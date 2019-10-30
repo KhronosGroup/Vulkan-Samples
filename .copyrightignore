@@ -1,0 +1,12 @@
+.clang-format
+.gitignore
+.snakeignore
+.yml
+.gitmodules
+.jpg
+.png
+.ttf
+doxyfile
+build.gradle.in
+settings.gradle.in
+VERSION

@@ -1,0 +1,70 @@
+buildscript {
+    repositories {
+        jcenter()
+        google()
+    }
+
+    dependencies {
+        classpath 'com.android.tools.build:gradle:3.4.0'
+    }
+}
+
+allprojects {
+    repositories {
+        google()
+        jcenter()
+    }
+}
+
+apply plugin: 'com.android.application'
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion '28.0.3'
+
+    defaultConfig {
+        @MIN_SDK_VERSION@
+        targetSdkVersion 28
+
+        @NDK_ABI_FILTERS@
+
+        externalNativeBuild {
+            @CMAKE_ARGUMENTS@
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            jniDebuggable true
+        }
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+        }
+    }
+
+    sourceSets {
+        main {
+            @ASSETS_SRC_DIRS@
+            @RES_SRC_DIRS@
+            @JAVA_SRC_DIRS@
+            @JNI_LIBS_SRC_DIRS@
+            @MANIFEST_FILE@
+
+            debug {
+                jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
+            }
+        }
+    }
+
+    externalNativeBuild {
+        @CMAKE_PATH@
+    }
+}
+
+dependencies {
+    implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
+}

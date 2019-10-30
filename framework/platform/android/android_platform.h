@@ -1,0 +1,69 @@
+/* Copyright (c) 2019, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#pragma once
+
+#include <android_native_app_glue.h>
+
+#include "common/vk_common.h"
+#include "platform/platform.h"
+
+namespace vkb
+{
+class AndroidPlatform : public Platform
+{
+  public:
+	AndroidPlatform(android_app *app);
+
+	virtual ~AndroidPlatform() = default;
+
+	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+
+	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
+
+	virtual void main_loop() override;
+
+	virtual void terminate(ExitCode code) override;
+
+	virtual void close() const override;
+
+	/**
+	 * @brief Sends a notification in the task bar
+	 * @param message The message to display
+	 */
+	void send_notification(const std::string &message);
+
+	/**
+	 * @brief Sends an error notification in the task bar
+	 * @param message The message to display
+	 */
+	void send_error_notification(const std::string &message);
+
+	float get_dpi_factor() const override;
+
+	android_app *get_android_app();
+
+	ANativeActivity *get_activity();
+
+  private:
+	android_app *app{nullptr};
+
+	std::string log_output;
+
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+};
+}        // namespace vkb

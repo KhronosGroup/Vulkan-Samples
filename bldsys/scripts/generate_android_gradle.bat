@@ -1,0 +1,41 @@
+:: Copyright (c) 2019, Arm Limited and Contributors
+::
+:: SPDX-License-Identifier: Apache-2.0
+::
+:: Licensed under the Apache License, Version 2.0 the "License";
+:: you may not use this file except in compliance with the License.
+:: You may obtain a copy of the License at
+::
+::     http://www.apache.org/licenses/LICENSE-2.0
+::
+:: Unless required by applicable law or agreed to in writing, software
+:: distributed under the License is distributed on an "AS IS" BASIS,
+:: WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+:: See the License for the specific language governing permissions and
+:: limitations under the License.
+
+
+@echo off
+
+set SCRIPT_DIR=%~dp0
+
+set ROOT_DIR=%SCRIPT_DIR%..\..
+
+if [%1] == [] (
+    set BUILD_DIR=%ROOT_DIR%\build\android_gradle
+) else (
+    set BUILD_DIR=%1
+)
+
+call cmake.exe -DPROJECT_NAME="vulkan_samples"^
+			   -DANDROID_API=24^
+			   -DARCH_ABI="arm64-v8a;armeabi-v7a"^
+			   -DANDROID_MANIFEST="%ROOT_DIR%\vulkan_samples\android\AndroidManifest.xml"^
+			   -DJAVA_DIRS="%ROOT_DIR%\vulkan_samples\android\java"^
+			   -DRES_DIRS="%ROOT_DIR%\vulkan_samples\android\res"^
+			   -DOUTPUT_DIR="%BUILD_DIR%"^
+			   -DASSET_DIRS=""^
+			   -DJNI_LIBS_DIRS=""^
+			   -DNATIVE_SCRIPT="%ROOT_DIR%\CMakeLists.txt"^
+			   -DNATIVE_ARGUMENTS="ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static"^
+			   -P "%ROOT_DIR%\bldsys\cmake\create_gradle_project.cmake"

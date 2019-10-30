@@ -1,0 +1,170 @@
+stages:
+  - Check
+  - Build
+  - Test
+  - Package
+
+cache:
+  key: ${CI_PIPELINE_ID}
+  paths:
+    - build/windows
+    - build/linux
+    - build/android
+    - output
+
+Doxygen:
+  stage: Check
+  image: khronosgroup/vulkan-samples
+  tags:
+    - linux
+    - docker
+  script:
+    - mkdir -p doxygen
+    - doxygen docs/doxygen/doxyfile
+    - if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
+
+CopyrightHeaders:
+  stage: Check
+  image: khronosgroup/vulkan-samples
+  tags:
+    - linux
+    - docker
+  script:
+    - python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
+
+SnakeCase:
+  stage: Check
+  image: khronosgroup/vulkan-samples
+  tags:
+    - linux
+    - docker
+  script:
+    - python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
+    - if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
+  allow_failure: true
+
+ClangFormat:
+  stage: Check
+  image: khronosgroup/vulkan-samples
+  tags:
+    - linux
+    - docker
+  script:
+    - python3 /usr/local/bin/clang_format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
+    - if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
+
+ClangTidy:
+  stage: Check
+  image: khronosgroup/vulkan-samples
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
+    - python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
+
+Linux:
+  stage: Build
+  image: khronosgroup/vulkan-samples
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  artifacts:
+    paths:
+      - build/linux
+    expire_in: 1h
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+    - cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))
+
+Windows:
+  stage: Build
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  artifacts:
+    paths:
+      - build/windows
+    expire_in: 1d
+  tags:
+    - gpu
+  script:
+    - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
+    - cmake --build build/windows --target vulkan_samples --config Release
+
+Android:
+  stage: Build
+  image: khronosgroup/vulkan-samples
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+    - cmake --build build/android --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))
+
+GenerateSample:
+  stage: Test
+  image: khronosgroup/vulkan-samples
+  variables:
+   GIT_SUBMODULE_STRATEGY: recursive
+  dependencies:
+    - Linux
+  tags:
+   - linux
+   - docker
+  script:
+   - cd tests/generate_sample
+   - python3 generate_sample_test.py
+
+SystemTest:
+  stage: Test
+  variables:
+   GIT_SUBMODULE_STRATEGY: recursive
+  artifacts:
+    paths:
+      - tests/system_test/artifacts
+    expire_in: 1d
+    when: on_failure
+  dependencies:
+   - Windows
+  tags:
+   - gpu
+  script:
+   - cd tests/system_test
+   - python system_test.py -Bbuild/windows -CRelease -D -P
+
+LinuxExternalProject:
+  stage: Package
+  image: khronosgroup/vulkan-samples
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+
+WindowsExternalProject:
+  stage: Package
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - gpu
+  script:
+    - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
+
+AndroidExternalProject:
+  stage: Package
+  image: khronosgroup/vulkan-samples
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  tags:
+    - linux
+    - docker
+  script:
+    - cmake -DCMAKE_TOOLCHAIN_FILE=../../bldsys/toolchain/android_gradle.cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
