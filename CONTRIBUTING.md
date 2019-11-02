@@ -125,7 +125,7 @@ A `.clang-format` file is included with this repository, please use `clang-forma
 
 All submissions, including submissions by project members, are subject to a code review by the Khronos Membership.
 GitHub pull requests are used to facilitate the review process, please submit a pull request with your contribution ready for review.
-For more information on the review process visit this [link](https://gitlab.khronos.org/vulkan/vulkan-samples/wikis/home#approval-process).
+For more information on the review process visit this [link](https://github.com/KhronosGroup/Vulkan-Samples/wiki/Review-Process).
 
 ## Maintenance
 
