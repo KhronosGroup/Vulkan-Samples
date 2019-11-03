@@ -134,7 +134,10 @@ VulkanSample::~VulkanSample()
 	}
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+	if (debug_report_callback != VK_NULL_HANDLE)
+	{
+		vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
+	}
 #endif
 
 	if (instance != VK_NULL_HANDLE)
