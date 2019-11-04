@@ -1,0 +1,27 @@
+stages:
+  - Check
+  - Build
+  - Test
+
+jobs:
+  include:
+    - stage: Check
+      name: "Doxygen"
+      script: echo "Doxygen"
+      name: "Copyright Headers"
+      script: echo "Copyright Headers"
+      name: "Snake Case (Optional)"
+      script: echo "Snake Case (Optional)"
+      name: "Clang Format"
+      script: echo "Clang Format"
+      name: "Clang Tidy"
+      script: echo "Clang Tidy"
+    - stage: Build
+      name: "Windows"
+      script: echo "Windows"
+      name: "Unix"
+      script: echo "Unix"
+      name: "Mac"
+      script: echo "Mac"
+    - stage: Test
+      name: "Generate Sample"
