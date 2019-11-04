@@ -1,7 +1,13 @@
+language: gneric
+os: linux
+
 stages:
   - Check
   - Build
   - Test
+
+services:
+  - docker
 
 jobs:
   include:
@@ -18,10 +24,11 @@ jobs:
       script: echo "Clang Tidy"
     - stage: Build
       name: "Windows"
+      os: windows
       script: echo "Windows"
       name: "Unix"
       script: echo "Unix"
-      name: "Mac"
-      script: echo "Mac"
+      name: "Android"
+      script: echo "Android"
     - stage: Test
       name: "Generate Sample"
