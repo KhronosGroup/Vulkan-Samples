@@ -1,6 +1,11 @@
 language: gneric
 os: linux
 
+branches:
+  only:
+    - branch
+    - master
+
 stages:
   - Check
   - Build
@@ -9,26 +14,31 @@ stages:
 services:
   - docker
 
+before_install:
+  - docker pull khronosgroup/vulkan-samples
+
 jobs:
   include:
     - stage: Check
       name: "Doxygen"
-      script: echo "Doxygen"
+      script: ls
+    - script: echo "Doxygen"
       name: "Copyright Headers"
-      script: echo "Copyright Headers"
+    - script: echo "Copyright Headers"
       name: "Snake Case (Optional)"
-      script: echo "Snake Case (Optional)"
+    - script: echo "Snake Case (Optional)"
       name: "Clang Format"
-      script: echo "Clang Format"
+    - script: echo "Clang Format"
       name: "Clang Tidy"
-      script: echo "Clang Tidy"
+    - script: echo "Clang Tidy"
     - stage: Build
       name: "Windows"
       os: windows
-      script: echo "Windows"
+    - script: echo "Windows"
       name: "Unix"
-      script: echo "Unix"
+    - script: echo "Unix"
       name: "Android"
-      script: echo "Android"
+    - script: echo "Android"
     - stage: Test
       name: "Generate Sample"
+      script: echo "Generate Sample"
