@@ -9,4 +9,4 @@
 doxyfile
 build.gradle.in
 settings.gradle.in
-VERSION
+pull_request_template.md
