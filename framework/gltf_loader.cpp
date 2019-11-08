@@ -537,8 +537,13 @@ sg::Scene GLTFLoader::load_scene()
 	scene.add_component(std::move(default_sampler));
 
 	// Load materials
-	auto textures = scene.get_components<sg::Texture>();
-
+	bool                            has_textures = scene.has_component<sg::Texture>();
+	std::vector<vkb::sg::Texture *> textures;
+	if (has_textures)
+	{
+		textures = scene.get_components<sg::Texture>();
+	}
+	
 	for (auto &gltf_material : model.materials)
 	{
 		auto material = parse_material(gltf_material);
