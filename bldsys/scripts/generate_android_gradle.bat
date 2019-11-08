@@ -30,9 +30,9 @@ if [%1] == [] (
 call cmake.exe -DPROJECT_NAME="vulkan_samples"^
 			   -DANDROID_API=24^
 			   -DARCH_ABI="arm64-v8a;armeabi-v7a"^
-			   -DANDROID_MANIFEST="%ROOT_DIR%\vulkan_samples\android\AndroidManifest.xml"^
-			   -DJAVA_DIRS="%ROOT_DIR%\vulkan_samples\android\java"^
-			   -DRES_DIRS="%ROOT_DIR%\vulkan_samples\android\res"^
+			   -DANDROID_MANIFEST="%ROOT_DIR%\app\android\AndroidManifest.xml"^
+			   -DJAVA_DIRS="%ROOT_DIR%\app\android\java"^
+			   -DRES_DIRS="%ROOT_DIR%\app\android\res"^
 			   -DOUTPUT_DIR="%BUILD_DIR%"^
 			   -DASSET_DIRS=""^
 			   -DJNI_LIBS_DIRS=""^
