@@ -425,15 +425,7 @@ void ComputeNBody::prepare_graphics()
 
 void ComputeNBody::prepare_compute()
 {
-	// Create a compute capable device queue
-	// The VulkanDevice::createLogicalDevice functions finds a compute capable queue and prefers queue families that only support compute
-	// Depending on the implementation this may result in different queue family indices for graphics and computes,
-	// requiring proper synchronization (see the memory barriers in build_compute_command_buffer)
-	VkDeviceQueueCreateInfo queue_create_info = {};
-	queue_create_info.sType                   = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-	queue_create_info.pNext                   = NULL;
-	queue_create_info.queueFamilyIndex        = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
-	queue_create_info.queueCount              = 1;
+	// Get compute queue
 	vkGetDeviceQueue(get_device().get_handle(), get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT), 0, &compute.queue);
 
 	// Create compute pipeline
