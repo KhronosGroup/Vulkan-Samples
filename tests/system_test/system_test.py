@@ -88,7 +88,7 @@ class WindowsSubtest(Subtest):
         super().__init__(test_name, "Windows")
 
     def run(self):
-        app_path = "{}vulkan_samples/bin/{}/{}/vulkan_samples.exe".format(build_path, build_config, platform.machine())
+        app_path = "{}app/bin/{}/{}/vulkan_samples.exe".format(build_path, build_config, platform.machine())
         return super().run(app_path)
 
 class UnixSubtest(Subtest):
@@ -96,7 +96,7 @@ class UnixSubtest(Subtest):
         super().__init__(test_name, platform_type)
 
     def run(self):
-        app_path = "{}vulkan_samples/bin/{}/{}/vulkan_samples".format(build_path, build_config, platform.machine())
+        app_path = "{}app/bin/{}/{}/vulkan_samples".format(build_path, build_config, platform.machine())
         return super().run(app_path)
 
 class AndroidSubtest(Subtest):
