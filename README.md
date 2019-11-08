@@ -42,7 +42,7 @@ The Vulkan Samples is collection of resources to help you develop optimized Vulk
 
 If you are new to Vulkan the [API samples](samples/api) are the right place to start.
 Additionally you may find the following links useful:
- - [Beginners Guide to Vulkan](https://www.khronos.org/blog/beginners-guide-to-vulkan)
+ - [Vulkan Guide](https://github.com/KhronosGroup/Vulkan-Guide)
  - [Get Started in Vulkan](https://vulkan-tutorial.com/)
 
  [Performance samples](samples/performance) show the recommended best practice together with real-time profiling information.
