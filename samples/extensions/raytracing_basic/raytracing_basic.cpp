@@ -225,7 +225,7 @@ void RaytracingBasic::create_scene()
 	geometry.geometry.triangles.vertexOffset    = 0;
 	geometry.geometry.triangles.vertexCount     = static_cast<uint32_t>(vertices.size());
 	geometry.geometry.triangles.vertexStride    = sizeof(Vertex);
-	geometry.geometry.triangles.vertexFormat    = VK_FORMAT_R32G32B32A32_SFLOAT;
+	geometry.geometry.triangles.vertexFormat    = VK_FORMAT_R32G32B32_SFLOAT;
 	geometry.geometry.triangles.indexData       = index_buffer->get_handle();
 	geometry.geometry.triangles.indexOffset     = 0;
 	geometry.geometry.triangles.indexCount      = index_count;
