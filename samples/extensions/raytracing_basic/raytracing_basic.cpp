@@ -291,7 +291,7 @@ void RaytracingBasic::create_scene()
 
 	const VkDeviceSize scratch_buffer_size = std::max(memory_requirements_bottom_level.memoryRequirements.size, memory_requirements_top_level.memoryRequirements.size);
 
-	vkb::core::Buffer scratch_buffer{get_device(), scratch_buffer_size, VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VMA_MEMORY_USAGE_CPU_ONLY};
+	vkb::core::Buffer scratch_buffer{get_device(), scratch_buffer_size, VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
