@@ -323,6 +323,7 @@ void RaytracingBasic::create_scene()
 	/*
 		Build top-level acceleration structure
 	*/
+	build_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
 	build_info.pGeometries   = 0;
 	build_info.geometryCount = 0;
 	build_info.instanceCount = 1;
