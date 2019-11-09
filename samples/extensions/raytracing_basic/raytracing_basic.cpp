@@ -118,6 +118,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure(const VkGeometr
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements{};
 	memory_requirements.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memory_requirements.type                  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 	memory_requirements.accelerationStructure = bottom_level_acceleration_structure.acceleration_structure;
 
 	VkMemoryRequirements2 memory_requirements2{};
@@ -155,6 +156,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements{};
 	memory_requirements.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memory_requirements.type                  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 	memory_requirements.accelerationStructure = top_level_acceleration_structure.acceleration_structure;
 
 	VkMemoryRequirements2 memory_requirements2{};
@@ -179,7 +181,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 */
 void RaytracingBasic::create_scene()
 {
-	// Setup vertices for a single uv-mapped quad made from two triangles
+	// Setup vertices for a single triangle
 	struct Vertex
 	{
 		float pos[4];
@@ -277,7 +279,7 @@ void RaytracingBasic::create_scene()
 	// Acceleration structure build requires some scratch space to store temporary information
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements_info{};
 	memory_requirements_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
+	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;	
 
 	VkMemoryRequirements2 memory_requirements_bottom_level;
 	memory_requirements_info.accelerationStructure = bottom_level_acceleration_structure.acceleration_structure;
