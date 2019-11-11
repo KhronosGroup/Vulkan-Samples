@@ -618,6 +618,9 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+	get_render_context().update_swapchain(image_usage_flags);
+
 	// Query the ray tracing properties of the current implementation, we will need them later on
 	ray_tracing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
 	VkPhysicalDeviceProperties2 device_properties{};
