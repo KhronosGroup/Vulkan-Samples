@@ -1,9 +1,5 @@
-language: cpp
+language: shell
 os: linux
-
-compiler:
-  - gcc
-  - clang
 
 branches:
   only:
@@ -18,39 +14,62 @@ stages:
 services:
   - docker
 
+
 before_install:
-  - docker pull khronosgroup/vulkan-samples
+    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker pull khronosgroup/vulkan-samples; fi
 
 before_script:
-  - docker run --name VKB -v ~/build/KhronosGroup/Vulkan-Samples:/home/vulkan-samples -dit khronosgroup/vulkan-samples
+    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker run --name VKB -v ~/build/KhronosGroup/Vulkan-Samples:/home/vulkan-samples -dit khronosgroup/vulkan-samples; fi
 
 after_script:
-  - docker stop VKB
+    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker stop VKB; fi
 
 jobs:
   fast_finish: true
+  allow_failures:
+    - name: "Snake Case (Optional)"
   include:
-    - stage: Check
-    - name: "Doxygen"
-      script:
-      - docker exec VKB sh -c "cd /home/vulkan-samples && mkdir -p doxygen && doxygen docs/doxygen/doxyfile && if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi"
-      - docker exec VKB sh -c "if [ $(stat -c%s /home/vulkan-samples/doxygen/warnings.txt) -gt 0 ]; then cat /home/vulkan-samples/doxygen/warnings.txt; exit 1; fi"
+    # - stage: Check
+
+    # - name: "Doxygen"
+    #   script:
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && mkdir -p doxygen && doxygen docs/doxygen/doxyfile"
+    #     - docker exec VKB sh -c "if [ $(stat -c%s /home/vulkan-samples/doxygen/warnings.txt) -gt 0 ]; then cat /home/vulkan-samples/doxygen/warnings.txt; exit 1; fi"
+
     # - name: "Copyright Headers"
-    #   script: echo "Copyright Headers"
-    # - name: "Snake Case (Optional)"
-    #   script: echo "Snake Case (Optional)"
+    #   script:
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/check_copyright_headers.py master"
+
     # - name: "Clang Format"
-    #   script: echo "Clang Format"
+    #   script:
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/clang_format.py -v --diff master > clang-format-report.txt"
+    #     - docker exec VKB sh -c "if [ $(grep -c 'clang-format did not modify any files' /home/vulkan-samples/clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' /home/vulkan-samples/clang-format-report.txt) -eq 0  ]; then cat /home/vulkan-samples/clang-format-report.txt; exit 1; fi"
+
     # - name: "Clang Tidy"
-    #   script: echo "Clang Tidy"
-    # - stage: Build
-    # - name: "Windows"
-    #   os: windows
-    #   script: echo "Windows"
-    # - name: "Unix"
-    #   script: echo "Unix"
-    # - name: "Android"
-    #   script: echo "Android"
-    # - stage: Test
-    # - name: "Generate Sample"
-    #   script: echo "Generate Sample"
+    #   script:
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang"
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/"
+
+    # - name: "Snake Case (Optional)"
+    #   script:
+    #     - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/snake_case.py master > snake-report.txt"
+    #     - docker exec VKB sh -c "if [ $(grep -c '@@' /home/vulkan-samples/snake-report.txt) -gt 0 ]; then cat /home/vulkan-samples/snake-report.txt; exit 1; fi"
+
+    - stage: Build
+
+    - name: "Windows"
+      language: shell
+      os: windows
+      script:
+        - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
+        - cmake --build build --target vulkan_samples --config Release
+
+    - name: "Unix"
+      language: shell
+      os: linux
+
+      script: echo "Unix"
+    - name: "Android"
+      language: shell
+      os: linux
+      script: echo "Android"
