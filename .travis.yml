@@ -16,13 +16,14 @@ services:
 
 
 before_install:
-    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker pull khronosgroup/vulkan-samples; fi
+  - echo "OS $TRAVIS_OS_NAME"
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker pull khronosgroup/vulkan-samples; fi
 
 before_script:
-    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker run --name VKB -v ~/build/KhronosGroup/Vulkan-Samples:/home/vulkan-samples -dit khronosgroup/vulkan-samples; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run --name VKB -v ~/build/KhronosGroup/Vulkan-Samples:/home/vulkan-samples -dit khronosgroup/vulkan-samples; fi
 
 after_script:
-    - if [ $TRAVIS_OS_NAME = "linux" ]; then; docker stop VKB; fi
+  - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker stop VKB; fi
 
 jobs:
   fast_finish: true
@@ -61,15 +62,21 @@ jobs:
       language: shell
       os: windows
       script:
+
         - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
         - cmake --build build --target vulkan_samples --config Release
 
     - name: "Unix"
       language: shell
       os: linux
+      script:
+      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
+      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))"
 
-      script: echo "Unix"
     - name: "Android"
       language: shell
       os: linux
-      script: echo "Android"
+      script:
+      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
+      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))"
+
