@@ -1,5 +1,9 @@
-language: gneric
+language: cpp
 os: linux
+
+compiler:
+  - gcc
+  - clang
 
 branches:
   only:
@@ -18,27 +22,28 @@ before_install:
   - docker pull khronosgroup/vulkan-samples
 
 jobs:
+  fast_finish: true
   include:
     - stage: Check
-      name: "Doxygen"
-      script: ls
-    - script: echo "Doxygen"
-      name: "Copyright Headers"
-    - script: echo "Copyright Headers"
-      name: "Snake Case (Optional)"
-    - script: echo "Snake Case (Optional)"
-      name: "Clang Format"
-    - script: echo "Clang Format"
-      name: "Clang Tidy"
-    - script: echo "Clang Tidy"
+    - name: "Doxygen"
+      script:
+      - docker run -it khronosgroup/vulkan-samples echo "Doxygen"
+    - name: "Copyright Headers"
+      script: echo "Copyright Headers"
+    - name: "Snake Case (Optional)"
+      script: echo "Snake Case (Optional)"
+    - name: "Clang Format"
+      script: echo "Clang Format"
+    - name: "Clang Tidy"
+      script: echo "Clang Tidy"
     - stage: Build
-      name: "Windows"
+    - name: "Windows"
       os: windows
-    - script: echo "Windows"
-      name: "Unix"
-    - script: echo "Unix"
-      name: "Android"
-    - script: echo "Android"
+      script: echo "Windows"
+    - name: "Unix"
+      script: echo "Unix"
+    - name: "Android"
+      script: echo "Android"
     - stage: Test
-      name: "Generate Sample"
+    - name: "Generate Sample"
       script: echo "Generate Sample"
