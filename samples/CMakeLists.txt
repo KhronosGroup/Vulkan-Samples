@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -69,6 +69,10 @@ set(ORDER_LIST
     "descriptor_management"
     "render_passes"
     "render_subpasses"
+    "pipeline_barriers"
+    "wait_idle"
+    "layout_transitions"
+    "specialization_constants"
     "command_buffer_usage"
     "afbc")
 

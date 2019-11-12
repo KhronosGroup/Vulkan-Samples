@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -143,6 +143,14 @@ ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&
 size_t ShaderVariant::get_id() const
 {
 	return id;
+}
+
+void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
+{
+	for (auto &definition : definitions)
+	{
+		add_define(definition);
+	}
 }
 
 void ShaderVariant::add_define(const std::string &def)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,9 +43,13 @@ class Framebuffer
 
 	VkFramebuffer get_handle() const;
 
+	const VkExtent2D &get_extent() const;
+
   private:
 	Device &device;
 
 	VkFramebuffer handle{VK_NULL_HANDLE};
+
+	VkExtent2D extent{};
 };
 }        // namespace vkb

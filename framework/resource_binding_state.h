@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,11 @@
 
 namespace vkb
 {
+/**
+ * @brief A resource info is a struct containing the actual resource data.
+ *
+ * This will be referenced by a buffer info or image info descriptor inside a descriptor set.
+ */
 struct ResourceInfo
 {
 	bool dirty{false};
@@ -39,7 +44,13 @@ struct ResourceInfo
 	const core::Sampler *sampler{nullptr};
 };
 
-class SetBindings
+/**
+ * @brief A resource set is a set of bindings containing resources that were bound 
+ *        by a command buffer.
+ *
+ * The ResourceSet has a one to one mapping with a DescriptorSet.
+ */
+class ResourceSet
 {
   public:
 	void reset();
@@ -64,6 +75,12 @@ class SetBindings
 	BindingMap<ResourceInfo> resource_bindings;
 };
 
+/**
+ * @brief The resource binding state of a command buffer.
+ *
+ * Keeps track of all the resources bound by the command buffer. The ResourceBindingState is used by
+ * the command buffer to create the appropriate descriptor sets when it comes to draw.
+ */
 class ResourceBindingState
 {
   public:
@@ -81,11 +98,11 @@ class ResourceBindingState
 
 	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	const std::unordered_map<uint32_t, SetBindings> &get_set_bindings();
+	const std::unordered_map<uint32_t, ResourceSet> &get_resource_sets();
 
   private:
 	bool dirty{false};
 
-	std::unordered_map<uint32_t, SetBindings> set_bindings;
+	std::unordered_map<uint32_t, ResourceSet> resource_sets;
 };
 }        // namespace vkb

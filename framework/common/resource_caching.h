@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -405,7 +405,7 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto stage : pipeline_state.get_pipeline_layout().get_stages())
+		for (auto stage : pipeline_state.get_pipeline_layout().get_shader_modules())
 		{
 			vkb::hash_combine(result, stage->get_id());
 		}

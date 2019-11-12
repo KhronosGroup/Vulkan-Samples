@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,9 +84,7 @@ void ConservativeRasterization::prepare_offscreen()
 	offscreen_pass.height = height / ZOOM_FACTOR;
 
 	// Find a suitable depth format
-	VkFormat framebuffer_depth_format;
-	VkBool32 valid_depth_format = vkb::get_supported_depth_format(get_device().get_physical_device(), &framebuffer_depth_format);
-	assert(valid_depth_format);
+	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_physical_device());
 
 	// Color attachment
 	VkImageCreateInfo image = vkb::initializers::image_create_info();

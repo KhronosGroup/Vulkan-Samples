@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,12 @@ struct ShaderResource;
 class DescriptorSetLayout
 {
   public:
-	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources);
+	/**
+	 * @brief Creates a descriptor set layout from a set of resources
+	 * @param device A valid Vulkan device
+	 * @param resource_set A grouping of shader resources belonging to the same set
+	 */
+	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 
@@ -50,9 +55,9 @@ class DescriptorSetLayout
 
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
-	bool get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(uint32_t binding_index) const;
 
-	bool has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const std::string &name) const;
 
   private:
 	Device &device;

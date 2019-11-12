@@ -92,7 +92,7 @@ bool debug_graphs(RenderContext &context, sg::Scene &scene)
 		size_t pipeline_layouts_id = framework_graph.create_node<FrameworkNode>(it_pipeline_layouts->second, it_pipeline_layouts->first);
 		framework_graph.add_edge(resource_cache_id, pipeline_layouts_id);
 
-		auto &stages = it_pipeline_layouts->second.get_stages();
+		auto &stages = it_pipeline_layouts->second.get_shader_modules();
 		for (const auto *shader_module : stages)
 		{
 			size_t shader_modules_id = framework_graph.create_node<FrameworkNode>(*shader_module);

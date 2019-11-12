@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,8 @@ enum class ShaderResourceType
 	BufferUniform,
 	BufferStorage,
 	PushConstant,
-	SpecializationConstant
+	SpecializationConstant,
+	All
 };
 
 /// Store shader resource data.
@@ -85,6 +86,12 @@ class ShaderVariant
 	ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes);
 
 	size_t get_id() const;
+
+	/**
+	 * @brief Add definitions to shader variant
+	 * @param definitions Vector of definitions to add to the variant
+	 */
+	void add_definitions(const std::vector<std::string> &definitions);
 
 	/**
 	 * @brief Adds a define macro to the shader

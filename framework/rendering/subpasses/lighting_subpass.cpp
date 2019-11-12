@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,8 +33,8 @@ LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&v
 
 void LightingSubpass::prepare()
 {
-	add_definitions(lighting_variant, {"MAX_DEFERRED_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
-	add_definitions(lighting_variant, light_type_definitions);
+	lighting_variant.add_definitions({"MAX_DEFERRED_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+	lighting_variant.add_definitions(light_type_definitions);
 	// Build all shaders upfront
 	auto &resource_cache = render_context.get_device().get_resource_cache();
 	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
