@@ -30,7 +30,7 @@ jobs:
   allow_failures:
     - name: "Snake Case (Optional)"
   include:
-    stage: Check
+    - stage: Check
 
     - name: "Doxygen"
       script:
@@ -56,7 +56,7 @@ jobs:
         - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/snake_case.py master > ./snake-report.txt"
         - docker exec VKB sh -c "cd /home/vulkan-samples && if [ $(grep -c '@@' ./snake-report.txt) -gt 0 ]; then cat ./snake-report.txt; exit 1; fi"
 
-    stage: Build
+    - stage: Build
 
     - name: "Windows"
       language: shell
