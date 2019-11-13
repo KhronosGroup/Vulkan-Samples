@@ -28,8 +28,6 @@ void Camera::update_view_matrix()
 	rotation_matrix = glm::rotate(rotation_matrix, glm::radians(rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 	rotation_matrix = glm::rotate(rotation_matrix, glm::radians(rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
 
-	some_undefined_var = some_undefined_value // missing semicolon
-
 	transformation_matrix = glm::translate(glm::mat4(1.0f), position);
 
 	if (type == CameraType::FirstPerson)
