@@ -38,6 +38,8 @@
 
 ## Introduction
 
+![Travis CI](https://travis-ci.org/KhronosGroup/Vulkan-Samples.svg?branch=master)
+
 The Vulkan Samples is collection of resources to help you develop optimized Vulkan applications.
 
 If you are new to Vulkan the [API samples](samples/api) are the right place to start.
