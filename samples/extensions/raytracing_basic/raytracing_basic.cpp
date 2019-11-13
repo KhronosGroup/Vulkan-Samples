@@ -279,7 +279,7 @@ void RaytracingBasic::create_scene()
 	// Acceleration structure build requires some scratch space to store temporary information
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements_info{};
 	memory_requirements_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;	
+	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
 
 	VkMemoryRequirements2 memory_requirements_bottom_level;
 	memory_requirements_info.accelerationStructure = bottom_level_acceleration_structure.acceleration_structure;
