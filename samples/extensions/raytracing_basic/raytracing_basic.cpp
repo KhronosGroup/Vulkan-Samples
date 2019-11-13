@@ -595,11 +595,6 @@ void RaytracingBasic::build_command_buffers()
 		    VK_IMAGE_LAYOUT_GENERAL,
 		    subresource_range);
 
-		//@todo: Default render pass setup willl overwrite contents
-		//vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		//drawUI(drawCmdBuffers[i]);
-		//vkCmdEndRenderPass(drawCmdBuffers[i]);
-
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
@@ -618,6 +613,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// This sample copies ray traced output to the swapchain image, so we need to enable the required image usage flags
 	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 	get_render_context().update_swapchain(image_usage_flags);
 
