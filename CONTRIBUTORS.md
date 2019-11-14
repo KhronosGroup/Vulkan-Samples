@@ -32,6 +32,7 @@
 * Marton Tamas
 * Matthew Rusch
 * Michael Parkin-White
+* Peter Harris
 * Ryan O'Shea
 * Sascha Willems
 * Spencer Fricke
