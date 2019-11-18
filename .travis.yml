@@ -30,9 +30,6 @@ jobs:
   allow_failures:
     - name: "Snake Case (Optional)"
   include:
-
-jobs:
-  include:
     - stage: Check
       name: "Doxygen"
       script: 
