@@ -698,7 +698,7 @@ void TerrainTessellation::update_uniform_buffers()
 		ubo_tess.tessellation_factor = 0.0f;
 	}
 
-	memcpy(uniform_buffers.terrain_tessellation->map(), &ubo_tess, sizeof(ubo_tess));
+	uniform_buffers.terrain_tessellation->convert_and_update(ubo_tess);
 
 	if (!tessellation)
 	{

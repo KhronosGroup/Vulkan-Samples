@@ -23,15 +23,20 @@ namespace vkb
 {
 class Device;
 
-class FencePool : public NonCopyable
+class FencePool
 {
   public:
 	FencePool(Device &device);
 
+	FencePool(const FencePool &) = delete;
+
+	FencePool(FencePool &&other) = default;
+
 	~FencePool();
 
-	/// @brief Move construct
-	FencePool(FencePool &&other) = default;
+	FencePool &operator=(const FencePool &) = delete;
+
+	FencePool &operator=(FencePool &&) = delete;
 
 	VkFence request_fence();
 

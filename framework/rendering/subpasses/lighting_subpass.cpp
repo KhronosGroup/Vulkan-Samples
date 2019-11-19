@@ -17,27 +17,39 @@
 
 #include "lighting_subpass.h"
 
+#include "buffer_pool.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
+#include "scene_graph/scene.h"
 
 namespace vkb
 {
-LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam) :
+LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &cam, sg::Scene &scene_) :
     Subpass{render_context, std::move(vertex_shader), std::move(fragment_shader)},
-    camera{cam}
+    camera{cam},
+    scene{scene_}
 {
+}
+
+void LightingSubpass::prepare()
+{
+	add_definitions(lighting_variant, {"MAX_DEFERRED_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+	add_definitions(lighting_variant, light_type_definitions);
 	// Build all shaders upfront
 	auto &resource_cache = render_context.get_device().get_resource_cache();
-	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
-	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
+	resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
+	resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
 }
 
 void LightingSubpass::draw(CommandBuffer &command_buffer)
 {
+	auto light_buffer = allocate_lights<DeferredLights>(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
+	command_buffer.bind_buffer(light_buffer.get_buffer(), light_buffer.get_offset(), light_buffer.get_size(), 0, 4, 0);
+
 	// Get shaders from cache
 	auto &resource_cache     = command_buffer.get_device().get_resource_cache();
-	auto &vert_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
-	auto &frag_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
+	auto &vert_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), lighting_variant);
+	auto &frag_shader_module = resource_cache.request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), lighting_variant);
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
@@ -74,10 +86,6 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	// Inverse view projection
 	light_uniform.inv_view_proj = glm::inverse(vulkan_style_projection(camera.get_projection()) * camera.get_view());
 
-	// Default light
-	light_uniform.light_pos   = glm::vec4(0.0f, 128.0f, -225.0f, 1.0);
-	light_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
-
 	// Allocate a buffer using the buffer pool from the active frame to store uniform values and bind it
 	auto &render_frame = get_render_context().get_active_frame();
 	auto  allocation   = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(LightUniform));
@@ -87,5 +95,4 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	// Draw full screen triangle triangle
 	command_buffer.draw(3, 1, 0, 0);
 }
-
 }        // namespace vkb

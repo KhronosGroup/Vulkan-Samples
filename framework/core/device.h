@@ -26,6 +26,7 @@
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
+#include "core/instance.h"
 #include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
@@ -39,12 +40,47 @@
 
 namespace vkb
 {
-class Device : public NonCopyable
+struct DriverVersion
+{
+	uint16_t major;
+	uint16_t minor;
+	uint16_t patch;
+};
+
+class Device
 {
   public:
 	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> requested_extensions = {}, VkPhysicalDeviceFeatures features = {});
 
+	Device(const Device &) = delete;
+
+	Device(Device &&) = delete;
+
 	~Device();
+
+	Device &operator=(const Device &) = delete;
+
+	Device &operator=(Device &&) = delete;
+
+	VkPhysicalDevice get_physical_device() const;
+
+	const VkPhysicalDeviceFeatures &get_features() const;
+
+	VkDevice get_handle() const;
+
+	VmaAllocator get_memory_allocator() const;
+
+	const VkPhysicalDeviceProperties &get_properties() const;
+
+	/**
+	 * @return The version of the driver of the current physical device
+	 */
+	DriverVersion get_driver_version() const;
+
+	/**
+	 * @return Whether an image format is supported by the GPU
+	 */
+	bool is_image_format_supported(VkFormat format) const;
 
 	const VkFormatProperties get_format_properties(VkFormat format) const;
 
@@ -55,13 +91,16 @@ class Device : public NonCopyable
 	const Queue &get_queue_by_present(uint32_t queue_index);
 
 	/**
-	 * @return Whether an image format is supported by the GPU
+	 * @brief Finds a suitable graphics queue to submit to
+	 * @return The first present supported queue, otherwise just any graphics queue
 	 */
-	bool is_image_format_supported(VkFormat format) const;
+	const Queue &get_suitable_graphics_queue();
 
 	bool is_extension_supported(const std::string &extension);
 
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
+
+	CommandPool &get_command_pool();
 
 	/**
 	 * @brief Checks that a given memory type is supported by the GPU
@@ -122,6 +161,8 @@ class Device : public NonCopyable
 	 */
 	CommandBuffer &request_command_buffer();
 
+	FencePool &get_fence_pool();
+
 	/**
 	 * @brief Requests a fence to the fence pool
 	 * @return A vulkan fence
@@ -129,20 +170,6 @@ class Device : public NonCopyable
 	VkFence request_fence();
 
 	VkResult wait_idle();
-
-	VkPhysicalDevice get_physical_device() const;
-
-	const VkPhysicalDeviceFeatures &get_features() const;
-
-	VkDevice get_handle() const;
-
-	VmaAllocator get_memory_allocator() const;
-
-	const VkPhysicalDeviceProperties &get_properties() const;
-
-	CommandPool &get_command_pool();
-
-	FencePool &get_fence_pool();
 
 	ResourceCache &get_resource_cache();
 

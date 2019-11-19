@@ -1,6 +1,5 @@
 #version 320 es
-/* Copyright (c) 2016, Sascha Willems
- * Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *

@@ -52,7 +52,7 @@ struct Attachment
  * - Creation of a RenderTarget becomes simpler, because the caller can just ask for some
  *   Attachment (s) without having to create the images
  */
-class RenderTarget : public NonCopyable
+class RenderTarget
 {
   public:
 	using CreateFunc = std::function<RenderTarget(core::Image &&)>;
@@ -61,7 +61,11 @@ class RenderTarget : public NonCopyable
 
 	RenderTarget(std::vector<core::Image> &&images);
 
+	RenderTarget(const RenderTarget &) = delete;
+
 	RenderTarget(RenderTarget &&) = default;
+
+	RenderTarget &operator=(const RenderTarget &other) noexcept = delete;
 
 	RenderTarget &operator=(RenderTarget &&other) noexcept;
 

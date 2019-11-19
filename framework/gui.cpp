@@ -40,6 +40,8 @@ VKBP_ENABLE_WARNINGS()
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
 #include "rendering/render_context.h"
+#include "timer.h"
+#include "utils/graphs.h"
 #include "vulkan_sample.h"
 
 namespace vkb
@@ -90,8 +92,8 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(RenderContext &render_context, const float dpi_factor, const float font_size, bool explicit_update) :
-    render_context{render_context},
+Gui::Gui(VulkanSample &sample_, const float dpi_factor, const float font_size, bool explicit_update) :
+    sample{sample_},
     dpi_factor{dpi_factor},
     explicit_update{explicit_update}
 {
@@ -124,7 +126,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor, const float font
 
 	// Dimensions
 	ImGuiIO &io                = ImGui::GetIO();
-	auto     extent            = render_context.get_surface_extent();
+	auto     extent            = sample.get_render_context().get_surface_extent();
 	io.DisplaySize.x           = static_cast<float>(extent.width);
 	io.DisplaySize.y           = static_cast<float>(extent.height);
 	io.FontGlobalScale         = 1.0f;
@@ -152,11 +154,11 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor, const float font
 	io.Fonts->GetTexDataAsRGBA32(&font_data, &tex_width, &tex_height);
 	size_t upload_size = tex_width * tex_height * 4 * sizeof(char);
 
-	auto &device = render_context.get_device();
+	auto &device = sample.get_render_context().get_device();
 
 	// Create target image for copy
 	VkExtent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
-	font_image      = std::make_unique<core::Image>(render_context.get_device(), font_extent, VK_FORMAT_R8G8B8A8_UNORM,
+	font_image      = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
                                                VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                                                VMA_MEMORY_USAGE_GPU_ONLY);
 	font_image_view = std::make_unique<core::ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
@@ -171,7 +173,7 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor, const float font
 		FencePool fence_pool{device};
 
 		// Begin recording
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
 		{
 			// Prepare for transfer
@@ -240,12 +242,12 @@ Gui::Gui(RenderContext &render_context, const float dpi_factor, const float font
 
 	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
-	sampler = std::make_unique<core::Sampler>(render_context.get_device(), sampler_info);
+	sampler = std::make_unique<core::Sampler>(device, sampler_info);
 
 	if (explicit_update)
 	{
-		vertex_buffer = std::make_unique<core::Buffer>(render_context.get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer  = std::make_unique<core::Buffer>(render_context.get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer  = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	}
 }
 
@@ -255,25 +257,25 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 	VkDescriptorPoolCreateInfo descriptorPoolInfo = vkb::initializers::descriptor_pool_create_info(pool_sizes, 2);
-	VK_CHECK(vkCreateDescriptorPool(render_context.get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool));
+	VK_CHECK(vkCreateDescriptorPool(sample.get_render_context().get_device().get_handle(), &descriptorPoolInfo, nullptr, &descriptor_pool));
 
 	// Descriptor set layout
 	std::vector<VkDescriptorSetLayoutBinding> layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	};
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(layout_bindings);
-	VK_CHECK(vkCreateDescriptorSetLayout(render_context.get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(sample.get_render_context().get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout));
 
 	// Descriptor set
 	VkDescriptorSetAllocateInfo descriptor_allocation = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
-	VK_CHECK(vkAllocateDescriptorSets(render_context.get_device().get_handle(), &descriptor_allocation, &descriptor_set));
+	VK_CHECK(vkAllocateDescriptorSets(sample.get_render_context().get_device().get_handle(), &descriptor_allocation, &descriptor_set));
 	VkDescriptorImageInfo font_descriptor = vkb::initializers::descriptor_image_info(
 	    sampler->get_handle(),
 	    font_image_view->get_handle(),
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &font_descriptor)};
-	vkUpdateDescriptorSets(render_context.get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(sample.get_render_context().get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Setup graphics pipeline for UI rendering
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -341,7 +343,7 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
 
-	VK_CHECK(vkCreateGraphicsPipelines(render_context.get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(sample.get_render_context().get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }        // namespace vkb
 
 void Gui::update(const float delta_time)
@@ -390,7 +392,7 @@ bool Gui::update_buffers()
 		updated                 = true;
 
 		vertex_buffer.reset();
-		vertex_buffer = std::make_unique<core::Buffer>(render_context.get_device(), vertex_buffer_size,
+		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
 		                                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
 	}
@@ -401,7 +403,7 @@ bool Gui::update_buffers()
 		updated                = true;
 
 		index_buffer.reset();
-		index_buffer = std::make_unique<core::Buffer>(render_context.get_device(), vertex_buffer_size,
+		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
 		                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                              VMA_MEMORY_USAGE_GPU_TO_CPU);
 	}
@@ -440,7 +442,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer, RenderFrame &render_fram
 
 	upload_draw_data(draw_data, vertex_data.data(), index_data.data());
 
-	auto vertex_allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
+	auto vertex_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, vertex_buffer_size);
 
 	vertex_allocation.update(vertex_data);
 
@@ -451,7 +453,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer, RenderFrame &render_fram
 
 	command_buffer.bind_vertex_buffers(0, buffers, offsets);
 
-	auto index_allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
+	auto index_allocation = sample.get_render_context().get_active_frame().allocate_buffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, index_buffer_size);
 
 	index_allocation.update(index_data);
 
@@ -530,20 +532,23 @@ void Gui::draw(CommandBuffer &command_buffer)
 	auto &io             = ImGui::GetIO();
 	auto  push_transform = glm::mat4(1.0f);
 
-	auto transform = render_context.get_swapchain().get_transform();
+	if (sample.get_render_context().has_swapchain())
+	{
+		auto transform = sample.get_render_context().get_swapchain().get_transform();
 
-	glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
-	if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
-	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
-	}
-	else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-	{
-		push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
+		glm::vec3 rotation_axis = glm::vec3(0.0f, 0.0f, 1.0f);
+		if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(90.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(270.0f), rotation_axis);
+		}
+		else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+		{
+			push_transform = glm::rotate(push_transform, glm::radians(180.0f), rotation_axis);
+		}
 	}
 
 	// GUI coordinate space to screen space
@@ -556,7 +561,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	// If a render context is used, then use the frames buffer pools to allocate GUI vertex/index data from
 	if (!explicit_update)
 	{
-		update_buffers(command_buffer, render_context.get_active_frame());
+		update_buffers(command_buffer, sample.get_render_context().get_active_frame());
 	}
 	else
 	{
@@ -590,28 +595,30 @@ void Gui::draw(CommandBuffer &command_buffer)
 			scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
 
 			// Adjust for pre-rotation if necessary
-			auto transform = render_context.get_swapchain().get_transform();
-
-			if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+			if (sample.get_render_context().has_swapchain())
 			{
-				scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-				scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
-				scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-				scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-			}
-			else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
-			{
-				scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-				scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-				scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
-				scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-			}
-			else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
-			{
-				scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
-				scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-				scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
-				scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+				auto transform = sample.get_render_context().get_swapchain().get_transform();
+				if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+				{
+					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+					scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
+					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+				}
+				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+				{
+					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+				}
+				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+				{
+					scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
+					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
+					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
+				}
 			}
 
 			command_buffer.set_scissor(0, {scissor_rect});
@@ -678,9 +685,9 @@ void Gui::draw(VkCommandBuffer command_buffer)
 
 Gui::~Gui()
 {
-	vkDestroyDescriptorPool(render_context.get_device().get_handle(), descriptor_pool, nullptr);
-	vkDestroyDescriptorSetLayout(render_context.get_device().get_handle(), descriptor_set_layout, nullptr);
-	vkDestroyPipeline(render_context.get_device().get_handle(), pipeline, nullptr);
+	vkDestroyDescriptorPool(sample.get_render_context().get_device().get_handle(), descriptor_pool, nullptr);
+	vkDestroyDescriptorSetLayout(sample.get_render_context().get_device().get_handle(), descriptor_set_layout, nullptr);
+	vkDestroyPipeline(sample.get_render_context().get_device().get_handle(), pipeline, nullptr);
 
 	ImGui::DestroyContext();
 }
@@ -783,7 +790,7 @@ void Gui::show_app_info(const std::string &app_name)
 	ImGui::Text("%s", app_name.c_str());
 
 	// GPU name
-	auto &device            = render_context.get_device();
+	auto &device            = sample.get_render_context().get_device();
 	auto  device_name_label = "GPU: " + std::string(device.get_properties().deviceName);
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(device_name_label.c_str()).x);
 	ImGui::Text("%s", device_name_label.c_str());
@@ -810,7 +817,8 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	                               ImGuiWindowFlags_NoMove |
 	                               ImGuiWindowFlags_NoTitleBar |
 	                               ImGuiWindowFlags_NoResize |
-	                               ImGuiWindowFlags_NoFocusOnAppearing;
+	                               ImGuiWindowFlags_NoFocusOnAppearing |
+	                               ImGuiWindowFlags_NoNav;
 
 	ImGui::Begin("Debug Window", &is_open, flags);
 	ImGui::PushFont(font.handle);
@@ -833,15 +841,54 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
+	static Timer       timer;
+	static const char *message;
+
+	if (ImGui::Button("Save Debug Graphs"))
+	{
+		if (utils::debug_graphs(sample.get_render_context(), sample.get_scene()))
+		{
+			message = "Graphs Saved!";
+		}
+		else
+		{
+			message = "Error outputting graphs!";
+		}
+
+		if (timer.is_running())
+		{
+			timer.lap();
+		}
+		else
+		{
+			timer.start();
+		}
+	}
+
+	if (timer.is_running())
+	{
+		if (timer.elapsed() > 2.0)
+		{
+			timer.stop();
+		}
+		else
+		{
+			ImGui::SameLine();
+			ImGui::Text("%s", message);
+		}
+	}
+
 	ImGui::PopFont();
 	ImGui::End();
 }
 
-Gui::StatsView::GraphData::GraphData(const std::string &graph_label_format_,
+Gui::StatsView::GraphData::GraphData(const std::string &name_,
+                                     const std::string &graph_label_format_,
                                      float              scale_factor_,
                                      bool               has_fixed_max_,
                                      float              max_value_) :
-    graph_label_format{graph_label_format_},
+    name(name_),
+    format{graph_label_format_},
     scale_factor{scale_factor_},
     has_fixed_max{has_fixed_max_},
     max_value{max_value_}
@@ -853,11 +900,8 @@ void Gui::show_stats(const Stats &stats)
 	{
 		// Find the graph data of this stat index
 		auto pr = stats_view.graph_map.find(stat_index);
-		if (pr == stats_view.graph_map.end())
-		{
-			ImGui::Text("Stat not found");
-			continue;
-		}
+
+		assert(pr != stats_view.graph_map.end() && "StatIndex not implemented in gui graph_map");
 
 		// Draw graph
 		auto &      graph_data     = pr->second;
@@ -884,11 +928,11 @@ void Gui::show_stats(const Stats &stats)
 		// Check if the stat is available in the current platform
 		if (!stats.is_available(stat_index))
 		{
-			graph_label << "Stat not available";
+			graph_label << graph_data.name << ": not available";
 		}
 		else
 		{
-			graph_label << fmt::format(graph_data.graph_label_format, avg * graph_data.scale_factor);
+			graph_label << fmt::format(graph_data.name + ": " + graph_data.format, avg * graph_data.scale_factor);
 		}
 
 		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
@@ -936,7 +980,7 @@ void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::fu
 	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
-	ImGui::TextUnformatted(std::string(render_context.get_device().get_properties().deviceName).c_str());
+	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_properties().deviceName).c_str());
 	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / last_fps), last_fps);
 	ImGui::PushItemWidth(110.0f * dpi_factor);
 

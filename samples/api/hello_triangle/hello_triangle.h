@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "core/instance.h"
 #include "platform/application.h"
 
 /**
@@ -170,6 +171,8 @@ class HelloTriangle : public vkb::Application
 
   private:
 	Context context;
+
+	std::unique_ptr<vkb::Instance> vk_instance;
 };
 
 std::unique_ptr<vkb::Application> create_hello_triangle();

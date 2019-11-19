@@ -98,8 +98,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	vkb::Device &get_device();
 
-	vkb::RenderContext &get_render_context();
-
 	const std::vector<const char *> get_instance_extensions() override;
 
 	const std::vector<const char *> get_device_extensions() override;

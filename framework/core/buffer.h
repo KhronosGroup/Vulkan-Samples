@@ -26,14 +26,32 @@ class Device;
 
 namespace core
 {
-class Buffer : public NonCopyable
+class Buffer
 {
   public:
-	Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags = 0);
+	/**
+	 * @brief Creates a buffer using VMA
+	 * @param device A valid Vulkan device
+	 * @param size The size in bytes of the buffer
+	 * @param buffer_usage The usage flags for the VkBuffer
+	 * @param memory_usage The memory usage of the buffer
+	 * @param flags The allocation create flags
+	 */
+	Buffer(Device &                 device,
+	       VkDeviceSize             size,
+	       VkBufferUsageFlags       buffer_usage,
+	       VmaMemoryUsage           memory_usage,
+	       VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+
+	Buffer(const Buffer &) = delete;
 
 	Buffer(Buffer &&other);
 
 	~Buffer();
+
+	Buffer &operator=(const Buffer &) = delete;
+
+	Buffer &operator=(Buffer &&) = delete;
 
 	const Device &get_device() const;
 
@@ -118,7 +136,10 @@ class Buffer : public NonCopyable
 
 	uint8_t *mapped_data{nullptr};
 
-	/// Whether it has been mapped with vmaMapMemory
+	/// Whether the buffer is persistently mapped or not
+	bool persistent{false};
+
+	/// Whether the buffer has been mapped with vmaMapMemory
 	bool mapped{false};
 };
 }        // namespace core

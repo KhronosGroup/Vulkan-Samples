@@ -16,6 +16,7 @@
  */
 
 // Generated file by CMake. Don't edit.
+
 #include "common/logging.h"
 #include "platform/platform.h"
 
@@ -34,24 +35,31 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	vkb::WindowsPlatform platform{hInstance, hPrevInstance,
 	                              lpCmdLine, nCmdShow};
 #elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
-#	include "platform/linux/linux_d2d_platform.h"
+#	include "platform/unix/unix_d2d_platform.h"
 int main(int argc, char *argv[])
 {
-	vkb::LinuxD2DPlatform platform{argc, argv};
+	vkb::UnixD2DPlatform platform{argc, argv};
 #else
-#	include "platform/linux/linux_platform.h"
+#	include "platform/unix/unix_platform.h"
 int main(int argc, char *argv[])
 {
-	vkb::LinuxPlatform platform{argc, argv};
+#	if defined(VK_USE_PLATFORM_MACOS_MVK)
+	vkb::UnixPlatform platform{vkb::UnixType::Mac, argc, argv};
+#	elif defined(VK_USE_PLATFORM_XCB_KHR)
+	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
+#	endif
 #endif
 
+// Only error handle in release
+#ifndef DEBUG
 	try
 	{
-		auto sample = create_@TARGET_CREATE_FUNC@();
-		sample->set_name("@TARGET_NAME@");
-		sample->parse_options(platform.get_arguments());
+#endif
+		auto app = create_@TARGET_CREATE_FUNC@();
+		app->set_name("@TARGET_NAME@");
+		app->parse_options(platform.get_arguments());
 
-		if (platform.initialize(std::move(sample)))
+		if (platform.initialize(std::move(app)))
 		{
 			platform.main_loop();
 			platform.terminate(vkb::ExitCode::Success);
@@ -60,11 +68,16 @@ int main(int argc, char *argv[])
 		{
 			platform.terminate(vkb::ExitCode::UnableToRun);
 		}
-		platform.terminate(vkb::ExitCode::Success);
+#ifndef DEBUG
 	}
 	catch (const std::exception &e)
 	{
 		LOGE(e.what());
 		platform.terminate(vkb::ExitCode::FatalError);
 	}
+#endif
+
+#ifndef VK_USE_PLATFORM_ANDROID_KHR
+	return EXIT_SUCCESS;
+#endif
 }

@@ -79,7 +79,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	}
 
 	// Create a descriptor set layout for each set index
-	for (auto it : set_bindings)
+	for (auto &it : set_bindings)
 	{
 		set_layouts.emplace(it.first, &device.get_resource_cache().request_descriptor_set_layout(it.second));
 	}
@@ -93,7 +93,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 
 	std::vector<VkPushConstantRange> push_constant_ranges;
 
-	for (auto it : resources)
+	for (auto &it : resources)
 	{
 		ShaderResource &resource = it.second;
 
@@ -182,7 +182,7 @@ std::vector<ShaderResource> PipelineLayout::get_vertex_input_attributes() const
 	std::vector<ShaderResource> vertex_input_attributes;
 
 	// Iterate over all resources
-	for (auto it : resources)
+	for (auto &it : resources)
 	{
 		if (it.second.stages == VK_SHADER_STAGE_VERTEX_BIT &&
 		    it.second.type == ShaderResourceType::Input)
@@ -199,7 +199,7 @@ std::vector<ShaderResource> PipelineLayout::get_fragment_output_attachments() co
 	std::vector<ShaderResource> fragment_output_attachments;
 
 	// Iterate over all resources
-	for (auto it : resources)
+	for (auto &it : resources)
 	{
 		if (it.second.stages == VK_SHADER_STAGE_FRAGMENT_BIT &&
 		    it.second.type == ShaderResourceType::Output)
@@ -216,7 +216,7 @@ std::vector<ShaderResource> PipelineLayout::get_fragment_input_attachments() con
 	std::vector<ShaderResource> fragment_input_attachments;
 
 	// Iterate over all resources
-	for (auto it : resources)
+	for (auto &it : resources)
 	{
 		if (it.second.stages == VK_SHADER_STAGE_FRAGMENT_BIT &&
 		    it.second.type == ShaderResourceType::InputAttachment)
@@ -233,7 +233,7 @@ VkShaderStageFlags PipelineLayout::get_push_constant_range_stage(uint32_t offset
 	VkShaderStageFlags stages = 0;
 
 	// Iterate over all resources
-	for (auto it : resources)
+	for (auto &it : resources)
 	{
 		if (it.second.type == ShaderResourceType::PushConstant)
 		{

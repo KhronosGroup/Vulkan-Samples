@@ -24,7 +24,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/pbr_material.h"
 #include "stats.h"
@@ -48,22 +48,22 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-
 	load_scene("scenes/sponza/Sponza01.gltf");
-	auto &camera_node = add_free_camera("main_camera");
+
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
@@ -73,14 +73,10 @@ void SwapchainImages::update(float delta_time)
 	// Process GUI input
 	if (swapchain_image_count != last_swapchain_image_count)
 	{
-		render_context->get_device().wait_idle();
+		get_device().wait_idle();
 
-		// Create a new swapchain using the old one
-		auto new_swapchain = std::make_unique<vkb::Swapchain>(
-		    render_context->get_swapchain(),
-		    swapchain_image_count);
-
-		render_context->update_swapchain(std::move(new_swapchain));
+		// Create a new swapchain with a new swapchain image count
+		render_context->update_swapchain(swapchain_image_count);
 
 		last_swapchain_image_count = swapchain_image_count;
 	}
