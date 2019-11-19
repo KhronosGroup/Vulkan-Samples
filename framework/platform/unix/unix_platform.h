@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,49 +17,31 @@
 
 #pragma once
 
-#include <android_native_app_glue.h>
-
 #include "platform/platform.h"
 
 namespace vkb
 {
-class AndroidPlatform : public Platform
+enum UnixType
+{
+	Mac,
+	Linux
+};
+
+class UnixPlatform : public Platform
 {
   public:
-	AndroidPlatform(android_app *app);
+	UnixPlatform(const UnixType &type, int argc, char **argv);
 
-	virtual ~AndroidPlatform() = default;
+	virtual ~UnixPlatform() = default;
 
 	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
 	virtual void create_window() override;
 
-	virtual void main_loop() override;
-
-	virtual void terminate(ExitCode code) override;
-
 	virtual const char *get_surface_extension() override;
 
-	/**
-	 * @brief Sends a notification in the task bar
-	 * @param message The message to display
-	 */
-	void send_notification(const std::string &message);
-
-	/**
-	 * @brief Sends an error notification in the task bar
-	 * @param message The message to display
-	 */
-	void send_error_notification(const std::string &message);
-
-	android_app *get_android_app();
-
-	ANativeActivity *get_activity();
-
   private:
-	android_app *app{nullptr};
-
-	std::string log_output;
+	UnixType type;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };

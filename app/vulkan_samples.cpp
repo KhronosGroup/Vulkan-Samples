@@ -32,7 +32,7 @@ extern "C"
 		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
 		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, 0);
 
-		for (int sample_index = 0; sample_index < sample_list.size(); ++sample_index)
+		for (int sample_index = 0; sample_index < sample_list.size(); sample_index++)
 		{
 			const SampleInfo &sample_info = sample_list[sample_index];
 
@@ -117,7 +117,7 @@ VulkanSamples::VulkanSamples()
 	    R"(Vulkan Samples.
 	Usage:
 		vulkan_samples <sample>
-		vulkan_samples (--sample <arg> | --test <arg> | --batch <arg> [<tags>...]) [--benchmark <frames>] [--width <arg>] [--height <arg>] [--hide]
+		vulkan_samples (--sample <arg> | --test <arg> | --batch <arg> [<tags>...]) [--benchmark <frames>] [--width <arg>] [--height <arg>] [--headless] 
 		vulkan_samples --help
 
 	Options:
@@ -125,12 +125,12 @@ VulkanSamples::VulkanSamples()
 		--sample SAMPLE_ID        Run sample.
 		--test TEST_ID            Run test.
 		--batch CATEGORY          Run all samples within a certain category, specify 'all' to run all.
-		--benchmark FRAMES        Run app under benchmark mode for n amount of frames.)"
+		--benchmark FRAMES        Run app under benchmark mode for n amount of frames.
+		--headless                Run the app with headless rendering.)"
 #ifndef VK_USE_PLATFORM_DISPLAY_KHR
 	    R"(
 		--width WIDTH             The width of the screen if visible [default: 1280].
-		--height HEIGHT           The height of the screen if visible [default: 720].
-		--hide                    Hides the window if possible.)"
+		--height HEIGHT           The height of the screen if visible [default: 720].)"
 #endif
 	    "\n");
 }
@@ -273,6 +273,8 @@ bool VulkanSamples::prepare_active_app(CreateAppFunc create_app_func, const std:
 	{
 		active_app->set_benchmark_mode(true);
 	}
+
+	active_app->set_headless(is_headless());
 
 	auto result = active_app->prepare(*platform);
 

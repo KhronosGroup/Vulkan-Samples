@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,29 +15,41 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "window.h"
 
 #include "platform/platform.h"
 
 namespace vkb
 {
-class WindowsPlatform : public Platform
+Window::Window(Platform &platform, uint32_t width, uint32_t height) :
+    platform{platform},
+    width{width},
+    height{height}
 {
-  public:
-	WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	                PSTR lpCmdLine, INT nCmdShow);
+}
 
-	virtual ~WindowsPlatform() = default;
+void Window::process_events()
+{
+}
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+Platform &Window::get_platform()
+{
+	return platform;
+}
 
-	virtual void create_window() override;
+void Window::resize(uint32_t width, uint32_t height)
+{
+	this->width  = width;
+	this->height = height;
+}
 
-	virtual void terminate(ExitCode code) override;
+uint32_t Window::get_width()
+{
+	return width;
+}
 
-	virtual const char *get_surface_extension() override;
-
-  private:
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
-};
+uint32_t Window::get_height()
+{
+	return height;
+}
 }        // namespace vkb

@@ -15,41 +15,26 @@
  * limitations under the License.
  */
 
-#include "linux_platform.h"
+#pragma once
+
+#include "platform/platform.h"
 
 namespace vkb
 {
-namespace
+class UnixD2DPlatform : public Platform
 {
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "/tmp/";
+  public:
+	UnixD2DPlatform(int argc, char **argv);
 
-	if (const char *env_ptr = std::getenv("TMPDIR"))
-	{
-		temp_path = std::string(env_ptr) + "/";
-	}
+	virtual ~UnixD2DPlatform() = default;
 
-	return temp_path;
-}
-}        // namespace
+	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
+	virtual void create_window() override;
 
-LinuxPlatform::LinuxPlatform(int argc, char **argv)
-{
-	// Ignore the first argument containing the application full path
-	Platform::set_arguments({argv + 1, argv + argc});
+	virtual const char *get_surface_extension() override;
 
-	Platform::set_temp_directory(get_temp_path_from_environment());
-}
+  private:
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+};
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,35 +17,33 @@
 
 #pragma once
 
-#include "common/vk_common.h"
-#include "platform.h"
-
-struct GLFWwindow;
+#include "platform/window.h"
 
 namespace vkb
 {
-class GlfwPlatform : public Platform
+/**
+ * @brief Surface-less implementation of a Window, for use in headless rendering
+ */
+class HeadlessWindow : public Window
 {
   public:
-	GlfwPlatform() = default;
+	HeadlessWindow(Platform &platform, uint32_t width = 1028, uint32_t height = 720);
 
-	virtual ~GlfwPlatform() = default;
+	virtual ~HeadlessWindow() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	/**
+	 * @brief A direct window doesn't have a surface
+	 * @returns VK_NULL_HANDLE
+	 */
+	virtual VkSurfaceKHR create_surface(Instance &instance) override;
 
-	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
+	virtual bool should_close() override;
 
-	virtual void main_loop() override;
+	virtual void close() override;
 
-	virtual void terminate(ExitCode code) override;
-
-	virtual void close() const override;
-
-	float get_dpi_factor() const override;
+	virtual float get_dpi_factor() const override;
 
   private:
-	GLFWwindow *window = nullptr;
-
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+	bool closed{false};
 };
 }        // namespace vkb

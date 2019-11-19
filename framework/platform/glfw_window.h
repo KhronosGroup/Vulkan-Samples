@@ -17,27 +17,34 @@
 
 #pragma once
 
-#include "platform/platform.h"
+#include "common/vk_common.h"
+#include "platform/window.h"
+
+struct GLFWwindow;
 
 namespace vkb
 {
-class WindowsPlatform : public Platform
+/**
+ * @brief An implementation of GLFW, inheriting the behaviour of the Window interface
+ */
+class GlfwWindow : public Window
 {
   public:
-	WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	                PSTR lpCmdLine, INT nCmdShow);
+	GlfwWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
 
-	virtual ~WindowsPlatform() = default;
+	virtual ~GlfwWindow();
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	virtual VkSurfaceKHR create_surface(Instance &instance) override;
 
-	virtual void create_window() override;
+	virtual bool should_close() override;
 
-	virtual void terminate(ExitCode code) override;
+	virtual void process_events() override;
 
-	virtual const char *get_surface_extension() override;
+	virtual void close() override;
+
+	float get_dpi_factor() const override;
 
   private:
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+	GLFWwindow *handle = nullptr;
 };
 }        // namespace vkb

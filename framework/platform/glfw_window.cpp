@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "glfw_platform.h"
+#include "glfw_window.h"
 
 #include <unordered_map>
 
@@ -27,6 +27,8 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
+
+#include "platform/platform.h"
 
 namespace vkb
 {
@@ -44,17 +46,20 @@ void window_close_callback(GLFWwindow *window)
 
 void window_size_callback(GLFWwindow *window, int width, int height)
 {
-	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
-		platform->get_app().resize(width, height);
+		auto &platform = glfw_window->get_platform();
+		platform.get_app().resize(width, height);
+		glfw_window->resize(width, height);
 	}
 }
 
 void window_focus_callback(GLFWwindow *window, int focused)
 {
-	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
-		platform->get_app().set_focus(focused ? true : false);
+		auto &platform = glfw_window->get_platform();
+		platform.get_app().set_focus(focused ? true : false);
 	}
 }
 
@@ -199,9 +204,10 @@ void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action, int
 	KeyCode   key_code   = translate_key_code(key);
 	KeyAction key_action = translate_key_action(action);
 
-	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
-		platform->get_app().input_event(KeyInputEvent{*platform, key_code, key_action});
+		auto &platform = glfw_window->get_platform();
+		platform.get_app().input_event(KeyInputEvent{platform, key_code, key_action});
 	}
 }
 
@@ -231,10 +237,11 @@ inline MouseAction translate_mouse_action(int action)
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 {
-	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
-		platform->get_app().input_event(MouseButtonInputEvent{
-		    *platform,
+		auto &platform = glfw_window->get_platform();
+		platform.get_app().input_event(MouseButtonInputEvent{
+		    platform,
 		    MouseButton::Unknown,
 		    MouseAction::Move,
 		    static_cast<float>(xpos),
@@ -246,13 +253,14 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 {
 	MouseAction mouse_action = translate_mouse_action(action);
 
-	if (auto platform = reinterpret_cast<GlfwPlatform *>(glfwGetWindowUserPointer(window)))
+	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
+		auto & platform = glfw_window->get_platform();
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
 
-		platform->get_app().input_event(MouseButtonInputEvent{
-		    *platform,
+		platform.get_app().input_event(MouseButtonInputEvent{
+		    platform,
 		    translate_mouse_button(button),
 		    mouse_action,
 		    static_cast<float>(xpos),
@@ -261,28 +269,19 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 }
 }        // namespace
 
-bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
+GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
+    Window(platform, width, height)
 {
-	auto result = Platform::initialize(std::move(app));
-
-	auto &options = active_app->get_options();
-
 	if (!glfwInit())
 	{
-		return false;
+		throw std::runtime_error("GLFW couldn't be initialized.");
 	}
 
 	glfwSetErrorCallback(error_callback);
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	if (options.contains("--hide"))
-	{
-		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-	}
-
-	uint32_t width  = 1280;
-	uint32_t height = 720;
+	auto &options = platform.get_app().get_options();
 
 	if (options.contains("--width"))
 	{
@@ -294,38 +293,41 @@ bool GlfwPlatform::initialize(std::unique_ptr<Application> &&app)
 		height = static_cast<uint32_t>(options.get_int("--height"));
 	}
 
-	window = glfwCreateWindow(width, height, active_app->get_name().c_str(), NULL, NULL);
+	handle = glfwCreateWindow(width, height, platform.get_app().get_name().c_str(), NULL, NULL);
 
-	if (!window)
+	if (!handle)
 	{
-		return false;
+		throw std::runtime_error("Couldn't create glfw window.");
 	}
 
-	glfwSetWindowUserPointer(window, this);
+	glfwSetWindowUserPointer(handle, this);
 
-	glfwSetWindowCloseCallback(window, window_close_callback);
-	glfwSetWindowSizeCallback(window, window_size_callback);
-	glfwSetWindowFocusCallback(window, window_focus_callback);
-	glfwSetKeyCallback(window, key_callback);
-	glfwSetCursorPosCallback(window, cursor_position_callback);
-	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetWindowCloseCallback(handle, window_close_callback);
+	glfwSetWindowSizeCallback(handle, window_size_callback);
+	glfwSetWindowFocusCallback(handle, window_focus_callback);
+	glfwSetKeyCallback(handle, key_callback);
+	glfwSetCursorPosCallback(handle, cursor_position_callback);
+	glfwSetMouseButtonCallback(handle, mouse_button_callback);
 
-	glfwSetInputMode(window, GLFW_STICKY_KEYS, 1);
-	glfwSetInputMode(window, GLFW_STICKY_MOUSE_BUTTONS, 1);
-
-	return result && Platform::prepare();
+	glfwSetInputMode(handle, GLFW_STICKY_KEYS, 1);
+	glfwSetInputMode(handle, GLFW_STICKY_MOUSE_BUTTONS, 1);
 }
 
-VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
+GlfwWindow::~GlfwWindow()
 {
-	if (instance == VK_NULL_HANDLE || !window)
+	glfwTerminate();
+}
+
+VkSurfaceKHR GlfwWindow::create_surface(Instance &instance)
+{
+	if (instance.get_handle() == VK_NULL_HANDLE || !handle)
 	{
 		return VK_NULL_HANDLE;
 	}
 
 	VkSurfaceKHR surface;
 
-	VkResult errCode = glfwCreateWindowSurface(instance, window, NULL, &surface);
+	VkResult errCode = glfwCreateWindowSurface(instance.get_handle(), handle, NULL, &surface);
 
 	if (errCode != VK_SUCCESS)
 	{
@@ -335,31 +337,24 @@ VkSurfaceKHR GlfwPlatform::create_surface(VkInstance instance)
 	return surface;
 }
 
-void GlfwPlatform::main_loop()
+bool GlfwWindow::should_close()
 {
-	while (!glfwWindowShouldClose(window))
-	{
-		run();
-
-		glfwPollEvents();
-	}
+	return glfwWindowShouldClose(handle);
 }
 
-void GlfwPlatform::terminate(ExitCode code)
+void GlfwWindow::process_events()
 {
-	glfwTerminate();
-
-	Platform::terminate(code);
+	glfwPollEvents();
 }
 
-void GlfwPlatform::close() const
+void GlfwWindow::close()
 {
-	glfwSetWindowShouldClose(window, GLFW_TRUE);
+	glfwSetWindowShouldClose(handle, GLFW_TRUE);
 }
 
 /// @brief It calculates the dpi factor using the density from GLFW physical size
 /// <a href="https://www.glfw.org/docs/latest/monitor_guide.html#monitor_size">GLFW docs for dpi</a>
-float GlfwPlatform::get_dpi_factor() const
+float GlfwWindow::get_dpi_factor() const
 {
 	auto primary_monitor = glfwGetPrimaryMonitor();
 	auto vidmode         = glfwGetVideoMode(primary_monitor);
@@ -375,12 +370,4 @@ float GlfwPlatform::get_dpi_factor() const
 	auto dpi_factor = dpi / win_base_density;
 	return dpi_factor;
 }
-
-std::vector<spdlog::sink_ptr> GlfwPlatform::get_platform_sinks()
-{
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	return sinks;
-}
-
 }        // namespace vkb
