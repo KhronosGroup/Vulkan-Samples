@@ -58,7 +58,7 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 model;
-		float     lod_bias = 0.0f;
+		float     lod_bias      = 0.0f;
 		int32_t   sampler_index = 2;
 	} ubo;
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer;

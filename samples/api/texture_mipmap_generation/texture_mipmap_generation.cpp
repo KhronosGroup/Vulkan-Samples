@@ -573,9 +573,9 @@ void TextureMipMapGeneration::prepare_uniform_buffers()
 {
 	// Shared parameter uniform buffer block
 	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        sizeof(ubo),
-	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                     sizeof(ubo),
+	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
