@@ -584,7 +584,8 @@ void TextureMipMapGeneration::update_uniform_buffers(float delta_time)
 {
 	ubo.projection = camera.matrices.perspective;
 	ubo.model      = camera.matrices.view;
-	ubo.model      = glm::rotate(ubo.model, glm::radians(timer * 360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model      = glm::rotate(ubo.model, glm::radians(90.0f + timer * 360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	ubo.model      = glm::scale(ubo.model, glm::vec3(0.5f));
 	timer += delta_time * 0.005f;
 	if (timer > 1.0f)
 	{
@@ -602,7 +603,7 @@ bool TextureMipMapGeneration::prepare(vkb::Platform &platform)
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 1024.0f);
-	camera.set_translation(glm::vec3(0.0f, 0.0f, -20.0f));
+	camera.set_translation(glm::vec3(0.0f, 0.0f, -12.5f));
 
 	load_assets();
 	prepare_uniform_buffers();
