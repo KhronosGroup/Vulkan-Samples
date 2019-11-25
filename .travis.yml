@@ -31,52 +31,42 @@ jobs:
     - name: "Snake Case (Optional)"
   include:
     - stage: Check
-
-    - name: "Doxygen"
-      script:
+      name: "Doxygen"
+      script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && mkdir -p doxygen && doxygen ./docs/doxygen/doxyfile"
         - docker exec VKB sh -c "cd /home/vulkan-samples && if [ $(stat -c%s ./doxygen/warnings.txt) -gt 0 ]; then cat ./doxygen/warnings.txt; exit 1; fi"
-
-    - name: "Copyright Headers"
-      script:
-        - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/check_copyright_headers.py master"
-
-    - name: "Clang Format"
-      script:
+    - script: 
+      -  docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/check_copyright_headers.py master"
+      name: "Copyright Headers"
+    - script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/clang_format.py -v --diff master > ./clang-format-report.txt"
         - docker exec VKB sh -c "cd /home/vulkan-samples && if [ $(grep -c 'clang-format did not modify any files' ./clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' ./clang-format-report.txt) -eq 0  ]; then cat ./clang-format-report.txt; exit 1; fi"
-
-    - name: "Clang Tidy"
-      script:
+      name: "Clang Format"
+    - script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang"
         - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/"
-
-    - name: "Snake Case (Optional)"
-      script:
+      name: "Clang Tidy"
+    - script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/snake_case.py master > ./snake-report.txt"
         - docker exec VKB sh -c "cd /home/vulkan-samples && if [ $(grep -c '@@' ./snake-report.txt) -gt 0 ]; then cat ./snake-report.txt; exit 1; fi"
+      name: "Snake Case (Optional)"
 
     - stage: Build
-
-    - name: "Windows"
+      name: Build Windows
       language: shell
       os: windows
-      script:
-
+      script: 
         - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
         - cmake --build build --target vulkan_samples --config Release
-
-    - name: "Unix"
+    - script: 
+        - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
+        - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))"
+      name: Build Linux
       language: shell
       os: linux
-      script:
-      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
-      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))"
-
-    - name: "Android"
+    - script: 
+        - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
+        - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))"
+      name: Build Android
       language: shell
-      os: linux
-      script:
-      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -G \"Unix Makefiles\" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON"
-      - docker exec VKB sh -c "cd /home/vulkan-samples && cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))"
-
+      os: linux 
