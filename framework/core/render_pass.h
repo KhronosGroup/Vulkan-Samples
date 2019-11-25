@@ -45,7 +45,7 @@ class RenderPass : public NonCopyable
 	VkRenderPass get_handle() const;
 
 	RenderPass(Device &                          device,
-	           const std::vector<Attachment> &   attachemnts,
+	           const std::vector<Attachment> &   attachments,
 	           const std::vector<LoadStoreInfo> &load_store_infos,
 	           const std::vector<SubpassInfo> &  subpasses);
 
