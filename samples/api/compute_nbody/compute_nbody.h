@@ -50,6 +50,7 @@ class ComputeNBody : public ApiVulkanSample
 		VkPipelineLayout                   pipeline_layout;              // Layout of the graphics pipeline
 		VkPipeline                         pipeline;                     // Particle rendering pipeline
 		VkSemaphore                        semaphore;                    // Execution dependency between compute & graphic submission
+		uint32_t                           queue_family_index;
 		struct
 		{
 			glm::mat4 projection;
@@ -76,6 +77,7 @@ class ComputeNBody : public ApiVulkanSample
 		VkPipelineLayout                   pipeline_layout_blur;
 		VkDescriptorSetLayout              descriptor_set_layout_blur;
 		VkDescriptorSet                    descriptor_set_blur;
+		uint32_t                           queue_family_index;
 		struct ComputeUBO
 		{                              // Compute shader uniform block object
 			float   delta_time;        //		Frame delta time
