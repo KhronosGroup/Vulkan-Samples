@@ -1,5 +1,3 @@
-# Pull Request Template
-
 ## Description
 
 Please include a summary of the change, new sample or fixed issue. Please also include relevant motivation and context.
@@ -15,6 +13,7 @@ Do not submit your PR without all of the below being checked:
 - [ ] I have made corresponding changes to the documentation
 - [ ] I have tested my sample on at least one compliant Vulkan implementation
 - [ ] I have stated on what implementation the sample has been tested so that others can test on different implementations and platforms
+- [ ] If my sample is vendor-specific, I have [tagged it appropriately](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#General-Requirements)
 - [ ] My changes do not add any new compiler warnings
 - [ ] Vulkan validation layer output is clean on at least one compliant implementation
 - [ ] Any dependent changes (e.g. assets) have been merged and published in downstream modules
