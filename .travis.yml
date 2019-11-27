@@ -14,10 +14,10 @@ stages:
 services:
   - docker
 
-
 before_install:
   - echo "OS $TRAVIS_OS_NAME"
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker pull khronosgroup/vulkan-samples; fi
+  - git submodule update --init --remote
 
 before_script:
   - if [ "$TRAVIS_OS_NAME" == "linux" ]; then docker run --name VKB -v ~/build/KhronosGroup/Vulkan-Samples:/home/vulkan-samples -dit khronosgroup/vulkan-samples; fi
