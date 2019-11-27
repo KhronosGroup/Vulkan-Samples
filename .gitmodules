@@ -50,3 +50,4 @@
 	path = assets
 	url = https://github.com/KhronosGroup/Vulkan-Samples-Assets
 	shallow = true
+	branch = master
