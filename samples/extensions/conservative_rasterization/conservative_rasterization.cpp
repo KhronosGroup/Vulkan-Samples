@@ -471,7 +471,7 @@ void ConservativeRasterization::prepare_pipelines()
 
 	// Get device properties for conservative rasterization
 	// Requires VK_KHR_get_physical_device_properties2 and manual function pointer creation
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties2KHR"));
+	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	assert(vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 	conservative_raster_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
@@ -560,7 +560,7 @@ void ConservativeRasterization::update_uniform_buffers_scene()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.model      = camera.matrices.view;
-	memcpy(uniform_buffers.scene->map(), &ubo_scene, sizeof(ubo_scene));
+	uniform_buffers.scene->convert_and_update(ubo_scene);
 }
 
 void ConservativeRasterization::draw()

@@ -362,7 +362,7 @@ void RaytracingBasic::create_shader_binding_table()
 	shader_binding_table                     = std::make_unique<vkb::core::Buffer>(get_device(),
                                                                shader_binding_table_size,
                                                                VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
-                                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
+                                                               VMA_MEMORY_USAGE_GPU_TO_CPU, 0);
 
 	auto shader_handle_storage = new uint8_t[shader_binding_table_size];
 	// Get shader identifiers
@@ -603,7 +603,7 @@ void RaytracingBasic::update_uniform_buffers()
 {
 	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
 	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
-	memcpy(ubo->map(), &uniform_data, sizeof(uniform_data));
+	ubo->convert_and_update(uniform_data);
 }
 
 bool RaytracingBasic::prepare(vkb::Platform &platform)

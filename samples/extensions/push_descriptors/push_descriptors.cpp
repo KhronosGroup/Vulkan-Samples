@@ -270,7 +270,7 @@ void PushDescriptors::update_uniform_buffers()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.view       = camera.matrices.view;
-	memcpy(uniform_buffers.scene->map(), &ubo_scene, sizeof(UboScene));
+	uniform_buffers.scene->convert_and_update(ubo_scene);
 }
 
 void PushDescriptors::update_cube_uniform_buffers(float delta_time)
@@ -283,7 +283,7 @@ void PushDescriptors::update_cube_uniform_buffers(float delta_time)
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		memcpy(cube.uniform_buffer->map(), &cube.model_mat, sizeof(glm::mat4));
+		cube.uniform_buffer->convert_and_update(cube.model_mat);
 	}
 
 	if (animate)
@@ -329,7 +329,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	}
 
 	// Get device push descriptor properties (to display them)
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties2KHR"));
+	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	if (!vkGetPhysicalDeviceProperties2KHR)
 	{
 		throw std::runtime_error("Could not get a valid function pointer for vkGetPhysicalDeviceProperties2KHR");

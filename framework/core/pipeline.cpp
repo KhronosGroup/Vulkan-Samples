@@ -29,7 +29,8 @@ Pipeline::Pipeline(Device &device) :
 
 Pipeline::Pipeline(Pipeline &&other) :
     device{other.device},
-    handle{other.handle}
+    handle{other.handle},
+    state{other.state}
 {
 	other.handle = VK_NULL_HANDLE;
 }
@@ -46,6 +47,11 @@ Pipeline::~Pipeline()
 VkPipeline Pipeline::get_handle() const
 {
 	return handle;
+}
+
+const PipelineState &Pipeline::get_state() const
+{
+	return state;
 }
 
 ComputePipeline::ComputePipeline(Device &        device,
@@ -288,5 +294,7 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 	{
 		vkDestroyShaderModule(device.get_handle(), shader_module, nullptr);
 	}
+
+	state = pipeline_state;
 }
 }        // namespace vkb

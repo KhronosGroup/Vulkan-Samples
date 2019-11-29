@@ -72,6 +72,8 @@ class SubMesh : public Component
 
 	const ShaderVariant &get_shader_variant() const;
 
+	ShaderVariant &get_mut_shader_variant();
+
   private:
 	std::unordered_map<std::string, VertexAttribute> vertex_attributes;
 

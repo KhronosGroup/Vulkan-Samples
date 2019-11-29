@@ -17,38 +17,37 @@
 
 #pragma once
 
-#include "platform/platform.h"
 #include <termios.h>
 #include <unistd.h>
 
+#include "common/vk_common.h"
+#include "platform/platform.h"
+#include "platform/window.h"
+
 namespace vkb
 {
-// Direct-To-Display platform
-class LinuxD2DPlatform : public Platform
+/**
+ * @brief Direct2Display window
+ */
+class DirectWindow : public Window
 {
   public:
-	LinuxD2DPlatform(int argc, char **argv);
+	DirectWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
 
-	virtual ~LinuxD2DPlatform() = default;
+	virtual ~DirectWindow();
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	virtual VkSurfaceKHR create_surface(Instance &instance) override;
 
-	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
+	virtual bool should_close() override;
 
-	virtual void main_loop() override;
+	virtual void process_events() override;
 
-	virtual void terminate(ExitCode code) override;
-
-	virtual void close() const override;
+	virtual void close() override;
 
 	float get_dpi_factor() const override;
 
   private:
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
-
 	void poll_terminal();
-
-	VkPhysicalDevice get_physical_device(VkInstance instance);
 
 	uint32_t find_compatible_plane(VkPhysicalDevice phys_dev, VkDisplayKHR display,
 	                               const std::vector<VkDisplayPlanePropertiesKHR> &plane_properties);

@@ -20,6 +20,8 @@
 #include "command_pool.h"
 #include "common/error.h"
 #include "device.h"
+#include "rendering/render_frame.h"
+#include "rendering/subpass.h"
 
 namespace vkb
 {
@@ -75,6 +77,11 @@ bool CommandBuffer::is_recording() const
 	return state == State::Recording;
 }
 
+void CommandBuffer::clear(VkClearAttachment attachment, VkClearRect rect)
+{
+	vkCmdClearAttachments(handle, 1, &attachment, 1, &rect);
+}
+
 VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf)
 {
 	assert(!is_recording() && "Command buffer is already recording, please call end before beginning again");
@@ -90,6 +97,7 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 	pipeline_state.reset();
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
+	stored_push_constants.clear();
 
 	VkCommandBufferBeginInfo       begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 	VkCommandBufferInheritanceInfo inheritance = {VK_STRUCTURE_TYPE_COMMAND_BUFFER_INHERITANCE_INFO};
@@ -105,14 +113,12 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 
 		inheritance.renderPass  = current_render_pass.render_pass->get_handle();
 		inheritance.framebuffer = current_render_pass.framebuffer->get_handle();
-		inheritance.subpass     = pipeline_state.get_subpass_index();
+		inheritance.subpass     = primary_cmd_buf->get_current_subpass_index();
 
 		begin_info.pInheritanceInfo = &inheritance;
 	}
 
-	vkBeginCommandBuffer(handle, &begin_info);
-
-	return VK_SUCCESS;
+	return vkBeginCommandBuffer(get_handle(), &begin_info);
 }
 
 VkResult CommandBuffer::end()
@@ -131,7 +137,7 @@ VkResult CommandBuffer::end()
 	return VK_SUCCESS;
 }
 
-void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents, const std::vector<std::unique_ptr<Subpass>> &subpasses)
+void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents)
 {
 	// Reset state
 	pipeline_state.reset();
@@ -139,6 +145,7 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const s
 	descriptor_set_layout_state.clear();
 
 	// Create render pass
+	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
 	std::vector<SubpassInfo> subpass_infos(subpasses.size());
 	auto                     subpass_info_it = subpass_infos.begin();
 	for (auto &subpass : subpasses)
@@ -181,7 +188,15 @@ void CommandBuffer::next_subpass()
 	resource_binding_state.reset();
 	descriptor_set_layout_state.clear();
 
+	// Clear stored push constants
+	stored_push_constants.clear();
+
 	vkCmdNextSubpass(get_handle(), VK_SUBPASS_CONTENTS_INLINE);
+}
+
+void CommandBuffer::execute_commands(CommandBuffer &secondary_command_buffer)
+{
+	vkCmdExecuteCommands(get_handle(), 1, &secondary_command_buffer.get_handle());
 }
 
 void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers)
@@ -207,8 +222,16 @@ void CommandBuffer::set_specialization_constant(uint32_t constant_id, const std:
 	pipeline_state.set_specialization_constant(constant_id, data);
 }
 
+void CommandBuffer::set_push_constants(const std::vector<uint8_t> &values)
+{
+	stored_push_constants.insert(stored_push_constants.end(), values.begin(), values.end());
+}
+
 void CommandBuffer::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
 {
+	auto accumulated_values = stored_push_constants;
+	accumulated_values.insert(accumulated_values.end(), values.begin(), values.end());
+
 	const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
 
 	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, to_u32(values.size()));
@@ -375,9 +398,9 @@ void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &ds
 
 void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
 {
-	VkBufferCopy copyRegion = {};
-	copyRegion.size         = size;
-	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copyRegion);
+	VkBufferCopy copy_region = {};
+	copy_region.size         = size;
+	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copy_region);
 }
 
 void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
@@ -476,6 +499,8 @@ void CommandBuffer::flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point
 
 void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point)
 {
+	assert(command_pool.get_render_frame() && "The command pool must be associated to a render frame");
+
 	PipelineLayout &pipeline_layout = const_cast<PipelineLayout &>(pipeline_state.get_pipeline_layout());
 
 	const auto &set_bindings = pipeline_layout.get_bindings();
@@ -600,14 +625,12 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 						if (image_view != nullptr)
 						{
-							const auto &image_view = *resource_info.image_view;
-
 							// Add image layout info based on descriptor type
 							switch (binding_info.descriptorType)
 							{
 								case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
 								case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-									if (is_depth_stencil_format(image_view.get_format()))
+									if (is_depth_stencil_format(image_view->get_format()))
 									{
 										image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 									}
@@ -630,7 +653,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
-			auto &descriptor_set = get_device().get_resource_cache().request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos);
+			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
 
 			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 
@@ -649,6 +672,16 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 const CommandBuffer::State CommandBuffer::get_state() const
 {
 	return state;
+}
+
+const CommandBuffer::RenderPassBinding &CommandBuffer::get_current_render_pass() const
+{
+	return current_render_pass;
+}
+
+const uint32_t CommandBuffer::get_current_subpass_index() const
+{
+	return pipeline_state.get_subpass_index();
 }
 
 VkResult CommandBuffer::reset(ResetMode reset_mode)

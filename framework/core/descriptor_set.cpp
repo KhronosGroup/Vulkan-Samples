@@ -26,11 +26,13 @@ namespace vkb
 {
 DescriptorSet::DescriptorSet(Device &                                  device,
                              DescriptorSetLayout &                     descriptor_set_layout,
+                             DescriptorPool &                          descriptor_pool,
                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
                              const BindingMap<VkDescriptorImageInfo> & image_infos) :
     device{device},
     descriptor_set_layout{descriptor_set_layout},
-    handle{descriptor_set_layout.get_descriptor_pool().allocate()}
+    descriptor_pool{descriptor_pool},
+    handle{descriptor_pool.allocate()}
 {
 	if (!buffer_infos.empty() || !image_infos.empty())
 	{
@@ -117,20 +119,12 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
     device{other.device},
     descriptor_set_layout{other.descriptor_set_layout},
+    descriptor_pool{other.descriptor_pool},
     buffer_infos{std::move(other.buffer_infos)},
     image_infos{std::move(other.image_infos)},
     handle{other.handle}
 {
 	other.handle = VK_NULL_HANDLE;
-}
-
-DescriptorSet::~DescriptorSet()
-{
-	// Destroy descriptor set
-	if (handle != VK_NULL_HANDLE)
-	{
-		descriptor_set_layout.get_descriptor_pool().free(handle);
-	}
 }
 
 VkDescriptorSet DescriptorSet::get_handle() const

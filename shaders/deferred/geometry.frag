@@ -32,8 +32,7 @@ layout (location = 1) out vec4 o_normal;
 layout(set = 0, binding = 1) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
-    vec4 light_pos;
-    vec4 light_color;
+    vec3 camera_position;
 } global_uniform;
 
 layout(push_constant, std430) uniform PBRMaterialUniform {

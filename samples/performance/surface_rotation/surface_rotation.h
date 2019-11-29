@@ -44,15 +44,25 @@ class SurfaceRotation : public vkb::VulkanSample
 
 	virtual void draw_gui() override;
 
-	void trigger_swapchain_recreation();
-
 	void recreate_swapchain();
-
-	void handle_surface_changes();
 
 	bool pre_rotate = false;
 
 	bool last_pre_rotate = false;
+
+	/*
+	* @brief Returns the preTransform value to use when recreating
+	*        the swapchain, which depends on whether or not the
+	*        application is implementing pre-rotation
+	*/
+	VkSurfaceTransformFlagBitsKHR select_pre_transform();
+
+	/* @brief 180 degree rotations do not trigger a resize, but
+	 *        if pre_rotation is enabled a new swapchain
+	 *        needs to be created with the corresponding
+	 *        preTransform value
+	 */
+	void handle_no_resize_rotations();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_surface_rotation();

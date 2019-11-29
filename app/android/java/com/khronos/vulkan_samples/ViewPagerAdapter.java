@@ -26,14 +26,19 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-import java.util.SortedSet;
 import java.util.TreeSet;
 
 public class ViewPagerAdapter extends FragmentStatePagerAdapter {
+
+    private static final List<String> defined_category_order = Collections.unmodifiableList(
+        Arrays.asList("api", "performance", "extensions"));
 
     private TabFragment currentFragment;
 
@@ -50,9 +55,29 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
     ViewPagerAdapter(FragmentManager manager, @NonNull HashMap<String,
             List<Sample>> categorizedSampleMap, AdapterView.OnItemClickListener clickListener) {
         super(manager);
-        SortedSet<String> keys = new TreeSet<>(categorizedSampleMap.keySet());
+        // Define order of category tabs
+        TreeSet<String> category_set = new TreeSet<String>(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int ret;
+                int o1_defined_order = defined_category_order.indexOf(o1);
+                int o2_defined_order = defined_category_order.indexOf(o2);
+                if (o1_defined_order > -1 && o2_defined_order > -1) {
+                    // If in the pre-defined list, sort in the order they appear there
+                    ret =  o1_defined_order > o2_defined_order ? 1 : -1;
+                } else if (o1_defined_order > -1 || o2_defined_order > -1) {
+                    // If not in the pre-defined list, sort after those that are
+                    ret = 1;
+                } else {
+                    // Sort alphabetically
+                    ret =  o1.compareTo(o2);
+                }
+                return ret;
+            }
+        });
+        category_set.addAll(categorizedSampleMap.keySet());
         this.categories = new ArrayList<>();
-        this.categories.addAll(keys);
+        this.categories.addAll(category_set);
         this.sampleMap = categorizedSampleMap;
         this.viewableSamples = new ArrayList<>();
         this.clickListener = clickListener;

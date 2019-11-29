@@ -38,6 +38,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 
 	// Gpu properties
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
+	LOGI("GPU: {}", properties.deviceName);
 
 	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
@@ -146,7 +147,12 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
 
 		VkBool32 present_supported{VK_FALSE};
-		VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &present_supported));
+
+		// Only check if surface is valid to allow for headless applications
+		if (surface != VK_NULL_HANDLE)
+		{
+			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &present_supported));
+		}
 
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
 		{
@@ -250,6 +256,32 @@ VmaAllocator Device::get_memory_allocator() const
 const VkPhysicalDeviceProperties &Device::get_properties() const
 {
 	return properties;
+}
+
+DriverVersion Device::get_driver_version() const
+{
+	DriverVersion version;
+
+	switch (properties.vendorID)
+	{
+		case 0x10DE:
+		{
+			// Nvidia
+			version.major = (properties.driverVersion >> 22) & 0x3ff;
+			version.minor = (properties.driverVersion >> 14) & 0x0ff;
+			version.patch = (properties.driverVersion >> 6) & 0x0ff;
+			// Ignoring optional tertiary info in lower 6 bits
+			break;
+		}
+		default:
+		{
+			version.major = VK_VERSION_MAJOR(properties.driverVersion);
+			version.minor = VK_VERSION_MINOR(properties.driverVersion);
+			version.patch = VK_VERSION_PATCH(properties.driverVersion);
+		}
+	}
+
+	return version;
 }
 
 bool Device::is_image_format_supported(VkFormat format) const
@@ -383,6 +415,23 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	}
 
 	throw std::runtime_error("Could not find a matching queue family index");
+}
+
+const Queue &Device::get_suitable_graphics_queue()
+{
+	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
+	{
+		Queue &first_queue = queues[queue_family_index][0];
+
+		uint32_t queue_count = first_queue.get_properties().queueCount;
+
+		if (first_queue.support_present() && 0 < queue_count)
+		{
+			return queues[queue_family_index][0];
+		}
+	}
+
+	return get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 }
 
 VkBuffer Device::create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size, VkDeviceMemory *memory, void *data)

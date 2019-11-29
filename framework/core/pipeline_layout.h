@@ -28,15 +28,20 @@ class Device;
 class ShaderModule;
 class DescriptorSetLayout;
 
-class PipelineLayout : public NonCopyable
+class PipelineLayout
 {
   public:
 	PipelineLayout(Device &device, const std::vector<ShaderModule *> &shader_modules);
 
-	/// @brief Move constructs
+	PipelineLayout(const PipelineLayout &) = delete;
+
 	PipelineLayout(PipelineLayout &&other);
 
 	~PipelineLayout();
+
+	PipelineLayout &operator=(const PipelineLayout &) = delete;
+
+	PipelineLayout &operator=(PipelineLayout &&) = delete;
 
 	VkPipelineLayout get_handle() const;
 

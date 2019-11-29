@@ -30,7 +30,7 @@
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
 - [Usage](#usage)
-- [Testing](#testing)
+- [Testing](#tests)
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
@@ -55,7 +55,9 @@ Additionally you may find the following links useful:
 
 ## Tutorials
 - **General**
-  - [Controls](./docs/controls.md)
+  - [Controls](./docs/misc.md#controls)
+  - [Debug window](./docs/misc.md#debug-window)
+  - [Driver version](./docs/misc.md#driver-version)
   - [Create a Sample](./docs/create_sample.md)
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
@@ -64,12 +66,15 @@ Additionally you may find the following links useful:
   - [Appropriate use of surface rotation](./samples/performance/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
   - [Use of pipeline caches to avoid startup latency](./samples/performance/pipeline_cache/pipeline_cache_tutorial.md)
+- **Descriptors**
+  - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
 - **Command Buffers**
   - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md)
+  - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
 
@@ -137,6 +142,7 @@ This project has some third-party dependencies, each of which may have independe
 - [SPIRV-Cross](https://github.com/KhronosGroup/SPIRV-Cross): Parses and converts SPIR-V to other shader languages
 - [stb](https://github.com/nothings/stb): Single-file public domain (or MIT licensed) libraries
 - [tinygltf](https://github.com/syoyo/tinygltf): Header only C++11 glTF 2.0 file parser
+- [nlohmann json](https://github.com/nlohmann/json): C++ JSON Library (included by [tinygltf](https://github.com/syoyo/tinygltf))
 - [vma](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator): Vulkan Memory Allocator
 - [volk](https://github.com/zeux/volk): Meta loader for Vulkan API
 - [vulkan](https://github.com/KhronosGroup/Vulkan-Docs): Sources for the formal documentation of the Vulkan API
@@ -149,9 +155,9 @@ Vulkan is a registered trademark of the Khronos Group Inc.
 
 ## Contributions
 
-Donated to Khronos by Arm, with further contributions by Sascha Willems and Adam Sawicki.
+Donated to Khronos by Arm, with further contributions by Sascha Willems and Adam Sawicki. See [CONTRIBUTORS](CONTRIBUTORS.md) for the full contributor list.
 
-See [CONTRIBUTING](CONTRIBUTING.md).
+Also see [CONTRIBUTING](CONTRIBUTING.md) for contribution guidelines.
 
 ## Related resources
 

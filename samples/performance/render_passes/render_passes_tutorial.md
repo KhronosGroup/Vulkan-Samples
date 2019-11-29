@@ -52,15 +52,13 @@ begin.pClearValues    = &clear;
 
 Using the `LOAD_OP_LOAD` flag is the wrong choice in this case. Not only do we not use its content during this render-pass, it will cost us more in terms of bandwidth.
 
-Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`. We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. In this case we get an estimate of `2220 * 1080 * (32/8) * 61.7 = 591 MiB/s`.
+Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`. We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. Considering we are using triple buffering, we calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`, and multiplying it by `3` we obtain a value close to the _External Read Bytes_ shown in the graph.
 
-![Using LOAD_OP_LOAD](load_store.jpg)
+![Using LOAD_OP_LOAD](images/load_store.jpg)
 
-Comparing the read bandwidth values, we observe a difference of `5099.5 - 4453.8 = 645 MiB/s` if we select `LOAD_OP_CLEAR`:
+Comparing the read bandwidth values, we observe a difference of `1533.9 - 933.7 = 600.2 MiB/s` if we select `LOAD_OP_CLEAR`. The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
 
-![Using LOAD_OP_CLEAR](clear_store.jpg)
-
-The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
+![Using LOAD_OP_CLEAR](images/clear_store.jpg)
 
 ## Depth attachment store operation
 
@@ -78,13 +76,17 @@ VmaAllocationCreateInfo depth_alloc = {};
 depth_alloc.preferredFlags = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
 ```
 
-![Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE](clear_dont_care.jpg)
+![Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE](images/clear_dont_care.jpg)
 
-In this case the write transactions were reduced by `769.6 - 239.5 = 530 MiB/s`, again what we would roughly expect from storing the size of an uncompressed image at ~60 FPS.
-
-![Streamline](render_passes_streamline.png)
+In this case the write transactions were reduced by `986.3 - 431.5 = 554.8 MiB/s`, again what we would roughly expect from storing the size of an uncompressed image at ~60 FPS.
 
 The streamline trace shows us a more in-depth analysis of what is going on in the GPU. The delta between `LOAD_OP_LOAD` and `LOAD_OP_CLEAR` is evident at 10.4s having consistently less external reads. The delta between `STORE_OP_STORE` and `STORE_OP_DONT_CARE` is clear at 18.1s with the external write graphs plunging down.
+
+![Streamline](images/render_passes_streamline.png)
+
+As a side note, bear in mind that calling `vkCmdClear*` to clear the attachments is not needed as you can get the same result by using `LOAD_OP_CLEAR`. The following screenshot shows that by using that command the GPU will need `~6` million more fragment cycles per second.
+
+![vkCmdClear](images/vk_cmd_clear.png)
 
 ## Depth image usage
 

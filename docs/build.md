@@ -102,7 +102,7 @@ Treat all warnings as errors
 
 # 3D models
 
-Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule. The assets are placed in the right locations for all platforms except Android.
+Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule.
 
 On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
@@ -165,7 +165,7 @@ cmake --build build/windows --config Release --target vulkan_samples
 `Step 3.` Run the **Vulkan Samples** application
 
 ```
-build\windows\vulkan_samples\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 ```
 
 # Linux
@@ -198,7 +198,7 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 `Step 3.` Run the **Vulkan Samples** application to display the help message
 
 ```
-./build/linux/vulkan_samples/bin/Release/x86_64/vulkan_samples --help
+./build/linux/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
 # macOS
@@ -228,7 +228,7 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 `Step 3.` Run the **Vulkan Samples** application to display the help message
 
 ```
-./build/mac/vulkan_samples/bin/Release/x86_64/vulkan_samples --help
+./build/mac/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
 

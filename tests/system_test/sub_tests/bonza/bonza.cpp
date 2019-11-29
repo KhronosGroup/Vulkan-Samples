@@ -20,7 +20,6 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
 #include "stats.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
