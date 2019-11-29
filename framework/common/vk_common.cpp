@@ -18,6 +18,8 @@
 
 #include "vk_common.h"
 
+#include <spdlog/fmt/fmt.h>
+
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
 
@@ -762,6 +764,11 @@ const std::string to_string(VkImageUsageFlagBits image_usage)
 		default:
 			return "UNKNOWN IMAGE USAGE FLAG";
 	}
+}
+
+const std::string to_string(VkExtent2D extent)
+{
+	return fmt::format("{}x{}", extent.width, extent.height);
 }
 
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)

@@ -39,7 +39,7 @@ struct SubpassInfo
 	std::vector<uint32_t> output_attachments;
 };
 
-class RenderPass : public NonCopyable
+class RenderPass
 {
   public:
 	VkRenderPass get_handle() const;
@@ -49,9 +49,15 @@ class RenderPass : public NonCopyable
 	           const std::vector<LoadStoreInfo> &load_store_infos,
 	           const std::vector<SubpassInfo> &  subpasses);
 
+	RenderPass(const RenderPass &) = delete;
+
 	RenderPass(RenderPass &&other);
 
 	~RenderPass();
+
+	RenderPass &operator=(const RenderPass &) = delete;
+
+	RenderPass &operator=(RenderPass &&) = delete;
 
 	const uint32_t get_color_output_count(uint32_t subpass_index) const;
 

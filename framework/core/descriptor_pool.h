@@ -27,8 +27,10 @@ namespace vkb
 class Device;
 class DescriptorSetLayout;
 
-// Manages an array of fixed size VkDescriptorPool and is able to allocate descriptor sets
-class DescriptorPool : public NonCopyable
+/**
+ * @brief Manages an array of fixed size VkDescriptorPool and is able to allocate descriptor sets
+ */
+class DescriptorPool
 {
   public:
 	static const uint32_t MAX_SETS_PER_POOL = 16;
@@ -37,9 +39,17 @@ class DescriptorPool : public NonCopyable
 	               const DescriptorSetLayout &descriptor_set_layout,
 	               uint32_t                   pool_size = MAX_SETS_PER_POOL);
 
+	DescriptorPool(const DescriptorPool &) = delete;
+
 	DescriptorPool(DescriptorPool &&) = default;
 
 	~DescriptorPool();
+
+	DescriptorPool &operator=(const DescriptorPool &) = delete;
+
+	DescriptorPool &operator=(DescriptorPool &&) = delete;
+
+	void reset();
 
 	const DescriptorSetLayout &get_descriptor_set_layout() const;
 

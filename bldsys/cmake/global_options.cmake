@@ -37,6 +37,7 @@ set(VKB_SYMLINKS OFF CACHE BOOL "Enable create symlink folders for every applica
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
+set(VKB_DIRECT_2_DISPLAY OFF CACHE BOOL "Force using D2D (if available)")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
@@ -45,3 +46,9 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+
+string(LENGTH "${CMAKE_SOURCE_DIR}/" ROOT_PATH_SIZE)
+add_definitions(-DROOT_PATH_SIZE=${ROOT_PATH_SIZE})
+
+set(CMAKE_C_FLAGS_DEBUG   "-DDEBUG=0 ${CMAKE_C_FLAGS_DEBUG}")
+set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG=0 ${CMAKE_CXX_FLAGS_DEBUG}")

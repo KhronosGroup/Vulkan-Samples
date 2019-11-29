@@ -60,6 +60,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
     private TextView textPermissions;
 
     private boolean isBenchmarkMode = false;
+    private boolean isHeadless = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -155,6 +156,9 @@ public class SampleLauncherActivity extends AppCompatActivity {
         super.onPrepareOptionsMenu(menu);
         MenuItem checkable = menu.findItem(R.id.menu_benchmark_mode);
         checkable.setChecked(isBenchmarkMode);
+
+        checkable = menu.findItem(R.id.menu_headless);
+        checkable.setChecked(isHeadless);
         return true;
     }
 
@@ -183,6 +187,10 @@ public class SampleLauncherActivity extends AppCompatActivity {
             case R.id.menu_benchmark_mode:
                 isBenchmarkMode = !item.isChecked();
                 item.setChecked(isBenchmarkMode);
+                return true;
+            case R.id.menu_headless:
+                isHeadless = !item.isChecked();
+                item.setChecked(isHeadless);
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
@@ -217,6 +225,9 @@ public class SampleLauncherActivity extends AppCompatActivity {
         if (isBenchmarkMode) {
             args.add("--benchmark");
             args.add("2000");
+        }
+        if (isHeadless) {
+            args.add("--headless");
         }
         String[] argArray = new String[args.size()];
         sendArgumentsToPlatform(args.toArray(argArray));

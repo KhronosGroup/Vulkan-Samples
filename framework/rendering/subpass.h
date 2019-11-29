@@ -17,14 +17,26 @@
 
 #pragma once
 
+#include "buffer_pool.h"
 #include "common/helpers.h"
 #include "core/shader_module.h"
 #include "rendering/pipeline_state.h"
+#include "rendering/render_context.h"
+#include "rendering/render_frame.h"
+#include "scene_graph/components/light.h"
+#include "scene_graph/node.h"
 
 namespace vkb
 {
-class RenderContext;
 class CommandBuffer;
+
+struct alignas(16) Light
+{
+	glm::vec4 position;         // position.w represents type of light
+	glm::vec4 color;            // color.w represents light intensity
+	glm::vec4 direction;        // direction.w represents range
+	glm::vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
+};
 
 /**
  * @brief Calculates the vulkan style projection matrix
@@ -33,17 +45,29 @@ class CommandBuffer;
  */
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj);
 
+extern const std::vector<std::string> light_type_definitions;
+
 /**
  * @brief This class defines an interface for subpasses
  *        where they need to implement the draw function.
  *        It is used to construct a RenderPipeline
  */
-class Subpass : public NonCopyable
+class Subpass
 {
   public:
 	Subpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader);
 
+	Subpass(const Subpass &) = delete;
+
+	Subpass(Subpass &&) = default;
+
 	virtual ~Subpass() = default;
+
+	Subpass &operator=(const Subpass &) = delete;
+
+	Subpass &operator=(Subpass &&) = delete;
+
+	virtual void prepare() = 0;
 
 	/**
 	 * @brief Updates the render target attachments with the ones stored in this subpass
@@ -73,6 +97,47 @@ class Subpass : public NonCopyable
 	const std::vector<uint32_t> &get_output_attachments() const;
 
 	void set_output_attachments(std::vector<uint32_t> output);
+
+	/**
+	 * @brief Add definitions to shader variant within a subpass
+	 * 
+	 * @param variant Variant to add definitions too
+	 * @param definitions Vector of definitions to add to the variant
+	 */
+	void add_definitions(ShaderVariant &variant, const std::vector<std::string> &definitions);
+
+	/**
+	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
+	 * 
+	 * @tparam T ForwardLights / DeferredLights
+	 * @param scene_lights  Lights from the scene graph
+	 * @param max_lights MAX_FORWARD_LIGHT_COUNT / MAX_DEFERRED_LIGHT_COUNT
+	 * @return BufferAllocation A buffer allocation created for use in shaders
+	 */
+	template <typename T>
+	BufferAllocation allocate_lights(const std::vector<sg::Light *> &scene_lights, size_t max_lights)
+	{
+		assert(scene_lights.size() <= max_lights && "Exceeding Max Light Capacity");
+
+		T light_info;
+		light_info.count = to_u32(scene_lights.size());
+
+		std::transform(scene_lights.begin(), scene_lights.end(), light_info.lights, [](sg::Light *light) -> Light {
+			const auto &properties = light->get_properties();
+			auto &      transform  = light->get_node()->get_transform();
+
+			return {{transform.get_translation(), static_cast<float>(light->get_light_type())},
+			        {properties.color, properties.intensity},
+			        {transform.get_rotation() * properties.direction, properties.range},
+			        {properties.inner_cone_angle, properties.outer_cone_angle}};
+		});
+
+		auto &           render_frame = get_render_context().get_active_frame();
+		BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
+		light_buffer.update(light_info);
+
+		return light_buffer;
+	}
 
   protected:
 	RenderContext &render_context;

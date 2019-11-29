@@ -17,8 +17,6 @@
 
 #include "descriptor_set_layout.h"
 
-#include "descriptor_pool.h"
-#include "descriptor_set.h"
 #include "device.h"
 #include "shader_module.h"
 
@@ -117,21 +115,16 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 	{
 		throw VulkanException{result, "Cannot create DescriptorSetLayout"};
 	}
-
-	descriptor_pool = std::make_unique<DescriptorPool>(device, *this);
 }
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     device{other.device},
-    descriptor_pool{std::move(other.descriptor_pool)},
     handle{other.handle},
     bindings{std::move(other.bindings)},
     bindings_lookup{std::move(other.bindings_lookup)},
     resources_lookup{std::move(other.resources_lookup)}
 {
 	other.handle = VK_NULL_HANDLE;
-
-	descriptor_pool->set_descriptor_set_layout(*this);
 }
 
 DescriptorSetLayout::~DescriptorSetLayout()
@@ -146,12 +139,6 @@ DescriptorSetLayout::~DescriptorSetLayout()
 VkDescriptorSetLayout DescriptorSetLayout::get_handle() const
 {
 	return handle;
-}
-
-DescriptorPool &DescriptorSetLayout::get_descriptor_pool()
-{
-	assert(handle != VK_NULL_HANDLE && "DescriptorSetLayout is not valid anymore");
-	return *descriptor_pool;
 }
 
 const std::vector<VkDescriptorSetLayoutBinding> &DescriptorSetLayout::get_bindings() const

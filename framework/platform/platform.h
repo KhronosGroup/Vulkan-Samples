@@ -21,15 +21,14 @@
 #include <string>
 #include <vector>
 
-#include "application.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "platform/application.h"
 #include "platform/filesystem.h"
+#include "platform/window.h"
 
 namespace vkb
 {
-class Application;
-
 enum class ExitCode
 {
 	Success     = 0, /* App prepare succeeded, it ran correctly and exited properly with no errors */
@@ -40,12 +39,12 @@ enum class ExitCode
 class Platform
 {
   public:
-	Platform();
+	Platform() = default;
 
 	virtual ~Platform() = default;
 
 	/**
-	 * @brief Sets up windowing system and logging
+	 * @brief Sets up the window and logger
 	 * @param app The application to prepare after the platform is prepared
 	 */
 	virtual bool initialize(std::unique_ptr<Application> &&app);
@@ -56,20 +55,13 @@ class Platform
 	virtual bool prepare();
 
 	/**
-	 * @brief Gets a handle from the platform's Vulkan surface 
-	 * @param instance The Vulkan instance
-	 * @returns A VkSurfaceKHR handle, for use by the application
-	 */
-	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
-
-	/**
 	 * @brief Handles the main loop of the platform
-	 *        This function is responsible for calling run()
+	 * This should be overriden if a platform requires a specific main loop setup.
 	 */
-	virtual void main_loop() = 0;
+	virtual void main_loop();
 
 	/**
-	 * @brief Handles the running of the app
+	 * @brief Runs the application for one frame
 	 */
 	void run();
 
@@ -82,7 +74,7 @@ class Platform
 	/**
 	 * @brief Requests to close the platform at the next available point
 	 */
-	virtual void close() const = 0;
+	virtual void close() const;
 
 	/**
 	 * @brief Returns the working directory of the application set by the platform
@@ -101,6 +93,13 @@ class Platform
 	 */
 	virtual float get_dpi_factor() const;
 
+	/**
+	 * @return The VkInstance extension name for the platform
+	 */
+	virtual const char *get_surface_extension() = 0;
+
+	Window &get_window() const;
+
 	Application &get_app() const;
 
 	std::vector<std::string> &get_arguments();
@@ -112,7 +111,9 @@ class Platform
 	static void set_temp_directory(const std::string &dir);
 
   protected:
-	std::unique_ptr<Application> active_app;
+	std::unique_ptr<Window> window{nullptr};
+
+	std::unique_ptr<Application> active_app{nullptr};
 
 	bool benchmark_mode{false};
 
@@ -123,6 +124,11 @@ class Platform
 	Timer timer;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
+
+	/**
+	 * @brief Handles the creation of the window
+	 */
+	virtual void create_window() = 0;
 
   private:
 	/// Static so can be set via JNI code in android_platform.cpp

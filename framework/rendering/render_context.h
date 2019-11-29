@@ -44,23 +44,38 @@ namespace vkb
  * to the active frame. Note that it's guaranteed that there is always an active frame.
  * More than one frame can be in-flight in the GPU, thus the need for per-frame resources.
  *
- * It requires a Device to be valid on creation and will take control of the Swapchain, so a
- * RenderFrame can be created for each Swapchain image.
+ * It requires a Device to be valid on creation, and will take control of a given Swapchain.
  *
- * A RenderContext can be extended for headless mode (i.e. not presenting rendered images to
- * a display) by removing the swapchain part and overriding begin_frame and end_frame.
+ * For normal rendering (using a swapchain), the RenderContext can be created by passing in a
+ * swapchain. A RenderFrame will then be created for each Swapchain image.
+ *
+ * For headless rendering (no swapchain), the RenderContext can be given a valid Device, and
+ * a width and height. A single RenderFrame will then be created.
  */
-class RenderContext : public NonCopyable
+class RenderContext
 {
   public:
+	// The format to use for the RenderTargets if a swapchain isn't created
+	static VkFormat DEFAULT_VK_FORMAT;
+
 	/**
 	 * @brief Constructor
 	 * @param device A valid device
 	 * @param surface A surface, VK_NULL_HANDLE if in headless mode
+	 * @param window_width The width of the window where the surface was created
+	 * @param window_height The height of the window where the surface was created
 	 */
-	RenderContext(Device &device, VkSurfaceKHR surface);
+	RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height);
+
+	RenderContext(const RenderContext &) = delete;
+
+	RenderContext(RenderContext &&) = default;
 
 	virtual ~RenderContext() = default;
+
+	RenderContext &operator=(const RenderContext &) = delete;
+
+	RenderContext &operator=(RenderContext &&) = delete;
 
 	/**
 	 * @brief Requests to set the present mode of the swapchain, must be called before prepare
@@ -83,9 +98,11 @@ class RenderContext : public NonCopyable
 	void set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list);
 
 	/**
-	 * @brief Creates the necessary components to allow the render context to be rendered
+	 * @brief Prepares the RenderFrames for rendering
+	 * @param thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
+	 * @param create_render_target_func A function delegate, used to create a RenderTarget
 	 */
-	void prepare(uint16_t command_pools_per_frame = 1, RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
+	void prepare(size_t thread_count = 1, RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
 
 	/**
 	 * @brief Updates the swapchains extent, if a swapchain exists
@@ -113,9 +130,32 @@ class RenderContext : public NonCopyable
 	void update_swapchain(const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform);
 
 	/**
+	 * @returns True if a valid swapchain exists in the RenderContext
+	 */
+	bool has_swapchain();
+
+	/**
 	 * @brief Recreates the RenderFrames, called after every update
 	 */
 	void recreate();
+
+	/**
+	 * @brief Recreates the swapchain
+	 */
+	void recreate_swapchain();
+
+	/**
+	 * @brief Prepares the next available frame for rendering
+	 * @param reset_mode How to reset the command buffer
+	 * @returns A valid command buffer to record commands to be submitted
+	 */
+	CommandBuffer &begin(CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
+
+	/**
+	 * @brief Submits the command buffer to the right queue
+	 * @param command_buffer A command buffer containing recorded commands
+	 */
+	void submit(CommandBuffer &command_buffer);
 
 	/**
 	 * @brief begin_frame
@@ -146,32 +186,27 @@ class RenderContext : public NonCopyable
 	RenderFrame &get_active_frame();
 
 	/**
+	 * @brief An error should be raised if the frame is not active.
+	 *        A frame is active after @ref begin_frame has been called.
+	 * @return The current active frame index
+	 */
+	uint32_t get_active_frame_index();
+
+	/**
 	 * @brief An error should be raised if a frame is active.
 	 *        A frame is active after @ref begin_frame has been called.
 	 * @return The previous frame
 	 */
 	RenderFrame &get_last_rendered_frame();
 
-	/**
-	 * @brief Requests a command buffer to the command pool of the active frame
-	 *        A frame should be active at the moment of requesting it
-	 * @param queue The queue command buffers will be submitted on
-	 * @param reset_mode Indicate how the command buffer will be used, may trigger a
-	 *        pool re-creation to set necessary flags
-	 * @param level Command buffer level, either primary or secondary
-	 * @param pool_index Select the frame command pool to use to manage the buffer
-	 * @return A command buffer related to the current active frame
-	 */
-	CommandBuffer &request_frame_command_buffer(const Queue &            queue,
-	                                            CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool,
-	                                            VkCommandBufferLevel     level      = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-	                                            uint16_t                 pool_index = 0);
-
 	VkSemaphore request_semaphore();
 
 	Device &get_device();
 
-	void update_swapchain(std::unique_ptr<Swapchain> &&new_swapchain);
+	/**
+	 * @brief Returns the format that the RenderTargets are created with within the RenderContext
+	 */
+	VkFormat get_format();
 
 	Swapchain &get_swapchain();
 
@@ -181,6 +216,9 @@ class RenderContext : public NonCopyable
 
 	std::vector<RenderFrame> &get_render_frames();
 
+	/**
+	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
+	 */
 	virtual void handle_surface_changes();
 
   protected:
@@ -188,6 +226,9 @@ class RenderContext : public NonCopyable
 
   private:
 	Device &device;
+
+	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
+	const Queue &queue;
 
 	std::unique_ptr<Swapchain> swapchain;
 
@@ -205,20 +246,23 @@ class RenderContext : public NonCopyable
 	    {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	    {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
+	std::vector<RenderFrame> frames;
+
+	VkSemaphore acquired_semaphore;
+
+	bool prepared{false};
+
 	/// Current active frame index
 	uint32_t active_frame_index{0};
 
 	/// Whether a frame is active or not
 	bool frame_active{false};
 
-	std::vector<RenderFrame> frames;
+	RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC;
 
-	/// Queue to submit commands for rendering our frames
-	const Queue &present_queue;
+	VkSurfaceTransformFlagBitsKHR pre_transform{VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR};
 
-	RenderTarget::CreateFunc create_render_target = RenderTarget::DEFAULT_CREATE_FUNC;
-
-	uint16_t command_pools_per_frame = 1;
+	size_t thread_count{1};
 };
 
 }        // namespace vkb

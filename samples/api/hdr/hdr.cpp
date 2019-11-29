@@ -837,12 +837,12 @@ void HDR::update_uniform_buffers()
 	ubo_vs.projection       = camera.matrices.perspective;
 	ubo_vs.modelview        = camera.matrices.view * models.transforms[models.object_index];
 	ubo_vs.skybox_modelview = camera.matrices.view;
-	memcpy(uniform_buffers.matrices->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
 void HDR::update_params()
 {
-	memcpy(uniform_buffers.params->map(), &ubo_params, sizeof(ubo_params));
+	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
 void HDR::draw()

@@ -133,10 +133,17 @@ const std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha);
 
 /**
  * @brief Helper function to convert a VkImageUsageFlagBits flag to a string
- * @param image_usage Vulkan composite alpha flag bit to convert.
+ * @param image_usage Vulkan image usage flag bit to convert.
  * @return The string to return.
  */
 const std::string to_string(VkImageUsageFlagBits image_usage);
+
+/**
+ * @brief Helper function to convert a VkExtent2D flag to a string
+ * @param extent Vulkan extent to convert.
+ * @return The string to return.
+ */
+const std::string to_string(VkExtent2D extent);
 
 /**
  * @brief Helper function to create a VkShaderModule

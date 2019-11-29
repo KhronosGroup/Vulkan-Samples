@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/geometry_subpass.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
@@ -30,15 +30,16 @@
 
 namespace vkb
 {
-SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene, sg::Camera &camera) :
+GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
-    meshes{scene.get_components<sg::Mesh>()},
-    camera{camera}
+    meshes{scene_.get_components<sg::Mesh>()},
+    camera{camera},
+    scene{scene_}
 {
-	// Default light
-	global_uniform.light_pos   = glm::vec4(500.0f, 1550.0f, 0.0f, 1.0);
-	global_uniform.light_color = glm::vec4(1.0, 1.0, 1.0, 1.0);
+}
 
+void GeometrySubpass::prepare()
+{
 	// Build all shader variance upfront
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
@@ -55,8 +56,7 @@ SceneSubpass::SceneSubpass(RenderContext &render_context, ShaderSource &&vertex_
 	}
 }
 
-void SceneSubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes,
-                                    std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
+void GeometrySubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &opaque_nodes, std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> &transparent_nodes)
 {
 	auto camera_transform = camera.get_node()->get_transform().get_world_matrix();
 
@@ -88,21 +88,24 @@ void SceneSubpass::get_sorted_nodes(std::multimap<float, std::pair<sg::Node *, s
 	}
 }
 
-void SceneSubpass::draw(CommandBuffer &command_buffer)
+void GeometrySubpass::draw(CommandBuffer &command_buffer)
 {
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> opaque_nodes;
 	std::multimap<float, std::pair<sg::Node *, sg::SubMesh *>> transparent_nodes;
 
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
-	auto &render_frame = get_render_context().get_active_frame();
-
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
 		update_uniform(command_buffer, *node_it->second.first);
 
-		draw_submesh(command_buffer, *node_it->second.second);
+		// Invert the front face if the mesh was flipped
+		const auto &scale      = node_it->second.first->get_transform().get_scale();
+		bool        flipped    = scale.x * scale.y * scale.z < 0;
+		VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
+		draw_submesh(command_buffer, *node_it->second.second, front_face);
 	}
 
 	// Enable alpha blending
@@ -128,28 +131,33 @@ void SceneSubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void SceneSubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node)
+void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
 {
+	GlobalUniform global_uniform;
+
 	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = get_render_context().get_active_frame();
 
 	auto &transform = node.get_transform();
 
-	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform));
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform), thread_index);
 
 	global_uniform.model = transform.get_world_matrix();
+
+	global_uniform.camera_position = glm::vec3(glm::inverse(camera.get_view())[3]);
 
 	allocation.update(global_uniform);
 
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
 }
 
-void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
 
 	RasterizationState rasterization_state{};
+	rasterization_state.front_face = front_face;
 
 	if (sub_mesh.get_material()->double_sided)
 	{
@@ -238,7 +246,7 @@ void SceneSubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_
 	draw_submesh_command(command_buffer, sub_mesh);
 }
 
-void SceneSubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
+void GeometrySubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh)
 {
 	// Draw submesh indexed if indices exists
 	if (sub_mesh.vertex_indices != 0)

@@ -55,12 +55,7 @@ void Scene::add_node(std::unique_ptr<Node> &&n)
 
 void Scene::add_child(Node &child)
 {
-	children.push_back(&child);
-}
-
-const std::vector<Node *> &Scene::get_children() const
-{
-	return children;
+	root->add_child(child);
 }
 
 std::unique_ptr<Component> Scene::get_model(uint32_t index)
@@ -100,12 +95,13 @@ const std::vector<std::unique_ptr<Component>> &Scene::get_components(const std::
 
 bool Scene::has_component(const std::type_index &type_info) const
 {
-	return components.count(type_info) != 0 ? true : false;
+	auto component = components.find(type_info);
+	return (component != components.end() && !component->second.empty());
 }
 
 Node *Scene::find_node(const std::string &node_name)
 {
-	for (auto root_node : children)
+	for (auto root_node : root->get_children())
 	{
 		std::queue<sg::Node *> traverse_nodes{};
 		traverse_nodes.push(root_node);
@@ -128,6 +124,16 @@ Node *Scene::find_node(const std::string &node_name)
 	}
 
 	return nullptr;
+}
+
+void Scene::set_root_node(Node &node)
+{
+	root = &node;
+}
+
+Node &Scene::get_root_node()
+{
+	return *root;
 }
 }        // namespace sg
 }        // namespace vkb

@@ -375,7 +375,7 @@ void Instancing::prepare_instance_data()
 
 		// Inner ring
 		rho                       = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
-		theta                     = 2.0 * glm::pi<float>() * uniform_dist(rnd_generator);
+		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
 		instance_data[i].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
 		instance_data[i].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[i].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
@@ -384,7 +384,7 @@ void Instancing::prepare_instance_data()
 
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                               = 2.0 * glm::pi<double>() * uniform_dist(rnd_generator);
+		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
@@ -462,7 +462,7 @@ void Instancing::update_uniform_buffer(float delta_time)
 		ubo_vs.glob_speed += delta_time * 0.01f;
 	}
 
-	memcpy(uniform_buffers.scene->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.scene->convert_and_update(ubo_vs);
 }
 
 void Instancing::draw()

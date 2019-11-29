@@ -408,10 +408,9 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	// Prepare per-object matrices with offsets and random rotations
 	std::default_random_engine      rnd_engine(is_benchmark_mode() ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
-	const float                     PI = 3.14159265358979323846f;
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
-		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * (float) PI;
+		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * glm::pi<float>();
 		rotation_speeds[i] = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine));
 	}
 
@@ -425,7 +424,7 @@ void DynamicUniformBuffers::update_uniform_buffers()
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.view       = camera.matrices.view;
 
-	memcpy(uniform_buffers.view->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.view->convert_and_update(ubo_vs);
 }
 
 void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool force)
@@ -467,7 +466,7 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 
 	animation_timer = 0.0f;
 
-	memcpy(uniform_buffers.dynamic->map(), ubo_data_dynamic.model, uniform_buffers.dynamic->get_size());
+	uniform_buffers.dynamic->update(ubo_data_dynamic.model, uniform_buffers.dynamic->get_size());
 
 	// Flush to make changes visible to the device
 	uniform_buffers.dynamic->flush();

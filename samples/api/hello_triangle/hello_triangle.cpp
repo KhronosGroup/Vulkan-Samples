@@ -1042,11 +1042,7 @@ void HelloTriangle::teardown(Context &context)
 		context.debug_callback = VK_NULL_HANDLE;
 	}
 
-	if (context.instance != VK_NULL_HANDLE)
-	{
-		vkDestroyInstance(context.instance, nullptr);
-		context.instance = VK_NULL_HANDLE;
-	}
+	vk_instance.reset();
 }
 
 HelloTriangle::HelloTriangle()
@@ -1062,7 +1058,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	context.surface = platform.create_surface(context.instance);
+	vk_instance = std::make_unique<vkb::Instance>(context.instance);
+
+	context.surface = platform.get_window().create_surface(*vk_instance);
 
 	init_device(context, {"VK_KHR_swapchain"});
 

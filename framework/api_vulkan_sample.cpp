@@ -47,14 +47,17 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	// Set up submit info structure
 	// Semaphores will stay the same during application lifetime
 	// Command buffer submission info is set by each example
-	submit_info                      = vkb::initializers::submit_info();
-	submit_info.pWaitDstStageMask    = &submit_pipeline_stages;
-	submit_info.waitSemaphoreCount   = 1;
-	submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
-	submit_info.signalSemaphoreCount = 1;
-	submit_info.pSignalSemaphores    = &semaphores.render_complete;
+	submit_info                   = vkb::initializers::submit_info();
+	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
+	if (!is_headless())
+	{
+		submit_info.waitSemaphoreCount   = 1;
+		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
+		submit_info.signalSemaphoreCount = 1;
+		submit_info.pSignalSemaphores    = &semaphores.render_complete;
+	}
 
-	queue = device->get_queue_by_present(0).get_handle();
+	queue = device->get_suitable_graphics_queue().get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -65,10 +68,10 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	create_pipeline_cache();
 	setup_framebuffer();
 
-	width  = render_context->get_surface_extent().width;
-	height = render_context->get_surface_extent().height;
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
 
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor(), 15.0f, true);
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor(), 15.0f, true);
 	gui->prepare(pipeline_cache, render_pass,
 	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
 	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
@@ -78,20 +81,20 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 
 void ApiVulkanSample::prepare_render_context()
 {
-	render_context->set_present_mode_priority({VK_PRESENT_MODE_MAILBOX_KHR,
-	                                           VK_PRESENT_MODE_IMMEDIATE_KHR,
-	                                           VK_PRESENT_MODE_FIFO_KHR});
+	get_render_context().set_present_mode_priority({VK_PRESENT_MODE_MAILBOX_KHR,
+	                                                VK_PRESENT_MODE_IMMEDIATE_KHR,
+	                                                VK_PRESENT_MODE_FIFO_KHR});
 
-	render_context->set_surface_format_priority({{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+	get_render_context().set_surface_format_priority({{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                  {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                  {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                  {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
 
-	render_context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+	get_render_context().request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
 
-	render_context->request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
+	get_render_context().request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
 
-	render_context->prepare();
+	get_render_context().prepare();
 }
 
 void ApiVulkanSample::update(float delta_time)
@@ -119,16 +122,16 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 		return;
 	}
 
-	render_context->handle_surface_changes();
+	get_render_context().handle_surface_changes();
 
 	// Don't recreate the swapchain if the dimensions haven't changed
-	if (width == render_context->get_surface_extent().width && height == render_context->get_surface_extent().height)
+	if (width == get_render_context().get_surface_extent().width && height == get_render_context().get_surface_extent().height)
 	{
 		return;
 	}
 
-	width  = render_context->get_surface_extent().width;
-	height = render_context->get_surface_extent().height;
+	width  = get_render_context().get_surface_extent().width;
+	height = get_render_context().get_surface_extent().height;
 
 	prepared = false;
 
@@ -178,11 +181,6 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 vkb::Device &ApiVulkanSample::get_device()
 {
 	return *device;
-}
-
-vkb::RenderContext &ApiVulkanSample::get_render_context()
-{
-	return *render_context;
 }
 
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
@@ -402,7 +400,7 @@ bool ApiVulkanSample::check_command_buffers()
 void ApiVulkanSample::create_command_buffers()
 {
 	// Create one command buffer for each swap chain image and reuse for rendering
-	draw_cmd_buffers.resize(render_context->get_swapchain().get_images().size());
+	draw_cmd_buffers.resize(render_context->get_render_frames().size());
 
 	VkCommandBufferAllocateInfo allocate_info =
 	    vkb::initializers::command_buffer_allocate_info(
@@ -470,59 +468,65 @@ void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer)
 
 void ApiVulkanSample::prepare_frame()
 {
-	handle_surface_changes();
-	// Acquire the next image from the swap chain
-	VkResult result = render_context->get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
-	// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
-	if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR))
+	if (render_context->has_swapchain())
 	{
-		resize(width, height);
-	}
-	else
-	{
-		VK_CHECK(result);
+		handle_surface_changes();
+		// Acquire the next image from the swap chain
+		VkResult result = render_context->get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
+		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
+		if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR))
+		{
+			resize(width, height);
+		}
+		else
+		{
+			VK_CHECK(result);
+		}
 	}
 }
 
 void ApiVulkanSample::submit_frame()
 {
-	const auto &queue = device->get_queue_by_present(0);
-
-	VkSwapchainKHR sc = render_context->get_swapchain().get_handle();
-
-	VkPresentInfoKHR present_info = {};
-	present_info.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-	present_info.pNext            = NULL;
-	present_info.swapchainCount   = 1;
-	present_info.pSwapchains      = &sc;
-	present_info.pImageIndices    = &current_buffer;
-	// Check if a wait semaphore has been specified to wait for before presenting the image
-	if (semaphores.render_complete != VK_NULL_HANDLE)
+	if (render_context->has_swapchain())
 	{
-		present_info.pWaitSemaphores    = &semaphores.render_complete;
-		present_info.waitSemaphoreCount = 1;
-	}
+		const auto &queue = device->get_queue_by_present(0);
 
-	VkResult present_result = queue.present(present_info);
+		VkSwapchainKHR sc = render_context->get_swapchain().get_handle();
 
-	if (!((present_result == VK_SUCCESS) || (present_result == VK_SUBOPTIMAL_KHR)))
-	{
-		if (present_result == VK_ERROR_OUT_OF_DATE_KHR)
+		VkPresentInfoKHR present_info = {};
+		present_info.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+		present_info.pNext            = NULL;
+		present_info.swapchainCount   = 1;
+		present_info.pSwapchains      = &sc;
+		present_info.pImageIndices    = &current_buffer;
+		// Check if a wait semaphore has been specified to wait for before presenting the image
+		if (semaphores.render_complete != VK_NULL_HANDLE)
 		{
-			// Swap chain is no longer compatible with the surface and needs to be recreated
-			resize(width, height);
-			return;
+			present_info.pWaitSemaphores    = &semaphores.render_complete;
+			present_info.waitSemaphoreCount = 1;
 		}
-		else
+
+		VkResult present_result = queue.present(present_info);
+
+		if (!((present_result == VK_SUCCESS) || (present_result == VK_SUBOPTIMAL_KHR)))
 		{
-			VK_CHECK(present_result);
+			if (present_result == VK_ERROR_OUT_OF_DATE_KHR)
+			{
+				// Swap chain is no longer compatible with the surface and needs to be recreated
+				resize(width, height);
+				return;
+			}
+			else
+			{
+				VK_CHECK(present_result);
+			}
 		}
 	}
 
 	// DO NOT USE
 	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
 	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	VK_CHECK(vkQueueWaitIdle(queue.get_handle()));
+	VK_CHECK(vkDeviceWaitIdle(device->get_handle()));
 }
 
 ApiVulkanSample::~ApiVulkanSample()
@@ -603,7 +607,7 @@ void ApiVulkanSample::setup_depth_stencil()
 	image_create_info.sType       = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
 	image_create_info.imageType   = VK_IMAGE_TYPE_2D;
 	image_create_info.format      = depth_format;
-	image_create_info.extent      = {render_context->get_surface_extent().width, render_context->get_surface_extent().height, 1};
+	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
 	image_create_info.mipLevels   = 1;
 	image_create_info.arrayLayers = 1;
 	image_create_info.samples     = VK_SAMPLE_COUNT_1_BIT;
@@ -652,12 +656,12 @@ void ApiVulkanSample::setup_framebuffer()
 	framebuffer_create_info.renderPass              = render_pass;
 	framebuffer_create_info.attachmentCount         = 2;
 	framebuffer_create_info.pAttachments            = attachments;
-	framebuffer_create_info.width                   = render_context->get_surface_extent().width;
-	framebuffer_create_info.height                  = render_context->get_surface_extent().height;
+	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
+	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
 
 	// Create frame buffers for every swap chain image
-	framebuffers.resize(render_context->get_swapchain().get_images().size());
+	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachments[0] = swapchain_buffers[i].view;
@@ -669,7 +673,7 @@ void ApiVulkanSample::setup_render_pass()
 {
 	std::array<VkAttachmentDescription, 2> attachments = {};
 	// Color attachment
-	attachments[0].format         = render_context->get_swapchain().get_format();
+	attachments[0].format         = render_context->get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -742,39 +746,57 @@ void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void ApiVulkanSample::create_swapchain_buffers()
 {
-	auto &images = render_context->get_swapchain().get_images();
-
-	// Get the swap chain buffers containing the image and imageview
-	for (auto &swapchain_buffer : swapchain_buffers)
+	if (render_context->has_swapchain())
 	{
-		vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
+		auto &images = render_context->get_swapchain().get_images();
+
+		// Get the swap chain buffers containing the image and imageview
+		for (auto &swapchain_buffer : swapchain_buffers)
+		{
+			vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
+		}
+		swapchain_buffers.clear();
+		swapchain_buffers.resize(images.size());
+		for (uint32_t i = 0; i < images.size(); i++)
+		{
+			VkImageViewCreateInfo color_attachment_view = {};
+			color_attachment_view.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			color_attachment_view.pNext                 = NULL;
+			color_attachment_view.format                = render_context->get_swapchain().get_format();
+			color_attachment_view.components            = {
+                VK_COMPONENT_SWIZZLE_R,
+                VK_COMPONENT_SWIZZLE_G,
+                VK_COMPONENT_SWIZZLE_B,
+                VK_COMPONENT_SWIZZLE_A};
+			color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+			color_attachment_view.subresourceRange.baseMipLevel   = 0;
+			color_attachment_view.subresourceRange.levelCount     = 1;
+			color_attachment_view.subresourceRange.baseArrayLayer = 0;
+			color_attachment_view.subresourceRange.layerCount     = 1;
+			color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+			color_attachment_view.flags                           = 0;
+
+			swapchain_buffers[i].image = images[i];
+
+			color_attachment_view.image = swapchain_buffers[i].image;
+
+			VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
+		}
 	}
-	swapchain_buffers.clear();
-	swapchain_buffers.resize(images.size());
-	for (uint32_t i = 0; i < images.size(); i++)
+	else
 	{
-		VkImageViewCreateInfo color_attachment_view = {};
-		color_attachment_view.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-		color_attachment_view.pNext                 = NULL;
-		color_attachment_view.format                = render_context->get_swapchain().get_format();
-		color_attachment_view.components            = {
-            VK_COMPONENT_SWIZZLE_R,
-            VK_COMPONENT_SWIZZLE_G,
-            VK_COMPONENT_SWIZZLE_B,
-            VK_COMPONENT_SWIZZLE_A};
-		color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		color_attachment_view.subresourceRange.baseMipLevel   = 0;
-		color_attachment_view.subresourceRange.levelCount     = 1;
-		color_attachment_view.subresourceRange.baseArrayLayer = 0;
-		color_attachment_view.subresourceRange.layerCount     = 1;
-		color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-		color_attachment_view.flags                           = 0;
+		auto &frames = render_context->get_render_frames();
 
-		swapchain_buffers[i].image = images[i];
+		// Get the swap chain buffers containing the image and imageview
+		swapchain_buffers.clear();
+		swapchain_buffers.resize(frames.size());
+		for (uint32_t i = 0; i < frames.size(); i++)
+		{
+			auto &image_view = *frames[i].get_render_target().get_views().begin();
 
-		color_attachment_view.image = swapchain_buffers[i].image;
-
-		VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
+			swapchain_buffers[i].image = image_view.get_image().get_handle();
+			swapchain_buffers[i].view  = image_view.get_handle();
+		}
 	}
 }
 
@@ -782,11 +804,11 @@ void ApiVulkanSample::handle_surface_changes()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->get_physical_device(),
-	                                                   render_context->get_swapchain().get_surface(),
+	                                                   get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
-	if (surface_properties.currentExtent.width != render_context->get_surface_extent().width ||
-	    surface_properties.currentExtent.height != render_context->get_surface_extent().height)
+	if (surface_properties.currentExtent.width != get_render_context().get_surface_extent().width ||
+	    surface_properties.currentExtent.height != get_render_context().get_surface_extent().height)
 	{
 		resize(surface_properties.currentExtent.width, surface_properties.currentExtent.height);
 	}

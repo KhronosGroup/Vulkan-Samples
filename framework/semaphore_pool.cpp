@@ -69,4 +69,9 @@ void SemaphorePool::reset()
 {
 	active_semaphore_count = 0;
 }
+
+uint32_t SemaphorePool::get_active_semaphore_count() const
+{
+	return active_semaphore_count;
+}
 }        // namespace vkb

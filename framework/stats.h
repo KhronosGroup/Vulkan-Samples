@@ -57,7 +57,7 @@ enum class StatIndex
 	l2_ext_write_stalls,
 	l2_ext_read_bytes,
 	l2_ext_write_bytes,
-	tex_instr
+	tex_cycles
 };
 
 struct StatIndexHash

@@ -65,9 +65,10 @@ set(ORDER_LIST
     #Performance Samples
     "swapchain_images"
     "surface_rotation"
+    "pipeline_cache"
+    "descriptor_management"
     "render_passes"
     "render_subpasses"
-    "pipeline_cache"
     "command_buffer_usage"
     "afbc")
 

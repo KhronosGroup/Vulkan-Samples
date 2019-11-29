@@ -53,7 +53,7 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::l2_ext_write_stalls, {hwcpipe::GpuCounter::ExternalMemoryWriteStalls}},
 	    {StatIndex::l2_ext_read_bytes, {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
 	    {StatIndex::l2_ext_write_bytes, {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
-	    {StatIndex::tex_instr, {hwcpipe::GpuCounter::ShaderTextureCycles}},
+	    {StatIndex::tex_cycles, {hwcpipe::GpuCounter::ShaderTextureCycles}},
 	};
 
 	hwcpipe::CpuCounterSet enabled_cpu_counters{};

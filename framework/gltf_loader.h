@@ -28,19 +28,22 @@
 
 #include "timer.h"
 
+#define KHR_LIGHTS_PUNCTUAL_EXTENSION "KHR_lights_punctual"
+
 namespace vkb
 {
 class Device;
 
 namespace sg
 {
-class Scene;
-class Node;
 class Camera;
 class Image;
+class Light;
 class Mesh;
+class Node;
 class PBRMaterial;
 class Sampler;
+class Scene;
 class SubMesh;
 class Texture;
 }        // namespace sg
@@ -70,7 +73,7 @@ class GLTFLoader
 
 	virtual ~GLTFLoader() = default;
 
-	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name);
+	std::unique_ptr<sg::Scene> read_scene_from_file(const std::string &file_name, int scene_index = -1);
 
 	/**
 	 * @brief Loads the first model from a GLTF file for use in simpler samples
@@ -99,14 +102,37 @@ class GLTFLoader
 
 	virtual std::unique_ptr<sg::Camera> create_default_camera();
 
+	/**
+	 * @brief Parses and returns a list of scene graph lights from the KHR_lights_punctual extension
+	 */
+	std::vector<std::unique_ptr<sg::Light>> parse_khr_lights_punctual();
+
+	/**
+	 * @brief Checks if the GLTFLoader supports an extension, and that it is present in the glTF file
+	 * @param requested_extension The extension to check
+	 * @returns True if the loader knows how to load the extension and it is present in the glTF file, false if not
+	 */
+	bool is_extension_enabled(const std::string &requested_extension);
+
+	/**
+	 * @brief Finds whether an extension exists inside a tinygltf extension map and returns the result
+	 * @param tinygltf_extensions The extension map associated with a given tinygltf object
+	 * @param extension The extension to check
+	 * @returns A pointer to the value of the extension object, nullptr if it isn't found
+	 */
+	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
+
 	Device &device;
 
 	tinygltf::Model model;
 
 	std::string model_path;
 
+	/// The extensions that the GLTFLoader can load mapped to whether they should be enabled or not
+	static std::unordered_map<std::string, bool> supported_extensions;
+
   private:
-	sg::Scene load_scene();
+	sg::Scene load_scene(int scene_index = -1);
 
 	std::unique_ptr<sg::SubMesh> load_model(uint32_t index);
 };

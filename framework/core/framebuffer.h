@@ -26,14 +26,20 @@ namespace vkb
 {
 class Device;
 
-class Framebuffer : public NonCopyable
+class Framebuffer
 {
   public:
 	Framebuffer(Device &device, const RenderTarget &render_target, const RenderPass &render_pass);
 
+	Framebuffer(const Framebuffer &) = delete;
+
 	Framebuffer(Framebuffer &&other);
 
 	~Framebuffer();
+
+	Framebuffer &operator=(const Framebuffer &) = delete;
+
+	Framebuffer &operator=(Framebuffer &&) = delete;
 
 	VkFramebuffer get_handle() const;
 
