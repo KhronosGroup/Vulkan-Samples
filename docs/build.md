@@ -131,7 +131,7 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (know to work with 3.10.2)
 - Visual Studio 2017 or above
 - [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
@@ -172,7 +172,7 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (know to work with 3.10.2)
 - C++14 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
@@ -205,7 +205,7 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (know to work with 3.10.2)
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
