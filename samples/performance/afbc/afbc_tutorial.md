@@ -138,4 +138,4 @@ Previous generations that support AFBC only support a subset of formats:
 
 **Debugging**
 
-* To test if AFBC is enabled or disabled, you can use a profiler such as Streamline and record the bandwidth values of when AFBC is enabled or when AFBC is disabled.
+* To test if AFBC is enabled or disabled, you can use a profiler such as Streamline and record the bandwidth values when AFBC is enabled or when AFBC is disabled.
