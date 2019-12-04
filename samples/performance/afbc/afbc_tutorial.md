@@ -21,13 +21,13 @@
 
 ## Overview
 
-AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm, designed to tackle the ever-growing demand for higher resolution graphics. This format is applied to the framebuffers that are to be written to the GPU. This technology can offer bandwidth reductions of [up to 50%](https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression).
+AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics. This format is applied to the framebuffers that are to be written to the GPU. This technology can offer bandwidth reductions of [up to 50%](https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression).
 
 The sample is geared towards demonstrating the bandwidth that you can save by toggling AFBC on and off and displaying a real-time graph of the external bandwidth. In this case we will be focusing on the swapchain images.
 
 The Vulkan API allows the developer a level of control around how the `VkSwapchainKHR` is created and formatted. It is here where we want to ensure that it is created and formatted in the right way so that the subsequent `VkImage`'s that we query from it have AFBC appropriately applied.
 
-It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali G-51` or higher. To find out your GPU and driver version, open the [debug window](../../../docs/misc.md#Debug-Window) or follow the steps in this [article](../../../docs/misc.md#Driver-Version).
+It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali-G51` or higher. To find out your GPU and driver version, open the [debug window](../../../docs/misc.md#Debug-Window) or follow the steps in this [article](../../../docs/misc.md#Driver-Version).
 
 > Tested on: Samsung Galaxy S10, Huawei P30
 
@@ -138,4 +138,4 @@ Previous generations that support AFBC only support a subset of formats:
 
 **Debugging**
 
-* To test if AFBC is enabled or disabled, you can use a profiler such as Streamline and record the bandwidth values of when AFBC is enabled or when AFBC is disabled.
+* To test if AFBC is enabled or disabled, you can use a profiler such as Streamline and record the bandwidth values when AFBC is enabled or when AFBC is disabled.
