@@ -635,8 +635,9 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	vkGetRayTracingShaderGroupHandlesNV            = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkGetRayTracingShaderGroupHandlesNV"));
 	vkCmdTraceRaysNV                               = reinterpret_cast<PFN_vkCmdTraceRaysNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdTraceRaysNV"));
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
 

@@ -20,7 +20,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/quaternion.hpp>
 VKBP_ENABLE_WARNINGS()
