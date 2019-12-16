@@ -341,7 +341,7 @@ std::vector<VkClearValue> get_clear_value()
 	// Clear values
 	std::vector<VkClearValue> clear_value{4};
 	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[1].depthStencil = {1.0f, ~0U};
+	clear_value[1].depthStencil = {0.0f, ~0U};
 	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
 	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
 

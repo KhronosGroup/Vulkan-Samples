@@ -17,6 +17,7 @@
 
 #include "surface_rotation.h"
 
+#include "common/error.h"
 #include "core/device.h"
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
@@ -29,9 +30,10 @@
 #include "scene_graph/components/pbr_material.h"
 #include "stats.h"
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+#include <glm/gtc/matrix_transform.hpp>
+VKBP_ENABLE_WARNINGS()
 
 SurfaceRotation::SurfaceRotation()
 {

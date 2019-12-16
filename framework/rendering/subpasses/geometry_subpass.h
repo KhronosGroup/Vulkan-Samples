@@ -20,7 +20,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
 #include "rendering/subpass.h"

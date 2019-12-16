@@ -38,7 +38,7 @@ RenderPipeline::RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses
 	}
 	// Default clear value
 	clear_value[0].color        = {0.0f, 0.0f, 0.0f, 1.0f};
-	clear_value[1].depthStencil = {1.0f, ~0U};
+	clear_value[1].depthStencil = {0.0f, ~0U};
 }
 
 void RenderPipeline::add_subpass(std::unique_ptr<Subpass> &&subpass)

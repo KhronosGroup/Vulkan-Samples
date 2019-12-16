@@ -37,14 +37,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "common/glm_common.h"
 #include <glm/gtx/hash.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/transform.hpp>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb

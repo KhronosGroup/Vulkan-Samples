@@ -25,8 +25,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
-#include <glm/gtc/quaternion.hpp>
+#include "common/glm_common.h"
+#include <glm/gtx/quaternion.hpp>
 VKBP_ENABLE_WARNINGS()
 
 #include "scene_graph/component.h"

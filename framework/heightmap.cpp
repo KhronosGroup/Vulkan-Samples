@@ -18,8 +18,13 @@
 #include "heightmap.h"
 
 #include <cstring>
-#include <glm/glm.hpp>
 #include <ktx.h>
+
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
 
 #include "platform/filesystem.h"
 

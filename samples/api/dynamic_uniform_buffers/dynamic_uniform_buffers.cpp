@@ -81,7 +81,7 @@ void DynamicUniformBuffers::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -307,11 +307,12 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
 	        VK_TRUE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -482,7 +483,9 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 256.0f);
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	generate_cube();
 	prepare_uniform_buffers();
