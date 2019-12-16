@@ -24,7 +24,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
+#include <glm/gtc/matrix_transform.hpp>
 VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"

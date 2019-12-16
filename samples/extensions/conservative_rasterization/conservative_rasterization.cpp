@@ -257,7 +257,7 @@ void ConservativeRasterization::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.0f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.renderPass               = offscreen_pass.render_pass;
@@ -293,7 +293,7 @@ void ConservativeRasterization::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.25f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = framebuffers[i];
@@ -448,8 +448,9 @@ void ConservativeRasterization::prepare_pipelines()
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -579,8 +580,9 @@ bool ConservativeRasterization::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.0f));
 
