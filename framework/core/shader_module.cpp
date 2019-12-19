@@ -174,7 +174,7 @@ void ShaderVariant::add_undefine(const std::string &undef)
 
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
 {
-	if (runtime_array_sizes.find(runtime_array_name) != runtime_array_sizes.end())
+	if (runtime_array_sizes.find(runtime_array_name) == runtime_array_sizes.end())
 	{
 		runtime_array_sizes.insert({runtime_array_name, size});
 	}
