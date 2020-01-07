@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -158,7 +158,33 @@ Instance::Instance(const std::string &              application_name,
 	std::vector<const char *> active_instance_layers(required_validation_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
+	// Optimal validation layers
+	std::vector<const char *> default_debug_layers{{
+	    "VK_LAYER_KHRONOS_validation",
+	}};
+	// Alternative layers
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {
+		    "VK_LAYER_LUNARG_standard_validation",
+		};
+	}
+	// Fallback layers
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {
+		    "VK_LAYER_GOOGLE_threading",
+		    "VK_LAYER_LUNARG_parameter_validation",
+		    "VK_LAYER_LUNARG_object_tracker",
+		    "VK_LAYER_LUNARG_core_validation",
+		    "VK_LAYER_GOOGLE_unique_objects",
+		};
+	}
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {};
+	}
+	active_instance_layers.insert(active_instance_layers.end(), default_debug_layers.begin(), default_debug_layers.end());
 #endif
 
 	if (validate_layers(active_instance_layers, instance_layers))
@@ -183,6 +209,15 @@ Instance::Instance(const std::string &              application_name,
 
 	VkInstanceCreateInfo instance_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	VkDebugReportCallbackCreateInfoEXT debug_report_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+
+	debug_report_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	debug_report_info.pfnCallback = debug_callback;
+
+	instance_info.pNext = &debug_report_info;
+#endif
+
 	instance_info.pApplicationInfo = &app_info;
 
 	instance_info.enabledExtensionCount   = to_u32(extensions.size());
@@ -201,12 +236,7 @@ Instance::Instance(const std::string &              application_name,
 	volkLoadInstance(handle);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
-
-	result = vkCreateDebugReportCallbackEXT(handle, &info, nullptr, &debug_report_callback);
+	result = vkCreateDebugReportCallbackEXT(handle, &debug_report_info, nullptr, &debug_report_callback);
 	if (result != VK_SUCCESS)
 	{
 		throw std::runtime_error("Could not create debug callback.");

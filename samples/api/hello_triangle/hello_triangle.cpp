@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -207,11 +207,33 @@ void HelloTriangle::init_instance(Context &                        context,
 	std::vector<const char *> active_instance_layers(required_instance_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_threading");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_parameter_validation");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_object_tracker");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_core_validation");
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_unique_objects");
+	// Optimal validation layers
+	std::vector<const char *> default_debug_layers{{
+	    "VK_LAYER_KHRONOS_validation",
+	}};
+	// Alternative layers
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {
+		    "VK_LAYER_LUNARG_standard_validation",
+		};
+	}
+	// Fallback layers
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {
+		    "VK_LAYER_GOOGLE_threading",
+		    "VK_LAYER_LUNARG_parameter_validation",
+		    "VK_LAYER_LUNARG_object_tracker",
+		    "VK_LAYER_LUNARG_core_validation",
+		    "VK_LAYER_GOOGLE_unique_objects",
+		};
+	}
+	if (!validate_layers(default_debug_layers, instance_layers))
+	{
+		default_debug_layers = {};
+	}
+	active_instance_layers.insert(active_instance_layers.end(), default_debug_layers.begin(), default_debug_layers.end());
 #endif
 
 	if (!validate_layers(active_instance_layers, instance_layers))
@@ -225,6 +247,16 @@ void HelloTriangle::init_instance(Context &                        context,
 	app.apiVersion       = VK_MAKE_VERSION(1, 0, 0);
 
 	VkInstanceCreateInfo instance_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	VkDebugReportCallbackCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+
+	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	info.pfnCallback = debug_callback;
+
+	instance_info.pNext = &info;
+#endif
+
 	instance_info.pApplicationInfo        = &app;
 	instance_info.enabledExtensionCount   = vkb::to_u32(active_instance_extensions.size());
 	instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
@@ -236,9 +268,6 @@ void HelloTriangle::init_instance(Context &                        context,
 	volkLoadInstance(context.instance);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
 	VK_CHECK(vkCreateDebugReportCallbackEXT(context.instance, &info, nullptr, &context.debug_callback));
 #endif
 }
