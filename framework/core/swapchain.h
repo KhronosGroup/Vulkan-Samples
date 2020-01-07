@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -79,7 +79,7 @@ class Swapchain
 	          const uint32_t                        image_count       = 3,
 	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
-	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
+	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT});
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
@@ -92,7 +92,7 @@ class Swapchain
 	          const uint32_t                        image_count       = 3,
 	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
 	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
-	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
+	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT});
 
 	Swapchain(const Swapchain &) = delete;
 
