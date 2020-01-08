@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -338,6 +338,10 @@ if(NOT MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC -fexceptions)
 endif()
 
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PUBLIC /MP)
+endif()
+
 if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
 endif()
@@ -347,7 +351,7 @@ if(${VKB_WARNINGS_AS_ERRORS})
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
         target_compile_options(${PROJECT_NAME} PRIVATE -Werror)
     elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
-        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX /MP)
+        target_compile_options(${PROJECT_NAME} PRIVATE /W3 /WX)
     endif()
 endif()
 
