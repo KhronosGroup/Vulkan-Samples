@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -113,8 +113,10 @@ vulkan_samples --test bonza --hide
 
 # Run all the performance samples
 vulkan_samples --batch performance
-```
 
+# Run Swapchain Images sample on an Android device
+adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
+```
 
 ## Tests
 
