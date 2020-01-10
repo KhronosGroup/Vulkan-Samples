@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,14 @@ namespace vkb
 SemaphorePool::SemaphorePool(Device &device) :
     device{device}
 {
+}
+
+SemaphorePool::SemaphorePool(SemaphorePool &&other) :
+    device{other.device},
+    active_semaphore_count{other.active_semaphore_count}
+{
+	semaphores.swap(other.semaphores);
+	other.active_semaphore_count = 0;
 }
 
 SemaphorePool::~SemaphorePool()
