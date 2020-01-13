@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  * Copyright (c) 2019, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -404,7 +404,7 @@ bool Gui::update_buffers()
 		updated                = true;
 
 		index_buffer.reset();
-		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
+		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), index_buffer_size,
 		                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                              VMA_MEMORY_USAGE_GPU_TO_CPU);
 	}
