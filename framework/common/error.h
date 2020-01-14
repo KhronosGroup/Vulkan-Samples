@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,8 +21,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "common/strings.h"
 #include "logging.h"
-#include "utils/strings.h"
 #include "vk_common.h"
 
 #if defined(__clang__)
@@ -79,15 +79,15 @@ class VulkanException : public std::runtime_error
 }        // namespace vkb
 
 /// @brief Helper macro to test the result of Vulkan calls which can return an error.
-#define VK_CHECK(x)                                                                  \
-	do                                                                               \
-	{                                                                                \
-		VkResult err = x;                                                            \
-		if (err)                                                                     \
-		{                                                                            \
-			LOGE("Detected Vulkan error: {}", vkb::utils::vk_result_to_string(err)); \
-			abort();                                                                 \
-		}                                                                            \
+#define VK_CHECK(x)                                                 \
+	do                                                              \
+	{                                                               \
+		VkResult err = x;                                           \
+		if (err)                                                    \
+		{                                                           \
+			LOGE("Detected Vulkan error: {}", vkb::to_string(err)); \
+			abort();                                                \
+		}                                                           \
 	} while (0)
 
 #define ASSERT_VK_HANDLE(handle)        \

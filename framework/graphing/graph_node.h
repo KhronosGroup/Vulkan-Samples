@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,26 @@
 
 #pragma once
 
-#include "rendering/render_context.h"
-#include "scene_graph/scene.h"
+#include <json.hpp>
 
 namespace vkb
 {
-namespace utils
+namespace graphing
 {
-bool debug_graphs(RenderContext &context, sg::Scene &scene);
-}        // namespace utils
+class Node
+{
+  public:
+	Node(){};
+
+	Node(size_t id, const char *title, const char *style = NULL, const nlohmann::json &data = {});
+
+	template <typename T>
+	static std::uintptr_t handle_to_uintptr_t(T handle)
+	{
+		return reinterpret_cast<std::uintptr_t>(reinterpret_cast<void *>(handle));
+	}
+
+	nlohmann::json attributes;
+};
+}        // namespace graphing
 }        // namespace vkb
