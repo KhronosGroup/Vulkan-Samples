@@ -239,7 +239,7 @@ void Stats::update(float delta_time)
 	size_t sample_count = static_cast<size_t>(sampling_config.speed * delta_time) * pending_samples.size();
 
 	// Clamp the number of samples
-	sample_count = std::max<size_t>(1, std::min(sample_count, pending_samples.size()));
+	sample_count = std::max<size_t>(1, std::min<size_t>(sample_count, pending_samples.size()));
 
 	// Push the samples to circular buffers
 	std::for_each(pending_samples.end() - sample_count, pending_samples.end(), [this](const auto &s) {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,11 +25,11 @@
 #include <json.hpp>
 
 #include "common/error.h"
-#include "node.h"
+#include "graph_node.h"
 
 namespace vkb
 {
-namespace utils
+namespace graphing
 {
 struct Edge
 {
@@ -53,48 +53,54 @@ class Graph
   public:
 	Graph(const char *name);
 
+	static const size_t node_not_found = 0;
+
+	/**
+	 * @brief Create a new style
+	 * 
+	 * @param style_name the group name
+	 * @param color the hex color of the group
+	 */
+	void new_style(std::string style_name, std::string color);
+
 	/**
 	 * @brief Create a node object
-	 * @tparam T
-	 * @tparam Args 
-	 * @param node required
-	 * @param args 
-	 * @return size_t id of the node in the graph
+	 * 
+	 * @param title of node
+	 * @param style corresponds to the key used when using new_type(style, color)
+	 * @param data json data to be displayed with node
+	 * @return size_t id of node
 	 */
-	template <class NodeType, typename T, typename... Args>
-	size_t create_node(const T &node, Args... args)
-	{
-		const void *addr = reinterpret_cast<const void *>(&node);
-		const void *uid  = get_uid(addr);
-		if (!uid)
-		{
-			size_t id = new_id();
-			uids[uid] = id;
-			nodes[id] = std::make_unique<NodeType>(id, node, args...);
-			return id;
-		}
-		return reinterpret_cast<size_t>(addr);
-	}
-
-	size_t create_vk_image(const VkImage &image);
-
-	size_t create_vk_image_view(const VkImageView &image);
-
-	template <typename T>
-	size_t create_vk_node(const char *name, const T &handle)
+	size_t create_node(const char *title = "Node", const char *style = NULL, const nlohmann::json &data = {})
 	{
 		size_t id = new_id();
-		nodes[id] = std::make_unique<Node>(id, name, "Vulkan", nlohmann::json{{name, Node::handle_to_uintptr_t(handle)}});
+		nodes[id] = std::make_unique<Node>(id, title, style, data);
 		return id;
 	}
 
 	/**
-	 * @brief Get the uid of a node
+	 * @brief Find a node from a reference
+	 * 		  If the node does not exist then the reference will be node_not_found
 	 * 
-	 * @param addr 
-	 * @return const void* if null node doesnt exist
+	 * @param name of node
+	 * @return size_t if of node
 	 */
-	const void *get_uid(const void *addr);
+	size_t find_ref(std::string &name);
+
+	/**
+	 * @brief Add a readable reference to a node
+	 * 
+	 * @param name of reference
+	 * @param id of node
+	 */
+	void add_ref(std::string &name, size_t id);
+
+	/**
+	 * @brief Remove a readable reference to a node
+	 * 
+	 * @param name of ref
+	 */
+	void remove_ref(std::string &name);
 
 	/**
 	 * @brief Add an edge to the graph
@@ -119,11 +125,12 @@ class Graph
 	size_t new_id();
 
   private:
-	size_t                                            next_id = 0;
+	size_t                                            next_id = 1;
 	std::vector<Edge>                                 adj;
 	std::unordered_map<size_t, std::unique_ptr<Node>> nodes;
-	std::unordered_map<const void *, size_t>          uids;
+	std::unordered_map<std::string, size_t>           refs;
 	std::string                                       name;
+	std::unordered_map<std::string, std::string>      style_colors;
 };
-}        // namespace utils
+}        // namespace graphing
 }        // namespace vkb

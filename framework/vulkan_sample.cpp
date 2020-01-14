@@ -27,13 +27,15 @@ VKBP_ENABLE_WARNINGS()
 #include "api_vulkan_sample.h"
 #include "common/helpers.h"
 #include "common/logging.h"
+#include "common/strings.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
 #include "platform/window.h"
 #include "scene_graph/components/camera.h"
-#include "utils/graphs.h"
-#include "utils/strings.h"
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/free_camera.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -341,7 +343,10 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
 		{
-			utils::debug_graphs(get_render_context(), *scene.get());
+			if (!graphs::generate_all(get_render_context(), *scene.get()))
+			{
+				LOGE("Failed to save Graphs");
+			}
 		}
 	}
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -92,5 +92,10 @@ sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, co
  * @return Node where the script was attached as component
  */
 sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent);
+
+namespace graphs
+{
+bool generate_all(RenderContext &context, sg::Scene &scene);
+}
 
 }        // namespace vkb
