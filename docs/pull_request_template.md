@@ -37,7 +37,7 @@ Please ensure the following points are checked:
 
 ## Sample Checklist
 
-If your PR contains a new or modified sample, these further checks must be carried out *in addition* to the Framework Checklist:
+If your PR contains a new or modified sample, these further checks must be carried out *in addition* to the General Checklist:
 - [ ] I have tested the sample on at least one compliant Vulkan implementation
 - [ ] If the sample is vendor-specific, I have [tagged it appropriately](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#General-Requirements)
 - [ ] I have stated on what implementation the sample has been tested so that others can test on different implementations and platforms
