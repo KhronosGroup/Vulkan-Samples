@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,5 +59,7 @@ class AndroidWindow : public Window
 
 	// If true, return a VK_NULL_HANDLE on create_surface()
 	bool headless;
+
+	bool finish_called{false};
 };
 }        // namespace vkb
