@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,13 +48,15 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 
 bool AndroidWindow::should_close()
 {
-	return handle == nullptr;
+	return finish_called ? true : handle == nullptr;
 }
 
 void AndroidWindow::close()
 {
 	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
-	ANativeActivity_finish(android_platform.get_android_app()->activity);
+	ANativeActivity_finish(android_platform.get_activity());
+
+	finish_called = true;
 }
 
 float AndroidWindow::get_dpi_factor() const

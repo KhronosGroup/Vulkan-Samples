@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -286,7 +286,8 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	{
 		case APP_CMD_INIT_WINDOW:
 		{
-			platform->get_window().resize(ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window));
+			platform->get_window().resize(ANativeWindow_getWidth(app->window),
+			                              ANativeWindow_getHeight(app->window));
 			app->destroyRequested = !platform->prepare();
 			break;
 		}
@@ -403,26 +404,9 @@ void AndroidPlatform::main_loop()
 {
 	while (true)
 	{
-		android_poll_source *source;
+		poll_events();
 
-		int ident;
-		int events;
-
-		while ((ident = ALooper_pollAll(0, nullptr, &events,
-		                                (void **) &source)) >= 0)
-		{
-			if (source)
-			{
-				source->process(app, source);
-			}
-
-			if (app->destroyRequested)
-			{
-				break;
-			}
-		}
-
-		if (app->destroyRequested)
+		if (app->destroyRequested != 0)
 		{
 			break;
 		}
@@ -430,6 +414,28 @@ void AndroidPlatform::main_loop()
 		if (!window->should_close())
 		{
 			run();
+		}
+	}
+}
+
+void AndroidPlatform::poll_events()
+{
+	android_poll_source *source;
+
+	int ident;
+	int events;
+
+	while ((ident = ALooper_pollAll(0, nullptr, &events,
+	                                (void **) &source)) >= 0)
+	{
+		if (source)
+		{
+			source->process(app, source);
+		}
+
+		if (app->destroyRequested != 0)
+		{
+			break;
 		}
 	}
 }
@@ -449,6 +455,9 @@ void AndroidPlatform::terminate(ExitCode code)
 
 	auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
 	platform->get_window().close();
+
+	main_loop();        // Continue to process events until onDestroy()
+
 	Platform::terminate(code);
 }
 
@@ -459,10 +468,11 @@ const char *AndroidPlatform::get_surface_extension()
 
 void AndroidPlatform::send_notification(const std::string &message)
 {
-	app->activity->vm->AttachCurrentThread(&app->activity->env, NULL);
-	jclass    cls         = app->activity->env->GetObjectClass(app->activity->clazz);
-	jmethodID fatal_error = app->activity->env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
-	app->activity->env->CallVoidMethod(app->activity->clazz, fatal_error, app->activity->env->NewStringUTF(message.c_str()));
+	JNIEnv *env;
+	app->activity->vm->AttachCurrentThread(&env, NULL);
+	jclass    cls         = env->GetObjectClass(app->activity->clazz);
+	jmethodID fatal_error = env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
+	env->CallVoidMethod(app->activity->clazz, fatal_error, env->NewStringUTF(message.c_str()));
 	app->activity->vm->DetachCurrentThread();
 }
 
