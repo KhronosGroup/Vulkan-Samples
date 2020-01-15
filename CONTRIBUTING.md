@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -19,14 +19,15 @@
 
 # Contributing
 
-Contributions are encouraged! If you have a sample that demonstrates:
+Contributions are encouraged! This repository welcomes samples of the following types:
 - Vulkan API Usage
 - Vulkan Extension Usage
 - Vulkan Best Practices and/or Performance Guidance
 - Unique Vulkan use case or project
 
-then consider contributing to the Vulkan samples repository.
-However, before you start, check out the requirements and guidelines below.
+If you have a sample that demonstrates Vulkan like any of the above points, then consider contributing to the Vulkan samples repository.
+
+Before you start, check out the requirements and guidelines below.
 Following these guidelines can help ensure that your contribution ends up being approved by reviewers and most importantly becomes a valuable addition to the Vulkan Samples repository.
 
 ## Repository Structure
@@ -119,11 +120,15 @@ A `.clang-format` file is included with this repository, please use `clang-forma
   4. Make sure the sample is in compliance with the Vulkan specification.
   5. Make sure the sample code builds and runs on Windows, Linux, macOS and Android. If you cannot verify on all these target platforms, please note platform restrictions in the sample's README.
   6. Verify the sample against a recent version of the Vulkan validation layers, either built from source or from the most recent available Vulkan SDK.
-  7. Submit a pull request for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
+  7. Submit a [pull request](#creating-a-pull-request) for the contribution, including electronically signing the Khronos Contributor License Agreement (CLA) for the repository using CLA-Assistant.
+
+## Creating a Pull Request
+
+When you create your pull request, ensure the description is created with [this template](docs/pull_request_template.md), and then fill out the relative information. 
 
 ## Code Reviews
 
-All submissions, including submissions by project members, are subject to a code review by the Khronos Membership.
+All submissions, including those by project members, are subject to a code review by the Khronos Membership.
 GitHub pull requests are used to facilitate the review process, please submit a pull request with your contribution ready for review.
 For more information on the review process visit this [link](https://github.com/KhronosGroup/Vulkan-Samples/wiki/Review-Process).
 
