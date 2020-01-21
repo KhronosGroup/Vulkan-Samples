@@ -1179,13 +1179,3 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
 	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
 }
-
-const std::vector<const char *> ApiVulkanSample::get_instance_extensions()
-{
-	return instance_extensions;
-}
-
-const std::vector<const char *> ApiVulkanSample::get_device_extensions()
-{
-	return device_extensions;
-}

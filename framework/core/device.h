@@ -1,5 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,7 +50,14 @@ struct DriverVersion
 class Device
 {
   public:
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> requested_extensions = {}, VkPhysicalDeviceFeatures features = {});
+	/**
+	 * @brief Device constructor
+	 * @param physical_device The physical device
+	 * @param surface The surface
+	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
+	 * @param features (Optional) List of required device features
+	 */
+	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {}, VkPhysicalDeviceFeatures features = {});
 
 	Device(const Device &) = delete;
 
@@ -97,6 +104,8 @@ class Device
 	const Queue &get_suitable_graphics_queue();
 
 	bool is_extension_supported(const std::string &extension);
+
+	bool is_enabled(const char *extension);
 
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
 
@@ -175,6 +184,8 @@ class Device
 
   private:
 	std::vector<VkExtensionProperties> device_extensions;
+
+	std::vector<const char *> enabled_extensions{};
 
 	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
 
