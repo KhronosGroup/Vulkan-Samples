@@ -46,10 +46,10 @@ class Instance
 	 * @param headless Whether the application is requesting a headless setup or not
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	Instance(const std::string &              application_name,
-	         const std::vector<const char *> &required_extensions        = {},
-	         const std::vector<const char *> &required_validation_layers = {},
-	         bool                             headless                   = false);
+	Instance(const std::string &                           application_name,
+	         const std::unordered_map<const char *, bool> &required_extensions        = {},
+	         const std::vector<const char *> &             required_validation_layers = {},
+	         bool                                          headless                   = false);
 
 	/**
 	 * @brief Queries the GPUs of a VkInstance that is already created
@@ -97,7 +97,7 @@ class Instance
 	/**
 	 * @brief The enabled extensions
 	 */
-	std::vector<const char *> extensions;
+	std::vector<const char *> enabled_extensions;
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	/**
