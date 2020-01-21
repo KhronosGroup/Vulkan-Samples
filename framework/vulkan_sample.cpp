@@ -86,9 +86,8 @@ bool VulkanSample::prepare(Platform &platform)
 	LOGI("Initializing Vulkan sample");
 
 	// Creating the vulkan instance
-	std::vector<const char *> requested_instance_extensions = get_instance_extensions();
-	requested_instance_extensions.push_back(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), requested_instance_extensions, get_validation_layers(), is_headless());
+	add_instance_extension(platform.get_surface_extension());
+	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless());
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
@@ -100,13 +99,12 @@ bool VulkanSample::prepare(Platform &platform)
 	get_device_features();
 
 	// Creating vulkan device, specifying the swapchain extension always
-	std::vector<const char *> requested_device_extensions = get_device_extensions();
 	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
-		requested_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
-	device = std::make_unique<vkb::Device>(physical_device, surface, requested_device_extensions, requested_device_features);
+	device = std::make_unique<vkb::Device>(physical_device, surface, get_device_extensions(), requested_device_features);
 
 	// Preparing render context for rendering
 	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
@@ -431,14 +429,24 @@ const std::vector<const char *> VulkanSample::get_validation_layers()
 	return {};
 }
 
-std::vector<const char *> const VulkanSample::get_instance_extensions()
+const std::unordered_map<const char *, bool> VulkanSample::get_instance_extensions()
 {
-	return {};
+	return instance_extensions;
 }
 
-std::vector<const char *> const VulkanSample::get_device_extensions()
+const std::unordered_map<const char *, bool> VulkanSample::get_device_extensions()
 {
-	return {};
+	return device_extensions;
+}
+
+void VulkanSample::add_device_extension(const char *extension, bool optional)
+{
+	device_extensions[extension] = optional;
+}
+
+void VulkanSample::add_instance_extension(const char *extension, bool optional)
+{
+	instance_extensions[extension] = optional;
 }
 
 void VulkanSample::get_device_features()

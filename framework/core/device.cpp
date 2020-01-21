@@ -1,5 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> requested_extensions, VkPhysicalDeviceFeatures requested_features) :
+Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions, VkPhysicalDeviceFeatures requested_features) :
     physical_device{physical_device},
     resource_cache{*this}
 {
@@ -80,15 +80,13 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 		}
 	}
 
-	std::vector<const char *> supported_extensions{};
-
 	bool can_get_memory_requirements = is_extension_supported("VK_KHR_get_memory_requirements2");
 	bool has_dedicated_allocation    = is_extension_supported("VK_KHR_dedicated_allocation");
 
 	if (can_get_memory_requirements && has_dedicated_allocation)
 	{
-		supported_extensions.push_back("VK_KHR_get_memory_requirements2");
-		supported_extensions.push_back("VK_KHR_dedicated_allocation");
+		enabled_extensions.push_back("VK_KHR_get_memory_requirements2");
+		enabled_extensions.push_back("VK_KHR_dedicated_allocation");
 		LOGI("Dedicated Allocation enabled");
 	}
 
@@ -96,20 +94,20 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 	std::vector<const char *> unsupported_extensions{};
 	for (auto &extension : requested_extensions)
 	{
-		if (is_extension_supported(extension))
+		if (is_extension_supported(extension.first))
 		{
-			supported_extensions.emplace_back(extension);
+			enabled_extensions.emplace_back(extension.first);
 		}
 		else
 		{
-			unsupported_extensions.emplace_back(extension);
+			unsupported_extensions.emplace_back(extension.first);
 		}
 	}
 
-	if (supported_extensions.size() > 0)
+	if (enabled_extensions.size() > 0)
 	{
 		LOGI("Device supports the following requested extensions:");
-		for (auto &extension : supported_extensions)
+		for (auto &extension : enabled_extensions)
 		{
 			LOGI("  \t{}", extension);
 		}
@@ -117,12 +115,25 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 
 	if (unsupported_extensions.size() > 0)
 	{
-		LOGE("Device doesn't support the following requested extensions:");
+		auto error = false;
 		for (auto &extension : unsupported_extensions)
 		{
-			LOGE("\t{}", extension);
+			auto extension_is_optional = requested_extensions[extension];
+			if (extension_is_optional)
+			{
+				LOGW("Optional device extension {} not available, some features may be disabled", extension);
+			}
+			else
+			{
+				LOGE("Required device extension {} not available, cannot run", extension);
+			}
+			error = !extension_is_optional;
 		}
-		throw VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
+
+		if (error)
+		{
+			throw VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
+		}
 	}
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
@@ -130,8 +141,8 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
 	create_info.pEnabledFeatures        = &requested_features;
-	create_info.enabledExtensionCount   = to_u32(supported_extensions.size());
-	create_info.ppEnabledExtensionNames = supported_extensions.data();
+	create_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
+	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	VkResult result = vkCreateDevice(physical_device, &create_info, nullptr, &handle);
 
@@ -231,6 +242,11 @@ bool Device::is_extension_supported(const std::string &requested_extension)
 	                    [requested_extension](auto &device_extension) {
 		                    return std::strcmp(device_extension.extensionName, requested_extension.c_str()) == 0;
 	                    }) != device_extensions.end();
+}
+
+bool Device::is_enabled(const char *extension)
+{
+	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
 VkPhysicalDevice Device::get_physical_device() const

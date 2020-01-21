@@ -33,10 +33,10 @@ ConservativeRasterization::ConservativeRasterization()
 	title = "Conservative rasterization";
 
 	// Reading device properties of conservative rasterization requires VK_KHR_get_physical_device_properties2 to be enabled
-	instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
 	// Enable extension required for conservative rasterization
-	device_extensions.push_back(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);
+	add_device_extension(VK_EXT_CONSERVATIVE_RASTERIZATION_EXTENSION_NAME);
 }
 
 ConservativeRasterization::~ConservativeRasterization()
