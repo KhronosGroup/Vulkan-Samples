@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,14 @@ namespace vkb
 FencePool::FencePool(Device &device) :
     device{device}
 {
+}
+
+FencePool::FencePool(FencePool &&other) :
+    device{other.device},
+    active_fence_count{other.active_fence_count}
+{
+	fences.swap(other.fences);
+	other.active_fence_count = 0;
 }
 
 FencePool::~FencePool()
