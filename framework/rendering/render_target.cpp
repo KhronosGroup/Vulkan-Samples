@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,6 +54,16 @@ const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Imag
 
 	return RenderTarget{std::move(images)};
 };
+
+RenderTarget::RenderTarget(RenderTarget &&other) :
+    device(other.device)
+{
+	std::swap(extent, other.extent);
+	std::swap(images, other.images);
+	std::swap(views, other.views);
+	std::swap(attachments, other.attachments);
+	std::swap(output_attachments, other.output_attachments);
+}
 
 RenderTarget &RenderTarget::operator=(RenderTarget &&other) noexcept
 {
