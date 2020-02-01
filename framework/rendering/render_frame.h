@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,11 +60,11 @@ class RenderFrame
 	 */
 	static constexpr uint32_t BUFFER_POOL_BLOCK_SIZE = 256;
 
-	RenderFrame(Device &device, RenderTarget &&render_target, size_t thread_count = 1);
+	RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_target, size_t thread_count = 1);
 
 	RenderFrame(const RenderFrame &) = delete;
 
-	RenderFrame(RenderFrame &&) = default;
+	RenderFrame(RenderFrame &&) = delete;
 
 	RenderFrame &operator=(const RenderFrame &) = delete;
 
@@ -86,7 +86,7 @@ class RenderFrame
 	 * @brief Called when the swapchain changes
 	 * @param render_target A new render target with updated images
 	 */
-	void update_render_target(RenderTarget &&render_target);
+	void update_render_target(std::unique_ptr<RenderTarget> &&render_target);
 
 	RenderTarget &get_render_target();
 
@@ -155,7 +155,7 @@ class RenderFrame
 
 	size_t thread_count;
 
-	RenderTarget swapchain_render_target;
+	std::unique_ptr<RenderTarget> swapchain_render_target;
 
 	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
 

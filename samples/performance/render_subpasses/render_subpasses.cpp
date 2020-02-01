@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,7 +50,7 @@ RenderSubpasses::RenderSubpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
 }
 
-vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::RenderTarget> RenderSubpasses::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -93,7 +93,7 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	// Attachment 3
 	images.push_back(std::move(normal_image));
 
-	return vkb::RenderTarget{std::move(images)};
+	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
 void RenderSubpasses::prepare_render_context()
