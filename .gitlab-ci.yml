@@ -65,14 +65,10 @@ Linux:
   artifacts:
     paths:
       - build/linux
-    expire_in: 1h
+    expire_in: 2h
   tags:
     - linux
     - docker
-  artifacts:
-    paths:
-      - build/linux
-    expire_in: 2h
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/linux --target vulkan_samples --config Release -- -j$(($(nproc)/2+1))
@@ -81,13 +77,13 @@ Windows:
   stage: Build
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-  tags:
-    - gpu
-    - windows
   artifacts:
     paths:
       - build/windows
     expire_in: 2h
+  tags:
+    - gpu
+    - windows
   script:
     - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
     - cmake --build build/windows --target vulkan_samples --config Release
@@ -97,13 +93,13 @@ Android:
   image: khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
-  tags:
-    - linux
-    - docker
   artifacts:
     paths:
       - build/android
     expire_in: 2h
+  tags:
+    - linux
+    - docker
   script:
     - cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
     - cmake --build build/android --config Release --target vulkan_samples_package -- -j$(($(nproc)/2+1))
@@ -120,7 +116,7 @@ GenerateSample:
    - docker
   script:
    - cd tests/generate_sample
-   - python generate_sample_test.py
+   - python3 generate_sample_test.py
 
 SystemTest:
   stage: Test
