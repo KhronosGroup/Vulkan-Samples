@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  * Copyright (c) 2019, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -580,7 +580,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	{
 		textures = scene.get_components<sg::Texture>();
 	}
-	
+
 	for (auto &gltf_material : model.materials)
 	{
 		auto material = parse_material(gltf_material);
@@ -612,8 +612,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	// Load meshes
 	auto materials = scene.get_components<sg::PBRMaterial>();
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	for (auto &gltf_mesh : model.meshes)
 	{
@@ -705,10 +703,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		scene.add_component(std::move(mesh));
 	}
-
-	command_buffer.end();
-
-	queue.submit(command_buffer, device.request_fence());
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
