@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -163,7 +163,6 @@ class Drawer
 	/**
 	 * @brief Adds a label to the gui
 	 * @param formatstr The format string
-	 * @returns True if adding item was successful
 	 */
 	void text(const char *formatstr, ...);
 
