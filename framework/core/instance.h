@@ -94,6 +94,11 @@ class Instance
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	/**
+	 * @brief Debug utils messenger callback for VK_EXT_Debug_Utils
+	 */
+	VkDebugUtilsMessengerEXT debug_utils_messenger{VK_NULL_HANDLE};
+	
+	/**
 	 * @brief The debug report callback
 	 */
 	VkDebugReportCallbackEXT debug_report_callback{VK_NULL_HANDLE};

@@ -24,6 +24,23 @@ namespace vkb
 namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                              void *                                      user_data)
+{
+	// Log debug messge
+	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+	{
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+	}
+	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+	{
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+	}
+	return VK_FALSE;
+}
+
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
                                                      uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
                                                      const char *layer_prefix, const char *message, void * /*user_data*/)
@@ -118,7 +135,21 @@ Instance::Instance(const std::string &              application_name,
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
+	bool debug_utils = false;
+	for (auto &available_extension : available_instance_extensions)
+	{
+		if (strcmp(available_extension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+		{
+			debug_utils = true;
+			LOGI("{} is available, enabling it", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		}
+	}
+	if (!debug_utils)
+	{
+		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	}
 #endif
 
 	// Try to enable headless surface extension if it exists
@@ -201,15 +232,32 @@ Instance::Instance(const std::string &              application_name,
 	volkLoadInstance(handle);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
-
-	result = vkCreateDebugReportCallbackEXT(handle, &info, nullptr, &debug_report_callback);
-	if (result != VK_SUCCESS)
+	if (debug_utils)
 	{
-		throw std::runtime_error("Could not create debug callback.");
+		VkDebugUtilsMessengerCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+
+		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+		info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+		info.pfnUserCallback = debug_utils_messenger_callback;
+
+		result = vkCreateDebugUtilsMessengerEXT(handle, &info, nullptr, &debug_utils_messenger);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Could not create debug utils messenger.");
+		}
+	}
+	else
+	{
+		VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+
+		info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+		info.pfnCallback = debug_callback;
+
+		result = vkCreateDebugReportCallbackEXT(handle, &info, nullptr, &debug_report_callback);
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("Could not create debug callback.");
+		}
 	}
 #endif
 
