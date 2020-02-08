@@ -256,6 +256,8 @@ void DebugUtils::debug_name_objects()
 	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t) descriptor_set_layouts.composition, "Composition pass set layout");
 	set_object_name(VK_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT, (uint64_t) descriptor_set_layouts.bloom_filter, "Bloom filter descriptor set layout");
 
+	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) textures.skysphere.image->get_vk_image().get_handle(), "Sky sphere texture");
+	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.depth.image, "Offscreen pass depth image");
 	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.depth.image, "Offscreen pass depth image");
 	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.color[0].image, "Offscreen pass color image 0");
 	set_object_name(VK_OBJECT_TYPE_IMAGE, (uint64_t) offscreen.color[1].image, "Offscreen pass color image 1");
@@ -1051,11 +1053,13 @@ void DebugUtils::update_uniform_buffers()
 
 void DebugUtils::draw()
 {
+	queue_begin_label(queue, std::string("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), { 1.0f, 1.0f, 1.0f, 1.0f });
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
+	queue_end_label(queue);
 }
 
 bool DebugUtils::prepare(vkb::Platform &platform)
