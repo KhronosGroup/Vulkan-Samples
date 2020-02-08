@@ -1053,7 +1053,7 @@ void DebugUtils::update_uniform_buffers()
 
 void DebugUtils::draw()
 {
-	queue_begin_label(queue, std::string("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), { 1.0f, 1.0f, 1.0f, 1.0f });
+	queue_begin_label(queue, std::string("Graphics queue command buffer " + std::to_string(current_buffer) + " submission").c_str(), {1.0f, 1.0f, 1.0f, 1.0f});
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];

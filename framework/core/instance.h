@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -97,7 +97,7 @@ class Instance
 	 * @brief Debug utils messenger callback for VK_EXT_Debug_Utils
 	 */
 	VkDebugUtilsMessengerEXT debug_utils_messenger{VK_NULL_HANDLE};
-	
+
 	/**
 	 * @brief The debug report callback
 	 */
