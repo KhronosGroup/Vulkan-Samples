@@ -27,8 +27,9 @@
 class DebugUtils : public ApiVulkanSample
 {
   public:
-	bool bloom             = true;
-	bool display_skysphere = true;
+	bool bloom                 = true;
+	bool display_skysphere     = true;
+	bool debug_utils_supported = false;
 
 	struct
 	{
@@ -126,6 +127,7 @@ class DebugUtils : public ApiVulkanSample
 
 	DebugUtils();
 	~DebugUtils();
+	void                            debug_check_extension();
 	void                            cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
 	void                            cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
 	void                            cmd_end_label(VkCommandBuffer command_buffer);

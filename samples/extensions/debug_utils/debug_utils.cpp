@@ -66,12 +66,39 @@ DebugUtils::~DebugUtils()
 	}
 }
 
+/* 
+ * Checks if the required extension is supported at instance level
+ */
+void DebugUtils::debug_check_extension()
+{
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+	for (auto &available_extension : available_instance_extensions)
+	{
+		if (strcmp(available_extension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+		{
+			debug_utils_supported = true;
+			break;
+		}
+	}
+	if (!debug_utils_supported)
+	{
+		LOGE("Required extension {} not supported, no debugging possible with this sample", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	}
+}
+
 /*
  * Command buffer debug labeling functions
  */
 
 void DebugUtils::cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	VkDebugUtilsLabelEXT label = {VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT};
 	label.pLabelName           = label_name;
 	label.color[0]             = color[0];
@@ -83,6 +110,10 @@ void DebugUtils::cmd_begin_label(VkCommandBuffer command_buffer, const char *lab
 
 void DebugUtils::cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	VkDebugUtilsLabelEXT label = {VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT};
 	label.pLabelName           = label_name;
 	label.color[0]             = color[0];
@@ -94,6 +125,10 @@ void DebugUtils::cmd_insert_label(VkCommandBuffer command_buffer, const char *la
 
 void DebugUtils::cmd_end_label(VkCommandBuffer command_buffer)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	vkCmdEndDebugUtilsLabelEXT(command_buffer);
 }
 
@@ -103,6 +138,10 @@ void DebugUtils::cmd_end_label(VkCommandBuffer command_buffer)
 
 void DebugUtils::queue_begin_label(VkQueue queue, const char *label_name, std::vector<float> color)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	VkDebugUtilsLabelEXT label = {VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT};
 	label.pLabelName           = label_name;
 	label.color[0]             = color[0];
@@ -114,6 +153,10 @@ void DebugUtils::queue_begin_label(VkQueue queue, const char *label_name, std::v
 
 void DebugUtils::queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	VkDebugUtilsLabelEXT label = {VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT};
 	label.pLabelName           = label_name;
 	label.color[0]             = color[0];
@@ -125,6 +168,10 @@ void DebugUtils::queue_insert_label(VkQueue queue, const char *label_name, std::
 
 void DebugUtils::queue_end_label(VkQueue queue)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	vkQueueEndDebugUtilsLabelEXT(queue);
 }
 
@@ -134,6 +181,10 @@ void DebugUtils::queue_end_label(VkQueue queue)
 
 void DebugUtils::set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name)
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	VkDebugUtilsObjectNameInfoEXT name_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
 	name_info.objectType                    = object_type;
 	name_info.objectHandle                  = object_handle;
@@ -155,18 +206,21 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
 
-	// Name the sader (by file name)
-	set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, std::string("Shader " + file).c_str());
+	if (debug_utils_supported)
+	{
+		// Name the sader (by file name)
+		set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, std::string("Shader " + file).c_str());
 
-	std::vector<uint8_t> buffer = vkb::fs::read_shader(file);
-	// Pass the source GLSL shader code via an object tag
-	VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
-	info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
-	info.objectHandle                 = (uint64_t) shader_stage.module;
-	info.tagName                      = 1;
-	info.tagSize                      = buffer.size() * sizeof(uint8_t);
-	info.pTag                         = buffer.data();
-	vkSetDebugUtilsObjectTagEXT(device->get_handle(), &info);
+		std::vector<uint8_t> buffer = vkb::fs::read_shader(file);
+		// Pass the source GLSL shader code via an object tag
+		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
+		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
+		info.objectHandle                 = (uint64_t) shader_stage.module;
+		info.tagName                      = 1;
+		info.tagSize                      = buffer.size() * sizeof(uint8_t);
+		info.pTag                         = buffer.data();
+		vkSetDebugUtilsObjectTagEXT(device->get_handle(), &info);
+	}
 
 	return shader_stage;
 }
@@ -177,6 +231,10 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
  */
 void DebugUtils::debug_name_objects()
 {
+	if (!debug_utils_supported)
+	{
+		return;
+	}
 	set_object_name(VK_OBJECT_TYPE_BUFFER, (uint64_t) uniform_buffers.matrices->get_handle(), "Matrices uniform buffer");
 
 	set_object_name(VK_OBJECT_TYPE_PIPELINE, (uint64_t) pipelines.skysphere, "Skysphere pipeline");
@@ -1014,6 +1072,7 @@ bool DebugUtils::prepare(vkb::Platform &platform)
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
+	debug_check_extension();
 	load_assets();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
@@ -1038,6 +1097,7 @@ void DebugUtils::render(float delta_time)
 
 void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)
 {
+	drawer.text(debug_utils_supported ? "Debug utils supported" : "Error: Debut utils not supported");
 	if (drawer.header("Settings"))
 	{
 		if (drawer.checkbox("Bloom", &bloom))
