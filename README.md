@@ -77,6 +77,8 @@ Additionally you may find the following links useful:
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
+- **Debug utilities**
+  - [Using debug utilities for advanced debugging](./samples/extensions/debug_utils/debug_utils_tutorial.md)
 
 ## Setup
 
