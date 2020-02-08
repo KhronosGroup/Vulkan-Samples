@@ -225,7 +225,7 @@ set(ASTC_SOURCES
 
 add_library(astc ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
-target_compile_definitions(astc PRIVATE -D_USE_MATH_DEFINES)
+target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
 
 if(ANDROID)
