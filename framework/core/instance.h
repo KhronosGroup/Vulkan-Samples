@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "core/physical_device.h"
 
 namespace vkb
 {
@@ -76,13 +75,13 @@ class Instance
 	 * @brief Tries to find the first available discrete GPU
 	 * @returns A valid physical device
 	 */
-	VkPhysicalDevice get_gpu();
+	PhysicalDevice &get_suitable_gpu();
 
 	/**
 	 * @brief Checks if the given extension is enabled in the VkInstance
 	 * @param extension An extension to check
 	 */
-	bool is_enabled(const char *extension);
+	bool is_enabled(const char *extension) const;
 
 	VkInstance get_handle();
 
@@ -109,6 +108,6 @@ class Instance
 	/**
 	 * @brief The physical devices found on the machine
 	 */
-	std::vector<VkPhysicalDevice> gpus;
-};
+	std::vector<std::unique_ptr<PhysicalDevice>> gpus;
+};        // namespace Instance
 }        // namespace vkb

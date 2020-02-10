@@ -622,7 +622,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
 	// Get VK_NV_ray_tracing related function pointers
 	vkCreateAccelerationStructureNV                = reinterpret_cast<PFN_vkCreateAccelerationStructureNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCreateAccelerationStructureNV"));

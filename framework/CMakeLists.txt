@@ -165,6 +165,7 @@ set(SCENE_GRAPH_SCRIPTS_FILES
 set(CORE_FILES
     # Header Files
     core/instance.h
+    core/physical_device.h
     core/device.h
     core/shader_module.h
     core/pipeline_layout.h
@@ -185,6 +186,7 @@ set(CORE_FILES
     core/render_pass.h
     # Source Files
     core/instance.cpp
+    core/physical_device.cpp
     core/device.cpp
     core/image.cpp
     core/shader_module.cpp

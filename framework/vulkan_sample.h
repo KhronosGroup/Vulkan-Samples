@@ -174,12 +174,6 @@ class VulkanSample : public Application
 
 	std::unique_ptr<Stats> stats{nullptr};
 
-	// All the features the physical device supports
-	VkPhysicalDeviceFeatures supported_device_features{};
-
-	// The features to be requested from the logical device
-	VkPhysicalDeviceFeatures requested_device_features{};
-
 	/**
 	 * @brief Update scene
 	 * @param delta_time
@@ -254,9 +248,9 @@ class VulkanSample : public Application
 	void add_instance_extension(const char *extension, bool optional = false);
 
 	/**
-	 * @brief Populate `requested_device_features` with required sample-specific device features.
+	 * @brief Request features from the gpu based on what is supported
 	 */
-	virtual void get_device_features();
+	virtual void request_gpu_features(PhysicalDevice &gpu);
 
 	/** 
 	 * @brief Override this to customise the creation of the swapchain and render_context

@@ -296,30 +296,36 @@ void Instance::query_gpus()
 		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
 	}
 
-	gpus.resize(physical_device_count);
+	std::vector<VkPhysicalDevice> physical_devices;
+	physical_devices.resize(physical_device_count);
+	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, physical_devices.data()));
 
-	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, gpus.data()));
+	// Create gpus wrapper objects from the VkPhysicalDevice's
+	for (auto &physical_device : physical_devices)
+	{
+		gpus.push_back(std::make_unique<PhysicalDevice>(*this, physical_device));
+	}
 }
 
-VkPhysicalDevice Instance::get_gpu()
+PhysicalDevice &Instance::get_suitable_gpu()
 {
+	assert(!gpus.empty() && "No physical devices were found on the system.");
+
 	// Find a discrete GPU
-	for (auto gpu : gpus)
+	for (auto &gpu : gpus)
 	{
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(gpu, &properties);
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
-			return gpu;
+			return *gpu;
 		}
 	}
 
 	// Otherwise just pick the first one
-	LOGW("Couldn't find a discrete physical device, using integrated graphics");
-	return gpus.at(0);
+	LOGW("Couldn't find a discrete physical device, picking default GPU");
+	return *gpus.at(0);
 }
 
-bool Instance::is_enabled(const char *extension)
+bool Instance::is_enabled(const char *extension) const
 {
 	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }

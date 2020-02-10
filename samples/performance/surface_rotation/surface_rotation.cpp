@@ -171,7 +171,7 @@ VkSurfaceTransformFlagBitsKHR SurfaceRotation::select_pre_transform()
 	if (pre_rotate)
 	{
 		VkSurfaceCapabilitiesKHR surface_properties;
-		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
 		                                                   get_surface(),
 		                                                   &surface_properties));
 
@@ -196,7 +196,7 @@ void SurfaceRotation::handle_no_resize_rotations()
 	// If pre-rotate mode is enabled, the sample will detect a 180 degree change in orientation
 	// and re-create the swapchain
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_gpu().get_handle(),
 	                                                   get_surface(),
 	                                                   &surface_properties));
 

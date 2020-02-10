@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ class PushDescriptors : public ApiVulkanSample
 
 	PushDescriptors();
 	~PushDescriptors();
-	void         get_device_features() override;
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         load_assets();
 	void         setup_descriptor_set_layout();
