@@ -52,12 +52,11 @@ class Device
   public:
 	/**
 	 * @brief Device constructor
-	 * @param physical_device The physical device
+	 * @param gpu A valid Vulkan physical device and the requested gpu features 
 	 * @param surface The surface
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
-	 * @param features (Optional) List of required device features
 	 */
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {}, VkPhysicalDeviceFeatures features = {});
+	Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
 
 	Device(const Device &) = delete;
 
@@ -69,15 +68,11 @@ class Device
 
 	Device &operator=(Device &&) = delete;
 
-	VkPhysicalDevice get_physical_device() const;
-
-	const VkPhysicalDeviceFeatures &get_features() const;
+	const PhysicalDevice &get_gpu() const;
 
 	VkDevice get_handle() const;
 
 	VmaAllocator get_memory_allocator() const;
-
-	const VkPhysicalDeviceProperties &get_properties() const;
 
 	/**
 	 * @return The version of the driver of the current physical device
@@ -88,8 +83,6 @@ class Device
 	 * @return Whether an image format is supported by the GPU
 	 */
 	bool is_image_format_supported(VkFormat format) const;
-
-	const VkFormatProperties get_format_properties(VkFormat format) const;
 
 	const Queue &get_queue(uint32_t queue_family_index, uint32_t queue_index);
 
@@ -183,27 +176,17 @@ class Device
 	ResourceCache &get_resource_cache();
 
   private:
+	const PhysicalDevice &gpu;
+
+	VkSurfaceKHR surface{VK_NULL_HANDLE};
+
+	VkDevice handle{VK_NULL_HANDLE};
+
 	std::vector<VkExtensionProperties> device_extensions;
 
 	std::vector<const char *> enabled_extensions{};
 
-	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
-
-	VkPhysicalDeviceFeatures features{};
-
-	VkSurfaceKHR surface{VK_NULL_HANDLE};
-
-	uint32_t queue_family_count{0};
-
-	std::vector<VkQueueFamilyProperties> queue_family_properties;
-
-	VkDevice handle{VK_NULL_HANDLE};
-
 	VmaAllocator memory_allocator{VK_NULL_HANDLE};
-
-	VkPhysicalDeviceProperties properties;
-
-	VkPhysicalDeviceMemoryProperties memory_properties;
 
 	std::vector<std::vector<Queue>> queues;
 

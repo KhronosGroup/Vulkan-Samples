@@ -793,7 +793,7 @@ void Gui::show_app_info(const std::string &app_name)
 
 	// GPU name
 	auto &device            = sample.get_render_context().get_device();
-	auto  device_name_label = "GPU: " + std::string(device.get_properties().deviceName);
+	auto  device_name_label = "GPU: " + std::string(device.get_gpu().get_properties().deviceName);
 	ImGui::SameLine(ImGui::GetWindowContentRegionMax().x - ImGui::CalcTextSize(device_name_label.c_str()).x);
 	ImGui::Text("%s", device_name_label.c_str());
 }
@@ -982,7 +982,7 @@ void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::fu
 	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
-	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_properties().deviceName).c_str());
+	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_gpu().get_properties().deviceName).c_str());
 	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / last_fps), last_fps);
 	ImGui::PushItemWidth(110.0f * dpi_factor);
 

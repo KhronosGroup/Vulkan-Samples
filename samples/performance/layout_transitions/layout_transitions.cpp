@@ -85,7 +85,7 @@ std::unique_ptr<vkb::RenderTarget> LayoutTransitions::create_render_target(vkb::
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_physical_device()),
+	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 

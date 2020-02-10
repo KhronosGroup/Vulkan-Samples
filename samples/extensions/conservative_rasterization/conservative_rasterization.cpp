@@ -71,10 +71,10 @@ ConservativeRasterization::~ConservativeRasterization()
 	triangle.indices.reset();
 }
 
-void ConservativeRasterization::get_device_features()
+void ConservativeRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	requested_device_features.fillModeNonSolid = supported_device_features.fillModeNonSolid;
-	requested_device_features.wideLines        = supported_device_features.wideLines;
+	gpu.get_mutable_requested_features().fillModeNonSolid = gpu.get_features().fillModeNonSolid;
+	gpu.get_mutable_requested_features().wideLines        = gpu.get_features().wideLines;
 }
 
 // Setup offscreen framebuffer, attachments and render passes for lower resolution rendering of the scene
@@ -84,7 +84,7 @@ void ConservativeRasterization::prepare_offscreen()
 	offscreen_pass.height = height / ZOOM_FACTOR;
 
 	// Find a suitable depth format
-	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_physical_device());
+	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
 
 	// Color attachment
 	VkImageCreateInfo image = vkb::initializers::image_create_info();
@@ -476,7 +476,7 @@ void ConservativeRasterization::prepare_pipelines()
 	conservative_raster_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
 	device_properties.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext              = &conservative_raster_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	// Vertex bindings and attributes
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {

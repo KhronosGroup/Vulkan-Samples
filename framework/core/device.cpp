@@ -25,35 +25,20 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions, VkPhysicalDeviceFeatures requested_features) :
-    physical_device{physical_device},
+Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions) :
+    gpu{gpu},
     resource_cache{*this}
 {
-	// Check whether ASTC is supported
-	vkGetPhysicalDeviceFeatures(physical_device, &features);
-	if (features.textureCompressionASTC_LDR)
-	{
-		requested_features.textureCompressionASTC_LDR = VK_TRUE;
-	}
+	LOGI("Selected GPU: {}", gpu.get_properties().deviceName);
 
-	// Gpu properties
-	vkGetPhysicalDeviceProperties(physical_device, &properties);
-	LOGI("GPU: {}", properties.deviceName);
-
-	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
-
-	uint32_t queue_family_properties_count = 0;
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);
-
-	queue_family_properties = std::vector<VkQueueFamilyProperties>(queue_family_properties_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, queue_family_properties.data());
-
+	// Prepare the device queues
+	uint32_t                             queue_family_properties_count = to_u32(gpu.get_queue_family_properties().size());
 	std::vector<VkDeviceQueueCreateInfo> queue_create_infos(queue_family_properties_count, {VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO});
 	std::vector<std::vector<float>>      queue_priorities(queue_family_properties_count);
 
 	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
-		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
+		const VkQueueFamilyProperties &queue_family_property = gpu.get_queue_family_properties()[queue_family_index];
 
 		queue_priorities[queue_family_index].resize(queue_family_property.queueCount, 1.0f);
 
@@ -66,9 +51,9 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unor
 
 	// Check extensions to enable Vma Dedicated Allocation
 	uint32_t device_extension_count;
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, nullptr));
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
 	device_extensions = std::vector<VkExtensionProperties>(device_extension_count);
-	VK_CHECK(vkEnumerateDeviceExtensionProperties(physical_device, nullptr, &device_extension_count, device_extensions.data()));
+	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, device_extensions.data()));
 
 	// Display supported extensions
 	if (device_extensions.size() > 0)
@@ -140,11 +125,12 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unor
 
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
-	create_info.pEnabledFeatures        = &requested_features;
+	const auto requested_gpu_features   = gpu.get_requested_features();
+	create_info.pEnabledFeatures        = &requested_gpu_features;
 	create_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
-	VkResult result = vkCreateDevice(physical_device, &create_info, nullptr, &handle);
+	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -155,14 +141,14 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unor
 
 	for (uint32_t queue_family_index = 0U; queue_family_index < queue_family_properties_count; ++queue_family_index)
 	{
-		const VkQueueFamilyProperties &queue_family_property = queue_family_properties[queue_family_index];
+		const VkQueueFamilyProperties &queue_family_property = gpu.get_queue_family_properties()[queue_family_index];
 
-		VkBool32 present_supported{VK_FALSE};
+		VkBool32 present_supported = gpu.is_present_supported(surface, queue_family_index);
 
 		// Only check if surface is valid to allow for headless applications
 		if (surface != VK_NULL_HANDLE)
 		{
-			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(physical_device, queue_family_index, surface, &present_supported));
+			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu.get_handle(), queue_family_index, surface, &present_supported));
 		}
 
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
@@ -190,7 +176,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::unor
 	vma_vulkan_func.vkUnmapMemory                       = vkUnmapMemory;
 
 	VmaAllocatorCreateInfo allocator_info{};
-	allocator_info.physicalDevice = physical_device;
+	allocator_info.physicalDevice = gpu.get_handle();
 	allocator_info.device         = handle;
 
 	if (can_get_memory_requirements && has_dedicated_allocation)
@@ -249,14 +235,9 @@ bool Device::is_enabled(const char *extension)
 	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
-VkPhysicalDevice Device::get_physical_device() const
+const PhysicalDevice &Device::get_gpu() const
 {
-	return physical_device;
-}
-
-const VkPhysicalDeviceFeatures &Device::get_features() const
-{
-	return features;
+	return gpu;
 }
 
 VkDevice Device::get_handle() const
@@ -269,31 +250,26 @@ VmaAllocator Device::get_memory_allocator() const
 	return memory_allocator;
 }
 
-const VkPhysicalDeviceProperties &Device::get_properties() const
-{
-	return properties;
-}
-
 DriverVersion Device::get_driver_version() const
 {
 	DriverVersion version;
 
-	switch (properties.vendorID)
+	switch (gpu.get_properties().vendorID)
 	{
 		case 0x10DE:
 		{
 			// Nvidia
-			version.major = (properties.driverVersion >> 22) & 0x3ff;
-			version.minor = (properties.driverVersion >> 14) & 0x0ff;
-			version.patch = (properties.driverVersion >> 6) & 0x0ff;
+			version.major = (gpu.get_properties().driverVersion >> 22) & 0x3ff;
+			version.minor = (gpu.get_properties().driverVersion >> 14) & 0x0ff;
+			version.patch = (gpu.get_properties().driverVersion >> 6) & 0x0ff;
 			// Ignoring optional tertiary info in lower 6 bits
 			break;
 		}
 		default:
 		{
-			version.major = VK_VERSION_MAJOR(properties.driverVersion);
-			version.minor = VK_VERSION_MINOR(properties.driverVersion);
-			version.patch = VK_VERSION_PATCH(properties.driverVersion);
+			version.major = VK_VERSION_MAJOR(gpu.get_properties().driverVersion);
+			version.minor = VK_VERSION_MINOR(gpu.get_properties().driverVersion);
+			version.patch = VK_VERSION_PATCH(gpu.get_properties().driverVersion);
 		}
 	}
 
@@ -304,7 +280,7 @@ bool Device::is_image_format_supported(VkFormat format) const
 {
 	VkImageFormatProperties format_properties;
 
-	auto result = vkGetPhysicalDeviceImageFormatProperties(physical_device,
+	auto result = vkGetPhysicalDeviceImageFormatProperties(gpu.get_handle(),
 	                                                       format,
 	                                                       VK_IMAGE_TYPE_2D,
 	                                                       VK_IMAGE_TILING_OPTIMAL,
@@ -316,11 +292,11 @@ bool Device::is_image_format_supported(VkFormat format) const
 
 uint32_t Device::get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found)
 {
-	for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
+	for (uint32_t i = 0; i < gpu.get_memory_properties().memoryTypeCount; i++)
 	{
 		if ((bits & 1) == 1)
 		{
-			if ((memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
+			if ((gpu.get_memory_properties().memoryTypes[i].propertyFlags & properties) == properties)
 			{
 				if (memory_type_found)
 				{
@@ -341,13 +317,6 @@ uint32_t Device::get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties
 	{
 		throw std::runtime_error("Could not find a matching memory type");
 	}
-}
-
-const VkFormatProperties Device::get_format_properties(VkFormat format) const
-{
-	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(physical_device, format, &format_properties);
-	return format_properties;
 }
 
 const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index)
@@ -392,6 +361,8 @@ const Queue &Device::get_queue_by_present(uint32_t queue_index)
 
 uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 {
+	const auto &queue_family_properties = gpu.get_queue_family_properties();
+
 	// Dedicated queue for compute
 	// Try to find a queue family index that supports compute but not graphics
 	if (queue_flag & VK_QUEUE_COMPUTE_BIT)

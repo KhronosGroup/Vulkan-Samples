@@ -197,7 +197,7 @@ size_t create_vk_image_view(Graph &graph, const VkImageView &image)
 
 size_t device_node(Graph &graph, const Device &device)
 {
-	auto pd_props = device.get_properties();
+	auto pd_props = device.get_gpu().get_properties();
 
 	nlohmann::json device_properties = {
 	    {"deviceID", pd_props.deviceID},
