@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -378,7 +378,7 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	// We allocate this manually as the alignment of the offset differs between GPUs
 
 	// Calculate required alignment based on minimum device offset alignment
-	size_t min_ubo_alignment = get_device().get_properties().limits.minUniformBufferOffsetAlignment;
+	size_t min_ubo_alignment = get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment;
 	dynamic_alignment        = sizeof(glm::mat4);
 	if (min_ubo_alignment > 0)
 	{

@@ -92,11 +92,16 @@ bool VulkanSample::prepare(Platform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 
-	auto physical_device = instance->get_gpu();
+	auto &gpu = instance->get_suitable_gpu();
 
-	// Get supported features from the physical device, and requested features from the sample
-	vkGetPhysicalDeviceFeatures(physical_device, &supported_device_features);
-	get_device_features();
+	// Request to enable ASTC
+	if (gpu.get_features().textureCompressionASTC_LDR)
+	{
+		gpu.get_mutable_requested_features().textureCompressionASTC_LDR = VK_TRUE;
+	}
+
+	// Request sample required GPU features
+	request_gpu_features(gpu);
 
 	// Creating vulkan device, specifying the swapchain extension always
 	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
@@ -104,7 +109,7 @@ bool VulkanSample::prepare(Platform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
-	device = std::make_unique<vkb::Device>(physical_device, surface, get_device_extensions(), requested_device_features);
+	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
 
 	// Preparing render context for rendering
 	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
@@ -449,9 +454,9 @@ void VulkanSample::add_instance_extension(const char *extension, bool optional)
 	instance_extensions[extension] = optional;
 }
 
-void VulkanSample::get_device_features()
+void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
 {
-	// Can be overriden in derived class
+	// To be overriden by sample
 }
 
 sg::Scene &VulkanSample::get_scene()

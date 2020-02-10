@@ -57,11 +57,12 @@ PushDescriptors::~PushDescriptors()
 	}
 }
 
-void PushDescriptors::get_device_features()
+void PushDescriptors::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	if (supported_device_features.samplerAnisotropy)
+	// Enable anisotropic filtering if supported
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -339,7 +340,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	push_descriptor_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
 	device_properties.sType          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext          = &push_descriptor_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	/*
 		End of extension specific functions

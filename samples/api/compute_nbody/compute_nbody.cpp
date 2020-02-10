@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,12 +59,12 @@ ComputeNBody::~ComputeNBody()
 	}
 }
 
-void ComputeNBody::get_device_features()
+void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -508,7 +508,7 @@ void ComputeNBody::prepare_compute()
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(2, offsetof(SpecializationData, power), sizeof(float)));
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(3, offsetof(SpecializationData, soften), sizeof(float)));
 
-	specialization_data.shaderd_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	specialization_data.shaderd_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	specialization_data.gravity = 0.002f;
 	specialization_data.power   = 0.75f;
