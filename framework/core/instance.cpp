@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "physical_device.h"
+
 #include "instance.h"
 
 #include <algorithm>

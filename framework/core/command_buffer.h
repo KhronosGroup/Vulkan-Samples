@@ -215,6 +215,8 @@ class CommandBuffer
 
 	const State get_state() const;
 
+	void set_update_after_bind(bool update_after_bind_);
+
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to
 	 * @param reset_mode How to reset the buffer, should match the one used by the pool to allocate it
@@ -239,6 +241,10 @@ class CommandBuffer
 	VkExtent2D last_framebuffer_extent{};
 
 	VkExtent2D last_render_area_extent{};
+
+	// If true, it becomes the responsibility of the caller to update ANY descriptor bindings
+	// that contain update after bind, as they wont be implicitly updated
+	bool update_after_bind{false};
 
 	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_binding_state;
 

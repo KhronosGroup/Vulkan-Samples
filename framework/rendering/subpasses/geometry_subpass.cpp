@@ -110,6 +110,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	color_blend_attachment.blend_enable           = VK_TRUE;
 	color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	ColorBlendState color_blend_state{};
 	color_blend_state.attachments.resize(get_output_attachments().size());
@@ -166,6 +167,12 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	auto &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), sub_mesh.get_shader_variant());
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
+
+	// Set UBO to use dynamic indexing
+	for (auto &shader_module : shader_modules)
+	{
+		shader_module->set_resource_mode(ShaderResourceMode::Dynamic, "GlobalUniform");
+	}
 
 	auto &pipeline_layout = device.get_resource_cache().request_pipeline_layout(shader_modules);
 

@@ -41,6 +41,14 @@ enum class ShaderResourceType
 	All
 };
 
+/// This determines the type and method of how descriptor set should be created and bound
+enum class ShaderResourceMode
+{
+	Static,
+	Dynamic,
+	UpdateAfterBind
+};
+
 /// Store shader resource data.
 /// Used by the shader module.
 struct ShaderResource
@@ -48,6 +56,8 @@ struct ShaderResource
 	VkShaderStageFlags stages;
 
 	ShaderResourceType type;
+
+	ShaderResourceMode mode;
 
 	uint32_t set;
 
@@ -68,8 +78,6 @@ struct ShaderResource
 	uint32_t size;
 
 	uint32_t constant_id;
-
-	bool dynamic;
 
 	std::string name;
 };
@@ -196,7 +204,7 @@ class ShaderModule
 
 	const std::vector<uint32_t> &get_binary() const;
 
-	void set_resource_dynamic(const std::string &resource_name);
+	void set_resource_mode(const ShaderResourceMode &mode, const std::string &resource_name);
 
   private:
 	Device &device;

@@ -208,6 +208,7 @@ struct hash<vkb::ShaderResource>
 		vkb::hash_combine(result, shader_resource.set);
 		vkb::hash_combine(result, shader_resource.binding);
 		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
+		vkb::hash_combine(result, shader_resource.mode);
 
 		return result;
 	}
@@ -405,9 +406,9 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto stage : pipeline_state.get_pipeline_layout().get_shader_modules())
+		for (auto shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
 		{
-			vkb::hash_combine(result, stage->get_id());
+			vkb::hash_combine(result, shader_module->get_id());
 		}
 
 		// VkPipelineVertexInputStateCreateInfo
