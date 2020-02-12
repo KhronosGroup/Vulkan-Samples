@@ -558,7 +558,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	push_transform = glm::scale(push_transform, glm::vec3(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y, 0.0f));
 
 	// Push constants
-	command_buffer.push_constants(0, push_transform);
+	command_buffer.push_constants(push_transform);
 
 	// If a render context is used, then use the frames buffer pools to allocate GUI vertex/index data from
 	if (!explicit_update)

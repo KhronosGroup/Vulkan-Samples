@@ -27,6 +27,7 @@ namespace vkb
 {
 CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level) :
     command_pool{command_pool},
+    max_push_constants_size{command_pool.get_device().get_gpu().get_properties().limits.maxPushConstantsSize},
     level{level}
 {
 	VkCommandBufferAllocateInfo allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
@@ -138,6 +139,15 @@ VkResult CommandBuffer::end()
 	return VK_SUCCESS;
 }
 
+void CommandBuffer::flush(VkPipelineBindPoint pipeline_bind_point)
+{
+	flush_pipeline_state(pipeline_bind_point);
+
+	flush_push_constants();
+
+	flush_descriptor_state(pipeline_bind_point);
+}
+
 void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents)
 {
 	// Reset state
@@ -243,35 +253,18 @@ void CommandBuffer::set_specialization_constant(uint32_t constant_id, const std:
 	pipeline_state.set_specialization_constant(constant_id, data);
 }
 
-void CommandBuffer::set_push_constants(const std::vector<uint8_t> &values)
+void CommandBuffer::push_constants(const std::vector<uint8_t> &values)
 {
-	stored_push_constants.insert(stored_push_constants.end(), values.begin(), values.end());
-}
+	uint32_t push_constant_size = to_u32(stored_push_constants.size() + values.size());
 
-void CommandBuffer::push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset)
-{
-	auto accumulated_values = stored_push_constants;
-	accumulated_values.insert(accumulated_values.end(), values.begin(), values.end());
-
-	push_constants(offset, accumulated_values);
-}
-
-void CommandBuffer::push_constants(uint32_t offset, const std::vector<uint8_t> &values)
-{
-	auto accumulated_values = stored_push_constants;
-	accumulated_values.insert(accumulated_values.end(), values.begin(), values.end());
-
-	const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
-
-	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(offset, to_u32(values.size()));
-
-	if (shader_stage)
+	if (push_constant_size > max_push_constants_size)
 	{
-		vkCmdPushConstants(get_handle(), pipeline_layout.get_handle(), shader_stage, offset, to_u32(values.size()), values.data());
+		LOGE("Push constant limit of {} exceeded (pushing {} bytes for a total of {} bytes)", max_push_constants_size, values.size(), push_constant_size);
+		throw std::runtime_error("Push constant limit exceeded.");
 	}
 	else
 	{
-		LOGW("Push constant range [{}, {}] not found", offset, values.size());
+		stored_push_constants.insert(stored_push_constants.end(), values.begin(), values.end());
 	}
 }
 
@@ -370,45 +363,35 @@ void CommandBuffer::set_depth_bounds(float min_depth_bounds, float max_depth_bou
 
 void CommandBuffer::draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
-	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
-
-	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
+	flush(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
 	vkCmdDraw(get_handle(), vertex_count, instance_count, first_vertex, first_instance);
 }
 
 void CommandBuffer::draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
 {
-	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
-
-	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
+	flush(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
 	vkCmdDrawIndexed(get_handle(), index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 void CommandBuffer::draw_indexed_indirect(const core::Buffer &buffer, VkDeviceSize offset, uint32_t draw_count, uint32_t stride)
 {
-	flush_pipeline_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
-
-	flush_descriptor_state(VK_PIPELINE_BIND_POINT_GRAPHICS);
+	flush(VK_PIPELINE_BIND_POINT_GRAPHICS);
 
 	vkCmdDrawIndexedIndirect(get_handle(), buffer.get_handle(), offset, draw_count, stride);
 }
 
 void CommandBuffer::dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
 {
-	flush_pipeline_state(VK_PIPELINE_BIND_POINT_COMPUTE);
-
-	flush_descriptor_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+	flush(VK_PIPELINE_BIND_POINT_COMPUTE);
 
 	vkCmdDispatch(get_handle(), group_count_x, group_count_y, group_count_z);
 }
 
 void CommandBuffer::dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset)
 {
-	flush_pipeline_state(VK_PIPELINE_BIND_POINT_COMPUTE);
-
-	flush_descriptor_state(VK_PIPELINE_BIND_POINT_COMPUTE);
+	flush(VK_PIPELINE_BIND_POINT_COMPUTE);
 
 	vkCmdDispatchIndirect(get_handle(), buffer.get_handle(), offset);
 }
@@ -724,6 +707,29 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 			                        dynamic_offsets.data());
 		}
 	}
+}
+
+void CommandBuffer::flush_push_constants()
+{
+	if (stored_push_constants.empty())
+	{
+		return;
+	}
+
+	const PipelineLayout &pipeline_layout = pipeline_state.get_pipeline_layout();
+
+	VkShaderStageFlags shader_stage = pipeline_layout.get_push_constant_range_stage(to_u32(stored_push_constants.size()));
+
+	if (shader_stage)
+	{
+		vkCmdPushConstants(get_handle(), pipeline_layout.get_handle(), shader_stage, 0, to_u32(stored_push_constants.size()), stored_push_constants.data());
+	}
+	else
+	{
+		LOGW("Push constant range [{}, {}] not found", 0, stored_push_constants.size());
+	}
+
+	stored_push_constants.clear();
 }
 
 const CommandBuffer::State CommandBuffer::get_state() const

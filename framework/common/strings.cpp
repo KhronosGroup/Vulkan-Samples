@@ -494,43 +494,6 @@ const std::string to_string(VkSampleCountFlagBits flags)
 	return result;
 }
 
-const std::string to_string_vk_shader_stage_flags(VkShaderStageFlags flags)
-{
-	if (flags == VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT)
-	{
-		return "TESSELLATION_CONTROL";
-	}
-	if (flags == VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT)
-	{
-		return "TESSELLATION_EVALUATION";
-	}
-	if (flags == VK_SHADER_STAGE_GEOMETRY_BIT)
-	{
-		return "GEOMETRY";
-	}
-	if (flags == VK_SHADER_STAGE_FRAGMENT_BIT)
-	{
-		return "FRAGMENT";
-	}
-	if (flags == VK_SHADER_STAGE_COMPUTE_BIT)
-	{
-		return "COMPUTE";
-	}
-	if (flags == VK_SHADER_STAGE_ALL_GRAPHICS)
-	{
-		return "ALL_GRAPHICS";
-	}
-	if (flags == VK_SHADER_STAGE_FLAG_BITS_MAX_ENUM)
-	{
-		return "FLAG_BITS_MAX_ENUM";
-	}
-	if (flags & VK_SHADER_STAGE_VERTEX_BIT)
-	{
-		return "VERTEX";
-	}
-	return "Unknown Stage";
-}
-
 const std::string to_string(VkPhysicalDeviceType type)
 {
 	switch (type)
@@ -548,111 +511,6 @@ const std::string to_string(VkPhysicalDeviceType type)
 		default:
 			return "UNKNOWN_DEVICE_TYPE";
 	}
-}
-
-const std::string to_string_vk_image_usage_flags(VkImageUsageFlags flags)
-{
-	std::string result{""};
-	bool        append = false;
-	if (flags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_TRANSFER_SRC_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_TRANSFER_DST_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_TRANSFER_DST_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_SAMPLED_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_SAMPLED_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_STORAGE_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_STORAGE_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT)
-	{
-		result += append ? " / " : "";
-		result += "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT";
-		append = true;
-	}
-	return result;
-}
-
-const std::string to_string_vk_image_aspect_flags(VkImageAspectFlags flags)
-{
-	std::string result = "";
-	bool        append = false;
-
-	if (flags & VK_IMAGE_ASPECT_COLOR_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_COLOR_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_DEPTH_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_DEPTH_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_STENCIL_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_STENCIL_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_METADATA_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_METADATA_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_PLANE_0_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_PLANE_0_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_PLANE_1_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_PLANE_1_BIT";
-		append = true;
-	}
-	if (flags & VK_IMAGE_ASPECT_PLANE_2_BIT)
-	{
-		result += append ? "/" : "";
-		result += "VK_IMAGE_ASPECT_PLANE_2_BIT";
-		append = true;
-	}
-	return result;
 }
 
 const std::string to_string(VkImageTiling tiling)
@@ -835,27 +693,6 @@ const std::string to_string(VkPolygonMode mode)
 		return "VK_POLYGON_MODE_FILL_RECTANGLE_NV";
 	}
 	return "UNKOWN";
-}
-
-const std::string to_string_vk_cull_mode_flags(VkCullModeFlags flags)
-{
-	if (flags == VK_CULL_MODE_NONE)
-	{
-		return "VK_CULL_MODE_NONE";
-	}
-	if (flags == VK_CULL_MODE_FRONT_BIT)
-	{
-		return "VK_CULL_MODE_FRONT_BIT";
-	}
-	if (flags == VK_CULL_MODE_BACK_BIT)
-	{
-		return "VK_CULL_MODE_BACK_BIT";
-	}
-	if (flags == VK_CULL_MODE_FRONT_AND_BACK)
-	{
-		return "VK_CULL_MODE_FRONT_AND_BACK";
-	}
-	return "Unkown Cull Mode";
 }
 
 const std::string to_string(VkCompareOp operation)
@@ -1260,28 +1097,6 @@ const std::string to_string(VkBlendOp operation)
 	return "Unkown";
 }
 
-const std::string to_string_vk_color_component_flags(VkColorComponentFlags flags)
-{
-	std::string result = "";
-	if (flags & VK_COLOR_COMPONENT_R_BIT)
-	{
-		result += "R";
-	}
-	if (flags & VK_COLOR_COMPONENT_G_BIT)
-	{
-		result += "G";
-	}
-	if (flags & VK_COLOR_COMPONENT_B_BIT)
-	{
-		result += "B";
-	}
-	if (flags & VK_COLOR_COMPONENT_A_BIT)
-	{
-		result += "A";
-	}
-	return result.empty() ? "No Color Component" : result;
-}
-
 const std::string to_string(sg::AlphaMode mode)
 {
 	if (mode == sg::AlphaMode::Blend)
@@ -1339,4 +1154,79 @@ const std::string to_string(ShaderResourceType type)
 	}
 }
 
+const std::string buffer_usage_to_string(VkBufferUsageFlags flags)
+{
+	return to_string<VkBufferUsageFlagBits>(flags,
+	                                        {{VK_BUFFER_USAGE_TRANSFER_SRC_BIT, "VK_BUFFER_USAGE_TRANSFER_SRC_BIT"},
+	                                         {VK_BUFFER_USAGE_TRANSFER_DST_BIT, "VK_BUFFER_USAGE_TRANSFER_DST_BIT"},
+	                                         {VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, "VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, "VK_BUFFER_USAGE_STORAGE_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_INDEX_BUFFER_BIT, "VK_BUFFER_USAGE_INDEX_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, "VK_BUFFER_USAGE_VERTEX_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT, "VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT"},
+	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT"},
+	                                         {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_BUFFER_BIT_EXT"},
+	                                         {VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT, "VK_BUFFER_USAGE_TRANSFORM_FEEDBACK_COUNTER_BUFFER_BIT_EXT"},
+	                                         {VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT, "VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT"},
+	                                         {VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, "VK_BUFFER_USAGE_RAY_TRACING_BIT_NV"},
+	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_EXT"},
+	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR"}});
+}
+
+const std::string shader_stage_to_string(VkShaderStageFlags flags)
+{
+	return to_string<VkShaderStageFlagBits>(flags,
+	                                        {{VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TESSELLATION_CONTROL"},
+	                                         {VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT, "TESSELLATION_EVALUATION"},
+	                                         {VK_SHADER_STAGE_GEOMETRY_BIT, "GEOMETRY"},
+	                                         {VK_SHADER_STAGE_VERTEX_BIT, "VERTEX"},
+	                                         {VK_SHADER_STAGE_FRAGMENT_BIT, "FRAGMENT"},
+	                                         {VK_SHADER_STAGE_COMPUTE_BIT, "COMPUTE"},
+	                                         {VK_SHADER_STAGE_ALL_GRAPHICS, "ALL GRAPHICS"}});
+}
+
+const std::string image_usage_to_string(VkImageUsageFlags flags)
+{
+	return to_string<VkImageUsageFlagBits>(flags,
+	                                       {{VK_IMAGE_USAGE_TRANSFER_SRC_BIT, "VK_IMAGE_USAGE_TRANSFER_SRC_BIT"},
+	                                        {VK_IMAGE_USAGE_TRANSFER_DST_BIT, "VK_IMAGE_USAGE_TRANSFER_DST_BIT"},
+	                                        {VK_IMAGE_USAGE_SAMPLED_BIT, "VK_IMAGE_USAGE_SAMPLED_BIT"},
+	                                        {VK_IMAGE_USAGE_STORAGE_BIT, "VK_IMAGE_USAGE_STORAGE_BIT"},
+	                                        {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT"},
+	                                        {VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT"},
+	                                        {VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT"},
+	                                        {VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT"}});
+}
+
+const std::string image_aspect_to_string(VkImageAspectFlags flags)
+{
+	return to_string<VkImageAspectFlagBits>(flags,
+	                                        {{VK_IMAGE_ASPECT_COLOR_BIT, "VK_IMAGE_ASPECT_COLOR_BIT"},
+	                                         {VK_IMAGE_ASPECT_DEPTH_BIT, "VK_IMAGE_ASPECT_DEPTH_BIT"},
+	                                         {VK_IMAGE_ASPECT_STENCIL_BIT, "VK_IMAGE_ASPECT_STENCIL_BIT"},
+	                                         {VK_IMAGE_ASPECT_METADATA_BIT, "VK_IMAGE_ASPECT_METADATA_BIT"},
+	                                         {VK_IMAGE_ASPECT_PLANE_0_BIT, "VK_IMAGE_ASPECT_PLANE_0_BIT"},
+	                                         {VK_IMAGE_ASPECT_PLANE_1_BIT, "VK_IMAGE_ASPECT_PLANE_1_BIT"},
+	                                         {VK_IMAGE_ASPECT_PLANE_2_BIT, "VK_IMAGE_ASPECT_PLANE_2_BIT"}});
+}
+
+const std::string cull_mode_to_string(VkCullModeFlags flags)
+{
+	return to_string<VkCullModeFlagBits>(flags,
+	                                     {{VK_CULL_MODE_NONE, "VK_CULL_MODE_NONE"},
+	                                      {VK_CULL_MODE_FRONT_BIT, "VK_CULL_MODE_FRONT_BIT"},
+	                                      {VK_CULL_MODE_BACK_BIT, "VK_CULL_MODE_BACK_BIT"},
+	                                      {VK_CULL_MODE_FRONT_AND_BACK, "VK_CULL_MODE_FRONT_AND_BACK"}});
+}
+
+const std::string color_component_to_string(VkColorComponentFlags flags)
+{
+	return to_string<VkColorComponentFlagBits>(flags,
+	                                           {{VK_COLOR_COMPONENT_R_BIT, "R"},
+	                                            {VK_COLOR_COMPONENT_G_BIT, "G"},
+	                                            {VK_COLOR_COMPONENT_B_BIT, "B"},
+	                                            {VK_COLOR_COMPONENT_A_BIT, "A"}});
+}
 }        // namespace vkb

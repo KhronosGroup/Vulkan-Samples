@@ -50,6 +50,7 @@ enum class StatIndex
 	killed_tiles,
 	fragment_jobs,
 	fragment_cycles,
+	load_store_cycles,
 	l2_reads_lookups,
 	l2_ext_reads,
 	l2_writes_lookups,

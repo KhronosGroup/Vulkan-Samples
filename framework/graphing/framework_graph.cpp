@@ -257,13 +257,13 @@ size_t image_view_node(Graph &graph, const core::ImageView &image_view)
 
 	nlohmann::json data = {{"VkFormat", to_string(image_view.get_format())},
 	                       {"VkImageSubresourceRange",
-	                        {{"VkImageAspectFlags", to_string_vk_image_aspect_flags(subresource_range.aspectMask)},
+	                        {{"VkImageAspectFlags", image_aspect_to_string(subresource_range.aspectMask)},
 	                         {"base_mip_level", subresource_range.baseMipLevel},
 	                         {"level_count", subresource_range.levelCount},
 	                         {"base_array_layer", subresource_range.baseArrayLayer},
 	                         {"layer_count", subresource_range.layerCount}}},
 	                       {"VkImageSubresourceLayers",
-	                        {{"VkImageAspectFlags", to_string_vk_image_aspect_flags(subresource_layers.aspectMask)},
+	                        {{"VkImageAspectFlags", image_aspect_to_string(subresource_layers.aspectMask)},
 	                         {"mip_level", subresource_layers.mipLevel},
 	                         {"base_array_layer", subresource_layers.baseArrayLayer},
 	                         {"layer_count", subresource_layers.layerCount}}}};
@@ -292,11 +292,11 @@ size_t image_node(Graph &graph, const core::Image &image)
 
 	nlohmann::json data = {{"VkExtent2D", {{"width", image.get_extent().width}, {"height", image.get_extent().height}}},
 	                       {"VkFormat", to_string(image.get_format())},
-	                       {"VkImageUsageFlags", to_string_vk_image_usage_flags(image.get_usage())},
+	                       {"VkImageUsageFlags", image_usage_to_string(image.get_usage())},
 	                       {"VkSampleCountFlagBits", to_string(image.get_sample_count())},
 	                       {"VkImageTiling", to_string(image.get_tiling())},
 	                       {"VkImageType", to_string(image.get_type())},
-	                       {"VkSubresource", {{"VkImageAspectFlags", to_string_vk_image_aspect_flags(subresource.aspectMask)}, {"mip_level", subresource.mipLevel}, {"array_layer", subresource.arrayLayer}}}};
+	                       {"VkSubresource", {{"VkImageAspectFlags", image_aspect_to_string(subresource.aspectMask)}, {"mip_level", subresource.mipLevel}, {"array_layer", subresource.arrayLayer}}}};
 
 	return graph.create_node(result.c_str(), "Core", data);
 }
@@ -312,7 +312,7 @@ size_t swapchain_node(Graph &graph, const Swapchain &swapchain)
 	                       {"image_count", image_count},
 	                       {"VkSurfaceTransformFlagBitsKHR", to_string(swapchain.get_transform())},
 	                       {"VkPresentModeKHR", to_string(swapchain.get_present_mode())},
-	                       {"VkImageUsageFlags", to_string_vk_image_usage_flags(swapchain.get_usage())}};
+	                       {"VkImageUsageFlags", image_usage_to_string(swapchain.get_usage())}};
 
 	return graph.create_node("Swapchain", "Core", data);
 }
@@ -360,7 +360,7 @@ size_t render_pass_node(Graph &graph, const RenderPass &render_pass)
 
 size_t shader_module_node(Graph &graph, const ShaderModule &shader_module)
 {
-	std::string stage = to_string_vk_shader_stage_flags(shader_module.get_stage());
+	std::string stage = shader_stage_to_string(shader_module.get_stage());
 	std::transform(stage.begin(), stage.end(), stage.begin(),
 	               [](unsigned char c) { return std::tolower(c); });
 
@@ -492,7 +492,7 @@ size_t rasterization_state_node(Graph &graph, const RasterizationState &rasteriz
 	    {"depth_clamp_enable", to_string_vk_bool(rasterization_state.depth_clamp_enable)},
 	    {"rasterizer_discard_enable", to_string_vk_bool(rasterization_state.rasterizer_discard_enable)},
 	    {"polygon_mode", to_string(rasterization_state.polygon_mode)},
-	    {"cull_mode", to_string_vk_cull_mode_flags(rasterization_state.cull_mode)},
+	    {"cull_mode", cull_mode_to_string(rasterization_state.cull_mode)},
 	    {"front_face", to_string(rasterization_state.front_face)},
 	    {"depth_bias_enable", to_string_vk_bool(rasterization_state.depth_bias_enable)},
 	};
@@ -555,7 +555,7 @@ size_t color_blend_attachment_state_node(Graph &graph, const ColorBlendAttachmen
 	    {"src_alpha_blend_factor", to_string(state.src_alpha_blend_factor)},
 	    {"dst_alpha_blend_factor", to_string(state.dst_alpha_blend_factor)},
 	    {"alpha_blend_op", to_string(state.alpha_blend_op)},
-	    {"color_write_mask", to_string_vk_color_component_flags(state.color_write_mask)}};
+	    {"color_write_mask", color_component_to_string(state.color_write_mask)}};
 
 	return graph.create_node("Color Blend Attachment State", "Core", data);
 }

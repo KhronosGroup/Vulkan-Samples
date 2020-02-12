@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -161,21 +161,13 @@ class SpecializationConstantState
 template <class T>
 inline void SpecializationConstantState::set_constant(std::uint32_t constant_id, const T &data)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data);
-
-	set_constant(constant_id,
-	             {reinterpret_cast<const uint8_t *>(&value),
-	              reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+	set_constant(constant_id, to_bytes(static_cast<std::uint32_t>(data)));
 }
 
 template <>
-inline void SpecializationConstantState::set_constant<bool>(std::uint32_t constant_id, const bool &data_)
+inline void SpecializationConstantState::set_constant<bool>(std::uint32_t constant_id, const bool &data)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data_);
-
-	set_constant(constant_id,
-	             {reinterpret_cast<const uint8_t *>(&value),
-	              reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+	set_constant(constant_id, to_bytes(static_cast<std::uint32_t>(data)));
 }
 
 class PipelineState

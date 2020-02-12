@@ -47,14 +47,9 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(stage, glsl_source.get_data(), entry_point, shader_variant, spirv, info_log))
 	{
-		if (glsl_source.get_filename().empty())
-		{
-			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Shader compilation failed:\n" + info_log};
-		}
-		else
-		{
-			throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Compilation failed for shader \"" + glsl_source.get_filename() + "\":\n" + info_log};
-		}
+		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
+		LOGE("{}", info_log);
+		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 
 	SPIRVReflection spirv_reflection;
@@ -112,17 +107,17 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 	return spirv;
 }
 
-void ShaderModule::set_resource_mode(const ShaderResourceMode &mode, const std::string &resource_name)
+void ShaderModule::set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode)
 {
 	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{
-		if (mode == ShaderResourceMode::Dynamic)
+		if (resource_mode == ShaderResourceMode::Dynamic)
 		{
 			if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
 			{
-				it->mode = mode;
+				it->mode = resource_mode;
 			}
 			else
 			{
@@ -131,7 +126,7 @@ void ShaderModule::set_resource_mode(const ShaderResourceMode &mode, const std::
 		}
 		else
 		{
-			it->mode = mode;
+			it->mode = resource_mode;
 		}
 	}
 	else
