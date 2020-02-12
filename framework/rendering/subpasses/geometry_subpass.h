@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -85,11 +85,19 @@ class GeometrySubpass : public Subpass
 	 */
 	virtual void draw(CommandBuffer &command_buffer) override;
 
-	void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
+  protected:
+	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
 
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 
-  protected:
+	virtual void prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material);
+
+	virtual PipelineLayout &prepare_pipeline_layout(CommandBuffer &command_buffer, const std::vector<ShaderModule *> &shader_modules);
+
+	virtual void prepare_push_constants(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+
+	virtual void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
+
 	/**
 	 * @brief Sorts objects based on distance from camera and classifies them
 	 *        into opaque and transparent in the arrays provided
@@ -102,9 +110,6 @@ class GeometrySubpass : public Subpass
 	std::vector<sg::Mesh *> meshes;
 
 	sg::Scene &scene;
-
-  private:
-	void draw_submesh_command(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh);
 };
 
 }        // namespace vkb

@@ -37,9 +37,10 @@ class DescriptorSetLayout
 	/**
 	 * @brief Creates a descriptor set layout from a set of resources
 	 * @param device A valid Vulkan device
+	 * @param set_index The descriptor set index this layout maps to
 	 * @param resource_set A grouping of shader resources belonging to the same set
 	 */
-	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set);
+	DescriptorSetLayout(Device &device, const uint32_t set_index, const std::vector<ShaderResource> &resource_set);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 
@@ -52,6 +53,8 @@ class DescriptorSetLayout
 	DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
 
 	VkDescriptorSetLayout get_handle() const;
+
+	const uint32_t get_index() const;
 
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
@@ -67,6 +70,8 @@ class DescriptorSetLayout
 	Device &device;
 
 	VkDescriptorSetLayout handle{VK_NULL_HANDLE};
+
+	const uint32_t set_index;
 
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 

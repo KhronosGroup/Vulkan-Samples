@@ -155,8 +155,9 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set) :
-    device{device}
+DescriptorSetLayout::DescriptorSetLayout(Device &device, const uint32_t set_index, const std::vector<ShaderResource> &resource_set) :
+    device{device},
+    set_index{set_index}
 {
 	for (auto &resource : resource_set)
 	{
@@ -220,7 +221,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 
 		if (!validate_flags(device.get_gpu(), bindings, binding_flags))
 		{
-			throw std::runtime_error("Invalid binding set up, couldn't create descriptor set layout.");
+			throw std::runtime_error("Invalid binding, couldn't create descriptor set layout.");
 		}
 
 		VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
@@ -243,6 +244,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     device{other.device},
     handle{other.handle},
+    set_index{other.set_index},
     bindings{std::move(other.bindings)},
     binding_flags{std::move(other.binding_flags)},
     bindings_lookup{std::move(other.bindings_lookup)},
@@ -264,6 +266,11 @@ DescriptorSetLayout::~DescriptorSetLayout()
 VkDescriptorSetLayout DescriptorSetLayout::get_handle() const
 {
 	return handle;
+}
+
+const uint32_t DescriptorSetLayout::get_index() const
+{
+	return set_index;
 }
 
 const std::vector<VkDescriptorSetLayoutBinding> &DescriptorSetLayout::get_bindings() const

@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <map>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 
@@ -102,27 +104,6 @@ const std::string to_string(VkExtent2D format);
 const std::string to_string(VkSampleCountFlagBits flags);
 
 /**
- * @brief Helper function to convert VkShaderStageFlags to a string 
- * @param flags Vulkan VkShaderStageFlags to convert
- * @return The string to return 
- */
-const std::string to_string_vk_shader_stage_flags(VkShaderStageFlags flags);
-
-/**
- * @brief Helper function to convert VkImageUsageFlags to a string 
- * @param flags Vulkan VkImageUsageFlags to convert
- * @return The string to return 
- */
-const std::string to_string_vk_image_usage_flags(VkImageUsageFlags flags);
-
-/**
- * @brief Helper function to convert VkImageAspectFlags to a string 
- * @param flags Vulkan VkImageAspectFlags to convert
- * @return The string to return 
- */
-const std::string to_string_vk_image_aspect_flags(VkImageAspectFlags flags);
-
-/**
  * @brief Helper function to convert VkImageTiling to a string 
  * @param tiling Vulkan VkImageTiling to convert
  * @return The string to return 
@@ -179,13 +160,6 @@ const std::string to_string(VkFrontFace face);
 const std::string to_string(VkPolygonMode mode);
 
 /**
- * @brief Helper function to convert VkCullModeFlags to a string 
- * @param flags Vulkan VkCullModeFlags to convert
- * @return The string to return 
- */
-const std::string to_string_vk_cull_mode_flags(VkCullModeFlags flags);
-
-/**
  * @brief Helper function to convert VkCompareOp to a string 
  * @param operation Vulkan VkCompareOp to convert
  * @return The string to return 
@@ -214,13 +188,6 @@ const std::string to_string(VkLogicOp operation);
 const std::string to_string(VkBlendOp operation);
 
 /**
- * @brief Helper function to convert VkColorComponentFlags to a string 
- * @param operation Vulkan VkColorComponentFlags to convert
- * @return The string to return 
- */
-const std::string to_string_vk_color_component_flags(VkColorComponentFlags operation);
-
-/**
  * @brief Helper function to convert AlphaMode to a string 
  * @param mode Vulkan AlphaMode to convert
  * @return The string to return 
@@ -240,4 +207,72 @@ const std::string to_string(bool flag);
  * @return The string to return 
  */
 const std::string to_string(ShaderResourceType type);
+
+/**
+ * @brief Helper generic function to convert a bitmask to a string of its components
+ * @param bitmask The bitmask to convert
+ * @param string_map A map of bitmask bits to the string that describe the Vulkan flag
+ * @returns A string of the enabled bits in the bitmask
+ */
+template <typename T>
+inline const std::string to_string(uint32_t bitmask, const std::map<T, const char *> string_map)
+{
+	std::stringstream result;
+	bool              append = false;
+	for (const auto &s : string_map)
+	{
+		if (bitmask & s.first)
+		{
+			if (append)
+			{
+				result << " / ";
+			}
+			result << s.second;
+			append = true;
+		}
+	}
+	return result.str();
+}
+
+/**
+ * @brief Helper function to convert VkBufferUsageFlags to a string
+ * @param bitmask The buffer usage bitmask to convert to strings
+ * @return The converted string to return
+ */
+const std::string buffer_usage_to_string(VkBufferUsageFlags bitmask);
+
+/**
+ * @brief Helper function to convert VkShaderStageFlags to a string
+ * @param bitmask The shader stage bitmask to convert
+ * @return The converted string to return
+ */
+const std::string shader_stage_to_string(VkShaderStageFlags bitmask);
+
+/**
+ * @brief Helper function to convert VkImageUsageFlags to a string
+ * @param bitmask The image usage bitmask to convert
+ * @return The converted string to return
+ */
+const std::string image_usage_to_string(VkImageUsageFlags bitmask);
+
+/**
+ * @brief Helper function to convert VkImageAspectFlags to a string
+ * @param bitmask The image aspect bitmask to convert
+ * @return The converted string to return
+ */
+const std::string image_aspect_to_string(VkImageAspectFlags bitmask);
+
+/**
+ * @brief Helper function to convert VkCullModeFlags to a string
+ * @param bitmask The cull mode bitmask to convert
+ * @return The converted string to return
+ */
+const std::string cull_mode_to_string(VkCullModeFlags bitmask);
+
+/**
+ * @brief Helper function to convert VkColorComponentFlags to a string
+ * @param bitmask The color component bitmask to convert
+ * @return The converted string to return
+ */
+const std::string color_component_to_string(VkColorComponentFlags bitmask);
 }        // namespace vkb
