@@ -111,7 +111,7 @@ void ComputeNBody::build_command_buffers()
 			        VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
 			        nullptr,
 			        0,
-			        VK_ACCESS_SHADER_WRITE_BIT,
+			        VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
 			        compute.queue_family_index,
 			        graphics.queue_family_index,
 			        compute.storage_buffer->get_handle(),
@@ -120,8 +120,8 @@ void ComputeNBody::build_command_buffers()
 
 			vkCmdPipelineBarrier(
 			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
 			    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+			    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
 			    0,
 			    0, nullptr,
 			    1, &buffer_barrier,
