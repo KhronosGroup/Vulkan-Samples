@@ -128,7 +128,6 @@ void ComputeNBody::build_command_buffers()
 			    0, nullptr);
 		}
 
-
 		// Draw the particle system using the update vertex buffer
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
@@ -334,11 +333,36 @@ void ComputeNBody::prepare_storage_buffers()
 	                                                             VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                             VMA_MEMORY_USAGE_GPU_ONLY);
 
-	// Copy to staging buffer
+	// Copy from staging buffer to storage buffer
 	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	VkBufferCopy    copy_region  = {};
 	copy_region.size             = storage_buffer_size;
 	vkCmdCopyBuffer(copy_command, staging_buffer.get_handle(), compute.storage_buffer->get_handle(), 1, &copy_region);
+	// Execute a transfer to the compute queue, if necessary
+	if (graphics.queue_family_index != compute.queue_family_index)
+	{
+		VkBufferMemoryBarrier buffer_barrier =
+		    {
+		        VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		        nullptr,
+		        VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT,
+		        0,
+		        graphics.queue_family_index,
+		        compute.queue_family_index,
+		        compute.storage_buffer->get_handle(),
+		        0,
+		        compute.storage_buffer->get_size()};
+
+		vkCmdPipelineBarrier(
+		    copy_command,
+		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    0,
+		    0, nullptr,
+		    1, &buffer_barrier,
+		    0, nullptr);
+	}
+
 	device->flush_command_buffer(copy_command, queue, true);
 }
 
@@ -645,6 +669,91 @@ void ComputeNBody::prepare_compute()
 
 	// Build a single command buffer containing the compute dispatch commands
 	build_compute_command_buffer();
+
+	// If necessary, acquire and immediately release the storage buffer, so that the initial acquire
+	// from the graphics command buffers are matched up properly.
+	if (graphics.queue_family_index != compute.queue_family_index)
+	{
+		VkCommandBuffer transfer_command;
+
+		// Create a transient command buffer for setting up the initial buffer transfer state
+		VkCommandBufferAllocateInfo command_buffer_allocate_info =
+		    vkb::initializers::command_buffer_allocate_info(
+		        compute.command_pool,
+		        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		        1);
+
+		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &transfer_command));
+
+		VkCommandBufferBeginInfo command_buffer_info{};
+		command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		VK_CHECK(vkBeginCommandBuffer(transfer_command, &command_buffer_info));
+
+		VkBufferMemoryBarrier acquire_buffer_barrier =
+		    {
+		        VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		        nullptr,
+		        0,
+		        VK_ACCESS_SHADER_WRITE_BIT,
+		        graphics.queue_family_index,
+		        compute.queue_family_index,
+		        compute.storage_buffer->get_handle(),
+		        0,
+		        compute.storage_buffer->get_size()};
+		vkCmdPipelineBarrier(
+		    transfer_command,
+		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    0,
+		    0, nullptr,
+		    1, &acquire_buffer_barrier,
+		    0, nullptr);
+
+		VkBufferMemoryBarrier release_buffer_barrier =
+		    {
+		        VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+		        nullptr,
+		        VK_ACCESS_SHADER_WRITE_BIT,
+		        0,
+		        compute.queue_family_index,
+		        graphics.queue_family_index,
+		        compute.storage_buffer->get_handle(),
+		        0,
+		        compute.storage_buffer->get_size()};
+		vkCmdPipelineBarrier(
+		    transfer_command,
+		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    0,
+		    0, nullptr,
+		    1, &release_buffer_barrier,
+		    0, nullptr);
+
+		// Copied from Device::flush_command_buffer, which we can't use because it would be 
+		// working with the wrong command pool
+		VK_CHECK(vkEndCommandBuffer(transfer_command));
+
+		// Submit compute commands
+		VkSubmitInfo submit_info{};
+		submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers    = &transfer_command;
+
+		// Create fence to ensure that the command buffer has finished executing
+		VkFenceCreateInfo fence_info{};
+		fence_info.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fence_info.flags = VK_FLAGS_NONE;
+
+		VkFence fence;
+		VK_CHECK(vkCreateFence(device->get_handle(), &fence_info, nullptr, &fence));
+		// Submit to the *compute* queue
+		VkResult result = vkQueueSubmit(compute.queue, 1, &submit_info, fence);
+		// Wait for the fence to signal that command buffer has finished executing
+		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
+		vkDestroyFence(device->get_handle(), fence, nullptr);
+
+		vkFreeCommandBuffers(device->get_handle(), compute.command_pool, 1, &transfer_command);
+	}
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -723,7 +832,7 @@ bool ComputeNBody::prepare(vkb::Platform &platform)
 	}
 
 	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
-	compute.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 
 	load_assets();
 	setup_descriptor_pool();
