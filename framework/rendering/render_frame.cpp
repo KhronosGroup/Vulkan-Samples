@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 
 namespace vkb
 {
-RenderFrame::RenderFrame(Device &device, RenderTarget &&render_target, size_t thread_count) :
+RenderFrame::RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_target, size_t thread_count) :
     device{device},
     fence_pool{device},
     semaphore_pool{device},
@@ -58,7 +58,7 @@ Device &RenderFrame::get_device()
 	return device;
 }
 
-void RenderFrame::update_render_target(RenderTarget &&render_target)
+void RenderFrame::update_render_target(std::unique_ptr<RenderTarget> &&render_target)
 {
 	swapchain_render_target = std::move(render_target);
 }
@@ -148,12 +148,12 @@ VkSemaphore RenderFrame::request_semaphore()
 
 RenderTarget &RenderFrame::get_render_target()
 {
-	return swapchain_render_target;
+	return *swapchain_render_target;
 }
 
 const RenderTarget &RenderFrame::get_render_target_const() const
 {
-	return swapchain_render_target;
+	return *swapchain_render_target;
 }
 
 CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBuffer::ResetMode reset_mode, VkCommandBufferLevel level, size_t thread_index)

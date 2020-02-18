@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class SemaphorePool
 
 	SemaphorePool(const SemaphorePool &) = delete;
 
-	SemaphorePool(SemaphorePool &&other) = default;
+	SemaphorePool(SemaphorePool &&other) = delete;
 
 	~SemaphorePool();
 
