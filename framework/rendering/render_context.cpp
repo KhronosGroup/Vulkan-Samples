@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,7 +72,7 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 			    swapchain->get_format(),
 			    swapchain->get_usage()};
 			auto render_target = create_render_target_func(std::move(swapchain_image));
-			frames.emplace_back(RenderFrame{device, std::move(render_target), thread_count});
+			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
 		}
 	}
 	else
@@ -87,7 +87,7 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 		                               VMA_MEMORY_USAGE_GPU_ONLY};
 
 		auto render_target = create_render_target_func(std::move(color_image));
-		frames.emplace_back(RenderFrame{device, std::move(render_target), thread_count});
+		frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
 	}
 
 	this->create_render_target_func = create_render_target_func;
@@ -210,12 +210,12 @@ void RenderContext::recreate()
 
 		if (frame_it != frames.end())
 		{
-			frame_it->update_render_target(std::move(render_target));
+			(*frame_it)->update_render_target(std::move(render_target));
 		}
 		else
 		{
 			// Create a new frame if the new swapchain has more images than current frames
-			frames.emplace_back(RenderFrame{device, std::move(render_target), thread_count});
+			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
 		}
 
 		++frame_it;
@@ -295,7 +295,7 @@ VkSemaphore RenderContext::begin_frame()
 
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
-	auto &prev_frame = frames.at(active_frame_index);
+	auto &prev_frame = *frames.at(active_frame_index);
 
 	auto aquired_semaphore = prev_frame.request_semaphore();
 
@@ -406,7 +406,7 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 RenderFrame &RenderContext::get_active_frame()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
-	return frames.at(active_frame_index);
+	return *frames.at(active_frame_index);
 }
 
 uint32_t RenderContext::get_active_frame_index()
@@ -418,7 +418,7 @@ uint32_t RenderContext::get_active_frame_index()
 RenderFrame &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");
-	return frames.at(active_frame_index);
+	return *frames.at(active_frame_index);
 }
 
 VkSemaphore RenderContext::request_semaphore()
@@ -450,7 +450,7 @@ void RenderContext::recreate_swapchain()
 		                            swapchain->get_usage()};
 
 		auto render_target = create_render_target_func(std::move(swapchain_image));
-		frame_it->update_render_target(std::move(render_target));
+		(*frame_it)->update_render_target(std::move(render_target));
 
 		++frame_it;
 	}
@@ -477,7 +477,7 @@ uint32_t RenderContext::get_active_frame_index() const
 	return active_frame_index;
 }
 
-std::vector<RenderFrame> &RenderContext::get_render_frames()
+std::vector<std::unique_ptr<RenderFrame>> &RenderContext::get_render_frames()
 {
 	return frames;
 }
