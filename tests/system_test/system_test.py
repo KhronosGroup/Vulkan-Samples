@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2019, Arm Limited and Contributors
+Copyright (c) 2019-2020, Arm Limited and Contributors
 
 SPDX-License-Identifier: Apache-2.0
 
@@ -96,7 +96,7 @@ class UnixSubtest(Subtest):
         super().__init__(test_name, platform_type)
 
     def run(self):
-        app_path = "{}app/bin/{}/{}/vulkan_samples".format(build_path, build_config, platform.machine())
+        app_path = "{}app/bin/{}/vulkan_samples".format(build_path, platform.machine())
         return super().run(app_path)
 
 class AndroidSubtest(Subtest):
