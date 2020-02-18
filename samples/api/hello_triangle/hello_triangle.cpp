@@ -158,7 +158,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  */
 void HelloTriangle::init_instance(Context &                        context,
                                   const std::vector<const char *> &required_instance_extensions,
-                                  const std::vector<const char *> &required_instance_layers)
+                                  const std::vector<const char *> &required_validation_layers)
 {
 	LOGI("Initializing vulkan instance.");
 
@@ -201,22 +201,28 @@ void HelloTriangle::init_instance(Context &                        context,
 	uint32_t instance_layer_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
 
-	std::vector<VkLayerProperties> instance_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data()));
+	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
 
-	std::vector<const char *> active_instance_layers(required_instance_layers);
+	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_threading");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_parameter_validation");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_object_tracker");
-	active_instance_layers.push_back("VK_LAYER_LUNARG_core_validation");
-	active_instance_layers.push_back("VK_LAYER_GOOGLE_unique_objects");
+	// Determine the optimal validation layers to enable that are necessary for useful debugging
+	std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
+	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
 
-	if (!validate_layers(active_instance_layers, instance_layers))
+	if (validate_layers(requested_validation_layers, supported_validation_layers))
 	{
-		throw std::runtime_error("Required instance layers are missing.");
+		LOGI("Enabled Validation Layers:")
+		for (const auto &layer : requested_validation_layers)
+		{
+			LOGI("	\t{}", layer);
+		}
+	}
+	else
+	{
+		throw std::runtime_error("Required validation layers are missing.");
 	}
 
 	VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
@@ -228,19 +234,21 @@ void HelloTriangle::init_instance(Context &                        context,
 	instance_info.pApplicationInfo        = &app;
 	instance_info.enabledExtensionCount   = vkb::to_u32(active_instance_extensions.size());
 	instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
-	instance_info.enabledLayerCount       = vkb::to_u32(active_instance_layers.size());
-	instance_info.ppEnabledLayerNames     = active_instance_layers.data();
+	instance_info.enabledLayerCount       = vkb::to_u32(requested_validation_layers.size());
+	instance_info.ppEnabledLayerNames     = requested_validation_layers.data();
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+	debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	debug_report_create_info.pfnCallback                        = debug_callback;
+
+	instance_info.pNext = &debug_report_create_info;
+#endif
+
 	// Create the Vulkan instance
 	VK_CHECK(vkCreateInstance(&instance_info, nullptr, &context.instance));
 
 	volkLoadInstance(context.instance);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info{VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
-	VK_CHECK(vkCreateDebugReportCallbackEXT(context.instance, &info, nullptr, &context.debug_callback));
-#endif
 }
 
 /**

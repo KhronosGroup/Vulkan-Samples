@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,6 +22,13 @@
 
 namespace vkb
 {
+/**
+ * @brief Returns a list of Khronos/LunarG supported validation layers
+ *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
+ * @param supported_instance_layers A list of validation layers to check against
+ */
+std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
+
 /**
  * @brief A wrapper class for VkInstance
  *
