@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -154,7 +154,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  *
  * @param context A newly created Vulkan context.
  * @param required_instance_extensions The required Vulkan instance extensions.
- * @param required_instance_layers
+ * @param required_validation_layers The required Vulkan validation layers
  */
 void HelloTriangle::init_instance(Context &                        context,
                                   const std::vector<const char *> &required_instance_extensions,
