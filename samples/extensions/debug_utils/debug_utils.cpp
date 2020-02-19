@@ -71,13 +71,10 @@ DebugUtils::~DebugUtils()
  */
 void DebugUtils::debug_check_extension()
 {
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
-	for (auto &available_extension : available_instance_extensions)
+	std::vector<const char *> enabled_instance_extensions = instance->get_extensions();
+	for (auto &enabled_extension : enabled_instance_extensions)
 	{
-		if (strcmp(available_extension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+		if (strcmp(enabled_extension, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
 		{
 			debug_utils_supported = true;
 			break;
@@ -85,7 +82,8 @@ void DebugUtils::debug_check_extension()
 	}
 	if (!debug_utils_supported)
 	{
-		LOGE("Required extension {} not supported, no debugging possible with this sample", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		LOGE("Required extension {} not supported or available, no debugging possible with this sample", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		LOGE("Make sure to compile the sample in debug mode and/or enable the validation layers");
 	}
 }
 
@@ -1101,7 +1099,17 @@ void DebugUtils::render(float delta_time)
 
 void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.text(debug_utils_supported ? "Debug utils supported" : "Error: Debut utils not supported");
+	if (debug_utils_supported)
+	{
+		drawer.text("Debug utilities enabled");
+	}
+	else
+	{
+		drawer.text("Warning: Debug utilities extension not available");
+		drawer.text("Possible reasons:");
+		drawer.text("- Driver does not support the extension");
+		drawer.text("- Compiling in release mode with no validation layers enabled");
+	}
 	if (drawer.header("Settings"))
 	{
 		if (drawer.checkbox("Bloom", &bloom))
