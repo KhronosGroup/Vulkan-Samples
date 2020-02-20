@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2019-2020, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -184,7 +184,7 @@ endif()
 if(EXISTS ${NATIVE_SCRIPT})
     file(RELATIVE_PATH NATIVE_SCRIPT_TMP ${OUTPUT_DIR} ${NATIVE_SCRIPT})
 
-    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.10.2\'\n\t\t} ")
+    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.10.2+\'\n\t\t} ")
 endif()
 
 # cmake.arguments

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -271,5 +271,13 @@ RenderPass::~RenderPass()
 const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
 {
 	return to_u32(color_attachments[subpass_index].size());
+}
+
+const VkExtent2D RenderPass::get_render_area_granularity() const
+{
+	VkExtent2D render_area_granularity = {};
+	vkGetRenderAreaGranularity(device.get_handle(), get_handle(), &render_area_granularity);
+
+	return render_area_granularity;
 }
 }        // namespace vkb

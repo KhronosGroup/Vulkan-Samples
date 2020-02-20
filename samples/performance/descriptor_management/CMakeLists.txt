@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,5 +23,5 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
-    NAME "Descriptor management"
+    NAME "Descriptor Management"
     DESCRIPTION "Descriptor set management and buffer allocation strategies.")

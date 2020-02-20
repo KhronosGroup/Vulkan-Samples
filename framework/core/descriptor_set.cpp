@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,30 +53,29 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 		auto  binding         = binding_it.first;
 		auto &buffer_bindings = binding_it.second;
 
-		VkDescriptorSetLayoutBinding binding_info;
-		if (!descriptor_set_layout.get_layout_binding(binding, binding_info))
+		if (auto binding_info = descriptor_set_layout.get_layout_binding(binding))
+		{
+			// Iterate over all binding buffers in array
+			for (auto &element_it : buffer_bindings)
+			{
+				auto  arrayElement = element_it.first;
+				auto &buffer_info  = element_it.second;
+
+				VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+
+				write_descriptor_set.dstBinding      = binding;
+				write_descriptor_set.descriptorType  = binding_info->descriptorType;
+				write_descriptor_set.pBufferInfo     = &buffer_info;
+				write_descriptor_set.dstSet          = handle;
+				write_descriptor_set.dstArrayElement = arrayElement;
+				write_descriptor_set.descriptorCount = 1;
+
+				set_updates.push_back(write_descriptor_set);
+			}
+		}
+		else
 		{
 			LOGE("Shader layout set does not use buffer binding at #{}", binding);
-
-			continue;
-		}
-
-		// Iterate over all binding buffers in array
-		for (auto &element_it : buffer_bindings)
-		{
-			auto  arrayElement = element_it.first;
-			auto &buffer_info  = element_it.second;
-
-			VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-
-			write_descriptor_set.dstBinding      = binding;
-			write_descriptor_set.descriptorType  = binding_info.descriptorType;
-			write_descriptor_set.pBufferInfo     = &buffer_info;
-			write_descriptor_set.dstSet          = handle;
-			write_descriptor_set.dstArrayElement = arrayElement;
-			write_descriptor_set.descriptorCount = 1;
-
-			set_updates.push_back(write_descriptor_set);
 		}
 	}
 
@@ -86,30 +85,29 @@ void DescriptorSet::update(const BindingMap<VkDescriptorBufferInfo> &buffer_info
 		auto  binding_index     = binding_it.first;
 		auto &binding_resources = binding_it.second;
 
-		VkDescriptorSetLayoutBinding binding_info;
-		if (!descriptor_set_layout.get_layout_binding(binding_index, binding_info))
+		if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
+		{
+			// Iterate over all binding images in array
+			for (auto &element_it : binding_resources)
+			{
+				auto  arrayElement = element_it.first;
+				auto &image_info   = element_it.second;
+
+				VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+
+				write_descriptor_set.dstBinding      = binding_index;
+				write_descriptor_set.descriptorType  = binding_info->descriptorType;
+				write_descriptor_set.pImageInfo      = &image_info;
+				write_descriptor_set.dstSet          = handle;
+				write_descriptor_set.dstArrayElement = arrayElement;
+				write_descriptor_set.descriptorCount = 1;
+
+				set_updates.push_back(write_descriptor_set);
+			}
+		}
+		else
 		{
 			LOGE("Shader layout set does not use image binding at #{}", binding_index);
-
-			continue;
-		}
-
-		// Iterate over all binding images in array
-		for (auto &element_it : binding_resources)
-		{
-			auto  arrayElement = element_it.first;
-			auto &image_info   = element_it.second;
-
-			VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
-
-			write_descriptor_set.dstBinding      = binding_index;
-			write_descriptor_set.descriptorType  = binding_info.descriptorType;
-			write_descriptor_set.pImageInfo      = &image_info;
-			write_descriptor_set.dstSet          = handle;
-			write_descriptor_set.dstArrayElement = arrayElement;
-			write_descriptor_set.descriptorCount = 1;
-
-			set_updates.push_back(write_descriptor_set);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,13 +24,6 @@ namespace vkb
 {
 struct Attachment;
 class Device;
-
-struct LoadStoreInfo
-{
-	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
-
-	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
-};
 
 struct SubpassInfo
 {
@@ -60,6 +53,8 @@ class RenderPass
 	RenderPass &operator=(RenderPass &&) = delete;
 
 	const uint32_t get_color_output_count(uint32_t subpass_index) const;
+
+	const VkExtent2D get_render_area_granularity() const;
 
   private:
 	Device &device;

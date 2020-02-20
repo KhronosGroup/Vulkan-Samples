@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,9 +63,9 @@ ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, 
 	return request_resource(device, recorder, shader_module_mutex, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
 }
 
-PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &requested_shader_modules)
+PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
 {
-	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, requested_shader_modules);
+	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
 }
 
 DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources)
@@ -145,21 +145,21 @@ void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &o
 						{
 							VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
 
-							VkDescriptorSetLayoutBinding binding_info;
-							if (!descriptor_set.get_layout().get_layout_binding(binding, binding_info))
+							if (auto binding_info = descriptor_set.get_layout().get_layout_binding(binding))
+							{
+								write_descriptor_set.dstBinding      = binding;
+								write_descriptor_set.descriptorType  = binding_info->descriptorType;
+								write_descriptor_set.pImageInfo      = &image_info;
+								write_descriptor_set.dstSet          = descriptor_set.get_handle();
+								write_descriptor_set.dstArrayElement = array_element;
+								write_descriptor_set.descriptorCount = 1;
+
+								set_updates.push_back(write_descriptor_set);
+							}
+							else
 							{
 								LOGE("Shader layout set does not use image binding at #{}", binding);
-								continue;
 							}
-
-							write_descriptor_set.dstBinding      = binding;
-							write_descriptor_set.descriptorType  = binding_info.descriptorType;
-							write_descriptor_set.pImageInfo      = &image_info;
-							write_descriptor_set.dstSet          = descriptor_set.get_handle();
-							write_descriptor_set.dstArrayElement = array_element;
-							write_descriptor_set.descriptorCount = 1;
-
-							set_updates.push_back(write_descriptor_set);
 						}
 					}
 				}

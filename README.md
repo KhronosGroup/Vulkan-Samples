@@ -54,10 +54,9 @@ Additionally you may find the following links useful:
 - Create a framework that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
 
 ## Tutorials
-- **General**
+- **Project Basics**
   - [Controls](./docs/misc.md#controls)
   - [Debug window](./docs/misc.md#debug-window)
-  - [Driver version](./docs/misc.md#driver-version)
   - [Create a Sample](./docs/create_sample.md)
 - **Vulkan Essentials**  
   - [How does Vulkan compare to OpenGL ES? What should you expect when targeting Vulkan?](./samples/vulkan_basics.md)
@@ -66,17 +65,26 @@ Additionally you may find the following links useful:
   - [Appropriate use of surface rotation](./samples/performance/surface_rotation/surface_rotation_tutorial.md)
 - **Pipelines**
   - [Use of pipeline caches to avoid startup latency](./samples/performance/pipeline_cache/pipeline_cache_tutorial.md)
+  - [Utilizing Specialization Constants](./samples/performance/specialization_constants/specialization_constants_tutorial.md)
 - **Descriptors**
   - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
+  - [Choosing the correct layout when transitioning images](./samples/performance/layout_transitions/layout_transitions_tutorial.md)
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
+- **Workload Synchronization**
+  - [Using pipeline barriers efficiently](./samples/performance/pipeline_barriers/pipeline_barriers_tutorial.md)
+  - [How to synchronize back to the CPU and avoid stalling](./samples/performance/wait_idle/wait_idle_tutorial.md)
 - **Command Buffers**
-  - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md)
+  - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
+- **Misc**
+  - [Driver version](./docs/misc.md#driver-version)
+  - [Memory limits](./docs/memory_limits.md)
+  - [Vulkan FAQ](./docs/faq.md)
 
 ## Setup
 

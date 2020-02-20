@@ -39,9 +39,7 @@ Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUs
 {
 }
 const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget> {
-	VkFormat depth_format;
-	VkBool32 is_format_supported = get_supported_depth_format(swapchain_image.get_device().get_physical_device(), &depth_format);
-	assert(is_format_supported && "No suitable format found for depth attachment");
+	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_physical_device());
 
 	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                        depth_format,

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -254,7 +254,7 @@ For all dependencies set the following environment variables.
 ##### Windows <!-- omit in toc -->
 
 ```
-bldsys/scripts/generate_android_gradle.bat
+bldsys\scripts\generate_android_gradle.bat
 ```
 
 ##### Linux <!-- omit in toc -->
@@ -279,29 +279,6 @@ adb install build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
 > Alternatively, you may open the `build/android_gradle` folder in Android Studio and run the project from here
-
-## Build with CMake
-
-`Step 1.` Select a generator which supports custom compiler like `Unix Makefiles` or `Ninja`.
-
-`Step 2.` Run the command below in the root directory of the project.
-
-```
-cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
-```
-
-`Step 3.` Build the project using the command below
-
-```
-cmake --build build/android --config Release --target vulkan_samples_package
-```
-
-`Step 4.` You can now run the apk on a connected device
-
-```
-cd build/android/vulkan_samples/vulkan_samples_package
-adb install build/outputs/apk/debug/vulkan_samples-debug.apk
-```
 
 # Building Individual Samples
 

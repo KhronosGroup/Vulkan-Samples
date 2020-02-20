@@ -32,8 +32,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	VkBool32 valid_depth_format = vkb::get_supported_depth_format(device->get_physical_device(), &depth_format);
-	assert(valid_depth_format);
+	depth_format = vkb::get_suitable_depth_format(device->get_physical_device());
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
