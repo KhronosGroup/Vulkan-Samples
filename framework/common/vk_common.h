@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <vector>
 
 #include <vk_mem_alloc.h>
 #include <volk.h>
@@ -54,12 +55,17 @@ bool is_depth_only_format(VkFormat format);
 bool is_depth_stencil_format(VkFormat format);
 
 /**
- * @brief Helper function to determine a suitable supported depth format starting with 32 bit down to 16 bit
+ * @brief Helper function to determine a suitable supported depth format based on a priority list
  * @param physical_device The physical device to check the depth formats against
- * @param depth_format The depth format (this can be modified)
- * @return false if none of the depth formats in the list is supported by the device
+ * @param depth_format_priority_list The list of depth formats to prefer over one another
+ *		  By default we start with the highest precision packed format
+ * @return The valid suited depth format
  */
-VkBool32 get_supported_depth_format(VkPhysicalDevice physical_device, VkFormat *depth_format);
+VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
+                                   const std::vector<VkFormat> &depth_format_priority_list = {
+                                       VK_FORMAT_D32_SFLOAT,
+                                       VK_FORMAT_D24_UNORM_S8_UINT,
+                                       VK_FORMAT_D16_UNORM});
 
 /**
  * @brief Helper function to determine if a Vulkan descriptor type is a dynamic storage buffer or dynamic uniform buffer.
@@ -225,5 +231,38 @@ void insert_image_memory_barrier(
     VkPipelineStageFlags    src_stage_mask,
     VkPipelineStageFlags    dst_stage_mask,
     VkImageSubresourceRange subresource_range);
+
+/**
+ * @brief Load and store info for a render pass attachment.
+ */
+struct LoadStoreInfo
+{
+	VkAttachmentLoadOp load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+
+	VkAttachmentStoreOp store_op = VK_ATTACHMENT_STORE_OP_STORE;
+};
+
+namespace gbuffer
+{
+/**
+  * @return Load store info to load all and store only the swapchain
+  */
+std::vector<LoadStoreInfo> get_load_all_store_swapchain();
+
+/**
+  * @return Load store info to clear all and store only the swapchain
+  */
+std::vector<LoadStoreInfo> get_clear_all_store_swapchain();
+
+/**
+  * @return Load store info to clear and store all images
+  */
+std::vector<LoadStoreInfo> get_clear_store_all();
+
+/**
+  * @return Default clear values for the G-buffer
+  */
+std::vector<VkClearValue> get_clear_value();
+}        // namespace gbuffer
 
 }        // namespace vkb

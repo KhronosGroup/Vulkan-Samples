@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -125,13 +125,23 @@ class CommandBuffer
 
 	/**
 	 * @brief Stores additional data which is prepended to the
-	 *        values passed to the push_constant() function
+	 *        values passed to the push_constants_accumulated() function
 	 * @param data Data to be stored
 	 */
 	template <class T>
 	void set_push_constants(const T &data);
 
 	void set_push_constants(const std::vector<uint8_t> &values);
+
+	void push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset = 0);
+
+	template <typename T>
+	void push_constants_accumulated(const T &value, uint32_t offset = 0)
+	{
+		push_constants_accumulated(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                                                reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
+		                           offset);
+	}
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
@@ -226,11 +236,20 @@ class CommandBuffer
 
 	ResourceBindingState resource_binding_state;
 
-	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
+	VkExtent2D last_framebuffer_extent{};
+
+	VkExtent2D last_render_area_extent{};
+
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_binding_state;
 
 	const RenderPassBinding &get_current_render_pass() const;
 
 	const uint32_t get_current_subpass_index() const;
+
+	/**
+	 * @brief Check that the render area is an optimal size by comparing to the render area granularity
+	 */
+	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
 
 	/**
 	 * @brief Flush the piplines state

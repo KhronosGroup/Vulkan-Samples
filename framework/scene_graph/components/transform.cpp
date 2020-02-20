@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,6 @@
  */
 
 #include "transform.h"
-
-#include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
@@ -86,6 +84,7 @@ void Transform::set_matrix(const glm::mat4 &matrix)
 	glm::vec3 skew;
 	glm::vec4 perspective;
 	glm::decompose(matrix, scale, rotation, translation, skew, perspective);
+	rotation = glm::conjugate(rotation);
 
 	invalidate_world_matrix();
 }

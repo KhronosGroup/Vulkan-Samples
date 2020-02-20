@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,10 @@
 
 #include "buffer_pool.h"
 #include "rendering/subpass.h"
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
 
 #define MAX_DEFERRED_LIGHT_COUNT 100
 

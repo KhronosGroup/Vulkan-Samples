@@ -174,7 +174,7 @@ class RenderContext
 	/**
 	 * @brief Waits a frame to finish its rendering
 	 */
-	void wait_frame();
+	virtual void wait_frame();
 
 	void end_frame(VkSemaphore semaphore);
 

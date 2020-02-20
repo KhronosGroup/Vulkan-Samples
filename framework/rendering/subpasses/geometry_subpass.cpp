@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,9 +49,6 @@ void GeometrySubpass::prepare()
 			auto &variant     = sub_mesh->get_shader_variant();
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
-
-			vert_module.set_resource_dynamic("GlobalUniform");
-			frag_module.set_resource_dynamic("GlobalUniform");
 		}
 	}
 }
@@ -113,7 +110,6 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	color_blend_attachment.blend_enable           = VK_TRUE;
 	color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	ColorBlendState color_blend_state{};
 	color_blend_state.attachments.resize(get_output_attachments().size());
@@ -171,7 +167,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
-	PipelineLayout &pipeline_layout = device.get_resource_cache().request_pipeline_layout(shader_modules);
+	auto &pipeline_layout = device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
@@ -182,23 +178,21 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	pbr_material_uniform.metallic_factor   = pbr_material->metallic_factor;
 	pbr_material_uniform.roughness_factor  = pbr_material->roughness_factor;
 
-	command_buffer.push_constants(0, pbr_material_uniform);
+	command_buffer.push_constants_accumulated(pbr_material_uniform);
 
-	DescriptorSetLayout &descriptor_set_layout = pipeline_layout.get_set_layout(0);
+	auto &descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(0);
 
 	for (auto &texture : sub_mesh.get_material()->textures)
 	{
-		VkDescriptorSetLayoutBinding layout_binding;
-
-		if (descriptor_set_layout.has_layout_binding(texture.first, layout_binding))
+		if (auto layout_binding = descriptor_set_layout.get_layout_binding(texture.first))
 		{
 			command_buffer.bind_image(texture.second->get_image()->get_vk_image_view(),
 			                          texture.second->get_sampler()->vk_sampler,
-			                          0, layout_binding.binding, 0);
+			                          0, layout_binding->binding, 0);
 		}
 	}
 
-	auto vertex_input_resources = pipeline_layout.get_vertex_input_attributes();
+	auto vertex_input_resources = pipeline_layout.get_resources(ShaderResourceType::Input, VK_SHADER_STAGE_VERTEX_BIT);
 
 	VertexInputState vertex_input_state;
 

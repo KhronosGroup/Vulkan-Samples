@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -123,6 +123,7 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 	std::vector<ShaderModule *> shader_stages(shader_indices.size());
 	std::transform(shader_indices.begin(), shader_indices.end(), shader_stages.begin(),
 	               [&](size_t shader_index) { return shader_modules.at(shader_index); });
+
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_stages);
 
 	pipeline_layouts.push_back(&pipeline_layout);
