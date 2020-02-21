@@ -262,11 +262,24 @@ Instance::Instance(const std::string &              application_name,
 	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	debug_report_create_info.pfnCallback                        = debug_callback;
 
-	instance_info.pNext = &debug_report_create_info;
+	if (debug_utils)
+	{
+		VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+		debug_utils_create_info.messageSeverity                    = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+		debug_utils_create_info.messageType                        = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+		debug_utils_create_info.pfnUserCallback                    = debug_utils_messenger_callback;
+
+		instance_info.pNext = &debug_utils_create_info;
+	}
+	else
+	{
+		VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+		debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+		debug_report_create_info.pfnCallback                        = debug_callback;
+
+		instance_info.pNext = &debug_report_create_info;
+	}
 #endif
 
 	// Create the Vulkan instance
@@ -279,24 +292,6 @@ Instance::Instance(const std::string &              application_name,
 
 	volkLoadInstance(handle);
 
-	if (debug_utils)
-	{
-		VkDebugUtilsMessengerCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-
-		info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-		info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-		info.pfnUserCallback = debug_utils_messenger_callback;
-
-		result = vkCreateDebugUtilsMessengerEXT(handle, &info, nullptr, &debug_utils_messenger);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Could not create debug utils messenger.");
-		}
-	}
-	else
-	{
-		VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	}
 	query_gpus();
 }
 
