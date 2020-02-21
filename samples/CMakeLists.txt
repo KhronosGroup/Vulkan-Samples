@@ -68,6 +68,7 @@ set(ORDER_LIST
     "pipeline_cache"
     "descriptor_management"
     "render_passes"
+    "msaa"
     "render_subpasses"
     "pipeline_barriers"
     "wait_idle"
