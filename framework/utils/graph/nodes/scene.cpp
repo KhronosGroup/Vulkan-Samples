@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +23,13 @@
 #include <stdexcept>
 #include <type_traits>
 
-#include <glm/gtx/string_cast.hpp>
 #include <json.hpp>
 #include <spdlog/fmt/fmt.h>
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+#include <glm/gtx/string_cast.hpp>
+VKBP_ENABLE_WARNINGS()
 
 #include "utils/strings.h"
 

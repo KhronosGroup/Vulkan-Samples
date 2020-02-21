@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -317,7 +317,7 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = 0;
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
@@ -580,7 +580,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	{
 		textures = scene.get_components<sg::Texture>();
 	}
-	
+
 	for (auto &gltf_material : model.materials)
 	{
 		auto material = parse_material(gltf_material);
@@ -612,8 +612,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	// Load meshes
 	auto materials = scene.get_components<sg::PBRMaterial>();
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	for (auto &gltf_mesh : model.meshes)
 	{
@@ -705,10 +703,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		scene.add_component(std::move(mesh));
 	}
-
-	command_buffer.end();
-
-	queue.submit(command_buffer, device.request_fence());
 
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();

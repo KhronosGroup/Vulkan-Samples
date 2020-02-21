@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,8 +32,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	VkBool32 valid_depth_format = vkb::get_supported_depth_format(device->get_physical_device(), &depth_format);
-	assert(valid_depth_format);
+	depth_format = vkb::get_suitable_depth_format(device->get_physical_device());
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -792,7 +791,7 @@ void ApiVulkanSample::create_swapchain_buffers()
 		swapchain_buffers.resize(frames.size());
 		for (uint32_t i = 0; i < frames.size(); i++)
 		{
-			auto &image_view = *frames[i].get_render_target().get_views().begin();
+			auto &image_view = *frames[i]->get_render_target().get_views().begin();
 
 			swapchain_buffers[i].image = image_view.get_image().get_handle();
 			swapchain_buffers[i].view  = image_view.get_handle();

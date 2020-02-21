@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,10 +38,8 @@ Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUs
     usage{usage}
 {
 }
-const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> RenderTarget {
-	VkFormat depth_format;
-	VkBool32 is_format_supported = get_supported_depth_format(swapchain_image.get_device().get_physical_device(), &depth_format);
-	assert(is_format_supported && "No suitable format found for depth attachment");
+const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget> {
+	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_physical_device());
 
 	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                        depth_format,
@@ -52,29 +50,8 @@ const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Imag
 	images.push_back(std::move(swapchain_image));
 	images.push_back(std::move(depth_image));
 
-	return RenderTarget{std::move(images)};
+	return std::make_unique<RenderTarget>(std::move(images));
 };
-
-RenderTarget &RenderTarget::operator=(RenderTarget &&other) noexcept
-{
-	if (this != &other)
-	{
-		assert(&device == &other.device && "Cannot move assign with a render target created with a different device");
-
-		// Update those descriptor sets referring to old views
-		for (size_t i = 0; i < views.size(); ++i)
-		{
-			device.get_resource_cache().update_descriptor_sets(views, other.views);
-		}
-
-		std::swap(extent, other.extent);
-		std::swap(images, other.images);
-		std::swap(views, other.views);
-		std::swap(attachments, other.attachments);
-		std::swap(output_attachments, other.output_attachments);
-	}
-	return *this;
-}
 
 vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
     device{images.back().get_device()},

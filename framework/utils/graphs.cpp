@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -92,7 +92,7 @@ bool debug_graphs(RenderContext &context, sg::Scene &scene)
 		size_t pipeline_layouts_id = framework_graph.create_node<FrameworkNode>(it_pipeline_layouts->second, it_pipeline_layouts->first);
 		framework_graph.add_edge(resource_cache_id, pipeline_layouts_id);
 
-		auto &stages = it_pipeline_layouts->second.get_stages();
+		auto &stages = it_pipeline_layouts->second.get_shader_modules();
 		for (const auto *shader_module : stages)
 		{
 			size_t shader_modules_id = framework_graph.create_node<FrameworkNode>(*shader_module);
@@ -196,17 +196,18 @@ bool debug_graphs(RenderContext &context, sg::Scene &scene)
 	auto        frame_it = frames.begin();
 	while (frame_it != frames.end())
 	{
-		size_t frame_id = framework_graph.create_node<FrameworkNode>(*frame_it, "Render Frame");
+		auto & frame_ref = *frame_it;
+		size_t frame_id  = framework_graph.create_node<FrameworkNode>(*frame_ref, "Render Frame");
 		framework_graph.add_edge(render_context_id, frame_id);
 
-		size_t semaphore_pool_id = framework_graph.create_node<FrameworkNode>(frame_it->get_semaphore_pool());
-		size_t fence_pool_id     = framework_graph.create_node<FrameworkNode>(frame_it->get_fence_pool());
-		size_t render_target_id  = framework_graph.create_node<FrameworkNode>(frame_it->get_render_target_const());
+		size_t semaphore_pool_id = framework_graph.create_node<FrameworkNode>(frame_ref->get_semaphore_pool());
+		size_t fence_pool_id     = framework_graph.create_node<FrameworkNode>(frame_ref->get_fence_pool());
+		size_t render_target_id  = framework_graph.create_node<FrameworkNode>(frame_ref->get_render_target_const());
 		framework_graph.add_edge(frame_id, semaphore_pool_id);
 		framework_graph.add_edge(frame_id, fence_pool_id);
 		framework_graph.add_edge(frame_id, render_target_id);
 
-		for (const auto &view : frame_it->get_render_target_const().get_views())
+		for (const auto &view : frame_ref->get_render_target_const().get_views())
 		{
 			size_t      image_view_id = framework_graph.create_node<FrameworkNode>(view);
 			const auto &image         = view.get_image();

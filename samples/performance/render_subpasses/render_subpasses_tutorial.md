@@ -1,7 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -50,8 +48,8 @@ mat4 inv_view_proj  = inverse(projection * view);
 vec2 inv_resolution = vec2(1.0f / width, 1.0f / height);
 
 // Load depth from tile buffer and reconstruct world position
-vec4 clip    = vec4(gl_FragCoord.xy * inv_resolution * 2.0 - 1.0,
-                    subpassLoad(depth).x, 1.0);
+vec4 clip    = vec4(in_uv * 2.0 - 1.0, 
+                    subpassLoad(i_depth).x, 1.0);
 vec4 world_w = inv_view_proj * clip;
 vec3 world   = world_w.xyz / world_w.w;
 ```

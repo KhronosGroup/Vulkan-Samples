@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,7 +71,7 @@ class RenderSubpasses : public vkb::VulkanSample
 
 	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
-	vkb::RenderTarget create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/// Good pipeline with two subpasses within one render pass
 	std::unique_ptr<vkb::RenderPipeline> render_pipeline{};

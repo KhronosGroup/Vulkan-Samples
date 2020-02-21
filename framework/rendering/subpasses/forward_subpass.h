@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,10 +18,6 @@
 #pragma once
 
 #include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
-VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
 #include "rendering/subpasses/geometry_subpass.h"

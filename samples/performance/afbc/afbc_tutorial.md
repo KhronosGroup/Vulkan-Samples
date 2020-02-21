@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -27,7 +27,7 @@ The sample is geared towards demonstrating the bandwidth that you can save by to
 
 The Vulkan API allows the developer a level of control around how the `VkSwapchainKHR` is created and formatted. It is here where we want to ensure that it is created and formatted in the right way so that the subsequent `VkImage`'s that we query from it have AFBC appropriately applied.
 
-It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali-G51` or higher. To find out your GPU and driver version, open the [debug window](../../../docs/misc.md#Debug-Window) or follow the steps in this [article](../../../docs/misc.md#Driver-Version).
+It is important to note that from a device perspective to have AFBC enabled on Vulkan, you will need at least driver version `r16p0` and a `Mali G-51` or higher. To find out your GPU and driver version, open the [debug window](../../../docs/misc.md#Debug-Window) or follow the steps in this [article](../../../docs/misc.md#Driver-Version).
 
 > Tested on: Samsung Galaxy S10, Huawei P30
 

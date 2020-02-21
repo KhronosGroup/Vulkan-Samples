@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,30 +124,30 @@ bool is_depth_stencil_format(VkFormat format)
 	       is_depth_only_format(format);
 }
 
-VkBool32 get_supported_depth_format(VkPhysicalDevice physical_device, VkFormat *depth_format)
+VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &depth_format_priority_list)
 {
-	// Since all depth formats may be optional, we need to find a suitable depth format to use
-	// Start with the highest precision packed format
-	std::vector<VkFormat> depth_formats = {
-	    VK_FORMAT_D32_SFLOAT_S8_UINT,
-	    VK_FORMAT_D32_SFLOAT,
-	    VK_FORMAT_D24_UNORM_S8_UINT,
-	    VK_FORMAT_D16_UNORM_S8_UINT,
-	    VK_FORMAT_D16_UNORM};
+	VkFormat depth_format{VK_FORMAT_UNDEFINED};
 
-	for (auto &format : depth_formats)
+	for (auto &format : depth_format_priority_list)
 	{
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+
 		// Format must support depth stencil attachment for optimal tiling
 		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
-			*depth_format = format;
-			return true;
+			depth_format = format;
+			break;
 		}
 	}
 
-	return false;
+	if (depth_format != VK_FORMAT_UNDEFINED)
+	{
+		LOGI("Depth format selected: {}", to_string(depth_format));
+		return depth_format;
+	}
+
+	throw std::runtime_error("No suitable depth format could be determined");
 }
 
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
@@ -981,4 +981,91 @@ void insert_image_memory_barrier(
 	    0, nullptr,
 	    1, &barrier);
 }
+namespace gbuffer
+{
+std::vector<LoadStoreInfo> get_load_all_store_swapchain()
+{
+	// Load every attachment and store only swapchain
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
+}
+
+std::vector<LoadStoreInfo> get_clear_all_store_swapchain()
+{
+	// Clear every attachment and store only swapchain
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
+}
+
+std::vector<LoadStoreInfo> get_clear_store_all()
+{
+	// Clear and store every attachment
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	return load_store;
+}
+
+std::vector<VkClearValue> get_clear_value()
+{
+	// Clear values
+	std::vector<VkClearValue> clear_value{4};
+	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clear_value[1].depthStencil = {0.0f, ~0U};
+	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+
+	return clear_value;
+}
+}        // namespace gbuffer
+
 }        // namespace vkb

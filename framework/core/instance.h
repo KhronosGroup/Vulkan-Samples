@@ -23,6 +23,13 @@
 namespace vkb
 {
 /**
+ * @brief Returns a list of Khronos/LunarG supported validation layers
+ *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
+ * @param supported_instance_layers A list of validation layers to check against
+ */
+std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
+
+/**
  * @brief A wrapper class for VkInstance
  *
  * This class is responsible for initializing volk, enumerating over all available extensions and validation layers

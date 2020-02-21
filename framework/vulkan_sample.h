@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -203,7 +203,7 @@ class VulkanSample : public Application
 	 * @param command_buffer The command buffer to record the commands to
 	 * @param render_target The render target that is being drawn to
 	 */
-	void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
+	virtual void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
 
 	/**
 	 * @brief Starts the render pass, executes the render pipeline, and then ends the render pass
@@ -265,16 +265,6 @@ class VulkanSample : public Application
 	 * @brief Updates the debug window, samples can override this to insert their own data elements
 	 */
 	virtual void update_debug_window();
-
-	/**
-	 * @brief Add free camera script to a node with a camera object.
-	 *        Fallback to the default_camera if node not found.
-	 *
-	 * @param node_name The scene node name
-	 *
-	 * @return Node where the script was attached as component
-	 */
-	sg::Node &add_free_camera(const std::string &node_name);
 
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 

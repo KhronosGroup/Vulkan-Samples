@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,6 +39,9 @@ ForwardSubpass::ForwardSubpass(RenderContext &render_context, ShaderSource &&ver
 
 void ForwardSubpass::prepare()
 {
+	// By default use dynamic resources
+	dynamic_resources = {"GlobalUniform"};
+
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
 	{
@@ -46,15 +49,12 @@ void ForwardSubpass::prepare()
 		{
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
-			// Same as Geometry accept adds lighting definitions to sub mesh variants.
-			add_definitions(variant, {"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
-			add_definitions(variant, light_type_definitions);
+			// Same as Geometry except adds lighting definitions to sub mesh variants.
+			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
+			variant.add_definitions(light_type_definitions);
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
 			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
-
-			vert_module.set_resource_dynamic("GlobalUniform");
-			frag_module.set_resource_dynamic("GlobalUniform");
 		}
 	}
 }

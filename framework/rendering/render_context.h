@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ class RenderContext
 
 	RenderContext(const RenderContext &) = delete;
 
-	RenderContext(RenderContext &&) = default;
+	RenderContext(RenderContext &&) = delete;
 
 	virtual ~RenderContext() = default;
 
@@ -174,7 +174,7 @@ class RenderContext
 	/**
 	 * @brief Waits a frame to finish its rendering
 	 */
-	void wait_frame();
+	virtual void wait_frame();
 
 	void end_frame(VkSemaphore semaphore);
 
@@ -214,7 +214,7 @@ class RenderContext
 
 	uint32_t get_active_frame_index() const;
 
-	std::vector<RenderFrame> &get_render_frames();
+	std::vector<std::unique_ptr<RenderFrame>> &get_render_frames();
 
 	/**
 	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
@@ -246,7 +246,7 @@ class RenderContext
 	    {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	    {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
-	std::vector<RenderFrame> frames;
+	std::vector<std::unique_ptr<RenderFrame>> frames;
 
 	VkSemaphore acquired_semaphore;
 

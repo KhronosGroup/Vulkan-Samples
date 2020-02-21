@@ -116,6 +116,42 @@ bool validate_layers(const std::vector<const char *> &     required,
 }
 }        // namespace
 
+std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers)
+{
+	std::vector<std::vector<const char *>> validation_layer_priority_list =
+	    {
+	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
+	        {"VK_LAYER_KHRONOS_validation"},
+
+	        // Otherwise we fallback to using the LunarG meta layer
+	        {"VK_LAYER_LUNARG_standard_validation"},
+
+	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
+	        {
+	            "VK_LAYER_GOOGLE_threading",
+	            "VK_LAYER_LUNARG_parameter_validation",
+	            "VK_LAYER_LUNARG_object_tracker",
+	            "VK_LAYER_LUNARG_core_validation",
+	            "VK_LAYER_GOOGLE_unique_objects",
+	        },
+
+	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
+	        {"VK_LAYER_LUNARG_core_validation"}};
+
+	for (auto &validation_layers : validation_layer_priority_list)
+	{
+		if (validate_layers(validation_layers, supported_instance_layers))
+		{
+			return validation_layers;
+		}
+
+		LOGW("Couldn't enable validation layers (see log for error) - falling back");
+	}
+
+	// Else return nothing
+	return {};
+}
+
 Instance::Instance(const std::string &              application_name,
                    const std::vector<const char *> &required_extensions,
                    const std::vector<const char *> &required_validation_layers,
@@ -183,20 +219,23 @@ Instance::Instance(const std::string &              application_name,
 	uint32_t instance_layer_count;
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
 
-	std::vector<VkLayerProperties> instance_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data()));
+	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
 
-	std::vector<const char *> active_instance_layers(required_validation_layers);
+	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
+	// Determine the optimal validation layers to enable that are necessary for useful debugging
+	std::vector<const char *> optimal_validation_layers = get_optimal_validation_layers(supported_validation_layers);
+	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
 #endif
 
-	if (validate_layers(active_instance_layers, instance_layers))
+	if (validate_layers(requested_validation_layers, supported_validation_layers))
 	{
-		for (const auto &layer : active_instance_layers)
+		LOGI("Enabled Validation Layers:")
+		for (const auto &layer : requested_validation_layers)
 		{
-			LOGI("Enabled Validation Layer {}", layer);
+			LOGI("	\t{}", layer);
 		}
 	}
 	else
@@ -219,11 +258,20 @@ Instance::Instance(const std::string &              application_name,
 	instance_info.enabledExtensionCount   = to_u32(extensions.size());
 	instance_info.ppEnabledExtensionNames = extensions.data();
 
-	instance_info.enabledLayerCount   = to_u32(active_instance_layers.size());
-	instance_info.ppEnabledLayerNames = active_instance_layers.data();
+	instance_info.enabledLayerCount   = to_u32(requested_validation_layers.size());
+	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+	debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+	debug_report_create_info.pfnCallback                        = debug_callback;
+
+	instance_info.pNext = &debug_report_create_info;
+#endif
 
 	// Create the Vulkan instance
 	result = vkCreateInstance(&instance_info, nullptr, &handle);
+
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException(result, "Could not create Vulkan instance");
@@ -231,7 +279,6 @@ Instance::Instance(const std::string &              application_name,
 
 	volkLoadInstance(handle);
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (debug_utils)
 	{
 		VkDebugUtilsMessengerCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
@@ -249,18 +296,7 @@ Instance::Instance(const std::string &              application_name,
 	else
 	{
 		VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-
-		info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-		info.pfnCallback = debug_callback;
-
-		result = vkCreateDebugReportCallbackEXT(handle, &info, nullptr, &debug_report_callback);
-		if (result != VK_SUCCESS)
-		{
-			throw std::runtime_error("Could not create debug callback.");
-		}
 	}
-#endif
-
 	query_gpus();
 }
 
