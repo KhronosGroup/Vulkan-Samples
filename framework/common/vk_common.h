@@ -57,11 +57,13 @@ bool is_depth_stencil_format(VkFormat format);
 /**
  * @brief Helper function to determine a suitable supported depth format based on a priority list
  * @param physical_device The physical device to check the depth formats against
- * @param depth_format_priority_list The list of depth formats to prefer over one another
+ * @param depth_only (Optional) Wether to include the stencil component in the format or not
+ * @param depth_format_priority_list (Optional) The list of depth formats to prefer over one another
  *		  By default we start with the highest precision packed format
  * @return The valid suited depth format
  */
 VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
+                                   bool                         depth_only                 = false,
                                    const std::vector<VkFormat> &depth_format_priority_list = {
                                        VK_FORMAT_D32_SFLOAT,
                                        VK_FORMAT_D24_UNORM_S8_UINT,

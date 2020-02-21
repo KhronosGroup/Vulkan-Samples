@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,7 +46,11 @@ class PerspectiveCamera : public Camera
 
 	void set_field_of_view(float fov);
 
+	float get_far_plane() const;
+
 	void set_far_plane(float zfar);
+
+	float get_near_plane() const;
 
 	void set_near_plane(float znear);
 

@@ -73,6 +73,8 @@ class VulkanException : public std::runtime_error
 	 */
 	const char *what() const noexcept override;
 
+	VkResult result;
+
   private:
 	std::string error_message;
 };

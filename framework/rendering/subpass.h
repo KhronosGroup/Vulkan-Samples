@@ -109,6 +109,24 @@ class Subpass
 
 	void add_dynamic_resources(const std::vector<std::string> &dynamic_resources);
 
+	void set_sample_count(VkSampleCountFlagBits sample_count);
+
+	const std::vector<uint32_t> &get_color_resolve_attachments() const;
+
+	void set_color_resolve_attachments(std::vector<uint32_t> color_resolve);
+
+	const bool &get_disable_depth_stencil_attachment() const;
+
+	void set_disable_depth_stencil_attachment(bool disable_depth_stencil);
+
+	const uint32_t &get_depth_stencil_resolve_attachment() const;
+
+	void set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve);
+
+	const VkResolveModeFlagBits get_depth_stencil_resolve_mode() const;
+
+	void set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode);
+
 	/**
 	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
 	 * 
@@ -184,6 +202,8 @@ class Subpass
 
 	std::vector<std::string> dynamic_resources{};
 
+	VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};
+
   private:
 	ShaderSource vertex_shader;
 
@@ -191,11 +211,30 @@ class Subpass
 
 	DepthStencilState depth_stencil_state{};
 
+	/**
+	 * @brief When creating the renderpass, pDepthStencilAttachment will
+	 *        be set to nullptr, which disables depth testing
+	 */
+	bool disable_depth_stencil_attachment{false};
+
+	/**
+	 * @brief When creating the renderpass, if not None, the resolve
+	 *        of the multisampled depth attachment will be enabled,
+	 *        with this mode, to depth_stencil_resolve_attachment
+	 */
+	VkResolveModeFlagBits depth_stencil_resolve_mode{VK_RESOLVE_MODE_NONE};
+
 	/// Default to no input attachments
 	std::vector<uint32_t> input_attachments = {};
 
 	/// Default to swapchain output attachment
 	std::vector<uint32_t> output_attachments = {0};
+
+	/// Default to no color resolve attachments
+	std::vector<uint32_t> color_resolve_attachments = {};
+
+	/// Default to no depth stencil resolve attachment
+	uint32_t depth_stencil_resolve_attachment{VK_ATTACHMENT_UNUSED};
 };
 
 }        // namespace vkb

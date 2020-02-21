@@ -123,4 +123,9 @@ const std::vector<uint32_t> &RenderTarget::get_output_attachments() const
 	return output_attachments;
 }
 
+void RenderTarget::set_layout(uint32_t attachment, VkImageLayout layout)
+{
+	attachments[attachment].initial_layout = layout;
+}
+
 }        // namespace vkb
