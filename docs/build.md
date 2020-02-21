@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -102,7 +102,7 @@ Treat all warnings as errors
 
 # 3D models
 
-Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule. The assets are placed in the right locations for all platforms except Android.
+Most of the samples require 3D models downloaded from https://github.com/KhronosGroup/Vulkan-Samples-Assets as git submodule.
 
 On Android, Gradle will run CMake which will sync assets to the device if there has been a change.
 
@@ -131,7 +131,7 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (known to work with 3.10.2)
 - Visual Studio 2017 or above
 - [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
@@ -165,14 +165,14 @@ cmake --build build/windows --config Release --target vulkan_samples
 `Step 3.` Run the **Vulkan Samples** application
 
 ```
-build\windows\vulkan_samples\bin\Release\AMD64\vulkan_samples.exe
+build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 ```
 
 # Linux
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (known to work with 3.10.2)
 - C++14 Compiler (tested on GCC 7.3)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
@@ -198,14 +198,14 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 `Step 3.` Run the **Vulkan Samples** application to display the help message
 
 ```
-./build/linux/vulkan_samples/bin/Release/x86_64/vulkan_samples --help
+./build/linux/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
 # macOS
 
 ## Dependencies
 
-- CMake v3.10+
+- CMake v3.10+ (known to work with 3.10.2)
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
@@ -228,7 +228,7 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 `Step 3.` Run the **Vulkan Samples** application to display the help message
 
 ```
-./build/mac/vulkan_samples/bin/Release/x86_64/vulkan_samples --help
+./build/mac/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
 
@@ -254,7 +254,7 @@ For all dependencies set the following environment variables.
 ##### Windows <!-- omit in toc -->
 
 ```
-bldsys/scripts/generate_android_gradle.bat
+bldsys\scripts\generate_android_gradle.bat
 ```
 
 ##### Linux <!-- omit in toc -->
@@ -279,29 +279,6 @@ adb install build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
 > Alternatively, you may open the `build/android_gradle` folder in Android Studio and run the project from here
-
-## Build with CMake
-
-`Step 1.` Select a generator which supports custom compiler like `Unix Makefiles` or `Ninja`.
-
-`Step 2.` Run the command below in the root directory of the project.
-
-```
-cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake
-```
-
-`Step 3.` Build the project using the command below
-
-```
-cmake --build build/android --config Release --target vulkan_samples_package
-```
-
-`Step 4.` You can now run the apk on a connected device
-
-```
-cd build/android/vulkan_samples/vulkan_samples_package
-adb install build/outputs/apk/debug/vulkan_samples-debug.apk
-```
 
 # Building Individual Samples
 

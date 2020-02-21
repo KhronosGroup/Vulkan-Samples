@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -52,15 +52,13 @@ begin.pClearValues    = &clear;
 
 Using the `LOAD_OP_LOAD` flag is the wrong choice in this case. Not only do we not use its content during this render-pass, it will cost us more in terms of bandwidth.
 
-Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`. We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. In this case we get an estimate of `2220 * 1080 * (32/8) * 61.7 = 591 MiB/s`.
+Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`. We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. Considering we are using triple buffering, we calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`, and multiplying it by `3` we obtain a value close to the _External Read Bytes_ shown in the graph.
 
-![Using LOAD_OP_LOAD](load_store.jpg)
+![Using LOAD_OP_LOAD](images/load_store.jpg)
 
-Comparing the read bandwidth values, we observe a difference of `5099.5 - 4453.8 = 645 MiB/s` if we select `LOAD_OP_CLEAR`:
+Comparing the read bandwidth values, we observe a difference of `1533.9 - 933.7 = 600.2 MiB/s` if we select `LOAD_OP_CLEAR`. The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
 
-![Using LOAD_OP_CLEAR](clear_store.jpg)
-
-The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
+![Using LOAD_OP_CLEAR](images/clear_store.jpg)
 
 ## Depth attachment store operation
 
@@ -78,13 +76,21 @@ VmaAllocationCreateInfo depth_alloc = {};
 depth_alloc.preferredFlags = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
 ```
 
-![Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE](clear_dont_care.jpg)
+![Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE](images/clear_dont_care.jpg)
 
-In this case the write transactions were reduced by `769.6 - 239.5 = 530 MiB/s`, again what we would roughly expect from storing the size of an uncompressed image at ~60 FPS.
-
-![Streamline](render_passes_streamline.png)
+In this case the write transactions were reduced by `986.3 - 431.5 = 554.8 MiB/s`, again what we would roughly expect from storing the size of an uncompressed image at ~60 FPS.
 
 The streamline trace shows us a more in-depth analysis of what is going on in the GPU. The delta between `LOAD_OP_LOAD` and `LOAD_OP_CLEAR` is evident at 10.4s having consistently less external reads. The delta between `STORE_OP_STORE` and `STORE_OP_DONT_CARE` is clear at 18.1s with the external write graphs plunging down.
+
+![Streamline](images/render_passes_streamline.png)
+
+## `vkCmdClear*` functions
+
+Using the `vkCmdClear*` to clear the attachments is not needed as you can get the same result by using `LOAD_OP_CLEAR`. The following screenshot shows that by using that command the GPU will need ~6 million more fragment cycles per second.
+
+![vkCmdClear](images/vk_cmd_clear.png)
+
+While the `vkCmdClear*` functions can be used to clear images explicitly, on certain mobile devices this will result in a per-fragment clear shader which results in the additional workload demonstrated in the above screenshot. Despite this, the `vkCmdClear*` functions do have uses which are not covered by the loadOp operations, for example the `vkCmdClearAttachments` function can be used to clear a specific region within an attachment during a render pass.
 
 ## Depth image usage
 
@@ -94,6 +100,17 @@ Beyond setting the depth image usage bit to specify that it can be used as a `DE
 VkImageCreateInfo depth_info = {VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 depth_info.usage = VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT;
 ```
+
+## Render area granularity
+
+The render area provided to the render pass begin info struct should be tested against the `vkGetRenderAreaGranularity` to confirm that it is an optimal size. A render area is optimal when it satisfies all of the following conditions:
+
+* The `offset.x` member in `renderArea` is a multiple of the width member of the horizontal granularity.
+* The `offset.y` member in `renderArea` is a multiple of the height of the vertical granularity.
+* Either the `extent.width` member in `renderArea` is a multiple of the horizontal granularity or `offset.x` + `extent.width` is equal to the width of the framebuffer in the `VkRenderPassBeginInfo`.
+* Either the `extent.height` member in `renderArea` is a multiple of the vertical granularity or `offset.y` + `extent.height` is equal to the height of the framebuffer in the `VkRenderPassBeginInfo`.
+
+A non optimal render area may cause a negative impact to performance. More information on this is available [here](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetRenderAreaGranularity.html) and [here](https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch07s04.html).
 
 ## Best-practice summary
 

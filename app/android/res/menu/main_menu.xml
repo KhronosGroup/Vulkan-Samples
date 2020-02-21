@@ -17,17 +17,19 @@
 - limitations under the License.
 -
 -->
-<menu xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item
         android:id="@+id/filter_button"
         android:title="@string/filter_button_text" />
     <item
         android:id="@+id/menu_benchmark_mode"
-        android:title="@string/menu_benchmark_mode_title"
-        android:orderInCategory="80"
-        android:checkable="true"/>
+        android:checkable="true"
+        android:title="@string/menu_benchmark_mode_title"/>
+    <item
+        android:id="@+id/menu_headless"
+        android:checkable="true"
+        android:title="@string/menu_headless_title" />
     <item
         android:id="@+id/menu_run_samples"
         android:title="@string/menu_run_samples_title"/>

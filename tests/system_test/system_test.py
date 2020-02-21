@@ -32,7 +32,7 @@ script_path       = os.path.dirname(os.path.realpath(__file__))
 root_path         = os.path.join(script_path, "../../")
 build_path        = ""
 build_config      = ""
-outputs_path      = os.path.join(root_path, "output/images/")
+outputs_path      = "output/images/"
 tmp_path          = os.path.join(script_path, "tmp/")
 archive_path      = os.path.join(script_path, "artifacts/")
 image_ext         = ".png"
@@ -52,7 +52,7 @@ class Subtest:
     def run(self, application_path):
         result = True
         path = root_path + application_path
-        arguments = ["--hide", "--test", "{}".format(self.test_name)]
+        arguments = ["--test", "{}".format(self.test_name), "--headless"]
         try:
             subprocess.run([path] + arguments, cwd=root_path)
         except FileNotFoundError:
@@ -68,9 +68,9 @@ class Subtest:
         self.result = True
         screenshot_path = tmp_path + self.platform + "/"
         try:
-            shutil.move(outputs_path + self.test_name + image_ext, screenshot_path + self.test_name + image_ext)
+            shutil.move(os.path.join(root_path, outputs_path) + self.test_name + image_ext, screenshot_path + self.test_name + image_ext)
         except FileNotFoundError:
-            print("\t\t\t(Error) Couldn't find screenshot ({}), perhaps test crashed".format(outputs_path + self.test_name + image_ext))
+            print("\t\t\t(Error) Couldn't find screenshot ({}), perhaps test crashed".format(os.path.join(root_path, outputs_path) + self.test_name + image_ext))
             self.result = False
             return
         if not test(self.test_name, screenshot_path):
@@ -105,7 +105,7 @@ class AndroidSubtest(Subtest):
 
     def run(self):
         subprocess.run("adb shell am force-stop com.khronos.vulkan_samples")
-        subprocess.run(["adb", "shell", "am", "start", "-W", "-n", "com.khronos.vulkan_samples/com.khronos.vulkan_samples.BPSampleActivity", "-e", "test", "{0}".format(self.test_name)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(["adb", "shell", "am", "start", "-W", "-n", "com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity", "-e", "test", "{0}".format(self.test_name)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         output = subprocess.check_output("adb shell dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1")
         activity = "".join(output.decode("utf-8").split())
         timeout_counter = 0
@@ -115,7 +115,7 @@ class AndroidSubtest(Subtest):
             output = subprocess.check_output("adb shell \"dumpsys window windows | grep -E 'mCurrentFocus|mFocusedApp' | cut -d . -f 5 | cut -d ' ' -f 1\"")
             activity = "".join(output.decode("utf-8").split())
         if timeout_counter <= android_timeout:
-            subprocess.run(["adb", "pull", "/sdcard/Android/data/com.khronos.vulkan_samples/files/" + outputs_path + self.test_name + image_ext, root_path + outputs_path], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            subprocess.run(["adb", "pull", "/sdcard/Android/data/com.khronos.vulkan_samples/files/" + outputs_path + self.test_name + image_ext, os.path.join(root_path, outputs_path)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
             return True
         else:
             print("\t\t\t(Error) Timed out")

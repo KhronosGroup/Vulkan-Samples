@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,6 +43,7 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::gpu_cycles, {hwcpipe::GpuCounter::GpuCycles}},
 	    {StatIndex::vertex_compute_cycles, {hwcpipe::GpuCounter::VertexComputeCycles}},
 	    {StatIndex::tiles, {hwcpipe::GpuCounter::Tiles}},
+	    {StatIndex::killed_tiles, {hwcpipe::GpuCounter::TransactionEliminations}},
 	    {StatIndex::fragment_cycles, {hwcpipe::GpuCounter::FragmentCycles}},
 	    {StatIndex::fragment_jobs, {hwcpipe::GpuCounter::FragmentJobs}},
 	    {StatIndex::l2_reads_lookups, {hwcpipe::GpuCounter::CacheReadLookups}},
@@ -53,7 +54,7 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 	    {StatIndex::l2_ext_write_stalls, {hwcpipe::GpuCounter::ExternalMemoryWriteStalls}},
 	    {StatIndex::l2_ext_read_bytes, {hwcpipe::GpuCounter::ExternalMemoryReadBytes}},
 	    {StatIndex::l2_ext_write_bytes, {hwcpipe::GpuCounter::ExternalMemoryWriteBytes}},
-	    {StatIndex::tex_instr, {hwcpipe::GpuCounter::ShaderTextureCycles}},
+	    {StatIndex::tex_cycles, {hwcpipe::GpuCounter::ShaderTextureCycles}},
 	};
 
 	hwcpipe::CpuCounterSet enabled_cpu_counters{};

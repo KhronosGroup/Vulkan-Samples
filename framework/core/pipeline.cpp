@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,8 @@ Pipeline::Pipeline(Device &device) :
 
 Pipeline::Pipeline(Pipeline &&other) :
     device{other.device},
-    handle{other.handle}
+    handle{other.handle},
+    state{other.state}
 {
 	other.handle = VK_NULL_HANDLE;
 }
@@ -48,12 +49,17 @@ VkPipeline Pipeline::get_handle() const
 	return handle;
 }
 
+const PipelineState &Pipeline::get_state() const
+{
+	return state;
+}
+
 ComputePipeline::ComputePipeline(Device &        device,
                                  VkPipelineCache pipeline_cache,
                                  PipelineState & pipeline_state) :
     Pipeline{device}
 {
-	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_stages().front();
+	const ShaderModule *shader_module = pipeline_state.get_pipeline_layout().get_shader_modules().front();
 
 	if (shader_module->get_stage() != VK_SHADER_STAGE_COMPUTE_BIT)
 	{
@@ -140,7 +146,7 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 	specialization_info.dataSize      = data.size();
 	specialization_info.pData         = data.data();
 
-	for (const ShaderModule *shader_module : pipeline_state.get_pipeline_layout().get_stages())
+	for (const ShaderModule *shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
 	{
 		VkPipelineShaderStageCreateInfo stage_create_info{VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
 
@@ -288,5 +294,7 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 	{
 		vkDestroyShaderModule(device.get_handle(), shader_module, nullptr);
 	}
+
+	state = pipeline_state;
 }
 }        // namespace vkb

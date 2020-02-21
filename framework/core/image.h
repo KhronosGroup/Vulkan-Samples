@@ -29,7 +29,7 @@ class Device;
 namespace core
 {
 class ImageView;
-class Image : public NonCopyable
+class Image
 {
   public:
 	Image(Device &          device,
@@ -49,9 +49,15 @@ class Image : public NonCopyable
 	      VkImageTiling         tiling       = VK_IMAGE_TILING_OPTIMAL,
 	      VkImageCreateFlags    flags        = 0);
 
+	Image(const Image &) = delete;
+
 	Image(Image &&other);
 
 	~Image();
+
+	Image &operator=(const Image &) = delete;
+
+	Image &operator=(Image &&) = delete;
 
 	Device &get_device();
 

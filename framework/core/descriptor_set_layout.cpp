@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,6 @@
 
 #include "descriptor_set_layout.h"
 
-#include "descriptor_pool.h"
-#include "descriptor_set.h"
 #include "device.h"
 #include "shader_module.h"
 
@@ -72,10 +70,10 @@ inline VkDescriptorType find_descriptor_type(ShaderResourceType resource_type, b
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources) :
+DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set) :
     device{device}
 {
-	for (auto &resource : set_resources)
+	for (auto &resource : resource_set)
 	{
 		// Skip shader resources whitout a binding point
 		if (resource.type == ShaderResourceType::Input ||
@@ -117,21 +115,16 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 	{
 		throw VulkanException{result, "Cannot create DescriptorSetLayout"};
 	}
-
-	descriptor_pool = std::make_unique<DescriptorPool>(device, *this);
 }
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     device{other.device},
-    descriptor_pool{std::move(other.descriptor_pool)},
     handle{other.handle},
     bindings{std::move(other.bindings)},
     bindings_lookup{std::move(other.bindings_lookup)},
     resources_lookup{std::move(other.resources_lookup)}
 {
 	other.handle = VK_NULL_HANDLE;
-
-	descriptor_pool->set_descriptor_set_layout(*this);
 }
 
 DescriptorSetLayout::~DescriptorSetLayout()
@@ -148,40 +141,32 @@ VkDescriptorSetLayout DescriptorSetLayout::get_handle() const
 	return handle;
 }
 
-DescriptorPool &DescriptorSetLayout::get_descriptor_pool()
-{
-	assert(handle != VK_NULL_HANDLE && "DescriptorSetLayout is not valid anymore");
-	return *descriptor_pool;
-}
-
 const std::vector<VkDescriptorSetLayoutBinding> &DescriptorSetLayout::get_bindings() const
 {
 	return bindings;
 }
 
-bool DescriptorSetLayout::get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const
+std::unique_ptr<VkDescriptorSetLayoutBinding> DescriptorSetLayout::get_layout_binding(uint32_t binding_index) const
 {
 	auto it = bindings_lookup.find(binding_index);
 
 	if (it == bindings_lookup.end())
 	{
-		return false;
+		return nullptr;
 	}
 
-	binding = it->second;
-
-	return true;
+	return std::make_unique<VkDescriptorSetLayoutBinding>(it->second);
 }
 
-bool DescriptorSetLayout::has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const
+std::unique_ptr<VkDescriptorSetLayoutBinding> DescriptorSetLayout::get_layout_binding(const std::string &name) const
 {
 	auto it = resources_lookup.find(name);
 
 	if (it == resources_lookup.end())
 	{
-		return false;
+		return nullptr;
 	}
 
-	return get_layout_binding(it->second, binding);
+	return get_layout_binding(it->second);
 }
 }        // namespace vkb

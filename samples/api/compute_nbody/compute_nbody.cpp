@@ -25,7 +25,9 @@ ComputeNBody::ComputeNBody()
 {
 	title       = "Compute shader N-body system";
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -85,7 +87,7 @@ void ComputeNBody::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -778,7 +780,7 @@ void ComputeNBody::prepare_uniform_buffers()
 void ComputeNBody::update_compute_uniform_buffers(float delta_time)
 {
 	compute.ubo.delta_time = paused ? 0.0f : delta_time;
-	memcpy(compute.uniform_buffer->map(), &compute.ubo, sizeof(compute.ubo));
+	compute.uniform_buffer->convert_and_update(compute.ubo);
 }
 
 void ComputeNBody::update_graphics_uniform_buffers()
@@ -786,7 +788,7 @@ void ComputeNBody::update_graphics_uniform_buffers()
 	graphics.ubo.projection = camera.matrices.perspective;
 	graphics.ubo.view       = camera.matrices.view;
 	graphics.ubo.screenDim  = glm::vec2((float) width, (float) height);
-	memcpy(graphics.uniform_buffer->map(), &graphics.ubo, sizeof(graphics.ubo));
+	graphics.uniform_buffer->convert_and_update(graphics.ubo);
 }
 
 void ComputeNBody::draw()

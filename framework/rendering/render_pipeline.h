@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,21 +27,29 @@ namespace vkb
 {
 /**
  * @brief A RenderPipeline is a sequence of Subpass objects.
- * The most basic one is SceneSubpass.
  * Subpass holds shaders and can draw the core::sg::Scene.
- * SceneSubpass holds a GlobalUniform for uniform data across all meshes.
  * More subpasses can be added to the sequence if required.
  * For example, postprocessing can be implemented with two pipelines which
  * share render targets.
+ *
+ * GeometrySubpass -> Processes Scene for Shaders, use by itself if shader requires no lighting
+ * ForwardSubpass -> Binds lights at the beginning of a GeometrySubpass to create Forward Rendering, should be used with most default shaders
+ * LightingSubpass -> Holds a Global Light uniform, Can be combined with GeometrySubpass to create Deferred Rendering
  */
-class RenderPipeline : public NonCopyable
+class RenderPipeline
 {
   public:
 	RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
 
+	RenderPipeline(const RenderPipeline &) = delete;
+
+	RenderPipeline(RenderPipeline &&) = default;
+
 	virtual ~RenderPipeline() = default;
 
-	RenderPipeline(RenderPipeline &&other) = default;
+	RenderPipeline &operator=(const RenderPipeline &) = delete;
+
+	RenderPipeline &operator=(RenderPipeline &&) = default;
 
 	/**
 	 * @return Load store info
@@ -69,10 +77,18 @@ class RenderPipeline : public NonCopyable
 	 */
 	void add_subpass(std::unique_ptr<Subpass> &&subpass);
 
+	std::vector<std::unique_ptr<Subpass>> &get_subpasses();
+
 	/**
 	 * @brief Record draw commands for each Subpass
 	 */
 	void draw(CommandBuffer &command_buffer, RenderTarget &render_target, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+
+	/**
+	 * @return Subpass currently being recorded, or the first one
+	 *         if drawing has not started
+	 */
+	std::unique_ptr<Subpass> &get_active_subpass();
 
   private:
 	std::vector<std::unique_ptr<Subpass>> subpasses;
@@ -82,5 +98,7 @@ class RenderPipeline : public NonCopyable
 
 	/// Default to two clear values
 	std::vector<VkClearValue> clear_value = std::vector<VkClearValue>(2);
+
+	size_t active_subpass_index{0};
 };
 }        // namespace vkb

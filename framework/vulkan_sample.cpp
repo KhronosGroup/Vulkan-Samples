@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 #include <imgui.h>
 VKBP_ENABLE_WARNINGS()
 
@@ -30,90 +30,17 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
+#include "platform/window.h"
 #include "scene_graph/components/camera.h"
-#include "scene_graph/script.h"
-#include "scene_graph/scripts/free_camera.h"
+#include "utils/graphs.h"
+#include "utils/strings.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
 
 namespace vkb
 {
-namespace
-{
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
-                                                     uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
-                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
-{
-	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
-	{
-		LOGE("{}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-	{
-		LOGW("{}: {}", layer_prefix, message);
-	}
-	else
-	{
-		LOGI("{}: {}", layer_prefix, message);
-	}
-	return VK_FALSE;
-}
-#endif
-bool validate_extensions(const std::vector<const char *> &         required,
-                         const std::vector<VkExtensionProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.extensionName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
-bool validate_layers(const std::vector<const char *> &     required,
-                     const std::vector<VkLayerProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.layerName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-}        // namespace
-
 VulkanSample::~VulkanSample()
 {
 	if (device)
@@ -130,20 +57,10 @@ VulkanSample::~VulkanSample()
 
 	if (surface != VK_NULL_HANDLE)
 	{
-		vkDestroySurfaceKHR(instance, surface, nullptr);
+		vkDestroySurfaceKHR(instance->get_handle(), surface, nullptr);
 	}
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (debug_report_callback != VK_NULL_HANDLE)
-	{
-		vkDestroyDebugReportCallbackEXT(instance, debug_report_callback, nullptr);
-	}
-#endif
-
-	if (instance != VK_NULL_HANDLE)
-	{
-		vkDestroyInstance(instance, nullptr);
-	}
+	instance.reset();
 }
 
 void VulkanSample::set_render_pipeline(RenderPipeline &&rp)
@@ -164,31 +81,17 @@ bool VulkanSample::prepare(Platform &platform)
 		return false;
 	}
 
-	get_debug_info().insert<field::MinMax, float>("fps", fps);
-	get_debug_info().insert<field::MinMax, float>("frame_time", frame_time);
+	LOGI("Initializing Vulkan sample");
 
-	LOGI("Initializing context");
-
+	// Creating the vulkan instance
 	std::vector<const char *> requested_instance_extensions = get_instance_extensions();
-	requested_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	instance = create_instance(requested_instance_extensions, get_validation_layers());
+	requested_instance_extensions.push_back(platform.get_surface_extension());
+	instance = std::make_unique<Instance>(get_name(), requested_instance_extensions, get_validation_layers(), is_headless());
 
-	surface = platform.create_surface(instance);
+	// Getting a valid vulkan surface from the platform
+	surface = platform.get_window().create_surface(*instance);
 
-	uint32_t physical_device_count{0};
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr));
-
-	if (physical_device_count < 1)
-	{
-		LOGE("Failed to enumerate Vulkan physical device.");
-		return false;
-	}
-
-	gpus.resize(physical_device_count);
-
-	VK_CHECK(vkEnumeratePhysicalDevices(instance, &physical_device_count, gpus.data()));
-
-	auto physical_device = get_gpu();
+	auto physical_device = instance->get_gpu();
 
 	// Get supported features from the physical device, and requested features from the sample
 	vkGetPhysicalDeviceFeatures(physical_device, &supported_device_features);
@@ -196,11 +99,15 @@ bool VulkanSample::prepare(Platform &platform)
 
 	// Creating vulkan device, specifying the swapchain extension always
 	std::vector<const char *> requested_device_extensions = get_device_extensions();
-	requested_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	{
+		requested_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	}
+
 	device = std::make_unique<vkb::Device>(physical_device, surface, requested_device_extensions, requested_device_features);
 
 	// Preparing render context for rendering
-	render_context = std::make_unique<vkb::RenderContext>(*device, surface);
+	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
 	render_context->set_present_mode_priority({VK_PRESENT_MODE_FIFO_KHR,
 	                                           VK_PRESENT_MODE_MAILBOX_KHR});
 
@@ -208,6 +115,7 @@ bool VulkanSample::prepare(Platform &platform)
 	                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+
 	prepare_render_context();
 
 	return true;
@@ -273,14 +181,35 @@ void VulkanSample::update_gui(float delta_time)
 	}
 }
 
-void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target)
+void VulkanSample::update(float delta_time)
+{
+	update_scene(delta_time);
+
+	update_stats(delta_time);
+
+	update_gui(delta_time);
+
+	auto &command_buffer = render_context->begin();
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	draw(command_buffer, render_context->get_active_frame().get_render_target());
+
+	command_buffer.end();
+
+	render_context->submit(command_buffer);
+}
+
+void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
 
 	{
+		// Image 0 is the swapchain
 		ImageMemoryBarrier memory_barrier{};
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -296,16 +225,17 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 
 	{
 		ImageMemoryBarrier memory_barrier{};
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+		memory_barrier.src_access_mask = 0;
+		memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
 		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
-	draw_swapchain_renderpass(command_buffer, render_target);
+	draw_renderpass(command_buffer, render_target);
 
 	{
 		ImageMemoryBarrier memory_barrier{};
@@ -319,36 +249,37 @@ void VulkanSample::record_scene_rendering_commands(CommandBuffer &command_buffer
 	}
 }
 
-void VulkanSample::update(float delta_time)
+void VulkanSample::draw_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
-	update_scene(delta_time);
+	auto &extent = render_target.get_extent();
 
-	update_stats(delta_time);
+	VkViewport viewport{};
+	viewport.width    = static_cast<float>(extent.width);
+	viewport.height   = static_cast<float>(extent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	command_buffer.set_viewport(0, {viewport});
 
-	update_gui(delta_time);
+	VkRect2D scissor{};
+	scissor.extent = extent;
+	command_buffer.set_scissor(0, {scissor});
 
-	auto acquired_semaphore = render_context->begin_frame();
+	render(command_buffer);
 
-	if (acquired_semaphore == VK_NULL_HANDLE)
+	if (gui)
 	{
-		return;
+		gui->draw(command_buffer);
 	}
 
-	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	command_buffer.end_render_pass();
+}
 
-	auto &render_target = render_context->get_active_frame().get_render_target();
-
-	auto &command_buffer = render_context->request_frame_command_buffer(queue);
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-	record_scene_rendering_commands(command_buffer, render_target);
-
-	command_buffer.end();
-
-	auto render_semaphore = render_context->submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
-
-	render_context->end_frame(render_semaphore);
+void VulkanSample::render(CommandBuffer &command_buffer)
+{
+	if (render_pipeline)
+	{
+		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
+	}
 }
 
 void VulkanSample::resize(uint32_t width, uint32_t height)
@@ -407,6 +338,11 @@ void VulkanSample::input_event(const InputEvent &input_event)
 		{
 			screenshot(*render_context, "screenshot-" + get_name());
 		}
+
+		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
+		{
+			utils::debug_graphs(get_render_context(), *scene.get());
+		}
 	}
 }
 
@@ -420,39 +356,14 @@ void VulkanSample::finish()
 	}
 }
 
-VkPhysicalDevice VulkanSample::get_gpu()
+Device &VulkanSample::get_device()
 {
-	// Find a discrete GPU
-	for (auto gpu : gpus)
-	{
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(gpu, &properties);
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-		{
-			return gpu;
-		}
-	}
-
-	// Otherwise just pick the first one
-	return gpus.at(0);
-}
-
-VkSurfaceKHR VulkanSample::get_surface()
-{
-	return surface;
+	return *device;
 }
 
 Configuration &VulkanSample::get_configuration()
 {
 	return configuration;
-}
-
-void VulkanSample::render(CommandBuffer &command_buffer)
-{
-	if (render_pipeline)
-	{
-		render_pipeline->draw(command_buffer, render_context->get_active_frame().get_render_target());
-	}
 }
 
 void VulkanSample::draw_gui()
@@ -461,9 +372,12 @@ void VulkanSample::draw_gui()
 
 void VulkanSample::update_debug_window()
 {
+	auto        driver_version     = device->get_driver_version();
+	std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
+	get_debug_info().insert<field::Static, std::string>("driver_version", driver_version_str);
+
 	get_debug_info().insert<field::Static, std::string>("resolution",
-	                                                    to_string(render_context->get_swapchain().get_extent().width) + "x" +
-	                                                        to_string(render_context->get_swapchain().get_extent().height));
+	                                                    to_string(render_context->get_swapchain().get_extent()));
 
 	get_debug_info().insert<field::Static, std::string>("surface_format",
 	                                                    to_string(render_context->get_swapchain().get_format()) + " (" +
@@ -483,36 +397,6 @@ void VulkanSample::update_debug_window()
 	}
 }
 
-sg::Node &VulkanSample::add_free_camera(const std::string &node_name)
-{
-	auto camera_node = scene->find_node(node_name);
-
-	if (!camera_node)
-	{
-		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
-
-		camera_node = scene->find_node("default_camera");
-	}
-
-	if (!camera_node)
-	{
-		throw std::runtime_error("Camera node with name `" + node_name + "` not found.");
-	}
-
-	if (!camera_node->has_component<sg::Camera>())
-	{
-		throw std::runtime_error("No camera component found for `" + node_name + "` node.");
-	}
-
-	auto free_camera_script = std::make_unique<sg::FreeCamera>(*camera_node);
-
-	free_camera_script->resize(render_context->get_surface_extent().width, render_context->get_surface_extent().height);
-
-	scene->add_component(std::move(free_camera_script), *camera_node);
-
-	return *camera_node;
-}
-
 void VulkanSample::load_scene(const std::string &path)
 {
 	GLTFLoader loader{*device};
@@ -526,10 +410,9 @@ void VulkanSample::load_scene(const std::string &path)
 	}
 }
 
-Device &VulkanSample::get_device()
+VkSurfaceKHR VulkanSample::get_surface()
 {
-	assert(render_context && "Device is not valid");
-	return *device;
+	return surface;
 }
 
 RenderContext &VulkanSample::get_render_context()
@@ -538,117 +421,17 @@ RenderContext &VulkanSample::get_render_context()
 	return *render_context;
 }
 
-VkInstance VulkanSample::create_instance(const std::vector<const char *> &required_instance_extensions,
-                                         const std::vector<const char *> &required_instance_layers)
-{
-	VkResult result = volkInitialize();
-	if (result)
-	{
-		throw VulkanException(result, "Failed to initialize volk.");
-	}
-
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-
-	std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data()));
-
-	std::vector<const char *> active_instance_extensions(required_instance_extensions);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
-#endif
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
-	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_MACOS_MVK)
-	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
-	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
-#endif
-
-	if (!validate_extensions(active_instance_extensions, instance_extensions))
-	{
-		throw std::runtime_error("Required instance extensions are missing.");
-	}
-
-	uint32_t instance_layer_count;
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
-
-	std::vector<VkLayerProperties> instance_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, instance_layers.data()));
-
-	std::vector<const char *> active_instance_layers(required_instance_layers);
-
-#ifdef VKB_VALIDATION_LAYERS
-	active_instance_layers.push_back("VK_LAYER_KHRONOS_validation");
-#endif
-
-	if (!validate_layers(active_instance_layers, instance_layers))
-	{
-		throw std::runtime_error("Required instance layers are missing.");
-	}
-
-	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
-
-	app_info.pApplicationName   = get_name().c_str();
-	app_info.applicationVersion = 0;
-	app_info.pEngineName        = "Vulkan Samples";
-	app_info.engineVersion      = 0;
-	app_info.apiVersion         = VK_MAKE_VERSION(1, 0, 0);
-
-	VkInstanceCreateInfo instance_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
-
-	instance_info.pApplicationInfo = &app_info;
-
-	instance_info.enabledExtensionCount   = to_u32(active_instance_extensions.size());
-	instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
-
-	instance_info.enabledLayerCount   = to_u32(active_instance_layers.size());
-	instance_info.ppEnabledLayerNames = active_instance_layers.data();
-
-	// Create the Vulkan instance
-
-	VkInstance new_instance;
-	result = vkCreateInstance(&instance_info, nullptr, &new_instance);
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException(result, "Could not create Vulkan instance");
-	}
-
-	volkLoadInstance(new_instance);
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-
-	info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	info.pfnCallback = debug_callback;
-
-	result = vkCreateDebugReportCallbackEXT(new_instance, &info, nullptr, &debug_report_callback);
-	if (result != VK_SUCCESS)
-	{
-		throw std::runtime_error("Could not create debug callback.");
-	}
-#endif
-
-	return new_instance;
-}
-
 const std::vector<const char *> VulkanSample::get_validation_layers()
 {
 	return {};
 }
 
-const std::vector<const char *> VulkanSample::get_instance_extensions()
+std::vector<const char *> const VulkanSample::get_instance_extensions()
 {
 	return {};
 }
 
-const std::vector<const char *> VulkanSample::get_device_extensions()
+std::vector<const char *> const VulkanSample::get_device_extensions()
 {
 	return {};
 }
@@ -658,28 +441,9 @@ void VulkanSample::get_device_features()
 	// Can be overriden in derived class
 }
 
-void VulkanSample::draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
+sg::Scene &VulkanSample::get_scene()
 {
-	auto &extent = render_target.get_extent();
-
-	VkViewport viewport{};
-	viewport.width    = static_cast<float>(extent.width);
-	viewport.height   = static_cast<float>(extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	command_buffer.set_viewport(0, {viewport});
-
-	VkRect2D scissor{};
-	scissor.extent = extent;
-	command_buffer.set_scissor(0, {scissor});
-
-	render(command_buffer);
-
-	if (gui)
-	{
-		gui->draw(command_buffer);
-	}
-
-	command_buffer.end_render_pass();
+	assert(scene && "Scene not loaded");
+	return *scene;
 }
 }        // namespace vkb

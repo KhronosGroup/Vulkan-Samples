@@ -59,17 +59,27 @@ DescriptorPool::DescriptorPool(Device &                   device,
 
 DescriptorPool::~DescriptorPool()
 {
-	// Destroy all descriptor sets
-	for (auto it : set_pool_mapping)
-	{
-		vkFreeDescriptorSets(device.get_handle(), pools[it.second], 1, &it.first);
-	}
-
 	// Destroy all descriptor pools
 	for (auto pool : pools)
 	{
 		vkDestroyDescriptorPool(device.get_handle(), pool, nullptr);
 	}
+}
+
+void DescriptorPool::reset()
+{
+	// Reset all descriptor pools
+	for (auto pool : pools)
+	{
+		vkResetDescriptorPool(device.get_handle(), pool, 0);
+	}
+
+	// Clear internal tracking of descriptor set allocations
+	std::fill(pool_sets_count.begin(), pool_sets_count.end(), 0);
+	set_pool_mapping.clear();
+
+	// Reset the pool index from which descriptor sets are allocated
+	pool_index = 0;
 }
 
 const DescriptorSetLayout &DescriptorPool::get_descriptor_set_layout() const
@@ -151,7 +161,8 @@ std::uint32_t DescriptorPool::find_available_pool(std::uint32_t search_index)
 	{
 		VkDescriptorPoolCreateInfo create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
 
-		create_info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		// We do not set FREE_DESCRIPTOR_SET_BIT as we do not need to free individual descriptor sets
+		create_info.flags         = 0;
 		create_info.poolSizeCount = to_u32(pool_sizes.size());
 		create_info.pPoolSizes    = pool_sizes.data();
 		create_info.maxSets       = pool_max_sets;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,11 +26,15 @@ VkFramebuffer Framebuffer::get_handle() const
 	return handle;
 }
 
-Framebuffer::Framebuffer(Device &device, const RenderTarget &render_target, const RenderPass &render_pass) :
-    device{device}
+const VkExtent2D &Framebuffer::get_extent() const
 {
-	auto &extent = render_target.get_extent();
+	return extent;
+}
 
+Framebuffer::Framebuffer(Device &device, const RenderTarget &render_target, const RenderPass &render_pass) :
+    device{device},
+    extent{render_target.get_extent()}
+{
 	std::vector<VkImageView> attachments;
 
 	for (auto &view : render_target.get_views())
@@ -57,7 +61,8 @@ Framebuffer::Framebuffer(Device &device, const RenderTarget &render_target, cons
 
 Framebuffer::Framebuffer(Framebuffer &&other) :
     device{other.device},
-    handle{other.handle}
+    handle{other.handle},
+    extent{other.extent}
 {
 	other.handle = VK_NULL_HANDLE;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,6 +82,7 @@ size_t ResourceRecord::register_pipeline_layout(const std::vector<ShaderModule *
 	std::vector<size_t> shader_indices(shader_modules.size());
 	std::transform(shader_modules.begin(), shader_modules.end(), shader_indices.begin(),
 	               [this](ShaderModule *shader_module) { return shader_module_to_index.at(shader_module); });
+
 	write(stream,
 	      ResourceType::PipelineLayout,
 	      shader_indices);

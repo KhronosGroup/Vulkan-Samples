@@ -33,13 +33,11 @@ class RenderPassesSample : public vkb::VulkanSample
 
 	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
-
 	void draw_gui() override;
 
-	/** 
-	 * @brief Struct that contains radio button labeling and the value 
-	 *			which one is selected
+	/**
+	 * @brief Struct that contains radio button labeling
+	 * and the value which one is selected
 	 */
 	struct RadioButtonGroup
 	{
@@ -50,12 +48,22 @@ class RenderPassesSample : public vkb::VulkanSample
 		int value;
 	};
 
+	struct CheckBox
+	{
+		const char *description;
+
+		bool value;
+	};
+
   private:
 	void reset_stats_view() override;
 
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	vkb::sg::PerspectiveCamera *camera{nullptr};
+
+	// Whether to use vkCmdClear or not
+	bool cmd_clear = false;
 
 	RadioButtonGroup load{
 	    "Color attachment load operation",

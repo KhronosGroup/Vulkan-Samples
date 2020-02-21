@@ -20,8 +20,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb

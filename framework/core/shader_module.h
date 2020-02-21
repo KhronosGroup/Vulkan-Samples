@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,8 @@ enum class ShaderResourceType
 	BufferUniform,
 	BufferStorage,
 	PushConstant,
-	SpecializationConstant
+	SpecializationConstant,
+	All
 };
 
 /// Store shader resource data.
@@ -85,6 +86,12 @@ class ShaderVariant
 	ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes);
 
 	size_t get_id() const;
+
+	/**
+	 * @brief Add definitions to shader variant
+	 * @param definitions Vector of definitions to add to the variant
+	 */
+	void add_definitions(const std::vector<std::string> &definitions);
 
 	/**
 	 * @brief Adds a define macro to the shader
@@ -160,7 +167,7 @@ class ShaderSource
  * It works similarly for attribute locations. A current limitation is that only set 0
  * is considered. Uniform buffers are currently hardcoded as well.
  */
-class ShaderModule : public NonCopyable
+class ShaderModule
 {
   public:
 	ShaderModule(Device &              device,
@@ -169,7 +176,13 @@ class ShaderModule : public NonCopyable
 	             const std::string &   entry_point,
 	             const ShaderVariant & shader_variant);
 
+	ShaderModule(const ShaderModule &) = delete;
+
 	ShaderModule(ShaderModule &&other);
+
+	ShaderModule &operator=(const ShaderModule &) = delete;
+
+	ShaderModule &operator=(ShaderModule &&) = delete;
 
 	size_t get_id() const;
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "core/instance.h"
 #include "platform/application.h"
 
 /**
@@ -139,7 +140,7 @@ class HelloTriangle : public vkb::Application
 
 	void init_instance(Context &                        context,
 	                   const std::vector<const char *> &required_instance_extensions,
-	                   const std::vector<const char *> &required_instance_layers);
+	                   const std::vector<const char *> &required_validation_layers);
 
 	void init_device(Context &                        context,
 	                 const std::vector<const char *> &required_device_extensions);
@@ -170,6 +171,8 @@ class HelloTriangle : public vkb::Application
 
   private:
 	Context context;
+
+	std::unique_ptr<vkb::Instance> vk_instance;
 };
 
 std::unique_ptr<vkb::Application> create_hello_triangle();

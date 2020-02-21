@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -145,6 +145,14 @@ size_t ShaderVariant::get_id() const
 	return id;
 }
 
+void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
+{
+	for (auto &definition : definitions)
+	{
+		add_define(definition);
+	}
+}
+
 void ShaderVariant::add_define(const std::string &def)
 {
 	processes.push_back("D" + def);
@@ -174,7 +182,7 @@ void ShaderVariant::add_undefine(const std::string &undef)
 
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
 {
-	if (runtime_array_sizes.find(runtime_array_name) != runtime_array_sizes.end())
+	if (runtime_array_sizes.find(runtime_array_name) == runtime_array_sizes.end())
 	{
 		runtime_array_sizes.insert({runtime_array_name, size});
 	}

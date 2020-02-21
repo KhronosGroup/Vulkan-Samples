@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,9 +84,7 @@ void ConservativeRasterization::prepare_offscreen()
 	offscreen_pass.height = height / ZOOM_FACTOR;
 
 	// Find a suitable depth format
-	VkFormat framebuffer_depth_format;
-	VkBool32 valid_depth_format = vkb::get_supported_depth_format(get_device().get_physical_device(), &framebuffer_depth_format);
-	assert(valid_depth_format);
+	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_physical_device());
 
 	// Color attachment
 	VkImageCreateInfo image = vkb::initializers::image_create_info();
@@ -257,7 +255,7 @@ void ConservativeRasterization::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.0f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.renderPass               = offscreen_pass.render_pass;
@@ -293,7 +291,7 @@ void ConservativeRasterization::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.25f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = framebuffers[i];
@@ -448,8 +446,9 @@ void ConservativeRasterization::prepare_pipelines()
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -471,7 +470,7 @@ void ConservativeRasterization::prepare_pipelines()
 
 	// Get device properties for conservative rasterization
 	// Requires VK_KHR_get_physical_device_properties2 and manual function pointer creation
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties2KHR"));
+	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	assert(vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 	conservative_raster_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
@@ -560,7 +559,7 @@ void ConservativeRasterization::update_uniform_buffers_scene()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.model      = camera.matrices.view;
-	memcpy(uniform_buffers.scene->map(), &ubo_scene, sizeof(ubo_scene));
+	uniform_buffers.scene->convert_and_update(ubo_scene);
 }
 
 void ConservativeRasterization::draw()
@@ -579,8 +578,9 @@ bool ConservativeRasterization::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.0f));
 

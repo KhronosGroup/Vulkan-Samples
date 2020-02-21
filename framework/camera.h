@@ -17,15 +17,13 @@
 
 #pragma once
 
-#ifndef GLM_FORCE_RADIANS
-#	define GLM_FORCE_RADIANS
-#endif
-#ifndef GLM_FORCE_DEPTH_ZERO_TO_ONE
-#	define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#endif
-#include <glm/glm.hpp>
+#include "common/error.h"
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/quaternion.hpp>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

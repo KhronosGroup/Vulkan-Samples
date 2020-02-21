@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
 #include "common/error.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "core/instance.h"
 #include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
@@ -40,7 +41,8 @@ namespace vkb
  * The lifecycle of a Vulkan sample starts by instantiating the correct Platform
  * (e.g. WindowsPlatform) and then calling initialize() on it, which sets up
  * the windowing system and logging. Then it calls the parent Platform::initialize(),
- * which takes ownership of the active application an calls Application::prepare().
+ * which takes ownership of the active application. It's the platforms responsibility
+ * to then call VulkanSample::prepare() to prepare the vulkan sample when it is ready.
  *
  * @subsection sample_init Sample initialization
  * The preparation step is divided in two steps, one in VulkanSample and the other in the
@@ -121,19 +123,14 @@ class VulkanSample : public Application
 
 	virtual void finish() override;
 
-	/**
-	 * @return A suitable GPU
-	 */
-	VkPhysicalDevice get_gpu();
-
-	VkSurfaceKHR get_surface();
-
 	/** 
 	 * @brief Loads the scene
-	 * 
+	 *
 	 * @param path The path of the glTF file
 	 */
 	void load_scene(const std::string &path);
+
+	VkSurfaceKHR get_surface();
 
 	Device &get_device();
 
@@ -145,9 +142,22 @@ class VulkanSample : public Application
 
 	Configuration &get_configuration();
 
+	sg::Scene &get_scene();
+
   protected:
+	/**
+	 * @brief The Vulkan instance
+	 */
+	std::unique_ptr<Instance> instance{nullptr};
+
+	/**
+	 * @brief The Vulkan device
+	 */
 	std::unique_ptr<Device> device{nullptr};
 
+	/**
+	 * @brief Context used for rendering, it is responsible for managing the frames and their underlying images
+	 */
 	std::unique_ptr<RenderContext> render_context{nullptr};
 
 	/**
@@ -155,6 +165,9 @@ class VulkanSample : public Application
 	 */
 	std::unique_ptr<RenderPipeline> render_pipeline{nullptr};
 
+	/**
+	 * @brief Holds all scene information
+	 */
 	std::unique_ptr<sg::Scene> scene{nullptr};
 
 	std::unique_ptr<Gui> gui{nullptr};
@@ -167,10 +180,43 @@ class VulkanSample : public Application
 	// The features to be requested from the logical device
 	VkPhysicalDeviceFeatures requested_device_features{};
 
-	/** 
-	 * @brief Override this to customise the creation of the swapchain and render_context
+	/**
+	 * @brief Update scene
+	 * @param delta_time
 	 */
-	virtual void prepare_render_context();
+	void update_scene(float delta_time);
+
+	/**
+	 * @brief Update counter values
+	 * @param delta_time
+	 */
+	void update_stats(float delta_time);
+
+	/**
+	 * @brief Update GUI
+	 * @param delta_time
+	 */
+	void update_gui(float delta_time);
+
+	/**
+	 * @brief Prepares the render target and draws to it, calling draw_renderpass
+	 * @param command_buffer The command buffer to record the commands to
+	 * @param render_target The render target that is being drawn to
+	 */
+	virtual void draw(CommandBuffer &command_buffer, RenderTarget &render_target);
+
+	/**
+	 * @brief Starts the render pass, executes the render pipeline, and then ends the render pass
+	 * @param command_buffer The command buffer to record the commands to
+	 * @param render_target The render target that is being drawn to
+	 */
+	virtual void draw_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target);
+
+	/**
+	 * @brief Triggers the render pipeline, it can be overriden by samples to specialize their rendering logic
+	 * @param command_buffer The command buffer to record the commands to
+	 */
+	virtual void render(CommandBuffer &command_buffer);
 
 	/**
 	 * @brief Get additional sample-specific instance layers.
@@ -198,31 +244,10 @@ class VulkanSample : public Application
 	 */
 	virtual void get_device_features();
 
-	/**
-	 * @brief Update scene
-	 * @param delta_time
+	/** 
+	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
-	void update_scene(float delta_time);
-
-	/**
-	 * @brief Update counter values
-	 * @param delta_time
-	 */
-	void update_stats(float delta_time);
-
-	/**
-	 * @brief Update GUI
-	 * @param delta_time
-	 */
-	void update_gui(float delta_time);
-
-	/**
-	 * @brief Sets up the necessary image memory barriers for all attachments
-	 *        and calls draw_swapchain_renderpass
-	 * @param command_buffer
-	 * @param render_target
-	 */
-	void record_scene_rendering_commands(CommandBuffer &command_buffer, RenderTarget &render_target);
+	virtual void prepare_render_context();
 
 	/**
 	 * @brief Resets the stats view max values for high demanding configs
@@ -230,17 +255,6 @@ class VulkanSample : public Application
 	 *        know which configuration is resource demanding
 	 */
 	virtual void reset_stats_view(){};
-
-	/**
-	 * @brief Record render pass for drawing the scene
-	 */
-	virtual void draw_swapchain_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target);
-
-	/**
-	 * @brief Triggers rendering, it can be overriden by samples to specialize their rendering logic
-	 * @param command_buffer The Vulkan command buffer
-	 */
-	virtual void render(CommandBuffer &command_buffer);
 
 	/**
 	 * @brief Samples should override this function to draw their interface
@@ -252,27 +266,7 @@ class VulkanSample : public Application
 	 */
 	virtual void update_debug_window();
 
-	/**
-	 * @brief Add free camera script to a node with a camera object.
-	 *        Fallback to the default_camera if node not found.
-	 *
-	 * @param node_name The scene node name
-	 *
-	 * @return Node where the script was attached as component
-	 */
-	sg::Node &add_free_camera(const std::string &node_name);
-
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
-
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	/// The debug report callback
-	VkDebugReportCallbackEXT debug_report_callback{VK_NULL_HANDLE};
-#endif
-
-	/**
-	 * @brief The Vulkan instance
-	 */
-	VkInstance instance{VK_NULL_HANDLE};
 
 	/**
 	 * @brief The Vulkan surface
@@ -280,24 +274,8 @@ class VulkanSample : public Application
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
 	/**
-	 * @brief The physical devices found on the machine
-	 */
-	std::vector<VkPhysicalDevice> gpus;
-
-	/**
 	 * @brief The configuration of the sample
 	 */
 	Configuration configuration{};
-
-	/**
-	 * @brief Create a Vulkan instance
-	 *
-	 * @param required_instance_extensions The required Vulkan instance extensions
-	 * @param required_instance_layers The required Vulkan instance layers
-	 *
-	 * @return Vulkan instance object
-	 */
-	VkInstance create_instance(const std::vector<const char *> &required_instance_extensions = {},
-	                           const std::vector<const char *> &required_instance_layers     = {});
 };
 }        // namespace vkb

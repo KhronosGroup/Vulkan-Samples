@@ -24,22 +24,34 @@
 namespace vkb
 {
 class Device;
+class RenderFrame;
 
-class CommandPool : public NonCopyable
+class CommandPool
 {
   public:
-	CommandPool(Device &device, uint32_t queue_family_index, CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
+	CommandPool(Device &device, uint32_t queue_family_index, RenderFrame *render_frame = nullptr,
+	            size_t                   thread_index = 0,
+	            CommandBuffer::ResetMode reset_mode   = CommandBuffer::ResetMode::ResetPool);
+
+	CommandPool(const CommandPool &) = delete;
+
+	CommandPool(CommandPool &&other);
 
 	~CommandPool();
 
-	/// @brief Move construct
-	CommandPool(CommandPool &&other);
+	CommandPool &operator=(const CommandPool &) = delete;
+
+	CommandPool &operator=(CommandPool &&) = delete;
 
 	Device &get_device();
 
 	uint32_t get_queue_family_index() const;
 
 	VkCommandPool get_handle() const;
+
+	RenderFrame *get_render_frame();
+
+	size_t get_thread_index() const;
 
 	VkResult reset_pool();
 
@@ -52,11 +64,19 @@ class CommandPool : public NonCopyable
 
 	VkCommandPool handle{VK_NULL_HANDLE};
 
+	RenderFrame *render_frame{nullptr};
+
+	size_t thread_index{0};
+
 	uint32_t queue_family_index{0};
 
-	std::vector<std::unique_ptr<CommandBuffer>> command_buffers;
+	std::vector<std::unique_ptr<CommandBuffer>> primary_command_buffers;
 
-	uint32_t active_command_buffer_count{0};
+	uint32_t active_primary_command_buffer_count{0};
+
+	std::vector<std::unique_ptr<CommandBuffer>> secondary_command_buffers;
+
+	uint32_t active_secondary_command_buffer_count{0};
 
 	CommandBuffer::ResetMode reset_mode{CommandBuffer::ResetMode::ResetPool};
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,6 @@
 #include "core/sampler.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
-#include "rendering/subpass.h"
 #include "resource_binding_state.h"
 
 namespace vkb
@@ -39,12 +38,13 @@ class Pipeline;
 class PipelineLayout;
 class PipelineState;
 class RenderTarget;
+class Subpass;
 
 /**
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer : public NonCopyable
+class CommandBuffer
 {
   public:
 	enum class ResetMode
@@ -62,7 +62,7 @@ class CommandBuffer : public NonCopyable
 		Executable,
 	};
 
-	/*
+	/**
 	 * @brief Helper structure used to track render pass state
 	 */
 	struct RenderPassBinding
@@ -74,12 +74,15 @@ class CommandBuffer : public NonCopyable
 
 	CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level);
 
+	CommandBuffer(const CommandBuffer &) = delete;
+
+	CommandBuffer(CommandBuffer &&other);
+
 	~CommandBuffer();
 
-	/**
-	 * @brief Move constructs
-	 */
-	CommandBuffer(CommandBuffer &&other);
+	CommandBuffer &operator=(const CommandBuffer &) = delete;
+
+	CommandBuffer &operator=(CommandBuffer &&) = delete;
 
 	Device &get_device();
 
@@ -87,19 +90,27 @@ class CommandBuffer : public NonCopyable
 
 	bool is_recording() const;
 
+	std::vector<uint8_t> stored_push_constants;
+
 	/**
 	 * @brief Sets the command buffer so that it is ready for recording
 	 *        If it is a secondary command buffer, a pointer to the
 	 *        primary command buffer it inherits from must be provided
-	 * @brief primary_cmd_buf (optional)
+	 * @param flags Usage behavior for the command buffer
+	 * @param primary_cmd_buf (optional)
+	 * @return Whether it succeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
 	VkResult end();
 
-	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE, const std::vector<std::unique_ptr<Subpass>> &subpasses = {});
+	void clear(VkClearAttachment info, VkClearRect rect);
+
+	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void next_subpass();
+
+	void execute_commands(CommandBuffer &secondary_command_buffer);
 
 	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
 
@@ -111,6 +122,26 @@ class CommandBuffer : public NonCopyable
 	void set_specialization_constant(uint32_t constant_id, const T &data);
 
 	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
+
+	/**
+	 * @brief Stores additional data which is prepended to the
+	 *        values passed to the push_constants_accumulated() function
+	 * @param data Data to be stored
+	 */
+	template <class T>
+	void set_push_constants(const T &data);
+
+	void set_push_constants(const std::vector<uint8_t> &values);
+
+	void push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset = 0);
+
+	template <typename T>
+	void push_constants_accumulated(const T &value, uint32_t offset = 0)
+	{
+		push_constants_accumulated(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+		                                                reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
+		                           offset);
+	}
 
 	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
 
@@ -205,12 +236,20 @@ class CommandBuffer : public NonCopyable
 
 	ResourceBindingState resource_binding_state;
 
-	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_state;
+	VkExtent2D last_framebuffer_extent{};
 
-	const RenderPassBinding &get_current_render_pass()
-	{
-		return current_render_pass;
-	}
+	VkExtent2D last_render_area_extent{};
+
+	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_binding_state;
+
+	const RenderPassBinding &get_current_render_pass() const;
+
+	const uint32_t get_current_subpass_index() const;
+
+	/**
+	 * @brief Check that the render area is an optimal size by comparing to the render area granularity
+	 */
+	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
 
 	/**
 	 * @brief Flush the piplines state
@@ -224,6 +263,24 @@ class CommandBuffer : public NonCopyable
 };
 
 template <class T>
+inline void CommandBuffer::set_push_constants(const T &data)
+{
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&data),
+	     reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+}
+
+template <>
+inline void CommandBuffer::set_push_constants<bool>(const bool &data)
+{
+	uint32_t value = to_u32(data);
+
+	set_push_constants(
+	    {reinterpret_cast<const uint8_t *>(&value),
+	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+}
+
+template <class T>
 inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
 {
 	set_specialization_constant(constant_id,
@@ -234,7 +291,7 @@ inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, con
 template <>
 inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
 {
-	std::uint32_t value = static_cast<std::uint32_t>(data);
+	uint32_t value = to_u32(data);
 
 	set_specialization_constant(
 	    constant_id,

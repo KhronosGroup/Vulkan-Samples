@@ -118,6 +118,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure(const VkGeometr
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements{};
 	memory_requirements.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memory_requirements.type                  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 	memory_requirements.accelerationStructure = bottom_level_acceleration_structure.acceleration_structure;
 
 	VkMemoryRequirements2 memory_requirements2{};
@@ -155,6 +156,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements{};
 	memory_requirements.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
+	memory_requirements.type                  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
 	memory_requirements.accelerationStructure = top_level_acceleration_structure.acceleration_structure;
 
 	VkMemoryRequirements2 memory_requirements2{};
@@ -179,7 +181,7 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 */
 void RaytracingBasic::create_scene()
 {
-	// Setup vertices for a single uv-mapped quad made from two triangles
+	// Setup vertices for a single triangle
 	struct Vertex
 	{
 		float pos[4];
@@ -223,7 +225,7 @@ void RaytracingBasic::create_scene()
 	geometry.geometry.triangles.vertexOffset    = 0;
 	geometry.geometry.triangles.vertexCount     = static_cast<uint32_t>(vertices.size());
 	geometry.geometry.triangles.vertexStride    = sizeof(Vertex);
-	geometry.geometry.triangles.vertexFormat    = VK_FORMAT_R32G32B32A32_SFLOAT;
+	geometry.geometry.triangles.vertexFormat    = VK_FORMAT_R32G32B32_SFLOAT;
 	geometry.geometry.triangles.indexData       = index_buffer->get_handle();
 	geometry.geometry.triangles.indexOffset     = 0;
 	geometry.geometry.triangles.indexCount      = index_count;
@@ -277,7 +279,7 @@ void RaytracingBasic::create_scene()
 	// Acceleration structure build requires some scratch space to store temporary information
 	VkAccelerationStructureMemoryRequirementsInfoNV memory_requirements_info{};
 	memory_requirements_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_INFO_NV;
-	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_OBJECT_NV;
+	memory_requirements_info.type  = VK_ACCELERATION_STRUCTURE_MEMORY_REQUIREMENTS_TYPE_BUILD_SCRATCH_NV;
 
 	VkMemoryRequirements2 memory_requirements_bottom_level;
 	memory_requirements_info.accelerationStructure = bottom_level_acceleration_structure.acceleration_structure;
@@ -289,7 +291,7 @@ void RaytracingBasic::create_scene()
 
 	const VkDeviceSize scratch_buffer_size = std::max(memory_requirements_bottom_level.memoryRequirements.size, memory_requirements_top_level.memoryRequirements.size);
 
-	vkb::core::Buffer scratch_buffer{get_device(), scratch_buffer_size, VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VMA_MEMORY_USAGE_CPU_ONLY};
+	vkb::core::Buffer scratch_buffer{get_device(), scratch_buffer_size, VK_BUFFER_USAGE_RAY_TRACING_BIT_NV, VMA_MEMORY_USAGE_GPU_ONLY};
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -321,6 +323,7 @@ void RaytracingBasic::create_scene()
 	/*
 		Build top-level acceleration structure
 	*/
+	build_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_NV;
 	build_info.pGeometries   = 0;
 	build_info.geometryCount = 0;
 	build_info.instanceCount = 1;
@@ -359,7 +362,7 @@ void RaytracingBasic::create_shader_binding_table()
 	shader_binding_table                     = std::make_unique<vkb::core::Buffer>(get_device(),
                                                                shader_binding_table_size,
                                                                VK_BUFFER_USAGE_RAY_TRACING_BIT_NV,
-                                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
+                                                               VMA_MEMORY_USAGE_GPU_TO_CPU, 0);
 
 	auto shader_handle_storage = new uint8_t[shader_binding_table_size];
 	// Get shader identifiers
@@ -592,11 +595,6 @@ void RaytracingBasic::build_command_buffers()
 		    VK_IMAGE_LAYOUT_GENERAL,
 		    subresource_range);
 
-		//@todo: Default render pass setup willl overwrite contents
-		//vkCmdBeginRenderPass(drawCmdBuffers[i], &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE);
-		//drawUI(drawCmdBuffers[i]);
-		//vkCmdEndRenderPass(drawCmdBuffers[i]);
-
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
@@ -605,7 +603,7 @@ void RaytracingBasic::update_uniform_buffers()
 {
 	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
 	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
-	memcpy(ubo->map(), &uniform_data, sizeof(uniform_data));
+	ubo->convert_and_update(uniform_data);
 }
 
 bool RaytracingBasic::prepare(vkb::Platform &platform)
@@ -614,6 +612,10 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
+
+	// This sample copies ray traced output to the swapchain image, so we need to enable the required image usage flags
+	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+	get_render_context().update_swapchain(image_usage_flags);
 
 	// Query the ray tracing properties of the current implementation, we will need them later on
 	ray_tracing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PROPERTIES_NV;
@@ -633,8 +635,9 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	vkGetRayTracingShaderGroupHandlesNV            = reinterpret_cast<PFN_vkGetRayTracingShaderGroupHandlesNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkGetRayTracingShaderGroupHandlesNV"));
 	vkCmdTraceRaysNV                               = reinterpret_cast<PFN_vkCmdTraceRaysNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdTraceRaysNV"));
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
 

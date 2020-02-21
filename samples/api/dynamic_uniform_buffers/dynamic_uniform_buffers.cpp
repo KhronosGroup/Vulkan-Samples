@@ -81,7 +81,7 @@ void DynamicUniformBuffers::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -307,11 +307,12 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
 	        VK_TRUE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -408,10 +409,9 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	// Prepare per-object matrices with offsets and random rotations
 	std::default_random_engine      rnd_engine(is_benchmark_mode() ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
-	const float                     PI = 3.14159265358979323846f;
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
-		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * (float) PI;
+		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * glm::pi<float>();
 		rotation_speeds[i] = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine));
 	}
 
@@ -425,7 +425,7 @@ void DynamicUniformBuffers::update_uniform_buffers()
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.view       = camera.matrices.view;
 
-	memcpy(uniform_buffers.view->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.view->convert_and_update(ubo_vs);
 }
 
 void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool force)
@@ -467,7 +467,7 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 
 	animation_timer = 0.0f;
 
-	memcpy(uniform_buffers.dynamic->map(), ubo_data_dynamic.model, uniform_buffers.dynamic->get_size());
+	uniform_buffers.dynamic->update(ubo_data_dynamic.model, uniform_buffers.dynamic->get_size());
 
 	// Flush to make changes visible to the device
 	uniform_buffers.dynamic->flush();
@@ -483,7 +483,9 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 256.0f);
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	generate_cube();
 	prepare_uniform_buffers();

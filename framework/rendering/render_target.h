@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,18 +52,22 @@ struct Attachment
  * - Creation of a RenderTarget becomes simpler, because the caller can just ask for some
  *   Attachment (s) without having to create the images
  */
-class RenderTarget : public NonCopyable
+class RenderTarget
 {
   public:
-	using CreateFunc = std::function<RenderTarget(core::Image &&)>;
+	using CreateFunc = std::function<std::unique_ptr<RenderTarget>(core::Image &&)>;
 
 	static const CreateFunc DEFAULT_CREATE_FUNC;
 
 	RenderTarget(std::vector<core::Image> &&images);
 
-	RenderTarget(RenderTarget &&) = default;
+	RenderTarget(const RenderTarget &) = delete;
 
-	RenderTarget &operator=(RenderTarget &&other) noexcept;
+	RenderTarget(RenderTarget &&) = delete;
+
+	RenderTarget &operator=(const RenderTarget &other) noexcept = delete;
+
+	RenderTarget &operator=(RenderTarget &&other) noexcept = delete;
 
 	const VkExtent2D &get_extent() const;
 

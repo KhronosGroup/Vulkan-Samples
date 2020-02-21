@@ -53,9 +53,7 @@ android {
             @JNI_LIBS_SRC_DIRS@
             @MANIFEST_FILE@
 
-            debug {
-                jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
-            }
+            jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
         }
     }
 

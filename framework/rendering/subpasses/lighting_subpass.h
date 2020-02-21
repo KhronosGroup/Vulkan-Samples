@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,13 +17,22 @@
 
 #pragma once
 
+#include "buffer_pool.h"
 #include "rendering/subpass.h"
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+VKBP_ENABLE_WARNINGS()
+
+#define MAX_DEFERRED_LIGHT_COUNT 100
 
 namespace vkb
 {
 namespace sg
 {
 class Camera;
+class Light;
+class Scene;
 }        // namespace sg
 
 /**
@@ -34,9 +43,13 @@ class Camera;
 struct alignas(16) LightUniform
 {
 	glm::mat4 inv_view_proj;
-	glm::vec4 light_pos;
-	glm::vec4 light_color;
 	glm::vec2 inv_resolution;
+};
+
+struct alignas(16) DeferredLights
+{
+	uint32_t count;
+	Light    lights[MAX_DEFERRED_LIGHT_COUNT];
 };
 
 /**
@@ -45,12 +58,18 @@ struct alignas(16) LightUniform
 class LightingSubpass : public Subpass
 {
   public:
-	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera);
+	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
+
+	virtual void prepare() override;
 
 	void draw(CommandBuffer &command_buffer) override;
 
   private:
 	sg::Camera &camera;
+
+	sg::Scene &scene;
+
+	ShaderVariant lighting_variant;
 };
 
 }        // namespace vkb

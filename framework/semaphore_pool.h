@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,19 +24,26 @@ namespace vkb
 {
 class Device;
 
-class SemaphorePool : public NonCopyable
+class SemaphorePool
 {
   public:
 	SemaphorePool(Device &device);
 
+	SemaphorePool(const SemaphorePool &) = delete;
+
+	SemaphorePool(SemaphorePool &&other) = delete;
+
 	~SemaphorePool();
 
-	/// @brief Move construct
-	SemaphorePool(SemaphorePool &&other) = default;
+	SemaphorePool &operator=(const SemaphorePool &) = delete;
+
+	SemaphorePool &operator=(SemaphorePool &&) = delete;
 
 	VkSemaphore request_semaphore();
 
 	void reset();
+
+	uint32_t get_active_semaphore_count() const;
 
   private:
 	Device &device;

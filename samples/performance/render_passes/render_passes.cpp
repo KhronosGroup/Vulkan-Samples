@@ -22,7 +22,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -33,9 +33,11 @@ RenderPassesSample::RenderPassesSample()
 {
 	auto &config = get_configuration();
 
+	config.insert<vkb::BoolSetting>(0, cmd_clear, false);
 	config.insert<vkb::IntSetting>(0, load.value, 0);
 	config.insert<vkb::IntSetting>(0, store.value, 0);
 
+	config.insert<vkb::BoolSetting>(1, cmd_clear, true);
 	config.insert<vkb::IntSetting>(1, load.value, 1);
 	config.insert<vkb::IntSetting>(1, store.value, 1);
 }
@@ -55,7 +57,7 @@ void RenderPassesSample::reset_stats_view()
 
 void RenderPassesSample::draw_gui()
 {
-	auto lines = radio_buttons.size();
+	auto lines = radio_buttons.size() + 1 /* checkbox */;
 	if (camera->get_aspect_ratio() < 1.0f)
 	{
 		// In portrait, show buttons below heading
@@ -64,6 +66,9 @@ void RenderPassesSample::draw_gui()
 
 	gui->show_options_window(
 	    /* body = */ [this, lines]() {
+		    // Checkbox vkCmdClear
+		    ImGui::Checkbox("Use vkCmdClearAttachments (color)", &cmd_clear);
+
 		    // For every option set
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
 		    {
@@ -104,29 +109,32 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	auto enabled_stats = {vkb::StatIndex::l2_ext_read_bytes, vkb::StatIndex::l2_ext_write_bytes};
+	auto enabled_stats = {vkb::StatIndex::fragment_cycles,
+	                      vkb::StatIndex::l2_ext_read_bytes,
+	                      vkb::StatIndex::l2_ext_write_bytes};
 
 	stats = std::make_unique<vkb::Stats>(enabled_stats);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
-	auto &camera_node = add_free_camera("main_camera");
+
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
 
 	return true;
 }
 
-void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	std::vector<vkb::LoadStoreInfo> load_store{2};
 
@@ -154,20 +162,29 @@ void RenderPassesSample::draw_swapchain_renderpass(vkb::CommandBuffer &command_b
 	scissor.extent = extent;
 	command_buffer.set_scissor(0, {scissor});
 
-	render(command_buffer);
+	auto &subpasses = render_pipeline->get_subpasses();
+	command_buffer.begin_render_pass(render_target, load_store, render_pipeline->get_clear_value(), subpasses);
+
+	if (cmd_clear)
+	{
+		VkClearAttachment attachment = {};
+		// Clear color only
+		attachment.aspectMask      = VK_IMAGE_ASPECT_COLOR_BIT;
+		attachment.clearValue      = {0, 0, 0};
+		attachment.colorAttachment = 0;
+
+		VkClearRect rect = {};
+		rect.layerCount  = 1;
+		rect.rect.extent = extent;
+
+		command_buffer.clear(attachment, rect);
+	}
+
+	subpasses.at(0)->draw(command_buffer);
 
 	gui->draw(command_buffer);
 
 	command_buffer.end_render_pass();
-}
-
-void RenderPassesSample::update(float delta_time)
-{
-	VulkanSample::update(delta_time);
-
-	// Use an exponential moving average to smooth values
-	const float alpha = 0.01f;
-	frame_rate        = (1.0f / delta_time) * alpha + frame_rate * (1.0f - alpha);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_render_passes()

@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2019-2020, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -334,6 +334,8 @@ function(order_sample_list)
     set(OUTPUT_LIST)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    list(REMOVE_DUPLICATES TARGET_ORDER)
 
     # Add samples based on the given order
     foreach(SAMPLE_ID ${TARGET_ORDER})

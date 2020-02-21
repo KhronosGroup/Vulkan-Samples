@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,6 +21,11 @@
 
 namespace vkb
 {
+const std::vector<std::string> light_type_definitions = {
+    "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
+    "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
+    "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
+
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
 	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
@@ -83,5 +88,15 @@ const std::vector<uint32_t> &Subpass::get_output_attachments() const
 void Subpass::set_output_attachments(std::vector<uint32_t> output)
 {
 	output_attachments = output;
+}
+
+void Subpass::clear_dynamic_resources()
+{
+	dynamic_resources.clear();
+}
+
+void Subpass::add_dynamic_resources(const std::vector<std::string> &dynamic_resources_)
+{
+	dynamic_resources.insert(dynamic_resources.end(), dynamic_resources_.begin(), dynamic_resources_.end());
 }
 }        // namespace vkb

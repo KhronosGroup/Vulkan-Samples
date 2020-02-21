@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,7 +70,7 @@ void Instancing::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -157,7 +157,7 @@ void Instancing::setup_descriptor_pool()
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
-	        pool_sizes.size(),
+	        vkb::to_u32(pool_sizes.size()),
 	        pool_sizes.data(),
 	        2);
 
@@ -183,7 +183,7 @@ void Instancing::setup_descriptor_set_layout()
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(
 	        set_layout_bindings.data(),
-	        set_layout_bindings.size());
+	        vkb::to_u32(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
@@ -210,7 +210,7 @@ void Instancing::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), write_descriptor_sets.size(), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 
 	// Planet
 	buffer_descriptor = create_descriptor(*uniform_buffers.scene);
@@ -220,7 +220,7 @@ void Instancing::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), write_descriptor_sets.size(), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
 void Instancing::prepare_pipelines()
@@ -248,11 +248,12 @@ void Instancing::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
 	        VK_TRUE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -269,7 +270,7 @@ void Instancing::prepare_pipelines()
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(
 	        dynamic_state_enables.data(),
-	        dynamic_state_enables.size(),
+	        vkb::to_u32(dynamic_state_enables.size()),
 	        0);
 
 	// Load shaders
@@ -288,7 +289,7 @@ void Instancing::prepare_pipelines()
 	pipeline_create_info.pViewportState      = &viewport_state;
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
-	pipeline_create_info.stageCount          = shader_stages.size();
+	pipeline_create_info.stageCount          = vkb::to_u32(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
 
 	// This example uses two different input states, one for the instanced part and one for non-instanced rendering
@@ -375,7 +376,7 @@ void Instancing::prepare_instance_data()
 
 		// Inner ring
 		rho                       = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
-		theta                     = 2.0 * glm::pi<float>() * uniform_dist(rnd_generator);
+		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
 		instance_data[i].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
 		instance_data[i].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[i].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
@@ -384,7 +385,7 @@ void Instancing::prepare_instance_data()
 
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                               = 2.0 * glm::pi<double>() * uniform_dist(rnd_generator);
+		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
@@ -462,7 +463,7 @@ void Instancing::update_uniform_buffer(float delta_time)
 		ubo_vs.glob_speed += delta_time * 0.01f;
 	}
 
-	memcpy(uniform_buffers.scene->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.scene->convert_and_update(ubo_vs);
 }
 
 void Instancing::draw()
@@ -486,8 +487,9 @@ bool Instancing::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 256.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
 	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
 
