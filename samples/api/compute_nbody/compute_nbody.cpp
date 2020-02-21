@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -731,7 +731,7 @@ void ComputeNBody::prepare_compute()
 		    1, &release_buffer_barrier,
 		    0, nullptr);
 
-		// Copied from Device::flush_command_buffer, which we can't use because it would be 
+		// Copied from Device::flush_command_buffer, which we can't use because it would be
 		// working with the wrong command pool
 		VK_CHECK(vkEndCommandBuffer(transfer_command));
 
