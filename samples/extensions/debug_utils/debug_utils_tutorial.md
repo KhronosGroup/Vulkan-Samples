@@ -210,7 +210,7 @@ This is also evident in the pipeline state, where you can now e.g. see what pipe
 
 <a href="./images/renderdoc_pipeline_state_names.jpg"><img src="./images/renderdoc_pipeline_state_names.jpg" style="border:1px solid black"></a>
 
-This makes it very easy to see if the correct resources are used at that pipeline stage.
+This makes it very easy to see if the correct resources are used at that pipeline stage. (1) shows the pipeline and shader used at the vertex shader stage, and (2) lists the uniform buffer bound to set 0.
 
 The new functions to set names and tags for Vulkan objects are:
 
@@ -246,6 +246,8 @@ For convenience, the sample wraps those functions into dedicated functions.
 To see this in action, you need to run the sample application from inside a Vulkan debugger. If you're unfamiliar with this, this is a sample setup for running our sample application from RenderDoc. The paths depend on where you have downloaded the source from this repository and the platform for which you are compiling:
 
 <a href="./images/renderdoc_launch_settings.jpg"><img src="./images/renderdoc_launch_settings.jpg" style="border:1px solid black"></a>
+
+(1) is the binary you want to start, which depends on the platform you have compiled the samples for. (2) refers to the path that's passed as the working directory to the binary, which must be the root path of the repository so the asset's can be properly loaded. (3) tells the binary which sample to run. After setting these up press (4) to start the application from within RenderDoc.
 
 Once the sample application is running, press F12 do capture the current frame, close the application and then select the capture in RenderDoc.
 
