@@ -249,6 +249,10 @@ void HelloTriangle::init_instance(Context &                        context,
 	VK_CHECK(vkCreateInstance(&instance_info, nullptr, &context.instance));
 
 	volkLoadInstance(context.instance);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	VK_CHECK(vkCreateDebugReportCallbackEXT(context.instance, &debug_report_create_info, nullptr, &context.debug_callback));
+#endif
 }
 
 /**
