@@ -1044,12 +1044,6 @@ void HelloTriangle::teardown(Context &context)
 		context.device = VK_NULL_HANDLE;
 	}
 
-	if (context.debug_callback != VK_NULL_HANDLE)
-	{
-		vkDestroyDebugReportCallbackEXT(context.instance, context.debug_callback, nullptr);
-		context.debug_callback = VK_NULL_HANDLE;
-	}
-
 	vk_instance.reset();
 }
 

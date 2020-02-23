@@ -99,13 +99,6 @@ class Instance
 	 */
 	std::vector<const char *> extensions;
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	/**
-	 * @brief The debug report callback
-	 */
-	VkDebugReportCallbackEXT debug_report_callback{VK_NULL_HANDLE};
-#endif
-
 	/**
 	 * @brief The physical devices found on the machine
 	 */

@@ -266,13 +266,6 @@ Instance::Instance(VkInstance instance) :
 
 Instance::~Instance()
 {
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (debug_report_callback != VK_NULL_HANDLE)
-	{
-		vkDestroyDebugReportCallbackEXT(handle, debug_report_callback, nullptr);
-	}
-#endif
-
 	if (handle != VK_NULL_HANDLE)
 	{
 		vkDestroyInstance(handle, nullptr);
