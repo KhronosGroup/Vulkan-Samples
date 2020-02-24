@@ -29,14 +29,14 @@ This area of the repository contains samples that are meant to demonstrate Vulka
 
 ## Samples
 - [Conservative Rasterization](./conservative_rasterization)<br/>
-Extensions: [VK_EXT_conservative_rasterization](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
+**Extension**: [```VK_EXT_conservative_rasterization```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
 Uses conservative rasterization to change the way fragments are generated. Enables overestimation to generate fragments for every pixel touched instead of only pixels that are fully covered.
 
 - [Push Descriptors](./push_descriptors)<br/>
-Extensions: [VK_KHR_push_descriptor](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
+**Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
 Push descriptors apply the push constants concept to descriptor sets. Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.
 
 - [Basic Ray Tracing (NVIDIA)](./raytracing_basic)<br/>
-Extensions: [VK_NV_ray_tracing](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_NV_ray_tracing)<br/>
+**Extension**: [```VK_NV_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_NV_ray_tracing)<br/>
 Render a simple triangle using the Nvidia ray tracing extensions. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.
 
