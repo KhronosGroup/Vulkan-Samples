@@ -68,15 +68,7 @@ debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION
 debug_utils_create_info.pfnUserCallback = debug_utils_messenger_callback;
 ```
 
-Creating the debug utilities messenger callback can be done in two ways:
-
-Explicitly creating the callback:
-
-```cpp
-result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
-```
-
-Implicitly by passing the create info structure via ```pNext``` to the instance creation:
+We then pass this to the ```pNext``` member of our instance creation structure, enabling validation for isntance creation and destruction:
 
 ```cpp
 VkInstanceCreateInfo instance_create_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
@@ -84,7 +76,11 @@ VkInstanceCreateInfo instance_create_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_I
 instance_create_info.pNext = &debug_utils_create_info;
 ```
 
-**Note:** This is the preferred way of creating the debug utilities messenger callback, as this **enables validation of instance creation and destruction**.
+After instance creation we can create the actual debug utils messenger callback that is invoked by the enabled validation layers:
+
+```cpp
+result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
+```
 
 The ```messageSeverity``` member of the ```VkDebugUtilsMessengerCreateInfoEXT``` struct determines the kind of validation layer messages that are passed to the user callback:
 

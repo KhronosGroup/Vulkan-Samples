@@ -262,21 +262,20 @@ Instance::Instance(const std::string &              application_name,
 	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
 	if (debug_utils)
 	{
-		VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-		debug_utils_create_info.messageSeverity                    = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-		debug_utils_create_info.messageType                        = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
-		debug_utils_create_info.pfnUserCallback                    = debug_utils_messenger_callback;
+		debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+		debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT;
+		debug_utils_create_info.pfnUserCallback = debug_utils_messenger_callback;
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
 	else
 	{
-		VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-		debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-		debug_report_create_info.pfnCallback                        = debug_callback;
+		debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+		debug_report_create_info.pfnCallback = debug_callback;
 
 		instance_info.pNext = &debug_report_create_info;
 	}
@@ -291,6 +290,25 @@ Instance::Instance(const std::string &              application_name,
 	}
 
 	volkLoadInstance(handle);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	if (debug_utils)
+	{
+		result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
+		if (result != VK_SUCCESS)
+		{
+			throw VulkanException(result, "Could not create debug utils messenger");
+		}
+	}
+	else
+	{
+		result = vkCreateDebugReportCallbackEXT(handle, &debug_report_create_info, nullptr, &debug_report_callback);
+		if (result != VK_SUCCESS)
+		{
+			throw VulkanException(result, "Could not create debug report callback");
+		}
+	}
+#endif
 
 	query_gpus();
 }
