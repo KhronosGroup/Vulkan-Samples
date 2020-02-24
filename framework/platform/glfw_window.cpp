@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -370,4 +370,15 @@ float GlfwWindow::get_dpi_factor() const
 	auto dpi_factor = dpi / win_base_density;
 	return dpi_factor;
 }
+
+float GlfwWindow::get_content_scale_factor() const
+{
+	float xscale, yscale;
+	glfwGetWindowContentScale(handle, &xscale, &yscale);
+	// We could return a 2D result here instead of a scalar,
+	// but non-uniform scaling is very unlikely, and would
+	// require significantly more changes in the IMGUI integration
+	return xscale;
+}
+
 }        // namespace vkb

@@ -55,7 +55,7 @@ bool SpecializationConstants::prepare(vkb::Platform &platform)
 	specialization_constants_pipeline = create_specialization_renderpass();
 	standard_pipeline                 = create_standard_renderpass();
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::fragment_cycles});
 

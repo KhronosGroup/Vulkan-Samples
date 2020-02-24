@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,7 +72,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 	set_render_pipeline(std::move(render_pipeline));
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded
