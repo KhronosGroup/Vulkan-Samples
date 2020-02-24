@@ -38,7 +38,7 @@ Compute shader example that uses two passes and shared compute shader memory for
 Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.
 - [High dynamic range](./hdr)<br/>
 Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.
-- [Hello Triangle](./hellp_triangle)<br/>
+- [Hello Triangle](./hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 - [Instancing](./instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
