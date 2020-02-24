@@ -23,6 +23,7 @@
 
 - [Introduction](#introduction)
 - [Tutorials](#tutorials)
+- [Samples](#samples)
 
 ## Introduction
 

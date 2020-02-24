@@ -22,6 +22,7 @@
 ## Contents <!-- omit in toc -->
 
 - [Introduction](#introduction)
+- [Samples](#samples)
 
 ## Introduction
 
