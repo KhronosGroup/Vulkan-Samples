@@ -26,7 +26,7 @@
 
 ## Introduction
 
-This area of the repository contains samples that are meant to demonstrate Vulkan API usage. The goal of these samples is to demonstrate how to use a given feature at the API level without abstraction.
+This area of the repository contains samples that are meant to demonstrate Vulkan API usage. The goal of these samples is to demonstrate how to use a given feature at the API level with as little abstraction as possible.
 
 ## Tutorials
 - [Run-time mip-map generation](./texture_mipmap_generation/texture_mipmap_generation_tutorial.md)
