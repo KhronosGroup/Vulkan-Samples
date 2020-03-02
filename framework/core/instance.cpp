@@ -248,6 +248,14 @@ Instance::Instance(const std::string &              application_name,
 
 	volkLoadInstance(handle);
 
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	result = vkCreateDebugReportCallbackEXT(handle, &debug_report_create_info, nullptr, &debug_report_callback);
+	if (result != VK_SUCCESS)
+	{
+		throw VulkanException(result, "Could not create debug reporting callback");
+	}
+#endif
+
 	query_gpus();
 }
 
