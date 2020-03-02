@@ -36,6 +36,8 @@
 
 namespace vkb
 {
+class Window;
+
 /**
  * @brief Helper structure for fonts loaded from TTF
  */
@@ -333,11 +335,11 @@ class Gui
 	/**
 	 * @brief Initializes the Gui
 	 * @param sample A vulkan render context
-	 * @param dpi_factor The dpi scale factor
+	 * @param window A Window object from which to draw DPI and content scaling information
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(VulkanSample &sample, const float dpi_factor = 1.0, const float font_size = 21.0f, bool explicit_update = false);
+	Gui(VulkanSample &sample, const Window &window, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -466,6 +468,9 @@ class Gui
 	size_t last_vertex_buffer_size;
 
 	size_t last_index_buffer_size;
+
+	///  Scale factor to apply due to a difference between the window and GL pixel sizes
+	float content_scale_factor{1.0f};
 
 	/// Scale factor to apply to the size of gui elements (expressed in dp)
 	float dpi_factor{1.0f};
