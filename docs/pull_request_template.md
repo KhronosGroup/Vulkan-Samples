@@ -3,7 +3,7 @@
 Please include a summary of the change, new sample or fixed issue. Please also include relevant motivation and context.
 Please read the [contribution guidelines](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md)
 
-fixes #.
+Fixes #<issue number>
 
 ## General Checklist:
 
