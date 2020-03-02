@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -129,7 +129,7 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }

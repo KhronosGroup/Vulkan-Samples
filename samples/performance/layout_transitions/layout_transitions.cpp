@@ -68,7 +68,7 @@ bool LayoutTransitions::prepare(vkb::Platform &platform)
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::killed_tiles,
 	                                                              vkb::StatIndex::l2_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }

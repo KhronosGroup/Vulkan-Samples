@@ -65,7 +65,7 @@ bool WaitIdle::prepare(vkb::Platform &platform)
 
 	// Add a GUI with the stats you want to monitor
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }

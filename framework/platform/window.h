@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,6 +66,11 @@ class Window
 	 * @return The dot-per-inch scale factor
 	 */
 	virtual float get_dpi_factor() const = 0;
+
+	/**
+     * @return The scale factor for systems with heterogeneous window and pixel coordinates
+     */
+	virtual float get_content_scale_factor() const;
 
 	Platform &get_platform();
 
