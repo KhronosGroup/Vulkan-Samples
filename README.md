@@ -88,7 +88,6 @@ Additionally you may find the following links useful:
 - **Misc**
   - [Driver version](./docs/misc.md#driver-version)
   - [Memory limits](./docs/memory_limits.md)
-  - [Vulkan FAQ](./docs/faq.md)
 
 ## Setup
 
