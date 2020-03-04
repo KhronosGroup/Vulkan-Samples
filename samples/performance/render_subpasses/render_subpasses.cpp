@@ -155,7 +155,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	// Enable stats
 	auto enabled_stats = {vkb::StatIndex::fragment_jobs,

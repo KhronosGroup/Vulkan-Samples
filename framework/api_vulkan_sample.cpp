@@ -70,7 +70,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	width  = get_render_context().get_surface_extent().width;
 	height = get_render_context().get_surface_extent().height;
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor(), 15.0f, true);
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), 15.0f, true);
 	gui->prepare(pipeline_cache, render_pass,
 	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
 	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});

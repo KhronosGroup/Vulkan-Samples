@@ -1,5 +1,5 @@
 /* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,6 +40,7 @@ VKBP_ENABLE_WARNINGS()
 #include "core/shader_module.h"
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
+#include "platform/window.h"
 #include "rendering/render_context.h"
 #include "timer.h"
 #include "utils/graphs.h"
@@ -93,9 +94,10 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(VulkanSample &sample_, const float dpi_factor, const float font_size, bool explicit_update) :
+Gui::Gui(VulkanSample &sample_, const Window &window, const float font_size, bool explicit_update) :
     sample{sample_},
-    dpi_factor{dpi_factor},
+    content_scale_factor{window.get_content_scale_factor()},
+    dpi_factor{window.get_dpi_factor() * content_scale_factor},
     explicit_update{explicit_update}
 {
 	ImGui::CreateContext();
@@ -1014,8 +1016,8 @@ bool Gui::input_event(const InputEvent &input_event)
 	{
 		const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
 
-		io.MousePos = ImVec2{mouse_button.get_pos_x(),
-		                     mouse_button.get_pos_y()};
+		io.MousePos = ImVec2{mouse_button.get_pos_x() * content_scale_factor,
+		                     mouse_button.get_pos_y() * content_scale_factor};
 
 		auto button_id = static_cast<int>(mouse_button.get_button());
 

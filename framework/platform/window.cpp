@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,4 +52,10 @@ uint32_t Window::get_height()
 {
 	return height;
 }
+
+float Window::get_content_scale_factor() const
+{
+	return 1.0f;
+}
+
 }        // namespace vkb

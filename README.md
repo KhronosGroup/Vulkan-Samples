@@ -81,12 +81,13 @@ Additionally you may find the following links useful:
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
-- **Debug utilities**
-  - [Using debug utilities for advanced debugging](./samples/extensions/debug_utils/debug_utils_tutorial.md)
+- **API samples**
+  - [Overview for the API samples](./samples/api/README.md)
+- **Extension samples**
+  - [Overview for the extension samples](./samples/extensions/README.md)
 - **Misc**
   - [Driver version](./docs/misc.md#driver-version)
   - [Memory limits](./docs/memory_limits.md)
-  - [Vulkan FAQ](./docs/faq.md)
 
 ## Setup
 

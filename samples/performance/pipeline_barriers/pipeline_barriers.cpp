@@ -104,7 +104,7 @@ bool PipelineBarriers::prepare(vkb::Platform &platform)
 	                                                              vkb::StatIndex::vertex_compute_cycles,
 	                                                              vkb::StatIndex::fragment_cycles},
 	                                     vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window().get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -111,7 +111,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::Gui>(*this, dpi_factor);
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
