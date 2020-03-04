@@ -207,6 +207,13 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 */
 	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer);
 
+	/**
+	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
+	 * @param f a block of code which is passed a command buffer which is already in the begin state.
+	 * @param signalSemaphore An optional semaphore to signal when the commands have completed execution.
+	 */
+	void with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore = nullptr);
+
   public:
 	/**
 	 * @brief Called when a view change occurs, can be overriden in derived samples to handle updating uniforms

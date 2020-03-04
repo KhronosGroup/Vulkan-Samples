@@ -402,6 +402,10 @@ target_link_libraries(${PROJECT_NAME}
     ctpl
     docopt)
 
+if ((NOT APPLE) AND (NOT ANDROID) AND (NOT DIRECT_TO_DISPLAY))
+    target_link_libraries(${PROJECT_NAME} glad)
+endif()
+
 # Link platform specific libraries
 if(ANDROID)
     target_link_libraries(${PROJECT_NAME} log android native_app_glue)

@@ -51,7 +51,7 @@ function(generate_samples_header)
     set(SAMPLE_INFO_LIST)
 
     foreach(SAMPLE_ID ${TARGET_SAMPLE_ID_LIST})
-        if (${VKB_${SAMPLE_ID}} AND TARGET ${SAMPLE_ID})
+        if ("${VKB_${SAMPLE_ID}}" AND TARGET ${SAMPLE_ID})
             get_target_property(SAMPLE_CATEGORY ${SAMPLE_ID} SAMPLE_CATEGORY)
             get_target_property(SAMPLE_AUTHOR ${SAMPLE_ID} SAMPLE_AUTHOR)
             get_target_property(SAMPLE_NAME ${SAMPLE_ID} SAMPLE_NAME)

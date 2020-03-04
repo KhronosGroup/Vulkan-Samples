@@ -68,6 +68,19 @@ elseif(UNIX)
     endif()
 endif()
 
+if ((NOT APPLE) AND (NOT ANDROID) AND (NOT DIRECT_TO_DISPLAY))
+    add_library(glad)
+    set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/glad")
+    set(GLAD_SOURCES
+        ${GLAD_DIR}/src/glad.c
+        ${GLAD_DIR}/include/glad/glad.h
+        ${GLAD_DIR}/include/KHR/khrplatform.h
+    )
+    set_property(TARGET glad PROPERTY FOLDER "ThirdParty")
+    target_sources(glad PRIVATE ${GLAD_SOURCES})
+    target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
+endif()
+
 # vma
 add_library(vma INTERFACE)
 set(VMA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vma/src)
