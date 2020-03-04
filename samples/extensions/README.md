@@ -28,6 +28,9 @@
 
 This area of the repository contains samples that are meant to demonstrate Vulkan extension. The goal of these samples is to demonstrate how to use a given extension at the API level with as little abstraction as possible.
 
+## Tutorials
+- [Using the Debug Utilities for advanced Vulkan debugging](./debug_utils/debug_utils_tutorial.md)<br/>
+
 ## Samples
 - [Conservative Rasterization](./conservative_rasterization)<br/>
 **Extension**: [```VK_EXT_conservative_rasterization```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
@@ -37,7 +40,10 @@ Uses conservative rasterization to change the way fragments are generated. Enabl
 **Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
 Push descriptors apply the push constants concept to descriptor sets. Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.
 
+- [Debug Utilities](./debug_utils)<br/>
+**Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
+Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
+
 - [Basic Ray Tracing (NVIDIA)](./raytracing_basic)<br/>
 **Extension**: [```VK_NV_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_NV_ray_tracing)<br/>
 Render a simple triangle using the Nvidia ray tracing extensions. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.
-
