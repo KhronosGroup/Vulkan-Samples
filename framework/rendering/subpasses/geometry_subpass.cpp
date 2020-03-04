@@ -168,12 +168,6 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 	std::vector<ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 
-	// Set UBO to use dynamic indexing
-	for (auto &shader_module : shader_modules)
-	{
-		shader_module->set_resource_mode(ShaderResourceMode::Dynamic, "GlobalUniform");
-	}
-
 	auto &pipeline_layout = device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
