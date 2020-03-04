@@ -37,11 +37,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format) :
 	subresource_range.levelCount = image->get_subresource().mipLevel;
 	subresource_range.layerCount = image->get_subresource().arrayLayer;
 
-	if (is_depth_only_format(format))
-	{
-		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-	}
-	else if (is_depth_stencil_format(format))
+	if (is_depth_stencil_format(format))
 	{
 		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 	}
