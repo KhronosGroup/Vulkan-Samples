@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -190,8 +190,17 @@ bool write_json(nlohmann::json &data, const std::string &filename)
 {
 	std::stringstream json;
 
-	// Whitespace needed as last character is overwritten on android causing the json to be corrupt
-	json << data << " ";
+	try
+	{
+		// Whitespace needed as last character is overwritten on android causing the json to be corrupt
+		json << data << " ";
+	}
+	catch (std::exception &e)
+	{
+		// JSON dump errors
+		LOGE(e.what());
+		return false;
+	}
 
 	if (!nlohmann::json::accept(json.str()))
 	{
