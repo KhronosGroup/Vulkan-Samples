@@ -53,8 +53,8 @@ bool generate(RenderContext &context)
 		size_t pipeline_layouts_id = pipeline_layout_node(graph, it_pipeline_layouts->second);
 		graph.add_edge(resource_cache_id, pipeline_layouts_id);
 
-		auto &modules = it_pipeline_layouts->second.get_shader_modules();
-		for (const auto &shader_module : modules)
+		auto &shader_modules = it_pipeline_layouts->second.get_shader_modules();
+		for (const auto *shader_module : shader_modules)
 		{
 			size_t shader_modules_id = shader_module_node(graph, *shader_module);
 			graph.add_edge(pipeline_layouts_id, shader_modules_id);
@@ -390,7 +390,7 @@ size_t shader_resource_node(Graph &graph, const ShaderResource &shader_resource)
 	                       {"offset", shader_resource.offset},
 	                       {"size", shader_resource.size},
 	                       {"constant_id", shader_resource.constant_id},
-	                       {"dynamic", shader_resource.dynamic},
+	                       {"mode", shader_resource.mode},
 	                       {"name", shader_resource.name}};
 
 	return graph.create_node(label.c_str(), "Rendering", data);

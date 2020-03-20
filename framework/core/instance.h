@@ -17,10 +17,12 @@
 
 #pragma once
 
-#include "core/physical_device.h"
+#include "common/helpers.h"
+#include "common/vk_common.h"
 
 namespace vkb
 {
+class PhysicalDevice;
 /**
  * @brief Returns a list of Khronos/LunarG supported validation layers
  *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions

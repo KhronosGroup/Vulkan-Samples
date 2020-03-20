@@ -110,6 +110,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	color_blend_attachment.blend_enable           = VK_TRUE;
 	color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	ColorBlendState color_blend_state{};
 	color_blend_state.attachments.resize(get_output_attachments().size());
