@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include "common/helpers.h"
-#include "common/vk_common.h"
+#include "core/instance.h"
 
 namespace vkb
 {
@@ -62,6 +61,31 @@ class PhysicalDevice
 
 	const VkPhysicalDeviceFeatures get_requested_features() const;
 
+	void *get_requested_extension_features() const;
+
+	void request_descriptor_indexing_features();
+
+	const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &get_descriptor_indexing_features() const;
+
+  protected:
+	template <typename T>
+	const T request_extension_features(VkStructureType type)
+	{
+		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+		{
+			return {};
+		}
+
+		VkPhysicalDeviceFeatures2KHR extended_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
+		T                            ext{type};
+
+		extended_features.pNext = &ext;
+
+		vkGetPhysicalDeviceFeatures2KHR(handle, &extended_features);
+
+		return ext;
+	}
+
   private:
 	// Handle to the Vulkan instance
 	const Instance &instance;
@@ -83,5 +107,10 @@ class PhysicalDevice
 
 	// The features that will be requested to be enabled in the logical device
 	VkPhysicalDeviceFeatures requested_features{};
+
+	// The extension feature pointer
+	void *last_requested_extension_feature{nullptr};
+
+	VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features{};
 };
 }        // namespace vkb

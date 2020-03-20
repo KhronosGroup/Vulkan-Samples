@@ -128,6 +128,11 @@ class RenderFrame
 	 */
 	BufferAllocation allocate_buffer(VkBufferUsageFlags usage, VkDeviceSize size, size_t thread_index = 0);
 
+	/**
+	 * @brief Updates all the descriptor sets in the current frame at a specific thread index
+	 */
+	void update_descriptor_sets(size_t thread_index = 0);
+
   private:
 	Device &device;
 

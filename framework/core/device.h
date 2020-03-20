@@ -28,6 +28,8 @@
 #include "core/framebuffer.h"
 #include "core/instance.h"
 #include "core/pipeline.h"
+
+#include "core/physical_device.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
 #include "core/render_pass.h"

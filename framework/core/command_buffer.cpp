@@ -56,7 +56,8 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) :
     command_pool{other.command_pool},
     level{other.level},
     handle{other.handle},
-    state{other.state}
+    state{other.state},
+    update_after_bind{other.update_after_bind}
 {
 	other.handle = VK_NULL_HANDLE;
 	other.state  = State::Invalid;
@@ -595,6 +596,9 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 			std::vector<uint32_t> dynamic_offsets;
 
+			// The bindings we want to update before binding, if empty we update all bindings
+			std::vector<uint32_t> bindings_to_update;
+
 			// Iterate over all resource bindings
 			for (auto &binding_it : resource_set.get_resource_bindings())
 			{
@@ -604,6 +608,12 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				// Check if binding exists in the pipeline layout
 				if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
 				{
+					// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
+					if (update_after_bind && !(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT))
+					{
+						bindings_to_update.push_back(binding_index);
+					}
+
 					// Iterate over all binding resources
 					for (auto &element_it : binding_resources)
 					{
@@ -631,7 +641,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = buffer_info;
+							buffer_infos[binding_index][array_element] = std::move(buffer_info);
 						}
 
 						// Get image info
@@ -673,7 +683,9 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
+			// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
 			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
+			descriptor_set.update(bindings_to_update);
 
 			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 
@@ -692,6 +704,11 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 const CommandBuffer::State CommandBuffer::get_state() const
 {
 	return state;
+}
+
+void CommandBuffer::set_update_after_bind(bool update_after_bind_)
+{
+	update_after_bind = update_after_bind_;
 }
 
 const CommandBuffer::RenderPassBinding &CommandBuffer::get_current_render_pass() const
