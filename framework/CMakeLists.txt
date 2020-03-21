@@ -19,6 +19,10 @@ cmake_minimum_required(VERSION 3.10)
 
 project(framework LANGUAGES C CXX)
 
+if(${VKB_VK_ENABLE_BETA_EXTENSIONS})
+    target_compile_definitions(volk PUBLIC VK_ENABLE_BETA_EXTENSIONS)
+endif()
+
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
