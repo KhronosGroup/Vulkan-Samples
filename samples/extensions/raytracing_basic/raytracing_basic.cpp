@@ -320,7 +320,7 @@ void RaytracingBasic::create_scene()
 		                                                                                          sizeof(instance),
 		                                                                                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 		                                                                                          VMA_MEMORY_USAGE_GPU_TO_CPU);
-		instances_buffer->update(&indices, index_buffer_size);
+		instances_buffer->update(&instance, sizeof(VkAccelerationStructureInstanceKHR));
 
 		buffer_device_address_info.buffer = instances_buffer->get_handle();
 		VkDeviceOrHostAddressConstKHR instance_data_device_address{};
