@@ -133,6 +133,18 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 	create_info.enabledExtensionCount   = to_u32(supported_extensions.size());
 	create_info.ppEnabledExtensionNames = supported_extensions.data();
 
+	// @todo: add way to pass this from a sample (sascha)
+	VkPhysicalDeviceBufferDeviceAddressFeatures feature2{};
+	feature2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	feature2.bufferDeviceAddress = VK_TRUE;
+
+	VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
+	physicalDeviceFeatures2.sType     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	physicalDeviceFeatures2.features  = requested_features;
+	physicalDeviceFeatures2.pNext     = &feature2;
+	create_info.pEnabledFeatures      = nullptr;
+	create_info.pNext                 = &physicalDeviceFeatures2;
+
 	VkResult result = vkCreateDevice(physical_device, &create_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
@@ -177,6 +189,7 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 	vma_vulkan_func.vkInvalidateMappedMemoryRanges      = vkInvalidateMappedMemoryRanges;
 	vma_vulkan_func.vkMapMemory                         = vkMapMemory;
 	vma_vulkan_func.vkUnmapMemory                       = vkUnmapMemory;
+	vma_vulkan_func.vkCmdCopyBuffer                     = vkCmdCopyBuffer;
 
 	VmaAllocatorCreateInfo allocator_info{};
 	allocator_info.physicalDevice = physical_device;
@@ -188,6 +201,9 @@ Device::Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vect
 		vma_vulkan_func.vkGetBufferMemoryRequirements2KHR = vkGetBufferMemoryRequirements2KHR;
 		vma_vulkan_func.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
 	}
+
+	// @todo: Add way to pass this from sample (sascha)
+	allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;	
 
 	allocator_info.pVulkanFunctions = &vma_vulkan_func;
 
