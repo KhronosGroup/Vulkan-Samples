@@ -352,7 +352,7 @@ void RaytracingBasic::create_scene()
 		acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer.device_address;
 
 		VkAccelerationStructureBuildOffsetInfoKHR acceleration_build_offset_info{};
-		acceleration_build_offset_info.primitiveCount                                       = 0;
+		acceleration_build_offset_info.primitiveCount                                       = 1;
 		acceleration_build_offset_info.primitiveOffset                                      = 0x0;
 		acceleration_build_offset_info.firstVertex                                          = 0;
 		acceleration_build_offset_info.transformOffset                                      = 0x0;
