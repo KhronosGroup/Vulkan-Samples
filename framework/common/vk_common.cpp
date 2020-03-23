@@ -124,12 +124,17 @@ bool is_depth_stencil_format(VkFormat format)
 	       is_depth_only_format(format);
 }
 
-VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, const std::vector<VkFormat> &depth_format_priority_list)
+VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only, const std::vector<VkFormat> &depth_format_priority_list)
 {
 	VkFormat depth_format{VK_FORMAT_UNDEFINED};
 
 	for (auto &format : depth_format_priority_list)
 	{
+		if (depth_only && !is_depth_only_format(format))
+		{
+			continue;
+		}
+
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
 

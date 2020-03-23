@@ -203,6 +203,8 @@ class CommandBuffer
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
+	void resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions);
+
 	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
