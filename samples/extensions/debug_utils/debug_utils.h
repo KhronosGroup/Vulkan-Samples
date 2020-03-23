@@ -137,7 +137,7 @@ class DebugUtils : public ApiVulkanSample
 	void                            set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name);
 	VkPipelineShaderStageCreateInfo debug_load_shader(const std::string &file, VkShaderStageFlagBits stage);
 	void                            debug_name_objects();
-	void                            get_device_features() override;
+	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                            build_command_buffers() override;
 	void                            create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
 	void                            prepare_offscreen_buffer();

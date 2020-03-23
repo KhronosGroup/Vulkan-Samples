@@ -155,12 +155,12 @@ Instance::Instance(const std::string &                           application_nam
 		{
 			debug_utils = true;
 			LOGI("{} is available, enabling it", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 	}
 	if (!debug_utils)
 	{
-		extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+		enabled_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
 #endif
 
