@@ -130,6 +130,8 @@ struct hash<vkb::Attachment>
 
 		vkb::hash_combine(result, static_cast<std::underlying_type<VkFormat>::type>(attachment.format));
 		vkb::hash_combine(result, static_cast<std::underlying_type<VkSampleCountFlagBits>::type>(attachment.samples));
+		vkb::hash_combine(result, attachment.usage);
+		vkb::hash_combine(result, static_cast<std::underlying_type<VkImageLayout>::type>(attachment.initial_layout));
 
 		return result;
 	}
@@ -165,6 +167,15 @@ struct hash<vkb::SubpassInfo>
 		{
 			vkb::hash_combine(result, input_attachment);
 		}
+
+		for (uint32_t resolve_attachment : subpass_info.color_resolve_attachments)
+		{
+			vkb::hash_combine(result, resolve_attachment);
+		}
+
+		vkb::hash_combine(result, subpass_info.disable_depth_stencil_attachment);
+		vkb::hash_combine(result, subpass_info.depth_stencil_resolve_attachment);
+		vkb::hash_combine(result, subpass_info.depth_stencil_resolve_mode);
 
 		return result;
 	}
@@ -208,6 +219,7 @@ struct hash<vkb::ShaderResource>
 		vkb::hash_combine(result, shader_resource.set);
 		vkb::hash_combine(result, shader_resource.binding);
 		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
+		vkb::hash_combine(result, shader_resource.mode);
 
 		return result;
 	}
@@ -405,9 +417,9 @@ struct hash<vkb::PipelineState>
 
 		vkb::hash_combine(result, pipeline_state.get_subpass_index());
 
-		for (auto stage : pipeline_state.get_pipeline_layout().get_shader_modules())
+		for (auto shader_module : pipeline_state.get_pipeline_layout().get_shader_modules())
 		{
-			vkb::hash_combine(result, stage->get_id());
+			vkb::hash_combine(result, shader_module->get_id());
 		}
 
 		// VkPipelineVertexInputStateCreateInfo

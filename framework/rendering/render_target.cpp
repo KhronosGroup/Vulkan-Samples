@@ -39,7 +39,7 @@ Attachment::Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUs
 {
 }
 const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Image &&swapchain_image) -> std::unique_ptr<RenderTarget> {
-	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_physical_device());
+	VkFormat depth_format = get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle());
 
 	core::Image depth_image{swapchain_image.get_device(), swapchain_image.get_extent(),
 	                        depth_format,
@@ -121,6 +121,11 @@ void RenderTarget::set_output_attachments(std::vector<uint32_t> &output)
 const std::vector<uint32_t> &RenderTarget::get_output_attachments() const
 {
 	return output_attachments;
+}
+
+void RenderTarget::set_layout(uint32_t attachment, VkImageLayout layout)
+{
+	attachments[attachment].initial_layout = layout;
 }
 
 }        // namespace vkb

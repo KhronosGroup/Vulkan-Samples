@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include "physical_device.h"
+
 #include "instance.h"
 
 #include <algorithm>
@@ -64,31 +66,6 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 	return VK_FALSE;
 }
 #endif
-
-bool validate_extensions(const std::vector<const char *> &         required,
-                         const std::vector<VkExtensionProperties> &available)
-{
-	for (auto extension : required)
-	{
-		bool found = false;
-		for (auto &available_extension : available)
-		{
-			if (strcmp(available_extension.extensionName, extension) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			LOGE("Extension {} not found", extension);
-			return false;
-		}
-	}
-
-	return true;
-}
 
 bool validate_layers(const std::vector<const char *> &     required,
                      const std::vector<VkLayerProperties> &available)
@@ -152,11 +129,10 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	return {};
 }
 
-Instance::Instance(const std::string &              application_name,
-                   const std::vector<const char *> &required_extensions,
-                   const std::vector<const char *> &required_validation_layers,
-                   bool                             headless) :
-    extensions{required_extensions}
+Instance::Instance(const std::string &                           application_name,
+                   const std::unordered_map<const char *, bool> &required_extensions,
+                   const std::vector<const char *> &             required_validation_layers,
+                   bool                                          headless)
 {
 	VkResult result = volkInitialize();
 	if (result)
@@ -198,7 +174,7 @@ Instance::Instance(const std::string &              application_name,
 			{
 				headless_extension = true;
 				LOGI("{} is available, enabling it", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-				extensions.push_back(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
+				enabled_extensions.push_back(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 			}
 		}
 		if (!headless_extension)
@@ -208,10 +184,34 @@ Instance::Instance(const std::string &              application_name,
 	}
 	else
 	{
-		extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	}
 
-	if (!validate_extensions(extensions, available_instance_extensions))
+	auto extension_error = false;
+	for (auto extension : required_extensions)
+	{
+		auto extension_name        = extension.first;
+		auto extension_is_optional = extension.second;
+		if (std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
+		                 [&extension_name](VkExtensionProperties available_extension) { return strcmp(available_extension.extensionName, extension_name) == 0; }) == available_instance_extensions.end())
+		{
+			if (extension_is_optional)
+			{
+				LOGW("Optional instance extension {} not available, some features may be disabled", extension_name);
+			}
+			else
+			{
+				LOGE("Required instance extension {} not available, cannot run", extension_name);
+			}
+			extension_error = !extension_is_optional;
+		}
+		else
+		{
+			enabled_extensions.push_back(extension_name);
+		}
+	}
+
+	if (extension_error)
 	{
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
@@ -255,8 +255,8 @@ Instance::Instance(const std::string &              application_name,
 
 	instance_info.pApplicationInfo = &app_info;
 
-	instance_info.enabledExtensionCount   = to_u32(extensions.size());
-	instance_info.ppEnabledExtensionNames = extensions.data();
+	instance_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
+	instance_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	instance_info.enabledLayerCount   = to_u32(requested_validation_layers.size());
 	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
@@ -356,32 +356,38 @@ void Instance::query_gpus()
 		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
 	}
 
-	gpus.resize(physical_device_count);
+	std::vector<VkPhysicalDevice> physical_devices;
+	physical_devices.resize(physical_device_count);
+	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, physical_devices.data()));
 
-	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, gpus.data()));
+	// Create gpus wrapper objects from the VkPhysicalDevice's
+	for (auto &physical_device : physical_devices)
+	{
+		gpus.push_back(std::make_unique<PhysicalDevice>(*this, physical_device));
+	}
 }
 
-VkPhysicalDevice Instance::get_gpu()
+PhysicalDevice &Instance::get_suitable_gpu()
 {
+	assert(!gpus.empty() && "No physical devices were found on the system.");
+
 	// Find a discrete GPU
-	for (auto gpu : gpus)
+	for (auto &gpu : gpus)
 	{
-		VkPhysicalDeviceProperties properties{};
-		vkGetPhysicalDeviceProperties(gpu, &properties);
-		if (properties.deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
-			return gpu;
+			return *gpu;
 		}
 	}
 
 	// Otherwise just pick the first one
-	LOGW("Couldn't find a discrete physical device, using integrated graphics");
-	return gpus.at(0);
+	LOGW("Couldn't find a discrete physical device, picking default GPU");
+	return *gpus.at(0);
 }
 
-bool Instance::is_enabled(const char *extension)
+bool Instance::is_enabled(const char *extension) const
 {
-	return std::find(extensions.begin(), extensions.end(), extension) != extensions.end();
+	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
 VkInstance Instance::get_handle()
@@ -391,6 +397,6 @@ VkInstance Instance::get_handle()
 
 const std::vector<const char *> &Instance::get_extensions()
 {
-	return extensions;
+	return enabled_extensions;
 }
 }        // namespace vkb

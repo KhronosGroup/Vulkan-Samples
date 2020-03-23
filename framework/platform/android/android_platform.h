@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,6 +57,8 @@ class AndroidPlatform : public Platform
 	ANativeActivity *get_activity();
 
   private:
+	void poll_events();
+
 	android_app *app{nullptr};
 
 	std::string log_output;

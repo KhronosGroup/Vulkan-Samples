@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,15 +30,15 @@ BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags u
 {
 	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minUniformBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minUniformBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minStorageBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minStorageBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minTexelBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minTexelBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_INDEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_VERTEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
 	{

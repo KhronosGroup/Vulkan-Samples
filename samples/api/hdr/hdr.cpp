@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,12 +65,12 @@ HDR::~HDR()
 	}
 }
 
-void HDR::get_device_features()
+void HDR::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 

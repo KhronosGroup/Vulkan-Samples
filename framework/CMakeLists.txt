@@ -69,10 +69,12 @@ set(COMMON_FILES
     common/helpers.h
     common/error.h
     common/utils.h
+    common/strings.h
     # Source Files
     common/error.cpp
     common/vk_common.cpp
-    common/utils.cpp)
+    common/utils.cpp
+    common/strings.cpp)
 
 set(GEOMETRY_FILES
     # Header Files
@@ -163,6 +165,7 @@ set(SCENE_GRAPH_SCRIPTS_FILES
 set(CORE_FILES
     # Header Files
     core/instance.h
+    core/physical_device.h
     core/device.h
     core/shader_module.h
     core/pipeline_layout.h
@@ -183,6 +186,7 @@ set(CORE_FILES
     core/render_pass.h
     # Source Files
     core/instance.cpp
+    core/physical_device.cpp
     core/device.cpp
     core/image.cpp
     core/shader_module.cpp
@@ -202,22 +206,6 @@ set(CORE_FILES
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp)
-
-set(UTIL_FILES
-    # Header Files
-    utils/graph/graph.h
-    utils/graph/nodes/framework.h
-    utils/graph/nodes/scene.h
-    utils/graph/node.h
-    utils/graphs.h
-    utils/strings.h
-    # Source Files
-    utils/graph/graph.cpp
-    utils/graph/nodes/framework.cpp
-    utils/graph/nodes/scene.cpp
-    utils/graph/node.cpp
-    utils/graphs.cpp
-    utils/strings.cpp)
 
 set(PLATFORM_FILES
     # Header Files
@@ -239,6 +227,19 @@ set(PLATFORM_FILES
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
+
+set(GRAPHING_FILES
+    # Header Files
+    graphing/graph.h
+    graphing/graph_node.h
+    graphing/scene_graph.h
+    graphing/framework_graph.h
+
+    # Source Files
+    graphing/graph.cpp
+    graphing/graph_node.cpp
+    graphing/scene_graph.cpp
+    graphing/framework_graph.cpp)
 
 set(ANDROID_FILES
     # Header Files
@@ -289,7 +290,7 @@ source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
-source_group("utils\\" FILES ${UTIL_FILES})
+source_group("graphing\\" FILES ${GRAPHING_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
@@ -302,7 +303,7 @@ set(PROJECT_FILES
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES}
-    ${UTIL_FILES})
+    ${GRAPHING_FILES})
 
 # Add files based on platform
 if(VKB_DIRECT_2_DISPLAY)

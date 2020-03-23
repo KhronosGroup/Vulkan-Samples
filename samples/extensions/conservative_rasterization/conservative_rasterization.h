@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,7 +109,7 @@ class ConservativeRasterization : public ApiVulkanSample
 
 	ConservativeRasterization();
 	~ConservativeRasterization();
-	void         get_device_features() override;
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         prepare_offscreen();
 	void         load_assets();

@@ -64,7 +64,7 @@ std::unique_ptr<vkb::RenderTarget> RenderSubpasses::create_render_target(vkb::co
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_physical_device()),
+	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 

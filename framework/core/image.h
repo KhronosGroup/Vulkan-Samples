@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,11 +32,12 @@ class ImageView;
 class Image
 {
   public:
-	Image(Device &          device,
-	      VkImage           handle,
-	      const VkExtent3D &extent,
-	      VkFormat          format,
-	      VkImageUsageFlags image_usage);
+	Image(Device &              device,
+	      VkImage               handle,
+	      const VkExtent3D &    extent,
+	      VkFormat              format,
+	      VkImageUsageFlags     image_usage,
+	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
 	Image(Device &              device,
 	      const VkExtent3D &    extent,

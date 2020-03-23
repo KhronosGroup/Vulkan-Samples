@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,9 +26,9 @@ RaytracingBasic::RaytracingBasic()
 	title = "VK_NV_ray_tracing";
 
 	// Enable instance and device extensions required to use VK_NV_ray_tracing
-	instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_NV_RAY_TRACING_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+	add_device_extension(VK_NV_RAY_TRACING_EXTENSION_NAME);
 }
 
 RaytracingBasic::~RaytracingBasic()
@@ -622,7 +622,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
 	// Get VK_NV_ray_tracing related function pointers
 	vkCreateAccelerationStructureNV                = reinterpret_cast<PFN_vkCreateAccelerationStructureNV>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCreateAccelerationStructureNV"));

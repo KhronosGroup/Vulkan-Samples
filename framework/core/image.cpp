@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -122,13 +122,13 @@ Image::Image(Device &              device,
 	}
 }
 
-Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage) :
+Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
     device{device},
     handle{handle},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    sample_count{VK_SAMPLE_COUNT_1_BIT},
+    sample_count{sample_count},
     usage{image_usage}
 {
 	subresource.mipLevel   = 1;

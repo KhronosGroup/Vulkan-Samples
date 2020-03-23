@@ -174,12 +174,6 @@ class VulkanSample : public Application
 
 	std::unique_ptr<Stats> stats{nullptr};
 
-	// All the features the physical device supports
-	VkPhysicalDeviceFeatures supported_device_features{};
-
-	// The features to be requested from the logical device
-	VkPhysicalDeviceFeatures requested_device_features{};
-
 	/**
 	 * @brief Update scene
 	 * @param delta_time
@@ -228,21 +222,35 @@ class VulkanSample : public Application
 	/**
 	 * @brief Get sample-specific instance extensions.
 	 *
-	 * @return Vector of instance extensions. Default is empty vector.
+	 * @return Map of instance extensions and wether or not they are optional. Default is empty map.
 	 */
-	virtual const std::vector<const char *> get_instance_extensions();
+	const std::unordered_map<const char *, bool> get_instance_extensions();
 
 	/**
 	 * @brief Get sample-specific device extensions.
 	 *
-	 * @return Vector of device extensions. Default is empty vector.
+	 * @return Map of device extensions and whether or not they are optional. Default is empty map.
 	 */
-	virtual const std::vector<const char *> get_device_extensions();
+	const std::unordered_map<const char *, bool> get_device_extensions();
 
 	/**
-	 * @brief Populate `requested_device_features` with required sample-specific device features.
+	 * @brief Add a sample-specific device extension
+	 * @param extension The extension name
+	 * @param optional (Optional) Wether the extension is optional
 	 */
-	virtual void get_device_features();
+	void add_device_extension(const char *extension, bool optional = false);
+
+	/**
+	 * @brief Add a sample-specific instance extension
+	 * @param extension The extension name
+	 * @param optional (Optional) Wether the extension is optional
+	 */
+	void add_instance_extension(const char *extension, bool optional = false);
+
+	/**
+	 * @brief Request features from the gpu based on what is supported
+	 */
+	virtual void request_gpu_features(PhysicalDevice &gpu);
 
 	/** 
 	 * @brief Override this to customise the creation of the swapchain and render_context
@@ -266,6 +274,16 @@ class VulkanSample : public Application
 	 */
 	virtual void update_debug_window();
 
+	/**
+	 * @brief Add free camera script to a node with a camera object.
+	 *        Fallback to the default_camera if node not found.
+	 *
+	 * @param node_name The scene node name
+	 *
+	 * @return Node where the script was attached as component
+	 */
+	sg::Node &add_free_camera(const std::string &node_name);
+
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
 	/**
@@ -277,5 +295,12 @@ class VulkanSample : public Application
 	 * @brief The configuration of the sample
 	 */
 	Configuration configuration{};
+
+  private:
+	/** @brief Set of device extensions to be enabled for this example and wether they are optional (must be set in the derived constructor) */
+	std::unordered_map<const char *, bool> device_extensions;
+
+	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
+	std::unordered_map<const char *, bool> instance_extensions;
 };
 }        // namespace vkb

@@ -231,7 +231,7 @@ void RenderContext::handle_surface_changes()
 	}
 
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_physical_device(),
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(),
 	                                                   swapchain->get_surface(),
 	                                                   &surface_properties));
 

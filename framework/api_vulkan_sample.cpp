@@ -32,7 +32,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	depth_format = vkb::get_suitable_depth_format(device->get_physical_device());
+	depth_format = vkb::get_suitable_depth_format(device->get_gpu().get_handle());
 
 	// Create synchronization objects
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
@@ -802,7 +802,7 @@ void ApiVulkanSample::create_swapchain_buffers()
 void ApiVulkanSample::handle_surface_changes()
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
-	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->get_physical_device(),
+	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device->get_gpu().get_handle(),
 	                                                   get_render_context().get_swapchain().get_surface(),
 	                                                   &surface_properties));
 
@@ -943,8 +943,8 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = device->get_features().samplerAnisotropy ? (device->get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = device->get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1044,8 +1044,8 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = device->get_features().samplerAnisotropy ? device->get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = device->get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1145,8 +1145,8 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
 	// Max level-of-detail should match mip level count
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy    = device->get_features().samplerAnisotropy ? device->get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = device->get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1178,14 +1178,4 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
 	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
-}
-
-const std::vector<const char *> ApiVulkanSample::get_instance_extensions()
-{
-	return instance_extensions;
-}
-
-const std::vector<const char *> ApiVulkanSample::get_device_extensions()
-{
-	return device_extensions;
 }

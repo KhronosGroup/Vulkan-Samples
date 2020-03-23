@@ -55,9 +55,13 @@ class DescriptorSetLayout
 
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
-	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(uint32_t binding_index) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const uint32_t binding_index) const;
 
 	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const std::string &name) const;
+
+	const std::vector<VkDescriptorBindingFlagsEXT> &get_binding_flags() const;
+
+	VkDescriptorBindingFlagsEXT get_layout_binding_flag(const uint32_t binding_index) const;
 
   private:
 	Device &device;
@@ -66,7 +70,11 @@ class DescriptorSetLayout
 
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
+	std::vector<VkDescriptorBindingFlagsEXT> binding_flags;
+
 	std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings_lookup;
+
+	std::unordered_map<uint32_t, VkDescriptorBindingFlagsEXT> binding_flags_lookup;
 
 	std::unordered_map<std::string, uint32_t> resources_lookup;
 };

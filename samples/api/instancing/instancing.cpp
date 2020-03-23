@@ -42,25 +42,27 @@ Instancing::~Instancing()
 	}
 }
 
-void Instancing::get_device_features()
+void Instancing::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	auto &requested_features = gpu.get_mutable_requested_features();
+
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		requested_features.samplerAnisotropy = VK_TRUE;
 	}
 	// Enable texture compression
-	if (supported_device_features.textureCompressionBC)
+	if (gpu.get_features().textureCompressionBC)
 	{
-		requested_device_features.textureCompressionBC = VK_TRUE;
+		requested_features.textureCompressionBC = VK_TRUE;
 	}
-	else if (supported_device_features.textureCompressionASTC_LDR)
+	else if (gpu.get_features().textureCompressionASTC_LDR)
 	{
-		requested_device_features.textureCompressionASTC_LDR = VK_TRUE;
+		requested_features.textureCompressionASTC_LDR = VK_TRUE;
 	}
-	else if (supported_device_features.textureCompressionETC2)
+	else if (gpu.get_features().textureCompressionETC2)
 	{
-		requested_device_features.textureCompressionETC2 = VK_TRUE;
+		requested_features.textureCompressionETC2 = VK_TRUE;
 	}
 };
 
