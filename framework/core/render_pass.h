@@ -30,6 +30,14 @@ struct SubpassInfo
 	std::vector<uint32_t> input_attachments;
 
 	std::vector<uint32_t> output_attachments;
+
+	std::vector<uint32_t> color_resolve_attachments;
+
+	bool disable_depth_stencil_attachment;
+
+	uint32_t depth_stencil_resolve_attachment;
+
+	VkResolveModeFlagBits depth_stencil_resolve_mode;
 };
 
 class RenderPass
@@ -63,11 +71,9 @@ class RenderPass
 
 	size_t subpass_count;
 
-	// Store attachments for every subpass
-	std::vector<std::vector<VkAttachmentReference>> input_attachments;
+	template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>
+	void create_renderpass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
 
-	std::vector<std::vector<VkAttachmentReference>> color_attachments;
-
-	std::vector<std::vector<VkAttachmentReference>> depth_stencil_attachments;
+	std::vector<uint32_t> color_output_count;
 };
 }        // namespace vkb

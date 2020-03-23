@@ -151,8 +151,12 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const s
 	auto                     subpass_info_it = subpass_infos.begin();
 	for (auto &subpass : subpasses)
 	{
-		subpass_info_it->input_attachments  = subpass->get_input_attachments();
-		subpass_info_it->output_attachments = subpass->get_output_attachments();
+		subpass_info_it->input_attachments                = subpass->get_input_attachments();
+		subpass_info_it->output_attachments               = subpass->get_output_attachments();
+		subpass_info_it->color_resolve_attachments        = subpass->get_color_resolve_attachments();
+		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
+		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
+		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
 
 		++subpass_info_it;
 	}
@@ -421,6 +425,13 @@ void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &ds
 	               to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
 }
 
+void CommandBuffer::resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions)
+{
+	vkCmdResolveImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                  dst_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                  to_u32(regions.size()), regions.data());
+}
+
 void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
 {
 	VkBufferCopy copy_region = {};
@@ -658,6 +669,8 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								switch (binding_info->descriptorType)
 								{
 									case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+										break;
 									case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
 										if (is_depth_stencil_format(image_view->get_format()))
 										{
