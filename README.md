@@ -71,6 +71,7 @@ Additionally you may find the following links useful:
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
   - [Choosing the correct layout when transitioning images](./samples/performance/layout_transitions/layout_transitions_tutorial.md)
+  - [How to implement MSAA](./samples/performance/msaa/msaa_tutorial.md)
 - **Render Subpasses**
   - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
 - **Workload Synchronization**
