@@ -27,14 +27,27 @@
 
 // Indices for the different ray tracing shader types used in this example
 #define INDEX_RAYGEN 0
-#define INDEX_MISS 1
-#define INDEX_CLOSEST_HIT 2
+#define INDEX_CLOSEST_HIT 1
+#define INDEX_MISS 2
 
-struct ScratchBuffer
+// Holds data for a ray tracing scratch buffer that is used as a temporary storage
+struct RayTracingScratchBuffer
 {
 	uint64_t       device_address = 0;
 	VkBuffer       buffer         = VK_NULL_HANDLE;
 	VkDeviceMemory memory         = VK_NULL_HANDLE;
+	void *         mapped_pointer = nullptr;
+	RayTracingScratchBuffer(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
+};
+
+// Holds data for a memory object bound to an acceleration structure
+struct RayTracingObjectMemory
+{
+	uint64_t       device_address = 0;
+	VkBuffer       buffer         = VK_NULL_HANDLE;
+	VkDeviceMemory memory         = VK_NULL_HANDLE;
+	void *         mapped_pointer = nullptr; 
+	RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
 };
 
 class RaytracingBasic : public ApiVulkanSample
@@ -76,19 +89,19 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
-	ScratchBuffer create_scratch_buffer(ScratchBuffer &scratch_buffer, VkAccelerationStructureKHR acceleration_structure);
-	void          create_storage_image();
-	void          create_scene();
-	VkDeviceSize  copy_shader_identifier(uint8_t *data, const uint8_t *shader_handle_storage, uint32_t group_index);
-	void          create_shader_binding_table();
-	void          create_descriptor_sets();
-	void          create_ray_tracing_pipeline();
-	void          create_uniform_buffer();
-	void          build_command_buffers() override;
-	void          update_uniform_buffers();
-	void          draw();
-	bool          prepare(vkb::Platform &platform) override;
-	virtual void  render(float delta_time) override;
+	uint64_t                 get_buffer_device_address(VkBuffer buffer);
+	void                     create_storage_image();
+	void                     create_scene();
+	VkDeviceSize             copy_shader_identifier(uint8_t *data, const uint8_t *shader_handle_storage, uint32_t group_index);
+	void                     create_shader_binding_table();
+	void                     create_descriptor_sets();
+	void                     create_ray_tracing_pipeline();
+	void                     create_uniform_buffer();
+	void                     build_command_buffers() override;
+	void                     update_uniform_buffers();
+	void                     draw();
+	bool                     prepare(vkb::Platform &platform) override;
+	virtual void             render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_basic();
