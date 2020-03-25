@@ -115,10 +115,6 @@ RaytracingBasic::RaytracingBasic()
 	device_extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
 	device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 	device_extensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
-#if defined(VKB_DEBUG)
-	// @todo: NV-Extension currently required to get the validation layers working
-	device_extensions.push_back(VK_NV_RAY_TRACING_EXTENSION_NAME);
-#endif
 }
 
 RaytracingBasic::~RaytracingBasic()
@@ -435,14 +431,6 @@ void RaytracingBasic::create_scene()
 
 		top_level_acceleration_structure_handle = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
-}
-
-VkDeviceSize RaytracingBasic::copy_shader_identifier(uint8_t *data, const uint8_t *shaderHandleStorage, uint32_t groupIndex)
-{
-	const uint32_t shader_group_handle_size = ray_tracing_properties.shaderGroupHandleSize;
-	memcpy(data, shaderHandleStorage + groupIndex * shader_group_handle_size, shader_group_handle_size);
-	data += shader_group_handle_size;
-	return shader_group_handle_size;
 }
 
 /*

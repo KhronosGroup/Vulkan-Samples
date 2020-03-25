@@ -92,7 +92,6 @@ class RaytracingBasic : public ApiVulkanSample
 	uint64_t     get_buffer_device_address(VkBuffer buffer);
 	void         create_storage_image();
 	void         create_scene();
-	VkDeviceSize copy_shader_identifier(uint8_t *data, const uint8_t *shader_handle_storage, uint32_t group_index);
 	void         create_shader_binding_table();
 	void         create_descriptor_sets();
 	void         create_ray_tracing_pipeline();
