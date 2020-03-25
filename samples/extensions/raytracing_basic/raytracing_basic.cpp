@@ -17,8 +17,7 @@
 
 /*
  * Basic example for ray tracing using VK_KHR_ray_tracing
- * @note: Work-in-progress
- * @note: The extension is still beta, so you need to either enable VKB_VK_ENABLE_BETA_EXTENSIONS in cmake to include beta header and functions
+ * @note: The extension is still beta, so you need to enable VKB_VK_ENABLE_BETA_EXTENSIONS in the cmake options
  */
 
 #include "raytracing_basic.h"
@@ -26,7 +25,8 @@
 /*
 	Create a scratch buffer used as a temporary storage in various ray tracing structures
 */
-RayTracingScratchBuffer::RayTracingScratchBuffer(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure)
+RayTracingScratchBuffer::RayTracingScratchBuffer(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure) :
+    device(device)
 {
 	VkMemoryRequirements2 memory_requirements_2{};
 	memory_requirements_2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
@@ -66,10 +66,24 @@ RayTracingScratchBuffer::RayTracingScratchBuffer(vkb::Device &device, VkAccelera
 	device_address                    = vkGetBufferDeviceAddressKHR(device.get_handle(), &buffer_device_address_info);
 }
 
+RayTracingScratchBuffer::~RayTracingScratchBuffer()
+{
+	// Scratch buffers can be safely deleted after the acceleration structure has been built
+	if (memory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(device.get_handle(), memory, nullptr);
+	}
+	if (buffer != VK_NULL_HANDLE)
+	{
+		vkDestroyBuffer(device.get_handle(), buffer, nullptr);
+	}
+}
+
 /*
 	Create memory that will be attached to an acceleration structure
 */
-RayTracingObjectMemory::RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure)
+RayTracingObjectMemory::RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure) :
+    device(device)
 {
 	VkMemoryRequirements2 memory_requirements_2{};
 	memory_requirements_2.sType = VK_STRUCTURE_TYPE_MEMORY_REQUIREMENTS_2;
