@@ -184,7 +184,7 @@ void RaytracingBasic::create_storage_image()
 }
 
 /*
-	Get the device address from a buffer
+	Gets the device address from a buffer that's required for some of the ray tracing acceleration structures
 */
 uint64_t RaytracingBasic::get_buffer_device_address(VkBuffer buffer)
 {
@@ -199,54 +199,46 @@ uint64_t RaytracingBasic::get_buffer_device_address(VkBuffer buffer)
 */
 void RaytracingBasic::create_scene()
 {
-	// Setup vertices for a single triangle
-	struct Vertex
-	{
-		float pos[3];
-	};
-	std::vector<Vertex> vertices = {
-	    {{1.0f, 1.0f, 0.0f}},
-	    {{-1.0f, 1.0f, 0.0f}},
-	    {{0.0f, -1.0f, 0.0f}}};
-
-	// Setup indices
-	std::vector<uint32_t> indices = {0, 1, 2};
-	index_count                   = static_cast<uint32_t>(indices.size());
-
-	auto vertex_buffer_size = vertices.size() * sizeof(Vertex);
-	auto index_buffer_size  = indices.size() * sizeof(uint32_t);
-
-	// Create buffers
-	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_buffer->update(vertices.data(), vertex_buffer_size);
-
-	// Index buffer
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer->update(indices.data(), index_buffer_size);
-
-	VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
-	VkDeviceOrHostAddressConstKHR index_data_device_address{};
-
-	VkBufferDeviceAddressInfo buffer_device_address_info{};
-	buffer_device_address_info.sType         = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
-	buffer_device_address_info.buffer        = vertex_buffer->get_handle();
-	vertex_data_device_address.deviceAddress = vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
-
-	buffer_device_address_info.buffer       = index_buffer->get_handle();
-	index_data_device_address.deviceAddress = vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
-
 	/*
 		Create the bottom level acceleration structure containing the actual scene geometry as triangles
 	*/
 	{
+		// Setup vertices and indices for a single triangle
+		struct Vertex
+		{
+			float pos[3];
+		};
+		std::vector<Vertex> vertices = {
+		    {{1.0f, 1.0f, 0.0f}},
+		    {{-1.0f, 1.0f, 0.0f}},
+		    {{0.0f, -1.0f, 0.0f}}};
+		std::vector<uint32_t> indices = {0, 1, 2};
+
+		auto vertex_buffer_size = vertices.size() * sizeof(Vertex);
+		auto index_buffer_size  = indices.size() * sizeof(uint32_t);
+
+		// Create buffers
+		// For the sake of simplicity we won't stage the vertex data to the gpu memory
+		// Vertex buffer
+		vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                    vertex_buffer_size,
+		                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
+		vertex_buffer->update(vertices.data(), vertex_buffer_size);
+
+		// Index buffer
+		index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                   index_buffer_size,
+		                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+		index_buffer->update(indices.data(), index_buffer_size);
+
+		VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
+		VkDeviceOrHostAddressConstKHR index_data_device_address{};
+
+		vertex_data_device_address.deviceAddress = get_buffer_device_address(vertex_buffer->get_handle());
+		index_data_device_address.deviceAddress  = get_buffer_device_address(index_buffer->get_handle());
+
 		VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info{};
 		acceleration_create_geometry_info.sType             = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
 		acceleration_create_geometry_info.geometryType      = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
@@ -375,9 +367,8 @@ void RaytracingBasic::create_scene()
 		                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 		instances_buffer->update(&instance, sizeof(VkAccelerationStructureInstanceKHR));
 
-		buffer_device_address_info.buffer = instances_buffer->get_handle();
 		VkDeviceOrHostAddressConstKHR instance_data_device_address{};
-		instance_data_device_address.deviceAddress = vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
+		instance_data_device_address.deviceAddress = get_buffer_device_address(instances_buffer->get_handle());
 
 		VkAccelerationStructureGeometryKHR acceleration_geometry{};
 		acceleration_geometry.sType                                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -434,19 +425,17 @@ void RaytracingBasic::create_scene()
 }
 
 /*
-	Create the Shader Binding Table that binds the programs and top-level acceleration structure
+	Create the Shader Binding Table that holds the ray tracing piepeline's shader group handle
 */
 void RaytracingBasic::create_shader_binding_table()
 {
-	uint32_t shader_binding_table_size = ray_tracing_properties.shaderGroupHandleSize * 3;
 	// Create buffer to hold the shader binding table
-	shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                           shader_binding_table_size,
-	                                                           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR,
-	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU, 0);
+	uint32_t shader_binding_table_size = ray_tracing_properties.shaderGroupHandleSize * 3;
+	shader_binding_table               = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                               shader_binding_table_size,
+                                                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR,
+                                                               VMA_MEMORY_USAGE_CPU_TO_GPU, 0);
 
-	auto shader_handle_storage = new uint8_t[shader_binding_table_size];
-	// Get shader group handles
 	auto *data = static_cast<uint8_t *>(shader_binding_table->map());
 	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, 3, shader_binding_table_size, data));
 	shader_binding_table->unmap();
