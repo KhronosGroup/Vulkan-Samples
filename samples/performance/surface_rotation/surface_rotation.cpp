@@ -99,7 +99,7 @@ void SurfaceRotation::update(float delta_time)
 	// The swapchain preTransform attribute will now be something other than
 	// identity only if pre-rotate mode is enabled
 	glm::mat4   pre_rotate_mat = glm::mat4(1.0f);
-	glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, -1.0f);
+	glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
 	const auto &swapchain      = get_render_context().get_swapchain();
 
 	if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
@@ -115,10 +115,6 @@ void SurfaceRotation::update(float delta_time)
 		pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
 	}
 
-	// Ensure that the camera uses the swapchain dimensions, which never change if
-	// pre-rotate mode is enabled, and not the window dimensions set by the framework
-	VkExtent2D extent = swapchain.get_extent();
-	camera->set_aspect_ratio(static_cast<float>(extent.width) / extent.height);
 	camera->set_pre_rotation(pre_rotate_mat);
 
 	VulkanSample::update(delta_time);
@@ -131,9 +127,6 @@ void SurfaceRotation::draw_gui()
 	auto              prerotate_str   = "Pre-rotate (" + rotation_by_str + " rotates)";
 	auto              transform       = vkb::to_string(get_render_context().get_swapchain().get_transform());
 	auto              resolution_str  = "Res: " + std::to_string(extent.width) + "x" + std::to_string(extent.height);
-	std::stringstream fov_stream;
-	fov_stream << "FOV: " << std::fixed << std::setprecision(2) << camera->get_field_of_view() * 180.0f / glm::pi<float>();
-	auto fov_str = fov_stream.str();
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
 	// scene has been rotated using the swapchain preTransform attribute
@@ -146,7 +139,7 @@ void SurfaceRotation::draw_gui()
 		gui->show_options_window(
 		    /* body = */ [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
-			    ImGui::Text("%s | %s | %s", transform.c_str(), resolution_str.c_str(), fov_str.c_str());
+			    ImGui::Text("%s | %s", transform.c_str(), resolution_str.c_str());
 		    },
 		    /* lines = */ lines);
 	}
@@ -158,7 +151,7 @@ void SurfaceRotation::draw_gui()
 		    /* body = */ [&]() {
 			    ImGui::Checkbox(prerotate_str.c_str(), &pre_rotate);
 			    ImGui::Text("%s", transform.c_str());
-			    ImGui::Text("%s | %s", resolution_str.c_str(), fov_str.c_str());
+			    ImGui::Text("%s", resolution_str.c_str());
 		    },
 		    /* lines = */ lines);
 	}

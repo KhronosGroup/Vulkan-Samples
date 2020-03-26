@@ -61,10 +61,7 @@ void PerspectiveCamera::set_aspect_ratio(float new_aspect_ratio)
 
 float PerspectiveCamera::get_field_of_view()
 {
-	/* Calculate vertical fov */
-	auto vfov = static_cast<float>(2 * atan(tan(fov / 2) * (1.0 / aspect_ratio)));
-
-	return aspect_ratio > 1.0f ? fov : vfov;
+	return fov;
 }
 
 float PerspectiveCamera::get_aspect_ratio()
@@ -75,7 +72,7 @@ float PerspectiveCamera::get_aspect_ratio()
 glm::mat4 PerspectiveCamera::get_projection()
 {
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	return glm::perspective(get_field_of_view(), aspect_ratio, far_plane, near_plane);
+	return glm::perspective(fov, aspect_ratio, far_plane, near_plane);
 }
 }        // namespace sg
 }        // namespace vkb
