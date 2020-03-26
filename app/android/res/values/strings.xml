@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -22,7 +22,6 @@
 	<string name="channel_name">vkb_channel</string>
 	<string name="channel_desc">vkb_channel is a channel for the vulkan best practice application notifications</string>
 	<string name="native_lib_name">vulkan_samples</string>
-	<string name="button_demo_mode">Run All Samples</string>
 	<string name="permissions_text">Permission to access files is required to load assets</string>
 	<string name="permissions_button">Grant Permissions</string>
 	<string name="menu_run_samples_title">Run All Samples</string>

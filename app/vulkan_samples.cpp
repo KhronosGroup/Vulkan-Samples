@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ extern "C"
 	JNIEXPORT jobjectArray JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
-		jclass       c             = env->FindClass("com/khronos/vulkan_samples/Sample");
+		jclass       c             = env->FindClass("com/khronos/vulkan_samples/model/Sample");
 		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
 		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, 0);
 

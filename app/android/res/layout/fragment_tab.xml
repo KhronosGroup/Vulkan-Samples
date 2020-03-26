@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -23,7 +23,6 @@
     android:orientation="vertical">
 
     <TextView
-        android:id="@+id/tab_title"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center"
