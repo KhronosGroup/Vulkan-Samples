@@ -54,3 +54,6 @@
 	path = third_party/glad
 	url = https://github.com/jherico/glad.git
 	branch = vulkan_samples
+[submodule "third_party/glad_android"]
+	path = third_party/glad_android
+	url = https://github.com/jherico/glad.git

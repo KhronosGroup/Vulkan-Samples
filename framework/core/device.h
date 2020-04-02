@@ -158,7 +158,7 @@ class Device
 	 * @param free Whether the command buffer should be implictly freed up
 	 * @param signalSemaphore An optional semaphore to signal when the commands have been executed
 	 */
-	void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true, VkSemaphore signalSemaphore = nullptr);
+	void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true, VkSemaphore signalSemaphore = VK_NULL_HANDLE);
 
 	/**
 	 * @brief Requests a command buffer from the general command_pool

@@ -29,20 +29,20 @@
 #	include "platform/android/android_platform.h"
 #endif
 
-// Do not join these blocks, or if you do, be aware that some clang-format versions
-// will re-order the glad/GLFW headers and break compilation
 VKBP_DISABLE_WARNINGS()
 #include <glad/glad.h>
-VKBP_ENABLE_WARNINGS()
-
-VKBP_DISABLE_WARNINGS()
-#include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	include <ctime>
+#	include <EGL/egl.h>
+#	include <EGL/eglext.h>
+#else
+#	include <GLFW/glfw3.h>
+#	include <GLFW/glfw3native.h>
+#endif
 VKBP_ENABLE_WARNINGS()
 
 constexpr uint32_t SHARED_TEXTURE_DIMENSION = 512;
 
-// FIXME make work on non-Win32 platforms
 #if !defined(WIN32)
 constexpr const char *HOST_MEMORY_EXTENSION_NAME    = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
 constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME;
@@ -61,8 +61,14 @@ constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_
 #	define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
 #endif
 
-constexpr const char *OPENG_VERTEX_SHADER = R"SHADER(
-#version 450 core
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	define OPENGL_SHADER_HEADER "#version 320 es"
+#else
+#	define OPENGL_SHADER_HEADER "#version 450 core"
+#endif
+constexpr const char *OPENG_VERTEX_SHADER =
+    OPENGL_SHADER_HEADER
+    R"SHADER(
 const vec4 VERTICES[] = vec4[](
     vec4(-1.0, -1.0, 0.0, 1.0), 
     vec4( 1.0, -1.0, 0.0, 1.0),    
@@ -74,8 +80,9 @@ void main() { gl_Position = VERTICES[gl_VertexID]; }
 
 // Derived from Shadertoy Vornoi noise shader by Inigo Quilez
 // https://www.shadertoy.com/view/Xd23Dh
-constexpr const char *OPENGL_FRAGMENT_SHADER = R"SHADER(
-#version 450 core
+constexpr const char *OPENGL_FRAGMENT_SHADER =
+    OPENGL_SHADER_HEADER
+    R"SHADER(
 const vec4 iMouse = vec4(0.0); 
 layout(location = 0) out vec4 outColor;
 layout(location = 0) uniform vec3 iResolution;
@@ -190,9 +197,50 @@ class OpenGLWindow
 		return program;
 	}
 
+	static float getTime()
+	{
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+		timespec now;
+		clock_gettime(CLOCK_MONOTONIC, &now);
+		float result = now.tv_sec + float(now.tv_nsec / 1000000LL) / 1000.0f;
+		return result;
+#else
+		return glfwGetTime();
+#endif
+	}
+
   public:
 	void create(const OpenGLInterop::ShareHandles &handles, uint64_t memorySize)
 	{
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+		EGLint eglMajVers{0}, eglMinVers{0};
+		eglDisp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+		eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
+		LOGD("EGL init with version %d.%d", eglMajVers, eglMinVers);
+
+		constexpr EGLint confAttr[] = {
+		    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
+		    EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
+		    EGL_RED_SIZE, 8,
+		    EGL_GREEN_SIZE, 8,
+		    EGL_BLUE_SIZE, 8,
+		    EGL_ALPHA_SIZE, 8,
+		    EGL_NONE};
+
+		EGLint numConfigs;
+		eglChooseConfig(eglDisp, confAttr, &eglConf, 1, &numConfigs);
+
+		// Create a EGL context
+		constexpr EGLint ctxAttr[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
+
+		eglCtx = eglCreateContext(eglDisp, eglConf, EGL_NO_CONTEXT, ctxAttr);
+
+		// Create an offscreen pbuffer surface, and then make it current
+		constexpr EGLint surfaceAttr[] = {EGL_WIDTH, 10, EGL_HEIGHT, 10, EGL_NONE};
+		eglSurface                     = eglCreatePbufferSurface(eglDisp, eglConf, surfaceAttr);
+		eglMakeCurrent(eglDisp, eglSurface, eglSurface, eglCtx);
+		gladLoadGLES2Loader((GLADloadproc) &eglGetProcAddress);
+#else
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -203,18 +251,19 @@ class OpenGLWindow
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwMakeContextCurrent(window);
 		gladLoadGL();
+#endif
 
 		glDebugMessageCallback(debugMessageCallback, NULL);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
 		program   = buildProgram(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
-		startTime = glfwGetTime();
+		startTime = getTime();
 
 		glDisable(GL_DEPTH_TEST);
 
 		// Create the texture for the FBO color attachment.
 		// This only reserves the ID, it doesn't allocate memory
-		glCreateTextures(GL_TEXTURE_2D, 1, &color);
+		glGenTextures(1, &color);
 
 		// Create the GL identifiers
 
@@ -235,20 +284,22 @@ class OpenGLWindow
 		glTextureStorageMem2DEXT(color, 1, GL_RGBA8, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION, mem, 0);
 
 		// The remaining initialization code is all standard OpenGL
-		glCreateFramebuffers(1, &fbo);
-		glNamedFramebufferTexture(fbo, GL_COLOR_ATTACHMENT0, color, 0);
 		glGenVertexArrays(1, &vao);
 		glBindVertexArray(vao);
+
+		glGenFramebuffers(1, &fbo);
+		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
+		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, color, 0);
+
 		glUseProgram(program);
 		glProgramUniform3f(program, 0, (float) SHARED_TEXTURE_DIMENSION, (float) SHARED_TEXTURE_DIMENSION, 0.0f);
 
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 		glViewport(0, 0, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION);
 	}
 
 	void render()
 	{
-		float time = (float) (glfwGetTime() - startTime);
+		float time = (float) (getTime() - startTime);
 		// The GL shader animates the image, so provide the time as input
 		glProgramUniform1f(program, 1, time);
 
@@ -290,19 +341,33 @@ class OpenGLWindow
 		glDeleteProgram(program);
 		glFlush();
 		glFinish();
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+		eglDestroySurface(eglDisp, eglSurface);
+		eglSurface = nullptr;
+		eglDestroyContext(eglDisp, eglCtx);
+		eglCtx = nullptr;
+#else
 		glfwDestroyWindow(window);
 		window = nullptr;
+#endif
 	}
 
   private:
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+	EGLConfig  eglConf{nullptr};
+	EGLSurface eglSurface{nullptr};
+	EGLContext eglCtx{nullptr};
+	EGLDisplay eglDisp{nullptr};
+#else
 	GLFWwindow *window{nullptr};
-	GLuint      glReady{0}, glComplete{0};
-	GLuint      color{0};
-	GLuint      fbo{0};
-	GLuint      vao{0};
-	GLuint      program{0};
-	GLuint      mem{0};
-	double      startTime{0};
+#endif
+	GLuint glReady{0}, glComplete{0};
+	GLuint color{0};
+	GLuint fbo{0};
+	GLuint vao{0};
+	GLuint program{0};
+	GLuint mem{0};
+	double startTime{0};
 };
 
 OpenGLInterop::OpenGLInterop()
