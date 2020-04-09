@@ -57,7 +57,7 @@ In addition to this, your `VkImage` needs to adhere to the following flags:
 
 ## The AFBC Sample
 
-The sample presents the user with Sponza, with a graph displaying bandwidth at the top and a configuration window at the bottom.
+The sample presents the user with Sponza, with a graph displaying bandwidth at the top and a configuration window at the bottom. There is a back-and-forth oscillating camera to disable any GPU optimisations for frames that are identical.
 
 The configuration itself is simple. There is one checkbox (labelled "AFBC") that will reload the swapchain when its value is changed.
 

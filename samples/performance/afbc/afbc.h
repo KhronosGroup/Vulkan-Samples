@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
+#include "timer.h"
 #include "vulkan_sample.h"
 
 /**
@@ -45,6 +46,8 @@ class AFBCSample : public vkb::VulkanSample
 	bool afbc_enabled_last_value{false};
 
 	bool afbc_enabled{false};
+
+	std::chrono::system_clock::time_point start_time;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_afbc();
