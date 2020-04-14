@@ -101,6 +101,11 @@ void *PhysicalDevice::get_requested_extension_features() const
 	return last_requested_extension_feature;
 }
 
+void *&PhysicalDevice::get_mutable_requested_extension_features()
+{
+	return last_requested_extension_feature;
+}
+
 void PhysicalDevice::request_descriptor_indexing_features()
 {
 	// Request the relevant extension
