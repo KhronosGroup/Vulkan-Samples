@@ -63,6 +63,9 @@ class PhysicalDevice
 
 	void *get_requested_extension_features() const;
 
+	// Returns the pointer to the extension feature chain to be used for enabling extension features
+	void *&get_mutable_requested_extension_features();
+
 	void request_descriptor_indexing_features();
 
 	const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &get_descriptor_indexing_features() const;
