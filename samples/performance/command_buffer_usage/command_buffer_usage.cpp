@@ -27,7 +27,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 CommandBufferUsage::CommandBufferUsage()
 {
@@ -71,8 +71,11 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
+	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded
@@ -115,20 +118,24 @@ void CommandBufferUsage::update(float delta_time)
 
 	subpass_state.multi_threading = gui_multi_threading;
 
-	update_scene(delta_time);
+	auto &render_context = get_render_context();
 
-	update_stats(delta_time);
+	update_scene(delta_time);
 
 	update_gui(delta_time);
 
-	auto &render_context = get_render_context();
-
 	auto &primary_command_buffer = render_context.begin(subpass_state.command_buffer_reset_mode);
 
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
+
+	update_stats(delta_time, active_frame_idx);
+
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	stats->command_buffer_begun(primary_command_buffer, active_frame_idx);
 
 	draw(primary_command_buffer, render_context.get_active_frame().get_render_target());
 
+	stats->command_buffer_ending(primary_command_buffer, active_frame_idx);
 	primary_command_buffer.end();
 
 	render_context.submit(primary_command_buffer);

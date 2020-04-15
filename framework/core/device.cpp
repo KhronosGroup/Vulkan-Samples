@@ -68,11 +68,46 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 	bool can_get_memory_requirements = is_extension_supported("VK_KHR_get_memory_requirements2");
 	bool has_dedicated_allocation    = is_extension_supported("VK_KHR_dedicated_allocation");
 
+	// For performance queries, we also use host query reset since queryPool resets cannot
+	// live in the same command buffer as beginQuery
+	bool has_performance_query = is_extension_supported("VK_KHR_performance_query") &&
+	                             is_extension_supported("VK_EXT_host_query_reset");
+
 	if (can_get_memory_requirements && has_dedicated_allocation)
 	{
 		enabled_extensions.push_back("VK_KHR_get_memory_requirements2");
 		enabled_extensions.push_back("VK_KHR_dedicated_allocation");
+
 		LOGI("Dedicated Allocation enabled");
+	}
+
+	VkPhysicalDeviceHostQueryResetFeatures hqr_features{};
+	hqr_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
+
+	VkPhysicalDevicePerformanceQueryFeaturesKHR perf_features{};
+	perf_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR;
+	perf_features.pNext = &hqr_features;
+
+	if (has_performance_query)
+	{
+		// Must have VK_KHR_get_physical_device_properties2 as it's a prerequisite of perf query
+		VkPhysicalDeviceFeatures2KHR supported_features{};
+		supported_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+		supported_features.pNext = &perf_features;
+
+		// Check the feature support bits
+		vkGetPhysicalDeviceFeatures2KHR(gpu.get_handle(), &supported_features);
+
+		if (perf_features.performanceCounterQueryPools && hqr_features.hostQueryReset)
+		{
+			enabled_extensions.push_back("VK_KHR_performance_query");
+			enabled_extensions.push_back("VK_EXT_host_query_reset");
+			LOGI("Performance query enabled");
+		}
+		else
+		{
+			has_performance_query = false;
+		}
 	}
 
 	// Check that extensions are supported before trying to create the device
@@ -123,15 +158,33 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
-	// Latest requested feature will have the pNext's all set up for device creation.
-	create_info.pNext = gpu.get_requested_extension_features();
-
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
-	const auto requested_gpu_features   = gpu.get_requested_features();
-	create_info.pEnabledFeatures        = &requested_gpu_features;
 	create_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
+
+	const auto requested_gpu_features = gpu.get_requested_features();
+
+	if (has_performance_query)
+	{
+		// Ensure we turn on the feature bits we want
+		VkPhysicalDeviceFeatures2KHR requested_features{};
+		requested_features.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
+		requested_features.features = requested_gpu_features;
+		requested_features.pNext    = &perf_features;
+
+		// The pNext chain will be perf_features -> hqr_features -> gpu.get_requested_extension_features()
+		hqr_features.pNext = gpu.get_requested_extension_features();
+
+		create_info.pNext            = &requested_features;
+		create_info.pEnabledFeatures = nullptr;
+	}
+	else
+	{
+		// Latest requested feature will have the pNext's all set up for device creation.
+		create_info.pNext            = gpu.get_requested_extension_features();
+		create_info.pEnabledFeatures = &requested_gpu_features;
+	}
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
 

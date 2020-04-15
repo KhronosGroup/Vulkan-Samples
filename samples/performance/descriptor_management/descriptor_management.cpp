@@ -23,7 +23,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 DescriptorManagement::DescriptorManagement()
 {
@@ -57,9 +57,12 @@ bool DescriptorManagement::prepare(vkb::Platform &platform)
 	render_pipeline.add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));
 
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
 	// Add a GUI with the stats you want to monitor
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
+	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }
@@ -68,13 +71,15 @@ void DescriptorManagement::update(float delta_time)
 {
 	update_scene(delta_time);
 
-	update_stats(delta_time);
-
 	update_gui(delta_time);
 
 	auto &render_context = get_render_context();
 
 	auto &command_buffer = render_context.begin();
+
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
+
+	update_stats(delta_time, active_frame_idx);
 
 	// Process GUI input
 	auto buffer_alloc_strategy = (buffer_allocation.value == 0) ?
@@ -90,9 +95,11 @@ void DescriptorManagement::update(float delta_time)
 	}
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	stats->command_buffer_begun(command_buffer, active_frame_idx);
 
 	draw(command_buffer, render_context.get_active_frame().get_render_target());
 
+	stats->command_buffer_ending(command_buffer, active_frame_idx);
 	command_buffer.end();
 
 	render_context.submit(command_buffer);

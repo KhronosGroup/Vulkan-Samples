@@ -33,6 +33,6 @@
 #include "resource_replay.h"
 #include "semaphore_pool.h"
 #include "spirv_reflection.h"
-#include "stats.h"
+#include "stats/stats.h"
 #include "timer.h"
 #include "vulkan_sample.h"

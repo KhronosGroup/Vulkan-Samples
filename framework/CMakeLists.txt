@@ -22,7 +22,6 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
-    stats.h
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
@@ -41,7 +40,6 @@ set(FRAMEWORK_FILES
     camera.h
     # Source Files
     gui.cpp
-    stats.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp
@@ -164,6 +162,22 @@ set(SCENE_GRAPH_SCRIPTS_FILES
     scene_graph/scripts/free_camera.cpp
     scene_graph/scripts/node_animation.cpp)
 
+set(STATS_FILES
+    # Header Files
+    stats/stats.h
+    stats/stats_common.h
+    stats/stats_provider.h
+    stats/frame_time_stats_provider.h
+    stats/hwcpipe_stats_provider.h
+    stats/vulkan_stats_provider.h
+
+    # Source Files
+    stats/stats.cpp
+    stats/stats_provider.cpp
+    stats/frame_time_stats_provider.cpp
+    stats/hwcpipe_stats_provider.cpp
+    stats/vulkan_stats_provider.cpp)
+
 set(CORE_FILES
     # Header Files
     core/instance.h
@@ -186,6 +200,7 @@ set(CORE_FILES
     core/sampler.h
     core/framebuffer.h
     core/render_pass.h
+    core/query_pool.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
@@ -207,7 +222,8 @@ set(CORE_FILES
     core/instance.cpp
     core/sampler.cpp
     core/framebuffer.cpp
-    core/render_pass.cpp)
+    core/render_pass.cpp
+    core/query_pool.cpp)
 
 set(PLATFORM_FILES
     # Header Files
@@ -292,6 +308,7 @@ source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
+source_group("stats\\" FILES ${STATS_FILES})
 source_group("graphing\\" FILES ${GRAPHING_FILES})
 
 set(PROJECT_FILES
@@ -305,6 +322,7 @@ set(PROJECT_FILES
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES}
+    ${STATS_FILES}
     ${GRAPHING_FILES})
 
 # Add files based on platform

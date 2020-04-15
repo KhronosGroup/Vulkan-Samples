@@ -148,11 +148,11 @@ void VulkanSample::update_scene(float delta_time)
 	}
 }
 
-void VulkanSample::update_stats(float delta_time)
+void VulkanSample::update_stats(float delta_time, uint32_t active_frame_idx)
 {
 	if (stats)
 	{
-		stats->update(delta_time);
+		stats->update(delta_time, active_frame_idx);
 
 		static float stats_view_count = 0.0f;
 		stats_view_count += delta_time;
@@ -190,16 +190,19 @@ void VulkanSample::update(float delta_time)
 {
 	update_scene(delta_time);
 
-	update_stats(delta_time);
-
 	update_gui(delta_time);
 
 	auto &command_buffer = render_context->begin();
 
+	uint32_t active_frame_idx = render_context->get_active_frame_index();
+	update_stats(delta_time, active_frame_idx);
+
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	stats->command_buffer_begun(command_buffer, active_frame_idx);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
+	stats->command_buffer_ending(command_buffer, active_frame_idx);
 	command_buffer.end();
 
 	render_context->submit(command_buffer);
@@ -464,4 +467,5 @@ sg::Scene &VulkanSample::get_scene()
 	assert(scene && "Scene not loaded");
 	return *scene;
 }
+
 }        // namespace vkb

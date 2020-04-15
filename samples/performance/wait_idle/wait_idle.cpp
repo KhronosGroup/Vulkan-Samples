@@ -23,7 +23,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -63,9 +63,12 @@ bool WaitIdle::prepare(vkb::Platform &platform)
 	render_pipeline.add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));
 
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
 	// Add a GUI with the stats you want to monitor
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
+	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

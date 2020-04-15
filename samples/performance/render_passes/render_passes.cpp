@@ -23,7 +23,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -46,12 +46,12 @@ void RenderPassesSample::reset_stats_view()
 {
 	if (load.value == VK_ATTACHMENT_LOAD_OP_LOAD)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_read_bytes);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_read_bytes);
 	}
 
 	if (store.value == VK_ATTACHMENT_STORE_OP_STORE)
 	{
-		gui->get_stats_view().reset_max_value(vkb::StatIndex::l2_ext_write_bytes);
+		gui->get_stats_view().reset_max_value(vkb::StatIndex::gpu_ext_write_bytes);
 	}
 }
 
@@ -109,11 +109,13 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	auto enabled_stats = {vkb::StatIndex::fragment_cycles,
-	                      vkb::StatIndex::l2_ext_read_bytes,
-	                      vkb::StatIndex::l2_ext_write_bytes};
+	auto enabled_stats = {vkb::StatIndex::gpu_fragment_cycles,
+	                      vkb::StatIndex::gpu_ext_read_bytes,
+	                      vkb::StatIndex::gpu_ext_write_bytes};
 
-	stats = std::make_unique<vkb::Stats>(enabled_stats);
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers, enabled_stats);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -129,7 +131,7 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

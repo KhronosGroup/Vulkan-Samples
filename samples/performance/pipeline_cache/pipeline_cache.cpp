@@ -26,7 +26,7 @@
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/node.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 PipelineCache::PipelineCache()
 {
@@ -104,14 +104,17 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	// Build all pipelines from a previous run
 	resource_cache.warmup(data_cache);
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
+	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
 
 	float dpi_factor = platform.get_window().get_dpi_factor();
 
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

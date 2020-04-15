@@ -24,7 +24,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 SpecializationConstants::SpecializationConstants()
 {
@@ -55,9 +55,12 @@ bool SpecializationConstants::prepare(vkb::Platform &platform)
 	specialization_constants_pipeline = create_specialization_renderpass();
 	standard_pipeline                 = create_standard_renderpass();
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::fragment_cycles});
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
+	                                     std::set<vkb::StatIndex>{vkb::StatIndex::gpu_fragment_cycles});
+
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

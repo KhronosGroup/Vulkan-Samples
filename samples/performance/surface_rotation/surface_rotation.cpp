@@ -34,7 +34,7 @@ VKBP_ENABLE_WARNINGS()
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/pbr_material.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 SurfaceRotation::SurfaceRotation()
 {
@@ -56,9 +56,11 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 		throw std::runtime_error("Requires a surface to run sample");
 	}
 
-	auto enabled_stats = {vkb::StatIndex::l2_ext_read_stalls, vkb::StatIndex::l2_ext_write_stalls};
+	auto enabled_stats = {vkb::StatIndex::gpu_ext_read_stalls, vkb::StatIndex::gpu_ext_write_stalls};
 
-	stats = std::make_unique<vkb::Stats>(enabled_stats);
+	size_t num_framebuffers = get_render_context().get_render_frames().size();
+
+	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers, enabled_stats);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
@@ -74,7 +76,7 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }
@@ -122,11 +124,11 @@ void SurfaceRotation::update(float delta_time)
 
 void SurfaceRotation::draw_gui()
 {
-	auto              extent          = get_render_context().get_swapchain().get_extent();
-	std::string       rotation_by_str = pre_rotate ? "application" : "compositor";
-	auto              prerotate_str   = "Pre-rotate (" + rotation_by_str + " rotates)";
-	auto              transform       = vkb::to_string(get_render_context().get_swapchain().get_transform());
-	auto              resolution_str  = "Res: " + std::to_string(extent.width) + "x" + std::to_string(extent.height);
+	auto        extent          = get_render_context().get_swapchain().get_extent();
+	std::string rotation_by_str = pre_rotate ? "application" : "compositor";
+	auto        prerotate_str   = "Pre-rotate (" + rotation_by_str + " rotates)";
+	auto        transform       = vkb::to_string(get_render_context().get_swapchain().get_transform());
+	auto        resolution_str  = "Res: " + std::to_string(extent.width) + "x" + std::to_string(extent.height);
 
 	// If pre-rotate is enabled, the aspect ratio will not change, therefore need to check if the
 	// scene has been rotated using the swapchain preTransform attribute

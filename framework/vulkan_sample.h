@@ -28,7 +28,7 @@
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 namespace vkb
 {
@@ -184,7 +184,7 @@ class VulkanSample : public Application
 	 * @brief Update counter values
 	 * @param delta_time
 	 */
-	void update_stats(float delta_time);
+	void update_stats(float delta_time, uint32_t active_frame_idx);
 
 	/**
 	 * @brief Update GUI

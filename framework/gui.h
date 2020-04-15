@@ -32,7 +32,7 @@
 #include "platform/filesystem.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 namespace vkb
 {
@@ -187,31 +187,10 @@ class Gui
 	{
 	  public:
 		/**
-		 * @brief Per-statistic graph data
+		 * @brief Constructs a StatsView
+    	 * @param stats Const pointer to the Stats data object; may be null
 		 */
-		class GraphData
-		{
-		  public:
-			/**
-			 * @brief Constructs data for the graph
-			 * @param name Name of the Stat
-			 * @param format Format of the label
-			 * @param scale_factor Any scaling to apply to the data
-			 * @param has_fixed_max Whether the data should have a fixed max value
-			 * @param max_value The maximum value to use
-			 */
-			GraphData(const std::string &name,
-			          const std::string &format,
-			          float              scale_factor  = 1.0f,
-			          bool               has_fixed_max = false,
-			          float              max_value     = 0.0f);
-
-			std::string name;
-			std::string format;
-			float       scale_factor;
-			bool        has_fixed_max;
-			float       max_value;
-		};
+		StatsView(const Stats *stats);
 
 		/**
 		 * @brief Resets the max values for the stats
@@ -225,83 +204,7 @@ class Gui
 		void reset_max_value(const StatIndex index);
 
 		/// Per-statistic max values
-		std::map<StatIndex, GraphData>
-		    graph_map{
-		        {StatIndex::frame_times,
-		         {/* name = */ "Frame Times",
-		          /* format = */ "{:3.1f} ms",
-		          /* scale_factor = */ 1000.0f}},
-		        {StatIndex::cpu_cycles,
-		         {/* name = */ "CPU Cycles",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::cpu_instructions,
-		         {/* name = */ "CPU Instructions",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::cache_miss_ratio,
-		         {/* name = */ "Cache Miss Ratio",
-		          /* format = */ "{:3.1f}%",
-		          /* scale_factor = */ 100.0f,
-		          /* has_fixed_max = */ true,
-		          /* max_value = */ 100.0f}},
-		        {StatIndex::branch_miss_ratio,
-		         {/* name = */ "Branch Miss Ratio",
-		          /* format = */ "{:3.1f}%",
-		          /* scale_factor = */ 100.0f,
-		          /* has_fixed_max = */ true,
-		          /* max_value = */ 100.0f}},
-		        {StatIndex::gpu_cycles,
-		         {/* name = */ "GPU Cycles",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::vertex_compute_cycles,
-		         {/* name = */ "Vertex Compute Cycles",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::tiles,
-		         {/* name = */ "Tiles",
-		          /* format = */ "{:4.1f} k/s",
-		          /* scale_factor = */ float(1e-3)}},
-		        {StatIndex::killed_tiles,
-		         {/* name = */ "Tiles killed by CRC match",
-		          /* format = */ "{:4.1f} k/s",
-		          /* scale_factor = */ float(1e-3)}},
-		        {StatIndex::fragment_cycles,
-		         {/* name = */ "Fragment Cycles",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::fragment_jobs,
-		         {/* name = */ "Fragment Jobs",
-		          /* format = */ "{:4.0f}/s"}},
-		        {StatIndex::tex_cycles,
-		         {/* name = */ "Shader Texture Cycles",
-		          /* format = */ "{:4.0f} k/s",
-		          /* scale_factor = */ float(1e-3)}},
-		        {StatIndex::l2_ext_reads,
-		         {/* name = */ "External Reads",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::l2_ext_writes,
-		         {/* name = */ "External Writes",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::l2_ext_read_stalls,
-		         {/* name = */ "External Read Stalls",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::l2_ext_write_stalls,
-		         {/* name = */ "External Write Stalls",
-		          /* format = */ "{:4.1f} M/s",
-		          /* scale_factor = */ float(1e-6)}},
-		        {StatIndex::l2_ext_read_bytes,
-		         {/* name = */ "External Read Bytes",
-		          /* format = */ "{:4.1f} MiB/s",
-		          /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
-		        {StatIndex::l2_ext_write_bytes,
-		         {/* name = */ "External Write Bytes",
-		          /* format = */ "{:4.1f} MiB/s",
-		          /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
+		std::map<StatIndex, StatGraphData> graph_map;
 
 		float graph_height{50.0f};
 
@@ -339,7 +242,8 @@ class Gui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(VulkanSample &sample, const Window &window, const float font_size = 21.0f, bool explicit_update = false);
+	Gui(VulkanSample &sample, const Window &window, const Stats *stats = nullptr,
+	    const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
