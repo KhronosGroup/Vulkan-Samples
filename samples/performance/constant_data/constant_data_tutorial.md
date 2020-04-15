@@ -44,7 +44,7 @@ This sample aims to break this question down by highlighting the different metho
 
 ### **Introduction**
 
-Constant data is a form of information that is supplied to our graphics pipeline to help with shader computations. 
+Constant data is a form of information that is supplied to the graphics pipeline to help with shader computations.
 
 In theory, this data can be anything we want it to be, for instance it can be used for things such as calculating where an object should be placed inside our world, or computing the overall brightness of an object based on the lights in the scene.
 
@@ -56,7 +56,7 @@ The next section aims to cover the constant data theory, starting at the shader 
 
 ### **Constant data in Vulkan shaders**
 
-Constant data is implemented in our shader code by using global variables.
+Constant data is implemented in shader code by using global variables.
 
 **Global variables** have the following format:
 `<layout> <storage> <type> <variable_name>`.  
@@ -121,7 +121,7 @@ We've covered how constant data is implemented in the shader, however to push th
 
 We do this with the use of `VkBuffer`s, which is Vulkan's implementation of buffer memory.
 
-Buffers in Vulkan are just chunks of memory used for storing data, which can be read by the graphics card. 
+Buffers in Vulkan are just chunks of memory used for storing data, which can be read by the GPU.
 
 They need to be created and have their memory *manually* allocated, and then we can copy our constant data into the allocated memory. This data can then be plugged into the draw calls, so that it can finally be used in our shader computations. 
 
@@ -155,7 +155,7 @@ When we break this down, we have the following methods:
 
 ### **Introduction**
 
-The sample uses a mesh heavy scene which has 1856 meshes with 475 KB of mesh data. This is to demonstrate a use case where many different calls to pushing uniform data will occur during a single frame. The constant data that is being sent is the per-mesh model matrix, the camera view projection matrix, and if 256 bytes of push constants are available it will push a scale matrix and some extra padding.
+The sample uses a mesh heavy scene which has 1856 meshes with 475 KB of mesh data. This is to demonstrate a use case where many different calls to pushing uniform data will occur during a single frame. The constant data that is being sent is the per-mesh model matrix, the camera view projection matrix, a scale matrix and some extra padding. If the GPU doesn't support 256 bytes of push constants, it will instead push 128 bytes (it won't include the scale matrix and the extra padding).
 
 A performance graph is displayed at the top with two charts, one showing frame time, and one showing the load/store cycles.
 
@@ -264,7 +264,7 @@ When we compare the frametime with [push constants](#push-constants) we can see 
 
 ### **Introduction**
 
-Dynamic descriptor sets differ to the regular descriptor sets because they allow an offset to be specified when we aere *binding* (`vkCmdBindDescriptorSets`) the descriptor set. This dynamic offset can be used in addition to the base offset used at the time of updating the descriptor set. 
+Dynamic descriptor sets differ to the regular descriptor sets because they allow an offset to be specified when we are *binding* (`vkCmdBindDescriptorSets`) the descriptor set. This dynamic offset can be used in addition to the base offset used at the time of updating the descriptor set.
 
 One case in which this can be useful is:
 
