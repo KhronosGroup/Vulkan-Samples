@@ -64,7 +64,7 @@ class RenderFrame
 	// A map of the supported usages to a multiplier for the BUFFER_POOL_BLOCK_SIZE
 	const std::unordered_map<VkBufferUsageFlags, uint32_t> supported_usage_map = {
 	    {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, 1},
-	    {VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 2},        // x2 the size of BUFFER_POOL_BLOCK_SIZE since SSAOs are normally much larger than other types of buffers
+	    {VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, 2},        // x2 the size of BUFFER_POOL_BLOCK_SIZE since SSBOs are normally much larger than other types of buffers
 	    {VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, 1},
 	    {VK_BUFFER_USAGE_INDEX_BUFFER_BIT, 1}};
 
