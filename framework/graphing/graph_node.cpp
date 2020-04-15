@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,19 +14,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#include "node.h"
+#include "graphing/graph_node.h"
 
 namespace vkb
 {
-namespace utils
+namespace graphing
 {
-Node::Node(size_t id, const char *type, const char *group, nlohmann::json data)
+Node::Node(size_t id, const char *title, const char *style, const nlohmann::json &data)
 {
 	attributes["id"]    = id;
-	attributes["type"]  = type;
+	attributes["label"] = title;
 	attributes["data"]  = data;
-	attributes["group"] = group;
+	attributes["style"] = style;
 }
-}        // namespace utils
+}        // namespace graphing
 }        // namespace vkb

@@ -203,6 +203,8 @@ class CommandBuffer
 
 	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
 
+	void resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions);
+
 	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size);
 
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
@@ -214,6 +216,8 @@ class CommandBuffer
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
 	const State get_state() const;
+
+	void set_update_after_bind(bool update_after_bind_);
 
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to
@@ -239,6 +243,10 @@ class CommandBuffer
 	VkExtent2D last_framebuffer_extent{};
 
 	VkExtent2D last_render_area_extent{};
+
+	// If true, it becomes the responsibility of the caller to update ANY descriptor bindings
+	// that contain update after bind, as they wont be implicitly updated
+	bool update_after_bind{false};
 
 	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layout_binding_state;
 

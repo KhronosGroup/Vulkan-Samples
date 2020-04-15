@@ -110,6 +110,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	color_blend_attachment.blend_enable           = VK_TRUE;
 	color_blend_attachment.src_color_blend_factor = VK_BLEND_FACTOR_SRC_ALPHA;
 	color_blend_attachment.dst_color_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+	color_blend_attachment.src_alpha_blend_factor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
 
 	ColorBlendState color_blend_state{};
 	color_blend_state.attachments.resize(get_output_attachments().size());
@@ -131,7 +132,7 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 {
 	GlobalUniform global_uniform;
 
-	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+	global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 
 	auto &render_frame = get_render_context().get_active_frame();
 
@@ -161,6 +162,10 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 	}
 
 	command_buffer.set_rasterization_state(rasterization_state);
+
+	MultisampleState multisample_state{};
+	multisample_state.rasterization_samples = sample_count;
+	command_buffer.set_multisample_state(multisample_state);
 
 	auto &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), sub_mesh.get_shader_variant());
 	auto &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), sub_mesh.get_shader_variant());

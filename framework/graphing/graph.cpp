@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,16 +21,53 @@
 
 namespace vkb
 {
-namespace utils
+namespace graphing
 {
 Graph::Graph(const char *new_name) :
     name(new_name)
 {
 }
 
+void Graph::new_style(std::string style_name, std::string color)
+{
+	auto it = style_colors.find(style_name);
+	if (it != style_colors.end())
+	{
+		it->second = color;
+	}
+	else
+	{
+		style_colors.insert({style_name, color});
+	}
+}
+
 size_t Graph::new_id()
 {
 	return next_id++;
+}
+
+size_t Graph::find_ref(std::string &name)
+{
+	auto it = refs.find(name);
+	if (it == refs.end())
+	{
+		return node_not_found;
+	}
+	return it->second;
+}
+
+void Graph::add_ref(std::string &name, size_t id)
+{
+	refs.insert({name, id});
+}
+
+void Graph::remove_ref(std::string &name)
+{
+	auto it = refs.find(name);
+	if (it != refs.end())
+	{
+		refs.erase(it);
+	}
 }
 
 void Graph::add_edge(size_t from, size_t to)
@@ -51,42 +88,6 @@ void Graph::remove_edge(size_t from, size_t to)
 	}
 }
 
-size_t Graph::create_vk_image(const VkImage &image)
-{
-	const void *addr = reinterpret_cast<const void *>(image);
-	const void *uid  = get_uid(addr);
-	if (!uid)
-	{
-		auto id    = create_vk_node("VkImage", image);
-		uids[addr] = id;
-		return id;
-	}
-	return reinterpret_cast<size_t>(uid);
-}
-
-size_t Graph::create_vk_image_view(const VkImageView &image)
-{
-	const void *addr = reinterpret_cast<const void *>(image);
-	const void *uid  = get_uid(addr);
-	if (!uid)
-	{
-		auto id    = create_vk_node("VkImageView", image);
-		uids[addr] = id;
-		return id;
-	}
-	return reinterpret_cast<size_t>(uid);
-}
-
-const void *Graph::get_uid(const void *addr)
-{
-	auto it = uids.find(addr);
-	if (it != uids.end())
-	{
-		return reinterpret_cast<const void *>(it->second);
-	}
-	return nullptr;
-}
-
 bool Graph::dump_to_file(std::string file)
 {
 	std::vector<nlohmann::json> edges;
@@ -95,7 +96,7 @@ bool Graph::dump_to_file(std::string file)
 		auto it = nodes.find(e.from);
 		if (it != nodes.end())
 		{
-			e.options["group"] = it->second->attributes["group"];
+			e.options["style"] = it->second->attributes["style"];
 		}
 		e.options["id"]     = e.id;
 		e.options["source"] = e.from;
@@ -114,10 +115,11 @@ bool Graph::dump_to_file(std::string file)
 	nlohmann::json j = {
 	    {"name", name},
 	    {"nodes", node_json},
-	    {"edges", edges}};
+	    {"edges", edges},
+	    {"styles", style_colors}};
 
 	return fs::write_json(j, file);
-}
+}        // namespace graphing
 
-}        // namespace utils
+}        // namespace graphing
 }        // namespace vkb

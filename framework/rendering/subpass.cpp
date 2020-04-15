@@ -90,6 +90,51 @@ void Subpass::set_output_attachments(std::vector<uint32_t> output)
 	output_attachments = output;
 }
 
+const std::vector<uint32_t> &Subpass::get_color_resolve_attachments() const
+{
+	return color_resolve_attachments;
+}
+
+void Subpass::set_color_resolve_attachments(std::vector<uint32_t> color_resolve)
+{
+	color_resolve_attachments = color_resolve;
+}
+
+const bool &Subpass::get_disable_depth_stencil_attachment() const
+{
+	return disable_depth_stencil_attachment;
+}
+
+void Subpass::set_disable_depth_stencil_attachment(bool disable_depth_stencil)
+{
+	disable_depth_stencil_attachment = disable_depth_stencil;
+}
+
+const uint32_t &Subpass::get_depth_stencil_resolve_attachment() const
+{
+	return depth_stencil_resolve_attachment;
+}
+
+void Subpass::set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve)
+{
+	depth_stencil_resolve_attachment = depth_stencil_resolve;
+}
+
+const VkResolveModeFlagBits Subpass::get_depth_stencil_resolve_mode() const
+{
+	return depth_stencil_resolve_mode;
+}
+
+void Subpass::set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode)
+{
+	depth_stencil_resolve_mode = mode;
+}
+
+void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
+{
+	this->sample_count = sample_count;
+}
+
 void Subpass::clear_dynamic_resources()
 {
 	dynamic_resources.clear();

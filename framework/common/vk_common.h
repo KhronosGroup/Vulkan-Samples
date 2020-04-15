@@ -57,11 +57,13 @@ bool is_depth_stencil_format(VkFormat format);
 /**
  * @brief Helper function to determine a suitable supported depth format based on a priority list
  * @param physical_device The physical device to check the depth formats against
- * @param depth_format_priority_list The list of depth formats to prefer over one another
+ * @param depth_only (Optional) Wether to include the stencil component in the format or not
+ * @param depth_format_priority_list (Optional) The list of depth formats to prefer over one another
  *		  By default we start with the highest precision packed format
  * @return The valid suited depth format
  */
 VkFormat get_suitable_depth_format(VkPhysicalDevice             physical_device,
+                                   bool                         depth_only                 = false,
                                    const std::vector<VkFormat> &depth_format_priority_list = {
                                        VK_FORMAT_D32_SFLOAT,
                                        VK_FORMAT_D24_UNORM_S8_UINT,
@@ -87,69 +89,6 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  * @return The bits per pixel of the given format, -1 for invalid formats.
  */
 int32_t get_bits_per_pixel(VkFormat format);
-
-/**
- * @brief Helper function to convert a VkFormat enum to a string
- * @param format Vulkan format to convert.
- * @return The string to return.
- */
-const std::string to_string(VkFormat format);
-
-/**
- * @brief Helper function to convert a VkPresentModeKHR to a string
- * @param present_mode Vulkan present mode to convert.
- * @return The string to return.
- */
-const std::string to_string(VkPresentModeKHR present_mode);
-
-/**
- * @brief Helper function to convert a VkResult enum to a string
- * @param format Vulkan result to convert.
- * @return The string to return.
- */
-const std::string to_string(VkResult result);
-
-/**
- * @brief Helper function to convert a VkPhysicalDeviceType enum to a string
- * @param format Vulkan physical device type to convert.
- * @return The string to return.
- */
-const std::string to_string(VkPhysicalDeviceType type);
-
-/**
- * @brief Helper function to convert a VkSurfaceTransformFlagBitsKHR flag to a string
- * @param transform_flag Vulkan surface transform flag bit to convert.
- * @return The string to return.
- */
-const std::string to_string(VkSurfaceTransformFlagBitsKHR transform_flag);
-
-/**
- * @brief Helper function to convert a VkSurfaceFormatKHR format to a string
- * @param surface_format Vulkan surface format to convert.
- * @return The string to return.
- */
-const std::string to_string(VkSurfaceFormatKHR surface_format);
-
-/**
- * @brief Helper function to convert a VkCompositeAlphaFlagBitsKHR flag to a string
- * @param composite_alpha Vulkan composite alpha flag bit to convert.
- * @return The string to return.
- */
-const std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha);
-
-/**
- * @brief Helper function to convert a VkImageUsageFlagBits flag to a string
- * @param image_usage Vulkan image usage flag bit to convert.
- * @return The string to return.
- */
-const std::string to_string(VkImageUsageFlagBits image_usage);
-
-/**
- * @brief Helper function to convert a VkExtent2D flag to a string
- * @param extent Vulkan extent to convert.
- * @return The string to return.
- */
-const std::string to_string(VkExtent2D extent);
 
 /**
  * @brief Helper function to create a VkShaderModule

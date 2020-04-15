@@ -175,6 +175,15 @@ DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descript
 	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
+void RenderFrame::update_descriptor_sets(size_t thread_index)
+{
+	auto &thread_descriptor_sets = *descriptor_sets.at(thread_index);
+	for (auto &descriptor_set_it : thread_descriptor_sets)
+	{
+		descriptor_set_it.second.update();
+	}
+}
+
 void RenderFrame::clear_descriptors()
 {
 	for (auto &desc_sets_per_thread : descriptor_sets)

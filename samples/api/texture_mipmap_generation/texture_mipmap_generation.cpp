@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,13 +45,13 @@ TextureMipMapGeneration::~TextureMipMapGeneration()
 }
 
 // Enable physical device features required for this example
-void TextureMipMapGeneration::get_device_features()
+void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
-	};
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+	}
 }
 
 /*
@@ -81,7 +81,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	// Check if the selected format supports blit source and destination, which is required for generating the mip levels
 	// If this is not supported you could implement a fallback via compute shader image writes and stores
 	VkFormatProperties formatProperties;
-	vkGetPhysicalDeviceFormatProperties(get_device().get_physical_device(), format, &formatProperties);
+	vkGetPhysicalDeviceFormatProperties(get_device().get_gpu().get_handle(), format, &formatProperties);
 	if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) || !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT))
 	{
 		throw std::runtime_error("Selected image format does not support blit source and destination");
@@ -284,9 +284,9 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler, nullptr, &samplers[1]));
 
 	// With mip mapping and anisotropic filtering (when supported)
-	if (device->get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
-		sampler.maxAnisotropy    = device->get_properties().limits.maxSamplerAnisotropy;
+		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = VK_TRUE;
 	}
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler, nullptr, &samplers[2]));

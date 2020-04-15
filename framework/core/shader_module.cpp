@@ -112,19 +112,26 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 	return spirv;
 }
 
-void ShaderModule::set_resource_dynamic(const std::string &resource_name)
+void ShaderModule::set_resource_mode(const ShaderResourceMode &mode, const std::string &resource_name)
 {
 	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{
-		if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
+		if (mode == ShaderResourceMode::Dynamic)
 		{
-			it->dynamic = true;
+			if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
+			{
+				it->mode = mode;
+			}
+			else
+			{
+				LOGW("Resource `{}` does not support dynamic.", resource_name);
+			}
 		}
 		else
 		{
-			LOGW("Resource `{}` does not support dynamic.", resource_name);
+			it->mode = mode;
 		}
 	}
 	else

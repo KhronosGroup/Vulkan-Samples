@@ -38,6 +38,8 @@ struct Attachment
 
 	VkImageUsageFlags usage{VK_IMAGE_USAGE_SAMPLED_BIT};
 
+	VkImageLayout initial_layout{VK_IMAGE_LAYOUT_UNDEFINED};
+
 	Attachment() = default;
 
 	Attachment(VkFormat format, VkSampleCountFlagBits samples, VkImageUsageFlags usage);
@@ -92,6 +94,8 @@ class RenderTarget
 	void set_output_attachments(std::vector<uint32_t> &output);
 
 	const std::vector<uint32_t> &get_output_attachments() const;
+
+	void set_layout(uint32_t attachment, VkImageLayout layout);
 
   private:
 	Device &device;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -330,12 +330,12 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	surface_format_priority_list = old_swapchain.surface_format_priority_list;
 
 	VkSurfaceCapabilitiesKHR surface_capabilities{};
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_physical_device(), surface, &surface_capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_gpu().get_handle(), surface, &surface_capabilities);
 
 	uint32_t surface_format_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_physical_device(), surface, &surface_format_count, nullptr));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, nullptr));
 	surface_formats.resize(surface_format_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_physical_device(), surface, &surface_format_count, surface_formats.data()));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, surface_formats.data()));
 
 	LOGI("Surface supports the following surface formats:");
 	for (auto &surface_format : surface_formats)
@@ -344,9 +344,9 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	}
 
 	uint32_t present_mode_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_physical_device(), surface, &present_mode_count, nullptr));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, nullptr));
 	present_modes.resize(present_mode_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_physical_device(), surface, &present_mode_count, present_modes.data()));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, present_modes.data()));
 
 	LOGI("Surface supports the following present modes:");
 	for (auto &present_mode : present_modes)
@@ -360,7 +360,7 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	properties.array_layers   = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
 	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
 	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(this->device.get_physical_device(), properties.surface_format.format, &format_properties);
+	vkGetPhysicalDeviceFormatProperties(this->device.get_gpu().get_handle(), properties.surface_format.format, &format_properties);
 	this->image_usage_flags    = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
 	properties.image_usage     = composite_image_flags(this->image_usage_flags);
 	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);

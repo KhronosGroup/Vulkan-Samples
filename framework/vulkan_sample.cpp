@@ -27,13 +27,15 @@ VKBP_ENABLE_WARNINGS()
 #include "api_vulkan_sample.h"
 #include "common/helpers.h"
 #include "common/logging.h"
+#include "common/strings.h"
+#include "common/utils.h"
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "platform/platform.h"
 #include "platform/window.h"
 #include "scene_graph/components/camera.h"
-#include "utils/graphs.h"
-#include "utils/strings.h"
+#include "scene_graph/script.h"
+#include "scene_graph/scripts/free_camera.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -84,27 +86,30 @@ bool VulkanSample::prepare(Platform &platform)
 	LOGI("Initializing Vulkan sample");
 
 	// Creating the vulkan instance
-	std::vector<const char *> requested_instance_extensions = get_instance_extensions();
-	requested_instance_extensions.push_back(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), requested_instance_extensions, get_validation_layers(), is_headless());
+	add_instance_extension(platform.get_surface_extension());
+	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless());
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 
-	auto physical_device = instance->get_gpu();
+	auto &gpu = instance->get_suitable_gpu();
 
-	// Get supported features from the physical device, and requested features from the sample
-	vkGetPhysicalDeviceFeatures(physical_device, &supported_device_features);
-	get_device_features();
-
-	// Creating vulkan device, specifying the swapchain extension always
-	std::vector<const char *> requested_device_extensions = get_device_extensions();
-	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	// Request to enable ASTC
+	if (gpu.get_features().textureCompressionASTC_LDR)
 	{
-		requested_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+		gpu.get_mutable_requested_features().textureCompressionASTC_LDR = VK_TRUE;
 	}
 
-	device = std::make_unique<vkb::Device>(physical_device, surface, requested_device_extensions, requested_device_features);
+	// Request sample required GPU features
+	request_gpu_features(gpu);
+
+	// Creating vulkan device, specifying the swapchain extension always
+	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	{
+		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	}
+
+	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
 
 	// Preparing render context for rendering
 	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
@@ -341,7 +346,10 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
 		{
-			utils::debug_graphs(get_render_context(), *scene.get());
+			if (!graphs::generate_all(get_render_context(), *scene.get()))
+			{
+				LOGE("Failed to save Graphs");
+			}
 		}
 	}
 }
@@ -426,19 +434,29 @@ const std::vector<const char *> VulkanSample::get_validation_layers()
 	return {};
 }
 
-std::vector<const char *> const VulkanSample::get_instance_extensions()
+const std::unordered_map<const char *, bool> VulkanSample::get_instance_extensions()
 {
-	return {};
+	return instance_extensions;
 }
 
-std::vector<const char *> const VulkanSample::get_device_extensions()
+const std::unordered_map<const char *, bool> VulkanSample::get_device_extensions()
 {
-	return {};
+	return device_extensions;
 }
 
-void VulkanSample::get_device_features()
+void VulkanSample::add_device_extension(const char *extension, bool optional)
 {
-	// Can be overriden in derived class
+	device_extensions[extension] = optional;
+}
+
+void VulkanSample::add_instance_extension(const char *extension, bool optional)
+{
+	instance_extensions[extension] = optional;
+}
+
+void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
+{
+	// To be overriden by sample
 }
 
 sg::Scene &VulkanSample::get_scene()

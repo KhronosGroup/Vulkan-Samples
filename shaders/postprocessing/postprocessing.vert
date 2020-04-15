@@ -1,4 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+#version 320 es
+/* Copyright (c) 2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,28 +16,10 @@
  * limitations under the License.
  */
 
-#pragma once
+layout (location = 0) out vec2 outUV;
 
-#include <json.hpp>
-
-namespace vkb
+void main()
 {
-namespace utils
-{
-class Node
-{
-  public:
-	Node(){};
-
-	Node(size_t id, const char *type, const char *group, nlohmann::json data);
-
-	template <typename T>
-	static std::uintptr_t handle_to_uintptr_t(T handle)
-	{
-		return reinterpret_cast<std::uintptr_t>(reinterpret_cast<void *>(handle));
-	}
-
-	nlohmann::json attributes;
-};
-}        // namespace utils
-}        // namespace vkb
+	outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+	gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+}

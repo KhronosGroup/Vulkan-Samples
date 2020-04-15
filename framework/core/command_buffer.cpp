@@ -56,7 +56,8 @@ CommandBuffer::CommandBuffer(CommandBuffer &&other) :
     command_pool{other.command_pool},
     level{other.level},
     handle{other.handle},
-    state{other.state}
+    state{other.state},
+    update_after_bind{other.update_after_bind}
 {
 	other.handle = VK_NULL_HANDLE;
 	other.state  = State::Invalid;
@@ -150,8 +151,12 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const s
 	auto                     subpass_info_it = subpass_infos.begin();
 	for (auto &subpass : subpasses)
 	{
-		subpass_info_it->input_attachments  = subpass->get_input_attachments();
-		subpass_info_it->output_attachments = subpass->get_output_attachments();
+		subpass_info_it->input_attachments                = subpass->get_input_attachments();
+		subpass_info_it->output_attachments               = subpass->get_output_attachments();
+		subpass_info_it->color_resolve_attachments        = subpass->get_color_resolve_attachments();
+		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
+		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
+		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
 
 		++subpass_info_it;
 	}
@@ -420,6 +425,13 @@ void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &ds
 	               to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
 }
 
+void CommandBuffer::resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions)
+{
+	vkCmdResolveImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	                  dst_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                  to_u32(regions.size()), regions.data());
+}
+
 void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
 {
 	VkBufferCopy copy_region = {};
@@ -443,11 +455,23 @@ void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core:
 
 void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
 {
+	// Adjust barrier's subresource range for depth images
+	auto subresource_range = image_view.get_subresource_range();
+	auto format            = image_view.get_format();
+	if (is_depth_only_format(format))
+	{
+		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+	}
+	else if (is_depth_stencil_format(format))
+	{
+		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+	}
+
 	VkImageMemoryBarrier image_memory_barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
 	image_memory_barrier.oldLayout        = memory_barrier.old_layout;
 	image_memory_barrier.newLayout        = memory_barrier.new_layout;
 	image_memory_barrier.image            = image_view.get_image().get_handle();
-	image_memory_barrier.subresourceRange = image_view.get_subresource_range();
+	image_memory_barrier.subresourceRange = subresource_range;
 	image_memory_barrier.srcAccessMask    = memory_barrier.src_access_mask;
 	image_memory_barrier.dstAccessMask    = memory_barrier.dst_access_mask;
 
@@ -595,6 +619,9 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 			std::vector<uint32_t> dynamic_offsets;
 
+			// The bindings we want to update before binding, if empty we update all bindings
+			std::vector<uint32_t> bindings_to_update;
+
 			// Iterate over all resource bindings
 			for (auto &binding_it : resource_set.get_resource_bindings())
 			{
@@ -604,6 +631,12 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				// Check if binding exists in the pipeline layout
 				if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
 				{
+					// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
+					if (update_after_bind && !(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT))
+					{
+						bindings_to_update.push_back(binding_index);
+					}
+
 					// Iterate over all binding resources
 					for (auto &element_it : binding_resources)
 					{
@@ -631,7 +664,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = buffer_info;
+							buffer_infos[binding_index][array_element] = std::move(buffer_info);
 						}
 
 						// Get image info
@@ -648,6 +681,8 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								switch (binding_info->descriptorType)
 								{
 									case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+										break;
 									case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
 										if (is_depth_stencil_format(image_view->get_format()))
 										{
@@ -673,7 +708,9 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
+			// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
 			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
+			descriptor_set.update(bindings_to_update);
 
 			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 
@@ -692,6 +729,11 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 const CommandBuffer::State CommandBuffer::get_state() const
 {
 	return state;
+}
+
+void CommandBuffer::set_update_after_bind(bool update_after_bind_)
+{
+	update_after_bind = update_after_bind_;
 }
 
 const CommandBuffer::RenderPassBinding &CommandBuffer::get_current_render_pass() const

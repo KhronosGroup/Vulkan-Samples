@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -98,19 +98,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	vkb::Device &get_device();
 
-	const std::vector<const char *> get_instance_extensions() override;
-
-	const std::vector<const char *> get_device_extensions() override;
-
   protected:
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
-
-	/** @brief Set of device extensions to be enabled for this example (must be set in the derived constructor) */
-	std::vector<const char *> device_extensions;
-
-	/** @brief Set of instance extensions to be enabled for this example (must be set in the derived constructor) */
-	std::vector<const char *> instance_extensions;
 
 	virtual void prepare_render_context() override;
 

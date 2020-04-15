@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -36,8 +36,8 @@ PushDescriptors::PushDescriptors()
 	title = "Push descriptors";
 
 	// Enable extension required for push descriptors
-	instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 }
 
 PushDescriptors::~PushDescriptors()
@@ -57,11 +57,12 @@ PushDescriptors::~PushDescriptors()
 	}
 }
 
-void PushDescriptors::get_device_features()
+void PushDescriptors::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	if (supported_device_features.samplerAnisotropy)
+	// Enable anisotropic filtering if supported
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -339,7 +340,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	push_descriptor_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
 	device_properties.sType          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext          = &push_descriptor_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	/*
 		End of extension specific functions
