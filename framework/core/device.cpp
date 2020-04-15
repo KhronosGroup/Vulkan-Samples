@@ -134,22 +134,6 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
-	VkPhysicalDeviceBufferDeviceAddressFeatures feature_buffer_device_address{};
-	feature_buffer_device_address.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
-	feature_buffer_device_address.bufferDeviceAddress = VK_TRUE;
-
-	VkPhysicalDeviceRayTracingFeaturesKHR feature2_ray_tracing{};
-	feature2_ray_tracing.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
-	feature2_ray_tracing.rayTracing = VK_TRUE;
-	feature2_ray_tracing.pNext      = &feature_buffer_device_address;
-
-	VkPhysicalDeviceFeatures2 physicalDeviceFeatures2{};
-	physicalDeviceFeatures2.sType     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	physicalDeviceFeatures2.features  = requested_features;
-	physicalDeviceFeatures2.pNext     = &feature2_ray_tracing;
-	create_info.pEnabledFeatures      = nullptr;
-	create_info.pNext                 = &physicalDeviceFeatures2;
-
 
 	if (result != VK_SUCCESS)
 	{
