@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -74,7 +74,7 @@ No pre-rotation | Pre-rotation
 Destroy the Vulkan framebuffers and the swapchain | Destroy the Vulkan framebuffers and the swapchain
 Re-create the swapchain using the new surface dimensions i.e. the swapchain dimensions match the surface's. Ignore the `preTransform` field in [`VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSwapchainCreateInfoKHR.html). This will not match the value returned by [`vkGetPhysicalDeviceSurfaceCapabilitiesKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html) and therefore the Android Compositor will rotate the scene before presenting it to the display | Re-create the swapchain using the old swapchain dimensions, i.e. the swapchain dimensions do not change. Update the `preTransform` field in [`VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSwapchainCreateInfoKHR.html) so that it matches the `currentTransform` field of the [`VkSurfaceCapabilitiesKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSurfaceCapabilitiesKHR.html) returned by the new surface. This communicates to Android that it does not need to rotate the scene.
 Re-create the framebuffers | Re-create the framebuffers
-n/a | Adjust the MVP matrix so that: 1) The world is rotated,  2) The field-of-view (FOV) is adjusted to the new aspect ratio
+n/a | Adjust the MVP matrix so that the world is rotated
 Render the scene | Render the scene
 
 ## Rotation in Android
@@ -168,7 +168,7 @@ projection transformation.
 Therefore we update the matrix that the camera will use to compute the projection matrix:
 ```
 glm::mat4   pre_rotate_mat = glm::mat4(1.0f);
-glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, -1.0f);
+glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
 const auto &swapchain      = get_render_context().get_swapchain();
 
 if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
@@ -187,26 +187,14 @@ else if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
 camera->set_pre_rotation(pre_rotate_mat)
 ```
 
-The camera uses this transformation when returning the view matrix:
-```
-glm::mat4 Camera::get_view()
-{
-	if (!node)
-	{
-		throw std::runtime_error{"Camera component is not attached to a node"};
-	}
-
-	auto &transform = node->get_component<Transform>();
-	return pre_rotation * glm::inverse(transform.get_world_matrix());
-```
-
+The camera stores this pre-rotation matrix.
 This way the framework will use the updated matrix before pushing the MVP to the shader:
 ```
 void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
 {
 	GlobalUniform global_uniform;
 
-	global_uniform.camera_view_proj = vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
+	global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 ```
 
 For completion, here are the relevant sections of the vertex shader:
@@ -225,37 +213,6 @@ void main(void)
 {
     o_pos = global_uniform.model * vec4(position, 1.0);
     gl_Position = global_uniform.view_proj * o_pos;;
-}
-```
-
-As well as rotating the scene, we also need to adjust the Field-of-view (FOV) used by the camera to calculate
-the projection matrix.
-The FOV is the extent of the observable world that can be seen, and it can be broken down into a horizontal
-component and a vertical component.
-To calculate the projection matrix, we use the aspect ratio, the FOV, a far clipping plane
-and a near clipping plane. Keeping the other factors constant, increasing the FOV for a given
-camera position results in a ‘zoom out’ effect. Similarly, decreasing the FOV results in a ‘zoom in’ effect.
-Therefore, if the aspect ratio changes, in order to keep the same ‘zoom level’, the FOV must be adjusted accordingly.
-Since rotating the screen is effectively a swap of width and height, having set a particular horizontal FOV
-in a landscape display means that we need to use the corresponding vertical FOV in a portrait display.
-The derivation of the formula used can be found below:
-
-![FOV components](images/fov_components.png)
-
-In the framework:
-
-```
-float PerspectiveCamera::get_field_of_view()
-{
-	/* Calculate vertical fov */
-	auto vfov = static_cast<float>(2 * atan(tan(fov / 2) * (1.0 / aspect_ratio)));
-
-	return aspect_ratio > 1.0f ? fov : vfov;
-}
-
-glm::mat4 PerspectiveCamera::get_projection()
-{
-	return glm::perspective(get_field_of_view(), aspect_ratio, near_plane, far_plane);
 }
 ```
 
