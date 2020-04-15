@@ -56,6 +56,9 @@ class RaytracingBasic : public ApiVulkanSample
 	VkPhysicalDeviceRayTracingPropertiesKHR ray_tracing_properties{};
 	VkPhysicalDeviceRayTracingFeaturesKHR   ray_tracing_features{};
 
+	VkPhysicalDeviceBufferDeviceAddressFeatures requested_buffer_device_address_features{};
+	VkPhysicalDeviceRayTracingFeaturesKHR       requested_ray_tracing_features{};
+
 	VkAccelerationStructureKHR bottom_level_acceleration_structure;
 	uint64_t                   bottom_level_acceleration_structure_handle = 0;
 	VkAccelerationStructureKHR top_level_acceleration_structure;
@@ -89,6 +92,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
+	void         request_gpu_features(vkb::PhysicalDevice &gpu);
 	uint64_t     get_buffer_device_address(VkBuffer buffer);
 	void         create_storage_image();
 	void         create_scene();

@@ -108,13 +108,13 @@ RaytracingBasic::RaytracingBasic()
 {
 	title = "VK_KHR_ray_tracing";
 	// Enable instance and device extensions required to use VK_KHR_ray_tracing
-	instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_RAY_TRACING_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
-	device_extensions.push_back(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_RAY_TRACING_EXTENSION_NAME);
+	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+	add_device_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+	add_device_extension(VK_KHR_PIPELINE_LIBRARY_EXTENSION_NAME);
 }
 
 RaytracingBasic::~RaytracingBasic()
@@ -134,6 +134,19 @@ RaytracingBasic::~RaytracingBasic()
 		shader_binding_table.reset();
 		ubo.reset();
 	}
+}
+
+void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+	// Enable extension features required to use VK_KHR_ray_tracing
+	// These are passed to device creation via a pNext structure chain
+	// @todo: add way to pass this from a sample (sascha)
+	requested_buffer_device_address_features.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	requested_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
+	requested_ray_tracing_features.sType                         = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
+	requested_ray_tracing_features.rayTracing                    = VK_TRUE;
+	requested_ray_tracing_features.pNext                         = &requested_buffer_device_address_features;
+	gpu.get_mutable_requested_extension_features()               = &requested_ray_tracing_features;
 }
 
 /*
@@ -700,13 +713,13 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	VkPhysicalDeviceProperties2 device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &ray_tracing_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
 	ray_tracing_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
 	VkPhysicalDeviceFeatures2 device_features{};
 	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 	device_features.pNext = &ray_tracing_features;
-	vkGetPhysicalDeviceFeatures2(get_device().get_physical_device(), &device_features);
+	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
