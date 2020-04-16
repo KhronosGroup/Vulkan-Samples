@@ -190,8 +190,10 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 		vma_vulkan_func.vkGetImageMemoryRequirements2KHR  = vkGetImageMemoryRequirements2KHR;
 	}
 
-	// @todo: Add way to pass this from sample (sascha)
-	allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;	
+	if (is_extension_supported(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME) && is_enabled(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME))
+	{
+		allocator_info.flags |= VMA_ALLOCATOR_CREATE_BUFFER_DEVICE_ADDRESS_BIT;
+	}
 
 	allocator_info.pVulkanFunctions = &vma_vulkan_func;
 
