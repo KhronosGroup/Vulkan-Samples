@@ -72,9 +72,11 @@ class RaytracingBasic : public ApiVulkanSample
 	struct StorageImage
 	{
 		VkDeviceMemory memory;
-		VkImage        image;
+		VkImage        image = VK_NULL_HANDLE;
 		VkImageView    view;
 		VkFormat       format;
+		uint32_t       width;
+		uint32_t       height;
 	} storage_image;
 
 	struct UniformData

@@ -154,11 +154,14 @@ void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void RaytracingBasic::create_storage_image()
 {
+	storage_image.width  = width;
+	storage_image.height = height;
+
 	VkImageCreateInfo image = vkb::initializers::image_create_info();
 	image.imageType         = VK_IMAGE_TYPE_2D;
 	image.format            = VK_FORMAT_B8G8R8A8_UNORM;
-	image.extent.width      = width;
-	image.extent.height     = height;
+	image.extent.width      = storage_image.width;
+	image.extent.height     = storage_image.height;
 	image.extent.depth      = 1;
 	image.mipLevels         = 1;
 	image.arrayLayers       = 1;
@@ -597,6 +600,22 @@ void RaytracingBasic::create_uniform_buffer()
 */
 void RaytracingBasic::build_command_buffers()
 {
+	if (width != storage_image.width || height != storage_image.height)
+	{
+		// If the viewport size has changed, we need to recreate the storage image
+		vkDestroyImageView(get_device().get_handle(), storage_image.view, nullptr);
+		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
+		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
+		create_storage_image();
+		// The descriptor also needs to be updated to reference the new iamge
+		VkDescriptorImageInfo image_descriptor{};
+		image_descriptor.imageView              = storage_image.view;
+		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
+		VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
+		vkUpdateDescriptorSets(get_device().get_handle(), 1, &result_image_write, 0, VK_NULL_HANDLE);
+		build_command_buffers();
+	}
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
