@@ -264,6 +264,7 @@ class OpenGLWindow
 		// Create the texture for the FBO color attachment.
 		// This only reserves the ID, it doesn't allocate memory
 		glGenTextures(1, &color);
+		glBindTexture(GL_TEXTURE_2D, color);
 
 		// Create the GL identifiers
 
@@ -282,6 +283,7 @@ class OpenGLWindow
 		// and mip count should match the ones used by Vulkan to create the image and determine it's memory
 		// allocation.
 		glTextureStorageMem2DEXT(color, 1, GL_RGBA8, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION, mem, 0);
+		glBindTexture(GL_TEXTURE_2D, 0);
 
 		// The remaining initialization code is all standard OpenGL
 		glGenVertexArrays(1, &vao);
