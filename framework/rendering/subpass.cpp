@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,6 +21,11 @@
 
 namespace vkb
 {
+const std::vector<std::string> light_type_definitions = {
+    "DIRECTIONAL_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Directional)),
+    "POINT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Point)),
+    "SPOT_LIGHT " + std::to_string(static_cast<float>(sg::LightType::Spot))};
+
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
 	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
@@ -83,5 +88,60 @@ const std::vector<uint32_t> &Subpass::get_output_attachments() const
 void Subpass::set_output_attachments(std::vector<uint32_t> output)
 {
 	output_attachments = output;
+}
+
+const std::vector<uint32_t> &Subpass::get_color_resolve_attachments() const
+{
+	return color_resolve_attachments;
+}
+
+void Subpass::set_color_resolve_attachments(std::vector<uint32_t> color_resolve)
+{
+	color_resolve_attachments = color_resolve;
+}
+
+const bool &Subpass::get_disable_depth_stencil_attachment() const
+{
+	return disable_depth_stencil_attachment;
+}
+
+void Subpass::set_disable_depth_stencil_attachment(bool disable_depth_stencil)
+{
+	disable_depth_stencil_attachment = disable_depth_stencil;
+}
+
+const uint32_t &Subpass::get_depth_stencil_resolve_attachment() const
+{
+	return depth_stencil_resolve_attachment;
+}
+
+void Subpass::set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve)
+{
+	depth_stencil_resolve_attachment = depth_stencil_resolve;
+}
+
+const VkResolveModeFlagBits Subpass::get_depth_stencil_resolve_mode() const
+{
+	return depth_stencil_resolve_mode;
+}
+
+void Subpass::set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode)
+{
+	depth_stencil_resolve_mode = mode;
+}
+
+void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
+{
+	this->sample_count = sample_count;
+}
+
+void Subpass::clear_dynamic_resources()
+{
+	dynamic_resources.clear();
+}
+
+void Subpass::add_dynamic_resources(const std::vector<std::string> &dynamic_resources_)
+{
+	dynamic_resources.insert(dynamic_resources.end(), dynamic_resources_.begin(), dynamic_resources_.end());
 }
 }        // namespace vkb

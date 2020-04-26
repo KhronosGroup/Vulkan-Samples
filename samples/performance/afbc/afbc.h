@@ -40,9 +40,11 @@ class AFBCSample : public vkb::VulkanSample
 
 	virtual void draw_gui() override;
 
-	bool afbc_enabled_last_value = false;
+	void recreate_swapchain();
 
-	bool afbc_enabled = false;
+	bool afbc_enabled_last_value{false};
+
+	bool afbc_enabled{false};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_afbc();

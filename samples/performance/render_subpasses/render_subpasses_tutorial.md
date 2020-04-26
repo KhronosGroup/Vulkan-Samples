@@ -1,7 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -34,7 +32,7 @@ The _Render Subpasses sample_ implements a [deferred renderer](https://en.wikipe
 
 The G-buffer layout used by the sample is below a limit of 128-bit per pixel of *tile buffer color storage* (more about that in the next section):
 
-* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://developer.arm.com/architectures/media-architectures/transaction-elimination).
+* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://developer.arm.com/solutions/graphics-and-gaming/resources/demos/transaction-elimination).
 * Depth (`D32_SFLOAT`), which does not add up to the 128-bit limit.
 * Albedo (`RGBA8_UNORM`)
 * Normal (`RGB10A2_UNORM`)
@@ -50,8 +48,8 @@ mat4 inv_view_proj  = inverse(projection * view);
 vec2 inv_resolution = vec2(1.0f / width, 1.0f / height);
 
 // Load depth from tile buffer and reconstruct world position
-vec4 clip    = vec4(gl_FragCoord.xy * inv_resolution * 2.0 - 1.0,
-                    subpassLoad(depth).x, 1.0);
+vec4 clip    = vec4(in_uv * 2.0 - 1.0, 
+                    subpassLoad(i_depth).x, 1.0);
 vec4 world_w = inv_view_proj * clip;
 vec3 world   = world_w.xyz / world_w.w;
 ```

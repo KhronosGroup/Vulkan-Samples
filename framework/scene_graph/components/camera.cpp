@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +41,7 @@ glm::mat4 Camera::get_view()
 	}
 
 	auto &transform = node->get_component<Transform>();
-	return pre_rotation * glm::inverse(transform.get_world_matrix());
+	return glm::inverse(transform.get_world_matrix());
 }
 
 void Camera::set_node(Node &n)
@@ -52,6 +52,11 @@ void Camera::set_node(Node &n)
 Node *Camera::get_node()
 {
 	return node;
+}
+
+const glm::mat4 Camera::get_pre_rotation()
+{
+	return pre_rotation;
 }
 
 void Camera::set_pre_rotation(const glm::mat4 &pr)

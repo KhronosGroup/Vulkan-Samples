@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -74,7 +74,7 @@ No pre-rotation | Pre-rotation
 Destroy the Vulkan framebuffers and the swapchain | Destroy the Vulkan framebuffers and the swapchain
 Re-create the swapchain using the new surface dimensions i.e. the swapchain dimensions match the surface's. Ignore the `preTransform` field in [`VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSwapchainCreateInfoKHR.html). This will not match the value returned by [`vkGetPhysicalDeviceSurfaceCapabilitiesKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkGetPhysicalDeviceSurfaceCapabilitiesKHR.html) and therefore the Android Compositor will rotate the scene before presenting it to the display | Re-create the swapchain using the old swapchain dimensions, i.e. the swapchain dimensions do not change. Update the `preTransform` field in [`VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSwapchainCreateInfoKHR.html) so that it matches the `currentTransform` field of the [`VkSurfaceCapabilitiesKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSurfaceCapabilitiesKHR.html) returned by the new surface. This communicates to Android that it does not need to rotate the scene.
 Re-create the framebuffers | Re-create the framebuffers
-n/a | Adjust the MVP matrix so that: 1) The world is rotated,  2) The field-of-view (FOV) is adjusted to the new aspect ratio
+n/a | Adjust the MVP matrix so that the world is rotated
 Render the scene | Render the scene
 
 ## Rotation in Android
@@ -96,7 +96,8 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	{
 		case APP_CMD_INIT_WINDOW:
 		{
-			app->destroyRequested = !platform->get_sample().prepare(*platform);
+			platform->get_window().resize(ANativeWindow_getWidth(app->window), ANativeWindow_getHeight(app->window));
+			app->destroyRequested = !platform->prepare();
 			break;
 		}
 		case APP_CMD_CONTENT_RECT_CHANGED:
@@ -104,12 +105,8 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
-			platform->get_sample().resize(width, height);
-			break;
-		}
-		case APP_CMD_TERM_WINDOW:
-		{
-			platform->get_sample().finish();
+			platform->get_app().resize(width, height);
+			platform->get_window().resize(width, height);
 			break;
 		}
 	}
@@ -118,136 +115,106 @@ void on_app_cmd(android_app *app, int32_t cmd)
 
 ## Swapchain re-creation
 
-When we rotate, first we must safely destroy the framebuffers:
-
- ```
- vkDeviceWaitIdle(context.device);
- destroy_framebuffers(context);
- ```
-
-Then we need to sample the current transform from the surface:
+We need to sample the current transform from the surface:
 ```
 VkSurfaceCapabilitiesKHR surface_properties;
-vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu,
-                                          context.surface,
-                                          &surface_properties);
+VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(get_device().get_physical_device(),
+                                                   get_surface(),
+                                                   &surface_properties));
 
-uint32_t                      new_width         = surface_properties.currentExtent.width;
-uint32_t                      new_height        = surface_properties.currentExtent.height;
-VkSurfaceTransformFlagBitsKHR new_pre_transform = surface_properties.currentTransform;
+pre_transform = surface_properties.currentTransform;
 ```
 
-We query the new width and the new height, which should just be swapped with respect to the previous orientation.
-However, when doing pre-rotation we want to preserve the dimensions of the images, as we are planning to
-rotate our geometry accordingly. `currentTransform` is a
-[`VkSurfaceTransformFlagBitsKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap32.html#VkSurfaceTransformFlagBitsKHR) value,
-which we can use to act on if the orientation has changed.
+`currentTransform` is a [`VkSurfaceTransformFlagBitsKHR`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/html/chap32.html#VkSurfaceTransformFlagBitsKHR) value.
 When we re-create the swapchain, we must set the swapchain's
 [`preTransform`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkSwapchainCreateInfoKHR.html)
 to match this value.
 This informs the compositor that the application has handled the required transform so it does not have to.
+
+To re-create the swapchain, the sample uses the helper function `update_swapchain` provided by the framework:
 ```
-if (new_pre_transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR ||
-    new_pre_transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+get_device().wait_idle();
+
+auto surface_extent = get_render_context().get_surface_extent();
+
+get_render_context().update_swapchain(surface_extent, select_pre_transform());
+```
+
+This function then takes care to safely destroy the framebuffers and use the new `preTransform` value to re-create the swapchain:
+```
+device.get_resource_cache().clear_framebuffers();
+
+auto width  = extent.width;
+auto height = extent.height;
+if (transform == VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR || transform == VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
 {
-	// Do not change the swapchain dimensions
-	new_width  = surface_properties.currentExtent.height;
-	new_height = surface_properties.currentExtent.width;
+	// Pre-rotation: always use native orientation i.e. if rotated, use width and height of identity transform
+	std::swap(width, height);
 }
-vkb::init_swapchain(context, new_width, new_height, new_pre_transform);
+
+swapchain = std::make_unique<Swapchain>(*swapchain, VkExtent2D{width, height}, transform);
 ```
 
-The `init_swapchain` function can be found in our framework.
-It uses the new width, height and transformation values, and it recycles the previous swapchain:
-```
-surface_properties.currentExtent.width  = new_width;
-surface_properties.currentExtent.height = new_height;
+Note that if pre-rotation is enabled and the application has been rotated by 90 degrees, then the surface dimensions must be swapped with respect to the previous orientation.
+This is done to preserve the dimensions of the swapchain images, since we are planning to rotate our geometry accordingly.
 
-VkSwapchainCreateInfoKHR info = {VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
-(...)
-info.imageExtent              = surface_properties.currentExtent;
-info.preTransform             = new_pre_transform;
-info.oldSwapchain             = old_swapchain;
-
-vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain.handle);
-
-if (old_swapchain != VK_NULL_HANDLE)
-{
-	vkDestroySwapchainKHR(context.device, old_swapchain, nullptr);
-}
-```
-
-Finally, we re-create the framebuffers:
-```
-vkb::init_framebuffers(context);
-```
+The framework then takes care to re-create the framebuffers.
 
 # Rotating the scene
 
 When rotating our geometry, normally all we need to do is adjust the Model View Projection (MVP) matrix that we
 provide to the vertex shader every frame. In this case we want to rotate the scene just before applying the
-projection transformation:
+projection transformation.
+Therefore we update the matrix that the camera will use to compute the projection matrix:
 ```
-float     aspect_ratio   = width / height;
-auto      horizontal_fov = glm::radians(60.0f);
-auto      vertical_fov   = static_cast<float>(2 * atan((0.5 * height) / (0.5 * width / tan(horizontal_fov / 2))));
-auto      fov            = (aspect_ratio > 1.0f) ? horizontal_fov : vertical_fov;
+glm::mat4   pre_rotate_mat = glm::mat4(1.0f);
+glm::vec3   rotation_axis  = glm::vec3(0.0f, 0.0f, 1.0f);
+const auto &swapchain      = get_render_context().get_swapchain();
 
-glm::mat4 pre_rotate_mat = glm::mat4(1.0f);
-glm::vec3 rotation_axis  = glm::vec3(0.0f, 0.0f, -1.0f); # Rotate anti-clockwise
-if (context.swapchain.pre_transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
+if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
 {
 	pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(90.0f), rotation_axis);
 }
-else if (context.swapchain.pre_transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
+else if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
 {
 	pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(270.0f), rotation_axis);
 }
-else if (context.swapchain.pre_transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
+else if (swapchain.get_transform() & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
 {
 	pre_rotate_mat = glm::rotate(pre_rotate_mat, glm::radians(180.0f), rotation_axis);
 }
 
-glm::mat4 proj      = glm::perspective(fov, aspect_ratio, 0.01f, 1000.0f);
-glm::mat4 view_proj = vulkan_style_projection(proj) * pre_rotate_mat * view;
+camera->set_pre_rotation(pre_rotate_mat)
+```
 
-(...)
+The camera stores this pre-rotation matrix.
+This way the framework will use the updated matrix before pushing the MVP to the shader:
+```
+void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
+{
+	GlobalUniform global_uniform;
 
-vkCmdPushConstants(cmd, pipeline_layout->get_handle(), VK_SHADER_STAGE_VERTEX_BIT, sizeof(glm::mat4),
-                   sizeof(glm::mat4), glm::value_ptr(view_proj));
+	global_uniform.camera_view_proj = camera.get_pre_rotation() * vkb::vulkan_style_projection(camera.get_projection()) * camera.get_view();
 ```
 
 For completion, here are the relevant sections of the vertex shader:
 ```
 layout(location = 0) in vec3 position;
 
-layout(push_constant, std430) uniform PushConstant {
-	mat4 model;
-	mat4 view_proj;
-} vs_push_constant;
+layout(set = 0, binding = 1) uniform GlobalUniform {
+    mat4 model;
+    mat4 view_proj;
+    vec3 camera_position;
+} global_uniform;
 
 layout (location = 0) out vec4 o_pos;
 
 void main(void)
 {
-	o_pos       = vs_push_constant.model * vec4(position, 1.0);
-	gl_Position = vs_push_constant.view_proj * o_pos;
+    o_pos = global_uniform.model * vec4(position, 1.0);
+    gl_Position = global_uniform.view_proj * o_pos;;
 }
 ```
-
-We can see that, as well as rotating the scene, we also need to adjust the Field-of-view (FOV) used to calculate
-the projection matrix.
-The FOV is the extent of the observable world that can be seen, and it can be broken down into a horizontal
-component and a vertical component.
-To calculate the projection matrix, we use the aspect ratio, the FOV, a far clipping plane
-and a near clipping plane. Keeping the other factors constant, increasing the FOV for a given
-camera position results in a ‘zoom out’ effect. Similarly, decreasing the FOV results in a ‘zoom in’ effect.
-Therefore, if the aspect ratio changes, in order to keep the same ‘zoom level’, the FOV must be adjusted accordingly.
-Since rotating the screen is effectively a swap of width and height, having set a particular horizontal FOV
-in a landscape display means that we need to use the corresponding vertical FOV in a portrait display.
-The derivation of the formula used can be found below:
-
-![FOV components](images/fov_components.png)
 
 # Performance impact
 

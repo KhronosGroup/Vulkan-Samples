@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-precision highp float;
-
 layout (location = 0) out vec2 outUV;
 
 void main()

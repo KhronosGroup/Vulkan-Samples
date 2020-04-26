@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <glm/glm.hpp>
+#include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
 #include "common/helpers.h"
@@ -51,6 +51,8 @@ class Camera : public Component
 	void set_node(Node &node);
 
 	Node *get_node();
+
+	const glm::mat4 get_pre_rotation();
 
 	void set_pre_rotation(const glm::mat4 &pre_rotation);
 

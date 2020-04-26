@@ -21,11 +21,16 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
+
+VKBP_DISABLE_WARNINGS()
+#include "common/glm_common.h"
+#include <glm/gtx/quaternion.hpp>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkbtest
 {
@@ -43,6 +48,10 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	load_scene(scene_path);
 
+	scene->clear_components<vkb::sg::Light>();
+
+	vkb::add_directional_light(get_scene(), glm::quat({glm::radians(-90.0f), 0.0f, glm::radians(30.0f)}));
+
 	auto camera_node = scene->find_node("main_camera");
 
 	if (!camera_node)
@@ -54,10 +63,10 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	auto &camera = camera_node->get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
+	vkb::ShaderSource vert_shader("base.vert");
+	vkb::ShaderSource frag_shader("base.frag");
 
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, camera);
+	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

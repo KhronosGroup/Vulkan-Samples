@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,9 +42,6 @@ class RenderSubpasses : public vkb::VulkanSample
 	void draw_gui() override;
 
   private:
-	/**
-	 * @brief Prepares the custom render context for render subpasses
-	 */
 	virtual void prepare_render_context() override;
 
 	/**
@@ -72,9 +69,9 @@ class RenderSubpasses : public vkb::VulkanSample
 	 */
 	void draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
 
-	void draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
-	vkb::RenderTarget create_render_target(vkb::core::Image &&swapchain_image);
+	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/// Good pipeline with two subpasses within one render pass
 	std::unique_ptr<vkb::RenderPipeline> render_pipeline{};

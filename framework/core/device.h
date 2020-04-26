@@ -1,5 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,10 @@
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
+#include "core/instance.h"
 #include "core/pipeline.h"
+
+#include "core/physical_device.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
 #include "core/render_pass.h"
@@ -39,14 +42,49 @@
 
 namespace vkb
 {
-class Device : public NonCopyable
+struct DriverVersion
+{
+	uint16_t major;
+	uint16_t minor;
+	uint16_t patch;
+};
+
+class Device
 {
   public:
-	Device(VkPhysicalDevice physical_device, VkSurfaceKHR surface, std::vector<const char *> requested_extensions = {}, VkPhysicalDeviceFeatures features = {});
+	/**
+	 * @brief Device constructor
+	 * @param gpu A valid Vulkan physical device and the requested gpu features 
+	 * @param surface The surface
+	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
+	 */
+	Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
+
+	Device(const Device &) = delete;
+
+	Device(Device &&) = delete;
 
 	~Device();
 
-	const VkFormatProperties get_format_properties(VkFormat format) const;
+	Device &operator=(const Device &) = delete;
+
+	Device &operator=(Device &&) = delete;
+
+	const PhysicalDevice &get_gpu() const;
+
+	VkDevice get_handle() const;
+
+	VmaAllocator get_memory_allocator() const;
+
+	/**
+	 * @return The version of the driver of the current physical device
+	 */
+	DriverVersion get_driver_version() const;
+
+	/**
+	 * @return Whether an image format is supported by the GPU
+	 */
+	bool is_image_format_supported(VkFormat format) const;
 
 	const Queue &get_queue(uint32_t queue_family_index, uint32_t queue_index);
 
@@ -55,13 +93,18 @@ class Device : public NonCopyable
 	const Queue &get_queue_by_present(uint32_t queue_index);
 
 	/**
-	 * @return Whether an image format is supported by the GPU
+	 * @brief Finds a suitable graphics queue to submit to
+	 * @return The first present supported queue, otherwise just any graphics queue
 	 */
-	bool is_image_format_supported(VkFormat format) const;
+	const Queue &get_suitable_graphics_queue();
 
 	bool is_extension_supported(const std::string &extension);
 
+	bool is_enabled(const char *extension);
+
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
+
+	CommandPool &get_command_pool();
 
 	/**
 	 * @brief Checks that a given memory type is supported by the GPU
@@ -122,6 +165,8 @@ class Device : public NonCopyable
 	 */
 	CommandBuffer &request_command_buffer();
 
+	FencePool &get_fence_pool();
+
 	/**
 	 * @brief Requests a fence to the fence pool
 	 * @return A vulkan fence
@@ -130,42 +175,20 @@ class Device : public NonCopyable
 
 	VkResult wait_idle();
 
-	VkPhysicalDevice get_physical_device() const;
-
-	const VkPhysicalDeviceFeatures &get_features() const;
-
-	VkDevice get_handle() const;
-
-	VmaAllocator get_memory_allocator() const;
-
-	const VkPhysicalDeviceProperties &get_properties() const;
-
-	CommandPool &get_command_pool();
-
-	FencePool &get_fence_pool();
-
 	ResourceCache &get_resource_cache();
 
   private:
-	std::vector<VkExtensionProperties> device_extensions;
-
-	VkPhysicalDevice physical_device{VK_NULL_HANDLE};
-
-	VkPhysicalDeviceFeatures features{};
+	const PhysicalDevice &gpu;
 
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
-	uint32_t queue_family_count{0};
-
-	std::vector<VkQueueFamilyProperties> queue_family_properties;
-
 	VkDevice handle{VK_NULL_HANDLE};
 
+	std::vector<VkExtensionProperties> device_extensions;
+
+	std::vector<const char *> enabled_extensions{};
+
 	VmaAllocator memory_allocator{VK_NULL_HANDLE};
-
-	VkPhysicalDeviceProperties properties;
-
-	VkPhysicalDeviceMemoryProperties memory_properties;
 
 	std::vector<std::vector<Queue>> queues;
 

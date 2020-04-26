@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,15 +30,15 @@ BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags u
 {
 	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minUniformBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minUniformBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_STORAGE_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minStorageBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minStorageBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_UNIFORM_TEXEL_BUFFER_BIT)
 	{
-		alignment = device.get_properties().limits.minTexelBufferOffsetAlignment;
+		alignment = device.get_gpu().get_properties().limits.minTexelBufferOffsetAlignment;
 	}
 	else if (usage == VK_BUFFER_USAGE_INDEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_VERTEX_BUFFER_BIT || usage == VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT)
 	{
@@ -91,30 +91,30 @@ BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 	// Find the first block in the range of the inactive blocks
 	// which size is greater than the minimum size
 	auto it = std::upper_bound(buffer_blocks.begin() + active_buffer_block_count, buffer_blocks.end(), minimum_size,
-	                           [](const VkDeviceSize &a, const BufferBlock &b) -> bool { return a < b.get_size(); });
+	                           [](const VkDeviceSize &a, const std::unique_ptr<BufferBlock> &b) -> bool { return a < b->get_size(); });
 
 	if (it != buffer_blocks.end())
 	{
 		// Recycle inactive block
 		active_buffer_block_count++;
-		return *it;
+		return *it->get();
 	}
 
-	LOGI("Building #{} buffer block ({})", buffer_blocks.size(), usage);
+	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
 
 	// Create a new block, store and return it
-	buffer_blocks.emplace_back(device, std::max(block_size, minimum_size), usage, memory_usage);
+	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, std::max(block_size, minimum_size), usage, memory_usage));
 
 	auto &block = buffer_blocks[active_buffer_block_count++];
 
-	return block;
+	return *block.get();
 }
 
 void BufferPool::reset()
 {
 	for (auto &buffer_block : buffer_blocks)
 	{
-		buffer_block.reset();
+		buffer_block->reset();
 	}
 
 	active_buffer_block_count = 0;

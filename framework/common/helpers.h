@@ -37,14 +37,8 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#define GLM_FORCE_DEPTH_ZERO_TO_ONE
-#include <glm/glm.hpp>
-#include <glm/gtc/constants.hpp>
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/type_ptr.hpp>
+#include "common/glm_common.h"
 #include <glm/gtx/hash.hpp>
-#include <glm/gtx/rotate_vector.hpp>
-#include <glm/gtx/transform.hpp>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -213,42 +207,4 @@ uint32_t to_u32(T value)
 	return static_cast<uint32_t>(value);
 }
 
-/**
- * @brief Helper class to disable the copy constructor and copy
- *        assignment operator of any inherited a class to be non copyable.
- */
-class NonCopyable
-{
-  public:
-	/**
-	 * @brief Constructor
-	 */
-	NonCopyable() = default;
-
-	/**
-	 * @brief Destructor
-	 */
-	~NonCopyable() = default;
-
-	/**
-	 * @brief Move constructor
-	 */
-	NonCopyable(NonCopyable &&) = default;
-
-	/**
-	 * @brief Move assignment operator
-	 */
-	NonCopyable &operator=(NonCopyable &&) noexcept = default;
-
-  private:
-	/**
-	 * @brief Deleted copy constructor
-	 */
-	NonCopyable(const NonCopyable &) = delete;
-
-	/**
-	 * @brief Deleted copy assignment operator
-	 */
-	NonCopyable &operator=(const NonCopyable &) = delete;
-};
 }        // namespace vkb

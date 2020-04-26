@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,8 @@
  */
 
 #include "vk_common.h"
+
+#include <spdlog/fmt/fmt.h>
 
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
@@ -122,30 +124,35 @@ bool is_depth_stencil_format(VkFormat format)
 	       is_depth_only_format(format);
 }
 
-VkBool32 get_supported_depth_format(VkPhysicalDevice physical_device, VkFormat *depth_format)
+VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only, const std::vector<VkFormat> &depth_format_priority_list)
 {
-	// Since all depth formats may be optional, we need to find a suitable depth format to use
-	// Start with the highest precision packed format
-	std::vector<VkFormat> depth_formats = {
-	    VK_FORMAT_D32_SFLOAT_S8_UINT,
-	    VK_FORMAT_D32_SFLOAT,
-	    VK_FORMAT_D24_UNORM_S8_UINT,
-	    VK_FORMAT_D16_UNORM_S8_UINT,
-	    VK_FORMAT_D16_UNORM};
+	VkFormat depth_format{VK_FORMAT_UNDEFINED};
 
-	for (auto &format : depth_formats)
+	for (auto &format : depth_format_priority_list)
 	{
+		if (depth_only && !is_depth_only_format(format))
+		{
+			continue;
+		}
+
 		VkFormatProperties properties;
 		vkGetPhysicalDeviceFormatProperties(physical_device, format, &properties);
+
 		// Format must support depth stencil attachment for optimal tiling
 		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
 		{
-			*depth_format = format;
-			return true;
+			depth_format = format;
+			break;
 		}
 	}
 
-	return false;
+	if (depth_format != VK_FORMAT_UNDEFINED)
+	{
+		LOGI("Depth format selected: {}", to_string(depth_format));
+		return depth_format;
+	}
+
+	throw std::runtime_error("No suitable depth format could be determined");
 }
 
 bool is_dynamic_buffer_descriptor_type(VkDescriptorType descriptor_type)
@@ -326,441 +333,6 @@ int32_t get_bits_per_pixel(VkFormat format)
 		case VK_FORMAT_UNDEFINED:
 		default:
 			return -1;
-	}
-}
-
-const std::string to_string(VkFormat format)
-{
-	switch (format)
-	{
-		case VK_FORMAT_R4G4_UNORM_PACK8:
-			return "VK_FORMAT_R4G4_UNORM_PACK8";
-		case VK_FORMAT_R4G4B4A4_UNORM_PACK16:
-			return "VK_FORMAT_R4G4B4A4_UNORM_PACK16";
-		case VK_FORMAT_B4G4R4A4_UNORM_PACK16:
-			return "VK_FORMAT_B4G4R4A4_UNORM_PACK16";
-		case VK_FORMAT_R5G6B5_UNORM_PACK16:
-			return "VK_FORMAT_R5G6B5_UNORM_PACK16";
-		case VK_FORMAT_B5G6R5_UNORM_PACK16:
-			return "VK_FORMAT_B5G6R5_UNORM_PACK16";
-		case VK_FORMAT_R5G5B5A1_UNORM_PACK16:
-			return "VK_FORMAT_R5G5B5A1_UNORM_PACK16";
-		case VK_FORMAT_B5G5R5A1_UNORM_PACK16:
-			return "VK_FORMAT_B5G5R5A1_UNORM_PACK16";
-		case VK_FORMAT_A1R5G5B5_UNORM_PACK16:
-			return "VK_FORMAT_A1R5G5B5_UNORM_PACK16";
-		case VK_FORMAT_R8_UNORM:
-			return "VK_FORMAT_R8_UNORM";
-		case VK_FORMAT_R8_SNORM:
-			return "VK_FORMAT_R8_SNORM";
-		case VK_FORMAT_R8_USCALED:
-			return "VK_FORMAT_R8_USCALED";
-		case VK_FORMAT_R8_SSCALED:
-			return "VK_FORMAT_R8_SSCALED";
-		case VK_FORMAT_R8_UINT:
-			return "VK_FORMAT_R8_UINT";
-		case VK_FORMAT_R8_SINT:
-			return "VK_FORMAT_R8_SINT";
-		case VK_FORMAT_R8_SRGB:
-			return "VK_FORMAT_R8_SRGB";
-		case VK_FORMAT_R8G8_UNORM:
-			return "VK_FORMAT_R8G8_UNORM";
-		case VK_FORMAT_R8G8_SNORM:
-			return "VK_FORMAT_R8G8_SNORM";
-		case VK_FORMAT_R8G8_USCALED:
-			return "VK_FORMAT_R8G8_USCALED";
-		case VK_FORMAT_R8G8_SSCALED:
-			return "VK_FORMAT_R8G8_SSCALED";
-		case VK_FORMAT_R8G8_UINT:
-			return "VK_FORMAT_R8G8_UINT";
-		case VK_FORMAT_R8G8_SINT:
-			return "VK_FORMAT_R8G8_SINT";
-		case VK_FORMAT_R8G8_SRGB:
-			return "VK_FORMAT_R8G8_SRGB";
-		case VK_FORMAT_R8G8B8_UNORM:
-			return "VK_FORMAT_R8G8B8_UNORM";
-		case VK_FORMAT_R8G8B8_SNORM:
-			return "VK_FORMAT_R8G8B8_SNORM";
-		case VK_FORMAT_R8G8B8_USCALED:
-			return "VK_FORMAT_R8G8B8_USCALED";
-		case VK_FORMAT_R8G8B8_SSCALED:
-			return "VK_FORMAT_R8G8B8_SSCALED";
-		case VK_FORMAT_R8G8B8_UINT:
-			return "VK_FORMAT_R8G8B8_UINT";
-		case VK_FORMAT_R8G8B8_SINT:
-			return "VK_FORMAT_R8G8B8_SINT";
-		case VK_FORMAT_R8G8B8_SRGB:
-			return "VK_FORMAT_R8G8B8_SRGB";
-		case VK_FORMAT_B8G8R8_UNORM:
-			return "VK_FORMAT_B8G8R8_UNORM";
-		case VK_FORMAT_B8G8R8_SNORM:
-			return "VK_FORMAT_B8G8R8_SNORM";
-		case VK_FORMAT_B8G8R8_USCALED:
-			return "VK_FORMAT_B8G8R8_USCALED";
-		case VK_FORMAT_B8G8R8_SSCALED:
-			return "VK_FORMAT_B8G8R8_SSCALED";
-		case VK_FORMAT_B8G8R8_UINT:
-			return "VK_FORMAT_B8G8R8_UINT";
-		case VK_FORMAT_B8G8R8_SINT:
-			return "VK_FORMAT_B8G8R8_SINT";
-		case VK_FORMAT_B8G8R8_SRGB:
-			return "VK_FORMAT_B8G8R8_SRGB";
-		case VK_FORMAT_R8G8B8A8_UNORM:
-			return "VK_FORMAT_R8G8B8A8_UNORM";
-		case VK_FORMAT_R8G8B8A8_SNORM:
-			return "VK_FORMAT_R8G8B8A8_SNORM";
-		case VK_FORMAT_R8G8B8A8_USCALED:
-			return "VK_FORMAT_R8G8B8A8_USCALED";
-		case VK_FORMAT_R8G8B8A8_SSCALED:
-			return "VK_FORMAT_R8G8B8A8_SSCALED";
-		case VK_FORMAT_R8G8B8A8_UINT:
-			return "VK_FORMAT_R8G8B8A8_UINT";
-		case VK_FORMAT_R8G8B8A8_SINT:
-			return "VK_FORMAT_R8G8B8A8_SINT";
-		case VK_FORMAT_R8G8B8A8_SRGB:
-			return "VK_FORMAT_R8G8B8A8_SRGB";
-		case VK_FORMAT_B8G8R8A8_UNORM:
-			return "VK_FORMAT_B8G8R8A8_UNORM";
-		case VK_FORMAT_B8G8R8A8_SNORM:
-			return "VK_FORMAT_B8G8R8A8_SNORM";
-		case VK_FORMAT_B8G8R8A8_USCALED:
-			return "VK_FORMAT_B8G8R8A8_USCALED";
-		case VK_FORMAT_B8G8R8A8_SSCALED:
-			return "VK_FORMAT_B8G8R8A8_SSCALED";
-		case VK_FORMAT_B8G8R8A8_UINT:
-			return "VK_FORMAT_B8G8R8A8_UINT";
-		case VK_FORMAT_B8G8R8A8_SINT:
-			return "VK_FORMAT_B8G8R8A8_SINT";
-		case VK_FORMAT_B8G8R8A8_SRGB:
-			return "VK_FORMAT_B8G8R8A8_SRGB";
-		case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
-			return "VK_FORMAT_A8B8G8R8_UNORM_PACK32";
-		case VK_FORMAT_A8B8G8R8_SNORM_PACK32:
-			return "VK_FORMAT_A8B8G8R8_SNORM_PACK32";
-		case VK_FORMAT_A8B8G8R8_USCALED_PACK32:
-			return "VK_FORMAT_A8B8G8R8_USCALED_PACK32";
-		case VK_FORMAT_A8B8G8R8_SSCALED_PACK32:
-			return "VK_FORMAT_A8B8G8R8_SSCALED_PACK32";
-		case VK_FORMAT_A8B8G8R8_UINT_PACK32:
-			return "VK_FORMAT_A8B8G8R8_UINT_PACK32";
-		case VK_FORMAT_A8B8G8R8_SINT_PACK32:
-			return "VK_FORMAT_A8B8G8R8_SINT_PACK32";
-		case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
-			return "VK_FORMAT_A8B8G8R8_SRGB_PACK32";
-		case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
-			return "VK_FORMAT_A2R10G10B10_UNORM_PACK32";
-		case VK_FORMAT_A2R10G10B10_SNORM_PACK32:
-			return "VK_FORMAT_A2R10G10B10_SNORM_PACK32";
-		case VK_FORMAT_A2R10G10B10_USCALED_PACK32:
-			return "VK_FORMAT_A2R10G10B10_USCALED_PACK32";
-		case VK_FORMAT_A2R10G10B10_SSCALED_PACK32:
-			return "VK_FORMAT_A2R10G10B10_SSCALED_PACK32";
-		case VK_FORMAT_A2R10G10B10_UINT_PACK32:
-			return "VK_FORMAT_A2R10G10B10_UINT_PACK32";
-		case VK_FORMAT_A2R10G10B10_SINT_PACK32:
-			return "VK_FORMAT_A2R10G10B10_SINT_PACK32";
-		case VK_FORMAT_A2B10G10R10_UNORM_PACK32:
-			return "VK_FORMAT_A2B10G10R10_UNORM_PACK32";
-		case VK_FORMAT_A2B10G10R10_SNORM_PACK32:
-			return "VK_FORMAT_A2B10G10R10_SNORM_PACK32";
-		case VK_FORMAT_A2B10G10R10_USCALED_PACK32:
-			return "VK_FORMAT_A2B10G10R10_USCALED_PACK32";
-		case VK_FORMAT_A2B10G10R10_SSCALED_PACK32:
-			return "VK_FORMAT_A2B10G10R10_SSCALED_PACK32";
-		case VK_FORMAT_A2B10G10R10_UINT_PACK32:
-			return "VK_FORMAT_A2B10G10R10_UINT_PACK32";
-		case VK_FORMAT_A2B10G10R10_SINT_PACK32:
-			return "VK_FORMAT_A2B10G10R10_SINT_PACK32";
-		case VK_FORMAT_R16_UNORM:
-			return "VK_FORMAT_R16_UNORM";
-		case VK_FORMAT_R16_SNORM:
-			return "VK_FORMAT_R16_SNORM";
-		case VK_FORMAT_R16_USCALED:
-			return "VK_FORMAT_R16_USCALED";
-		case VK_FORMAT_R16_SSCALED:
-			return "VK_FORMAT_R16_SSCALED";
-		case VK_FORMAT_R16_UINT:
-			return "VK_FORMAT_R16_UINT";
-		case VK_FORMAT_R16_SINT:
-			return "VK_FORMAT_R16_SINT";
-		case VK_FORMAT_R16_SFLOAT:
-			return "VK_FORMAT_R16_SFLOAT";
-		case VK_FORMAT_R16G16_UNORM:
-			return "VK_FORMAT_R16G16_UNORM";
-		case VK_FORMAT_R16G16_SNORM:
-			return "VK_FORMAT_R16G16_SNORM";
-		case VK_FORMAT_R16G16_USCALED:
-			return "VK_FORMAT_R16G16_USCALED";
-		case VK_FORMAT_R16G16_SSCALED:
-			return "VK_FORMAT_R16G16_SSCALED";
-		case VK_FORMAT_R16G16_UINT:
-			return "VK_FORMAT_R16G16_UINT";
-		case VK_FORMAT_R16G16_SINT:
-			return "VK_FORMAT_R16G16_SINT";
-		case VK_FORMAT_R16G16_SFLOAT:
-			return "VK_FORMAT_R16G16_SFLOAT";
-		case VK_FORMAT_R16G16B16_UNORM:
-			return "VK_FORMAT_R16G16B16_UNORM";
-		case VK_FORMAT_R16G16B16_SNORM:
-			return "VK_FORMAT_R16G16B16_SNORM";
-		case VK_FORMAT_R16G16B16_USCALED:
-			return "VK_FORMAT_R16G16B16_USCALED";
-		case VK_FORMAT_R16G16B16_SSCALED:
-			return "VK_FORMAT_R16G16B16_SSCALED";
-		case VK_FORMAT_R16G16B16_UINT:
-			return "VK_FORMAT_R16G16B16_UINT";
-		case VK_FORMAT_R16G16B16_SINT:
-			return "VK_FORMAT_R16G16B16_SINT";
-		case VK_FORMAT_R16G16B16_SFLOAT:
-			return "VK_FORMAT_R16G16B16_SFLOAT";
-		case VK_FORMAT_R16G16B16A16_UNORM:
-			return "VK_FORMAT_R16G16B16A16_UNORM";
-		case VK_FORMAT_R16G16B16A16_SNORM:
-			return "VK_FORMAT_R16G16B16A16_SNORM";
-		case VK_FORMAT_R16G16B16A16_USCALED:
-			return "VK_FORMAT_R16G16B16A16_USCALED";
-		case VK_FORMAT_R16G16B16A16_SSCALED:
-			return "VK_FORMAT_R16G16B16A16_SSCALED";
-		case VK_FORMAT_R16G16B16A16_UINT:
-			return "VK_FORMAT_R16G16B16A16_UINT";
-		case VK_FORMAT_R16G16B16A16_SINT:
-			return "VK_FORMAT_R16G16B16A16_SINT";
-		case VK_FORMAT_R16G16B16A16_SFLOAT:
-			return "VK_FORMAT_R16G16B16A16_SFLOAT";
-		case VK_FORMAT_R32_UINT:
-			return "VK_FORMAT_R32_UINT";
-		case VK_FORMAT_R32_SINT:
-			return "VK_FORMAT_R32_SINT";
-		case VK_FORMAT_R32_SFLOAT:
-			return "VK_FORMAT_R32_SFLOAT";
-		case VK_FORMAT_R32G32_UINT:
-			return "VK_FORMAT_R32G32_UINT";
-		case VK_FORMAT_R32G32_SINT:
-			return "VK_FORMAT_R32G32_SINT";
-		case VK_FORMAT_R32G32_SFLOAT:
-			return "VK_FORMAT_R32G32_SFLOAT";
-		case VK_FORMAT_R32G32B32_UINT:
-			return "VK_FORMAT_R32G32B32_UINT";
-		case VK_FORMAT_R32G32B32_SINT:
-			return "VK_FORMAT_R32G32B32_SINT";
-		case VK_FORMAT_R32G32B32_SFLOAT:
-			return "VK_FORMAT_R32G32B32_SFLOAT";
-		case VK_FORMAT_R32G32B32A32_UINT:
-			return "VK_FORMAT_R32G32B32A32_UINT";
-		case VK_FORMAT_R32G32B32A32_SINT:
-			return "VK_FORMAT_R32G32B32A32_SINT";
-		case VK_FORMAT_R32G32B32A32_SFLOAT:
-			return "VK_FORMAT_R32G32B32A32_SFLOAT";
-		case VK_FORMAT_R64_UINT:
-			return "VK_FORMAT_R64_UINT";
-		case VK_FORMAT_R64_SINT:
-			return "VK_FORMAT_R64_SINT";
-		case VK_FORMAT_R64_SFLOAT:
-			return "VK_FORMAT_R64_SFLOAT";
-		case VK_FORMAT_R64G64_UINT:
-			return "VK_FORMAT_R64G64_UINT";
-		case VK_FORMAT_R64G64_SINT:
-			return "VK_FORMAT_R64G64_SINT";
-		case VK_FORMAT_R64G64_SFLOAT:
-			return "VK_FORMAT_R64G64_SFLOAT";
-		case VK_FORMAT_R64G64B64_UINT:
-			return "VK_FORMAT_R64G64B64_UINT";
-		case VK_FORMAT_R64G64B64_SINT:
-			return "VK_FORMAT_R64G64B64_SINT";
-		case VK_FORMAT_R64G64B64_SFLOAT:
-			return "VK_FORMAT_R64G64B64_SFLOAT";
-		case VK_FORMAT_R64G64B64A64_UINT:
-			return "VK_FORMAT_R64G64B64A64_UINT";
-		case VK_FORMAT_R64G64B64A64_SINT:
-			return "VK_FORMAT_R64G64B64A64_SINT";
-		case VK_FORMAT_R64G64B64A64_SFLOAT:
-			return "VK_FORMAT_R64G64B64A64_SFLOAT";
-		case VK_FORMAT_B10G11R11_UFLOAT_PACK32:
-			return "VK_FORMAT_B10G11R11_UFLOAT_PACK32";
-		case VK_FORMAT_E5B9G9R9_UFLOAT_PACK32:
-			return "VK_FORMAT_E5B9G9R9_UFLOAT_PACK32";
-		case VK_FORMAT_D16_UNORM:
-			return "VK_FORMAT_D16_UNORM";
-		case VK_FORMAT_X8_D24_UNORM_PACK32:
-			return "VK_FORMAT_X8_D24_UNORM_PACK32";
-		case VK_FORMAT_D32_SFLOAT:
-			return "VK_FORMAT_D32_SFLOAT";
-		case VK_FORMAT_S8_UINT:
-			return "VK_FORMAT_S8_UINT";
-		case VK_FORMAT_D16_UNORM_S8_UINT:
-			return "VK_FORMAT_D16_UNORM_S8_UINT";
-		case VK_FORMAT_D24_UNORM_S8_UINT:
-			return "VK_FORMAT_D24_UNORM_S8_UINT";
-		case VK_FORMAT_D32_SFLOAT_S8_UINT:
-			return "VK_FORMAT_D32_SFLOAT_S8_UINT";
-		case VK_FORMAT_UNDEFINED:
-			return "VK_FORMAT_UNDEFINED";
-		default:
-			return "VK_FORMAT_INVALID";
-	}
-}
-
-const std::string to_string(VkPresentModeKHR present_mode)
-{
-	switch (present_mode)
-	{
-		case VK_PRESENT_MODE_MAILBOX_KHR:
-			return "VK_PRESENT_MODE_MAILBOX_KHR";
-		case VK_PRESENT_MODE_IMMEDIATE_KHR:
-			return "VK_PRESENT_MODE_IMMEDIATE_KHR";
-		case VK_PRESENT_MODE_FIFO_KHR:
-			return "VK_PRESENT_MODE_FIFO_KHR";
-		case VK_PRESENT_MODE_FIFO_RELAXED_KHR:
-			return "VK_PRESENT_MODE_FIFO_RELAXED_KHR";
-		case VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR:
-			return "VK_PRESENT_MODE_SHARED_CONTINUOUS_REFRESH_KHR";
-		case VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR:
-			return "VK_PRESENT_MODE_SHARED_DEMAND_REFRESH_KHR";
-		default:
-			return "Unknown Present Mode";
-	}
-}
-
-const std::string to_string(VkResult result)
-{
-	switch (result)
-	{
-#define STR(r)   \
-	case VK_##r: \
-		return #r
-		STR(NOT_READY);
-		STR(TIMEOUT);
-		STR(EVENT_SET);
-		STR(EVENT_RESET);
-		STR(INCOMPLETE);
-		STR(ERROR_OUT_OF_HOST_MEMORY);
-		STR(ERROR_OUT_OF_DEVICE_MEMORY);
-		STR(ERROR_INITIALIZATION_FAILED);
-		STR(ERROR_DEVICE_LOST);
-		STR(ERROR_MEMORY_MAP_FAILED);
-		STR(ERROR_LAYER_NOT_PRESENT);
-		STR(ERROR_EXTENSION_NOT_PRESENT);
-		STR(ERROR_FEATURE_NOT_PRESENT);
-		STR(ERROR_INCOMPATIBLE_DRIVER);
-		STR(ERROR_TOO_MANY_OBJECTS);
-		STR(ERROR_FORMAT_NOT_SUPPORTED);
-		STR(ERROR_SURFACE_LOST_KHR);
-		STR(ERROR_NATIVE_WINDOW_IN_USE_KHR);
-		STR(SUBOPTIMAL_KHR);
-		STR(ERROR_OUT_OF_DATE_KHR);
-		STR(ERROR_INCOMPATIBLE_DISPLAY_KHR);
-		STR(ERROR_VALIDATION_FAILED_EXT);
-		STR(ERROR_INVALID_SHADER_NV);
-#undef STR
-		default:
-			return "UNKNOWN_ERROR";
-	}
-}
-
-const std::string to_string(VkPhysicalDeviceType type)
-{
-	switch (type)
-	{
-#define STR(r)                        \
-	case VK_PHYSICAL_DEVICE_TYPE_##r: \
-		return #r
-		STR(OTHER);
-		STR(INTEGRATED_GPU);
-		STR(DISCRETE_GPU);
-		STR(VIRTUAL_GPU);
-#undef STR
-		default:
-			return "UNKNOWN_DEVICE_TYPE";
-	}
-}
-
-const std::string to_string(VkSurfaceTransformFlagBitsKHR transform_flag)
-{
-	switch (transform_flag)
-	{
-		case VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR:
-			return "SURFACE_TRANSFORM_IDENTITY";
-		case VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR:
-			return "SURFACE_TRANSFORM_ROTATE_90";
-		case VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR:
-			return "SURFACE_TRANSFORM_ROTATE_180";
-		case VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR:
-			return "SURFACE_TRANSFORM_ROTATE_270";
-		case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_BIT_KHR:
-			return "SURFACE_TRANSFORM_HORIZONTAL_MIRROR";
-		case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90_BIT_KHR:
-			return "SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_90";
-		case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180_BIT_KHR:
-			return "SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_180";
-		case VK_SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270_BIT_KHR:
-			return "SURFACE_TRANSFORM_HORIZONTAL_MIRROR_ROTATE_270";
-		case VK_SURFACE_TRANSFORM_INHERIT_BIT_KHR:
-			return "SURFACE_TRANSFORM_INHERIT";
-		case VK_SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM_KHR:
-			return "SURFACE_TRANSFORM_FLAG_BITS_MAX_ENUM";
-		default:
-			return "[Unknown transform flag]";
-	}
-}
-
-const std::string to_string(VkSurfaceFormatKHR surface_format)
-{
-	std::string surface_format_string = to_string(surface_format.format) + ", ";
-
-	switch (surface_format.colorSpace)
-	{
-		case VK_COLORSPACE_SRGB_NONLINEAR_KHR:
-			surface_format_string += "VK_COLORSPACE_SRGB_NONLINEAR_KHR";
-			break;
-		default:
-			surface_format_string += "UNKNOWN COLOR SPACE";
-	}
-	return surface_format_string;
-}
-
-const std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha)
-{
-	switch (composite_alpha)
-	{
-		case VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR:
-			return "VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR";
-		case VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR:
-			return "VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR";
-		case VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR:
-			return "VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR";
-		case VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR:
-			return "VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR";
-		case VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR:
-			return "VK_COMPOSITE_ALPHA_FLAG_BITS_MAX_ENUM_KHR";
-		default:
-			return "UNKNOWN COMPOSITE ALPHA FLAG";
-	}
-}
-
-const std::string to_string(VkImageUsageFlagBits image_usage)
-{
-	switch (image_usage)
-	{
-		case VK_IMAGE_USAGE_TRANSFER_SRC_BIT:
-			return "VK_IMAGE_USAGE_TRANSFER_SRC_BIT";
-		case VK_IMAGE_USAGE_TRANSFER_DST_BIT:
-			return "VK_IMAGE_USAGE_TRANSFER_DST_BIT";
-		case VK_IMAGE_USAGE_SAMPLED_BIT:
-			return "VK_IMAGE_USAGE_SAMPLED_BIT";
-		case VK_IMAGE_USAGE_STORAGE_BIT:
-			return "VK_IMAGE_USAGE_STORAGE_BIT";
-		case VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT:
-			return "VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT";
-		case VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT:
-			return "VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT";
-		case VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT:
-			return "VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT";
-		case VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT:
-			return "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT";
-		case VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM:
-			return "VK_IMAGE_USAGE_FLAG_BITS_MAX_ENUM";
-		default:
-			return "UNKNOWN IMAGE USAGE FLAG";
 	}
 }
 
@@ -974,4 +546,91 @@ void insert_image_memory_barrier(
 	    0, nullptr,
 	    1, &barrier);
 }
+namespace gbuffer
+{
+std::vector<LoadStoreInfo> get_load_all_store_swapchain()
+{
+	// Load every attachment and store only swapchain
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
+}
+
+std::vector<LoadStoreInfo> get_clear_all_store_swapchain()
+{
+	// Clear every attachment and store only swapchain
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+	return load_store;
+}
+
+std::vector<LoadStoreInfo> get_clear_store_all()
+{
+	// Clear and store every attachment
+	std::vector<LoadStoreInfo> load_store{4};
+
+	// Swapchain
+	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Depth
+	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Albedo
+	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	// Normal
+	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_STORE;
+
+	return load_store;
+}
+
+std::vector<VkClearValue> get_clear_value()
+{
+	// Clear values
+	std::vector<VkClearValue> clear_value{4};
+	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clear_value[1].depthStencil = {0.0f, ~0U};
+	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+
+	return clear_value;
+}
+}        // namespace gbuffer
+
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -112,19 +112,26 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 	return spirv;
 }
 
-void ShaderModule::set_resource_dynamic(const std::string &resource_name)
+void ShaderModule::set_resource_mode(const ShaderResourceMode &mode, const std::string &resource_name)
 {
 	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
 
 	if (it != resources.end())
 	{
-		if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
+		if (mode == ShaderResourceMode::Dynamic)
 		{
-			it->dynamic = true;
+			if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
+			{
+				it->mode = mode;
+			}
+			else
+			{
+				LOGW("Resource `{}` does not support dynamic.", resource_name);
+			}
 		}
 		else
 		{
-			LOGW("Resource `{}` does not support dynamic.", resource_name);
+			it->mode = mode;
 		}
 	}
 	else
@@ -143,6 +150,14 @@ ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&
 size_t ShaderVariant::get_id() const
 {
 	return id;
+}
+
+void ShaderVariant::add_definitions(const std::vector<std::string> &definitions)
+{
+	for (auto &definition : definitions)
+	{
+		add_define(definition);
+	}
 }
 
 void ShaderVariant::add_define(const std::string &def)
@@ -174,7 +189,7 @@ void ShaderVariant::add_undefine(const std::string &undef)
 
 void ShaderVariant::add_runtime_array_size(const std::string &runtime_array_name, size_t size)
 {
-	if (runtime_array_sizes.find(runtime_array_name) != runtime_array_sizes.end())
+	if (runtime_array_sizes.find(runtime_array_name) == runtime_array_sizes.end())
 	{
 		runtime_array_sizes.insert({runtime_array_name, size});
 	}

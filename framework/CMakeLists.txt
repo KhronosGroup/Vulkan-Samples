@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -63,14 +63,18 @@ set(COMMON_FILES
     # Header Files
     common/vk_common.h
     common/vk_initializers.h
+    common/glm_common.h 
+    common/resource_caching.h
     common/logging.h
     common/helpers.h
     common/error.h
     common/utils.h
+    common/strings.h
     # Source Files
-    common/vk_common.cpp
     common/error.cpp
-    common/utils.cpp)
+    common/vk_common.cpp
+    common/utils.cpp
+    common/strings.cpp)
 
 set(GEOMETRY_FILES
     # Header Files
@@ -96,11 +100,15 @@ set(RENDERING_FILES
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
-    rendering/subpasses/scene_subpass.h
+    rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
+    rendering/subpasses/geometry_subpass.h
+    rendering/subpasses/postprocessing_subpass.h
     # Source files
-    rendering/subpasses/scene_subpass.cpp
-    rendering/subpasses/lighting_subpass.cpp)
+    rendering/subpasses/forward_subpass.cpp
+    rendering/subpasses/lighting_subpass.cpp
+    rendering/subpasses/geometry_subpass.cpp
+    rendering/subpasses/postprocessing_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -120,6 +128,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/camera.h
     scene_graph/components/perspective_camera.h
     scene_graph/components/image.h
+    scene_graph/components/light.h
     scene_graph/components/material.h
     scene_graph/components/mesh.h
     scene_graph/components/pbr_material.h
@@ -135,6 +144,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/camera.cpp
     scene_graph/components/perspective_camera.cpp
     scene_graph/components/image.cpp
+    scene_graph/components/light.cpp
     scene_graph/components/material.cpp
     scene_graph/components/mesh.cpp
     scene_graph/components/pbr_material.cpp
@@ -156,6 +166,8 @@ set(SCENE_GRAPH_SCRIPTS_FILES
 
 set(CORE_FILES
     # Header Files
+    core/instance.h
+    core/physical_device.h
     core/device.h
     core/shader_module.h
     core/pipeline_layout.h
@@ -170,10 +182,13 @@ set(CORE_FILES
     core/buffer.h
     core/image.h
     core/image_view.h
+    core/instance.h
     core/sampler.h
     core/framebuffer.h
     core/render_pass.h
     # Source Files
+    core/instance.cpp
+    core/physical_device.cpp
     core/device.cpp
     core/image.cpp
     core/shader_module.cpp
@@ -189,6 +204,7 @@ set(CORE_FILES
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
+    core/instance.cpp
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp)
@@ -198,6 +214,9 @@ set(PLATFORM_FILES
     platform/application.h
     platform/options.h
     platform/platform.h
+    platform/window.h
+    platform/headless_window.h
+    platform/glfw_window.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
@@ -205,48 +224,67 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/options.cpp
     platform/platform.cpp
+    platform/window.cpp
+    platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp)
 
-# Add files based on platform
-if(ANDROID)
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/android/android_platform.h
-        # Source Files
-        platform/android/android_platform.cpp)
-elseif(DIRECT_TO_DISPLAY)
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/linux/linux_d2d_platform.h
-        # Source Files
-        platform/linux/linux_d2d_platform.cpp)
-else()
-    list(APPEND PLATFORM_FILES
-        # Header Files
-        platform/glfw_platform.h
-        # Source Files
-        platform/glfw_platform.cpp)
+set(GRAPHING_FILES
+    # Header Files
+    graphing/graph.h
+    graphing/graph_node.h
+    graphing/scene_graph.h
+    graphing/framework_graph.h
 
-    if(WIN32)
-        list(APPEND PLATFORM_FILES
-            # Header Files
-            platform/windows/windows_platform.h
-            # Source Files
-            platform/windows/windows_platform.cpp)
-    else()
-        list(APPEND PLATFORM_FILES
-            # Header Files
-            platform/linux/linux_platform.h
-            # Source Files
-            platform/linux/linux_platform.cpp)
-    endif()
-endif()
+    # Source Files
+    graphing/graph.cpp
+    graphing/graph_node.cpp
+    graphing/scene_graph.cpp
+    graphing/framework_graph.cpp)
+
+set(ANDROID_FILES
+    # Header Files
+    platform/android/android_platform.h
+    platform/android/android_window.h
+    # Source Files
+    platform/android/android_platform.cpp
+    platform/android/android_window.cpp)
+
+set(WINDOWS_FILES
+    # Header Files
+    platform/windows/windows_platform.h
+    # Source Files
+    platform/windows/windows_platform.cpp)
+
+set(UNIX_FILES
+    # Header Files
+    platform/unix/unix_platform.h
+    # Source Files
+    platform/unix/unix_platform.cpp)
+
+set(GLFW_FILES
+    # Header Files
+    platform/glfw_window.h
+    # Source Files
+    platform/glfw_window.cpp)
+
+set(LINUX_D2D_FILES
+    # Header Files
+    platform/unix/unix_d2d_platform.h
+    platform/unix/direct_window.h
+    # Source Files
+    platform/unix/unix_d2d_platform.cpp
+    platform/unix/direct_window.cpp) 
 
 source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
+source_group("platform\\" FILES ${GLFW_FILES})
+source_group("platform\\windows" FILES ${WINDOWS_FILES})
+source_group("platform\\android" FILES ${ANDROID_FILES})
+source_group("platform\\unix" FILES ${UNIX_FILES})
+source_group("platform\\unix" FILES ${LINUX_D2D_FILES})
 source_group("core\\" FILES ${CORE_FILES})
 source_group("geometry\\" FILES ${GEOMETRY_FILES})
 source_group("rendering\\" FILES ${RENDERING_FILES})
@@ -254,6 +292,7 @@ source_group("rendering\\subpasses" FILES ${RENDERING_SUBPASSES_FILES})
 source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
+source_group("graphing\\" FILES ${GRAPHING_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
@@ -265,20 +304,47 @@ set(PROJECT_FILES
     ${RENDERING_SUBPASSES_FILES}
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
-    ${SCENE_GRAPH_SCRIPTS_FILES})
+    ${SCENE_GRAPH_SCRIPTS_FILES}
+    ${GRAPHING_FILES})
 
-vulkan_samples_pch(PROJECT_FILES pch.cpp)
-
-if(MSVC)
-  # Enable parallel build
-  add_definitions(/MP)
+# Add files based on platform
+if(VKB_DIRECT_2_DISPLAY)
+    message(STATUS "VKB_DIRECT_2_DISPLAY enabled, forcing D2D support")
+    list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
+else()
+    # Add files based on platform
+    if(ANDROID)
+        list(APPEND PROJECT_FILES ${ANDROID_FILES})
+        message(STATUS "Android platform detected")
+    else()
+        if(DIRECT_TO_DISPLAY)
+            list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
+            message(STATUS "Unix d2d platform detected")
+        else()
+            list(APPEND PROJECT_FILES ${GLFW_FILES})
+            if(WIN32)
+                list(APPEND PROJECT_FILES ${WINDOWS_FILES})
+                message(STATUS "Windows platform detected")
+            else()
+                list(APPEND PROJECT_FILES ${UNIX_FILES})
+                message(STATUS "Unix platform detected")
+            endif()
+        endif()
+    endif()
 endif()
+
+# Pre compiled headers
+vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
 # compiler flags based on compiler type
 if(NOT MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC -fexceptions)
+endif()
+
+if(MSVC)
+    target_compile_options(${PROJECT_NAME} PUBLIC /MP)
 endif()
 
 if(${VKB_VALIDATION_LAYERS})

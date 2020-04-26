@@ -28,12 +28,20 @@ class Device;
  * @brief An allocation of vulkan memory; different buffer allocations,
  *        with different offset and size, may come from the same Vulkan buffer
  */
-class BufferAllocation : public NonCopyable
+class BufferAllocation
 {
   public:
 	BufferAllocation() = default;
 
 	BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset);
+
+	BufferAllocation(const BufferAllocation &) = delete;
+
+	BufferAllocation(BufferAllocation &&) = default;
+
+	BufferAllocation &operator=(const BufferAllocation &) = delete;
+
+	BufferAllocation &operator=(BufferAllocation &&) = default;
 
 	void update(const std::vector<uint8_t> &data, uint32_t offset = 0);
 
@@ -64,7 +72,7 @@ class BufferAllocation : public NonCopyable
 /**
  * @brief Helper class which handles multiple allocation from the same underlying Vulkan buffer.
  */
-class BufferBlock : public NonCopyable
+class BufferBlock
 {
   public:
 	BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage);
@@ -104,7 +112,7 @@ class BufferBlock : public NonCopyable
  * We re-use descriptor sets: we only need one for the corresponding buffer infos (and we only
  * have one VkBuffer per BufferBlock), then it is bound and we use dynamic offsets.
  */
-class BufferPool : public NonCopyable
+class BufferPool
 {
   public:
 	BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -117,7 +125,7 @@ class BufferPool : public NonCopyable
 	Device &device;
 
 	/// List of blocks requested
-	std::vector<BufferBlock> buffer_blocks;
+	std::vector<std::unique_ptr<BufferBlock>> buffer_blocks;
 
 	/// Minimum size of the blocks
 	VkDeviceSize block_size{0};

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,15 +23,20 @@ namespace vkb
 {
 class Device;
 
-class FencePool : public NonCopyable
+class FencePool
 {
   public:
 	FencePool(Device &device);
 
+	FencePool(const FencePool &) = delete;
+
+	FencePool(FencePool &&other) = delete;
+
 	~FencePool();
 
-	/// @brief Move construct
-	FencePool(FencePool &&other) = default;
+	FencePool &operator=(const FencePool &) = delete;
+
+	FencePool &operator=(FencePool &&) = delete;
 
 	VkFence request_fence();
 

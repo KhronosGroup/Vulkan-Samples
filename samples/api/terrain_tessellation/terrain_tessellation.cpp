@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,12 +66,14 @@ TerrainTessellation::~TerrainTessellation()
 	}
 }
 
-void TerrainTessellation::get_device_features()
+void TerrainTessellation::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	auto &requested_features = gpu.get_mutable_requested_features();
+
 	// Tessellation shader support is required for this example
-	if (supported_device_features.tessellationShader)
+	if (gpu.get_features().tessellationShader)
 	{
-		requested_device_features.tessellationShader = VK_TRUE;
+		requested_features.tessellationShader = VK_TRUE;
 	}
 	else
 	{
@@ -79,21 +81,21 @@ void TerrainTessellation::get_device_features()
 	}
 
 	// Fill mode non solid is required for wireframe display
-	if (supported_device_features.fillModeNonSolid)
+	if (gpu.get_features().fillModeNonSolid)
 	{
-		requested_device_features.fillModeNonSolid = VK_TRUE;
+		requested_features.fillModeNonSolid = VK_TRUE;
 	}
 
 	// Pipeline statistics
-	if (supported_device_features.pipelineStatisticsQuery)
+	if (gpu.get_features().pipelineStatisticsQuery)
 	{
-		requested_device_features.pipelineStatisticsQuery = VK_TRUE;
+		requested_features.pipelineStatisticsQuery = VK_TRUE;
 	}
 
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		requested_features.samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -118,7 +120,7 @@ void TerrainTessellation::setup_query_result_buffer()
 	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
 
 	// Create query pool
-	if (get_device().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		VkQueryPoolCreateInfo query_pool_info = {};
 		query_pool_info.sType                 = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
@@ -188,7 +190,7 @@ void TerrainTessellation::load_assets()
 	sampler_create_info.minLod       = 0.0f;
 	sampler_create_info.maxLod       = static_cast<float>(textures.terrain_array.image->get_mipmaps().size());
 	sampler_create_info.borderColor  = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-	if (get_device().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
 		sampler_create_info.maxAnisotropy    = 4.0f;
 		sampler_create_info.anisotropyEnable = VK_TRUE;
@@ -206,7 +208,7 @@ void TerrainTessellation::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -223,7 +225,7 @@ void TerrainTessellation::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		if (get_device().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			vkCmdResetQueryPool(draw_cmd_buffers[i], query_pool, 0, 2);
 		}
@@ -246,7 +248,7 @@ void TerrainTessellation::build_command_buffers()
 		draw_model(skysphere, draw_cmd_buffers[i]);
 
 		// Terrain
-		if (get_device().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			// Begin pipeline statistics query
 			vkCmdBeginQuery(draw_cmd_buffers[i], query_pool, 0, 0);
@@ -257,7 +259,7 @@ void TerrainTessellation::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, terrain.vertices->get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], terrain.indices->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 		vkCmdDrawIndexed(draw_cmd_buffers[i], terrain.index_count, 1, 0, 0, 0);
-		if (get_device().get_features().pipelineStatisticsQuery)
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			// End pipeline statistics query
 			vkCmdEndQuery(draw_cmd_buffers[i], query_pool, 0);
@@ -561,11 +563,12 @@ void TerrainTessellation::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
 	        VK_TRUE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -636,7 +639,7 @@ void TerrainTessellation::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.terrain));
 
 	// Terrain wireframe pipeline
-	if (get_device().get_features().fillModeNonSolid)
+	if (get_device().get_gpu().get_features().fillModeNonSolid)
 	{
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.wireframe));
@@ -698,7 +701,7 @@ void TerrainTessellation::update_uniform_buffers()
 		ubo_tess.tessellation_factor = 0.0f;
 	}
 
-	memcpy(uniform_buffers.terrain_tessellation->map(), &ubo_tess, sizeof(ubo_tess));
+	uniform_buffers.terrain_tessellation->convert_and_update(ubo_tess);
 
 	if (!tessellation)
 	{
@@ -721,7 +724,7 @@ void TerrainTessellation::draw()
 	// Submit to queue
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 
-	if (get_device().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		// Read query results for displaying in next frame
 		get_query_results();
@@ -737,15 +740,16 @@ bool TerrainTessellation::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-12.0f, 159.0f, 0.0f));
 	camera.set_translation(glm::vec3(18.0f, 22.5f, 57.5f));
 	camera.translation_speed = 7.5f;
 
 	load_assets();
 	generate_terrain();
-	if (get_device().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		setup_query_result_buffer();
 	}
@@ -783,7 +787,7 @@ void TerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			update_uniform_buffers();
 		}
-		if (get_device().get_features().fillModeNonSolid)
+		if (get_device().get_gpu().get_features().fillModeNonSolid)
 		{
 			if (drawer.checkbox("Wireframe", &wireframe))
 			{
@@ -791,7 +795,7 @@ void TerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 		}
 	}
-	if (get_device().get_features().pipelineStatisticsQuery)
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		if (drawer.header("Pipeline statistics"))
 		{

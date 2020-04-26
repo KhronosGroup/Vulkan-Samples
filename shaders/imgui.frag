@@ -1,6 +1,5 @@
 #version 320 es
-/* Copyright (c) 2016, Sascha Willems
- * Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +15,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 precision mediump float;
 
 layout (binding = 0) uniform sampler2D fontSampler;

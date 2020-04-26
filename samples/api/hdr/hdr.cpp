@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,12 +65,12 @@ HDR::~HDR()
 	}
 }
 
-void HDR::get_device_features()
+void HDR::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -80,7 +80,7 @@ void HDR::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass            = render_pass;
@@ -101,7 +101,7 @@ void HDR::build_command_buffers()
 			std::array<VkClearValue, 3> clear_values;
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 			clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[2].depthStencil = {1.0f, 0};
+			clear_values[2].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.renderPass               = offscreen.render_pass;
@@ -146,7 +146,7 @@ void HDR::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			// Bloom filter
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -183,7 +183,7 @@ void HDR::build_command_buffers()
 		{
 			VkClearValue clear_values[2];
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {1.0f, 0};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			// Final composition
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -668,11 +668,12 @@ void HDR::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
 	        VK_FALSE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -837,12 +838,12 @@ void HDR::update_uniform_buffers()
 	ubo_vs.projection       = camera.matrices.perspective;
 	ubo_vs.modelview        = camera.matrices.view * models.transforms[models.object_index];
 	ubo_vs.skybox_modelview = camera.matrices.view;
-	memcpy(uniform_buffers.matrices->map(), &ubo_vs, sizeof(ubo_vs));
+	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
 void HDR::update_params()
 {
-	memcpy(uniform_buffers.params->map(), &ubo_params, sizeof(ubo_params));
+	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
 void HDR::draw()
@@ -864,7 +865,9 @@ bool HDR::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 256.0f);
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();

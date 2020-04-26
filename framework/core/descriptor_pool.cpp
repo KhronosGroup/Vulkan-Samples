@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,17 +59,27 @@ DescriptorPool::DescriptorPool(Device &                   device,
 
 DescriptorPool::~DescriptorPool()
 {
-	// Destroy all descriptor sets
-	for (auto it : set_pool_mapping)
-	{
-		vkFreeDescriptorSets(device.get_handle(), pools[it.second], 1, &it.first);
-	}
-
 	// Destroy all descriptor pools
 	for (auto pool : pools)
 	{
 		vkDestroyDescriptorPool(device.get_handle(), pool, nullptr);
 	}
+}
+
+void DescriptorPool::reset()
+{
+	// Reset all descriptor pools
+	for (auto pool : pools)
+	{
+		vkResetDescriptorPool(device.get_handle(), pool, 0);
+	}
+
+	// Clear internal tracking of descriptor set allocations
+	std::fill(pool_sets_count.begin(), pool_sets_count.end(), 0);
+	set_pool_mapping.clear();
+
+	// Reset the pool index from which descriptor sets are allocated
+	pool_index = 0;
 }
 
 const DescriptorSetLayout &DescriptorPool::get_descriptor_set_layout() const
@@ -92,16 +102,15 @@ VkDescriptorSet DescriptorPool::allocate()
 
 	VkDescriptorSetLayout set_layout = get_descriptor_set_layout().get_handle();
 
-	VkDescriptorSetAllocateInfo allocInfo{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
-
-	allocInfo.descriptorPool     = pools[pool_index];
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts        = &set_layout;
+	VkDescriptorSetAllocateInfo alloc_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO};
+	alloc_info.descriptorPool     = pools[pool_index];
+	alloc_info.descriptorSetCount = 1;
+	alloc_info.pSetLayouts        = &set_layout;
 
 	VkDescriptorSet handle = VK_NULL_HANDLE;
 
 	// Allocate a new descriptor set from the current pool
-	auto result = vkAllocateDescriptorSets(device.get_handle(), &allocInfo, &handle);
+	auto result = vkAllocateDescriptorSets(device.get_handle(), &alloc_info, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -151,10 +160,22 @@ std::uint32_t DescriptorPool::find_available_pool(std::uint32_t search_index)
 	{
 		VkDescriptorPoolCreateInfo create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO};
 
-		create_info.flags         = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 		create_info.poolSizeCount = to_u32(pool_sizes.size());
 		create_info.pPoolSizes    = pool_sizes.data();
 		create_info.maxSets       = pool_max_sets;
+
+		// We do not set FREE_DESCRIPTOR_SET_BIT as we do not need to free individual descriptor sets
+		create_info.flags = 0;
+
+		// Check descriptor set layout and enable the required flags
+		auto &binding_flags = descriptor_set_layout->get_binding_flags();
+		for (auto binding_flag : binding_flags)
+		{
+			if (binding_flag & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT)
+			{
+				create_info.flags |= VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
+			}
+		}
 
 		VkDescriptorPool handle = VK_NULL_HANDLE;
 

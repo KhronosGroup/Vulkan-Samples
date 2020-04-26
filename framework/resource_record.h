@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,7 +48,10 @@ class ResourceRecord
 
 	const std::ostringstream &get_stream();
 
-	size_t register_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant);
+	size_t register_shader_module(VkShaderStageFlagBits stage,
+	                              const ShaderSource &  glsl_source,
+	                              const std::string &   entry_point,
+	                              const ShaderVariant & shader_variant);
 
 	size_t register_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 

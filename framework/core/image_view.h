@@ -25,14 +25,20 @@ namespace vkb
 {
 namespace core
 {
-class ImageView : public NonCopyable
+class ImageView
 {
   public:
 	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED);
 
+	ImageView(ImageView &) = delete;
+
 	ImageView(ImageView &&other);
 
 	~ImageView();
+
+	ImageView &operator=(const ImageView &) = delete;
+
+	ImageView &operator=(ImageView &&) = delete;
 
 	const Image &get_image() const;
 

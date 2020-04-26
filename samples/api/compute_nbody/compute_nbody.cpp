@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,7 +25,9 @@ ComputeNBody::ComputeNBody()
 {
 	title       = "Compute shader N-body system";
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -57,12 +59,12 @@ ComputeNBody::~ComputeNBody()
 	}
 }
 
-void ComputeNBody::get_device_features()
+void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -85,7 +87,7 @@ void ComputeNBody::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -624,7 +626,7 @@ void ComputeNBody::prepare_compute()
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(2, offsetof(SpecializationData, power), sizeof(float)));
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(3, offsetof(SpecializationData, soften), sizeof(float)));
 
-	specialization_data.shaderd_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	specialization_data.shaderd_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	specialization_data.gravity = 0.002f;
 	specialization_data.power   = 0.75f;
@@ -778,7 +780,7 @@ void ComputeNBody::prepare_uniform_buffers()
 void ComputeNBody::update_compute_uniform_buffers(float delta_time)
 {
 	compute.ubo.delta_time = paused ? 0.0f : delta_time;
-	memcpy(compute.uniform_buffer->map(), &compute.ubo, sizeof(compute.ubo));
+	compute.uniform_buffer->convert_and_update(compute.ubo);
 }
 
 void ComputeNBody::update_graphics_uniform_buffers()
@@ -786,7 +788,7 @@ void ComputeNBody::update_graphics_uniform_buffers()
 	graphics.ubo.projection = camera.matrices.perspective;
 	graphics.ubo.view       = camera.matrices.view;
 	graphics.ubo.screenDim  = glm::vec2((float) width, (float) height);
-	memcpy(graphics.uniform_buffer->map(), &graphics.ubo, sizeof(graphics.ubo));
+	graphics.uniform_buffer->convert_and_update(graphics.ubo);
 }
 
 void ComputeNBody::draw()

@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "platform/glfw_platform.h"
+#include "platform/platform.h"
 
 namespace vkb
 {
-class WindowsPlatform : public GlfwPlatform
+class WindowsPlatform : public Platform
 {
   public:
 	WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
@@ -31,6 +31,13 @@ class WindowsPlatform : public GlfwPlatform
 
 	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
+	virtual void create_window() override;
+
 	virtual void terminate(ExitCode code) override;
+
+	virtual const char *get_surface_extension() override;
+
+  private:
+	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

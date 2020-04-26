@@ -108,6 +108,11 @@ class Timer
 		return duration.count();
 	}
 
+	/**
+	 * @brief Check if the timer is running
+	 */
+	bool is_running() const;
+
   private:
 	bool running{false};
 

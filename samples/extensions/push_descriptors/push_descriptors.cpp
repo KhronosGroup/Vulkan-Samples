@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -36,8 +36,8 @@ PushDescriptors::PushDescriptors()
 	title = "Push descriptors";
 
 	// Enable extension required for push descriptors
-	instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	device_extensions.push_back(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_PUSH_DESCRIPTOR_EXTENSION_NAME);
 }
 
 PushDescriptors::~PushDescriptors()
@@ -57,11 +57,12 @@ PushDescriptors::~PushDescriptors()
 	}
 }
 
-void PushDescriptors::get_device_features()
+void PushDescriptors::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	if (supported_device_features.samplerAnisotropy)
+	// Enable anisotropic filtering if supported
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
@@ -71,7 +72,7 @@ void PushDescriptors::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -195,8 +196,9 @@ void PushDescriptors::prepare_pipelines()
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -270,7 +272,7 @@ void PushDescriptors::update_uniform_buffers()
 {
 	ubo_scene.projection = camera.matrices.perspective;
 	ubo_scene.view       = camera.matrices.view;
-	memcpy(uniform_buffers.scene->map(), &ubo_scene, sizeof(UboScene));
+	uniform_buffers.scene->convert_and_update(ubo_scene);
 }
 
 void PushDescriptors::update_cube_uniform_buffers(float delta_time)
@@ -283,7 +285,7 @@ void PushDescriptors::update_cube_uniform_buffers(float delta_time)
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.x), glm::vec3(1.0f, 0.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.y), glm::vec3(0.0f, 1.0f, 0.0f));
 		cube.model_mat = glm::rotate(cube.model_mat, glm::radians(cube.rotation.z), glm::vec3(0.0f, 0.0f, 1.0f));
-		memcpy(cube.uniform_buffer->map(), &cube.model_mat, sizeof(glm::mat4));
+		cube.uniform_buffer->convert_and_update(cube.model_mat);
 	}
 
 	if (animate)
@@ -329,7 +331,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	}
 
 	// Get device push descriptor properties (to display them)
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance, "vkGetPhysicalDeviceProperties2KHR"));
+	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
 	if (!vkGetPhysicalDeviceProperties2KHR)
 	{
 		throw std::runtime_error("Could not get a valid function pointer for vkGetPhysicalDeviceProperties2KHR");
@@ -338,14 +340,15 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	push_descriptor_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
 	device_properties.sType          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext          = &push_descriptor_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_physical_device(), &device_properties);
+	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	/*
 		End of extension specific functions
 	*/
 
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, static_cast<float>(width) / height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -5.0f));
 

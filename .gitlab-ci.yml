@@ -4,14 +4,6 @@ stages:
   - Test
   - Package
 
-cache:
-  key: ${CI_PIPELINE_ID}
-  paths:
-    - build/windows
-    - build/linux
-    - build/android
-    - output
-
 Doxygen:
   stage: Check
   image: khronosgroup/vulkan-samples
@@ -73,7 +65,7 @@ Linux:
   artifacts:
     paths:
       - build/linux
-    expire_in: 1h
+    expire_in: 2h
   tags:
     - linux
     - docker
@@ -88,9 +80,10 @@ Windows:
   artifacts:
     paths:
       - build/windows
-    expire_in: 1d
+    expire_in: 2h
   tags:
     - gpu
+    - windows
   script:
     - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
     - cmake --build build/windows --target vulkan_samples --config Release
@@ -100,6 +93,10 @@ Android:
   image: khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
+  artifacts:
+    paths:
+      - build/android
+    expire_in: 2h
   tags:
     - linux
     - docker
@@ -134,6 +131,7 @@ SystemTest:
    - Windows
   tags:
    - gpu
+   - windows
   script:
    - cd tests/system_test
    - python system_test.py -Bbuild/windows -CRelease -D -P
@@ -155,6 +153,7 @@ WindowsExternalProject:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
     - gpu
+    - windows
   script:
     - cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,37 +27,54 @@ class Device;
 
 struct ShaderResource;
 
-// Caches DescriptorSet objects for the shader's set index.
-// Creates a DescriptorPool to allocate the DescriptorSet objects
-class DescriptorSetLayout : public NonCopyable
+/**
+ * @brief Caches DescriptorSet objects for the shader's set index.
+ *        Creates a DescriptorPool to allocate the DescriptorSet objects
+ */
+class DescriptorSetLayout
 {
   public:
-	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &set_resources);
+	/**
+	 * @brief Creates a descriptor set layout from a set of resources
+	 * @param device A valid Vulkan device
+	 * @param resource_set A grouping of shader resources belonging to the same set
+	 */
+	DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set);
+
+	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 
 	DescriptorSetLayout(DescriptorSetLayout &&other);
 
 	~DescriptorSetLayout();
 
-	VkDescriptorSetLayout get_handle() const;
+	DescriptorSetLayout &operator=(const DescriptorSetLayout &) = delete;
 
-	DescriptorPool &get_descriptor_pool();
+	DescriptorSetLayout &operator=(DescriptorSetLayout &&) = delete;
+
+	VkDescriptorSetLayout get_handle() const;
 
 	const std::vector<VkDescriptorSetLayoutBinding> &get_bindings() const;
 
-	bool get_layout_binding(uint32_t binding_index, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const uint32_t binding_index) const;
 
-	bool has_layout_binding(const std::string &name, VkDescriptorSetLayoutBinding &binding) const;
+	std::unique_ptr<VkDescriptorSetLayoutBinding> get_layout_binding(const std::string &name) const;
+
+	const std::vector<VkDescriptorBindingFlagsEXT> &get_binding_flags() const;
+
+	VkDescriptorBindingFlagsEXT get_layout_binding_flag(const uint32_t binding_index) const;
 
   private:
 	Device &device;
-
-	std::unique_ptr<DescriptorPool> descriptor_pool;
 
 	VkDescriptorSetLayout handle{VK_NULL_HANDLE};
 
 	std::vector<VkDescriptorSetLayoutBinding> bindings;
 
+	std::vector<VkDescriptorBindingFlagsEXT> binding_flags;
+
 	std::unordered_map<uint32_t, VkDescriptorSetLayoutBinding> bindings_lookup;
+
+	std::unordered_map<uint32_t, VkDescriptorBindingFlagsEXT> binding_flags_lookup;
 
 	std::unordered_map<std::string, uint32_t> resources_lookup;
 };

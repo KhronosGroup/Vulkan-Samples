@@ -30,21 +30,21 @@ find_package(Adb 1.0.39 REQUIRED)
 set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${DEVICE_DIR})
 
 execute_process(
-        COMMAND
-        ${ADB_COMMAND})
+     COMMAND
+     ${ADB_COMMAND})
 
 # Sync files
 
 set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${FOLDER_DIR} ${DEVICE_DIR})
 
 execute_process(
-        COMMAND
-        ${ADB_COMMAND}
-        RESULT_VARIABLE
-        ret_var
-        OUTPUT_VARIABLE
-        ret_msg
-        OUTPUT_STRIP_TRAILING_WHITESPACE)
+     COMMAND
+     ${ADB_COMMAND}
+     RESULT_VARIABLE
+     ret_var
+     OUTPUT_VARIABLE
+     ret_msg
+     OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT "${ret_var}" STREQUAL "0")
     message(WARNING "Could not sync ${FOLDER_DIR} to device:\n${ret_msg}")

@@ -43,7 +43,7 @@ struct SwapchainProperties
 	VkPresentModeKHR              present_mode;
 };
 
-class Swapchain : public NonCopyable
+class Swapchain
 {
   public:
 	/**
@@ -94,15 +94,15 @@ class Swapchain : public NonCopyable
 	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
 	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
-	/**
-	 * @brief Destructor
-	 */
+	Swapchain(const Swapchain &) = delete;
+
+	Swapchain(Swapchain &&other);
+
 	~Swapchain();
 
-	/**
-	 * @brief Move constructor
-	 */
-	Swapchain(Swapchain &&other);
+	Swapchain &operator=(const Swapchain &) = delete;
+
+	Swapchain &operator=(Swapchain &&) = delete;
 
 	void create();
 
@@ -127,6 +127,8 @@ class Swapchain : public NonCopyable
 	VkSurfaceKHR get_surface() const;
 
 	VkImageUsageFlags get_usage() const;
+
+	VkPresentModeKHR get_present_mode() const;
 
 	/**
 	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
@@ -164,6 +166,8 @@ class Swapchain : public NonCopyable
 	    {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	    {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	    {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+	VkPresentModeKHR present_mode{};
 
 	std::set<VkImageUsageFlagBits> image_usage_flags;
 };

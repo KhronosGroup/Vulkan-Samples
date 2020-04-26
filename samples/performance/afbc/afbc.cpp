@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -44,17 +44,18 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// We want AFBC disabled by default, hence we create swapchain with 'VK_IMAGE_USAGE_STORAGE_BIT'
-	std::set<VkImageUsageFlagBits> image_usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_STORAGE_BIT};
-	get_render_context().update_swapchain(image_usage);
+	// We want AFBC disabled at start-up
+	afbc_enabled = false;
+	recreate_swapchain();
 
 	load_scene("scenes/sponza/Sponza01.gltf");
-	auto &camera_node = add_free_camera("main_camera");
+
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
@@ -62,7 +63,7 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 	set_render_pipeline(std::move(render_pipeline));
 
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }
@@ -71,21 +72,27 @@ void AFBCSample::update(float delta_time)
 {
 	if (afbc_enabled != afbc_enabled_last_value)
 	{
-		std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
-
-		if (!afbc_enabled)
-		{
-			image_usage_flags.insert(VK_IMAGE_USAGE_STORAGE_BIT);
-		}
-
-		get_device().wait_idle();
-
-		get_render_context().update_swapchain(image_usage_flags);
+		recreate_swapchain();
 
 		afbc_enabled_last_value = afbc_enabled;
 	}
 
 	VulkanSample::update(delta_time);
+}
+
+void AFBCSample::recreate_swapchain()
+{
+	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
+
+	if (!afbc_enabled)
+	{
+		// To force-disable AFBC, set an invalid image usage flag
+		image_usage_flags.insert(VK_IMAGE_USAGE_STORAGE_BIT);
+	}
+
+	get_device().wait_idle();
+
+	get_render_context().update_swapchain(image_usage_flags);
 }
 
 void AFBCSample::draw_gui()

@@ -86,6 +86,10 @@ class Application
 
 	void set_benchmark_mode(bool benchmark_mode);
 
+	bool is_headless() const;
+
+	void set_headless(bool headless);
+
 	bool is_focused() const;
 
 	void set_focus(bool flag);
@@ -117,6 +121,8 @@ class Application
 	Timer timer;
 
 	bool benchmark_mode{false};
+
+	bool headless{false};
 
 	// The debug info of the app
 	DebugInfo debug_info{};

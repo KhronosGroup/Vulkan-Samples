@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include <android_native_app_glue.h>
 
-#include "common/vk_common.h"
 #include "platform/platform.h"
 
 namespace vkb
@@ -33,13 +32,13 @@ class AndroidPlatform : public Platform
 
 	virtual bool initialize(std::unique_ptr<Application> &&app) override;
 
-	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
+	virtual void create_window() override;
 
 	virtual void main_loop() override;
 
 	virtual void terminate(ExitCode code) override;
 
-	virtual void close() const override;
+	virtual const char *get_surface_extension() override;
 
 	/**
 	 * @brief Sends a notification in the task bar
@@ -53,13 +52,13 @@ class AndroidPlatform : public Platform
 	 */
 	void send_error_notification(const std::string &message);
 
-	float get_dpi_factor() const override;
-
 	android_app *get_android_app();
 
 	ANativeActivity *get_activity();
 
   private:
+	void poll_events();
+
 	android_app *app{nullptr};
 
 	std::string log_output;

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
+ * Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,6 +36,8 @@
 
 namespace vkb
 {
+class Window;
+
 /**
  * @brief Helper structure for fonts loaded from TTF
  */
@@ -163,13 +165,14 @@ class Drawer
 	/**
 	 * @brief Adds a label to the gui
 	 * @param formatstr The format string
-	 * @returns True if adding item was successful
 	 */
 	void text(const char *formatstr, ...);
 
   private:
 	bool dirty{false};
 };
+
+class VulkanSample;
 
 /**
  * @brief Vulkan helper class for Dear ImGui
@@ -191,17 +194,20 @@ class Gui
 		  public:
 			/**
 			 * @brief Constructs data for the graph
-			 * @param graph_label_format Format of the label
+			 * @param name Name of the Stat
+			 * @param format Format of the label
 			 * @param scale_factor Any scaling to apply to the data
 			 * @param has_fixed_max Whether the data should have a fixed max value
 			 * @param max_value The maximum value to use
 			 */
-			GraphData(const std::string &graph_label_format,
+			GraphData(const std::string &name,
+			          const std::string &format,
 			          float              scale_factor  = 1.0f,
 			          bool               has_fixed_max = false,
 			          float              max_value     = 0.0f);
 
-			std::string graph_label_format;
+			std::string name;
+			std::string format;
 			float       scale_factor;
 			bool        has_fixed_max;
 			float       max_value;
@@ -219,62 +225,83 @@ class Gui
 		void reset_max_value(const StatIndex index);
 
 		/// Per-statistic max values
-		std::map<StatIndex, GraphData> graph_map{
-		    {StatIndex::frame_times,
-		     {/* label = */ "Frame time: {:3.1f} ms",
-		      /* scale_factor = */ 1000.0f}},
-		    {StatIndex::cpu_cycles,
-		     {/* label = */ "CPU cycles: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::cpu_instructions,
-		     {/* label = */ "CPU inst: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::cache_miss_ratio,
-		     {/* label = */ "Cache misses: {:3.1f}%",
-		      /* scale_factor = */ 100.0f,
-		      /* has_fixed_max = */ true,
-		      /* max_value = */ 100.0f}},
-		    {StatIndex::branch_miss_ratio,
-		     {/* label = */ "Branch misses: {:3.1f}%",
-		      /* scale_factor = */ 100.0f,
-		      /* has_fixed_max = */ true,
-		      /* max_value = */ 100.0f}},
-
-		    {StatIndex::gpu_cycles,
-		     {/* label = */ "GPU cycles: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::vertex_compute_cycles,
-		     {/* label = */ "Vert cycles: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::tiles,
-		     {/* label = */ "Tiles: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::fragment_cycles,
-		     {/* label = */ "Frag cycles: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::fragment_jobs,
-		     {/* label = */ "Frag jobs: {:4.0f}/s"}},
-		    {StatIndex::tex_instr,
-		     {/* label = */ "Tex instr: {:4.0f} k/s",
-		      /* scale_factor = */ float(1e-3)}},
-		    {StatIndex::l2_ext_reads,
-		     {/* label = */ "Ext reads: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_writes,
-		     {/* label = */ "Ext writes: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_read_stalls,
-		     {/* label = */ "Ext read stalls: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_write_stalls,
-		     {/* label = */ "Ext write stalls: {:4.1f} M/s",
-		      /* scale_factor = */ float(1e-6)}},
-		    {StatIndex::l2_ext_read_bytes,
-		     {/* label = */ "Ext read bw: {:4.1f} MiB/s",
-		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
-		    {StatIndex::l2_ext_write_bytes,
-		     {/* label = */ "Ext write bw: {:4.1f} MiB/s",
-		      /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
+		std::map<StatIndex, GraphData>
+		    graph_map{
+		        {StatIndex::frame_times,
+		         {/* name = */ "Frame Times",
+		          /* format = */ "{:3.1f} ms",
+		          /* scale_factor = */ 1000.0f}},
+		        {StatIndex::cpu_cycles,
+		         {/* name = */ "CPU Cycles",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::cpu_instructions,
+		         {/* name = */ "CPU Instructions",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::cache_miss_ratio,
+		         {/* name = */ "Cache Miss Ratio",
+		          /* format = */ "{:3.1f}%",
+		          /* scale_factor = */ 100.0f,
+		          /* has_fixed_max = */ true,
+		          /* max_value = */ 100.0f}},
+		        {StatIndex::branch_miss_ratio,
+		         {/* name = */ "Branch Miss Ratio",
+		          /* format = */ "{:3.1f}%",
+		          /* scale_factor = */ 100.0f,
+		          /* has_fixed_max = */ true,
+		          /* max_value = */ 100.0f}},
+		        {StatIndex::gpu_cycles,
+		         {/* name = */ "GPU Cycles",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::vertex_compute_cycles,
+		         {/* name = */ "Vertex Compute Cycles",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::tiles,
+		         {/* name = */ "Tiles",
+		          /* format = */ "{:4.1f} k/s",
+		          /* scale_factor = */ float(1e-3)}},
+		        {StatIndex::killed_tiles,
+		         {/* name = */ "Tiles killed by CRC match",
+		          /* format = */ "{:4.1f} k/s",
+		          /* scale_factor = */ float(1e-3)}},
+		        {StatIndex::fragment_cycles,
+		         {/* name = */ "Fragment Cycles",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::fragment_jobs,
+		         {/* name = */ "Fragment Jobs",
+		          /* format = */ "{:4.0f}/s"}},
+		        {StatIndex::tex_cycles,
+		         {/* name = */ "Shader Texture Cycles",
+		          /* format = */ "{:4.0f} k/s",
+		          /* scale_factor = */ float(1e-3)}},
+		        {StatIndex::l2_ext_reads,
+		         {/* name = */ "External Reads",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::l2_ext_writes,
+		         {/* name = */ "External Writes",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::l2_ext_read_stalls,
+		         {/* name = */ "External Read Stalls",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::l2_ext_write_stalls,
+		         {/* name = */ "External Write Stalls",
+		          /* format = */ "{:4.1f} M/s",
+		          /* scale_factor = */ float(1e-6)}},
+		        {StatIndex::l2_ext_read_bytes,
+		         {/* name = */ "External Read Bytes",
+		          /* format = */ "{:4.1f} MiB/s",
+		          /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}},
+		        {StatIndex::l2_ext_write_bytes,
+		         {/* name = */ "External Write Bytes",
+		          /* format = */ "{:4.1f} MiB/s",
+		          /* scale_factor = */ 1.0f / (1024.0f * 1024.0f)}}};
 
 		float graph_height{50.0f};
 
@@ -307,12 +334,12 @@ class Gui
 
 	/**
 	 * @brief Initializes the Gui
-	 * @param render_context A vulkan render context
-	 * @param dpi_factor The dpi scale factor
-	 * @param font_size The font scale factor
-	 * @param explicit_update Whether this class should update its buffers explicitly every render
+	 * @param sample A vulkan render context
+	 * @param window A Window object from which to draw DPI and content scaling information
+	 * @param font_size The font size
+	 * @param explicit_update If true, update buffers every frame
 	 */
-	Gui(RenderContext &render_context, const float dpi_factor = 1.0, const float font_size = 21.0f, bool explicit_update = false);
+	Gui(VulkanSample &sample, const Window &window, const float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
@@ -432,7 +459,7 @@ class Gui
 
 	static const ImGuiWindowFlags info_flags;
 
-	RenderContext &render_context;
+	VulkanSample &sample;
 
 	std::unique_ptr<core::Buffer> vertex_buffer;
 
@@ -441,6 +468,9 @@ class Gui
 	size_t last_vertex_buffer_size;
 
 	size_t last_index_buffer_size;
+
+	///  Scale factor to apply due to a difference between the window and GL pixel sizes
+	float content_scale_factor{1.0f};
 
 	/// Scale factor to apply to the size of gui elements (expressed in dp)
 	float dpi_factor{1.0f};
@@ -480,6 +510,8 @@ class Gui
 
 	/// Whether or not the GUI has detected a multi touch gesture
 	bool two_finger_tap = false;
+
+	bool show_graph_file_output = false;
 };
 
 void Gui::new_frame()

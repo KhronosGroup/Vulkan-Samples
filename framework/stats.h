@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,6 +47,7 @@ enum class StatIndex
 	gpu_cycles,
 	vertex_compute_cycles,
 	tiles,
+	killed_tiles,
 	fragment_jobs,
 	fragment_cycles,
 	l2_reads_lookups,
@@ -57,7 +58,7 @@ enum class StatIndex
 	l2_ext_write_stalls,
 	l2_ext_read_bytes,
 	l2_ext_write_bytes,
-	tex_instr
+	tex_cycles
 };
 
 struct StatIndexHash

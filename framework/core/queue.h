@@ -26,13 +26,18 @@ namespace vkb
 class Device;
 class CommandBuffer;
 
-class Queue : NonCopyable
+class Queue
 {
   public:
 	Queue(Device &device, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
 
-	/// @brief Move construct
+	Queue(const Queue &) = default;
+
 	Queue(Queue &&other);
+
+	Queue &operator=(const Queue &) = delete;
+
+	Queue &operator=(Queue &&) = delete;
 
 	const Device &get_device() const;
 

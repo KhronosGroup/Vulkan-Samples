@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,12 +22,8 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
-#include "rendering/subpasses/scene_subpass.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
 
 @SAMPLE_NAME@::@SAMPLE_NAME@()
 {
@@ -39,25 +35,25 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
-	
+
 	// Load a scene from the assets folder
 	load_scene("scenes/sponza/Sponza01.gltf");
 
 	// Attach a move script to the camera component in the scene
-	auto &camera_node = add_free_camera("main_camera");
-	auto camera = &camera_node.get_component<vkb::sg::Camera>();
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	auto camera       = &camera_node.get_component<vkb::sg::Camera>();
 
 	// Example Scene Render Pipeline
-	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(vert_shader), std::move(frag_shader), *scene, *camera);
-	auto render_pipeline = vkb::RenderPipeline();
+	vkb::ShaderSource vert_shader("base.vert");
+	vkb::ShaderSource frag_shader("base.frag");
+	auto              scene_subpass   = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));
 	set_render_pipeline(std::move(render_pipeline));
 
 	// Add a GUI with the stats you want to monitor
 	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	return true;
 }

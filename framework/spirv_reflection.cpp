@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -148,7 +148,7 @@ inline void read_resource_size(const spirv_cross::Compiler &    compiler,
 		case spirv_cross::SPIRType::BaseType::Int64:
 		case spirv_cross::SPIRType::BaseType::UInt64:
 		case spirv_cross::SPIRType::BaseType::Double:
-			shader_resource.size = 7;
+			shader_resource.size = 8;
 			break;
 		default:
 			shader_resource.size = 0;

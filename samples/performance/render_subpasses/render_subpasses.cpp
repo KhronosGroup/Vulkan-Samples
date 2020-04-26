@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,12 +17,13 @@
 
 #include "render_subpasses.h"
 
+#include "common/vk_common.h"
 #include "platform/platform.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
+#include "rendering/subpasses/geometry_subpass.h"
 #include "rendering/subpasses/lighting_subpass.h"
-#include "rendering/subpasses/scene_subpass.h"
 #include "scene_graph/node.h"
 
 RenderSubpasses::RenderSubpasses()
@@ -50,7 +51,7 @@ RenderSubpasses::RenderSubpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
 }
 
-vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::RenderTarget> RenderSubpasses::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -63,7 +64,7 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 
 	vkb::core::Image depth_image{device,
 	                             extent,
-	                             VK_FORMAT_D32_SFLOAT,
+	                             vkb::get_suitable_depth_format(swapchain_image.get_device().get_gpu().get_handle()),
 	                             VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | rt_usage_flags,
 	                             VMA_MEMORY_USAGE_GPU_ONLY};
 
@@ -93,12 +94,12 @@ vkb::RenderTarget RenderSubpasses::create_render_target(vkb::core::Image &&swapc
 	// Attachment 3
 	images.push_back(std::move(normal_image));
 
-	return vkb::RenderTarget{std::move(images)};
+	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
 void RenderSubpasses::prepare_render_context()
 {
-	get_render_context().prepare(1, std::bind(&RenderSubpasses::create_render_target, this, std::placeholders::_1));
+	get_render_context().prepare(1, [this](vkb::core::Image &&swapchain_image) { return create_render_target(std::move(swapchain_image)); });
 }
 
 bool RenderSubpasses::prepare(vkb::Platform &platform)
@@ -108,12 +109,44 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT};
+	std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
 	get_render_context().update_swapchain(usage);
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 
-	auto &camera_node = add_free_camera("main_camera");
+	scene->clear_components<vkb::sg::Light>();
+
+	auto light_pos   = glm::vec3(0.0f, 128.0f, -225.0f);
+	auto light_color = glm::vec3(1.0, 1.0, 1.0);
+
+	// Magic numbers used to offset lights in the Sponza scene
+	for (int i = -4; i < 4; ++i)
+	{
+		for (int j = 0; j < 2; ++j)
+		{
+			glm::vec3 pos = light_pos;
+			pos.x += i * 400;
+			pos.z += j * (225 + 140);
+			pos.y = 8;
+
+			for (int k = 0; k < 3; ++k)
+			{
+				pos.y = pos.y + (k * 100);
+
+				light_color.x = static_cast<float>(rand()) / (RAND_MAX);
+				light_color.y = static_cast<float>(rand()) / (RAND_MAX);
+				light_color.z = static_cast<float>(rand()) / (RAND_MAX);
+
+				vkb::sg::LightProperties props;
+				props.color     = light_color;
+				props.intensity = 0.2f;
+
+				vkb::add_point_light(*scene, pos, props);
+			}
+		}
+	}
+
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	render_pipeline = create_one_renderpass_two_subpasses();
@@ -122,7 +155,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*render_context, platform.get_dpi_factor());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
 	// Enable stats
 	auto enabled_stats = {vkb::StatIndex::fragment_jobs,
@@ -143,9 +176,9 @@ void RenderSubpasses::update(float delta_time)
 		last_render_technique = configs[Config::RenderTechnique].value;
 
 		// Reset frames, their synchronization objects and their command buffers
-		for (auto &frame : render_context->get_render_frames())
+		for (auto &frame : get_render_context().get_render_frames())
 		{
-			frame.reset();
+			frame->reset();
 		}
 	}
 
@@ -190,13 +223,13 @@ void RenderSubpasses::update(float delta_time)
 		}
 
 		// Reset frames, their synchronization objects and their command buffers
-		for (auto &frame : render_context->get_render_frames())
+		for (auto &frame : get_render_context().get_render_frames())
 		{
-			frame.reset();
+			frame->reset();
 		}
 
 		LOGI("Recreating render target");
-		render_context->update_swapchain(std::make_unique<vkb::Swapchain>(std::move(render_context->get_swapchain())));
+		render_context->recreate();
 	}
 
 	VulkanSample::update(delta_time);
@@ -247,81 +280,12 @@ void RenderSubpasses::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-/**
- * @return Load store info to load all and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_load_all_store_swapchain()
-{
-	// Load every attachment and store only swapchain
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_LOAD;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-/**
- * @return Load store info to clear all and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_clear_all_store_swapchain()
-{
-	// Clear every attachment and store only swapchain
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-
-	return load_store;
-}
-
-/**
- * @return Clear values common to all pipelines
- */
-std::vector<VkClearValue> get_clear_value()
-{
-	// Clear values
-	std::vector<VkClearValue> clear_value{4};
-	clear_value[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[1].depthStencil = {1.0f, ~0U};
-	clear_value[2].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_value[3].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-
-	return clear_value;
-}
-
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag"};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -329,7 +293,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert"};
 	auto lighting_fs      = vkb::ShaderSource{"deferred/lighting.frag"};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, *scene);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -341,38 +305,11 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 
 	auto render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(subpasses));
 
-	render_pipeline->set_load_store(get_clear_all_store_swapchain());
+	render_pipeline->set_load_store(vkb::gbuffer::get_clear_all_store_swapchain());
 
-	render_pipeline->set_clear_value(get_clear_value());
+	render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return render_pipeline;
-}
-
-/**
- * @return Load store info to clear and store only the swapchain
- */
-std::vector<vkb::LoadStoreInfo> get_clear_store_all()
-{
-	// Clear and store every attachment
-	std::vector<vkb::LoadStoreInfo> load_store{4};
-
-	// Swapchain
-	load_store[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Depth
-	load_store[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[1].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Albedo
-	load_store[2].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[2].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Normal
-	load_store[3].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	load_store[3].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	return load_store;
 }
 
 std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass()
@@ -380,7 +317,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert"};
 	auto geometry_fs   = vkb::ShaderSource{"deferred/geometry.frag"};
-	auto scene_subpass = std::make_unique<vkb::SceneSubpass>(*render_context, std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
+	auto scene_subpass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
@@ -391,9 +328,9 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 
 	auto geometry_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(scene_subpasses));
 
-	geometry_render_pipeline->set_load_store(get_clear_store_all());
+	geometry_render_pipeline->set_load_store(vkb::gbuffer::get_clear_store_all());
 
-	geometry_render_pipeline->set_clear_value(get_clear_value());
+	geometry_render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return geometry_render_pipeline;
 }
@@ -403,7 +340,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert"};
 	auto lighting_fs      = vkb::ShaderSource{"deferred/lighting.frag"};
-	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(*render_context, std::move(lighting_vs), std::move(lighting_fs), *camera);
+	auto lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, *scene);
 
 	// Inputs are depth, albedo, and normal from the geometry subpass
 	lighting_subpass->set_input_attachments({1, 2, 3});
@@ -413,9 +350,9 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass
 
 	auto lighting_render_pipeline = std::make_unique<vkb::RenderPipeline>(std::move(lighting_subpasses));
 
-	lighting_render_pipeline->set_load_store(get_load_all_store_swapchain());
+	lighting_render_pipeline->set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	lighting_render_pipeline->set_clear_value(get_clear_value());
+	lighting_render_pipeline->set_clear_value(vkb::gbuffer::get_clear_value());
 
 	return lighting_render_pipeline;
 }
@@ -489,7 +426,7 @@ void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb:
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, gui.get());
 }
 
-void RenderSubpasses::draw_swapchain_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void RenderSubpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{

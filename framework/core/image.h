@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,14 +29,15 @@ class Device;
 namespace core
 {
 class ImageView;
-class Image : public NonCopyable
+class Image
 {
   public:
-	Image(Device &          device,
-	      VkImage           handle,
-	      const VkExtent3D &extent,
-	      VkFormat          format,
-	      VkImageUsageFlags image_usage);
+	Image(Device &              device,
+	      VkImage               handle,
+	      const VkExtent3D &    extent,
+	      VkFormat              format,
+	      VkImageUsageFlags     image_usage,
+	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
 	Image(Device &              device,
 	      const VkExtent3D &    extent,
@@ -49,9 +50,15 @@ class Image : public NonCopyable
 	      VkImageTiling         tiling       = VK_IMAGE_TILING_OPTIMAL,
 	      VkImageCreateFlags    flags        = 0);
 
+	Image(const Image &) = delete;
+
 	Image(Image &&other);
 
 	~Image();
+
+	Image &operator=(const Image &) = delete;
+
+	Image &operator=(Image &&) = delete;
 
 	Device &get_device();
 

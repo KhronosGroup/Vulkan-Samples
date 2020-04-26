@@ -28,5 +28,6 @@
 	<string name="menu_run_samples_title">Run All Samples</string>
 	<string name="open_file_with">Open File With</string>
 	<string name="menu_benchmark_mode_title">Benchmark Mode</string>
+	<string name="menu_headless_title">Headless</string>
 	<string name="filter_button_text">Filter</string>
 </resources>

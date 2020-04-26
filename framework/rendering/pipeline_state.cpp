@@ -86,8 +86,12 @@ namespace vkb
 {
 void SpecializationConstantState::reset()
 {
+	if (dirty)
+	{
+		specialization_constant_state.clear();
+	}
+
 	dirty = false;
-	specialization_constant_state.clear();
 }
 
 bool SpecializationConstantState::is_dirty() const

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -217,7 +217,7 @@ inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageU
 		}
 		else
 		{
-			LOGW("(Swapchain) Image usage ({}) not supported.", to_string(flag));
+			LOGW("(Swapchain) Image usage ({}) requested but not supported.", to_string(flag));
 		}
 	}
 
@@ -235,13 +235,22 @@ inline std::set<VkImageUsageFlagBits> choose_image_usage(const std::set<VkImageU
 			if ((image_usage & supported_image_usage) && validate_format_feature(image_usage, supported_features))
 			{
 				validated_image_usage_flags.insert(image_usage);
-				LOGI("(Swapchain) Image usage selected: {}.", to_string(image_usage));
 				break;
 			}
 		}
 	}
 
-	if (validated_image_usage_flags.empty())
+	if (!validated_image_usage_flags.empty())
+	{
+		// Log image usage flags used
+		std::string usage_list;
+		for (VkImageUsageFlagBits image_usage : validated_image_usage_flags)
+		{
+			usage_list += to_string(image_usage) + " ";
+		}
+		LOGI("(Swapchain) Image usage flags: {}", usage_list);
+	}
+	else
 	{
 		throw std::runtime_error("No compatible image usage found.");
 	}
@@ -321,12 +330,12 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	surface_format_priority_list = old_swapchain.surface_format_priority_list;
 
 	VkSurfaceCapabilitiesKHR surface_capabilities{};
-	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_physical_device(), surface, &surface_capabilities);
+	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_gpu().get_handle(), surface, &surface_capabilities);
 
 	uint32_t surface_format_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_physical_device(), surface, &surface_format_count, nullptr));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, nullptr));
 	surface_formats.resize(surface_format_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_physical_device(), surface, &surface_format_count, surface_formats.data()));
+	VK_CHECK(vkGetPhysicalDeviceSurfaceFormatsKHR(this->device.get_gpu().get_handle(), surface, &surface_format_count, surface_formats.data()));
 
 	LOGI("Surface supports the following surface formats:");
 	for (auto &surface_format : surface_formats)
@@ -335,9 +344,9 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	}
 
 	uint32_t present_mode_count{0U};
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_physical_device(), surface, &present_mode_count, nullptr));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, nullptr));
 	present_modes.resize(present_mode_count);
-	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_physical_device(), surface, &present_mode_count, present_modes.data()));
+	VK_CHECK(vkGetPhysicalDeviceSurfacePresentModesKHR(this->device.get_gpu().get_handle(), surface, &present_mode_count, present_modes.data()));
 
 	LOGI("Surface supports the following present modes:");
 	for (auto &present_mode : present_modes)
@@ -351,8 +360,8 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	properties.array_layers   = choose_image_array_layers(1U, surface_capabilities.maxImageArrayLayers);
 	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
 	VkFormatProperties format_properties;
-	vkGetPhysicalDeviceFormatProperties(this->device.get_physical_device(), properties.surface_format.format, &format_properties);
-	this->image_usage_flags    = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.bufferFeatures);
+	vkGetPhysicalDeviceFormatProperties(this->device.get_gpu().get_handle(), properties.surface_format.format, &format_properties);
+	this->image_usage_flags    = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
 	properties.image_usage     = composite_image_flags(this->image_usage_flags);
 	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
 	properties.composite_alpha = choose_composite_alpha(VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR, surface_capabilities.supportedCompositeAlpha);
@@ -479,5 +488,9 @@ void Swapchain::set_present_mode_priority(const std::vector<VkPresentModeKHR> &n
 void Swapchain::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &new_surface_format_priority_list)
 {
 	surface_format_priority_list = new_surface_format_priority_list;
+}
+VkPresentModeKHR Swapchain::get_present_mode() const
+{
+	return present_mode;
 }
 }        // namespace vkb

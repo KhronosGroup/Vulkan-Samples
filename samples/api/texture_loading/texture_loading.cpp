@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,13 +49,13 @@ TextureLoading::~TextureLoading()
 }
 
 // Enable physical device features required for this example
-void TextureLoading::get_device_features()
+void TextureLoading::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
-	if (supported_device_features.samplerAnisotropy)
+	if (gpu.get_features().samplerAnisotropy)
 	{
-		requested_device_features.samplerAnisotropy = VK_TRUE;
-	};
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+	}
 }
 
 /*
@@ -108,7 +108,7 @@ void TextureLoading::load_texture()
 		// Don't use linear if format is not supported for (linear) shader sampling
 		// Get device properites for the requested texture format
 		VkFormatProperties format_properties;
-		vkGetPhysicalDeviceFormatProperties(get_device().get_physical_device(), format, &format_properties);
+		vkGetPhysicalDeviceFormatProperties(get_device().get_gpu().get_handle(), format, &format_properties);
 		use_staging = !(format_properties.linearTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT);
 	}
 
@@ -358,10 +358,10 @@ void TextureLoading::load_texture()
 	sampler.maxLod = (use_staging) ? (float) texture.mip_levels : 0.0f;
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
-	if (get_device().get_features().samplerAnisotropy)
+	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
-		sampler.maxAnisotropy    = get_device().get_properties().limits.maxSamplerAnisotropy;
+		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = VK_TRUE;
 	}
 	else
@@ -410,7 +410,7 @@ void TextureLoading::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = default_clear_color;
-	clear_values[1].depthStencil = {1.0f, 0};
+	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
@@ -611,11 +611,12 @@ void TextureLoading::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
 	        VK_TRUE,
-	        VK_COMPARE_OP_LESS_OR_EQUAL);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);

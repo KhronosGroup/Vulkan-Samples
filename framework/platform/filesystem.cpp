@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,8 @@ const std::unordered_map<Type, std::string> relative_paths = {{Type::Assets, "as
                                                               {Type::Shaders, "shaders/"},
                                                               {Type::Storage, "output/"},
                                                               {Type::Screenshots, "output/images/"},
-                                                              {Type::Logs, "output/logs/"}};
+                                                              {Type::Logs, "output/logs/"},
+                                                              {Type::Graphs, "output/graphs/"}};
 
 const std::string get(const Type type, const std::string &file)
 {
@@ -183,6 +184,45 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
 void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
 {
 	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
+}
+
+bool write_json(nlohmann::json &data, const std::string &filename)
+{
+	std::stringstream json;
+
+	try
+	{
+		// Whitespace needed as last character is overwritten on android causing the json to be corrupt
+		json << data << " ";
+	}
+	catch (std::exception &e)
+	{
+		// JSON dump errors
+		LOGE(e.what());
+		return false;
+	}
+
+	if (!nlohmann::json::accept(json.str()))
+	{
+		LOGE("Invalid JSON string");
+		return false;
+	}
+
+	std::ofstream out_stream;
+	out_stream.open(fs::path::get(vkb::fs::path::Type::Graphs) + filename, std::ios::out | std::ios::trunc);
+
+	if (out_stream.good())
+	{
+		out_stream << json.str();
+	}
+	else
+	{
+		LOGE("Could not load JSON file " + filename);
+		return false;
+	}
+
+	out_stream.close();
+	return true;
 }
 }        // namespace fs
 }        // namespace vkb

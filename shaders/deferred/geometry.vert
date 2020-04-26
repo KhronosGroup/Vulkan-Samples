@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-precision highp float;
-
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
@@ -25,8 +23,7 @@ layout(location = 2) in vec3 normal;
 layout(set = 0, binding = 1) uniform GlobalUniform {
     mat4 model;
     mat4 view_proj;
-    vec4 light_pos;
-    vec4 light_color;
+    vec3 camera_position;
 } global_uniform;
 
 layout (location = 0) out vec4 o_pos;
