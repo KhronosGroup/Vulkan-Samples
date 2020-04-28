@@ -111,7 +111,7 @@ class ConstantData : public vkb::VulkanSample
 
 		virtual void prepare() override;
 
-		uint32_t push_constant_limit{128};
+		uint32_t struct_size{128};
 	};
 
 	/**
@@ -225,8 +225,12 @@ class ConstantData : public vkb::VulkanSample
 
 		auto subpass = std::make_unique<T>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
-		// We again want to store the push constants limit, so we create a UBO that is the same size as the push constants
-		subpass->push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
+		// We want to check if the push constants limit can support the full 256 bytes
+		auto push_constant_limit = get_device().get_gpu().get_properties().limits.maxPushConstantsSize;
+		if (push_constant_limit >= 256)
+		{
+			subpass->struct_size = 256;
+		}
 
 		std::vector<std::unique_ptr<vkb::Subpass>> subpasses{};
 		subpasses.push_back(std::move(subpass));

@@ -91,9 +91,13 @@ They have slightly different rules for what they do depending on the shader stag
 
 Constant types are global variables that have either the `uniform` or `buffer` storage type, these are *uniform buffer objects* and *shader storage buffer objects* respectively. They describe data which remains constant across an entire draw call, meaning that the values stay the same across the different shader stages and shader invocations.
 
-**Uniform buffer objects (UBOs)** are the more commonly used of the two. They can hold up to 16KB of data. It is important to note that they are not *compile-time* constant, so they are not given the `const` type. However, trying to edit the data in shader code will result in a compile-time error. These values use a `layout binding` and, when working with multiple `VkDescriptorSet`s, we will even give it a `layout set`. *You can read more about UBOs [here](https://www.khronos.org/opengl/wiki/Uniform_Buffer_Object).*
+These values use a `layout binding` and, when working with multiple `VkDescriptorSet`s, we will also give it a `layout set`.
 
-**Shader storage buffer objects (SSBOs)** are like special types of uniform buffer objects, denoted by the storage type `buffer`. Unlike UBOs they can be written to, meaning the values *can* be changed in the shaders so therefore they don't always represent data that is constant. Having said this, they can hold up to 128MB of data as opposed to the 16KB with UBOs. *You can read more about SSBOs [here](https://www.khronos.org/opengl/wiki/Shader_Storage_Buffer_Object).*
+**Uniform buffer objects (UBOs)** are the more commonly used of the two. They are *read-only* buffers, so trying to edit them in shader code will result in a compile-time error. 
+
+**Shader storage buffer objects (SSBOs)** are like special types of uniform buffer objects, denoted by the storage type `buffer`. Unlike UBOs they can be written to, meaning the values *can* be changed in the shaders so therefore they don't always represent data that is constant. Having said this, depending on the implementation, they generally can hold a lot more data as opposed to UBOs.
+
+***Note:** To check how much data we can store in uniform buffers and storage buffers, you can query the physical device for its `VkPhysicalDeviceLimits` and check the values `maxUniformBufferRange` and `maxStorageBufferRange` respectively.*
 
 #### *Interface Blocks*
 
@@ -155,7 +159,9 @@ When we break this down, we have the following methods:
 
 ### **Introduction**
 
-The sample uses a mesh heavy scene which has 1856 meshes with 475 KB of mesh data. This is to demonstrate a use case where many different calls to pushing uniform data will occur during a single frame. The constant data that is being sent is the per-mesh model matrix, the camera view projection matrix, a scale matrix and some extra padding. If the GPU doesn't support 256 bytes of push constants, it will instead push 128 bytes (it won't include the scale matrix and the extra padding).
+The sample uses a mesh heavy scene which has 1856 meshes (475 KB of mesh data). This is to demonstrate a use case where many different calls to pushing constant data will occur during a single frame. 
+
+The constant data that is being sent is the per-mesh model matrix, the camera view projection matrix, a scale matrix and some extra padding. If the GPU doesn't support at least 256 bytes of push constants, it will instead push 128 bytes (it won't include the scale matrix and the extra padding).
 
 A performance graph is displayed at the top with two charts, one showing frame time, and one showing the load/store cycles.
 
@@ -213,7 +219,7 @@ void vkCmdPushConstants(
 
 ![push constants](images/push_constants_performance.jpg)
 
-In early implementations of Vulkan, this was usually the fastest way of pushing data to your shaders. In more recent times, we have observed that *overall* they can be slower. If performance is something you are trying to maximise, descriptor sets may be the way to go. 
+In early implementations of Vulkan on Arm Mali, this was usually the fastest way of pushing data to your shaders. In more recent times, we have observed on Mali devices that *overall* they can be slower. If performance is something you are trying to maximise, descriptor sets may be the way to go. 
 
 Having said this, descriptor sets are one of the more complex features of Vulkan, making the convenience of push constants still worth considering as a go-to method, especially if working with trivial data. 
 
@@ -258,7 +264,7 @@ A **buffer object** in Vulkan is a type of `VkBuffer`, created with the respecti
 
 While it is not straightforward to perform a 1:1 comparison between push constants and descriptor sets, the sample does show static descriptor sets outperforming push constants.
 
-When we compare the frametime with [push constants](#push-constants) we can see it is the same (16.7ms), however it is the load/store cycles we want to look at. They drop from 266 k/s to 123 k/s, showing that the GPU is worked more in the case of push constants to achieve the same visual results.
+When comparing with [push constants](#push-constants) on an Arm Mali GPU, we can see the frametime remains the same (16.7ms), however it is the load/store cycles we want to look at. They drop from 266 k/s to 123 k/s, showing that the GPU is worked more in the case of push constants to achieve the same visual results.
 
 ## **Dynamic Descriptor Sets**
 
@@ -276,7 +282,7 @@ One case in which this can be useful is:
 
 ![dynamic ubo](images/dynamic_descriptor_set_performance.jpg)
 
-In the screenshot above we can see the load/store cycles stay roughly around the same compared to [static uniform buffer objects](#uniform-buffer-objects). However, the frame time goes up from 16.7 ms to 20.9 ms. This is due to the extra time you need to spend every frame determining the dynamic offsets, that you need to send in the bind call (`vkCmdBindDescriptorSets`).
+In the screenshot above (taken on an S10 with a Mali G76 GPU) we can see the load/store cycles stay roughly the same compared to [static uniform buffer objects](#uniform-buffer-objects). However, the frame time goes up from 16.7 ms to 20.9 ms. This is due to the extra time you need to spend every frame determining the dynamic offsets, that you need to send in the bind call (`vkCmdBindDescriptorSets`).
 
 ## **Update-after-bind Descriptor Sets**
 
@@ -298,11 +304,11 @@ This should come with zero performance costs, and as a result this method is des
 
 Another approach, which can be likened to a dynamic descriptor set, is a buffer object array. This is the concept of allocating all of your constant data *upfront* in a large buffer, and writing the entire buffer to a descriptor set. This means in any one shader invocation we have access to all of the model data for the entire scene, at the benefit of only needing to bind one descriptor set per entire draw call.
 
-You can use either a `uniform` or a `buffer` storage type in your shader code to achieve this. However, since `uniform`s can only carry 16 KB of data, this tutorial will use a `buffer`. 
+You can use either a `uniform` or a `buffer` storage type in your shader code to achieve this. However, since `buffer`s can generally hold bigger amounts of data, this tutorial will use them. 
 
-***Note:** If deciding to use a `uniform`, then the size of the array needs to be defined before compile time. This can be achieved with a shader variant definition.*
+***Note:** If deciding to use a `uniform`, then the size of the array needs to be defined at compile time. This can be achieved with a shader variant definition.*
 
-In shader code it looks like this:
+Here is an example of using a `buffer` in shader code:
 
 ```
 layout(set = 0, binding = 1) buffer MeshArray
@@ -311,7 +317,7 @@ layout(set = 0, binding = 1) buffer MeshArray
 } mesh_array;
 ```
 
-***Note:** If you plan to write to `buffer`s inside vertex/compute/geometry/tesselation shaders, you have to query the physical device features and check that `vertexPipelineStoresAndAtomics` is enabled.*
+***Note:** If you plan to write to `buffer`s inside shaders, you have to query the physical device features and check that `vertexPipelineStoresAndAtomics` is enabled.*
 
 Before you draw the scene, you create a `VkBuffer` with the  `VK_BUFFER_USAGE_STORAGE_BUFFER_BIT` usage flag, and fill it with all the model matrices of each mesh in the scene.
 
@@ -367,11 +373,11 @@ This on Mali is not a recommend practice as it disables a compiler optimisation 
 
 Pilot shaders are a technique that allows us to determine what calculations can be "piloted" into your GPU's register so that when the data needs to be read it doesn't take a full read cycle from the GPU RAM.
 
-To show this we can use Streamline to profile the sample, here are the read cycles for using a single descriptor set per mesh against the pre allocated buffer array:
+To show this here is a Streamline capture of a Mali G76, showing the read cycles for using a single descriptor set per mesh against the pre allocated buffer array:
 
 ![loadcycles](images/loadcycles.png)
 
-A few different stats are affected in the GPU by using this, but the main thing is the **full read** in the **Mali Core Load/Store Cycles**.
+A few different stats are affected in the Mali GPU by using this, but the main thing is the **full read** in the **Mali Core Load/Store Cycles**.
 
 ## **Further reading**
 
@@ -396,4 +402,4 @@ A few different stats are affected in the GPU by using this, but the main thing 
 **Impact**
 
 * Failing to use the correct method of constant data will negatively impact performance, causing either reduced FPS and/or increased BW and load/store activity.
-* Register mapped uniforms are effectively free. Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.
+* On Mali, register mapped uniforms are effectively free. Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.

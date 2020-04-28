@@ -285,6 +285,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 {
 	// Build all shader variance upfront
 	auto &device = render_context.get_device();
+
 	for (auto &mesh : meshes)
 	{
 		for (auto &sub_mesh : mesh->get_submeshes())
@@ -296,8 +297,8 @@ void ConstantData::ConstantDataSubpass::prepare()
 			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
 			variant.add_definitions(vkb::light_type_definitions);
 
-			// If push constants limit is 256 we add a definition so the uniform has more values
-			if (push_constant_limit == 256)
+			// If struct size is 256 we add a definition so the uniform has more values
+			if (struct_size == 256)
 			{
 				variant.add_definitions({"PUSH_CONSTANT_LIMIT_256"});
 			}
@@ -335,7 +336,7 @@ void ConstantData::PushConstantSubpass::prepare_push_constants(vkb::CommandBuffe
 	command_buffer.push_constants(mvp_uniform.camera_view_proj);        // 64 bytes
 
 	// If we can push another 128 bytes, push more as this will make the delta more prominent
-	if (push_constant_limit == 256)
+	if (struct_size == 256)
 	{
 		command_buffer.push_constants(mvp_uniform.scale);          // 64 bytes
 		command_buffer.push_constants(mvp_uniform.padding);        // 64 bytes
@@ -356,7 +357,7 @@ void ConstantData::DescriptorSetSubpass::update_uniform(vkb::CommandBuffer &comm
 
 	// Ensure the container doesn't hold more bytes than are needed
 	auto data = vkb::to_bytes(mvp);
-	data.resize(push_constant_limit);
+	data.resize(struct_size);
 	allocation.update(data);
 
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
