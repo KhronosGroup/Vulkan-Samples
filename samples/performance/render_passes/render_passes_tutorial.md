@@ -52,13 +52,16 @@ begin.pClearValues    = &clear;
 
 Using the `LOAD_OP_LOAD` flag is the wrong choice in this case. Not only do we not use its content during this render-pass, it will cost us more in terms of bandwidth.
 
-Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`. We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. Considering we are using triple buffering, we calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`, and multiplying it by `3` we obtain a value close to the _External Read Bytes_ shown in the graph.
+Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`:
 
 ![Using LOAD_OP_LOAD](images/load_store.jpg)
 
-Comparing the read bandwidth values, we observe a difference of `1533.9 - 933.7 = 600.2 MiB/s` if we select `LOAD_OP_CLEAR`. The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
+Comparing the read bandwidth values (_External Read Bytes_ graph), we observe a difference of `1533.9 - 933.7 = 600.2 MiB/s` if we select `LOAD_OP_CLEAR`
 
 ![Using LOAD_OP_CLEAR](images/clear_store.jpg)
+
+We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`. We calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`.
+The savings will be lower if the images are compressed, see [Enabling AFBC in your Vulkan Application](../afbc/afbc_tutorial.md).
 
 ## Depth attachment store operation
 
