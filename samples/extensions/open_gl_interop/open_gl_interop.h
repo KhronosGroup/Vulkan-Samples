@@ -76,20 +76,18 @@ class OpenGLInterop : public ApiVulkanSample
 
 	struct SharedTexture
 	{
-		VkImage        image{nullptr};
-		VkDeviceMemory memory{nullptr};
+		VkImage        image{VK_NULL_HANDLE};
+		VkDeviceMemory memory{VK_NULL_HANDLE};
 		VkDeviceSize   size{0};
 		VkDeviceSize   allocationSize{0};
-		VkSampler      sampler{nullptr};
-		VkImageView    view{nullptr};
-		//VkImageLayout  image_layout{VK_IMAGE_LAYOUT_UNDEFINED};
-
+		VkSampler      sampler{VK_NULL_HANDLE};
+		VkImageView    view{VK_NULL_HANDLE};
 	} sharedTexture;
 
 	struct Semaphores
 	{
-		VkSemaphore glReady{nullptr};
-		VkSemaphore glComplete{nullptr};
+		VkSemaphore glReady{VK_NULL_HANDLE};
+		VkSemaphore glComplete{VK_NULL_HANDLE};
 	} sharedSemaphores;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
@@ -105,10 +103,10 @@ class OpenGLInterop : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	VkPipeline            pipeline{nullptr};
-	VkPipelineLayout      pipeline_layout{nullptr};
-	VkDescriptorSet       descriptor_set{nullptr};
-	VkDescriptorSetLayout descriptor_set_layout{nullptr};
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_open_gl_interop();

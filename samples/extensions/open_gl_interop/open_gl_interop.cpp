@@ -24,6 +24,7 @@
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats.h"
+#include "timer.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -197,18 +198,6 @@ class OpenGLWindow
 		return program;
 	}
 
-	static float getTime()
-	{
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-		timespec now;
-		clock_gettime(CLOCK_MONOTONIC, &now);
-		float result = now.tv_sec + float(now.tv_nsec / 1000000LL) / 1000.0f;
-		return result;
-#else
-		return glfwGetTime();
-#endif
-	}
-
   public:
 	void create(const OpenGLInterop::ShareHandles &handles, uint64_t memorySize)
 	{
@@ -256,8 +245,8 @@ class OpenGLWindow
 		glDebugMessageCallback(debugMessageCallback, NULL);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 
-		program   = buildProgram(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
-		startTime = getTime();
+		program = buildProgram(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
+		timer.start();
 
 		glDisable(GL_DEPTH_TEST);
 
@@ -301,7 +290,7 @@ class OpenGLWindow
 
 	void render()
 	{
-		float time = (float) (getTime() - startTime);
+		float time = (float) timer.elapsed();
 		// The GL shader animates the image, so provide the time as input
 		glProgramUniform1f(program, 1, time);
 
@@ -357,19 +346,19 @@ class OpenGLWindow
   private:
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	EGLConfig  eglConf{nullptr};
-	EGLSurface eglSurface{nullptr};
-	EGLContext eglCtx{nullptr};
-	EGLDisplay eglDisp{nullptr};
+	EGLSurface eglSurface{EGL_NO_SURFACE};
+	EGLContext eglCtx{EGL_NO_CONTEXT};
+	EGLDisplay eglDisp{EGL_NO_DISPLAY};
 #else
 	GLFWwindow *window{nullptr};
 #endif
-	GLuint glReady{0}, glComplete{0};
-	GLuint color{0};
-	GLuint fbo{0};
-	GLuint vao{0};
-	GLuint program{0};
-	GLuint mem{0};
-	double startTime{0};
+	GLuint     glReady{0}, glComplete{0};
+	GLuint     color{0};
+	GLuint     fbo{0};
+	GLuint     vao{0};
+	GLuint     program{0};
+	GLuint     mem{0};
+	vkb::Timer timer;
 };
 
 OpenGLInterop::OpenGLInterop()

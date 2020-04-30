@@ -212,7 +212,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param f a block of code which is passed a command buffer which is already in the begin state.
 	 * @param signalSemaphore An optional semaphore to signal when the commands have completed execution.
 	 */
-	void with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore = nullptr);
+	void with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore = VK_NULL_HANDLE);
 
   public:
 	/**
