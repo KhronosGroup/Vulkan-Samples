@@ -48,3 +48,8 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 **Extension**: [```VK_KHR_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing)<br/>
 Render a simple triangle using the official cross-vendor ray tracing extension. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.<br/>
 **Note**:  This extension is not yet finalized and currently considered a BETA extension. This means that it is not yet production ready and subject to change until it's finalized. In order to use this sample you may also need special developer drivers.
+
+- [OpenGL interoperability](./open_gl_interop)<br/>
+**Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), , [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
+Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
+
