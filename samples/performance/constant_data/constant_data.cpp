@@ -418,10 +418,19 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 
 	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(MVPUniform) * uniforms.size());
 
-	size_t offset = 0;
-	for (size_t i = 0; i < uniforms.size(); offset += sizeof(MVPUniform), ++i)
+	uint32_t offset = 0;
+	for (size_t i = 0; i < uniforms.size(); ++i)
 	{
-		allocation.update(uniforms[i], vkb::to_u32(offset));
+		// Push 128 bytes of data
+		allocation.update(uniforms[i].model, offset += 64);
+		allocation.update(uniforms[i].camera_view_proj, offset += 64);
+
+		// If we can push another 128 bytes, push more as this will make the delta more prominent
+		if (struct_size == 256)
+		{
+            allocation.update(uniforms[i].scale, offset += 64);
+			allocation.update(uniforms[i].padding, offset += 64);
+		}
 	}
 
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 1, 0);
