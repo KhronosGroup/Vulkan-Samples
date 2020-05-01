@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ class Timer
 	/**
 	 * @brief Calculates the time difference between now and when the timer was started
 	 *        if lap() was called, then between now and when the timer was last lapped
-	 * @return The duration between the two time points (default in milliseconds)
+	 * @return The duration between the two time points (default in seconds)
 	 */
 	template <typename T = DefaultResolution>
 	double elapsed()
