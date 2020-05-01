@@ -428,7 +428,7 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 		// If we can push another 128 bytes, push more as this will make the delta more prominent
 		if (struct_size == 256)
 		{
-            allocation.update(uniforms[i].scale, offset += 64);
+			allocation.update(uniforms[i].scale, offset += 64);
 			allocation.update(uniforms[i].padding, offset += 64);
 		}
 	}
