@@ -422,14 +422,18 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	for (size_t i = 0; i < uniforms.size(); ++i)
 	{
 		// Push 128 bytes of data
-		allocation.update(uniforms[i].model, offset += 64);
-		allocation.update(uniforms[i].camera_view_proj, offset += 64);
+		allocation.update(uniforms[i].model, offset + 0);                    // Update bytes 0 - 63
+		allocation.update(uniforms[i].camera_view_proj, offset + 64);        // Update bytes 64 - 127
+
+		offset += 128;
 
 		// If we can push another 128 bytes, push more as this will make the delta more prominent
 		if (struct_size == 256)
 		{
-			allocation.update(uniforms[i].scale, offset += 64);
-			allocation.update(uniforms[i].padding, offset += 64);
+			allocation.update(uniforms[i].scale, offset);               // Update bytes 128 - 191
+			allocation.update(uniforms[i].padding, offset + 64);        // Update bytes 192 - 255
+
+			offset += 128;
 		}
 	}
 
