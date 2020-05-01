@@ -117,7 +117,7 @@ Previous generations that support AFBC only support a subset of formats:
 
 ## Further Reading
 
-* [Arm Frame Buffer Compression](https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression) - developer.arm.com
+* [Arm Frame Buffer Compression](https://www.arm.com/why-arm/technologies/graphics-technologies/arm-frame-buffer-compression) - developer.arm.com
 
 ## Best practice summary
 
