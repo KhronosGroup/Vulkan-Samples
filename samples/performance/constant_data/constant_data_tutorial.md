@@ -129,7 +129,7 @@ Buffers in Vulkan are just chunks of memory used for storing data, which can be 
 
 They need to be created and have their memory *manually* allocated, and then we can copy our constant data into the allocated memory. This data can then be plugged into the draw calls, so that it can finally be used in our shader computations. 
 
-**Note:** *The library [Vulkan Memory Allocator (VMA)](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) is extremely good for handling a lot of the common pitfalls that come with handling your Vulkan memory without removing the control that you would otherwise have with native Vulkan.*
+**Note:** *The library [Vulkan Memory Allocator (VMA)](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator) is extremely good for handling a lot of the common pitfalls that come with managing your Vulkan memory, without removing the control that you would otherwise have with native Vulkan.*
 
 The following links are useful for learning how to create a Vulkan buffer in your application:
 
@@ -159,7 +159,7 @@ When we break this down, we have the following methods:
 
 ### **Introduction**
 
-The sample uses a mesh heavy scene which has 1856 meshes (475 KB of mesh data). This is to demonstrate a use case where many different calls to pushing constant data will occur during a single frame. 
+The sample uses a mesh heavy scene which has 1856 meshes (475 KB of mesh data). This is to demonstrate a use case where many different calls to pushing constant data will occur during a single frame. This is to artificially exaggerate the performance delta.
 
 The constant data that is being sent is the per-mesh model matrix, the camera view projection matrix, a scale matrix and some extra padding. If the GPU doesn't support at least 256 bytes of push constants, it will instead push 128 bytes (it won't include the scale matrix and the extra padding).
 
@@ -185,8 +185,8 @@ When an option is changed, the descriptor sets are flushed and recreated with th
 
 Push constants are usually the first method newer Vulkan programmers will stumble upon when beginning to work with constant data. They are straightforward to use and integrate nicely into any codebase, making them a great option to send simple data to your shaders.
 
-The downside to push constants is that they have very strict limitations on how much data can be sent.
-The Vulkan spec requires drivers to support at least 128 bytes of push constants, and most modern implementations of Vulkan will support 256 bytes. 
+A downside to push constants is that on some platforms they have strict limitations on how much data can be sent.
+The Vulkan spec guarantees that drivers will support at least 128 bytes of push constants. Many modern implementations of Vulkan will commonly support 256 bytes and sometimes much more. 
 
 ***Note:** To determine how many bytes your system supports, you can query the physical device for its `VkPhysicalDeviceLimits` and check the value `maxPushConstantsSize`.*
 
@@ -219,7 +219,7 @@ void vkCmdPushConstants(
 
 ![push constants](images/push_constants_performance.jpg)
 
-In early implementations of Vulkan on Arm Mali, this was usually the fastest way of pushing data to your shaders. In more recent times, we have observed on Mali devices that *overall* they can be slower. If performance is something you are trying to maximise, descriptor sets may be the way to go. 
+In early implementations of Vulkan on Arm Mali, this was usually the fastest way of pushing data to your shaders. In more recent times, we have observed on Mali devices that *overall* they can be slower. If performance is something you are trying to maximise on Mali devices, descriptor sets may be the way to go. However, other devices may still favour push constants. 
 
 Having said this, descriptor sets are one of the more complex features of Vulkan, making the convenience of push constants still worth considering as a go-to method, especially if working with trivial data. 
 
@@ -317,8 +317,6 @@ layout(set = 0, binding = 1) buffer MeshArray
 } mesh_array;
 ```
 
-***Note:** If you plan to write to `buffer`s inside shaders, you have to query the physical device features and check that `vertexPipelineStoresAndAtomics` is enabled.*
-
 Before you draw the scene, you create a `VkBuffer` with the  `VK_BUFFER_USAGE_STORAGE_BUFFER_BIT` usage flag, and fill it with all the model matrices of each mesh in the scene.
 
 Then to get the correct matrix inside our shader, we can pass a **dynamic index** to our draw call. We do this by using the `gl_InstanceIndex` value.
@@ -369,7 +367,7 @@ In the code snippet above we can see that we bind our descriptor set once, and f
 
 ### **Performance**
 
-This on Mali is not a recommend practice as it disables a compiler optimisation technique known as **pilot shaders**. 
+While this could be a fast method for some devices, on Mali it is not a recommend practice as it disables a compiler optimisation technique known as **pilot shaders**.
 
 Pilot shaders are a technique that allows us to determine what calculations can be "piloted" into your GPU's register so that when the data needs to be read it doesn't take a full read cycle from the GPU RAM.
 
