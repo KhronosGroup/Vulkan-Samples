@@ -145,7 +145,7 @@ VulkanStatsProvider::VulkanStatsProvider(Device &device, std::set<StatIndex> &re
 	}
 
 	// Now we know the counters and that we can collect them, make a query pool for the results.
-	if (!create_query_pools(num_framebuffers, queue_family_index))
+	if (!create_query_pools(uint32_t(num_framebuffers), queue_family_index))
 	{
 		stat_data.clear();
 		counter_indices.clear();
@@ -217,7 +217,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t num_framebuffers, uint32_t
 	VkQueryPoolPerformanceCreateInfoKHR perf_create_info{};
 	perf_create_info.sType             = VK_STRUCTURE_TYPE_QUERY_POOL_PERFORMANCE_CREATE_INFO_KHR;
 	perf_create_info.queueFamilyIndex  = queue_family_index;
-	perf_create_info.counterIndexCount = counter_indices.size();
+	perf_create_info.counterIndexCount = uint32_t(counter_indices.size());
 	perf_create_info.pCounterIndices   = counter_indices.data();
 
 	uint32_t passes_needed;
@@ -356,17 +356,17 @@ static double get_counter_value(const VkPerformanceCounterResultKHR &result,
 	switch (storage)
 	{
 		case VK_PERFORMANCE_COUNTER_STORAGE_INT32_KHR:
-			return result.int32;
+			return double(result.int32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_INT64_KHR:
-			return result.int64;
+			return double(result.int64);
 		case VK_PERFORMANCE_COUNTER_STORAGE_UINT32_KHR:
-			return result.uint32;
+			return double(result.uint32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_UINT64_KHR:
-			return result.uint64;
+			return double(result.uint64);
 		case VK_PERFORMANCE_COUNTER_STORAGE_FLOAT32_KHR:
-			return result.float32;
+			return double(result.float32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_FLOAT64_KHR:
-			return result.float64;
+			return double(result.float64);
 		default:
 			assert(0);
 			return 0.0;
@@ -389,8 +389,8 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time, uint32_t act
 	                                         VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
 	if (r == VK_SUCCESS)
 	{
-		uint64_t elapsed_ns = (timestamps[1] - timestamps[0]) * timestamp_period;
-		delta_time          = float(double(elapsed_ns) / 1000000000.0);
+		float elapsed_ns = timestamp_period * float(timestamps[1] - timestamps[0]);
+		delta_time       = elapsed_ns * 0.000000001f;
 	}
 
 	return delta_time;
