@@ -39,7 +39,7 @@ struct MVPUniform
 #endif
 };
 
-layout(set = 0, binding = 1) uniform MVPUniformArray
+layout(set = 0, binding = 1) buffer MVPUniformArray
 {
 	MVPUniform uniform_data[SCENE_MESH_COUNT];
 } mvp_array;
