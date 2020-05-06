@@ -54,7 +54,6 @@ class QueryPool
 
 	/**
 	 * @brief Reset a range of queries in the query pool. Only call if VK_EXT_host_query_reset is enabled.
-	 * @param pool The query pool
 	 * @param firstQuery The first query to reset
 	 * @param queryCount The number of queries to reset
 	 */
@@ -64,7 +63,8 @@ class QueryPool
 	 * @brief Get query pool results
 	 * @param first_query The initial query index
 	 * @param num_queries The number of queries to read
-	 * @param results Result vector, must be large enough to hold results
+	 * @param result_bytes The number of bytes in the results array
+	 * @param results Array of bytes result_bytes long
 	 * @param stride The stride in bytes between results for individual queries
 	 * @param flags A bitmask of VkQueryResultFlagBits
 	 */

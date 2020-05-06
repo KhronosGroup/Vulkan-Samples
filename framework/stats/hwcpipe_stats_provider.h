@@ -86,6 +86,7 @@ class HWCPipeStatsProvider : public StatsProvider
 	/**
 	 * @brief Constructs a HWCPipeStateProvider
 	 * @param requested_stats Set of stats to be collected. Supported stats will be removed from the set.
+	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 */
 	HWCPipeStatsProvider(std::set<StatIndex> &requested_stats, CounterSamplingConfig sampling_config);
 

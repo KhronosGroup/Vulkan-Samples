@@ -79,6 +79,8 @@ class VulkanStatsProvider : public StatsProvider
 	 * @brief Constructs a VulkanStatsProvider
 	 * @param device The device on which to collect stats
 	 * @param requested_stats Set of stats to be collected. Supported stats will be removed from the set.
+	 * @param sampling_config Sampling mode configuration (polling or continuous)
+	 * @param num_framebuffers The number of buffers in the swapchain
 	 */
 	VulkanStatsProvider(Device &device, std::set<StatIndex> &requested_stats,
 	                    const CounterSamplingConfig &sampling_config, size_t num_framebuffers);

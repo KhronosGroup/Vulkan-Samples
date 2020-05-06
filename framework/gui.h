@@ -239,6 +239,7 @@ class Gui
 	 * @brief Initializes the Gui
 	 * @param sample A vulkan render context
 	 * @param window A Window object from which to draw DPI and content scaling information
+	 * @param stats A statistics object (null if no statistics are used)
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */

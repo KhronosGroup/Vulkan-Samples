@@ -45,6 +45,7 @@ class Stats
 	/**
 	 * @brief Constructs a Stats object
 	 * @param device Device on which to collect stats
+	 * @param num_framebuffers The number of buffers in the swapchain
 	 * @param requested_stats Set of stats to be collected if available
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
 	 * @param buffer_size Size of the circular buffers
@@ -106,12 +107,14 @@ class Stats
 	/**
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
+ 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
 	void command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx);
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
+ 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
 	void command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx);
 
