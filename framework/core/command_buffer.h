@@ -147,7 +147,7 @@ class CommandBuffer
 			throw std::runtime_error("Cannot overflow push constant limit");
 		}
 
-		push_constants(to_bytes(value));
+		push_constants(data);
 	}
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
