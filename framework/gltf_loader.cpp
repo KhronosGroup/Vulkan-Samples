@@ -564,7 +564,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				gltf_texture.name = images.at(gltf_texture.source)->get_name();
 			}
 
-			LOGW("Sampler not found for texture {}, possible GLTF error", gltf_texture.name);
 			texture->set_sampler(*default_sampler);
 		}
 
