@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -69,7 +69,7 @@ The orange dashed line highlights a point in which the whole system is idle. FB1
 
 This idling behavior caps framerate at 30 fps, while the application could achieve ~50 fps. With triple buffering there will always be an image already processed and ready for presentation, so the GPU can start processing a new image without stalling.
 
-![Double buffering at <60 FPS](images/swapchain_triple_buffering.png)
+![Triple buffering at 60 FPS](images/swapchain_triple_buffering.png)
 
 ## The sample
 
