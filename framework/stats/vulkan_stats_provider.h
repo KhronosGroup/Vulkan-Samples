@@ -108,7 +108,7 @@ class VulkanStatsProvider : public StatsProvider
 	 * @param delta_time Time since last sample
 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	Sample sample(float delta_time, uint32_t active_frame_idx) override;
+	Counters sample(float delta_time, uint32_t active_frame_idx) override;
 
 	/**
 	 * @brief A command buffer that we want stats about has just begun
@@ -145,7 +145,7 @@ class VulkanStatsProvider : public StatsProvider
 	// The timestamp period
 	float timestamp_period{1.0f};
 
-	// And one for timestamps
+	// Query pool for timestamps
 	std::unique_ptr<QueryPool> timestamp_pool;
 
 	// Map of vendor specific stat data
@@ -157,6 +157,7 @@ class VulkanStatsProvider : public StatsProvider
 	// An ordered list of the Vulkan counter ids
 	std::vector<uint32_t> counter_indices;
 
+	// How many queries have been ended?
 	uint32_t queries_ready = 0;
 };
 

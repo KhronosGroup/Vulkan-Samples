@@ -226,7 +226,7 @@ class CommandBuffer
 
 	void end_query(const QueryPool &query_pool, uint32_t query);
 
-	void write_timestamp(VkPipelineStageFlagBits pipelineStage, const QueryPool &query_pool, uint32_t query);
+	void write_timestamp(VkPipelineStageFlagBits pipeline_stage, const QueryPool &query_pool, uint32_t query);
 
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to

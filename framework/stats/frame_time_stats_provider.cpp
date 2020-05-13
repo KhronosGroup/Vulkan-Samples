@@ -17,8 +17,6 @@
 
 #include "frame_time_stats_provider.h"
 
-#include <cassert>
-
 namespace vkb
 {
 FrameTimeStatsProvider::FrameTimeStatsProvider(std::set<StatIndex> &requested_stats)
@@ -34,9 +32,9 @@ bool FrameTimeStatsProvider::is_available(StatIndex index) const
 	return index == StatIndex::frame_times;
 }
 
-StatsProvider::Sample FrameTimeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters FrameTimeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
 {
-	Sample res;
+	Counters res;
 	// frame_times comes directly from delta_time
 	res[StatIndex::frame_times].result = delta_time;
 	return res;

@@ -20,7 +20,7 @@
 namespace vkb
 {
 // Default graphing values for stats. May be overridden by individual providers.
-std::map<StatIndex, StatGraphData> StatsProvider::def_graph_map{
+std::map<StatIndex, StatGraphData> StatsProvider::default_graph_map{
     // clang-format off
     // StatIndex                        Name shown in graph           Format          Scale           fixed_max  max_value
     {StatIndex::frame_times,           {"Frame Times",               "{:3.1f} ms",    1000.0f}},
@@ -47,7 +47,7 @@ std::map<StatIndex, StatGraphData> StatsProvider::def_graph_map{
 // Static
 const StatGraphData &StatsProvider::default_graph_data(StatIndex index)
 {
-	return def_graph_map.at(index);
+	return default_graph_map.at(index);
 }
 
 }        // namespace vkb

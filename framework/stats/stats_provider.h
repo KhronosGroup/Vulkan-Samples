@@ -38,7 +38,7 @@ class StatsProvider
 		double result;
 	};
 
-	using Sample = std::unordered_map<StatIndex, Counter, StatIndexHash>;
+	using Counters = std::unordered_map<StatIndex, Counter, StatIndexHash>;
 
 	/**
 	 * @brief Virtual Destructor
@@ -59,7 +59,7 @@ class StatsProvider
 	 */
 	virtual const StatGraphData &get_graph_data(StatIndex index) const
 	{
-		return def_graph_map.at(index);
+		return default_graph_map.at(index);
 	}
 
 	/**
@@ -73,13 +73,13 @@ class StatsProvider
 	 * @param delta_time Time since last sample
 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	virtual Sample sample(float delta_time, uint32_t active_frame_idx) = 0;
+	virtual Counters sample(float delta_time, uint32_t active_frame_idx) = 0;
 
 	/**
 	 * @brief Retrieve a new sample set from continuous sampling
 	 * @param delta_time Time since last sample
 	 */
-	virtual Sample continuous_sample(float delta_time)
+	virtual Counters continuous_sample(float delta_time)
 	{
 		return Sample();
 	}
@@ -101,6 +101,6 @@ class StatsProvider
 	{}
 
   protected:
-	static std::map<StatIndex, StatGraphData> def_graph_map;
+	static std::map<StatIndex, StatGraphData> default_graph_map;
 };
 }        // namespace vkb

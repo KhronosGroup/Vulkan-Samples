@@ -130,16 +130,16 @@ bool HWCPipeStatsProvider::is_available(StatIndex index) const
 
 const StatGraphData &HWCPipeStatsProvider::get_graph_data(StatIndex index) const
 {
-	static StatGraphData vertex_compute_cycles{"Vertex Compute Cycles", "{:4.1f} M/s", float(1e-6)};
-
 	assert(is_available(index) && "HWCPipeStatsProvider::get_graph_data() called with invalid StatIndex");
 
+	static StatGraphData vertex_compute_cycles{"Vertex Compute Cycles", "{:4.1f} M/s", float(1e-6)};
+
 	// HWCPipe reports combined vertex/compute cycles (which is Arm specific)
-	// Ensure we report graph that with the correct name when asked for vertex cycles
+	// Ensure we report graph with the correct name when asked for vertex cycles
 	if (index == StatIndex::gpu_vertex_cycles)
 		return vertex_compute_cycles;
 
-	return def_graph_map[index];
+	return default_graph_map[index];
 }
 
 static double get_cpu_counter_value(const hwcpipe::CpuMeasurements *cpu, hwcpipe::CpuCounter counter)
@@ -158,9 +158,9 @@ static double get_gpu_counter_value(const hwcpipe::GpuMeasurements *gpu, hwcpipe
 	return 0.0;
 }
 
-StatsProvider::Sample HWCPipeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
 {
-	Sample                res;
+	Counters              res;
 	hwcpipe::Measurements m = hwcpipe->sample();
 
 	// Map from hwcpipe measurement to our sample result for each counter
@@ -210,7 +210,7 @@ StatsProvider::Sample HWCPipeStatsProvider::sample(float delta_time, uint32_t ac
 	return res;
 }
 
-StatsProvider::Sample HWCPipeStatsProvider::continuous_sample(float delta_time)
+StatsProvider::Counters HWCPipeStatsProvider::continuous_sample(float delta_time)
 {
 	return sample(delta_time, 0);
 }

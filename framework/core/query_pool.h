@@ -54,10 +54,10 @@ class QueryPool
 
 	/**
 	 * @brief Reset a range of queries in the query pool. Only call if VK_EXT_host_query_reset is enabled.
-	 * @param firstQuery The first query to reset
-	 * @param queryCount The number of queries to reset
+	 * @param first_query The first query to reset
+	 * @param query_count The number of queries to reset
 	 */
-	void host_reset(uint32_t firstQuery, uint32_t queryCount);
+	void host_reset(uint32_t first_query, uint32_t query_count);
 
 	/**
 	 * @brief Get query pool results

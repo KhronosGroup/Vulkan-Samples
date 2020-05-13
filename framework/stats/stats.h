@@ -105,14 +105,28 @@ class Stats
 	void update(float delta_time, uint32_t active_frame_idx);
 
 	/**
-	 * @brief A command buffer that we want stats about has just begun
+	 * @brief A command buffer that we want to collect stats about has just begun
+	 *
+	 * Some stats providers (like the Vulkan extension one) can only collect stats
+	 * about the execution of a specific command buffer. In those cases we need to
+	 * know when a command buffer has begun and when it's about to end so that we
+	 * can inject some extra commands into the command buffer to control the stats
+	 * collection. This method tells the stats provider that a command buffer has
+	 * begun so that can happen.
 	 * @param cb The command buffer
  	 * @param active_frame_idx Which of the framebuffers is active
 	 */
 	void command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx);
 
 	/**
-	 * @brief A command buffer that we want stats about is about to be ended
+	 * @brief A command buffer that we want to collect stats about is about to be ended
+	 *
+	 * Some stats providers (like the Vulkan extension one) can only collect stats
+	 * about the execution of a specific command buffer. In those cases we need to
+	 * know when a command buffer has begun and when it's about to end so that we
+	 * can inject some extra commands into the command buffer to control the stats
+	 * collection. This method tells the stats provider that a command buffer is
+	 * about to be ended so that can happen.
 	 * @param cb The command buffer
  	 * @param active_frame_idx Which of the framebuffers is active
 	 */
@@ -153,20 +167,20 @@ class Stats
 	std::mutex continuous_sampling_mutex;
 
 	/// The samples read during continuous sampling
-	std::vector<StatsProvider::Sample> continuous_samples;
+	std::vector<StatsProvider::Counters> continuous_samples;
 
 	/// A flag specifying if the worker thread should add entries to continuous_samples
 	bool should_add_to_continuous_samples{false};
 
 	/// The samples waiting to be displayed
-	std::vector<StatsProvider::Sample> pending_samples;
+	std::vector<StatsProvider::Counters> pending_samples;
 
 	/// The worker thread function for continuous sampling;
 	/// it adds a new entry to continuous_samples at every interval
 	void continuous_sampling_worker(std::future<void> should_terminate);
 
 	/// Updates circular buffers for CPU and GPU counters
-	void push_sample(const StatsProvider::Sample &sample);
+	void push_sample(const StatsProvider::Counters &sample);
 };
 
 }        // namespace vkb

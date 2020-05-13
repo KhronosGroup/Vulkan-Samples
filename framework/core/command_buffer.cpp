@@ -770,10 +770,10 @@ void CommandBuffer::end_query(const QueryPool &query_pool, uint32_t query)
 	vkCmdEndQuery(get_handle(), query_pool.get_handle(), query);
 }
 
-void CommandBuffer::write_timestamp(VkPipelineStageFlagBits pipelineStage,
+void CommandBuffer::write_timestamp(VkPipelineStageFlagBits pipeline_stage,
                                     const QueryPool &query_pool, uint32_t query)
 {
-	vkCmdWriteTimestamp(get_handle(), pipelineStage, query_pool.get_handle(), query);
+	vkCmdWriteTimestamp(get_handle(), pipeline_stage, query_pool.get_handle(), query);
 }
 
 VkResult CommandBuffer::reset(ResetMode reset_mode)

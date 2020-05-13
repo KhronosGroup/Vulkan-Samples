@@ -48,12 +48,12 @@ VkQueryPool QueryPool::get_handle() const
 	return handle;
 }
 
-void QueryPool::host_reset(uint32_t firstQuery, uint32_t queryCount)
+void QueryPool::host_reset(uint32_t first_query, uint32_t query_count)
 {
 	assert(device.is_enabled("VK_EXT_host_query_reset") &&
 	       "VK_EXT_host_query_reset needs to be enabled to call QueryPool::host_reset");
 
-	vkResetQueryPoolEXT(device.get_handle(), get_handle(), firstQuery, queryCount);
+	vkResetQueryPoolEXT(device.get_handle(), get_handle(), first_query, query_count);
 }
 
 VkResult QueryPool::get_results(uint32_t first_query, uint32_t num_queries,

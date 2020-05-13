@@ -306,7 +306,7 @@ const StatGraphData &VulkanStatsProvider::get_graph_data(StatIndex index) const
 	if (data.has_vendor_graph_data)
 		return data.graph_data;
 
-	return def_graph_map[index];
+	return default_graph_map[index];
 }
 
 void VulkanStatsProvider::command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx)
@@ -396,9 +396,9 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time, uint32_t act
 	return delta_time;
 }
 
-StatsProvider::Sample VulkanStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters VulkanStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
 {
-	Sample out;
+	Counters out;
 	if (!query_pool || queries_ready == 0)
 		return out;
 

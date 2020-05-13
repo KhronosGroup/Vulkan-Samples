@@ -41,6 +41,6 @@ class FrameTimeStatsProvider : public StatsProvider
 	 * @param delta_time Time since last sample
 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	Sample sample(float delta_time, uint32_t active_frame_idx) override;
+	Counters sample(float delta_time, uint32_t active_frame_idx) override;
 };
 }        // namespace vkb

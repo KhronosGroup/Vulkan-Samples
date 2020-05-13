@@ -194,6 +194,7 @@ void VulkanSample::update(float delta_time)
 
 	auto &command_buffer = render_context->begin();
 
+	// Collect the performance data for the sample graphs
 	uint32_t active_frame_idx = render_context->get_active_frame_index();
 	update_stats(delta_time, active_frame_idx);
 

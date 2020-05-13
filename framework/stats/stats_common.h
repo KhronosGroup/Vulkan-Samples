@@ -95,13 +95,13 @@ class StatGraphData
 {
   public:
 	/**
-		 * @brief Constructs data for the graph
-		 * @param name Name of the Stat
-		 * @param format Format of the label
-		 * @param scale_factor Any scaling to apply to the data
-		 * @param has_fixed_max Whether the data should have a fixed max value
-		 * @param max_value The maximum value to use
-		 */
+	 * @brief Constructs data for the graph
+	 * @param name Name of the Stat
+	 * @param format Format of the label
+	 * @param scale_factor Any scaling to apply to the data
+	 * @param has_fixed_max Whether the data should have a fixed max value
+	 * @param max_value The maximum value to use
+	 */
 	StatGraphData(const std::string &name,
 	              const std::string &format,
 	              float              scale_factor  = 1.0f,

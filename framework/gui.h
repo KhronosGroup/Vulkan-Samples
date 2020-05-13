@@ -188,7 +188,7 @@ class Gui
 	  public:
 		/**
 		 * @brief Constructs a StatsView
-    	 * @param stats Const pointer to the Stats data object; may be null
+		 * @param stats Const pointer to the Stats data object; may be null
 		 */
 		StatsView(const Stats *stats);
 
@@ -203,7 +203,6 @@ class Gui
 		 */
 		void reset_max_value(const StatIndex index);
 
-		/// Per-statistic max values
 		std::map<StatIndex, StatGraphData> graph_map;
 
 		float graph_height{50.0f};

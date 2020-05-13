@@ -50,11 +50,11 @@ class HWCPipeStatsProvider : public StatsProvider
 		StatData() = default;
 
 		/**
-	 * @brief Constructor for CPU counters
-	 * @param c The CPU counter to be gathered
-	 * @param stat_scaling The scaling to be applied to the stat
-	 * @param divisor The CPU counter to be used as divisor if scaling is ByCounter
-	 */
+		 * @brief Constructor for CPU counters
+		 * @param c The CPU counter to be gathered
+		 * @param stat_scaling The scaling to be applied to the stat
+		 * @param divisor The CPU counter to be used as divisor if scaling is ByCounter
+		 */
 		StatData(hwcpipe::CpuCounter c,
 		         StatScaling         stat_scaling = StatScaling::ByDeltaTime,
 		         hwcpipe::CpuCounter divisor      = hwcpipe::CpuCounter::MaxValue) :
@@ -65,11 +65,11 @@ class HWCPipeStatsProvider : public StatsProvider
 		{}
 
 		/**
-	 * @brief Constructor for GPU counters
-	 * @param c The GPU counter to be gathered
-	 * @param stat_scaling The scaling to be applied to the stat
-	 * @param divisor The GPU counter to be used as divisor if scaling is ByCounter
-	 */
+		 * @brief Constructor for GPU counters
+		 * @param c The GPU counter to be gathered
+		 * @param stat_scaling The scaling to be applied to the stat
+		 * @param divisor The GPU counter to be used as divisor if scaling is ByCounter
+		 */
 		StatData(hwcpipe::GpuCounter c,
 		         StatScaling         stat_scaling = StatScaling::ByDeltaTime,
 		         hwcpipe::GpuCounter divisor      = hwcpipe::GpuCounter::MaxValue) :
@@ -106,15 +106,15 @@ class HWCPipeStatsProvider : public StatsProvider
 	/**
 	 * @brief Retrieve a new sample set from polled sampling
 	 * @param delta_time Time since last sample
-	 * @param active_frame_idx Which of the framebuffers is active
+	 * @param active_frame_idx Which of the framebuffers is active - unused by this HWCPipeStatsProvider
 	 */
-	Sample sample(float delta_time, uint32_t active_frame_idx) override;
+	Counters sample(float delta_time, uint32_t active_frame_idx) override;
 
 	/**
 	 * @brief Retrieve a new sample set from continuous sampling
  	 * @param delta_time Time since last sample
 	 */
-	Sample continuous_sample(float delta_time) override;
+	Counters continuous_sample(float delta_time) override;
 
   private:
 	// The hwcpipe instance

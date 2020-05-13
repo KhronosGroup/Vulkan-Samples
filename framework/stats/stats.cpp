@@ -23,6 +23,7 @@
 #include "frame_time_stats_provider.h"
 #include "hwcpipe_stats_provider.h"
 #include "vulkan_stats_provider.h"
+
 namespace vkb
 {
 Stats::Stats(Device &device, size_t num_framebuffers, const std::set<StatIndex> &requested_stats,
@@ -118,7 +119,7 @@ void Stats::update(float delta_time, uint32_t active_frame_idx)
 	{
 		case CounterSamplingMode::Polling:
 		{
-			StatsProvider::Sample sample;
+			StatsProvider::Counters sample;
 
 			for (auto &p : providers)
 			{
@@ -164,7 +165,7 @@ void Stats::update(float delta_time, uint32_t active_frame_idx)
 			sample_count = std::max<size_t>(1, std::min<size_t>(sample_count, pending_samples.size()));
 
 			// Get the frame time stats (not a continuous stat)
-			StatsProvider::Sample frame_time_sample = frame_time_provider->sample(delta_time, active_frame_idx);
+			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time, active_frame_idx);
 
 			// Push the samples to circular buffers
 			std::for_each(pending_samples.end() - sample_count, pending_samples.end(), [this, frame_time_sample](auto &s) {
@@ -200,10 +201,10 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 		}
 
 		// Sample counters
-		StatsProvider::Sample sample;
+		StatsProvider::Counters sample;
 		for (auto &p : providers)
 		{
-			StatsProvider::Sample s = p->continuous_sample(delta_time);
+			StatsProvider::Counters s = p->continuous_sample(delta_time);
 			sample.insert(s.begin(), s.end());
 		}
 
@@ -215,7 +216,7 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 	}
 }
 
-void Stats::push_sample(const StatsProvider::Sample &sample)
+void Stats::push_sample(const StatsProvider::Counters &sample)
 {
 	for (auto &c : counters)
 	{
