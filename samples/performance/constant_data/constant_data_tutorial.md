@@ -23,7 +23,9 @@
 
 The Vulkan API exposes a few different ways in which we can send uniform data into our shaders. There are enough methods that it raises the question "Which one is fastest?", and more often than not the answer is "It depends".
 
-This sample aims to break this question down by highlighting the different methods we can use, and the performance implications that each of them bring. Then you, the developer, can pick the right one.
+The main issue for developers is that the fastest methods may differ between the various vendors, so often there is no "one size fits all" solution.
+
+This sample aims to highlight this issue, and help move the Vulkan ecosystem to a point where we are better equipped to solve this for developers. This is done by having an interactive way to toggle different constant data methods that the Vulkan API expose to us. This can then be run on a platform of the developers choice to see the performance implications that each of them bring.
 
 ## **Contents**
 
@@ -87,9 +89,9 @@ They have slightly different rules for what they do depending on the shader stag
 
 *You can read more about shader stage inputs and outputs [here](https://www.khronos.org/opengl/wiki/Type_Qualifier_(GLSL)#Shader_stage_inputs_and_outputs).*
 
-#### *Constant Types*
+#### *Uniform Types*
 
-Constant types are global variables that have either the `uniform` or `buffer` storage type, these are *uniform buffer objects* and *shader storage buffer objects* respectively. They describe data which remains constant across an entire draw call, meaning that the values stay the same across the different shader stages and shader invocations.
+Uniform types are global variables that have either the `uniform` or `buffer` storage type, these are *uniform buffer objects* and *shader storage buffer objects* respectively. They describe data which remains constant across an entire draw call, meaning that the values stay the same across the different shader stages and shader invocations.
 
 These values use a `layout binding` and, when working with multiple `VkDescriptorSet`s, we will also give it a `layout set`.
 
@@ -139,7 +141,7 @@ The following links are useful for learning how to create a Vulkan buffer in you
 
 #### *The Methods*
 
-Generally, there are two ways to push your constant data. It is either with **push constants** or **descriptor sets**. 
+There are various ways to push your constant data, where this tutorial will cover a subset of these methods.
 
 However the Vulkan API gives a lot of flexibility about how to handle **descriptor sets**, offering many different types and different ways to bind and use them (especially when we factor in extensions). This can puzzle developers about which is best, and for which scenarios. This tutorial aims to ease some of the confusion and uncertainty around this subject. 
 
@@ -383,7 +385,6 @@ A few different stats are affected in the Mali GPU by using this, but the main t
 * "Writing an efficient Vulkan renderer" by Arseny Kapoulkine https://zeux.io/2020/02/27/writing-an-efficient-vulkan-renderer/
 * Alexander Overvoorde's [Vulkan Tutorial on Descriptors](https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer) guide
 * Vulkan Fast Paths http://32ipi028l5q82yhj72224m8j-wpengine.netdna-ssl.com/wp-content/uploads/2016/03/VulkanFastPaths.pdf
-* Performance root signature of descriptor sets https://gpuopen.com/performance-root-signature-descriptor-sets/
 
 ## **Best practice summary**
 
@@ -395,7 +396,7 @@ A few different stats are affected in the Mali GPU by using this, but the main t
 
 **Avoid**
 
-* Avoid indexing in the shader if possible, such as dynamically indexing into `buffer` or `uniform` arrays.
+* Avoid indexing in the shader if possible, such as dynamically indexing into `buffer` or `uniform` arrays, as this can disable shader optimisations in some platforms.
 
 **Impact**
 
