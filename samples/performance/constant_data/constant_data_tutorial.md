@@ -123,7 +123,7 @@ Interface blocks are still global variables, and technically still follow the gl
 
 We've covered how constant data is implemented in the shader, however to push the data from the application to the shader we need to use Vulkan.
 
-We do this with the use of `VkBuffer`s, which is Vulkan's implementation of buffer memory.
+We do this mainly with the use of `VkBuffer`s, which is Vulkan's implementation of buffer memory.
 
 Buffers in Vulkan are just chunks of memory used for storing data, which can be read by the GPU.
 
