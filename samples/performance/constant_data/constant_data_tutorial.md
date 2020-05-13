@@ -44,7 +44,7 @@ This sample aims to break this question down by highlighting the different metho
 
 ### **Introduction**
 
-Constant data is a form of information that is supplied to the graphics pipeline to help with shader computations.
+Constant data is a form of information that is supplied to the pipeline to help with shader computations.
 
 In theory, this data can be anything we want it to be, for instance it can be used for things such as calculating where an object should be placed inside our world, or computing the overall brightness of an object based on the lights in the scene.
 
