@@ -25,7 +25,7 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions) :
+Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions) :
     gpu{gpu},
     resource_cache{*this}
 {
@@ -81,24 +81,15 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 		LOGI("Dedicated Allocation enabled");
 	}
 
-	VkPhysicalDeviceHostQueryResetFeatures hqr_features{};
-	hqr_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES;
-
-	VkPhysicalDevicePerformanceQueryFeaturesKHR perf_features{};
-	perf_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR;
-	perf_features.pNext = &hqr_features;
-
 	if (has_performance_query)
 	{
-		// Must have VK_KHR_get_physical_device_properties2 as it's a prerequisite of perf query
-		VkPhysicalDeviceFeatures2KHR supported_features{};
-		supported_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-		supported_features.pNext = &perf_features;
+		gpu.request_performance_counter_features();
+		gpu.request_host_query_reset_features();
 
-		// Check the feature support bits
-		vkGetPhysicalDeviceFeatures2KHR(gpu.get_handle(), &supported_features);
+		auto perf_counter_features     = gpu.get_performance_counter_features();
+		auto host_query_reset_features = gpu.get_host_query_reset_features();
 
-		if (perf_features.performanceCounterQueryPools && hqr_features.hostQueryReset)
+		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
 			enabled_extensions.push_back("VK_KHR_performance_query");
 			enabled_extensions.push_back("VK_EXT_host_query_reset");
@@ -165,26 +156,9 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 
 	const auto requested_gpu_features = gpu.get_requested_features();
 
-	if (has_performance_query)
-	{
-		// Ensure we turn on the feature bits we want
-		VkPhysicalDeviceFeatures2KHR requested_features{};
-		requested_features.sType    = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR;
-		requested_features.features = requested_gpu_features;
-		requested_features.pNext    = &perf_features;
-
-		// The pNext chain will be perf_features -> hqr_features -> gpu.get_requested_extension_features()
-		hqr_features.pNext = gpu.get_requested_extension_features();
-
-		create_info.pNext            = &requested_features;
-		create_info.pEnabledFeatures = nullptr;
-	}
-	else
-	{
-		// Latest requested feature will have the pNext's all set up for device creation.
-		create_info.pNext            = gpu.get_requested_extension_features();
-		create_info.pEnabledFeatures = &requested_gpu_features;
-	}
+	// Latest requested feature will have the pNext's all set up for device creation.
+	create_info.pNext            = gpu.get_requested_extension_features();
+	create_info.pEnabledFeatures = &requested_gpu_features;
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
 
@@ -253,7 +227,7 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 
 	command_pool = std::make_unique<CommandPool>(*this, get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index());
 	fence_pool   = std::make_unique<FencePool>(*this);
-}
+}        // namespace vkb
 
 Device::~Device()
 {

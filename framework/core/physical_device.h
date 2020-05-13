@@ -57,6 +57,15 @@ class PhysicalDevice
 
 	const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const;
 
+	uint32_t get_queue_family_performance_query_passes(
+	    const VkQueryPoolPerformanceCreateInfoKHR *perf_query_create_info) const;
+
+	void enumerate_queue_family_performance_query_counters(
+	    uint32_t                            queue_family_index,
+	    uint32_t *                          count,
+	    VkPerformanceCounterKHR *           counters,
+	    VkPerformanceCounterDescriptionKHR *descriptions) const;
+
 	VkPhysicalDeviceFeatures &get_mutable_requested_features();
 
 	const VkPhysicalDeviceFeatures get_requested_features() const;
@@ -69,6 +78,14 @@ class PhysicalDevice
 	void request_descriptor_indexing_features();
 
 	const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &get_descriptor_indexing_features() const;
+
+	void request_performance_counter_features();
+
+	const VkPhysicalDevicePerformanceQueryFeaturesKHR &get_performance_counter_features() const;
+
+	void request_host_query_reset_features();
+
+	const VkPhysicalDeviceHostQueryResetFeatures &get_host_query_reset_features() const;
 
   protected:
 	template <typename T>
@@ -87,6 +104,19 @@ class PhysicalDevice
 		vkGetPhysicalDeviceFeatures2KHR(handle, &extended_features);
 
 		return ext;
+	}
+
+	template <typename T>
+	void chain_extension_features(T &features)
+	{
+		// If an extension has already been requested, set that to the pNext element
+		if (last_requested_extension_feature)
+		{
+			features.pNext = last_requested_extension_feature;
+		}
+
+		// Set the last requested extension to the pointer of the most recently requested extension
+		last_requested_extension_feature = &features;
 	}
 
   private:
@@ -115,5 +145,9 @@ class PhysicalDevice
 	void *last_requested_extension_feature{nullptr};
 
 	VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features{};
+
+	VkPhysicalDevicePerformanceQueryFeaturesKHR performance_counter_features{};
+
+	VkPhysicalDeviceHostQueryResetFeatures host_query_reset_features{};
 };
 }        // namespace vkb

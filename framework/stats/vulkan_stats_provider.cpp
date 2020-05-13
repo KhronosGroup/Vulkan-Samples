@@ -44,8 +44,8 @@ VulkanStatsProvider::VulkanStatsProvider(Device &device, std::set<StatIndex> &re
 
 	// Query number of available counters
 	uint32_t count = 0;
-	VK_CHECK(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
-	    gpu.get_handle(), queue_family_index, &count, nullptr, nullptr));
+	gpu.enumerate_queue_family_performance_query_counters(queue_family_index, &count,
+	                                                      nullptr, nullptr);
 
 	if (count == 0)
 		return;        // No counters available
@@ -62,8 +62,8 @@ VulkanStatsProvider::VulkanStatsProvider(Device &device, std::set<StatIndex> &re
 	}
 
 	// Now get the list of counters and their descriptions
-	VK_CHECK(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
-	    gpu.get_handle(), queue_family_index, &count, counters.data(), descs.data()));
+	gpu.enumerate_queue_family_performance_query_counters(queue_family_index, &count,
+	                                                      counters.data(), descs.data());
 
 	// Every vendor has a different set of performance counters each
 	// with different names. Match them to the stats we want, where available.
@@ -204,7 +204,10 @@ bool VulkanStatsProvider::fill_vendor_data()
 		return true;
 	}
 #endif
-	return false;        // Unsupported vendor
+	{
+		// Unsupported vendor
+		return false;
+	}
 }
 
 bool VulkanStatsProvider::create_query_pools(uint32_t num_framebuffers, uint32_t queue_family_index)
@@ -220,9 +223,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t num_framebuffers, uint32_t
 	perf_create_info.counterIndexCount = uint32_t(counter_indices.size());
 	perf_create_info.pCounterIndices   = counter_indices.data();
 
-	uint32_t passes_needed;
-	vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(gpu.get_handle(), &perf_create_info,
-	                                                        &passes_needed);
+	uint32_t passes_needed = gpu.get_queue_family_performance_query_passes(&perf_create_info);
 	if (passes_needed != 1)
 	{
 		// Needs more than one pass, remove all our supported stats

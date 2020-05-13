@@ -86,6 +86,25 @@ const std::vector<VkQueueFamilyProperties> &PhysicalDevice::get_queue_family_pro
 	return queue_family_properties;
 }
 
+uint32_t PhysicalDevice::get_queue_family_performance_query_passes(
+    const VkQueryPoolPerformanceCreateInfoKHR *perf_query_create_info) const
+{
+	uint32_t passes_needed;
+	vkGetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR(get_handle(), perf_query_create_info,
+	                                                        &passes_needed);
+	return passes_needed;
+}
+
+void PhysicalDevice::enumerate_queue_family_performance_query_counters(
+    uint32_t                            queue_family_index,
+    uint32_t *                          count,
+    VkPerformanceCounterKHR *           counters,
+    VkPerformanceCounterDescriptionKHR *descriptions) const
+{
+	VK_CHECK(vkEnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR(
+	    get_handle(), queue_family_index, count, counters, descriptions));
+}
+
 VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
 {
 	return requested_features;
@@ -111,19 +130,38 @@ void PhysicalDevice::request_descriptor_indexing_features()
 	// Request the relevant extension
 	descriptor_indexing_features = request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
 
-	// If an extension has already been requested, set that to the pNext element
-	if (last_requested_extension_feature)
-	{
-		descriptor_indexing_features.pNext = last_requested_extension_feature;
-	}
-
-	// Set the last requested extension to the pointer of the most recently requested extension
-	last_requested_extension_feature = &descriptor_indexing_features;
+	chain_extension_features(descriptor_indexing_features);
 }
 
 const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &PhysicalDevice::get_descriptor_indexing_features() const
 {
 	return descriptor_indexing_features;
+}
+
+void PhysicalDevice::request_performance_counter_features()
+{
+	// Request the relevant extensions
+	performance_counter_features = request_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
+
+	chain_extension_features(performance_counter_features);
+}
+
+const VkPhysicalDevicePerformanceQueryFeaturesKHR &PhysicalDevice::get_performance_counter_features() const
+{
+	return performance_counter_features;
+}
+
+void PhysicalDevice::request_host_query_reset_features()
+{
+	// Request the relevant extension
+	host_query_reset_features = request_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
+
+	chain_extension_features(host_query_reset_features);
+}
+
+const VkPhysicalDeviceHostQueryResetFeatures &PhysicalDevice::get_host_query_reset_features() const
+{
+	return host_query_reset_features;
 }
 
 }        // namespace vkb

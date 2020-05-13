@@ -81,7 +81,7 @@ class StatsProvider
 	 */
 	virtual Counters continuous_sample(float delta_time)
 	{
-		return Sample();
+		return Counters();
 	}
 
 	/**
