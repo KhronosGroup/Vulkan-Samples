@@ -110,58 +110,14 @@ VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
 	return requested_features;
 }
 
-const VkPhysicalDeviceFeatures PhysicalDevice::get_requested_features() const
+VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
 {
 	return requested_features;
 }
 
-void *PhysicalDevice::get_requested_extension_features() const
+void *PhysicalDevice::get_extension_feature_chain() const
 {
 	return last_requested_extension_feature;
-}
-
-void *&PhysicalDevice::get_mutable_requested_extension_features()
-{
-	return last_requested_extension_feature;
-}
-
-void PhysicalDevice::request_descriptor_indexing_features()
-{
-	// Request the relevant extension
-	descriptor_indexing_features = request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
-
-	chain_extension_features(descriptor_indexing_features);
-}
-
-const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &PhysicalDevice::get_descriptor_indexing_features() const
-{
-	return descriptor_indexing_features;
-}
-
-void PhysicalDevice::request_performance_counter_features()
-{
-	// Request the relevant extensions
-	performance_counter_features = request_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
-
-	chain_extension_features(performance_counter_features);
-}
-
-const VkPhysicalDevicePerformanceQueryFeaturesKHR &PhysicalDevice::get_performance_counter_features() const
-{
-	return performance_counter_features;
-}
-
-void PhysicalDevice::request_host_query_reset_features()
-{
-	// Request the relevant extension
-	host_query_reset_features = request_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
-
-	chain_extension_features(host_query_reset_features);
-}
-
-const VkPhysicalDeviceHostQueryResetFeatures &PhysicalDevice::get_host_query_reset_features() const
-{
-	return host_query_reset_features;
 }
 
 }        // namespace vkb
