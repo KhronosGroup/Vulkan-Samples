@@ -149,15 +149,15 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
+	// Latest requested feature will have the pNext's all set up for device creation.
+	create_info.pNext = gpu.get_extension_feature_chain();
+
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
 	create_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	const auto requested_gpu_features = gpu.get_requested_features();
-
-	// Latest requested feature will have the pNext's all set up for device creation.
-	create_info.pNext            = gpu.get_requested_extension_features();
 	create_info.pEnabledFeatures = &requested_gpu_features;
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);

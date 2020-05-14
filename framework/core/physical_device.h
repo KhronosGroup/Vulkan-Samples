@@ -70,53 +70,65 @@ class PhysicalDevice
 
 	const VkPhysicalDeviceFeatures get_requested_features() const;
 
-	void *get_requested_extension_features() const;
+	VkPhysicalDeviceFeatures &get_mutable_requested_features();
 
-	// Returns the pointer to the extension feature chain to be used for enabling extension features
-	void *&get_mutable_requested_extension_features();
+	/**
+	 * @brief Used at logical device creation to pass the extensions feature chain to vkCreateDevice
+	 * @returns A void pointer to the start of the extension linked list
+	 */
+	void *get_extension_feature_chain() const;
 
-	void request_descriptor_indexing_features();
-
-	const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &get_descriptor_indexing_features() const;
-
-	void request_performance_counter_features();
-
-	const VkPhysicalDevicePerformanceQueryFeaturesKHR &get_performance_counter_features() const;
-
-	void request_host_query_reset_features();
-
-	const VkPhysicalDeviceHostQueryResetFeatures &get_host_query_reset_features() const;
-
-  protected:
+	/**
+	 * @brief Requests a third party extension to be used by the framework
+	 *
+	 *        To have the features enabled, this function must be called before the logical device
+	 *        is created. To do this request sample specific features inside
+	 *        VulkanSample::request_gpu_features(vkb::PhysicalDevice &gpu).
+	 *
+	 *        If the feature extension requires you to ask for certain features to be enabled, you can
+	 *        modify the struct returned by this function, it will propegate the changes to the logical
+	 *        device.
+	 * @param type The VkStructureType for the extension you are requesting
+	 * @template T The user defined type for the extension you are requesting
+	 * @returns The extension feature struct
+	 */
 	template <typename T>
-	const T request_extension_features(VkStructureType type)
+	T &request_extension_features(VkStructureType type)
 	{
+		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			return {};
+			return T{};
 		}
 
-		VkPhysicalDeviceFeatures2KHR extended_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
-		T                            ext{type};
+		// If the type already exists in the map, dereference the void pointer to get the extension feature struct
+		auto extension_features_it = extension_features.find(type);
+		if (extension_features_it != extension_features.end())
+		{
+			return *((T *) extension_features_it->second.get());
+		}
 
-		extended_features.pNext = &ext;
+		// Get the extension feature
+		VkPhysicalDeviceFeatures2KHR physical_device_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2_KHR};
+		T                            extension{type};
+		physical_device_features.pNext = &extension;
+		vkGetPhysicalDeviceFeatures2KHR(handle, &physical_device_features);
 
-		vkGetPhysicalDeviceFeatures2KHR(handle, &extended_features);
+		// Insert the extension feature into the extension feature map so its ownership is held
+		extension_features.insert({type, std::make_shared<T>(extension)});
 
-		return ext;
-	}
+		// Pull out the dereferenced void pointer, we can assume its type based on the template
+		auto &extension_ref = *((T *) extension_features.find(type)->second.get());
 
-	template <typename T>
-	void chain_extension_features(T &features)
-	{
-		// If an extension has already been requested, set that to the pNext element
+		// If an extension feature has already been requested, we shift the linked list down by one
+		// Making this current extension the new base pointer
 		if (last_requested_extension_feature)
 		{
-			features.pNext = last_requested_extension_feature;
+			extension_ref.pNext = last_requested_extension_feature;
 		}
+		last_requested_extension_feature = &extension_ref;
 
-		// Set the last requested extension to the pointer of the most recently requested extension
-		last_requested_extension_feature = &features;
+		return extension_ref;
 	}
 
   private:
@@ -144,10 +156,7 @@ class PhysicalDevice
 	// The extension feature pointer
 	void *last_requested_extension_feature{nullptr};
 
-	VkPhysicalDeviceDescriptorIndexingFeaturesEXT descriptor_indexing_features{};
-
-	VkPhysicalDevicePerformanceQueryFeaturesKHR performance_counter_features{};
-
-	VkPhysicalDeviceHostQueryResetFeatures host_query_reset_features{};
+	// Holds the extension feature structures, we use a map to retain an order of requested structures
+	std::map<VkStructureType, std::shared_ptr<void>> extension_features;
 };
 }        // namespace vkb
