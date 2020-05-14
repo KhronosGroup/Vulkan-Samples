@@ -106,24 +106,4 @@ void *&PhysicalDevice::get_mutable_requested_extension_features()
 	return last_requested_extension_feature;
 }
 
-void PhysicalDevice::request_descriptor_indexing_features()
-{
-	// Request the relevant extension
-	descriptor_indexing_features = request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
-
-	// If an extension has already been requested, set that to the pNext element
-	if (last_requested_extension_feature)
-	{
-		descriptor_indexing_features.pNext = last_requested_extension_feature;
-	}
-
-	// Set the last requested extension to the pointer of the most recently requested extension
-	last_requested_extension_feature = &descriptor_indexing_features;
-}
-
-const VkPhysicalDeviceDescriptorIndexingFeaturesEXT &PhysicalDevice::get_descriptor_indexing_features() const
-{
-	return descriptor_indexing_features;
-}
-
 }        // namespace vkb

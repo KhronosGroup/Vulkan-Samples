@@ -126,7 +126,7 @@ void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}
 
-	gpu.request_descriptor_indexing_features();
+	auto &descriptor_features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2_KHR);
 }
 
 void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
