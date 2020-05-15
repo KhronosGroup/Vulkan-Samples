@@ -89,68 +89,6 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 		return false;
 	}
 
-	auto &extended_features = gpu.get_descriptor_indexing_features();
-
-	for (size_t i = 0; i < bindings.size(); ++i)
-	{
-		if (flags[i] == VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT)
-		{
-			if (extended_features.descriptorBindingUniformBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingUniformBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingSampledImageUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_SAMPLER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingSampledImageUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_SAMPLER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, or VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageImageUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageImageUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_IMAGE must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingUniformTexelBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingUniformTexelBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageTexelBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageTexelBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-		}
-	}
-
 	return true;
 }
 }        // namespace
