@@ -77,7 +77,6 @@ class PhysicalDevice
 	 *        modify the struct returned by this function, it will propegate the changes to the logical
 	 *        device.
 	 * @param type The VkStructureType for the extension you are requesting
-	 * @template T The user defined type for the extension you are requesting
 	 * @returns The extension feature struct
 	 */
 	template <typename T>
