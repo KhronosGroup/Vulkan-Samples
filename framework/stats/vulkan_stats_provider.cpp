@@ -181,8 +181,8 @@ bool VulkanStatsProvider::fill_vendor_data()
 		// clang-format off
 		vendor_data = {
 		    {StatIndex::gpu_cycles,          {"cycle_count"}},
-		    {StatIndex::gpu_vertex_cycles,   {"qpu_active_cycles_vertex_coord_user"}},
-		    {StatIndex::gpu_fragment_cycles, {"qpu_active_cycles_fragment"}},
+		    {StatIndex::gpu_vertex_cycles,   {"gpu_vertex_cycles"}},
+		    {StatIndex::gpu_fragment_cycles, {"gpu_fragment_cycles"}},
 		    {StatIndex::gpu_fragment_jobs,   {"render_jobs_completed"}},
 		    {StatIndex::gpu_ext_reads,       {"gpu_mem_reads"}},
 		    {StatIndex::gpu_ext_writes,      {"gpu_mem_writes"}},
@@ -192,7 +192,7 @@ bool VulkanStatsProvider::fill_vendor_data()
 		// clang-format on
 
 		// Override vendor-specific graph data
-		vendor_data.at(StatIndex::gpu_vertex_cycles).set_vendor_graph_data({"Vertex/Coord/User Cycles", "{:4.0f}/s"});
+		vendor_data.at(StatIndex::gpu_vertex_cycles).set_vendor_graph_data({"Vertex/Coord/User Cycles", "{:4.1f} M/s", float(1e-6)});
 		vendor_data.at(StatIndex::gpu_fragment_jobs).set_vendor_graph_data({"Render Jobs", "{:4.0f}/s"});
 
 		return true;
