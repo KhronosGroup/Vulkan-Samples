@@ -216,7 +216,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
 	Device &              device           = render_context.get_device();
 	const PhysicalDevice &gpu              = device.get_gpu();
-	size_t                num_framebuffers = render_context.get_render_frames().size();
+	uint32_t              num_framebuffers = uint32_t(render_context.get_render_frames().size());
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would
