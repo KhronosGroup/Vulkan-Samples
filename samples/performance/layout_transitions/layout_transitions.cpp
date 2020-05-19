@@ -66,12 +66,10 @@ bool LayoutTransitions::prepare(vkb::Platform &platform)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
+	stats->request_stats({vkb::StatIndex::gpu_killed_tiles,
+	                      vkb::StatIndex::gpu_ext_write_bytes});
 
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::gpu_killed_tiles,
-	                                                              vkb::StatIndex::gpu_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

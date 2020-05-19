@@ -22,6 +22,8 @@
 
 namespace vkb
 {
+class RenderContext;
+
 class VulkanStatsProvider : public StatsProvider
 {
   private:
@@ -77,13 +79,12 @@ class VulkanStatsProvider : public StatsProvider
   public:
 	/**
 	 * @brief Constructs a VulkanStatsProvider
-	 * @param device The device on which to collect stats
 	 * @param requested_stats Set of stats to be collected. Supported stats will be removed from the set.
 	 * @param sampling_config Sampling mode configuration (polling or continuous)
-	 * @param num_framebuffers The number of buffers in the swapchain
+	 * @param render_context The render context
 	 */
-	VulkanStatsProvider(Device &device, std::set<StatIndex> &requested_stats,
-	                    const CounterSamplingConfig &sampling_config, size_t num_framebuffers);
+	VulkanStatsProvider(std::set<StatIndex> &requested_stats, const CounterSamplingConfig &sampling_config,
+	                    RenderContext &render_context);
 
 	/**
 	 * @brief Destructs a VulkanStatsProvider
@@ -106,35 +107,33 @@ class VulkanStatsProvider : public StatsProvider
 	/**
 	 * @brief Retrieve a new sample set from polled sampling
 	 * @param delta_time Time since last sample
-	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	Counters sample(float delta_time, uint32_t active_frame_idx) override;
+	Counters sample(float delta_time) override;
 
 	/**
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
- 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	void command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx) override;
+	void command_buffer_begun(CommandBuffer &cb) override;
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
-	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	void command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx) override;
+	void command_buffer_ending(CommandBuffer &cb) override;
 
   private:
 	bool is_supported(const CounterSamplingConfig &sampling_config) const;
 
 	bool fill_vendor_data();
 
-	bool create_query_pools(uint32_t num_framebuffers, uint32_t queue_family_index);
+	bool create_query_pools(uint32_t queue_family_index);
 
-	float get_best_delta_time(float sw_delta_time, uint32_t active_frame_idx) const;
+	float get_best_delta_time(float sw_delta_time) const;
 
   private:
-	Device &device;
+	// The render context
+	RenderContext &render_context;
 
 	// The query pool for the performance queries
 	std::unique_ptr<QueryPool> query_pool;

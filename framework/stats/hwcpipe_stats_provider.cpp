@@ -158,7 +158,7 @@ static double get_gpu_counter_value(const hwcpipe::GpuMeasurements *gpu, hwcpipe
 	return 0.0;
 }
 
-StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 {
 	Counters              res;
 	hwcpipe::Measurements m = hwcpipe->sample();
@@ -212,7 +212,7 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time, uint32_t 
 
 StatsProvider::Counters HWCPipeStatsProvider::continuous_sample(float delta_time)
 {
-	return sample(delta_time, 0);
+	return sample(delta_time);
 }
 
 }        // namespace vkb

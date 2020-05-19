@@ -123,6 +123,8 @@ bool VulkanSample::prepare(Platform &platform)
 
 	prepare_render_context();
 
+	stats = std::make_unique<vkb::Stats>(*render_context);
+
 	return true;
 }
 
@@ -148,11 +150,11 @@ void VulkanSample::update_scene(float delta_time)
 	}
 }
 
-void VulkanSample::update_stats(float delta_time, uint32_t active_frame_idx)
+void VulkanSample::update_stats(float delta_time)
 {
 	if (stats)
 	{
-		stats->update(delta_time, active_frame_idx);
+		stats->update(delta_time);
 
 		static float stats_view_count = 0.0f;
 		stats_view_count += delta_time;
@@ -195,15 +197,14 @@ void VulkanSample::update(float delta_time)
 	auto &command_buffer = render_context->begin();
 
 	// Collect the performance data for the sample graphs
-	uint32_t active_frame_idx = render_context->get_active_frame_index();
-	update_stats(delta_time, active_frame_idx);
+	update_stats(delta_time);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->command_buffer_begun(command_buffer, active_frame_idx);
+	stats->command_buffer_begun(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
-	stats->command_buffer_ending(command_buffer, active_frame_idx);
+	stats->command_buffer_ending(command_buffer);
 	command_buffer.end();
 
 	render_context->submit(command_buffer);

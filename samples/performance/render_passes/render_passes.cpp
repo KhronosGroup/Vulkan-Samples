@@ -109,13 +109,9 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	auto enabled_stats = {vkb::StatIndex::gpu_fragment_cycles,
+	stats->request_stats({vkb::StatIndex::gpu_fragment_cycles,
 	                      vkb::StatIndex::gpu_ext_read_bytes,
-	                      vkb::StatIndex::gpu_ext_write_bytes};
-
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers, enabled_stats);
+	                      vkb::StatIndex::gpu_ext_write_bytes});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

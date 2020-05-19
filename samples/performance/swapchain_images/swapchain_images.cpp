@@ -62,11 +62,8 @@ bool SwapchainImages::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	stats->request_stats({vkb::StatIndex::frame_times});
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

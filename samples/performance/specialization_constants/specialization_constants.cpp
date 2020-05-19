@@ -55,10 +55,7 @@ bool SpecializationConstants::prepare(vkb::Platform &platform)
 	specialization_constants_pipeline = create_specialization_renderpass();
 	standard_pipeline                 = create_standard_renderpass();
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::gpu_fragment_cycles});
+	stats->request_stats({vkb::StatIndex::gpu_fragment_cycles});
 
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 

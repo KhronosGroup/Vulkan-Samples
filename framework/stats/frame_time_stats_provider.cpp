@@ -32,7 +32,7 @@ bool FrameTimeStatsProvider::is_available(StatIndex index) const
 	return index == StatIndex::frame_times;
 }
 
-StatsProvider::Counters FrameTimeStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters FrameTimeStatsProvider::sample(float delta_time)
 {
 	Counters res;
 	// frame_times comes directly from delta_time

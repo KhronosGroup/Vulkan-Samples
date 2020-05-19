@@ -26,13 +26,37 @@
 
 namespace vkb
 {
-Stats::Stats(Device &device, size_t num_framebuffers, const std::set<StatIndex> &requested_stats,
-             CounterSamplingConfig sampling_config, size_t buffer_size) :
-    requested_stats(requested_stats),
-    sampling_config(sampling_config),
-    stop_worker(std::make_unique<std::promise<void>>())
+Stats::Stats(RenderContext &render_context, size_t buffer_size) :
+    render_context(render_context),
+    buffer_size(buffer_size)
 {
 	assert(buffer_size >= 2 && "Buffers size should be greater than 2");
+}
+
+Stats::~Stats()
+{
+	if (stop_worker)
+	{
+		stop_worker->set_value();
+	}
+
+	if (worker_thread.joinable())
+	{
+		worker_thread.join();
+	}
+}
+
+void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
+                          CounterSamplingConfig      config)
+{
+	if (providers.size() != 0)
+	{
+		LOGE("Stats must only be requested once");
+		throw std::runtime_error("Stats must only be requested once");
+	}
+
+	requested_stats = wanted_stats;
+	sampling_config = config;
 
 	// Copy the requested stats, so they can be changed by the providers below
 	std::set<StatIndex> stats = requested_stats;
@@ -42,7 +66,7 @@ Stats::Stats(Device &device, size_t num_framebuffers, const std::set<StatIndex> 
 	// so subsequent providers only see requests for stats that aren't already supported.
 	providers.emplace_back(std::make_unique<FrameTimeStatsProvider>(stats));
 	providers.emplace_back(std::make_unique<HWCPipeStatsProvider>(stats, sampling_config));
-	providers.emplace_back(std::make_unique<VulkanStatsProvider>(device, stats, sampling_config, num_framebuffers));
+	providers.emplace_back(std::make_unique<VulkanStatsProvider>(stats, sampling_config, render_context));
 
 	// In continuous sampling mode we still need to update the frame times as if we are polling
 	// Store the frame time provider here so we can easily access it later.
@@ -56,25 +80,14 @@ Stats::Stats(Device &device, size_t num_framebuffers, const std::set<StatIndex> 
 	if (sampling_config.mode == CounterSamplingMode::Continuous)
 	{
 		// Start a thread for continuous sample capture
+		stop_worker = std::make_unique<std::promise<void>>();
+
 		worker_thread = std::thread([this] {
 			continuous_sampling_worker(stop_worker->get_future());
 		});
 
 		// Reduce smoothing for continuous sampling
 		alpha_smoothing = 0.6f;
-	}
-}
-
-Stats::~Stats()
-{
-	if (stop_worker)
-	{
-		stop_worker->set_value();
-	}
-
-	if (worker_thread.joinable())
-	{
-		worker_thread.join();
 	}
 }
 
@@ -113,7 +126,7 @@ static void add_smoothed_value(std::vector<float> &values, float value, float al
 	values.back() = value * alpha + *(values.end() - 2) * (1.0f - alpha);
 }
 
-void Stats::update(float delta_time, uint32_t active_frame_idx)
+void Stats::update(float delta_time)
 {
 	switch (sampling_config.mode)
 	{
@@ -123,7 +136,7 @@ void Stats::update(float delta_time, uint32_t active_frame_idx)
 
 			for (auto &p : providers)
 			{
-				auto s = p->sample(delta_time, active_frame_idx);
+				auto s = p->sample(delta_time);
 				sample.insert(s.begin(), s.end());
 			}
 			push_sample(sample);
@@ -165,7 +178,7 @@ void Stats::update(float delta_time, uint32_t active_frame_idx)
 			sample_count = std::max<size_t>(1, std::min<size_t>(sample_count, pending_samples.size()));
 
 			// Get the frame time stats (not a continuous stat)
-			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time, active_frame_idx);
+			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time);
 
 			// Push the samples to circular buffers
 			std::for_each(pending_samples.end() - sample_count, pending_samples.end(), [this, frame_time_sample](auto &s) {
@@ -234,18 +247,18 @@ void Stats::push_sample(const StatsProvider::Counters &sample)
 	}
 }
 
-void Stats::command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx)
+void Stats::command_buffer_begun(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
-		p->command_buffer_begun(cb, active_frame_idx);
+		p->command_buffer_begun(cb);
 }
 
-void Stats::command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx)
+void Stats::command_buffer_ending(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
-		p->command_buffer_ending(cb, active_frame_idx);
+		p->command_buffer_ending(cb);
 }
 
 const StatGraphData &Stats::get_graph_data(StatIndex index) const

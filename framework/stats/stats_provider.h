@@ -71,9 +71,8 @@ class StatsProvider
 	/**
 	 * @brief Retrieve a new sample set
 	 * @param delta_time Time since last sample
-	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	virtual Counters sample(float delta_time, uint32_t active_frame_idx) = 0;
+	virtual Counters sample(float delta_time) = 0;
 
 	/**
 	 * @brief Retrieve a new sample set from continuous sampling
@@ -87,17 +86,15 @@ class StatsProvider
 	/**
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
-	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	virtual void command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx)
+	virtual void command_buffer_begun(CommandBuffer &cb)
 	{}
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
-	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	virtual void command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx)
+	virtual void command_buffer_ending(CommandBuffer &cb)
 	{}
 
   protected:

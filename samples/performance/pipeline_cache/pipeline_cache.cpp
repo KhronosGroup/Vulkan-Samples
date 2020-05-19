@@ -104,10 +104,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	// Build all pipelines from a previous run
 	resource_cache.warmup(data_cache);
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
+	stats->request_stats({vkb::StatIndex::frame_times});
 
 	float dpi_factor = platform.get_window().get_dpi_factor();
 

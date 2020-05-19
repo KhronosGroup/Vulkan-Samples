@@ -125,12 +125,9 @@ bool MSAASample::prepare(vkb::Platform &platform)
 
 	update_pipelines();
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::frame_times,
-	                                                              vkb::StatIndex::gpu_ext_read_bytes,
-	                                                              vkb::StatIndex::gpu_ext_write_bytes});
+	stats->request_stats({vkb::StatIndex::frame_times,
+	                      vkb::StatIndex::gpu_ext_read_bytes,
+	                      vkb::StatIndex::gpu_ext_write_bytes});
 
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 

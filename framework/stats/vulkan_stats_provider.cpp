@@ -19,22 +19,24 @@
 #include "core/device.h"
 
 #include "core/command_buffer.h"
+#include "rendering/render_context.h"
 #include "vulkan_stats_provider.h"
 
 #include <regex>
 
 namespace vkb
 {
-VulkanStatsProvider::VulkanStatsProvider(Device &device, std::set<StatIndex> &requested_stats,
+VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_stats,
                                          const CounterSamplingConfig &sampling_config,
-                                         size_t                       num_framebuffers) :
-    device(device)
+                                         RenderContext &              render_context) :
+    render_context(render_context)
 {
 	// Check all the Vulkan capabilities we require are present
 	if (!is_supported(sampling_config))
 		return;
 
-	const PhysicalDevice &gpu = device.get_gpu();
+	Device &              device = render_context.get_device();
+	const PhysicalDevice &gpu    = device.get_gpu();
 
 	has_timestamps   = gpu.get_properties().limits.timestampComputeAndGraphics;
 	timestamp_period = gpu.get_properties().limits.timestampPeriod;
@@ -145,7 +147,7 @@ VulkanStatsProvider::VulkanStatsProvider(Device &device, std::set<StatIndex> &re
 	}
 
 	// Now we know the counters and that we can collect them, make a query pool for the results.
-	if (!create_query_pools(uint32_t(num_framebuffers), queue_family_index))
+	if (!create_query_pools(queue_family_index))
 	{
 		stat_data.clear();
 		counter_indices.clear();
@@ -164,13 +166,13 @@ VulkanStatsProvider::~VulkanStatsProvider()
 	if (stat_data.size() > 0)
 	{
 		// Release profiling lock
-		vkReleaseProfilingLockKHR(device.get_handle());
+		vkReleaseProfilingLockKHR(render_context.get_device().get_handle());
 	}
 }
 
 bool VulkanStatsProvider::fill_vendor_data()
 {
-	const auto &pd_props = device.get_gpu().get_properties();
+	const auto &pd_props = render_context.get_device().get_gpu().get_properties();
 	if (pd_props.vendorID == 0x14E4)        // Broadcom devices
 	{
 		LOGI("Using Vulkan performance counters from Broadcom device");
@@ -210,9 +212,11 @@ bool VulkanStatsProvider::fill_vendor_data()
 	}
 }
 
-bool VulkanStatsProvider::create_query_pools(uint32_t num_framebuffers, uint32_t queue_family_index)
+bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
-	const PhysicalDevice &gpu = device.get_gpu();
+	Device &              device           = render_context.get_device();
+	const PhysicalDevice &gpu              = device.get_gpu();
+	size_t                num_framebuffers = render_context.get_render_frames().size();
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would
@@ -273,6 +277,8 @@ bool VulkanStatsProvider::is_supported(const CounterSamplingConfig &sampling_con
 	if (sampling_config.mode == CounterSamplingMode::Continuous)
 		return false;
 
+	Device &device = render_context.get_device();
+
 	// The VK_KHR_performance_query must be available and enabled
 	if (!(device.is_enabled("VK_KHR_performance_query") && device.is_enabled("VK_EXT_host_query_reset")))
 		return false;
@@ -310,8 +316,9 @@ const StatGraphData &VulkanStatsProvider::get_graph_data(StatIndex index) const
 	return default_graph_map[index];
 }
 
-void VulkanStatsProvider::command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx)
+void VulkanStatsProvider::command_buffer_begun(CommandBuffer &cb)
 {
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
 	if (timestamp_pool)
 	{
 		// We use TimestampQueries when available to provide a more accurate delta_time.
@@ -327,8 +334,10 @@ void VulkanStatsProvider::command_buffer_begun(CommandBuffer &cb, uint32_t activ
 		cb.begin_query(*query_pool, active_frame_idx, VkQueryControlFlags(0));
 }
 
-void VulkanStatsProvider::command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx)
+void VulkanStatsProvider::command_buffer_ending(CommandBuffer &cb)
 {
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
+
 	if (query_pool)
 	{
 		// Perform a barrier to ensure all previous commands complete before ending the query
@@ -374,7 +383,7 @@ static double get_counter_value(const VkPerformanceCounterResultKHR &result,
 	}
 }
 
-float VulkanStatsProvider::get_best_delta_time(float sw_delta_time, uint32_t active_frame_idx) const
+float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 {
 	if (!timestamp_pool)
 		return sw_delta_time;
@@ -383,6 +392,8 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time, uint32_t act
 
 	// Query the timestamps to get an accurate delta time
 	std::array<uint64_t, 2> timestamps;
+
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
 
 	VkResult r = timestamp_pool->get_results(active_frame_idx * 2, 2,
 	                                         timestamps.size() * sizeof(uint64_t),
@@ -397,11 +408,13 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time, uint32_t act
 	return delta_time;
 }
 
-StatsProvider::Counters VulkanStatsProvider::sample(float delta_time, uint32_t active_frame_idx)
+StatsProvider::Counters VulkanStatsProvider::sample(float delta_time)
 {
 	Counters out;
 	if (!query_pool || queries_ready == 0)
 		return out;
+
+	uint32_t active_frame_idx = render_context.get_active_frame_index();
 
 	VkDeviceSize stride = sizeof(VkPerformanceCounterResultKHR) * counter_indices.size();
 
@@ -414,7 +427,7 @@ StatsProvider::Counters VulkanStatsProvider::sample(float delta_time, uint32_t a
 		return out;
 
 	// Use timestamps to get a more accurate delta if available
-	delta_time = get_best_delta_time(delta_time, active_frame_idx);
+	delta_time = get_best_delta_time(delta_time);
 
 	// Parse the results - they are in the order we gave in counter_indices
 	for (const auto &s : stat_data)

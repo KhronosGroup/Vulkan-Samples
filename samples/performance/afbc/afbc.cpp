@@ -62,11 +62,9 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
+	stats->request_stats({vkb::StatIndex::gpu_ext_write_bytes});
 
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers,
-	                                     std::set<vkb::StatIndex>{vkb::StatIndex::gpu_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

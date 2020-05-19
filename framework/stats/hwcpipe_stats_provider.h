@@ -106,9 +106,8 @@ class HWCPipeStatsProvider : public StatsProvider
 	/**
 	 * @brief Retrieve a new sample set from polled sampling
 	 * @param delta_time Time since last sample
-	 * @param active_frame_idx Which of the framebuffers is active - unused by this HWCPipeStatsProvider
 	 */
-	Counters sample(float delta_time, uint32_t active_frame_idx) override;
+	Counters sample(float delta_time) override;
 
 	/**
 	 * @brief Retrieve a new sample set from continuous sampling

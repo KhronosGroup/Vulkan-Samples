@@ -35,6 +35,7 @@ namespace vkb
 {
 class Device;
 class CommandBuffer;
+class RenderContext;
 
 /*
  * @brief Helper class for querying statistics about the CPU and the GPU
@@ -44,22 +45,23 @@ class Stats
   public:
 	/**
 	 * @brief Constructs a Stats object
-	 * @param device Device on which to collect stats
-	 * @param num_framebuffers The number of buffers in the swapchain
-	 * @param requested_stats Set of stats to be collected if available
-	 * @param sampling_config Sampling mode configuration (polling or continuous)
+	 * @param render_context The RenderContext for this sample
 	 * @param buffer_size Size of the circular buffers
 	 */
-	Stats(Device &                   device,
-	      size_t                     num_framebuffers,
-	      const std::set<StatIndex> &requested_stats,
-	      CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling},
-	      size_t                     buffer_size     = 16);
+	Stats(RenderContext &render_context, size_t buffer_size = 16);
 
 	/**
 	 * @brief Destroys the Stats object
 	 */
 	~Stats();
+
+	/**
+	 * @brief Request specific set of stats to be collected
+	 * @param requested_stats Set of stats to be collected if available
+	 * @param sampling_config Sampling mode configuration (polling or continuous)
+	 */
+	void request_stats(const std::set<StatIndex> &requested_stats,
+	                   CounterSamplingConfig      sampling_config = {CounterSamplingMode::Polling});
 
 	/**
 	 * @brief Resizes the stats buffers according to the width of the screen
@@ -101,8 +103,9 @@ class Stats
 
 	/**
 	 * @brief Update statistics, must be called after every frame
+	 * @param delta_time Time since last update
 	 */
-	void update(float delta_time, uint32_t active_frame_idx);
+	void update(float delta_time);
 
 	/**
 	 * @brief A command buffer that we want to collect stats about has just begun
@@ -114,9 +117,8 @@ class Stats
 	 * collection. This method tells the stats provider that a command buffer has
 	 * begun so that can happen.
 	 * @param cb The command buffer
- 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	void command_buffer_begun(CommandBuffer &cb, uint32_t active_frame_idx);
+	void command_buffer_begun(CommandBuffer &cb);
 
 	/**
 	 * @brief A command buffer that we want to collect stats about is about to be ended
@@ -128,11 +130,13 @@ class Stats
 	 * collection. This method tells the stats provider that a command buffer is
 	 * about to be ended so that can happen.
 	 * @param cb The command buffer
- 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	void command_buffer_ending(CommandBuffer &cb, uint32_t active_frame_idx);
+	void command_buffer_ending(CommandBuffer &cb);
 
   private:
+	/// The render context
+	RenderContext &render_context;
+
 	/// Stats that were requested - they may not all be available
 	std::set<StatIndex> requested_stats;
 
@@ -144,6 +148,9 @@ class Stats
 
 	/// Counter sampling configuration
 	CounterSamplingConfig sampling_config;
+
+	/// Size of the circular buffers
+	size_t buffer_size;
 
 	/// Timer used in the main thread to compute delta time
 	Timer main_timer;

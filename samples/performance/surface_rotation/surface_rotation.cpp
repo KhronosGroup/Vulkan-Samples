@@ -56,11 +56,8 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 		throw std::runtime_error("Requires a surface to run sample");
 	}
 
-	auto enabled_stats = {vkb::StatIndex::gpu_ext_read_stalls, vkb::StatIndex::gpu_ext_write_stalls};
-
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers, enabled_stats);
+	stats->request_stats({vkb::StatIndex::gpu_ext_read_stalls,
+	                      vkb::StatIndex::gpu_ext_write_stalls});
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

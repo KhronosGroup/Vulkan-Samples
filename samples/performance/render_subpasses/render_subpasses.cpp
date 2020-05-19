@@ -155,14 +155,10 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable stats
-	auto enabled_stats = {vkb::StatIndex::gpu_fragment_jobs,
+	stats->request_stats({vkb::StatIndex::gpu_fragment_jobs,
 	                      vkb::StatIndex::gpu_tiles,
 	                      vkb::StatIndex::gpu_ext_read_bytes,
-	                      vkb::StatIndex::gpu_ext_write_bytes};
-
-	size_t num_framebuffers = get_render_context().get_render_frames().size();
-
-	stats = std::make_unique<vkb::Stats>(get_device(), num_framebuffers, enabled_stats);
+	                      vkb::StatIndex::gpu_ext_write_bytes});
 
 	// Enable gui
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());

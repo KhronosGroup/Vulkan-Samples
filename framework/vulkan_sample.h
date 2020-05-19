@@ -183,9 +183,8 @@ class VulkanSample : public Application
 	/**
 	 * @brief Update counter values
 	 * @param delta_time
- 	 * @param active_frame_idx Which of the framebuffers is active
 	 */
-	void update_stats(float delta_time, uint32_t active_frame_idx);
+	void update_stats(float delta_time);
 
 	/**
 	 * @brief Update GUI
