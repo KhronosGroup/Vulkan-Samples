@@ -85,7 +85,9 @@ class PhysicalDevice
 		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			return T{};
+			// Return an empty struct so the caller can continue to run
+			extension_features.insert({type, std::make_shared<T>()});
+			return *((T *) extension_features.find(type)->second.get());
 		}
 
 		// If the type already exists in the map, dereference the void pointer to get the extension feature struct
