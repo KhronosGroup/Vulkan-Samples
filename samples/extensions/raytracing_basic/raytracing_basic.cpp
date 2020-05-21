@@ -441,7 +441,7 @@ void RaytracingBasic::create_scene()
 }
 
 /*
-	Create the Shader Binding Table that holds the ray tracing piepeline's shader group handle
+	Create the Shader Binding Table that holds the ray tracing pipeline's shader group handle
 */
 void RaytracingBasic::create_shader_binding_table()
 {
