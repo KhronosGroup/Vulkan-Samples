@@ -278,7 +278,17 @@ gradle assembleDebug
 adb install build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
-> Alternatively, you may open the `build/android_gradle` folder in Android Studio and run the project from here
+> Alternatively, you may import the `build/android_gradle` folder in Android Studio and run the project from here
+
+If you are using a newer version of cmake then 3.13, you might get this error:
+
+> Execution failed for task ':externalNativeBuildDebug'.
+Expected output file at \<PATH> for target \<sample> but there was none
+
+In this case, update the version of the gradle plugin in "bldsys/cmake/template/gradle/build.gradle.in" to 3.5.0, remove the content of build folder and repeat the build process from Step 1. This is known to work with Gradle 6.3 and NDK 20.0.55
+
+If you are using Android Studio, you can simply do these changes after importing the `build/android_gradle` folder, opening File->Project Structure, and doing the following changes:
+On the Project tab, change the Android Gradle Plugin version to 3.5.0 and the Gradle version to 6.3.(this also requires NDK 20.0.55)
 
 # Building Individual Samples
 
