@@ -21,8 +21,6 @@
 
 #pragma once
 
-#define VK_KHR_ray_tracing
-
 #include "api_vulkan_sample.h"
 
 // Indices for the different ray tracing shader types used in this example
