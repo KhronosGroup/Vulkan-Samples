@@ -259,7 +259,7 @@ void RaytracingBasic::create_scene()
 		acceleration_create_geometry_info.geometryType      = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
 		acceleration_create_geometry_info.maxPrimitiveCount = 1;
 		acceleration_create_geometry_info.indexType         = VK_INDEX_TYPE_UINT32;
-		acceleration_create_geometry_info.maxVertexCount    = vertices.size();
+		acceleration_create_geometry_info.maxVertexCount    = static_cast<uint32_t>(vertices.size());
 		acceleration_create_geometry_info.vertexFormat      = VK_FORMAT_R32G32B32_SFLOAT;
 		acceleration_create_geometry_info.allowsTransforms  = VK_FALSE;
 
