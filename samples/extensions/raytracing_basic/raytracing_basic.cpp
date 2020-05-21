@@ -17,7 +17,6 @@
 
 /*
  * Basic example for ray tracing using VK_KHR_ray_tracing
- * @note: The extension is still beta, so you need to enable VKB_VK_ENABLE_BETA_EXTENSIONS in the cmake options
  */
 
 #include "raytracing_basic.h"

@@ -19,10 +19,6 @@ cmake_minimum_required(VERSION 3.10)
 
 project(framework LANGUAGES C CXX)
 
-if(${VKB_VK_ENABLE_BETA_EXTENSIONS})
-    target_compile_definitions(volk PUBLIC VK_ENABLE_BETA_EXTENSIONS)
-endif()
-
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
@@ -350,6 +346,9 @@ endif()
 if(MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC /MP)
 endif()
+
+# Enable beta features required for certain samples
+target_compile_definitions(volk PUBLIC VK_ENABLE_BETA_EXTENSIONS)
 
 if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
