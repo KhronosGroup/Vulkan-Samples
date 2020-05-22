@@ -66,8 +66,6 @@ class PhysicalDevice
 	    VkPerformanceCounterKHR *           counters,
 	    VkPerformanceCounterDescriptionKHR *descriptions) const;
 
-	VkPhysicalDeviceFeatures &get_mutable_requested_features();
-
 	const VkPhysicalDeviceFeatures get_requested_features() const;
 
 	VkPhysicalDeviceFeatures &get_mutable_requested_features();
@@ -97,7 +95,9 @@ class PhysicalDevice
 		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			return T{};
+			// Return an empty structure
+			extension_features.insert({type, std::make_shared<T>()});
+			return *((T *) extension_features.find(type)->second.get());
 		}
 
 		// If the type already exists in the map, dereference the void pointer to get the extension feature struct

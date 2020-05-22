@@ -83,11 +83,8 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 
 	if (has_performance_query)
 	{
-		gpu.request_performance_counter_features();
-		gpu.request_host_query_reset_features();
-
-		auto perf_counter_features     = gpu.get_performance_counter_features();
-		auto host_query_reset_features = gpu.get_host_query_reset_features();
+		auto perf_counter_features     = gpu.request_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
+		auto host_query_reset_features = gpu.request_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
@@ -158,7 +155,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	const auto requested_gpu_features = gpu.get_requested_features();
-	create_info.pEnabledFeatures = &requested_gpu_features;
+	create_info.pEnabledFeatures      = &requested_gpu_features;
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
 
@@ -286,8 +283,7 @@ DriverVersion Device::get_driver_version() const
 
 	switch (gpu.get_properties().vendorID)
 	{
-		case 0x10DE:
-		{
+		case 0x10DE: {
 			// Nvidia
 			version.major = (gpu.get_properties().driverVersion >> 22) & 0x3ff;
 			version.minor = (gpu.get_properties().driverVersion >> 14) & 0x0ff;
@@ -295,8 +291,7 @@ DriverVersion Device::get_driver_version() const
 			// Ignoring optional tertiary info in lower 6 bits
 			break;
 		}
-		default:
-		{
+		default: {
 			version.major = VK_VERSION_MAJOR(gpu.get_properties().driverVersion);
 			version.minor = VK_VERSION_MINOR(gpu.get_properties().driverVersion);
 			version.patch = VK_VERSION_PATCH(gpu.get_properties().driverVersion);
