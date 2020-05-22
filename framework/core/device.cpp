@@ -283,7 +283,8 @@ DriverVersion Device::get_driver_version() const
 
 	switch (gpu.get_properties().vendorID)
 	{
-		case 0x10DE: {
+		case 0x10DE:
+		{
 			// Nvidia
 			version.major = (gpu.get_properties().driverVersion >> 22) & 0x3ff;
 			version.minor = (gpu.get_properties().driverVersion >> 14) & 0x0ff;
@@ -291,7 +292,8 @@ DriverVersion Device::get_driver_version() const
 			// Ignoring optional tertiary info in lower 6 bits
 			break;
 		}
-		default: {
+		default:
+		{
 			version.major = VK_VERSION_MAJOR(gpu.get_properties().driverVersion);
 			version.minor = VK_VERSION_MINOR(gpu.get_properties().driverVersion);
 			version.patch = VK_VERSION_PATCH(gpu.get_properties().driverVersion);
