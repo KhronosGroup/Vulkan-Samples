@@ -214,8 +214,8 @@ void Subpasses::update(float delta_time)
 			else
 			{
 				// Use more bits
-				albedo_format = VK_FORMAT_R16G16B16A16_SFLOAT;        // 64-bit
-				normal_format = VK_FORMAT_R16G16B16A16_SFLOAT;        // 64-bit
+				albedo_format = VK_FORMAT_R32G32B32A32_SFLOAT;        // 128-bit
+				normal_format = VK_FORMAT_R32G32B32A32_SFLOAT;        // 128-bit
 			}
 
 			last_g_buffer_size = configs[Config::GBufferSize].value;
