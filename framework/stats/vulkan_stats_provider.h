@@ -114,13 +114,13 @@ class VulkanStatsProvider : public StatsProvider
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
 	 */
-	void command_buffer_begun(CommandBuffer &cb) override;
+	void begin_sampling(CommandBuffer &cb) override;
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
 	 */
-	void command_buffer_ending(CommandBuffer &cb) override;
+	void end_sampling(CommandBuffer &cb) override;
 
   private:
 	bool is_supported(const CounterSamplingConfig &sampling_config) const;

@@ -87,14 +87,14 @@ class StatsProvider
 	 * @brief A command buffer that we want stats about has just begun
 	 * @param cb The command buffer
 	 */
-	virtual void command_buffer_begun(CommandBuffer &cb)
+	virtual void begin_sampling(CommandBuffer &cb)
 	{}
 
 	/**
 	 * @brief A command buffer that we want stats about is about to be ended
 	 * @param cb The command buffer
 	 */
-	virtual void command_buffer_ending(CommandBuffer &cb)
+	virtual void end_sampling(CommandBuffer &cb)
 	{}
 
   protected:

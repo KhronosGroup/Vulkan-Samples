@@ -51,7 +51,6 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 {
 	if (providers.size() != 0)
 	{
-		LOGE("Stats must only be requested once");
 		throw std::runtime_error("Stats must only be requested once");
 	}
 
@@ -65,7 +64,7 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 	// All supported stats will be removed from the given 'stats' set by the provider's constructor
 	// so subsequent providers only see requests for stats that aren't already supported.
 	providers.emplace_back(std::make_unique<FrameTimeStatsProvider>(stats));
-	providers.emplace_back(std::make_unique<HWCPipeStatsProvider>(stats, sampling_config));
+	providers.emplace_back(std::make_unique<HWCPipeStatsProvider>(stats));
 	providers.emplace_back(std::make_unique<VulkanStatsProvider>(stats, sampling_config, render_context));
 
 	// In continuous sampling mode we still need to update the frame times as if we are polling
@@ -247,18 +246,18 @@ void Stats::push_sample(const StatsProvider::Counters &sample)
 	}
 }
 
-void Stats::command_buffer_begun(CommandBuffer &cb)
+void Stats::begin_sampling(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
-		p->command_buffer_begun(cb);
+		p->begin_sampling(cb);
 }
 
-void Stats::command_buffer_ending(CommandBuffer &cb)
+void Stats::end_sampling(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
-		p->command_buffer_ending(cb);
+		p->end_sampling(cb);
 }
 
 const StatGraphData &Stats::get_graph_data(StatIndex index) const

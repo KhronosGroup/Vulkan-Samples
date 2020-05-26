@@ -200,11 +200,11 @@ void VulkanSample::update(float delta_time)
 	update_stats(delta_time);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->command_buffer_begun(command_buffer);
+	stats->begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
-	stats->command_buffer_ending(command_buffer);
+	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	render_context->submit(command_buffer);

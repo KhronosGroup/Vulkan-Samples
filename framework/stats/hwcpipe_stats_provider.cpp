@@ -22,9 +22,7 @@
 
 namespace vkb
 {
-HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> & requested_stats,
-                                           CounterSamplingConfig sampling_config) :
-    sampling_config(sampling_config)
+HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 {
 	// Mapping of stats to their hwcpipe availability
 	// clang-format off
@@ -93,7 +91,9 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> & requested_stats
 						++iter;
 				}
 				else
+				{
 					iter = stat_data.erase(iter);
+				}
 				break;
 			}
 			case StatType::Gpu:
@@ -107,7 +107,9 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> & requested_stats
 						++iter;
 				}
 				else
+				{
 					iter = stat_data.erase(iter);
+				}
 				break;
 			}
 		}

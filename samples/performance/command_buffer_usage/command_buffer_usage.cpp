@@ -127,11 +127,11 @@ void CommandBufferUsage::update(float delta_time)
 	update_stats(delta_time);
 
 	primary_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->command_buffer_begun(primary_command_buffer);
+	stats->begin_sampling(primary_command_buffer);
 
 	draw(primary_command_buffer, render_context.get_active_frame().get_render_target());
 
-	stats->command_buffer_ending(primary_command_buffer);
+	stats->end_sampling(primary_command_buffer);
 	primary_command_buffer.end();
 
 	render_context.submit(primary_command_buffer);

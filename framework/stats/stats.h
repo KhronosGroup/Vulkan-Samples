@@ -115,10 +115,11 @@ class Stats
 	 * know when a command buffer has begun and when it's about to end so that we
 	 * can inject some extra commands into the command buffer to control the stats
 	 * collection. This method tells the stats provider that a command buffer has
-	 * begun so that can happen.
+	 * begun so that can happen. The command buffer must be in a recording state
+	 * when this method is called.
 	 * @param cb The command buffer
 	 */
-	void command_buffer_begun(CommandBuffer &cb);
+	void begin_sampling(CommandBuffer &cb);
 
 	/**
 	 * @brief A command buffer that we want to collect stats about is about to be ended
@@ -128,10 +129,11 @@ class Stats
 	 * know when a command buffer has begun and when it's about to end so that we
 	 * can inject some extra commands into the command buffer to control the stats
 	 * collection. This method tells the stats provider that a command buffer is
-	 * about to be ended so that can happen.
+	 * about to be ended so that can happen. The command buffer must be in a recording
+	 * state when this method is called.
 	 * @param cb The command buffer
 	 */
-	void command_buffer_ending(CommandBuffer &cb);
+	void end_sampling(CommandBuffer &cb);
 
   private:
 	/// The render context
