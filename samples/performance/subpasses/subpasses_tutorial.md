@@ -88,6 +88,8 @@ Furthermore, in order to be merged, subpasses are required to use at most 128-bi
 
 The best way to verify whether two subpasses are merged or not is to compare the physical tiles (`PTILES`) counter by switching between the subpasses and the render passes techniques. When we compare the screenshots of the two render techniques on a `Mali-G76`, we can see that there is approximately a `55%` reduction in the number of tiles used (`262.2k/s` vs `614.7k/s`), and therefore a `55%` reduction in bandwidth.
 
+In order to calculate the number in the physical tiles counter, you need to know the resolution of the device you are using and the size of a single tile. In the case of an `S10 Mali-G76`, the resolution is `2220 * 1080` and a tile is `16x16` pixels. Therefore every frame needs `(2220 * 1080) / (16 * 16) = ~9k` tiles. To get the tiles every second, we multiply this number by the FPS (this can vary) so `9k * 30 = 270k/s` which is approximately what we see in the tiles counter. 
+
 It is important to note that by using a `VkImageFormat` that requires more bits, it is most likely that the G-buffer will no longer fit the drivers budget, denying the possibility to merge the subpasses. The following picture shows how the number of physical tiles used almost doubles to `409.6k/s`, indicating that subpasses are not merged.
 
 ![G-buffer size](images/gbuffer-size.jpg)
