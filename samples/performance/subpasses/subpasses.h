@@ -45,9 +45,9 @@ class Subpasses : public vkb::VulkanSample
 	virtual void prepare_render_context() override;
 
 	/**
-     * @brief Draws to a render target using the right pipeline based on the sample selection
-     *        Not to be confused with `draw_renderpasses` which uses the bad practice
-     */
+	 * @brief Draws to a render target using the right pipeline based on the sample selection
+	 *        Not to be confused with `draw_renderpasses` which uses the bad practice
+	 */
 	virtual void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	/**
