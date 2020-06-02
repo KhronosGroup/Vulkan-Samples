@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,124 +21,59 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.util.ArraySet;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 
+import com.khronos.vulkan_samples.model.Sample;
+import com.khronos.vulkan_samples.model.SampleStore;
+
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
-import java.util.TreeSet;
 
 public class ViewPagerAdapter extends FragmentStatePagerAdapter {
-
-    private static final List<String> defined_category_order = Collections.unmodifiableList(
-        Arrays.asList("api", "performance", "extensions"));
-
     private TabFragment currentFragment;
 
-    private List<String> categories;
+    private List<Sample> viewableSamples = new ArrayList<>();
 
-    private List<String> filterTags;
-
-    private HashMap<String, List<Sample>> sampleMap;
-
-    private List<Sample> viewableSamples;
+    private SampleStore samples;
 
     private AdapterView.OnItemClickListener clickListener;
 
-    ViewPagerAdapter(FragmentManager manager, @NonNull HashMap<String,
-            List<Sample>> categorizedSampleMap, AdapterView.OnItemClickListener clickListener) {
+    public ViewPagerAdapter(FragmentManager manager, SampleStore samples, AdapterView.OnItemClickListener clickListener) {
         super(manager);
-        // Define order of category tabs
-        TreeSet<String> category_set = new TreeSet<String>(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int ret;
-                int o1_defined_order = defined_category_order.indexOf(o1);
-                int o2_defined_order = defined_category_order.indexOf(o2);
-                if (o1_defined_order > -1 && o2_defined_order > -1) {
-                    // If in the pre-defined list, sort in the order they appear there
-                    ret =  o1_defined_order > o2_defined_order ? 1 : -1;
-                } else if (o1_defined_order > -1 || o2_defined_order > -1) {
-                    // If not in the pre-defined list, sort after those that are
-                    ret = 1;
-                } else {
-                    // Sort alphabetically
-                    ret =  o1.compareTo(o2);
-                }
-                return ret;
-            }
-        });
-        category_set.addAll(categorizedSampleMap.keySet());
-        this.categories = new ArrayList<>();
-        this.categories.addAll(category_set);
-        this.sampleMap = categorizedSampleMap;
-        this.viewableSamples = new ArrayList<>();
+        this.samples = samples;
         this.clickListener = clickListener;
-        applyFilter(getTags());
-
+        applyFilter(samples.getTags());
     }
 
     public void setDialog(FilterDialog dialog) {
-        dialog.setup(this, getTags());
+        dialog.setup(this, samples.getTags());
     }
 
     /**
-     * @brief Modifies the filter so that the viewableSamples updates
+     * Modifies the filter so that the viewableSamples updates
      */
     public void applyFilter(List<String> filterTags) {
-        viewableSamples.clear();
-        for(String filter : filterTags) {
-            for(List<Sample> sampleList : sampleMap.values()) {
-                for(Sample sample : sampleList) {
-                    if(sample.getTags().contains(filter) && !viewableSamples.contains(sample)) {
-                        viewableSamples.add(sample);
-                    }
-                }
-            }
-        }
-        this.filterTags = filterTags;
-    }
-
-    /**
-     * @brief Returns a list of unique tags pulled from CMake used to filter the view
-     */
-    private List<String> getTags() {
-        Set<String> tagSet = new ArraySet<>();
-        for(List<Sample> sampleList : sampleMap.values()) {
-            for(Sample sample : sampleList) {
-                tagSet.addAll(sample.getTags());
-            }
-        }
-        return new ArrayList<>(tagSet);
-    }
-
-    public List<String> getFilter() {
-        return filterTags;
+        viewableSamples = new ArrayList<>(samples.getByTags(filterTags));
     }
 
     @Override
     public Fragment getItem(int position) {
-        TabFragment fragment = (TabFragment) TabFragment.getInstance(categories.get(position));
-
         List<Sample> fragmentSamples = new ArrayList<>();
 
-        for(Sample sample : Objects.requireNonNull(sampleMap.get(categories.get(position)))) {
-            for(Sample viewableSample : this.viewableSamples) {
-                if(sample.getId().equals(viewableSample.getId())) {
+        String category = samples.getCategories().get(position);
+        assert category != null;
+
+        for (Sample sample : Objects.requireNonNull(samples.getByCategory(category))) {
+            for (Sample viewableSample : this.viewableSamples) {
+                if (sample.equals(viewableSample)) {
                     fragmentSamples.add(sample);
                 }
             }
         }
 
-        fragment.prepare(fragmentSamples, clickListener);
-        return fragment;
+        return TabFragment.getInstance(category, fragmentSamples, clickListener);
     }
 
     public int getItemPosition(@NonNull Object object) {
@@ -155,12 +90,12 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
 
     @Override
     public int getCount() {
-        return categories.size();
+        return samples.getCategoryIndex().size();
     }
 
     @Override
     public CharSequence getPageTitle(int position) {
-        return categories.get(position);
+        return samples.getCategories().get(position);
     }
 
     TabFragment getCurrentFragment() {

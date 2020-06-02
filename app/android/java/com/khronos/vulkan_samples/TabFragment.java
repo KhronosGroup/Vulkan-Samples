@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,22 +27,53 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
+import com.khronos.vulkan_samples.model.Sample;
+
+import java.util.ArrayList;
 import java.util.List;
 
 public class TabFragment extends Fragment {
 
     private String category;
 
-    private List<Sample> sampleList;
+    private List<Sample> sampleList = new ArrayList<>();
 
     private AdapterView.OnItemClickListener clickListener;
 
-    public static Fragment getInstance(String category) {
+    /**
+     * Create a new Tab Fragment Instance
+     *
+     * @param category      The Title of the TabFragment
+     * @param sampleList    The Samples that this tab will render
+     * @param clickListener The listener used when a item is clicked
+     * @return A new Tab Fragment
+     */
+    public static Fragment getInstance(String category, List<Sample> sampleList, AdapterView.OnItemClickListener clickListener) {
         Bundle bundle = new Bundle();
         bundle.putString("category", category);
         TabFragment tabFragment = new TabFragment();
         tabFragment.setArguments(bundle);
+        tabFragment.setSampleList(sampleList);
+        tabFragment.setClickListener(clickListener);
         return tabFragment;
+    }
+
+    /**
+     * Set the sample list that the fragment should render
+     *
+     * @param list A list of samples
+     */
+    public void setSampleList(List<Sample> list) {
+        this.sampleList = list;
+    }
+
+    /**
+     * Set the action to perform when a sample list item is clicked
+     *
+     * @param clickListener A OnItemClickListener
+     */
+    public void setClickListener(AdapterView.OnItemClickListener clickListener) {
+        this.clickListener = clickListener;
     }
 
     @Override
@@ -54,25 +85,17 @@ public class TabFragment extends Fragment {
     }
 
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         return inflater.inflate(R.layout.fragment_tab, container, false);
     }
 
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
-
         ListView listView = view.findViewById(R.id.sample_list);
-        SampleArrayAdapter sampleArrayAdapter = new SampleArrayAdapter(view.getContext(),
-                sampleList);
+        SampleArrayAdapter sampleArrayAdapter = new SampleArrayAdapter(view.getContext(), sampleList);
         listView.setAdapter(sampleArrayAdapter);
         listView.setOnItemClickListener(this.clickListener);
-    }
-
-    public void prepare(List<Sample> sampleList, AdapterView.OnItemClickListener clickListener) {
-        this.sampleList = sampleList;
-        this.clickListener = clickListener;
     }
 
     public String getCategory() {

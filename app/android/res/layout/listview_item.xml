@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,12 +17,12 @@
 - limitations under the License.
 -
 -->
-<RelativeLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
-	
+
     <TextView
         android:id="@+id/title_text"
         android:layout_width="fill_parent"
@@ -30,7 +30,8 @@
         android:paddingLeft="10dip"
         android:paddingTop="10dip"
         android:textSize="16dip"
-        android:textStyle="bold" >
+        android:textStyle="bold"
+        tools:text="A Sample Title">
     </TextView>
 
     <TextView
@@ -41,7 +42,8 @@
         android:paddingLeft="10dip"
         android:paddingBottom="10dip"
         android:textSize="14dip"
-        android:textStyle="italic" >
+        android:textStyle="italic"
+        tools:text="A Sample Description">
     </TextView>
 
     <TextView
@@ -55,7 +57,8 @@
         android:paddingRight="10dip"
         android:textColor="@color/colorPrimary"
         android:textSize="12dip"
-        android:textStyle="italic">
+        android:textStyle="italic"
+        tools:text="Tag, Tag">
     </TextView>
-	
+
 </RelativeLayout>

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,49 +18,43 @@
 package com.khronos.vulkan_samples;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
-import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TabLayout;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
-import android.support.v4.view.ViewPager;
 import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.widget.AdapterView;
-import android.widget.Button;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
 
 import android.support.v7.widget.Toolbar;
 
+import com.khronos.vulkan_samples.common.Notifications;
+import com.khronos.vulkan_samples.common.Utils;
+import com.khronos.vulkan_samples.model.Permission;
+import com.khronos.vulkan_samples.model.Sample;
+import com.khronos.vulkan_samples.model.SampleStore;
+import com.khronos.vulkan_samples.views.PermissionView;
+import com.khronos.vulkan_samples.views.SampleListView;
+
 public class SampleLauncherActivity extends AppCompatActivity {
 
-    private List<String> args = new ArrayList<>();
-
-    private static final int RC_READ_EXTERNAL_STORAGE = 1;
-    private static final int RC_WRITE_EXTERNAL_STORAGE = 2;
-
-    private TabLayout tabLayout;
-    private ViewPager viewPager;
-
-    private FilterDialog dialog;
-
-    private Button buttonPermissions;
-    private TextView textPermissions;
+    SampleListView sampleListView;
+    PermissionView permissionView;
 
     private boolean isBenchmarkMode = false;
     private boolean isHeadless = false;
+
+    public SampleStore samples;
+
+    // Required sample permissions
+    List<Permission> permissions;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,77 +64,30 @@ public class SampleLauncherActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        List<Sample> sampleList = new ArrayList<>();
-
         if (loadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
-            //Initialize cpp android platform
+            // Initialize cpp android platform
             File external_files_dir = getExternalFilesDir("");
             File temp_files_dir = getCacheDir();
-            if (external_files_dir != null && temp_files_dir != null){
+            if (external_files_dir != null && temp_files_dir != null) {
                 initFilePath(external_files_dir.toString(), temp_files_dir.toString());
             }
 
-            //Get sample info from cpp cmake generated file
-            sampleList = Arrays.asList(getSamples());
+            // Get sample info from cpp cmake generated file
+            samples = new SampleStore(Arrays.asList(getSamples()));
         }
 
-        AdapterView.OnItemClickListener clickListener = new AdapterView.OnItemClickListener() {
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                String sampleId = ((Sample)parent.getItemAtPosition(position)).getId();
-                args.add("--sample");
-                args.add(sampleId);
-                setArguments(args);
-                Intent intent = new Intent(SampleLauncherActivity.this,
-                        NativeSampleActivity.class);
-                startActivity(intent);
-            }
-        };
+        // Required Permissions
+        permissions = new ArrayList<>();
+        permissions.add(new Permission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 1));
+        permissions.add(new Permission(Manifest.permission.READ_EXTERNAL_STORAGE, 2));
 
-        HashMap<String, List<Sample>> categorizedSampleMap = categorize(sampleList);
-
-        viewPager = findViewById(R.id.viewpager);
-        ViewPagerAdapter adapter = new ViewPagerAdapter(getSupportFragmentManager(),
-                categorizedSampleMap, clickListener);
-
-        dialog = new FilterDialog();
-        adapter.setDialog(dialog);
-
-        viewPager.setAdapter(adapter);
-
-        tabLayout = findViewById(R.id.tabs);
-        tabLayout.setupWithViewPager(viewPager);
-
-        buttonPermissions = findViewById(R.id.button_permissions);
-        buttonPermissions.setOnClickListener(new View.OnClickListener() {
-            public void onClick(View v) {
-                checkPermissions();
-            }
-        });
-        textPermissions = findViewById(R.id.text_permissions);
-        checkPermissions();
-
-
-        // Handle argument passing
-        Bundle extras = this.getIntent().getExtras();
-        if (extras != null) {
-            if (extras.containsKey("sample")) {
-                args.add("--sample");
-                args.add(extras.getString("sample"));
-                setArguments(args);
-                Intent intent = new Intent(SampleLauncherActivity.this,
-                        NativeSampleActivity.class);
-                startActivity(intent);
-            }
-
-            else if (extras.containsKey("test")) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                args.add("--test");
-                args.add(extras.getString("test"));
-                setArguments(args);
-                Intent intent = new Intent(SampleLauncherActivity.this,
-                        NativeSampleActivity.class);
-                startActivity(intent);
-            }
+        if (checkPermissions()) {
+            // Permissions previously granted skip requesting them
+            parseArguments();
+            showSamples();
+        } else {
+            // Chain request permissions
+            requestNextPermission();
         }
     }
 
@@ -164,24 +111,26 @@ public class SampleLauncherActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch(item.getItemId()) {
+        switch (item.getItemId()) {
             case R.id.filter_button:
-                dialog.show(getSupportFragmentManager(), "filter");
+                sampleListView.dialog.show(getSupportFragmentManager(), "filter");
                 return true;
             case R.id.menu_run_samples:
                 String category = "";
-                List<String> filterTags = new ArrayList<>();
-                ViewPagerAdapter adapter = ((ViewPagerAdapter)viewPager.getAdapter());
-                if(adapter != null) {
+                List<String> arguments = new ArrayList<>();
+                List<String> filterTags = sampleListView.dialog.getFilter();
+
+                ViewPagerAdapter adapter = ((ViewPagerAdapter) sampleListView.viewPager.getAdapter());
+                if (adapter != null) {
                     category = adapter.getCurrentFragment().getCategory();
-                    filterTags = adapter.getFilter();
                 }
-                args.add("--batch");
-                args.add(category);
-                args.addAll(filterTags);
-                setArguments(args);
-                Intent intent = new Intent(SampleLauncherActivity.this,
-                        NativeSampleActivity.class);
+
+                arguments.add("--batch");
+                arguments.add(category);
+                arguments.addAll(filterTags);
+
+                setArguments(Utils.toStringArray(arguments));
+                Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
                 startActivity(intent);
                 return true;
             case R.id.menu_benchmark_mode:
@@ -200,64 +149,41 @@ public class SampleLauncherActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
                                            @NonNull int[] grantResults) {
-        switch (requestCode) {
-            case RC_WRITE_EXTERNAL_STORAGE: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    showPermissionsMessage();
-                    break;
-                }
-            }
-            case RC_READ_EXTERNAL_STORAGE: {
-                if (grantResults.length > 0
-                        && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
-                    showPermissionsMessage();
-                    break;
-                }
-            }
-            default:
-                showSamples();
-        }
+        requestNextPermission();
     }
 
-    private void setArguments(List<String> args) {
+    /**
+     * Set arguments of the Native Activity You may also use a
+     * String[]
+     *
+     * @param args A string array of arguments
+     */
+    public void setArguments(String... args) {
+        List<String> arguments = new ArrayList<>(Arrays.asList(args));
         if (isBenchmarkMode) {
-            args.add("--benchmark");
-            args.add("2000");
+            arguments.add("--benchmark");
+            arguments.add("2000");
         }
         if (isHeadless) {
-            args.add("--headless");
+            arguments.add("--headless");
         }
-        String[] argArray = new String[args.size()];
-        sendArgumentsToPlatform(args.toArray(argArray));
-        args.clear();
+        String[] argArray = new String[arguments.size()];
+        sendArgumentsToPlatform(arguments.toArray(argArray));
     }
 
-    private HashMap<String, List<Sample>> categorize(@NonNull List<Sample> sampleList) {
-        HashMap<String, List<Sample>> sampleMap = new HashMap<>();
-        for(Sample sample : sampleList) {
-            List<Sample> sampleListCategory = sampleMap.get(sample.getCategory());
-            if(sampleListCategory == null) {
-                sampleListCategory = new ArrayList<>();
-            }
-            sampleListCategory.add(sample);
-            sampleMap.put(sample.getCategory(), sampleListCategory);
-        }
-        return sampleMap;
-    }
-
+    /**
+     * Load a native library
+     *
+     * @param native_lib_name Native library to load
+     * @return True if loaded correctly; False otherwise
+     */
     private boolean loadNativeLibrary(String native_lib_name) {
         boolean status = true;
 
         try {
             System.loadLibrary(native_lib_name);
         } catch (UnsatisfiedLinkError e) {
-            Toast
-                .makeText(getApplicationContext(),
-                          "Native code library failed to load.",
-                          Toast.LENGTH_SHORT)
-                .show();
+            Toast.makeText(getApplicationContext(), "Native code library failed to load.", Toast.LENGTH_SHORT).show();
 
             status = false;
         }
@@ -265,41 +191,132 @@ public class SampleLauncherActivity extends AppCompatActivity {
         return status;
     }
 
-    private void checkPermissions() {
-        if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.WRITE_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(SampleLauncherActivity.this,
-                    new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE},
-                    RC_WRITE_EXTERNAL_STORAGE);
-        } else if (ContextCompat.checkSelfPermission(this,
-                Manifest.permission.READ_EXTERNAL_STORAGE)
-                != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(SampleLauncherActivity.this,
-                    new String[]{Manifest.permission.READ_EXTERNAL_STORAGE},
-                    RC_READ_EXTERNAL_STORAGE);
-        } else {
+    /**
+     * Chain request permissions from the required permission list. When
+     * called the next unrequested permission with be requested If all
+     * permission are requested but not all granted; requested states will be
+     * reset and the PermissionView will be shown
+     */
+    public void requestNextPermission() {
+        boolean granted = true;
+
+        for (Permission permission : permissions) {
+
+            // Permission previously requested but not granted
+            if (!permission.granted(getApplication())) {
+                // Permission not previously requested - request it
+                if (!permission.isRequested()) {
+                    permission.request(this);
+                    return;
+                }
+
+                granted = false;
+            }
+        }
+
+        if (granted) {
+            parseArguments();
             showSamples();
+        } else {
+            // Reset all permissions request state so they can be requested again
+            for (Permission permission : permissions) {
+                permission.setRequested(false);
+            }
+            showPermissionsMessage();
         }
     }
 
+    /**
+     * Check all required permissions have been granted
+     *
+     * @return True if all granted; False otherwise
+     */
+    public boolean checkPermissions() {
+        for (Permission permission : permissions) {
+            if (!permission.granted(getApplicationContext())) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Show/Create the Permission View. Hides all other views
+     */
     public void showPermissionsMessage() {
-        textPermissions.setVisibility(View.VISIBLE);
-        buttonPermissions.setVisibility(View.VISIBLE);
-        viewPager.setVisibility(View.INVISIBLE);
-        tabLayout.setVisibility(View.INVISIBLE);
+        if (permissionView == null) {
+            permissionView = new PermissionView(this);
+        }
+
+        if (sampleListView != null) {
+            sampleListView.hide();
+        }
+
+        permissionView.show();
     }
 
+    /**
+     * Show/Create the Sample View. Hides all other views
+     */
     public void showSamples() {
-        textPermissions.setVisibility(View.INVISIBLE);
-        buttonPermissions.setVisibility(View.INVISIBLE);
-        viewPager.setVisibility(View.VISIBLE);
-        tabLayout.setVisibility(View.VISIBLE);
+        if (sampleListView == null) {
+            sampleListView = new SampleListView(this);
+        }
+
+        if (permissionView != null) {
+            permissionView.hide();
+        }
+
+        sampleListView.show();
     }
 
+    // Allow Orientation locking for testing
+    @SuppressLint("SourceLockedOrientationActivity")
+    public void parseArguments() {
+        // Handle argument passing
+        Bundle extras = this.getIntent().getExtras();
+        if (extras != null) {
+            if (extras.containsKey("sample")) {
+                String sampleID = extras.getString("sample");
+                Sample sample = samples.findByID(sampleID);
+                if (sample != null) {
+                    setArguments("--sample", sampleID);
+                    Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
+                    startActivity(intent);
+                    finishAffinity();
+                } else {
+                    Notifications.toast(this, "Could not find sample " + sampleID);
+
+                    // Continue showing app launcher
+                    return;
+                }
+            } else if (extras.containsKey("test")) {
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                setArguments("--test", extras.getString("test"));
+                Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
+                startActivity(intent);
+                finishAndRemoveTask();
+            }
+        }
+    }
+
+    /**
+     * Get samples from the Native Application
+     *
+     * @return A list of Samples that are currently installed in the Native Application
+     */
     private native Sample[] getSamples();
 
+    /**
+     * Set the arguments of the Native Application
+     *
+     * @param args The arguments that are to be passed to the app
+     */
     private native void sendArgumentsToPlatform(String[] args);
 
+    /**
+     * @breif Initiate the file system for the Native Application
+     */
     private native void initFilePath(String external_dir, String temp_path);
 }
