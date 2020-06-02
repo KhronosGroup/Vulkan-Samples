@@ -76,7 +76,6 @@ Since subpass information is known ahead of time, the driver is able to detect i
 
 In other words, a GPU driver can optimize even more by merging two or more subpasses together as long as certain requirements are met. Such requirements may vary between vendors, the following are the ones for Arm GPUs:
 
-* If color attachment data formats can be merged.
 * If merge can save a write-out/read-back; two unrelated subpasses which don't share any data do not benefit from multipass and will not be merged.
 * If the number of unique `VkAttachments` used for input and color attachments in all considered subpasses is <= 8. Note that depth/stencil does not count towards this limit.
 * The depth/stencil attachment does not change between subpasses.
