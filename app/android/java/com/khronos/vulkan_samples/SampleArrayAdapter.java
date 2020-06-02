@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,8 @@ import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
+import com.khronos.vulkan_samples.model.Sample;
+
 import java.util.List;
 
 public class SampleArrayAdapter extends ArrayAdapter<Sample> {
@@ -35,12 +36,21 @@ public class SampleArrayAdapter extends ArrayAdapter<Sample> {
         super(context, R.layout.listview_item, sample_list);
     }
 
+    /**
+     * Get a view for a position in the sample list
+     *
+     * @param position The position in the list
+     * @param view     The view object that was previously at this position
+     * @param parent   The parent view group
+     * @return A view object representing a given sample at a list position
+     */
     @NonNull
     @SuppressLint("SetTextI18n")
     @Override
     public View getView(int position, View view, @NonNull ViewGroup parent) {
-        if(view == null) {
-            view = LayoutInflater.from(getContext()).inflate(R.layout.listview_item, parent,false);
+        // Recycle view objects
+        if (view == null) {
+            view = LayoutInflater.from(getContext()).inflate(R.layout.listview_item, parent, false);
         }
 
         Sample sample = getItem(position);
@@ -52,26 +62,8 @@ public class SampleArrayAdapter extends ArrayAdapter<Sample> {
         TextView description = view.findViewById(R.id.description_text);
         description.setText(sample.getDescription());
 
-        StringBuilder vendorTagText = new StringBuilder();
-
-        List<String> tags = new ArrayList<>(sample.getTags());
-        if(tags.size() > 1) {
-            tags.remove("any");
-            for (int i = 0; i < tags.size(); ++i) {
-                String tag = tags.get(i);
-                String formattedTag = tag.substring(0, 1).toUpperCase() + tag.substring(1);
-                vendorTagText.append(formattedTag);
-                if (i < tags.size() - 1) {
-                    vendorTagText.append(", ");
-                }
-            }
-        }
-        else {
-           vendorTagText.append("Any");
-        }
-
         TextView vendorTag = view.findViewById(R.id.vendor_text);
-        vendorTag.setText(vendorTagText.toString());
+        vendorTag.setText(sample.getTagText());
 
         return view;
     }
