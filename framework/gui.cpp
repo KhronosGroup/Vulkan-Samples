@@ -928,18 +928,18 @@ void Gui::show_stats(const Stats &stats)
 		float             avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / graph_elements.size();
 
 		// Check if the stat is available in the current platform
-		if (stats.is_available(stat_index))
+		if (!stats.is_available(stat_index))
 		{
-			graph_label << fmt::format(graph_data.name + ": " + graph_data.format, avg * graph_data.scale_factor);
-			ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
-			ImGui::PlotLines("", &graph_elements[0], static_cast<int>(graph_elements.size()), 0, graph_label.str().c_str(), graph_min, graph_max, graph_size);
-			ImGui::PopItemFlag();
+			graph_label << graph_data.name << ": not available";
 		}
 		else
 		{
-			graph_label << graph_data.name << ": not available";
-			ImGui::Text("%s", graph_label.str().c_str());
+			graph_label << fmt::format(graph_data.name + ": " + graph_data.format, avg * graph_data.scale_factor);
 		}
+
+		ImGui::PushItemFlag(ImGuiItemFlags_Disabled, true);
+		ImGui::PlotLines("", &graph_elements[0], static_cast<int>(graph_elements.size()), 0, graph_label.str().c_str(), graph_min, graph_max, graph_size);
+		ImGui::PopItemFlag();
 	}
 }
 
