@@ -16,6 +16,7 @@
  */
 
 #include "stats.h"
+#include "gui.h"
 
 #include "common/error.h"
 
@@ -100,6 +101,17 @@ Stats::Stats(const std::set<StatIndex> &enabled_stats, CounterSamplingConfig sam
 
 		// Reduce smoothing for continuous sampling
 		alpha_smoothing = 0.6f;
+	}
+
+	for (const auto &stat_index : enabled_stats)
+	{
+		if (!is_available(stat_index))
+		{
+			// Find the graph data of this stat index
+			vkb::Gui::StatsView stats_view;
+			auto &              graph_data = stats_view.graph_map.find(stat_index)->second;
+			LOGW(graph_data.name + " : not available");
+		}
 	}
 }
 
