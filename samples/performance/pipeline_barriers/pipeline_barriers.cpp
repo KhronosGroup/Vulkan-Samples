@@ -233,18 +233,7 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
 	}
 
-	auto &extent = render_target.get_extent();
-
-	VkViewport viewport{};
-	viewport.width    = static_cast<float>(extent.width);
-	viewport.height   = static_cast<float>(extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	command_buffer.set_viewport(0, {viewport});
-
-	VkRect2D scissor{};
-	scissor.extent = extent;
-	command_buffer.set_scissor(0, {scissor});
+	set_viewport_and_scissor(command_buffer, render_target.get_extent());
 
 	gbuffer_pipeline.draw(command_buffer, get_render_context().get_active_frame().get_render_target());
 

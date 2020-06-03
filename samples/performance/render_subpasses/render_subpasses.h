@@ -71,6 +71,8 @@ class RenderSubpasses : public vkb::VulkanSample
 
 	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
+	void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target, vkb::RenderPipeline &render_pipeline, vkb::Gui *gui = nullptr);
+
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
 	/// Good pipeline with two subpasses within one render pass

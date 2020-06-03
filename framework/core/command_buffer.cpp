@@ -86,6 +86,19 @@ void CommandBuffer::clear(VkClearAttachment attachment, VkClearRect rect)
 
 VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf)
 {
+	if (level == VK_COMMAND_BUFFER_LEVEL_SECONDARY)
+	{
+		assert(primary_cmd_buf && "A primary command buffer pointer must be provided when calling begin from a secondary one");
+		auto render_pass_binding = primary_cmd_buf->get_current_render_pass();
+
+		return begin(flags, render_pass_binding.render_pass, render_pass_binding.framebuffer, primary_cmd_buf->get_current_subpass_index());
+	}
+
+	return begin(flags, nullptr, nullptr, 0);
+}
+
+VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, const RenderPass *render_pass, const Framebuffer *framebuffer, uint32_t subpass_index)
+{
 	assert(!is_recording() && "Command buffer is already recording, please call end before beginning again");
 
 	if (is_recording())
@@ -107,15 +120,14 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 
 	if (level == VK_COMMAND_BUFFER_LEVEL_SECONDARY)
 	{
-		assert(primary_cmd_buf && "A primary command buffer pointer must be provided when calling begin from a secondary one");
+		assert((render_pass && framebuffer) && "Render pass and framebuffer must be provided when calling begin from a secondary one");
 
-		auto render_pass_binding        = primary_cmd_buf->get_current_render_pass();
-		current_render_pass.render_pass = render_pass_binding.render_pass;
-		current_render_pass.framebuffer = render_pass_binding.framebuffer;
+		current_render_pass.render_pass = render_pass;
+		current_render_pass.framebuffer = framebuffer;
 
 		inheritance.renderPass  = current_render_pass.render_pass->get_handle();
 		inheritance.framebuffer = current_render_pass.framebuffer->get_handle();
-		inheritance.subpass     = primary_cmd_buf->get_current_subpass_index();
+		inheritance.subpass     = subpass_index;
 
 		begin_info.pInheritanceInfo = &inheritance;
 	}
@@ -155,23 +167,16 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const s
 	resource_binding_state.reset();
 	descriptor_set_layout_binding_state.clear();
 
-	// Create render pass
-	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
-	std::vector<SubpassInfo> subpass_infos(subpasses.size());
-	auto                     subpass_info_it = subpass_infos.begin();
-	for (auto &subpass : subpasses)
-	{
-		subpass_info_it->input_attachments                = subpass->get_input_attachments();
-		subpass_info_it->output_attachments               = subpass->get_output_attachments();
-		subpass_info_it->color_resolve_attachments        = subpass->get_color_resolve_attachments();
-		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
-		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
-		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
+	auto &render_pass = get_render_pass(render_target, load_store_infos, subpasses);
+	auto &framebuffer = get_device().get_resource_cache().request_framebuffer(render_target, render_pass);
 
-		++subpass_info_it;
-	}
-	current_render_pass.render_pass = &get_device().get_resource_cache().request_render_pass(render_target.get_attachments(), load_store_infos, subpass_infos);
-	current_render_pass.framebuffer = &get_device().get_resource_cache().request_framebuffer(render_target, *current_render_pass.render_pass);
+	begin_render_pass(render_target, render_pass, framebuffer, clear_values, contents);
+}
+
+void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const RenderPass &render_pass, const Framebuffer &framebuffer, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents)
+{
+	current_render_pass.render_pass = &render_pass;
+	current_render_pass.framebuffer = &framebuffer;
 
 	// Begin render pass
 	VkRenderPassBeginInfo begin_info{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
@@ -796,5 +801,27 @@ VkResult CommandBuffer::reset(ResetMode reset_mode)
 	}
 
 	return result;
+}
+
+RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<std::unique_ptr<Subpass>> &subpasses)
+{
+	// Create render pass
+	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
+
+	std::vector<vkb::SubpassInfo> subpass_infos(subpasses.size());
+	auto                          subpass_info_it = subpass_infos.begin();
+	for (auto &subpass : subpasses)
+	{
+		subpass_info_it->input_attachments                = subpass->get_input_attachments();
+		subpass_info_it->output_attachments               = subpass->get_output_attachments();
+		subpass_info_it->color_resolve_attachments        = subpass->get_color_resolve_attachments();
+		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
+		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
+		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
+
+		++subpass_info_it;
+	}
+
+	return get_device().get_resource_cache().request_render_pass(render_target.get_attachments(), load_store_infos, subpass_infos);
 }
 }        // namespace vkb

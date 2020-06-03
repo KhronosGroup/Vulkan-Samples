@@ -158,18 +158,24 @@ class RenderContext
 	void submit(CommandBuffer &command_buffer);
 
 	/**
+	 * @brief Submits multiple command buffers to the right queue
+	 * @param command_buffers Command buffers containing recorded commands
+	 */
+	void submit(const std::vector<CommandBuffer *> &command_buffers);
+
+	/**
 	 * @brief begin_frame
 	 *
 	 * @return VkSemaphore
 	 */
 	VkSemaphore begin_frame();
 
-	VkSemaphore submit(const Queue &queue, const CommandBuffer &command_buffer, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
+	VkSemaphore submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
 	 */
-	void submit(const Queue &queue, const CommandBuffer &command_buffer);
+	void submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers);
 
 	/**
 	 * @brief Waits a frame to finish its rendering
