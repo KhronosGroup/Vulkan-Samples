@@ -182,6 +182,7 @@ Device::Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_m
 	VmaAllocatorCreateInfo allocator_info{};
 	allocator_info.physicalDevice = gpu.get_handle();
 	allocator_info.device         = handle;
+	allocator_info.instance       = gpu.get_instance().get_handle();
 
 	if (can_get_memory_requirements && has_dedicated_allocation)
 	{
