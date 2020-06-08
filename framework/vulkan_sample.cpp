@@ -389,7 +389,7 @@ void VulkanSample::update_debug_window()
 
 	get_debug_info().insert<field::Static, std::string>("surface_format",
 	                                                    to_string(render_context->get_swapchain().get_format()) + " (" +
-	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bbp)");
+	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bpp)");
 
 	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
 
