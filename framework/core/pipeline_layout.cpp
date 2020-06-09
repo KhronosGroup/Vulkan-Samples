@@ -86,7 +86,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 
 	// Collect all the descriptor set layout handles, maintaining set order
 	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles(descriptor_set_layouts.size());
-	for (size_t i = 0; i < descriptor_set_layouts.size(); i++)
+	for (uint32_t i = 0; i < descriptor_set_layouts.size(); i++)
 	{
 		if (descriptor_set_layouts[i] != nullptr)
 		{
