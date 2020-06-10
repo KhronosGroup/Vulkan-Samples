@@ -58,7 +58,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	}
 
 	// Sift through the map of name indexed shader resources
-	// Seperate them into their respective sets
+	// Separate them into their respective sets
 	for (auto &it : shader_resources)
 	{
 		auto &shader_resource = it.second;
@@ -84,10 +84,20 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 		descriptor_set_layouts.emplace(shader_set_it.first, &device.get_resource_cache().request_descriptor_set_layout(shader_set_it.second));
 	}
 
-	// Collect all the descriptor set layout handles
+	// Collect all the descriptor set layout handles, maintaining set order
 	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles(descriptor_set_layouts.size());
-	std::transform(descriptor_set_layouts.begin(), descriptor_set_layouts.end(), descriptor_set_layout_handles.begin(),
-	               [](auto &descriptor_set_layout_it) { return descriptor_set_layout_it.second->get_handle(); });
+	for (uint32_t i = 0; i < descriptor_set_layouts.size(); i++)
+	{
+		if (descriptor_set_layouts[i] != nullptr)
+		{
+			descriptor_set_layout_handles[i] = descriptor_set_layouts[i]->get_handle();
+		}
+		else
+		{
+			// Add an empty set layout
+			descriptor_set_layout_handles[i] = device.get_resource_cache().request_descriptor_set_layout({}).get_handle();
+		}
+	}
 
 	// Collect all the push constant shader resources
 	std::vector<VkPushConstantRange> push_constant_ranges;
