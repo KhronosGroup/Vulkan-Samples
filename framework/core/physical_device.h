@@ -70,7 +70,7 @@ class PhysicalDevice
 
 	const VkPhysicalDeviceFeatures get_requested_features() const;
 
-	void *get_requested_extension_features() const;
+	VkPhysicalDeviceFeatures &get_mutable_requested_features();
 
 	/**
 	 * @brief Used at logical device creation to pass the extensions feature chain to vkCreateDevice
@@ -89,22 +89,22 @@ class PhysicalDevice
 	 *        modify the struct returned by this function, it will propegate the changes to the logical
 	 *        device.
 	 * @param type The VkStructureType for the extension you are requesting
-	 * @returns The extension feature struct
+	 * @returns A pointer to the extension feature struct
 	 */
 	template <typename T>
-	T &request_extension_features(VkStructureType type)
+	T *request_extension_features(VkStructureType type)
 	{
 		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
-			return T{};
+			return nullptr;
 		}
 
-		// If the type already exists in the map, dereference the void pointer to get the extension feature struct
+		// If the type already exists in the map, return a casted pointer to get the extension feature struct
 		auto extension_features_it = extension_features.find(type);
 		if (extension_features_it != extension_features.end())
 		{
-			return *((T *) extension_features_it->second.get());
+			return static_cast<T *>(extension_features_it->second.get());
 		}
 
 		// Get the extension feature
@@ -117,17 +117,17 @@ class PhysicalDevice
 		extension_features.insert({type, std::make_shared<T>(extension)});
 
 		// Pull out the dereferenced void pointer, we can assume its type based on the template
-		auto &extension_ref = *((T *) extension_features.find(type)->second.get());
+		auto *extension_ptr = (T *) extension_features.find(type)->second.get();
 
 		// If an extension feature has already been requested, we shift the linked list down by one
 		// Making this current extension the new base pointer
 		if (last_requested_extension_feature)
 		{
-			extension_ref.pNext = last_requested_extension_feature;
+			extension_ptr->pNext = last_requested_extension_feature;
 		}
-		last_requested_extension_feature = &extension_ref;
+		last_requested_extension_feature = extension_ptr;
 
-		return extension_ref;
+		return extension_ptr;
 	}
 
 	template <typename T>

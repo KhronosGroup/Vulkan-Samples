@@ -110,11 +110,6 @@ VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
 	return requested_features;
 }
 
-VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
-{
-	return requested_features;
-}
-
 void *PhysicalDevice::get_extension_feature_chain() const
 {
 	return last_requested_extension_feature;
