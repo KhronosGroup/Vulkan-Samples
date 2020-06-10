@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2020, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,7 +23,5 @@ add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Wilems"
-    NAME "NV ray tracing basic"
-    DESCRIPTION "Basic example for ray tracing using VK_NV_ray_tracing"
-    TAGS
-        "nvidia")
+    NAME "Ray tracing basic"
+    DESCRIPTION "Basic example for ray tracing using VK_KHR_ray_tracing")
