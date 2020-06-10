@@ -166,7 +166,11 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 
 	void record_separate_secondary_command_buffers(std::vector<vkb::CommandBuffer *> &command_buffers, vkb::CommandBuffer &main_command_buffer);
 
-	void record_image_memory_barriers(vkb::CommandBuffer &command_buffer);
+	void record_main_pass_image_memory_barriers(vkb::CommandBuffer &command_buffer);
+
+	void record_shadow_pass_image_memory_barrier(vkb::CommandBuffer &command_buffer);
+
+	void record_present_image_memory_barrier(vkb::CommandBuffer &command_buffer);
 
 	void draw_shadow_pass(vkb::CommandBuffer &command_buffer);
 

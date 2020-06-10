@@ -52,7 +52,7 @@ bool MultithreadingRenderPasses::prepare(vkb::Platform &platform)
 		shadow_render_targets[i] = create_shadow_render_target(SHADOWMAP_RESOLUTION);
 	}
 
-	load_scene("scenes/bonza/Bonza4X.gltf");
+	load_scene("scenes/sponza/Sponza01.gltf");
 
 	scene->clear_components<vkb::sg::Light>();
 	auto &light           = vkb::add_directional_light(*scene, glm::quat({glm::radians(-30.0f), glm::radians(175.0f), glm::radians(0.0f)}));
@@ -290,30 +290,33 @@ void MultithreadingRenderPasses::record_separate_secondary_command_buffers(std::
 	// Recording main command buffer
 	main_command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
+	record_shadow_pass_image_memory_barrier(main_command_buffer);
+
 	main_command_buffer.begin_render_pass(shadow_render_target, shadow_render_pass, shadow_framebuffer, shadow_render_pipeline->get_clear_value(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 	main_command_buffer.execute_commands(shadow_command_buffer);
 	main_command_buffer.end_render_pass();
 
-	record_image_memory_barriers(main_command_buffer);
+	record_main_pass_image_memory_barriers(main_command_buffer);
 
 	main_command_buffer.begin_render_pass(scene_render_target, scene_render_pass, scene_framebuffer, main_render_pipeline->get_clear_value(), VK_SUBPASS_CONTENTS_SECONDARY_COMMAND_BUFFERS);
 	main_command_buffer.execute_commands(scene_command_buffer);
 	main_command_buffer.end_render_pass();
+
+	record_present_image_memory_barrier(main_command_buffer);
 
 	main_command_buffer.end();
 
 	command_buffers.push_back(&main_command_buffer);
 }
 
-void MultithreadingRenderPasses::record_image_memory_barriers(vkb::CommandBuffer &command_buffer)
+void MultithreadingRenderPasses::record_main_pass_image_memory_barriers(vkb::CommandBuffer &command_buffer)
 {
 	auto &views = render_context->get_active_frame().get_render_target().get_views();
 
-	auto swapchain_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = swapchain_layout;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -338,7 +341,7 @@ void MultithreadingRenderPasses::record_image_memory_barriers(vkb::CommandBuffer
 		auto &shadowmap = shadow_render_targets[render_context->get_active_frame_index()]->get_views().at(shadowmap_attachment_index);
 
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		memory_barrier.src_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
@@ -347,6 +350,35 @@ void MultithreadingRenderPasses::record_image_memory_barriers(vkb::CommandBuffer
 
 		command_buffer.image_memory_barrier(shadowmap, memory_barrier);
 	}
+}
+
+void MultithreadingRenderPasses::record_shadow_pass_image_memory_barrier(vkb::CommandBuffer &command_buffer)
+{
+	auto &shadowmap = shadow_render_targets[render_context->get_active_frame_index()]->get_views().at(shadowmap_attachment_index);
+
+	vkb::ImageMemoryBarrier memory_barrier{};
+	memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
+	memory_barrier.new_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	memory_barrier.src_access_mask = 0;
+	memory_barrier.dst_access_mask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+
+	command_buffer.image_memory_barrier(shadowmap, memory_barrier);
+}
+
+void MultithreadingRenderPasses::record_present_image_memory_barrier(vkb::CommandBuffer &command_buffer)
+{
+	auto &views = render_context->get_active_frame().get_render_target().get_views();
+
+	vkb::ImageMemoryBarrier memory_barrier{};
+	memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	memory_barrier.new_layout      = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+
+	command_buffer.image_memory_barrier(views.at(swapchain_attachment_index), memory_barrier);
 }
 
 void MultithreadingRenderPasses::draw_shadow_pass(vkb::CommandBuffer &command_buffer)
@@ -362,6 +394,7 @@ void MultithreadingRenderPasses::draw_shadow_pass(vkb::CommandBuffer &command_bu
 	}
 	else
 	{
+		record_shadow_pass_image_memory_barrier(command_buffer);
 		shadow_render_pipeline->draw(command_buffer, shadow_render_target);
 		command_buffer.end_render_pass();
 	}
@@ -382,7 +415,7 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::CommandBuffer &command_buff
 	}
 	else
 	{
-		record_image_memory_barriers(command_buffer);
+		record_main_pass_image_memory_barriers(command_buffer);
 		main_render_pipeline->draw(command_buffer, render_target);
 	}
 
@@ -394,6 +427,7 @@ void MultithreadingRenderPasses::draw_main_pass(vkb::CommandBuffer &command_buff
 	if (!is_secondary_command_buffer)
 	{
 		command_buffer.end_render_pass();
+		record_present_image_memory_barrier(command_buffer);
 	}
 }
 
