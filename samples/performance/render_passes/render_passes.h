@@ -73,7 +73,7 @@ class RenderPassesSample : public vkb::VulkanSample
 	RadioButtonGroup store{
 	    "Depth attachment store operation",
 	    {"Store", "Don't care"},
-	    0};
+	    1};
 
 	std::vector<RadioButtonGroup *> radio_buttons = {&load, &store};
 
