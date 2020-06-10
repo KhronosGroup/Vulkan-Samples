@@ -19,6 +19,16 @@
  * Basic example for ray tracing using VK_KHR_ray_tracing
  */
 
+/*
+ * Important note:
+ *
+ * The VK_KHR_ray_tracing extension is currently considered a BETA extension.
+ *
+ * This means that it is not yet production ready and subject to change until it's finalized.
+ *
+ * In order to use this sample you may also need special developer drivers.
+ */
+
 #include "raytracing_basic.h"
 
 /*
