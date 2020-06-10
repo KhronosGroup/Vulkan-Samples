@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,54 +16,61 @@
  */
 
 /*
- * Basic example for ray tracing using VK_NV_ray_tracing
+ * Basic example for ray tracing using VK_KHR_ray_tracing
+ */
+
+/*
+ * Important note:
+ *
+ * The VK_KHR_ray_tracing extension is currently considered a BETA extension.
+ *
+ * This means that it is not yet production ready and subject to change until it's finalized.
+ *
+ * In order to use this sample you may also need special developer drivers.
  */
 
 #pragma once
 
 #include "api_vulkan_sample.h"
 
-// Ray tracing acceleration structure
-struct AccelerationStructure
-{
-	VkDeviceMemory            memory;
-	VkAccelerationStructureNV acceleration_structure;
-	uint64_t                  handle;
-};
-
-// Ray tracing geometry instance
-struct GeometryInstance
-{
-	glm::mat3x4 transform;
-	uint32_t    instance_id : 24;
-	uint32_t    mask : 8;
-	uint32_t    instance_offset : 24;
-	uint32_t    flags : 8;
-	uint64_t    acceleration_structure_handle;
-};
-
 // Indices for the different ray tracing shader types used in this example
 #define INDEX_RAYGEN 0
-#define INDEX_MISS 1
-#define INDEX_CLOSEST_HIT 2
+#define INDEX_CLOSEST_HIT 1
+#define INDEX_MISS 2
+
+// Holds data for a ray tracing scratch buffer that is used as a temporary storage
+struct RayTracingScratchBuffer
+{
+	vkb::Device &  device;
+	uint64_t       device_address = 0;
+	VkBuffer       buffer         = VK_NULL_HANDLE;
+	VkDeviceMemory memory         = VK_NULL_HANDLE;
+	RayTracingScratchBuffer(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
+	~RayTracingScratchBuffer();
+};
+
+// Holds data for a memory object bound to an acceleration structure
+struct RayTracingObjectMemory
+{
+	vkb::Device &  device;
+	uint64_t       device_address = 0;
+	VkDeviceMemory memory         = VK_NULL_HANDLE;
+	RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
+};
 
 class RaytracingBasic : public ApiVulkanSample
 {
   public:
-	PFN_vkCreateAccelerationStructureNV                vkCreateAccelerationStructureNV;
-	PFN_vkDestroyAccelerationStructureNV               vkDestroyAccelerationStructureNV;
-	PFN_vkBindAccelerationStructureMemoryNV            vkBindAccelerationStructureMemoryNV;
-	PFN_vkGetAccelerationStructureHandleNV             vkGetAccelerationStructureHandleNV;
-	PFN_vkGetAccelerationStructureMemoryRequirementsNV vkGetAccelerationStructureMemoryRequirementsNV;
-	PFN_vkCmdBuildAccelerationStructureNV              vkCmdBuildAccelerationStructureNV;
-	PFN_vkCreateRayTracingPipelinesNV                  vkCreateRayTracingPipelinesNV;
-	PFN_vkGetRayTracingShaderGroupHandlesNV            vkGetRayTracingShaderGroupHandlesNV;
-	PFN_vkCmdTraceRaysNV                               vkCmdTraceRaysNV;
+	VkPhysicalDeviceRayTracingPropertiesKHR ray_tracing_properties{};
+	VkPhysicalDeviceRayTracingFeaturesKHR   ray_tracing_features{};
 
-	VkPhysicalDeviceRayTracingPropertiesNV ray_tracing_properties{};
+	VkPhysicalDeviceBufferDeviceAddressFeatures requested_buffer_device_address_features{};
+	VkPhysicalDeviceRayTracingFeaturesKHR       requested_ray_tracing_features{};
 
-	AccelerationStructure bottom_level_acceleration_structure;
-	AccelerationStructure top_level_acceleration_structure;
+	VkAccelerationStructureKHR bottom_level_acceleration_structure;
+	uint64_t                   bottom_level_acceleration_structure_handle = 0;
+	VkAccelerationStructureKHR top_level_acceleration_structure;
+	uint64_t                   top_level_acceleration_structure_handle = 0;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
@@ -73,9 +80,11 @@ class RaytracingBasic : public ApiVulkanSample
 	struct StorageImage
 	{
 		VkDeviceMemory memory;
-		VkImage        image;
+		VkImage        image = VK_NULL_HANDLE;
 		VkImageView    view;
 		VkFormat       format;
+		uint32_t       width;
+		uint32_t       height;
 	} storage_image;
 
 	struct UniformData
@@ -93,11 +102,10 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
+	void         request_gpu_features(vkb::PhysicalDevice &gpu);
+	uint64_t     get_buffer_device_address(VkBuffer buffer);
 	void         create_storage_image();
-	void         create_bottom_level_acceleration_structure(const VkGeometryNV *geometries);
-	void         create_top_level_acceleration_structure();
 	void         create_scene();
-	VkDeviceSize copy_shader_identifier(uint8_t *data, const uint8_t *shader_handle_storage, uint32_t group_index);
 	void         create_shader_binding_table();
 	void         create_descriptor_sets();
 	void         create_ray_tracing_pipeline();
