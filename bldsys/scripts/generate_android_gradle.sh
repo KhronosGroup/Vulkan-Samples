@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -35,5 +35,5 @@ cmake -DPROJECT_NAME="vulkan_samples" \
 	  -DASSET_DIRS="" \
 	  -DJNI_LIBS_DIRS="" \
 	  -DNATIVE_SCRIPT=$ROOT_DIR/CMakeLists.txt \
-	  -DNATIVE_ARGUMENTS="ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static" \
+	  -DNATIVE_ARGUMENTS="ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF"\
 	  -P $ROOT_DIR/bldsys/cmake/create_gradle_project.cmake
