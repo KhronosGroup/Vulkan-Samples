@@ -44,6 +44,7 @@ Push descriptors apply the push constants concept to descriptor sets. Instead of
 **Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
 Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
 
-- [Basic Ray Tracing (NVIDIA)](./raytracing_basic)<br/>
-**Extension**: [```VK_NV_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_NV_ray_tracing)<br/>
-Render a simple triangle using the Nvidia ray tracing extensions. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.
+- [Basic Ray Tracing](./raytracing_basic)<br/>
+**Extension**: [```VK_KHR_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing)<br/>
+Render a simple triangle using the official cross-vendor ray tracing extension. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.<br/>
+**Note**:  This extension is not yet finalized and currently considered a BETA extension. This means that it is not yet production ready and subject to change until it's finalized. In order to use this sample you may also need special developer drivers.
