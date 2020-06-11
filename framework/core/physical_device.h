@@ -31,7 +31,7 @@ class Instance;
 class PhysicalDevice
 {
   public:
-	PhysicalDevice(const Instance &instance, VkPhysicalDevice physical_device);
+	PhysicalDevice(Instance &instance, VkPhysicalDevice physical_device);
 
 	PhysicalDevice(const PhysicalDevice &) = delete;
 
@@ -41,7 +41,7 @@ class PhysicalDevice
 
 	PhysicalDevice &operator=(PhysicalDevice &&) = delete;
 
-	const Instance &get_instance() const;
+	Instance &get_instance() const;
 
 	VkBool32 is_present_supported(VkSurfaceKHR surface, uint32_t queue_family_index) const;
 
@@ -91,7 +91,7 @@ class PhysicalDevice
 
   private:
 	// Handle to the Vulkan instance
-	const Instance &instance;
+	Instance &instance;
 
 	// Handle to the Vulkan physical device
 	VkPhysicalDevice handle{VK_NULL_HANDLE};

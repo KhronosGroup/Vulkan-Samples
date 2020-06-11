@@ -19,7 +19,7 @@
 
 namespace vkb
 {
-PhysicalDevice::PhysicalDevice(const Instance &instance, VkPhysicalDevice physical_device) :
+PhysicalDevice::PhysicalDevice(Instance &instance, VkPhysicalDevice physical_device) :
     instance{instance},
     handle{physical_device}
 {
@@ -35,7 +35,7 @@ PhysicalDevice::PhysicalDevice(const Instance &instance, VkPhysicalDevice physic
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, queue_family_properties.data());
 }
 
-const Instance &PhysicalDevice::get_instance() const
+Instance &PhysicalDevice::get_instance() const
 {
 	return instance;
 }
