@@ -37,16 +37,14 @@ WaitIdle::WaitIdle()
 	config.insert<vkb::IntSetting>(1, wait_idle_enabled, 1);
 }
 
-bool WaitIdle::prepare(vkb::Platform &platform)
+bool WaitIdle::prepare(vkb::Platform &plat)
 {
-	if (!VulkanSample::prepare(platform))
+	platform = &plat;
+
+	if (!VulkanSample::prepare(plat))
 	{
 		return false;
 	}
-
-	render_context.reset();
-	render_context = std::make_unique<CustomRenderContext>(get_device(), get_surface(), platform.get_window().get_width(), platform.get_window().get_height(), wait_idle_enabled);
-	prepare_render_context();
 
 	// Load a scene from the assets folder
 	load_scene("scenes/bonza/Bonza.gltf");
@@ -65,9 +63,16 @@ bool WaitIdle::prepare(vkb::Platform &platform)
 
 	// Add a GUI with the stats you want to monitor
 	stats->request_stats({vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, plat.get_window(), stats.get());
 
 	return true;
+}
+
+void WaitIdle::prepare_render_context()
+{
+	render_context.reset();
+	render_context = std::make_unique<CustomRenderContext>(get_device(), get_surface(), platform->get_window().get_width(), platform->get_window().get_height(), wait_idle_enabled);
+	VulkanSample::prepare_render_context();
 }
 
 WaitIdle::CustomRenderContext::CustomRenderContext(vkb::Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height, int &wait_idle_enabled) :
