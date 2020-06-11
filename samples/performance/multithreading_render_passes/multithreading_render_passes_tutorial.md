@@ -45,7 +45,7 @@ Note that the more similar is the workload for all the passes, the more performa
 
 One way to use multi-threading with multiple render passes is to create a separate primary level command buffer for each of them. In this case command buffers can be recorded independently and then submitted to the queue all at once using ``vkQueueSubmit``.
 
-A better approach is to use secondary level command buffers, which helps to reduce the overhead and get even better performance. First, both of the passes are recorded into two separate secondary command buffers using two threads. Then, we can just reference them in the primary command buffer via ``vkCmdExecuteCommands``.
+Another approach is to use secondary level command buffers. First, both of the passes are recorded into two separate secondary command buffers using two threads. Then, we can just reference them in the primary command buffer via ``vkCmdExecuteCommands``.
 
 When using both of these methods for multi-threading, general recommendations should still be taken into account (see [Multi-threaded-recording](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)).
 
@@ -89,10 +89,6 @@ And indeed, in debug build, which was used for profiling, frame time is decrease
 
 * Use multi-threading for command buffer recording if possible.
 * Spread the workload between threads as equally, as possible, to utilize them in the most efficient way.
-
-**Avoid**
-
-* Submitting multiple primary command buffers to the queue at once, when secondary command buffers can be used.
 
 **Impact**
 
