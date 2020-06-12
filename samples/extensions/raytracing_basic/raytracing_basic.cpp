@@ -151,12 +151,11 @@ void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// Enable extension features required to use VK_KHR_ray_tracing
 	// These are passed to device creation via a pNext structure chain
 	// @todo: add way to pass this from a sample (sascha)
-	requested_buffer_device_address_features.sType               = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES;
+	auto &requested_buffer_device_address_features               = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
 	requested_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
-	requested_ray_tracing_features.sType                         = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR;
-	requested_ray_tracing_features.rayTracing                    = VK_TRUE;
-	requested_ray_tracing_features.pNext                         = &requested_buffer_device_address_features;
-	gpu.get_mutable_requested_extension_features()               = &requested_ray_tracing_features;
+
+	auto &requested_ray_tracing_features      = gpu.request_extension_features<VkPhysicalDeviceRayTracingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_FEATURES_KHR);
+	requested_ray_tracing_features.rayTracing = VK_TRUE;
 }
 
 /*

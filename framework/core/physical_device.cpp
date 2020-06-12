@@ -105,6 +105,11 @@ void PhysicalDevice::enumerate_queue_family_performance_query_counters(
 	    get_handle(), queue_family_index, count, counters, descriptions));
 }
 
+const VkPhysicalDeviceFeatures PhysicalDevice::get_requested_features() const
+{
+	return requested_features;
+}
+
 VkPhysicalDeviceFeatures &PhysicalDevice::get_mutable_requested_features()
 {
 	return requested_features;
