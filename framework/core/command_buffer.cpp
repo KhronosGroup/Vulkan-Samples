@@ -755,6 +755,27 @@ const bool CommandBuffer::is_render_size_optimal(const VkExtent2D &framebuffer_e
 	        ((render_area.extent.height % render_area_granularity.height == 0) || (render_area.offset.y + render_area.extent.height == framebuffer_extent.height)));
 }
 
+void CommandBuffer::reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count)
+{
+	vkCmdResetQueryPool(get_handle(), query_pool.get_handle(), first_query, query_count);
+}
+
+void CommandBuffer::begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags)
+{
+	vkCmdBeginQuery(get_handle(), query_pool.get_handle(), query, flags);
+}
+
+void CommandBuffer::end_query(const QueryPool &query_pool, uint32_t query)
+{
+	vkCmdEndQuery(get_handle(), query_pool.get_handle(), query);
+}
+
+void CommandBuffer::write_timestamp(VkPipelineStageFlagBits pipeline_stage,
+                                    const QueryPool &query_pool, uint32_t query)
+{
+	vkCmdWriteTimestamp(get_handle(), pipeline_stage, query_pool.get_handle(), query);
+}
+
 VkResult CommandBuffer::reset(ResetMode reset_mode)
 {
 	VkResult result = VK_SUCCESS;

@@ -187,6 +187,17 @@ Instance::Instance(const std::string &                           application_nam
 		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	}
 
+	for (auto &available_extension : available_instance_extensions)
+	{
+		// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
+		// which will be used for stats gathering where available.
+		if (strcmp(available_extension.extensionName, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) == 0)
+		{
+			LOGI("{} is available, enabling it", VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+			enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+		}
+	}
+
 	auto extension_error = false;
 	for (auto extension : required_extensions)
 	{

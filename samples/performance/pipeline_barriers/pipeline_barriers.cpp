@@ -29,7 +29,7 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/perspective_camera.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 PipelineBarriers::PipelineBarriers()
 {
@@ -100,11 +100,12 @@ bool PipelineBarriers::prepare(vkb::Platform &platform)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times,
-	                                                              vkb::StatIndex::vertex_compute_cycles,
-	                                                              vkb::StatIndex::fragment_cycles},
-	                                     vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats({vkb::StatIndex::frame_times,
+	                      vkb::StatIndex::gpu_vertex_cycles,
+	                      vkb::StatIndex::gpu_fragment_cycles},
+	                     vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
+
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

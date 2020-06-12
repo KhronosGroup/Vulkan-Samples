@@ -123,6 +123,8 @@ bool VulkanSample::prepare(Platform &platform)
 
 	prepare_render_context();
 
+	stats = std::make_unique<vkb::Stats>(*render_context);
+
 	return true;
 }
 
@@ -190,16 +192,19 @@ void VulkanSample::update(float delta_time)
 {
 	update_scene(delta_time);
 
-	update_stats(delta_time);
-
 	update_gui(delta_time);
 
 	auto &command_buffer = render_context->begin();
 
+	// Collect the performance data for the sample graphs
+	update_stats(delta_time);
+
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	stats->begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
+	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	render_context->submit(command_buffer);
@@ -464,4 +469,5 @@ sg::Scene &VulkanSample::get_scene()
 	assert(scene && "Scene not loaded");
 	return *scene;
 }
+
 }        // namespace vkb

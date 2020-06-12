@@ -23,7 +23,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 @SAMPLE_NAME@::@SAMPLE_NAME@()
 {
@@ -52,8 +52,8 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 	set_render_pipeline(std::move(render_pipeline));
 
 	// Add a GUI with the stats you want to monitor
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats({/*stats you require*/});
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

@@ -28,7 +28,7 @@
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/node_animation.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 namespace vkb
 {

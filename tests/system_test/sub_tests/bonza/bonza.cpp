@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/platform.h"
-#include "stats.h"
+#include "stats/stats.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif

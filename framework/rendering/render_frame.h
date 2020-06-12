@@ -26,6 +26,7 @@
 #include "core/command_pool.h"
 #include "core/device.h"
 #include "core/image.h"
+#include "core/query_pool.h"
 #include "core/queue.h"
 #include "fence_pool.h"
 #include "rendering/render_target.h"

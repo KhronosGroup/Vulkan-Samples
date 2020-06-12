@@ -64,7 +64,7 @@ void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const u
 	}
 }
 
-inline void reset_graph_max_value(Gui::StatsView::GraphData &graph_data)
+inline void reset_graph_max_value(StatGraphData &graph_data)
 {
 	// If it does not have a fixed max
 	if (!graph_data.has_fixed_max)
@@ -93,11 +93,13 @@ const ImGuiWindowFlags Gui::options_flags = Gui::common_flags;
 
 const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_NoInputs;
 
-Gui::Gui(VulkanSample &sample_, const Window &window, const float font_size, bool explicit_update) :
+Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
+         const float font_size, bool explicit_update) :
     sample{sample_},
     content_scale_factor{window.get_content_scale_factor()},
     dpi_factor{window.get_dpi_factor() * content_scale_factor},
-    explicit_update{explicit_update}
+    explicit_update{explicit_update},
+    stats_view(stats)
 {
 	ImGui::CreateContext();
 
@@ -731,6 +733,20 @@ bool Gui::is_debug_view_active() const
 	return debug_view.active;
 }
 
+Gui::StatsView::StatsView(const Stats *stats)
+{
+	if (stats == nullptr)
+		return;
+
+	// Request graph data information for each stat and record it in graph_map
+	const std::set<StatIndex> &indices = stats->get_requested_stats();
+
+	for (StatIndex i : indices)
+	{
+		graph_map[i] = stats->get_graph_data(i);
+	}
+}
+
 void Gui::StatsView::reset_max_value(const StatIndex index)
 {
 	auto pr = graph_map.find(index);
@@ -884,21 +900,9 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::End();
 }
 
-Gui::StatsView::GraphData::GraphData(const std::string &name_,
-                                     const std::string &graph_label_format_,
-                                     float              scale_factor_,
-                                     bool               has_fixed_max_,
-                                     float              max_value_) :
-    name(name_),
-    format{graph_label_format_},
-    scale_factor{scale_factor_},
-    has_fixed_max{has_fixed_max_},
-    max_value{max_value_}
-{}
-
 void Gui::show_stats(const Stats &stats)
 {
-	for (const auto &stat_index : stats.get_enabled_stats())
+	for (const auto &stat_index : stats.get_requested_stats())
 	{
 		// Find the graph data of this stat index
 		auto pr = stats_view.graph_map.find(stat_index);

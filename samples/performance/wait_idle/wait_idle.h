@@ -46,7 +46,11 @@ class WaitIdle : public vkb::VulkanSample
 		int &wait_idle_enabled;
 	};
 
+	virtual void prepare_render_context() override;
+
   private:
+	vkb::Platform *platform;
+
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	virtual void draw_gui() override;

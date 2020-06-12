@@ -23,7 +23,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -66,8 +66,9 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::l2_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats({vkb::StatIndex::gpu_ext_write_bytes});
+
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	// Store the start time to calculate rotation
 	start_time = std::chrono::system_clock::now();

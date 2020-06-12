@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif

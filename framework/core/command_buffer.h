@@ -24,6 +24,7 @@
 #include "core/buffer.h"
 #include "core/image.h"
 #include "core/image_view.h"
+#include "core/query_pool.h"
 #include "core/sampler.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
@@ -218,6 +219,14 @@ class CommandBuffer
 	const State get_state() const;
 
 	void set_update_after_bind(bool update_after_bind_);
+
+	void reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count);
+
+	void begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags);
+
+	void end_query(const QueryPool &query_pool, uint32_t query);
+
+	void write_timestamp(VkPipelineStageFlagBits pipeline_stage, const QueryPool &query_pool, uint32_t query);
 
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to

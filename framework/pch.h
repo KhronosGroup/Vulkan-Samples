@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,6 +33,6 @@
 #include "resource_replay.h"
 #include "semaphore_pool.h"
 #include "spirv_reflection.h"
-#include "stats.h"
+#include "stats/stats.h"
 #include "timer.h"
 #include "vulkan_sample.h"
