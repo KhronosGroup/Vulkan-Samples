@@ -28,7 +28,7 @@
 #include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/pbr_material.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 LayoutTransitions::LayoutTransitions()
 {
@@ -66,9 +66,10 @@ bool LayoutTransitions::prepare(vkb::Platform &platform)
 	lighting_pipeline.add_subpass(std::move(lighting_subpass));
 	lighting_pipeline.set_load_store(vkb::gbuffer::get_load_all_store_swapchain());
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::killed_tiles,
-	                                                              vkb::StatIndex::l2_ext_write_bytes});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats({vkb::StatIndex::gpu_killed_tiles,
+	                      vkb::StatIndex::gpu_ext_write_bytes});
+
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

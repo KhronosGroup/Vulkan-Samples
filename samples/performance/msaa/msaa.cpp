@@ -24,7 +24,7 @@
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "rendering/subpasses/postprocessing_subpass.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 namespace
 {
@@ -125,11 +125,11 @@ bool MSAASample::prepare(vkb::Platform &platform)
 
 	update_pipelines();
 
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times,
-	                                                              vkb::StatIndex::l2_ext_read_bytes,
-	                                                              vkb::StatIndex::l2_ext_write_bytes});
+	stats->request_stats({vkb::StatIndex::frame_times,
+	                      vkb::StatIndex::gpu_ext_read_bytes,
+	                      vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }

@@ -54,11 +54,11 @@ class Device
   public:
 	/**
 	 * @brief Device constructor
-	 * @param gpu A valid Vulkan physical device and the requested gpu features 
+	 * @param gpu A valid Vulkan physical device and the requested gpu features
 	 * @param surface The surface
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	Device(const PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
+	Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
 
 	Device(const Device &) = delete;
 

@@ -154,15 +154,14 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	geometry_render_pipeline = create_geometry_renderpass();
 	lighting_render_pipeline = create_lighting_renderpass();
 
-	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
-
 	// Enable stats
-	auto enabled_stats = {vkb::StatIndex::fragment_jobs,
-	                      vkb::StatIndex::tiles,
-	                      vkb::StatIndex::l2_ext_read_bytes,
-	                      vkb::StatIndex::l2_ext_write_bytes};
-	stats              = std::make_unique<vkb::Stats>(enabled_stats);
+	stats->request_stats({vkb::StatIndex::gpu_fragment_jobs,
+	                      vkb::StatIndex::gpu_tiles,
+	                      vkb::StatIndex::gpu_ext_read_bytes,
+	                      vkb::StatIndex::gpu_ext_write_bytes});
+
+	// Enable gui
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }
