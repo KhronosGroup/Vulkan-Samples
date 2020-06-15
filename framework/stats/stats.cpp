@@ -88,6 +88,14 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 		// Reduce smoothing for continuous sampling
 		alpha_smoothing = 0.6f;
 	}
+
+	for (const auto &stat_index : requested_stats)
+	{
+		if (!is_available(stat_index))
+		{
+			LOGW(vkb::StatsProvider::default_graph_data(stat_index).name + " : not available");
+		}
+	}
 }
 
 void Stats::resize(const size_t width)
