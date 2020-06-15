@@ -172,7 +172,7 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 		const StatData &data  = iter.second;
 
 		double d = 0.0;
-		if (m.cpu)
+		if (data.type == StatType::Cpu)
 		{
 			d = get_cpu_counter_value(m.cpu, data.cpu_counter);
 
@@ -189,7 +189,7 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 					d = 0.0;
 			}
 		}
-		if (m.gpu)
+		else if (data.type == StatType::Gpu)
 		{
 			d = get_gpu_counter_value(m.gpu, data.gpu_counter);
 
