@@ -274,16 +274,6 @@ class VulkanSample : public Application
 	 */
 	virtual void update_debug_window();
 
-	/**
-	 * @brief Add free camera script to a node with a camera object.
-	 *        Fallback to the default_camera if node not found.
-	 *
-	 * @param node_name The scene node name
-	 *
-	 * @return Node where the script was attached as component
-	 */
-	sg::Node &add_free_camera(const std::string &node_name);
-
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
 	/**

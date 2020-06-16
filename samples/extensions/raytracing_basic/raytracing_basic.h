@@ -102,7 +102,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
-	void         request_gpu_features(vkb::PhysicalDevice &gpu);
+	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t     get_buffer_device_address(VkBuffer buffer);
 	void         create_storage_image();
 	void         create_scene();
