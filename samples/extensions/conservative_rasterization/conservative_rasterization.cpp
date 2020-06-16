@@ -137,7 +137,7 @@ void ConservativeRasterization::prepare_offscreen()
 	sampler_info.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &offscreen_pass.sampler));
 
-	// Depth stencil attachment
+	// Depth attachment
 	image.format = framebuffer_depth_format;
 	image.usage  = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 
@@ -148,12 +148,15 @@ void ConservativeRasterization::prepare_offscreen()
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &offscreen_pass.depth.mem));
 	VK_CHECK(vkBindImageMemory(get_device().get_handle(), offscreen_pass.depth.image, offscreen_pass.depth.mem, 0));
 
+	// The depth format we get for the current device may not include a stencil part, which affects the aspect mask used by the image view
+	const VkImageAspectFlags aspect_mask = vkb::is_depth_only_format(framebuffer_depth_format) ? VK_IMAGE_ASPECT_DEPTH_BIT : VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+
 	VkImageViewCreateInfo depth_stencil_view           = vkb::initializers::image_view_create_info();
 	depth_stencil_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 	depth_stencil_view.format                          = framebuffer_depth_format;
 	depth_stencil_view.flags                           = 0;
 	depth_stencil_view.subresourceRange                = {};
-	depth_stencil_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
+	depth_stencil_view.subresourceRange.aspectMask     = aspect_mask;
 	depth_stencil_view.subresourceRange.baseMipLevel   = 0;
 	depth_stencil_view.subresourceRange.levelCount     = 1;
 	depth_stencil_view.subresourceRange.baseArrayLayer = 0;
