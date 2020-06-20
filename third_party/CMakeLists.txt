@@ -68,6 +68,12 @@ elseif(UNIX)
     endif()
 endif()
 
+# Corresponds to the logic in framework/CMakeLists.txt near "if(VKB_DIRECT_2_DISPLAY)"
+if (NOT (VKB_DIRECT_2_DISPLAY OR ANDROID OR DIRECT_TO_DISPLAY))
+    set(USE_GLFW TRUE)
+    set(USE_GLFW TRUE PARENT_SCOPE)
+endif()    
+
 # Needed for the OpenGL interoperability example
 if (ANDROID)
     set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/glad_android")

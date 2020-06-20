@@ -17,56 +17,56 @@
 
 #include "open_gl_interop.h"
 
-#include "common/vk_common.h"
-#include "gltf_loader.h"
-#include "gui.h"
-#include "platform/filesystem.h"
-#include "platform/platform.h"
-#include "rendering/subpasses/forward_subpass.h"
-#include "stats.h"
-#include "timer.h"
+#if defined(USE_GLFW)
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
+#	include "common/vk_common.h"
+#	include "gltf_loader.h"
+#	include "gui.h"
+#	include "platform/filesystem.h"
+#	include "platform/platform.h"
+#	include "rendering/subpasses/forward_subpass.h"
+
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#		include "platform/android/android_platform.h"
+#	endif
 
 VKBP_DISABLE_WARNINGS()
-#include <glad/glad.h>
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include <ctime>
-#	include <EGL/egl.h>
-#	include <EGL/eglext.h>
-#else
-#	include <GLFW/glfw3.h>
-#	include <GLFW/glfw3native.h>
-#endif
+#	include <glad/glad.h>
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#		include <ctime>
+#		include <EGL/egl.h>
+#		include <EGL/eglext.h>
+#	else
+#		include <GLFW/glfw3.h>
+#		include <GLFW/glfw3native.h>
+#	endif
 VKBP_ENABLE_WARNINGS()
 
 constexpr uint32_t SHARED_TEXTURE_DIMENSION = 512;
 
-#if !defined(WIN32)
+#	if !defined(WIN32)
 constexpr const char *HOST_MEMORY_EXTENSION_NAME    = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
 constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME;
-#	define glImportSemaphore glImportSemaphoreFdEXT
-#	define glImportMemory glImportMemoryFdEXT
-#	define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_FD_EXT
-#	define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT
-#	define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
-#else
+#		define glImportSemaphore glImportSemaphoreFdEXT
+#		define glImportMemory glImportMemoryFdEXT
+#		define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_FD_EXT
+#		define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT
+#		define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
+#	else
 constexpr const char *HOST_MEMORY_EXTENSION_NAME    = VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME;
 constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME;
-#	define glImportSemaphore glImportSemaphoreWin32HandleEXT
-#	define glImportMemory glImportMemoryWin32HandleEXT
-#	define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_WIN32_EXT
-#	define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT
-#	define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
-#endif
+#		define glImportSemaphore glImportSemaphoreWin32HandleEXT
+#		define glImportMemory glImportMemoryWin32HandleEXT
+#		define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_WIN32_EXT
+#		define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT
+#		define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
+#	endif
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	define OPENGL_SHADER_HEADER "#version 320 es"
-#else
-#	define OPENGL_SHADER_HEADER "#version 450 core"
-#endif
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#		define OPENGL_SHADER_HEADER "#version 320 es"
+#	else
+#		define OPENGL_SHADER_HEADER "#version 450 core"
+#	endif
 constexpr const char *OPENG_VERTEX_SHADER =
     OPENGL_SHADER_HEADER
     R"SHADER(
@@ -201,7 +201,7 @@ class OpenGLWindow
   public:
 	void create(const OpenGLInterop::ShareHandles &handles, uint64_t memorySize)
 	{
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
 		EGLint eglMajVers{0}, eglMinVers{0};
 		eglDisp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
 		eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
@@ -229,7 +229,7 @@ class OpenGLWindow
 		eglSurface                     = eglCreatePbufferSurface(eglDisp, eglConf, surfaceAttr);
 		eglMakeCurrent(eglDisp, eglSurface, eglSurface, eglCtx);
 		gladLoadGLES2Loader((GLADloadproc) &eglGetProcAddress);
-#else
+#	else
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
@@ -240,7 +240,7 @@ class OpenGLWindow
 		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 		glfwMakeContextCurrent(window);
 		gladLoadGL();
-#endif
+#	endif
 
 		glDebugMessageCallback(debugMessageCallback, NULL);
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
@@ -332,26 +332,26 @@ class OpenGLWindow
 		glDeleteProgram(program);
 		glFlush();
 		glFinish();
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
 		eglDestroySurface(eglDisp, eglSurface);
 		eglSurface = nullptr;
 		eglDestroyContext(eglDisp, eglCtx);
 		eglCtx = nullptr;
-#else
+#	else
 		glfwDestroyWindow(window);
 		window = nullptr;
-#endif
+#	endif
 	}
 
   private:
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	EGLConfig  eglConf{nullptr};
 	EGLSurface eglSurface{EGL_NO_SURFACE};
 	EGLContext eglCtx{EGL_NO_CONTEXT};
 	EGLDisplay eglDisp{EGL_NO_DISPLAY};
-#else
+#	else
 	GLFWwindow *window{nullptr};
-#endif
+#	endif
 	GLuint     glReady{0}, glComplete{0};
 	GLuint     color{0};
 	GLuint     fbo{0};
@@ -414,7 +414,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.glComplete));
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.glReady));
 
-#if WIN32
+#	if WIN32
 		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		    nullptr, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT};
@@ -422,7 +422,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.glReady));
 		semaphoreGetHandleInfo.semaphore = sharedSemaphores.glComplete;
 		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.glComplete));
-#else
+#	else
 		VkSemaphoreGetFdInfoKHR semaphoreGetFdInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR, nullptr,
 		    nullptr, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT};
@@ -430,7 +430,7 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.glReady));
 		semaphoreGetFdInfo.semaphore = sharedSemaphores.glComplete;
 		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.glComplete));
-#endif
+#	endif
 	}
 
 	{
@@ -459,17 +459,17 @@ void OpenGLInterop::prepare_shared_resources()
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
-#if WIN32
+#	if WIN32
 		VkMemoryGetWin32HandleInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR, nullptr,
 		                                           sharedTexture.memory,
 		                                           VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT};
 		VK_CHECK(vkGetMemoryWin32HandleKHR(deviceHandle, &memoryFdInfo, &shareHandles.memory));
-#else
+#	else
 		VkMemoryGetFdInfoKHR memoryFdInfo{VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR, nullptr,
 		                                  sharedTexture.memory,
 		                                  VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT};
 		VK_CHECK(vkGetMemoryFdKHR(deviceHandle, &memoryFdInfo, &shareHandles.memory));
-#endif
+#	endif
 
 		// Create sampler
 		VkSamplerCreateInfo samplerCreateInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
@@ -913,6 +913,9 @@ void OpenGLInterop::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
+
+#else
+#endif
 
 std::unique_ptr<vkb::VulkanSample> create_open_gl_interop()
 {
