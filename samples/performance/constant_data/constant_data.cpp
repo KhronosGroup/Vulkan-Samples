@@ -40,7 +40,7 @@
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 namespace
 {
@@ -113,8 +113,8 @@ bool ConstantData::prepare(vkb::Platform &platform)
 	buffer_array_render_pipeline   = create_render_pipeline<BufferArraySubpass>("constant_data/buffer_array.vert", "constant_data/buffer_array.frag");
 
 	// Add a GUI with the stats you want to monitor
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::load_store_cycles});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::gpu_load_store_cycles});
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }
@@ -126,7 +126,7 @@ void ConstantData::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}
 
-	auto &descriptor_features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2_KHR);
+	gpu.request_descriptor_indexing_features();
 }
 
 void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)

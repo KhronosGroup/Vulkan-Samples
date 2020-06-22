@@ -85,17 +85,16 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	}
 
 	// Collect all the descriptor set layout handles, maintaining set order
-	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles(descriptor_set_layouts.size());
-	for (uint32_t i = 0; i < descriptor_set_layouts.size(); i++)
+	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles;
+	for (uint32_t i = 0; i < descriptor_set_layouts.size(); ++i)
 	{
-		if (descriptor_set_layouts[i] != nullptr)
+		if (descriptor_set_layouts[i])
 		{
-			descriptor_set_layout_handles[i] = descriptor_set_layouts[i]->get_handle();
+			descriptor_set_layout_handles.push_back(descriptor_set_layouts[i]->get_handle());
 		}
 		else
 		{
-			// Add an empty set layout
-			descriptor_set_layout_handles[i] = device.get_resource_cache().request_descriptor_set_layout({}).get_handle();
+			descriptor_set_layout_handles.push_back(VK_NULL_HANDLE);
 		}
 	}
 

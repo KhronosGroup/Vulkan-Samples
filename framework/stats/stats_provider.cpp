@@ -30,6 +30,7 @@ std::map<StatIndex, StatGraphData> StatsProvider::default_graph_map{
     {StatIndex::cpu_branch_miss_ratio, {"Branch Miss Ratio",         "{:3.1f}%",      100.0f,         true,      100.0f}},
     {StatIndex::gpu_cycles,            {"GPU Cycles",                "{:4.1f} M/s",   float(1e-6)}},
     {StatIndex::gpu_vertex_cycles,     {"Vertex Cycles",             "{:4.1f} M/s",   float(1e-6)}},
+    {StatIndex::gpu_load_store_cycles, {"Load Store Cycles",         "{:4.0f} k/s",   float(1e-6)}},
     {StatIndex::gpu_tiles,             {"Tiles",                     "{:4.1f} k/s",   float(1e-3)}},
     {StatIndex::gpu_killed_tiles,      {"Tiles killed by CRC match", "{:4.1f} k/s",   float(1e-3)}},
     {StatIndex::gpu_fragment_jobs,     {"Fragment Jobs",             "{:4.0f}/s"}},
