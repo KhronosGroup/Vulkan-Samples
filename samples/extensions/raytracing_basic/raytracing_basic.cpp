@@ -118,6 +118,7 @@ RaytracingBasic::RaytracingBasic()
 	title = "VK_KHR_ray_tracing";
 	// Enable instance and device extensions required to use VK_KHR_ray_tracing
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
 	add_device_extension(VK_KHR_GET_MEMORY_REQUIREMENTS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
