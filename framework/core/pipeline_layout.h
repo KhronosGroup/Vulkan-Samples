@@ -51,11 +51,11 @@ class PipelineLayout
 
 	const std::unordered_map<uint32_t, std::vector<ShaderResource>> &get_shader_sets() const;
 
-	bool has_descriptor_set_layout(uint32_t set_index) const;
+	bool has_descriptor_set_layout(const uint32_t set_index) const;
 
-	DescriptorSetLayout &get_descriptor_set_layout(uint32_t set_index) const;
+	DescriptorSetLayout &get_descriptor_set_layout(const uint32_t set_index) const;
 
-	VkShaderStageFlags get_push_constant_range_stage(uint32_t offset, uint32_t size) const;
+	VkShaderStageFlags get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
 
   private:
 	Device &device;
@@ -72,6 +72,6 @@ class PipelineLayout
 	std::unordered_map<uint32_t, std::vector<ShaderResource>> shader_sets;
 
 	// The different descriptor set layouts for this pipeline layout
-	std::unordered_map<uint32_t, DescriptorSetLayout *> descriptor_set_layouts;
+	std::vector<DescriptorSetLayout *> descriptor_set_layouts;
 };
 }        // namespace vkb

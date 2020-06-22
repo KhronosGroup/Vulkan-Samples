@@ -68,9 +68,9 @@ PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderM
 	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
 }
 
-DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const std::vector<ShaderResource> &set_resources)
+DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t set_index, const std::vector<ShaderResource> &set_resources)
 {
-	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_resources);
+	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, set_resources);
 }
 
 GraphicsPipeline &ResourceCache::request_graphics_pipeline(PipelineState &pipeline_state)

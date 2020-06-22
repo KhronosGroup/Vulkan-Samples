@@ -67,6 +67,7 @@ set(ORDER_LIST
     "surface_rotation"
     "pipeline_cache"
     "descriptor_management"
+    "constant_data"
     "render_passes"
     "msaa"
     "render_subpasses"

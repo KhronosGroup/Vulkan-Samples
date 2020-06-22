@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,9 +48,7 @@ class BufferAllocation
 	template <class T>
 	void update(const T &value, uint32_t offset = 0)
 	{
-		update(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                            reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
-		       offset);
+		update(to_bytes(value), offset);
 	}
 
 	bool empty() const;

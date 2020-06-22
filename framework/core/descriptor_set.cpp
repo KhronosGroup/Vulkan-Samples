@@ -62,7 +62,7 @@ void DescriptorSet::prepare()
 	// We don't want to prepare twice during the life cycle of a Descriptor Set
 	if (!write_descriptor_sets.empty())
 	{
-		LOGW("Trying to prepare a Descriptor Set that has already been prepared, skipping.");
+		LOGW("Trying to prepare a descriptor set that has already been prepared, skipping.");
 		return;
 	}
 
@@ -77,8 +77,26 @@ void DescriptorSet::prepare()
 			// Iterate over all binding buffers in array
 			for (auto &element_it : buffer_bindings)
 			{
-				auto  array_element = element_it.first;
-				auto &buffer_info   = element_it.second;
+				auto &buffer_info = element_it.second;
+
+				size_t uniform_buffer_range_limit = device.get_gpu().get_properties().limits.maxUniformBufferRange;
+				size_t storage_buffer_range_limit = device.get_gpu().get_properties().limits.maxStorageBufferRange;
+
+				size_t buffer_range_limit = buffer_info.range;
+
+				if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) && buffer_range_limit > uniform_buffer_range_limit)
+				{
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, uniform_buffer_range_limit);
+					buffer_range_limit = uniform_buffer_range_limit;
+				}
+				else if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) && buffer_range_limit > storage_buffer_range_limit)
+				{
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, storage_buffer_range_limit);
+					buffer_range_limit = storage_buffer_range_limit;
+				}
+
+				// Clip the buffers range to the limit if one exists as otherwise we will receive a Vulkan validation error
+				buffer_info.range = buffer_range_limit;
 
 				VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
 
@@ -86,7 +104,7 @@ void DescriptorSet::prepare()
 				write_descriptor_set.descriptorType  = binding_info->descriptorType;
 				write_descriptor_set.pBufferInfo     = &buffer_info;
 				write_descriptor_set.dstSet          = handle;
-				write_descriptor_set.dstArrayElement = array_element;
+				write_descriptor_set.dstArrayElement = element_it.first;
 				write_descriptor_set.descriptorCount = 1;
 
 				write_descriptor_sets.push_back(write_descriptor_set);
@@ -109,8 +127,7 @@ void DescriptorSet::prepare()
 			// Iterate over all binding images in array
 			for (auto &element_it : binding_resources)
 			{
-				auto  array_element = element_it.first;
-				auto &image_info    = element_it.second;
+				auto &image_info = element_it.second;
 
 				VkWriteDescriptorSet write_descriptor_set{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
 
@@ -118,7 +135,7 @@ void DescriptorSet::prepare()
 				write_descriptor_set.descriptorType  = binding_info->descriptorType;
 				write_descriptor_set.pImageInfo      = &image_info;
 				write_descriptor_set.dstSet          = handle;
-				write_descriptor_set.dstArrayElement = array_element;
+				write_descriptor_set.dstArrayElement = element_it.first;
 				write_descriptor_set.descriptorCount = 1;
 
 				write_descriptor_sets.push_back(write_descriptor_set);

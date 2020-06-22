@@ -204,7 +204,12 @@ class ShaderModule
 
 	const std::vector<uint32_t> &get_binary() const;
 
-	void set_resource_mode(const ShaderResourceMode &mode, const std::string &resource_name);
+	/**
+	 * @brief Flags a resource to use a different method of being bound to the shader
+	 * @param resource_name The name of the shader resource
+	 * @param resource_mode The mode of how the shader resource will be bound
+	 */
+	void set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode);
 
   private:
 	Device &device;

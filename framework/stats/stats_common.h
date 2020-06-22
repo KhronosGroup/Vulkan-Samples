@@ -35,6 +35,7 @@ enum class StatIndex
 	cpu_branch_miss_ratio,
 	gpu_cycles,
 	gpu_vertex_cycles,
+	gpu_load_store_cycles,
 	gpu_tiles,
 	gpu_killed_tiles,
 	gpu_fragment_jobs,

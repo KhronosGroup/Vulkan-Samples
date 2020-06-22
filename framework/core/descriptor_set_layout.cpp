@@ -18,6 +18,7 @@
 #include "descriptor_set_layout.h"
 
 #include "device.h"
+#include "physical_device.h"
 #include "shader_module.h"
 
 namespace vkb
@@ -89,74 +90,13 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 		return false;
 	}
 
-	auto &extended_features = gpu.get_descriptor_indexing_features();
-
-	for (size_t i = 0; i < bindings.size(); ++i)
-	{
-		if (flags[i] == VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT)
-		{
-			if (extended_features.descriptorBindingUniformBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingUniformBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingSampledImageUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_SAMPLER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingSampledImageUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_SAMPLER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, or VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageImageUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageImageUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_IMAGE must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingUniformTexelBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingUniformTexelBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-
-			if (extended_features.descriptorBindingStorageTexelBufferUpdateAfterBind == 0)
-			{
-				if (!validate_binding(bindings[i], {VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER}))
-				{
-					LOGE("If VkPhysicalDeviceDescriptorIndexingFeatures::descriptorBindingStorageTexelBufferUpdateAfterBind is not enabled, all bindings with descriptor type VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER must not use VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT");
-					return false;
-				}
-			}
-		}
-	}
-
 	return true;
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<ShaderResource> &resource_set) :
-    device{device}
+DescriptorSetLayout::DescriptorSetLayout(Device &device, const uint32_t set_index, const std::vector<ShaderResource> &resource_set) :
+    device{device},
+    set_index{set_index}
 {
 	for (auto &resource : resource_set)
 	{
@@ -220,7 +160,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 
 		if (!validate_flags(device.get_gpu(), bindings, binding_flags))
 		{
-			throw std::runtime_error("Invalid binding set up, couldn't create descriptor set layout.");
+			throw std::runtime_error("Invalid binding, couldn't create descriptor set layout.");
 		}
 
 		VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT};
@@ -243,6 +183,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const std::vector<Shade
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     device{other.device},
     handle{other.handle},
+    set_index{other.set_index},
     bindings{std::move(other.bindings)},
     binding_flags{std::move(other.binding_flags)},
     bindings_lookup{std::move(other.bindings_lookup)},
@@ -264,6 +205,11 @@ DescriptorSetLayout::~DescriptorSetLayout()
 VkDescriptorSetLayout DescriptorSetLayout::get_handle() const
 {
 	return handle;
+}
+
+const uint32_t DescriptorSetLayout::get_index() const
+{
+	return set_index;
 }
 
 const std::vector<VkDescriptorSetLayoutBinding> &DescriptorSetLayout::get_bindings() const
