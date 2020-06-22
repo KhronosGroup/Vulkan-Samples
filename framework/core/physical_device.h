@@ -128,19 +128,6 @@ class PhysicalDevice
 		return *extension_ptr;
 	}
 
-	template <typename T>
-	void chain_extension_features(T &features)
-	{
-		// If an extension has already been requested, set that to the pNext element
-		if (last_requested_extension_feature)
-		{
-			features.pNext = last_requested_extension_feature;
-		}
-
-		// Set the last requested extension to the pointer of the most recently requested extension
-		last_requested_extension_feature = &features;
-	}
-
   private:
 	// Handle to the Vulkan instance
 	Instance &instance;
