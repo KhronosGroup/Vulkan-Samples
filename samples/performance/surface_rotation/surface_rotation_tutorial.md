@@ -113,6 +113,29 @@ void on_app_cmd(android_app *app, int32_t cmd)
 }
 ```
 
+Note that android NDK 21 and below does not support `APP_CMD_CONTENT_RECT_CHANGED`. This is fixed in version 22+ which at the date of this addition has not been released. This can be patched in the short term by registering a callback that mimics the expected behavior of `OnContentRectChanged`. The callback we use in this project is:
+
+```
+void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
+{
+	... log content rect dimensions
+	
+	struct android_app *app = reinterpret_cast<struct android_app *>(activity->instance);
+	auto                cmd = APP_CMD_CONTENT_RECT_CHANGED;
+
+	app->contentRect = *rect;
+
+	if (write(app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd))
+	{
+		... failed to write message to the app glue command stream
+	}
+}
+```
+
+The above triggers the `APP_CMD_CONTENT_RECT_CHANGED` event and the new content rect dimensions should be accessible by the `app->contentRect` attribute.
+
+There are other alternatives to `CONTENT_RECT_CHANGED`, an example can be found here [Handling Device Orientation Efficiently in Vulkan With Pre-Rotation](https://android-developers.googleblog.com/2020/02/handling-device-orientation-efficiently.html)
+
 ## Swapchain re-creation
 
 We need to sample the current transform from the surface:
