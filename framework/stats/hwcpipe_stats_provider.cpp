@@ -35,7 +35,7 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	    {StatIndex::gpu_vertex_cycles,     {hwcpipe::GpuCounter::VertexComputeCycles}},
 	    {StatIndex::gpu_load_store_cycles, {hwcpipe::GpuCounter::ShaderLoadStoreCycles}},
 	    {StatIndex::gpu_tiles,             {hwcpipe::GpuCounter::Tiles}},
-	    {StatIndex::gpu_killed_tiles,      {hwcpipe::GpuCounter::TransactionEliminations}},
+	    {StatIndex::gpu_killed_tiles,      {hwcpipe::GpuCounter::TransactionEliminations}}, 
 	    {StatIndex::gpu_fragment_cycles,   {hwcpipe::GpuCounter::FragmentCycles}},
 	    {StatIndex::gpu_fragment_jobs,     {hwcpipe::GpuCounter::FragmentJobs}},
 	    {StatIndex::gpu_ext_reads,         {hwcpipe::GpuCounter::ExternalMemoryReadAccesses}},
