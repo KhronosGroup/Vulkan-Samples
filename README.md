@@ -68,6 +68,8 @@ Additionally you may find the following links useful:
   - [Utilizing Specialization Constants](./samples/performance/specialization_constants/specialization_constants_tutorial.md)
 - **Descriptors**
   - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
+- **Constant Data**
+  - [Sending constant data to the shaders](./samples/performance/constant_data/)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
   - [Choosing the correct layout when transitioning images](./samples/performance/layout_transitions/layout_transitions_tutorial.md)

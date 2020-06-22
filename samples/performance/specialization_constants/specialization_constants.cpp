@@ -64,8 +64,6 @@ bool SpecializationConstants::prepare(vkb::Platform &platform)
 
 void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 {
-	dynamic_resources = {"GlobalUniform"};
-
 	auto &device = render_context.get_device();
 	for (auto &mesh : meshes)
 	{

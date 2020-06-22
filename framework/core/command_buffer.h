@@ -91,7 +91,11 @@ class CommandBuffer
 
 	bool is_recording() const;
 
-	std::vector<uint8_t> stored_push_constants;
+	/**
+	 * @brief Flushes the command buffer, pushing the new changes
+	 * @param pipeline_bind_point The type of pipeline we want to flush
+	 */
+	void flush(VkPipelineBindPoint pipeline_bind_point);
 
 	/**
 	 * @brief Sets the command buffer so that it is ready for recording
@@ -125,33 +129,25 @@ class CommandBuffer
 	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
 
 	/**
-	 * @brief Stores additional data which is prepended to the
-	 *        values passed to the push_constants_accumulated() function
-	 * @param data Data to be stored
+	 * @brief Records byte data into the command buffer to be pushed as push constants to each draw call
+	 * @param values The byte data to store
 	 */
-	template <class T>
-	void set_push_constants(const T &data);
-
-	void set_push_constants(const std::vector<uint8_t> &values);
-
-	void push_constants_accumulated(const std::vector<uint8_t> &values, uint32_t offset = 0);
+	void push_constants(const std::vector<uint8_t> &values);
 
 	template <typename T>
-	void push_constants_accumulated(const T &value, uint32_t offset = 0)
+	void push_constants(const T &value)
 	{
-		push_constants_accumulated(std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                                reinterpret_cast<const uint8_t *>(&value) + sizeof(T)},
-		                           offset);
-	}
+		auto data = to_bytes(value);
 
-	void push_constants(uint32_t offset, const std::vector<uint8_t> &values);
+		uint32_t size = to_u32(stored_push_constants.size() + data.size());
 
-	template <typename T>
-	void push_constants(uint32_t offset, const T &value)
-	{
-		push_constants(offset,
-		               std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
-		                                    reinterpret_cast<const uint8_t *>(&value) + sizeof(T)});
+		if (size > max_push_constants_size)
+		{
+			LOGE("Push constant limit exceeded ({} / {} bytes)", size, max_push_constants_size);
+			throw std::runtime_error("Cannot overflow push constant limit");
+		}
+
+		stored_push_constants.insert(stored_push_constants.end(), data.begin(), data.end());
 	}
 
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
@@ -249,6 +245,10 @@ class CommandBuffer
 
 	ResourceBindingState resource_binding_state;
 
+	std::vector<uint8_t> stored_push_constants;
+
+	uint32_t max_push_constants_size;
+
 	VkExtent2D last_framebuffer_extent{};
 
 	VkExtent2D last_render_area_extent{};
@@ -277,42 +277,22 @@ class CommandBuffer
 	 * @brief Flush the descriptor set state
 	 */
 	void flush_descriptor_state(VkPipelineBindPoint pipeline_bind_point);
+
+	/**
+	 * @brief Flush the push constant state
+	 */
+	void flush_push_constants();
 };
-
-template <class T>
-inline void CommandBuffer::set_push_constants(const T &data)
-{
-	set_push_constants(
-	    {reinterpret_cast<const uint8_t *>(&data),
-	     reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
-}
-
-template <>
-inline void CommandBuffer::set_push_constants<bool>(const bool &data)
-{
-	uint32_t value = to_u32(data);
-
-	set_push_constants(
-	    {reinterpret_cast<const uint8_t *>(&value),
-	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
-}
 
 template <class T>
 inline void CommandBuffer::set_specialization_constant(uint32_t constant_id, const T &data)
 {
-	set_specialization_constant(constant_id,
-	                            {reinterpret_cast<const uint8_t *>(&data),
-	                             reinterpret_cast<const uint8_t *>(&data) + sizeof(T)});
+	set_specialization_constant(constant_id, to_bytes(data));
 }
 
 template <>
 inline void CommandBuffer::set_specialization_constant<bool>(std::uint32_t constant_id, const bool &data)
 {
-	uint32_t value = to_u32(data);
-
-	set_specialization_constant(
-	    constant_id,
-	    {reinterpret_cast<const uint8_t *>(&value),
-	     reinterpret_cast<const uint8_t *>(&value) + sizeof(std::uint32_t)});
+	set_specialization_constant(constant_id, to_bytes(to_u32(data)));
 }
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -205,6 +205,13 @@ uint32_t to_u32(T value)
 	}
 
 	return static_cast<uint32_t>(value);
+}
+
+template <typename T>
+inline std::vector<uint8_t> to_bytes(const T &value)
+{
+	return std::vector<uint8_t>{reinterpret_cast<const uint8_t *>(&value),
+	                            reinterpret_cast<const uint8_t *>(&value) + sizeof(T)};
 }
 
 }        // namespace vkb

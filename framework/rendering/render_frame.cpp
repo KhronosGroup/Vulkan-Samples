@@ -29,16 +29,15 @@ RenderFrame::RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_
     swapchain_render_target{std::move(render_target)},
     thread_count{thread_count}
 {
-	const std::vector<VkBufferUsageFlags> supported_usages = {VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_BUFFER_USAGE_INDEX_BUFFER_BIT};
-	for (auto &usage : supported_usages)
+	for (auto &usage_it : supported_usage_map)
 	{
 		std::vector<std::pair<BufferPool, BufferBlock *>> usage_buffer_pools;
-		for (size_t i = 0; i < thread_count; i++)
+		for (size_t i = 0; i < thread_count; ++i)
 		{
-			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024, usage}, nullptr));
+			usage_buffer_pools.push_back(std::make_pair(BufferPool{device, BUFFER_POOL_BLOCK_SIZE * 1024 * usage_it.second, usage_it.first}, nullptr));
 		}
 
-		auto res_ins_it = buffer_pools.emplace(usage, std::move(usage_buffer_pools));
+		auto res_ins_it = buffer_pools.emplace(usage_it.first, std::move(usage_buffer_pools));
 
 		if (!res_ins_it.second)
 		{
@@ -46,7 +45,7 @@ RenderFrame::RenderFrame(Device &device, std::unique_ptr<RenderTarget> &&render_
 		}
 	}
 
-	for (size_t i = 0; i < thread_count; i++)
+	for (size_t i = 0; i < thread_count; ++i)
 	{
 		descriptor_pools.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorPool>>());
 		descriptor_sets.push_back(std::make_unique<std::unordered_map<std::size_t, DescriptorSet>>());
@@ -208,6 +207,14 @@ void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_st
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
+
+	uint32_t block_multiplier = supported_usage_map.at(usage);
+
+	if (size > BUFFER_POOL_BLOCK_SIZE * 1024 * block_multiplier)
+	{
+		LOGE("Trying to allocate {} buffer of size {}KB which is larger than the buffer pool block size ({} KB)!", buffer_usage_to_string(usage), size / 1024, BUFFER_POOL_BLOCK_SIZE * block_multiplier);
+		throw std::runtime_error("Couldn't allocate render frame buffer.");
+	}
 
 	// Find a pool for this usage
 	auto buffer_pool_it = buffer_pools.find(usage);

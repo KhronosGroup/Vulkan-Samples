@@ -52,6 +52,11 @@ class RenderPipeline
 	RenderPipeline &operator=(RenderPipeline &&) = default;
 
 	/**
+	 * @brief Prepares the subpasses
+	 */
+	void prepare();
+
+	/**
 	 * @return Load store info
 	 */
 	const std::vector<LoadStoreInfo> &get_load_store() const;

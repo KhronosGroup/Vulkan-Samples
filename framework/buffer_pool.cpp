@@ -133,7 +133,7 @@ void BufferAllocation::update(const std::vector<uint8_t> &data, uint32_t offset)
 
 	if (offset + data.size() <= size)
 	{
-		buffer->update(data, static_cast<size_t>(base_offset) + offset);
+		buffer->update(data, to_u32(base_offset) + offset);
 	}
 	else
 	{

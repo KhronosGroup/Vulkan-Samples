@@ -134,14 +134,4 @@ void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
 {
 	this->sample_count = sample_count;
 }
-
-void Subpass::clear_dynamic_resources()
-{
-	dynamic_resources.clear();
-}
-
-void Subpass::add_dynamic_resources(const std::vector<std::string> &dynamic_resources_)
-{
-	dynamic_resources.insert(dynamic_resources.end(), dynamic_resources_.begin(), dynamic_resources_.end());
-}
 }        // namespace vkb

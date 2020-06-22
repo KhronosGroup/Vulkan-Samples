@@ -81,21 +81,20 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	// Create a descriptor set layout for each shader set in the shader modules
 	for (auto &shader_set_it : shader_sets)
 	{
-		descriptor_set_layouts.emplace(shader_set_it.first, &device.get_resource_cache().request_descriptor_set_layout(shader_set_it.second));
+		descriptor_set_layouts.emplace_back(&device.get_resource_cache().request_descriptor_set_layout(shader_set_it.first, shader_set_it.second));
 	}
 
 	// Collect all the descriptor set layout handles, maintaining set order
-	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles(descriptor_set_layouts.size());
-	for (uint32_t i = 0; i < descriptor_set_layouts.size(); i++)
+	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles;
+	for (uint32_t i = 0; i < descriptor_set_layouts.size(); ++i)
 	{
-		if (descriptor_set_layouts[i] != nullptr)
+		if (descriptor_set_layouts[i])
 		{
-			descriptor_set_layout_handles[i] = descriptor_set_layouts[i]->get_handle();
+			descriptor_set_layout_handles.push_back(descriptor_set_layouts[i]->get_handle());
 		}
 		else
 		{
-			// Add an empty set layout
-			descriptor_set_layout_handles[i] = device.get_resource_cache().request_descriptor_set_layout({}).get_handle();
+			descriptor_set_layout_handles.push_back(VK_NULL_HANDLE);
 		}
 	}
 
@@ -177,17 +176,24 @@ const std::unordered_map<uint32_t, std::vector<ShaderResource>> &PipelineLayout:
 	return shader_sets;
 }
 
-bool PipelineLayout::has_descriptor_set_layout(uint32_t set_index) const
+bool PipelineLayout::has_descriptor_set_layout(const uint32_t set_index) const
 {
 	return set_index < descriptor_set_layouts.size();
 }
 
-DescriptorSetLayout &PipelineLayout::get_descriptor_set_layout(uint32_t set_index) const
+DescriptorSetLayout &PipelineLayout::get_descriptor_set_layout(const uint32_t set_index) const
 {
-	return *descriptor_set_layouts.at(set_index);
+	for (auto &descriptor_set_layout : descriptor_set_layouts)
+	{
+		if (descriptor_set_layout->get_index() == set_index)
+		{
+			return *descriptor_set_layout;
+		}
+	}
+	throw std::runtime_error("Couldn't find descriptor set layout at set index " + to_string(set_index));
 }
 
-VkShaderStageFlags PipelineLayout::get_push_constant_range_stage(uint32_t offset, uint32_t size) const
+VkShaderStageFlags PipelineLayout::get_push_constant_range_stage(uint32_t size, uint32_t offset) const
 {
 	VkShaderStageFlags stages = 0;
 

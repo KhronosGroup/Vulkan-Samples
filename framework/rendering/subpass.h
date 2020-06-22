@@ -200,9 +200,10 @@ class Subpass
   protected:
 	RenderContext &render_context;
 
-	std::vector<std::string> dynamic_resources{};
-
 	VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};
+
+	// A map of shader resource names and the mode of constant data
+	std::unordered_map<std::string, ShaderResourceMode> resource_mode_map;
 
   private:
 	ShaderSource vertex_shader;
