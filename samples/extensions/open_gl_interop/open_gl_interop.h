@@ -21,8 +21,6 @@
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
-#if defined(USE_GLFW)
-
 class OpenGLWindow;
 
 #	if defined(WIN32)
@@ -110,13 +108,5 @@ class OpenGLInterop : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 };
-
-#else        // #if defined(USE_GLFW)
-
-class OpenGLInterop : public vkb::VulkanSample
-{
-};
-
-#endif
 
 std::unique_ptr<vkb::VulkanSample> create_open_gl_interop();

@@ -26,17 +26,28 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
+# Needed for the OpenGL interoperability example
+set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/glad")
+set(GLAD_SOURCES
+    ${GLAD_DIR}/src/glad.c
+    ${GLAD_DIR}/include/glad/glad.h
+    ${GLAD_DIR}/include/KHR/khrplatform.h
+)
+add_library(glad ${GLAD_SOURCES})
+target_sources(glad PRIVATE ${GLAD_SOURCES})
+target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 
-
-add_sample_with_tags(
-    ID ${FOLDER_NAME}
-    CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Bradley Austin Davis"
-    NAME "OpenGL Interoperability"
-    DESCRIPTION "Example showing sharing resources between OpenGL and Vulkan"
-    TAGS
-        "opengl")
-
-if (USE_GLFW)
-    target_compile_definitions(open_gl_interop PUBLIC USE_GLFW)
+# Only Compile on platforms that support glfw
+# Corresponds to the logic in framework/CMakeLists.txt near "if(VKB_DIRECT_2_DISPLAY)"
+if (NOT (VKB_DIRECT_2_DISPLAY OR ANDROID OR DIRECT_TO_DISPLAY))
+    add_sample_with_tags(
+        ID ${FOLDER_NAME}
+        CATEGORY ${CATEGORY_NAME}
+        AUTHOR "Bradley Austin Davis"
+        NAME "OpenGL Interoperability"
+        DESCRIPTION "Example showing sharing resources between OpenGL and Vulkan"
+        TAGS
+            "opengl"
+        LIBS
+            glad)
 endif()

@@ -136,9 +136,19 @@ endfunction()
 function(add_sample)
     set(options)  
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs)
+    set(multiValueArgs FILES LIBS)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(SRC_FILES
+        ${TARGET_ID}.h
+        ${TARGET_ID}.cpp
+    )
+
+    # Append extra files if present
+    if (TARGET_FILES)
+        list(APPEND SRC_FILES ${TARGET_FILES})
+    endif()
 
     add_project(
         TYPE "Sample"
@@ -150,18 +160,30 @@ function(add_sample)
         TAGS 
             "any"
         FILES
-            ${TARGET_ID}.h
-            ${TARGET_ID}.cpp)
+            ${SRC_FILES}
+        LIBS
+            ${TARGET_LIBS})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS)
+    set(multiValueArgs TAGS FILES LIBS)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     list(APPEND TARGET_TAGS "any")
+
+    set(SRC_FILES
+        ${TARGET_ID}.h
+        ${TARGET_ID}.cpp
+    )
+
+    # Append extra files if present
+    if (TARGET_FILES)
+        list(APPEND SRC_FILES ${TARGET_FILES})
+    endif()
+
 
     add_project(
         TYPE "Sample"
@@ -173,8 +195,9 @@ function(add_sample_with_tags)
         TAGS 
             ${TARGET_TAGS}
         FILES
-            ${TARGET_ID}.h
-            ${TARGET_ID}.cpp)
+            ${SRC_FILES}
+        LIBS
+            ${TARGET_LIBS})
 
 endfunction()
 
@@ -201,7 +224,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES)
+    set(multiValueArgs TAGS FILES LIBS)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -221,15 +244,22 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES})
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES})
     
     # inherit compile definitions from framework target
     target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
-    # inherit include directories from framework target
+    # # inherit include directories from framework target
     target_include_directories(${PROJECT_NAME} PUBLIC 
         $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES>
         ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+
+    target_link_libraries(${PROJECT_NAME} PRIVATE framework)
+
+    # Link against extra project specific libraries
+    if(TARGET_LIBS)
+        target_link_libraries(${PROJECT_NAME} PRIVATE ${TARGET_LIBS})
+    endif()
 
     # if test then add test framework as well
     if(${TARGET_TYPE} STREQUAL "Test")

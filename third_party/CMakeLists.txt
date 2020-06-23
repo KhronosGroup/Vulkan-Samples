@@ -66,29 +66,7 @@ elseif(UNIX)
         set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
         target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
     endif()
-endif()
-
-# Corresponds to the logic in framework/CMakeLists.txt near "if(VKB_DIRECT_2_DISPLAY)"
-if (NOT (VKB_DIRECT_2_DISPLAY OR ANDROID OR DIRECT_TO_DISPLAY))
-    set(USE_GLFW TRUE)
-    set(USE_GLFW TRUE PARENT_SCOPE)
-endif()    
-
-# Needed for the OpenGL interoperability example
-if (ANDROID)
-    set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/glad_android")
-else()
-    set(GLAD_DIR "${CMAKE_CURRENT_SOURCE_DIR}/glad")
-endif()
-set(GLAD_SOURCES
-    ${GLAD_DIR}/src/glad.c
-    ${GLAD_DIR}/include/glad/glad.h
-    ${GLAD_DIR}/include/KHR/khrplatform.h
-)
-add_library(glad ${GLAD_SOURCES})
-set_property(TARGET glad PROPERTY FOLDER "ThirdParty")
-target_sources(glad PRIVATE ${GLAD_SOURCES})
-target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
+endif() 
 
 # vma
 add_library(vma INTERFACE)

@@ -400,12 +400,11 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    docopt
-    glad)
+    docopt)
 
 # Link platform specific libraries
 if(ANDROID)
-    target_link_libraries(${PROJECT_NAME} log android EGL native_app_glue)
+    target_link_libraries(${PROJECT_NAME} log android native_app_glue)
 else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} dl)
