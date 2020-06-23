@@ -49,5 +49,8 @@ if (NOT (VKB_DIRECT_2_DISPLAY OR ANDROID OR DIRECT_TO_DISPLAY))
         TAGS
             "opengl"
         LIBS
-            glad)
+            glad
+        FILES
+            offscreen_context.h
+            offscreen_context.cpp)
 endif()
