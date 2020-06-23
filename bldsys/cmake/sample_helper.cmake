@@ -157,11 +157,20 @@ endfunction()
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS)
+    set(multiValueArgs TAGS FILES)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     list(APPEND TARGET_TAGS "any")
+
+    set(SRC_FILES
+        ${TARGET_ID}.h
+        ${TARGET_ID}.cpp
+    )
+
+    if (TARGET_FILES)
+        list(APPEND SRC_FILES ${TARGET_FILES})
+    endif()
 
     add_project(
         TYPE "Sample"
@@ -173,8 +182,7 @@ function(add_sample_with_tags)
         TAGS 
             ${TARGET_TAGS}
         FILES
-            ${TARGET_ID}.h
-            ${TARGET_ID}.cpp)
+            ${SRC_FILES})
 
 endfunction()
 

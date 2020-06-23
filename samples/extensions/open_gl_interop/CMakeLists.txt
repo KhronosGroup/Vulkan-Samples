@@ -35,7 +35,10 @@ add_sample_with_tags(
     NAME "OpenGL Interoperability"
     DESCRIPTION "Example showing sharing resources between OpenGL and Vulkan"
     TAGS
-        "opengl")
+        "opengl"
+    FILES
+        offscreen_context.h
+        offscreen_context.cpp)
 
 if (USE_GLFW)
     target_compile_definitions(open_gl_interop PUBLIC USE_GLFW)

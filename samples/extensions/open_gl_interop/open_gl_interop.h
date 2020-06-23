@@ -20,6 +20,7 @@
 #include "api_vulkan_sample.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
+#include "timer.h"
 
 #if defined(USE_GLFW)
 
@@ -40,10 +41,11 @@ struct VertexStructure
 	float normal[3];
 };
 
+class OffscreenContext;
+struct GLData;
+
 class OpenGLInterop : public ApiVulkanSample
 {
-	friend class OpenGLWindow;
-
   public:
 	OpenGLInterop();
 	~OpenGLInterop();
@@ -57,7 +59,6 @@ class OpenGLInterop : public ApiVulkanSample
 
   private:
 	void prepare_shared_resources();
-	void prepare_opengl_context();
 	void generate_quad();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
@@ -67,13 +68,15 @@ class OpenGLInterop : public ApiVulkanSample
 	void update_uniform_buffers();
 	void draw();
 
-	std::unique_ptr<OpenGLWindow> glWindow;
+	vkb::Timer        timer;
+	OffscreenContext *gl_context{nullptr};
+	GLData *          gl_data{nullptr};
 
 	struct ShareHandles
 	{
 		Handle memory{INVALID_HANDLE_VALUE};
-		Handle glReady{INVALID_HANDLE_VALUE};
-		Handle glComplete{INVALID_HANDLE_VALUE};
+		Handle gl_ready{INVALID_HANDLE_VALUE};
+		Handle gl_complete{INVALID_HANDLE_VALUE};
 	} shareHandles;
 
 	struct SharedTexture
@@ -88,8 +91,8 @@ class OpenGLInterop : public ApiVulkanSample
 
 	struct Semaphores
 	{
-		VkSemaphore glReady{VK_NULL_HANDLE};
-		VkSemaphore glComplete{VK_NULL_HANDLE};
+		VkSemaphore gl_ready{VK_NULL_HANDLE};
+		VkSemaphore gl_complete{VK_NULL_HANDLE};
 	} sharedSemaphores;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;

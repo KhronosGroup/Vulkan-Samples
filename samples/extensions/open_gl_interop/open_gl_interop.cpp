@@ -25,50 +25,15 @@
 #	include "platform/filesystem.h"
 #	include "platform/platform.h"
 #	include "rendering/subpasses/forward_subpass.h"
+#	include "stats/stats.h"
 
 #	if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #		include "platform/android/android_platform.h"
 #	endif
 
-VKBP_DISABLE_WARNINGS()
-#	include <glad/glad.h>
-#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#		include <ctime>
-#		include <EGL/egl.h>
-#		include <EGL/eglext.h>
-#	else
-#		include <GLFW/glfw3.h>
-#		include <GLFW/glfw3native.h>
-#	endif
-VKBP_ENABLE_WARNINGS()
+#	include "offscreen_context.h"
 
-constexpr uint32_t SHARED_TEXTURE_DIMENSION = 512;
-
-#	if !defined(WIN32)
-constexpr const char *HOST_MEMORY_EXTENSION_NAME    = VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME;
-constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME;
-#		define glImportSemaphore glImportSemaphoreFdEXT
-#		define glImportMemory glImportMemoryFdEXT
-#		define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_FD_EXT
-#		define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT
-#		define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT
-#	else
-constexpr const char *HOST_MEMORY_EXTENSION_NAME    = VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME;
-constexpr const char *HOST_SEMAPHORE_EXTENSION_NAME = VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME;
-#		define glImportSemaphore glImportSemaphoreWin32HandleEXT
-#		define glImportMemory glImportMemoryWin32HandleEXT
-#		define GL_HANDLE_TYPE GL_HANDLE_TYPE_OPAQUE_WIN32_EXT
-#		define VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT
-#		define VK_EXTERNAL_MEMORY_HANDLE_TYPE VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT
-#	endif
-
-#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#		define OPENGL_SHADER_HEADER "#version 320 es"
-#	else
-#		define OPENGL_SHADER_HEADER "#version 450 core"
-#	endif
 constexpr const char *OPENG_VERTEX_SHADER =
-    OPENGL_SHADER_HEADER
     R"SHADER(
 const vec4 VERTICES[] = vec4[](
     vec4(-1.0, -1.0, 0.0, 1.0), 
@@ -82,7 +47,6 @@ void main() { gl_Position = VERTICES[gl_VertexID]; }
 // Derived from Shadertoy Vornoi noise shader by Inigo Quilez
 // https://www.shadertoy.com/view/Xd23Dh
 constexpr const char *OPENGL_FRAGMENT_SHADER =
-    OPENGL_SHADER_HEADER
     R"SHADER(
 const vec4 iMouse = vec4(0.0); 
 layout(location = 0) out vec4 outColor;
@@ -136,229 +100,23 @@ void mainImage( out vec4 fragColor, in vec2 fragCoord )
 void main() { mainImage(outColor, gl_FragCoord.xy); }
 )SHADER";
 
-class OpenGLWindow
+struct GLData
 {
-	static void debugMessageCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
-	{
-		switch (severity)
-		{
-			case GL_DEBUG_SEVERITY_HIGH:
-				LOGE("OpenGL: {}", message);
-				break;
-			case GL_DEBUG_SEVERITY_MEDIUM:
-				LOGW("OpenGL: {}", message);
-				break;
-			case GL_DEBUG_SEVERITY_LOW:
-				LOGI("OpenGL: {}", message);
-				break;
-			default:
-			case GL_DEBUG_SEVERITY_NOTIFICATION:
-				LOGD("OpenGL: {}", message);
-		}
-	}
+	// Shader
+	GLuint program{0};
 
-	static GLuint loadShader(const char *shaderSource, GLenum shaderType)
-	{
-		GLuint shader = glCreateShader(shaderType);
-		int    sizes  = static_cast<int>(strlen(shaderSource));
-		glShaderSource(shader, 1, &shaderSource, &sizes);
-		glCompileShader(shader);
+	// Semaphores
+	GLuint gl_ready{0}, gl_complete{0};
 
-		GLint isCompiled = 0;
-		glGetShaderiv(shader, GL_COMPILE_STATUS, &isCompiled);
-		if (isCompiled == GL_FALSE)
-		{
-			GLint maxLength = 0;
-			glGetShaderiv(shader, GL_INFO_LOG_LENGTH, &maxLength);
+	// Memory Object
+	GLuint mem{0};
 
-			// The maxLength includes the NULL character
-			std::vector<GLchar> errorLog(maxLength);
-			glGetShaderInfoLog(shader, maxLength, &maxLength, &errorLog[0]);
-			std::string strError;
-			strError.insert(strError.end(), errorLog.begin(), errorLog.end());
+	// Texture
+	GLuint color{0};
 
-			// Provide the infolog in whatever manor you deem best.
-			// Exit with failure.
-			glDeleteShader(shader);        // Don't leak the shader.
-			LOGE("OpenGL: Shader compilation failed", strError.c_str());
-		}
-		return shader;
-	}
-
-	static GLuint buildProgram(const char *vertexShaderSource, const char *fragmentShaderSource)
-	{
-		GLuint program = glCreateProgram();
-		GLuint vs      = loadShader(vertexShaderSource, GL_VERTEX_SHADER);
-		GLuint fs      = loadShader(fragmentShaderSource, GL_FRAGMENT_SHADER);
-		glAttachShader(program, vs);
-		glAttachShader(program, fs);
-		glLinkProgram(program);
-		glDeleteShader(vs);
-		glDeleteShader(fs);
-		return program;
-	}
-
-  public:
-	void create(const OpenGLInterop::ShareHandles &handles, uint64_t memorySize)
-	{
-#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
-		EGLint eglMajVers{0}, eglMinVers{0};
-		eglDisp = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-		eglInitialize(eglDisp, &eglMajVers, &eglMinVers);
-		LOGD("EGL init with version %d.%d", eglMajVers, eglMinVers);
-
-		constexpr EGLint confAttr[] = {
-		    EGL_RENDERABLE_TYPE, EGL_OPENGL_ES2_BIT,
-		    EGL_SURFACE_TYPE, EGL_PBUFFER_BIT,
-		    EGL_RED_SIZE, 8,
-		    EGL_GREEN_SIZE, 8,
-		    EGL_BLUE_SIZE, 8,
-		    EGL_ALPHA_SIZE, 8,
-		    EGL_NONE};
-
-		EGLint numConfigs;
-		eglChooseConfig(eglDisp, confAttr, &eglConf, 1, &numConfigs);
-
-		// Create a EGL context
-		constexpr EGLint ctxAttr[] = {EGL_CONTEXT_CLIENT_VERSION, 2, EGL_NONE};
-
-		eglCtx = eglCreateContext(eglDisp, eglConf, EGL_NO_CONTEXT, ctxAttr);
-
-		// Create an offscreen pbuffer surface, and then make it current
-		constexpr EGLint surfaceAttr[] = {EGL_WIDTH, 10, EGL_HEIGHT, 10, EGL_NONE};
-		eglSurface                     = eglCreatePbufferSurface(eglDisp, eglConf, surfaceAttr);
-		eglMakeCurrent(eglDisp, eglSurface, eglSurface, eglCtx);
-		gladLoadGLES2Loader((GLADloadproc) &eglGetProcAddress);
-#	else
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_OPENGL_API);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-		glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
-		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-		glfwWindowHint(GLFW_OPENGL_DEBUG_CONTEXT, 1);
-		glfwWindowHint(GLFW_VISIBLE, GLFW_FALSE);
-		window = glfwCreateWindow(SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION, "OpenGL Window", nullptr, nullptr);
-		glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-		glfwMakeContextCurrent(window);
-		gladLoadGL();
-#	endif
-
-		glDebugMessageCallback(debugMessageCallback, NULL);
-		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-
-		program = buildProgram(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
-		timer.start();
-
-		glDisable(GL_DEPTH_TEST);
-
-		// Create the texture for the FBO color attachment.
-		// This only reserves the ID, it doesn't allocate memory
-		glGenTextures(1, &color);
-		glBindTexture(GL_TEXTURE_2D, color);
-
-		// Create the GL identifiers
-
-		// semaphores
-		glGenSemaphoresEXT(1, &glReady);
-		glGenSemaphoresEXT(1, &glComplete);
-		// memory
-		glCreateMemoryObjectsEXT(1, &mem);
-
-		// Platform specific import.
-		glImportSemaphore(glReady, GL_HANDLE_TYPE, handles.glReady);
-		glImportSemaphore(glComplete, GL_HANDLE_TYPE, handles.glComplete);
-		glImportMemory(mem, memorySize, GL_HANDLE_TYPE, handles.memory);
-
-		// Use the imported memory as backing for the OpenGL texture.  The internalFormat, dimensions
-		// and mip count should match the ones used by Vulkan to create the image and determine it's memory
-		// allocation.
-		glTextureStorageMem2DEXT(color, 1, GL_RGBA8, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION, mem, 0);
-		glBindTexture(GL_TEXTURE_2D, 0);
-
-		// The remaining initialization code is all standard OpenGL
-		glGenVertexArrays(1, &vao);
-		glBindVertexArray(vao);
-
-		glGenFramebuffers(1, &fbo);
-		glBindFramebuffer(GL_FRAMEBUFFER, fbo);
-		glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, color, 0);
-
-		glUseProgram(program);
-		glProgramUniform3f(program, 0, (float) SHARED_TEXTURE_DIMENSION, (float) SHARED_TEXTURE_DIMENSION, 0.0f);
-
-		glViewport(0, 0, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION);
-	}
-
-	void render()
-	{
-		float time = (float) timer.elapsed();
-		// The GL shader animates the image, so provide the time as input
-		glProgramUniform1f(program, 1, time);
-
-		// Wait (on the GPU side) for the Vulkan semaphore to be signaled
-		GLenum srcLayout = GL_LAYOUT_COLOR_ATTACHMENT_EXT;
-		glWaitSemaphoreEXT(glReady, 0, nullptr, 1, &color, &srcLayout);
-
-		// Draw to the framebuffer
-		glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
-
-		// Once drawing is complete, signal the Vulkan semaphore indicating
-		// it can continue with it's render
-		GLenum dstLayout = GL_LAYOUT_SHADER_READ_ONLY_EXT;
-		glSignalSemaphoreEXT(glComplete, 0, nullptr, 1, &color, &dstLayout);
-
-		// When using synchronization across multiple GL context, or in this case
-		// across OpenGL and another API, it's critical that an operation on a
-		// synchronization object that will be waited on in another context or API
-		// is flushed to the GL server.
-		//
-		// Failure to flush the operation can cause the GL driver to sit and wait for
-		// sufficient additional commands in the buffer before it flushes automatically
-		// but depending on how the waits and signals are structured, this may never
-		// occur.
-		glFlush();
-	}
-
-	void destroy()
-	{
-		glFinish();
-		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-		glBindVertexArray(0);
-		glUseProgram(0);
-		glDeleteFramebuffers(1, &fbo);
-		glDeleteTextures(1, &color);
-		glDeleteSemaphoresEXT(1, &glReady);
-		glDeleteSemaphoresEXT(1, &glComplete);
-		glDeleteVertexArrays(1, &vao);
-		glDeleteProgram(program);
-		glFlush();
-		glFinish();
-#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
-		eglDestroySurface(eglDisp, eglSurface);
-		eglSurface = nullptr;
-		eglDestroyContext(eglDisp, eglCtx);
-		eglCtx = nullptr;
-#	else
-		glfwDestroyWindow(window);
-		window = nullptr;
-#	endif
-	}
-
-  private:
-#	if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	EGLConfig  eglConf{nullptr};
-	EGLSurface eglSurface{EGL_NO_SURFACE};
-	EGLContext eglCtx{EGL_NO_CONTEXT};
-	EGLDisplay eglDisp{EGL_NO_DISPLAY};
-#	else
-	GLFWwindow *window{nullptr};
-#	endif
-	GLuint     glReady{0}, glComplete{0};
-	GLuint     color{0};
-	GLuint     fbo{0};
-	GLuint     vao{0};
-	GLuint     program{0};
-	GLuint     mem{0};
-	vkb::Timer timer;
+	// Quad
+	GLuint fbo{0};
+	GLuint vao{0};
 };
 
 OpenGLInterop::OpenGLInterop()
@@ -376,60 +134,69 @@ OpenGLInterop::OpenGLInterop()
 	add_device_extension(HOST_MEMORY_EXTENSION_NAME);
 }
 
-OpenGLInterop::~OpenGLInterop()
-{
-	if (glWindow)
-	{
-		glWindow->destroy();
-		glWindow.reset();
-	}
-
-	vertex_buffer.reset();
-	index_buffer.reset();
-	uniform_buffer_vs.reset();
-
-	if (device)
-	{
-		device->wait_idle();
-		auto deviceHandle = device->get_handle();
-		vkDestroySemaphore(deviceHandle, sharedSemaphores.glReady, nullptr);
-		vkDestroySemaphore(deviceHandle, sharedSemaphores.glComplete, nullptr);
-		vkDestroyImage(deviceHandle, sharedTexture.image, nullptr);
-		vkDestroySampler(deviceHandle, sharedTexture.sampler, nullptr);
-		vkDestroyImageView(deviceHandle, sharedTexture.view, nullptr);
-		vkFreeMemory(deviceHandle, sharedTexture.memory, nullptr);
-		vkDestroyPipeline(deviceHandle, pipeline, nullptr);
-		vkDestroyPipelineLayout(deviceHandle, pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(deviceHandle, descriptor_set_layout, nullptr);
-	}
-}
-
 void OpenGLInterop::prepare_shared_resources()
 {
-	auto deviceHandle = device->get_handle();
+	auto deviceHandle         = device->get_handle();
+	auto physicalDeviceHandle = device->get_gpu().get_handle();
 
 	{
-		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE};
-		VkSemaphoreCreateInfo       semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO, &exportSemaphoreCreateInfo};
-		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.glComplete));
-		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr, &sharedSemaphores.glReady));
+		VkExternalSemaphoreHandleTypeFlagBits flags[] = {
+		    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT,
+		    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT,
+		    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_KMT_BIT,
+		    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_D3D12_FENCE_BIT,
+		    VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_SYNC_FD_BIT};
+
+		VkPhysicalDeviceExternalSemaphoreInfo zzzz{
+		    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_SEMAPHORE_INFO, nullptr};
+		VkExternalSemaphoreProperties aaaa{VK_STRUCTURE_TYPE_EXTERNAL_SEMAPHORE_PROPERTIES,
+		                                   nullptr};
+
+		bool                                  found = false;
+		VkExternalSemaphoreHandleTypeFlagBits compatable_semaphore_type;
+		for (size_t i = 0; i < 5; i++)
+		{
+			zzzz.handleType = flags[i];
+			vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(physicalDeviceHandle, &zzzz, &aaaa);
+			if (aaaa.compatibleHandleTypes & flags[i] && aaaa.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_EXPORTABLE_BIT)
+			{
+				compatable_semaphore_type = flags[i];
+				found                     = true;
+				break;
+			}
+		}
+
+		if (!found)
+		{
+			throw;
+		}
+
+		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{
+		    VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr,
+		    compatable_semaphore_type};
+		VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
+		                                          &exportSemaphoreCreateInfo};
+		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
+		                           &sharedSemaphores.gl_complete));
+		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
+		                           &sharedSemaphores.gl_ready));
 
 #	if WIN32
 		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr,
-		    nullptr, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT};
-		semaphoreGetHandleInfo.semaphore = sharedSemaphores.glReady;
-		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.glReady));
-		semaphoreGetHandleInfo.semaphore = sharedSemaphores.glComplete;
-		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.glComplete));
+		    VK_NULL_HANDLE, compatable_semaphore_type};
+		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_ready;
+		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.gl_ready));
+		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_complete;
+		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.gl_complete));
 #	else
 		VkSemaphoreGetFdInfoKHR semaphoreGetFdInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR, nullptr,
-		    nullptr, VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT};
-		semaphoreGetFdInfo.semaphore = sharedSemaphores.glReady;
-		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.glReady));
-		semaphoreGetFdInfo.semaphore = sharedSemaphores.glComplete;
-		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.glComplete));
+		    VK_NULL_HANDLE, compatable_semaphore_type};
+		semaphoreGetFdInfo.semaphore = sharedSemaphores.gl_ready;
+		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.gl_ready));
+		semaphoreGetFdInfo.semaphore = sharedSemaphores.gl_complete;
+		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.gl_complete));
 #	endif
 	}
 
@@ -455,7 +222,8 @@ void OpenGLInterop::prepare_shared_resources()
 		VkMemoryAllocateInfo memAllocInfo{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO, &exportAllocInfo};
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
-		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits,
+                                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
@@ -487,7 +255,8 @@ void OpenGLInterop::prepare_shared_resources()
 		viewCreateInfo.viewType         = VK_IMAGE_VIEW_TYPE_2D;
 		viewCreateInfo.image            = sharedTexture.image;
 		viewCreateInfo.format           = VK_FORMAT_R8G8B8A8_UNORM;
-		viewCreateInfo.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+		viewCreateInfo.subresourceRange = VkImageSubresourceRange{VK_IMAGE_ASPECT_COLOR_BIT, 0, 1,
+		                                                          0, 1};
 		vkCreateImageView(deviceHandle, &viewCreateInfo, nullptr, &sharedTexture.view);
 
 		with_command_buffer([&](VkCommandBuffer image_command_buffer) {
@@ -511,39 +280,8 @@ void OpenGLInterop::prepare_shared_resources()
 			    0, nullptr,
 			    1, &image_memory_barrier);
 		},
-		                    sharedSemaphores.glReady);
+		                    sharedSemaphores.gl_ready);
 	}
-}
-
-void OpenGLInterop::prepare_opengl_context()
-{
-	glWindow = std::make_unique<OpenGLWindow>();
-	glWindow->create(shareHandles, sharedTexture.allocationSize);
-}
-
-void OpenGLInterop::draw()
-{
-	ApiVulkanSample::prepare_frame();
-
-	glWindow->render();
-
-	std::array<VkPipelineStageFlags, 2> waitStages{{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT}};
-	std::array<VkSemaphore, 2>          waitSemaphores{{semaphores.acquired_image_ready, sharedSemaphores.glComplete}};
-
-	std::array<VkSemaphore, 2> signalSemaphores{{semaphores.render_complete, sharedSemaphores.glReady}};
-	// Command buffer to be sumitted to the queue
-	submit_info.waitSemaphoreCount   = vkb::to_u32(waitSemaphores.size());
-	submit_info.pWaitSemaphores      = waitSemaphores.data();
-	submit_info.pWaitDstStageMask    = waitStages.data();
-	submit_info.signalSemaphoreCount = vkb::to_u32(signalSemaphores.size());
-	submit_info.pSignalSemaphores    = signalSemaphores.data();
-	submit_info.commandBufferCount   = 1;
-	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
-
-	// Submit to queue
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-
-	ApiVulkanSample::submit_frame();
 }
 
 void OpenGLInterop::generate_quad()
@@ -569,13 +307,15 @@ void OpenGLInterop::generate_quad()
 	// Vertex buffer
 	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                    VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT |
+	                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	index_buffer->update(indices.data(), index_buffer_size);
@@ -587,7 +327,8 @@ void OpenGLInterop::setup_descriptor_pool()
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	    {
 	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	        vkb::initializers::descriptor_pool_size(
+	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
@@ -595,7 +336,9 @@ void OpenGLInterop::setup_descriptor_pool()
 	        pool_sizes.data(),
 	        2);
 
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+	VK_CHECK(
+	    vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr,
+	                           &descriptor_pool));
 }
 
 void OpenGLInterop::setup_descriptor_set_layout()
@@ -618,11 +361,15 @@ void OpenGLInterop::setup_descriptor_set_layout()
 	        set_layout_bindings.data(),
 	        vkb::to_u32(set_layout_bindings.size()));
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr,
+	                                     &descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(
+	    &descriptor_set_layout, 1);
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+	VK_CHECK(
+	    vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr,
+	                           &pipeline_layout));
 }
 
 void OpenGLInterop::setup_descriptor_set()
@@ -660,7 +407,8 @@ void OpenGLInterop::setup_descriptor_set()
 	            &image_descriptor)                                // Pointer to the descriptor image for our texture
 	    };
 
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(), 0, NULL);
 }
 
 void OpenGLInterop::prepare_pipelines()
@@ -721,18 +469,24 @@ void OpenGLInterop::prepare_pipelines()
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(VertexStructure), VK_VERTEX_INPUT_RATE_VERTEX),
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(VertexStructure),
+	                                                        VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStructure, pos)),
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexStructure, uv)),
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexStructure, normal)),
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          offsetof(VertexStructure, pos)),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT,
+	                                                          offsetof(VertexStructure, uv)),
+	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          offsetof(VertexStructure,
+	                                                                   normal)),
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
+        vertex_input_attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
@@ -751,7 +505,8 @@ void OpenGLInterop::prepare_pipelines()
 	pipeline_create_info.stageCount          = vkb::to_u32(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1,
+	                                   &pipeline_create_info, nullptr, &pipeline));
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -769,7 +524,8 @@ void OpenGLInterop::prepare_uniform_buffers()
 void OpenGLInterop::update_uniform_buffers()
 {
 	// Vertex shader
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height,
+                                         0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
@@ -789,8 +545,56 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// Create off screen context
+	gl_context = new OffscreenContext{};
+	gl_data    = new GLData{};
+
 	prepare_shared_resources();
-	prepare_opengl_context();
+
+	gl_data->program = gl_context->build_program(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
+
+	timer.start();
+
+	glDisable(GL_DEPTH_TEST);
+
+	// Create the texture for the FBO color attachment.
+	// This only reserves the ID, it doesn't allocate memory
+	glGenTextures(1, &gl_data->color);
+	glBindTexture(GL_TEXTURE_2D, gl_data->color);
+
+	// Create the GL identifiers
+
+	// semaphores
+	glGenSemaphoresEXT(1, &gl_data->gl_ready);
+	glGenSemaphoresEXT(1, &gl_data->gl_complete);
+	// memory
+	glCreateMemoryObjectsEXT(1, &gl_data->mem);
+
+	// Platform specific import.
+	glImportSemaphore(gl_data->gl_ready, GL_HANDLE_TYPE, shareHandles.gl_ready);
+	glImportSemaphore(gl_data->gl_complete, GL_HANDLE_TYPE, shareHandles.gl_complete);
+	glImportMemory(gl_data->mem, sharedTexture.allocationSize, GL_HANDLE_TYPE, shareHandles.memory);
+
+	// Use the imported memory as backing for the OpenGL texture.  The internalFormat, dimensions
+	// and mip count should match the ones used by Vulkan to create the image and determine it's memory
+	// allocation.
+	glTextureStorageMem2DEXT(gl_data->color, 1, GL_RGBA8, SHARED_TEXTURE_DIMENSION,
+	                         SHARED_TEXTURE_DIMENSION, gl_data->mem, 0);
+	glBindTexture(GL_TEXTURE_2D, 0);
+
+	// The remaining initialization code is all standard OpenGL
+	glGenVertexArrays(1, &gl_data->vao);
+	glBindVertexArray(gl_data->vao);
+
+	glGenFramebuffers(1, &gl_data->fbo);
+	glBindFramebuffer(GL_FRAMEBUFFER, gl_data->fbo);
+	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, gl_data->color, 0);
+
+	glUseProgram(gl_data->program);
+	glProgramUniform3f(gl_data->program, 0, (float) SHARED_TEXTURE_DIMENSION,
+	                   (float) SHARED_TEXTURE_DIMENSION, 0.0f);
+
+	glViewport(0, 0, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION);
 
 	generate_quad();
 	prepare_uniform_buffers();
@@ -807,7 +611,54 @@ void OpenGLInterop::render(float)
 {
 	if (!prepared)
 		return;
-	draw();
+
+	ApiVulkanSample::prepare_frame();
+	// RENDER
+	float time = (float) timer.elapsed();
+	// The GL shader animates the image, so provide the time as input
+	glProgramUniform1f(gl_data->program, 1, time);
+
+	// Wait (on the GPU side) for the Vulkan semaphore to be signaled
+	GLenum srcLayout = GL_LAYOUT_COLOR_ATTACHMENT_EXT;
+	glWaitSemaphoreEXT(gl_data->gl_ready, 0, nullptr, 1, &gl_data->color, &srcLayout);
+
+	// Draw to the framebuffer
+	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
+
+	// Once drawing is complete, signal the Vulkan semaphore indicating
+	// it can continue with it's render
+	GLenum dstLayout = GL_LAYOUT_SHADER_READ_ONLY_EXT;
+	glSignalSemaphoreEXT(gl_data->gl_complete, 0, nullptr, 1, &gl_data->color, &dstLayout);
+
+	// When using synchronization across multiple GL context, or in this case
+	// across OpenGL and another API, it's critical that an operation on a
+	// synchronization object that will be waited on in another context or API
+	// is flushed to the GL server.
+	//
+	// Failure to flush the operation can cause the GL driver to sit and wait for
+	// sufficient additional commands in the buffer before it flushes automatically
+	// but depending on how the waits and signals are structured, this may never
+	// occur.
+	glFlush();
+	// RENDER
+
+	std::array<VkPipelineStageFlags, 2> waitStages{{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT}};
+	std::array<VkSemaphore, 2>          waitSemaphores{{semaphores.acquired_image_ready, sharedSemaphores.gl_complete}};
+
+	std::array<VkSemaphore, 2> signalSemaphores{{semaphores.render_complete, sharedSemaphores.gl_ready}};
+	// Command buffer to be sumitted to the queue
+	submit_info.waitSemaphoreCount   = vkb::to_u32(waitSemaphores.size());
+	submit_info.pWaitSemaphores      = waitSemaphores.data();
+	submit_info.pWaitDstStageMask    = waitStages.data();
+	submit_info.signalSemaphoreCount = vkb::to_u32(signalSemaphores.size());
+	submit_info.pSignalSemaphores    = signalSemaphores.data();
+	submit_info.commandBufferCount   = 1;
+	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
+
+	// Submit to queue
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+
+	ApiVulkanSample::submit_frame();
 }
 
 void OpenGLInterop::view_changed()
@@ -860,24 +711,29 @@ void OpenGLInterop::build_command_buffers()
 			subresource_range.layerCount               = 1;
 			vkCmdPipelineBarrier(
 			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
+			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
 			    0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 		}
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info,
+		                     VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f,
+		                                                  1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                        pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0,
+		                     VK_INDEX_TYPE_UINT32);
 
 		vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
 
@@ -911,6 +767,45 @@ void OpenGLInterop::build_command_buffers()
 			    1, &image_memory_barrier);
 		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+	}
+}
+
+OpenGLInterop::~OpenGLInterop()
+{
+	glFinish();
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	glBindVertexArray(0);
+	glUseProgram(0);
+	glDeleteFramebuffers(1, &gl_data->fbo);
+	glDeleteTextures(1, &gl_data->color);
+	glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
+	glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
+	glDeleteVertexArrays(1, &gl_data->vao);
+	glDeleteProgram(gl_data->program);
+	glFlush();
+	glFinish();
+
+	// Destroy OpenGl Context
+	delete gl_context;
+	delete gl_data;
+
+	vertex_buffer.reset();
+	index_buffer.reset();
+	uniform_buffer_vs.reset();
+
+	if (device)
+	{
+		device->wait_idle();
+		auto deviceHandle = device->get_handle();
+		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
+		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
+		vkDestroyImage(deviceHandle, sharedTexture.image, nullptr);
+		vkDestroySampler(deviceHandle, sharedTexture.sampler, nullptr);
+		vkDestroyImageView(deviceHandle, sharedTexture.view, nullptr);
+		vkFreeMemory(deviceHandle, sharedTexture.memory, nullptr);
+		vkDestroyPipeline(deviceHandle, pipeline, nullptr);
+		vkDestroyPipelineLayout(deviceHandle, pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(deviceHandle, descriptor_set_layout, nullptr);
 	}
 }
 
