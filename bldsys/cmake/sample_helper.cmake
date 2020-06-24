@@ -265,6 +265,7 @@ function(add_project)
     if(${TARGET_TYPE} STREQUAL "Test")
         target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,COMPILE_DEFINITIONS>)
         target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,INCLUDE_DIRECTORIES>)
+        target_link_libraries(${PROJECT_NAME} PRIVATE test_framework)
     endif()
 
     # capitalise the first letter of the category  (performance -> Performance) 
