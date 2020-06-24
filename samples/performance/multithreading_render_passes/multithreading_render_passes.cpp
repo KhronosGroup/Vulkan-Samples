@@ -26,7 +26,7 @@
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/orthographic_camera.h"
 #include "scene_graph/components/perspective_camera.h"
-#include "stats.h"
+#include "stats/stats.h"
 
 MultithreadingRenderPasses::MultithreadingRenderPasses()
 {
@@ -74,8 +74,8 @@ bool MultithreadingRenderPasses::prepare(vkb::Platform &platform)
 	main_render_pipeline   = create_main_renderpass();
 
 	// Add a GUI with the stats you want to monitor
-	stats = std::make_unique<vkb::Stats>(std::set<vkb::StatIndex>{vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
-	gui   = std::make_unique<vkb::Gui>(*this, platform.get_window());
+	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
 }
@@ -448,8 +448,6 @@ void MultithreadingRenderPasses::MainSubpass::prepare()
 {
 	ForwardSubpass::prepare();
 
-	dynamic_resources = {"GlobalUniform", "ShadowUniform"};
-
 	// Create a sampler for sampling the shadowmap during the lighting process
 	// Address mode and border color are used to put everything outside of the shadow camera frustum into shadow
 	// Depth is closer to 1 for near objects and closer to 0 for distant objects
@@ -520,7 +518,7 @@ vkb::PipelineLayout &MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline
 	// Only vertex shader is needed in the shadow subpass
 	auto vertex_shader_module = shader_modules.at(0);
 
-	vertex_shader_module->set_resource_mode(vkb::ShaderResourceMode::Dynamic, "GlobalUniform");
+	vertex_shader_module->set_resource_mode("GlobalUniform", vkb::ShaderResourceMode::Dynamic);
 
 	return command_buffer.get_device().get_resource_cache().request_pipeline_layout({vertex_shader_module});
 }

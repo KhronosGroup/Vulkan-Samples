@@ -19,6 +19,7 @@
 
 #include <ctpl_stl.h>
 
+#include "core/command_buffer.h"
 #include "rendering/render_pipeline.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/camera.h"
