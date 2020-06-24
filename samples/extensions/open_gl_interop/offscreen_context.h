@@ -1,4 +1,5 @@
-/* Copyright (c) 2019-2020, Bradley Austin Davis & Tom Atkinson
+/* Copyright (c) 2020, Arm Limited
+ * Copyright (c) 2020, Bradley Austin Davis
  *
  * SPDX-License-Identifier: Apache-2.0
  *
