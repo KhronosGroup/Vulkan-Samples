@@ -84,6 +84,17 @@ sg::Light &add_point_light(sg::Scene &scene, const glm::vec3 &position, const sg
 sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, const sg::LightProperties &props = {}, sg::Node *parent_node = nullptr);
 
 /**
+ * @brief Adds a spot light to the scene with the specified parameters
+ * @param scene The scene to add the light to
+ * @param position The position of the light
+ * @param rotation The rotation of the light
+ * @param props The light properties, such as color and intensity
+ * @param parent_node The parent node for the line, defaults to root
+ * @return The newly created light component
+ */
+sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props = {}, sg::Node *parent_node = nullptr);
+
+/**
  * @brief Add free camera script to a node with a camera object.
  *        Fallback to the default_camera if node not found.
  * @param scene The scene to add the camera to

@@ -87,6 +87,17 @@ vec3 apply_point_light(uint index, vec3 normal)
 	return ndotl * lights.light[index].color.w * atten * lights.light[index].color.rgb;
 }
 
+vec3 apply_spot_light(uint index, vec3 normal)
+{
+	vec3 light_to_pixel = normalize(in_pos.xyz - lights.light[index].position.xyz);
+
+	float theta = dot(light_to_pixel, normalize(lights.light[index].direction.xyz));
+
+	float intensity = (theta - lights.light[index].info.y) / (lights.light[index].info.x - lights.light[index].info.y);
+
+	return smoothstep(0.0, 1.0, intensity) * lights.light[index].color.w * lights.light[index].color.rgb;
+}
+
 void main(void)
 {
 	vec3 normal = normalize(in_normal);
@@ -102,6 +113,10 @@ void main(void)
 		if (lights.light[i].position.w == POINT_LIGHT)
 		{
 			light_contribution += apply_point_light(i, normal);
+		}
+		if (lights.light[i].position.w == SPOT_LIGHT)
+		{
+			light_contribution += apply_spot_light(i, normal);
 		}
 	}
 
