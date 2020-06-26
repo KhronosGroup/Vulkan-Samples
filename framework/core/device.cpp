@@ -68,11 +68,6 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 	bool can_get_memory_requirements = is_extension_supported("VK_KHR_get_memory_requirements2");
 	bool has_dedicated_allocation    = is_extension_supported("VK_KHR_dedicated_allocation");
 
-	// For performance queries, we also use host query reset since queryPool resets cannot
-	// live in the same command buffer as beginQuery
-	bool has_performance_query = is_extension_supported("VK_KHR_performance_query") &&
-	                             is_extension_supported("VK_EXT_host_query_reset");
-
 	if (can_get_memory_requirements && has_dedicated_allocation)
 	{
 		enabled_extensions.push_back("VK_KHR_get_memory_requirements2");
@@ -81,23 +76,19 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 		LOGI("Dedicated Allocation enabled");
 	}
 
-	if (has_performance_query)
+	// For performance queries, we also use host query reset since queryPool resets cannot
+	// live in the same command buffer as beginQuery
+	if (is_extension_supported("VK_KHR_performance_query") &&
+	    is_extension_supported("VK_EXT_host_query_reset"))
 	{
-		gpu.request_performance_counter_features();
-		gpu.request_host_query_reset_features();
-
-		auto perf_counter_features     = gpu.get_performance_counter_features();
-		auto host_query_reset_features = gpu.get_host_query_reset_features();
+		auto perf_counter_features     = gpu.request_extension_features<VkPhysicalDevicePerformanceQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PERFORMANCE_QUERY_FEATURES_KHR);
+		auto host_query_reset_features = gpu.request_extension_features<VkPhysicalDeviceHostQueryResetFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES);
 
 		if (perf_counter_features.performanceCounterQueryPools && host_query_reset_features.hostQueryReset)
 		{
 			enabled_extensions.push_back("VK_KHR_performance_query");
 			enabled_extensions.push_back("VK_EXT_host_query_reset");
 			LOGI("Performance query enabled");
-		}
-		else
-		{
-			has_performance_query = false;
 		}
 	}
 
@@ -149,16 +140,16 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
+	// Latest requested feature will have the pNext's all set up for device creation.
+	create_info.pNext = gpu.get_extension_feature_chain();
+
 	create_info.pQueueCreateInfos       = queue_create_infos.data();
 	create_info.queueCreateInfoCount    = to_u32(queue_create_infos.size());
 	create_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 
 	const auto requested_gpu_features = gpu.get_requested_features();
-
-	// Latest requested feature will have the pNext's all set up for device creation.
-	create_info.pNext            = gpu.get_requested_extension_features();
-	create_info.pEnabledFeatures = &requested_gpu_features;
+	create_info.pEnabledFeatures      = &requested_gpu_features;
 
 	VkResult result = vkCreateDevice(gpu.get_handle(), &create_info, nullptr, &handle);
 
