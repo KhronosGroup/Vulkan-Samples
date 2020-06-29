@@ -93,7 +93,11 @@ vec3 apply_spot_light(uint index, vec3 normal)
 
 	float theta = dot(light_to_pixel, normalize(lights.light[index].direction.xyz));
 
-	float intensity = (theta - lights.light[index].info.y) / (lights.light[index].info.x - lights.light[index].info.y);
+	float inner_cone_angle = lights.light[index].info.x;
+
+	float outer_cone_angle = lights.light[index].info.y;
+
+	float intensity = (theta - outer_cone_angle) / (inner_cone_angle - outer_cone_angle);
 
 	return smoothstep(0.0, 1.0, intensity) * lights.light[index].color.w * lights.light[index].color.rgb;
 }
