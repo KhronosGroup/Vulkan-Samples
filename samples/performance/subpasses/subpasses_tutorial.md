@@ -81,7 +81,7 @@ In other words, a GPU driver can optimize even more by merging two or more subpa
 * The depth/stencil attachment does not change between subpasses.
 * Multisample counts are the same for all attachments.
 
-Furthermore, in order to be merged, subpasses are required to use at most 128-bit per pixel of *tile buffer color storage*, although some of the more recent GPUs such as Mali-G72 increase this to up to 256-bits per pixel. G-buffers requiring more color storage than this can be used at the expense of needing smaller tiles during fragment shading, which can reduce overall throughput and increase bandwidth reading tile lists.
+On Mali devices in order to be merged, subpasses are required to use at most 128-bit per pixel of *tile buffer color storage*, although some of the more recent GPUs such as Mali-G72 increase this to up to 256-bits per pixel. G-buffers requiring more color storage than this can be used at the expense of needing smaller tiles during fragment shading, which can reduce overall throughput and increase bandwidth reading tile lists.
 
 ![Good practice](images/good-practice.jpg)
 
@@ -117,7 +117,7 @@ In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1
 **Do**
 
 * Use subpasses.
-* Use a 128-bit G-buffer budget for color.
+* Keep your G-buffer budget for color small.
 * Use `DEPTH_STENCIL_READ_ONLY` image layout for depth after the geometry pass is done.
 * Use `LAZILY_ALLOCATED` memory to back images for every attachment except for the light buffer, which is the only texture written out to memory.
 * Follow the basic [render pass best practices](../render_passes/render_passes_tutorial.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
