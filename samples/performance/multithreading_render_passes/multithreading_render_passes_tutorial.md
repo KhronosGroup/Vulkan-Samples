@@ -65,7 +65,7 @@ With secondary command buffers you can see a further drop in frame time.
 
 ## Profiling
 
-Android Profiler can help to see how threads are utilized. Flame Chart shows how much time was spent for each function execution during a particular timeframe. In this particular example total contribution of command buffers recording in the main thread is 9.94 seconds within a 10 seconds capture with multi-threading disabled. 
+A profiling tool, such as Android Profiler, can help to see how threads are utilized. Flame Chart shows how much time was spent for each function execution during a particular timeframe. In this particular example total contribution of command buffers recording in the main thread is 9.94 seconds within a 10 seconds capture with multi-threading disabled. 
 
 ![Profiler Capture No Multithreading](images/android_studio_capture_no_multithreading.png)
 _Multithreading is disabled_
