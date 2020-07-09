@@ -373,12 +373,15 @@ float GlfwWindow::get_dpi_factor() const
 
 float GlfwWindow::get_content_scale_factor() const
 {
-	float xscale, yscale;
-	glfwGetWindowContentScale(handle, &xscale, &yscale);
+	int fb_width, fb_height;
+	glfwGetFramebufferSize(handle, &fb_width, &fb_height);
+	int win_width, win_height;
+	glfwGetWindowSize(handle, &win_width, &win_height);
+
 	// We could return a 2D result here instead of a scalar,
 	// but non-uniform scaling is very unlikely, and would
 	// require significantly more changes in the IMGUI integration
-	return xscale;
+	return static_cast<float>(win_width) / fb_width;
 }
 
 }        // namespace vkb
