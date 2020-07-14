@@ -66,12 +66,12 @@ vec3 apply_point_light(uint index, vec3 pos, vec3 normal)
 
 vec3 apply_spot_light(uint index, vec3 pos, vec3 normal)
 {
-    vec3 light_to_pixel = normalize(pos - lights.light[index].position.xyz);
-    float theta = dot(light_to_pixel, normalize(lights.light[index].direction.xyz));
-    float inner_cone_angle = lights.light[index].info.x;
-    float outer_cone_angle = lights.light[index].info.y;
+    vec3 light_to_pixel = normalize(pos - lights.lights[index].position.xyz);
+    float theta = dot(light_to_pixel, normalize(lights.lights[index].direction.xyz));
+    float inner_cone_angle = lights.lights[index].info.x;
+    float outer_cone_angle = lights.lights[index].info.y;
     float intensity = (theta - outer_cone_angle) / (inner_cone_angle - outer_cone_angle);
-    return smoothstep(0.0, 1.0, intensity) * lights.light[index].color.w * lights.light[index].color.rgb;
+    return smoothstep(0.0, 1.0, intensity) * lights.lights[index].color.w * lights.lights[index].color.rgb;
 }
 
 void main()
@@ -99,7 +99,7 @@ void main()
         {
             L += apply_point_light(i, pos, normal);
         }
-        if (lights.light[i].position.w == SPOT_LIGHT)
+        if (lights.lights[i].position.w == SPOT_LIGHT)
         {
             L += apply_spot_light(i, pos, normal);
         }
