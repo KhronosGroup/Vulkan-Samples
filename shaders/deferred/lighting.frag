@@ -41,41 +41,45 @@ struct Light
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-    Light lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light directional_lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light point_lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light spot_lights[MAX_DEFERRED_LIGHT_COUNT];
 }
-lights;
+lights_info;
 
-layout (constant_id = 0) const uint LIGHT_COUNT = 0U;
-layout (constant_id = 1) const bool HAS_DIRECTIONAL_LIGHTS = false;
-layout (constant_id = 2) const bool HAS_POINT_LIGHTS = false;
-layout (constant_id = 3) const bool HAS_SPOT_LIGHTS = false;
+layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
+layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
+layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
 
 vec3 apply_directional_light(uint index, vec3 normal)
 {
-    vec3 world_to_light = -lights.lights[index].direction.xyz;
+    Light light = lights_info.directional_lights[index];
+    vec3 world_to_light = -light.direction.xyz;
     world_to_light = normalize(world_to_light);
     float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
-    return ndotl * lights.lights[index].color.w * lights.lights[index].color.rgb;
+    return ndotl * light.color.w * light.color.rgb;
 }
 
 vec3 apply_point_light(uint index, vec3 pos, vec3 normal)
 {
-    vec3 world_to_light = lights.lights[index].position.xyz - pos;
+    Light light = lights_info.point_lights[index];
+    vec3 world_to_light = light.position.xyz - pos;
     float dist = length(world_to_light) * 0.005;
     float atten = 1.0 / (dist * dist);
     world_to_light = normalize(world_to_light);
     float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
-    return ndotl * lights.lights[index].color.w * atten * lights.lights[index].color.rgb;
+    return ndotl * light.color.w * atten * light.color.rgb;
 }
 
 vec3 apply_spot_light(uint index, vec3 pos, vec3 normal)
 {
-    vec3 light_to_pixel = normalize(pos - lights.lights[index].position.xyz);
-    float theta = dot(light_to_pixel, normalize(lights.lights[index].direction.xyz));
-    float inner_cone_angle = lights.lights[index].info.x;
-    float outer_cone_angle = lights.lights[index].info.y;
+    Light light = lights_info.spot_lights[index];
+    vec3 light_to_pixel = normalize(pos - light.position.xyz);
+    float theta = dot(light_to_pixel, normalize(light.direction.xyz));
+    float inner_cone_angle = light.info.x;
+    float outer_cone_angle = light.info.y;
     float intensity = (theta - outer_cone_angle) / (inner_cone_angle - outer_cone_angle);
-    return smoothstep(0.0, 1.0, intensity) * lights.lights[index].color.w * lights.lights[index].color.rgb;
+    return smoothstep(0.0, 1.0, intensity) * light.color.w * light.color.rgb;
 }
 
 void main()
@@ -93,20 +97,20 @@ void main()
 
     // Calculate lighting
     vec3 L = vec3(0.0);
-    for (uint i = 0U; i < LIGHT_COUNT; i++)
+
+    for (uint i = 0U; i < DIRECTIONAL_LIGHT_COUNT; ++i)
     {
-        if (HAS_DIRECTIONAL_LIGHTS && lights.lights[i].position.w == DIRECTIONAL_LIGHT)
-        {
-            L += apply_directional_light(i, normal);
-        }
-        else if (HAS_POINT_LIGHTS && lights.lights[i].position.w == POINT_LIGHT)
-        {
-            L += apply_point_light(i, pos, normal);
-        }
-        else if (HAS_SPOT_LIGHTS && lights.lights[i].position.w == SPOT_LIGHT)
-        {
-            L += apply_spot_light(i, pos, normal);
-        }
+        L += apply_directional_light(i, normal);
+    }
+
+    for (uint i = 0U; i < POINT_LIGHT_COUNT; ++i)
+    {
+        L += apply_point_light(i, pos, normal);
+    }
+
+    for (uint i = 0U; i < SPOT_LIGHT_COUNT; ++i)
+    {
+        L += apply_spot_light(i, pos, normal);
     }
 
     vec3 ambient_color = vec3(0.2) * albedo.xyz;

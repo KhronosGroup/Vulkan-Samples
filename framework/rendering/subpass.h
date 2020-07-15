@@ -105,10 +105,6 @@ class Subpass
 
 	void set_output_attachments(std::vector<uint32_t> output);
 
-	void clear_dynamic_resources();
-
-	void add_dynamic_resources(const std::vector<std::string> &dynamic_resources);
-
 	void set_sample_count(VkSampleCountFlagBits sample_count);
 
 	const std::vector<uint32_t> &get_color_resolve_attachments() const;
@@ -130,7 +126,7 @@ class Subpass
 	/**
 	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
 	 * 
-	 * @tparam T ForwardLights / DeferredLights
+	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
 	 * @param scene_lights  Lights from the scene graph
 	 * @param max_lights MAX_FORWARD_LIGHT_COUNT / MAX_DEFERRED_LIGHT_COUNT
 	 * @return BufferAllocation A buffer allocation created for use in shaders
@@ -138,32 +134,51 @@ class Subpass
 	template <typename T>
 	BufferAllocation allocate_lights(CommandBuffer &command_buffer, const std::vector<sg::Light *> &scene_lights, size_t max_lights)
 	{
-		assert(scene_lights.size() <= max_lights && "Exceeding Max Light Capacity");
-
-		command_buffer.set_specialization_constant(0, scene_lights.size());
-
-		bool has_directional = std::find_if(scene_lights.begin(), scene_lights.end(),
-		                                    [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Directional; }) != scene_lights.end();
-		bool has_point       = std::find_if(scene_lights.begin(), scene_lights.end(),
-                                      [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Point; }) != scene_lights.end();
-		bool has_spot        = std::find_if(scene_lights.begin(), scene_lights.end(),
-                                     [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Spot; }) != scene_lights.end();
-
-		command_buffer.set_specialization_constant(1, has_directional);
-		command_buffer.set_specialization_constant(2, has_point);
-		command_buffer.set_specialization_constant(3, has_spot);
+		assert(scene_lights.size() <= (max_lights * sg::LightType::Max) && "Exceeding Max Light Capacity");
 
 		T light_info;
 
-		std::transform(scene_lights.begin(), scene_lights.end(), light_info.lights, [](sg::Light *light) -> Light {
-			const auto &properties = light->get_properties();
-			auto &      transform  = light->get_node()->get_transform();
+		std::vector<Light> directional_lights;
+		std::vector<Light> point_lights;
+		std::vector<Light> spot_lights;
 
-			return {{transform.get_translation(), static_cast<float>(light->get_light_type())},
-			        {properties.color, properties.intensity},
-			        {transform.get_rotation() * properties.direction, properties.range},
-			        {properties.inner_cone_angle, properties.outer_cone_angle}};
-		});
+		for (auto &scene_light : scene_lights)
+		{
+			const auto &properties = scene_light->get_properties();
+			auto &      transform  = scene_light->get_node()->get_transform();
+
+			Light light{{transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
+			            {properties.color, properties.intensity},
+			            {transform.get_rotation() * properties.direction, properties.range},
+			            {properties.inner_cone_angle, properties.outer_cone_angle}};
+
+			switch (scene_light->get_light_type())
+			{
+				case sg::LightType::Directional:
+				{
+					directional_lights.push_back(light);
+					break;
+				}
+				case sg::LightType::Point:
+				{
+					point_lights.push_back(light);
+					break;
+				}
+				case sg::LightType::Spot:
+				{
+					spot_lights.push_back(light);
+					break;
+				}
+			}
+		}
+
+		std::copy(directional_lights.begin(), directional_lights.end(), light_info.directional_lights);
+		std::copy(point_lights.begin(), point_lights.end(), light_info.point_lights);
+		std::copy(spot_lights.begin(), spot_lights.end(), light_info.spot_lights);
+
+		command_buffer.set_specialization_constant(0, directional_lights.size());
+		command_buffer.set_specialization_constant(1, point_lights.size());
+		command_buffer.set_specialization_constant(2, spot_lights.size());
 
 		auto &           render_frame = get_render_context().get_active_frame();
 		BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));

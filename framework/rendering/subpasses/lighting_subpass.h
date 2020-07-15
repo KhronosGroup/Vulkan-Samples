@@ -24,7 +24,8 @@ VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
-#define MAX_DEFERRED_LIGHT_COUNT 100
+// This value is per type of light that we feed into the shader
+#define MAX_DEFERRED_LIGHT_COUNT 32
 
 namespace vkb
 {
@@ -48,7 +49,9 @@ struct alignas(16) LightUniform
 
 struct alignas(16) DeferredLights
 {
-	Light lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light directional_lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light point_lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light spot_lights[MAX_DEFERRED_LIGHT_COUNT];
 };
 
 /**

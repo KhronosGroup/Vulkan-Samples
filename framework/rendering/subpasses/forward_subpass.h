@@ -22,7 +22,8 @@
 #include "buffer_pool.h"
 #include "rendering/subpasses/geometry_subpass.h"
 
-#define MAX_FORWARD_LIGHT_COUNT 16
+// This value is per type of light that we feed into the shader
+#define MAX_FORWARD_LIGHT_COUNT 8
 
 namespace vkb
 {
@@ -37,7 +38,9 @@ class Camera;
 
 struct alignas(16) ForwardLights
 {
-	Light lights[MAX_FORWARD_LIGHT_COUNT];
+	Light directional_lights[MAX_FORWARD_LIGHT_COUNT];
+	Light point_lights[MAX_FORWARD_LIGHT_COUNT];
+	Light spot_lights[MAX_FORWARD_LIGHT_COUNT];
 };
 
 /**
