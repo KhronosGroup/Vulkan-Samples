@@ -442,7 +442,7 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	// Reset the instance index back to 0 for each draw call
 	instance_index = 0;
 
-	auto lights_buffer = allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	auto lights_buffer = allocate_lights<vkb::ForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
 
 	GeometrySubpass::draw(command_buffer);

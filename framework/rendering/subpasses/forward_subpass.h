@@ -37,8 +37,7 @@ class Camera;
 
 struct alignas(16) ForwardLights
 {
-	uint32_t count;
-	Light    lights[MAX_FORWARD_LIGHT_COUNT];
+	Light lights[MAX_FORWARD_LIGHT_COUNT];
 };
 
 /**

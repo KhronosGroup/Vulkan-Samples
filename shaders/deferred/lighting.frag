@@ -41,10 +41,14 @@ struct Light
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-    uint  count;
     Light lights[MAX_DEFERRED_LIGHT_COUNT];
 }
 lights;
+
+layout (constant_id = 0) const uint LIGHT_COUNT = 0U;
+layout (constant_id = 1) const bool HAS_DIRECTIONAL_LIGHTS = false;
+layout (constant_id = 2) const bool HAS_POINT_LIGHTS = false;
+layout (constant_id = 3) const bool HAS_SPOT_LIGHTS = false;
 
 vec3 apply_directional_light(uint index, vec3 normal)
 {
@@ -89,17 +93,17 @@ void main()
 
     // Calculate lighting
     vec3 L = vec3(0.0);
-    for (uint i = 0U; i < lights.count; i++)
+    for (uint i = 0U; i < LIGHT_COUNT; i++)
     {
-        if (lights.lights[i].position.w == DIRECTIONAL_LIGHT)
+        if (HAS_DIRECTIONAL_LIGHTS && lights.lights[i].position.w == DIRECTIONAL_LIGHT)
         {
             L += apply_directional_light(i, normal);
         }
-        if (lights.lights[i].position.w == POINT_LIGHT)
+        else if (HAS_POINT_LIGHTS && lights.lights[i].position.w == POINT_LIGHT)
         {
             L += apply_point_light(i, pos, normal);
         }
-        if (lights.lights[i].position.w == SPOT_LIGHT)
+        else if (HAS_SPOT_LIGHTS && lights.lights[i].position.w == SPOT_LIGHT)
         {
             L += apply_spot_light(i, pos, normal);
         }

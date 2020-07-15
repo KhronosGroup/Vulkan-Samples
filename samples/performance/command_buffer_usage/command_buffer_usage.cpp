@@ -309,7 +309,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 	}
 	const auto transparent_submeshes = vkb::to_u32(sorted_transparent_nodes.size());
 
-	light_buffer = allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	light_buffer = allocate_lights<vkb::ForwardLights>(primary_command_buffer, scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 
 	color_blend_attachment.blend_enable = VK_FALSE;
 	color_blend_state.attachments.resize(get_output_attachments().size());

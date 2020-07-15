@@ -136,12 +136,24 @@ class Subpass
 	 * @return BufferAllocation A buffer allocation created for use in shaders
 	 */
 	template <typename T>
-	BufferAllocation allocate_lights(const std::vector<sg::Light *> &scene_lights, size_t max_lights)
+	BufferAllocation allocate_lights(CommandBuffer &command_buffer, const std::vector<sg::Light *> &scene_lights, size_t max_lights)
 	{
 		assert(scene_lights.size() <= max_lights && "Exceeding Max Light Capacity");
 
+		command_buffer.set_specialization_constant(0, scene_lights.size());
+
+		bool has_directional = std::find_if(scene_lights.begin(), scene_lights.end(),
+		                                    [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Directional; }) != scene_lights.end();
+		bool has_point       = std::find_if(scene_lights.begin(), scene_lights.end(),
+                                      [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Point; }) != scene_lights.end();
+		bool has_spot        = std::find_if(scene_lights.begin(), scene_lights.end(),
+                                     [](sg::Light *light) -> bool { return light->get_light_type() == sg::LightType::Spot; }) != scene_lights.end();
+
+		command_buffer.set_specialization_constant(1, has_directional);
+		command_buffer.set_specialization_constant(2, has_point);
+		command_buffer.set_specialization_constant(3, has_spot);
+
 		T light_info;
-		light_info.count = to_u32(scene_lights.size());
 
 		std::transform(scene_lights.begin(), scene_lights.end(), light_info.lights, [](sg::Light *light) -> Light {
 			const auto &properties = light->get_properties();

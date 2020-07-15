@@ -48,8 +48,7 @@ struct alignas(16) LightUniform
 
 struct alignas(16) DeferredLights
 {
-	uint32_t count;
-	Light    lights[MAX_DEFERRED_LIGHT_COUNT];
+	Light lights[MAX_DEFERRED_LIGHT_COUNT];
 };
 
 /**

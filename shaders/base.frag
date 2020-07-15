@@ -46,7 +46,6 @@ struct Light
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-	uint  count;
 	Light light[MAX_FORWARD_LIGHT_COUNT];
 }
 lights;
@@ -60,6 +59,11 @@ layout(push_constant, std430) uniform PBRMaterialUniform
 	float roughness_factor;
 }
 pbr_material_uniform;
+
+layout (constant_id = 0) const uint LIGHT_COUNT = 0U;
+layout (constant_id = 1) const bool HAS_DIRECTIONAL_LIGHTS = false;
+layout (constant_id = 2) const bool HAS_POINT_LIGHTS = false;
+layout (constant_id = 3) const bool HAS_SPOT_LIGHTS = false;
 
 vec3 apply_directional_light(uint index, vec3 normal)
 {
@@ -108,17 +112,17 @@ void main(void)
 
 	vec3 light_contribution = vec3(0.0);
 
-	for (uint i = 0U; i < lights.count; i++)
+	for (uint i = 0U; i < LIGHT_COUNT; i++)
 	{
-		if (lights.light[i].position.w == DIRECTIONAL_LIGHT)
+		if (HAS_DIRECTIONAL_LIGHTS && lights.light[i].position.w == DIRECTIONAL_LIGHT)
 		{
 			light_contribution += apply_directional_light(i, normal);
 		}
-		if (lights.light[i].position.w == POINT_LIGHT)
+		else if (HAS_POINT_LIGHTS && lights.light[i].position.w == POINT_LIGHT)
 		{
 			light_contribution += apply_point_light(i, normal);
 		}
-		if (lights.light[i].position.w == SPOT_LIGHT)
+		else if (HAS_SPOT_LIGHTS && lights.light[i].position.w == SPOT_LIGHT)
 		{
 			light_contribution += apply_spot_light(i, normal);
 		}

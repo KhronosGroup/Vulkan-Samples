@@ -43,7 +43,7 @@ void LightingSubpass::prepare()
 
 void LightingSubpass::draw(CommandBuffer &command_buffer)
 {
-	auto light_buffer = allocate_lights<DeferredLights>(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
+	auto light_buffer = allocate_lights<DeferredLights>(command_buffer, scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
 	command_buffer.bind_buffer(light_buffer.get_buffer(), light_buffer.get_offset(), light_buffer.get_size(), 0, 4, 0);
 
 	// Get shaders from cache
