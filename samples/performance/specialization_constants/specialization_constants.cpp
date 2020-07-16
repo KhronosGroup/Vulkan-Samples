@@ -72,7 +72,7 @@ void SpecializationConstants::ForwardSubpassCustomLights::prepare()
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
 			// Same as Geometry except adds lighting definitions to sub mesh variants.
-			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(LIGHT_COUNT)});
+			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(LIGHT_COUNT)});
 			variant.add_definitions(vkb::light_type_definitions);
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);

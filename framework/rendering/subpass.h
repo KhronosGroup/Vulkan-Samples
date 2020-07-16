@@ -127,6 +127,7 @@ class Subpass
 	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
 	 * 
 	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
+	 * @param command_buffer The command buffer that the returned light buffer allocation will be bound to
 	 * @param scene_lights  Lights from the scene graph
 	 * @param max_lights MAX_FORWARD_LIGHT_COUNT / MAX_DEFERRED_LIGHT_COUNT
 	 * @return BufferAllocation A buffer allocation created for use in shaders

@@ -294,7 +294,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 
 			// Copied from vkb::ForwardSubpass
 			variant.add_definitions({"SCENE_MESH_COUNT " + std::to_string(scene.get_components<vkb::sg::SubMesh>().size())});
-			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
+			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
 			variant.add_definitions(vkb::light_type_definitions);
 
 			// If struct size is 256 we add a definition so the uniform has more values
