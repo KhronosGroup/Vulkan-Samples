@@ -275,4 +275,12 @@ const std::string cull_mode_to_string(VkCullModeFlags bitmask);
  * @return The converted string to return
  */
 const std::string color_component_to_string(VkColorComponentFlags bitmask);
+
+/**
+ * @brief Helper function to split a single string into a vector of strings by a delimiter
+ * @param input The input string to be split
+ * @param delim The character to delimit by
+ * @return The vector of tokenized strings
+ */
+std::vector<std::string> split(const std::string &input, char delim);
 }        // namespace vkb

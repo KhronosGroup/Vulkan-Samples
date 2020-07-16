@@ -111,14 +111,14 @@ bool MSAASample::prepare(vkb::Platform &platform)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
-	vkb::ShaderSource scene_vs(vkb::fs::read_shader("base.vert"));
-	vkb::ShaderSource scene_fs(vkb::fs::read_shader("base.frag"));
+	vkb::ShaderSource scene_vs("base.vert");
+	vkb::ShaderSource scene_fs("base.frag");
 	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(scene_vs), std::move(scene_fs), *scene, *camera);
 	scene_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
-	vkb::ShaderSource postprocessing_vs(vkb::fs::read_shader("postprocessing/postprocessing.vert"));
-	vkb::ShaderSource postprocessing_fs(vkb::fs::read_shader("postprocessing/outline.frag"));
+	vkb::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert");
+	vkb::ShaderSource postprocessing_fs("postprocessing/outline.frag");
 	auto              postprocessing_subpass = std::make_unique<vkb::PostProcessingSubpass>(get_render_context(), std::move(postprocessing_vs), std::move(postprocessing_fs), *scene, *camera);
 	postprocessing_pipeline                  = std::make_unique<vkb::RenderPipeline>();
 	postprocessing_pipeline->add_subpass(std::move(postprocessing_subpass));

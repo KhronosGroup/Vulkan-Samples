@@ -92,20 +92,21 @@ void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorde
 void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::istringstream &stream)
 {
 	VkShaderStageFlagBits    stage{};
-	std::vector<uint8_t>     glsl_code;
+	std::string              glsl_source;
 	std::string              entry_point;
 	std::string              preamble;
 	std::vector<std::string> processes;
 
 	read(stream,
 	     stage,
-	     glsl_code,
+	     glsl_source,
 	     entry_point,
 	     preamble);
 
 	read_processes(stream, processes);
 
-	ShaderSource  shader_source(std::move(glsl_code));
+	ShaderSource shader_source{};
+	shader_source.set_source(std::move(glsl_source));
 	ShaderVariant shader_variant(std::move(preamble), std::move(processes));
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);

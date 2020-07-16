@@ -44,46 +44,15 @@ layout(set = 0, binding = 1) buffer MVPUniformArray
 	MVPUniform uniform_data[SCENE_MESH_COUNT];
 } mvp_array;
 
-struct Light
-{
-	vec4 position;         // position.w represents type of light
-	vec4 color;            // color.w represents light intensity
-	vec4 direction;        // direction.w represents range
-	vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
-};
+#include "lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {
-	uint  count;
-	Light light[MAX_FORWARD_LIGHT_COUNT];
+	Light directional_lights[MAX_LIGHT_COUNT];
+	Light point_lights[MAX_LIGHT_COUNT];
+	Light spot_lights[MAX_LIGHT_COUNT];
 }
-lights;
-
-vec3 apply_directional_light(uint index, vec3 normal)
-{
-	vec3 world_to_light = -lights.light[index].direction.xyz;
-
-	world_to_light = normalize(world_to_light);
-
-	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
-
-	return ndotl * lights.light[index].color.w * lights.light[index].color.rgb;
-}
-
-vec3 apply_point_light(uint index, vec3 normal)
-{
-	vec3 world_to_light = lights.light[index].position.xyz - in_pos.xyz;
-
-	float dist = length(world_to_light);
-
-	float atten = 1.0 / (dist * dist);
-
-	world_to_light = normalize(world_to_light);
-
-	float ndotl = clamp(dot(normal, world_to_light), 0.0, 1.0);
-
-	return ndotl * lights.light[index].color.w * atten * lights.light[index].color.rgb;
-}
+lights_info;
 
 void main(void)
 {
@@ -91,16 +60,19 @@ void main(void)
 
 	vec3 light_contribution = vec3(0.0);
 
-	for (uint i = 0U; i < lights.count; i++)
+	for (uint i = 0U; i < DIRECTIONAL_LIGHT_COUNT; ++i)
 	{
-		if (lights.light[i].position.w == DIRECTIONAL_LIGHT)
-		{
-			light_contribution += apply_directional_light(i, normal);
-		}
-		if (lights.light[i].position.w == POINT_LIGHT)
-		{
-			light_contribution += apply_point_light(i, normal);
-		}
+		light_contribution += apply_directional_light(lights_info.directional_lights[i], normal);
+	}
+
+	for (uint i = 0U; i < POINT_LIGHT_COUNT; ++i)
+	{
+		light_contribution += apply_point_light(lights_info.point_lights[i], in_pos.xyz, normal);
+	}
+
+	for (uint i = 0U; i < SPOT_LIGHT_COUNT; ++i)
+	{
+		light_contribution += apply_spot_light(lights_info.spot_lights[i], in_pos.xyz, normal);
 	}
 
 	vec4 base_color = vec4(1.0, 0.0, 0.0, 1.0);

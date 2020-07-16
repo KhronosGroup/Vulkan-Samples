@@ -33,7 +33,8 @@ LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&v
 
 void LightingSubpass::prepare()
 {
-	lighting_variant.add_definitions({"MAX_DEFERRED_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+	lighting_variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+
 	lighting_variant.add_definitions(light_type_definitions);
 	// Build all shaders upfront
 	auto &resource_cache = render_context.get_device().get_resource_cache();
