@@ -169,6 +169,8 @@ class Subpass
 					spot_lights.push_back(light);
 					break;
 				}
+				default:
+					break;
 			}
 		}
 
