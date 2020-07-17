@@ -23,9 +23,9 @@ struct Light
 	vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
 };
 
-layout (constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
-layout (constant_id = 1) const uint POINT_LIGHT_COUNT = 0U;
-layout (constant_id = 2) const uint SPOT_LIGHT_COUNT = 0U;
+layout(constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
+layout(constant_id = 1) const uint POINT_LIGHT_COUNT       = 0U;
+layout(constant_id = 2) const uint SPOT_LIGHT_COUNT        = 0U;
 
 vec3 apply_directional_light(Light light, vec3 normal)
 {
@@ -37,17 +37,17 @@ vec3 apply_directional_light(Light light, vec3 normal)
 
 vec3 apply_point_light(Light light, vec3 pos, vec3 normal)
 {
-	vec3 world_to_light = light.position.xyz - pos;
-	float dist          = length(world_to_light) * 0.005;
-	float atten         = 1.0 / (dist * dist);
-	world_to_light      = normalize(world_to_light);
-	float ndotl         = clamp(dot(normal, world_to_light), 0.0, 1.0);
+	vec3  world_to_light = light.position.xyz - pos;
+	float dist           = length(world_to_light) * 0.005;
+	float atten          = 1.0 / (dist * dist);
+	world_to_light       = normalize(world_to_light);
+	float ndotl          = clamp(dot(normal, world_to_light), 0.0, 1.0);
 	return ndotl * light.color.w * atten * light.color.rgb;
 }
 
 vec3 apply_spot_light(Light light, vec3 pos, vec3 normal)
 {
-	vec3 light_to_pixel    = normalize(pos - light.position.xyz);
+	vec3  light_to_pixel   = normalize(pos - light.position.xyz);
 	float theta            = dot(light_to_pixel, normalize(light.direction.xyz));
 	float inner_cone_angle = light.info.x;
 	float outer_cone_angle = light.info.y;
