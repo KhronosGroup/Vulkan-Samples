@@ -137,7 +137,7 @@ std::unique_ptr<vkb::RenderPipeline> SpecializationConstants::create_standard_re
 void SpecializationConstants::ForwardSubpassCustomLights::draw(vkb::CommandBuffer &command_buffer)
 {
 	// Override forward light subpass draw function to provide a custom number of lights
-	auto lights_buffer = allocate_set_num_lights<CustomForwardLights>(scene.get_components<vkb::sg::Light>(), static_cast<size_t>(LIGHT_COUNT));
+	auto lights_buffer = allocate_custom_lights<CustomForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), LIGHT_COUNT);
 	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
 
 	vkb::GeometrySubpass::draw(command_buffer);

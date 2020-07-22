@@ -129,15 +129,15 @@ class Subpass
 	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
 	 * @param command_buffer The command buffer that the returned light buffer allocation will be bound to
 	 * @param scene_lights  Lights from the scene graph
-	 * @param max_lights MAX_FORWARD_LIGHT_COUNT / MAX_DEFERRED_LIGHT_COUNT
+	 * @param light_count The maximum amount of lights allowed for any given type of shader light.
 	 * @return BufferAllocation A buffer allocation created for use in shaders
 	 */
 	template <typename T>
-	BufferAllocation allocate_lights(CommandBuffer &command_buffer, const std::vector<sg::Light *> &scene_lights, size_t max_lights)
+	BufferAllocation allocate_lights(CommandBuffer &                 command_buffer,
+	                                 const std::vector<sg::Light *> &scene_lights,
+	                                 size_t                          light_count)
 	{
-		assert(scene_lights.size() <= (max_lights * sg::LightType::Max) && "Exceeding Max Light Capacity");
-
-		T light_info;
+		assert(scene_lights.size() <= (light_count * sg::LightType::Max) && "Exceeding Max Light Capacity");
 
 		std::vector<Light> directional_lights;
 		std::vector<Light> point_lights;
@@ -157,17 +157,26 @@ class Subpass
 			{
 				case sg::LightType::Directional:
 				{
-					directional_lights.push_back(light);
+					if (directional_lights.size() < light_count)
+					{
+						directional_lights.push_back(light);
+					}
 					break;
 				}
 				case sg::LightType::Point:
 				{
-					point_lights.push_back(light);
+					if (point_lights.size() < light_count)
+					{
+						point_lights.push_back(light);
+					}
 					break;
 				}
 				case sg::LightType::Spot:
 				{
-					spot_lights.push_back(light);
+					if (spot_lights.size() < light_count)
+					{
+						spot_lights.push_back(light);
+					}
 					break;
 				}
 				default:
@@ -175,50 +184,15 @@ class Subpass
 			}
 		}
 
-		std::copy(directional_lights.begin(), directional_lights.end(), light_info.directional_lights);
-		std::copy(point_lights.begin(), point_lights.end(), light_info.point_lights);
-		std::copy(spot_lights.begin(), spot_lights.end(), light_info.spot_lights);
-
 		command_buffer.set_specialization_constant(0, directional_lights.size());
 		command_buffer.set_specialization_constant(1, point_lights.size());
 		command_buffer.set_specialization_constant(2, spot_lights.size());
 
-		auto &           render_frame = get_render_context().get_active_frame();
-		BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
-		light_buffer.update(light_info);
-
-		return light_buffer;
-	}
-
-	/**
-	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
-	 *		  Provides the specified number of lights, regardless of how many are within the scene
-	 *
-	 * @tparam T ForwardLights / DeferredLights
-	 * @param scene_lights  Lights from the scene graph
-	 * @param num_lights Number of lights to render
-	 * @return BufferAllocation A buffer allocation created for use in shaders
-	 */
-	template <typename T>
-	BufferAllocation allocate_set_num_lights(const std::vector<sg::Light *> &scene_lights, size_t num_lights)
-	{
 		T light_info;
-		light_info.count = to_u32(num_lights);
 
-		std::vector<Light> lights_vector;
-		for (uint32_t i = 0U; i < num_lights; ++i)
-		{
-			auto        light      = i < scene_lights.size() ? scene_lights.at(i) : scene_lights.back();
-			const auto &properties = light->get_properties();
-			auto &      transform  = light->get_node()->get_transform();
-
-			lights_vector.push_back(Light({{transform.get_translation(), static_cast<float>(light->get_light_type())},
-			                               {properties.color, properties.intensity},
-			                               {transform.get_rotation() * properties.direction, properties.range},
-			                               {properties.inner_cone_angle, properties.outer_cone_angle}}));
-		}
-
-		std::copy(lights_vector.begin(), lights_vector.end(), light_info.lights);
+		std::copy(directional_lights.begin(), directional_lights.end(), light_info.directional_lights);
+		std::copy(point_lights.begin(), point_lights.end(), light_info.point_lights);
+		std::copy(spot_lights.begin(), spot_lights.end(), light_info.spot_lights);
 
 		auto &           render_frame = get_render_context().get_active_frame();
 		BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
