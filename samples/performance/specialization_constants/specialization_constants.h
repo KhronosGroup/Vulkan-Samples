@@ -65,6 +65,7 @@ class SpecializationConstants : public vkb::VulkanSample
 		 *		  Provides the specified number of lights, regardless of how many are within the scene
 		 *
 		 * @tparam T ForwardLights / DeferredLights
+		 * @param command_buffer The command buffer that the returned light buffer allocation will be bound to
 		 * @param scene_lights  Lights from the scene graph
 		 * @param light_count Number of lights to render
 		 * @return BufferAllocation A buffer allocation created for use in shaders
