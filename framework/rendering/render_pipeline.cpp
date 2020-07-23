@@ -94,7 +94,7 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 
 		auto &subpass = subpasses[i];
 
-		subpass->update_render_target_attachments();
+		subpass->update_render_target_attachments(render_target);
 
 		if (i == 0)
 		{

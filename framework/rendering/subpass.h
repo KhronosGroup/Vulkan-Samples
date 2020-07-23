@@ -81,7 +81,7 @@ class Subpass
 	 *        This function is called by the RenderPipeline before beginning the render
 	 *        pass and before proceeding with a new subpass.
 	 */
-	void update_render_target_attachments();
+	void update_render_target_attachments(RenderTarget &render_target);
 
 	/**
 	 * @brief Draw virtual function

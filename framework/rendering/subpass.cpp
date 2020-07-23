@@ -42,10 +42,8 @@ Subpass::Subpass(RenderContext &render_context, ShaderSource &&vertex_source, Sh
 {
 }
 
-void Subpass::update_render_target_attachments()
+void Subpass::update_render_target_attachments(RenderTarget &render_target)
 {
-	auto &render_target = render_context.get_active_frame().get_render_target();
-
 	render_target.set_input_attachments(input_attachments);
 	render_target.set_output_attachments(output_attachments);
 }
