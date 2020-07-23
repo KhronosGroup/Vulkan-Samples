@@ -54,6 +54,10 @@ layout(set = 0, binding = 4) uniform LightsInfo
 }
 lights_info;
 
+layout(constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
+layout(constant_id = 1) const uint POINT_LIGHT_COUNT       = 0U;
+layout(constant_id = 2) const uint SPOT_LIGHT_COUNT        = 0U;
+
 void main(void)
 {
 	vec3 normal = normalize(in_normal);

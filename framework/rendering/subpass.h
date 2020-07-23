@@ -42,6 +42,17 @@ struct alignas(16) Light
 	glm::vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
 };
 
+struct LightingState
+{
+	std::vector<Light> directional_lights;
+
+	std::vector<Light> point_lights;
+
+	std::vector<Light> spot_lights;
+
+	BufferAllocation light_buffer;
+};
+
 /**
  * @brief Calculates the vulkan style projection matrix
  * @param proj The projection matrix
@@ -123,25 +134,26 @@ class Subpass
 
 	void set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode);
 
+	LightingState &get_lighting_state();
+
 	/**
-	 * @brief Create a buffer allocation from scene graph lights to be bound to shaders
+	 * @brief Prepares the lighting state to have its lights 
 	 * 
 	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
 	 * @param command_buffer The command buffer that the returned light buffer allocation will be bound to
-	 * @param scene_lights  Lights from the scene graph
-	 * @param light_count The maximum amount of lights allowed for any given type of shader light.
+	 * @param scene_lights All of the light components from the scene graph
+	 * @param light_count The maximum amount of lights allowed for any given type of light.
 	 * @return BufferAllocation A buffer allocation created for use in shaders
 	 */
 	template <typename T>
-	BufferAllocation allocate_lights(CommandBuffer &                 command_buffer,
-	                                 const std::vector<sg::Light *> &scene_lights,
-	                                 size_t                          light_count)
+	void allocate_lights(const std::vector<sg::Light *> &scene_lights,
+	                     size_t                          light_count)
 	{
 		assert(scene_lights.size() <= (light_count * sg::LightType::Max) && "Exceeding Max Light Capacity");
 
-		std::vector<Light> directional_lights;
-		std::vector<Light> point_lights;
-		std::vector<Light> spot_lights;
+		lighting_state.directional_lights.clear();
+		lighting_state.point_lights.clear();
+		lighting_state.spot_lights.clear();
 
 		for (auto &scene_light : scene_lights)
 		{
@@ -157,25 +169,25 @@ class Subpass
 			{
 				case sg::LightType::Directional:
 				{
-					if (directional_lights.size() < light_count)
+					if (lighting_state.directional_lights.size() < light_count)
 					{
-						directional_lights.push_back(light);
+						lighting_state.directional_lights.push_back(light);
 					}
 					break;
 				}
 				case sg::LightType::Point:
 				{
-					if (point_lights.size() < light_count)
+					if (lighting_state.point_lights.size() < light_count)
 					{
-						point_lights.push_back(light);
+						lighting_state.point_lights.push_back(light);
 					}
 					break;
 				}
 				case sg::LightType::Spot:
 				{
-					if (spot_lights.size() < light_count)
+					if (lighting_state.spot_lights.size() < light_count)
 					{
-						spot_lights.push_back(light);
+						lighting_state.spot_lights.push_back(light);
 					}
 					break;
 				}
@@ -184,21 +196,15 @@ class Subpass
 			}
 		}
 
-		command_buffer.set_specialization_constant(0, directional_lights.size());
-		command_buffer.set_specialization_constant(1, point_lights.size());
-		command_buffer.set_specialization_constant(2, spot_lights.size());
-
 		T light_info;
 
-		std::copy(directional_lights.begin(), directional_lights.end(), light_info.directional_lights);
-		std::copy(point_lights.begin(), point_lights.end(), light_info.point_lights);
-		std::copy(spot_lights.begin(), spot_lights.end(), light_info.spot_lights);
+		std::copy(lighting_state.directional_lights.begin(), lighting_state.directional_lights.end(), light_info.directional_lights);
+		std::copy(lighting_state.point_lights.begin(), lighting_state.point_lights.end(), light_info.point_lights);
+		std::copy(lighting_state.spot_lights.begin(), lighting_state.spot_lights.end(), light_info.spot_lights);
 
-		auto &           render_frame = get_render_context().get_active_frame();
-		BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
-		light_buffer.update(light_info);
-
-		return light_buffer;
+		auto &render_frame          = get_render_context().get_active_frame();
+		lighting_state.light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
+		lighting_state.light_buffer.update(light_info);
 	}
 
   protected:
@@ -208,6 +214,9 @@ class Subpass
 
 	// A map of shader resource names and the mode of constant data
 	std::unordered_map<std::string, ShaderResourceMode> resource_mode_map;
+
+	/// The structure containing all the requested render-ready lights for the scene
+	LightingState lighting_state{};
 
   private:
 	ShaderSource vertex_shader;

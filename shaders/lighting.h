@@ -23,10 +23,6 @@ struct Light
 	vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
 };
 
-layout(constant_id = 0) const uint DIRECTIONAL_LIGHT_COUNT = 0U;
-layout(constant_id = 1) const uint POINT_LIGHT_COUNT       = 0U;
-layout(constant_id = 2) const uint SPOT_LIGHT_COUNT        = 0U;
-
 vec3 apply_directional_light(Light light, vec3 normal)
 {
 	vec3 world_to_light = -light.direction.xyz;

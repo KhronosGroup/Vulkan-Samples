@@ -134,4 +134,9 @@ void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
 {
 	this->sample_count = sample_count;
 }
+
+LightingState &Subpass::get_lighting_state()
+{
+	return lighting_state;
+}
 }        // namespace vkb

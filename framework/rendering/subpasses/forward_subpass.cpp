@@ -59,8 +59,8 @@ void ForwardSubpass::prepare()
 
 void ForwardSubpass::draw(CommandBuffer &command_buffer)
 {
-	auto lights_buffer = allocate_lights<ForwardLights>(command_buffer, scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
-	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
+	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	GeometrySubpass::draw(command_buffer);
 }

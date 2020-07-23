@@ -296,6 +296,15 @@ void CommandBuffer::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize o
 	vkCmdBindIndexBuffer(get_handle(), buffer.get_handle(), offset, index_type);
 }
 
+void CommandBuffer::bind_lighting(LightingState &lighting_state, uint32_t set, uint32_t binding)
+{
+	bind_buffer(lighting_state.light_buffer.get_buffer(), lighting_state.light_buffer.get_offset(), lighting_state.light_buffer.get_size(), set, binding, 0);
+
+	set_specialization_constant(0, lighting_state.directional_lights.size());
+	set_specialization_constant(1, lighting_state.point_lights.size());
+	set_specialization_constant(2, lighting_state.spot_lights.size());
+}
+
 void CommandBuffer::set_viewport_state(const ViewportState &state_info)
 {
 	pipeline_state.set_viewport_state(state_info);

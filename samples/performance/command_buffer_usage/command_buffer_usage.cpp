@@ -254,8 +254,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
 
-	auto light_buffer = allocate_lights<vkb::ForwardLights>(command_buffer, scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
-	command_buffer.bind_buffer(light_buffer.get_buffer(), light_buffer.get_offset(), light_buffer.get_size(), 0, 4, 0);
+	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	for (uint32_t i = mesh_start; i < mesh_end; i++)
 	{
@@ -310,6 +309,8 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 		sorted_transparent_nodes.push_back(node_it->second);
 	}
 	const auto transparent_submeshes = vkb::to_u32(sorted_transparent_nodes.size());
+
+	allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 
 	color_blend_attachment.blend_enable = VK_FALSE;
 	color_blend_state.attachments.resize(get_output_attachments().size());
