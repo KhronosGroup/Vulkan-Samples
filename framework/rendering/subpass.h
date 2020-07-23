@@ -140,10 +140,8 @@ class Subpass
 	 * @brief Prepares the lighting state to have its lights 
 	 * 
 	 * @tparam A light structure that has 'directional_lights', 'point_lights' and 'spot_light' array fields defined.
-	 * @param command_buffer The command buffer that the returned light buffer allocation will be bound to
 	 * @param scene_lights All of the light components from the scene graph
 	 * @param light_count The maximum amount of lights allowed for any given type of light.
-	 * @return BufferAllocation A buffer allocation created for use in shaders
 	 */
 	template <typename T>
 	void allocate_lights(const std::vector<sg::Light *> &scene_lights,
