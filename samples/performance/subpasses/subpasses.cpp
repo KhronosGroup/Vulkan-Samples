@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "render_subpasses.h"
+#include "subpasses.h"
 
 #include "common/vk_common.h"
 #include "platform/platform.h"
@@ -26,7 +26,7 @@
 #include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/node.h"
 
-RenderSubpasses::RenderSubpasses()
+Subpasses::Subpasses()
 {
 	auto &config = get_configuration();
 
@@ -51,7 +51,7 @@ RenderSubpasses::RenderSubpasses()
 	config.insert<vkb::IntSetting>(3, configs[Config::GBufferSize].value, 1);
 }
 
-std::unique_ptr<vkb::RenderTarget> RenderSubpasses::create_render_target(vkb::core::Image &&swapchain_image)
+std::unique_ptr<vkb::RenderTarget> Subpasses::create_render_target(vkb::core::Image &&swapchain_image)
 {
 	auto &device = swapchain_image.get_device();
 	auto &extent = swapchain_image.get_extent();
@@ -97,12 +97,12 @@ std::unique_ptr<vkb::RenderTarget> RenderSubpasses::create_render_target(vkb::co
 	return std::make_unique<vkb::RenderTarget>(std::move(images));
 }
 
-void RenderSubpasses::prepare_render_context()
+void Subpasses::prepare_render_context()
 {
 	get_render_context().prepare(1, [this](vkb::core::Image &&swapchain_image) { return create_render_target(std::move(swapchain_image)); });
 }
 
-bool RenderSubpasses::prepare(vkb::Platform &platform)
+bool Subpasses::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
 	{
@@ -155,7 +155,8 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	lighting_render_pipeline = create_lighting_renderpass();
 
 	// Enable stats
-	stats->request_stats({vkb::StatIndex::gpu_fragment_jobs,
+	stats->request_stats({vkb::StatIndex::frame_times,
+	                      vkb::StatIndex::gpu_fragment_jobs,
 	                      vkb::StatIndex::gpu_tiles,
 	                      vkb::StatIndex::gpu_ext_read_bytes,
 	                      vkb::StatIndex::gpu_ext_write_bytes});
@@ -166,7 +167,7 @@ bool RenderSubpasses::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void RenderSubpasses::update(float delta_time)
+void Subpasses::update(float delta_time)
 {
 	// Check whether the user changed the render technique
 	if (configs[Config::RenderTechnique].value != last_render_technique)
@@ -214,8 +215,8 @@ void RenderSubpasses::update(float delta_time)
 			else
 			{
 				// Use more bits
-				albedo_format = VK_FORMAT_R16G16B16A16_SFLOAT;        // 64-bit
-				normal_format = VK_FORMAT_R16G16B16A16_SFLOAT;        // 64-bit
+				albedo_format = VK_FORMAT_R32G32B32A32_SFLOAT;        // 128-bit
+				normal_format = VK_FORMAT_R32G32B32A32_SFLOAT;        // 128-bit
 			}
 
 			last_g_buffer_size = configs[Config::GBufferSize].value;
@@ -234,7 +235,7 @@ void RenderSubpasses::update(float delta_time)
 	VulkanSample::update(delta_time);
 }
 
-void RenderSubpasses::draw_gui()
+void Subpasses::draw_gui()
 {
 	auto lines = configs.size();
 	if (camera->get_aspect_ratio() < 1.0f)
@@ -279,7 +280,7 @@ void RenderSubpasses::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_subpasses()
+std::unique_ptr<vkb::RenderPipeline> Subpasses::create_one_renderpass_two_subpasses()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert"};
@@ -311,7 +312,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_one_renderpass_two_
 	return render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass()
+std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 {
 	// Geometry subpass
 	auto geometry_vs   = vkb::ShaderSource{"deferred/geometry.vert"};
@@ -334,7 +335,7 @@ std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_geometry_renderpass
 	return geometry_render_pipeline;
 }
 
-std::unique_ptr<vkb::RenderPipeline> RenderSubpasses::create_lighting_renderpass()
+std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 {
 	// Lighting subpass
 	auto lighting_vs      = vkb::ShaderSource{"deferred/lighting.vert"};
@@ -381,12 +382,12 @@ void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render
 	command_buffer.end_render_pass();
 }
 
-void RenderSubpasses::draw_render_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	draw_pipeline(command_buffer, render_target, *render_pipeline, gui.get());
 }
 
-void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	// First render pass (no gui)
 	draw_pipeline(command_buffer, render_target, *geometry_render_pipeline);
@@ -425,12 +426,12 @@ void RenderSubpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb:
 	draw_pipeline(command_buffer, render_target, *lighting_render_pipeline, gui.get());
 }
 
-void RenderSubpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
+void Subpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
 {
 	if (configs[Config::RenderTechnique].value == 0)
 	{
 		// Efficient way
-		draw_render_subpasses(command_buffer, render_target);
+		draw_subpasses(command_buffer, render_target);
 	}
 	else
 	{
@@ -439,7 +440,7 @@ void RenderSubpasses::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::R
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_render_subpasses()
+std::unique_ptr<vkb::VulkanSample> create_subpasses()
 {
-	return std::make_unique<RenderSubpasses>();
+	return std::make_unique<Subpasses>();
 }

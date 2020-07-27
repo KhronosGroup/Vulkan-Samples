@@ -17,15 +17,15 @@
 -
 -->
 
-# Render Subpasses
+# Subpasses
 
 ## Overview
 
-Vulkan introduces the concept of _sub-passes_ to subdivide a single [render pass](../render_passes/render_passes_tutorial.md) into separate logical phases. The benefit of using sub-passes over multiple render passes is that a GPU is able to perform various optimizations. Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
+Vulkan introduces the concept of _subpasses_ to subdivide a single [render pass](../render_passes/render_passes_tutorial.md) into separate logical phases. The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations. Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
 
 ## Deferred rendering
 
-The _Render Subpasses sample_ implements a [deferred renderer](https://en.wikipedia.org/wiki/Deferred_shading), which splits rendering in two passes:
+The _Subpasses sample_ implements a [deferred renderer](https://en.wikipedia.org/wiki/Deferred_shading), which splits rendering in two passes:
 
 * A geometry pass, where data needed for shading is written to the _G-buffer_ (depth, albedo, normals).
 * A lighting pass, where shading is performed using the information in the G-buffer.
@@ -54,59 +54,58 @@ vec4 world_w = inv_view_proj * clip;
 vec3 world   = world_w.xyz / world_w.w;
 ```
 
-In order to highlight the benefit of sub-passes over multiple render passes, the sample allows the user to switch between two different techniques at run-time:
-
-The first technique uses two render passes, running one after another. The former generates the G-buffer, the latter uses it in the lighting stage. The following picture shows some numbers collected by HWCPipe by using two render passes, with a high number of physical tiles (`PTILES`) used and a considerable amount of bandwidth (external reads/writes).
+In order to highlight the benefit of subpasses over multiple render passes, the sample allows the user to switch between two different techniques at run-time.
 
 ![Render passes](images/render-passes.jpg)
 
-The second technique uses a single render pass with two sub-passes. The first sub-pass generates the G-buffer and the second performs lighting calculations. On tile-based GPUs the G-buffer might be kept in tile memory across subpasses.
+One of the techniques uses two render passes, running one after another. The first render pass generates the G-buffer, and the second uses it in the lighting stage to generate our final image. The above screenshot shows four GPU counters (collected by HWCPipe), and their values when using two render passes. We can see that there is a high number of physical tiles (`PTILES`) used and a considerable amount of bandwidth (external reads/writes).
+
+Another technique uses a *single* render pass which is composed of two subpasses. The first subpass generates the G-buffer and the second performs the lighting calculations to generate our final image (similarly to the two render pass technique). On tile-based GPUs the G-buffer might be kept in tile memory across subpasses, which is why this method is considered a best practice.
 
 The first thing that you may notice from the [Streamline](https://developer.arm.com/tools-and-software/embedded/arm-development-studio/components/streamline-performance-analyzer) screenshot below is the difference in terms of bandwidth between the two techniques:
-- On the left, from `0s` to `3.6s`, the benefit of the sub-passes technique is clear, as it is able to store the G-buffer on tile memory.
+- On the left, from `0s` to `3.6s`, the benefit of the subpasses technique is clear, as it is able to store the G-buffer on tile memory.
 - On the right, from `3.7s`, is highlighted the two render passes technique, which writes lots of data back to the external memory, as the first render pass needs to store the G-buffer in order to be read by the second render pass.
 
-![Sub-passes vs render-passes trace](images/subpasses-renderpasses-trace.jpg)
+![Subpasses vs render passes trace](images/subpasses-renderpasses-trace.jpg)
 
 ## Merging
 
 As stated by the Vulkan reference, _Subpasses with simple framebuffer-space dependencies may be merged into a single tile rendering pass, keeping the attachment data on-chip for the duration of a renderpass._ [[2](#references)].
 
-Since sub-passes information is known ahead of time, the driver is able to detect if two or more subpasses can be merged together. The consequence of this is that [vkCmdNextSubpass](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdNextSubpass.html) becomes a `NOP`.
+Since subpass information is known ahead of time, the driver is able to detect if two or more subpasses can be merged together. The consequence of this is that [vkCmdNextSubpass](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkCmdNextSubpass.html) becomes a `NOP`.
 
 In other words, a GPU driver can optimize even more by merging two or more subpasses together as long as certain requirements are met. Such requirements may vary between vendors, the following are the ones for Arm GPUs:
 
-* If color attachment data formats can be merged.
 * If merge can save a write-out/read-back; two unrelated subpasses which don't share any data do not benefit from multipass and will not be merged.
 * If the number of unique `VkAttachments` used for input and color attachments in all considered subpasses is <= 8. Note that depth/stencil does not count towards this limit.
 * The depth/stencil attachment does not change between subpasses.
 * Multisample counts are the same for all attachments.
 
-Furthermore, in order to be merged, sub-passes are required to use at most 128-bit per pixel of *tile buffer color storage*, although some of the more recent GPUs such as Mali-G72 increase this to up to 256-bits per pixel. G-buffers requiring more color storage than this can be used at the expense of needing smaller tiles during fragment shading, which can reduce overall throughput and increase bandwidth reading tile lists.
-
-From the sample perspective, the best way to verify whether two subpasses are merged or not is to compare the physical tiles (`PTILES`) counter by switching between the sub-passes and the render passes technique. Two fused sub-passes will need half the number of `PTILES` needed by two render passes, indeed comparing the following screenshot with the previous one, roughly half the number of tiles are used (`0.5` vs `1.1`) and about `70%` of bandwidth is saved.
+On Mali devices in order to be merged, subpasses are required to use at most 128-bit per pixel of *tile buffer color storage*, although some of the more recent GPUs such as Mali-G72 increase this to up to 256-bits per pixel. G-buffers requiring more color storage than this can be used at the expense of needing smaller tiles during fragment shading, which can reduce overall throughput and increase bandwidth reading tile lists.
 
 ![Good practice](images/good-practice.jpg)
 
-By changing the `VkImageFormat` of these images with formats requiring more bits, it is most likely that the G-buffer will no longer fit the budget, denying the driver the possibility to merge the sub-passes. The following picture shows how the number of physical tiles used goes back to over one million per second, meaning that sub-passes are not merged.
+The best way to verify whether two subpasses are merged or not is to compare the physical tiles (`PTILES`) counter by switching between the subpasses and the render passes techniques. When we compare the screenshots of the two render techniques on a `Mali-G76`, we can see that there is approximately a `55%` reduction in the number of tiles used (`262.2k/s` vs `614.7k/s`), and therefore a `55%` reduction in bandwidth.
 
-To understand what these numbers mean, consider that, on the device where the screenshots are taken, the resolution is `2220x1080` and a tile is `16x16` pixels. Every frame needs `(2220 * 1080) / (16 * 16) = ~9k` tiles. Since the sample runs at 60 frames per second, we end up with `~9k * 60 = ~0.5M` of tiles per second for one render pass. Of course, two render passes will need twice this amount.
+In order to calculate the number in the physical tiles counter, you need to know the resolution of the device you are using and the size of a single tile. In the case of an `S10 Mali-G76`, the resolution is `2220 * 1080` and a tile is `16x16` pixels. Therefore every frame needs `(2220 * 1080) / (16 * 16) = ~9k` tiles. To get the tiles every second, we multiply this number by the FPS (this can vary) so `9k * 30 = 270k/s` which is approximately what we see in the tiles counter. 
+
+It is important to note that by using a `VkImageFormat` that requires more bits, it is most likely that the G-buffer will no longer fit the drivers budget, denying the possibility to merge the subpasses. The following picture shows how the number of physical tiles used almost doubles to `409.6k/s`, indicating that subpasses are not merged.
 
 ![G-buffer size](images/gbuffer-size.jpg)
 
 ## Transient attachments
 
-Some framebuffer attachments, like _depth_, _albedo_, and _normal_ in the sample, are cleared at the beginning of the render pass, written by the geometry subpass, read by the lighting subpass, and discarded at the end of the render pass. If the GPU has enough memory available to store them on tile memory, there is no need to write them back to external memory. Actually, there is not even need to allocate them at all.
-
-In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkImageUsageFlagBits.html) needs to be specified as `TRANSIENT` and their [memory](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkMemoryPropertyFlagBits.html) needs to be `LAZILY_ALLOCATED`. Failing to set these flags properly will lead to an increase of [fragment jobs](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/mali-bifrost-family-performance-counters) as the GPU will need to write them back to external memory.
+Some framebuffer attachments in the sample (such as _depth_, _albedo_, and _normal_), are cleared at the beginning of the render pass, written by the geometry subpass, read by the lighting subpass, and discarded at the end of the render pass. If the GPU has enough memory available to store them on tile memory, there is no need to write them back to external memory. Actually, there is not even a need to allocate them at all.
 
 ![Non-transient attachments](images/transient-attachments.jpg)
+
+In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkImageUsageFlagBits.html) needs to be specified as `TRANSIENT` and their [memory](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkMemoryPropertyFlagBits.html) needs to be `LAZILY_ALLOCATED`. Failing to set these flags properly will lead to an increase of [fragment jobs](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/mali-bifrost-family-performance-counters) as the GPU will need to write them back to external memory. As you can see in the above screenshot, we see roughly a double in fragment jobs per second (from `56/s` to `113/s`).
 
 ## Further reading
 
 * [Vulkan Multipass at GDC 2017](https://community.arm.com/developer/tools-software/graphics/b/blog/posts/vulkan-multipass-at-gdc-2017) - community.arm.com
 * [Deferring shading with Multipass](https://arm-software.github.io/vulkan-sdk/multipass.html) - arm-software.github.io
-* [Vulkan input attachments and sub-passes](https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/) - saschawillems.de
+* [Vulkan input attachments and subpasses](https://www.saschawillems.de/blog/2018/07/19/vulkan-input-attachments-and-sub-passes/) - saschawillems.de
 
 ## References
 
@@ -117,8 +116,8 @@ In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1
 
 **Do**
 
-* Use sub-passes.
-* Use a 128-bit G-buffer budget for color.
+* Use subpasses.
+* Keep your G-buffer budget for color small.
 * Use `DEPTH_STENCIL_READ_ONLY` image layout for depth after the geometry pass is done.
 * Use `LAZILY_ALLOCATED` memory to back images for every attachment except for the light buffer, which is the only texture written out to memory.
 * Follow the basic [render pass best practices](../render_passes/render_passes_tutorial.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.

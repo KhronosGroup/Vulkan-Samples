@@ -22,27 +22,33 @@
 #include "vulkan_sample.h"
 
 /**
-  * @brief The RenderSubpasses sample shows how a significant amount of bandwidth
+  * @brief The Subpasses sample shows how a significant amount of bandwidth
   *        (L2 cache ext reads and writes) can be saved, by using sub-passes instead
   *        of multiple render passes. In order to highlight the difference, it
   *        implements deferred rendering with and without sub-passes, giving the
   *        user the possibility to change some key settings.
   */
-class RenderSubpasses : public vkb::VulkanSample
+class Subpasses : public vkb::VulkanSample
 {
   public:
-	RenderSubpasses();
+	Subpasses();
 
 	bool prepare(vkb::Platform &platform) override;
 
 	void update(float delta_time) override;
 
-	virtual ~RenderSubpasses() = default;
+	virtual ~Subpasses() = default;
 
 	void draw_gui() override;
 
   private:
 	virtual void prepare_render_context() override;
+
+	/**
+	 * @brief Draws to a render target using the right pipeline based on the sample selection
+	 *        Not to be confused with `draw_renderpasses` which uses the bad practice
+	 */
+	virtual void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	/**
 	 * @return A good pipeline
@@ -60,16 +66,14 @@ class RenderSubpasses : public vkb::VulkanSample
 	std::unique_ptr<vkb::RenderPipeline> create_lighting_renderpass();
 
 	/**
-	 * @brief Draws using the good pipeline: one render pass with two sub-passes
+	 * @brief Draws using the good pipeline: one render pass with two subpasses
 	 */
-	void draw_render_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
+	void draw_subpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
 
 	/**
 	 * @brief Draws using the bad practice: two separate render passes
 	 */
 	void draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target);
-
-	void draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
@@ -133,4 +137,4 @@ class RenderSubpasses : public vkb::VulkanSample
 	     /* value       = */ 0}};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_render_subpasses();
+std::unique_ptr<vkb::VulkanSample> create_subpasses();
