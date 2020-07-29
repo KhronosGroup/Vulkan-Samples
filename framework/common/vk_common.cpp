@@ -340,7 +340,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_shader(filename);
+	auto buffer = vkb::fs::read_shader_binary(filename);
 
 	std::string file_ext = filename;
 

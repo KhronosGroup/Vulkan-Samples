@@ -37,9 +37,11 @@ namespace sg
 {
 enum LightType
 {
-	Directional,
-	Point,
-	Spot
+	Directional = 0,
+	Point       = 1,
+	Spot        = 2,
+	// Insert new lightype here
+	Max
 };
 
 struct LightProperties

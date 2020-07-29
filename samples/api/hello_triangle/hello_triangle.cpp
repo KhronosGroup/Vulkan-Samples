@@ -668,7 +668,7 @@ VkShaderModule HelloTriangle::load_shader_module(Context &context, const char *p
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_shader(path);
+	auto buffer = vkb::fs::read_shader_binary(path);
 
 	std::string file_ext = path;
 

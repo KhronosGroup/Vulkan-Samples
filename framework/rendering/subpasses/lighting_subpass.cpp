@@ -33,7 +33,8 @@ LightingSubpass::LightingSubpass(RenderContext &render_context, ShaderSource &&v
 
 void LightingSubpass::prepare()
 {
-	lighting_variant.add_definitions({"MAX_DEFERRED_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+	lighting_variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_DEFERRED_LIGHT_COUNT)});
+
 	lighting_variant.add_definitions(light_type_definitions);
 	// Build all shaders upfront
 	auto &resource_cache = render_context.get_device().get_resource_cache();
@@ -43,8 +44,8 @@ void LightingSubpass::prepare()
 
 void LightingSubpass::draw(CommandBuffer &command_buffer)
 {
-	auto light_buffer = allocate_lights<DeferredLights>(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
-	command_buffer.bind_buffer(light_buffer.get_buffer(), light_buffer.get_offset(), light_buffer.get_size(), 0, 4, 0);
+	allocate_lights<DeferredLights>(scene.get_components<sg::Light>(), MAX_DEFERRED_LIGHT_COUNT);
+	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	// Get shaders from cache
 	auto &resource_cache     = command_buffer.get_device().get_resource_cache();

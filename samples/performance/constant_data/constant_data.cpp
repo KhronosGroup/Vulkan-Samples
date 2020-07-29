@@ -294,7 +294,7 @@ void ConstantData::ConstantDataSubpass::prepare()
 
 			// Copied from vkb::ForwardSubpass
 			variant.add_definitions({"SCENE_MESH_COUNT " + std::to_string(scene.get_components<vkb::sg::SubMesh>().size())});
-			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
+			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
 			variant.add_definitions(vkb::light_type_definitions);
 
 			// If struct size is 256 we add a definition so the uniform has more values
@@ -442,8 +442,8 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	// Reset the instance index back to 0 for each draw call
 	instance_index = 0;
 
-	auto lights_buffer = allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
-	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
+	allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	GeometrySubpass::draw(command_buffer);
 }

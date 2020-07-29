@@ -283,6 +283,11 @@ sg::Light &add_directional_light(sg::Scene &scene, const glm::quat &rotation, co
 	return add_light(scene, sg::LightType::Directional, {}, rotation, props, parent_node);
 }
 
+sg::Light &add_spot_light(sg::Scene &scene, const glm::vec3 &position, const glm::quat &rotation, const sg::LightProperties &props, sg::Node *parent_node)
+{
+	return add_light(scene, sg::LightType::Spot, position, rotation, props, parent_node);
+}
+
 sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExtent2D extent)
 {
 	auto camera_node = scene.find_node(node_name);
