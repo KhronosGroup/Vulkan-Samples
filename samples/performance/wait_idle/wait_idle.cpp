@@ -54,8 +54,8 @@ bool WaitIdle::prepare(vkb::Platform &plat)
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());
 
 	// Example Scene Render Pipeline
-	vkb::ShaderSource vert_shader(vkb::fs::read_shader("base.vert"));
-	vkb::ShaderSource frag_shader(vkb::fs::read_shader("base.frag"));
+	vkb::ShaderSource vert_shader("base.vert");
+	vkb::ShaderSource frag_shader("base.frag");
 	auto              scene_subpass   = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 	auto              render_pipeline = vkb::RenderPipeline();
 	render_pipeline.add_subpass(std::move(scene_subpass));

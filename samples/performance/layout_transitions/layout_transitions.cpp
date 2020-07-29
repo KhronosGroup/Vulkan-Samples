@@ -50,16 +50,16 @@ bool LayoutTransitions::prepare(vkb::Platform &platform)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	auto geometry_vs = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.vert")};
-	auto geometry_fs = vkb::ShaderSource{vkb::fs::read_shader("deferred/geometry.frag")};
+	auto geometry_vs = vkb::ShaderSource{"deferred/geometry.vert"};
+	auto geometry_fs = vkb::ShaderSource{"deferred/geometry.frag"};
 
 	std::unique_ptr<vkb::Subpass> gbuffer_pass = std::make_unique<vkb::GeometrySubpass>(get_render_context(), std::move(geometry_vs), std::move(geometry_fs), *scene, *camera);
 	gbuffer_pass->set_output_attachments({1, 2, 3});
 	gbuffer_pipeline.add_subpass(std::move(gbuffer_pass));
 	gbuffer_pipeline.set_load_store(vkb::gbuffer::get_clear_store_all());
 
-	auto lighting_vs = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.vert")};
-	auto lighting_fs = vkb::ShaderSource{vkb::fs::read_shader("deferred/lighting.frag")};
+	auto lighting_vs = vkb::ShaderSource{"deferred/lighting.vert"};
+	auto lighting_fs = vkb::ShaderSource{"deferred/lighting.frag"};
 
 	std::unique_ptr<vkb::Subpass> lighting_subpass = std::make_unique<vkb::LightingSubpass>(get_render_context(), std::move(lighting_vs), std::move(lighting_fs), *camera, *scene);
 	lighting_subpass->set_input_attachments({1, 2, 3});

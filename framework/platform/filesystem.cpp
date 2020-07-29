@@ -112,7 +112,24 @@ void create_path(const std::string &root, const std::string &path)
 	}
 }
 
-static std::vector<uint8_t> read_binary_file(const std::string &filename, const uint32_t count)
+std::string read_text_file(const std::string &filename)
+{
+	std::vector<std::string> data;
+
+	std::ifstream file;
+
+	file.open(filename, std::ios::in);
+
+	if (!file.is_open())
+	{
+		throw std::runtime_error("Failed to open file: " + filename);
+	}
+
+	return std::string{(std::istreambuf_iterator<char>(file)),
+	                   (std::istreambuf_iterator<char>())};
+}
+
+std::vector<uint8_t> read_binary_file(const std::string &filename, const uint32_t count)
 {
 	std::vector<uint8_t> data;
 
@@ -166,7 +183,12 @@ std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t coun
 	return read_binary_file(path::get(path::Type::Assets) + filename, count);
 }
 
-std::vector<uint8_t> read_shader(const std::string &filename)
+std::string read_shader(const std::string &filename)
+{
+	return read_text_file(path::get(path::Type::Shaders) + filename);
+}
+
+std::vector<uint8_t> read_shader_binary(const std::string &filename)
 {
 	return read_binary_file(path::get(path::Type::Shaders) + filename, 0);
 }

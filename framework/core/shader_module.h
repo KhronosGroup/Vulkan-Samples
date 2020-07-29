@@ -150,20 +150,20 @@ class ShaderSource
 
 	ShaderSource(const std::string &filename);
 
-	ShaderSource(std::vector<uint8_t> &&data);
-
 	size_t get_id() const;
 
 	const std::string &get_filename() const;
 
-	const std::vector<uint8_t> &get_data() const;
+	void set_source(const std::string &source);
+
+	const std::string &get_source() const;
 
   private:
 	size_t id;
 
 	std::string filename;
 
-	std::vector<uint8_t> data;
+	std::string source;
 };
 
 /**

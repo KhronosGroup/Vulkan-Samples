@@ -25,27 +25,83 @@
 
 namespace vkb
 {
+/**
+ * @brief Pre-compiles project shader files to include header code
+ * @param filename The shader file
+ * @returns A byte array of the final shader
+ */
+inline std::vector<std::string> precompile_shader(const std::string &source)
+{
+	std::vector<std::string> final_file;
+
+	auto lines = split(source, '\n');
+
+	for (auto &line : lines)
+	{
+		if (line.find("#include \"") == 0)
+		{
+			// Include paths are relative to the base shader directory
+			std::string include_path = line.substr(10);
+			if (!include_path.empty() && include_path.back() == '"')
+			{
+				include_path.pop_back();
+			}
+
+			auto include_file = precompile_shader(fs::read_shader(include_path));
+			for (auto &include_file_line : include_file)
+			{
+				final_file.push_back(include_file_line);
+			}
+		}
+		else
+		{
+			final_file.push_back(line);
+		}
+	}
+
+	return final_file;
+}
+
+inline std::vector<uint8_t> convert_to_bytes(std::vector<std::string> &lines)
+{
+	std::vector<uint8_t> bytes;
+
+	for (auto &line : lines)
+	{
+		line += "\n";
+		std::vector<uint8_t> line_bytes(line.begin(), line.end());
+		bytes.insert(bytes.end(), line_bytes.begin(), line_bytes.end());
+	}
+
+	return bytes;
+}
+
 ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const std::string &entry_point, const ShaderVariant &shader_variant) :
     device{device},
     stage{stage},
     entry_point{entry_point}
 {
-	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (glsl_source.get_data().empty())
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 
-	GLSLCompiler glsl_compiler;
+	auto &source = glsl_source.get_source();
+
+	// Check if application is passing in GLSL source code to compile to SPIR-V
+	if (source.empty())
+	{
+		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
+	}
+
+	// Precompile source into the final spirv bytecode
+	auto glsl_final_source = precompile_shader(source);
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(stage, glsl_source.get_data(), entry_point, shader_variant, spirv, info_log))
+	GLSLCompiler glsl_compiler;
+
+	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
 	{
 		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
 		LOGE("{}", info_log);
@@ -228,19 +284,12 @@ void ShaderVariant::update_id()
 	id = hasher(preamble);
 }
 
-ShaderSource::ShaderSource(std::vector<uint8_t> &&data) :
-    data{std::move(data)}
-{
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->data.cbegin(), this->data.cend()});
-}
-
 ShaderSource::ShaderSource(const std::string &filename) :
     filename{filename},
-    data{fs::read_shader(filename)}
+    source{fs::read_shader(filename)}
 {
 	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->data.cbegin(), this->data.cend()});
+	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
 }
 
 size_t ShaderSource::get_id() const
@@ -253,8 +302,15 @@ const std::string &ShaderSource::get_filename() const
 	return filename;
 }
 
-const std::vector<uint8_t> &ShaderSource::get_data() const
+void ShaderSource::set_source(const std::string &source_)
 {
-	return data;
+	source = source_;
+	std::hash<std::string> hasher{};
+	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
+}
+
+const std::string &ShaderSource::get_source() const
+{
+	return source;
 }
 }        // namespace vkb

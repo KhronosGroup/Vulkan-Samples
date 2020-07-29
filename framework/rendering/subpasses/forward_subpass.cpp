@@ -47,7 +47,8 @@ void ForwardSubpass::prepare()
 			auto &variant = sub_mesh->get_mut_shader_variant();
 
 			// Same as Geometry except adds lighting definitions to sub mesh variants.
-			variant.add_definitions({"MAX_FORWARD_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
+			variant.add_definitions({"MAX_LIGHT_COUNT " + std::to_string(MAX_FORWARD_LIGHT_COUNT)});
+
 			variant.add_definitions(light_type_definitions);
 
 			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
@@ -58,8 +59,8 @@ void ForwardSubpass::prepare()
 
 void ForwardSubpass::draw(CommandBuffer &command_buffer)
 {
-	auto lights_buffer = allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
-	command_buffer.bind_buffer(lights_buffer.get_buffer(), lights_buffer.get_offset(), lights_buffer.get_size(), 0, 4, 0);
+	allocate_lights<ForwardLights>(scene.get_components<sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
+	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
 	GeometrySubpass::draw(command_buffer);
 }
