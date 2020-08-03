@@ -1227,8 +1227,12 @@ std::unique_ptr<sg::Camera> GLTFLoader::create_default_camera()
 
 std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 {
-	if (is_extension_enabled(KHR_LIGHTS_PUNCTUAL_EXTENSION) && model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Has("lights"))
+	if (is_extension_enabled(KHR_LIGHTS_PUNCTUAL_EXTENSION))
 	{
+		if (model.extensions.find(KHR_LIGHTS_PUNCTUAL_EXTENSION) == model.extensions.end() || !model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Has("lights"))
+		{
+			return {};
+		}
 		auto &khr_lights = model.extensions.at(KHR_LIGHTS_PUNCTUAL_EXTENSION).Get("lights");
 
 		std::vector<std::unique_ptr<sg::Light>> light_components(khr_lights.ArrayLen());
