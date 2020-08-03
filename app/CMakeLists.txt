@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -45,28 +45,6 @@ set(PROJECT_FILES
     ${CMAKE_CURRENT_BINARY_DIR}/tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_samples.h
     ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_samples.cpp)
-    
-# add object files from samples
-foreach(SAMPLE_ID ${TOTAL_SAMPLE_ID_LIST})
-    if(TARGET ${SAMPLE_ID})
-        get_target_property(TARGET_TYPE ${SAMPLE_ID} TYPE)
-
-        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
-            list(APPEND PROJECT_FILES $<TARGET_OBJECTS:${SAMPLE_ID}>)
-        endif()
-    endif()
-endforeach()
-
-# add object files from tests
-foreach(TEST_ID ${TOTAL_TEST_ID_LIST})
-    if(TARGET ${TEST_ID})
-        get_target_property(TARGET_TYPE ${TEST_ID} TYPE)
-
-        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
-            list(APPEND PROJECT_FILES $<TARGET_OBJECTS:${TEST_ID}>)
-        endif()
-    endif()
-endforeach()
 
 source_group("\\" FILES ${PROJECT_FILES})
 
@@ -90,11 +68,24 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 
 target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 
+# Link the test framework
 if(VKB_BUILD_TESTS)
     target_include_directories(${PROJECT_NAME} PUBLIC
         $<TARGET_PROPERTY:test_framework,INCLUDE_DIRECTORIES>)
     target_link_libraries(${PROJECT_NAME} PUBLIC test_framework)
 endif()
+
+# Link all samples and tests
+set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST} ${TOTAL_TEST_ID_LIST})
+foreach(ID ${PROJECT_ID_LIST})
+    if(TARGET ${ID})
+        get_target_property(TARGET_TYPE ${ID} TYPE)
+
+        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+            target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
+        endif()
+    endif()
+endforeach()
 
 if(ANDROID)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
