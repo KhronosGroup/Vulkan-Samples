@@ -37,6 +37,7 @@ set(GLAD_SOURCES
 add_library(glad ${GLAD_SOURCES})
 target_sources(glad PRIVATE ${GLAD_SOURCES})
 target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
+set_property(TARGET glad PROPERTY FOLDER "ThirdParty")
 
 # Only Compile on platforms that support glfw
 # Corresponds to the logic in framework/CMakeLists.txt near "if(VKB_DIRECT_2_DISPLAY)"
