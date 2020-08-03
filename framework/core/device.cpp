@@ -553,7 +553,7 @@ VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool b
 	return command_buffer;
 }
 
-void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free)
+void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free, VkSemaphore signalSemaphore)
 {
 	if (command_buffer == VK_NULL_HANDLE)
 	{
@@ -566,6 +566,11 @@ void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue,
 	submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &command_buffer;
+	if (signalSemaphore)
+	{
+		submit_info.pSignalSemaphores    = &signalSemaphore;
+		submit_info.signalSemaphoreCount = 1;
+	}
 
 	// Create fence to ensure that the command buffer has finished executing
 	VkFenceCreateInfo fence_info{};

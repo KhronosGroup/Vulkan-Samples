@@ -66,7 +66,7 @@ elseif(UNIX)
         set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
         target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
     endif()
-endif()
+endif() 
 
 # vma
 add_library(vma INTERFACE)

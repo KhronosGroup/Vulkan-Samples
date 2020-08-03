@@ -1179,3 +1179,10 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
 	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
 }
+
+void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore)
+{
+	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	f(command_buffer);
+	device->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+}
