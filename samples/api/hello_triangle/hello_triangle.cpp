@@ -1096,8 +1096,10 @@ void HelloTriangle::update(float delta_time)
 	if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
+		res = acquire_next_image(context, &index);
 	}
-	else if (res != VK_SUCCESS)
+
+	if (res != VK_SUCCESS)
 	{
 		vkQueueWaitIdle(context.queue);
 		return;
