@@ -69,13 +69,13 @@ Additionally you may find the following links useful:
 - **Descriptors**
   - [Descriptor and buffer management](./samples/performance/descriptor_management/descriptor_management_tutorial.md)
 - **Constant Data**
-  - [Sending constant data to the shaders](./samples/performance/constant_data/)
+  - [Sending constant data to the shaders](./samples/performance/constant_data/constant_data_tutorial.md)
 - **Render Passes**
   - [Appropriate use of load/store operations, and use of transient attachments](./samples/performance/render_passes/render_passes_tutorial.md)
   - [Choosing the correct layout when transitioning images](./samples/performance/layout_transitions/layout_transitions_tutorial.md)
   - [How to implement MSAA](./samples/performance/msaa/msaa_tutorial.md)
 - **Render Subpasses**
-  - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/render_subpasses/render_subpasses_tutorial.md)
+  - [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./samples/performance/subpasses/subpasses_tutorial.md)
 - **Workload Synchronization**
   - [Using pipeline barriers efficiently](./samples/performance/pipeline_barriers/pipeline_barriers_tutorial.md)
   - [How to synchronize back to the CPU and avoid stalling](./samples/performance/wait_idle/wait_idle_tutorial.md)
