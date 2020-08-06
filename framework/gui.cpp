@@ -365,7 +365,9 @@ void Gui::update(const float delta_time)
 	}
 
 	// Update imGui
-	ImGuiIO &io  = ImGui::GetIO();
+	ImGuiIO &io     = ImGui::GetIO();
+	auto     extent = sample.get_render_context().get_surface_extent();
+	resize(extent.width, extent.height);
 	io.DeltaTime = delta_time;
 
 	// Render to generate draw buffers
