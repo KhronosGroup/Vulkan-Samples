@@ -357,9 +357,20 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_lighting_renderpass()
 	return lighting_render_pipeline;
 }
 
-void RenderSubpasses::draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target, vkb::RenderPipeline &render_pipeline, vkb::Gui *gui)
+void draw_pipeline(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target, vkb::RenderPipeline &render_pipeline, vkb::Gui *gui = nullptr)
 {
-	set_viewport_and_scissor(command_buffer, render_target.get_extent());
+	auto &extent = render_target.get_extent();
+
+	VkViewport viewport{};
+	viewport.width    = static_cast<float>(extent.width);
+	viewport.height   = static_cast<float>(extent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	command_buffer.set_viewport(0, {viewport});
+
+	VkRect2D scissor{};
+	scissor.extent = extent;
+	command_buffer.set_scissor(0, {scissor});
 
 	render_pipeline.draw(command_buffer, render_target);
 
