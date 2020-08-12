@@ -42,10 +42,8 @@ Subpass::Subpass(RenderContext &render_context, ShaderSource &&vertex_source, Sh
 {
 }
 
-void Subpass::update_render_target_attachments()
+void Subpass::update_render_target_attachments(RenderTarget &render_target)
 {
-	auto &render_target = render_context.get_active_frame().get_render_target();
-
 	render_target.set_input_attachments(input_attachments);
 	render_target.set_output_attachments(output_attachments);
 }
@@ -133,5 +131,10 @@ void Subpass::set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode)
 void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
 {
 	this->sample_count = sample_count;
+}
+
+LightingState &Subpass::get_lighting_state()
+{
+	return lighting_state;
 }
 }        // namespace vkb

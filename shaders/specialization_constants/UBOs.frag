@@ -47,7 +47,7 @@ struct Light
 layout(set = 0, binding = 4) uniform LightsInfo
 {
 	uint  count;
-	Light light[MAX_FORWARD_LIGHT_COUNT];
+	Light light[MAX_LIGHT_COUNT];
 }
 lights;
 

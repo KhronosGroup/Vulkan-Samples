@@ -70,7 +70,7 @@ set(ORDER_LIST
     "constant_data"
     "render_passes"
     "msaa"
-    "render_subpasses"
+    "subpasses"
     "pipeline_barriers"
     "wait_idle"
     "layout_transitions"

@@ -114,7 +114,10 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 	ColorBlendState color_blend_state{};
 	color_blend_state.attachments.resize(get_output_attachments().size());
-	color_blend_state.attachments[0] = color_blend_attachment;
+	for (auto &it : color_blend_state.attachments)
+	{
+		it = color_blend_attachment;
+	}
 	command_buffer.set_color_blend_state(color_blend_state);
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());

@@ -40,6 +40,7 @@ class PipelineLayout;
 class PipelineState;
 class RenderTarget;
 class Subpass;
+struct LightingState;
 
 /**
  * @brief Helper class to manage and record a command buffer, building and
@@ -173,6 +174,8 @@ class CommandBuffer
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
 
 	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type);
+
+	void bind_lighting(LightingState &lighting_state, uint32_t set, uint32_t binding);
 
 	void set_viewport_state(const ViewportState &state_info);
 
