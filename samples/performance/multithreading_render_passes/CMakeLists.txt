@@ -23,5 +23,5 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
-    NAME "Multithreading with Render Passes"
+    NAME "RP Multithreading"
     DESCRIPTION "Multithreading with multiple render passes.")
