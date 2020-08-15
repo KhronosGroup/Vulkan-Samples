@@ -679,13 +679,11 @@ void RaytracingBasic::build_command_buffers()
 		VkStridedBufferRegionKHR miss_shader_sbt_entry{};
 		miss_shader_sbt_entry.buffer = shader_binding_table->get_handle();
 		miss_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupBaseAlignment * INDEX_MISS);
-		miss_shader_sbt_entry.stride = ray_tracing_properties.shaderGroupBaseAlignment;
 		miss_shader_sbt_entry.size   = shader_binding_table_size;
 
 		VkStridedBufferRegionKHR hit_shader_sbt_entry{};
 		hit_shader_sbt_entry.buffer = shader_binding_table->get_handle();
 		hit_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupBaseAlignment * INDEX_CLOSEST_HIT);
-		hit_shader_sbt_entry.stride = ray_tracing_properties.shaderGroupBaseAlignment;
 		hit_shader_sbt_entry.size   = shader_binding_table_size;
 
 		VkStridedBufferRegionKHR callable_shader_sbt_entry{};
