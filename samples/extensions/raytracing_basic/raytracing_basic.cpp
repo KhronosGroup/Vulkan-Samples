@@ -156,6 +156,8 @@ RaytracingBasic::~RaytracingBasic()
 		vkDestroyImageView(get_device().get_handle(), storage_image.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
+		delete top_level_acceleration_structure;
+		delete bottom_level_acceleration_structure;
 		vertex_buffer.reset();
 		index_buffer.reset();
 		shader_binding_table.reset();
