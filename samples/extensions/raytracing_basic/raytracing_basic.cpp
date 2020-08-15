@@ -150,7 +150,6 @@ void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required to use VK_KHR_ray_tracing
 	// These are passed to device creation via a pNext structure chain
-	// @todo: add way to pass this from a sample (sascha)
 	auto &requested_buffer_device_address_features               = gpu.request_extension_features<VkPhysicalDeviceBufferDeviceAddressFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES);
 	requested_buffer_device_address_features.bufferDeviceAddress = VK_TRUE;
 
@@ -243,7 +242,7 @@ void RaytracingBasic::create_scene()
 		auto index_buffer_size  = indices.size() * sizeof(uint32_t);
 
 		// Create buffers
-		// For the sake of simplicity we won't stage the vertex data to the gpu memory
+		// For the sake of simplicity we won't stage the vertex data to the GPU memory
 		// Vertex buffer
 		vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 		                                                    vertex_buffer_size,
@@ -455,14 +454,24 @@ void RaytracingBasic::create_scene()
 void RaytracingBasic::create_shader_binding_table()
 {
 	// Create buffer to hold the shader binding table
-	uint32_t shader_binding_table_size = ray_tracing_properties.shaderGroupHandleSize * 3;
-	shader_binding_table               = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                               shader_binding_table_size,
-                                                               VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR,
-                                                               VMA_MEMORY_USAGE_CPU_TO_GPU, 0);
+	const uint32_t shader_binding_table_size = ray_tracing_properties.shaderGroupBaseAlignment * 3;
+
+	shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                           shader_binding_table_size,
+	                                                           VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_RAY_TRACING_BIT_KHR,
+	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU, 0);
+
+	// Write the shader handles to the shader binding table
+	std::vector<uint8_t> shader_handle_storage(shader_binding_table_size);
+	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, 3, shader_binding_table_size, shader_handle_storage.data()));
 
 	auto *data = static_cast<uint8_t *>(shader_binding_table->map());
-	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, 3, shader_binding_table_size, data));
+	// This part is required, as the alignment and handle size may differ
+	for (uint32_t i = 0; i < 3; i++)
+	{
+		memcpy(data, shader_handle_storage.data() + i * ray_tracing_properties.shaderGroupHandleSize, ray_tracing_properties.shaderGroupHandleSize);
+		data += ray_tracing_properties.shaderGroupBaseAlignment;
+	}
 	shader_binding_table->unmap();
 }
 
@@ -562,7 +571,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	std::array<VkRayTracingShaderGroupCreateInfoKHR, 3> groups{};
 	for (auto &group : groups)
 	{
-		// Init all groups with some default values
+		// Initialize all groups with some default values
 		group.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		group.generalShader      = VK_SHADER_UNUSED_KHR;
 		group.closestHitShader   = VK_SHADER_UNUSED_KHR;
@@ -611,12 +620,12 @@ void RaytracingBasic::build_command_buffers()
 {
 	if (width != storage_image.width || height != storage_image.height)
 	{
-		// If the viewport size has changed, we need to recreate the storage image
+		// If the view port size has changed, we need to recreate the storage image
 		vkDestroyImageView(get_device().get_handle(), storage_image.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
 		create_storage_image();
-		// The descriptor also needs to be updated to reference the new iamge
+		// The descriptor also needs to be updated to reference the new image
 		VkDescriptorImageInfo image_descriptor{};
 		image_descriptor.imageView              = storage_image.view;
 		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
@@ -637,20 +646,24 @@ void RaytracingBasic::build_command_buffers()
 			Setup the strided buffer regions pointing to the shaders in our shader binding table
 		*/
 
+		const uint32_t shader_binding_table_size = ray_tracing_properties.shaderGroupBaseAlignment * 3;
+
 		VkStridedBufferRegionKHR raygen_shader_sbt_entry{};
 		raygen_shader_sbt_entry.buffer = shader_binding_table->get_handle();
-		raygen_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupHandleSize * INDEX_RAYGEN);
-		raygen_shader_sbt_entry.size   = ray_tracing_properties.shaderGroupHandleSize;
+		raygen_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupBaseAlignment * INDEX_RAYGEN);
+		raygen_shader_sbt_entry.size   = shader_binding_table_size;
 
 		VkStridedBufferRegionKHR miss_shader_sbt_entry{};
 		miss_shader_sbt_entry.buffer = shader_binding_table->get_handle();
-		miss_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupHandleSize * INDEX_MISS);
-		miss_shader_sbt_entry.size   = ray_tracing_properties.shaderGroupHandleSize;
+		miss_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupBaseAlignment * INDEX_MISS);
+		miss_shader_sbt_entry.stride = ray_tracing_properties.shaderGroupBaseAlignment;
+		miss_shader_sbt_entry.size   = shader_binding_table_size;
 
 		VkStridedBufferRegionKHR hit_shader_sbt_entry{};
 		hit_shader_sbt_entry.buffer = shader_binding_table->get_handle();
-		hit_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupHandleSize * INDEX_CLOSEST_HIT);
-		hit_shader_sbt_entry.size   = ray_tracing_properties.shaderGroupHandleSize;
+		hit_shader_sbt_entry.offset = static_cast<VkDeviceSize>(ray_tracing_properties.shaderGroupBaseAlignment * INDEX_CLOSEST_HIT);
+		hit_shader_sbt_entry.stride = ray_tracing_properties.shaderGroupBaseAlignment;
+		hit_shader_sbt_entry.size   = shader_binding_table_size;
 
 		VkStridedBufferRegionKHR callable_shader_sbt_entry{};
 
@@ -671,9 +684,9 @@ void RaytracingBasic::build_command_buffers()
 		    1);
 
 		/*
-			Copy raytracing output to swap chain image
+			Copy ray tracing output to swap chain image
 		*/
-		// Prepare current swapchain image as transfer destination
+		// Prepare current swap chain image as transfer destination
 		vkb::set_image_layout(
 		    draw_cmd_buffers[i],
 		    get_render_context().get_swapchain().get_images()[i],
@@ -732,7 +745,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// This sample copies ray traced output to the swapchain image, so we need to enable the required image usage flags
+	// This sample copies ray traced output to the swap chain image, so we need to enable the required image usage flags
 	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 	get_render_context().update_swapchain(image_usage_flags);
 
@@ -749,7 +762,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	device_features.pNext = &ray_tracing_features;
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
