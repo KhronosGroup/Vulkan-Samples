@@ -34,9 +34,9 @@
 #include "api_vulkan_sample.h"
 
 // Indices for the different ray tracing shader types used in this example
-#define INDEX_RAYGEN 0
-#define INDEX_CLOSEST_HIT 1
-#define INDEX_MISS 2
+#define INDEX_RAYGEN_GROUP 0
+#define INDEX_MISS_GROUP 1
+#define INDEX_CLOSEST_HIT_GROUP 2
 
 // Holds data for a ray tracing scratch buffer that is used as a temporary storage
 struct RayTracingScratchBuffer
@@ -79,10 +79,11 @@ class RaytracingBasic : public ApiVulkanSample
 	RayTracingAccelerationStructure *bottom_level_acceleration_structure;
 	RayTracingAccelerationStructure *top_level_acceleration_structure;
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
-	std::unique_ptr<vkb::core::Buffer> shader_binding_table;
+	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
+	std::unique_ptr<vkb::core::Buffer>                index_buffer;
+	uint32_t                                          index_count;
+	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
+	std::unique_ptr<vkb::core::Buffer>                shader_binding_table;
 
 	struct StorageImage
 	{
