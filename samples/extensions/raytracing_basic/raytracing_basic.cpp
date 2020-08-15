@@ -113,6 +113,25 @@ RayTracingObjectMemory::RayTracingObjectMemory(vkb::Device &device, VkAccelerati
 	VK_CHECK(vkAllocateMemory(device.get_handle(), &memory_allocate_info, nullptr, &memory));
 }
 
+RayTracingObjectMemory::~RayTracingObjectMemory()
+{
+	// Object memory must not be destroyed as long as the acceleration structure that refers to it is still in use
+	if (memory != VK_NULL_HANDLE)
+	{
+		vkFreeMemory(device.get_handle(), memory, nullptr);
+	}
+}
+
+RayTracingAccelerationStructure::RayTracingAccelerationStructure(vkb::Device &device) :
+    device(device)
+{}
+
+RayTracingAccelerationStructure::~RayTracingAccelerationStructure()
+{
+	vkDestroyAccelerationStructureKHR(device.get_handle(), structure, nullptr);
+	delete object_memory;
+}
+
 RaytracingBasic::RaytracingBasic()
 {
 	title = "VK_KHR_ray_tracing";
@@ -137,8 +156,6 @@ RaytracingBasic::~RaytracingBasic()
 		vkDestroyImageView(get_device().get_handle(), storage_image.view, nullptr);
 		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
-		vkDestroyAccelerationStructureKHR(device->get_handle(), bottom_level_acceleration_structure, nullptr);
-		vkDestroyAccelerationStructureKHR(device->get_handle(), top_level_acceleration_structure, nullptr);
 		vertex_buffer.reset();
 		index_buffer.reset();
 		shader_binding_table.reset();
@@ -227,6 +244,8 @@ void RaytracingBasic::create_scene()
 		Create the bottom level acceleration structure containing the actual scene geometry as triangles
 	*/
 	{
+		bottom_level_acceleration_structure = new RayTracingAccelerationStructure(get_device());
+
 		// Setup vertices and indices for a single triangle
 		struct Vertex
 		{
@@ -278,15 +297,15 @@ void RaytracingBasic::create_scene()
 		acceleration_create_info.flags            = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 		acceleration_create_info.maxGeometryCount = 1;
 		acceleration_create_info.pGeometryInfos   = &acceleration_create_geometry_info;
-		VK_CHECK(vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_create_info, nullptr, &bottom_level_acceleration_structure));
+		VK_CHECK(vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_create_info, nullptr, &bottom_level_acceleration_structure->structure));
 
 		// Bind object memory to the top level acceleration structure
-		RayTracingObjectMemory object_memory(get_device(), bottom_level_acceleration_structure);
+		bottom_level_acceleration_structure->object_memory = new RayTracingObjectMemory(get_device(), bottom_level_acceleration_structure->structure);
 
 		VkBindAccelerationStructureMemoryInfoKHR bind_acceleration_memory_info{};
 		bind_acceleration_memory_info.sType                 = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_KHR;
-		bind_acceleration_memory_info.accelerationStructure = bottom_level_acceleration_structure;
-		bind_acceleration_memory_info.memory                = object_memory.memory;
+		bind_acceleration_memory_info.accelerationStructure = bottom_level_acceleration_structure->structure;
+		bind_acceleration_memory_info.memory                = bottom_level_acceleration_structure->object_memory->memory;
 		VK_CHECK(vkBindAccelerationStructureMemoryKHR(device->get_handle(), 1, &bind_acceleration_memory_info));
 
 		VkAccelerationStructureGeometryKHR acceleration_geometry{};
@@ -304,14 +323,14 @@ void RaytracingBasic::create_scene()
 		VkAccelerationStructureGeometryKHR *            acceleration_structure_geometries = acceleration_geometries.data();
 
 		// Create a small scratch buffer used during build of the bottom level acceleration structure
-		RayTracingScratchBuffer scratch_buffer(get_device(), bottom_level_acceleration_structure);
+		RayTracingScratchBuffer scratch_buffer(get_device(), bottom_level_acceleration_structure->structure);
 
 		VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
 		acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 		acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 		acceleration_build_geometry_info.update                    = VK_FALSE;
-		acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure;
+		acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure->structure;
 		acceleration_build_geometry_info.geometryArrayOfPointers   = VK_FALSE;
 		acceleration_build_geometry_info.geometryCount             = 1;
 		acceleration_build_geometry_info.ppGeometries              = &acceleration_structure_geometries;
@@ -340,15 +359,17 @@ void RaytracingBasic::create_scene()
 
 		VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 		acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure;
+		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure->structure;
 
-		bottom_level_acceleration_structure_handle = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+		bottom_level_acceleration_structure->handle = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
 
 	/*
 		Create the top level acceleration structure containing geometry instances
 	*/
 	{
+		top_level_acceleration_structure = new RayTracingAccelerationStructure(get_device());
+	
 		VkAccelerationStructureCreateGeometryTypeInfoKHR acceleration_create_geometry_info{};
 		acceleration_create_geometry_info.sType             = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_GEOMETRY_TYPE_INFO_KHR;
 		acceleration_create_geometry_info.geometryType      = VK_GEOMETRY_TYPE_INSTANCES_KHR;
@@ -361,15 +382,15 @@ void RaytracingBasic::create_scene()
 		acceleration_create_info.flags            = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 		acceleration_create_info.maxGeometryCount = 1;
 		acceleration_create_info.pGeometryInfos   = &acceleration_create_geometry_info;
-		VK_CHECK(vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_create_info, nullptr, &top_level_acceleration_structure));
+		VK_CHECK(vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_create_info, nullptr, &top_level_acceleration_structure->structure));
 
 		// Bind object memory to the top level acceleration structure
-		RayTracingObjectMemory object_memory(get_device(), top_level_acceleration_structure);
+		top_level_acceleration_structure->object_memory = new RayTracingObjectMemory(get_device(), top_level_acceleration_structure->structure);
 
 		VkBindAccelerationStructureMemoryInfoKHR bind_acceleration_memory_info{};
 		bind_acceleration_memory_info.sType                 = VK_STRUCTURE_TYPE_BIND_ACCELERATION_STRUCTURE_MEMORY_INFO_KHR;
-		bind_acceleration_memory_info.accelerationStructure = top_level_acceleration_structure;
-		bind_acceleration_memory_info.memory                = object_memory.memory;
+		bind_acceleration_memory_info.accelerationStructure = top_level_acceleration_structure->structure;
+		bind_acceleration_memory_info.memory                = top_level_acceleration_structure->object_memory->memory;
 		VK_CHECK(vkBindAccelerationStructureMemoryKHR(device->get_handle(), 1, &bind_acceleration_memory_info));
 
 		VkTransformMatrixKHR transform_matrix = {
@@ -383,7 +404,7 @@ void RaytracingBasic::create_scene()
 		instance.mask                                   = 0xFF;
 		instance.instanceShaderBindingTableRecordOffset = 0;
 		instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		instance.accelerationStructureReference         = bottom_level_acceleration_structure_handle;
+		instance.accelerationStructureReference         = bottom_level_acceleration_structure->handle;
 
 		std::unique_ptr<vkb::core::Buffer> instances_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 		                                                                                          sizeof(instance),
@@ -406,7 +427,7 @@ void RaytracingBasic::create_scene()
 		VkAccelerationStructureGeometryKHR *            acceleration_structure_geometries = acceleration_geometries.data();
 
 		// Create a small scratch buffer used during build of the top level acceleration structure
-		RayTracingScratchBuffer scratch_buffer(get_device(), top_level_acceleration_structure);
+		RayTracingScratchBuffer scratch_buffer(get_device(), top_level_acceleration_structure->structure);
 
 		VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
 		acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
@@ -414,7 +435,7 @@ void RaytracingBasic::create_scene()
 		acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 		acceleration_build_geometry_info.update                    = VK_FALSE;
 		acceleration_build_geometry_info.srcAccelerationStructure  = VK_NULL_HANDLE;
-		acceleration_build_geometry_info.dstAccelerationStructure  = top_level_acceleration_structure;
+		acceleration_build_geometry_info.dstAccelerationStructure  = top_level_acceleration_structure->structure;
 		acceleration_build_geometry_info.geometryArrayOfPointers   = VK_FALSE;
 		acceleration_build_geometry_info.geometryCount             = 1;
 		acceleration_build_geometry_info.ppGeometries              = &acceleration_structure_geometries;
@@ -442,9 +463,9 @@ void RaytracingBasic::create_scene()
 
 		VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 		acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure;
+		acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure->structure;
 
-		top_level_acceleration_structure_handle = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+		top_level_acceleration_structure->handle = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
 }
 
@@ -493,7 +514,7 @@ void RaytracingBasic::create_descriptor_sets()
 	VkWriteDescriptorSetAccelerationStructureKHR descriptor_acceleration_structure_info{};
 	descriptor_acceleration_structure_info.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 	descriptor_acceleration_structure_info.accelerationStructureCount = 1;
-	descriptor_acceleration_structure_info.pAccelerationStructures    = &top_level_acceleration_structure;
+	descriptor_acceleration_structure_info.pAccelerationStructures    = &top_level_acceleration_structure->structure;
 
 	VkWriteDescriptorSet acceleration_structure_write{};
 	acceleration_structure_write.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

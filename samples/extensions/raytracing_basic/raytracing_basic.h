@@ -56,6 +56,18 @@ struct RayTracingObjectMemory
 	uint64_t       device_address = 0;
 	VkDeviceMemory memory         = VK_NULL_HANDLE;
 	RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
+	~RayTracingObjectMemory();
+};
+
+// Wraps all data required of an acceleration structure
+struct RayTracingAccelerationStructure
+{
+	vkb::Device &              device;
+	VkAccelerationStructureKHR structure;
+	uint64_t                   handle;
+	RayTracingObjectMemory *   object_memory;
+	RayTracingAccelerationStructure(vkb::Device &device);
+	~RayTracingAccelerationStructure();
 };
 
 class RaytracingBasic : public ApiVulkanSample
@@ -64,10 +76,8 @@ class RaytracingBasic : public ApiVulkanSample
 	VkPhysicalDeviceRayTracingPropertiesKHR ray_tracing_properties{};
 	VkPhysicalDeviceRayTracingFeaturesKHR   ray_tracing_features{};
 
-	VkAccelerationStructureKHR bottom_level_acceleration_structure;
-	uint64_t                   bottom_level_acceleration_structure_handle = 0;
-	VkAccelerationStructureKHR top_level_acceleration_structure;
-	uint64_t                   top_level_acceleration_structure_handle = 0;
+	RayTracingAccelerationStructure *bottom_level_acceleration_structure;
+	RayTracingAccelerationStructure *top_level_acceleration_structure;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
