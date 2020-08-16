@@ -26,7 +26,7 @@ ComputeNBody::ComputeNBody()
 	title       = "Compute shader N-body system";
 	camera.type = vkb::CameraType::LookAt;
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
@@ -208,7 +208,7 @@ void ComputeNBody::build_compute_command_buffer()
 	// -------------------------------------------------------------------------------------------------------
 	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_calculate);
 	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &compute.descriptor_set, 0, 0);
-	vkCmdDispatch(compute.command_buffer, num_particles / 256, 1, 1);
+	vkCmdDispatch(compute.command_buffer, num_particles / work_group_size, 1, 1);
 
 	// Add memory barrier to ensure that the computer shader has finished writing to the buffer
 	VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
@@ -231,7 +231,7 @@ void ComputeNBody::build_compute_command_buffer()
 	// Second pass: Integrate particles
 	// -------------------------------------------------------------------------------------------------------
 	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_integrate);
-	vkCmdDispatch(compute.command_buffer, num_particles / 256, 1, 1);
+	vkCmdDispatch(compute.command_buffer, num_particles / work_group_size, 1, 1);
 
 	// Release
 	if (graphics.queue_family_index != compute.queue_family_index)
@@ -608,29 +608,31 @@ void ComputeNBody::prepare_compute()
 	// Create pipelines
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
 
-	// 1st pass
+	// 1st pass - Particle movement calculations
 	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
-	// Set shader parameters via specialization constants
+	// Set some shader parameters via specialization constants
 	struct SpecializationData
 	{
-		uint32_t shaderd_data_size;
+		uint32_t shared_data_size;
 		float    gravity;
 		float    power;
 		float    soften;
+		uint32_t workgroup_size;
 	} specialization_data;
 
 	std::vector<VkSpecializationMapEntry> specialization_map_entries;
-	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecializationData, shaderd_data_size), sizeof(uint32_t)));
-	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(1, offsetof(SpecializationData, gravity), sizeof(float)));
-	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(2, offsetof(SpecializationData, power), sizeof(float)));
-	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(3, offsetof(SpecializationData, soften), sizeof(float)));
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecializationData, workgroup_size), sizeof(uint32_t)));
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(1, offsetof(SpecializationData, shared_data_size), sizeof(uint32_t)));
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(2, offsetof(SpecializationData, gravity), sizeof(float)));
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(3, offsetof(SpecializationData, power), sizeof(float)));
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(4, offsetof(SpecializationData, soften), sizeof(float)));
 
-	specialization_data.shaderd_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
-
-	specialization_data.gravity = 0.002f;
-	specialization_data.power   = 0.75f;
-	specialization_data.soften  = 0.05f;
+	specialization_data.shared_data_size = shared_data_size;
+	specialization_data.gravity          = 0.002f;
+	specialization_data.power            = 0.75f;
+	specialization_data.soften           = 0.05f;
+	specialization_data.workgroup_size   = work_group_size;
 
 	VkSpecializationInfo specialization_info =
 	    vkb::initializers::specialization_info(static_cast<uint32_t>(specialization_map_entries.size()), specialization_map_entries.data(), sizeof(specialization_data), &specialization_data);
@@ -638,7 +640,13 @@ void ComputeNBody::prepare_compute()
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
-	// 2nd pass
+	// 2nd pass - Particle integration
+	specialization_map_entries.clear();
+	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
+	specialization_info =
+	    vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(work_group_size), &work_group_size);
+	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
+
 	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_integrate));
 
@@ -835,6 +843,11 @@ bool ComputeNBody::prepare(vkb::Platform &platform)
 
 	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
 	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+
+	// Not all implementations support a work group size of 256, so we need to check with the device limits
+	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize);
+	// Same for shared data size for passing data between shader invocations
+	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	load_assets();
 	setup_descriptor_pool();
