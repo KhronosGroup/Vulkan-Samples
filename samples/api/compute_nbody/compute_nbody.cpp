@@ -845,7 +845,7 @@ bool ComputeNBody::prepare(vkb::Platform &platform)
 	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
-	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize);
+	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
 	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
