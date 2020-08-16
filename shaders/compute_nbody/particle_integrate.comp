@@ -28,8 +28,6 @@ layout(std140, binding = 0) buffer Pos
    Particle particles[ ];
 };
 
-layout (constant_id = 0) const int WORKGROUP_SIZE = 128;
-
 layout (local_size_x_id = 0) in;
 
 layout (binding = 1) uniform UBO 

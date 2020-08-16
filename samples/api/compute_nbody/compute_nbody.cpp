@@ -614,11 +614,11 @@ void ComputeNBody::prepare_compute()
 	// Set some shader parameters via specialization constants
 	struct SpecializationData
 	{
+		uint32_t workgroup_size;
 		uint32_t shared_data_size;
 		float    gravity;
 		float    power;
 		float    soften;
-		uint32_t workgroup_size;
 	} specialization_data;
 
 	std::vector<VkSpecializationMapEntry> specialization_map_entries;
@@ -628,11 +628,11 @@ void ComputeNBody::prepare_compute()
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(3, offsetof(SpecializationData, power), sizeof(float)));
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(4, offsetof(SpecializationData, soften), sizeof(float)));
 
+	specialization_data.workgroup_size   = work_group_size;
 	specialization_data.shared_data_size = shared_data_size;
 	specialization_data.gravity          = 0.002f;
 	specialization_data.power            = 0.75f;
 	specialization_data.soften           = 0.05f;
-	specialization_data.workgroup_size   = work_group_size;
 
 	VkSpecializationInfo specialization_info =
 	    vkb::initializers::specialization_info(static_cast<uint32_t>(specialization_map_entries.size()), specialization_map_entries.data(), sizeof(specialization_data), &specialization_data);
@@ -641,13 +641,14 @@ void ComputeNBody::prepare_compute()
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
 	// 2nd pass - Particle integration
+	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+
 	specialization_map_entries.clear();
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
 	specialization_info =
 	    vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(work_group_size), &work_group_size);
-	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
 
-	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_integrate));
 
 	// Separate command pool as queue family for compute may be different than graphics
