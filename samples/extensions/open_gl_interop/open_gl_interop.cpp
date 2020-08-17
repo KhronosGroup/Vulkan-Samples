@@ -171,7 +171,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{
 		    VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr,
-		    compatable_semaphore_type};
+		    VkExternalSemaphoreHandleTypeFlags(compatable_semaphore_type)};
 		VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		                                          &exportSemaphoreCreateInfo};
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
