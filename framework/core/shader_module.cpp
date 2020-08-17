@@ -43,6 +43,7 @@ inline std::vector<std::string> precompile_shader(const std::string &source)
 			// Include paths are relative to the base shader directory
 			std::string include_path = line.substr(10);
 			size_t last_quote = include_path.find("\"");
+
 			if (!include_path.empty() && last_quote != std::string::npos)
 			{
 				include_path = include_path.substr(0, last_quote);
