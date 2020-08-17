@@ -322,7 +322,7 @@ function(add_project)
         target_include_directories(${PROJECT_NAME} PUBLIC 
             $<TARGET_PROPERTY:${TARGET_ID},INCLUDE_DIRECTORIES>)
 
-        target_link_libraries(${PROJECT_NAME} PUBLIC framework)
+        target_link_libraries(${PROJECT_NAME} PUBLIC framework ${TARGET_LIBS})
 
         if(${TARGET_TYPE} STREQUAL "Test")
             target_link_libraries(${PROJECT_NAME} PUBLIC test_framework)
