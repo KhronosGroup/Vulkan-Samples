@@ -301,15 +301,13 @@ VkSemaphore RenderContext::begin_frame()
 
 	if (swapchain)
 	{
-		auto fence = prev_frame.request_fence();
-
-		auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
+		auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, VK_NULL_HANDLE);
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			handle_surface_changes();
 
-			result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, fence);
+			result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, VK_NULL_HANDLE);
 		}
 
 		if (result != VK_SUCCESS)
@@ -323,6 +321,7 @@ VkSemaphore RenderContext::begin_frame()
 	// Now the frame is active again
 	frame_active = true;
 
+	// Wait on all resource to be freed from the previous render to this frame
 	wait_frame();
 
 	return aquired_semaphore;
