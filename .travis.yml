@@ -39,7 +39,7 @@ jobs:
       name: "Clang Format"
     - script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang"
-        - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-8 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/"
+        - docker exec VKB sh -c "cd /home/vulkan-samples && python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/"
       name: "Clang Tidy"
     - script: 
         - docker exec VKB sh -c "cd /home/vulkan-samples && git fetch origin master:master && python3 /usr/local/bin/snake_case.py master > ./snake-report.txt"
