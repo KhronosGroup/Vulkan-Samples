@@ -16,7 +16,10 @@ Please ensure the following points are checked:
 - [ ] My changes do not add any new compiler warnings
 - [ ] My changes do not add any new validation layer errors or warnings
 - [ ] I have used existing framework/helper functions where possible
-- [ ] My changes build and run on Windows, Linux, macOS and Android. Otherwise I have [documented any exceptions](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#General-Requirements)
+- [ ] My changes build on Windows, Linux, macOS and Android. Otherwise I have [documented any exceptions](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#General-Requirements)
+- [ ] My changes do not add any regressions
+- [ ] I have tested every sample to ensure everything runs correctly
+- [ ] This PR describes the scope and expected impact of the changes I am making
 
 ## Sample Checklist
 
