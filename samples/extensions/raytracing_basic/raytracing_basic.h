@@ -33,10 +33,15 @@
 
 #include "api_vulkan_sample.h"
 
-// Indices for the different ray tracing shader types used in this example
+// Indices for the ray tracing shader groups
 #define INDEX_RAYGEN_GROUP 0
 #define INDEX_MISS_GROUP 1
 #define INDEX_CLOSEST_HIT_GROUP 2
+
+// Indices for the ray tracing shaders for the ray tracing pipeline
+#define INDEX_RAYGEN_SHADER 0
+#define INDEX_MISS_SHADER 1
+#define INDEX_CLOSEST_HIT_SHADER 2
 
 // Holds data for a ray tracing scratch buffer that is used as a temporary storage
 struct RayTracingScratchBuffer

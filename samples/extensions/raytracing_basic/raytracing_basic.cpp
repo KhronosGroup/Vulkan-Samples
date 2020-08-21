@@ -586,9 +586,9 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
 	std::array<VkPipelineShaderStageCreateInfo, 3> shader_stages;
-	shader_stages[0] = load_shader("khr_ray_tracing_basic/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR);
-	shader_stages[1] = load_shader("khr_ray_tracing_basic/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR);
-	shader_stages[2] = load_shader("khr_ray_tracing_basic/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR);
+	shader_stages[INDEX_RAYGEN_SHADER]      = load_shader("khr_ray_tracing_basic/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR);
+	shader_stages[INDEX_MISS_SHADER]        = load_shader("khr_ray_tracing_basic/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR);
+	shader_stages[INDEX_CLOSEST_HIT_SHADER] = load_shader("khr_ray_tracing_basic/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR);
 
 	/*
 		Setup ray tracing shader groups
@@ -596,7 +596,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 	raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-	raygen_group_ci.generalShader      = 0;
+	raygen_group_ci.generalShader      = INDEX_RAYGEN_SHADER;
 	raygen_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
 	raygen_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
 	raygen_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
@@ -605,7 +605,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 	miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
-	miss_group_ci.generalShader      = 1;
+	miss_group_ci.generalShader      = INDEX_MISS_SHADER;
 	miss_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
 	miss_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
 	miss_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
@@ -615,7 +615,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 	closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
 	closes_hit_group_ci.generalShader      = VK_SHADER_UNUSED_KHR;
-	closes_hit_group_ci.closestHitShader   = 2;
+	closes_hit_group_ci.closestHitShader   = INDEX_CLOSEST_HIT_SHADER;
 	closes_hit_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
 	closes_hit_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
 	shader_groups.push_back(closes_hit_group_ci);
