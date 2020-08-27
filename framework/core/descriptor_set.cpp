@@ -18,6 +18,7 @@
 #include "descriptor_set.h"
 
 #include "common/logging.h"
+#include "common/resource_caching.h"
 #include "descriptor_pool.h"
 #include "descriptor_set_layout.h"
 #include "device.h"
@@ -151,28 +152,46 @@ void DescriptorSet::prepare()
 void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 {
 	std::vector<VkWriteDescriptorSet> write_operations;
+	std::vector<size_t>               write_operation_hashes;
 
-	// If the 'bindings_to_update' vector is empty, we want to write to all the bindings (skipping those that haven't already been written)
+	// If the 'bindings_to_update' vector is empty, we want to write to all the bindings
+	// (but skipping all to-update bindings that haven't been written yet)
 	if (bindings_to_update.empty())
 	{
-		for (auto &write_operation : write_descriptor_sets)
+		for (size_t i = 0; i < write_descriptor_sets.size(); i++)
 		{
-			if (std::find(updated_bindings.begin(), updated_bindings.end(), write_operation.dstBinding) == updated_bindings.end())
+			const auto &write_operation = write_descriptor_sets[i];
+
+			size_t write_operation_hash = 0;
+			hash_param(write_operation_hash, write_operation);
+
+			auto update_pair_it = updated_bindings.find(write_operation.dstBinding);
+			if (update_pair_it == updated_bindings.end() || update_pair_it->second != write_operation_hash)
 			{
 				write_operations.push_back(write_operation);
+				write_operation_hashes.push_back(write_operation_hash);
 			}
 		}
 	}
 	else
 	{
 		// Otherwise we want to update the binding indices present in the 'bindings_to_update' vector.
-		// (Again skipping those that have already been written)
-		for (auto &write_operation : write_descriptor_sets)
+		// (again, skipping those to update but not updated yet)
+		for (size_t i = 0; i < write_descriptor_sets.size(); i++)
 		{
-			if (std::find(bindings_to_update.begin(), bindings_to_update.end(), write_operation.dstBinding) != bindings_to_update.end() &&
-			    std::find(updated_bindings.begin(), updated_bindings.end(), write_operation.dstBinding) == updated_bindings.end())
+			const auto &write_operation = write_descriptor_sets[i];
+
+			if (std::find(bindings_to_update.begin(), bindings_to_update.end(), write_operation.dstBinding) != bindings_to_update.end())
 			{
-				write_operations.push_back(write_operation);
+				size_t write_operation_hash = 0;
+				hash_param(write_operation_hash, write_operation);
+
+				auto update_pair_it = updated_bindings.find(write_operation.dstBinding);
+				if (update_pair_it == updated_bindings.end() || update_pair_it->second != write_operation_hash)
+				{
+					write_operations.push_back(write_operation);
+					write_operation_hashes.push_back(write_operation_hash);
+				}
 			}
 		}
 	}
@@ -187,10 +206,11 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 		                       nullptr);
 	}
 
-	// Store the bindings from the write operations that were executed by vkUpdateDescriptorSets to prevent overwriting by future calls to "update()"
-	for (auto &write_op : write_operations)
+	// Store the bindings from the write operations that were executed by vkUpdateDescriptorSets (and their hash)
+	// to prevent overwriting by future calls to "update()"
+	for (size_t i = 0; i < write_operations.size(); i++)
 	{
-		updated_bindings.push_back(write_op.dstBinding);
+		updated_bindings[write_operations[i].dstBinding] = write_operation_hashes[i];
 	}
 }
 

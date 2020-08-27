@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "rendering/postprocessing_pipeline.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "vulkan_sample.h"
@@ -92,7 +93,7 @@ class MSAASample : public vkb::VulkanSample
 	 *        Read in the output color and depth attachments from the
 	 *        scene subpass and use them to apply a screen-based effect
 	 */
-	std::unique_ptr<vkb::RenderPipeline> postprocessing_pipeline{};
+	std::unique_ptr<vkb::PostProcessingPipeline> postprocessing_pipeline{};
 
 	/**
 	 * @brief Update MSAA options and accordingly set the load/store
@@ -243,8 +244,6 @@ class MSAASample : public vkb::VulkanSample
 	std::vector<uint32_t> depth_atts{};
 
 	std::vector<vkb::LoadStoreInfo> scene_load_store{};
-
-	std::vector<vkb::LoadStoreInfo> postprocessing_load_store{};
 
 	/* Helpers for managing GUI input */
 

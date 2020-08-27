@@ -278,6 +278,11 @@ void CommandBuffer::bind_image(const core::ImageView &image_view, const core::Sa
 	resource_binding_state.bind_image(image_view, sampler, set, binding, array_element);
 }
 
+void CommandBuffer::bind_image(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	resource_binding_state.bind_image(image_view, set, binding, array_element);
+}
+
 void CommandBuffer::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_binding_state.bind_input(image_view, set, binding, array_element);

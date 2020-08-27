@@ -88,6 +88,38 @@ vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
 	}
 }
 
+vkb::RenderTarget::RenderTarget(std::vector<core::ImageView> &&image_views) :
+    device{const_cast<core::Image &>(image_views.back().get_image()).get_device()},
+    images{},
+    views{std::move(image_views)}
+{
+	assert(!views.empty() && "Should specify at least 1 image view");
+
+	std::set<VkExtent2D, CompareExtent2D> unique_extent;
+
+	// Returns the extent of the base mip level pointed at by a view
+	auto get_view_extent = [](const core::ImageView &view) {
+		const VkExtent3D mip0_extent = view.get_image().get_extent();
+		const uint32_t   mip_level   = view.get_subresource_range().baseMipLevel;
+		return VkExtent2D{mip0_extent.width >> mip_level, mip0_extent.height >> mip_level};
+	};
+
+	// Constructs a set of unique image extents given a vector of image views;
+	// allow only one extent size for a render target
+	std::transform(views.begin(), views.end(), std::inserter(unique_extent, unique_extent.end()), get_view_extent);
+	if (unique_extent.size() != 1)
+	{
+		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED, "Extent size is not unique"};
+	}
+	extent = *unique_extent.begin();
+
+	for (auto &view : views)
+	{
+		const auto &image = view.get_image();
+		attachments.emplace_back(Attachment{image.get_format(), image.get_sample_count(), image.get_usage()});
+	}
+}
+
 const VkExtent2D &RenderTarget::get_extent() const
 {
 	return extent;
@@ -126,6 +158,11 @@ const std::vector<uint32_t> &RenderTarget::get_output_attachments() const
 void RenderTarget::set_layout(uint32_t attachment, VkImageLayout layout)
 {
 	attachments[attachment].initial_layout = layout;
+}
+
+VkImageLayout RenderTarget::get_layout(uint32_t attachment) const
+{
+	return attachments[attachment].initial_layout;
 }
 
 }        // namespace vkb

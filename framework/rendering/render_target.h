@@ -63,6 +63,8 @@ class RenderTarget
 
 	RenderTarget(std::vector<core::Image> &&images);
 
+	RenderTarget(std::vector<core::ImageView> &&image_views);
+
 	RenderTarget(const RenderTarget &) = delete;
 
 	RenderTarget(RenderTarget &&) = delete;
@@ -96,6 +98,8 @@ class RenderTarget
 	const std::vector<uint32_t> &get_output_attachments() const;
 
 	void set_layout(uint32_t attachment, VkImageLayout layout);
+
+	VkImageLayout get_layout(uint32_t attachment) const;
 
   private:
 	Device &device;
