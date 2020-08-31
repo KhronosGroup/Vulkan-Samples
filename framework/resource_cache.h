@@ -99,7 +99,9 @@ class ResourceCache
 
 	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 
-	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<ShaderResource> &set_resources);
+	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                     set_index,
+	                                                   const std::vector<ShaderModule *> &shader_modules,
+	                                                   const std::vector<ShaderResource> &set_resources);
 
 	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
 
