@@ -94,10 +94,18 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &device, const uint32_t set_index, const std::vector<ShaderResource> &resource_set) :
+DescriptorSetLayout::DescriptorSetLayout(Device &                           device,
+                                         const uint32_t                     set_index,
+                                         const std::vector<ShaderModule *> &shader_modules,
+                                         const std::vector<ShaderResource> &resource_set) :
     device{device},
-    set_index{set_index}
+    set_index{set_index},
+    shader_modules{shader_modules}
 {
+	// NOTE: `shader_modules` is passed in mainly for hashing their handles in `request_resource`.
+	//        This way, different pipelines (with different shaders / shader variants) will get
+	//        different descriptor set layouts (incl. appropriate name -> binding lookups)
+
 	for (auto &resource : resource_set)
 	{
 		// Skip shader resources whitout a binding point
@@ -182,6 +190,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &device, const uint32_t set_inde
 
 DescriptorSetLayout::DescriptorSetLayout(DescriptorSetLayout &&other) :
     device{other.device},
+    shader_modules{other.shader_modules},
     handle{other.handle},
     set_index{other.set_index},
     bindings{std::move(other.bindings)},
@@ -256,6 +265,11 @@ VkDescriptorBindingFlagsEXT DescriptorSetLayout::get_layout_binding_flag(const u
 	}
 
 	return it->second;
+}
+
+const std::vector<ShaderModule *> &DescriptorSetLayout::get_shader_modules() const
+{
+	return shader_modules;
 }
 
 }        // namespace vkb
