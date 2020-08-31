@@ -24,7 +24,9 @@ namespace vkb
 {
 namespace core
 {
-ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format) :
+ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
+                     uint32_t mip_level, uint32_t array_layer,
+                     uint32_t n_mip_levels, uint32_t n_array_layers) :
     device{img.get_device()},
     image{&img},
     format{format}
@@ -34,8 +36,10 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format) :
 		this->format = format = image->get_format();
 	}
 
-	subresource_range.levelCount = image->get_subresource().mipLevel;
-	subresource_range.layerCount = image->get_subresource().arrayLayer;
+	subresource_range.baseMipLevel   = mip_level;
+	subresource_range.baseArrayLayer = array_layer;
+	subresource_range.levelCount     = n_mip_levels == 0 ? image->get_subresource().mipLevel : n_mip_levels;
+	subresource_range.layerCount     = n_array_layers == 0 ? image->get_subresource().arrayLayer : n_array_layers;
 
 	if (is_depth_stencil_format(format))
 	{

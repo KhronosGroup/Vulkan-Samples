@@ -19,17 +19,17 @@
 precision highp float;
 
 #ifdef MS_DEPTH
-layout(set = 0, binding = 0) uniform sampler2DMS ms_depth_sampler;
+layout(set = 0, binding = 1) uniform sampler2DMS ms_depth_sampler;
 #else
-layout(set = 0, binding = 0) uniform sampler2D depth_sampler;
+layout(set = 0, binding = 1) uniform sampler2D depth_sampler;
 #endif
-layout(set = 0, binding = 1) uniform sampler2D color_sampler;
+layout(set = 0, binding = 2) uniform sampler2D color_sampler;
 
 layout(location = 0) in vec2 in_uv;
 
 layout(location = 0) out vec4 o_color;
 
-layout(set = 0, binding = 2) uniform PostprocessingUniform
+layout(set = 0, binding = 0) uniform PostprocessingUniform
 {
 	vec2 near_far;
 } postprocessing_uniform;

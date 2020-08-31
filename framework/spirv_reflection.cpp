@@ -81,15 +81,16 @@ inline void read_resource_decoration<spv::DecorationNonWritable>(const spirv_cro
                                                                  ShaderResource &             shader_resource,
                                                                  const ShaderVariant &        variant)
 {
-	// Not storing this information, as not useful
+	shader_resource.qualifiers |= ShaderResourceQualifiers::NonWritable;
 }
+
 template <>
 inline void read_resource_decoration<spv::DecorationNonReadable>(const spirv_cross::Compiler &compiler,
                                                                  const spirv_cross::Resource &resource,
                                                                  ShaderResource &             shader_resource,
                                                                  const ShaderVariant &        variant)
 {
-	// Not storing this information, as not useful
+	shader_resource.qualifiers |= ShaderResourceQualifiers::NonReadable;
 }
 
 inline void read_resource_vec_size(const spirv_cross::Compiler &compiler,
