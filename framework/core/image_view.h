@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,9 @@ namespace core
 class ImageView
 {
   public:
-	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED);
+	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED,
+	          uint32_t base_mip_level = 0, uint32_t base_array_layer = 0,
+	          uint32_t n_mip_levels = 0, uint32_t n_array_layers = 0);
 
 	ImageView(ImageView &) = delete;
 

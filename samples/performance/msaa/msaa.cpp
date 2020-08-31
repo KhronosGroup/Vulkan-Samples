@@ -22,8 +22,8 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
+#include "rendering/postprocessing_renderpass.h"
 #include "rendering/subpasses/forward_subpass.h"
-#include "rendering/subpasses/postprocessing_subpass.h"
 #include "stats/stats.h"
 
 namespace
@@ -118,10 +118,9 @@ bool MSAASample::prepare(vkb::Platform &platform)
 	scene_pipeline->add_subpass(std::move(scene_subpass));
 
 	vkb::ShaderSource postprocessing_vs("postprocessing/postprocessing.vert");
-	vkb::ShaderSource postprocessing_fs("postprocessing/outline.frag");
-	auto              postprocessing_subpass = std::make_unique<vkb::PostProcessingSubpass>(get_render_context(), std::move(postprocessing_vs), std::move(postprocessing_fs), *scene, *camera);
-	postprocessing_pipeline                  = std::make_unique<vkb::RenderPipeline>();
-	postprocessing_pipeline->add_subpass(std::move(postprocessing_subpass));
+	postprocessing_pipeline = std::make_unique<vkb::PostProcessingPipeline>(get_render_context(), std::move(postprocessing_vs));
+	postprocessing_pipeline->add_pass()
+	    .add_subpass(vkb::ShaderSource("postprocessing/outline.frag"));
 
 	update_pipelines();
 
@@ -229,7 +228,6 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 	                                     VK_SAMPLE_COUNT_1_BIT};
 
 	scene_load_store.clear();
-	postprocessing_load_store.clear();
 	std::vector<vkb::core::Image> images;
 
 	// Attachment 0 - Swapchain
@@ -238,21 +236,18 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 	i_swapchain = 0;
 	images.push_back(std::move(swapchain_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE});
-	postprocessing_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_STORE});
 
 	// Attachment 1 - Depth
 	// Always used by the scene renderpass, may or may not be multisampled
 	i_depth = 1;
 	images.push_back(std::move(depth_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
-	postprocessing_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
 
 	// Attachment 2 - Multisampled color
 	// Used by the scene renderpass if MSAA is enabled
 	i_color_ms = 2;
 	images.push_back(std::move(color_ms_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
-	postprocessing_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
 
 	// Attachment 3 - Resolved color
 	// Used as an output by the scene renderpass if MSAA and postprocessing are enabled
@@ -260,14 +255,12 @@ std::unique_ptr<vkb::RenderTarget> MSAASample::create_render_target(vkb::core::I
 	i_color_resolve = 3;
 	images.push_back(std::move(color_resolve_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
-	postprocessing_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
 
 	// Attachment 4 - Resolved depth
 	// Used for writeback depth resolve if MSAA is enabled and the required extension is supported
 	i_depth_resolve = 4;
 	images.push_back(std::move(depth_resolve_image));
 	scene_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
-	postprocessing_load_store.push_back({VK_ATTACHMENT_LOAD_OP_CLEAR, VK_ATTACHMENT_STORE_OP_DONT_CARE});
 
 	color_atts = {i_swapchain, i_color_ms, i_color_resolve};
 	depth_atts = {i_depth, i_depth_resolve};
@@ -385,14 +378,6 @@ void MSAASample::update_for_scene_and_postprocessing(bool msaa_enabled)
 
 	// Update the scene renderpass
 	scene_pipeline->set_load_store(scene_load_store);
-
-	// Postprocessing renderpass: clear and store swapchain
-	// The load/store operations of unused attachments are ignored
-	postprocessing_load_store[i_swapchain].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	postprocessing_load_store[i_swapchain].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-
-	// Update the postprocessing renderpass
-	postprocessing_pipeline->set_load_store(postprocessing_load_store);
 }
 
 void MSAASample::use_multisampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t resolve_attachment)
@@ -580,45 +565,27 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target,
                                 VkImageLayout &swapchain_layout, bool msaa_enabled)
 {
-	auto postprocessing_subpass = dynamic_cast<vkb::PostProcessingSubpass *>(postprocessing_pipeline->get_active_subpass().get());
-	auto depth_attachment       = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
-	bool multisampled_depth     = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
+	auto        depth_attachment   = (msaa_enabled && depth_writeback_resolve_supported && resolve_depth_on_writeback) ? i_depth_resolve : i_depth;
+	bool        multisampled_depth = msaa_enabled && !(depth_writeback_resolve_supported && resolve_depth_on_writeback);
+	std::string depth_sampler_name = multisampled_depth ? "ms_depth_sampler" : "depth_sampler";
 
-	postprocessing_subpass->set_ms_depth(multisampled_depth);
-	postprocessing_subpass->set_full_screen_color(i_color_resolve);
-	postprocessing_subpass->set_full_screen_depth(depth_attachment);
-	postprocessing_subpass->set_disable_depth_stencil_attachment(true);
+	glm::vec4 near_far = {camera->get_far_plane(), camera->get_near_plane(), -1.0f, -1.0f};
 
-	auto &views = render_target.get_views();
+	auto &postprocessing_pass = postprocessing_pipeline->get_pass(0);
+	postprocessing_pass.set_uniform_data(near_far);
 
-	// Prepare color and depth attachments to be bound as textures
+	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
+	postprocessing_subpass.get_fs_variant().clear();
+	if (multisampled_depth)
 	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-		command_buffer.image_memory_barrier(views.at(i_color_resolve), memory_barrier);
-		render_target.set_layout(i_color_resolve, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH");
 	}
-
-	{
-		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
-		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-
-		command_buffer.image_memory_barrier(views.at(depth_attachment), memory_barrier);
-		render_target.set_layout(depth_attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	}
+	postprocessing_subpass
+	    .bind_sampled_image(depth_sampler_name, depth_attachment)
+	    .bind_sampled_image("color_sampler", i_color_resolve);
 
 	// Second render pass
+	// NOTE: Color and depth attachments are automatically transitioned to be bound as textures
 	postprocessing_pipeline->draw(command_buffer, render_target);
 
 	if (gui)

@@ -55,6 +55,13 @@ void ResourceBindingState::bind_image(const core::ImageView &image_view, const c
 	dirty = true;
 }
 
+void ResourceBindingState::bind_image(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
+{
+	resource_sets[set].bind_image(image_view, binding, array_element);
+
+	dirty = true;
+}
+
 void ResourceBindingState::bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element)
 {
 	resource_sets[set].bind_input(image_view, binding, array_element);
@@ -104,6 +111,15 @@ void ResourceSet::bind_image(const core::ImageView &image_view, const core::Samp
 	resource_bindings[binding][array_element].dirty      = true;
 	resource_bindings[binding][array_element].image_view = &image_view;
 	resource_bindings[binding][array_element].sampler    = &sampler;
+
+	dirty = true;
+}
+
+void ResourceSet::bind_image(const core::ImageView &image_view, uint32_t binding, uint32_t array_element)
+{
+	resource_bindings[binding][array_element].dirty      = true;
+	resource_bindings[binding][array_element].image_view = &image_view;
+	resource_bindings[binding][array_element].sampler    = nullptr;
 
 	dirty = true;
 }

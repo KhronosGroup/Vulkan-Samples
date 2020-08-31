@@ -256,6 +256,59 @@ struct hash<VkDescriptorImageInfo>
 };
 
 template <>
+struct hash<VkWriteDescriptorSet>
+{
+	std::size_t operator()(const VkWriteDescriptorSet &write_descriptor_set) const
+	{
+		std::size_t result = 0;
+
+		vkb::hash_combine(result, write_descriptor_set.dstSet);
+		vkb::hash_combine(result, write_descriptor_set.dstBinding);
+		vkb::hash_combine(result, write_descriptor_set.dstArrayElement);
+		vkb::hash_combine(result, write_descriptor_set.descriptorCount);
+		vkb::hash_combine(result, write_descriptor_set.descriptorType);
+
+		switch (write_descriptor_set.descriptorType)
+		{
+			case VK_DESCRIPTOR_TYPE_SAMPLER:
+			case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+			case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+			case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+			case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+				for (uint32_t i = 0; i < write_descriptor_set.descriptorCount; i++)
+				{
+					vkb::hash_combine(result, write_descriptor_set.pImageInfo[i]);
+				}
+				break;
+
+			case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+			case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+				for (uint32_t i = 0; i < write_descriptor_set.descriptorCount; i++)
+				{
+					vkb::hash_combine(result, write_descriptor_set.pTexelBufferView[i]);
+				}
+				break;
+
+			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+			case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+			case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+			case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+				for (uint32_t i = 0; i < write_descriptor_set.descriptorCount; i++)
+				{
+					vkb::hash_combine(result, write_descriptor_set.pBufferInfo[i]);
+				}
+				break;
+
+			default:
+				// Not implemented
+				break;
+		};
+
+		return result;
+	}
+};
+
+template <>
 struct hash<VkVertexInputAttributeDescription>
 {
 	std::size_t operator()(const VkVertexInputAttributeDescription &vertex_attrib) const
