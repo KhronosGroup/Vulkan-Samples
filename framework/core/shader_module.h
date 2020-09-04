@@ -49,6 +49,17 @@ enum class ShaderResourceMode
 	UpdateAfterBind
 };
 
+/// A bitmask of qualifiers applied to a resource
+struct ShaderResourceQualifiers
+{
+	enum : uint32_t
+	{
+		None        = 0,
+		NonReadable = 1,
+		NonWritable = 2,
+	};
+};
+
 /// Store shader resource data.
 /// Used by the shader module.
 struct ShaderResource
@@ -78,6 +89,8 @@ struct ShaderResource
 	uint32_t size;
 
 	uint32_t constant_id;
+
+	uint32_t qualifiers;
 
 	std::string name;
 };

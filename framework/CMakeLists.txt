@@ -83,6 +83,10 @@ set(GEOMETRY_FILES
 set(RENDERING_FILES
     # Header files
     rendering/pipeline_state.h
+    rendering/postprocessing_pipeline.h
+    rendering/postprocessing_pass.h
+    rendering/postprocessing_renderpass.h
+    rendering/postprocessing_computepass.h
     rendering/render_context.h
     rendering/render_frame.h
     rendering/render_pipeline.h
@@ -90,6 +94,10 @@ set(RENDERING_FILES
     rendering/subpass.h
     # Source files
     rendering/pipeline_state.cpp
+    rendering/postprocessing_pipeline.cpp
+    rendering/postprocessing_pass.cpp
+    rendering/postprocessing_renderpass.cpp
+    rendering/postprocessing_computepass.cpp
     rendering/render_context.cpp
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
@@ -101,12 +109,10 @@ set(RENDERING_SUBPASSES_FILES
     rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
     rendering/subpasses/geometry_subpass.h
-    rendering/subpasses/postprocessing_subpass.h
     # Source files
     rendering/subpasses/forward_subpass.cpp
     rendering/subpasses/lighting_subpass.cpp
-    rendering/subpasses/geometry_subpass.cpp
-    rendering/subpasses/postprocessing_subpass.cpp)
+    rendering/subpasses/geometry_subpass.cpp)
 
 set(SCENE_GRAPH_FILES
     # Header Files
@@ -198,6 +204,7 @@ set(CORE_FILES
     core/buffer.h
     core/image.h
     core/image_view.h
+    core/sampled_image.h
     core/instance.h
     core/sampler.h
     core/framebuffer.h
@@ -221,6 +228,7 @@ set(CORE_FILES
     core/buffer.cpp
     core/image.cpp
     core/image_view.cpp
+    core/sampled_image.cpp
     core/instance.cpp
     core/sampler.cpp
     core/framebuffer.cpp

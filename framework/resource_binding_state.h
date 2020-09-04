@@ -65,6 +65,8 @@ class ResourceSet
 
 	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t binding, uint32_t array_element);
 
+	void bind_image(const core::ImageView &image_view, uint32_t binding, uint32_t array_element);
+
 	void bind_input(const core::ImageView &image_view, uint32_t binding, uint32_t array_element);
 
 	const BindingMap<ResourceInfo> &get_resource_bindings() const;
@@ -95,6 +97,8 @@ class ResourceBindingState
 	void bind_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize range, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
+
+	void bind_image(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 

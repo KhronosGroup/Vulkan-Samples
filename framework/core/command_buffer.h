@@ -169,6 +169,8 @@ class CommandBuffer
 
 	void bind_image(const core::ImageView &image_view, const core::Sampler &sampler, uint32_t set, uint32_t binding, uint32_t array_element);
 
+	void bind_image(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
+
 	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
 	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
