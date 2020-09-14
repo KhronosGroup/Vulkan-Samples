@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,18 +28,18 @@ layout(std140, binding = 0) buffer Pos
    Particle particles[ ];
 };
 
-layout (local_size_x = 256) in;
-
 layout (binding = 1) uniform UBO 
 {
 	float deltaT;
 	int particleCount;
 } ubo;
 
-layout (constant_id = 0) const int SHARED_DATA_SIZE = 512;
-layout (constant_id = 1) const float GRAVITY = 0.002;
-layout (constant_id = 2) const float POWER = 0.75;
-layout (constant_id = 3) const float SOFTEN = 0.0075;
+layout (constant_id = 1) const int SHARED_DATA_SIZE = 1024;
+layout (constant_id = 2) const float GRAVITY = 0.002;
+layout (constant_id = 3) const float POWER = 0.75;
+layout (constant_id = 4) const float SOFTEN = 0.05;
+
+layout (local_size_x_id = 0) in;
 
 // Share data between computer shader invocations to speed up caluclations
 shared vec4 sharedData[SHARED_DATA_SIZE];

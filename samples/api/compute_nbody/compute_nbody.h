@@ -34,6 +34,8 @@ class ComputeNBody : public ApiVulkanSample
 {
   public:
 	uint32_t num_particles;
+	uint32_t work_group_size  = 128;
+	uint32_t shared_data_size = 1024;
 
 	struct
 	{
