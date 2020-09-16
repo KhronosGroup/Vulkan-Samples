@@ -26,6 +26,7 @@
 - [Introduction](#introduction)
   - [Goals](#goals)
 - [Tutorials](#tutorials)
+- [Samples](#samples)
 - [Setup](#setup)
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
@@ -48,12 +49,13 @@ Additionally you may find the following links useful:
  [Performance samples](samples/performance) show the recommended best practice together with real-time profiling information.
  They are more advanced but also contain a detailed [tutorial](#tutorials) with more in-detail explanations.
 
-[Here is a complete list of all samples](./samples/README.md) available in this repository.
-
 ### Goals
 - Create a collection of resources that demonstrate best-practice recommendations in Vulkan
 - Create tutorials that explain the implementation of best-practices and include performance analysis guides
 - Create a framework that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
+
+## Samples
+- [Listing of all samples available in this repository ](./samples/README.md)
 
 ## Tutorials
 - **Project Basics**
