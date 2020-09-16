@@ -407,7 +407,8 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    docopt)
+    docopt
+    apps)
 
 # Link platform specific libraries
 if(ANDROID)

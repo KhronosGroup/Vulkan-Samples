@@ -22,6 +22,8 @@ include(android_package)
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
 
+add_subdirectory(apps)
+
 set(SRC
     main.cpp
 )
@@ -43,7 +45,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../framework)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE framework)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework apps)
 
 # Create android project
 if(ANDROID)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,6 +21,7 @@
 #include <string>
 #include <vector>
 
+#include "apps.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
@@ -47,7 +48,7 @@ class Platform
 	 * @brief Sets up the window and logger
 	 * @param app The application to prepare after the platform is prepared
 	 */
-	virtual bool initialize(std::unique_ptr<Application> &&app);
+	virtual bool initialize();
 
 	/**
 	 * @brief Prepares the active app supplied in the initialize function
@@ -110,6 +111,12 @@ class Platform
 
 	static void set_temp_directory(const std::string &dir);
 
+	void request_application(const apps::AppInfo *app);
+
+	bool app_requested();
+
+	bool start_app();
+
   protected:
 	std::unique_ptr<Window> window{nullptr};
 
@@ -129,6 +136,8 @@ class Platform
 	 * @brief Handles the creation of the window
 	 */
 	virtual void create_window() = 0;
+
+	const apps::AppInfo *requested_app{nullptr};
 
   private:
 	/// Static so can be set via JNI code in android_platform.cpp

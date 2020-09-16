@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,9 +61,9 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixD2DPlatform::initialize(std::unique_ptr<Application> &&app)
+bool UnixD2DPlatform::initialize()
 {
-	return Platform::initialize(std::move(app)) && prepare();
+	return Platform::initialize() && prepare();
 }
 
 void UnixD2DPlatform::create_window()

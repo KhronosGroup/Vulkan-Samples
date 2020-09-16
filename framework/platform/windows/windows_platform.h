@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ class WindowsPlatform : public Platform
 
 	virtual ~WindowsPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize() override;
 
 	virtual void create_window() override;
 

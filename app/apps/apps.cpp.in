@@ -1,0 +1,129 @@
+/* Copyright (c) 2020, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Generated file by CMake. Don't edit.
+#include "apps.h"
+
+@SAMPLE_INCLUDE_FILES@
+
+@TEST_INCLUDE_FILES@
+
+namespace apps
+{
+std::vector<AppInfo> apps = {
+@APP_INFO_LIST@
+};
+
+std::vector<SampleInfo> samples = {
+@SAMPLE_INFO_LIST@
+};
+
+std::vector<TestInfo> tests = {
+@TEST_INFO_LIST@
+};
+
+AppInfo *get_app(const std::string &id)
+{
+	for (auto &app : apps)
+	{
+		if (app.id == id)
+		{
+			return &app;
+		}
+	}
+
+	return nullptr;
+}
+
+std::vector<AppInfo *> get_apps()
+{
+	std::vector<AppInfo *> app_ptrs;
+
+	for (auto &app : apps)
+	{
+		app_ptrs.push_back(&app);
+	}
+
+	return app_ptrs;
+}
+
+std::vector<SampleInfo *> get_samples(const std::vector<std::string> &categories, const std::vector<std::string> &tags)
+{
+	std::vector<SampleInfo *> sample_ptrs;
+
+	for (auto &sample : samples)
+	{
+		sample_ptrs.push_back(&sample);
+	}
+
+	// No filters
+	if (categories.empty() && tags.empty())
+	{
+		return sample_ptrs;
+	}
+
+	std::vector<SampleInfo *> filtered;
+
+	for (auto sample : sample_ptrs)
+	{
+		bool selected = false;
+
+		// Sample is in one of the desired categories
+		for (auto &category : categories)
+		{
+			if (category == sample->category)
+			{
+				selected = true;
+				break;
+			}
+		}
+
+		// Sample has one or more of the desired tags
+		for (auto &tag : tags)
+		{
+			for (auto &s_tag : sample->tags)
+			{
+				if (s_tag == tag)
+				{
+					selected = true;
+					break;
+				}
+			}
+		}
+
+		if (selected)
+		{
+			filtered.push_back(sample);
+		}
+	}
+
+	return filtered;
+}
+
+std::vector<TestInfo *> get_tests()
+{
+	std::vector<TestInfo *> test_ptrs;
+
+	for (auto &test : tests)
+	{
+		test_ptrs.push_back(&test);
+	}
+
+	return test_ptrs;
+}
+
+}        // namespace apps

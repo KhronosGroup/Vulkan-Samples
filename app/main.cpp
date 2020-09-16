@@ -46,27 +46,27 @@ int main(int argc, char *argv[])
 #	endif
 #endif
 
-	// #ifndef DEBUG
-	// 	try
-	// 	{
-	// #endif
-	// 		if (platform.initialize())
-	// 		{
-	// 			platform.main_loop();
-	// 			platform.terminate(vkb::ExitCode::Success);
-	// 		}
-	// 		else
-	// 		{
-	// 			platform.terminate(vkb::ExitCode::UnableToRun);
-	// 		}
-	// #ifndef DEBUG
-	// 	}
-	// 	catch (const std::exception &e)
-	// 	{
-	// 		LOGE(e.what());
-	// 		platform.terminate(vkb::ExitCode::FatalError);
-	// 	}
-	// #endif
+#ifndef DEBUG
+	try
+	{
+#endif
+		if (platform.initialize())
+		{
+			platform.main_loop();
+			platform.terminate(vkb::ExitCode::Success);
+		}
+		else
+		{
+			platform.terminate(vkb::ExitCode::UnableToRun);
+		}
+#ifndef DEBUG
+	}
+	catch (const std::exception &e)
+	{
+		LOGE(e.what());
+		platform.terminate(vkb::ExitCode::FatalError);
+	}
+#endif
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 	platform.main_loop();        // Continue to process events until onDestroy()

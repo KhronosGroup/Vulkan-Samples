@@ -30,7 +30,7 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize() override;
 
 	virtual void create_window() override;
 

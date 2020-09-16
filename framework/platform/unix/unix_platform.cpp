@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,9 +70,9 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixPlatform::initialize(std::unique_ptr<Application> &&app)
+bool UnixPlatform::initialize()
 {
-	return Platform::initialize(std::move(app)) && prepare();
+	return Platform::initialize() && prepare();
 }
 
 void UnixPlatform::create_window()

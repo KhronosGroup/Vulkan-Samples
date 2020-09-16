@@ -31,13 +31,44 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
+#include "apps.h"
 #include "common/logging.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
-#include "vulkan_sample.h"
 
 extern "C"
 {
+	JNIEXPORT jobjectArray JNICALL
+	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
+	{
+		auto &sample_list = apps::get_samples();
+
+		jclass       c             = env->FindClass("com/khronos/vulkan_samples/Sample");
+		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
+		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, 0);
+
+		for (int sample_index = 0; sample_index < sample_list.size(); sample_index++)
+		{
+			const samples::Info &sample_info = sample_list[sample_index];
+
+			jstring id       = env->NewStringUTF(sample_info.id.c_str());
+			jstring category = env->NewStringUTF(sample_info.category.c_str());
+			jstring author   = env->NewStringUTF(sample_info.author.c_str());
+			jstring name     = env->NewStringUTF(sample_info.name.c_str());
+			jstring desc     = env->NewStringUTF(sample_info.description.c_str());
+
+			jobjectArray j_tag_list = env->NewObjectArray(sample_info.tags.size(), env->FindClass("java/lang/String"), env->NewStringUTF(""));
+			for (int tag_index = 0; tag_index < sample_info.tags.size(); ++tag_index)
+			{
+				env->SetObjectArrayElement(j_tag_list, tag_index, env->NewStringUTF(sample_info.tags[tag_index].c_str()));
+			}
+
+			env->SetObjectArrayElement(j_sample_list, sample_index, env->NewObject(c, constructor, id, category, author, name, desc, j_tag_list));
+		}
+
+		return j_sample_list;
+	}
+
 	JNIEXPORT void JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
 	{

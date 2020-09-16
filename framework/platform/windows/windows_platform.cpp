@@ -121,9 +121,9 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
+bool WindowsPlatform::initialize()
 {
-	return Platform::initialize(std::move(app)) && prepare();
+	return Platform::initialize() && prepare();
 }
 
 void WindowsPlatform::create_window()

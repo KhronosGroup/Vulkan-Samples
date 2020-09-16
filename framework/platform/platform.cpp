@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,11 +37,24 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-bool Platform::initialize(std::unique_ptr<Application> &&app)
-{
-	assert(app && "Application is not valid");
-	active_app = std::move(app);
+// TEMP - Required as the platform configures a window by using the active app is_headless
 
+class DummyApp : public Application
+{
+  public:
+	DummyApp() :
+	    Application()
+	{}
+	virtual ~DummyApp()
+	{}
+
+	virtual void update(float delta_time){};
+};
+
+// TEMP
+
+bool Platform::initialize()
+{
 	auto sinks = get_platform_sinks();
 
 	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
@@ -57,18 +70,22 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 
 	LOGI("Logger initialized");
 
-	// Set the app to execute as a benchmark
-	if (active_app->get_options().contains("--benchmark"))
-	{
-		benchmark_mode             = true;
-		total_benchmark_frames     = active_app->get_options().get_int("--benchmark");
-		remaining_benchmark_frames = total_benchmark_frames;
-		active_app->set_benchmark_mode(true);
-	}
+	// TEMP - Not needed after later PRs, allows the app to run for now
 
-	// Set the app as headless
-	active_app->set_headless(active_app->get_options().contains("--headless"));
+	active_app = std::make_unique<DummyApp>();
 
+	auto app = apps::get_apps()[2];
+
+	request_application(app);
+
+	// TEMP
+
+	return true;
+}
+
+bool Platform::prepare()
+{
+	// width, height can be overriden by the "WindowSize" extension
 	create_window();
 
 	if (!window)
@@ -78,22 +95,34 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 
 	LOGI("Window created");
 
-	return true;
-}
-
-bool Platform::prepare()
-{
-	if (active_app)
+	if (!window)
 	{
-		return active_app->prepare(*this);
+		LOGE("Window creation failed!");
+		return false;
 	}
-	return false;
+
+	if (!app_requested())
+	{
+		LOGE("An app was not requested, can not continue");
+		return false;
+	}
+
+	return true;
 }
 
 void Platform::main_loop()
 {
 	while (!window->should_close())
 	{
+		// Load or swap running application
+		if (app_requested())
+		{
+			if (!start_app())
+			{
+				throw std::runtime_error{"Failed to load Application"};
+			}
+		}
+
 		run();
 
 		window->process_events();
@@ -190,4 +219,49 @@ std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 {
 	return {};
 }
+
+bool Platform::app_requested()
+{
+	return requested_app != nullptr;
+}
+
+void Platform::request_application(const apps::AppInfo *app)
+{
+	requested_app = app;
+}
+
+bool Platform::start_app()
+{
+	if (active_app)
+	{
+		auto execution_time = timer.stop();
+		LOGI("Closing App (Runtime: {:.1f})", execution_time);
+
+		auto app_id = active_app->get_name();
+
+		active_app->finish();
+
+		active_app.reset();
+	}
+
+	active_app = requested_app->create();
+
+	active_app->set_name(requested_app->id);
+
+	if (!active_app)
+	{
+		LOGE("Failed to create a valid vulkan app.");
+		return false;
+	}
+
+	if (!active_app->prepare(*this))
+	{
+		LOGE("Failed to prepare vulkan app.");
+		return false;
+	}
+
+	requested_app = nullptr;
+	return true;
+}
+
 }        // namespace vkb
