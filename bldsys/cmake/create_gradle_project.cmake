@@ -17,7 +17,7 @@
 
  ]]
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)
@@ -31,11 +31,11 @@ include(${SCRIPT_DIR}/utils.cmake)
 set(ANDROID_API 24 CACHE STRING "")
 set(ANDROID_MANIFEST "AndroidManifest.xml" CACHE STRING "")
 set(ARCH_ABI "arm64-v8a;armeabi-v7a" CACHE STRING "")
-set(ASSET_DIRS "assets" CACHE PATHS "")
-set(RES_DIRS "res" CACHE PATHS "")
-set(JAVA_DIRS "java" CACHE PATHS "")
-set(JNI_LIBS_DIRS "jni" CACHE PATHS "")
-set(NATIVE_SCRIPT "CMakeLists.txt" CACHE FILE "")
+set(ASSET_DIRS "assets" CACHE STRING "")
+set(RES_DIRS "res" CACHE STRING "")
+set(JAVA_DIRS "java" CACHE STRING "")
+set(JNI_LIBS_DIRS "jni" CACHE STRING "")
+set(NATIVE_SCRIPT "CMakeLists.txt" CACHE STRING "")
 set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF" CACHE STRING "")
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
 
@@ -65,10 +65,7 @@ foreach(ABI_FILTER ${ARCH_ABI})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${ABI_LIST}
-    OUTPUT ABI_LIST)
+list(JOIN ABI_LIST "', '" ABI_LIST)
 
 if(NOT ${ABI_LIST})
     set(NDK_ABI_FILTERS "ndk { abiFilters '${ABI_LIST}' }")
@@ -92,10 +89,7 @@ foreach(ASSET_DIR ${ASSET_DIRS})
     endif()   
 endforeach()
 
-string_join(
-    GLUE "', '"    
-    INPUT ${ASSETS_LIST}
-    OUTPUT ASSETS_LIST)
+list(JOIN ASSETS_LIST "', '" ASSETS_LIST)
 
 if(NOT ${ASSETS_LIST})
     set(ASSETS_SRC_DIRS "assets.srcDirs += [ '${ASSETS_LIST}' ]")
@@ -117,10 +111,7 @@ foreach(RES_DIR ${RES_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"    
-    INPUT ${RES_LIST}
-    OUTPUT RES_LIST)
+list(JOIN RES_LIST "', '" RES_LIST)
 
 if(NOT ${RES_LIST})
     set(RES_SRC_DIRS "res.srcDirs += [ '${RES_LIST}' ]")
@@ -142,10 +133,7 @@ foreach(JAVA_DIR ${JAVA_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${JAVA_LIST}
-    OUTPUT JAVA_LIST)
+list(JOIN JAVA_LIST "', '" JAVA_LIST)
 
 if(NOT ${JAVA_LIST})
     set(JAVA_SRC_DIRS "java.srcDirs += [ '${JAVA_LIST}' ]")
@@ -167,10 +155,7 @@ foreach(JNI_LIBS_DIR ${JNI_LIBS_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${JNI_LIBS_DIR_LIST}
-    OUTPUT JNI_LIBS_DIR_LIST)
+list(JOIN JNI_LIBS_DIR_LIST "', '" JNI_LIBS_DIR_LIST)
 
 if(NOT ${JNI_LIBS_DIR_LIST})
     set(JNI_LIBS_SRC_DIRS "jniLibs.srcDirs += [ '${JNI_LIBS_DIR_LIST}' ]")
@@ -184,7 +169,7 @@ endif()
 if(EXISTS ${NATIVE_SCRIPT})
     file(RELATIVE_PATH NATIVE_SCRIPT_TMP ${OUTPUT_DIR} ${NATIVE_SCRIPT})
 
-    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.10.2+\'\n\t\t} ")
+    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.12.0+\'\n\t\t} ")
 endif()
 
 # cmake.arguments
@@ -194,10 +179,7 @@ foreach(NATIVE_ARG ${NATIVE_ARGUMENTS})
     list(APPEND ARGS_LIST "-D${NATIVE_ARG}")
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${ARGS_LIST}
-    OUTPUT ARGS_LIST)
+list(JOIN ARGS_LIST "', '" ARGS_LIST)
     
 if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
     set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\targuments '${ARGS_LIST}' \n\t\t\t}")

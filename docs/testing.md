@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2020, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -20,8 +20,12 @@
 # Testing Guides
 
 ## Contents 
-- [System Test](#system-test)
-- [Generate Sample Test](#generate-sample-test)
+- [Testing Guides](#testing-guides)
+  - [Contents](#contents)
+  - [System Test](#system-test)
+    - [Android](#android)
+  - [Generate Sample Test](#generate-sample-test)
+      - [To run](#to-run)
 
 ## System Test
 In order for the script to work you will need to install and add to your Path:
@@ -31,7 +35,7 @@ In order for the script to work you will need to install and add to your Path:
 * `cmake` 
 * (Optional) `adb` if you plan to use Android
 
-You will also need to have built the Vulkan Best Practices in 64 bit, with the CMake flag `VKB_BUILD_SAMPLES`, `VKB_BUILD_TESTS`, and `VKB_SYMLINKS` set to `ON`, and in addition to this install a working `.apk` onto a device if you plan on testing on Android.
+You will also need to have built the Vulkan Best Practices in 64 bit, with the CMake flag `VKB_BUILD_SAMPLES`, `VKB_BUILD_TESTS` and in addition to this install a working `.apk` onto a device if you plan on testing on Android.
 
 **Before you begin a system test on Android, ensure that the device is held in landscape, and there isn't an instance of Vulkan Best Practice running already.**
 

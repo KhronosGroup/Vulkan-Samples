@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2019, Arm Limited and Contributors
+Copyright (c) 2019-2020, Arm Limited and Contributors
 
 SPDX-License-Identifier: Apache-2.0
 
@@ -55,13 +55,13 @@ def build():
     generate_command = ""
     build_command = ""
     if platform.system() == "Windows":
-        generate_command = "cmake -G\"Visual Studio 15 2017 Win64\" -H. -Bbuild/windows -DVKB_BUILD_SAMPLES=ON -DVKB_SYMLINKS=OFF"
+        generate_command = "cmake -G\"Visual Studio 15 2017 Win64\" -H. -Bbuild/windows -DVKB_BUILD_SAMPLES=ON"
         build_command = "cmake --build build/windows --config Release --target vulkan_samples"
     elif platform.system() == "Linux":
-        generate_command = "cmake -G \"Unix Makefiles\" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_SAMPLES=ON -DVKB_SYMLINKS=OFF"
+        generate_command = "cmake -G \"Unix Makefiles\" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_SAMPLES=ON"
         build_command = "cmake --build build/linux --config Release --target vulkan_samples"
     elif platform.system() == "Darwin":
-        generate_command = "cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_SAMPLES=ON -DVKB_SYMLINKS=OFF"
+        generate_command = "cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release -DVKB_BUILD_SAMPLES=ON"
         build_command = "cmake --build build/mac --config Release --target vulkan_samples"
     else:
         print("Error: Platform not supported")
