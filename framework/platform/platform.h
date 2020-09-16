@@ -25,8 +25,11 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
+#include "platform/extensions/extension.h"
+#include "platform/extensions/parser.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
+#include "timer.h"
 
 namespace vkb
 {
@@ -46,9 +49,9 @@ class Platform
 
 	/**
 	 * @brief Sets up the window and logger
-	 * @param app The application to prepare after the platform is prepared
+	 * @param app_id The application to prepare after the platform is prepared
 	 */
-	virtual bool initialize();
+	virtual bool initialize(const std::vector<extensions::Extension *> &extensions);
 
 	/**
 	 * @brief Prepares the active app supplied in the initialize function
@@ -64,7 +67,7 @@ class Platform
 	/**
 	 * @brief Runs the application for one frame
 	 */
-	void run();
+	void update();
 
 	/**
 	 * @brief Terminates the platform and the application
@@ -99,9 +102,15 @@ class Platform
 	 */
 	virtual const char *get_surface_extension() = 0;
 
+	void input_event(const InputEvent &input_event);
+
 	Window &get_window() const;
 
+	void set_window(std::unique_ptr<Window> &&window);
+
 	Application &get_app() const;
+
+	Application &get_app();
 
 	std::vector<std::string> &get_arguments();
 
@@ -111,6 +120,22 @@ class Platform
 
 	static void set_temp_directory(const std::string &dir);
 
+	void set_width(uint32_t width);
+
+	void set_height(uint32_t height);
+
+	void set_focused(bool focused);
+
+	/**
+	 * @brief Handles the creation of the window
+	 */
+	virtual void create_window() = 0;
+
+	void lock_app_input();
+
+	template <class T>
+	bool using_extension() const;
+
 	void request_application(const apps::AppInfo *app);
 
 	bool app_requested();
@@ -118,33 +143,44 @@ class Platform
 	bool start_app();
 
   protected:
+	std::vector<extensions::Extension *> active_extensions;
+
+	std::unordered_map<extensions::Hook, std::vector<extensions::Extension *>> hooks;
+
 	std::unique_ptr<Window> window{nullptr};
 
 	std::unique_ptr<Application> active_app{nullptr};
 
-	bool benchmark_mode{false};
-
-	uint32_t total_benchmark_frames{0};
-
-	uint32_t remaining_benchmark_frames{0};
-
-	Timer timer;
-
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
-	/**
-	 * @brief Handles the creation of the window
-	 */
-	virtual void create_window() = 0;
+	uint32_t width{1280};
+
+	uint32_t height{720};
+
+  private:
+	Timer timer;
+
+	bool app_focused{true};
+
+	bool pass_input_to_app{true};
 
 	const apps::AppInfo *requested_app{nullptr};
 
-  private:
+	std::unique_ptr<Parser> parser;
+
 	/// Static so can be set via JNI code in android_platform.cpp
 	static std::vector<std::string> arguments;
 
 	static std::string external_storage_directory;
 
 	static std::string temp_directory;
+
+	void call_hook(const extensions::Hook &hook, std::function<void(extensions::Extension *)> fn) const;
 };
+
+template <class T>
+bool Platform::using_extension() const
+{
+	return !extensions::with_tags<T>(active_extensions).empty();
+}
 }        // namespace vkb

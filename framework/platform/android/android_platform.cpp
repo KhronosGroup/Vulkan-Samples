@@ -413,20 +413,21 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 {
 }
 
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
+bool AndroidPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	return Platform::initialize(std::move(application));
+	return Platform::initialize(extensions);
 }
 
 void AndroidPlatform::create_window()
 {
+	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, active_app->is_headless());
+	window = std::make_unique<AndroidWindow>(*this, app->window, using_extensions<extensions::Headless>());
 }
 
 void AndroidPlatform::main_loop()
@@ -440,9 +441,12 @@ void AndroidPlatform::main_loop()
 			break;
 		}
 
-		if (!window->should_close())
+		if (window)
 		{
-			run();
+			if (!window->should_close())
+			{
+				update();
+			}
 		}
 	}
 }
@@ -481,11 +485,6 @@ void AndroidPlatform::terminate(ExitCode code)
 			send_notification(log_output);
 			break;
 	}
-
-	auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
-	platform->get_window().close();
-
-	main_loop();        // Continue to process events until onDestroy()
 
 	Platform::terminate(code);
 }

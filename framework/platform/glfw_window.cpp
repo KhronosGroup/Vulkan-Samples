@@ -59,7 +59,7 @@ void window_focus_callback(GLFWwindow *window, int focused)
 	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
 		auto &platform = glfw_window->get_platform();
-		platform.get_app().set_focus(focused ? true : false);
+		platform.set_focused(focused);
 	}
 }
 
@@ -281,19 +281,7 @@ GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	auto &options = platform.get_app().get_options();
-
-	if (options.contains("--width"))
-	{
-		width = static_cast<uint32_t>(options.get_int("--width"));
-	}
-
-	if (options.contains("--height"))
-	{
-		height = static_cast<uint32_t>(options.get_int("--height"));
-	}
-
-	handle = glfwCreateWindow(width, height, platform.get_app().get_name().c_str(), NULL, NULL);
+	handle = glfwCreateWindow(width, height, "VulkanSamples", NULL, NULL);
 
 	if (!handle)
 	{

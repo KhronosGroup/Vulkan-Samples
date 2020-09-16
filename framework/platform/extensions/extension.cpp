@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,35 +14,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-#pragma once
-
+#include "extension.h"
+#include "platform/extensions/parser.h"
 #include "platform/platform.h"
 
 namespace vkb
 {
-enum UnixType
+namespace extensions
 {
-	Mac,
-	Linux
-};
-
-class UnixPlatform : public Platform
+bool Extension::activate_extension(Platform &p, const Parser &parser)
 {
-  public:
-	UnixPlatform(const UnixType &type, int argc, char **argv);
+	platform = &p;
 
-	virtual ~UnixPlatform() = default;
+	bool active = is_active(parser);
 
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
+	// Extension activated
+	if (active)
+	{
+		init(p, parser);
+	}
 
-	virtual void create_window() override;
-
-	virtual const char *get_surface_extension() override;
-
-  private:
-	UnixType type;
-
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+	return active;
 };
+}        // namespace extensions
 }        // namespace vkb

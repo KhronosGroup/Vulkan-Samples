@@ -25,6 +25,8 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
+#include "headless/headless.h"
+
 bool ApiVulkanSample::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -48,7 +50,8 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	// Command buffer submission info is set by each example
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
-	if (!is_headless())
+
+	if (!platform.using_extension<vkb::extensions::Headless>())
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;

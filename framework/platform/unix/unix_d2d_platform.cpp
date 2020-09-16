@@ -24,6 +24,7 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
+#include "headless/headless.h"
 #include "platform/headless_window.h"
 #include "platform/unix/direct_window.h"
 
@@ -61,20 +62,20 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixD2DPlatform::initialize()
+bool UnixD2DPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
 {
-	return Platform::initialize() && prepare();
+	return Platform::initialize(extensions) && prepare();
 }
 
 void UnixD2DPlatform::create_window()
 {
-	if (active_app->is_headless())
+	if (using_extension<extensions::Headless>())
 	{
-		window = std::make_unique<HeadlessWindow>(*this);
+		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}
 	else
 	{
-		window = std::make_unique<DirectWindow>(*this);
+		window = std::make_unique<DirectWindow>(*this, width, height);
 	}
 }
 

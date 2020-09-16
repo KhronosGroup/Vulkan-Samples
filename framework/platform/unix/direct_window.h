@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ namespace vkb
 class DirectWindow : public Window
 {
   public:
-	DirectWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
+	DirectWindow(Platform &platform, uint32_t width, uint32_t height);
 
 	virtual ~DirectWindow();
 

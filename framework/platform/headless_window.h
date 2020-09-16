@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ namespace vkb
 class HeadlessWindow : public Window
 {
   public:
-	HeadlessWindow(Platform &platform, uint32_t width = 1028, uint32_t height = 720);
+	HeadlessWindow(Platform &platform, uint32_t width, uint32_t height);
 
 	virtual ~HeadlessWindow() = default;
 

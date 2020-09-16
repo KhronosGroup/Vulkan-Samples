@@ -27,6 +27,8 @@ VKBP_ENABLE_WARNINGS()
 #include "platform/glfw_window.h"
 #include "platform/headless_window.h"
 
+#include "headless/headless.h"
+
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
 #endif
@@ -70,20 +72,20 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixPlatform::initialize()
+bool UnixPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
 {
-	return Platform::initialize() && prepare();
+	return Platform::initialize(extensions) && prepare();
 }
 
 void UnixPlatform::create_window()
 {
-	if (active_app->is_headless())
+	if (using_extension<extensions::Headless>())
 	{
-		window = std::make_unique<HeadlessWindow>(*this);
+		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}
 	else
 	{
-		window = std::make_unique<GlfwWindow>(*this);
+		window = std::make_unique<GlfwWindow>(*this, width, height);
 	}
 }
 

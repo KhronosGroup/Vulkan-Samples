@@ -29,7 +29,7 @@ class WindowsPlatform : public Platform
 
 	virtual ~WindowsPlatform() = default;
 
-	virtual bool initialize() override;
+	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
 
 	virtual void create_window() override;
 

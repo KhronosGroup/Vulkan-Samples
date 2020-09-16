@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,11 +22,11 @@
 #include "debug_info.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
-#include "platform/options.h"
 #include "timer.h"
 
 namespace vkb
 {
+class Window;
 class Platform;
 
 class Application
@@ -35,12 +35,6 @@ class Application
 	Application();
 
 	virtual ~Application() = default;
-
-	/**
-	 * @brief Advances the application forward one frame, calculating the delta time between steps
-	 *        and then calling the update method accordingly
-	 */
-	void step();
 
 	/**
 	 * @brief Prepares the application for execution
@@ -52,7 +46,7 @@ class Application
 	 * @brief Updates the application
 	 * @param delta_time The time since the last update
 	 */
-	virtual void update(float delta_time) = 0;
+	virtual void update(float delta_time);
 
 	/**
 	 * @brief Handles cleaning up the application
@@ -72,12 +66,6 @@ class Application
 	 */
 	virtual void input_event(const InputEvent &input_event);
 
-	/**
-	 * @brief Parses the arguments against Application::usage
-	 * @param args The argument list
-	 */
-	void parse_options(const std::vector<std::string> &args);
-
 	const std::string &get_name() const;
 
 	void set_name(const std::string &name);
@@ -86,43 +74,25 @@ class Application
 
 	void set_benchmark_mode(bool benchmark_mode);
 
-	bool is_headless() const;
-
-	void set_headless(bool headless);
-
 	bool is_focused() const;
 
 	void set_focus(bool flag);
 
 	DebugInfo &get_debug_info();
 
-	const Options &get_options();
-
   protected:
-	float fps{0.0f};
+	Platform *platform;
 
-	float frame_time{0.0f};        // In ms
-
-	uint32_t frame_count{0};
-
-	uint32_t last_frame_count{0};
-
-	static std::string usage;
-
-	Options options{};
-
-	static void set_usage(const std::string &usage);
+	float fps;
 
   private:
+	float frame_time;
+
 	std::string name{};
 
 	bool focus{true};
 
-	Timer timer;
-
 	bool benchmark_mode{false};
-
-	bool headless{false};
 
 	// The debug info of the app
 	DebugInfo debug_info{};

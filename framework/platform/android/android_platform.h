@@ -30,7 +30,7 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize() override;
+	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
 
 	virtual void create_window() override;
 
@@ -56,9 +56,9 @@ class AndroidPlatform : public Platform
 
 	ANativeActivity *get_activity();
 
-  private:
 	void poll_events();
 
+  private:
 	android_app *app{nullptr};
 
 	std::string log_output;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,34 +15,27 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include "platform/platform.h"
+#include "headless.h"
 
 namespace vkb
 {
-enum UnixType
+namespace extensions
 {
-	Mac,
-	Linux
-};
+Flag headless_flag = {"headless", Flag::Type::FlagOnly, "Run in headless mode"};
 
-class UnixPlatform : public Platform
+Headless::Headless() :
+    HeadlessTags({}, {FlagGroup(FlagGroup::Type::Individual, true, {&headless_flag})})
 {
-  public:
-	UnixPlatform(const UnixType &type, int argc, char **argv);
+}
 
-	virtual ~UnixPlatform() = default;
+bool Headless::is_active(const Parser &parser)
+{
+	return parser.contains(headless_flag);
+}
 
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
-
-	virtual void create_window() override;
-
-	virtual const char *get_surface_extension() override;
-
-  private:
-	UnixType type;
-
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
-};
+void Headless::init(Platform &platform, const Parser &parser)
+{
+	// Use has_extension<extensions::Headless>() to query if headless mode is enabled
+}
+}        // namespace extensions
 }        // namespace vkb

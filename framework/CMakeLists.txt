@@ -68,6 +68,7 @@ set(COMMON_FILES
     common/error.h
     common/utils.h
     common/strings.h
+    common/tags.h
     # Source Files
     common/error.cpp
     common/vk_common.cpp
@@ -238,7 +239,6 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
-    platform/options.h
     platform/platform.h
     platform/window.h
     platform/headless_window.h
@@ -246,15 +246,22 @@ set(PLATFORM_FILES
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
+    platform/extensions/parser.h
+    platform/extensions/extension.h
+    platform/extensions/extension_base.h
+    platform/extensions/flag.h
+
     # Source Files
     platform/application.cpp
-    platform/options.cpp
     platform/platform.cpp
     platform/window.cpp
     platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
-    platform/configuration.cpp)
+    platform/configuration.cpp
+    platform/extensions/extension.cpp
+    platform/extensions/parser.cpp
+    platform/extensions/flag.cpp)
 
 set(GRAPHING_FILES
     # Header Files
@@ -408,7 +415,8 @@ target_link_libraries(${PROJECT_NAME}
     spdlog
     ctpl
     docopt
-    apps)
+    apps
+    extensions)
 
 # Link platform specific libraries
 if(ANDROID)

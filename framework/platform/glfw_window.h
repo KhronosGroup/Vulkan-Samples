@@ -30,7 +30,7 @@ namespace vkb
 class GlfwWindow : public Window
 {
   public:
-	GlfwWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
+	GlfwWindow(Platform &platform, uint32_t width, uint32_t height);
 
 	virtual ~GlfwWindow();
 

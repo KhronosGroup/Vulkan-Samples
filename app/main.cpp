@@ -17,6 +17,7 @@
 
 #include "common/logging.h"
 #include "platform/platform.h"
+#include "extensions/extensions.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -50,7 +51,7 @@ int main(int argc, char *argv[])
 	try
 	{
 #endif
-		if (platform.initialize())
+		if (platform.initialize(vkb::extensions::get_available_extensions()))
 		{
 			platform.main_loop();
 			platform.terminate(vkb::ExitCode::Success);

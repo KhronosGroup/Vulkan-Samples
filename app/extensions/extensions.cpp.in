@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,21 +15,41 @@
  * limitations under the License.
  */
 
-#pragma once
+// Generated file by CMake. Don't edit.
 
-#include "scene_graph/components/image.h"
+#include "extensions.h"
+
+#include <memory>
+
+@EXTENSION_INCLUDE_FILES@
 
 namespace vkb
 {
-namespace sg
+namespace extensions
 {
-class Stb : public Image
+
+#define ADD_EXTENSION(name) \
+	extensions.emplace_back(std::make_unique<##name>())
+
+std::vector<Extension *> get_available_extensions()
 {
-  public:
-	Stb(const std::string &name, const std::vector<uint8_t> &data);
+	static bool once = true;
+	static std::vector<std::unique_ptr<Extension>> extensions;
 
-	virtual ~Stb() = default;
-};
+	if (once) {
+		once = false;
+@INIT_EXTENSIONS@
+	}
 
-}        // namespace sg
+	std::vector<Extension *> ptrs;
+	ptrs.reserve(extensions.size());
+
+	for (auto &extension : extensions)
+	{
+		ptrs.push_back(extension.get());
+	}
+
+	return ptrs;
+}
+}        // namespace extensions
 }        // namespace vkb

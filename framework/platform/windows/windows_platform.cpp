@@ -32,6 +32,8 @@ VKBP_ENABLE_WARNINGS()
 #include "platform/glfw_window.h"
 #include "platform/headless_window.h"
 
+#include "headless/headless.h"
+
 namespace vkb
 {
 namespace
@@ -121,20 +123,20 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool WindowsPlatform::initialize()
+bool WindowsPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
 {
-	return Platform::initialize() && prepare();
+	return Platform::initialize(extensions) && prepare();
 }
 
 void WindowsPlatform::create_window()
 {
-	if (active_app->is_headless())
+	if (using_extension<extensions::Headless>())
 	{
-		window = std::make_unique<HeadlessWindow>(*this);
+		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}
 	else
 	{
-		window = std::make_unique<GlfwWindow>(*this);
+		window = std::make_unique<GlfwWindow>(*this, width, height);
 	}
 }
 
@@ -142,7 +144,7 @@ void WindowsPlatform::terminate(ExitCode code)
 {
 	Platform::terminate(code);
 
-	if (code != ExitCode::Success || benchmark_mode)
+	if (code != ExitCode::Success)
 	{
 		std::cout << "Press enter to close...\n";
 		std::cin.get();

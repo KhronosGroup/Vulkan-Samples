@@ -17,6 +17,7 @@
 
 #include "platform.h"
 
+#include <algorithm>
 #include <ctime>
 #include <mutex>
 #include <vector>
@@ -37,23 +38,7 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-// TEMP - Required as the platform configures a window by using the active app is_headless
-
-class DummyApp : public Application
-{
-  public:
-	DummyApp() :
-	    Application()
-	{}
-	virtual ~DummyApp()
-	{}
-
-	virtual void update(float delta_time){};
-};
-
-// TEMP
-
-bool Platform::initialize()
+bool Platform::initialize(const std::vector<extensions::Extension *> &extensions = {})
 {
 	auto sinks = get_platform_sinks();
 
@@ -70,16 +55,41 @@ bool Platform::initialize()
 
 	LOGI("Logger initialized");
 
-	// TEMP - Not needed after later PRs
+	parser = std::make_unique<Parser>(extensions);
 
-	active_app = std::make_unique<DummyApp>();
+	// Process command line arguments
+	if (!parser->parse(arguments))
+	{
+		return false;
+	}
+
+	// Subscribe extensions to requested hooks and store activated extensions
+	for (auto &extension : extensions)
+	{
+		if (extension->activate_extension(*this, *parser.get()))
+		{
+			auto &extension_hooks = extension->get_hooks();
+			for (auto hook : extension_hooks)
+			{
+				auto it = hooks.find(hook);
+
+				if (it == hooks.end())
+				{
+					auto r = hooks.emplace(hook, std::vector<extensions::Extension *>{});
+
+					if (r.second)
+					{
+						it = r.first;
+					}
+				}
+
+				it->second.emplace_back(extension);
+			}
+
+			active_extensions.emplace_back(extension);
+		}
+	}
 	
-	auto app = apps::get_apps()[2];
-
-	request_application(app);
-
-	// TEMP
-
 	return true;
 }
 
@@ -87,13 +97,6 @@ bool Platform::prepare()
 {
 	// width, height can be overriden by the "WindowSize" extension
 	create_window();
-
-	if (!window)
-	{
-		throw std::runtime_error("Window creation failed, make sure platform overrides create_window() and creates a valid window.");
-	}
-
-	LOGI("Window created");
 
 	if (!window)
 	{
@@ -123,38 +126,44 @@ void Platform::main_loop()
 			}
 		}
 
-		run();
+		update();
 
 		window->process_events();
 	}
 }
 
-void Platform::run()
+void Platform::update()
 {
-	if (benchmark_mode)
-	{
-		timer.start();
+	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
-		if (remaining_benchmark_frames == 0)
+	if (app_focused)
+	{
+		call_hook(extensions::Hook::OnUpdate, [&delta_time](extensions::Extension *extension) { extension->on_update(delta_time); });
+
+		if (active_app->is_benchmark_mode())
 		{
-			auto time_taken = timer.stop();
-			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
-			close();
-			return;
+			// Benchmark Mode to make the run as reproducible as possible fix the delta time
+			// Skip first frame delta time so that there is not a large jump in delta time
+			delta_time = 0.01667f;
 		}
-	}
 
-	if (active_app->is_focused() || active_app->is_benchmark_mode())
-	{
-		active_app->step();
-		remaining_benchmark_frames--;
+		active_app->update(delta_time);
 	}
 }
 
 void Platform::terminate(ExitCode code)
 {
+	if (code == ExitCode::UnableToRun)
+	{
+		parser->print_help();
+	}
+
 	if (active_app)
 	{
+		std::string id = active_app->get_name();
+
+		call_hook(extensions::Hook::OnAppClose, [&id](extensions::Extension *extension) { extension->on_app_close(id); });
+
 		active_app->finish();
 	}
 
@@ -166,10 +175,38 @@ void Platform::terminate(ExitCode code)
 
 void Platform::close() const
 {
-	window->close();
+	if (window)
+	{
+		window->close();
+	}
+
+	call_hook(extensions::Hook::OnPlatformClose, [](extensions::Extension *extension) { extension->on_platform_close(); });
 }
 
-const std::string &Platform::get_external_storage_directory()
+void Platform::call_hook(const extensions::Hook &hook, std::function<void(extensions::Extension *)> fn) const
+{
+	auto res = hooks.find(hook);
+	if (res != hooks.end())
+	{
+		for (auto extension : res->second)
+		{
+			fn(extension);
+		}
+	}
+}
+
+void Platform::set_focused(bool focused)
+{
+	app_focused = focused;
+}
+
+void Platform::set_window(std::unique_ptr<Window> &&window)
+{
+	this->window = std::move(window);
+}
+
+const std::string &
+    Platform::get_external_storage_directory()
 {
 	return external_storage_directory;
 }
@@ -182,6 +219,12 @@ const std::string &Platform::get_temp_directory()
 float Platform::get_dpi_factor() const
 {
 	return window->get_dpi_factor();
+}
+
+Application &Platform::get_app()
+{
+	assert(active_app && "Application is not valid");
+	return *active_app;
 }
 
 Application &Platform::get_app() const
@@ -213,6 +256,38 @@ void Platform::set_external_storage_directory(const std::string &dir)
 void Platform::set_temp_directory(const std::string &dir)
 {
 	temp_directory = dir;
+}
+
+void Platform::input_event(const InputEvent &input_event)
+{
+	// TODO: Move to desktop platform
+	if (input_event.get_source() == EventSource::Keyboard)
+	{
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+
+		if (key_event.get_code() == KeyCode::Back ||
+		    key_event.get_code() == KeyCode::Escape)
+		{
+			close();
+		}
+	}
+
+	if (pass_input_to_app && active_app)
+	{
+		active_app->input_event(input_event);
+	}
+}
+
+void Platform::set_width(uint32_t width)
+{
+	// Values need correcting to proper minimum bounds
+	this->width = std::max<uint32_t>(width, 420);
+}
+
+void Platform::set_height(uint32_t height)
+{
+	// Values need correcting to proper minimum bounds
+	this->height = std::max<uint32_t>(height, 320);
 }
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
