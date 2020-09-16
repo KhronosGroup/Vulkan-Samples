@@ -28,11 +28,11 @@
 
 ## Introduction
 
-This readme lists all Vulkan samples currently available in this repository. They are grouped into different categories.
+This readme lists all Vulkan samples currently available in this repository. They are grouped into multiple categories.
 
 ## Performance samples
 
-These samples demonstrate performant Vulkan API usage. The goal of these is to demonstrate how to use certain features and functions to achieve optimal performance.
+The goal of these samples is to demonstrate how to use certain features and functions to achieve optimal performance. To visualize this, they also include real-time profiling information.
 
 ### [AFBC](./performance/afbc)<br/>
 AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics. This format is applied to the framebuffers that are to be written to the GPU. This technology can offer bandwidth reductions of [up to 50%](https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression).
@@ -78,7 +78,7 @@ This sample compares two methods for synchronizing between the CPU and GPU, ``Wa
 
 ## API samples
 
-These samples demonstrate Vulkan API usage. The goal of these is to demonstrate how to use a given feature at the API level with as little abstraction as possible.
+The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
 
 ### [Compute shader N-Body simulation](./api/compute_nbody)<br/>
 Compute shader example that uses two passes and shared compute shader memory for simulating a N-Body particle system.
@@ -99,7 +99,7 @@ Generates a complete mip-chain for a texture at runtime instead of loading it fr
 
 ## Extension Samples
 
-These samples demonstrate how to use a particular Vulkan extension. The goal of these is to demonstrate how to use a given extension at the API level with as little abstraction as possible.
+The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
 
 ### [Conservative Rasterization](./extensions/conservative_rasterization)<br/>
 **Extension**: [```VK_EXT_conservative_rasterization```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
