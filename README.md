@@ -84,10 +84,10 @@ Additionally you may find the following links useful:
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
-- **API samples**
-  - [Overview for the API samples](./samples/api/README.md)
-- **Extension samples**
-  - [Overview for the extension samples](./samples/extensions/README.md)
+- **Textures**
+  - [Run-time mip map generation](./samples/api/texture_mipmap_generation/texture_mipmap_generation_tutorial.md)
+- **Debugging**
+  - [Using the debug utilities extension](./samples/extensions/debug_utils/debug_utils_tutorial.md)
 - **Misc**
   - [Driver version](./docs/misc.md#driver-version)
   - [Memory limits](./docs/memory_limits.md)
