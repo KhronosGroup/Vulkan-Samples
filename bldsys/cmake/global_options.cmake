@@ -32,8 +32,6 @@ else()
 endif()
 
 set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
-set(VKB_ENTRYPOINTS OFF CACHE BOOL "Enable create entrypoint project for every application.")
-set(VKB_SYMLINKS OFF CACHE BOOL "Enable create symlink folders for every application.")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")

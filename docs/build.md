@@ -22,15 +22,16 @@
 # Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
-  - [VKB_<sample_name>](#vkb_sample_name)
-  - [VKB_SYMLINKS](#vkb_symlinks)
-  - [VKB_ENTRYPOINTS](#vkb_entrypoints)
+  - [VKB\_<sample_name>](#vkb_sample_name)
+  - [VKB_BUILD_SAMPLES](#vkb_build_samples)
+  - [VKB_BUILD_TESTS](#vkb_build_tests)
   - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 - [Windows](#windows)
   - [Dependencies](#dependencies)
+  - [Clang Format and Visual Studio](#clang-format-and-visual-studio)
   - [Build with CMake](#build-with-cmake)
 - [Linux](#linux)
   - [Dependencies](#dependencies-1)
@@ -41,16 +42,12 @@
 - [Android](#android)
   - [Dependencies](#dependencies-3)
   - [Build with Gradle](#build-with-gradle)
-  - [Build with CMake](#build-with-cmake-3)
-- [Building Individual Samples](#building-individual-samples)
-  - [CMake](#cmake)
-  - [Visual Studio](#visual-studio)
 
 # CMake Options
 
 The following options are used to change the build configuration
 
-#### VKB\_<sample_name>
+## VKB\_<sample_name>
 
 Choose whether to include a sample at build time.
 
@@ -59,7 +56,7 @@ Choose whether to include a sample at build time.
 
 **Default:** `ON`
 
-#### VKB_BUILD_SAMPLES
+## VKB_BUILD_SAMPLES
 
 Choose whether to build the samples.
 
@@ -68,7 +65,7 @@ Choose whether to build the samples.
 
 **Default:** `ON`
 
-#### VKB_BUILD_TESTS
+## VKB_BUILD_TESTS
 
 Choose whether to build the tests
 
@@ -77,24 +74,13 @@ Choose whether to build the tests
 
 **Default:** `OFF`
 
-#### VKB_SYMLINKS
-Rather than changing the working directory inside the IDE, `VKB_SYMLINKS` will enable symlink creation pointing to the root directory which exposes the assets and outputs folders to the samples.
-
-**Default:** `OFF`
-
-#### VKB_ENTRYPOINTS
-
-Generate a build project for each application so that they can be run separately
-
-**Default:** `OFF`
-
-#### VKB_VALIDATION_LAYERS
+## VKB_VALIDATION_LAYERS
 
 Enable Validation Layers
 
 **Default:** `OFF`
 
-#### VKB_WARNINGS_AS_ERRORS
+## VKB_WARNINGS_AS_ERRORS
 
 Treat all warnings as errors
 
@@ -293,23 +279,3 @@ In this case, update the version of the gradle plugin in "bldsys/cmake/template/
 
 If you are using Android Studio, you can simply do these changes after importing the `build/android_gradle` folder, opening File->Project Structure, and doing the following changes:
 On the Project tab, change the Android Gradle Plugin version to 3.5.0 and the Gradle version to 6.3.(this also requires NDK 20.0.55)
-
-# Building Individual Samples
-
-`Step 1.` When generating cmake set the `VKB_ENTRYPOINTS` flag to `ON`
-
-```
-cmake -B"build" -H"." -DVKB_ENTRYPOINTS=ON
-```
-
-### CMake
-
-`Step 2.` Set the target to `<samplename>_app`. For example:
-
-```
-cmake --build build --config Debug --target afbc_app
-```
-
-### Visual Studio
-
-`Step 2.` In the Solution Explorer there now is an Entrypoints folder. Select the `<sample>_app` you would like to run and set it as the `Start Up Project`

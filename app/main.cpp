@@ -15,12 +15,8 @@
  * limitations under the License.
  */
 
-// Generated file by CMake. Don't edit.
-
 #include "common/logging.h"
 #include "platform/platform.h"
-
-#include "@TARGET_INCLUDE_PATH@.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -50,34 +46,31 @@ int main(int argc, char *argv[])
 #	endif
 #endif
 
-// Only error handle in release
-#ifndef DEBUG
-	try
-	{
-#endif
-		auto app = create_@TARGET_CREATE_FUNC@();
-		app->set_name("@TARGET_NAME@");
-		app->parse_options(platform.get_arguments());
+	// #ifndef DEBUG
+	// 	try
+	// 	{
+	// #endif
+	// 		if (platform.initialize())
+	// 		{
+	// 			platform.main_loop();
+	// 			platform.terminate(vkb::ExitCode::Success);
+	// 		}
+	// 		else
+	// 		{
+	// 			platform.terminate(vkb::ExitCode::UnableToRun);
+	// 		}
+	// #ifndef DEBUG
+	// 	}
+	// 	catch (const std::exception &e)
+	// 	{
+	// 		LOGE(e.what());
+	// 		platform.terminate(vkb::ExitCode::FatalError);
+	// 	}
+	// #endif
 
-		if (platform.initialize(std::move(app)))
-		{
-			platform.main_loop();
-			platform.terminate(vkb::ExitCode::Success);
-		}
-		else
-		{
-			platform.terminate(vkb::ExitCode::UnableToRun);
-		}
-#ifndef DEBUG
-	}
-	catch (const std::exception &e)
-	{
-		LOGE(e.what());
-		platform.terminate(vkb::ExitCode::FatalError);
-	}
-#endif
-
-#ifndef VK_USE_PLATFORM_ANDROID_KHR
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
+	platform.main_loop();        // Continue to process events until onDestroy()
+#else
 	return EXIT_SUCCESS;
 #endif
 }
