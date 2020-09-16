@@ -61,25 +61,27 @@ std::vector<AppInfo *> get_apps()
 	return app_ptrs;
 }
 
-std::vector<SampleInfo *> get_samples(const std::vector<std::string> &categories, const std::vector<std::string> &tags)
+std::vector<AppInfo *> get_samples(const std::vector<std::string> &categories, const std::vector<std::string> &tags)
 {
-	std::vector<SampleInfo *> sample_ptrs;
+	std::vector<AppInfo *> app_ptrs;
 
-	for (auto &sample : samples)
+	for (auto &app : samples)
 	{
-		sample_ptrs.push_back(&sample);
+		app_ptrs.push_back(&app);
 	}
 
 	// No filters
 	if (categories.empty() && tags.empty())
 	{
-		return sample_ptrs;
+		return app_ptrs;
 	}
 
-	std::vector<SampleInfo *> filtered;
+	std::vector<AppInfo *> filtered;
 
-	for (auto sample : sample_ptrs)
+	for (auto app : app_ptrs)
 	{
+		auto *sample = reinterpret_cast<SampleInfo *>(app);
+
 		bool selected = false;
 
 		// Sample is in one of the desired categories
@@ -107,23 +109,23 @@ std::vector<SampleInfo *> get_samples(const std::vector<std::string> &categories
 
 		if (selected)
 		{
-			filtered.push_back(sample);
+			filtered.push_back(app);
 		}
 	}
 
 	return filtered;
 }
 
-std::vector<TestInfo *> get_tests()
+std::vector<AppInfo *> get_tests()
 {
-	std::vector<TestInfo *> test_ptrs;
+	std::vector<AppInfo *> app_ptrs;
 
-	for (auto &test : tests)
+	for (auto &app : tests)
 	{
-		test_ptrs.push_back(&test);
+		app_ptrs.push_back(&app);
 	}
 
-	return test_ptrs;
+	return app_ptrs;
 }
 
 }        // namespace apps

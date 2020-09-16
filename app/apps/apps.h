@@ -103,12 +103,12 @@ std::vector<AppInfo *> get_apps();
  * @param tags If not empty the lists will include samples that match on of the tags requested
  * @return std::vector<AppInfo *> A list of samples
  */
-std::vector<SampleInfo *> get_samples(const std::vector<std::string> &categories = {}, const std::vector<std::string> &tags = {});
+std::vector<AppInfo *> get_samples(const std::vector<std::string> &categories = {}, const std::vector<std::string> &tags = {});
 
 /**
  * @brief Get all tests
  * 
  * @return std::vector<AppInfo *> A list of Tests
  */
-std::vector<TestInfo *> get_tests();
+std::vector<AppInfo *> get_tests();
 }        // namespace apps

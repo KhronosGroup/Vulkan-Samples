@@ -70,10 +70,10 @@ bool Platform::initialize()
 
 	LOGI("Logger initialized");
 
-	// TEMP - Not needed after later PRs, allows the app to run for now
+	// TEMP - Not needed after later PRs
 
 	active_app = std::make_unique<DummyApp>();
-
+	
 	auto app = apps::get_apps()[2];
 
 	request_application(app);
