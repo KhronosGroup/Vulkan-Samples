@@ -48,6 +48,8 @@ Additionally you may find the following links useful:
  [Performance samples](samples/performance) show the recommended best practice together with real-time profiling information.
  They are more advanced but also contain a detailed [tutorial](#tutorials) with more in-detail explanations.
 
+[Here is a complete list of all samples](./samples/README.md) available in this repository.
+
 ### Goals
 - Create a collection of resources that demonstrate best-practice recommendations in Vulkan
 - Create tutorials that explain the implementation of best-practices and include performance analysis guides
@@ -163,7 +165,7 @@ This project has some third-party dependencies, each of which may have independe
 - [volk](https://github.com/zeux/volk): Meta loader for Vulkan API
 - [vulkan](https://github.com/KhronosGroup/Vulkan-Docs): Sources for the formal documentation of the Vulkan API
 
-This project uses assets from [vulkan-samples-assets](https://github.com/KhronosGroup/Vulkan-Samples-Assets). Each one has its own licence.
+This project uses assets from [vulkan-samples-assets](https://github.com/KhronosGroup/Vulkan-Samples-Assets). Each one has its own license.
 
 ### Trademarks
 
