@@ -267,17 +267,22 @@ CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
 
 void RenderContext::submit(CommandBuffer &command_buffer)
 {
+	submit({&command_buffer});
+}
+
+void RenderContext::submit(const std::vector<CommandBuffer *> &command_buffers)
+{
 	assert(frame_active && "RenderContext is inactive, cannot submit command buffer. Please call begin()");
 
 	VkSemaphore render_semaphore = VK_NULL_HANDLE;
 
 	if (swapchain)
 	{
-		render_semaphore = submit(queue, command_buffer, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+		render_semaphore = submit(queue, command_buffers, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 	else
 	{
-		submit(queue, command_buffer);
+		submit(queue, command_buffers);
 	}
 
 	end_frame(render_semaphore);
@@ -327,18 +332,19 @@ VkSemaphore RenderContext::begin_frame()
 	return aquired_semaphore;
 }
 
-VkSemaphore RenderContext::submit(const Queue &queue, const CommandBuffer &command_buffer, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
+VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
 {
+	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
+	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
+
 	RenderFrame &frame = get_active_frame();
 
 	VkSemaphore signal_semaphore = frame.request_semaphore();
 
-	VkCommandBuffer cmd_buf = command_buffer.get_handle();
-
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
-	submit_info.commandBufferCount   = 1;
-	submit_info.pCommandBuffers      = &cmd_buf;
+	submit_info.commandBufferCount   = to_u32(cmd_buf_handles.size());
+	submit_info.pCommandBuffers      = cmd_buf_handles.data();
 	submit_info.waitSemaphoreCount   = 1;
 	submit_info.pWaitSemaphores      = &wait_semaphore;
 	submit_info.pWaitDstStageMask    = &wait_pipeline_stage;
@@ -352,16 +358,17 @@ VkSemaphore RenderContext::submit(const Queue &queue, const CommandBuffer &comma
 	return signal_semaphore;
 }
 
-void RenderContext::submit(const Queue &queue, const CommandBuffer &command_buffer)
+void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers)
 {
-	RenderFrame &frame = get_active_frame();
+	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
+	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
 
-	VkCommandBuffer cmd_buf = command_buffer.get_handle();
+	RenderFrame &frame = get_active_frame();
 
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &cmd_buf;
+	submit_info.commandBufferCount = to_u32(cmd_buf_handles.size());
+	submit_info.pCommandBuffers    = cmd_buf_handles.data();
 
 	VkFence fence = frame.request_fence();
 

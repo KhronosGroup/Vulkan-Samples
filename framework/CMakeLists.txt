@@ -131,6 +131,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/aabb.h
     scene_graph/components/camera.h
     scene_graph/components/perspective_camera.h
+    scene_graph/components/orthographic_camera.h
     scene_graph/components/image.h
     scene_graph/components/light.h
     scene_graph/components/material.h
@@ -147,6 +148,7 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
     scene_graph/components/perspective_camera.cpp
+    scene_graph/components/orthographic_camera.cpp
     scene_graph/components/image.cpp
     scene_graph/components/light.cpp
     scene_graph/components/material.cpp

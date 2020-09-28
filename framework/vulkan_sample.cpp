@@ -261,18 +261,7 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 
 void VulkanSample::draw_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
-	auto &extent = render_target.get_extent();
-
-	VkViewport viewport{};
-	viewport.width    = static_cast<float>(extent.width);
-	viewport.height   = static_cast<float>(extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	command_buffer.set_viewport(0, {viewport});
-
-	VkRect2D scissor{};
-	scissor.extent = extent;
-	command_buffer.set_scissor(0, {scissor});
+	set_viewport_and_scissor(command_buffer, render_target.get_extent());
 
 	render(command_buffer);
 
@@ -408,6 +397,20 @@ void VulkanSample::update_debug_window()
 			get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
 		}
 	}
+}
+
+void VulkanSample::set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent) const
+{
+	VkViewport viewport{};
+	viewport.width    = static_cast<float>(extent.width);
+	viewport.height   = static_cast<float>(extent.height);
+	viewport.minDepth = 0.0f;
+	viewport.maxDepth = 1.0f;
+	command_buffer.set_viewport(0, {viewport});
+
+	VkRect2D scissor{};
+	scissor.extent = extent;
+	command_buffer.set_scissor(0, {scissor});
 }
 
 void VulkanSample::load_scene(const std::string &path)

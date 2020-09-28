@@ -95,7 +95,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	// Draw opaque objects in front-to-back order
 	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
-		update_uniform(command_buffer, *node_it->second.first);
+		update_uniform(command_buffer, *node_it->second.first, thread_index);
 
 		// Invert the front face if the mesh was flipped
 		const auto &scale      = node_it->second.first->get_transform().get_scale();
@@ -125,7 +125,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	// Draw transparent objects in back-to-front order
 	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
 	{
-		update_uniform(command_buffer, *node_it->second.first);
+		update_uniform(command_buffer, *node_it->second.first, thread_index);
 
 		draw_submesh(command_buffer, *node_it->second.second);
 	}
@@ -297,5 +297,10 @@ void GeometrySubpass::draw_submesh_command(CommandBuffer &command_buffer, sg::Su
 		// Draw submesh using vertices only
 		command_buffer.draw(sub_mesh.vertices_count, 1, 0, 0);
 	}
+}
+
+void GeometrySubpass::set_thread_index(uint32_t index)
+{
+	thread_index = index;
 }
 }        // namespace vkb

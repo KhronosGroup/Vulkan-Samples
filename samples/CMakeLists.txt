@@ -76,6 +76,7 @@ set(ORDER_LIST
     "layout_transitions"
     "specialization_constants"
     "command_buffer_usage"
+    "multithreading_render_passes"
     "afbc")
 
 # Orders the sample ids by the order list above
