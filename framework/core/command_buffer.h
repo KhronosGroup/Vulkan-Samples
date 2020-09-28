@@ -108,11 +108,25 @@ class CommandBuffer
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
+	/**
+	 * @brief Sets the command buffer so that it is ready for recording
+	 *        If it is a secondary command buffer, pointers to the
+	 *        render pass and framebuffer as well as subpass index must be provided
+	 * @param flags Usage behavior for the command buffer
+	 * @param render_pass
+	 * @param framebuffer
+	 * @param subpass_index
+	 * @return Whether it succeded or not
+	 */
+	VkResult begin(VkCommandBufferUsageFlags flags, const RenderPass *render_pass, const Framebuffer *framebuffer, uint32_t subpass_index);
+
 	VkResult end();
 
 	void clear(VkClearAttachment info, VkClearRect rect);
 
 	void begin_render_pass(const RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<VkClearValue> &clear_values, const std::vector<std::unique_ptr<Subpass>> &subpasses, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
+
+	void begin_render_pass(const RenderTarget &render_target, const RenderPass &render_pass, const Framebuffer &framebuffer, const std::vector<VkClearValue> &clear_values, VkSubpassContents contents = VK_SUBPASS_CONTENTS_INLINE);
 
 	void next_subpass();
 
@@ -234,6 +248,8 @@ class CommandBuffer
 	 * @param reset_mode How to reset the buffer, should match the one used by the pool to allocate it
 	 */
 	VkResult reset(ResetMode reset_mode);
+
+	RenderPass &get_render_pass(const vkb::RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<std::unique_ptr<Subpass>> &subpasses);
 
 	const VkCommandBufferLevel level;
 

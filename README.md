@@ -82,6 +82,7 @@ Additionally you may find the following links useful:
 - **Command Buffers**
   - [Allocation and management of command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
   - [Multi-threaded recording with secondary command buffers](./samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
+  - [Multi-threaded recording with multiple render passes](./samples/performance/multithreading_render_passes/multithreading_render_passes_tutorial.md)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
 - **API samples**

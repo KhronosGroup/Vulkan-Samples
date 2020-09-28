@@ -149,16 +149,7 @@ void RenderPassesSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb
 
 	auto &extent = render_target.get_extent();
 
-	VkViewport viewport{};
-	viewport.width    = static_cast<float>(extent.width);
-	viewport.height   = static_cast<float>(extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	command_buffer.set_viewport(0, {viewport});
-
-	VkRect2D scissor{};
-	scissor.extent = extent;
-	command_buffer.set_scissor(0, {scissor});
+	set_viewport_and_scissor(command_buffer, extent);
 
 	auto &subpasses = render_pipeline->get_subpasses();
 	command_buffer.begin_render_pass(render_target, load_store, render_pipeline->get_clear_value(), subpasses);

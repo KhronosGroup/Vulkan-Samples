@@ -85,6 +85,11 @@ class GeometrySubpass : public Subpass
 	 */
 	virtual void draw(CommandBuffer &command_buffer) override;
 
+	/**
+	 * @brief Thread index to use for allocating resources
+	 */
+	void set_thread_index(uint32_t index);
+
   protected:
 	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
 
@@ -110,6 +115,8 @@ class GeometrySubpass : public Subpass
 	std::vector<sg::Mesh *> meshes;
 
 	sg::Scene &scene;
+
+	uint32_t thread_index{0};
 };
 
 }        // namespace vkb
