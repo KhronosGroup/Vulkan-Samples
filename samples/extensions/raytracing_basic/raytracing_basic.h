@@ -33,10 +33,15 @@
 
 #include "api_vulkan_sample.h"
 
-// Indices for the different ray tracing shader types used in this example
-#define INDEX_RAYGEN 0
-#define INDEX_CLOSEST_HIT 1
-#define INDEX_MISS 2
+// Indices for the ray tracing shader groups
+#define INDEX_RAYGEN_GROUP 0
+#define INDEX_MISS_GROUP 1
+#define INDEX_CLOSEST_HIT_GROUP 2
+
+// Indices for the ray tracing shaders for the ray tracing pipeline
+#define INDEX_RAYGEN_SHADER 0
+#define INDEX_MISS_SHADER 1
+#define INDEX_CLOSEST_HIT_SHADER 2
 
 // Holds data for a ray tracing scratch buffer that is used as a temporary storage
 struct RayTracingScratchBuffer
@@ -56,6 +61,18 @@ struct RayTracingObjectMemory
 	uint64_t       device_address = 0;
 	VkDeviceMemory memory         = VK_NULL_HANDLE;
 	RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
+	~RayTracingObjectMemory();
+};
+
+// Wraps all data required of an acceleration structure
+struct RayTracingAccelerationStructure
+{
+	vkb::Device &              device;
+	VkAccelerationStructureKHR structure;
+	uint64_t                   handle;
+	RayTracingObjectMemory *   object_memory;
+	RayTracingAccelerationStructure(vkb::Device &device);
+	~RayTracingAccelerationStructure();
 };
 
 class RaytracingBasic : public ApiVulkanSample
@@ -64,15 +81,14 @@ class RaytracingBasic : public ApiVulkanSample
 	VkPhysicalDeviceRayTracingPropertiesKHR ray_tracing_properties{};
 	VkPhysicalDeviceRayTracingFeaturesKHR   ray_tracing_features{};
 
-	VkAccelerationStructureKHR bottom_level_acceleration_structure;
-	uint64_t                   bottom_level_acceleration_structure_handle = 0;
-	VkAccelerationStructureKHR top_level_acceleration_structure;
-	uint64_t                   top_level_acceleration_structure_handle = 0;
+	RayTracingAccelerationStructure *bottom_level_acceleration_structure;
+	RayTracingAccelerationStructure *top_level_acceleration_structure;
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
-	std::unique_ptr<vkb::core::Buffer> shader_binding_table;
+	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
+	std::unique_ptr<vkb::core::Buffer>                index_buffer;
+	uint32_t                                          index_count;
+	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
+	std::unique_ptr<vkb::core::Buffer>                shader_binding_table;
 
 	struct StorageImage
 	{
