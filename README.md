@@ -26,6 +26,7 @@
 - [Introduction](#introduction)
   - [Goals](#goals)
 - [Tutorials](#tutorials)
+- [Samples](#samples)
 - [Setup](#setup)
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
@@ -52,6 +53,9 @@ Additionally you may find the following links useful:
 - Create a collection of resources that demonstrate best-practice recommendations in Vulkan
 - Create tutorials that explain the implementation of best-practices and include performance analysis guides
 - Create a framework that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
+
+## Samples
+- [Listing of all samples available in this repository ](./samples/README.md)
 
 ## Tutorials
 - **Project Basics**
@@ -85,10 +89,10 @@ Additionally you may find the following links useful:
   - [Multi-threaded recording with multiple render passes](./samples/performance/multithreading_render_passes/multithreading_render_passes_tutorial.md)
 - **AFBC**
   - [Appropriate use of AFBC](./samples/performance/afbc/afbc_tutorial.md)
-- **API samples**
-  - [Overview for the API samples](./samples/api/README.md)
-- **Extension samples**
-  - [Overview for the extension samples](./samples/extensions/README.md)
+- **Textures**
+  - [Run-time mip map generation](./samples/api/texture_mipmap_generation/texture_mipmap_generation_tutorial.md)
+- **Debugging**
+  - [Using the debug utilities extension](./samples/extensions/debug_utils/debug_utils_tutorial.md)
 - **Misc**
   - [Driver version](./docs/misc.md#driver-version)
   - [Memory limits](./docs/memory_limits.md)
@@ -164,7 +168,7 @@ This project has some third-party dependencies, each of which may have independe
 - [volk](https://github.com/zeux/volk): Meta loader for Vulkan API
 - [vulkan](https://github.com/KhronosGroup/Vulkan-Docs): Sources for the formal documentation of the Vulkan API
 
-This project uses assets from [vulkan-samples-assets](https://github.com/KhronosGroup/Vulkan-Samples-Assets). Each one has its own licence.
+This project uses assets from [vulkan-samples-assets](https://github.com/KhronosGroup/Vulkan-Samples-Assets). Each one has its own license.
 
 ### Trademarks
 
