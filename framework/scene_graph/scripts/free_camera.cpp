@@ -47,7 +47,7 @@ const float FreeCamera::TRANSLATION_MOVE_STEP = 50.0f;
 const uint32_t FreeCamera::TRANSLATION_MOVE_SPEED = 4;
 
 FreeCamera::FreeCamera(Node &node) :
-    Script{node, "FreeCamera"}
+    NodeScript{node, "FreeCamera"}
 {}
 
 void FreeCamera::update(float delta_time)

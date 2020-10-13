@@ -34,7 +34,7 @@ namespace vkb
 namespace sg
 {
 NodeAnimation::NodeAnimation(Node &node, TransformAnimFn animation_fn) :
-    Script{node, ""},
+    NodeScript{node, ""},
     animation_fn{animation_fn}
 {
 }

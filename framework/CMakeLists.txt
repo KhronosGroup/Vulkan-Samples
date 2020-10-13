@@ -166,9 +166,11 @@ set(SCENE_GRAPH_SCRIPTS_FILES
     # Header Files
     scene_graph/scripts/free_camera.h
     scene_graph/scripts/node_animation.h
+    scene_graph/scripts/animation.h
     # Source Files
     scene_graph/scripts/free_camera.cpp
-    scene_graph/scripts/node_animation.cpp)
+    scene_graph/scripts/node_animation.cpp
+    scene_graph/scripts/animation.cpp)
 
 set(STATS_FILES
     # Header Files

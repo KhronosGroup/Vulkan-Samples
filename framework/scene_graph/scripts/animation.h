@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,31 +26,63 @@
 #include "scene_graph/components/transform.h"
 #include "scene_graph/script.h"
 
-/**
- *	@param std::shared_ptr<vkb::sg::Transform> The transform to animate
- *  @param float The delta time of the frame to scale animations
- */
-using TransformAnimFn = std::function<void(vkb::sg::Transform &, float)>;
-
 namespace vkb
 {
 namespace sg
 {
-class NodeAnimation : public NodeScript
+enum AnimationType
+{
+	Linear,
+	Step,
+	CubicSpline
+};
+
+enum AnimationTarget
+{
+	Translation,
+	Rotation,
+	Scale
+};
+
+struct AnimationSampler
+{
+	AnimationType type{Linear};
+
+	std::vector<float> inputs{};
+
+	std::vector<glm::vec4> outputs{};
+};
+
+struct AnimationChannel
+{
+	Node &node;
+
+	AnimationTarget target;
+
+	AnimationSampler sampler;
+};
+
+class Animation : public Script
 {
   public:
-	NodeAnimation(Node &node, TransformAnimFn animation_fn);
+	Animation(const std::string &name = "");
 
-	virtual ~NodeAnimation() = default;
+	Animation(const Animation &);
 
 	virtual void update(float delta_time) override;
 
-	void set_animation(TransformAnimFn handle);
+	void update_times(float start_time, float end_time);
 
-	void clear_animation();
+	void add_channel(Node &node, const AnimationTarget &target, const AnimationSampler &sampler);
 
   private:
-	TransformAnimFn animation_fn{};
+	std::vector<AnimationChannel> channels;
+
+	float current_time{0.0f};
+
+	float start_time{std::numeric_limits<float>::max()};
+
+	float end_time{std::numeric_limits<float>::min()};
 };
 }        // namespace sg
 }        // namespace vkb

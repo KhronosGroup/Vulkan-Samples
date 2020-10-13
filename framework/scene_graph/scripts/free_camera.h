@@ -35,7 +35,7 @@ namespace vkb
 {
 namespace sg
 {
-class FreeCamera : public Script
+class FreeCamera : public NodeScript
 {
   public:
 	static const float TOUCH_DOWN_MOVE_FORWARD_WAIT_TIME;

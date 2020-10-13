@@ -49,6 +49,7 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
+#include "scene_graph/scripts/animation.h"
 
 #include <ctpl_stl.h>
 
@@ -759,6 +760,134 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		nodes.push_back(std::move(node));
 	}
+
+	std::vector<std::unique_ptr<sg::Animation>> animations;
+
+	// Load animations
+	for (size_t animation_index = 0; animation_index < model.animations.size(); ++animation_index)
+	{
+		auto &gltf_animation = model.animations[animation_index];
+
+		std::vector<sg::AnimationSampler> samplers;
+
+		for (size_t sampler_index = 0; sampler_index < gltf_animation.samplers.size(); ++sampler_index)
+		{
+			auto gltf_sampler = gltf_animation.samplers[sampler_index];
+
+			sg::AnimationSampler sampler;
+			if (gltf_sampler.interpolation == "LINEAR")
+			{
+				sampler.type = sg::AnimationType::Linear;
+			}
+			else if (gltf_sampler.interpolation == "STEP")
+			{
+				sampler.type = sg::AnimationType::Step;
+			}
+			else if (gltf_sampler.interpolation == "CUBICSPLINE")
+			{
+				sampler.type = sg::AnimationType::CubicSpline;
+			}
+			else
+			{
+				LOGW("Gltf animation sampler #{} has unknown interpolation value", sampler_index);
+			}
+
+			auto input_accessor      = model.accessors[gltf_sampler.input];
+			auto input_accessor_data = get_attribute_data(&model, gltf_sampler.input);
+
+			const float *data = reinterpret_cast<const float *>(input_accessor_data.data());
+			for (size_t i = 0; i < input_accessor.count; ++i)
+			{
+				sampler.inputs.push_back(data[i]);
+			}
+
+			auto output_accessor      = model.accessors[gltf_sampler.output];
+			auto output_accessor_data = get_attribute_data(&model, gltf_sampler.output);
+
+			switch (output_accessor.type)
+			{
+				case TINYGLTF_TYPE_VEC3:
+				{
+					const glm::vec3 *data = reinterpret_cast<const glm::vec3 *>(output_accessor_data.data());
+					for (size_t i = 0; i < output_accessor.count; ++i)
+					{
+						sampler.outputs.push_back(glm::vec4(data[i], 0.0f));
+					}
+					break;
+				}
+				case TINYGLTF_TYPE_VEC4:
+				{
+					const glm::vec4 *data = reinterpret_cast<const glm::vec4 *>(output_accessor_data.data());
+					for (size_t i = 0; i < output_accessor.count; ++i)
+					{
+						sampler.outputs.push_back(glm::vec4(data[i]));
+					}
+					break;
+				}
+				default:
+				{
+					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index);
+					continue;
+				}
+			}
+
+			samplers.push_back(sampler);
+		}
+
+		auto animation = std::make_unique<sg::Animation>(gltf_animation.name);
+
+		for (size_t channel_index = 0; channel_index < gltf_animation.channels.size(); ++channel_index)
+		{
+			auto &gltf_channel = gltf_animation.channels[channel_index];
+
+			sg::AnimationTarget target;
+			if (gltf_channel.target_path == "translation")
+			{
+				target = sg::AnimationTarget::Translation;
+			}
+			else if (gltf_channel.target_path == "rotation")
+			{
+				target = sg::AnimationTarget::Rotation;
+			}
+			else if (gltf_channel.target_path == "scale")
+			{
+				target = sg::AnimationTarget::Scale;
+			}
+			else if (gltf_channel.target_path == "weights")
+			{
+				LOGW("Gltf animation channel #{} has unsupported target path: {}", channel_index, gltf_channel.target_path);
+				continue;
+			}
+			else
+			{
+				LOGW("Gltf animation channel #{} has unknown target path", channel_index);
+				continue;
+			}
+
+			float start_time{std::numeric_limits<float>::max()};
+			float end_time{std::numeric_limits<float>::min()};
+
+			for (auto input : samplers[gltf_channel.sampler].inputs)
+			{
+				if (input < start_time)
+				{
+					start_time = input;
+				}
+				if (input > end_time)
+				{
+					end_time = input;
+				}
+			}
+
+			animation->update_times(start_time, end_time);
+
+			animation->add_channel(*nodes[gltf_channel.target_node], target, samplers[gltf_channel.sampler]);
+		}
+
+		animations.push_back(std::move(animation));
+	}
+
+	scene.set_components(std::move(animations));
 
 	// Load scenes
 	std::queue<std::pair<sg::Node &, int>> traverse_nodes;
