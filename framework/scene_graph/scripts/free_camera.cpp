@@ -72,6 +72,14 @@ void FreeCamera::update(float delta_time)
 	{
 		delta_translation.x += TRANSLATION_MOVE_STEP;
 	}
+	if (key_pressed[KeyCode::Q])
+	{
+		delta_translation.y -= TRANSLATION_MOVE_STEP;
+	}
+	if (key_pressed[KeyCode::E])
+	{
+		delta_translation.y += TRANSLATION_MOVE_STEP;
+	}
 	if (key_pressed[KeyCode::LeftControl])
 	{
 		mul_translation *= (1.0f * TRANSLATION_MOVE_SPEED);
