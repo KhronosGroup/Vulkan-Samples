@@ -132,6 +132,7 @@ adb shell setprop security.perf_harden 0
 ## Dependencies
 
 - CMake v3.10+ (known to work with 3.10.2)
+- Python 3
 - Visual Studio 2017 or above
 - [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
