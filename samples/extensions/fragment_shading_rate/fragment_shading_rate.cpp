@@ -282,18 +282,20 @@ void FragmentShadingRate::setup_render_pass()
 	attachments[2].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[2].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[2].initialLayout  = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	attachments[2].finalLayout    = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 
 	VkAttachmentReference2 color_reference = {};
 	color_reference.sType                  = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 	color_reference.attachment             = 0;
 	color_reference.layout                 = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	color_reference.aspectMask             = VK_IMAGE_ASPECT_COLOR_BIT;
 
 	VkAttachmentReference2 depth_reference = {};
 	depth_reference.sType                  = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 	depth_reference.attachment             = 1;
 	depth_reference.layout                 = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+	depth_reference.aspectMask             = VK_IMAGE_ASPECT_DEPTH_BIT;
 
 	// @todo: comment
 	VkAttachmentReference2 fragment_shading_rate_reference = {};
@@ -303,7 +305,7 @@ void FragmentShadingRate::setup_render_pass()
 
 	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {};
 	fragment_shading_rate_attachment_info.sType                                  = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
-	fragment_shading_rate_attachment_info.pNext                                  = &fragment_shading_rate_reference;
+	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
 	// @todo
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width  = width;
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height = height;
@@ -345,7 +347,7 @@ void FragmentShadingRate::setup_render_pass()
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	VkRenderPassCreateInfo2 render_pass_create_info = {};
-	render_pass_create_info.sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_create_info.sType                   = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
 	render_pass_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
 	render_pass_create_info.pAttachments            = attachments.data();
 	render_pass_create_info.subpassCount            = 1;
@@ -362,6 +364,12 @@ void FragmentShadingRate::setup_render_pass()
 */
 void FragmentShadingRate::setup_framebuffer()
 {
+	// @todo: comment
+	if (shading_rate_image.image == VK_NULL_HANDLE)
+	{
+		create_shading_rate_attachment();
+	}
+
 	VkImageView attachments[3];
 
 	// Depth/Stencil attachment is the same for all frame buffers
@@ -1171,7 +1179,7 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
-	create_shading_rate_attachment();
+//	create_shading_rate_attachment();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
 	setup_descriptor_set_layout();

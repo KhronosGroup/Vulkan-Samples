@@ -38,9 +38,9 @@ class FragmentShadingRate : public ApiVulkanSample
 
 	struct ShadingRateImage
 	{
-		VkImage        image;
-		VkDeviceMemory memory;
-		VkImageView    view;
+		VkImage        image  = VK_NULL_HANDLE;
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+		VkImageView    view   = VK_NULL_HANDLE;
 	} shading_rate_image;
 
 	struct
