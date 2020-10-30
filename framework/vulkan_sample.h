@@ -250,7 +250,7 @@ class VulkanSample : public Application
 	/**
 	 * @brief Set he Vulkan API version to request at instance creation time
 	 */
-	void set_api_version(uint32_t requested_api_vrsion);
+	void set_api_version(uint32_t requested_api_version);
 
 	/**
 	 * @brief Request features from the gpu based on what is supported

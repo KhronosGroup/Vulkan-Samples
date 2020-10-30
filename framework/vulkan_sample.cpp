@@ -462,9 +462,9 @@ void VulkanSample::add_instance_extension(const char *extension, bool optional)
 	instance_extensions[extension] = optional;
 }
 
-void VulkanSample::set_api_version(uint32_t requested_api_vrsion)
+void VulkanSample::set_api_version(uint32_t requested_api_version)
 {
-	api_version = requested_api_vrsion;
+	api_version = requested_api_version;
 }
 
 void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
