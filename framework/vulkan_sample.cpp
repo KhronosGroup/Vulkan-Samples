@@ -87,7 +87,7 @@ bool VulkanSample::prepare(Platform &platform)
 
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless());
+	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless(), api_version);
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
@@ -460,6 +460,11 @@ void VulkanSample::add_device_extension(const char *extension, bool optional)
 void VulkanSample::add_instance_extension(const char *extension, bool optional)
 {
 	instance_extensions[extension] = optional;
+}
+
+void VulkanSample::set_api_version(uint32_t requested_api_vrsion)
+{
+	api_version = requested_api_vrsion;
 }
 
 void VulkanSample::request_gpu_features(PhysicalDevice &gpu)

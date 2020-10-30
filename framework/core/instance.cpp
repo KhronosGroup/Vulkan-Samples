@@ -132,7 +132,8 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 Instance::Instance(const std::string &                           application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *> &             required_validation_layers,
-                   bool                                          headless)
+                   bool                                          headless,
+                   uint32_t                                      api_version)
 {
 	VkResult result = volkInitialize();
 	if (result)
@@ -260,7 +261,7 @@ Instance::Instance(const std::string &                           application_nam
 	app_info.applicationVersion = 0;
 	app_info.pEngineName        = "Vulkan Samples";
 	app_info.engineVersion      = 0;
-	app_info.apiVersion         = VK_MAKE_VERSION(1, 0, 0);
+	app_info.apiVersion         = api_version;
 
 	VkInstanceCreateInfo instance_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
 

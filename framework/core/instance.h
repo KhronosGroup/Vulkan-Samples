@@ -45,12 +45,14 @@ class Instance
 	 * @param required_extensions The extensions requested to be enabled
 	 * @param required_validation_layers The validation layers to be enabled
 	 * @param headless Whether the application is requesting a headless setup or not
+	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
 	Instance(const std::string &                           application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
 	         const std::vector<const char *> &             required_validation_layers = {},
-	         bool                                          headless                   = false);
+	         bool                                          headless                   = false,
+	         uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
 	/**
 	 * @brief Queries the GPUs of a VkInstance that is already created
