@@ -248,7 +248,7 @@ class VulkanSample : public Application
 	void add_instance_extension(const char *extension, bool optional = false);
 
 	/**
-	 * @brief Set he Vulkan API version to request at instance creation time
+	 * @brief Set the Vulkan API version to request at instance creation time
 	 */
 	void set_api_version(uint32_t requested_api_version);
 
