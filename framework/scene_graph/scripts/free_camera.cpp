@@ -1,4 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
+ * Copyright (c) 2020, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
