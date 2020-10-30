@@ -86,10 +86,10 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
 
 	// Enable anisotropic filtering if supported
-	//if (gpu.get_features().samplerAnisotropy)
-	//{
-	//	gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	//}
+	if (gpu.get_features().samplerAnisotropy)
+	{
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+	}
 }
 
 /*
@@ -98,14 +98,21 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void FragmentShadingRate::create_shading_rate_attachment()
 {
+	// Get all available shading rates
+	// @todo: Make var local
+	uint32_t fragment_shading_rate_count = 0;
+	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
+	if (fragment_shading_rate_count > 0)
+	{
+		fragment_shading_rates.resize(fragment_shading_rate_count);
+		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
+	}
+
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
 	VkExtent3D imageExtent{};
-	imageExtent.width  = width;
-	imageExtent.height = height;
-	// @todo
-	//imageExtent.width  = static_cast<uint32_t>(ceil(width / (float) physicalDeviceShadingRateImagePropertiesNV.shadingRateTexelSize.width));
-	//imageExtent.height = static_cast<uint32_t>(ceil(height / (float) physicalDeviceShadingRateImagePropertiesNV.shadingRateTexelSize.height));
+	imageExtent.width  = static_cast<uint32_t>(ceil(width / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
+	imageExtent.height = static_cast<uint32_t>(ceil(height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
 	imageExtent.depth = 1;
 
 	// @todo: snake case
@@ -148,7 +155,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	VK_CHECK(vkCreateImageView(device->get_handle(), &imageViewCI, nullptr, &shading_rate_image.view));
 
 	// Populate with lowest possible shading rate pattern
-	uint8_t  val                    = VK_SHADING_RATE_PALETTE_ENTRY_1_INVOCATION_PER_4X4_PIXELS_NV;
+	uint8_t  val                    = 1;
 	uint8_t *shadingRatePatternData = new uint8_t[bufferSize];
 	memset(shadingRatePatternData, val, bufferSize);
 
@@ -166,18 +173,18 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	{
 		for (uint32_t x = 0; x < imageExtent.width; x++)
 		{
-			const float deltaX = (float) imageExtent.width / 2.0f - (float) x;
-			const float deltaY = ((float) imageExtent.height / 2.0f - (float) y) * ((float) width / (float) height);
-			const float dist   = std::sqrt(deltaX * deltaX + deltaY * deltaY);
-			for (auto pattern : patternLookup)
-			{
-				if (dist < pattern.first)
-				{
-					*ptrData = pattern.second;
-					break;
-				}
-			}
-			ptrData++;
+			//const float deltaX = (float) imageExtent.width / 2.0f - (float) x;
+			//const float deltaY = ((float) imageExtent.height / 2.0f - (float) y) * ((float) width / (float) height);
+			//const float dist   = std::sqrt(deltaX * deltaX + deltaY * deltaY);
+			//for (auto pattern : patternLookup)
+			//{
+			//	if (dist < pattern.first)
+			//	{
+			//		*ptrData = pattern.second;
+			//		break;
+			//	}
+			//}
+			//ptrData++;
 		}
 	}
 
@@ -253,6 +260,15 @@ void FragmentShadingRate::create_shading_rate_attachment()
 */
 void FragmentShadingRate::setup_render_pass()
 {
+	// @todo: comment, maybe move into sep. function
+
+	// Query the fragment shading rate properties of the current implementation, we will need them later on
+	physical_device_fragment_shading_rate_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+	VkPhysicalDeviceProperties2 device_properties{};
+	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties.pNext = &physical_device_fragment_shading_rate_properties;
+	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
+
 	std::array<VkAttachmentDescription2, 3> attachments = {};
 	// Color attachment
 	attachments[0].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
@@ -307,8 +323,8 @@ void FragmentShadingRate::setup_render_pass()
 	fragment_shading_rate_attachment_info.sType                                  = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
 	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
 	// @todo
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width  = width;
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height = height;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
 	// @todo: comment
 	VkSubpassDescription2 subpass_description   = {};
@@ -422,16 +438,17 @@ void FragmentShadingRate::build_command_buffers()
 				First pass: Render scene to offscreen framebuffer
 			*/
 
-			std::array<VkClearValue, 2> clear_values;
+			std::array<VkClearValue, 3> clear_values;
 			clear_values[0].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
 			clear_values[1].color = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values[2].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.renderPass               = offscreen.render_pass;
 			render_pass_begin_info.framebuffer              = offscreen.framebuffer;
 			render_pass_begin_info.renderArea.extent.width  = offscreen.width;
 			render_pass_begin_info.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info.clearValueCount          = 2;
+			render_pass_begin_info.clearValueCount          = 3;
 			render_pass_begin_info.pClearValues             = clear_values.data();
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -1045,7 +1062,21 @@ void FragmentShadingRate::prepare_pipelines()
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
 	color_blend_state.attachmentCount = 1;
 	color_blend_state.pAttachments    = blend_attachment_states.data();
+
+	// @todo: Is this required?
+	VkPipelineFragmentShadingRateStateCreateInfoKHR pipeline_fragment_shading_rate_state = {};
+	pipeline_fragment_shading_rate_state.sType                                           = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR;
+	pipeline_fragment_shading_rate_state.fragmentSize.width                              = 1;
+	pipeline_fragment_shading_rate_state.fragmentSize.height                             = 1;
+	pipeline_fragment_shading_rate_state.combinerOps[0]                                  = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
+	pipeline_fragment_shading_rate_state.combinerOps[1]                                  = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
+
+	pipeline_create_info.pNext = &pipeline_fragment_shading_rate_state;
+
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
+
+	// @todo: crashes at validation
+	//pipeline_create_info.pNext = nullptr;
 
 	// Bloom pass
 	shader_stages[0]                           = load_shader("debug_utils/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -1155,21 +1186,22 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Query the fragment shading rate properties of the current implementation, we will need them later on
-	physical_device_fragment_shading_rate_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-	VkPhysicalDeviceProperties2 device_properties{};
-	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	device_properties.pNext = &physical_device_fragment_shading_rate_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
+	// @todo
+	//// Query the fragment shading rate properties of the current implementation, we will need them later on
+	//physical_device_fragment_shading_rate_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
+	//VkPhysicalDeviceProperties2 device_properties{};
+	//device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	//device_properties.pNext = &physical_device_fragment_shading_rate_properties;
+	//vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
 
-	// Get all available shading rates
-	uint32_t fragment_shading_rate_count;
-	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
-	if (fragment_shading_rate_count > 0)
-	{
-		fragment_shading_rates.resize(fragment_shading_rate_count);
-		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
-	}
+	//// Get all available shading rates
+	//uint32_t fragment_shading_rate_count;
+	//vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
+	//if (fragment_shading_rate_count > 0)
+	//{
+	//	fragment_shading_rates.resize(fragment_shading_rate_count);
+	//	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
+	//}
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
@@ -1179,7 +1211,7 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
-//	create_shading_rate_attachment();
+	//	create_shading_rate_attachment();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
 	setup_descriptor_set_layout();
