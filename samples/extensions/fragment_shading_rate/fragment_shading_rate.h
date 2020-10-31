@@ -16,7 +16,8 @@
  */
 
 /*
- * Using variable fragment shading rates with VK_KHR_fragment_shading_rate
+ * Using variable fragment shading rates from a subpass attachment with VK_KHR_fragment_shading_rate
+ * This sample creates an image that contains different shading rates, which are then sampled during rendering
  */
 
 #pragma once
@@ -31,9 +32,7 @@ class FragmentShadingRate : public ApiVulkanSample
 	bool display_skysphere   = true;
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
-	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};
-
-	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
+	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};	
 
 	struct ShadingRateImage
 	{

@@ -16,13 +16,13 @@
  */
 
 /*
- * Using variable fragment shading rates with VK_KHR_fragment_shading_rate
+ * Using variable fragment shading rates from a subpass attachment with VK_KHR_fragment_shading_rate
+ * This sample creates an image that contains different shading rates, which are then sampled during rendering
  */
 
 /*
 * TODOS:
 * - Check shading rate image format support for VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR
-* - Transfer shading rate image to VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR
 */
 
 #include "fragment_shading_rate.h"
@@ -69,15 +69,13 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 }
 
 /*
-* Create an attachment that contains the shading rates 
-* @todo: better comment
-* @todo: Resize
+* Create an image that contains the values used to determine the shading rates to apply during scene rendering
 */
 void FragmentShadingRate::create_shading_rate_attachment()
 {
 	// Get all available shading rates
-	// @todo: Make var local
-	uint32_t fragment_shading_rate_count = 0;
+	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
+	uint32_t                                            fragment_shading_rate_count = 0;
 	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
 	if (fragment_shading_rate_count > 0)
 	{
@@ -87,49 +85,48 @@ void FragmentShadingRate::create_shading_rate_attachment()
 
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
-	VkExtent3D imageExtent{};
-	imageExtent.width  = static_cast<uint32_t>(ceil(width / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
-	imageExtent.height = static_cast<uint32_t>(ceil(height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
-	imageExtent.depth  = 1;
+	VkExtent3D image_extent{};
+	image_extent.width  = static_cast<uint32_t>(ceil(width / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
+	image_extent.height = static_cast<uint32_t>(ceil(height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
+	image_extent.depth  = 1;
 
-	// @todo: snake case
+	VkImageCreateInfo image_create_info{};
+	image_create_info.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+	image_create_info.imageType     = VK_IMAGE_TYPE_2D;
+	image_create_info.format        = VK_FORMAT_R8_UINT;
+	image_create_info.extent        = image_extent;
+	image_create_info.mipLevels     = 1;
+	image_create_info.arrayLayers   = 1;
+	image_create_info.samples       = VK_SAMPLE_COUNT_1_BIT;
+	image_create_info.tiling        = VK_IMAGE_TILING_OPTIMAL;
+	image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_create_info.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+	image_create_info.usage         = VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+	VK_CHECK(vkCreateImage(device->get_handle(), &image_create_info, nullptr, &shading_rate_image.image));
+	VkMemoryRequirements memory_requirements{};
+	vkGetImageMemoryRequirements(device->get_handle(), shading_rate_image.image, &memory_requirements);
 
-	VkImageCreateInfo imageCI{};
-	imageCI.sType         = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-	imageCI.imageType     = VK_IMAGE_TYPE_2D;
-	imageCI.format        = VK_FORMAT_R8_UINT;
-	imageCI.extent        = imageExtent;
-	imageCI.mipLevels     = 1;
-	imageCI.arrayLayers   = 1;
-	imageCI.samples       = VK_SAMPLE_COUNT_1_BIT;
-	imageCI.tiling        = VK_IMAGE_TILING_OPTIMAL;
-	imageCI.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	imageCI.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-	imageCI.usage         = VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-	VK_CHECK(vkCreateImage(device->get_handle(), &imageCI, nullptr, &shading_rate_image.image));
-	VkMemoryRequirements memReqs{};
-	vkGetImageMemoryRequirements(device->get_handle(), shading_rate_image.image, &memReqs);
-
-	VkDeviceSize bufferSize = imageExtent.width * imageExtent.height * sizeof(uint8_t);
-
-	VkMemoryAllocateInfo memAllloc{};
-	memAllloc.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memAllloc.allocationSize  = memReqs.size;
-	memAllloc.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memAllloc, nullptr, &shading_rate_image.memory));
+	VkMemoryAllocateInfo memory_allocate_info{};
+	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	memory_allocate_info.allocationSize  = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocate_info, nullptr, &shading_rate_image.memory));
 	VK_CHECK(vkBindImageMemory(device->get_handle(), shading_rate_image.image, shading_rate_image.memory, 0));
 
-	VkImageViewCreateInfo imageViewCI{};
-	imageViewCI.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	imageViewCI.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	imageViewCI.image                           = shading_rate_image.image;
-	imageViewCI.format                          = VK_FORMAT_R8_UINT;
-	imageViewCI.subresourceRange.baseMipLevel   = 0;
-	imageViewCI.subresourceRange.levelCount     = 1;
-	imageViewCI.subresourceRange.baseArrayLayer = 0;
-	imageViewCI.subresourceRange.layerCount     = 1;
-	imageViewCI.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	VK_CHECK(vkCreateImageView(device->get_handle(), &imageViewCI, nullptr, &shading_rate_image.view));
+	VkImageViewCreateInfo image_view_create_info{};
+	image_view_create_info.sType                           = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+	image_view_create_info.image                           = shading_rate_image.image;
+	image_view_create_info.format                          = VK_FORMAT_R8_UINT;
+	image_view_create_info.subresourceRange.baseMipLevel   = 0;
+	image_view_create_info.subresourceRange.levelCount     = 1;
+	image_view_create_info.subresourceRange.baseArrayLayer = 0;
+	image_view_create_info.subresourceRange.layerCount     = 1;
+	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view_create_info, nullptr, &shading_rate_image.view));
+
+	// Allocate a buffer that stores the shading rates
+	VkDeviceSize buffer_size = image_extent.width * image_extent.height * sizeof(uint8_t);
 
 	// @todo: Lazily taken from GLSL_EXT_fragment_shading_rate
 	const int gl_ShadingRateFlag2VerticalPixelsEXT   = 1;
@@ -137,13 +134,14 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	const int gl_ShadingRateFlag2HorizontalPixelsEXT = 4;
 	const int gl_ShadingRateFlag4HorizontalPixelsEXT = 8;
 
-	// Populate with lowest possible shading rate pattern
-	uint8_t  val                    = gl_ShadingRateFlag4VerticalPixelsEXT | gl_ShadingRateFlag4HorizontalPixelsEXT;
-	uint8_t *shadingRatePatternData = new uint8_t[bufferSize];
-	memset(shadingRatePatternData, val, bufferSize);
+	// Populate the buffer with lowest possible shading rate pattern (4x4)
+	uint8_t  val                       = gl_ShadingRateFlag4VerticalPixelsEXT | gl_ShadingRateFlag4HorizontalPixelsEXT;
+	uint8_t *shading_rate_pattern_data = new uint8_t[buffer_size];
+	memset(shading_rate_pattern_data, val, buffer_size);
 
 	// Create a circular pattern with decreasing sampling rates outwards (max. range, pattern)
-	std::map<float, uint8_t> patternLookup = {
+	// @todo: Take from actual list of available shading rates?
+	std::map<float, uint8_t> pattern_lookup = {
 	    {8.0f, 0},
 	    {12.0f, gl_ShadingRateFlag2VerticalPixelsEXT},
 	    {16.0f, gl_ShadingRateFlag2HorizontalPixelsEXT},
@@ -151,15 +149,15 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	    {20.0f, gl_ShadingRateFlag4VerticalPixelsEXT | gl_ShadingRateFlag2HorizontalPixelsEXT},
 	    {24.0f, gl_ShadingRateFlag2VerticalPixelsEXT | gl_ShadingRateFlag4HorizontalPixelsEXT}};
 
-	uint8_t *ptrData = shadingRatePatternData;
-	for (uint32_t y = 0; y < imageExtent.height; y++)
+	uint8_t *ptrData = shading_rate_pattern_data;
+	for (uint32_t y = 0; y < image_extent.height; y++)
 	{
-		for (uint32_t x = 0; x < imageExtent.width; x++)
+		for (uint32_t x = 0; x < image_extent.width; x++)
 		{
-			const float deltaX = (float) imageExtent.width / 2.0f - (float) x;
-			const float deltaY = ((float) imageExtent.height / 2.0f - (float) y) * ((float) width / (float) height);
+			const float deltaX = (float) image_extent.width / 2.0f - (float) x;
+			const float deltaY = ((float) image_extent.height / 2.0f - (float) y) * ((float) width / (float) height);
 			const float dist   = std::sqrt(deltaX * deltaX + deltaY * deltaY);
-			for (auto pattern : patternLookup)
+			for (auto pattern : pattern_lookup)
 			{
 				if (dist < pattern.first)
 				{
@@ -171,90 +169,70 @@ void FragmentShadingRate::create_shading_rate_attachment()
 		}
 	}
 
-	VkBuffer       stagingBuffer;
-	VkDeviceMemory stagingMemory;
+	// Move shading rate pattern data to staging buffer
+	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                                        buffer_size,
+	                                                                                        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	                                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_buffer->update(shading_rate_pattern_data, buffer_size);
+	delete[] shading_rate_pattern_data;
 
-	VkBufferCreateInfo bufferCreateInfo{};
-	bufferCreateInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	bufferCreateInfo.size        = bufferSize;
-	bufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	VK_CHECK(vkCreateBuffer(device->get_handle(), &bufferCreateInfo, nullptr, &stagingBuffer));
-	VkMemoryAllocateInfo memAllocInfo{};
-	memAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memReqs            = {};
-	vkGetBufferMemoryRequirements(device->get_handle(), stagingBuffer, &memReqs);
-	memAllocInfo.allocationSize  = memReqs.size;
-	memAllocInfo.memoryTypeIndex = device->get_memory_type(memReqs.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	VK_CHECK(vkAllocateMemory(device->get_handle(), &memAllocInfo, nullptr, &stagingMemory));
-	VK_CHECK(vkBindBufferMemory(device->get_handle(), stagingBuffer, stagingMemory, 0));
+	// Upload the buffer containing the shading rates to the image that'll be used as the shading rate attachment inside our renderpass
+	VkCommandBuffer         copy_cmd          = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	VkImageSubresourceRange subresource_range = {};
+	subresource_range.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
+	subresource_range.levelCount              = 1;
+	subresource_range.layerCount              = 1;
 
-	uint8_t *mapped;
-	VK_CHECK(vkMapMemory(device->get_handle(), stagingMemory, 0, memReqs.size, 0, (void **) &mapped));
-	memcpy(mapped, shadingRatePatternData, bufferSize);
-	vkUnmapMemory(device->get_handle(), stagingMemory);
+	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
+	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	image_memory_barrier.srcAccessMask        = 0;
+	image_memory_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.image                = shading_rate_image.image;
+	image_memory_barrier.subresourceRange     = subresource_range;
+	vkCmdPipelineBarrier(copy_cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 
-	delete[] shadingRatePatternData;
+	VkBufferImageCopy buffer_copy_region           = {};
+	buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	buffer_copy_region.imageSubresource.layerCount = 1;
+	buffer_copy_region.imageExtent.width           = image_extent.width;
+	buffer_copy_region.imageExtent.height          = image_extent.height;
+	buffer_copy_region.imageExtent.depth           = 1;
+	vkCmdCopyBufferToImage(copy_cmd, staging_buffer->get_handle(), shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
-	// Upload
-	VkCommandBuffer         copyCmd          = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	VkImageSubresourceRange subresourceRange = {};
-	subresourceRange.aspectMask              = VK_IMAGE_ASPECT_COLOR_BIT;
-	subresourceRange.levelCount              = 1;
-	subresourceRange.layerCount              = 1;
-	{
-		VkImageMemoryBarrier imageMemoryBarrier{};
-		imageMemoryBarrier.sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageMemoryBarrier.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
-		imageMemoryBarrier.newLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageMemoryBarrier.srcAccessMask    = 0;
-		imageMemoryBarrier.dstAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageMemoryBarrier.image            = shading_rate_image.image;
-		imageMemoryBarrier.subresourceRange = subresourceRange;
-		vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
-	}
-	VkBufferImageCopy bufferCopyRegion{};
-	bufferCopyRegion.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	bufferCopyRegion.imageSubresource.layerCount = 1;
-	bufferCopyRegion.imageExtent.width           = imageExtent.width;
-	bufferCopyRegion.imageExtent.height          = imageExtent.height;
-	bufferCopyRegion.imageExtent.depth           = 1;
-	vkCmdCopyBufferToImage(copyCmd, stagingBuffer, shading_rate_image.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &bufferCopyRegion);
-	{
-		VkImageMemoryBarrier imageMemoryBarrier{};
-		imageMemoryBarrier.sType            = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-		imageMemoryBarrier.oldLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		imageMemoryBarrier.newLayout        = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-		imageMemoryBarrier.srcAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
-		imageMemoryBarrier.dstAccessMask    = 0;
-		imageMemoryBarrier.image            = shading_rate_image.image;
-		imageMemoryBarrier.subresourceRange = subresourceRange;
-		vkCmdPipelineBarrier(copyCmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &imageMemoryBarrier);
-	}
-	device->flush_command_buffer(copyCmd, queue, true);
+	// Transfer image layout to fragment shading rate attachment layout required to access this in the renderpass
+	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+	image_memory_barrier.srcAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.dstAccessMask    = 0;
+	image_memory_barrier.image            = shading_rate_image.image;
+	image_memory_barrier.subresourceRange = subresource_range;
+	vkCmdPipelineBarrier(copy_cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_memory_barrier);
 
-	vkFreeMemory(device->get_handle(), stagingMemory, nullptr);
-	vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
+	device->flush_command_buffer(copy_cmd, queue, true);
+
+	staging_buffer.reset();
 }
 
+/*
+* The shading rate image needs to be invalidated and recreated when the frame buffer is resized
+*/
 void FragmentShadingRate::invalidate_shading_rate_attachment()
 {
 	vkDestroyImageView(device->get_handle(), shading_rate_image.view, nullptr);
 	vkDestroyImage(device->get_handle(), shading_rate_image.image, nullptr);
 	vkFreeMemory(device->get_handle(), shading_rate_image.memory, nullptr);
-	shading_rate_image.view = VK_NULL_HANDLE;
-	shading_rate_image.image = VK_NULL_HANDLE;
+	shading_rate_image.view   = VK_NULL_HANDLE;
+	shading_rate_image.image  = VK_NULL_HANDLE;
 	shading_rate_image.memory = VK_NULL_HANDLE;
 }
 
 /*
-* Custom render pass setup
-* @todo: proper comment
+* This sample uses a custom render pass setup, as the shading rate image needs to be passed to the sample's render / sub pass
 */
 void FragmentShadingRate::setup_render_pass()
 {
-	// @todo: comment, maybe move into sep. function
-
 	// Query the fragment shading rate properties of the current implementation, we will need them later on
 	physical_device_fragment_shading_rate_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
 	VkPhysicalDeviceProperties2 device_properties{};
@@ -283,7 +261,7 @@ void FragmentShadingRate::setup_render_pass()
 	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	// @todo: comment
+	// Fragment shading rate attachment
 	attachments[2].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	attachments[2].format         = VK_FORMAT_R8_UINT;
 	attachments[2].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -306,20 +284,19 @@ void FragmentShadingRate::setup_render_pass()
 	depth_reference.layout                 = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	depth_reference.aspectMask             = VK_IMAGE_ASPECT_DEPTH_BIT;
 
-	// @todo: comment
+	// Setup the attachment reference for the shading rate image attachment in slot 2
 	VkAttachmentReference2 fragment_shading_rate_reference = {};
 	fragment_shading_rate_reference.sType                  = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
 	fragment_shading_rate_reference.attachment             = 2;
 	fragment_shading_rate_reference.layout                 = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 
+	// Setup the attachment info for the shading rate image, which will be addeed to the sub pass via structure chaining (in pNext)
 	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {};
 	fragment_shading_rate_attachment_info.sType                                  = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
 	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
-	// @todo
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
-	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width   = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
+	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
-	// @todo: comment
 	VkSubpassDescription2 subpass_description   = {};
 	subpass_description.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
 	subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -331,8 +308,7 @@ void FragmentShadingRate::setup_render_pass()
 	subpass_description.preserveAttachmentCount = 0;
 	subpass_description.pPreserveAttachments    = nullptr;
 	subpass_description.pResolveAttachments     = nullptr;
-	// @todo: comment
-	subpass_description.pNext = &fragment_shading_rate_attachment_info;
+	subpass_description.pNext                   = &fragment_shading_rate_attachment_info;
 
 	// Subpass dependencies for layout transitions
 	std::array<VkSubpassDependency2, 2> dependencies = {};
@@ -368,30 +344,26 @@ void FragmentShadingRate::setup_render_pass()
 }
 
 /*
-* Custom frame buffer setup
-* @todo: proper comment
+* This sample uses a custom frame buffer setup, that includes the fragment shading rate image attachment
 */
 void FragmentShadingRate::setup_framebuffer()
 {
-	// @todo: comment
+	// Create ths shading rate image attachment if not defined (first run and resize)
 	if (shading_rate_image.image == VK_NULL_HANDLE)
 	{
 		create_shading_rate_attachment();
 	}
 
 	VkImageView attachments[3];
-
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depth_stencil.view;
-
-	// @todo: comment
+	// Fragment shading rate attachment
 	attachments[2] = shading_rate_image.view;
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebuffer_create_info.pNext                   = NULL;
 	framebuffer_create_info.renderPass              = render_pass;
-	framebuffer_create_info.attachmentCount         = 3;        // @todo: not sure on this
+	framebuffer_create_info.attachmentCount         = 3;
 	framebuffer_create_info.pAttachments            = attachments;
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
@@ -459,7 +431,6 @@ void FragmentShadingRate::build_command_buffers()
 			draw_model(models.skysphere, draw_cmd_buffers[i]);
 		}
 
-		// Spheres
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.sphere);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 		std::vector<glm::vec3> mesh_offsets = {
@@ -617,37 +588,26 @@ void FragmentShadingRate::prepare_pipelines()
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
-	// Full screen pipelines
-
-	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	pipeline_create_info.pVertexInputState                 = &empty_input_state;
-
 	// Scene rendering pipeline
-	// @todo: shaders
 
-	// @todo: Is this required? Crashes validation if not set
+	// Setup the fragment shading rate state for our pipeline
 	VkPipelineFragmentShadingRateStateCreateInfoKHR pipeline_fragment_shading_rate_state = {};
 	pipeline_fragment_shading_rate_state.sType                                           = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR;
-	pipeline_fragment_shading_rate_state.fragmentSize.width                              = 4;
-	pipeline_fragment_shading_rate_state.fragmentSize.height                             = 4;
+	pipeline_fragment_shading_rate_state.fragmentSize.width                              = 1;
+	pipeline_fragment_shading_rate_state.fragmentSize.height                             = 1;
+	// The combiners determine how the different shading rate values for the pipeline, primitives and attachment are combined
+	// We set them up so that the shading rates stored in the shading rate attachment replace all other values (combinerOps[1])
 	// Combiner for pipeline (A) and primitive (B) - Not used in this sample
 	pipeline_fragment_shading_rate_state.combinerOps[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
 	// Combiner for pipeline (A) and attachment (B)
 	pipeline_fragment_shading_rate_state.combinerOps[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR;
-
+	// Pass the state via structure chaining
 	pipeline_create_info.pNext = &pipeline_fragment_shading_rate_state;
 
-	// Object rendering pipelines
-	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
-
 	// Vertex bindings an attributes for model rendering
-	// Binding description
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
-
-	// Attribute descriptions
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
@@ -662,17 +622,15 @@ void FragmentShadingRate::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	// Scene rendering
-	blend_attachment_state.blendEnable = VK_FALSE;
-	pipeline_create_info.layout        = pipeline_layout;
-	pipeline_create_info.renderPass    = render_pass;
-	color_blend_state.attachmentCount  = 1;        // @todo
-	color_blend_state.pAttachments     = blend_attachment_states.data();
+	pipeline_create_info.layout     = pipeline_layout;
+	pipeline_create_info.renderPass = render_pass;
 
+	// Skysphere
 	shader_stages[0] = load_shader("fragment_shading_rate/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("fragment_shading_rate/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
+	// Objects
 	// Enable depth test and write
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
@@ -681,14 +639,12 @@ void FragmentShadingRate::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.sphere));
 }
 
-// Prepare and initialize uniform buffer containing shader uniforms
 void FragmentShadingRate::prepare_uniform_buffers()
 {
 	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                            sizeof(ubo_scene),
 	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
-
 	update_uniform_buffers();
 }
 
