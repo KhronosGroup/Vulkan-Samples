@@ -28,7 +28,6 @@ class FragmentShadingRate : public ApiVulkanSample
   public:
 	bool enable_shading_rate = true;
 	bool color_shading_rate  = false;
-	bool bloom               = true;
 	bool display_skysphere   = true;
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
@@ -46,6 +45,7 @@ class FragmentShadingRate : public ApiVulkanSample
 	struct
 	{
 		Texture skysphere;
+		Texture scene;
 	} textures;
 
 	struct
@@ -56,84 +56,30 @@ class FragmentShadingRate : public ApiVulkanSample
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices;
+		std::unique_ptr<vkb::core::Buffer> scene;
 	} uniform_buffers;
 
-	struct UBOVS
+	struct UBOScene
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skysphere_modelview;
-		float     modelscale = 0.05f;
-	} ubo_vs;
+		int32_t   color_shading_rate;
+	} ubo_scene;
 
-	struct
+	VkPipelineLayout pipeline_layout;
+	struct Pipelines
 	{
 		VkPipeline skysphere;
 		VkPipeline sphere;
-		VkPipeline composition;
-		VkPipeline bloom[2];
 	} pipelines;
 
-	struct
-	{
-		VkPipelineLayout models;
-		VkPipelineLayout composition;
-		VkPipelineLayout bloom_filter;
-	} pipeline_layouts;
-
-	struct
-	{
-		VkDescriptorSet skysphere;
-		VkDescriptorSet sphere;
-		VkDescriptorSet composition;
-		VkDescriptorSet bloom_filter;
-	} descriptor_sets;
-
-	struct
-	{
-		VkDescriptorSetLayout models;
-		VkDescriptorSetLayout composition;
-		VkDescriptorSetLayout bloom_filter;
-	} descriptor_set_layouts;
-
-	// Framebuffer for offscreen rendering
-	struct FrameBufferAttachment
-	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
-		VkFormat       format;
-		void           destroy(VkDevice device)
-		{
-			vkDestroyImageView(device, view, nullptr);
-			vkDestroyImage(device, image, nullptr);
-			vkFreeMemory(device, mem, nullptr);
-		}
-	};
-	struct FrameBuffer
-	{
-		int32_t               width, height;
-		VkFramebuffer         framebuffer;
-		FrameBufferAttachment color[2];
-		FrameBufferAttachment depth;
-		VkRenderPass          render_pass;
-		VkSampler             sampler;
-	} offscreen;
-
-	struct
-	{
-		int32_t               width, height;
-		VkFramebuffer         framebuffer;
-		FrameBufferAttachment color[1];
-		VkRenderPass          render_pass;
-		VkSampler             sampler;
-	} filter_pass;
+	VkDescriptorSetLayout descriptor_set_layout;
+	VkDescriptorSet       descriptor_set;
 
 	struct
 	{
 		glm::vec4 offset;
-		glm::vec4 color;
 		uint32_t  object_type;
 	} push_const_block;
 
@@ -144,8 +90,6 @@ class FragmentShadingRate : public ApiVulkanSample
 	void         setup_render_pass() override;
 	void         setup_framebuffer() override;
 	void         build_command_buffers() override;
-	void         create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
-	void         prepare_offscreen_buffer();
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
