@@ -22,7 +22,7 @@ VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
-#include <glslang/Include/revision.h>
+#include <glslang/build_info.h>
 #include <glslang/OSDependent/osinclude.h>
 VKBP_ENABLE_WARNINGS()
 
