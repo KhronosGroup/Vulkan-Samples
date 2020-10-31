@@ -154,8 +154,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	{
 		for (uint32_t x = 0; x < image_extent.width; x++)
 		{
-			const float deltaX = (float) image_extent.width / 2.0f - (float) x;
-			const float deltaY = ((float) image_extent.height / 2.0f - (float) y) * ((float) width / (float) height);
+			const float deltaX = ((float) image_extent.width / 2.0f - (float) x) / image_extent.width * 100.0f;
+			const float deltaY = ((float) image_extent.height / 2.0f - (float) y) / image_extent.height * 100.0f;
 			const float dist   = std::sqrt(deltaX * deltaX + deltaY * deltaY);
 			for (auto pattern : pattern_lookup)
 			{
