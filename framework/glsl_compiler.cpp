@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,8 @@ VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
-#include <glslang/build_info.h>
 #include <glslang/OSDependent/osinclude.h>
+#include <glslang/build_info.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
