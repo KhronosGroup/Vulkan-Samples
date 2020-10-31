@@ -23,7 +23,6 @@ VKBP_DISABLE_WARNINGS()
 #include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
 #include <glslang/OSDependent/osinclude.h>
-#include <glslang/build_info.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
