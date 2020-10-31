@@ -237,6 +237,16 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	vkDestroyBuffer(device->get_handle(), stagingBuffer, nullptr);
 }
 
+void FragmentShadingRate::invalidate_shading_rate_attachment()
+{
+	vkDestroyImageView(device->get_handle(), shading_rate_image.view, nullptr);
+	vkDestroyImage(device->get_handle(), shading_rate_image.image, nullptr);
+	vkFreeMemory(device->get_handle(), shading_rate_image.memory, nullptr);
+	shading_rate_image.view = VK_NULL_HANDLE;
+	shading_rate_image.image = VK_NULL_HANDLE;
+	shading_rate_image.memory = VK_NULL_HANDLE;
+}
+
 /*
 * Custom render pass setup
 * @todo: proper comment
@@ -708,8 +718,7 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
-	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
+	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
@@ -751,6 +760,7 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 {
+	invalidate_shading_rate_attachment();
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 }

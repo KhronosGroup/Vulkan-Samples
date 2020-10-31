@@ -87,6 +87,7 @@ class FragmentShadingRate : public ApiVulkanSample
 	~FragmentShadingRate();
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         create_shading_rate_attachment();
+	void         invalidate_shading_rate_attachment();
 	void         setup_render_pass() override;
 	void         setup_framebuffer() override;
 	void         build_command_buffers() override;
