@@ -73,16 +73,6 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void FragmentShadingRate::create_shading_rate_attachment()
 {
-	// Get all available shading rates
-	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
-	uint32_t                                            fragment_shading_rate_count = 0;
-	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
-	if (fragment_shading_rate_count > 0)
-	{
-		fragment_shading_rates.resize(fragment_shading_rate_count);
-		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
-	}
-
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
 	VkExtent3D image_extent{};
@@ -128,26 +118,35 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	// Allocate a buffer that stores the shading rates
 	VkDeviceSize buffer_size = image_extent.width * image_extent.height * sizeof(uint8_t);
 
-	// @todo: Lazily taken from GLSL_EXT_fragment_shading_rate
-	const int gl_ShadingRateFlag2VerticalPixelsEXT   = 1;
-	const int gl_ShadingRateFlag4VerticalPixelsEXT   = 2;
-	const int gl_ShadingRateFlag2HorizontalPixelsEXT = 4;
-	const int gl_ShadingRateFlag4HorizontalPixelsEXT = 8;
+	// Fragment sizes are encoded in a single texel as follows:
+	// size(w) = 2^((texel/4) & 3)
+	// size(h)h = 2^(texel & 3)
 
 	// Populate the buffer with lowest possible shading rate pattern (4x4)
-	uint8_t  val                       = gl_ShadingRateFlag4VerticalPixelsEXT | gl_ShadingRateFlag4HorizontalPixelsEXT;
+	uint8_t  val                       = (4 >> 1) | (4 << 1);
 	uint8_t *shading_rate_pattern_data = new uint8_t[buffer_size];
 	memset(shading_rate_pattern_data, val, buffer_size);
 
-	// Create a circular pattern with decreasing sampling rates outwards (max. range, pattern)
-	// @todo: Take from actual list of available shading rates?
-	std::map<float, uint8_t> pattern_lookup = {
-	    {8.0f, 0},
-	    {12.0f, gl_ShadingRateFlag2VerticalPixelsEXT},
-	    {16.0f, gl_ShadingRateFlag2HorizontalPixelsEXT},
-	    {18.0f, gl_ShadingRateFlag2VerticalPixelsEXT | gl_ShadingRateFlag2HorizontalPixelsEXT},
-	    {20.0f, gl_ShadingRateFlag4VerticalPixelsEXT | gl_ShadingRateFlag2HorizontalPixelsEXT},
-	    {24.0f, gl_ShadingRateFlag2VerticalPixelsEXT | gl_ShadingRateFlag4HorizontalPixelsEXT}};
+	// Create a circular pattern from the available list of fragment shadring rates with decreasing sampling rates outwards (max. range, pattern)
+	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
+	uint32_t                                            fragment_shading_rate_count = 0;
+	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
+	if (fragment_shading_rate_count > 0)
+	{
+		fragment_shading_rates.resize(fragment_shading_rate_count);
+		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
+	}
+	// Shading rates returned by vkGetPhysicalDeviceFragmentShadingRatesKHR are ordered from largest to smallest
+	std::map<float, uint8_t> pattern_lookup = {};
+	float                    range          = 25.0f / static_cast<uint32_t>(fragment_shading_rates.size());
+	float                    current_range  = 8.0f;
+	for (size_t i = fragment_shading_rates.size() - 1; i > 0; i--)
+	{
+		uint32_t rate_v               = fragment_shading_rates[i].fragmentSize.width == 1 ? 0 : (fragment_shading_rates[i].fragmentSize.width >> 1);
+		uint32_t rate_h               = fragment_shading_rates[i].fragmentSize.height == 1 ? 0 : (fragment_shading_rates[i].fragmentSize.height << 1);
+		pattern_lookup[current_range] = rate_v | rate_h;
+		current_range += range;
+	}
 
 	uint8_t *ptrData = shading_rate_pattern_data;
 	for (uint32_t y = 0; y < image_extent.height; y++)
@@ -459,7 +458,7 @@ void FragmentShadingRate::load_assets()
 	models.skysphere   = load_model("scenes/geosphere.gltf");
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
 	models.scene       = load_model("scenes/textured_unit_cube.gltf");
-	textures.scene     = load_texture("textures/crate02_color_height_rgba.ktx");
+	textures.scene     = load_texture("textures/metalplate01_rgba.ktx");
 }
 
 void FragmentShadingRate::setup_descriptor_pool()

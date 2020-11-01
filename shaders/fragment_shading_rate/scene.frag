@@ -62,15 +62,12 @@ void main()
 				vec3 diffuse = vec3(max(dot(N, L), 0.0));
 				vec3 specular = vec3(pow(max(dot(R, V), 0.0), 8.0));
 				color = vec4(ambient + diffuse + specular, 1.0);	
-//				color = texture(samplerSphere, inUV);
 			}
 			break;
 	}
 
-	outColor = vec4(color.rgb, 1.0);
-
 	if (ubo.color_shading_rates == 1) {
-		// Color fragment shading rates
+		// Visualize fragment shading rates
 
 		int v = 1;
 		int h = 1;
@@ -89,33 +86,12 @@ void main()
 		}
 
 		if (v == 1 && h == 1) {
-			outColor.rgb *= vec3(0.0, 1.0, 0.0);
-			return;
+			outColor = vec4(color.rrr * 1.0, 1.0);
+		} else {
+ 			outColor = vec4(color.rrr * 1.0 - ((v+h) * 0.05), 1.0);
 		}
-		if (v == 2 && h == 1) {
-			outColor.rgb *= vec3(0.2, 0.6, 1.0);
-			return;
-		}
-		if (v == 1 && h == 2) {
-			outColor.rgb *= vec3(0.0, 0.4, 0.8);
-			return;
-		}
-		if (v == 2 && h == 2) {
-			outColor.rgb *= vec3(1.0, 1.0, 0.2);
-			return;
-		}
-		if (v == 4 && h == 2) {
-			outColor.rgb *= vec3(0.8, 0.8, 0.0);
-			return;
-		}
-		if (v == 2 && h == 4) {
-			outColor.rgb *= vec3(1.0, 0.4, 0.2);
-			return;
-		}
-		if (v == 4 && h == 4) {
-			outColor.rgb *= vec3(1.0, 0.0, 0.0);
-			return;
-		}
+	} else {
+		outColor = vec4(color.rgb, 1.0);
 	}
 
 }
