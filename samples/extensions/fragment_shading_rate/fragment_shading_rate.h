@@ -27,12 +27,12 @@
 class FragmentShadingRate : public ApiVulkanSample
 {
   public:
-	bool enable_shading_rate = true;
-	bool color_shading_rate  = false;
-	bool display_skysphere   = true;
+	bool enable_attachment_shading_rate = true;
+	bool color_shading_rate             = false;
+	bool display_skysphere              = true;
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
-	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};	
+	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};
 
 	struct ShadingRateImage
 	{

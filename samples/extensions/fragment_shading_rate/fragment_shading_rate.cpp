@@ -20,11 +20,6 @@
  * This sample creates an image that contains different shading rates, which are then sampled during rendering
  */
 
-/*
-* TODOS:
-* - Check shading rate image format support for VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR
-*/
-
 #include "fragment_shading_rate.h"
 
 FragmentShadingRate::FragmentShadingRate()
@@ -49,6 +44,7 @@ FragmentShadingRate::~FragmentShadingRate()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 		uniform_buffers.scene.reset();
+		invalidate_shading_rate_attachment();
 	}
 }
 
@@ -73,6 +69,15 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void FragmentShadingRate::create_shading_rate_attachment()
 {
+	// Check if the requested format for the shading rate attachment supports the required flag
+	VkFormat requested_format = VK_FORMAT_R8_UINT;
+	VkFormatProperties format_properties;
+	vkGetPhysicalDeviceFormatProperties(device->get_gpu().get_handle(), requested_format, &format_properties);
+	if (!(format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR))
+	{
+		throw std::runtime_error("Selected shading rate attachment image format does not support required formate featureflag");
+	}
+
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
 	VkExtent3D image_extent{};
@@ -421,6 +426,26 @@ void FragmentShadingRate::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
+		// Set the fragment shading rate state for the current pipeline
+		VkExtent2D                         fragment_size = {1, 1};
+		VkFragmentShadingRateCombinerOpKHR combiner_ops[2];
+		// The combiners determine how the different shading rate values for the pipeline, primitives and attachment are combined
+		if (enable_attachment_shading_rate)
+		{
+			// If shading rate from attachment is enabled, we set the combiner, so that the values from the attachment are used
+			// Combiner for pipeline (A) and primitive (B) - Not used in this sample
+			combiner_ops[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
+			// Combiner for pipeline (A) and attachment (B), replace the pipeline default value (fragment_size) with the fragment sizes stored in the attachment
+			combiner_ops[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR;
+		}
+		else
+		{
+			// If shading rate from attachment is disabled, we keep the value set via the dynamic state
+			combiner_ops[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
+			combiner_ops[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
+		}
+		vkCmdSetFragmentShadingRateKHR(draw_cmd_buffers[i], &fragment_size, combiner_ops);
+
 		if (display_skysphere)
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
@@ -558,7 +583,9 @@ void FragmentShadingRate::prepare_pipelines()
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	    VK_DYNAMIC_STATE_SCISSOR,
+	    // Add fragment shading rate dynamic state, so we can easily toggle this at runtime
+	    VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(
 	        dynamic_state_enables.data(),
@@ -586,22 +613,6 @@ void FragmentShadingRate::prepare_pipelines()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
-
-	// Scene rendering pipeline
-
-	// Setup the fragment shading rate state for our pipeline
-	VkPipelineFragmentShadingRateStateCreateInfoKHR pipeline_fragment_shading_rate_state = {};
-	pipeline_fragment_shading_rate_state.sType                                           = VK_STRUCTURE_TYPE_PIPELINE_FRAGMENT_SHADING_RATE_STATE_CREATE_INFO_KHR;
-	pipeline_fragment_shading_rate_state.fragmentSize.width                              = 1;
-	pipeline_fragment_shading_rate_state.fragmentSize.height                             = 1;
-	// The combiners determine how the different shading rate values for the pipeline, primitives and attachment are combined
-	// We set them up so that the shading rates stored in the shading rate attachment replace all other values (combinerOps[1])
-	// Combiner for pipeline (A) and primitive (B) - Not used in this sample
-	pipeline_fragment_shading_rate_state.combinerOps[0] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
-	// Combiner for pipeline (A) and attachment (B)
-	pipeline_fragment_shading_rate_state.combinerOps[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_REPLACE_KHR;
-	// Pass the state via structure chaining
-	pipeline_create_info.pNext = &pipeline_fragment_shading_rate_state;
 
 	// Vertex bindings an attributes for model rendering
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -702,6 +713,10 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
+		if (drawer.checkbox("Enable attachment shading rate", &enable_attachment_shading_rate))
+		{
+			build_command_buffers();
+		}
 		if (drawer.checkbox("Color shading rates", &color_shading_rate))
 		{
 			update_uniform_buffers();
