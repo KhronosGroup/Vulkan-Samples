@@ -50,6 +50,9 @@ jobs:
       name: Build Windows
       language: shell
       os: windows
+      before_install:
+        - choco install python3
+        - export PATH="/c/Python37:/c/Python37/Scripts:$PATH"      
       script: 
         - cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild -DVKB_BUILD_TESTS:BOOL=ON -DVKB_BUILD_SAMPLES:BOOL=ON
         - cmake --build build --target vulkan_samples --config Release
