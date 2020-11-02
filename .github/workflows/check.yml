@@ -1,4 +1,4 @@
-name: "Check"
+name: Quality Checks
 
 on:
   pull_request:
@@ -7,28 +7,39 @@ on:
     branches: [master]
 
 jobs:
-  build:
-    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-    strategy:
-      matrix:
-        platform: [windows, ubuntu, macos]
-        build_type: [Release]
+  env:
+    TARGET_BRANCH: master
 
-    env:
-      PARALLEL: -j 2
-
-    runs-on: "${{ matrix.platform }}-latest"
+  doxygen:
+    container: khronosgroup/vulkan-samples
     steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "recursive"
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - run: mkdir -p doxygen
+    - run: doxygen docs/doxygen/doxyfile
+    - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
 
-      - if: ${{ matrix.platform == 'ubuntu' }}
-        name: Install RandR headers
-        run: sudo apt-get install xorg-dev libglu1-mesa-dev
+  copyright_headers:
+    container: khronosgroup/vulkan-samples
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
-      - name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+  snake_case_check:
+    container: khronosgroup/vulkan-samples
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+    - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
+    - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
-      - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+  clang_format:
+    container: khronosgroup/vulkan-samples
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
