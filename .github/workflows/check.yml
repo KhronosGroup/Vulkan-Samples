@@ -1,0 +1,32 @@
+name: "Check"
+
+on:
+  pull_request:
+    branches: [master]
+  push:
+    branches: [master]
+
+jobs:
+  build:
+    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    strategy:
+      matrix:
+        platform: [windows, ubuntu, macos]
+        build_type: [Debug, Release]
+    runs-on: "${{ matrix.platform }}-latest"
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+        submodules: 'recursive'
+
+    - name: Configure
+      run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+
+    - if: ${{ matrix.platform == 'macos' || matrix.platform == 'linux' }}
+      name: Build
+      run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config "${{ matrix.build_type }}" -- -j$(($(nproc)/2+1))
+
+    - if: ${{ matrix.platform == 'windows' }}}
+      name: Build
+      run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config "${{ matrix.build_type }}" --parallel
