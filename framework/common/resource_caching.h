@@ -445,6 +445,7 @@ struct hash<vkb::RenderTarget>
 		for (auto &view : render_target.get_views())
 		{
 			vkb::hash_combine(result, view.get_handle());
+			vkb::hash_combine(result, view.get_image().get_handle());
 		}
 
 		return result;
