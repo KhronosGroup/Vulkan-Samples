@@ -26,6 +26,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
@@ -44,5 +45,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/clang_format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
     - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
