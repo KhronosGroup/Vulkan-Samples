@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         platform: [windows, ubuntu, macos]
-        build_type: [Debug, Release]
+        build_type: [Release]
 
     env:
       PARALLEL: -j 2
