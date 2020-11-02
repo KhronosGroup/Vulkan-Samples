@@ -13,19 +13,22 @@ jobs:
       matrix:
         platform: [windows, ubuntu, macos]
         build_type: [Debug, Release]
+
+    env:
+      PARALLEL: -j 2
+
     runs-on: "${{ matrix.platform }}-latest"
     steps:
+      - uses: actions/checkout@v2
+        with:
+          submodules: "recursive"
 
-    - uses: actions/checkout@v2
-      with:
-        submodules: 'recursive'
+      - if: ${{ matrix.platform == 'ubuntu' }}
+        name: Install RandR headers
+        run: sudo apt-get install xorg-dev libglu1-mesa-dev
 
-    - if: ${{ matrix.platform == 'ubuntu' }}
-      name: Install RandR headers
-      run: sudo apt-get install xorg-dev libglu1-mesa-dev
+      - name: Configure
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
 
-    - name: Configure
-      run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-
-    - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-      run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}
+      - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
