@@ -150,6 +150,22 @@ function(add_sample)
         list(APPEND SRC_FILES ${TARGET_FILES})
     endif()
 
+    # Gather GLSL shader files
+    set(SHADER_DIR_GLSL "${PROJECT_SOURCE_DIR}/shaders/${TARGET_ID}")
+    file(GLOB SHADERS_GLSL 
+        "${SHADER_DIR_GLSL}/*.vert"
+        "${SHADER_DIR_GLSL}/*.frag"
+        "${SHADER_DIR_GLSL}/*.comp"
+        "${SHADER_DIR_GLSL}/*.geom"
+        "${SHADER_DIR_GLSL}/*.tesc"
+        "${SHADER_DIR_GLSL}/*.tese"
+        "${SHADER_DIR_GLSL}/*.mesh"
+        "${SHADER_DIR_GLSL}/*.task"
+        "${SHADER_DIR_GLSL}/*.rgen"
+        "${SHADER_DIR_GLSL}/*.rchit"
+        "${SHADER_DIR_GLSL}/*.rmiss"
+    )    
+
     add_project(
         TYPE "Sample"
         ID ${TARGET_ID}
@@ -162,7 +178,10 @@ function(add_sample)
         FILES
             ${SRC_FILES}
         LIBS
-            ${TARGET_LIBS})
+            ${TARGET_LIBS}
+        SHADERS_GLSL
+            ${SHADERS_GLSL})
+
 endfunction()
 
 function(add_sample_with_tags)
@@ -184,6 +203,21 @@ function(add_sample_with_tags)
         list(APPEND SRC_FILES ${TARGET_FILES})
     endif()
 
+    # Gather GLSL shader files
+    set(SHADER_DIR_GLSL "${PROJECT_SOURCE_DIR}/shaders/${TARGET_ID}")
+    file(GLOB SHADERS_GLSL 
+        "${SHADER_DIR_GLSL}/*.vert"
+        "${SHADER_DIR_GLSL}/*.frag"
+        "${SHADER_DIR_GLSL}/*.comp"
+        "${SHADER_DIR_GLSL}/*.geom"
+        "${SHADER_DIR_GLSL}/*.tesc"
+        "${SHADER_DIR_GLSL}/*.tese"
+        "${SHADER_DIR_GLSL}/*.mesh"
+        "${SHADER_DIR_GLSL}/*.task"
+        "${SHADER_DIR_GLSL}/*.rgen"
+        "${SHADER_DIR_GLSL}/*.rchit"
+        "${SHADER_DIR_GLSL}/*.rmiss"
+    )
 
     add_project(
         TYPE "Sample"
@@ -197,7 +231,9 @@ function(add_sample_with_tags)
         FILES
             ${SRC_FILES}
         LIBS
-            ${TARGET_LIBS})
+            ${TARGET_LIBS}
+            SHADERS_GLSL
+            ${SHADERS_GLSL})
 
 endfunction()
 
@@ -224,7 +260,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -244,8 +280,13 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES})
-    
+    # Add shaders to project group
+    if(SHADERS_GLSL)
+        source_group("\\Shaders\\GLSL" FILES ${SHADERS_GLSL})
+    endif()
+
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+   
     # inherit compile definitions from framework target
     target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
