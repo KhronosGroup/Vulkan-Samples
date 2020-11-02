@@ -32,6 +32,7 @@ jobs:
     name: Snake Case Check
     container: khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
+    continue-on-error: true
     steps:
     - uses: actions/checkout@v2
     - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
