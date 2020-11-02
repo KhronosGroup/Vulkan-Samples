@@ -6,12 +6,14 @@ on:
   push:
     branches: [master]
 
-jobs:
-  env:
-    TARGET_BRANCH: master
+env:
+  TARGET_BRANCH: master
 
+jobs:
   doxygen:
+    name: Doxygen Syntax Check
     container: khronosgroup/vulkan-samples
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -21,7 +23,9 @@ jobs:
     - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
 
   copyright_headers:
+    name: Copyright Headers Check
     container: khronosgroup/vulkan-samples
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -29,7 +33,9 @@ jobs:
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
+    name: Snake Case Check
     container: khronosgroup/vulkan-samples
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
@@ -38,7 +44,9 @@ jobs:
     - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
   clang_format:
+    name: Clang Format Check
     container: khronosgroup/vulkan-samples
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
       with:
