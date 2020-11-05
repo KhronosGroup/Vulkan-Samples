@@ -3,8 +3,6 @@ name: Quality Checks
 on:
   pull_request:
     branches: [master]
-  push:
-    branches: [master]
 
 env:
   TARGET_BRANCH: master
