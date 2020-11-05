@@ -28,7 +28,7 @@ namespace vkb
 BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage) :
     buffer{device, size, usage, memory_usage}
 {
-	if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
+			if (usage == VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT)
 	{
 		alignment = device.get_gpu().get_properties().limits.minUniformBufferOffsetAlignment;
 	}
