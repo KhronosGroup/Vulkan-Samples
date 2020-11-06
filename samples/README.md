@@ -121,3 +121,7 @@ Render a simple triangle using the official cross-vendor ray tracing extension. 
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
+
+### [Fragment shading rate](./extensions/fragment_shading_rate)<br/>
+**Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)<br/>
+Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
