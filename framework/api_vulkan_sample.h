@@ -371,7 +371,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	std::string title       = "Vulkan Example";
 	std::string name        = "vulkanExample";
-	uint32_t    api_version = VK_API_VERSION_1_0;
 
 	struct
 	{
