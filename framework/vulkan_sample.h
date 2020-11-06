@@ -248,6 +248,11 @@ class VulkanSample : public Application
 	void add_instance_extension(const char *extension, bool optional = false);
 
 	/**
+	 * @brief Set the Vulkan API version to request at instance creation time
+	 */
+	void set_api_version(uint32_t requested_api_version);
+
+	/**
 	 * @brief Request features from the gpu based on what is supported
 	 */
 	virtual void request_gpu_features(PhysicalDevice &gpu);
@@ -297,5 +302,8 @@ class VulkanSample : public Application
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> instance_extensions;
+
+	/** @brief The Vulkan API version to request for this sample at instance creation time */
+	uint32_t api_version = VK_API_VERSION_1_0;
 };
 }        // namespace vkb
