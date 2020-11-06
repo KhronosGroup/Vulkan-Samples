@@ -43,6 +43,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+    - run: git config clangFormat.binary "clang-format-10"
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/clang_format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
     - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
+
+  clang_tidy:
+    name: Clang Tidy Check
+    container: khronosgroup/vulkan-samples
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        submodules: "recursive"
+    - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
+    - run: python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
