@@ -1,0 +1,105 @@
+#version 450
+/* Copyright (c) 2020, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+// Allows us to use float16_t for arithmetic purposes.
+#extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
+
+// Allows us to use int16_t, uint16_t and float16_t for buffers.
+#extension GL_EXT_shader_16bit_storage : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(constant_id = 0) const uint WIDTH = 1;
+layout(constant_id = 1) const uint HEIGHT = 1;
+
+layout(set = 0, binding = 0) readonly buffer SSBO
+{
+    // It is possible to use native 16-bit types in SSBOs and UBOs. We could use uvec2 here and unpack manually.
+    // The key feature of 16-bit storage is to allow scalar access to 16-bit values however.
+    // Avoiding extra unpacking and packing can also be useful.
+    f16vec4 blob_data[];
+};
+
+layout(rgba16f, set = 0, binding = 1) writeonly uniform mediump image2D o_results;
+
+layout(push_constant) uniform Registers
+{
+    // Push constants can also be 16-bit. This can also be very useful since push constant space is so limited!
+    uint16_t num_blobs;
+    float16_t seed;
+    i16vec2 range;
+} registers;
+
+// This is very arbitrary. Expends a ton of arithmetic to compute
+// something that looks similar to a lens flare.
+f16vec4 compute_blob(f16vec2 pos, f16vec4 blob, float16_t seed)
+{
+    f16vec2 offset = pos - blob.xy;
+    f16vec4 rg_offset = offset.xxyy * f16vec4(0.95hf, 1.0hf, 0.95hf, 1.0hf);
+    f16vec4 bs_offset = offset.xxyy * f16vec4(1.05hf, 1.1hf + seed, 1.05hf, 1.1hf + seed);
+
+    f16vec4 rg_dot = rg_offset * rg_offset;
+    f16vec4 bs_dot = bs_offset * bs_offset;
+
+    // Dot products can be somewhat awkward in FP16, since the result is a scalar 16-bit value, and we don't want that.
+    // To that end, we compute at least two dot products side by side, and rg_offset and bs_offset are swizzled
+    // such that we avoid swizzling across a 32-bit boundary.
+    f16vec4 dots = f16vec4(rg_dot.xy + rg_dot.zw, bs_dot.xy + bs_dot.zw) * blob.w;
+
+    // Now we have square distances to blob center.
+
+    // Gotta have some FMAs, right? :D
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+
+    f16vec4 parabolas = max(f16vec4(1.0hf, 1.0hf, 1.0hf, 0.9hf) - dots, f16vec4(0.0hf));
+    parabolas -= parabolas.w;
+    parabolas = max(parabolas, f16vec4(0.0hf));
+    return parabolas;
+}
+
+void main()
+{
+    uint num_blobs = uint(registers.num_blobs);
+
+    float x = float(gl_GlobalInvocationID.x) / float(WIDTH) - 0.5;
+    float y = float(gl_GlobalInvocationID.y) / float(HEIGHT) - 0.5;
+    f16vec2 pos = f16vec2(x, y);
+    f16vec4 result = f16vec4(0.0hf);
+    float16_t seed = registers.seed;
+    ivec2 range = ivec2(registers.range);
+
+    const float16_t EXPAND_FACTOR = 0.3hf;
+    float16_t stride = seed * EXPAND_FACTOR;
+
+    for (uint i = 0; i < num_blobs; i++)
+    {
+        f16vec4 blob = blob_data[i];
+
+        // Get as much mileage out of the buffer load as possible.
+        for (int y = -range.y; y <= range.y; y++)
+            for (int x = -range.x; x <= range.x; x++)
+                result += compute_blob(pos + stride * f16vec2(x, y), blob, seed);
+    }
+
+    imageStore(o_results, ivec2(gl_GlobalInvocationID.xy), result);
+}
