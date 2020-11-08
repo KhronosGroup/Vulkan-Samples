@@ -28,7 +28,7 @@
 
 ## Introduction
 
-This readme lists all Vulkan samples currently available in this repository. They are grouped into multiple categories.
+This readme lists all Vulkan samples currently available in this repository. They are grouped into multiple categories. The 🎓 icon denotes additional information like tutorials.
 
 ## Performance samples
 
@@ -37,35 +37,58 @@ The goal of these samples is to demonstrate how to use certain features and func
 ### [AFBC](./performance/afbc)<br/>
 AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics. This format is applied to the framebuffers that are to be written to the GPU. This technology can offer bandwidth reductions of [up to 50%](https://developer.arm.com/technologies/graphics-technologies/arm-frame-buffer-compression).
 
+- 🎓 [Appropriate use of AFBC](./performance/afbc/afbc_tutorial.md)
+
 ### [Command buffer usage](./performance/command_buffer_usage)<br/>
 This sample demonstrates how to use and manage secondary command buffers, and how to record them concurrently. Implementing multi-threaded recording of draw calls can help reduce CPU frame time.
+
+- 🎓 [Allocation and management of command buffers](./performance/command_buffer_usage/command_buffer_usage_tutorial.md#Recycling-strategies)
+- 🎓 [Multi-threaded recording with secondary command buffers](./performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)
 
 ### [Constant data](./performance/constant_data)<br/>
 The Vulkan API exposes a few different ways in which we can send uniform data into our shaders. There are enough methods that it raises the question "Which one is fastest?", and more often than not the answer is "It depends". The main issue for developers is that the fastest methods may differ between the various vendors, so often there is no "one size fits all" solution. This sample aims to highlight this issue, and help move the Vulkan ecosystem to a point where we are better equipped to solve this for developers. This is done by having an interactive way to toggle different constant data methods that the Vulkan API expose to us. This can then be run on a platform of the developers choice to see the performance implications that each of them bring.
 
+- 🎓 [Sending constant data to the shaders](./performance/constant_data/constant_data_tutorial.md)
+
 ### [Descriptor management](./performance/descriptor_management)<br/>
 An application using Vulkan will have to implement a system to manage descriptor pools and sets. The most straightforward and flexible approach is to re-create them for each frame, but doing so might be very inefficient, especially on mobile platforms. The problem of descriptor management is intertwined with that of buffer management, that is choosing how to pack data in `VkBuffer` objects. This sample will explore a few options to improve both descriptor and buffer management.
+
+- 🎓 [Descriptor and buffer management](./performance/descriptor_management/descriptor_management_tutorial.md)
 
 ### [Layout transitions](./performance/layout_transitions)<br/>
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins. This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass. If the rendering pipeline is complex, transitioning each image to its correct layout is not trivial, as it requires some sort of state tracking. If previous image contents are not needed, there is an easy way out, that is setting `oldLayout`/`initialLayout` to `VK_IMAGE_LAYOUT_UNDEFINED`. While this is functionally correct, it can have performance implications as it may prevent the GPU from performing some optimizations. This sample will cover an example of such optimizations and how to avoid the performance overhead from using sub-optimal layouts.
 
+- 🎓 [Choosing the correct layout when transitioning images](./performance/layout_transitions/layout_transitions_tutorial.md)
+
 ### [MSAA](./performance/msaa)<br/>
 Aliasing is the result of under-sampling a signal. In graphics this means computing the color of a pixel at a resolution that results in artifacts, commonly jaggies at model edges. Multisample anti-aliasing (MSAA) is an efficient technique that reduces pixel sampling error.
+
+- 🎓 [How to implement MSAA](./performance/msaa/msaa_tutorial.md)
 
 ### [Pipeline barriers](./performance/pipeline_barriers)<br/>
 Vulkan gives the application significant control over memory access for resources. Pipeline barriers are particularly convenient for synchronizing memory accesses between render passes. Having barriers is required whenever there is a memory dependency - the application should not assume that render passes are executed in order. However, having too many or too strict barriers can affect the application's performance. This sample will cover how to set up pipeline barriers efficiently, with a focus on pipeline stages.
 
+- 🎓 [Using pipeline barriers efficiently](./performance/pipeline_barriers/pipeline_barriers_tutorial.md)
+
 ### [Pipeline cache](./performance/pipeline_cache)<br/>
 Vulkan gives applications the ability to save internal representation of a pipeline (graphics or compute) to enable recreating the same pipeline later. This sample will look in detail at the implementation and performance implications of the pipeline creation, caching and management.
+
+- 🎓 [Use of pipeline caches to avoid startup latency](./performance/pipeline_cache/pipeline_cache_tutorial.md)
 
 ### [Render passes](./performance/render_passes)<br/>
 Vulkan render-passes use attachments to describe input and output render targets. This sample shows how loading and storing attachments might affect performance on mobile. During the creation of a render-pass, you can specify various color attachments and a depth-stencil attachment. Each of those is described by a [`VkAttachmentDescription`](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentDescription.html) struct, which contains attributes to specify the [load operation](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentLoadOp.html) (`loadOp`) and the [store operation](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkAttachmentStoreOp.html) (`storeOp`). This sample lets you choose between different combinations of these operations at runtime.
 
+- 🎓 [Appropriate use of load/store operations, and use of transient attachments](./performance/render_passes/render_passes_tutorial.md)
+
 ### [Specialization constants](./performance/specialization_constants)<br/>
 Vulkan exposes a number of methods for setting values within shader code during run-time, this includes UBOs and Specialization Constants. This sample compares these two methods and the performance impact of them.
 
+- 🎓 [Utilizing Specialization Constants](./performance/specialization_constants/specialization_constants_tutorial.md)
+
 ### [Sub passes](./performance/subpasses)<br/>
 Vulkan introduces the concept of _subpasses_ to subdivide a single [render pass](./performance/render_passes/render_passes_tutorial.md) into separate logical phases. The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations. Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
+
+  - 🎓 [Benefits of subpasses over multiple render passes, use of transient attachments, and G-buffer recommended size](./performance/subpasses/subpasses_tutorial.md)
 
 ### [Surface rotation](./performance/surface_rotation)<br/>
 Mobile devices can be rotated, therefore the logical orientation of the application window and the physical orientation of the display may not match. Applications then need to be able to operate in two modes: portrait and landscape. The difference between these two modes can be simplified to just a change in resolution. However, some display subsystems always work on the "native" (or "physical") orientation of the display panel. Since the device has been rotated, to achieve the desired effect the application output must also rotate. In this sample we focus on the rotation step, and analyze the performance implications of implementing it correctly with Vulkan.
@@ -76,26 +99,37 @@ Vulkan gives the application some significant control over the number of swapcha
 ### [Wait idle](./performance/wait_idle)<br/>
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
+- 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
 
 ### [Compute shader N-Body simulation](./api/compute_nbody)<br/>
 Compute shader example that uses two passes and shared compute shader memory for simulating a N-Body particle system.
+
 ### [Dynamic Uniform buffers](./api/dynamic_uniform_buffers)<br/>
 Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.
+
 ### [High dynamic range](./api/hdr)<br/>
 Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.
+
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
+
 ### [Terrain Tessellation](./api/terrain_tessellation)<br/>
 Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.
+
 ### [Texture loading](./api/texture_loading)<br/>
 Loading and rendering of a 2D texture map from a file.
+
 ### [Texture run-time mip-map generation](./api/texture_mipmap_generation)<br/>
 Generates a complete mip-chain for a texture at runtime instead of loading it from a file.
+
+- 🎓 [How to generate mip maps at run-time](./api/texture_mipmap_generation/texture_mipmap_generation_tutorial.md)
 
 ## Extension Samples
 
@@ -112,6 +146,8 @@ Push descriptors apply the push constants concept to descriptor sets. Instead of
 ### [Debug Utilities](./extensions/debug_utils)<br/>
 **Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
 Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
+
+- 🎓 [Using the debug utilities extension](./extensions/debug_utils/debug_utils_tutorial.md)
 
 ### [Basic Ray Tracing](./extensions/raytracing_basic)<br/>
 **Extension**: [```VK_KHR_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing)<br/>
