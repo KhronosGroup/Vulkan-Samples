@@ -65,6 +65,12 @@ Aliasing is the result of under-sampling a signal. In graphics this means comput
 
 - 🎓 [How to implement MSAA](./performance/msaa/msaa_tutorial.md)
 
+### [Multi-threaded recording with multiple render passes](./performance/multithreading_render_passes)<br/>
+
+Ideally you render all stages of your frame in a single render pass. However, in some cases different stages can't be performed in the same render pass. This sample shows how multi-threading can help to boost performance when using multiple render passes to render a single frame. 
+
+- 🎓 [Multi-threaded recording with multiple render passes](./performance/multithreading_render_passes/multithreading_render_passes_tutorial.md)
+
 ### [Pipeline barriers](./performance/pipeline_barriers)<br/>
 Vulkan gives the application significant control over memory access for resources. Pipeline barriers are particularly convenient for synchronizing memory accesses between render passes. Having barriers is required whenever there is a memory dependency - the application should not assume that render passes are executed in order. However, having too many or too strict barriers can affect the application's performance. This sample will cover how to set up pipeline barriers efficiently, with a focus on pipeline stages.
 
@@ -93,8 +99,12 @@ Vulkan introduces the concept of _subpasses_ to subdivide a single [render pass]
 ### [Surface rotation](./performance/surface_rotation)<br/>
 Mobile devices can be rotated, therefore the logical orientation of the application window and the physical orientation of the display may not match. Applications then need to be able to operate in two modes: portrait and landscape. The difference between these two modes can be simplified to just a change in resolution. However, some display subsystems always work on the "native" (or "physical") orientation of the display panel. Since the device has been rotated, to achieve the desired effect the application output must also rotate. In this sample we focus on the rotation step, and analyze the performance implications of implementing it correctly with Vulkan.
 
+- 🎓 [Appropriate use of surface rotation](./performance/surface_rotation/surface_rotation_tutorial.md)
+
 ### [Swapchain images](./performance/swapchain_images)<br/>
 Vulkan gives the application some significant control over the number of swapchain images to be created. This sample analyzes the available options and their performance implications.
+
+- 🎓 [Appropriate use of N-buffering](./performance/swapchain_images/swapchain_images_tutorial.md)
 
 ### [Wait idle](./performance/wait_idle)<br/>
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
