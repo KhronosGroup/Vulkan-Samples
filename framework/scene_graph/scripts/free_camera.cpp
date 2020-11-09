@@ -1,4 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
+ * Copyright (c) 2020, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,6 +72,14 @@ void FreeCamera::update(float delta_time)
 	if (key_pressed[KeyCode::D])
 	{
 		delta_translation.x += TRANSLATION_MOVE_STEP;
+	}
+	if (key_pressed[KeyCode::Q])
+	{
+		delta_translation.y -= TRANSLATION_MOVE_STEP;
+	}
+	if (key_pressed[KeyCode::E])
+	{
+		delta_translation.y += TRANSLATION_MOVE_STEP;
 	}
 	if (key_pressed[KeyCode::LeftControl])
 	{
