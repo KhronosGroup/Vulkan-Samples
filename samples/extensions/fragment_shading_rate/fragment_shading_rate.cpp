@@ -139,6 +139,11 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	if (fragment_shading_rate_count > 0)
 	{
 		fragment_shading_rates.resize(fragment_shading_rate_count);
+		for (VkPhysicalDeviceFragmentShadingRateKHR &fragment_shading_rate : fragment_shading_rates)
+		{
+			// As per spec, the sType member of each shading rate array entry must be set
+			fragment_shading_rate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR;
+		}
 		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
 	}
 	// Shading rates returned by vkGetPhysicalDeviceFragmentShadingRatesKHR are ordered from largest to smallest
