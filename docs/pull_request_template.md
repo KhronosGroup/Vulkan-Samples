@@ -28,3 +28,4 @@ If your PR contains a new or modified sample, these further checks must be carri
 - [ ] If the sample is vendor-specific, I have [tagged it appropriately](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#General-Requirements)
 - [ ] I have stated on what implementation the sample has been tested so that others can test on different implementations and platforms
 - [ ] Any dependent assets have been merged and published in downstream modules
+- [ ] For new samples, I have added a paragraph with a summary to the appropriate chapter in the [samples readme](./../samples/README.md)
