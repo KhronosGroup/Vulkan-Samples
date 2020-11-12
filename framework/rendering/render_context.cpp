@@ -220,6 +220,8 @@ void RenderContext::recreate()
 
 		++frame_it;
 	}
+
+	device.get_resource_cache().clear_framebuffers();
 }
 
 void RenderContext::handle_surface_changes()
