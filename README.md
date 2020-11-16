@@ -25,6 +25,7 @@
 
 - [Introduction](#introduction)
   - [Goals](#goals)
+- [General information](#general-information)
 - [Samples](#samples)
 - [Setup](#setup)
 - [Build](#build)
