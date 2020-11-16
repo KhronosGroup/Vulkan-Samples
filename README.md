@@ -25,7 +25,6 @@
 
 - [Introduction](#introduction)
   - [Goals](#goals)
-- [Tutorials](#tutorials)
 - [Samples](#samples)
 - [Setup](#setup)
 - [Build](#build)
@@ -47,7 +46,7 @@ Additionally you may find the following links useful:
  - [Get Started in Vulkan](https://vulkan-tutorial.com/)
 
  [Performance samples](samples/performance) show the recommended best practice together with real-time profiling information.
- They are more advanced but also contain a detailed [tutorial](#tutorials) with more in-detail explanations.
+ They are more advanced but also contain a detailed tutorial with more in-detail explanations.
 
 ### Goals
 - Create a collection of resources that demonstrate best-practice recommendations in Vulkan
