@@ -231,7 +231,7 @@ void KHR16BitStorageInputOutputSample::draw_gui()
 
 	gui->show_options_window(
 		/* body = */ [this, label]() {
-		  ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
+			ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
 		},
 		/* lines = */ 1);
 }

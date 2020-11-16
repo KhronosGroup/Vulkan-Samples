@@ -51,8 +51,8 @@ class KHR16BitStorageInputOutputSample : public vkb::VulkanSample
 	struct Transform
 	{
 		vkb::sg::Transform *transform;
-		glm::vec3 axis;
-		float angular_frequency;
+		glm::vec3           axis;
+		float               angular_frequency;
 	};
 	std::vector<Transform> teapot_transforms;
 
