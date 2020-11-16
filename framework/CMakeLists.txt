@@ -412,6 +412,10 @@ target_link_libraries(${PROJECT_NAME}
     ctpl
     docopt)
 
+if(${NEED_LINK_ATOMIC})
+    target_link_libraries(${PROJECT_NAME} atomic)
+endif()
+
 # Link platform specific libraries
 if(ANDROID)
     target_link_libraries(${PROJECT_NAME} log android native_app_glue)
