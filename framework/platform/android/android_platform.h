@@ -30,7 +30,7 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
+	virtual bool initialize(const std::vector<Extension *> &extensions) override;
 
 	virtual void create_window() override;
 

@@ -26,11 +26,9 @@
 
 namespace vkb
 {
-namespace extensions
-{
 /**
  * @brief ExtensionBase is a CRTP style base class that extensions inherit from. The style enforces the use of tags when creating new extensions.
- * 		  For method information see extensions::Extension  
+ * 		  For method information see Extension  
  */
 template <typename... TAGS>
 class ExtensionBase : public Extension, public Tag<TAGS...>
@@ -80,5 +78,4 @@ const std::vector<Hook> &ExtensionBase<TAGS...>::get_hooks() const
 {
 	return hooks;
 }
-}        // namespace extensions
 }        // namespace vkb

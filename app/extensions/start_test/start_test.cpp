@@ -19,23 +19,21 @@
 
 #include "apps.h"
 
-namespace vkb
-{
 namespace extensions
 {
-Flag test_cmd = {"test", Flag::Type::CommandWithPositional, "Run a specific test"};
+vkb::Flag test_cmd = {"test", vkb::Flag::Type::CommandWithPositional, "Run a specific test"};
 
 StartTest::StartTest() :
-    StartTestTags({}, {FlagGroup(FlagGroup::Type::UseOne, false, {&test_cmd})})
+    StartTestTags({}, {vkb::FlagGroup(vkb::FlagGroup::Type::UseOne, false, {&test_cmd})})
 {
 }
 
-bool StartTest::is_active(const Parser &parser)
+bool StartTest::is_active(const vkb::Parser &parser)
 {
 	return parser.contains(test_cmd);
 }
 
-void StartTest::init(Platform &platform, const Parser &parser)
+void StartTest::init(vkb::Platform &platform, const vkb::Parser &parser)
 {
 	if (parser.contains(test_cmd))
 	{
@@ -48,4 +46,3 @@ void StartTest::init(Platform &platform, const Parser &parser)
 	}
 }
 }        // namespace extensions
-}        // namespace vkb

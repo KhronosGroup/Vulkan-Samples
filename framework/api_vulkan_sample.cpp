@@ -51,7 +51,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (!platform.using_extension<vkb::extensions::Headless>())
+	if (!platform.using_extension<extensions::Headless>())
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -441,7 +441,7 @@ void ApiVulkanSample::update_overlay(float delta_time)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(fps), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f/delta_time), [this]() {
 			on_update_ui_overlay(gui->get_drawer());
 		});
 

@@ -20,8 +20,6 @@
 
 namespace vkb
 {
-namespace extensions
-{
 bool Extension::activate_extension(Platform &p, const Parser &parser)
 {
 	platform = &p;
@@ -36,5 +34,4 @@ bool Extension::activate_extension(Platform &p, const Parser &parser)
 
 	return active;
 };
-}        // namespace extensions
 }        // namespace vkb

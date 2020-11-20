@@ -28,6 +28,7 @@
 #include <spdlog/spdlog.h>
 
 #include "common/logging.h"
+#include "platform/extensions/extension.h"
 #include "platform/filesystem.h"
 
 namespace vkb
@@ -38,7 +39,7 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-bool Platform::initialize(const std::vector<extensions::Extension *> &extensions = {})
+bool Platform::initialize(const std::vector<Extension *> &extensions = {})
 {
 	auto sinks = get_platform_sinks();
 
@@ -75,7 +76,7 @@ bool Platform::initialize(const std::vector<extensions::Extension *> &extensions
 
 				if (it == hooks.end())
 				{
-					auto r = hooks.emplace(hook, std::vector<extensions::Extension *>{});
+					auto r = hooks.emplace(hook, std::vector<Extension *>{});
 
 					if (r.second)
 					{
@@ -89,7 +90,7 @@ bool Platform::initialize(const std::vector<extensions::Extension *> &extensions
 			active_extensions.emplace_back(extension);
 		}
 	}
-	
+
 	return true;
 }
 
@@ -138,7 +139,7 @@ void Platform::update()
 
 	if (app_focused)
 	{
-		call_hook(extensions::Hook::OnUpdate, [&delta_time](extensions::Extension *extension) { extension->on_update(delta_time); });
+		call_hook(Hook::OnUpdate, [&delta_time](Extension *extension) { extension->on_update(delta_time); });
 
 		if (active_app->is_benchmark_mode())
 		{
@@ -162,7 +163,7 @@ void Platform::terminate(ExitCode code)
 	{
 		std::string id = active_app->get_name();
 
-		call_hook(extensions::Hook::OnAppClose, [&id](extensions::Extension *extension) { extension->on_app_close(id); });
+		call_hook(Hook::OnAppClose, [&id](Extension *extension) { extension->on_app_close(id); });
 
 		active_app->finish();
 	}
@@ -180,10 +181,10 @@ void Platform::close() const
 		window->close();
 	}
 
-	call_hook(extensions::Hook::OnPlatformClose, [](extensions::Extension *extension) { extension->on_platform_close(); });
+	call_hook(Hook::OnPlatformClose, [](Extension *extension) { extension->on_platform_close(); });
 }
 
-void Platform::call_hook(const extensions::Hook &hook, std::function<void(extensions::Extension *)> fn) const
+void Platform::call_hook(const Hook &hook, std::function<void(Extension *)> fn) const
 {
 	auto res = hooks.find(hook);
 	if (res != hooks.end())
@@ -280,13 +281,11 @@ void Platform::input_event(const InputEvent &input_event)
 
 void Platform::set_width(uint32_t width)
 {
-	// Values need correcting to proper minimum bounds
 	this->width = std::max<uint32_t>(width, 420);
 }
 
 void Platform::set_height(uint32_t height)
 {
-	// Values need correcting to proper minimum bounds
 	this->height = std::max<uint32_t>(height, 320);
 }
 

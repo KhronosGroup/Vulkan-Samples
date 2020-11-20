@@ -19,25 +19,23 @@
 
 #include "apps.h"
 
-namespace vkb
-{
 namespace extensions
 {
-Flag app_cmd = {"app", Flag::Type::Positional, "Run a specific application"};
+vkb::Flag app_cmd = {"app", vkb::Flag::Type::Positional, "Run a specific application"};
 
-Flag sample_cmd = {"sample", Flag::Type::CommandWithPositional, "Run a specific sample"};
+vkb::Flag sample_cmd = {"sample", vkb::Flag::Type::CommandWithPositional, "Run a specific sample"};
 
 StartApp::StartApp() :
-    StartAppTags({}, {FlagGroup(FlagGroup::Type::UseOne, false, {&app_cmd, &sample_cmd})})
+    StartAppTags({}, {vkb::FlagGroup(vkb::FlagGroup::Type::UseOne, false, {&app_cmd, &sample_cmd})})
 {
 }
 
-bool StartApp::is_active(const Parser &parser)
+bool StartApp::is_active(const vkb::Parser &parser)
 {
 	return parser.contains(app_cmd) || parser.contains(sample_cmd);
 }
 
-void StartApp::init(Platform &platform, const Parser &parser)
+void StartApp::init(vkb::Platform &platform, const vkb::Parser &parser)
 {
 	std::string          id;
 	const apps::AppInfo *app = nullptr;
@@ -60,4 +58,3 @@ void StartApp::init(Platform &platform, const Parser &parser)
 	}
 }
 }        // namespace extensions
-}        // namespace vkb

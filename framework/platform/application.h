@@ -83,9 +83,8 @@ class Application
   protected:
 	Platform *platform;
 
-	float fps;
-
   private:
+	float fps;
 	float frame_time;
 
 	std::string name{};

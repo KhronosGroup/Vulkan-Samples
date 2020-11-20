@@ -77,7 +77,7 @@ class Tag
 	static std::vector<TagID> tags;
 };
 
-#ifndef DOXYGEN_SHOULD_SKIP_THIS
+#ifndef DOXYGEN_SKIP
 
 template <typename... TAGS>
 std::vector<TagID> Tag<TAGS...>::tags;

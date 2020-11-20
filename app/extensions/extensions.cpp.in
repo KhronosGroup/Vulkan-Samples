@@ -23,25 +23,23 @@
 
 @EXTENSION_INCLUDE_FILES@
 
-namespace vkb
-{
 namespace extensions
 {
 
 #define ADD_EXTENSION(name) \
 	extensions.emplace_back(std::make_unique<##name>())
 
-std::vector<Extension *> get_available_extensions()
+std::vector<vkb::Extension *> get_all()
 {
 	static bool once = true;
-	static std::vector<std::unique_ptr<Extension>> extensions;
+	static std::vector<std::unique_ptr<vkb::Extension>> extensions;
 
 	if (once) {
 		once = false;
 @INIT_EXTENSIONS@
 	}
 
-	std::vector<Extension *> ptrs;
+	std::vector<vkb::Extension *> ptrs;
 	ptrs.reserve(extensions.size());
 
 	for (auto &extension : extensions)
@@ -52,4 +50,3 @@ std::vector<Extension *> get_available_extensions()
 	return ptrs;
 }
 }        // namespace extensions
-}        // namespace vkb

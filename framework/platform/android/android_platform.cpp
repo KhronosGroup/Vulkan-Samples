@@ -36,7 +36,6 @@ VKBP_ENABLE_WARNINGS()
 #include "headless/headless.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
-#include "apps.h"
 
 extern "C"
 {
@@ -317,13 +316,15 @@ void on_app_cmd(android_app *app, int32_t cmd)
 
 	switch (cmd)
 	{
-		case APP_CMD_INIT_WINDOW: {
+		case APP_CMD_INIT_WINDOW:
+		{
 			platform->get_window().resize(ANativeWindow_getWidth(app->window),
 			                              ANativeWindow_getHeight(app->window));
 			app->destroyRequested = !platform->prepare();
 			break;
 		}
-		case APP_CMD_CONTENT_RECT_CHANGED: {
+		case APP_CMD_CONTENT_RECT_CHANGED:
+		{
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
@@ -331,11 +332,13 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			platform->get_window().resize(width, height);
 			break;
 		}
-		case APP_CMD_GAINED_FOCUS: {
+		case APP_CMD_GAINED_FOCUS:
+		{
 			platform->get_app().set_focus(true);
 			break;
 		}
-		case APP_CMD_LOST_FOCUS: {
+		case APP_CMD_LOST_FOCUS:
+		{
 			platform->get_app().set_focus(false);
 			break;
 		}
@@ -413,7 +416,7 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 {
 }
 
-bool AndroidPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
+bool AndroidPlatform::initialize(const std::vector<Extension *> &extensions)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
@@ -427,7 +430,7 @@ void AndroidPlatform::create_window()
 {
 	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, using_extensions<extensions::Headless>());
+	window = std::make_unique<AndroidWindow>(*this, app->window, using_extension<extensions::Headless>());
 }
 
 void AndroidPlatform::main_loop()

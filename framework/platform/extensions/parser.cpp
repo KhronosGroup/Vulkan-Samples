@@ -29,26 +29,26 @@
 
 namespace vkb
 {
-Parser::Parser(const std::vector<extensions::Extension *> &extensions)
+Parser::Parser(const std::vector<Extension *> &extensions)
 {
-	std::vector<extensions::Extension *> entrypoints     = extensions::with_tags<extensions::tags::Entrypoint>(extensions);
-	std::vector<extensions::Extension *> not_entrypoints = extensions::without_tags<extensions::tags::Entrypoint>(extensions);
+	std::vector<Extension *> entrypoints     = extensions::with_tags<tags::Entrypoint>(extensions);
+	std::vector<Extension *> not_entrypoints = extensions::without_tags<tags::Entrypoint>(extensions);
 
 	// Dont mix well togther
-	std::vector<extensions::Extension *> aggressive = extensions::with_tags<extensions::tags::FullControl, extensions::tags::Stopping>(not_entrypoints);
+	std::vector<Extension *> aggressive = extensions::with_tags<tags::FullControl, tags::Stopping>(not_entrypoints);
 
 	// Work well with any extension
-	std::vector<extensions::Extension *> passives = extensions::with_tags<extensions::tags::Passive>(not_entrypoints);
+	std::vector<Extension *> passives = extensions::with_tags<tags::Passive>(not_entrypoints);
 
 	// Entrypoint - {aggressive, passive}
-	std::unordered_map<extensions::Extension *, std::vector<extensions::Extension *>> usage;
+	std::unordered_map<Extension *, std::vector<Extension *>> usage;
 	usage.reserve(entrypoints.size());
 
 	for (auto entrypoint : entrypoints)
 	{
-		std::vector<extensions::Extension *> compatable;
+		std::vector<Extension *> compatable;
 
-		if (!entrypoint->has_tag<extensions::tags::FullControl>() || entrypoint->has_tag<extensions::tags::Stopping>())
+		if (!entrypoint->has_tag<tags::FullControl>() || entrypoint->has_tag<tags::Stopping>())
 		{
 			// The entrypoint does not dictate the applications functionality so allow other extensions to take control
 			compatable.reserve(compatable.size() + aggressive.size());

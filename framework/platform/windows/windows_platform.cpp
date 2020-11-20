@@ -123,14 +123,14 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool WindowsPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
+bool WindowsPlatform::initialize(const std::vector<Extension *> &extensions)
 {
 	return Platform::initialize(extensions) && prepare();
 }
 
 void WindowsPlatform::create_window()
 {
-	if (using_extension<extensions::Headless>())
+	if (using_extension<::extensions::Headless>())
 	{
 		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}

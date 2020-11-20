@@ -62,7 +62,7 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixD2DPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
+bool UnixD2DPlatform::initialize(const std::vector<Extension *> &extensions)
 {
 	return Platform::initialize(extensions) && prepare();
 }

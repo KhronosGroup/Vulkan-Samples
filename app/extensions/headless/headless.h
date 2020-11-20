@@ -19,13 +19,11 @@
 
 #include "platform/extensions/extension_base.h"
 
-namespace vkb
-{
 namespace extensions
 {
 class Headless;
 
-using HeadlessTags = ExtensionBase<Headless, tags::Passive>;
+using HeadlessTags = vkb::ExtensionBase<Headless, vkb::tags::Passive>;
 
 class Headless : public HeadlessTags
 {
@@ -34,12 +32,8 @@ class Headless : public HeadlessTags
 
 	virtual ~Headless() = default;
 
-	virtual bool is_active(const Parser &parser) override;
+	virtual bool is_active(const vkb::Parser &parser) override;
 
-	virtual void init(Platform &plat, const Parser &options) override;
-
-  private:
-	// static Flag headless_flag;
+	virtual void init(vkb::Platform &plat, const vkb::Parser &options) override;
 };
 }        // namespace extensions
-}        // namespace vkb

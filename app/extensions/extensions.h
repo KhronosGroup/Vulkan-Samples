@@ -2,10 +2,7 @@
 
 #include "platform/extensions/extension.h"
 
-namespace vkb
-{
 namespace extensions
 {
-extern std::vector<Extension *> get_available_extensions();
+extern std::vector<vkb::Extension *> get_all();
 }        // namespace extensions
-}        // namespace vkb

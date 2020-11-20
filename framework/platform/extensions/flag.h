@@ -57,7 +57,7 @@ class Flag
 };
 
 /**
- * @brief TODO
+ * @brief Group flags and define how they should be accessed from the command line
  */
 class FlagGroup
 {

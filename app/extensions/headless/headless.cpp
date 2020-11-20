@@ -17,25 +17,21 @@
 
 #include "headless.h"
 
-namespace vkb
-{
 namespace extensions
 {
-Flag headless_flag = {"headless", Flag::Type::FlagOnly, "Run in headless mode"};
+vkb::Flag headless_flag = {"headless", vkb::Flag::Type::FlagOnly, "Run in headless mode"};
 
 Headless::Headless() :
-    HeadlessTags({}, {FlagGroup(FlagGroup::Type::Individual, true, {&headless_flag})})
+    HeadlessTags({}, {vkb::FlagGroup(vkb::FlagGroup::Type::Individual, true, {&headless_flag})})
 {
 }
 
-bool Headless::is_active(const Parser &parser)
+bool Headless::is_active(const vkb::Parser &parser)
 {
 	return parser.contains(headless_flag);
 }
 
-void Headless::init(Platform &platform, const Parser &parser)
+void Headless::init(vkb::Platform &platform, const vkb::Parser &parser)
 {
-	// Use has_extension<extensions::Headless>() to query if headless mode is enabled
 }
 }        // namespace extensions
-}        // namespace vkb

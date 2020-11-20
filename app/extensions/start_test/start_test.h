@@ -19,11 +19,9 @@
 
 #include "platform/extensions/extension_base.h"
 
-namespace vkb
-{
 namespace extensions
 {
-using StartTestTags = ExtensionBase<tags::Entrypoint>;
+using StartTestTags = vkb::ExtensionBase<vkb::tags::Entrypoint>;
 class StartTest : public StartTestTags
 {
   public:
@@ -31,9 +29,8 @@ class StartTest : public StartTestTags
 
 	virtual ~StartTest() = default;
 
-	virtual bool is_active(const Parser &parser) override;
+	virtual bool is_active(const vkb::Parser &parser) override;
 
-	virtual void init(Platform &platfrom, const Parser &parser) override;
+	virtual void init(vkb::Platform &platfrom, const vkb::Parser &parser) override;
 };
 }        // namespace extensions
-}        // namespace vkb

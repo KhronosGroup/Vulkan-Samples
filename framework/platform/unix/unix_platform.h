@@ -34,7 +34,7 @@ class UnixPlatform : public Platform
 
 	virtual ~UnixPlatform() = default;
 
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
+	virtual bool initialize(const std::vector<Extension *> &extensions) override;
 
 	virtual void create_window() override;
 

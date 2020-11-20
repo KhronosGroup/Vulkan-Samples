@@ -51,7 +51,7 @@ class Platform
 	 * @brief Sets up the window and logger
 	 * @param app_id The application to prepare after the platform is prepared
 	 */
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions);
+	virtual bool initialize(const std::vector<Extension *> &extensions);
 
 	/**
 	 * @brief Prepares the active app supplied in the initialize function
@@ -143,9 +143,9 @@ class Platform
 	bool start_app();
 
   protected:
-	std::vector<extensions::Extension *> active_extensions;
+	std::vector<Extension *> active_extensions;
 
-	std::unordered_map<extensions::Hook, std::vector<extensions::Extension *>> hooks;
+	std::unordered_map<Hook, std::vector<Extension *>> hooks;
 
 	std::unique_ptr<Window> window{nullptr};
 
@@ -175,7 +175,7 @@ class Platform
 
 	static std::string temp_directory;
 
-	void call_hook(const extensions::Hook &hook, std::function<void(extensions::Extension *)> fn) const;
+	void call_hook(const Hook &hook, std::function<void(Extension *)> fn) const;
 };
 
 template <class T>

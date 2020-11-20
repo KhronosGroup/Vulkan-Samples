@@ -19,11 +19,9 @@
 
 #include "platform/extensions/extension_base.h"
 
-namespace vkb
-{
 namespace extensions
 {
-using StartAppTags = ExtensionBase<tags::Entrypoint>;
+using StartAppTags = vkb::ExtensionBase<vkb::tags::Entrypoint>;
 class StartApp : public StartAppTags
 {
   public:
@@ -31,9 +29,8 @@ class StartApp : public StartAppTags
 
 	virtual ~StartApp() = default;
 
-	virtual bool is_active(const Parser &parser) override;
+	virtual bool is_active(const vkb::Parser &parser) override;
 
-	virtual void init(Platform &platfrom, const Parser &parser) override;
+	virtual void init(vkb::Platform &platfrom, const vkb::Parser &parser) override;
 };
 }        // namespace extensions
-}        // namespace vkb

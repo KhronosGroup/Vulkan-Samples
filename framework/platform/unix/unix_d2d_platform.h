@@ -28,7 +28,7 @@ class UnixD2DPlatform : public Platform
 
 	virtual ~UnixD2DPlatform() = default;
 
-	virtual bool initialize(const std::vector<extensions::Extension *> &extensions) override;
+	virtual bool initialize(const std::vector<Extension *> &extensions) override;
 
 	virtual void create_window() override;
 

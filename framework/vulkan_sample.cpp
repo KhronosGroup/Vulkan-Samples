@@ -86,7 +86,7 @@ bool VulkanSample::prepare(Platform &platform)
 
 	LOGI("Initializing Vulkan sample");
 
-	bool headless = platform.using_extension<vkb::extensions::Headless>();
+	bool headless = platform.using_extension<::extensions::Headless>();
 
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());

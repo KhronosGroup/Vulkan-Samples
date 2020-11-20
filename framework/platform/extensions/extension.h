@@ -28,15 +28,13 @@ class FlagGroup;
 class Parser;
 class Platform;
 
-namespace extensions
-{
 /**
- * @brief Tags are used to define an extensions behaviour. This is useful to dictacte which extensions will work together
- * 	      and which will not without directly specifying and exclusion or inclusion list. Tags are struct types so that they can
+ * @brief Tags are used to define an extensions behaviour. This is useful to dictate which extensions will work together
+ * 	      and which will not without directly specifying an exclusion or inclusion list. Tags are struct types so that they can
  * 		  be used in the tagging system (See extension implementation).
  *		  
- * Entrypoint - An entrypoint is a starting point for the application that will load a vkb::Application see (see start_app)
- * FullControl - The extension wants full control over how the application is executing and therefor Stopping extensions will be ignored (see batch_mode)
+ * Entrypoint - An entrypoint is a starting point for the application that will load a vkb::Application (see start_app)
+ * FullControl - The extension wants full control over how the application executes. Stopping extensions will be ignored (see batch_mode)
  * Stopping - The extension will stop the app through its own mechanism (see stop_after)	
  * Passive - These extensions provide non intrusive behaviour (see fps_logger)
  */
@@ -91,7 +89,7 @@ class Extension
 	virtual const std::vector<FlagGroup> &get_flag_groups() const = 0;
 
 	/**
-	 * @brief Return a list of hooks that an extension wants to subscribe too
+	 * @brief Return a list of hooks that an extension wants to subscribe to
 	 * 
 	 * @return Hooks that the extension wants to use
 	 */
@@ -185,8 +183,6 @@ class Extension
 	Platform *platform = nullptr;
 };
 
-}        // namespace extensions
-
 /**
  * The following section provides helper functions for filtering containers of extensions
  */
@@ -207,6 +203,8 @@ const std::vector<Extension *> with_tags(const std::vector<Extension *> &domain 
 	std::vector<Extension *> compatable;
 	for (auto ext : domain)
 	{
+		assert(ext != nullptr);
+
 		bool has_one = false;
 		for (auto t : tags)
 		{
@@ -237,6 +235,8 @@ const std::vector<Extension *> without_tags(const std::vector<Extension *> &doma
 	std::vector<Extension *> compatable;
 	for (auto ext : domain)
 	{
+		assert(ext != nullptr);
+
 		bool has_any = false;
 		for (auto t : tags)
 		{

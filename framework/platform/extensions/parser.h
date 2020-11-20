@@ -37,7 +37,7 @@ class Parser
 	 *
 	 * @param extensions Extensions used to generate CLI help menu
 	 */
-	Parser(const std::vector<extensions::Extension *> &extensions = {});
+	Parser(const std::vector<Extension *> &extensions = {});
 
 	/**
 	 * @brief Parse a list of arguments against the extensions
