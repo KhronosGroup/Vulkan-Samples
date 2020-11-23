@@ -20,8 +20,8 @@
 #include "stats/stats.h"
 #include <random>
 
-static constexpr unsigned Width = 1024;
-static constexpr unsigned Height = 1024;
+static constexpr unsigned Width    = 1024;
+static constexpr unsigned Height   = 1024;
 static constexpr unsigned NumBlobs = 16;
 
 KHR16BitArithmeticSample::KHR16BitArithmeticSample()
@@ -58,9 +58,9 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 
 	// Set up some structs for the (color, depth) attachments in the default render pass.
 	load_store_infos.resize(2);
-	load_store_infos[0].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store_infos[0].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	load_store_infos[0].store_op = VK_ATTACHMENT_STORE_OP_STORE;
-	load_store_infos[1].load_op = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	load_store_infos[1].load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	load_store_infos[1].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 
 	VkClearValue clear_value;
@@ -69,13 +69,13 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	clear_value.color.float32[2] = 0.0f;
 	clear_value.color.float32[3] = 1.0f;
 	clear_values.push_back(clear_value);
-	clear_value.depthStencil.depth = 1.0f;
+	clear_value.depthStencil.depth   = 1.0f;
 	clear_value.depthStencil.stencil = 0;
 	clear_values.push_back(clear_value);
 
 	// Generate some random blobs to render and place them in a 4xfp16 data structure.
-	std::default_random_engine rng(42);
-	std::normal_distribution<float> position_dist(0.0f, 0.1f);
+	std::default_random_engine            rng(42);
+	std::normal_distribution<float>       position_dist(0.0f, 0.1f);
 	std::uniform_real_distribution<float> intensity_dist(0.4f, 0.8f);
 	std::uniform_real_distribution<float> falloff_dist(50.0f, 100.0f);
 
@@ -99,9 +99,9 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	// Upload the blob buffer.
 	auto &device = get_render_context().get_device();
 
-	blob_buffer = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
-	                                                  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	                                                  VMA_MEMORY_USAGE_GPU_ONLY);
+	blob_buffer         = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16),
+                                                      VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+                                                      VMA_MEMORY_USAGE_GPU_ONLY);
 	auto staging_buffer = std::make_unique<vkb::core::Buffer>(device, sizeof(initial_data_fp16), VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_buffer->update(initial_data_fp16, sizeof(initial_data_fp16));
@@ -111,8 +111,8 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	cmd.copy_buffer(*staging_buffer, *blob_buffer, sizeof(initial_data_fp16));
 
 	vkb::BufferMemoryBarrier barrier;
-	barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-	barrier.dst_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+	barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
 	cmd.buffer_memory_barrier(*blob_buffer, 0, VK_WHOLE_SIZE, barrier);
@@ -123,7 +123,7 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	device.get_fence_pool().wait();
 
 	// Create the target image we render into in the main compute shader.
-	image = std::make_unique<vkb::core::Image>(device, VkExtent3D{ Width, Height, 1 },
+	image = std::make_unique<vkb::core::Image>(device, VkExtent3D{Width, Height, 1},
 	                                           VK_FORMAT_R16G16B16A16_SFLOAT,
 	                                           VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 	                                           VMA_MEMORY_USAGE_GPU_ONLY);
@@ -131,28 +131,28 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	image_view = std::make_unique<vkb::core::ImageView>(*image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R16G16B16A16_SFLOAT,
 	                                                    0, 0, 1, 1);
 
-	VkSamplerCreateInfo sampler_create_info = { VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO };
-	sampler_create_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-	sampler_create_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	sampler_create_info.magFilter = VK_FILTER_LINEAR;
-	sampler_create_info.minFilter = VK_FILTER_LINEAR;
-	sampler_create_info.maxLod = VK_LOD_CLAMP_NONE;
-	sampler = std::make_unique<vkb::core::Sampler>(device, sampler_create_info);
+	VkSamplerCreateInfo sampler_create_info = {VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+	sampler_create_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_create_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler_create_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	sampler_create_info.magFilter           = VK_FILTER_LINEAR;
+	sampler_create_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_create_info.maxLod              = VK_LOD_CLAMP_NONE;
+	sampler                                 = std::make_unique<vkb::core::Sampler>(device, sampler_create_info);
 
 	// Load shader modules.
 	auto &module =
-		device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-		                                                  vkb::ShaderSource{"16bit_arithmetic/compute_buffer.comp"});
-	compute_layout = &device.get_resource_cache().request_pipeline_layout({ &module });
+	    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+	                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer.comp"});
+	compute_layout = &device.get_resource_cache().request_pipeline_layout({&module});
 
 	if (supported_extensions)
 	{
 		auto &module_fp16 =
-			device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-			                                                  vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp"});
-		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({ &module_fp16 });
+		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
+		                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp"});
+		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 	}
 	else
 	{
@@ -162,11 +162,11 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	// Setup the visualization subpass which is there to blit the final result to screen.
 	vkb::ShaderSource vertex_source{"16bit_arithmetic/visualize.vert"};
 	vkb::ShaderSource fragment_source{"16bit_arithmetic/visualize.frag"};
-	auto subpass = std::make_unique<VisualizationSubpass>(get_render_context(),
-	                                                      std::move(vertex_source),
-	                                                      std::move(fragment_source));
+	auto              subpass = std::make_unique<VisualizationSubpass>(get_render_context(),
+                                                          std::move(vertex_source),
+                                                          std::move(fragment_source));
 
-	subpass->view = image_view.get();
+	subpass->view    = image_view.get();
 	subpass->sampler = sampler.get();
 	subpasses.emplace_back(std::move(subpass));
 	for (auto &subpass : subpasses)
@@ -179,10 +179,10 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 
 KHR16BitArithmeticSample::VisualizationSubpass::VisualizationSubpass(vkb::RenderContext &context,
                                                                      vkb::ShaderSource &&vertex_source,
-                                                                     vkb::ShaderSource &&fragment_source)
-	: vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
+                                                                     vkb::ShaderSource &&fragment_source) :
+    vkb::Subpass(context, std::move(vertex_source), std::move(fragment_source))
 {
-	set_output_attachments({ 0 });
+	set_output_attachments({0});
 }
 
 void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &command_buffer)
@@ -191,10 +191,10 @@ void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &co
 
 	// A depth-stencil attachment exists in the default render pass, make sure we ignore it.
 	vkb::DepthStencilState ds_state = {};
-	ds_state.depth_test_enable = VK_FALSE;
-	ds_state.stencil_test_enable = VK_FALSE;
-	ds_state.depth_write_enable = VK_FALSE;
-	ds_state.depth_compare_op = VK_COMPARE_OP_ALWAYS;
+	ds_state.depth_test_enable      = VK_FALSE;
+	ds_state.stencil_test_enable    = VK_FALSE;
+	ds_state.depth_write_enable     = VK_FALSE;
+	ds_state.depth_compare_op       = VK_COMPARE_OP_ALWAYS;
 	command_buffer.set_depth_stencil_state(ds_state);
 
 	command_buffer.bind_image(*view, *sampler, 0, 0, 0);
@@ -203,9 +203,9 @@ void KHR16BitArithmeticSample::VisualizationSubpass::draw(vkb::CommandBuffer &co
 
 void KHR16BitArithmeticSample::VisualizationSubpass::prepare()
 {
-	auto &device = get_render_context().get_device();
-	auto &vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
-	auto &frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
+	auto &                           device             = get_render_context().get_device();
+	auto &                           vert_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader());
+	auto &                           frag_shader_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader());
 	std::vector<vkb::ShaderModule *> shader_modules{&vert_shader_module, &frag_shader_module};
 	layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 }
@@ -219,7 +219,7 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// Required features.
 	storage_16bit_features.storageBuffer16BitAccess = VK_TRUE;
-	storage_16bit_features.storagePushConstant16 = VK_TRUE;
+	storage_16bit_features.storagePushConstant16    = VK_TRUE;
 
 	supported_extensions = arithmetic_16bit_8bit.shaderFloat16 == VK_TRUE;
 }
@@ -240,12 +240,12 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 
 	// Wait for fragment shader is done reading before we can write in compute.
 	vkb::ImageMemoryBarrier write_after_read_hazard;
-	write_after_read_hazard.src_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
-	write_after_read_hazard.dst_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+	write_after_read_hazard.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	write_after_read_hazard.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	write_after_read_hazard.src_access_mask = 0;
 	write_after_read_hazard.dst_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
-	write_after_read_hazard.old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-	write_after_read_hazard.new_layout = VK_IMAGE_LAYOUT_GENERAL;
+	write_after_read_hazard.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
+	write_after_read_hazard.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
 	command_buffer.image_memory_barrier(*image_view, write_after_read_hazard);
 
 	// 16-bit push constants are supported by VK_KHR_16bit_storage, which is handy for conserving space without
@@ -254,16 +254,16 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	{
 		uint16_t num_blobs;
 		uint16_t fp16_seed;
-		int16_t range_x, range_y;
+		int16_t  range_x, range_y;
 	} push = {};
 
-	frame_count = (frame_count + 1u) & 511u;
+	frame_count      = (frame_count + 1u) & 511u;
 	float seed_value = 0.5f * glm::sin(glm::two_pi<float>() * (float(frame_count) / 512.0f));
 
 	push.num_blobs = NumBlobs;
 	push.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(seed_value)));
-	push.range_x = 2;
-	push.range_y = 1;
+	push.range_x   = 2;
+	push.range_y   = 1;
 	command_buffer.push_constants(push);
 
 	command_buffer.set_specialization_constant(0, Width);
@@ -273,22 +273,18 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	command_buffer.dispatch(Width / 8, Height / 8, 1);
 
 	vkb::ImageMemoryBarrier to_fragment_barrier;
-	to_fragment_barrier.old_layout = VK_IMAGE_LAYOUT_GENERAL;
-	to_fragment_barrier.new_layout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	to_fragment_barrier.src_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-	to_fragment_barrier.dst_stage_mask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	to_fragment_barrier.old_layout      = VK_IMAGE_LAYOUT_GENERAL;
+	to_fragment_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	to_fragment_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+	to_fragment_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	to_fragment_barrier.src_access_mask = VK_ACCESS_SHADER_WRITE_BIT;
 	to_fragment_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
 	command_buffer.image_memory_barrier(*image_view, to_fragment_barrier);
 
 	// Blit result to screen and render UI.
 	command_buffer.begin_render_pass(render_target, load_store_infos, clear_values, subpasses);
-	command_buffer.set_viewport(0, {
-		{ 0.0f, 0.0f, float(render_target.get_extent().width), float(render_target.get_extent().height), 0.0f, 1.0f }
-	});
-	command_buffer.set_scissor(0, {
-		{{ 0, 0 }, render_target.get_extent() }
-	});
+	command_buffer.set_viewport(0, {{0.0f, 0.0f, float(render_target.get_extent().width), float(render_target.get_extent().height), 0.0f, 1.0f}});
+	command_buffer.set_scissor(0, {{{0, 0}, render_target.get_extent()}});
 	subpasses.front()->draw(command_buffer);
 
 	gui->draw(command_buffer);
@@ -308,10 +304,10 @@ void KHR16BitArithmeticSample::draw_gui()
 	}
 
 	gui->show_options_window(
-		/* body = */ [this, label]() {
-		  ImGui::Checkbox(label, &khr_16bit_arith_enabled);
-		},
-		/* lines = */ 1);
+	    /* body = */ [this, label]() {
+		    ImGui::Checkbox(label, &khr_16bit_arith_enabled);
+	    },
+	    /* lines = */ 1);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_16bit_arithmetic()

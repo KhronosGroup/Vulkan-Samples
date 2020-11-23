@@ -43,16 +43,16 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 
 	bool supported_extensions{false};
 
-	std::vector<vkb::LoadStoreInfo> load_store_infos;
+	std::vector<vkb::LoadStoreInfo>            load_store_infos;
 	std::vector<std::unique_ptr<vkb::Subpass>> subpasses;
-	std::vector<VkClearValue> clear_values;
+	std::vector<VkClearValue>                  clear_values;
 
-	std::unique_ptr<vkb::core::Buffer> blob_buffer;
-	std::unique_ptr<vkb::core::Image> image;
+	std::unique_ptr<vkb::core::Buffer>    blob_buffer;
+	std::unique_ptr<vkb::core::Image>     image;
 	std::unique_ptr<vkb::core::ImageView> image_view;
-	std::unique_ptr<vkb::core::Sampler> sampler;
-	vkb::PipelineLayout *compute_layout{nullptr};
-	vkb::PipelineLayout *compute_layout_fp16{nullptr};
+	std::unique_ptr<vkb::core::Sampler>   sampler;
+	vkb::PipelineLayout *                 compute_layout{nullptr};
+	vkb::PipelineLayout *                 compute_layout_fp16{nullptr};
 
 	unsigned frame_count{0};
 
@@ -62,9 +62,9 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 		virtual void prepare() override;
 		virtual void draw(vkb::CommandBuffer &command_buffer) override;
 
-		vkb::PipelineLayout *layout{nullptr};
+		vkb::PipelineLayout *       layout{nullptr};
 		const vkb::core::ImageView *view{nullptr};
-		const vkb::core::Sampler *sampler{nullptr};
+		const vkb::core::Sampler *  sampler{nullptr};
 	};
 };
 
