@@ -795,7 +795,7 @@ OpenGLInterop::~OpenGLInterop()
 	{
 		device->wait_idle();
 		auto deviceHandle = device->get_handle();
-		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
+		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_ready, nullptr);
 		vkDestroySemaphore(deviceHandle, sharedSemaphores.gl_complete, nullptr);
 		vkDestroyImage(deviceHandle, sharedTexture.image, nullptr);
 		vkDestroySampler(deviceHandle, sharedTexture.sampler, nullptr);
