@@ -16,10 +16,10 @@
  */
 
 #include "16bit_storage_input_output.h"
-#include "rendering/subpasses/forward_subpass.h"
-#include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/mesh.h"
 #include "platform/platform.h"
+#include "rendering/subpasses/forward_subpass.h"
+#include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
 #include <random>
 
 KHR16BitStorageInputOutputSample::KHR16BitStorageInputOutputSample()
@@ -52,30 +52,30 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 	for (auto *material : materials)
 	{
 		material->base_color_factor = glm::vec4(0.8f, 0.6f, 0.5f, 1.0f);
-		material->roughness_factor = 1.0f;
-		material->metallic_factor = 0.0f;
+		material->roughness_factor  = 1.0f;
+		material->metallic_factor   = 0.0f;
 	}
 
-	std::default_random_engine rng(42); // Use a fixed seed, makes rendering deterministic from run to run.
+	std::default_random_engine            rng(42);        // Use a fixed seed, makes rendering deterministic from run to run.
 	std::uniform_real_distribution<float> float_distribution{-1.0f, 1.0f};
-	const auto get_random_axis = [&]() -> glm::vec3 {
-		glm::vec3 axis;
+	const auto                            get_random_axis = [&]() -> glm::vec3 {
+        glm::vec3 axis;
 
-		for (unsigned i = 0; i < 3; i++)
-		{
-			axis[i] = float_distribution(rng);
-		}
+        for (unsigned i = 0; i < 3; i++)
+        {
+            axis[i] = float_distribution(rng);
+        }
 
-		if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
-		{
-			axis = glm::vec3(1.0f, 0.0f, 0.0f);
-		}
-		else
-		{
-			axis = glm::normalize(axis);
-		}
+        if (glm::all(glm::equal(axis, glm::vec3(0.0f))))
+        {
+            axis = glm::vec3(1.0f, 0.0f, 0.0f);
+        }
+        else
+        {
+            axis = glm::normalize(axis);
+        }
 
-		return axis;
+        return axis;
 	};
 
 	const auto get_random_angular_freq = [&]() -> float {
@@ -95,8 +95,8 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 			transform.set_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
 			Transform teapot;
-			teapot.transform = &transform;
-			teapot.axis = get_random_axis();
+			teapot.transform         = &transform;
+			teapot.axis              = get_random_axis();
 			teapot.angular_frequency = get_random_angular_freq();
 			teapot_transforms.push_back(teapot);
 		}
@@ -128,8 +128,8 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 			transform.set_rotation(glm::quat(1.0f, 0.0f, 0.0f, 0.0f));
 
 			Transform teapot;
-			teapot.transform = &transform;
-			teapot.axis = get_random_axis();
+			teapot.transform         = &transform;
+			teapot.axis              = get_random_axis();
 			teapot.angular_frequency = get_random_angular_freq();
 			teapot_transforms.push_back(teapot);
 
@@ -147,12 +147,12 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 	const std::string base_path = "16bit_storage_input_output/";
 	if (khr_16bit_storage_input_output_enabled && supports_16bit_storage)
 	{
-		vertex_path = "16bit_storage_input_output_enabled.vert";
+		vertex_path   = "16bit_storage_input_output_enabled.vert";
 		fragment_path = "16bit_storage_input_output_enabled.frag";
 	}
 	else
 	{
-		vertex_path = "16bit_storage_input_output_disabled.vert";
+		vertex_path   = "16bit_storage_input_output_disabled.vert";
 		fragment_path = "16bit_storage_input_output_disabled.frag";
 	}
 
@@ -194,7 +194,7 @@ bool KHR16BitStorageInputOutputSample::prepare(vkb::Platform &platform)
 void KHR16BitStorageInputOutputSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	auto &features_16bit_storage = gpu.request_extension_features<VkPhysicalDevice16BitStorageFeatures>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_16BIT_STORAGE_FEATURES);
-	supports_16bit_storage = features_16bit_storage.storageInputOutput16 == VK_TRUE;
+	supports_16bit_storage       = features_16bit_storage.storageInputOutput16 == VK_TRUE;
 }
 
 void KHR16BitStorageInputOutputSample::update(float delta_time)
@@ -209,7 +209,7 @@ void KHR16BitStorageInputOutputSample::update(float delta_time)
 	for (auto &teapot : teapot_transforms)
 	{
 		glm::quat rotation = teapot.transform->get_rotation();
-		rotation = glm::normalize(glm::angleAxis(teapot.angular_frequency * delta_time, teapot.axis) * rotation);
+		rotation           = glm::normalize(glm::angleAxis(teapot.angular_frequency * delta_time, teapot.axis) * rotation);
 		teapot.transform->set_rotation(rotation);
 		angular_freq += 0.05f;
 	}
@@ -230,10 +230,10 @@ void KHR16BitStorageInputOutputSample::draw_gui()
 	}
 
 	gui->show_options_window(
-		/* body = */ [this, label]() {
-			ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
-		},
-		/* lines = */ 1);
+	    /* body = */ [this, label]() {
+		    ImGui::Checkbox(label, &khr_16bit_storage_input_output_enabled);
+	    },
+	    /* lines = */ 1);
 }
 
 void KHR16BitStorageInputOutputSample::recreate_swapchain()
