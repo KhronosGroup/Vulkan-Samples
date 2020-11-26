@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "push_descriptors"
     "raytracing_basic"
+    "descriptor_indexing"
 
     #Performance Samples
     "swapchain_images"
