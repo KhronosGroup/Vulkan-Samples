@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,24 @@ namespace vkb
 /// A very simple version of the glslValidator application
 class GLSLCompiler
 {
+  private:
+	static glslang::EShTargetLanguage        env_target_language;
+	static glslang::EShTargetLanguageVersion env_target_language_version;
+
   public:
+	/**
+	 * @brief Set the glslang target environment to translate to when generating code
+	 * @param target_language The language to translate to
+	 * @param target_language_version The version of the language to translate to
+	 */
+	static void set_target_environment(glslang::EShTargetLanguage        target_language,
+	                                   glslang::EShTargetLanguageVersion target_language_version);
+
+	/**
+	 * @brief Reset the glslang target environment to the default values
+	 */
+	static void reset_target_environment();
+
 	/**
 	 * @brief Compiles GLSL to SPIRV code
 	 * @param stage The Vulkan shader stage flag
