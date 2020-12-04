@@ -22,8 +22,11 @@ jobs:
           submodules: "recursive"
 
       - if: ${{ matrix.platform == 'ubuntu' }}
+         name: Update packages 
+         run: sudo apt-get update 
+
+      - if: ${{ matrix.platform == 'ubuntu' }}
         name: Install RandR headers
-        run: sudo apt-get update 
         run: sudo apt install xorg-dev libglu1-mesa-dev
 
       - name: Configure
