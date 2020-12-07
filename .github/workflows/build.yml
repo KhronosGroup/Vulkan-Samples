@@ -22,8 +22,8 @@ jobs:
           submodules: "recursive"
 
       - if: ${{ matrix.platform == 'ubuntu' }}
-         name: Update packages 
-         run: sudo apt-get update 
+        name: Update packages 
+        run: sudo apt-get update 
 
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Install RandR headers
