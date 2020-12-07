@@ -21,8 +21,8 @@ jobs:
         with:
           submodules: "recursive"
 
-      - if: ${{ matrix.platform == 'ubuntu' }}
-        name: Update packages 
+      - name: Update packages 
+        if: ${{ matrix.platform == 'ubuntu' }}
         run: sudo apt-get update 
 
       - if: ${{ matrix.platform == 'ubuntu' }}
