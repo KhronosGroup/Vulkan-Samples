@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@ VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
-#include <glslang/Include/revision.h>
 #include <glslang/OSDependent/osinclude.h>
 VKBP_ENABLE_WARNINGS()
 
@@ -67,6 +66,21 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 }
 }        // namespace
 
+glslang::EShTargetLanguage        GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
+glslang::EShTargetLanguageVersion GLSLCompiler::env_target_language_version = (glslang::EShTargetLanguageVersion) 0;
+
+void GLSLCompiler::set_target_environment(glslang::EShTargetLanguage target_language, glslang::EShTargetLanguageVersion target_language_version)
+{
+	GLSLCompiler::env_target_language         = target_language;
+	GLSLCompiler::env_target_language_version = target_language_version;
+}
+
+void GLSLCompiler::reset_target_environment()
+{
+	GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
+	GLSLCompiler::env_target_language_version = (glslang::EShTargetLanguageVersion) 0;
+}
+
 bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
                                     const std::vector<uint8_t> &glsl_source,
                                     const std::string &         entry_point,
@@ -91,6 +105,10 @@ bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 	shader.setSourceEntryPoint(entry_point.c_str());
 	shader.setPreamble(shader_variant.get_preamble().c_str());
 	shader.addProcesses(shader_variant.get_processes());
+	if (GLSLCompiler::env_target_language != glslang::EShTargetLanguage::EShTargetNone)
+	{
+		shader.setEnvTarget(GLSLCompiler::env_target_language, GLSLCompiler::env_target_language_version);
+	}
 
 	if (!shader.parse(&glslang::DefaultTBuiltInResource, 100, false, messages))
 	{
