@@ -21,13 +21,11 @@ jobs:
         with:
           submodules: "recursive"
 
-      - name: Update packages 
-        if: ${{ matrix.platform == 'ubuntu' }}
-        run: sudo apt-get update 
-
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Install RandR headers
-        run: sudo apt install xorg-dev libglu1-mesa-dev
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
 
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
