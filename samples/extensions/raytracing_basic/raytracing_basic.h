@@ -16,7 +16,7 @@
  */
 
 /*
- * Basic example for ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
+ * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
  */
 
 #pragma once

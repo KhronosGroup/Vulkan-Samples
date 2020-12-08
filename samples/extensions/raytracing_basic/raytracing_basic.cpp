@@ -16,14 +16,14 @@
  */
 
 /*
- * Basic example for ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
+ * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
   */
 
 #include "raytracing_basic.h"
 
 RaytracingBasic::RaytracingBasic()
 {
-	title = "Basic ray tracing";
+	title = "Hardware accelerated ray tracing";
 
 	// SPIRV 1.4 requires Vulkan 1.1
 	set_api_version(VK_API_VERSION_1_1);
@@ -465,7 +465,7 @@ void RaytracingBasic::create_scene()
 }
 
 /*
-	Create the Shader Binding Tables that binds the programs and top-level acceleration structure
+	Create the Shader Binding Tables that connects the ray tracing pipelines' programs and the  top-level acceleration structure
 
 	SBT Layout used in this sample:
 
@@ -816,7 +816,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// This sample copies ray traced output to the swap chain image, so we need to enable the required image usage flags
+	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags
 	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 	get_render_context().update_swapchain(image_usage_flags);
 
