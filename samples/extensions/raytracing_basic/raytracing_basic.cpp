@@ -485,7 +485,7 @@ void RaytracingBasic::create_scene()
 
 void RaytracingBasic::create_shader_binding_tables()
 {
-	const uint32_t           handle_size	         = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t           handle_size             = ray_tracing_pipeline_properties.shaderGroupHandleSize;
 	const uint32_t           handle_size_aligned     = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 	const uint32_t           handle_alignment        = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
 	const uint32_t           group_count             = static_cast<uint32_t>(shader_groups.size());
