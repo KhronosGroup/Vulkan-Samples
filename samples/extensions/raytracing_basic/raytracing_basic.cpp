@@ -455,6 +455,11 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	top_level_acceleration_structure.device_address        = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 }
 
+inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
 /*
 	Create scene geometry and ray tracing acceleration structures
 */
@@ -480,10 +485,11 @@ void RaytracingBasic::create_scene()
 
 void RaytracingBasic::create_shader_binding_tables()
 {
-	const uint32_t           handle_size             = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t           handle_size	         = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t           handle_size_aligned     = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 	const uint32_t           handle_alignment        = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
 	const uint32_t           group_count             = static_cast<uint32_t>(shader_groups.size());
-	const uint32_t           sbt_size                = handle_alignment * group_count;
+	const uint32_t           sbt_size                = group_count * handle_size_aligned;
 	const VkBufferUsageFlags sbt_buffer_usafge_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	const VmaMemoryUsage     sbt_memory_usage        = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
@@ -501,9 +507,9 @@ void RaytracingBasic::create_shader_binding_tables()
 	uint8_t *data = static_cast<uint8_t *>(raygen_shader_binding_table->map());
 	memcpy(data, shader_handle_storage.data(), handle_size);
 	data = static_cast<uint8_t *>(miss_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_alignment, handle_size);
+	memcpy(data, shader_handle_storage.data() + handle_size_aligned, handle_size);
 	data = static_cast<uint8_t *>(hit_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_alignment * 2, handle_size);
+	memcpy(data, shader_handle_storage.data() + handle_size_aligned * 2, handle_size);
 	raygen_shader_binding_table->unmap();
 	miss_shader_binding_table->unmap();
 	hit_shader_binding_table->unmap();
@@ -721,20 +727,22 @@ void RaytracingBasic::build_command_buffers()
 			Setup the strided device address regions pointing at the shader identifiers in the shader binding table
 		*/
 
+		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
+
 		VkStridedDeviceAddressRegionKHR raygen_shader_sbt_entry{};
 		raygen_shader_sbt_entry.deviceAddress = get_buffer_device_address(raygen_shader_binding_table->get_handle());
-		raygen_shader_sbt_entry.stride        = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-		raygen_shader_sbt_entry.size          = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+		raygen_shader_sbt_entry.stride        = handle_size_aligned;
+		raygen_shader_sbt_entry.size          = handle_size_aligned;
 
 		VkStridedDeviceAddressRegionKHR miss_shader_sbt_entry{};
 		miss_shader_sbt_entry.deviceAddress = get_buffer_device_address(miss_shader_binding_table->get_handle());
-		miss_shader_sbt_entry.stride        = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-		miss_shader_sbt_entry.size          = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+		miss_shader_sbt_entry.stride        = handle_size_aligned;
+		miss_shader_sbt_entry.size          = handle_size_aligned;
 
 		VkStridedDeviceAddressRegionKHR hit_shader_sbt_entry{};
 		hit_shader_sbt_entry.deviceAddress = get_buffer_device_address(hit_shader_binding_table->get_handle());
-		hit_shader_sbt_entry.stride        = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-		hit_shader_sbt_entry.size          = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+		hit_shader_sbt_entry.stride        = handle_size_aligned;
+		hit_shader_sbt_entry.size          = handle_size_aligned;
 
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
