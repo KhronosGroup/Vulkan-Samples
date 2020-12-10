@@ -304,10 +304,10 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	vkCmdBuildAccelerationStructuresKHR(
-		command_buffer,
-		1,
-		&acceleration_build_geometry_info,
-		acceleration_build_structure_range_infos.data());
+	    command_buffer,
+	    1,
+	    &acceleration_build_geometry_info,
+	    acceleration_build_structure_range_infos.data());
 	get_device().flush_command_buffer(command_buffer, queue);
 
 	delete_scratch_buffer(scratch_buffer);
