@@ -300,28 +300,15 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 	acceleration_structure_build_range_info.transformOffset                                          = 0;
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
 
-	// Accelerations structures can be build either on the host or the device, with the former only possible if the implementation supports it
-	if (acceleration_structure_features.accelerationStructureHostCommands)
-	{
-		// Implementation supports building acceleration structure building on host
-		vkBuildAccelerationStructuresKHR(
-		    device->get_handle(),
-		    VK_NULL_HANDLE,
-		    1,
-		    &acceleration_build_geometry_info,
-		    acceleration_build_structure_range_infos.data());
-	}
-	else
-	{
-		// Build on the device, which involves a command buffer submission
-		VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-		vkCmdBuildAccelerationStructuresKHR(
-		    command_buffer,
-		    1,
-		    &acceleration_build_geometry_info,
-		    acceleration_build_structure_range_infos.data());
-		get_device().flush_command_buffer(command_buffer, queue);
-	}
+	// Build the acceleration structure on the device via a one-time command buffer submission
+	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	vkCmdBuildAccelerationStructuresKHR(
+		command_buffer,
+		1,
+		&acceleration_build_geometry_info,
+		acceleration_build_structure_range_infos.data());
+	get_device().flush_command_buffer(command_buffer, queue);
 
 	delete_scratch_buffer(scratch_buffer);
 
@@ -423,28 +410,15 @@ void RaytracingBasic::create_top_level_acceleration_structure()
 	acceleration_structure_build_range_info.transformOffset                                          = 0;
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
 
-	// Accelerations structures can be build either on the host or the device, with the former only possible if the implementation supports it
-	if (acceleration_structure_features.accelerationStructureHostCommands)
-	{
-		// Implementation supports building acceleration structure building on host
-		vkBuildAccelerationStructuresKHR(
-		    device->get_handle(),
-		    VK_NULL_HANDLE,
-		    1,
-		    &acceleration_build_geometry_info,
-		    acceleration_build_structure_range_infos.data());
-	}
-	else
-	{
-		// Build on the device, which involves a command buffer submission
-		VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-		vkCmdBuildAccelerationStructuresKHR(
-		    command_buffer,
-		    1,
-		    &acceleration_build_geometry_info,
-		    acceleration_build_structure_range_infos.data());
-		get_device().flush_command_buffer(command_buffer, queue);
-	}
+	// Build the acceleration structure on the device via a one-time command buffer submission
+	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	vkCmdBuildAccelerationStructuresKHR(
+	    command_buffer,
+	    1,
+	    &acceleration_build_geometry_info,
+	    acceleration_build_structure_range_infos.data());
+	get_device().flush_command_buffer(command_buffer, queue);
 
 	delete_scratch_buffer(scratch_buffer);
 
