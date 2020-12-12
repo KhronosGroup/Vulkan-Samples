@@ -14,24 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-#include "extension.h"
-#include "platform/extensions/parser.h"
-#include "platform/platform.h"
 
-namespace vkb
+#pragma once
+
+#include "platform/plugins/plugin_base.h"
+
+namespace plugins
 {
-bool Extension::activate_extension(Platform &p, const Parser &parser)
+class Headless;
+
+using HeadlessTags = vkb::PluginBase<Headless, vkb::tags::Passive>;
+
+class Headless : public HeadlessTags
 {
-	platform = &p;
+  public:
+	Headless();
 
-	bool active = is_active(parser);
+	virtual ~Headless() = default;
 
-	// Extension activated
-	if (active)
-	{
-		init(p, parser);
-	}
+	virtual bool is_active(const vkb::Parser &parser) override;
 
-	return active;
+	virtual void init(vkb::Platform &plat, const vkb::Parser &options) override;
 };
-}        // namespace vkb
+}        // namespace plugins

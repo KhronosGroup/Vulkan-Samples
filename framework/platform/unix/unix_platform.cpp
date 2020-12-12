@@ -72,14 +72,14 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixPlatform::initialize(const std::vector<extensions::Extension *> &extensions)
+bool UnixPlatform::initialize(const std::vector<plugins::Plugin *> &plugins)
 {
-	return Platform::initialize(extensions) && prepare();
+	return Platform::initialize(plugins) && prepare();
 }
 
 void UnixPlatform::create_window()
 {
-	if (using_extension<extensions::Headless>())
+	if (using_plugin<plugins::Headless>())
 	{
 		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}

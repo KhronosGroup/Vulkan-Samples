@@ -25,8 +25,8 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
-#include "platform/extensions/extension.h"
-#include "platform/extensions/parser.h"
+#include "platform/plugins/plugin.h"
+#include "platform/plugins/parser.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
 #include "timer.h"
@@ -51,7 +51,7 @@ class Platform
 	 * @brief Sets up the window and logger
 	 * @param app_id The application to prepare after the platform is prepared
 	 */
-	virtual bool initialize(const std::vector<Extension *> &extensions);
+	virtual bool initialize(const std::vector<Plugin *> &plugins);
 
 	/**
 	 * @brief Prepares the active app supplied in the initialize function
@@ -134,7 +134,7 @@ class Platform
 	void lock_app_input();
 
 	template <class T>
-	bool using_extension() const;
+	bool using_plugin() const;
 
 	void request_application(const apps::AppInfo *app);
 
@@ -143,9 +143,9 @@ class Platform
 	bool start_app();
 
   protected:
-	std::vector<Extension *> active_extensions;
+	std::vector<Plugin *> active_plugins;
 
-	std::unordered_map<Hook, std::vector<Extension *>> hooks;
+	std::unordered_map<Hook, std::vector<Plugin *>> hooks;
 
 	std::unique_ptr<Window> window{nullptr};
 
@@ -175,12 +175,12 @@ class Platform
 
 	static std::string temp_directory;
 
-	void call_hook(const Hook &hook, std::function<void(Extension *)> fn) const;
+	void call_hook(const Hook &hook, std::function<void(Plugin *)> fn) const;
 };
 
 template <class T>
-bool Platform::using_extension() const
+bool Platform::using_plugin() const
 {
-	return !extensions::with_tags<T>(active_extensions).empty();
+	return !plugins::with_tags<T>(active_plugins).empty();
 }
 }        // namespace vkb

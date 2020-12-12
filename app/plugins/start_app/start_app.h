@@ -15,23 +15,22 @@
  * limitations under the License.
  */
 
-#include "headless.h"
+#pragma once
 
-namespace extensions
-{
-vkb::Flag headless_flag = {"headless", vkb::Flag::Type::FlagOnly, "Run in headless mode"};
+#include "platform/plugins/plugin_base.h"
 
-Headless::Headless() :
-    HeadlessTags({}, {vkb::FlagGroup(vkb::FlagGroup::Type::Individual, true, {&headless_flag})})
+namespace plugins
 {
-}
+using StartAppTags = vkb::PluginBase<vkb::tags::Entrypoint>;
+class StartApp : public StartAppTags
+{
+  public:
+	StartApp();
 
-bool Headless::is_active(const vkb::Parser &parser)
-{
-	return parser.contains(headless_flag);
-}
+	virtual ~StartApp() = default;
 
-void Headless::init(vkb::Platform &platform, const vkb::Parser &parser)
-{
-}
-}        // namespace extensions
+	virtual bool is_active(const vkb::Parser &parser) override;
+
+	virtual void init(vkb::Platform &platfrom, const vkb::Parser &parser) override;
+};
+}        // namespace plugins

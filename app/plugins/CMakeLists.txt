@@ -18,7 +18,7 @@
  ]]
 
 cmake_minimum_required(VERSION 3.12)
-project(extensions)
+project(plugins)
 
 # Helper
 
@@ -49,51 +49,51 @@ function(snake_case_to_pascal_case SNAKE PASCAL)
     set(${PASCAL} ${SNAKE_CASE} PARENT_SCOPE)
 endfunction()
 
-# Extensions
+# Plugins
 
-set(EXTENSIONS
+set(PLUGINS
     headless
     start_app
     start_test
 )
 
 if(NOT ${VKB_BUILD_TESTS})
-    list(REMOVE_ITEM EXTENSIONS "start_test")
+    list(REMOVE_ITEM PLUGINS "start_test")
 endif()
 
-# Generate extensions.cpp
+# Generate plugins.cpp
 
-set(EXTENSION_INCLUDE_FILES)
-set(INIT_EXTENSIONS)
+set(PLUGIN_INCLUDE_FILES)
+set(INIT_PLUGINS)
 
-foreach(EXT_SNAKE IN LISTS EXTENSIONS)
+foreach(EXT_SNAKE IN LISTS PLUGINS)
     snake_case_to_pascal_case("${EXT_SNAKE}" EXT_PASCAL)
 
-    list(APPEND EXTENSION_INCLUDE_FILES "#include \"${EXT_SNAKE}/${EXT_SNAKE}.h\"")
-    list(APPEND INIT_EXTENSIONS "\t\tADD_EXTENSION(${EXT_PASCAL})")
+    list(APPEND PLUGIN_INCLUDE_FILES "#include \"${EXT_SNAKE}/${EXT_SNAKE}.h\"")
+    list(APPEND INIT_PLUGINS "\t\tADD_PLUGIN(${EXT_PASCAL})")
 endforeach()
 
-list(JOIN EXTENSION_INCLUDE_FILES "\n" EXTENSION_INCLUDE_FILES)
-list(JOIN INIT_EXTENSIONS ";\n" INIT_EXTENSIONS)
-set(INIT_EXTENSIONS "${INIT_EXTENSIONS};")
+list(JOIN PLUGIN_INCLUDE_FILES "\n" PLUGIN_INCLUDE_FILES)
+list(JOIN INIT_PLUGINS ";\n" INIT_PLUGINS)
+set(INIT_PLUGINS "${INIT_PLUGINS};")
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/extensions.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/extensions.cpp)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plugins.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/plugins.cpp)
 
-# Create extensions library
+# Create plugins library
 
-add_library(extension-headers INTERFACE)
-target_include_directories(extension-headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(plugin-headers INTERFACE)
+target_include_directories(plugin-headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 set(SRC_FILES
-    ${CMAKE_CURRENT_BINARY_DIR}/extensions.cpp
-    extensions.h
+    ${CMAKE_CURRENT_BINARY_DIR}/plugins.cpp
+    plugins.h
 )
 
-foreach(EXTENSION IN LISTS EXTENSIONS)
-    list(APPEND SRC_FILES "${EXTENSION}/${EXTENSION}.h")
-    list(APPEND SRC_FILES "${EXTENSION}/${EXTENSION}.cpp")
+foreach(PLUGIN IN LISTS PLUGINS)
+    list(APPEND SRC_FILES "${PLUGIN}/${PLUGIN}.h")
+    list(APPEND SRC_FILES "${PLUGIN}/${PLUGIN}.cpp")
 endforeach()
 
 add_library(${PROJECT_NAME} STATIC ${SRC_FILES})
-target_link_libraries(${PROJECT_NAME} PRIVATE framework apps extension-headers)
-target_link_libraries(${PROJECT_NAME} PUBLIC extension-headers)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework apps plugin-headers)
+target_link_libraries(${PROJECT_NAME} PUBLIC plugin-headers)

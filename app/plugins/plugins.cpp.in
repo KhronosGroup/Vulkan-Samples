@@ -15,25 +15,38 @@
  * limitations under the License.
  */
 
-#pragma once
+// Generated file by CMake. Don't edit.
 
-#include "platform/extensions/extension_base.h"
+#include "plugins.h"
 
-namespace extensions
+#include <memory>
+
+@PLUGIN_INCLUDE_FILES@
+
+namespace plugins
 {
-class Headless;
 
-using HeadlessTags = vkb::ExtensionBase<Headless, vkb::tags::Passive>;
+#define ADD_PLUGIN(name) \
+	plugins.emplace_back(std::make_unique<##name>())
 
-class Headless : public HeadlessTags
+std::vector<vkb::Plugin *> get_all()
 {
-  public:
-	Headless();
+	static bool once = true;
+	static std::vector<std::unique_ptr<vkb::Plugin>> plugins;
 
-	virtual ~Headless() = default;
+	if (once) {
+		once = false;
+@INIT_PLUGINS@
+	}
 
-	virtual bool is_active(const vkb::Parser &parser) override;
+	std::vector<vkb::Plugin *> ptrs;
+	ptrs.reserve(plugins.size());
 
-	virtual void init(vkb::Platform &plat, const vkb::Parser &options) override;
-};
-}        // namespace extensions
+	for (auto &plugin : plugins)
+	{
+		ptrs.push_back(plugin.get());
+	}
+
+	return ptrs;
+}
+}        // namespace plugins

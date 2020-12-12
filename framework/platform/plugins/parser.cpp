@@ -25,32 +25,32 @@
 
 #include "common/logging.h"
 #include "common/strings.h"
-#include "platform/extensions/extension.h"
+#include "platform/plugins/plugin.h"
 
 namespace vkb
 {
-Parser::Parser(const std::vector<Extension *> &extensions)
+Parser::Parser(const std::vector<Plugin *> &plugins)
 {
-	std::vector<Extension *> entrypoints     = extensions::with_tags<tags::Entrypoint>(extensions);
-	std::vector<Extension *> not_entrypoints = extensions::without_tags<tags::Entrypoint>(extensions);
+	std::vector<Plugin *> entrypoints     = plugins::with_tags<tags::Entrypoint>(plugins);
+	std::vector<Plugin *> not_entrypoints = plugins::without_tags<tags::Entrypoint>(plugins);
 
 	// Dont mix well togther
-	std::vector<Extension *> aggressive = extensions::with_tags<tags::FullControl, tags::Stopping>(not_entrypoints);
+	std::vector<Plugin *> aggressive = plugins::with_tags<tags::FullControl, tags::Stopping>(not_entrypoints);
 
-	// Work well with any extension
-	std::vector<Extension *> passives = extensions::with_tags<tags::Passive>(not_entrypoints);
+	// Work well with any plugin
+	std::vector<Plugin *> passives = plugins::with_tags<tags::Passive>(not_entrypoints);
 
 	// Entrypoint - {aggressive, passive}
-	std::unordered_map<Extension *, std::vector<Extension *>> usage;
+	std::unordered_map<Plugin *, std::vector<Plugin *>> usage;
 	usage.reserve(entrypoints.size());
 
 	for (auto entrypoint : entrypoints)
 	{
-		std::vector<Extension *> compatable;
+		std::vector<Plugin *> compatable;
 
 		if (!entrypoint->has_tag<tags::FullControl>() || entrypoint->has_tag<tags::Stopping>())
 		{
-			// The entrypoint does not dictate the applications functionality so allow other extensions to take control
+			// The entrypoint does not dictate the applications functionality so allow other plugins to take control
 			compatable.reserve(compatable.size() + aggressive.size());
 			for (auto ext : aggressive)
 			{
@@ -128,7 +128,7 @@ Parser::Parser(const std::vector<Extension *> &extensions)
 	extra_help.push_back("Extras:");
 
 	std::set<Flag *> unique_flags;
-	for (auto ext : extensions)
+	for (auto ext : plugins)
 	{
 		auto &groups = ext->get_flag_groups();
 		for (auto &group : groups)

@@ -29,14 +29,14 @@ class Parser;
 class Platform;
 
 /**
- * @brief Tags are used to define an extensions behaviour. This is useful to dictate which extensions will work together
+ * @brief Tags are used to define a plugins behaviour. This is useful to dictate which plugins will work together
  * 	      and which will not without directly specifying an exclusion or inclusion list. Tags are struct types so that they can
- * 		  be used in the tagging system (See extension implementation).
+ * 		  be used in the tagging system (See plugin implementation).
  *		  
  * Entrypoint - An entrypoint is a starting point for the application that will load a vkb::Application (see start_app)
- * FullControl - The extension wants full control over how the application executes. Stopping extensions will be ignored (see batch_mode)
- * Stopping - The extension will stop the app through its own mechanism (see stop_after)	
- * Passive - These extensions provide non intrusive behaviour (see fps_logger)
+ * FullControl - The plugin wants full control over how the application executes. Stopping plugins will be ignored (see batch_mode)
+ * Stopping - The plugin will stop the app through its own mechanism (see stop_after)	
+ * Passive - These plugins provide non intrusive behaviour (see fps_logger)
  */
 namespace tags
 {
@@ -51,7 +51,7 @@ struct Passive
 }        // namespace tags
 
 /**
- * @brief Hooks are points in the project that an extension can subscribe too. These can be expanded on to implement more behaviour in the future
+ * @brief Hooks are points in the project that an plugin can subscribe too. These can be expanded on to implement more behaviour in the future
  * 
  * Update - Executed at each update() loop
  * OnAppStart - Executed when an app starts
@@ -67,31 +67,31 @@ enum class Hook
 };
 
 /**
- * @brief Extensions are used to define custom behaviour. This allows the addition of features without directly
+ * @brief Plugins are used to define custom behaviour. This allows the addition of features without directly
  * 		  interfering with the applications core implementation
  */
-class Extension
+class Plugin
 {
   public:
-	Extension(){};
-	virtual ~Extension() = default;
+	Plugin(){};
+	virtual ~Plugin() = default;
 
 	/**
-	 * @brief Conducts the process of activating and initializing an extension
+	 * @brief Conducts the process of activating and initializing an plugin
 	 * 
 	 * @param platform The platform
-	 * @param parser The parser used to check if the extensions flags are present
-	 * @return true If the extension is to be activated
-	 * @return false If the extension is not active
+	 * @param parser The parser used to check if the plugins flags are present
+	 * @return true If the plugin is to be activated
+	 * @return false If the plugin is not active
 	 */
-	bool activate_extension(Platform &platform, const Parser &parser);
+	bool activate_plugin(Platform &platform, const Parser &parser);
 
 	virtual const std::vector<FlagGroup> &get_flag_groups() const = 0;
 
 	/**
-	 * @brief Return a list of hooks that an extension wants to subscribe to
+	 * @brief Return a list of hooks that an plugin wants to subscribe to
 	 * 
-	 * @return Hooks that the extension wants to use
+	 * @return Hooks that the plugin wants to use
 	 */
 	virtual const std::vector<Hook> &get_hooks() const = 0;
 
@@ -122,7 +122,7 @@ class Extension
 	virtual void on_platform_close() = 0;
 
 	/**
-	 * @brief Test whether the extension contains a given tag
+	 * @brief Test whether the plugin contains a given tag
 	 * 
 	 * @tparam C the tag to check for
 	 * @return true tag present
@@ -135,7 +135,7 @@ class Extension
 	}
 
 	/**
-	 * @brief Tests whether the extensions contains multiple tags
+	 * @brief Tests whether the plugins contains multiple tags
 	 * 
 	 * @tparam C A set of tags
 	 * @return true Contains all tags
@@ -154,7 +154,7 @@ class Extension
 	}
 
 	/**
-	 * @brief Implemented by extension base to return if the extension contains a tag
+	 * @brief Implemented by plugin base to return if the plugin contains a tag
 	 * 
 	 * @param id The tag id of a tag
 	 * @return true contains tag
@@ -164,16 +164,16 @@ class Extension
 
   protected:
 	/**
-	 * @brief An extension will override this method so that it can check if it will be activated
+	 * @brief An plugin will override this method so that it can check if it will be activated
 	 * 
 	 * @param parser A parser that has parsed the command line arguments when the app starts
-	 * @return true If the extension should be activated
-	 * @return false If the extesion should be ignored
+	 * @return true If the plugin should be activated
+	 * @return false If the plugin should be ignored
 	 */
 	virtual bool is_active(const Parser &parser) = 0;
 
 	/**
-	 * @brief Sets up an extension by using values from the parser
+	 * @brief Sets up an plugin by using values from the parser
 	 * 
 	 * @param platform The platform
 	 * @param parser The parser
@@ -184,23 +184,23 @@ class Extension
 };
 
 /**
- * The following section provides helper functions for filtering containers of extensions
+ * The following section provides helper functions for filtering containers of plugins
  */
-namespace extensions
+namespace plugins
 {
 /**
- * @brief Get all extensions with tags
- * 		  Extension must include one or more tags
+ * @brief Get all plugins with tags
+ * 		  Plugin must include one or more tags
  * 
- * @tparam TAGS Tags that an extension must contain
- * @param domain The list of extensions to query
- * @return const std::vector<Extension *> A list of extensions containing one or more TAGS
+ * @tparam TAGS Tags that an plugin must contain
+ * @param domain The list of plugins to query
+ * @return const std::vector<Plugin *> A list of plugins containing one or more TAGS
  */
 template <typename... TAGS>
-const std::vector<Extension *> with_tags(const std::vector<Extension *> &domain = {})
+const std::vector<Plugin *> with_tags(const std::vector<Plugin *> &domain = {})
 {
 	std::vector<TagID>       tags = {Tag<TAGS>::ID...};
-	std::vector<Extension *> compatable;
+	std::vector<Plugin *> compatable;
 	for (auto ext : domain)
 	{
 		assert(ext != nullptr);
@@ -220,19 +220,19 @@ const std::vector<Extension *> with_tags(const std::vector<Extension *> &domain 
 }
 
 /**
- * @brief Get all extensions without the given tags
- * 		  Extension must not include one or more tags
- * 		  Essentially the opoposite of extensions::with_tags<...TAGS>()
+ * @brief Get all plugins without the given tags
+ * 		  Plugin must not include one or more tags
+ * 		  Essentially the opoposite of plugins::with_tags<...TAGS>()
  * 
- * @tparam TAGS Tags that an extension must not contain
- * @param domain The list of extensions to query
- * @return const std::vector<Extension *> A list of extensions containing one or more TAGS
+ * @tparam TAGS Tags that an plugin must not contain
+ * @param domain The list of plugins to query
+ * @return const std::vector<Plugin *> A list of plugins containing one or more TAGS
  */
 template <typename... TAGS>
-const std::vector<Extension *> without_tags(const std::vector<Extension *> &domain = {})
+const std::vector<Plugin *> without_tags(const std::vector<Plugin *> &domain = {})
 {
 	std::vector<TagID>       tags = {Tag<TAGS>::ID...};
-	std::vector<Extension *> compatable;
+	std::vector<Plugin *> compatable;
 	for (auto ext : domain)
 	{
 		assert(ext != nullptr);
@@ -250,5 +250,5 @@ const std::vector<Extension *> without_tags(const std::vector<Extension *> &doma
 	}
 	return compatable;
 }
-}        // namespace extensions
+}        // namespace plugins
 }        // namespace vkb

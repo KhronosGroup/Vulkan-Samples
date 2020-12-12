@@ -22,7 +22,7 @@ include(android_package)
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
 
-add_subdirectory(extensions)
+add_subdirectory(plugins)
 add_subdirectory(apps)
 
 set(SRC
@@ -46,7 +46,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/../framework)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE framework extensions apps)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework plugins apps)
 
 # Create android project
 if(ANDROID)

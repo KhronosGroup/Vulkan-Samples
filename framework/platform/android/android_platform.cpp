@@ -416,21 +416,21 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 {
 }
 
-bool AndroidPlatform::initialize(const std::vector<Extension *> &extensions)
+bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	return Platform::initialize(extensions);
+	return Platform::initialize(plugins);
 }
 
 void AndroidPlatform::create_window()
 {
 	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, using_extension<extensions::Headless>());
+	window = std::make_unique<AndroidWindow>(*this, app->window, using_plugin<plugins::Headless>());
 }
 
 void AndroidPlatform::main_loop()
@@ -492,7 +492,7 @@ void AndroidPlatform::terminate(ExitCode code)
 	Platform::terminate(code);
 }
 
-const char *AndroidPlatform::get_surface_extension()
+const char *AndroidPlatform::get_surface_()
 {
 	return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
 }

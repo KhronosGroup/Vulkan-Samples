@@ -86,11 +86,11 @@ bool VulkanSample::prepare(Platform &platform)
 
 	LOGI("Initializing Vulkan sample");
 
-	bool headless = platform.using_extension<::extensions::Headless>();
+	bool headless = platform.using_plugin<::plugins::Headless>();
 
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless);
+	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);

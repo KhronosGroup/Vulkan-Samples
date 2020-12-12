@@ -17,11 +17,11 @@
 
 #pragma once
 
-#include "platform/extensions/extension_base.h"
+#include "platform/plugins/plugin_base.h"
 
-namespace extensions
+namespace plugins
 {
-using StartTestTags = vkb::ExtensionBase<vkb::tags::Entrypoint>;
+using StartTestTags = vkb::PluginBase<vkb::tags::Entrypoint>;
 class StartTest : public StartTestTags
 {
   public:
@@ -33,4 +33,4 @@ class StartTest : public StartTestTags
 
 	virtual void init(vkb::Platform &platfrom, const vkb::Parser &parser) override;
 };
-}        // namespace extensions
+}        // namespace plugins

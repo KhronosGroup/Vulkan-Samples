@@ -28,7 +28,7 @@
 #include <spdlog/spdlog.h>
 
 #include "common/logging.h"
-#include "platform/extensions/extension.h"
+#include "platform/plugins/plugin.h"
 #include "platform/filesystem.h"
 
 namespace vkb
@@ -39,7 +39,7 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-bool Platform::initialize(const std::vector<Extension *> &extensions = {})
+bool Platform::initialize(const std::vector<Plugin *> &plugins = {})
 {
 	auto sinks = get_platform_sinks();
 
@@ -56,7 +56,7 @@ bool Platform::initialize(const std::vector<Extension *> &extensions = {})
 
 	LOGI("Logger initialized");
 
-	parser = std::make_unique<Parser>(extensions);
+	parser = std::make_unique<Parser>(plugins);
 
 	// Process command line arguments
 	if (!parser->parse(arguments))
@@ -64,19 +64,19 @@ bool Platform::initialize(const std::vector<Extension *> &extensions = {})
 		return false;
 	}
 
-	// Subscribe extensions to requested hooks and store activated extensions
-	for (auto &extension : extensions)
+	// Subscribe plugins to requested hooks and store activated plugins
+	for (auto &plugin : plugins)
 	{
-		if (extension->activate_extension(*this, *parser.get()))
+		if (plugin->activate_plugin(*this, *parser.get()))
 		{
-			auto &extension_hooks = extension->get_hooks();
-			for (auto hook : extension_hooks)
+			auto &plugin_hooks = plugin->get_hooks();
+			for (auto hook : plugin_hooks)
 			{
 				auto it = hooks.find(hook);
 
 				if (it == hooks.end())
 				{
-					auto r = hooks.emplace(hook, std::vector<Extension *>{});
+					auto r = hooks.emplace(hook, std::vector<Plugin *>{});
 
 					if (r.second)
 					{
@@ -84,10 +84,10 @@ bool Platform::initialize(const std::vector<Extension *> &extensions = {})
 					}
 				}
 
-				it->second.emplace_back(extension);
+				it->second.emplace_back(plugin);
 			}
 
-			active_extensions.emplace_back(extension);
+			active_plugins.emplace_back(plugin);
 		}
 	}
 
@@ -96,7 +96,7 @@ bool Platform::initialize(const std::vector<Extension *> &extensions = {})
 
 bool Platform::prepare()
 {
-	// width, height can be overriden by the "WindowSize" extension
+	// width, height can be overriden by the "WindowSize" plugin
 	create_window();
 
 	if (!window)
@@ -139,7 +139,7 @@ void Platform::update()
 
 	if (app_focused)
 	{
-		call_hook(Hook::OnUpdate, [&delta_time](Extension *extension) { extension->on_update(delta_time); });
+		call_hook(Hook::OnUpdate, [&delta_time](Plugin *plugin) { plugin->on_update(delta_time); });
 
 		if (active_app->is_benchmark_mode())
 		{
@@ -163,7 +163,7 @@ void Platform::terminate(ExitCode code)
 	{
 		std::string id = active_app->get_name();
 
-		call_hook(Hook::OnAppClose, [&id](Extension *extension) { extension->on_app_close(id); });
+		call_hook(Hook::OnAppClose, [&id](Plugin *plugin) { plugin->on_app_close(id); });
 
 		active_app->finish();
 	}
@@ -181,17 +181,17 @@ void Platform::close() const
 		window->close();
 	}
 
-	call_hook(Hook::OnPlatformClose, [](Extension *extension) { extension->on_platform_close(); });
+	call_hook(Hook::OnPlatformClose, [](Plugin *plugin) { plugin->on_platform_close(); });
 }
 
-void Platform::call_hook(const Hook &hook, std::function<void(Extension *)> fn) const
+void Platform::call_hook(const Hook &hook, std::function<void(Plugin *)> fn) const
 {
 	auto res = hooks.find(hook);
 	if (res != hooks.end())
 	{
-		for (auto extension : res->second)
+		for (auto plugin : res->second)
 		{
-			fn(extension);
+			fn(plugin);
 		}
 	}
 }

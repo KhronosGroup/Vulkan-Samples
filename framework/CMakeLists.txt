@@ -246,10 +246,10 @@ set(PLATFORM_FILES
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
-    platform/extensions/parser.h
-    platform/extensions/extension.h
-    platform/extensions/extension_base.h
-    platform/extensions/flag.h
+    platform/plugins/parser.h
+    platform/plugins/plugin.h
+    platform/plugins/plugin_base.h
+    platform/plugins/flag.h
 
     # Source Files
     platform/application.cpp
@@ -259,9 +259,9 @@ set(PLATFORM_FILES
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
-    platform/extensions/extension.cpp
-    platform/extensions/parser.cpp
-    platform/extensions/flag.cpp)
+    platform/plugins/plugin.cpp
+    platform/plugins/parser.cpp
+    platform/plugins/flag.cpp)
 
 set(GRAPHING_FILES
     # Header Files
@@ -416,7 +416,7 @@ target_link_libraries(${PROJECT_NAME}
     ctpl
     docopt
     apps
-    extensions)
+    plugins)
 
 # Link platform specific libraries
 if(ANDROID)

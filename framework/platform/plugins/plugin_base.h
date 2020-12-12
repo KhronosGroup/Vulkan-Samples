@@ -19,7 +19,7 @@
 #include <spdlog/fmt/fmt.h>
 
 #include "common/tags.h"
-#include "extension.h"
+#include "plugin.h"
 #include "flag.h"
 #include "parser.h"
 #include "platform/platform.h"
@@ -27,22 +27,22 @@
 namespace vkb
 {
 /**
- * @brief ExtensionBase is a CRTP style base class that extensions inherit from. The style enforces the use of tags when creating new extensions.
- * 		  For method information see Extension  
+ * @brief PluginBase is the base class that plugins inherit from. The class enforces the use of tags when creating new plugins.
+ * 		  For method information see Plugin  
  */
 template <typename... TAGS>
-class ExtensionBase : public Extension, public Tag<TAGS...>
+class PluginBase : public Plugin, public Tag<TAGS...>
 {
   public:
-	ExtensionBase(const std::vector<Hook> &hooks = {}, const std::vector<FlagGroup> &groups = {});
+	PluginBase(const std::vector<Hook> &hooks = {}, const std::vector<FlagGroup> &groups = {});
 
-	virtual ~ExtensionBase() = default;
+	virtual ~PluginBase() = default;
 
 	virtual const std::vector<FlagGroup> &get_flag_groups() const override;
 	virtual const std::vector<Hook> &     get_hooks() const override;
 	virtual bool                          has_tag(TagID id) const override;
 
-	// hooks that can be implemented by extensions
+	// hooks that can be implemented by plugins
 	virtual void on_update(float delta_time) override{};
 	virtual void on_app_start(const std::string &app_id) override{};
 	virtual void on_app_close(const std::string &app_id) override{};
@@ -56,25 +56,25 @@ class ExtensionBase : public Extension, public Tag<TAGS...>
 };
 
 template <typename... TAGS>
-ExtensionBase<TAGS...>::ExtensionBase(const std::vector<Hook> &hooks, const std::vector<FlagGroup> &groups) :
+PluginBase<TAGS...>::PluginBase(const std::vector<Hook> &hooks, const std::vector<FlagGroup> &groups) :
     hooks{hooks}, groups{groups}
 {
 }
 
 template <typename... TAGS>
-const std::vector<FlagGroup> &ExtensionBase<TAGS...>::get_flag_groups() const
+const std::vector<FlagGroup> &PluginBase<TAGS...>::get_flag_groups() const
 {
 	return groups;
 }
 
 template <typename... TAGS>
-bool ExtensionBase<TAGS...>::has_tag(TagID id) const
+bool PluginBase<TAGS...>::has_tag(TagID id) const
 {
 	return tags->has_tag(id);
 }
 
 template <typename... TAGS>
-const std::vector<Hook> &ExtensionBase<TAGS...>::get_hooks() const
+const std::vector<Hook> &PluginBase<TAGS...>::get_hooks() const
 {
 	return hooks;
 }

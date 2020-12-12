@@ -62,14 +62,14 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixD2DPlatform::initialize(const std::vector<Extension *> &extensions)
+bool UnixD2DPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
-	return Platform::initialize(extensions) && prepare();
+	return Platform::initialize(plugins) && prepare();
 }
 
 void UnixD2DPlatform::create_window()
 {
-	if (using_extension<extensions::Headless>())
+	if (using_plugin<plugins::Headless>())
 	{
 		window = std::make_unique<HeadlessWindow>(*this, width, height);
 	}

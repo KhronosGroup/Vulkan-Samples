@@ -22,8 +22,8 @@
 
 #include <docopt.h>
 
-#include "platform/extensions/extension.h"
-#include "platform/extensions/flag.h"
+#include "platform/plugins/plugin.h"
+#include "platform/plugins/flag.h"
 
 namespace vkb
 {
@@ -35,12 +35,12 @@ class Parser
 	/**
 	 * @brief Construct a new Parser object
 	 *
-	 * @param extensions Extensions used to generate CLI help menu
+	 * @param plugins Plugins used to generate CLI help menu
 	 */
-	Parser(const std::vector<Extension *> &extensions = {});
+	Parser(const std::vector<Plugin *> &plugins = {});
 
 	/**
-	 * @brief Parse a list of arguments against the extensions
+	 * @brief Parse a list of arguments against the plugins
 	 * 
 	 * @param args A list of arguments to be considered
 	 * @return true If parsing is a success

@@ -14,39 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#include "plugin.h"
+#include "platform/plugins/parser.h"
+#include "platform/platform.h"
 
-// Generated file by CMake. Don't edit.
-
-#include "extensions.h"
-
-#include <memory>
-
-@EXTENSION_INCLUDE_FILES@
-
-namespace extensions
+namespace vkb
 {
-
-#define ADD_EXTENSION(name) \
-	extensions.emplace_back(std::make_unique<##name>())
-
-std::vector<vkb::Extension *> get_all()
+bool Plugin::activate_plugin(Platform &p, const Parser &parser)
 {
-	static bool once = true;
-	static std::vector<std::unique_ptr<vkb::Extension>> extensions;
+	platform = &p;
 
-	if (once) {
-		once = false;
-@INIT_EXTENSIONS@
-	}
+	bool active = is_active(parser);
 
-	std::vector<vkb::Extension *> ptrs;
-	ptrs.reserve(extensions.size());
-
-	for (auto &extension : extensions)
+	// Plugin activated
+	if (active)
 	{
-		ptrs.push_back(extension.get());
+		init(p, parser);
 	}
 
-	return ptrs;
-}
-}        // namespace extensions
+	return active;
+};
+}        // namespace vkb

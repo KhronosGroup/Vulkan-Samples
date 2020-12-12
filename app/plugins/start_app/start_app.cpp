@@ -19,7 +19,7 @@
 
 #include "apps.h"
 
-namespace extensions
+namespace plugins
 {
 vkb::Flag app_cmd = {"app", vkb::Flag::Type::Positional, "Run a specific application"};
 
@@ -57,4 +57,4 @@ void StartApp::init(vkb::Platform &platform, const vkb::Parser &parser)
 		platform.request_application(app);
 	}
 }
-}        // namespace extensions
+}        // namespace plugins

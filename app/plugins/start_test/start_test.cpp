@@ -19,7 +19,7 @@
 
 #include "apps.h"
 
-namespace extensions
+namespace plugins
 {
 vkb::Flag test_cmd = {"test", vkb::Flag::Type::CommandWithPositional, "Run a specific test"};
 
@@ -45,4 +45,4 @@ void StartTest::init(vkb::Platform &platform, const vkb::Parser &parser)
 		}
 	}
 }
-}        // namespace extensions
+}        // namespace plugins

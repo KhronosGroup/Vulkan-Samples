@@ -76,7 +76,7 @@ target_include_directories(apps-headers INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/samples
     ${CMAKE_SOURCE_DIR}/tests/system_test/sub_tests
-    ${CMAKE_SOURCE_DIR}/tests/system_test)
+    ${CMAKE_SOURCE_DIR}/tests/system_test/test_framework)
 
 set(SRC
     apps.h
@@ -84,7 +84,7 @@ set(SRC
 )
 
 add_library(${PROJECT_NAME} STATIC ${SRC})
-target_link_libraries(${PROJECT_NAME} PUBLIC apps-headers)
+target_link_libraries(${PROJECT_NAME} PUBLIC apps-headers framework)
 
 # Link all samples and tests
 set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST} ${TOTAL_TEST_ID_LIST})
