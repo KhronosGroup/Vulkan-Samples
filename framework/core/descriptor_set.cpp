@@ -83,7 +83,7 @@ void DescriptorSet::prepare()
 				size_t uniform_buffer_range_limit = device.get_gpu().get_properties().limits.maxUniformBufferRange;
 				size_t storage_buffer_range_limit = device.get_gpu().get_properties().limits.maxStorageBufferRange;
 
-				size_t buffer_range_limit = buffer_info.range;
+				size_t buffer_range_limit = static_cast<size_t>(buffer_info.range);
 
 				if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) && buffer_range_limit > uniform_buffer_range_limit)
 				{

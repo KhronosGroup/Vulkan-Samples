@@ -26,17 +26,7 @@ function(add_sample)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    set(SRC_FILES
-        ${TARGET_ID}.h
-        ${TARGET_ID}.cpp
-    )
-
-    # Append extra files if present
-    if (TARGET_FILES)
-        list(APPEND SRC_FILES ${TARGET_FILES})
-    endif()
-
-    add_project(
+    add_sample_with_tags(
         TYPE "Sample"
         ID ${TARGET_ID}
         CATEGORY ${TARGET_CATEGORY}
@@ -102,6 +92,7 @@ function(vkb_add_test)
         NAME ${TARGET_ID}
         DESCRIPTION " "
         VENDOR_TAG " "
+        LIBS test_framework
         FILES
             ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
             ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp)
@@ -136,22 +127,12 @@ function(add_project)
     target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
     # # inherit include directories from framework target
-    target_include_directories(${PROJECT_NAME} PUBLIC 
-        $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES>
-        ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-
+    target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE framework)
 
     # Link against extra project specific libraries
     if(TARGET_LIBS)
-        target_link_libraries(${PROJECT_NAME} PRIVATE ${TARGET_LIBS})
-    endif()
-
-    # if test then add test framework as well
-    if(${TARGET_TYPE} STREQUAL "Test")
-        target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,COMPILE_DEFINITIONS>)
-        target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:test_framework,INCLUDE_DIRECTORIES>)
-        target_link_libraries(${PROJECT_NAME} PRIVATE test_framework)
+        target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
     # capitalise the first letter of the category  (performance -> Performance) 

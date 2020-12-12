@@ -31,10 +31,10 @@ source_group("\\" FILES ${FRAMEWORK_FILES})
 
 add_library(${PROJECT_NAME} STATIC ${FRAMEWORK_FILES})
 
-# inherit compile definitions from framework target
-target_compile_definitions(${PROJECT_NAME} PUBLIC 
-    $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
+add_library(test_framework_headers INTERFACE)
+target_include_directories(test_framework_headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
-target_include_directories(${PROJECT_NAME} PUBLIC 
-    $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES>
-    ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+# inherit compile definitions from framework target
+target_compile_definitions(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework) 
+target_link_libraries(${PROJECT_NAME} PUBLIC test_framework_headers) 
