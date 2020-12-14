@@ -16,79 +16,47 @@
  */
 
 /*
- * Basic example for ray tracing using VK_KHR_ray_tracing
- */
-
-/*
- * Important note:
- *
- * The VK_KHR_ray_tracing extension is currently considered a BETA extension.
- *
- * This means that it is not yet production ready and subject to change until it's finalized.
- *
- * In order to use this sample you may also need special developer drivers.
+ * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
  */
 
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include "glsl_compiler.h"
 
-// Indices for the ray tracing shader groups
-#define INDEX_RAYGEN_GROUP 0
-#define INDEX_MISS_GROUP 1
-#define INDEX_CLOSEST_HIT_GROUP 2
-
-// Indices for the ray tracing shaders for the ray tracing pipeline
-#define INDEX_RAYGEN_SHADER 0
-#define INDEX_MISS_SHADER 1
-#define INDEX_CLOSEST_HIT_SHADER 2
-
-// Holds data for a ray tracing scratch buffer that is used as a temporary storage
-struct RayTracingScratchBuffer
+// Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
+struct ScratchBuffer
 {
-	vkb::Device &  device;
-	uint64_t       device_address = 0;
-	VkBuffer       buffer         = VK_NULL_HANDLE;
-	VkDeviceMemory memory         = VK_NULL_HANDLE;
-	RayTracingScratchBuffer(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
-	~RayTracingScratchBuffer();
+	uint64_t       device_address;
+	VkBuffer       handle;
+	VkDeviceMemory memory;
 };
 
-// Holds data for a memory object bound to an acceleration structure
-struct RayTracingObjectMemory
+// Wraps all data required for an acceleration structure
+struct AccelerationStructure
 {
-	vkb::Device &  device;
-	uint64_t       device_address = 0;
-	VkDeviceMemory memory         = VK_NULL_HANDLE;
-	RayTracingObjectMemory(vkb::Device &device, VkAccelerationStructureKHR acceleration_structure);
-	~RayTracingObjectMemory();
-};
-
-// Wraps all data required of an acceleration structure
-struct RayTracingAccelerationStructure
-{
-	vkb::Device &              device;
-	VkAccelerationStructureKHR structure;
-	uint64_t                   handle;
-	RayTracingObjectMemory *   object_memory;
-	RayTracingAccelerationStructure(vkb::Device &device);
-	~RayTracingAccelerationStructure();
+	VkAccelerationStructureKHR         handle;
+	uint64_t                           device_address;
+	std::unique_ptr<vkb::core::Buffer> buffer;
 };
 
 class RaytracingBasic : public ApiVulkanSample
 {
   public:
-	VkPhysicalDeviceRayTracingPropertiesKHR ray_tracing_properties{};
-	VkPhysicalDeviceRayTracingFeaturesKHR   ray_tracing_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
 
-	RayTracingAccelerationStructure *bottom_level_acceleration_structure;
-	RayTracingAccelerationStructure *top_level_acceleration_structure;
+	AccelerationStructure bottom_level_acceleration_structure;
+	AccelerationStructure top_level_acceleration_structure;
 
 	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer>                index_buffer;
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
-	std::unique_ptr<vkb::core::Buffer>                shader_binding_table;
+
+	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
+	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
+	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
 
 	struct StorageImage
 	{
@@ -115,19 +83,24 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	uint64_t     get_buffer_device_address(VkBuffer buffer);
-	void         create_storage_image();
-	void         create_scene();
-	void         create_shader_binding_table();
-	void         create_descriptor_sets();
-	void         create_ray_tracing_pipeline();
-	void         create_uniform_buffer();
-	void         build_command_buffers() override;
-	void         update_uniform_buffers();
-	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
+	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	uint64_t      get_buffer_device_address(VkBuffer buffer);
+	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
+	void          delete_scratch_buffer(ScratchBuffer &scratch_buffer);
+	void          create_storage_image();
+	void          create_bottom_level_acceleration_structure();
+	void          create_top_level_acceleration_structure();
+	void          delete_acceleration_structure(AccelerationStructure &acceleration_structure);
+	void          create_scene();
+	void          create_shader_binding_tables();
+	void          create_descriptor_sets();
+	void          create_ray_tracing_pipeline();
+	void          create_uniform_buffer();
+	void          build_command_buffers() override;
+	void          update_uniform_buffers();
+	void          draw();
+	bool          prepare(vkb::Platform &platform) override;
+	virtual void  render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_basic();

@@ -24,4 +24,4 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Wilems"
     NAME "Ray tracing basic"
-    DESCRIPTION "Basic example for ray tracing using VK_KHR_ray_tracing")
+    DESCRIPTION "Basic example for hardware accelerated ray tracing")
