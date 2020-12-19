@@ -159,10 +159,9 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 
 - 🎓 [Using the debug utilities extension](./extensions/debug_utils/debug_utils_tutorial.md)
 
-### [Basic Ray Tracing](./extensions/raytracing_basic)<br/>
-**Extension**: [```VK_KHR_ray_tracing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing)<br/>
-Render a simple triangle using the official cross-vendor ray tracing extension. Shows how to setup acceleration structures, ray tracing pipelines and the shaders required to do the actual ray tracing.<br/>
-**Note**:  This extension is not yet finalized and currently considered a BETA extension. This means that it is not yet production ready and subject to change until it's finalized. In order to use this sample you may also need special developer drivers.
+### [Basic hardware accelerated ray tracing](./extensions/raytracing_basic)<br/>
+**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
+Render a basic scene using the official cross-vendor ray tracing extension. Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses. After dispatching the rays, the final result is copied to the swapchain image.<br/>
 
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
