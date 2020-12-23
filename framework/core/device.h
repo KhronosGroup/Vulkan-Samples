@@ -104,6 +104,8 @@ class Device
 
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
 
+	uint32_t get_num_queues_for_queue_family(uint32_t queue_family_index);
+
 	CommandPool &get_command_pool();
 
 	/**

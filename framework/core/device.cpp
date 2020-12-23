@@ -387,6 +387,12 @@ const Queue &Device::get_queue_by_present(uint32_t queue_index)
 	throw std::runtime_error("Queue not found");
 }
 
+uint32_t Device::get_num_queues_for_queue_family(uint32_t queue_family_index)
+{
+	const auto &queue_family_properties = gpu.get_queue_family_properties();
+	return queue_family_properties[queue_family_index].queueCount;
+}
+
 uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 {
 	const auto &queue_family_properties = gpu.get_queue_family_properties();
