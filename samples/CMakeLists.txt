@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "push_descriptors"
     "raytracing_basic"
+    "timeline_semaphore"
 
     #Performance Samples
     "swapchain_images"
