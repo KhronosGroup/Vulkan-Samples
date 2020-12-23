@@ -76,7 +76,9 @@ Image::Image(Device &              device,
              const uint32_t        mip_levels,
              const uint32_t        array_layers,
              VkImageTiling         tiling,
-             VkImageCreateFlags    flags) :
+             VkImageCreateFlags    flags,
+             uint32_t              num_queue_families,
+             const uint32_t *      queue_families) :
     device{device},
     type{find_image_type(extent)},
     extent{extent},
@@ -102,6 +104,13 @@ Image::Image(Device &              device,
 	image_info.samples     = sample_count;
 	image_info.tiling      = tiling;
 	image_info.usage       = image_usage;
+
+	if (num_queue_families != 0)
+	{
+		image_info.sharingMode           = VK_SHARING_MODE_CONCURRENT;
+		image_info.queueFamilyIndexCount = num_queue_families;
+		image_info.pQueueFamilyIndices   = queue_families;
+	}
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = memory_usage;

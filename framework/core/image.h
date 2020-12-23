@@ -44,11 +44,13 @@ class Image
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
 	      VmaMemoryUsage        memory_usage,
-	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT,
-	      uint32_t              mip_levels   = 1,
-	      uint32_t              array_layers = 1,
-	      VkImageTiling         tiling       = VK_IMAGE_TILING_OPTIMAL,
-	      VkImageCreateFlags    flags        = 0);
+	      VkSampleCountFlagBits sample_count       = VK_SAMPLE_COUNT_1_BIT,
+	      uint32_t              mip_levels         = 1,
+	      uint32_t              array_layers       = 1,
+	      VkImageTiling         tiling             = VK_IMAGE_TILING_OPTIMAL,
+	      VkImageCreateFlags    flags              = 0,
+	      uint32_t              num_queue_families = 0,
+	      const uint32_t *      queue_families     = nullptr);
 
 	Image(const Image &) = delete;
 
