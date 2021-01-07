@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -381,20 +381,54 @@ void Instance::query_gpus()
 
 PhysicalDevice &Instance::get_suitable_gpu()
 {
-	assert(!gpus.empty() && "No physical devices were found on the system.");
-
-	// Find a discrete GPU
-	for (auto &gpu : gpus)
+	if (gpus.size() == 0)
 	{
-		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		throw std::runtime_error("No physical devices found.");
+	}
+
+	uint32_t count_device_type[VK_PHYSICAL_DEVICE_TYPE_CPU + 1];
+	memset(count_device_type, 0, sizeof(count_device_type));
+
+	for (uint32_t i = 0; i < gpus.size(); i++)
+	{
+		const auto deviceType = gpus[i]->get_properties().deviceType;
+		assert(deviceType <= VK_PHYSICAL_DEVICE_TYPE_CPU);
+		count_device_type[deviceType]++;
+	}
+
+	const VkPhysicalDeviceType device_type_preference[] = {
+	    VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_CPU,
+	    VK_PHYSICAL_DEVICE_TYPE_OTHER};
+
+	VkPhysicalDeviceType search_for_device_type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+	for (uint32_t i = 0; i < sizeof(device_type_preference) / sizeof(VkPhysicalDeviceType); i++)
+	{
+		if (count_device_type[device_type_preference[i]])
 		{
-			return *gpu;
+			search_for_device_type = device_type_preference[i];
+			break;
 		}
 	}
 
-	// Otherwise just pick the first one
-	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus.at(0);
+	int gpu_number = -1;
+	for (uint32_t i = 0; i < gpus.size(); i++)
+	{
+		const auto deviceType = gpus[i]->get_properties().deviceType;
+		assert(deviceType <= VK_PHYSICAL_DEVICE_TYPE_CPU);
+		if (deviceType == search_for_device_type)
+		{
+			LOGI("Using GPU {}: {}, type: {}", i, gpus[i]->get_properties().deviceName, deviceType);
+			gpu_number = i;
+			break;
+		}
+	}
+
+	assert(gpu_number >= 0);
+
+	return *gpus.at(gpu_number);
 }
 
 bool Instance::is_enabled(const char *extension) const
