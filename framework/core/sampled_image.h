@@ -45,7 +45,7 @@ class SampledImage
 	* @remarks If the render target is null, the default is assumed.
 	*          If the sampler is null, a default sampler is used.
 	*/
-	SampledImage(uint32_t target_attachment, RenderTarget *render_target = nullptr, Sampler *sampler = nullptr);
+	SampledImage(uint32_t target_attachment, RenderTarget *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
 
 	SampledImage(const SampledImage &to_copy);
 	SampledImage &operator=(const SampledImage &to_copy);
@@ -126,11 +126,17 @@ class SampledImage
 		render_target = std::move(new_render_target);
 	}
 
+	inline bool is_depth_resolve() const
+	{
+		return isDepthResolve;
+	}
+
   private:
 	const ImageView *image_view;
 	uint32_t         target_attachment;
 	RenderTarget *   render_target;
 	Sampler *        sampler;
+	bool			 isDepthResolve;
 };
 
 }        // namespace core

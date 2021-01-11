@@ -233,7 +233,9 @@ void PostProcessingRenderPass::update_load_stores(
 		                                     [&render_target, j](auto &pair) {
 			                                     // NOTE: if RT not set, default is the currently-active one
 			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
-			                                     return pair.second == j && sampled_rt == &render_target;
+												 // unpack attachment
+			                                     uint32_t attachment = pair.second & 0x7fffffff;
+			                                     return attachment == j && sampled_rt == &render_target;
 		                                     }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
 
@@ -350,7 +352,12 @@ void PostProcessingRenderPass::transition_attachments(
 	for (const auto &sampled : sampled_attachments)
 	{
 		auto *     sampled_rt  = sampled.first ? sampled.first : &render_target;
-		const auto prev_layout = sampled_rt->get_layout(sampled.second);
+
+		// unpack depth resolve flag and attachment
+		bool       is_depth_resolve = sampled.second & 0x80000000;
+		uint32_t   attachment       = sampled.second & 0x7fffffff;
+
+		const auto prev_layout      = sampled_rt->get_layout(attachment);
 
 		if (prev_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
@@ -358,8 +365,18 @@ void PostProcessingRenderPass::transition_attachments(
 			continue;
 		}
 
-		ensure_src_access(prev_pass_barrier_info.image_read_access, prev_pass_barrier_info.pipeline_stage,
-		                  prev_layout);
+		// The resolving depth occurs in the COLOR_ATTACHMENT_OUT stage, not in the EARLY\LATE_FRAGMENT_TESTS stage
+		// and the corresponding access mask is COLOR_ATTACHMENT_WRITE_BIT, not DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.
+		if (is_depth_resolve && prev_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			prev_pass_barrier_info.pipeline_stage    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			prev_pass_barrier_info.image_read_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+		else
+		{
+			ensure_src_access(prev_pass_barrier_info.image_read_access, prev_pass_barrier_info.pipeline_stage,
+			                  prev_layout);
+		}
 
 		vkb::ImageMemoryBarrier barrier;
 		barrier.old_layout      = prev_layout;
@@ -369,8 +386,8 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(sampled_rt->get_views().at(sampled.second), barrier);
-		sampled_rt->set_layout(sampled.second, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		command_buffer.image_memory_barrier(sampled_rt->get_views().at(attachment), barrier);
+		sampled_rt->set_layout(attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	for (uint32_t output : output_attachments)
@@ -429,7 +446,13 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 			if (const uint32_t *sampled_attachment = it.second.get_target_attachment())
 			{
 				auto *image_rt = it.second.get_render_target();
-				sampled_attachments.insert({image_rt, *sampled_attachment});
+				auto packed_sampled_attachment = *sampled_attachment;
+
+				// pack sampled attachment
+				if (it.second.is_depth_resolve())
+					packed_sampled_attachment |= 1 << 31;
+
+				sampled_attachments.insert({image_rt, packed_sampled_attachment});
 			}
 		}
 

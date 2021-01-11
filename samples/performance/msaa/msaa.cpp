@@ -581,7 +581,7 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 		postprocessing_subpass.get_fs_variant().add_define("MS_DEPTH");
 	}
 	postprocessing_subpass
-	    .bind_sampled_image(depth_sampler_name, depth_attachment)
+	    .bind_sampled_image(depth_sampler_name, {depth_attachment, nullptr, nullptr, depth_writeback_resolve_supported && resolve_depth_on_writeback})
 	    .bind_sampled_image("color_sampler", i_color_resolve);
 
 	// Second render pass
