@@ -42,6 +42,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 	bool khr_16bit_arith_enabled{false};
 
 	bool supported_extensions{false};
+	bool supports_push_constant16{false};
 
 	std::vector<vkb::LoadStoreInfo>            load_store_infos;
 	std::vector<std::unique_ptr<vkb::Subpass>> subpasses;

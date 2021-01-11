@@ -40,9 +40,16 @@ layout(rgba16f, set = 0, binding = 1) writeonly uniform mediump image2D o_result
 layout(push_constant) uniform Registers
 {
     // Push constants can also be 16-bit. This can also be very useful since push constant space is so limited!
+#ifdef PUSH_CONSTANT_16
     uint16_t num_blobs;
     float16_t seed;
     i16vec2 range;
+#else
+    // Fallback for implementations which do not support PushConstant16.
+    uint num_blobs;
+    float seed;
+    ivec2 range;
+#endif
 } registers;
 
 // This is very arbitrary. Expends a ton of arithmetic to compute
@@ -85,7 +92,7 @@ void main()
     float y = float(gl_GlobalInvocationID.y) / float(HEIGHT) - 0.5;
     f16vec2 pos = f16vec2(x, y);
     f16vec4 result = f16vec4(0.0hf);
-    float16_t seed = registers.seed;
+    float16_t seed = float16_t(registers.seed);
     ivec2 range = ivec2(registers.range);
 
     const float16_t EXPAND_FACTOR = 0.3hf;

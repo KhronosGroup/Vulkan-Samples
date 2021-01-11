@@ -35,10 +35,9 @@ layout(rgba16f, set = 0, binding = 1) writeonly uniform mediump image2D o_result
 
 layout(push_constant) uniform Registers
 {
-    // Push constants can also be 16-bit. This can also be very useful since push constant space is so limited!
-    uint16_t num_blobs;
-    float16_t seed;
-    i16vec2 range;
+    uint num_blobs;
+    float seed;
+    ivec2 range;
 } registers;
 
 // This is very arbitrary. Expends a ton of arithmetic to compute

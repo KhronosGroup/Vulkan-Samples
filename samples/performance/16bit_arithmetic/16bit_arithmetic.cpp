@@ -149,9 +149,16 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 
 	if (supported_extensions)
 	{
+		vkb::ShaderVariant variant;
+		if (supports_push_constant16)
+		{
+			variant.add_define("PUSH_CONSTANT_16");
+		}
+
+		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";
 		auto &module_fp16 =
 		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-		                                                      vkb::ShaderSource{"16bit_arithmetic/compute_buffer_fp16.comp"});
+		                                                      vkb::ShaderSource{shader}, variant);
 		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});
 	}
 	else
@@ -219,9 +226,10 @@ void KHR16BitArithmeticSample::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	// Required features.
 	storage_16bit_features.storageBuffer16BitAccess = VK_TRUE;
-	storage_16bit_features.storagePushConstant16    = VK_TRUE;
 
-	supported_extensions = arithmetic_16bit_8bit.shaderFloat16 == VK_TRUE;
+	// Optional features.
+	supported_extensions     = arithmetic_16bit_8bit.shaderFloat16 == VK_TRUE;
+	supports_push_constant16 = storage_16bit_features.storagePushConstant16 == VK_TRUE;
 }
 
 void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
@@ -250,21 +258,40 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 
 	// 16-bit push constants are supported by VK_KHR_16bit_storage, which is handy for conserving space without
 	// using many "unpack" instructions in the shader.
-	struct Push
+	struct Push16
 	{
 		uint16_t num_blobs;
 		uint16_t fp16_seed;
 		int16_t  range_x, range_y;
-	} push = {};
+	} push16 = {};
+
+	struct Push32
+	{
+		uint32_t num_blobs;
+		float    fp32_seed;
+		int32_t  range_x, range_y;
+	} push32 = {};
 
 	frame_count      = (frame_count + 1u) & 511u;
 	float seed_value = 0.5f * glm::sin(glm::two_pi<float>() * (float(frame_count) / 512.0f));
 
-	push.num_blobs = NumBlobs;
-	push.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(seed_value)));
-	push.range_x   = 2;
-	push.range_y   = 1;
-	command_buffer.push_constants(push);
+	push32.num_blobs = NumBlobs;
+	push32.fp32_seed = seed_value;
+	push32.range_x   = 2;
+	push32.range_y   = 1;
+
+	if (khr_16bit_arith_enabled && supports_push_constant16)
+	{
+		push16.num_blobs = push32.num_blobs;
+		push16.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
+		push16.range_x   = push32.range_x;
+		push16.range_y   = push32.range_y;
+		command_buffer.push_constants(push16);
+	}
+	else
+	{
+		command_buffer.push_constants(push32);
+	}
 
 	command_buffer.set_specialization_constant(0, Width);
 	command_buffer.set_specialization_constant(1, Height);
