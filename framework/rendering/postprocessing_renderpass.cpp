@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -233,7 +233,7 @@ void PostProcessingRenderPass::update_load_stores(
 		                                     [&render_target, j](auto &pair) {
 			                                     // NOTE: if RT not set, default is the currently-active one
 			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
-												 // unpack attachment
+			                                     // unpack attachment
 			                                     uint32_t attachment = pair.second & 0x7fffffff;
 			                                     return attachment == j && sampled_rt == &render_target;
 		                                     }) != sampled_attachments.end();
@@ -354,10 +354,10 @@ void PostProcessingRenderPass::transition_attachments(
 		auto *     sampled_rt  = sampled.first ? sampled.first : &render_target;
 
 		// unpack depth resolve flag and attachment
-		bool       is_depth_resolve = sampled.second & 0x80000000;
-		uint32_t   attachment       = sampled.second & 0x7fffffff;
+		bool     is_depth_resolve = sampled.second & 0x80000000;
+		uint32_t attachment       = sampled.second & 0x7fffffff;
 
-		const auto prev_layout      = sampled_rt->get_layout(attachment);
+		const auto prev_layout = sampled_rt->get_layout(attachment);
 
 		if (prev_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
@@ -446,7 +446,7 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 			if (const uint32_t *sampled_attachment = it.second.get_target_attachment())
 			{
 				auto *image_rt = it.second.get_render_target();
-				auto packed_sampled_attachment = *sampled_attachment;
+				auto  packed_sampled_attachment = *sampled_attachment;
 
 				// pack sampled attachment
 				if (it.second.is_depth_resolve())
