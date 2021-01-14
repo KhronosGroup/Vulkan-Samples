@@ -209,7 +209,8 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2)
+- CMake v3.10+ (known to work with 3.10.2; Apple Silicon requires at least 3.19.2)
+- XCode v12 for Apple Silicon
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
