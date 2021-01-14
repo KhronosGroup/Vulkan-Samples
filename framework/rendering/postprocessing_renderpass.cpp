@@ -21,6 +21,9 @@
 
 namespace vkb
 {
+constexpr uint32_t DEPTH_RESOLVE_BITMASK = 0x80000000;
+constexpr uint32_t ATTACHMENT_BITMASK    = 0x7FFFFFFF;
+
 PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,
                                              ShaderSource &&fs, ShaderVariant &&fs_variant) :
     Subpass(render_context, std::move(triangle_vs), std::move(fs)),
@@ -234,7 +237,7 @@ void PostProcessingRenderPass::update_load_stores(
 			                                     // NOTE: if RT not set, default is the currently-active one
 			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
 			                                     // unpack attachment
-			                                     uint32_t attachment = pair.second & 0x7fffffff;
+			                                     uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
 			                                     return attachment == j && sampled_rt == &render_target;
 		                                     }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
@@ -354,8 +357,8 @@ void PostProcessingRenderPass::transition_attachments(
 		auto *     sampled_rt  = sampled.first ? sampled.first : &render_target;
 
 		// unpack depth resolve flag and attachment
-		bool     is_depth_resolve = sampled.second & 0x80000000;
-		uint32_t attachment       = sampled.second & 0x7fffffff;
+		bool     is_depth_resolve = sampled.second & DEPTH_RESOLVE_BITMASK;
+		uint32_t attachment       = sampled.second & ATTACHMENT_BITMASK;
 
 		const auto prev_layout = sampled_rt->get_layout(attachment);
 
@@ -450,7 +453,7 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 
 				// pack sampled attachment
 				if (it.second.is_depth_resolve())
-					packed_sampled_attachment |= 1 << 31;
+					packed_sampled_attachment |= DEPTH_RESOLVE_BITMASK;
 
 				sampled_attachments.insert({image_rt, packed_sampled_attachment});
 			}
