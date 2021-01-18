@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2020, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -42,6 +42,7 @@ endmacro(vulkan_samples_pch)
 include(utils)
 include(global_options)
 include(sample_helper)
+include(check_atomic)
 
 # Add third party libraries
 add_subdirectory(third_party)
