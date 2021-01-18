@@ -1,0 +1,29 @@
+name: "Update Docker Image"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Specify tag to use with image"
+        required: true
+        default: "latest"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v1
+        with:
+          registry: ghcr.io/${{ github.repository }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_CONTAINER_REGISTRY_PAT }}
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build Image
+        run: docker build -t ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }} .github/docker/Dockerfile
+
+      - name: Push Image
+        run: docker image push ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}
