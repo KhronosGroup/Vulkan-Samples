@@ -13,17 +13,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to GitHub Container Registry
-        uses: docker/login-action@v1
-        with:
-          registry: ghcr.io/${{ github.repository }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_CONTAINER_REGISTRY_PAT }}
+        run: echo ${{ secrets.GITHUB_CONTAINER_REGISTRY_PAT }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Checkout Repository
         uses: actions/checkout@v2
 
       - name: Build Image
-        run: docker build -t ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }} .github/docker/Dockerfile
+        run: docker build -t ghcr.io/khronosgroup/vulkan-samples:${{ github.event.inputs.tag }} .github/docker/Dockerfile
 
       - name: Push Image
-        run: docker image push ghcr.io/${{ github.repository }}:${{ github.event.inputs.tag }}
+        run: docker image push ghcr.io/khronosgroup/vulkan-samples:${{ github.event.inputs.tag }}
+
+      - name: Logout
+        run: docker logout ghcr.io
