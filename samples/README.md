@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020, Arm Limited and Contributors
+- Copyright (c) 2020-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -113,6 +113,8 @@ This sample compares two methods for synchronizing between the CPU and GPU, ``Wa
 ### [16-bit arithmetic](./performance/16bit_arithmetic)
 This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
 The sample also shows how to enable 16-bit storage for SSBOs and push constants.
+
+- 🎓 [How to effectively use 16-bit arithmetic in shaders](./performance/16bit_arithmetic/16bit_arithmetic_tutorial.md)
 
 ## API samples
 
