@@ -290,7 +290,7 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 		gui->resize(width, height);
 	}
 
-	if (scene->has_component<sg::Script>())
+	if (scene && scene->has_component<sg::Script>())
 	{
 		auto scripts = scene->get_components<sg::Script>();
 
@@ -319,7 +319,7 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 	if (!gui_captures_event)
 	{
-		if (scene->has_component<sg::Script>())
+		if (scene && scene->has_component<sg::Script>())
 		{
 			auto scripts = scene->get_components<sg::Script>();
 

@@ -1,0 +1,101 @@
+#version 450
+/* Copyright (c) 2020, Arm Limited and Contributors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#extension GL_EXT_shader_16bit_storage : require
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(constant_id = 0) const uint WIDTH = 1;
+layout(constant_id = 1) const uint HEIGHT = 1;
+
+layout(set = 0, binding = 0) readonly buffer SSBO
+{
+    // It is possible to use native 16-bit types in SSBOs and UBOs. We could use uvec2 here and unpack manually.
+    // The key feature of 16-bit storage is to allow scalar access to 16-bit values however.
+    // Avoiding extra unpacking and packing can also be useful.
+    f16vec4 blob_data[];
+};
+
+layout(rgba16f, set = 0, binding = 1) writeonly uniform mediump image2D o_results;
+
+layout(push_constant) uniform Registers
+{
+    uint num_blobs;
+    float seed;
+    ivec2 range;
+} registers;
+
+// This is very arbitrary. Expends a ton of arithmetic to compute
+// something that looks similar to a lens flare.
+vec4 compute_blob(vec2 pos, vec4 blob, float seed)
+{
+    vec2 offset = pos - blob.xy;
+    vec2 s_offset = offset * (1.1 + seed);
+    vec2 r_offset = offset * 0.95;
+    vec2 g_offset = offset * 1.0;
+    vec2 b_offset = offset * 1.05;
+
+    float r_dot = dot(r_offset, r_offset);
+    float g_dot = dot(g_offset, g_offset);
+    float b_dot = dot(b_offset, b_offset);
+    float s_dot = dot(s_offset, s_offset);
+
+    vec4 dots = vec4(r_dot, g_dot, b_dot, s_dot) * blob.w;
+
+    // Now we have square distances to blob center.
+
+    // Gotta have some FMAs, right? :D
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+    dots = dots * dots + dots;
+
+    vec4 parabolas = max(vec4(1.0, 1.0, 1.0, 0.9) - dots, vec4(0.0));
+    parabolas -= parabolas.w;
+    parabolas = max(parabolas, vec4(0.0));
+    return parabolas;
+}
+
+void main()
+{
+    uint num_blobs = uint(registers.num_blobs);
+
+    float x = float(gl_GlobalInvocationID.x) / float(WIDTH) - 0.5;
+    float y = float(gl_GlobalInvocationID.y) / float(HEIGHT) - 0.5;
+    vec2 pos = vec2(x, y);
+    vec4 result = vec4(0.0);
+    float seed = float(registers.seed);
+    ivec2 range = ivec2(registers.range);
+
+    const float EXPAND_FACTOR = 0.3;
+    float stride = seed * EXPAND_FACTOR;
+
+    for (uint i = 0; i < num_blobs; i++)
+    {
+        vec4 blob = vec4(blob_data[i]);
+
+        // Get as much mileage out of the buffer load as possible.
+        for (int y = -range.y; y <= range.y; y++)
+            for (int x = -range.x; x <= range.x; x++)
+                result += compute_blob(pos + stride * vec2(x, y), blob, seed);
+    }
+
+    imageStore(o_results, ivec2(gl_GlobalInvocationID.xy), result);
+}
