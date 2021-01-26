@@ -375,9 +375,6 @@ if(MSVC)
     target_compile_options(${PROJECT_NAME} PUBLIC /MP)
 endif()
 
-# Enable beta features required for certain samples
-target_compile_definitions(volk PUBLIC VK_ENABLE_BETA_EXTENSIONS)
-
 if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
 endif()
@@ -411,6 +408,10 @@ target_link_libraries(${PROJECT_NAME}
     spdlog
     ctpl
     docopt)
+
+if(${NEED_LINK_ATOMIC})
+    target_link_libraries(${PROJECT_NAME} atomic)
+endif()
 
 # Link platform specific libraries
 if(ANDROID)

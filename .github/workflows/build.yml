@@ -2,7 +2,7 @@ name: Build Project
 
 on:
   pull_request:
-    branches: [master]
+    types: [opened, synchronize, reopened]
   push:
     branches: [master]
 
@@ -23,7 +23,9 @@ jobs:
 
       - if: ${{ matrix.platform == 'ubuntu' }}
         name: Install RandR headers
-        run: sudo apt-get install xorg-dev libglu1-mesa-dev
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
 
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
