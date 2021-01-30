@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -122,6 +122,11 @@ class Buffer
 	{
 		update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
 	}
+
+	/**
+	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)
+	 */
+	uint64_t get_device_address();
 
   private:
 	Device &device;

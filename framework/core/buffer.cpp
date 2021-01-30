@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -146,6 +146,14 @@ void Buffer::flush() const
 void Buffer::update(const std::vector<uint8_t> &data, size_t offset)
 {
 	update(data.data(), data.size(), offset);
+}
+
+uint64_t Buffer::get_device_address()
+{
+	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
+	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
+	buffer_device_address_info.buffer = handle;
+	return vkGetBufferDeviceAddressKHR(device.get_handle(), &buffer_device_address_info);
 }
 
 void Buffer::update(void *data, size_t size, size_t offset)
