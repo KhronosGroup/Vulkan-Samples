@@ -17,6 +17,8 @@
 
 #include "shader_binding_table.h"
 
+#include "device.h"
+
 namespace vkb
 {
 namespace core
