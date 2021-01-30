@@ -38,7 +38,8 @@ class AccelerationStructure
 	 * @brief Creates a acceleration structure and the required buffer to store it's geometries
 	 * @param device A valid Vulkan device
 	 * @param type The type of the acceleration structure (top- or bottom-level)
-	 * @param build_size_info Size information for the acceleration structure build acquired via vkGetAccelerationStructureBuildSizesKHR
+	 * @param build_geometry_info Geometry information for the acceleration structure build
+	 * @param primitive_count Number of primitives of this acceleration structure
 	 */
 	AccelerationStructure(Device &                                    device,
 	                      VkAccelerationStructureTypeKHR              type,
