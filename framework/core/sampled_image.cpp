@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,21 +27,24 @@ SampledImage::SampledImage(const core::ImageView &image_view, Sampler *sampler) 
     image_view{&image_view},
     target_attachment{0},
     render_target{nullptr},
-    sampler{sampler}
+    sampler{sampler},
+    isDepthResolve{false}
 {}
 
-SampledImage::SampledImage(uint32_t target_attachment, RenderTarget *render_target, Sampler *sampler) :
+SampledImage::SampledImage(uint32_t target_attachment, RenderTarget *render_target, Sampler *sampler, bool isDepthResolve) :
     image_view{nullptr},
     target_attachment{target_attachment},
     render_target{render_target},
-    sampler{sampler}
+    sampler{sampler},
+    isDepthResolve{isDepthResolve}
 {}
 
 SampledImage::SampledImage(const SampledImage &to_copy) :
     image_view{to_copy.image_view},
     target_attachment{to_copy.target_attachment},
     render_target{to_copy.render_target},
-    sampler{to_copy.sampler}
+    sampler{to_copy.sampler},
+    isDepthResolve{false}
 {}
 
 SampledImage &SampledImage::operator=(const SampledImage &to_copy)
@@ -50,6 +53,7 @@ SampledImage &SampledImage::operator=(const SampledImage &to_copy)
 	target_attachment = to_copy.target_attachment;
 	render_target     = to_copy.render_target;
 	sampler           = to_copy.sampler;
+	isDepthResolve    = to_copy.isDepthResolve;
 	return *this;
 }
 
@@ -57,7 +61,8 @@ SampledImage::SampledImage(SampledImage &&to_move) :
     image_view{std::move(to_move.image_view)},
     target_attachment{std::move(to_move.target_attachment)},
     render_target{std::move(to_move.render_target)},
-    sampler{std::move(to_move.sampler)}
+    sampler{std::move(to_move.sampler)},
+    isDepthResolve{std::move(to_move.isDepthResolve)}
 {}
 
 SampledImage &SampledImage::operator=(SampledImage &&to_move)
@@ -66,6 +71,7 @@ SampledImage &SampledImage::operator=(SampledImage &&to_move)
 	target_attachment = std::move(to_move.target_attachment);
 	render_target     = std::move(to_move.render_target);
 	sampler           = std::move(to_move.sampler);
+	isDepthResolve    = std::move(to_move.isDepthResolve);
 	return *this;
 }
 
