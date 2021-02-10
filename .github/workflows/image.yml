@@ -13,7 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Login to GitHub Container Registry
-        run: echo ${{ secrets.GITHUB_CONTAINER_REGISTRY_PAT }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
+        run: echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
 
       - name: Checkout Repository
         uses: actions/checkout@v2
