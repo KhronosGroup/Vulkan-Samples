@@ -108,6 +108,7 @@ class TimelineSemaphore : public ApiVulkanSample
 	void wait_timeline_cpu(const Timeline &timeline);
 	void signal_timeline_cpu(const Timeline &timeline, TimelineLock &lock);
 	void update_pending(TimelineLock &lock, uint64_t timeline);
+	void wait_pending_in_order_queue(TimelineLock &lock, uint64_t timeline);
 	void wait_pending(TimelineLock &lock, uint64_t timeline);
 };
 

@@ -177,7 +177,7 @@ void TimelineSemaphore::wait_timeline_gpu(VkQueue wait_queue, const Timeline &ti
 	// This is a special case to handle a scenario where async_queue == queue as well.
 	// Out-of-order submit is not possible with a single queue since the queue will deadlock itself.
 	// Very few implementations only support one queue, but the sample should run on all implementations.
-	wait_pending(lock, timeline.timeline);
+	wait_pending_in_order_queue(lock, timeline.timeline);
 
 	const VkPipelineStageFlags wait_stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
@@ -228,39 +228,45 @@ void TimelineSemaphore::signal_timeline_cpu(const Timeline &timeline, TimelineLo
 
 void TimelineSemaphore::update_pending(TimelineLock &lock, uint64_t timeline)
 {
-	if (async_queue == queue)
-	{
-		// To support out-of-order signal and wait with a single queue we must do some workarounds.
-		// Normally, an application should not bother with multiple async queues
-		// if they have to be hammered onto one VkQueue in the end,
-		// but it can be useful to know about these problem scenarios up front.
-		//
-		// To make the single queue scenario work, we must be able to guarantee that a wait is submitted after a signal,
-		// since we cannot signal on a queue once it is blocked by a wait.
-		// The only way to do this is to hold back submissions and ensure submissions happen in a forward-progress order.
-		//
-		// In this sample, we can achieve this with a condition variable where we wait until
-		// a pending signal has been submitted, but this approach does not work in all cases.
-		// It works here since we have a dedicated submission thread.
-		// It is always possible to add submission threads which may or may not be practical.
-		//
-		// This is called after signalling the timeline, which lets other submission threads know that it is safe to wait on
-		// any timeline value that is <= pending_timeline.
-		std::lock_guard<std::mutex> holder{lock.lock};
-		lock.pending_timeline = timeline;
-		lock.cond.notify_one();
-	}
+	// To support out-of-order signal and wait with a single queue we must do some workarounds.
+	// Normally, an application should not bother with multiple async queues
+	// if they have to be hammered onto one VkQueue in the end,
+	// but it can be useful to know about these problem scenarios up front.
+	//
+	// The other case where we need to ensure some kind of ordering is when waiting on a binary semaphore.
+	// Binary semaphores still have the requirement that all dependencies must already have been submitted,
+	// and we must still use binary semaphores for swapchain.
+	//
+	// To make the single queue scenario work, we must be able to guarantee that a wait is submitted after a signal,
+	// since we cannot signal on a queue once it is blocked by a wait.
+	// The only way to do this is to hold back submissions and ensure submissions happen in a forward-progress order.
+	//
+	// In this sample, we can achieve this with a condition variable where we wait until
+	// a pending signal has been submitted, but this approach does not work in all cases.
+	// It works here since we have a dedicated submission thread.
+	// It is always possible to add submission threads which may or may not be practical.
+	//
+	// This is called after signalling the timeline, which lets other submission threads know that it is safe to wait on
+	// any timeline value that is <= pending_timeline.
+	std::lock_guard<std::mutex> holder{lock.lock};
+	lock.pending_timeline = timeline;
+	lock.cond.notify_one();
 }
 
 void TimelineSemaphore::wait_pending(TimelineLock &lock, uint64_t timeline)
 {
+	// See update_pending(). This is called before submitting a wait to the single VkQueue.
+	std::unique_lock<std::mutex> holder{lock.lock};
+	lock.cond.wait(holder, [&lock, timeline]() -> bool {
+		return lock.pending_timeline >= timeline;
+	});
+}
+
+void TimelineSemaphore::wait_pending_in_order_queue(TimelineLock &lock, uint64_t timeline)
+{
 	if (async_queue == queue)
 	{
-		// See update_pending(). This is called before submitting a wait to the single VkQueue.
-		std::unique_lock<std::mutex> holder{lock.lock};
-		lock.cond.wait(holder, [&lock, timeline]() -> bool {
-			return lock.pending_timeline >= timeline;
-		});
+		wait_pending(lock, timeline);
 	}
 }
 
@@ -668,6 +674,11 @@ void TimelineSemaphore::render(float delta_time)
 	{
 		ConditionalLockGuard holder{submission_lock, async_queue == queue};
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, wait_fences[current_buffer]));
+
+		// Before we call present, which uses a binary semaphore, we must ensure that all dependent submissions
+		// have been submitted, so that the presenting queue is unblocked at the time of calling.
+		wait_pending(async_compute_timeline_lock, main_thread_timeline.timeline);
+
 		ApiVulkanSample::submit_frame();
 	}
 

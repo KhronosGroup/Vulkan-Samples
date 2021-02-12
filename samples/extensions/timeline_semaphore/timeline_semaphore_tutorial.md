@@ -346,6 +346,19 @@ Currently, the Vulkan WSI swapchain does not support timeline semaphores. In pra
 as swapchain integration tends to be a "special case" either way in most rendering backends.
 The acquire and release semaphores have no analog in other modern APIs.
 
+Another related issue with WSI swapchains is that when using binary semaphores, it is not possible to use wait-before-signal.
+The specification states that in order to submit a wait on a binary semaphore all dependencies for that semaphore wait
+must have been submitted already. This means that we need to potentially block a bit on host before we can call vkQueuePresentKHR.
+The sample does this right before calling `ApiVulkanSample::submit_frame()`.
+
+```cpp
+// Before we call present, which uses a binary semaphore, we must ensure that all dependent submissions
+// have been submitted, so that the presenting queue is unblocked at the time of calling.
+wait_pending(async_compute_timeline_lock, main_thread_timeline.timeline);
+
+ApiVulkanSample::submit_frame();
+```
+
 ## Conclusion
 
 Timeline semaphores grants a lot of flexibility to applications. With modern approaches of task graphs, many threads
