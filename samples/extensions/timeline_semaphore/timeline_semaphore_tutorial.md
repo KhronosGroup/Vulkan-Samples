@@ -101,7 +101,7 @@ which is very nice! To synchronize GPU work with CPU, we just need to know the t
 
 First, we need to create a `VkSemaphore` with `TIMELINE` type.
 
-```
+```cpp
 // A timeline semaphore is still a semaphore, but it is of TIMELINE type rather than BINARY.
 VkSemaphoreCreateInfo        create_info = vkb::initializers::semaphore_create_info();
 VkSemaphoreTypeCreateInfoKHR type_create_info{VK_STRUCTURE_TYPE_SEMAPHORE_TYPE_CREATE_INFO_KHR};
@@ -115,7 +115,7 @@ VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &create_info, nullptr, &ti
 
 We can signal the timeline in `vkQueueSubmit`.
 
-```
+```cpp
 VkSubmitInfo submit         = vkb::initializers::submit_info();
 submit.pSignalSemaphores    = &timeline.semaphore;
 submit.signalSemaphoreCount = 1;
@@ -134,7 +134,7 @@ VK_CHECK(vkQueueSubmit(signal_queue, 1, &submit, VK_NULL_HANDLE));
 
 Similarly, we can wait in `vkQueueSubmit`.
 
-```
+```cpp
 const VkPipelineStageFlags wait_stages = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 
 VkSubmitInfo submit       = vkb::initializers::submit_info();
@@ -155,7 +155,7 @@ VK_CHECK(vkQueueSubmit(wait_queue, 1, &submit, VK_NULL_HANDLE));
 
 We can wait for one or more semaphores on host as well!
 
-```
+```cpp
 VkSemaphoreWaitInfoKHR wait_info{VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO_KHR};
 wait_info.pSemaphores    = &semaphore;
 wait_info.semaphoreCount = 1;
@@ -165,7 +165,7 @@ VK_CHECK(vkWaitSemaphoresKHR(device->get_handle(), &wait_info, UINT64_MAX));
 
 A somewhat esoteric feature is to signal a timeline on host, this can be used to "kick" the GPU.
 
-```
+```cpp
 VkSemaphoreSignalInfoKHR signal_info{VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO_KHR};
 signal_info.semaphore = semaphore;
 signal_info.value     = value;
@@ -269,7 +269,7 @@ on work which never comes, and that queue becomes deadlocked. To alleviate this,
 of timeline semaphores to unblock everything in one fell swoop.
 
 From `TimelineSemaphore::finish()`:
-```
+```cpp
 // Draining queues which submit out-of-order can be quite tricky, since QueueWaitIdle can deadlock for threads which want to run ahead.
 // If we call Submit waiting for a semaphore which is yet to be signalled,
 // QueueWaitIdle will not finish until a signal in another thread happens.
@@ -313,7 +313,7 @@ Since we are using multiple submission threads this sample uses a condition vari
 allow a wait to be submitted if it ensures forward progress. This is handled by
 `TimelineSemaphore::update_pending()`:
 
-```
+```cpp
 std::lock_guard<std::mutex> holder{lock.lock};
 lock.pending_timeline = timeline;
 lock.cond.notify_one();
@@ -321,7 +321,7 @@ lock.cond.notify_one();
 
 and `TimelineSemaphore::wait_pending()`:
 
-```
+```cpp
 std::unique_lock<std::mutex> holder{lock.lock};
 lock.cond.wait(holder, [&lock, timeline]() -> bool {
     return lock.pending_timeline >= timeline;
