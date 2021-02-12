@@ -169,11 +169,18 @@ void TimelineSemaphore::signal_timeline_gpu(VkQueue signal_queue, const Timeline
 	// This is a special case to handle a scenario where async_queue == queue as well.
 	// Out-of-order submit is not possible with a single queue since the queue will deadlock itself.
 	// Very few implementations only support one queue, but the sample should run on all implementations.
+	// We also need this to handle the fact that we currently cannot use out-of-order submissions with swapchain.
 	update_pending(lock, timeline.timeline);
 }
 
 void TimelineSemaphore::wait_timeline_gpu(VkQueue wait_queue, const Timeline &timeline, TimelineLock &lock)
 {
+	if (timeline.timeline == 0)
+	{
+		// No-op.
+		return;
+	}
+
 	// This is a special case to handle a scenario where async_queue == queue as well.
 	// Out-of-order submit is not possible with a single queue since the queue will deadlock itself.
 	// Very few implementations only support one queue, but the sample should run on all implementations.
