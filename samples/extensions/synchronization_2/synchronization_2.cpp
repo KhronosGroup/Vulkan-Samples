@@ -32,8 +32,7 @@ Synchronization2::Synchronization2()
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
 
-	// @todo: comment
-	set_api_version(VK_API_VERSION_1_2);
+	// Enable required extension
 	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
 }
 
@@ -71,7 +70,7 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 
-	// @todo: comment
+	// Enable synchronization2 feature
 	auto &requested_synchronisation2_features            = gpu.request_extension_features<VkPhysicalDeviceSynchronization2FeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR);
 	requested_synchronisation2_features.synchronization2 = VK_TRUE;
 }
@@ -765,8 +764,7 @@ void Synchronization2::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// @todo: document, completly changed with sync 2, easier setup of stage masks, etc.
-
+	// Use synchronization 2 for the compute and graphics submissions
 	VkSemaphoreSubmitInfoKHR graphics_wait_semaphores[2]{};
 	graphics_wait_semaphores[0].sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
 	graphics_wait_semaphores[0].semaphore = compute.semaphore;
@@ -833,15 +831,6 @@ bool Synchronization2::prepare(vkb::Platform &platform)
 	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
 	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
-
-	// @todo: comment
-	synchronization2_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SYNCHRONIZATION_2_FEATURES_KHR;
-	VkPhysicalDeviceProperties2 device_properties_2{};
-	device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	device_properties_2.pNext = &synchronization2_features;
-	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties_2);
-	vkCmdPipelineBarrier2KHR = reinterpret_cast<PFN_vkCmdPipelineBarrier2KHR>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdPipelineBarrier2KHR"));
-	vkQueueSubmit2KHR        = reinterpret_cast<PFN_vkQueueSubmit2KHR>(vkGetDeviceProcAddr(get_device().get_handle(), "vkQueueSubmit2KHR"));
 
 	load_assets();
 	setup_descriptor_pool();

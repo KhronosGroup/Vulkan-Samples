@@ -33,11 +33,6 @@
 class Synchronization2 : public ApiVulkanSample
 {
   public:
-	// @todo: remove once supported by Volk
-	PFN_vkCmdPipelineBarrier2KHR                vkCmdPipelineBarrier2KHR;
-	PFN_vkQueueSubmit2KHR                       vkQueueSubmit2KHR;
-	VkPhysicalDeviceSynchronization2FeaturesKHR synchronization2_features{};
-
 	uint32_t num_particles;
 	uint32_t work_group_size  = 128;
 	uint32_t shared_data_size = 1024;
