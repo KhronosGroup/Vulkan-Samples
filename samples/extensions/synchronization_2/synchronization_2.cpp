@@ -584,7 +584,7 @@ void Synchronization2::prepare_compute()
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
 
 	// 1st pass - Particle movement calculations
-	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("synchronization_2/particle_calculate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	// Set some shader parameters via specialization constants
 	struct SpecializationData
@@ -616,7 +616,7 @@ void Synchronization2::prepare_compute()
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
 	// 2nd pass - Particle integration
-	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+	compute_pipeline_create_info.stage = load_shader("synchronization_2/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
 	specialization_map_entries.clear();
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t)));
