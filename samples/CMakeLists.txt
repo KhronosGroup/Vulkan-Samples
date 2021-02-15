@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "push_descriptors"
     "raytracing_basic"
+    "synchronization_2"
 
     #Performance Samples
     "swapchain_images"
