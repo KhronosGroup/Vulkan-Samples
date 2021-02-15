@@ -17,6 +17,7 @@
 
 /*
  * Doing compute and graphics queue synchronization using VK_KHR_synchronization2
+ * Synchronization examples using this extension can be found at https://github.com/KhronosGroup/Vulkan-Docs/wiki/Synchronization-Examples
  */
 
 #pragma once

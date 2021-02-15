@@ -23,5 +23,5 @@ add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    NAME "Compute N-Body simulation using VK_KHR_synchronization_2"
-    DESCRIPTION "Multi-pass compute dispatch N-Body particle simulation using the VK_KHR_synchronization_2 to simplify barriers")
+    NAME "Compute N-Body simulation using VK_KHR_synchronization2"
+    DESCRIPTION "Multi-pass compute dispatch N-Body particle simulation using the VK_KHR_synchronization2 to simplify barriers and queue submissions")
