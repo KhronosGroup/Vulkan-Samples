@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -89,9 +89,9 @@ BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFla
 BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 {
 	// Find the first block in the range of the inactive blocks
-	// which size is greater than the minimum size
+	// which can fit the minimum size
 	auto it = std::upper_bound(buffer_blocks.begin() + active_buffer_block_count, buffer_blocks.end(), minimum_size,
-	                           [](const VkDeviceSize &a, const std::unique_ptr<BufferBlock> &b) -> bool { return a < b->get_size(); });
+	                           [](const VkDeviceSize &a, const std::unique_ptr<BufferBlock> &b) -> bool { return a <= b->get_size(); });
 
 	if (it != buffer_blocks.end())
 	{
