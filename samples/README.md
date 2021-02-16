@@ -1,5 +1,4 @@
-<!--
-- Copyright (c) 2021, Arm Limited and Contributors
+- Copyright (c) 2020-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -110,6 +109,11 @@ Vulkan gives the application some significant control over the number of swapcha
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
 - 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+### [16-bit arithmetic](./performance/16bit_arithmetic)
+This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
+The sample also shows how to enable 16-bit storage for SSBOs and push constants.
+
+- 🎓 [How to effectively use 16-bit arithmetic in shaders](./performance/16bit_arithmetic/16bit_arithmetic_tutorial.md)
 
 ## API samples
 
