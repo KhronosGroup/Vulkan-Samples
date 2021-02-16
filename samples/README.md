@@ -171,3 +171,7 @@ Render a basic scene using the official cross-vendor ray tracing extension. Show
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
+
+### [Synchronization2](./extensions/synchronization_2)<br/>
+**Extension** [```VK_KHR_synchronization2```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_synchronization2)<br/>
+Demonstrates the use of the reworked synchronization api introduced with `VK_KHR_synchronization2`. Based on the compute shading N-Body particle system, this sample uses the new extension to streamline the memory barriers used for the compute and graphics work submissions.
