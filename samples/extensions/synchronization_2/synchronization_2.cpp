@@ -118,7 +118,7 @@ void Synchronization2::build_command_buffers()
 		{
 			VkBufferMemoryBarrier2KHR buffer_barrier{};
 			buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
-			buffer_barrier.srcAccessMask       = 0;
+			buffer_barrier.srcAccessMask       = VK_ACCESS_2_NONE_KHR;
 			buffer_barrier.dstAccessMask       = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
 			buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 			buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
@@ -153,7 +153,7 @@ void Synchronization2::build_command_buffers()
 			VkBufferMemoryBarrier2KHR buffer_barrier{};
 			buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
 			buffer_barrier.srcAccessMask       = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
-			buffer_barrier.dstAccessMask       = 0;
+			buffer_barrier.dstAccessMask       = VK_ACCESS_2_NONE_KHR;
 			buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 			buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 			buffer_barrier.srcQueueFamilyIndex = graphics.queue_family_index;
@@ -182,7 +182,7 @@ void Synchronization2::build_compute_command_buffer()
 	{
 		VkBufferMemoryBarrier2KHR buffer_barrier{};
 		buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
-		buffer_barrier.srcAccessMask       = 0;
+		buffer_barrier.srcAccessMask       = VK_ACCESS_2_NONE_KHR;
 		buffer_barrier.dstAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
 		buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 		buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
@@ -231,7 +231,7 @@ void Synchronization2::build_compute_command_buffer()
 		VkBufferMemoryBarrier2KHR buffer_barrier{};
 		buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
 		buffer_barrier.srcAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
-		buffer_barrier.dstAccessMask       = 0;
+		buffer_barrier.dstAccessMask       = VK_ACCESS_2_NONE_KHR;
 		buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 		buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 		buffer_barrier.srcQueueFamilyIndex = compute.queue_family_index;
@@ -326,7 +326,7 @@ void Synchronization2::prepare_storage_buffers()
 		VkBufferMemoryBarrier2KHR buffer_barrier{};
 		buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
 		buffer_barrier.srcAccessMask       = VK_ACCESS_2_VERTEX_ATTRIBUTE_READ_BIT_KHR;
-		buffer_barrier.dstAccessMask       = 0;
+		buffer_barrier.dstAccessMask       = VK_ACCESS_2_NONE_KHR;
 		buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 		buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 		buffer_barrier.srcQueueFamilyIndex = graphics.queue_family_index;
@@ -678,7 +678,7 @@ void Synchronization2::prepare_compute()
 		VkBufferMemoryBarrier2KHR buffer_barriers[2]{};
 
 		buffer_barriers[0].sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
-		buffer_barriers[0].srcAccessMask       = 0;
+		buffer_barriers[0].srcAccessMask       = VK_ACCESS_2_NONE_KHR;
 		buffer_barriers[0].dstAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
 		buffer_barriers[0].srcStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 		buffer_barriers[0].dstStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
@@ -689,7 +689,7 @@ void Synchronization2::prepare_compute()
 
 		buffer_barriers[1].sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
 		buffer_barriers[1].srcAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
-		buffer_barriers[1].dstAccessMask       = 0;
+		buffer_barriers[1].dstAccessMask       = VK_ACCESS_2_NONE_KHR;
 		buffer_barriers[1].srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
 		buffer_barriers[1].dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
 		buffer_barriers[1].srcQueueFamilyIndex = compute.queue_family_index;
