@@ -26,6 +26,7 @@
   - [VKB_SYMLINKS](#vkb_symlinks)
   - [VKB_ENTRYPOINTS](#vkb_entrypoints)
   - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
+  - [VKB_VALIDATION_LAYERS_GPU_ASSISTED](#vkb_validation_layers_gpu_assisted)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
@@ -91,6 +92,12 @@ Generate a build project for each application so that they can be run separately
 #### VKB_VALIDATION_LAYERS
 
 Enable Validation Layers
+
+**Default:** `OFF`
+
+#### VKB_VALIDATION_LAYERS_GPU_ASSISTED
+
+Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_indexing.
 
 **Default:** `OFF`
 
