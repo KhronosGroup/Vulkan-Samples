@@ -110,6 +110,11 @@ Vulkan gives the application some significant control over the number of swapcha
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
 - 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+### [16-bit arithmetic](./performance/16bit_arithmetic)
+This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
+The sample also shows how to enable 16-bit storage for SSBOs and push constants.
+
+- 🎓 [How to effectively use 16-bit arithmetic in shaders](./performance/16bit_arithmetic/16bit_arithmetic_tutorial.md)
 
 ## API samples
 
@@ -170,3 +175,8 @@ Render a procedural image using OpenGL and incorporate that rendered content int
 ### [Buffer device address](./extensions/buffer_device_address)<br/>
 **Extensions**: [```VK_KHR_buffer_device_address```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_buffer_device_address.html)
 Demonstrates how to use the buffer device address feature, which enables extreme flexibility in how buffer memory is accessed.
+
+### [Descriptor indexing](./extensions/descriptor_indexing)<br/>
+**Extensions**: [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html)
+Demonstrates how to use descriptor indexing to enable update-after-bind and non-dynamically uniform indexing of descriptors.
+
