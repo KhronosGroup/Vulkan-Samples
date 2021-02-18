@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "push_descriptors"
     "raytracing_basic"
+    "buffer_device_address"
     "descriptor_indexing"
 
     #Performance Samples
