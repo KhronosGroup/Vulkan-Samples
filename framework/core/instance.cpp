@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -165,6 +165,27 @@ Instance::Instance(const std::string &                           application_nam
 	}
 #endif
 
+#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+	bool validation_features = false;
+	{
+		uint32_t layer_instance_extension_count;
+		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, nullptr));
+
+		std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
+		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, available_layer_instance_extensions.data()));
+
+		for (auto &available_extension : available_layer_instance_extensions)
+		{
+			if (strcmp(available_extension.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0)
+			{
+				validation_features = true;
+				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+				enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+			}
+		}
+	}
+#endif
+
 	// Try to enable headless surface extension if it exists
 	if (headless)
 	{
@@ -290,6 +311,21 @@ Instance::Instance(const std::string &                           application_nam
 		debug_report_create_info.pfnCallback = debug_callback;
 
 		instance_info.pNext = &debug_report_create_info;
+	}
+#endif
+
+#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+	VkValidationFeaturesEXT validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	if (validation_features)
+	{
+		static const VkValidationFeatureEnableEXT enable_features[2] = {
+		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
+		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
+		};
+		validation_features_info.enabledValidationFeatureCount = 2;
+		validation_features_info.pEnabledValidationFeatures    = enable_features;
+		validation_features_info.pNext                         = instance_info.pNext;
+		instance_info.pNext                                    = &validation_features_info;
 	}
 #endif
 

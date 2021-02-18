@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2020, Arm Limited and Contributors
+- Copyright (c) 2019-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -26,6 +26,7 @@
   - [VKB_SYMLINKS](#vkb_symlinks)
   - [VKB_ENTRYPOINTS](#vkb_entrypoints)
   - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
+  - [VKB_VALIDATION_LAYERS_GPU_ASSISTED](#vkb_validation_layers_gpu_assisted)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
@@ -91,6 +92,12 @@ Generate a build project for each application so that they can be run separately
 #### VKB_VALIDATION_LAYERS
 
 Enable Validation Layers
+
+**Default:** `OFF`
+
+#### VKB_VALIDATION_LAYERS_GPU_ASSISTED
+
+Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_indexing.
 
 **Default:** `OFF`
 
@@ -209,7 +216,8 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2)
+- CMake v3.10+ (known to work with 3.10.2; Apple Silicon requires at least 3.19.2)
+- XCode v12 for Apple Silicon
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
 - [CMake Options](#cmake-options)
