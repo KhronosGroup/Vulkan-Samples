@@ -11,6 +11,7 @@ Please ensure the following points are checked:
 
 - [ ] My code follows the [coding style](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#Code-Style)
 - [ ] I have reviewed file [licenses](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/CONTRIBUTING.md#Copyright-Notice-and-License-Template)
+- [ ] I have updated the header Copyright to reflect the current year (CI build will fail if Copyright is out of date)
 - [ ] I have commented any added functions (in line with Doxygen)
 - [ ] I have commented any code that could be hard to understand
 - [ ] My changes do not add any new compiler warnings

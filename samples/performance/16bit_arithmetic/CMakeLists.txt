@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Sascha Willems
+# Copyright (c) 2020-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -20,8 +20,8 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_with_tags(
-    ID ${FOLDER_NAME}
-    CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Sascha Wilems"
-    NAME "Ray tracing basic"
-    DESCRIPTION "Basic example for hardware accelerated ray tracing")
+        ID ${FOLDER_NAME}
+        CATEGORY ${CATEGORY_NAME}
+        AUTHOR "Hans-Kristian Arntzen"
+        NAME "16-bit arithmetic"
+        DESCRIPTION "Using VK_KHR_shader_float16_int8 to improve arithmetic throughput.")

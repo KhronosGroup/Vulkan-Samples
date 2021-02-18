@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "push_descriptors"
     "raytracing_basic"
+    "descriptor_indexing"
 
     #Performance Samples
     "swapchain_images"
@@ -78,7 +79,8 @@ set(ORDER_LIST
     "command_buffer_usage"
     "multithreading_render_passes"
     "afbc"
-    "16bit_storage_input_output")
+    "16bit_storage_input_output"
+    "16bit_arithmetic")
 
 # Orders the sample ids by the order list above
 order_sample_list(
