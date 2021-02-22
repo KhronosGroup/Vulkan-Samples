@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2020, Arm Limited and Contributors
+ Copyright (c) 2019-2021, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -35,6 +35,7 @@ set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
 set(VKB_ENTRYPOINTS OFF CACHE BOOL "Enable create entrypoint project for every application.")
 set(VKB_SYMLINKS OFF CACHE BOOL "Enable create symlink folders for every application.")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
+set(VKB_VALIDATION_LAYERS_GPU_ASSISTED OFF CACHE BOOL "Enable GPU assisted validation layers for every application.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_DIRECT_2_DISPLAY OFF CACHE BOOL "Force using D2D (if available)")

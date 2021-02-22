@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -377,6 +377,15 @@ endif()
 
 if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
+endif()
+
+# GPU assisted validation layers are not available on macOS.
+if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
+    if (APPLE)
+        message(WARNING "GPU assisted validation layers are not currently available on macOS.")
+    else()
+        target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+    endif()
 endif()
 
 if(${VKB_WARNINGS_AS_ERRORS})

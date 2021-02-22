@@ -62,6 +62,8 @@ set(ORDER_LIST
     "push_descriptors"
     "raytracing_basic"
     "synchronization_2"
+    "buffer_device_address"
+    "descriptor_indexing"
 
     #Performance Samples
     "swapchain_images"
@@ -79,6 +81,7 @@ set(ORDER_LIST
     "command_buffer_usage"
     "multithreading_render_passes"
     "afbc"
+    "16bit_storage_input_output"
     "16bit_arithmetic")
 
 # Orders the sample ids by the order list above
