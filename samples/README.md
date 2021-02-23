@@ -109,7 +109,10 @@ Vulkan gives the application some significant control over the number of swapcha
 ### [Wait idle](./performance/wait_idle)<br/>
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
+### [16-bit storage InputOutput](./performance/16bit_storage_input_output)
+This sample compares bandwidth consumption when using FP32 varyings compared to using FP16 varyings with `VK_KHR_16bit_storage`.
 - 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+
 ### [16-bit arithmetic](./performance/16bit_arithmetic)
 This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
 The sample also shows how to enable 16-bit storage for SSBOs and push constants.
@@ -176,6 +179,10 @@ Render a procedural image using OpenGL and incorporate that rendered content int
 **Extensions**: [```VK_KHR_timeline_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_timeline_semaphore.html)
 Demonstrates various use cases which are enabled with timeline semaphores. The sample implements "Game of Life" in an esoteric way,
 using out-of-order signal and wait, multiple waits on same semaphore in different queues, waiting and signalling semaphore on host.
+
+### [Buffer device address](./extensions/buffer_device_address)<br/>
+**Extensions**: [```VK_KHR_buffer_device_address```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_buffer_device_address.html)
+Demonstrates how to use the buffer device address feature, which enables extreme flexibility in how buffer memory is accessed.
 
 ### [Descriptor indexing](./extensions/descriptor_indexing)<br/>
 **Extensions**: [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html)

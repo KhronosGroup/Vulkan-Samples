@@ -62,6 +62,7 @@ set(ORDER_LIST
     "push_descriptors"
     "raytracing_basic"
     "timeline_semaphore"
+    "buffer_device_address"
     "descriptor_indexing"
 
     #Performance Samples
@@ -80,6 +81,7 @@ set(ORDER_LIST
     "command_buffer_usage"
     "multithreading_render_passes"
     "afbc"
+    "16bit_storage_input_output"
     "16bit_arithmetic")
 
 # Orders the sample ids by the order list above
