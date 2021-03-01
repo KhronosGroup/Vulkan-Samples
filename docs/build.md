@@ -141,7 +141,7 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2)
+- CMake v3.10+ (known to work with 3.10.2 and 3.19.3)
 - Python 3
 - Visual Studio 2017 or above
 - [clang-format-8](#clang-format-and-visual-studio)
@@ -163,6 +163,11 @@ Go to the [LLVM downloads page](http://releases.llvm.org/download.html) to get c
 
 `Step 1.` The following command will generate the VS project
 
+```
+cmake -G"Visual Studio 15 2017 Win64" -S . -Bbuild/windows
+```
+
+(Prior to CMake v3.13)
 ```
 cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows
 ```
