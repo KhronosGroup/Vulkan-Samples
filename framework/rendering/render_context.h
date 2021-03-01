@@ -148,6 +148,7 @@ class RenderContext
 	 * @brief Prepares the next available frame for rendering
 	 * @param reset_mode How to reset the command buffer
 	 * @returns A valid command buffer to record commands to be submitted
+	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
 	CommandBuffer &begin(CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
@@ -165,10 +166,8 @@ class RenderContext
 
 	/**
 	 * @brief begin_frame
-	 *
-	 * @return VkSemaphore
 	 */
-	VkSemaphore begin_frame();
+	void begin_frame();
 
 	VkSemaphore submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
 

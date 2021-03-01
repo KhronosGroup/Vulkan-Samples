@@ -256,7 +256,10 @@ CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
 {
 	assert(prepared && "RenderContext not prepared for rendering, call prepare()");
 
-	acquired_semaphore = begin_frame();
+	if (!frame_active)
+	{
+		begin_frame();
+	}
 
 	if (acquired_semaphore == VK_NULL_HANDLE)
 	{
@@ -292,7 +295,7 @@ void RenderContext::submit(const std::vector<CommandBuffer *> &command_buffers)
 	acquired_semaphore = VK_NULL_HANDLE;
 }
 
-VkSemaphore RenderContext::begin_frame()
+void RenderContext::begin_frame()
 {
 	// Only handle surface changes if a swapchain exists
 	if (swapchain)
@@ -304,24 +307,23 @@ VkSemaphore RenderContext::begin_frame()
 
 	auto &prev_frame = *frames.at(active_frame_index);
 
-	auto aquired_semaphore = prev_frame.request_semaphore();
+	acquired_semaphore = prev_frame.request_semaphore();
 
 	if (swapchain)
 	{
-		auto result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, VK_NULL_HANDLE);
+		auto result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			handle_surface_changes();
 
-			result = swapchain->acquire_next_image(active_frame_index, aquired_semaphore, VK_NULL_HANDLE);
+			result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
 		}
 
 		if (result != VK_SUCCESS)
 		{
 			prev_frame.reset();
-
-			return VK_NULL_HANDLE;
+			return;
 		}
 	}
 
@@ -330,8 +332,6 @@ VkSemaphore RenderContext::begin_frame()
 
 	// Wait on all resource to be freed from the previous render to this frame
 	wait_frame();
-
-	return aquired_semaphore;
 }
 
 VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
