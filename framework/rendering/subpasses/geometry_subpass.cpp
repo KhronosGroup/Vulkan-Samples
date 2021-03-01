@@ -171,7 +171,10 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
-	prepare_push_constants(command_buffer, sub_mesh);
+	if (pipeline_layout.get_push_constant_range_stage(sizeof(PBRMaterialUniform)) != 0)
+	{
+		prepare_push_constants(command_buffer, sub_mesh);
+	}
 
 	DescriptorSetLayout &descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(0);
 
