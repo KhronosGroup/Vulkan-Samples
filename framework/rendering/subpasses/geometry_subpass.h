@@ -117,6 +117,8 @@ class GeometrySubpass : public Subpass
 	sg::Scene &scene;
 
 	uint32_t thread_index{0};
+
+	vkb::RasterizationState base_rasterization_state{};
 };
 
 }        // namespace vkb

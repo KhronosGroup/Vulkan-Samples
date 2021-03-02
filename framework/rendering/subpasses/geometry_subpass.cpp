@@ -238,7 +238,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
 {
-	RasterizationState rasterization_state{};
+	RasterizationState rasterization_state = base_rasterization_state;
 	rasterization_state.front_face = front_face;
 
 	if (double_sided_material)
