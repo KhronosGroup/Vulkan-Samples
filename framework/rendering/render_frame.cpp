@@ -145,6 +145,16 @@ VkSemaphore RenderFrame::request_semaphore()
 	return semaphore_pool.request_semaphore();
 }
 
+VkSemaphore RenderFrame::request_semaphore_with_ownership()
+{
+	return semaphore_pool.request_semaphore_with_ownership();
+}
+
+void RenderFrame::release_owned_semaphore(VkSemaphore semaphore)
+{
+	semaphore_pool.release_owned_semaphore(semaphore);
+}
+
 RenderTarget &RenderFrame::get_render_target()
 {
 	return *swapchain_render_target;

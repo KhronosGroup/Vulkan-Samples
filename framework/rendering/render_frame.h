@@ -89,6 +89,8 @@ class RenderFrame
 	const SemaphorePool &get_semaphore_pool() const;
 
 	VkSemaphore request_semaphore();
+	VkSemaphore request_semaphore_with_ownership();
+	void release_owned_semaphore(VkSemaphore semaphore);
 
 	/**
 	 * @brief Called when the swapchain changes

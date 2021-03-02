@@ -283,6 +283,7 @@ void RenderContext::submit(const std::vector<CommandBuffer *> &command_buffers)
 
 	if (swapchain)
 	{
+		assert(acquired_semaphore && "We do not have acquired_semaphore, it was probably consumed?\n");
 		render_semaphore = submit(queue, command_buffers, acquired_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 	}
 	else
@@ -291,8 +292,6 @@ void RenderContext::submit(const std::vector<CommandBuffer *> &command_buffers)
 	}
 
 	end_frame(render_semaphore);
-
-	acquired_semaphore = VK_NULL_HANDLE;
 }
 
 void RenderContext::begin_frame()
@@ -347,9 +346,14 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	submit_info.commandBufferCount   = to_u32(cmd_buf_handles.size());
 	submit_info.pCommandBuffers      = cmd_buf_handles.data();
-	submit_info.waitSemaphoreCount   = 1;
-	submit_info.pWaitSemaphores      = &wait_semaphore;
-	submit_info.pWaitDstStageMask    = &wait_pipeline_stage;
+
+	if (wait_semaphore != VK_NULL_HANDLE)
+	{
+		submit_info.waitSemaphoreCount = 1;
+		submit_info.pWaitSemaphores    = &wait_semaphore;
+		submit_info.pWaitDstStageMask  = &wait_pipeline_stage;
+	}
+
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = &signal_semaphore;
 
@@ -409,6 +413,15 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 
 	// Frame is not active anymore
 	frame_active = false;
+	acquired_semaphore = VK_NULL_HANDLE;
+}
+
+VkSemaphore RenderContext::consume_acquired_semaphore()
+{
+	assert(frame_active && "Frame is not active, please call begin_frame");
+	auto sem = acquired_semaphore;
+	acquired_semaphore = VK_NULL_HANDLE;
+	return sem;
 }
 
 RenderFrame &RenderContext::get_active_frame()
@@ -433,6 +446,18 @@ VkSemaphore RenderContext::request_semaphore()
 {
 	RenderFrame &frame = get_active_frame();
 	return frame.request_semaphore();
+}
+
+VkSemaphore RenderContext::request_semaphore_with_ownership()
+{
+	RenderFrame &frame = get_active_frame();
+	return frame.request_semaphore_with_ownership();
+}
+
+void RenderContext::release_owned_semaphore(VkSemaphore semaphore)
+{
+	RenderFrame &frame = get_active_frame();
+	frame.release_owned_semaphore(semaphore);
 }
 
 Device &RenderContext::get_device()

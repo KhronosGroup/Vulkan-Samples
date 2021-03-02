@@ -205,6 +205,8 @@ class RenderContext
 	RenderFrame &get_last_rendered_frame();
 
 	VkSemaphore request_semaphore();
+	VkSemaphore request_semaphore_with_ownership();
+	void release_owned_semaphore(VkSemaphore semaphore);
 
 	Device &get_device();
 
@@ -225,6 +227,12 @@ class RenderContext
 	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
 	 */
 	virtual void handle_surface_changes();
+
+	/**
+	 * @brief Returns the WSI acquire semaphore. Only to be used in very special circumstances.
+	 * @return The WSI acquire semaphore.
+	 */
+	VkSemaphore consume_acquired_semaphore();
 
   protected:
 	VkExtent2D surface_extent;
