@@ -116,6 +116,10 @@ struct ImageMemoryBarrier
 	VkImageLayout old_layout{VK_IMAGE_LAYOUT_UNDEFINED};
 
 	VkImageLayout new_layout{VK_IMAGE_LAYOUT_UNDEFINED};
+
+	uint32_t old_queue_family{VK_QUEUE_FAMILY_IGNORED};
+
+	uint32_t new_queue_family{VK_QUEUE_FAMILY_IGNORED};
 };
 
 /**
