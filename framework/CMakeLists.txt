@@ -210,6 +210,9 @@ set(CORE_FILES
     core/framebuffer.h
     core/render_pass.h
     core/query_pool.h
+    core/scratch_buffer.h
+    core/acceleration_structure.h
+    core/shader_binding_table.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
@@ -233,7 +236,10 @@ set(CORE_FILES
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp
-    core/query_pool.cpp)
+    core/query_pool.cpp
+    core/scratch_buffer.cpp
+    core/acceleration_structure.cpp
+    core/shader_binding_table.cpp)
 
 set(PLATFORM_FILES
     # Header Files
