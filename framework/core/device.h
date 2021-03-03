@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -103,6 +103,8 @@ class Device
 	bool is_enabled(const char *extension);
 
 	uint32_t get_queue_family_index(VkQueueFlagBits queue_flag);
+
+	uint32_t get_num_queues_for_queue_family(uint32_t queue_family_index);
 
 	CommandPool &get_command_pool();
 
