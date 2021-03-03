@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -385,6 +385,12 @@ const Queue &Device::get_queue_by_present(uint32_t queue_index)
 	}
 
 	throw std::runtime_error("Queue not found");
+}
+
+uint32_t Device::get_num_queues_for_queue_family(uint32_t queue_family_index)
+{
+	const auto &queue_family_properties = gpu.get_queue_family_properties();
+	return queue_family_properties[queue_family_index].queueCount;
 }
 
 uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
