@@ -87,6 +87,11 @@ void TimelineSemaphore::on_update_ui_overlay(vkb::Drawer &)
 
 void TimelineSemaphore::finish()
 {
+	if (!device)
+	{
+		return;
+	}
+
 	// Draining queues which submit out-of-order can be quite tricky, since QueueWaitIdle can deadlock for threads which want to run ahead.
 	// If we call Submit waiting for a semaphore which is yet to be signalled,
 	// QueueWaitIdle will not finish until a signal in another thread happens.
