@@ -62,6 +62,7 @@ set(ORDER_LIST
     "push_descriptors"
     "raytracing_basic"
     "timeline_semaphore"
+    "synchronization_2"
     "buffer_device_address"
     "descriptor_indexing"
 

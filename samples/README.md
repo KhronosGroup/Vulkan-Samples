@@ -184,6 +184,10 @@ using out-of-order signal and wait, multiple waits on same semaphore in differen
 **Extensions**: [```VK_KHR_buffer_device_address```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_buffer_device_address.html)
 Demonstrates how to use the buffer device address feature, which enables extreme flexibility in how buffer memory is accessed.
 
+### [Synchronization2](./extensions/synchronization_2)<br/>
+**Extension** [```VK_KHR_synchronization2```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_synchronization2)<br/>
+Demonstrates the use of the reworked synchronization api introduced with `VK_KHR_synchronization2`. Based on the compute shading N-Body particle system, this sample uses the new extension to streamline the memory barriers used for the compute and graphics work submissions.
+
 ### [Descriptor indexing](./extensions/descriptor_indexing)<br/>
 **Extensions**: [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html)
 Demonstrates how to use descriptor indexing to enable update-after-bind and non-dynamically uniform indexing of descriptors.
