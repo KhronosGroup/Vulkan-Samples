@@ -306,7 +306,9 @@ void RenderContext::begin_frame()
 
 	auto &prev_frame = *frames.at(active_frame_index);
 
-	acquired_semaphore = prev_frame.request_semaphore();
+	// We will use the acquired semaphore in a different frame context,
+	// so we need to hold ownership.
+	acquired_semaphore = prev_frame.request_semaphore_with_ownership();
 
 	if (swapchain)
 	{
@@ -413,7 +415,11 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 
 	// Frame is not active anymore
 	frame_active = false;
-	acquired_semaphore = VK_NULL_HANDLE;
+	if (acquired_semaphore)
+	{
+		release_owned_semaphore(acquired_semaphore);
+		acquired_semaphore = VK_NULL_HANDLE;
+	}
 }
 
 VkSemaphore RenderContext::consume_acquired_semaphore()
