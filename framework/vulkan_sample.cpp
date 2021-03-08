@@ -93,6 +93,7 @@ bool VulkanSample::prepare(Platform &platform)
 	surface = platform.get_window().create_surface(*instance);
 
 	auto &gpu = instance->get_suitable_gpu();
+	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
 	if (gpu.get_features().textureCompressionASTC_LDR)

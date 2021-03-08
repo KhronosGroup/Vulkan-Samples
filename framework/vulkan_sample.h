@@ -296,6 +296,18 @@ class VulkanSample : public Application
 	 */
 	Configuration configuration{};
 
+	/**
+	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
+	 * Very specific feature which is used by async compute samples.
+	 * Needs to be called before ::prepare().
+	 * @param enable If true, present queue will have prio 1.0 and other queues have prio 0.5.
+	 * Default state is false, where all queues have 0.5 priority.
+	 */
+	void set_high_priority_graphics_queue_enable(bool enable)
+	{
+		high_priority_graphics_queue = enable;
+	}
+
   private:
 	/** @brief Set of device extensions to be enabled for this example and wether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> device_extensions;
@@ -305,5 +317,8 @@ class VulkanSample : public Application
 
 	/** @brief The Vulkan API version to request for this sample at instance creation time */
 	uint32_t api_version = VK_API_VERSION_1_0;
+
+	/** @brief Whether or not we want a high priority graphics queue. */
+	bool high_priority_graphics_queue{false};
 };
 }        // namespace vkb
