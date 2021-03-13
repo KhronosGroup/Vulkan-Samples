@@ -98,13 +98,21 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	{
 		return VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 	}
-	else if (ext == "rmiss")
+	else if (ext == "rahit")
 	{
-		return VK_SHADER_STAGE_MISS_BIT_KHR;
+		return VK_SHADER_STAGE_ANY_HIT_BIT_KHR;
 	}
 	else if (ext == "rchit")
 	{
 		return VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+	}
+	else if (ext == "rmiss")
+	{
+		return VK_SHADER_STAGE_MISS_BIT_KHR;
+	}
+	else if (ext == "rint")
+	{
+		return VK_SHADER_STAGE_INTERSECTION_BIT_KHR;
 	}
 	else if (ext == "rcall")
 	{

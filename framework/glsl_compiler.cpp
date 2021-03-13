@@ -54,11 +54,17 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 		case VK_SHADER_STAGE_RAYGEN_BIT_KHR:
 			return EShLangRayGen;
 
-		case VK_SHADER_STAGE_MISS_BIT_KHR:
-			return EShLangMiss;
+		case VK_SHADER_STAGE_ANY_HIT_BIT_KHR:
+			return EShLangAnyHit;
 
 		case VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR:
 			return EShLangClosestHit;
+
+		case VK_SHADER_STAGE_MISS_BIT_KHR:
+			return EShLangMiss;
+
+		case VK_SHADER_STAGE_INTERSECTION_BIT_KHR:
+			return EShLangIntersect;
 
 		case VK_SHADER_STAGE_CALLABLE_BIT_KHR:
 			return EShLangCallable;
