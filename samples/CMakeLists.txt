@@ -59,6 +59,7 @@ set(ORDER_LIST
 
     #Extension Samples
     "conservative_rasterization"
+    "fragment_shading_rate"
     "push_descriptors"
     "raytracing_basic"
     "timeline_semaphore"
