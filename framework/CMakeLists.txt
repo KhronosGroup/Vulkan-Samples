@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -210,6 +210,9 @@ set(CORE_FILES
     core/framebuffer.h
     core/render_pass.h
     core/query_pool.h
+    core/scratch_buffer.h
+    core/acceleration_structure.h
+    core/shader_binding_table.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
@@ -233,7 +236,10 @@ set(CORE_FILES
     core/sampler.cpp
     core/framebuffer.cpp
     core/render_pass.cpp
-    core/query_pool.cpp)
+    core/query_pool.cpp
+    core/scratch_buffer.cpp
+    core/acceleration_structure.cpp
+    core/shader_binding_table.cpp)
 
 set(PLATFORM_FILES
     # Header Files
@@ -379,6 +385,15 @@ if(${VKB_VALIDATION_LAYERS})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
 endif()
 
+# GPU assisted validation layers are not available on macOS.
+if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
+    if (APPLE)
+        message(WARNING "GPU assisted validation layers are not currently available on macOS.")
+    else()
+        target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+    endif()
+endif()
+
 if(${VKB_WARNINGS_AS_ERRORS})
     message(STATUS "Warnings as Errors Enabled")
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -408,6 +423,10 @@ target_link_libraries(${PROJECT_NAME}
     spdlog
     ctpl
     docopt)
+
+if(${NEED_LINK_ATOMIC})
+    target_link_libraries(${PROJECT_NAME} atomic)
+endif()
 
 # Link platform specific libraries
 if(ANDROID)

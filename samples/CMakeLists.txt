@@ -62,6 +62,10 @@ set(ORDER_LIST
     "fragment_shading_rate"
     "push_descriptors"
     "raytracing_basic"
+    "timeline_semaphore"
+    "synchronization_2"
+    "buffer_device_address"
+    "descriptor_indexing"
 
     #Performance Samples
     "swapchain_images"
@@ -78,7 +82,9 @@ set(ORDER_LIST
     "specialization_constants"
     "command_buffer_usage"
     "multithreading_render_passes"
-    "afbc")
+    "afbc"
+    "16bit_storage_input_output"
+    "16bit_arithmetic")
 
 # Orders the sample ids by the order list above
 order_sample_list(

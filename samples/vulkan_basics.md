@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -58,7 +58,7 @@ table below gives a summary, and each feature is explored in more detail beneath
 | State management        | Global state               | State objects              |
 | API execution model     | Synchronous                | Asynchronous               |
 | API threading model     | Single threaded            | Multi-threaded             |
-| API error checking      | Extensive runtime checks   | Only via layer drivers     |
+| API error checking      | Extensive runtime checks   | Only via layers            |
 | Render pass abstraction | Inferred render passes     | Explicit render passes     |
 | Memory allocation       | Client-server pools        | Shared memory pool         |
 | Memory usage            | Typed allocations          | Typed views                |

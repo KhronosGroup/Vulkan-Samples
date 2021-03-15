@@ -109,7 +109,15 @@ Vulkan gives the application some significant control over the number of swapcha
 ### [Wait idle](./performance/wait_idle)<br/>
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
+### [16-bit storage InputOutput](./performance/16bit_storage_input_output)
+This sample compares bandwidth consumption when using FP32 varyings compared to using FP16 varyings with `VK_KHR_16bit_storage`.
 - 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+
+### [16-bit arithmetic](./performance/16bit_arithmetic)
+This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.
+The sample also shows how to enable 16-bit storage for SSBOs and push constants.
+
+- 🎓 [How to effectively use 16-bit arithmetic in shaders](./performance/16bit_arithmetic/16bit_arithmetic_tutorial.md)
 
 ## API samples
 
@@ -167,6 +175,23 @@ Render a basic scene using the official cross-vendor ray tracing extension. Show
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
 
+### [Timeline semaphore](./extensions/timeline_semaphore)<br/>
+**Extensions**: [```VK_KHR_timeline_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_timeline_semaphore.html)
+Demonstrates various use cases which are enabled with timeline semaphores. The sample implements "Game of Life" in an esoteric way,
+
+### [Buffer device address](./extensions/buffer_device_address)<br/>
+**Extensions**: [```VK_KHR_buffer_device_address```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_buffer_device_address.html)
+Demonstrates how to use the buffer device address feature, which enables extreme flexibility in how buffer memory is accessed.
+
+### [Synchronization2](./extensions/synchronization_2)<br/>
+**Extension** [```VK_KHR_synchronization2```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_synchronization2)<br/>
+Demonstrates the use of the reworked synchronization api introduced with `VK_KHR_synchronization2`. Based on the compute shading N-Body particle system, this sample uses the new extension to streamline the memory barriers used for the compute and graphics work submissions.
+
+### [Descriptor indexing](./extensions/descriptor_indexing)<br/>
+**Extensions**: [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html)
+Demonstrates how to use descriptor indexing to enable update-after-bind and non-dynamically uniform indexing of descriptors.
+
 ### [Fragment shading rate](./extensions/fragment_shading_rate)<br/>
 **Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)<br/>
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
+using out-of-order signal and wait, multiple waits on same semaphore in different queues, waiting and signalling semaphore on host.
