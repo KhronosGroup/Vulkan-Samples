@@ -178,6 +178,7 @@ Render a procedural image using OpenGL and incorporate that rendered content int
 ### [Timeline semaphore](./extensions/timeline_semaphore)<br/>
 **Extensions**: [```VK_KHR_timeline_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_timeline_semaphore.html)
 Demonstrates various use cases which are enabled with timeline semaphores. The sample implements "Game of Life" in an esoteric way,
+using out-of-order signal and wait, multiple waits on same semaphore in different queues, waiting and signalling semaphore on host.
 
 ### [Buffer device address](./extensions/buffer_device_address)<br/>
 **Extensions**: [```VK_KHR_buffer_device_address```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_buffer_device_address.html)
@@ -194,4 +195,3 @@ Demonstrates how to use descriptor indexing to enable update-after-bind and non-
 ### [Fragment shading rate](./extensions/fragment_shading_rate)<br/>
 **Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)<br/>
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
-using out-of-order signal and wait, multiple waits on same semaphore in different queues, waiting and signalling semaphore on host.
