@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,19 +58,15 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	auto &frame          = render_context.get_last_rendered_frame();
 	auto &src_image_view = frame.get_render_target().get_views().at(0);
 
-	auto width  = render_context.get_surface_extent().width;
-	auto height = render_context.get_surface_extent().height;
+	auto width    = render_context.get_surface_extent().width;
+	auto height   = render_context.get_surface_extent().height;
+	auto dst_size = width * height * 4;
 
-	core::Image dst_image{render_context.get_device(),
-	                      VkExtent3D{width, height, 1},
-	                      format,
-	                      VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-	                      VMA_MEMORY_USAGE_GPU_TO_CPU,
-	                      VK_SAMPLE_COUNT_1_BIT,
-	                      1, 1,
-	                      VK_IMAGE_TILING_LINEAR};
-
-	core::ImageView dst_image_view{dst_image, VK_IMAGE_VIEW_TYPE_2D};
+	core::Buffer dst_buffer{render_context.get_device(),
+	                        dst_size,
+	                        VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                        VMA_MEMORY_USAGE_GPU_TO_CPU,
+	                        VMA_ALLOCATION_CREATE_MAPPED_BIT};
 
 	const auto &queue = render_context.get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
@@ -78,17 +74,15 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	cmd_buf.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
-	// Enable destination image to be written to
+	// Enable destination buffer to be written to
 	{
-		ImageMemoryBarrier memory_barrier{};
+		BufferMemoryBarrier memory_barrier{};
 		memory_barrier.src_access_mask = 0;
 		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		cmd_buf.image_memory_barrier(dst_image_view, memory_barrier);
+		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Enable framebuffer image view to be read from
@@ -109,26 +103,26 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
 
 	// Copy framebuffer image memory
-	VkImageCopy image_copy_region{};
-	image_copy_region.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_copy_region.srcSubresource.layerCount = 1;
-	image_copy_region.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_copy_region.dstSubresource.layerCount = 1;
-	image_copy_region.extent.width              = width;
-	image_copy_region.extent.height             = height;
-	image_copy_region.extent.depth              = 1;
+	VkBufferImageCopy image_copy_region{};
+	image_copy_region.bufferRowLength             = width;
+	image_copy_region.bufferImageHeight           = height;
+	image_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_copy_region.imageSubresource.layerCount = 1;
+	image_copy_region.imageExtent.width           = width;
+	image_copy_region.imageExtent.height          = height;
+	image_copy_region.imageExtent.depth           = 1;
 
-	cmd_buf.copy_image(src_image_view.get_image(), dst_image, {image_copy_region});
+	cmd_buf.copy_image_to_buffer(src_image_view.get_image(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, dst_buffer, {image_copy_region});
 
-	// Enable destination image to map image memory
+	// Enable destination buffer to map memory
 	{
-		ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_GENERAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		BufferMemoryBarrier memory_barrier{};
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_HOST_READ_BIT;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_HOST_BIT;
 
-		cmd_buf.image_memory_barrier(dst_image_view, memory_barrier);
+		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
 	// Revert back the framebuffer image view from transfer to present
@@ -148,16 +142,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 
 	queue.wait_idle();
 
-	auto raw_data = dst_image.map();
+	auto raw_data = dst_buffer.map();
 
-	// Android requires the sub resource to be queried while the memory is mapped
-	VkImageSubresource  subresource{VK_IMAGE_ASPECT_COLOR_BIT};
-	VkSubresourceLayout subresource_layout;
-	vkGetImageSubresourceLayout(render_context.get_device().get_handle(), dst_image.get_handle(), &subresource, &subresource_layout);
-
-	raw_data += subresource_layout.offset;
-
-	// Creates a pointer to the address of the first byte past the offset of the image data
+	// Creates a pointer to the address of the first byte of the image data
 	// Replace the A component with 255 (remove transparency)
 	// If swapchain format is BGR, swapping the R and B components
 	uint8_t *data = raw_data;
@@ -165,41 +152,31 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	{
 		for (size_t i = 0; i < height; ++i)
 		{
-			// Gets the first pixel of the first row of the image (a pixel is 4 bytes)
-			unsigned int *pixel = (unsigned int *) data;
-
 			// Iterate over each pixel, swapping R and B components and writing the max value for alpha
 			for (size_t j = 0; j < width; ++j)
 			{
-				auto temp                = *((uint8_t *) pixel + 2);
-				*((uint8_t *) pixel + 2) = *((uint8_t *) pixel);
-				*((uint8_t *) pixel)     = temp;
-				*((uint8_t *) pixel + 3) = 255;
+				auto temp   = *(data + 2);
+				*(data + 2) = *(data);
+				*(data)     = temp;
+				*(data + 3) = 255;
 
 				// Get next pixel
-				pixel++;
+				data += 4;
 			}
-			// Pointer arithmetic to get the first byte in the next row of pixels
-			data += subresource_layout.rowPitch;
 		}
 	}
 	else
 	{
 		for (size_t i = 0; i < height; ++i)
 		{
-			// Gets the first pixel of the first row of the image (a pixel is 4 bytes)
-			unsigned int *pixel = (unsigned int *) data;
-
 			// Iterate over each pixel, writing the max value for alpha
 			for (size_t j = 0; j < width; ++j)
 			{
-				*((uint8_t *) pixel + 3) = 255;
+				*(data + 3) = 255;
 
 				// Get next pixel
-				pixel++;
+				data += 4;
 			}
-			// Pointer arithmetic to get the first byte in the next row of pixels
-			data += subresource_layout.rowPitch;
 		}
 	}
 
@@ -208,9 +185,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	                     width,
 	                     height,
 	                     4,
-	                     static_cast<uint32_t>(subresource_layout.rowPitch));
+	                     width * 4);
 
-	dst_image.unmap();
+	dst_buffer.unmap();
 }        // namespace vkb
 
 std::string to_snake_case(const std::string &text)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -226,6 +226,8 @@ class CommandBuffer
 	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
 
 	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
+
+	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions);
 
 	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
 

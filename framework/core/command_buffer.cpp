@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -453,6 +453,12 @@ void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core:
 	vkCmdCopyBufferToImage(get_handle(), buffer.get_handle(),
 	                       image.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                       to_u32(regions.size()), regions.data());
+}
+
+void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions)
+{
+	vkCmdCopyImageToBuffer(get_handle(), image.get_handle(), image_layout,
+	                       buffer.get_handle(), to_u32(regions.size()), regions.data());
 }
 
 void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
