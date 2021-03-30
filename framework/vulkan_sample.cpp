@@ -333,7 +333,8 @@ void VulkanSample::input_event(const InputEvent &input_event)
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
 		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
-		if (key_event.get_action() == KeyAction::Down && key_event.get_code() == KeyCode::PrintScreen)
+		if (key_event.get_action() == KeyAction::Down &&
+		    (key_event.get_code() == KeyCode::PrintScreen || key_event.get_code() == KeyCode::F12))
 		{
 			screenshot(*render_context, "screenshot-" + get_name());
 		}
