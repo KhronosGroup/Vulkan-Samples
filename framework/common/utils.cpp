@@ -20,19 +20,11 @@
 #include <queue>
 #include <stdexcept>
 
-#include "core/pipeline_layout.h"
-#include "core/shader_module.h"
 #include "graphing/framework_graph.h"
 #include "graphing/scene_graph.h"
-#include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
-#include "scene_graph/components/mesh.h"
-#include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/perspective_camera.h"
-#include "scene_graph/components/sampler.h"
 #include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/components/texture.h"
-#include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/free_camera.h"
@@ -52,7 +44,10 @@ std::string get_extension(const std::string &uri)
 
 void screenshot(RenderContext &render_context, const std::string &filename)
 {
-	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	assert(render_context.get_format() == VK_FORMAT_R8G8B8A8_UNORM ||
+	       render_context.get_format() == VK_FORMAT_B8G8R8A8_UNORM ||
+	       render_context.get_format() == VK_FORMAT_R8G8B8A8_SRGB ||
+	       render_context.get_format() == VK_FORMAT_B8G8R8A8_SRGB);
 
 	// We want the last completed frame since we don't want to be reading from an incomplete framebuffer
 	auto &frame          = render_context.get_last_rendered_frame();
@@ -96,11 +91,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		cmd_buf.image_memory_barrier(src_image_view, memory_barrier);
 	}
 
-	bool swizzle = false;
-
 	// Check if framebuffer images are in a BGR format
 	auto bgr_formats = {VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_B8G8R8A8_SNORM};
-	swizzle          = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
+	bool swizzle     = std::find(bgr_formats.begin(), bgr_formats.end(), src_image_view.get_format()) != bgr_formats.end();
 
 	// Copy framebuffer image memory
 	VkBufferImageCopy image_copy_region{};

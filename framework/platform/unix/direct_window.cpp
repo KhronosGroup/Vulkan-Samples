@@ -161,16 +161,28 @@ static KeyCode map_multichar_key(int tty_fd, KeyCode initial)
 	static std::map<std::string, KeyCode> mc_map;        // Static for one-time-init
 	if (mc_map.size() == 0)
 	{
-		mc_map["[A"]  = KeyCode::Up;
-		mc_map["[B"]  = KeyCode::Down;
-		mc_map["[C"]  = KeyCode::Right;
-		mc_map["[D"]  = KeyCode::Left;
-		mc_map["[2~"] = KeyCode::Insert;
-		mc_map["[3~"] = KeyCode::DelKey;
-		mc_map["[5~"] = KeyCode::PageUp;
-		mc_map["[6~"] = KeyCode::PageDown;
-		mc_map["[H"]  = KeyCode::Home;
-		mc_map["[F"]  = KeyCode::End;
+		mc_map["[A"]   = KeyCode::Up;
+		mc_map["[B"]   = KeyCode::Down;
+		mc_map["[C"]   = KeyCode::Right;
+		mc_map["[D"]   = KeyCode::Left;
+		mc_map["[2~"]  = KeyCode::Insert;
+		mc_map["[3~"]  = KeyCode::DelKey;
+		mc_map["[5~"]  = KeyCode::PageUp;
+		mc_map["[6~"]  = KeyCode::PageDown;
+		mc_map["[H"]   = KeyCode::Home;
+		mc_map["[F"]   = KeyCode::End;
+		mc_map["OP"]   = KeyCode::F1;
+		mc_map["OQ"]   = KeyCode::F2;
+		mc_map["OR"]   = KeyCode::F3;
+		mc_map["OS"]   = KeyCode::F4;
+		mc_map["[15~"] = KeyCode::F5;
+		mc_map["[17~"] = KeyCode::F6;
+		mc_map["[18~"] = KeyCode::F7;
+		mc_map["[19~"] = KeyCode::F8;
+		mc_map["[20~"] = KeyCode::F9;
+		mc_map["[21~"] = KeyCode::F10;
+		mc_map["[23~"] = KeyCode::F11;
+		mc_map["[24~"] = KeyCode::F12;
 	}
 
 	char        key;
