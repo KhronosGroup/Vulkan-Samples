@@ -803,7 +803,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		for (auto child_node_index : model.nodes[node_it.second].children)
 		{
-			traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
+			traverse_nodes.push(std::make_pair(std::ref(current_node), child_node_index));
 		}
 	}
 
