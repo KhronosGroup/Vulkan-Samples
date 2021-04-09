@@ -299,7 +299,7 @@ class VulkanSample : public Application
 	/**
 	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
 	 * Very specific feature which is used by async compute samples.
-	 * Needs to be called before ::prepare().
+	 * Needs to be called before prepare().
 	 * @param enable If true, present queue will have prio 1.0 and other queues have prio 0.5.
 	 * Default state is false, where all queues have 0.5 priority.
 	 */
