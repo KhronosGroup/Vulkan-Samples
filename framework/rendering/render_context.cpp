@@ -346,8 +346,8 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	VkSubmitInfo submit_info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
 
-	submit_info.commandBufferCount   = to_u32(cmd_buf_handles.size());
-	submit_info.pCommandBuffers      = cmd_buf_handles.data();
+	submit_info.commandBufferCount = to_u32(cmd_buf_handles.size());
+	submit_info.pCommandBuffers    = cmd_buf_handles.data();
 
 	if (wait_semaphore != VK_NULL_HANDLE)
 	{
@@ -425,7 +425,7 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 VkSemaphore RenderContext::consume_acquired_semaphore()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
-	auto sem = acquired_semaphore;
+	auto sem           = acquired_semaphore;
 	acquired_semaphore = VK_NULL_HANDLE;
 	return sem;
 }

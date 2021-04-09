@@ -41,7 +41,7 @@ class SemaphorePool
 
 	VkSemaphore request_semaphore();
 	VkSemaphore request_semaphore_with_ownership();
-	void release_owned_semaphore(VkSemaphore semaphore);
+	void        release_owned_semaphore(VkSemaphore semaphore);
 
 	void reset();
 

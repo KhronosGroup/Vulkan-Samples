@@ -24,9 +24,10 @@ layout(rgba16f, set = 0, binding = 1) writeonly uniform image2D out_tex;
 layout(push_constant) uniform Registers
 {
 	uvec2 resolution;
-	vec2 inv_resolution;
-	vec2 inv_input_resolution;
-} registers;
+	vec2  inv_resolution;
+	vec2  inv_input_resolution;
+}
+registers;
 
 vec2 get_uv(vec2 uv, float x, float y, float scale)
 {
@@ -35,10 +36,10 @@ vec2 get_uv(vec2 uv, float x, float y, float scale)
 
 vec3 bloom_blur(vec2 uv, float uv_scale)
 {
-	vec3 rgb = vec3(0.0);
-	const float N = -1.0;
-	const float Z = 0.0;
-	const float P = 1.0;
+	vec3        rgb = vec3(0.0);
+	const float N   = -1.0;
+	const float Z   = 0.0;
+	const float P   = 1.0;
 	rgb += 0.25 * textureLod(in_tex, get_uv(uv, Z, Z, uv_scale), 0.0).rgb;
 	rgb += 0.0625 * textureLod(in_tex, get_uv(uv, N, P, uv_scale), 0.0).rgb;
 	rgb += 0.0625 * textureLod(in_tex, get_uv(uv, P, P, uv_scale), 0.0).rgb;
