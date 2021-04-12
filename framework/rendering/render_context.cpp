@@ -414,12 +414,12 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 	}
 
 	// Frame is not active anymore
-	frame_active = false;
 	if (acquired_semaphore)
 	{
 		release_owned_semaphore(acquired_semaphore);
 		acquired_semaphore = VK_NULL_HANDLE;
 	}
+	frame_active = false;
 }
 
 VkSemaphore RenderContext::consume_acquired_semaphore()
