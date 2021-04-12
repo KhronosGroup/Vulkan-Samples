@@ -49,7 +49,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 				queue_priorities[queue_family_index].push_back(1.0f);
 				for (uint32_t i = 1; i < queue_family_property.queueCount; i++)
 				{
-					queue_priorities[queue_family_index][i] = 0.5f;
+					queue_priorities[queue_family_index].push_back(0.5f);
 				}
 			}
 			else
