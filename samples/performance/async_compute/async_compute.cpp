@@ -59,7 +59,7 @@ static VkExtent3D downsample_extent(const VkExtent3D &extent, uint32_t level)
 
 void AsyncComputeSample::prepare_render_targets()
 {
-	// To make this sample demanding enough to saturate mobile devices, use 4K.
+	// To make this sample demanding enough to saturate the tested mobile devices, use 4K.
 	// Could base this off the swapchain extent, but comparing cross-device performance
 	// could get awkward.
 	VkExtent3D size = {3840, 2160, 1};
@@ -85,7 +85,18 @@ void AsyncComputeSample::prepare_render_targets()
 	};
 
 	// 8K shadow-map overkill to stress devices.
-	vkb::core::Image shadow_target{*device, VkExtent3D{8 * 1024, 8 * 1024, 1}, VK_FORMAT_D16_UNORM,
+	// Min-spec is 4K however, so clamp to that if required.
+	VkExtent3D              shadow_resolution{8 * 1024, 8 * 1024, 1};
+	VkImageFormatProperties depth_properties{};
+	vkGetPhysicalDeviceImageFormatProperties(device->get_gpu().get_handle(), VK_FORMAT_D16_UNORM, VK_IMAGE_TYPE_2D,
+	                                         VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+	                                         0, &depth_properties);
+	shadow_resolution.width  = std::min(depth_properties.maxExtent.width, shadow_resolution.width);
+	shadow_resolution.height = std::min(depth_properties.maxExtent.height, shadow_resolution.height);
+	shadow_resolution.width  = std::min(device->get_gpu().get_properties().limits.maxFramebufferWidth, shadow_resolution.width);
+	shadow_resolution.height = std::min(device->get_gpu().get_properties().limits.maxFramebufferHeight, shadow_resolution.height);
+
+	vkb::core::Image shadow_target{*device, shadow_resolution, VK_FORMAT_D16_UNORM,
 	                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 	                               VMA_MEMORY_USAGE_GPU_ONLY};
 
