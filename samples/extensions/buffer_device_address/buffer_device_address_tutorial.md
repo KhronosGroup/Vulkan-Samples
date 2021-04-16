@@ -32,7 +32,7 @@ with full capability to perform pointer arithmetic and other fun tricks.
 To be able to grab a device address from a `VkBuffer`, we just need to modify our buffer creation slightly.
 
 First, the buffer must be created with `SHADER_DEVICE_ADDRESS_BIT` usage.
-```
+```cpp
 VkBufferCreateInfo create_info = vkb::initializers::buffer_create_info(
     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR, mesh_size);
 ```
@@ -41,14 +41,14 @@ After that, the memory we bind said buffer to must be allocated with a similar f
 This time, it is a `pNext` struct instead.
 This struct is core in Vulkan 1.1, but otherwise requires the `VK_KHR_device_group` extension.
 Vulkan 1.1 should be considered a given if buffer device address is supported, so this is more of a technicality than anything else.
-```
+```cpp
 VkMemoryAllocateFlagsInfoKHR flags_info{VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_FLAGS_INFO_KHR};
 flags_info.flags             = VK_MEMORY_ALLOCATE_DEVICE_ADDRESS_BIT_KHR;
 memory_allocation_info.pNext = &flags_info;
 ```
 
 Finally, once we have allocated and bound the buffer to the memory, we can query the address.
-```
+```cpp
 VkBufferDeviceAddressInfoKHR address_info{VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO_KHR};
 address_info.buffer = buffer.buffer;
 buffer.gpu_address  = vkGetBufferDeviceAddressKHR(device, &address_info);
@@ -68,17 +68,17 @@ faux pointer types instead.
 GLSL does not have true pointer types,
 but this is a way to introduce pointers without completely changing the language. E.g.:
 
-```
+```glsl
 #extension GL_EXT_buffer_reference : require
 ```
 
 We can forward-declare types, which is nice for data structures like linked lists.
-```
+```glsl
 layout(buffer_reference) buffer Position;
 ```
 
 We can declare a buffer type as well. This is not an SSBO declaration, but it basically declares a pointer to struct.
-```
+```glsl
 layout(std430, buffer_reference, buffer_reference_align = 8) writeonly buffer Position
 {
     vec2 positions[];
@@ -89,7 +89,7 @@ which is of this type is at least 8 byte aligned. This is required since the com
 It is possible to use scalar alignments here if you need it.
 
 We can now place the `Position` type inside another buffer, or another buffer reference type, e.g.:
-```
+```glsl
 layout(std430, buffer_reference, buffer_reference_align = 8) readonly buffer PositionReferences
 {
     Position buffers[];
@@ -99,7 +99,7 @@ Now we have a pointer to array of pointers ... spicy!
 
 Finally, we could place a buffer reference inside push constants, an SSBO or a UBO.
 
-```
+```glsl
 layout(std430, set = 0, binding = 0) readonly buffer Pointers
 {
     Positions positions[];
@@ -156,7 +156,7 @@ When using Vulkan GLSL, these `Aligned` values are inferred from `buffer_referen
 A key aspect of buffer device address is that we gain the capability to cast pointers freely.
 
 While it is technically possible (and useful in some cases!) to "cast pointers" with SSBOs with clever use of aliased declarations like so:
-```
+```glsl
 layout(set = 0, binding = 0) buffer SSBO { float v1[]; };
 layout(set = 0, binding = 0) buffer SSBO2 { vec4 v4[]; };
 ```
@@ -167,7 +167,7 @@ it gets kind of hairy quickly, and not as flexible when dealing with composite t
 When we have casts between integers and pointers, we get the full madness that is pointer arithmetic.
 Nothing stops us from doing:
 
-```
+```glsl
 #extension GL_EXT_buffer_reference : require
 layout(buffer_reference) buffer PointerToFloat { float v; };
 
@@ -183,7 +183,7 @@ In SPIR-V, this is a simple `OpBitcast`.
 Not all GPUs support 64-bit integers, so it is also possible to use `uvec2` to represent pointers.
 This way, we can do raw pointer arithmetic in 32-bit, which might be more optimal anyways.
 
-```
+```glsl
 #extension GL_EXT_buffer_reference_uvec2 : require
 layout(buffer_reference) buffer PointerToFloat { float v; };
 PointerToFloat pointer = load_pointer();
@@ -220,7 +220,7 @@ meaningful way to demonstrate this feature.
 In compute, we pass down a pointer in push constants, which is a very fast way of providing shaders
 with a buffer as there is no descriptor set required!
 
-```
+```glsl
 layout(std430, buffer_reference, buffer_reference_align = 8) writeonly buffer Position
 {
     vec2 positions[];
@@ -248,7 +248,7 @@ The actual implementation details are not very interesting.
 In the vertex shader, we do our faux "meshlet" rendering by assigning one VBO block per `gl_InstanceIndex`.
 For multi-draw-indirect use cases, it would be natural to use `gl_DrawID` perhaps.
 
-```
+```glsl
 layout(std430, buffer_reference, buffer_reference_align = 8) readonly buffer Position
 {
     vec2 positions[];

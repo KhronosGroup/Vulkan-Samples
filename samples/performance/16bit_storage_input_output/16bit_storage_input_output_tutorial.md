@@ -67,7 +67,7 @@ shaders.
 
 The native 16-bit types can only be used when storing to the variable, or when loading from the variable.
 
-```
+```glsl
 // GL_EXT_16bit_storage would normally be used here, but that extension does not support input/output.
 // glslang enables SPIR-V capabilities as required.
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
@@ -77,7 +77,7 @@ vec4 arithmetic = blah(); // Arithmetic happens in FP32.
 Foo = f16vec4(arithmetic); // Narrowing store.
 ```
 
-```
+```glsl
 // GL_EXT_16bit_storage would normally be used here, but that extension does not support input/output.
 // glslang enables SPIR-V capabilities as required.
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
@@ -129,7 +129,7 @@ that the types used in vertex output and fragment input interfaces are as narrow
 In the first scenario, the vertex shader has 3 vec3 outputs,
 which is not a lot when considering modern rendering engines.
 
-```
+```glsl
 layout (location = 0) out vec3 o_vertex_color;
 layout (location = 1) out vec3 o_normal;
 layout (location = 2) out vec3 o_delta_pos;
@@ -167,7 +167,7 @@ bandwidth savings as explicit FP16 would, but the caveat is that you cannot be s
 you know the driver implementation details. The snippet below will work on any core Vulkan 1.0 implementation,
 but it may or may not give you true FP16 vertex outputs:
 
-```
+```glsl
 // Vertex
 layout(location = 0) out mediump vec3 o_normal;
 
