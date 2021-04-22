@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -122,7 +122,7 @@ void Transform::update_world_transform()
 	if (parent)
 	{
 		auto &transform = parent->get_component<Transform>();
-		world_matrix    = world_matrix * transform.get_world_matrix();
+		world_matrix    = transform.get_world_matrix() * world_matrix;
 	}
 
 	update_world_matrix = false;
