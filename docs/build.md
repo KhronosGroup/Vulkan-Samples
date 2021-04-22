@@ -286,11 +286,12 @@ A new folder will be created in the root directory at `build\android_gradle`
 
 ### Build the project
 
-> Prefer a release build for better performance unless you want to actively debug the application.
 
 ```
 cd build/android_gradle
 ```
+
+> Prefer a release build for better performance unless you want to actively debug the application.
 
 For a release build:
 
