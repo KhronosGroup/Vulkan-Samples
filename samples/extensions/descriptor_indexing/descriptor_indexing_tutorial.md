@@ -67,7 +67,7 @@ To enable UPDATE_AFTER_BIND_BIT features for a descriptor binding, there is a li
 
 In `VkDescriptorSetLayoutCreateInfo` we must pass down binding flags in a separate struct with `pNext`.
 
-```
+```cpp
 VkDescriptorSetLayoutCreateInfo set_layout_create_info{VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO};
 set_layout_create_info.flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT_EXT;
 const VkDescriptorBindingFlagsEXT flags =
@@ -104,7 +104,7 @@ Mostly this is due to hardware considerations, but modern hardware is generally 
 
 In the beginning there was constant indexing.
 
-```
+```glsl
 layout(set = 0, binding = 0) uniform sampler2D Tex[4];
 
 texture(Tex[0], ...);
@@ -124,7 +124,7 @@ After constant indexing we have dynamic indexing.
 This has been supported since Vulkan 1.0. The dynamic indexing features allow us to use a non-constant expression
 to index an array. The restriction is that the index must be **dynamically uniform**, which will be explained later ...
 
-```
+```glsl
 layout(set = 0, binding = 0) uniform sampler2D Tex[4];
 
 texture(Tex[dynamically_uniform_expression], ...);
@@ -144,7 +144,7 @@ The rationale for having to annotate like this is that driver compiler backends
 would be forced to be more conservative than necessary if applications were not required
 to use `nonuniformEXT`.
 
-```
+```glsl
 // Unsized arrays, nice!
 layout(set = 0, binding = 0) uniform sampler2D Tex[];
 texture(Tex[nonuniformEXT(arbitrary_expression)], ...);
@@ -214,7 +214,7 @@ it could trivially optimize away `nonuniformEXT(subgroupBroadcastFirst())` anywa
 The common reason to use subgroups in the first place, is that it was an old workaround for lack of true non-uniform indexing,
 especially for desktop GPUs. A common pattern would be something like:
 
-```
+```glsl
 bool needs_work = true;
 uint index = something_non_uniform();
 do
@@ -234,7 +234,7 @@ do
 
 ##### Vulkan GLSL examples
 
-```
+```glsl
 #version 450
 #extension GL_EXT_nonuniform_qualifier : require
 layout(local_size_x = 64) in;
@@ -264,7 +264,7 @@ void main()
 
 With DXC:
 
-```
+```hlsl
 Texture2D<float4> Tex[] : register(t0, space0);
 SamplerState Samp[] : register(s0, space1);
 
@@ -316,7 +316,7 @@ The goal of this sample is to demonstrate how to use the two main use cases enab
 On the left side, we bind 64 unique textures and render them all in one draw call.
 This makes use of non-uniform indexing of descriptors and assigns `gl_InstanceIndex` to an index into the descriptor array.
 
-```
+```glsl
 #extension GL_EXT_nonuniform_qualifier : require
 layout(set = 0, binding = 0) uniform texture2D Textures[];
 layout(set = 1, binding = 0) uniform sampler ImmutableSampler;
@@ -332,7 +332,7 @@ descriptors to a single descriptor set. This is a style where we eliminate most 
 and treat descriptor memory as a ring buffer.
 We can place an offset into this ring in push constant memory, e.g.:
 
-```
+```glsl
 layout(push_constant) uniform Registers
 {
     layout(offset = 4) uint table_offset;
@@ -388,7 +388,7 @@ to enable GPU-assisted validation if `VKB_VALIDATION_LAYERS_GPU_ASSISTED` is set
 The key thing to know is that this is an extension exposed by the validation layer itself,
 so we need to query instance extensions directly on the layer. E.g.:
 
-```
+```cpp
 bool validation_features = false;
 uint32_t layer_instance_extension_count;
 VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, nullptr));
@@ -408,7 +408,7 @@ for (auto &available_extension : available_layer_instance_extensions)
 
 If present, we can pass down information to `vkCreateInstance` about the features we need to enable:
 
-```
+```cpp
 VkValidationFeaturesEXT validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
 if (validation_features)
 {
@@ -429,7 +429,7 @@ Instrumented shaders will write here as they execute.
 
 If we enable this, and say pretend that we forgot to update descriptor #3:
 
-```
+```cpp
 for (unsigned i = 0; i < NumDescriptorsNonUniform; i++)
 {
     ...
@@ -442,7 +442,7 @@ for (unsigned i = 0; i < NumDescriptorsNonUniform; i++)
 We end up with:
 
 ```
-error] [framework/core/instance.cpp:41] -1993010233 - UNASSIGNED-Descriptor uninitialized: Validation Error: [ UNASSIGNED-Descriptor uninitialized ] Object 0: handle = 0x55625acf5600, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0x893513c7 | Descriptor index 3 is uninitialized.  Command buffer (0x55625b187090). Draw Index 0x4. Pipeline (0x520000000052). Shader Module (0x510000000051). Shader Instruction Index = 59.  Stage = Fragment.  Fragment coord (x,y) = (930.5, 0.5).  Unable to find SPIR-V OpLine for source information.  Build shader with debug info to get source information.
+[error] [framework/core/instance.cpp:41] -1993010233 - UNASSIGNED-Descriptor uninitialized: Validation Error: [ UNASSIGNED-Descriptor uninitialized ] Object 0: handle = 0x55625acf5600, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0x893513c7 | Descriptor index 3 is uninitialized.  Command buffer (0x55625b187090). Draw Index 0x4. Pipeline (0x520000000052). Shader Module (0x510000000051). Shader Instruction Index = 59.  Stage = Fragment.  Fragment coord (x,y) = (930.5, 0.5).  Unable to find SPIR-V OpLine for source information.  Build shader with debug info to get source information.
 [error] [framework/core/instance.cpp:41] -1993010233 - UNASSIGNED-Descriptor uninitialized: Validation Error: [ UNASSIGNED-Descriptor uninitialized ] Object 0: handle = 0x55625acf5600, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0x893513c7 | Descriptor index 67 is uninitialized.  Command buffer (0x55625b184d60). Draw Index 0x4. Pipeline (0x520000000052). Shader Module (0x510000000051). Shader Instruction Index = 59.  Stage = Fragment.  Fragment coord (x,y) = (944.5, 0.5).  Unable to find SPIR-V OpLine for source information.  Build shader with debug info to get source information.
 [error] [framework/core/instance.cpp:41] -1993010233 - UNASSIGNED-Descriptor uninitialized: Validation Error: [ UNASSIGNED-Descriptor uninitialized ] Object 0: handle = 0x55625acf5600, type = VK_OBJECT_TYPE_QUEUE; | MessageID = 0x893513c7 | Descriptor index 131 is uninitialized.  Command buffer (0x55625b1893c0). Draw Index 0x4. Pipeline (0x520000000052). Shader Module (0x510000000051). Shader Instruction Index = 59.  Stage = Fragment.  Fragment coord (x,y) = (944.5, 0.5).  Unable to find SPIR-V OpLine for source information.  Build shader with debug info to get source information.
 ```
