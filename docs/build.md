@@ -266,15 +266,17 @@ For all dependencies set the following environment variables.
 
 ## Build with Gradle
 
-`Step 1.` Generate the gradle project using the internal script by running the following command
+### Generate the gradle project 
 
-##### Windows <!-- omit in toc -->
+Use the provided script for the platform you are building on by running the following command:
+
+#### Windows <!-- omit in toc -->
 
 ```
 bldsys\scripts\generate_android_gradle.bat
 ```
 
-##### Linux <!-- omit in toc -->
+#### Linux <!-- omit in toc -->
 
 ```
 ./bldsys/scripts/generate_android_gradle.sh
@@ -282,18 +284,42 @@ bldsys\scripts\generate_android_gradle.bat
 
 A new folder will be created in the root directory at `build\android_gradle`
 
-`Step 2.` Build the project
+### Build the project
+
+> Prefer a release build for better performance unless you want to actively debug the application.
 
 ```
 cd build/android_gradle
-gradle assembleDebug
 ```
 
-`Step 3.` You can now run the apk on a connected device
+For a release build:
+
+```
+gradle assembleRelease
+``` 
+
+For a debug build:
+
+```
+gradle assembleDebug
+``` 
+
+### Install the apk on the device
+
+You can now install the apk on a connected device using the Android Debug Bridge:
+
+For a release build:
+
+```
+adb install build/outputs/apk/release/vulkan_samples-release.apk
+```
+For a debug build:
 
 ```
 adb install build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
+
+## Build with Android Studio
 
 > Alternatively, you may import the `build/android_gradle` folder in Android Studio and run the project from here
 
