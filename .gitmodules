@@ -50,3 +50,6 @@
 	path = assets
 	url = https://github.com/KhronosGroup/Vulkan-Samples-Assets
 	shallow = true
+[submodule "third_party/tinyobjloader"]
+	path = third_party/tinyobjloader
+	url = https://github.com/tinyobjloader/tinyobjloader.git
