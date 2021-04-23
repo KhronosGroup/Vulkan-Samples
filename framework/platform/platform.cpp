@@ -24,6 +24,7 @@
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
 #include "common/logging.h"
@@ -153,6 +154,28 @@ void Platform::run()
 	}
 }
 
+std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface) const
+{
+	auto context = std::make_unique<RenderContext>(device, surface, window->get_width(), window->get_height());
+
+	context->set_surface_format_priority({{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                      {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                      {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                      {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+
+	context->request_image_format(VK_FORMAT_R8G8B8A8_SRGB);
+
+	context->set_present_mode_priority({
+	    VK_PRESENT_MODE_MAILBOX_KHR,
+	    VK_PRESENT_MODE_FIFO_KHR,
+	    VK_PRESENT_MODE_IMMEDIATE_KHR,
+	});
+
+	context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+
+	return std::move(context);
+}
+
 void Platform::terminate(ExitCode code)
 {
 	if (active_app)
@@ -219,6 +242,8 @@ void Platform::set_temp_directory(const std::string &dir)
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 {
-	return {};
+	std::vector<spdlog::sink_ptr> sinks;
+	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+	return sinks;
 }
 }        // namespace vkb

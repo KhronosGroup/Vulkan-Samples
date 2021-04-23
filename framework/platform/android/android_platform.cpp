@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -284,15 +284,13 @@ void on_app_cmd(android_app *app, int32_t cmd)
 
 	switch (cmd)
 	{
-		case APP_CMD_INIT_WINDOW:
-		{
+		case APP_CMD_INIT_WINDOW: {
 			platform->get_window().resize(ANativeWindow_getWidth(app->window),
 			                              ANativeWindow_getHeight(app->window));
-			app->destroyRequested = !platform->prepare();
+			platform->set_surface_ready();
 			break;
 		}
-		case APP_CMD_CONTENT_RECT_CHANGED:
-		{
+		case APP_CMD_CONTENT_RECT_CHANGED: {
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
@@ -300,13 +298,11 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			platform->get_window().resize(width, height);
 			break;
 		}
-		case APP_CMD_GAINED_FOCUS:
-		{
+		case APP_CMD_GAINED_FOCUS: {
 			platform->get_app().set_focus(true);
 			break;
 		}
-		case APP_CMD_LOST_FOCUS:
-		{
+		case APP_CMD_LOST_FOCUS: {
 			platform->get_app().set_focus(false);
 			break;
 		}
@@ -391,7 +387,23 @@ bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	return Platform::initialize(std::move(application));
+	if (!Platform::initialize(std::move(application)))
+	{
+		return false;
+	}
+
+	// Wait until the android window is loaded before allowing the app to continue
+	do
+	{
+		poll_events();
+
+		if (app->destroyRequested != 0)
+		{
+			return false;
+		}
+	} while (!surface_ready);
+
+	return true;
 }
 
 void AndroidPlatform::create_window()
@@ -476,6 +488,11 @@ void AndroidPlatform::send_notification(const std::string &message)
 	app->activity->vm->DetachCurrentThread();
 }
 
+void AndroidPlatform::set_surface_ready()
+{
+	surface_ready = true;
+}
+
 ANativeActivity *AndroidPlatform::get_activity()
 {
 	return app->activity;
@@ -484,6 +501,19 @@ ANativeActivity *AndroidPlatform::get_activity()
 android_app *AndroidPlatform::get_android_app()
 {
 	return app;
+}
+
+std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &device, VkSurfaceKHR surface) const
+{
+	auto context = Platform::create_render_context(device, surface);
+
+	context->set_present_mode_priority({VK_PRESENT_MODE_FIFO_KHR,
+	                                    VK_PRESENT_MODE_MAILBOX_KHR,
+	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
+
+	context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+
+	return std::move(context);
 }
 
 std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()

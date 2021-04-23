@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2019-2021, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -113,7 +113,7 @@ function(android_sync_folder)
     set(SYNC_COMMAND ${CMAKE_COMMAND}
             -DCMAKE_MODULE_PATH=${CMAKE_MODULE_PATH}
             -DFOLDER_DIR=${TARGET_PATH}/.
-            -DDEVICE_DIR=/sdcard/Android/data/com.khronos.${PROJECT_NAME}/files/${FOLDER_NAME}/
+            -DDEVICE_DIR=/sdcard/com.khronos.${PROJECT_NAME}/${FOLDER_NAME}/
             -P "${SCRIPT_DIR}/android_sync_folder.cmake")
 
     add_custom_target(
