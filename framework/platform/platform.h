@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,10 @@
 #include "platform/application.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
+
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+#	undef Success
+#endif
 
 namespace vkb
 {

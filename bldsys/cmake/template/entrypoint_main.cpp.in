@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 {
 #	if defined(VK_USE_PLATFORM_MACOS_MVK)
 	vkb::UnixPlatform platform{vkb::UnixType::Mac, argc, argv};
-#	elif defined(VK_USE_PLATFORM_XCB_KHR)
+#	elif defined(VK_USE_PLATFORM_XCB_KHR) || defined(VK_USE_PLATFORM_XLIB_KHR) || defined(VK_USE_PLATFORM_WAYLAND_KHR)
 	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
 #	endif
 #endif

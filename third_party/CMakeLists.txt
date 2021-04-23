@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -57,14 +57,31 @@ elseif(WIN32)
 elseif(APPLE)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
 elseif(UNIX)
-    # See whether X11 is available. If not, fall back to direct-to-display mode.
-    find_package(X11 QUIET)
-    if (X11_FOUND)
-        target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
-    else()
+    # Choose WSI based on VKB_WSI_SELECTION
+    if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
+        find_package(PkgConfig REQUIRED)
+    endif()
+    if (VKB_WSI_SELECTION STREQUAL XCB)
+        pkg_check_modules(XCB xcb REQUIRED)
+        if (XCB_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+        pkg_check_modules(X11 x11 REQUIRED)
+        if (X11_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XLIB_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+        pkg_check_modules(WAYLAND wayland-client REQUIRED)
+        if (WAYLAND_FOUND)
+            target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WAYLAND_KHR)
+        endif()
+    elseif (VKB_WSI_SELECTION STREQUAL D2D)
         set(DIRECT_TO_DISPLAY TRUE)
         set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
         target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
+    else()
+        message(FATAL_ERROR "Unknown WSI")
     endif()
 endif() 
 
@@ -112,6 +129,13 @@ add_library(volk STATIC ${VOLK_FILES})
 target_link_libraries(volk PUBLIC vulkan)
 
 target_include_directories(volk PUBLIC ${VOLK_DIR})
+if (VKB_WSI_SELECTION STREQUAL XCB)
+    target_include_directories(volk PUBLIC ${XCB_INCLUDE_DIRS})
+elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+    target_include_directories(volk PUBLIC ${X11_INCLUDE_DIRS})
+elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+    target_include_directories(volk PUBLIC ${WAYLAND_INCLUDE_DIRS})
+endif()
 
 set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
 
@@ -248,6 +272,9 @@ else()
         option(GLFW_BUILD_EXAMPLES OFF)
         option(GLFW_BUILD_TESTS OFF)
         option(GLFW_INSTALL OFF)
+        if (VKB_WSI_SELECTION STREQUAL WAYLAND)
+            set(GLFW_USE_WAYLAND ON)
+        endif()
 
         add_subdirectory(glfw)
 

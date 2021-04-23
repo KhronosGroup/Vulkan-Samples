@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2020, Broadcom Inc.
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2020-2021, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,10 @@
 
 #include <chrono>
 #include <string>
+
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+#	undef None
+#endif
 
 namespace vkb
 {

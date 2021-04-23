@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,6 +33,14 @@ VKBP_ENABLE_WARNINGS()
 
 #ifndef VK_KHR_XCB_SURFACE_EXTENSION_NAME
 #	define VK_KHR_XCB_SURFACE_EXTENSION_NAME "VK_KHR_xcb_surface"
+#endif
+
+#ifndef VK_KHR_XLIB_SURFACE_EXTENSION_NAME
+#	define VK_KHR_XLIB_SURFACE_EXTENSION_NAME "VK_KHR_xlib_surface"
+#endif
+
+#ifndef VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME
+#	define VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME "VK_KHR_wayland_surface"
 #endif
 
 namespace vkb
@@ -95,7 +103,13 @@ const char *UnixPlatform::get_surface_extension()
 	}
 	else
 	{
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		return VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+		return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+		return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+#endif
 	}
 }
 

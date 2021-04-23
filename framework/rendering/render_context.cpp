@@ -28,7 +28,19 @@ RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, uint32_t wind
 {
 	if (surface != VK_NULL_HANDLE)
 	{
-		swapchain = std::make_unique<Swapchain>(device, surface);
+		VkSurfaceCapabilitiesKHR surface_properties;
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(),
+		                                                   surface,
+		                                                   &surface_properties));
+
+		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+		{
+			swapchain = std::make_unique<Swapchain>(device, surface, surface_extent);
+		}
+		else
+		{
+			swapchain = std::make_unique<Swapchain>(device, surface);
+		}
 	}
 }
 
@@ -236,6 +248,11 @@ void RenderContext::handle_surface_changes()
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(),
 	                                                   swapchain->get_surface(),
 	                                                   &surface_properties));
+
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		return;
+	}
 
 	// Only recreate the swapchain if the dimensions have changed;
 	// handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,
