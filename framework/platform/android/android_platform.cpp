@@ -31,42 +31,44 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
+#include "apps.h"
 #include "common/logging.h"
+#include "common/strings.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
-#include "vulkan_sample.h"
+#include "window_options/window_options.h"
 
 extern "C"
 {
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
+	JNIEXPORT jobjectArray JNICALL
+	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
-		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
-		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
+		auto sample_list = apps::get_samples();
 
-		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
-		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
-	}
+		jclass       c             = env->FindClass("com/khronos/vulkan_samples/model/Sample");
+		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
+		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, 0);
 
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
-	{
-		std::vector<std::string> args;
-
-		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
+		for (int sample_index = 0; sample_index < sample_list.size(); sample_index++)
 		{
-			jstring arg_string = (jstring)(env->GetObjectArrayElement(arg_strings, i));
+			const apps::SampleInfo *sample_info = reinterpret_cast<apps::SampleInfo *>(sample_list[sample_index]);
 
-			const char *arg = env->GetStringUTFChars(arg_string, 0);
+			jstring id       = env->NewStringUTF(sample_info->id.c_str());
+			jstring category = env->NewStringUTF(sample_info->category.c_str());
+			jstring author   = env->NewStringUTF(sample_info->author.c_str());
+			jstring name     = env->NewStringUTF(sample_info->name.c_str());
+			jstring desc     = env->NewStringUTF(sample_info->description.c_str());
 
-			args.push_back(std::string(arg));
+			jobjectArray j_tag_list = env->NewObjectArray(sample_info->tags.size(), env->FindClass("java/lang/String"), env->NewStringUTF(""));
+			for (int tag_index = 0; tag_index < sample_info->tags.size(); ++tag_index)
+			{
+				env->SetObjectArrayElement(j_tag_list, tag_index, env->NewStringUTF(sample_info->tags[tag_index].c_str()));
+			}
 
-			env->ReleaseStringUTFChars(arg_string, arg);
+			env->SetObjectArrayElement(j_sample_list, sample_index, env->NewObject(c, constructor, id, category, author, name, desc, j_tag_list));
 		}
 
-		vkb::Platform::set_arguments(args);
+		return j_sample_list;
 	}
 }
 
@@ -285,8 +287,8 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	switch (cmd)
 	{
 		case APP_CMD_INIT_WINDOW: {
-			platform->get_window().resize(ANativeWindow_getWidth(app->window),
-			                              ANativeWindow_getHeight(app->window));
+			platform->resize(ANativeWindow_getWidth(app->window),
+			                 ANativeWindow_getHeight(app->window));
 			platform->set_surface_ready();
 			break;
 		}
@@ -294,16 +296,15 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
-			platform->get_app().resize(width, height);
-			platform->get_window().resize(width, height);
+			platform->resize(width, height);
 			break;
 		}
 		case APP_CMD_GAINED_FOCUS: {
-			platform->get_app().set_focus(true);
+			platform->set_focus(true);
 			break;
 		}
 		case APP_CMD_LOST_FOCUS: {
-			platform->get_app().set_focus(false);
+			platform->set_focus(false);
 			break;
 		}
 	}
@@ -321,8 +322,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		int32_t key_code = AKeyEvent_getKeyCode(input_event);
 		int32_t action   = AKeyEvent_getAction(input_event);
 
-		platform->get_app().input_event(KeyInputEvent{
-		    *platform,
+		platform->input_event(KeyInputEvent{
 		    translate_key_code(key_code),
 		    translate_key_action(action)});
 	}
@@ -333,8 +333,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		float x = AMotionEvent_getX(input_event, 0);
 		float y = AMotionEvent_getY(input_event, 0);
 
-		platform->get_app().input_event(MouseButtonInputEvent{
-		    *platform,
+		platform->input_event(MouseButtonInputEvent{
 		    translate_mouse_button(0),
 		    translate_mouse_action(action),
 		    x, y});
@@ -348,8 +347,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		float x = AMotionEvent_getX(input_event, 0);
 		float y = AMotionEvent_getY(input_event, 0);
 
-		platform->get_app().input_event(TouchInputEvent{
-		    *platform,
+		platform->input_event(TouchInputEvent{
 		    pointer_id,
 		    pointer_count,
 		    translate_touch_action(action),
@@ -378,9 +376,38 @@ void create_directory(const std::string &path)
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {
+	JNIEnv *env;
+	app->activity->vm->AttachCurrentThread(&env, NULL);
+
+	jclass    cls        = env->GetObjectClass(app->activity->clazz);
+	jmethodID get_intent = env->GetMethodID(cls, "getIntent", "()Landroid/content/Intent;");
+	jobject   intent     = env->CallObjectMethod(app->activity->clazz, get_intent);
+
+	jclass    intent_cls = env->GetObjectClass(intent);
+	jmethodID get_string = env->GetMethodID(intent_cls, "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
+
+	jstring     external_dir_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("external_dir"));
+	const char *external_dir_raw = env->GetStringUTFChars(external_dir_str, 0);
+	vkb::Platform::set_external_storage_directory(std::string(external_dir_raw) + "/");
+	env->ReleaseStringUTFChars(external_dir_str, external_dir_raw);
+
+	jstring     temp_dir_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("temp_dir"));
+	const char *temp_dir_raw = env->GetStringUTFChars(temp_dir_str, 0);
+	vkb::Platform::set_temp_directory(std::string(temp_dir_raw) + "/");
+	env->ReleaseStringUTFChars(temp_dir_str, temp_dir_raw);
+
+	jstring     arguments_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("arguments"));
+	const char *arguments_raw = env->GetStringUTFChars(arguments_str, 0);
+
+	std::string args = std::string(arguments_raw);
+
+	std::vector<std::string> arguments = vkb::split(args, ' ');
+	vkb::Platform::set_arguments(arguments);
+
+	env->ReleaseStringUTFChars(arguments_str, arguments_raw);
 }
 
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
+bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
@@ -406,50 +433,17 @@ bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
 	return true;
 }
 
-void AndroidPlatform::create_window()
+void AndroidPlatform::create_window(const Window::Properties &properties)
 {
+	LOGI("Waiting on window surface to be ready");
+	while (!ready)
+	{
+		process_android_events(app);
+	}
+
+	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, active_app->is_headless());
-}
-
-void AndroidPlatform::main_loop()
-{
-	while (true)
-	{
-		poll_events();
-
-		if (app->destroyRequested != 0)
-		{
-			break;
-		}
-
-		if (!window->should_close())
-		{
-			run();
-		}
-	}
-}
-
-void AndroidPlatform::poll_events()
-{
-	android_poll_source *source;
-
-	int ident;
-	int events;
-
-	while ((ident = ALooper_pollAll(0, nullptr, &events,
-	                                (void **) &source)) >= 0)
-	{
-		if (source)
-		{
-			source->process(app, source);
-		}
-
-		if (app->destroyRequested != 0)
-		{
-			break;
-		}
-	}
+	window = std::make_unique<AndroidWindow>(*this, app->window, properties);
 }
 
 void AndroidPlatform::terminate(ExitCode code)
@@ -464,11 +458,6 @@ void AndroidPlatform::terminate(ExitCode code)
 			send_notification(log_output);
 			break;
 	}
-
-	auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
-	platform->get_window().close();
-
-	main_loop();        // Continue to process events until onDestroy()
 
 	Platform::terminate(code);
 }
@@ -511,7 +500,16 @@ std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &de
 	                                    VK_PRESENT_MODE_MAILBOX_KHR,
 	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
 
-	context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+	switch (window_properties.vsync)
+	{
+		case Window::Vsync::OFF:
+			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+			break;
+		case Window::Vsync::ON:
+		default:
+			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+			break;
+	}
 
 	return std::move(context);
 }

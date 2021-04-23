@@ -32,7 +32,7 @@ namespace vkb
 class DirectWindow : public Window
 {
   public:
-	DirectWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
+	DirectWindow(Platform *platform, const Window::Properties &properties);
 
 	virtual ~DirectWindow();
 
@@ -59,6 +59,7 @@ class DirectWindow : public Window
 
   private:
 	mutable bool   keep_running = true;
+	Platform *     platform     = nullptr;
 	float          dpi;
 	int            tty_fd;
 	struct termios termio;

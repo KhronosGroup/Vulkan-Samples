@@ -17,6 +17,7 @@
 
 #include "platform.h"
 
+#include <algorithm>
 #include <ctime>
 #include <mutex>
 #include <vector>
@@ -29,7 +30,10 @@
 
 #include "common/logging.h"
 #include "platform/filesystem.h"
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
 #include "platform/parsers/CLI11.h"
+#include "platform/plugins/plugin.h"
 
 namespace vkb
 {
@@ -39,23 +43,8 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-PositionalCommand Platform::app("sample", "Start a sample with the given id");
-SubCommand        Platform::samples("samples", "List all samples", {});
-FlagCommand       Platform::sample(FlagType::OneValue, "sample", "s", "Start a sample --sample/--s ID");
-FlagCommand       Platform::test(FlagType::OneValue, "test", "t", "Start a test --test/--t ID");
-FlagCommand       Platform::benchmark(FlagType::OneValue, "benchmark", "", "Run a benchmark for a set amount of frames");
-FlagCommand       Platform::width(FlagType::OneValue, "width", "", "Set the window width --width WIDTH");
-FlagCommand       Platform::height(FlagType::OneValue, "height", "", "Set the window height --height HEIGHT");
-FlagCommand       Platform::headless(FlagType::FlagOnly, "headless", "", "Run in headless mode --headless");
-FlagCommand       Platform::batch_categories(FlagType::ManyValues, "category", "c", "A category to run in batch mode, --category={api,performance,extensions}");
-FlagCommand       Platform::batch_tags(FlagType::ManyValues, "tag", "t", "A tag to run in batch mode, --tag={any,Arm}");
-SubCommand        Platform::batch("batch", "Run multiple samples", {&Platform::batch_categories, &Platform::batch_tags});
-
-bool Platform::initialize(std::unique_ptr<Application> &&app)
+bool Platform::initialize(const std::vector<Plugin *> &plugins = {})
 {
-	assert(app && "Application is not valid");
-	active_app = std::move(app);
-
 	auto sinks = get_platform_sinks();
 
 	auto logger = std::make_shared<spdlog::logger>("logger", sinks.begin(), sinks.end());
@@ -71,86 +60,112 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 
 	LOGI("Logger initialized");
 
-	auto args = get_arguments();
-	args.insert(args.begin(), "vulkan_samples");
-	parser = std::make_unique<CLI11CommandParser>("vulkan_samples", "Vulkan Samples\n\nA collection of samples to demonstrate the Vulkan best practice.\n\nUse [SUBCOMMAND] --help for specific subcommand information\n\n", args);
+	parser = std::make_unique<CLI11CommandParser>("vulkan_samples", "\n\tVulkan Samples\n\n\t\tA collection of samples to demonstrate the Vulkan best practice.\n", arguments);
 
-	CommandGroup window_options("Window Options", {&Platform::width, &Platform::height, &Platform::headless});
-
-	if (!parser->parse({&Platform::app, &Platform::sample, &Platform::test, &Platform::batch, &Platform::samples, &Platform::benchmark, &window_options}))
+	// Process command line arguments
+	if (!parser->parse(associate_plugins(plugins)))
 	{
-		auto help = parser->help();
-		LOGI("");
-		for (auto &line : help)
-		{
-			LOGI(line);
-		}
-		LOGI("");
 		return false;
 	}
 
-	// Set the app to execute as a benchmark
-	if (parser->contains(&Platform::benchmark))
+	// Subscribe plugins to requested hooks and store activated plugins
+	for (auto *plugin : plugins)
 	{
-		benchmark_mode             = true;
-		total_benchmark_frames     = parser->as<uint32_t>(&Platform::benchmark);
-		remaining_benchmark_frames = total_benchmark_frames;
-		active_app->set_benchmark_mode(true);
+		if (plugin->activate_plugin(this, *parser.get()))
+		{
+			auto &plugin_hooks = plugin->get_hooks();
+			for (auto hook : plugin_hooks)
+			{
+				auto it = hooks.find(hook);
+
+				if (it == hooks.end())
+				{
+					auto r = hooks.emplace(hook, std::vector<Plugin *>{});
+
+					if (r.second)
+					{
+						it = r.first;
+					}
+				}
+
+				it->second.emplace_back(plugin);
+			}
+
+			active_plugins.emplace_back(plugin);
+		}
 	}
 
-	// Set the app as headless
-	active_app->set_headless(parser->contains(&Platform::headless));
-
-	create_window();
+	create_window(state.window_properties);
 
 	if (!window)
 	{
-		throw std::runtime_error("Window creation failed, make sure platform overrides create_window() and creates a valid window.");
+		LOGE("Window creation failed!");
+		return false;
 	}
 
-	LOGI("Window created");
+	if (!app_requested())
+	{
+		LOGE("An app was not requested, can not continue");
+		return false;
+	}
 
 	return true;
-}
-
-bool Platform::prepare()
-{
-	if (active_app)
-	{
-		return active_app->prepare(*this);
-	}
-	return false;
 }
 
 void Platform::main_loop()
 {
 	while (!window->should_close())
 	{
-		run();
+		try
+		{
+			// Load the requested app
+			if (app_requested())
+			{
+				if (!start_app())
+				{
+					throw std::runtime_error{"Failed to load Application"};
+				}
 
-		window->process_events();
+				// Compensate for load times of the app by rendering the first frame pre-emptively
+				timer.tick<Timer::Seconds>();
+				active_app->update(0.01667f);
+			}
+
+			update();
+
+			window->process_events();
+		}
+		catch (std::exception e)
+		{
+			LOGE("{}", e.what());
+			LOGE("Failed when running application {}", active_app->get_name());
+			LOGI("Attempting to continue");
+
+			on_app_error(active_app->get_name());
+
+			if (!app_requested())
+			{
+				LOGI("No application queued - exiting");
+				throw e;
+			}
+		}
 	}
 }
 
-void Platform::run()
+void Platform::update()
 {
-	if (benchmark_mode)
-	{
-		timer.start();
+	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
-		if (remaining_benchmark_frames == 0)
+	if (state.focused)
+	{
+		on_update(delta_time);
+
+		if (state.fixed_simulation_fps)
 		{
-			auto time_taken = timer.stop();
-			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
-			close();
-			return;
+			delta_time = state.simulation_frame_time;
 		}
-	}
 
-	if (active_app->is_focused() || active_app->is_benchmark_mode())
-	{
-		active_app->step();
-		remaining_benchmark_frames--;
+		active_app->update(delta_time);
 	}
 }
 
@@ -158,7 +173,8 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 {
 	assert(!surface_format_priority.empty() && "Surface format priority list must contain atleast one preffered surface format");
 
-	auto context = std::make_unique<RenderContext>(device, surface, window->get_width(), window->get_height());
+	auto extent  = window->get_extent();
+	auto context = std::make_unique<RenderContext>(device, surface, extent.width, extent.height);
 
 	context->set_surface_format_priority(surface_format_priority);
 
@@ -170,15 +186,49 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 	    VK_PRESENT_MODE_IMMEDIATE_KHR,
 	});
 
-	context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+	switch (state.window_properties.vsync)
+	{
+		case Window::Vsync::ON:
+			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+			break;
+		case Window::Vsync::OFF:
+		default:
+			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+			break;
+	}
 
 	return std::move(context);
 }
 
+void Platform::create_window(const Window::Properties &properties)
+{
+	if (properties.mode == vkb::Window::Mode::Headless)
+	{
+		window = std::make_unique<HeadlessWindow>(properties);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(this, properties);
+	}
+}
+
 void Platform::terminate(ExitCode code)
 {
+	if (code == ExitCode::UnableToRun)
+	{
+		auto help = parser->help();
+		for (auto &line : help)
+		{
+			LOGI(line);
+		}
+	}
+
 	if (active_app)
 	{
+		std::string id = active_app->get_name();
+
+		on_app_close(id);
+
 		active_app->finish();
 	}
 
@@ -186,11 +236,50 @@ void Platform::terminate(ExitCode code)
 	window.reset();
 
 	spdlog::drop_all();
+
+	on_platform_close();
+
+	if (code == ExitCode::UnableToRun)
+	{
+#ifndef ANDROID
+		std::cout << "Press any key to continue";
+		std::cin.get();
+#endif
+	}
 }
 
 void Platform::close() const
 {
-	window->close();
+	if (window)
+	{
+		window->close();
+	}
+}
+
+void Platform::force_simulation_fps(float fps)
+{
+	state.fixed_simulation_fps  = true;
+	state.simulation_frame_time = 1 / fps;
+}
+
+void Platform::disable_input_processing()
+{
+	state.process_input_events = false;
+}
+
+void Platform::set_focus(bool focused)
+{
+	state.focused = focused;
+}
+
+void Platform::set_window_properties(const Window::OptionalProperties &properties)
+{
+	state.window_properties.title         = properties.title.has_value() ? properties.title.value() : state.window_properties.title;
+	state.window_properties.mode          = properties.mode.has_value() ? properties.mode.value() : state.window_properties.mode;
+	state.window_properties.resizable     = properties.resizable.has_value() ? properties.resizable.value() : state.window_properties.resizable;
+	state.window_properties.vsync         = properties.vsync.has_value() ? properties.vsync.value() : state.window_properties.vsync;
+	state.window_properties.extent.width  = properties.extent.width.has_value() ? properties.extent.width.value() : state.window_properties.extent.width;
+	state.window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : state.window_properties.extent.height;
 }
 
 const std::string &Platform::get_external_storage_directory()
@@ -203,9 +292,10 @@ const std::string &Platform::get_temp_directory()
 	return temp_directory;
 }
 
-float Platform::get_dpi_factor() const
+Application &Platform::get_app()
 {
-	return window->get_dpi_factor();
+	assert(active_app && "Application is not valid");
+	return *active_app;
 }
 
 Application &Platform::get_app() const
@@ -245,4 +335,127 @@ std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
 	return sinks;
 }
+
+bool Platform::app_requested()
+{
+	return requested_app != nullptr;
+}
+
+void Platform::request_application(const apps::AppInfo *app)
+{
+	requested_app = app;
+}
+
+bool Platform::start_app()
+{
+	auto *requested_app_info = requested_app;
+	// Reset early incase error in preperation stage
+	requested_app = nullptr;
+
+	if (active_app)
+	{
+		auto execution_time = timer.stop();
+		LOGI("Closing App (Runtime: {:.1f})", execution_time);
+
+		auto app_id = active_app->get_name();
+
+		active_app->finish();
+	}
+
+	active_app = requested_app_info->create();
+
+	active_app->set_name(requested_app_info->id);
+
+	if (!active_app)
+	{
+		LOGE("Failed to create a valid vulkan app.");
+		return false;
+	}
+
+	if (!active_app->prepare(*this))
+	{
+		LOGE("Failed to prepare vulkan app.");
+		return false;
+	}
+
+	on_app_start(requested_app_info->id);
+
+	return true;
+}
+
+void Platform::input_event(const InputEvent &input_event)
+{
+	if (state.process_input_events && active_app)
+	{
+		active_app->input_event(input_event);
+	}
+
+	if (input_event.get_source() == EventSource::Keyboard)
+	{
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+
+		if (key_event.get_code() == KeyCode::Back ||
+		    key_event.get_code() == KeyCode::Escape)
+		{
+			close();
+		}
+	}
+}
+
+void Platform::resize(uint32_t width, uint32_t height)
+{
+	auto extent = Window::Extent{std::max<uint32_t>(width, MIN_WINDOW_WIDTH), std::max<uint32_t>(height, MIN_WINDOW_HEIGHT)};
+	if (window)
+	{
+		auto actual_extent = window->resize(extent);
+
+		if (active_app)
+		{
+			active_app->resize(actual_extent.width, actual_extent.height);
+		}
+	}
+}
+
+#define HOOK(enum, func)                \
+	static auto res = hooks.find(enum); \
+	if (res != hooks.end())             \
+	{                                   \
+		for (auto plugin : res->second) \
+		{                               \
+			plugin->func;               \
+		}                               \
+	}
+
+void Platform::on_post_draw(RenderContext &context)
+{
+	HOOK(Hook::PostDraw, on_post_draw(context));
+}
+
+void Platform::on_app_error(const std::string &app_id)
+{
+	HOOK(Hook::OnAppError, on_app_error(app_id));
+}
+
+void Platform::on_update(float delta_time)
+{
+	HOOK(Hook::OnUpdate, on_update(delta_time));
+}
+
+void Platform::on_app_start(const std::string &app_id)
+{
+	HOOK(Hook::OnAppStart, on_app_start(app_id));
+}
+
+void Platform::on_app_close(const std::string &app_id)
+{
+	HOOK(Hook::OnAppClose, on_app_close(app_id));
+}
+
+void Platform::on_platform_close()
+{
+	HOOK(Hook::OnPlatformClose, on_platform_close());
+}
+
+#undef HOOK
+
 }        // namespace vkb

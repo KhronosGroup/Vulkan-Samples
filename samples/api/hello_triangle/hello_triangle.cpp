@@ -1088,10 +1088,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
 	context.surface = platform.get_window().create_surface(*vk_instance);
-
-	context.surface = platform.get_window().create_surface(*vk_instance);
-	context.swapchain_dimensions.width  = platform.get_window().get_width(),
-	context.swapchain_dimensions.height = platform.get_window().get_height(),
+	auto &extent                        = platform.get_window().get_extent();
+	context.swapchain_dimensions.width  = extent.width;
+	context.swapchain_dimensions.height = extent.height;
 
 	init_device(context, {"VK_KHR_swapchain"});
 

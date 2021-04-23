@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,32 +15,11 @@
  * limitations under the License.
  */
 
-// Generated file by CMake. Don't edit.
 #pragma once
 
-#include <functional>
-#include <memory>
-#include <unordered_map>
-#include <vector>
+#include "platform/plugins/plugin.h"
 
-#include "platform/application.h"
-
-@SAMPLE_INCLUDE_FILES@
-
-struct SampleInfo
+namespace plugins
 {
-	std::string id;
-	std::string category;
-	std::string author;
-	std::string name;
-	std::string description;
-	std::vector<std::string> tags;
-};
-
-const std::vector<SampleInfo> sample_list = {
-@SAMPLE_INFO_LIST@
-};
-
-const std::unordered_map<std::string, std::function<std::unique_ptr<vkb::Application>()>> sample_create_functions = {
-@SAMPLE_NAME_FUNC_PAIRS@
-};
+extern std::vector<vkb::Plugin *> get_all();
+}        // namespace plugins

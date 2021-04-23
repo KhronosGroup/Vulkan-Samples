@@ -33,10 +33,12 @@ VKBP_ENABLE_WARNINGS()
 #include "gltf_loader.h"
 #include "platform/platform.h"
 #include "platform/window.h"
+#include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/animation.h"
 #include "scene_graph/scripts/free_camera.h"
+#include "window_options/window_options.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -86,9 +88,11 @@ bool VulkanSample::prepare(Platform &platform)
 
 	LOGI("Initializing Vulkan sample");
 
+	bool headless = platform.get_window().get_window_mode() == Window::Mode::Headless;
+
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless(), api_version);
+	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
@@ -106,7 +110,7 @@ bool VulkanSample::prepare(Platform &platform)
 	request_gpu_features(gpu);
 
 	// Creating vulkan device, specifying the swapchain extension always
-	if (!is_headless() || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
+	if (!headless || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
@@ -117,6 +121,9 @@ bool VulkanSample::prepare(Platform &platform)
 	prepare_render_context();
 
 	stats = std::make_unique<vkb::Stats>(*render_context);
+
+	// Start the sample in the first GUI configuration
+	configuration.reset();
 
 	return true;
 }
@@ -222,6 +229,8 @@ void VulkanSample::update(float delta_time)
 	command_buffer.end();
 
 	render_context->submit(command_buffer);
+
+	platform->on_post_draw(get_render_context());
 }
 
 void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_target)

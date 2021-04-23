@@ -24,6 +24,8 @@
 
 namespace vkb
 {
+class AndroidPlatform;
+
 /**
  * @brief Wrapper for a ANativeWindow, handles the window behaviour (including headless mode on Android)
  *        This class should not be responsible for destroying the underlying data it points to
@@ -34,10 +36,11 @@ class AndroidWindow : public Window
 	/**
 	 * @brief Constructor
 	 * @param platform The platform this window is created for
+	 * @param mode The mode that the window should run in (ignored on android)
 	 * @param window A reference to the location of the Android native window
 	 * @param headless Whether the application is being rendered in headless mode
 	 */
-	AndroidWindow(Platform &platform, ANativeWindow *&window, bool headless = false);
+	AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties);
 
 	virtual ~AndroidWindow() = default;
 
@@ -53,6 +56,8 @@ class AndroidWindow : public Window
 	 */
 	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
 
+	virtual void process_events() override;
+
 	virtual bool should_close() override;
 
 	virtual void close() override;
@@ -60,6 +65,8 @@ class AndroidWindow : public Window
 	virtual float get_dpi_factor() const override;
 
   private:
+	AndroidPlatform *platform;
+
 	// Handle to the android window
 	ANativeWindow *&handle;
 

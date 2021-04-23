@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 project(vulkan_samples)
 
@@ -58,7 +58,7 @@ endif()
 if(VKB_BUILD_SAMPLES)
     # Add vulkan samples
     add_subdirectory(samples)
-    
-    # Add vulkan app (runs all samples)
-    add_subdirectory(app)
 endif()
+
+# Add vulkan app (runs all samples)
+add_subdirectory(app)

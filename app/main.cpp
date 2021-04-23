@@ -15,12 +15,9 @@
  * limitations under the License.
  */
 
-// Generated file by CMake. Don't edit.
-
 #include "common/logging.h"
 #include "platform/platform.h"
-
-#include "@TARGET_INCLUDE_PATH@.h"
+#include "plugins/plugins.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
@@ -50,15 +47,11 @@ int main(int argc, char *argv[])
 #	endif
 #endif
 
-// Only error handle in release
 #ifndef DEBUG
 	try
 	{
 #endif
-		auto app = create_@TARGET_CREATE_FUNC@();
-		app->set_name("@TARGET_NAME@");
-
-		if (platform.initialize(std::move(app)) && platform.prepare())
+		if (platform.initialize(plugins::get_all()))
 		{
 			platform.main_loop();
 			platform.terminate(vkb::ExitCode::Success);
