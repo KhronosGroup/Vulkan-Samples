@@ -36,30 +36,26 @@ struct AccelerationStructure
 
 }        // namespace rt_refl
 
+struct BLAS
+{
+	VkAccelerationStructureKHR         handle;
+	uint64_t                           device_address;
+	std::unique_ptr<vkb::core::Buffer> buffer;
+};
+
 // Structure holding the material
 struct MaterialObj
 {
-	glm::vec3 ambient       = {0.1f, 0.1f, 0.1f};
-	glm::vec3 diffuse       = {0.7f, 0.7f, 0.7f};
-	glm::vec3 specular      = {1.0f, 1.0f, 1.0f};
-	glm::vec3 transmittance = {0.0f, 0.0f, 0.0f};
-	glm::vec3 emission      = {0.0f, 0.0f, 0.10};
-	float     shininess     = 0.f;
-	float     ior           = 1.0f;        // index of refraction
-	float     dissolve      = 1.f;         // 1 == opaque; 0 == fully transparent
-	    // illumination model (see http://www.fileformat.info/format/material/)
-	int illum     = 0;
-	int textureID = -1;
+	glm::vec3 diffuse   = {0.7f, 0.7f, 0.7f};
+	float     shininess = 0.f;
 };
 
 // OBJ representation of a vertex
 // NOTE: BLAS builder depends on pos being the first member
 struct ObjVertex
 {
-	glm::vec3 pos;
-	glm::vec3 nrm;
-	glm::vec3 color;
-	glm::vec2 texCoord;
+	glm::vec4 pos;
+	glm::vec4 nrm;
 };
 
 struct ObjModel
@@ -87,7 +83,7 @@ class RaytracingReflection : public ApiVulkanSample
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
 
-	rt_refl::AccelerationStructure bottom_level_acceleration_structure;
+	std::vector<BLAS>              bottom_level_acceleration_structure;
 	rt_refl::AccelerationStructure top_level_acceleration_structure;
 
 	// Array of objects and instances in the scene
@@ -129,22 +125,23 @@ class RaytracingReflection : public ApiVulkanSample
 	RaytracingReflection();
 	~RaytracingReflection();
 
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void         create_storage_image();
-	void         create_bottom_level_acceleration_structure(ObjModel &obj_model);
-	void         create_top_level_acceleration_structure();
-	void         load_model(const std::string &file_name);
-	void         delete_acceleration_structure(rt_refl::AccelerationStructure &acceleration_structure);
-	void         create_scene();
-	void         create_shader_binding_tables();
-	void         create_descriptor_sets();
-	void         create_ray_tracing_pipeline();
-	void         create_uniform_buffer();
-	void         build_command_buffers() override;
-	void         update_uniform_buffers();
-	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
+	void                               request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void                               create_storage_image();
+	void                               create_bottom_level_acceleration_structure(ObjModel &obj_model);
+	void                               create_top_level_acceleration_structure(std::vector<VkAccelerationStructureInstanceKHR> &blas_instances);
+	void                               load_model(const std::string &file_name);
+	VkAccelerationStructureInstanceKHR create_blas_instance(uint32_t blas_id, glm::mat4 &mat);
+	void                               delete_acceleration_structure(rt_refl::AccelerationStructure &acceleration_structure);
+	void                               create_scene();
+	void                               create_shader_binding_tables();
+	void                               create_descriptor_sets();
+	void                               create_ray_tracing_pipeline();
+	void                               create_uniform_buffer();
+	void                               build_command_buffers() override;
+	void                               update_uniform_buffers();
+	void                               draw();
+	bool                               prepare(vkb::Platform &platform) override;
+	virtual void                       render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_reflection();

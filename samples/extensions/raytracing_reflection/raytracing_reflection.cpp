@@ -32,8 +32,8 @@ RaytracingReflection::RaytracingReflection()
 {
 	title = "Hardware accelerated ray tracing";
 
-	// SPIRV 1.4 requires Vulkan 1.1
-	set_api_version(VK_API_VERSION_1_1);
+	// SPIRV 1.5 requires Vulkan 1.2
+	set_api_version(VK_API_VERSION_1_2);
 
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
@@ -43,9 +43,10 @@ RaytracingReflection::RaytracingReflection()
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 	add_device_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+	add_device_extension(VK_EXT_SCALAR_BLOCK_LAYOUT_EXTENSION_NAME);
 
 	// Required for VK_KHR_ray_tracing_pipeline
-	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+	//add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
@@ -62,7 +63,12 @@ RaytracingReflection::~RaytracingReflection()
 		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
 		delete_acceleration_structure(top_level_acceleration_structure);
-		delete_acceleration_structure(bottom_level_acceleration_structure);
+		for (auto &b : bottom_level_acceleration_structure)
+		{
+			b.buffer.reset();
+			vkDestroyAccelerationStructureKHR(device->get_handle(), b.handle, nullptr);
+		}
+
 		for (auto &obj : m_objModel)
 		{
 			obj.vertex_buffer.reset();
@@ -219,7 +225,8 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModel &
 	    &acceleration_structure_build_sizes_info);
 
 	// Create a buffer to hold the acceleration structure
-	bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
+	BLAS blas;
+	blas.buffer = std::make_unique<vkb::core::Buffer>(
 	    get_device(),
 	    acceleration_structure_build_sizes_info.accelerationStructureSize,
 	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
@@ -228,10 +235,10 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModel &
 	// Create the acceleration structure
 	VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
 	acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-	acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
+	acceleration_structure_create_info.buffer = blas.buffer->get_handle();
 	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
 	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
+	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &blas.handle);
 
 	// The actual build process starts here
 
@@ -246,7 +253,7 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModel &
 	acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 	acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
 	acceleration_build_geometry_info.mode                      = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-	acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure.handle;
+	acceleration_build_geometry_info.dstAccelerationStructure  = blas.handle;
 	acceleration_build_geometry_info.geometryCount             = 1;
 	acceleration_build_geometry_info.pGeometries               = &acceleration_structure_geometry;
 	acceleration_build_geometry_info.scratchData.deviceAddress = sc_buffer->get_device_address();
@@ -274,33 +281,22 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModel &
 	// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
 	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
 	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-	acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
-	bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	acceleration_device_address_info.accelerationStructure = blas.handle;
+	blas.device_address                                    = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+
+	bottom_level_acceleration_structure.push_back(std::move(blas));
 }
 
 /*
     Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
 */
-void RaytracingReflection::create_top_level_acceleration_structure()
+void RaytracingReflection::create_top_level_acceleration_structure(std::vector<VkAccelerationStructureInstanceKHR> &blas_instances)
 {
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
-
-	VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-	acceleration_structure_instance.transform                              = transform_matrix;
-	acceleration_structure_instance.instanceCustomIndex                    = 0;
-	acceleration_structure_instance.mask                                   = 0xFF;
-	acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure.device_address;
-
 	std::unique_ptr<vkb::core::Buffer> instances_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                                          sizeof(VkAccelerationStructureInstanceKHR),
+	                                                                                          sizeof(VkAccelerationStructureInstanceKHR) * blas_instances.size(),
 	                                                                                          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
+	instances_buffer->update(blas_instances.data(), sizeof(VkAccelerationStructureInstanceKHR) * blas_instances.size());
 
 	VkDeviceOrHostAddressConstKHR instance_data_device_address{};
 	instance_data_device_address.deviceAddress = instances_buffer->get_device_address();
@@ -322,7 +318,7 @@ void RaytracingReflection::create_top_level_acceleration_structure()
 	acceleration_structure_build_geometry_info.geometryCount = 1;
 	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-	const uint32_t primitive_count = 1;
+	const uint32_t primitive_count = static_cast<uint32_t>(blas_instances.size());
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -366,7 +362,7 @@ void RaytracingReflection::create_top_level_acceleration_structure()
 	acceleration_build_geometry_info.scratchData.deviceAddress = sc_buffer->get_device_address();
 
 	VkAccelerationStructureBuildRangeInfoKHR acceleration_structure_build_range_info;
-	acceleration_structure_build_range_info.primitiveCount                                           = 1;
+	acceleration_structure_build_range_info.primitiveCount                                           = primitive_count;
 	acceleration_structure_build_range_info.primitiveOffset                                          = 0;
 	acceleration_structure_build_range_info.firstVertex                                              = 0;
 	acceleration_structure_build_range_info.transformOffset                                          = 0;
@@ -418,15 +414,15 @@ void RaytracingReflection::load_model(const std::string &file_name)
 	for (const auto &material : reader.GetMaterials())
 	{
 		MaterialObj m;
-		m.ambient       = glm::make_vec3(material.ambient);
-		m.diffuse       = glm::make_vec3(material.diffuse);
-		m.specular      = glm::make_vec3(material.specular);
-		m.emission      = glm::make_vec3(material.emission);
-		m.transmittance = glm::make_vec3(material.transmittance);
-		m.dissolve      = material.dissolve;
-		m.ior           = material.ior;
-		m.shininess     = material.shininess;
-		m.illum         = material.illum;
+		//m.ambient       = glm::make_vec3(material.ambient);
+		m.diffuse = glm::make_vec3(material.diffuse);
+		//m.specular      = glm::make_vec3(material.specular);
+		//m.emission      = glm::make_vec3(material.emission);
+		//m.transmittance = glm::make_vec3(material.transmittance);
+		//m.dissolve      = material.dissolve;
+		//m.ior           = material.ior;
+		m.shininess = material.shininess;
+		//m.illum         = material.illum;
 		materials.emplace_back(m);
 	}
 	if (materials.empty())
@@ -444,25 +440,27 @@ void RaytracingReflection::load_model(const std::string &file_name)
 		{
 			ObjVertex    vertex = {};
 			const float *vp     = &attrib.vertices[3 * index.vertex_index];
-			vertex.pos          = {*(vp + 0), *(vp + 1), *(vp + 2)};
+			vertex.pos          = glm::vec4(glm::make_vec3(vp), 0);
+			//{*(vp + 0), *(vp + 1), *(vp + 2)};
 
 			if (!attrib.normals.empty() && index.normal_index >= 0)
 			{
 				const float *np = &attrib.normals[3 * index.normal_index];
-				vertex.nrm      = {*(np + 0), *(np + 1), *(np + 2)};
+				vertex.nrm      = glm::vec4(glm::make_vec3(np), 0);
+				//{*(np + 0), *(np + 1), *(np + 2)};
 			}
 
-			if (!attrib.texcoords.empty() && index.texcoord_index >= 0)
-			{
-				const float *tp = &attrib.texcoords[2 * index.texcoord_index + 0];
-				vertex.texCoord = {*tp, 1.0f - *(tp + 1)};
-			}
+			//if (!attrib.texcoords.empty() && index.texcoord_index >= 0)
+			//{
+			//	const float *tp = &attrib.texcoords[2 * index.texcoord_index + 0];
+			//	vertex.texCoord = {*tp, 1.0f - *(tp + 1)};
+			//}
 
-			if (!attrib.colors.empty())
-			{
-				const float *vc = &attrib.colors[3 * index.vertex_index];
-				vertex.color    = {*(vc + 0), *(vc + 1), *(vc + 2)};
-			}
+			//if (!attrib.colors.empty())
+			//{
+			//	const float *vc = &attrib.colors[3 * index.vertex_index];
+			//	vertex.color    = {*(vc + 0), *(vc + 1), *(vc + 2)};
+			//}
 
 			obj_vertices.push_back(vertex);
 			obj_indices.push_back(static_cast<int>(obj_indices.size()));
@@ -500,15 +498,61 @@ void RaytracingReflection::load_model(const std::string &file_name)
 	m_objModel.push_back(std::move(model));
 }
 
+VkAccelerationStructureInstanceKHR RaytracingReflection::create_blas_instance(uint32_t blas_id, glm::mat4 &mat)
+{
+	VkTransformMatrixKHR transform_matrix;
+	glm::mat3x4          rtxT = glm::transpose(mat);
+	memcpy(&transform_matrix, glm::value_ptr(rtxT), sizeof(VkTransformMatrixKHR));
+
+	VkAccelerationStructureInstanceKHR blas_instance{};
+	blas_instance.transform                              = transform_matrix;
+	blas_instance.instanceCustomIndex                    = blas_id;
+	blas_instance.mask                                   = 0xFF;
+	blas_instance.instanceShaderBindingTableRecordOffset = 0;
+	blas_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	blas_instance.accelerationStructureReference         = bottom_level_acceleration_structure[blas_id].device_address;
+
+	return blas_instance;
+}
+
 /*
     Create scene geometry and ray tracing acceleration structures
 */
 void RaytracingReflection::create_scene()
 {
 	load_model("scenes/cube.obj");
+	load_model("scenes/plane.obj");
 
 	create_bottom_level_acceleration_structure(m_objModel[0]);
-	create_top_level_acceleration_structure();
+	create_bottom_level_acceleration_structure(m_objModel[1]);
+
+	std::vector<VkAccelerationStructureInstanceKHR> blas_instances;
+	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(-1.0f, 0.0f, 0.0f))));
+	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(1.0f, 0.0f, 0.0f))));
+	blas_instances.push_back(create_blas_instance(1, glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f))));
+
+	//glm::mat4   myMatrix = glm::translate(glm::mat4(), glm::vec3(1.0f, 0.0f, 0.0f));
+	//glm::mat3x4 rtxT     = glm::transpose(myMatrix);
+	//memcpy(&transform_matrix, glm::value_ptr(rtxT), sizeof(VkTransformMatrixKHR));
+
+	//VkAccelerationStructureInstanceKHR blas_instance{};
+	//blas_instance.transform                              = transform_matrix;
+	//blas_instance.instanceCustomIndex                    = 0;
+	//blas_instance.mask                                   = 0xFF;
+	//blas_instance.instanceShaderBindingTableRecordOffset = 0;
+	//blas_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+	//blas_instance.accelerationStructureReference         = bottom_level_acceleration_structure[0].device_address;
+	//blas_instances.push_back(blas_instance);
+
+	//myMatrix = glm::translate(glm::mat4(), glm::vec3(-1.0f, 0.0f, 0.0f));
+	//rtxT     = glm::transpose(myMatrix);
+	//memcpy(&transform_matrix, glm::value_ptr(rtxT), sizeof(VkTransformMatrixKHR));
+
+	//blas_instance.transform                      = transform_matrix;
+	//blas_instance.accelerationStructureReference = bottom_level_acceleration_structure[0].device_address;
+	//blas_instances.push_back(blas_instance);
+
+	create_top_level_acceleration_structure(blas_instances);
 }
 
 /*
@@ -549,9 +593,9 @@ void RaytracingReflection::create_shader_binding_tables()
 	uint8_t *data = static_cast<uint8_t *>(raygen_shader_binding_table->map());
 	memcpy(data, shader_handle_storage.data(), handle_size);
 	data = static_cast<uint8_t *>(miss_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_size_aligned, handle_size);
+	memcpy(data, shader_handle_storage.data() + handle_size_aligned, handle_size);        // * 2);        // 2 miss shaders
 	data = static_cast<uint8_t *>(hit_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_size_aligned * 2, handle_size);
+	memcpy(data, shader_handle_storage.data() + handle_size_aligned * 2, handle_size);        // rgen + 2*miss == 3
 	raygen_shader_binding_table->unmap();
 	miss_shader_binding_table->unmap();
 	hit_shader_binding_table->unmap();
@@ -562,10 +606,14 @@ void RaytracingReflection::create_shader_binding_tables()
 */
 void RaytracingReflection::create_descriptor_sets()
 {
+	uint32_t nbObj = static_cast<uint32_t>(m_objModel.size());
+
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
 	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nbObj * 3},        // Material + Vertex + index
+	};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
@@ -593,13 +641,31 @@ void RaytracingReflection::create_descriptor_sets()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*ubo);
 
+	// All materials
+	std::vector<VkDescriptorBufferInfo> mat_descriptors;
+	std::vector<VkDescriptorBufferInfo> vtx_descriptors;
+	std::vector<VkDescriptorBufferInfo> idx_descriptors;
+	for (uint32_t i = 0; i < nbObj; ++i)
+	{
+		mat_descriptors.push_back(create_descriptor(*m_objModel[i].mat_color_buffer));
+		vtx_descriptors.push_back(create_descriptor(*m_objModel[i].vertex_buffer));
+		idx_descriptors.push_back(create_descriptor(*m_objModel[i].index_buffer));
+	}
+
 	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
+	VkWriteDescriptorSet mat_buffer_write     = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, mat_descriptors.data(), nbObj);
+	VkWriteDescriptorSet vtx_buffer_write     = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, vtx_descriptors.data(), nbObj);
+	VkWriteDescriptorSet idx_buffer_write     = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, idx_descriptors.data(), nbObj);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
 	    result_image_write,
-	    uniform_buffer_write};
+	    uniform_buffer_write,
+	    mat_buffer_write,
+	    vtx_buffer_write,
+	    idx_buffer_write,
+	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
@@ -627,10 +693,38 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 	uniform_buffer_binding.descriptorCount = 1;
 	uniform_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
+	// Scene elements
+	uint32_t nbObj = static_cast<uint32_t>(m_objModel.size());
+
+	// Material
+	VkDescriptorSetLayoutBinding material_buffer_binding{};
+	material_buffer_binding.binding         = 3;
+	material_buffer_binding.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	material_buffer_binding.descriptorCount = nbObj;
+	material_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+	// Vertex
+	VkDescriptorSetLayoutBinding vertex_buffer_binding{};
+	vertex_buffer_binding.binding         = 4;
+	vertex_buffer_binding.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	vertex_buffer_binding.descriptorCount = nbObj;
+	vertex_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+	// Index
+	VkDescriptorSetLayoutBinding index_buffer_binding{};
+	index_buffer_binding.binding         = 5;
+	index_buffer_binding.descriptorType  = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	index_buffer_binding.descriptorCount = nbObj;
+	index_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
-	    uniform_buffer_binding};
+	    uniform_buffer_binding,
+	    material_buffer_binding,
+	    vertex_buffer_binding,
+	    index_buffer_binding,
+	};
 
 	VkDescriptorSetLayoutCreateInfo layout_info{};
 	layout_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -646,7 +740,7 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
 	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the glslang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
+	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 
 	/*
         Setup ray tracing shader groups
@@ -680,6 +774,19 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 		shader_groups.push_back(miss_group_ci);
 	}
 
+	//// Ray miss (shadow) group
+	//{
+	//	shader_stages.push_back(load_shader("khr_ray_tracing_reflection/missShadow.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+	//	VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
+	//	miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
+	//	miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
+	//	miss_group_ci.generalShader      = static_cast<uint32_t>(shader_stages.size()) - 1;
+	//	miss_group_ci.closestHitShader   = VK_SHADER_UNUSED_KHR;
+	//	miss_group_ci.anyHitShader       = VK_SHADER_UNUSED_KHR;
+	//	miss_group_ci.intersectionShader = VK_SHADER_UNUSED_KHR;
+	//	shader_groups.push_back(miss_group_ci);
+	//}
+
 	// Ray closest hit group
 	{
 		shader_stages.push_back(load_shader("khr_ray_tracing_reflection/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
@@ -708,7 +815,7 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 }
 
 /*
-    Deletes all ressources acquired by an acceleration structure
+    Deletes all resources acquired by an acceleration structure
 */
 void RaytracingReflection::delete_acceleration_structure(AccelerationStructure &acceleration_structure)
 {
@@ -854,7 +961,10 @@ void RaytracingReflection::build_command_buffers()
 
 void RaytracingReflection::update_uniform_buffers()
 {
-	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
+	auto mat = camera.matrices.perspective;
+	mat[1][1] *= -1;        // Flipping Y axis
+
+	uniform_data.proj_inverse = glm::inverse(mat);
 	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
 	ubo->convert_and_update(uniform_data);
 }
