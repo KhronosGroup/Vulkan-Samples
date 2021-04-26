@@ -29,6 +29,7 @@ struct WaveFrontMaterial
 {
 	vec3  diffuse;
 	float shininess;
+	vec4  specular;
 };
 
 struct Vertex
@@ -43,6 +44,21 @@ layout(set = 0, binding = 3, scalar) buffer _materials { WaveFrontMaterial m[]; 
 layout(set = 0, binding = 4, scalar) buffer _vertices { Vertex v[]; } vertices[];
 layout(set = 0, binding = 5)         buffer _indices { uint i[]; } indices[];
 // clang-format on
+
+vec3 computeSpecular(WaveFrontMaterial mat, vec3 V, vec3 L, vec3 N)
+{
+	// Compute specular only if not in shadow
+	const float kPi        = 3.14159265;
+	const float kShininess = max(mat.shininess, 4.0);
+
+	// Specular
+	const float kEnergyConservation = (2.0 + kShininess) / (2.0 * kPi);
+	V                               = normalize(-V);
+	vec3  R                         = reflect(-L, N);
+	float specular                  = kEnergyConservation * pow(max(dot(V, R), 0.0), kShininess);
+
+	return vec3(mat.specular * specular);
+}
 
 void main()
 {
@@ -77,33 +93,34 @@ void main()
 	// Fake Lambertian to avoid black
 	vec3 result = mat.diffuse * max(NdotL, 0.1);
 
-	//	// Tracing shadow ray only if the light is visible from the surface
-	//	if (NdotL > 0)
-	//	{
-	//		float tMin   = 0.001;
-	//		float tMax   = 1e32;        // infinite
-	//		vec3  origin = gl_WorldRayOriginEXT + gl_WorldRayDirectionEXT * gl_HitTEXT;
-	//		vec3  rayDir = L;
-	//		uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
-	//		isShadowed   = true;
-	//		traceRayEXT(topLevelAS,        // acceleration structure
-	//		            flags,             // rayFlags
-	//		            0xFF,              // cullMask
-	//		            0,                 // sbtRecordOffset
-	//		            0,                 // sbtRecordStride
-	//		            1,                 // missIndex
-	//		            origin,            // ray origin
-	//		            tMin,              // ray min range
-	//		            rayDir,            // ray direction
-	//		            tMax,              // ray max range
-	//		            1                  // payload (location = 1)
-	//		);
-	//
-	//		if (isShadowed)
-	//		{
-	//			result *= 0.3;
-	//		}
-	//	}
+	// Tracing shadow ray only if the light is visible from the surface
+	if (NdotL > 0)
+	{
+		float tMin   = 0.001;
+		float tMax   = 1e32;        // infinite
+		vec3  origin = P;
+		vec3  rayDir = L;
+		uint  flags  = gl_RayFlagsTerminateOnFirstHitEXT | gl_RayFlagsOpaqueEXT | gl_RayFlagsSkipClosestHitShaderEXT;
+		isShadowed   = true;
+
+		traceRayEXT(topLevelAS,        // acceleration structure
+		            flags,             // rayFlags
+		            0xFF,              // cullMask
+		            0,                 // sbtRecordOffset
+		            0,                 // sbtRecordStride
+		            1,                 // missIndex
+		            origin,            // ray origin
+		            tMin,              // ray min range
+		            rayDir,            // ray direction
+		            tMax,              // ray max range
+		            1                  // payload (location = 1)
+		);
+
+		if (isShadowed)
+			result *= 0.3;
+		else
+			result += computeSpecular(mat, gl_WorldRayDirectionEXT, L, N);
+	}
 
 	hitValue = result;
 }

@@ -44,10 +44,11 @@ struct BLAS
 };
 
 // Structure holding the material
-struct MaterialObj
+struct ObjMaterial
 {
 	glm::vec3 diffuse   = {0.7f, 0.7f, 0.7f};
 	float     shininess = 0.f;
+	glm::vec4 specular  = {0.7f, 0.7f, 0.7f, 0.f};
 };
 
 // OBJ representation of a vertex
@@ -87,7 +88,7 @@ class RaytracingReflection : public ApiVulkanSample
 	rt_refl::AccelerationStructure top_level_acceleration_structure;
 
 	// Array of objects and instances in the scene
-	std::vector<ObjModel>    m_objModel;
+	std::vector<ObjModel>    obj_models;
 	std::vector<ObjInstance> m_objInstance;
 
 	//std::vector<std::unique_ptr<const vkb::core::Buffer>> mat_buffers;
@@ -129,7 +130,7 @@ class RaytracingReflection : public ApiVulkanSample
 	void                               create_storage_image();
 	void                               create_bottom_level_acceleration_structure(ObjModel &obj_model);
 	void                               create_top_level_acceleration_structure(std::vector<VkAccelerationStructureInstanceKHR> &blas_instances);
-	void                               load_model(const std::string &file_name);
+	void                               load_model(const std::string &file_name, std::shared_ptr<ObjMaterial> mat = {});
 	VkAccelerationStructureInstanceKHR create_blas_instance(uint32_t blas_id, glm::mat4 &mat);
 	void                               delete_acceleration_structure(rt_refl::AccelerationStructure &acceleration_structure);
 	void                               create_scene();
