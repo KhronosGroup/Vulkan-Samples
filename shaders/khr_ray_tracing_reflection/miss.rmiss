@@ -24,14 +24,23 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
- 
- 
+
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
+struct hitPayload
+{
+	vec3 radiance;
+	vec3 attenuation;
+	int  done;
+	vec3 rayOrigin;
+	vec3 rayDir;
+};
+
+layout(location = 0) rayPayloadInEXT hitPayload prd;
 
 void main()
 {
-    hitValue = vec3(0.0, 0.0, 0.2);
+	prd.radiance = vec3(0.3) * prd.attenuation;
+	prd.done     = 1;
 }

@@ -498,20 +498,37 @@ VkAccelerationStructureInstanceKHR RaytracingReflection::create_blas_instance(ui
 */
 void RaytracingReflection::create_scene()
 {
-	std::shared_ptr<ObjMaterial> mat = std::make_shared<ObjMaterial>();
-	mat->diffuse                     = glm::vec3(1, 0, 0);
-	mat->shininess                   = 1e32;
+	std::shared_ptr<ObjMaterial> matRed = std::make_shared<ObjMaterial>();
+	matRed->diffuse                     = glm::vec3(1, 0, 0);
+	matRed->specular                    = glm::vec4(1.0f);
+	matRed->shininess                   = 0.0f;
 
-	load_model("scenes/cube.obj", mat);
-	load_model("scenes/plane.obj");
+	std::shared_ptr<ObjMaterial> matGrey = std::make_shared<ObjMaterial>();
+	matGrey->diffuse                     = glm::vec3(0.7f);
+	matGrey->specular                    = glm::vec4(0.95f);
+	matGrey->shininess                   = 0.1f;
+
+	std::shared_ptr<ObjMaterial> matMirror = std::make_shared<ObjMaterial>();
+	matMirror->diffuse                     = glm::vec3(0, 0, 0.7f);
+	matMirror->specular                    = glm::vec4(0.98f);
+	matMirror->shininess                   = 0.98f;
+
+	load_model("scenes/cube.obj", matRed);
+	load_model("scenes/plane.obj", matGrey);
+	load_model("scenes/cube.obj", matMirror);
 
 	create_bottom_level_acceleration_structure(obj_models[0]);
 	create_bottom_level_acceleration_structure(obj_models[1]);
+	create_bottom_level_acceleration_structure(obj_models[2]);
 
 	std::vector<VkAccelerationStructureInstanceKHR> blas_instances;
 	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(-1.0f, 0.0f, 0.0f))));
 	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(1.0f, 0.0f, 0.0f))));
 	blas_instances.push_back(create_blas_instance(1, glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f))));
+
+	glm::mat4 m_mirror = glm::scale(glm::mat4(), glm::vec3(5.0f, 5.0f, 0.1f));
+	blas_instances.push_back(create_blas_instance(2, glm::translate(m_mirror, glm::vec3(0.0f, 0.0f, -35.0f))));
+	blas_instances.push_back(create_blas_instance(2, glm::translate(m_mirror, glm::vec3(0.0f, 0.0f, 35.0f))));
 
 	create_top_level_acceleration_structure(blas_instances);
 }

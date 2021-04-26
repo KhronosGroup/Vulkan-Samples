@@ -20,7 +20,16 @@
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
+struct hitPayload
+{
+	vec3 radiance;
+	vec3 attenuation;
+	int  done;
+	vec3 rayOrigin;
+	vec3 rayDir;
+};
+
+layout(location = 0) rayPayloadInEXT hitPayload prd;
 layout(location = 1) rayPayloadEXT bool isShadowed;
 
 hitAttributeEXT vec3 attribs;
@@ -47,7 +56,6 @@ layout(set = 0, binding = 5)         buffer _indices { uint i[]; } indices[];
 
 vec3 computeSpecular(WaveFrontMaterial mat, vec3 V, vec3 L, vec3 N)
 {
-	// Compute specular only if not in shadow
 	const float kPi        = 3.14159265;
 	const float kShininess = max(mat.shininess, 4.0);
 
@@ -91,7 +99,8 @@ void main()
 	float NdotL = dot(N, L);
 
 	// Fake Lambertian to avoid black
-	vec3 result = mat.diffuse * max(NdotL, 0.1);
+	vec3 diffuse  = mat.diffuse * max(NdotL, 0.3);
+	vec3 specular = vec3(0);
 
 	// Tracing shadow ray only if the light is visible from the surface
 	if (NdotL > 0)
@@ -117,10 +126,16 @@ void main()
 		);
 
 		if (isShadowed)
-			result *= 0.3;
+			diffuse *= 0.3;
 		else
-			result += computeSpecular(mat, gl_WorldRayDirectionEXT, L, N);
+			// Add specular only if not in shadow
+			specular = computeSpecular(mat, gl_WorldRayDirectionEXT, L, N);
 	}
+	prd.radiance = (diffuse + specular) * (1 - mat.shininess) * prd.attenuation;
 
-	hitValue = result;
+	// Reflect
+	vec3 rayDir = reflect(gl_WorldRayDirectionEXT, N);
+	prd.attenuation *= vec3(mat.shininess);
+	prd.rayOrigin = P;
+	prd.rayDir    = rayDir;
 }
