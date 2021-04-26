@@ -309,7 +309,6 @@ void AsyncComputeSample::render_shadow_pass()
 	auto &queue          = *early_graphics_queue;
 	auto &command_buffer = render_context->get_active_frame().request_command_buffer(queue);
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(command_buffer);
 
 	auto &views = shadow_render_target->get_views();
 
@@ -340,7 +339,6 @@ void AsyncComputeSample::render_shadow_pass()
 		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
 	}
 
-	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	render_context->submit(queue, {&command_buffer});
@@ -357,7 +355,6 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	auto &command_buffer = render_context->get_active_frame().request_command_buffer(queue);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(command_buffer);
 
 	auto &views = get_current_forward_render_target().get_views();
 
@@ -413,7 +410,6 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
 	}
 
-	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	// Conditionally waits on hdr_wait_semaphore.
@@ -435,7 +431,6 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 	auto &command_buffer = render_context->get_active_frame().request_command_buffer(queue);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(command_buffer);
 
 	if (post_compute_queue->get_family_index() != present_graphics_queue->get_family_index())
 	{
@@ -455,7 +450,6 @@ VkSemaphore AsyncComputeSample::render_swapchain(VkSemaphore post_semaphore)
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
-	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	// We're going to wait on this semaphore in different frame,
@@ -504,7 +498,6 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	auto &command_buffer = render_context->get_active_frame().request_command_buffer(queue);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	stats->begin_sampling(command_buffer);
 
 	// Acquire barrier if we're going to read HDR texture in compute queue
 	// of a different queue family index. We'll have to duplicate this barrier
@@ -617,7 +610,6 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		command_buffer.image_memory_barrier(get_current_forward_render_target().get_views()[0], memory_barrier);
 	}
 
-	stats->end_sampling(command_buffer);
 	command_buffer.end();
 
 	VkPipelineStageFlags wait_stages[]     = {VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT};
