@@ -24,6 +24,4 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Hans-Kristian Arntzen"
     NAME "Async compute"
-    DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU."
-    TAGS
-        "arm")
+    DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU.")
