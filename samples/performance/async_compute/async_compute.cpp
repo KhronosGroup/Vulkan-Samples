@@ -650,6 +650,10 @@ void AsyncComputeSample::update(float delta_time)
 	{
 		forward_render_target_index = 1 - forward_render_target_index;
 	}
+	else
+	{
+		forward_render_target_index = 0;
+	}
 
 	auto *forward_subpass   = static_cast<ShadowMapForwardSubpass *>(forward_render_pipeline.get_subpasses()[0].get());
 	auto *composite_subpass = static_cast<CompositeSubpass *>(render_pipeline->get_subpasses()[0].get());
