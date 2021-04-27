@@ -25,3 +25,11 @@ add_sample_with_tags(
     AUTHOR "Martin-Karl Lefrançois"
     NAME "Ray tracing reflection"
     DESCRIPTION "Example for hardware accelerated ray tracing")
+
+
+file(GLOB GLSL_FILES "${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME}/*.*")
+
+message(${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME})
+
+target_sources(${PARENT_DIR} PUBLIC ${GLSL_FILES})
+source_group("Shader Sources" FILES ${GLSL_FILES})
