@@ -277,12 +277,14 @@ bool AsyncComputeSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(blit_render_pipeline));
 
+	vkb::CounterSamplingConfig config;
+	config.mode = vkb::CounterSamplingMode::Continuous;
 	stats->request_stats({
 	    vkb::StatIndex::frame_times,
 	    vkb::StatIndex::gpu_cycles,
 	    vkb::StatIndex::gpu_vertex_cycles,
 	    vkb::StatIndex::gpu_fragment_cycles,
-	});
+	}, config);
 
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
