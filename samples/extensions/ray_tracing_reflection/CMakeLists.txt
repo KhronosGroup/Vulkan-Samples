@@ -19,17 +19,13 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
+file(GLOB GLSL_FILES "${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME}/*.*")
+
 add_sample_with_tags(
     ID ${FOLDER_NAME}
+    FILES ${GLSL_FILES}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Martin-Karl Lefrançois"
+    AUTHOR "Martin-Karl LefranÃ§ois"
     NAME "Ray tracing reflection"
     DESCRIPTION "Example for hardware accelerated ray tracing")
 
-
-file(GLOB GLSL_FILES "${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME}/*.*")
-
-message(${CMAKE_SOURCE_DIR}/shaders/${FOLDER_NAME})
-
-target_sources(${PARENT_DIR} PUBLIC ${GLSL_FILES})
-source_group("Shader Sources" FILES ${GLSL_FILES})
