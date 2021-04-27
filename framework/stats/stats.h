@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2020, Broadcom Inc.
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2020-2021, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -183,6 +183,9 @@ class Stats
 
 	/// The samples waiting to be displayed
 	std::vector<StatsProvider::Counters> pending_samples;
+
+	/// A value which helps keep a steady pace of continuous samples output.
+	float fractional_pending_samples{0.0f};
 
 	/// The worker thread function for continuous sampling;
 	/// it adds a new entry to continuous_samples at every interval

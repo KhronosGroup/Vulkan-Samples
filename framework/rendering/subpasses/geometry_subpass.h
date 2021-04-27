@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -117,6 +117,8 @@ class GeometrySubpass : public Subpass
 	sg::Scene &scene;
 
 	uint32_t thread_index{0};
+
+	vkb::RasterizationState base_rasterization_state{};
 };
 
 }        // namespace vkb

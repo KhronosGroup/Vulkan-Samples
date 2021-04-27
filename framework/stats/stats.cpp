@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2020, Broadcom Inc.
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2020-2021, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -102,11 +102,11 @@ void Stats::resize(const size_t width)
 {
 	// The circular buffer size will be 1/16th of the width of the screen
 	// which means every sixteen pixels represent one graph value
-	size_t buffers_size = width >> 4;
+	buffer_size = width >> 4;
 
 	for (auto &counter : counters)
 	{
-		counter.second.resize(buffers_size);
+		counter.second.resize(buffer_size);
 		counter.second.shrink_to_fit();
 	}
 }
@@ -137,8 +137,7 @@ void Stats::update(float delta_time)
 {
 	switch (sampling_config.mode)
 	{
-		case CounterSamplingMode::Polling:
-		{
+		case CounterSamplingMode::Polling: {
 			StatsProvider::Counters sample;
 
 			for (auto &p : providers)
@@ -149,8 +148,7 @@ void Stats::update(float delta_time)
 			push_sample(sample);
 			break;
 		}
-		case CounterSamplingMode::Continuous:
-		{
+		case CounterSamplingMode::Continuous: {
 			// Check that we have no pending samples to be shown
 			if (pending_samples.size() == 0)
 			{
@@ -166,8 +164,8 @@ void Stats::update(float delta_time)
 					// The worker thread has captured a frame, so we stop it
 					// and read the samples
 					should_add_to_continuous_samples = false;
-					pending_samples                  = continuous_samples;
-					continuous_samples.clear();
+					pending_samples.clear();
+					std::swap(pending_samples, continuous_samples);
 				}
 			}
 
@@ -176,10 +174,23 @@ void Stats::update(float delta_time)
 
 			// Ensure the number of pending samples is capped at a reasonable value
 			if (pending_samples.size() > 100)
-				pending_samples.resize(100);
+			{
+				// Prefer later samples over new samples.
+				std::move(pending_samples.end() - 100, pending_samples.end(), pending_samples.begin());
+				pending_samples.erase(pending_samples.begin() + 100, pending_samples.end());
+
+				// If we get to this point, we're not reading samples fast enough, nudge a little ahead.
+				fractional_pending_samples += 1.0f;
+			}
 
 			// Compute the number of samples to show this frame
-			size_t sample_count = static_cast<size_t>(sampling_config.speed * delta_time) * pending_samples.size();
+			float floating_sample_count = sampling_config.speed * delta_time * float(buffer_size) + fractional_pending_samples;
+
+			// Keep track of the fractional value to avoid speeding up or slowing down too much due to rounding errors.
+			// Generally we push very few samples per frame, so this matters.
+			fractional_pending_samples = floating_sample_count - std::floor(floating_sample_count);
+
+			auto sample_count = static_cast<size_t>(floating_sample_count);
 
 			// Clamp the number of samples
 			sample_count = std::max<size_t>(1, std::min<size_t>(sample_count, pending_samples.size()));
@@ -188,13 +199,13 @@ void Stats::update(float delta_time)
 			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time);
 
 			// Push the samples to circular buffers
-			std::for_each(pending_samples.end() - sample_count, pending_samples.end(), [this, frame_time_sample](auto &s) {
+			std::for_each(pending_samples.begin(), pending_samples.begin() + sample_count, [this, frame_time_sample](auto &s) {
 				// Write the correct frame time into the continuous stats
 				s.insert(frame_time_sample.begin(), frame_time_sample.end());
 				// Then push the sample to the counters list
 				this->push_sample(s);
 			});
-			pending_samples.erase(pending_samples.end() - sample_count, pending_samples.end());
+			pending_samples.erase(pending_samples.begin(), pending_samples.begin() + sample_count);
 
 			break;
 		}
@@ -231,7 +242,10 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 		// Add the new sample to the vector of continuous samples
 		{
 			std::unique_lock<std::mutex> lock(continuous_sampling_mutex);
-			continuous_samples.push_back(sample);
+			if (should_add_to_continuous_samples)
+			{
+				continuous_samples.push_back(sample);
+			}
 		}
 	}
 }
