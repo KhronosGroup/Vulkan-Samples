@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,7 +171,10 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 	command_buffer.bind_pipeline_layout(pipeline_layout);
 
-	prepare_push_constants(command_buffer, sub_mesh);
+	if (pipeline_layout.get_push_constant_range_stage(sizeof(PBRMaterialUniform)) != 0)
+	{
+		prepare_push_constants(command_buffer, sub_mesh);
+	}
 
 	DescriptorSetLayout &descriptor_set_layout = pipeline_layout.get_descriptor_set_layout(0);
 
@@ -235,7 +238,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 
 void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
 {
-	RasterizationState rasterization_state{};
+	RasterizationState rasterization_state = base_rasterization_state;
 	rasterization_state.front_face = front_face;
 
 	if (double_sided_material)

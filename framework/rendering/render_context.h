@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -148,6 +148,7 @@ class RenderContext
 	 * @brief Prepares the next available frame for rendering
 	 * @param reset_mode How to reset the command buffer
 	 * @returns A valid command buffer to record commands to be submitted
+	 * Also ensures that there is an active frame if there is no existing active frame already
 	 */
 	CommandBuffer &begin(CommandBuffer::ResetMode reset_mode = CommandBuffer::ResetMode::ResetPool);
 
@@ -165,10 +166,8 @@ class RenderContext
 
 	/**
 	 * @brief begin_frame
-	 *
-	 * @return VkSemaphore
 	 */
-	VkSemaphore begin_frame();
+	void begin_frame();
 
 	VkSemaphore submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
 
@@ -206,6 +205,8 @@ class RenderContext
 	RenderFrame &get_last_rendered_frame();
 
 	VkSemaphore request_semaphore();
+	VkSemaphore request_semaphore_with_ownership();
+	void        release_owned_semaphore(VkSemaphore semaphore);
 
 	Device &get_device();
 
@@ -226,6 +227,12 @@ class RenderContext
 	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
 	 */
 	virtual void handle_surface_changes();
+
+	/**
+	 * @brief Returns the WSI acquire semaphore. Only to be used in very special circumstances.
+	 * @return The WSI acquire semaphore.
+	 */
+	VkSemaphore consume_acquired_semaphore();
 
   protected:
 	VkExtent2D surface_extent;
