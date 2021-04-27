@@ -137,8 +137,7 @@ void Stats::update(float delta_time)
 {
 	switch (sampling_config.mode)
 	{
-		case CounterSamplingMode::Polling:
-		{
+		case CounterSamplingMode::Polling: {
 			StatsProvider::Counters sample;
 
 			for (auto &p : providers)
@@ -149,8 +148,7 @@ void Stats::update(float delta_time)
 			push_sample(sample);
 			break;
 		}
-		case CounterSamplingMode::Continuous:
-		{
+		case CounterSamplingMode::Continuous: {
 			// Check that we have no pending samples to be shown
 			if (pending_samples.size() == 0)
 			{
