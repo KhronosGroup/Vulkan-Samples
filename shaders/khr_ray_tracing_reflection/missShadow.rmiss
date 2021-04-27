@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2018, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,13 +25,12 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
- #version 460
+#version 460
 #extension GL_EXT_ray_tracing : require
 
 layout(location = 1) rayPayloadInEXT bool isShadowed;
 
 void main()
 {
-  isShadowed = false;
+	isShadowed = false;
 }
-

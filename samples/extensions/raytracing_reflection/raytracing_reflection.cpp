@@ -1,22 +1,32 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
- * SPDX-License-Identifier: Apache-2.0
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ *  * Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ *  * Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *  * Neither the name of NVIDIA CORPORATION nor the names of its
+ *    contributors may be used to endorse or promote products derived
+ *    from this software without specific prior written permission.
  *
- * Licensed under the Apache License, Version 2.0 the "License";
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS'' AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ * IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
+ * CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
+ * PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
+ * PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY
+ * OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+ * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
 /*
- * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
+ * More complex example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
   */
 
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -419,26 +429,12 @@ void RaytracingReflection::load_model(const std::string &file_name, std::shared_
 			ObjVertex    vertex = {};
 			const float *vp     = &attrib.vertices[3 * index.vertex_index];
 			vertex.pos          = glm::vec4(glm::make_vec3(vp), 0);
-			//{*(vp + 0), *(vp + 1), *(vp + 2)};
 
 			if (!attrib.normals.empty() && index.normal_index >= 0)
 			{
 				const float *np = &attrib.normals[3 * index.normal_index];
 				vertex.nrm      = glm::vec4(glm::make_vec3(np), 0);
-				//{*(np + 0), *(np + 1), *(np + 2)};
 			}
-
-			//if (!attrib.texcoords.empty() && index.texcoord_index >= 0)
-			//{
-			//	const float *tp = &attrib.texcoords[2 * index.texcoord_index + 0];
-			//	vertex.texCoord = {*tp, 1.0f - *(tp + 1)};
-			//}
-
-			//if (!attrib.colors.empty())
-			//{
-			//	const float *vc = &attrib.colors[3 * index.vertex_index];
-			//	vertex.color    = {*(vc + 0), *(vc + 1), *(vc + 2)};
-			//}
 
 			obj_vertices.push_back(vertex);
 			obj_indices.push_back(static_cast<int>(obj_indices.size()));
@@ -446,7 +442,6 @@ void RaytracingReflection::load_model(const std::string &file_name, std::shared_
 	}
 
 	ObjModel model;
-
 	model.nb_indices  = static_cast<uint32_t>(obj_indices.size());
 	model.nb_vertices = static_cast<uint32_t>(obj_vertices.size());
 
@@ -498,24 +493,24 @@ VkAccelerationStructureInstanceKHR RaytracingReflection::create_blas_instance(ui
 */
 void RaytracingReflection::create_scene()
 {
-	std::shared_ptr<ObjMaterial> matRed = std::make_shared<ObjMaterial>();
-	matRed->diffuse                     = glm::vec3(1, 0, 0);
-	matRed->specular                    = glm::vec4(1.0f);
-	matRed->shininess                   = 0.0f;
+	std::shared_ptr<ObjMaterial> mat_red = std::make_shared<ObjMaterial>();
+	mat_red->diffuse                     = glm::vec3(1, 0, 0);
+	mat_red->specular                    = glm::vec4(1.0f);
+	mat_red->shininess                   = 0.0f;
 
-	std::shared_ptr<ObjMaterial> matGrey = std::make_shared<ObjMaterial>();
-	matGrey->diffuse                     = glm::vec3(0.7f);
-	matGrey->specular                    = glm::vec4(0.95f);
-	matGrey->shininess                   = 0.1f;
+	std::shared_ptr<ObjMaterial> mat_grey = std::make_shared<ObjMaterial>();
+	mat_grey->diffuse                     = glm::vec3(0.7f);
+	mat_grey->specular                    = glm::vec4(0.95f);
+	mat_grey->shininess                   = 0.1f;
 
-	std::shared_ptr<ObjMaterial> matMirror = std::make_shared<ObjMaterial>();
-	matMirror->diffuse                     = glm::vec3(0, 0, 0.7f);
-	matMirror->specular                    = glm::vec4(0.98f);
-	matMirror->shininess                   = 0.98f;
+	std::shared_ptr<ObjMaterial> mat_mirror = std::make_shared<ObjMaterial>();
+	mat_mirror->diffuse                     = glm::vec3(0, 0, 0.7f);
+	mat_mirror->specular                    = glm::vec4(0.98f);
+	mat_mirror->shininess                   = 0.98f;
 
-	load_model("scenes/cube.obj", matRed);
-	load_model("scenes/plane.obj", matGrey);
-	load_model("scenes/cube.obj", matMirror);
+	load_model("scenes/cube.obj", mat_red);
+	load_model("scenes/plane.obj", mat_grey);
+	load_model("scenes/cube.obj", mat_mirror);
 
 	create_bottom_level_acceleration_structure(obj_models[0]);
 	create_bottom_level_acceleration_structure(obj_models[1]);
