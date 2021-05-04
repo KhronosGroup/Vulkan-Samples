@@ -115,8 +115,8 @@ void TextureLoading::load_texture()
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	VkMemoryRequirements memory_requirements  = {};
 
-	ktx_uint8_t *ktx_image_data   = ktxTexture_GetData(ktx_texture);
-	ktx_size_t   ktx_texture_size = ktxTexture_GetSize(ktx_texture);
+	ktx_uint8_t *ktx_image_data   = ktx_texture->pData;
+	ktx_size_t   ktx_texture_size = ktx_texture->dataSize;
 
 	if (use_staging)
 	{
