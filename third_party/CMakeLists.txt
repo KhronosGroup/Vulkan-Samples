@@ -149,7 +149,9 @@ set(KTX_INCLUDE_DIRS
 add_library(ktx ${KTX_SOURCES})
 
 target_compile_definitions(ktx PUBLIC LIBKTX)
+if (NOT ANDROID)
 target_compile_definitions(ktx PUBLIC "KTX_API=__declspec(dllexport)")
+endif()
 target_compile_definitions(ktx PUBLIC KTX_FEATURE_WRITE=0)
 target_compile_definitions(ktx PUBLIC BASISD_SUPPORT_KTX2_ZSTD=0)
 
