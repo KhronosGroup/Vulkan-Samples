@@ -154,6 +154,7 @@ target_compile_definitions(ktx PUBLIC "KTX_API=__declspec(dllexport)")
 endif()
 target_compile_definitions(ktx PUBLIC KTX_FEATURE_WRITE=0)
 target_compile_definitions(ktx PUBLIC BASISD_SUPPORT_KTX2_ZSTD=0)
+target_compile_definitions(ktx PUBLIC BASISU_NO_ITERATOR_DEBUG_LEVEL)
 
 target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
 
