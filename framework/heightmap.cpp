@@ -18,7 +18,6 @@
 #include "heightmap.h"
 
 #include <cstring>
-#include <ktx.h>
 
 #include "common/error.h"
 
