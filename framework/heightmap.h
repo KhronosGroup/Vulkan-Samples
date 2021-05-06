@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <string>
 #include <ktx.h>
+#include <string>
 
 namespace vkb
 {
