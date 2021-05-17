@@ -13,6 +13,3 @@ pull_request_template.md
 glad.h
 glad.c
 khrplatform.h
-clang_format.py
-run-clang-tidy.py
-package-list.txt
