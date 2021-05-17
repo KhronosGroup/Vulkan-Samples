@@ -1,0 +1,28 @@
+name: "Update Docker Image"
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Specify tag to use with image"
+        required: true
+        default: "latest"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Login to GitHub Container Registry
+        run: echo ${{ secrets.GHCR_PAT }} | docker login ghcr.io --username ${{ github.actor }} --password-stdin
+
+      - name: Checkout Repository
+        uses: actions/checkout@v2
+
+      - name: Build Image
+        run: cd .github/docker && docker build -t ghcr.io/khronosgroup/vulkan-samples:${{ github.event.inputs.tag }} .
+
+      - name: Push Image
+        run: docker image push ghcr.io/khronosgroup/vulkan-samples:${{ github.event.inputs.tag }}
+
+      - name: Logout
+        run: docker logout ghcr.io
