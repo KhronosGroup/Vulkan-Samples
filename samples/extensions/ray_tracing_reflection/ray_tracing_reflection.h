@@ -17,7 +17,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-
 /*
  * More complex example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
  */
@@ -78,8 +77,8 @@ class RaytracingReflection : public ApiVulkanSample
 	//std::vector<std::unique_ptr<const vkb::core::Buffer>> mat_buffers;
 	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer>                index_buffer;
-	uint32_t                                          index_count;
-	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
+	uint32_t                                          index_count{0};
+	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups;
 
 	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
 	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
@@ -87,12 +86,12 @@ class RaytracingReflection : public ApiVulkanSample
 
 	struct StorageImage
 	{
-		VkDeviceMemory memory;
-		VkImage        image = VK_NULL_HANDLE;
-		VkImageView    view;
-		VkFormat       format;
-		uint32_t       width;
-		uint32_t       height;
+		VkDeviceMemory memory{nullptr};
+		VkImage        image{nullptr};
+		VkImageView    view{nullptr};
+		VkFormat       format{VK_FORMAT_UNDEFINED};
+		uint32_t       width{0};
+		uint32_t       height{0};
 	} storage_image;
 
 	struct UniformData
@@ -102,28 +101,27 @@ class RaytracingReflection : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
-	VkPipeline            pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
+	VkPipeline            pipeline{nullptr};
+	VkPipelineLayout      pipeline_layout{nullptr};
+	VkDescriptorSet       descriptor_set{nullptr};
+	VkDescriptorSetLayout descriptor_set_layout{nullptr};
 
 	RaytracingReflection();
 	~RaytracingReflection();
 
-	void                               create_storage_image();
-	void                               create_bottom_level_acceleration_structure(ObjModelGpu &obj_model);
-	void                               create_top_level_acceleration_structure(std::vector<VkAccelerationStructureInstanceKHR> &blas_instances);
-	void                               load_model(const std::string &file_name, std::shared_ptr<ObjMaterial> mat = {});
-	void                               create_model(ObjModelCpu &obj, const std::vector<ObjMaterial> &materials);
-	VkAccelerationStructureInstanceKHR create_blas_instance(uint32_t blas_id, glm::mat4 &mat);
-	void                               delete_acceleration_structure(AccelerationStructure &acceleration_structure);
-	void                               create_scene();
-	void                               create_shader_binding_tables();
-	void                               create_descriptor_sets();
-	void                               create_ray_tracing_pipeline();
-	void                               create_uniform_buffer();
-	void                               update_uniform_buffers();
-	void                               draw();
+	void create_storage_image();
+	void create_bottom_level_acceleration_structure(ObjModelGpu &obj_model);
+	void create_top_level_acceleration_structure(std::vector<VkAccelerationStructureInstanceKHR> &blas_instances);
+	void create_model(ObjModelCpu &obj, const std::vector<ObjMaterial> &materials);
+	auto create_blas_instance(uint32_t blas_id, glm::mat4 &mat);
+	void delete_acceleration_structure(AccelerationStructure &acceleration_structure);
+	void create_scene();
+	void create_shader_binding_tables();
+	void create_descriptor_sets();
+	void create_ray_tracing_pipeline();
+	void create_uniform_buffer();
+	void update_uniform_buffers();
+	void draw();
 
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;

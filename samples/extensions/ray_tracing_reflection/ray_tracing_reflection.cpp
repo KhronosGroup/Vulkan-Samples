@@ -24,7 +24,6 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 
 #include "ray_tracing_reflection.h"
-#include "tiny_obj_loader.h"
 #include <glm/gtc/type_ptr.hpp>
 
 struct ObjPlane : ObjModelCpu
@@ -348,7 +347,7 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 	acceleration_structure_build_geometry_info.geometryCount = 1;
 	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-	const uint32_t primitive_count = static_cast<uint32_t>(blas_instances.size());
+	const auto primitive_count = static_cast<uint32_t>(blas_instances.size());
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -418,102 +417,6 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 }
 
 /*
-Loading an OBJ file
-*/
-void RaytracingReflection::load_model(const std::string &file_name, std::shared_ptr<ObjMaterial> mat)
-{
-	std::string obj_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
-
-	tinyobj::ObjReader reader;
-	reader.ParseFromFile(obj_file);
-	if (!reader.Valid())
-	{
-		LOGE(reader.Error().c_str());
-		std::cerr << "Cannot load: " << obj_file << std::endl;
-		assert(reader.Valid());
-	}
-
-	// Collecting the material in the scene
-	std::vector<ObjMaterial> materials;
-	if (mat != nullptr)
-	{
-		// Incoming material
-		materials.emplace_back(*mat);
-	}
-	else if (reader.GetMaterials().empty())
-	{
-		// Default material
-		materials.emplace_back(ObjMaterial());
-	}
-	else
-	{
-		// OBJ materials
-		for (const auto &material : reader.GetMaterials())
-		{
-			ObjMaterial m;
-			m.diffuse   = glm::make_vec3(material.diffuse);
-			m.specular  = glm::vec4(glm::make_vec3(material.specular), 0);
-			m.shininess = material.shininess;
-			materials.emplace_back(m);
-		}
-	}
-
-	std::vector<ObjVertex> obj_vertices;
-	std::vector<uint32_t>  obj_indices;
-	std::vector<int32_t>   obj_mat_index;
-
-	const tinyobj::attrib_t &attrib = reader.GetAttrib();
-	for (const auto &shape : reader.GetShapes())
-	{
-		obj_mat_index.insert(obj_mat_index.end(), shape.mesh.material_ids.begin(), shape.mesh.material_ids.end());
-		for (const auto &index : shape.mesh.indices)
-		{
-			ObjVertex    vertex = {};
-			const float *vp     = &attrib.vertices[3 * index.vertex_index];
-			vertex.pos          = glm::vec3(glm::make_vec3(vp));
-
-			if (!attrib.normals.empty() && index.normal_index >= 0)
-			{
-				const float *np = &attrib.normals[3 * index.normal_index];
-				vertex.nrm      = glm::vec3(glm::make_vec3(np));
-			}
-
-			obj_vertices.push_back(vertex);
-			obj_indices.push_back(static_cast<int>(obj_indices.size()));
-		}
-	}
-
-	ObjModelGpu model;
-	model.nb_indices  = static_cast<uint32_t>(obj_indices.size());
-	model.nb_vertices = static_cast<uint32_t>(obj_vertices.size());
-
-	auto vertex_buffer_size    = obj_vertices.size() * sizeof(ObjVertex);
-	auto index_buffer_size     = obj_indices.size() * sizeof(uint32_t);
-	auto mat_index_buffer_size = obj_mat_index.size() * sizeof(int32_t);
-	auto mat_buffer_size       = materials.size() * sizeof(ObjMaterial);
-
-	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-	VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
-	model.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	model.vertex_buffer->update(obj_vertices.data(), vertex_buffer_size);
-
-	// Acceleration structure flag is not needed for the rest
-	buffer_usage_flags = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-
-	model.index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	model.index_buffer->update(obj_indices.data(), index_buffer_size);
-
-	model.mat_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), mat_index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	model.mat_index_buffer->update(obj_mat_index.data(), mat_index_buffer_size);
-
-	model.mat_color_buffer = std::make_unique<vkb::core::Buffer>(get_device(), mat_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	model.mat_color_buffer->update(materials.data(), mat_buffer_size);
-
-	obj_models.push_back(std::move(model));
-}
-
-/*
 Create the GPU representation of the model
 */
 void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjMaterial> &materials)
@@ -528,7 +431,7 @@ void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjM
 	auto mat_buffer_size       = materials.size() * sizeof(ObjMaterial);
 
 	// Making sure the material triangle index don't exceed the number of materials
-	int32_t              max_index = static_cast<int32_t>(materials.size() - 1);
+	auto                 max_index = static_cast<int32_t>(materials.size() - 1);
 	std::vector<int32_t> mat_index(obj.mat_index.size());
 	for (auto i = 0; i < obj.mat_index.size(); i++)
 		mat_index[i] = std::min(max_index, obj.mat_index[i]);
@@ -554,7 +457,7 @@ void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjM
 	obj_models.push_back(std::move(model));
 }
 
-VkAccelerationStructureInstanceKHR RaytracingReflection::create_blas_instance(uint32_t blas_id, glm::mat4 &mat)
+auto RaytracingReflection::create_blas_instance(uint32_t blas_id, glm::mat4 &mat)
 {
 	VkTransformMatrixKHR transform_matrix;
 	glm::mat3x4          rtxT = glm::transpose(mat);
@@ -584,6 +487,7 @@ VkAccelerationStructureInstanceKHR RaytracingReflection::create_blas_instance(ui
 */
 void RaytracingReflection::create_scene()
 {
+	// Materials
 	ObjMaterial mat_red     = {{1, 0, 0}, {1, 1, 1}, {0}};
 	ObjMaterial mat_green   = {{0, 1, 0}, {1, 1, 1}, {0}};
 	ObjMaterial mat_blue    = {{0, 0, 1}, {1, 1, 1}, {0}};
@@ -593,28 +497,36 @@ void RaytracingReflection::create_scene()
 	ObjMaterial mat_grey    = {{0.7f, 0.7f, 0.7f}, {0.9f, 0.9f, 0.9f}, {0.1f}};        // Slightly reflective
 	ObjMaterial mat_mirror  = {{0.3f, 0.9f, 1.0f}, {0.9f, 0.9f, 0.9f}, {0.9f}};        // Mirror Slightly blue
 
-	// Upload model to GPU
-	create_model(ObjCube(), {mat_red, mat_green, mat_blue, mat_yellow, mat_cyan, mat_magenta});        // 6 color faces
-	create_model(ObjPlane(), {mat_grey});
-	create_model(ObjCube(), {mat_mirror});
+	// Geometries
+	auto cube  = ObjCube();
+	auto plane = ObjPlane();
 
-	// Create as many bottom acceleration structures (blas) as there are models
+	// Upload geometries to GPU
+	create_model(cube, {mat_red, mat_green, mat_blue, mat_yellow, mat_cyan, mat_magenta});        // 6 color faces
+	create_model(plane, {mat_grey});
+	create_model(cube, {mat_mirror});
+
+	// Create as many bottom acceleration structures (blas) as there are geometries/models
 	create_bottom_level_acceleration_structure(obj_models[0]);
 	create_bottom_level_acceleration_structure(obj_models[1]);
 	create_bottom_level_acceleration_structure(obj_models[2]);
 
-	// Creating instances of the blas to the top level acceleration structure
-	glm::mat4 m_mirror_back  = glm::scale(glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, -7.0f)), glm::vec3(5.0f, 5.0f, 0.1f));
-	glm::mat4 m_mirror_front = glm::scale(glm::translate(glm::mat4(), glm::vec3(0.0f, 0.0f, 7.0f)), glm::vec3(5.0f, 5.0f, 0.1f));
-	glm::mat4 m_plane        = glm::scale(glm::translate(glm::mat4(), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(15.0f, 15.0f, 15.0f));
+	// Matrices to position the instances
+	glm::mat4 m_mirror_back  = glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, -7.0f)), glm::vec3(5.0f, 5.0f, 0.1f));
+	glm::mat4 m_mirror_front = glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(0.0f, 0.0f, 7.0f)), glm::vec3(5.0f, 5.0f, 0.1f));
+	glm::mat4 m_plane        = glm::scale(glm::translate(glm::mat4(1.f), glm::vec3(0.0f, -1.0f, 0.0f)), glm::vec3(15.0f, 15.0f, 15.0f));
+	glm::mat4 m_cube_left    = glm::translate(glm::mat4(1.f), glm::vec3(-1.0f, 0.0f, 0.0f));
+	glm::mat4 m_cube_right   = glm::translate(glm::mat4(1.f), glm::vec3(1.0f, 0.0f, 0.0f));
 
+	// Creating instances of the blas to the top level acceleration structure
 	std::vector<VkAccelerationStructureInstanceKHR> blas_instances;
-	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(-1.0f, 0.0f, 0.0f))));        // cube
-	blas_instances.push_back(create_blas_instance(0, glm::translate(glm::mat4(), glm::vec3(1.0f, 0.0f, 0.0f))));         // cube
+	blas_instances.push_back(create_blas_instance(0, m_cube_left));
+	blas_instances.push_back(create_blas_instance(0, m_cube_right));
 	blas_instances.push_back(create_blas_instance(1, m_plane));
 	blas_instances.push_back(create_blas_instance(2, m_mirror_back));
 	blas_instances.push_back(create_blas_instance(2, m_mirror_front));
 
+	// Building the TLAS
 	create_top_level_acceleration_structure(blas_instances);
 }
 
@@ -636,36 +548,46 @@ void RaytracingReflection::create_scene()
 
 void RaytracingReflection::create_shader_binding_tables()
 {
-	const uint32_t           handle_size            = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-	const uint32_t           handle_size_aligned    = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-	const uint32_t           handle_alignment       = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
-	const uint32_t           group_count            = static_cast<uint32_t>(shader_groups.size());
-	const uint32_t           sbt_size               = group_count * handle_size_aligned;
+	// Index position of the groups in the generated ray tracing pipeline
+	// To be generic, this should be pass in parameters
+	std::vector<uint32_t> rgen_index{0};
+	std::vector<uint32_t> miss_index{1, 2};
+	std::vector<uint32_t> hit_index{3};
+
+	const uint32_t handle_size         = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t handle_alignment    = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
+	const uint32_t handle_size_aligned = aligned_size(handle_size, handle_alignment);
+
 	const VkBufferUsageFlags sbt_buffer_usage_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	const VmaMemoryUsage     sbt_memory_usage       = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
-	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned * 2, sbt_buffer_usage_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned * rgen_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned * miss_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size_aligned * hit_index.size(), sbt_buffer_usage_flags, sbt_memory_usage, 0);
 
 	// Copy the pipeline's shader handles into a host buffer
+	const auto           group_count = static_cast<uint32_t>(rgen_index.size() + miss_index.size() + hit_index.size());
+	const auto           sbt_size    = group_count * handle_size_aligned;
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
 	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, group_count, sbt_size, shader_handle_storage.data()));
 
-	// Copy the shader handles from the host buffer to the binding tables
-	uint8_t *data = static_cast<uint8_t *>(raygen_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data(), handle_size);
-	data = static_cast<uint8_t *>(miss_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_size_aligned, handle_size);        // miss shader 1
-	data += handle_size_aligned;
-	memcpy(data, shader_handle_storage.data() + handle_size_aligned * 2, handle_size);        // miss shader 2
-	data = static_cast<uint8_t *>(hit_shader_binding_table->map());
-	memcpy(data, shader_handle_storage.data() + handle_size_aligned * 3, handle_size);        // rgen + 2*miss == 3
-	raygen_shader_binding_table->unmap();
-	miss_shader_binding_table->unmap();
-	hit_shader_binding_table->unmap();
+	// Write the handles in the SBT buffer
+	auto copyHandles = [&](auto &buffer, std::vector<uint32_t> &indices, uint32_t stride) {
+		auto *pBuffer = static_cast<uint8_t *>(buffer->map());
+		for (uint32_t index = 0; index < static_cast<uint32_t>(indices.size()); index++)
+		{
+			auto *pStart = pBuffer;
+			// Copy the handle
+			memcpy(pBuffer, shader_handle_storage.data() + (indices[index] * handle_size), handle_size);
+			pBuffer = pStart + stride;        // Jumping to next group
+		}
+		buffer->unmap();
+	};
+
+	copyHandles(raygen_shader_binding_table, rgen_index, handle_size_aligned);
+	copyHandles(miss_shader_binding_table, miss_index, handle_size_aligned);
+	copyHandles(hit_shader_binding_table, hit_index, handle_size_aligned);
 }
 
 /*

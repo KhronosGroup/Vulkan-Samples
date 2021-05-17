@@ -413,7 +413,6 @@ target_link_libraries(${PROJECT_NAME}
     astc
     imgui
     tinygltf
-    tinyobjloader
     glm
     glslang
     SPIRV
