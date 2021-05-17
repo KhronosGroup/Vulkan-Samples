@@ -6,7 +6,7 @@ stages:
 
 Doxygen:
   stage: Check
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   tags:
     - linux
     - docker
@@ -17,7 +17,7 @@ Doxygen:
 
 CopyrightHeaders:
   stage: Check
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   tags:
     - linux
     - docker
@@ -26,7 +26,7 @@ CopyrightHeaders:
 
 SnakeCase:
   stage: Check
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   tags:
     - linux
     - docker
@@ -37,7 +37,7 @@ SnakeCase:
 
 ClangFormat:
   stage: Check
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   tags:
     - linux
     - docker
@@ -47,7 +47,7 @@ ClangFormat:
 
 ClangTidy:
   stage: Check
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
@@ -59,7 +59,7 @@ ClangTidy:
 
 Linux:
   stage: Build
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   artifacts:
@@ -90,7 +90,7 @@ Windows:
 
 Android:
   stage: Build
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   artifacts:
@@ -106,7 +106,7 @@ Android:
 
 GenerateSample:
   stage: Test
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
    GIT_SUBMODULE_STRATEGY: recursive
   dependencies:
@@ -138,7 +138,7 @@ SystemTest:
 
 LinuxExternalProject:
   stage: Package
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
@@ -159,7 +159,7 @@ WindowsExternalProject:
 
 AndroidExternalProject:
   stage: Package
-  image: khronosgroup/vulkan-samples
+  image: ghcr.io/khronosgroup/vulkan-samples
   variables:
     GIT_SUBMODULE_STRATEGY: recursive
   tags:
