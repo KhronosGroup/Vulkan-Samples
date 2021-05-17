@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,6 +40,8 @@ class SemaphorePool
 	SemaphorePool &operator=(SemaphorePool &&) = delete;
 
 	VkSemaphore request_semaphore();
+	VkSemaphore request_semaphore_with_ownership();
+	void        release_owned_semaphore(VkSemaphore semaphore);
 
 	void reset();
 
@@ -49,6 +51,7 @@ class SemaphorePool
 	Device &device;
 
 	std::vector<VkSemaphore> semaphores;
+	std::vector<VkSemaphore> released_semaphores;
 
 	uint32_t active_semaphore_count{0};
 };

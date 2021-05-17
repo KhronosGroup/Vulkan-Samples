@@ -40,7 +40,27 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 	{
 		const VkQueueFamilyProperties &queue_family_property = gpu.get_queue_family_properties()[queue_family_index];
 
-		queue_priorities[queue_family_index].resize(queue_family_property.queueCount, 1.0f);
+		if (gpu.has_high_priority_graphics_queue())
+		{
+			uint32_t graphics_queue_family = get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+			if (graphics_queue_family == queue_family_index)
+			{
+				queue_priorities[queue_family_index].reserve(queue_family_property.queueCount);
+				queue_priorities[queue_family_index].push_back(1.0f);
+				for (uint32_t i = 1; i < queue_family_property.queueCount; i++)
+				{
+					queue_priorities[queue_family_index].push_back(0.5f);
+				}
+			}
+			else
+			{
+				queue_priorities[queue_family_index].resize(queue_family_property.queueCount, 0.5f);
+			}
+		}
+		else
+		{
+			queue_priorities[queue_family_index].resize(queue_family_property.queueCount, 0.5f);
+		}
 
 		VkDeviceQueueCreateInfo &queue_create_info = queue_create_infos[queue_family_index];
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -119,7 +119,8 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 
 	// Generate a unique id, determined by source and variant
 	std::hash<std::string> hasher{};
-	id = hasher(std::string{spirv.cbegin(), spirv.cend()});
+	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()),
+	                        reinterpret_cast<const char *>(spirv.data() + spirv.size())});
 }
 
 ShaderModule::ShaderModule(ShaderModule &&other) :

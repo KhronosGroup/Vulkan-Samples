@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -116,6 +116,10 @@ struct ImageMemoryBarrier
 	VkImageLayout old_layout{VK_IMAGE_LAYOUT_UNDEFINED};
 
 	VkImageLayout new_layout{VK_IMAGE_LAYOUT_UNDEFINED};
+
+	uint32_t old_queue_family{VK_QUEUE_FAMILY_IGNORED};
+
+	uint32_t new_queue_family{VK_QUEUE_FAMILY_IGNORED};
 };
 
 /**

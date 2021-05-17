@@ -85,7 +85,8 @@ set(ORDER_LIST
     "multithreading_render_passes"
     "afbc"
     "16bit_storage_input_output"
-    "16bit_arithmetic")
+    "16bit_arithmetic"
+    "async_compute")
 
 # Orders the sample ids by the order list above
 order_sample_list(

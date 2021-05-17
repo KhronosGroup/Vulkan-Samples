@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -351,6 +351,7 @@ void Instancing::prepare_pipelines()
 	// Star field pipeline
 	rasterization_state.cullMode         = VK_CULL_MODE_NONE;
 	depth_stencil_state.depthWriteEnable = VK_FALSE;
+	depth_stencil_state.depthTestEnable  = VK_FALSE;
 	shader_stages[0]                     = load_shader("instancing/starfield.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                     = load_shader("instancing/starfield.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Vertices are generated in the vertex shader

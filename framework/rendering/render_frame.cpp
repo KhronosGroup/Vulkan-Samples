@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -143,6 +143,16 @@ const SemaphorePool &RenderFrame::get_semaphore_pool() const
 VkSemaphore RenderFrame::request_semaphore()
 {
 	return semaphore_pool.request_semaphore();
+}
+
+VkSemaphore RenderFrame::request_semaphore_with_ownership()
+{
+	return semaphore_pool.request_semaphore_with_ownership();
+}
+
+void RenderFrame::release_owned_semaphore(VkSemaphore semaphore)
+{
+	semaphore_pool.release_owned_semaphore(semaphore);
 }
 
 RenderTarget &RenderFrame::get_render_target()

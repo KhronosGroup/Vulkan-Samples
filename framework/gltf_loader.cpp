@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -803,7 +803,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		for (auto child_node_index : model.nodes[node_it.second].children)
 		{
-			traverse_nodes.push(std::make_pair(std::ref(traverse_root_node), child_node_index));
+			traverse_nodes.push(std::make_pair(std::ref(current_node), child_node_index));
 		}
 	}
 

@@ -119,6 +119,11 @@ The sample also shows how to enable 16-bit storage for SSBOs and push constants.
 
 - 🎓 [How to effectively use 16-bit arithmetic in shaders](./performance/16bit_arithmetic/16bit_arithmetic_tutorial.md)
 
+### [Async compute](./performance/async_compute)
+This sample demonstrates using multiple Vulkan queues to get better hardware utilization with compute post-processing workloads.
+
+- 🎓 [Using async compute to saturate GPU](./performance/async_compute/async_compute_tutorial.md)
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.

@@ -72,7 +72,7 @@ completely isolate arithmetic throughput as the main bottleneck.
 
 Here, the critical arithmetic overhead is:
 
-```
+```glsl
 // This is very arbitrary. Expends a ton of arithmetic to compute
 // something that looks similar to a lens flare.
 vec4 compute_blob(vec2 pos, vec4 blob, float seed)
@@ -111,7 +111,7 @@ vec4 compute_blob(vec2 pos, vec4 blob, float seed)
 
 In this version, we rewrite `compute_blob` and the rest of the shader to be as pure FP16 as we can:
 
-```
+```glsl
 // Allows us to use float16_t for arithmetic purposes.
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
 
@@ -119,7 +119,7 @@ In this version, we rewrite `compute_blob` and the rest of the shader to be as p
 #extension GL_EXT_shader_16bit_storage : require
 ```
 
-```
+```glsl
 // This is very arbitrary. Expends a ton of arithmetic to compute
 // something that looks similar to a lens flare.
 f16vec4 compute_blob(f16vec2 pos, f16vec4 blob, float16_t seed)
