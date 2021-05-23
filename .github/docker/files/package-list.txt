@@ -1,0 +1,4 @@
+build-tools;29.0.2
+platform-tools
+platforms;android-28
+tools
