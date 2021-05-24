@@ -60,15 +60,13 @@ void Animation::update(float delta_time)
 				{
 					switch (channel.target)
 					{
-						case Translation:
-						{
+						case Translation: {
 							transform.set_translation(glm::vec3(glm::mix(channel.sampler.outputs[i],
 							                                             channel.sampler.outputs[i + 1],
 							                                             time)));
 							break;
 						}
-						case Rotation:
-						{
+						case Rotation: {
 							glm::quat q1;
 							q1.x = channel.sampler.outputs[i].x;
 							q1.y = channel.sampler.outputs[i].y;
@@ -85,8 +83,7 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale:
-						{
+						case Scale: {
 							transform.set_scale(glm::vec3(glm::mix(channel.sampler.outputs[i],
 							                                       channel.sampler.outputs[i + 1],
 							                                       time)));
@@ -97,13 +94,11 @@ void Animation::update(float delta_time)
 				{
 					switch (channel.target)
 					{
-						case Translation:
-						{
+						case Translation: {
 							transform.set_translation(glm::vec3(channel.sampler.outputs[i]));
 							break;
 						}
-						case Rotation:
-						{
+						case Rotation: {
 							glm::quat q1;
 							q1.x = channel.sampler.outputs[i].x;
 							q1.y = channel.sampler.outputs[i].y;
@@ -114,8 +109,7 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale:
-						{
+						case Scale: {
 							transform.set_scale(glm::vec3(channel.sampler.outputs[i]));
 						}
 					}
@@ -137,13 +131,11 @@ void Animation::update(float delta_time)
 
 					switch (channel.target)
 					{
-						case Translation:
-						{
+						case Translation: {
 							transform.set_translation(glm::vec3(result));
 							break;
 						}
-						case Rotation:
-						{
+						case Rotation: {
 							glm::quat q1;
 							q1.x = result.x;
 							q1.y = result.y;
@@ -154,8 +146,7 @@ void Animation::update(float delta_time)
 							break;
 						}
 
-						case Scale:
-						{
+						case Scale: {
 							transform.set_scale(glm::vec3(result));
 						}
 					}
