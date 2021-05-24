@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -90,8 +90,8 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	VkMemoryRequirements memory_requirements  = {};
 
-	ktx_uint8_t *ktx_image_data   = ktxTexture_GetData(ktx_texture);
-	ktx_size_t   ktx_texture_size = ktxTexture_GetSize(ktx_texture);
+	ktx_uint8_t *ktx_image_data   = ktx_texture->pData;
+	ktx_size_t   ktx_texture_size = ktx_texture->dataSize;
 
 	// Create a host-visible staging buffer that contains the raw image data
 	VkBuffer       staging_buffer;

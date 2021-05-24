@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -262,6 +262,10 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 		image = std::make_unique<Astc>(name, data);
 	}
 	else if (extension == "ktx")
+	{
+		image = std::make_unique<Ktx>(name, data);
+	}
+	else if (extension == "ktx2")
 	{
 		image = std::make_unique<Ktx>(name, data);
 	}
