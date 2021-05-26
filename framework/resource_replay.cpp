@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -162,11 +162,11 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	read(stream,
 	     specialization_constant_state);
 
-	VertexInputState vertex_input_sate{};
+	VertexInputState vertex_input_state{};
 
 	read(stream,
-	     vertex_input_sate.attributes,
-	     vertex_input_sate.bindings);
+	     vertex_input_state.attributes,
+	     vertex_input_state.bindings);
 
 	InputAssemblyState input_assembly_state{};
 	RasterizationState rasterization_state{};
@@ -198,7 +198,7 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	}
 
 	pipeline_state.set_subpass_index(subpass_index);
-	pipeline_state.set_vertex_input_state(vertex_input_sate);
+	pipeline_state.set_vertex_input_state(vertex_input_state);
 	pipeline_state.set_input_assembly_state(input_assembly_state);
 	pipeline_state.set_rasterization_state(rasterization_state);
 	pipeline_state.set_viewport_state(viewport_state);
