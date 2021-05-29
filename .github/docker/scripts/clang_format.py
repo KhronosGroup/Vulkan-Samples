@@ -81,7 +81,6 @@ def main():
       'cu',  # CUDA
       # Other languages that clang-format supports
       'proto', 'protodevel',  # Protocol Buffers
-      'java',  # Java
       'js',  # JavaScript
       'ts',  # TypeScript
       ])
