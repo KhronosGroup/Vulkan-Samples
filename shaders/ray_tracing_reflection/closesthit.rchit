@@ -75,8 +75,8 @@ void main()
 {
 	int objId = gl_InstanceCustomIndexEXT;
 
-	int mat_idx = mat_index[objId].i[gl_PrimitiveID];
-	WaveFrontMaterial mat = materials[objId].m[mat_idx]; // Material for this triangle
+	int mat_idx = mat_index[nonuniformEXT(objId)].i[gl_PrimitiveID];
+	WaveFrontMaterial mat = materials[nonuniformEXT(objId)].m[mat_idx]; // Material for this triangle
 
 	// Indices of the triangle
 	ivec3 ind = ivec3(indices[nonuniformEXT(objId)].i[3 * gl_PrimitiveID + 0],         //
