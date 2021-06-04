@@ -16,11 +16,8 @@
  */
 
 /*
- * Loading a Basis Universal supercompressed texture (https://github.com/BinomialLLC/basis_universal) and transcoding it to a supported GPU texture format
- * Details on KTX 2.0 can be found at https://www.khronos.org/ktx/
+ * Loading a Basis Universal supercompressed texture and transcoding it to a supported GPU texture format
  */
-
-// @todo: link to https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md?
 
 #include "texture_compression_basisu.h"
 
@@ -61,8 +58,9 @@ bool TextureCompressionBasisu::format_supported(VkFormat format)
 	return ((format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_TRANSFER_DST_BIT) && (format_properties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT));
 }
 
-// Get a list of possible transcoding target formats supported by this gpu
-// Note that this is a simple mechanism...
+// Get a list of possible transcoding target formats supported by the selected gpu
+// Note that this is a simple mechanism for demonstration purposes
+// A real world application would probably need a more sophisticated way to determine the target formats based on texture usage
 void TextureCompressionBasisu::get_available_target_formats()
 {
 	available_target_formats.clear();
@@ -121,7 +119,7 @@ void TextureCompressionBasisu::get_available_target_formats()
 	available_target_formats_names.push_back("KTX_TTF_RGBA32");
 }
 
-// @todo: comment
+// Loads and transcodes the input KTX texture file to the desired native GPU target format
 void TextureCompressionBasisu::transcode_texture(const std::string &input_file, ktx_transcode_fmt_e target_format)
 {
 	// Clean up resources for an already created image
@@ -130,54 +128,49 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 		destroy_texture(texture);
 	}
 
-	// @todo: comment
-	ktxTexture2 *  ktx_texture;
-	KTX_error_code result;
-
 	std::string file_name = vkb::fs::path::get(vkb::fs::path::Assets, "textures/basisu/" + input_file);
 
-	result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
+	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
+	ktxTexture2 *ktx_texture;
+	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
+	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
 	if (result != KTX_SUCCESS)
 	{
-		// @todo
+		throw std::runtime_error("Could not load the requested image file.");
 	}
 
-	// @todo: comment
+	// Check if the texture needs transcoding. This is the case, if the format stored in the KTX file is a non-native compression format
+	// This is the case for all textures used in this sample, as they are compressed using Basis Universal, which has to be transcoded to a native GPU format
 	if (ktxTexture2_NeedsTranscoding(ktx_texture))
 	{
-		KTX_error_code result;
-		// Check if and which compressed texture formats are supported by the device
-		// This is then used to transcode the texture to
-		// @todo: note that this is just an example of how to select a target feature
-		auto tStart    = std::chrono::high_resolution_clock::now();
-		result         = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
-		auto tEnd      = std::chrono::high_resolution_clock::now();
-		transcode_time = std::chrono::duration<float, std::milli>(tEnd - tStart).count();
+		auto tStart         = std::chrono::high_resolution_clock::now();
+		result              = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
+		last_transcode_time = std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
+		if (result != KTX_SUCCESS)
+		{
+			throw std::runtime_error("Could not transcode the input texture to the selected target format.");
+		}
 	}
-
-	// @todo: comment
-	VkFormat format = (VkFormat) ktx_texture->vkFormat;
 
 	texture.width      = ktx_texture->baseWidth;
 	texture.height     = ktx_texture->baseHeight;
 	texture.mip_levels = ktx_texture->numLevels;
 
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	VkMemoryRequirements memory_requirements  = {};
+	// Once transcoded, we can read the native Vulkan format from the ktx texture object and upload the transcoded GPU native data via staging
+	VkFormat format = (VkFormat) ktx_texture->vkFormat;
 
-	ktx_uint8_t *ktx_image_data   = ktx_texture->pData;
-	ktx_size_t   ktx_texture_size = ktx_texture->dataSize;
-
-	// @todo: comment: Data is uploaded to the gpu using a process called staging with a host visible buffer that's copied to a device local buffer and then discarded
 	VkBuffer       staging_buffer;
 	VkDeviceMemory staging_memory;
 
 	VkBufferCreateInfo buffer_create_info = vkb::initializers::buffer_create_info();
-	buffer_create_info.size               = ktx_texture_size;
+	buffer_create_info.size               = ktx_texture->dataSize;
 	// This buffer is used as a transfer source for the buffer copy
 	buffer_create_info.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 	buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &staging_buffer));
+
+	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
+	VkMemoryRequirements memory_requirements  = {};
 	vkGetBufferMemoryRequirements(get_device().get_handle(), staging_buffer, &memory_requirements);
 	memory_allocate_info.allocationSize  = memory_requirements.size;
 	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -187,21 +180,21 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// Copy texture data into host local staging buffer
 	uint8_t *data;
 	VK_CHECK(vkMapMemory(get_device().get_handle(), staging_memory, 0, memory_requirements.size, 0, (void **) &data));
-	memcpy(data, ktx_image_data, ktx_texture_size);
+	memcpy(data, ktx_texture->pData, ktx_texture->dataSize);
 	vkUnmapMemory(get_device().get_handle(), staging_memory);
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
-	for (uint32_t i = 0; i < texture.mip_levels; i++)
+	for (uint32_t mip_level = 0; mip_level < texture.mip_levels; mip_level++)
 	{
 		ktx_size_t        offset;
-		KTX_error_code    result                           = ktxTexture_GetImageOffset((ktxTexture *) ktx_texture, i, 0, 0, &offset);
+		KTX_error_code    result                           = ktxTexture_GetImageOffset((ktxTexture *) ktx_texture, mip_level, 0, 0, &offset);
 		VkBufferImageCopy buffer_copy_region               = {};
 		buffer_copy_region.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		buffer_copy_region.imageSubresource.mipLevel       = i;
+		buffer_copy_region.imageSubresource.mipLevel       = mip_level;
 		buffer_copy_region.imageSubresource.baseArrayLayer = 0;
 		buffer_copy_region.imageSubresource.layerCount     = 1;
-		buffer_copy_region.imageExtent.width               = ktx_texture->baseWidth >> i;
-		buffer_copy_region.imageExtent.height              = ktx_texture->baseHeight >> i;
+		buffer_copy_region.imageExtent.width               = ktx_texture->baseWidth >> mip_level;
+		buffer_copy_region.imageExtent.height              = ktx_texture->baseHeight >> mip_level;
 		buffer_copy_region.imageExtent.depth               = 1;
 		buffer_copy_region.bufferOffset                    = offset;
 		buffer_copy_regions.push_back(buffer_copy_region);
@@ -249,8 +242,6 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
-	// Destination pipeline stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
 	vkCmdPipelineBarrier(
 	    copy_command,
 	    VK_PIPELINE_STAGE_HOST_BIT,
@@ -276,8 +267,6 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	image_memory_barrier.newLayout     = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-	// Source pipeline stage stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
-	// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 	vkCmdPipelineBarrier(
 	    copy_command,
 	    VK_PIPELINE_STAGE_TRANSFER_BIT,
@@ -612,7 +601,6 @@ void TextureCompressionBasisu::prepare_uniform_buffers()
 	                                                        sizeof(ubo_vs),
 	                                                        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-
 	update_uniform_buffers();
 }
 
@@ -637,15 +625,14 @@ bool TextureCompressionBasisu::prepare(vkb::Platform &platform)
 		return false;
 	}
 	get_available_target_formats();
-	// @todo: comment
 	texture_file_names = {"kodim23_UASTC.ktx2",
 	                      "kodim23_ETC1S.ktx2",
 	                      "kodim20_UASTC.ktx2",
 	                      "kodim20_ETC1S.ktx2",
 	                      "kodim05_UASTC.ktx2",
 	                      "kodim05_ETC1S.ktx2",
-	                      "kodim03_ETC1S.ktx2",
-	                      "kodim03_UASTC.ktx2"};
+	                      "kodim03_UASTC.ktx2",
+	                      "kodim03_ETC1S.ktx2"};
 	transcode_texture(texture_file_names[selected_input_texture], available_target_formats[selected_transcode_target_format]);
 	generate_quad();
 	prepare_uniform_buffers();
@@ -674,7 +661,6 @@ void TextureCompressionBasisu::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Input"))
 	{
-		// @todo: comment
 		drawer.text("Input image:");
 		ImGui::PushItemWidth(180);
 		drawer.combo_box("##img", &selected_input_texture, texture_file_names);
@@ -685,8 +671,6 @@ void TextureCompressionBasisu::on_update_ui_overlay(vkb::Drawer &drawer)
 		ImGui::PopItemWidth();
 		if (drawer.button("Transcode"))
 		{
-			// @todo: clean up image resources
-			// @todo: comment
 			vkQueueWaitIdle(queue);
 			transcode_texture(texture_file_names[selected_input_texture], available_target_formats[selected_transcode_target_format]);
 
@@ -703,7 +687,7 @@ void TextureCompressionBasisu::on_update_ui_overlay(vkb::Drawer &drawer)
 
 			vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 		}
-		drawer.text("Transcoded in %.2f ms", transcode_time);
+		drawer.text("Transcoded in %.2f ms", last_transcode_time);
 	}
 }
 

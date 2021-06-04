@@ -16,8 +16,7 @@
  */
 
 /*
- * Loading a Basis Universal supercompressed texture (https://github.com/BinomialLLC/basis_universal) and transcoding it to a supported GPU texture format
- * Details on KTX 2.0 can be found at https://www.khronos.org/ktx/
+ * Loading a Basis Universal supercompressed texture and transcoding it to a supported GPU texture format
  */
 
 #pragma once
@@ -67,15 +66,13 @@ class TextureCompressionBasisu : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
-	// @todo: document
+	int32_t                          selected_transcode_target_format = 0;
 	std::vector<ktx_transcode_fmt_e> available_target_formats;
 	std::vector<std::string>         available_target_formats_names;
+	int32_t                          selected_input_texture = 0;
 	std::vector<std::string>         texture_file_names;
 
-	// @todo: store some stats
-	int32_t selected_transcode_target_format = 0;
-	int32_t selected_input_texture = 0;
-	float   transcode_time;
+	float last_transcode_time;
 
 	TextureCompressionBasisu();
 	~TextureCompressionBasisu();
