@@ -127,7 +127,7 @@ This sample demonstrates using multiple Vulkan queues to get better hardware uti
 ## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
 This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
 
-- 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu.md)
+- 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
 
 ## API samples
 
