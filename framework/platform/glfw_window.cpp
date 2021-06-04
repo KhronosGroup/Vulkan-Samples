@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -281,16 +281,16 @@ GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
 
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	auto &options = platform.get_app().get_options();
+	auto parser = platform.get_parser();
 
-	if (options.contains("--width"))
+	if (parser->contains(&Platform::width))
 	{
-		width = static_cast<uint32_t>(options.get_int("--width"));
+		width = parser->as<uint32_t>(&Platform::width);
 	}
 
-	if (options.contains("--height"))
+	if (parser->contains(&Platform::height))
 	{
-		height = static_cast<uint32_t>(options.get_int("--height"));
+		height = parser->as<uint32_t>(&Platform::height);
 	}
 
 	handle = glfwCreateWindow(width, height, platform.get_app().get_name().c_str(), NULL, NULL);

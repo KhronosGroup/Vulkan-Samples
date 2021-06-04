@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,6 @@
 #include "debug_info.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
-#include "platform/options.h"
 #include "timer.h"
 
 namespace vkb
@@ -96,8 +95,6 @@ class Application
 
 	DebugInfo &get_debug_info();
 
-	const Options &get_options();
-
   protected:
 	float fps{0.0f};
 
@@ -106,12 +103,6 @@ class Application
 	uint32_t frame_count{0};
 
 	uint32_t last_frame_count{0};
-
-	static std::string usage;
-
-	Options options{};
-
-	static void set_usage(const std::string &usage);
 
   private:
 	std::string name{};

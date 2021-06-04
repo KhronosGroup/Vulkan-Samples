@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,6 +28,7 @@
 
 #include "common/logging.h"
 #include "platform/filesystem.h"
+#include "platform/parsers/CLI11.h"
 
 namespace vkb
 {
@@ -36,6 +37,18 @@ std::vector<std::string> Platform::arguments = {};
 std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
+
+PositionalCommand Platform::app("sample", "Start a sample with the given id");
+SubCommand        Platform::samples("samples", "List all samples", {});
+FlagCommand       Platform::sample(FlagType::OneValue, "sample", "s", "Start a sample --sample/--s ID");
+FlagCommand       Platform::test(FlagType::OneValue, "test", "t", "Start a test --test/--t ID");
+FlagCommand       Platform::benchmark(FlagType::OneValue, "benchmark", "", "Run a benchmark for a set amount of frames");
+FlagCommand       Platform::width(FlagType::OneValue, "width", "", "Set the window width --width WIDTH");
+FlagCommand       Platform::height(FlagType::OneValue, "height", "", "Set the window height --height HEIGHT");
+FlagCommand       Platform::headless(FlagType::FlagOnly, "headless", "", "Run in headless mode --headless");
+FlagCommand       Platform::batch_categories(FlagType::ManyValues, "category", "c", "A category to run in batch mode, --category={api,performance,extensions}");
+FlagCommand       Platform::batch_tags(FlagType::ManyValues, "tag", "t", "A tag to run in batch mode, --tag={any,Arm}");
+SubCommand        Platform::batch("batch", "Run multiple samples", {&Platform::batch_categories, &Platform::batch_tags});
 
 bool Platform::initialize(std::unique_ptr<Application> &&app)
 {
@@ -57,17 +70,35 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 
 	LOGI("Logger initialized");
 
+	auto args = get_arguments();
+	args.insert(args.begin(), "vulkan_samples");
+	parser = std::make_unique<CLI11CommandParser>("vulkan_samples", "Vulkan Samples\n\nA collection of samples to demonstrate the Vulkan best practice.\n\nUse [SUBCOMMAND] --help for specific subcommand information\n\n", args);
+
+	CommandGroup window_options("Window Options", {&Platform::width, &Platform::height, &Platform::headless});
+
+	if (!parser->parse({&Platform::app, &Platform::sample, &Platform::test, &Platform::batch, &Platform::samples, &Platform::benchmark, &window_options}))
+	{
+		auto help = parser->help();
+		LOGI("");
+		for (auto &line : help)
+		{
+			LOGI(line);
+		}
+		LOGI("");
+		return false;
+	}
+
 	// Set the app to execute as a benchmark
-	if (active_app->get_options().contains("--benchmark"))
+	if (parser->contains(&Platform::benchmark))
 	{
 		benchmark_mode             = true;
-		total_benchmark_frames     = active_app->get_options().get_int("--benchmark");
+		total_benchmark_frames     = parser->as<uint32_t>(&Platform::benchmark);
 		remaining_benchmark_frames = total_benchmark_frames;
 		active_app->set_benchmark_mode(true);
 	}
 
 	// Set the app as headless
-	active_app->set_headless(active_app->get_options().contains("--headless"));
+	active_app->set_headless(parser->contains(&Platform::headless));
 
 	create_window();
 

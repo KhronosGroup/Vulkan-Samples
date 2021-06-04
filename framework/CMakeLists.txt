@@ -244,7 +244,6 @@ set(CORE_FILES
 set(PLATFORM_FILES
     # Header Files
     platform/application.h
-    platform/options.h
     platform/platform.h
     platform/window.h
     platform/headless_window.h
@@ -252,15 +251,23 @@ set(PLATFORM_FILES
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
+    platform/parser.h
     # Source Files
     platform/application.cpp
-    platform/options.cpp
     platform/platform.cpp
     platform/window.cpp
     platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
-    platform/configuration.cpp)
+    platform/configuration.cpp
+    platform/parser.cpp)
+
+set(PARSER_FILES
+    # Header Files
+    platform/parsers/CLI11.h
+    # Source Files
+    platform/parsers/CLI11.cpp
+)
 
 set(GRAPHING_FILES
     # Header Files
@@ -313,6 +320,7 @@ source_group("\\" FILES ${FRAMEWORK_FILES})
 source_group("common\\" FILES ${COMMON_FILES})
 source_group("platform\\" FILES ${PLATFORM_FILES})
 source_group("platform\\" FILES ${GLFW_FILES})
+source_group("platform\\parsers" FILES ${PARSER_FILES})
 source_group("platform\\windows" FILES ${WINDOWS_FILES})
 source_group("platform\\android" FILES ${ANDROID_FILES})
 source_group("platform\\unix" FILES ${UNIX_FILES})
@@ -329,6 +337,7 @@ source_group("graphing\\" FILES ${GRAPHING_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
+    ${PARSER_FILES}
     ${COMMON_FILES}
     ${FRAMEWORK_FILES}
     ${CORE_FILES}
@@ -422,7 +431,7 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    docopt)
+    CLI11::CLI11)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} atomic)

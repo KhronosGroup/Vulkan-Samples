@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,8 +57,6 @@ int main(int argc, char *argv[])
 #endif
 		auto app = create_@TARGET_CREATE_FUNC@();
 		app->set_name("@TARGET_NAME@");
-		app->parse_options(platform.get_arguments());
-
 		if (platform.initialize(std::move(app)))
 		{
 			platform.main_loop();
