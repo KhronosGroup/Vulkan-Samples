@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,21 @@
 
 namespace vkb
 {
+std::vector<std::string> split(const std::string &str, const std::string &delimiter)
+{
+	std::vector<std::string> out;
+
+	std::string buffer = str;
+	size_t      pos    = 0;
+	while ((pos = buffer.find(delimiter)) != std::string::npos)
+	{
+		out.push_back(buffer.substr(0, pos));
+		buffer.erase(0, pos + delimiter.length());
+	}
+
+	return out;
+}
+
 const std::string to_string(VkFormat format)
 {
 	switch (format)

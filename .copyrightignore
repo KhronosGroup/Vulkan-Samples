@@ -6,6 +6,7 @@
 .jpg
 .png
 .ttf
+.github
 doxyfile
 build.gradle.in
 settings.gradle.in

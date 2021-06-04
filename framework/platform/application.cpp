@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,6 @@
 
 namespace vkb
 {
-std::string Application::usage = "";
-
 Application::Application() :
     name{"Sample Name"}
 {
@@ -95,16 +93,6 @@ void Application::input_event(const InputEvent &input_event)
 	}
 }
 
-void Application::parse_options(const std::vector<std::string> &args)
-{
-	options.parse(usage, args);
-}
-
-void Application::set_usage(const std::string &usage)
-{
-	Application::usage = usage;
-}
-
 const std::string &Application::get_name() const
 {
 	return name;
@@ -123,11 +111,6 @@ bool Application::is_benchmark_mode() const
 DebugInfo &Application::get_debug_info()
 {
 	return debug_info;
-}
-
-const Options &Application::get_options()
-{
-	return options;
 }
 
 void Application::set_benchmark_mode(bool benchmark_mode_)
