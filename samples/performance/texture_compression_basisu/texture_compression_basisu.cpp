@@ -335,6 +335,13 @@ void TextureCompressionBasisu::destroy_texture(Texture texture)
 	texture.image = VK_NULL_HANDLE;
 }
 
+void TextureCompressionBasisu::update_image_descriptor()
+{
+	VkDescriptorImageInfo image_descriptor     = {texture.sampler, texture.view, texture.image_layout};
+	VkWriteDescriptorSet  write_descriptor_set = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor);
+	vkUpdateDescriptorSets(get_device().get_handle(), 1, &write_descriptor_set, 0, nullptr);
+}
+
 void TextureCompressionBasisu::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -673,19 +680,7 @@ void TextureCompressionBasisu::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			vkQueueWaitIdle(queue);
 			transcode_texture(texture_file_names[selected_input_texture], available_target_formats[selected_transcode_target_format]);
-
-			// @todo: comment, move to seperate function
-			VkDescriptorImageInfo             image_descriptor = {texture.sampler, texture.view, texture.image_layout};
-			std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-			    {
-			        vkb::initializers::write_descriptor_set(
-			            descriptor_set,
-			            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,        // The descriptor set will use a combined image sampler (sampler and image could be split)
-			            1,                                                // Shader binding point 1
-			            &image_descriptor)                                // Pointer to the descriptor image for our texture
-			    };
-
-			vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+			update_image_descriptor();
 		}
 		drawer.text("Transcoded in %.2f ms", last_transcode_time);
 	}

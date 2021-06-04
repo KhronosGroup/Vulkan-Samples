@@ -81,6 +81,7 @@ class TextureCompressionBasisu : public ApiVulkanSample
 	void         get_available_target_formats();
 	void         transcode_texture(const std::string &input_file, ktx_transcode_fmt_e target_format);
 	void         destroy_texture(Texture texture);
+	void         update_image_descriptor();
 	void         build_command_buffers() override;
 	void         draw();
 	void         generate_quad();
