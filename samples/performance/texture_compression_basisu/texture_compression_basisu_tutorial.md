@@ -28,13 +28,13 @@ This tutorial, along with the accompanying example code, demonstrates how to use
 
 ## Basis Universal
 
-[Basis Universal](https://github.com/BinomialLLC/basis_universal) is a supercompressed GPU texture data interchange system that implements the UASTC and ETC1S compressed formats that server as **transmission formats**. Both can be quickly transcoded to a wide variety of GPU native compressed an uncompressed formats like RGB/RGBA, PVRTC1, BCn, ETC1, ETC2, etc. This means that unlike a KTX2.0 file storing a BC3 textures, the data needs to be transcoded at runtime.
+[Basis Universal](https://github.com/BinomialLLC/basis_universal) is a supercompressed GPU texture data interchange system that implements the UASTC and ETC1S compressed formats that server as **transmission formats**. Both can be quickly transcoded to a wide variety of GPU native compressed an uncompressed formats like RGB/RGBA, PVRTC1, BCn, ETC1, ETC2, etc. This means that unlike a KTX 2.0 file storing a BC3 textures, the data needs to be transcoded at runtime.
 
 ![KTX and BasisU](./images/2021-ktx-universal-gpu-compressed-textures.png)
 
-## libktx
+## Libraries for loading KTX 2.0 files
 
-This sample (as well as the repository) uses the *libktx* library from the [official Khronos KTX Software Repository](https://github.com/KhronosGroup/KTX-Software) for loading and transcoding the Basis Universal compressed KTX2.0 textures. It's included in the framework via this [CMakeLists.txt](../../../third_party/CMakeLists.txt) and also adds the Basis Universal transcoder:
+This sample (as well as the repository) uses the *libktx* library from the [official Khronos KTX Software Repository](https://github.com/KhronosGroup/KTX-Software) for loading and transcoding the Basis Universal compressed KTX 2.0 textures. It's included in the framework via this [CMakeLists.txt](../../../third_party/CMakeLists.txt) and also adds the Basis Universal transcoder:
 
 ```CMake
 # libktx
@@ -66,9 +66,12 @@ set(KTX_SOURCES
 
 An alternative to including *libktx* via CMake would be using the pre-built binaries provided in the [KTX-Software repository](https://github.com/KhronosGroup/KTX-Software/releases).
 
+For projects that just want to use KTX 2.0 and Basis Universal texture compression, a light-weight alternative to *libktx* is the basisu *basist::ktx2_transcoder*. More information on how to use this can be found in Binomial's documentation, [How to configure and use the transcoder](https://github.com/BinomialLLC/basis_universal/wiki/How-to-Use-and-Configure-the-Transcoder).
+
+
 ## Selecting a GPU native target format
 
-As noted above, the KTX2.0 files used in this sample store texture data in the Basis Universal ETC1S and UASTC transmission formats, which can't be natively used by the GPU. 
+As noted above, the KTX 2.0 files used in this sample store texture data in the Basis Universal ETC1S and UASTC transmission formats, which can't be natively used by the GPU. 
 
 So before transcoding the data to a native GPU format, we need to select a valid native GPU target format. In this sample, we use a simple mechanism solely based on the Vulkan formats supported by the GPU:
 
@@ -120,18 +123,18 @@ This gives us a list of possible target formats for the Basis Universal transcod
 
 Transcode target format selection in a real world application will most probably be a bit more complex. A good reference for how to select target formats can be found in the [KTX 2.0 / Basis Universal Textures — Developer Guide](https://github.com/KhronosGroup/3D-Formats-Guidelines/blob/main/KTXDeveloperGuide.md).
 
-## Loading the KTX2.0 file
+## Loading the KTX 2.0 file
 
-Loading and transcoding the KTX2.0 texture image file handled by *libktx* and done inside the ```TextureCompressionBasisu::transcode_texture``` function.
+Loading and transcoding the KTX 2.0 texture image file handled by *libktx* and done inside the ```TextureCompressionBasisu::transcode_texture``` function.
 
 ### Loading the file from disk
 
-Loading a KTX2.0 file is the same as loading a KTX1.0 file, with the exception that we use the ```ktxTexture2``` class, which needs to be casted to ```ktxTexture``` in some function calls:
+Loading a KTX 2.0 file is the same as loading a KTX1.0 file, with the exception that we use the ```ktxTexture2``` class, which needs to be casted to ```ktxTexture``` in some function calls:
 
 ```cpp
-// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
+// We are working with KTX 2.0 files, so we need to use the ktxTexture2 class
 ktxTexture2 *ktx_texture;
-// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
+// Load the KTX 2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
 KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
 if (result != KTX_SUCCESS)
 {
@@ -143,7 +146,7 @@ if (result != KTX_SUCCESS)
 
 Once we have successfully loaded the file from disk, we can transcode it from ETCS1/UASTC to our desired target format from the list we created earlier.
 
-We first check if the source KTX2.0 file actually needs transcoding via ```ktxTexture2_NeedsTranscoding```. This is always the case for all KTX2.0 texture files used in this sample, but if a file would e.g. already contain a native format like BCn, then we wouldn't have to transcode it.
+We first check if the source KTX 2.0 file actually needs transcoding via ```ktxTexture2_NeedsTranscoding```. This is always the case for all KTX 2.0 texture files used in this sample, but if a file would e.g. already contain a native format like BCn, then we wouldn't have to transcode it.
 
 If the file needs transcoding, we then call the Basis Universal transcoder from the *libktx* via ```ktxTexture2_TranscodeBasis```. This will transcode the texture data into the GPU native target format:
 
@@ -207,9 +210,9 @@ image_create_info.arrayLayers       = 1;
 image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
 image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
 image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
-image_create_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-image_create_info.extent        = {texture.width, texture.height, 1};
-image_create_info.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+image_create_info.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+image_create_info.extent            = {texture.width, texture.height, 1};
+image_create_info.usage             = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &texture.image);
 
 ...
