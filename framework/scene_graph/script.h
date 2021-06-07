@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ namespace sg
 class Script : public Component
 {
   public:
-	Script(Node &node, const std::string &name = "");
+	Script(const std::string &name = "");
 
 	virtual ~Script() = default;
 
@@ -50,6 +50,14 @@ class Script : public Component
 	virtual void input_event(const InputEvent &input_event);
 
 	virtual void resize(uint32_t width, uint32_t height);
+};
+
+class NodeScript : public Script
+{
+  public:
+	NodeScript(Node &node, const std::string &name = "");
+
+	virtual ~NodeScript() = default;
 
 	Node &get_node();
 
