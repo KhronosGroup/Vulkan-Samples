@@ -73,16 +73,8 @@ def main():
     argv = argv[:idx]
 
   default_extensions = ','.join([
-      # From clang/lib/Frontend/FrontendOptions.cpp, all lower case
       'c', 'h',  # C
-      'm',  # ObjC
-      'mm',  # ObjC++
       'cc', 'cp', 'cpp', 'c++', 'cxx', 'hpp',  # C++
-      'cu',  # CUDA
-      # Other languages that clang-format supports
-      'proto', 'protodevel',  # Protocol Buffers
-      'js',  # JavaScript
-      'ts',  # TypeScript
       ])
 
   p = argparse.ArgumentParser(
