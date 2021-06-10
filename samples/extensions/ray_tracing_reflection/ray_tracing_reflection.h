@@ -96,7 +96,6 @@ class RaytracingReflection : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
-
 	struct ObjBuffers
 	{
 		VkDeviceAddress vertices;
