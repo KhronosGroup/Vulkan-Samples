@@ -65,21 +65,16 @@ class RaytracingReflection : public ApiVulkanSample
 	};
 
   public:
-	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR};
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR};
 
 	std::vector<AccelerationStructure> bottom_level_acceleration_structure;
 	AccelerationStructure              top_level_acceleration_structure;
 
-	// Array of objects and instances in the scene
-	std::vector<ObjModelGpu> obj_models;
+	std::vector<ObjModelGpu>                          obj_models;           // Array of objects and instances in the scene
+	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups;        // Shader groups
 
-	//std::vector<std::unique_ptr<const vkb::core::Buffer>> mat_buffers;
-	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer>                index_buffer;
-	uint32_t                                          index_count{0};
-	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups;
-
+	// Shading Binding Table
 	std::unique_ptr<vkb::core::Buffer> raygen_shader_binding_table;
 	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
 	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
@@ -101,6 +96,16 @@ class RaytracingReflection : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
+
+	struct ObjBuffers
+	{
+		VkDeviceAddress vertices;
+		VkDeviceAddress indices;
+		VkDeviceAddress materials;
+		VkDeviceAddress materialIndices;
+	} obj_buffers;
+	std::unique_ptr<vkb::core::Buffer> scene_desc;
+
 	VkPipeline            pipeline{nullptr};
 	VkPipelineLayout      pipeline_layout{nullptr};
 	VkDescriptorSet       descriptor_set{nullptr};
@@ -116,6 +121,9 @@ class RaytracingReflection : public ApiVulkanSample
 	auto create_blas_instance(uint32_t blas_id, glm::mat4 &mat);
 	void delete_acceleration_structure(AccelerationStructure &acceleration_structure);
 	void create_scene();
+
+	void create_buffer_references();
+
 	void create_shader_binding_tables();
 	void create_descriptor_sets();
 	void create_ray_tracing_pipeline();

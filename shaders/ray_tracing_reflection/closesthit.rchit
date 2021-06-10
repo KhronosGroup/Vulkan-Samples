@@ -22,6 +22,8 @@
 #extension GL_EXT_scalar_block_layout : enable
 #extension GL_EXT_nonuniform_qualifier : enable
 
+#extension GL_EXT_shader_explicit_arithmetic_types_int64 : require
+#extension GL_EXT_buffer_reference2 : require
 struct hitPayload
 {
 	vec3 radiance;
@@ -49,12 +51,22 @@ struct Vertex
 	vec3 nrm;
 };
 
+struct ObjBuffers
+{
+	uint64_t vertices;
+	uint64_t indices;
+	uint64_t materials;
+	uint64_t materialIndices;
+};
+
 // clang-format off
+layout(buffer_reference, scalar) buffer Vertices {Vertex v[]; }; // Positions of an object
+layout(buffer_reference, scalar) buffer Indices {uvec3 i[]; }; // Triangle indices
+layout(buffer_reference, scalar) buffer Materials {WaveFrontMaterial m[]; }; // Array of all materials on an object
+layout(buffer_reference, scalar) buffer MatIndices {int i[]; }; // Material ID for each triangle
+
 layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
-layout(set = 0, binding = 3, scalar) buffer _materials { WaveFrontMaterial m[]; } materials[];
-layout(set = 0, binding = 4, scalar) buffer _vertices { Vertex v[]; } vertices[];
-layout(set = 0, binding = 5)         buffer _indices { uint i[]; } indices[];
-layout(set = 0, binding = 6)         buffer _mat_index { int i[]; } mat_index[];
+layout(set = 0, binding = 3)    buffer _scene_desc { ObjBuffers i[]; } scene_desc;
 // clang-format on
 
 vec3 computeSpecular(WaveFrontMaterial mat, vec3 V, vec3 L, vec3 N)
@@ -73,20 +85,29 @@ vec3 computeSpecular(WaveFrontMaterial mat, vec3 V, vec3 L, vec3 N)
 
 void main()
 {
-	int objId = gl_InstanceCustomIndexEXT;
+	// When contructing the TLAS, we stored the model id in InstanceCustomIndexEXT, so the
+	// the instance can quickly have access to the data
 
-	int mat_idx = mat_index[nonuniformEXT(objId)].i[gl_PrimitiveID];
-	WaveFrontMaterial mat = materials[nonuniformEXT(objId)].m[mat_idx]; // Material for this triangle
+	// Object data
+	ObjBuffers objResource = scene_desc.i[gl_InstanceCustomIndexEXT];
+	MatIndices matIndices  = MatIndices(objResource.materialIndices);
+	Materials  materials   = Materials(objResource.materials);
+	Indices    indices     = Indices(objResource.indices);
+	Vertices   vertices    = Vertices(objResource.vertices);
+
+	// Retrieve the material used on this triangle 'PrimitiveID'
+	int               mat_idx = matIndices.i[gl_PrimitiveID];
+	WaveFrontMaterial mat     = materials.m[mat_idx];        // Material for this triangle
 
 	// Indices of the triangle
-	ivec3 ind = ivec3(indices[nonuniformEXT(objId)].i[3 * gl_PrimitiveID + 0],         //
-	                  indices[nonuniformEXT(objId)].i[3 * gl_PrimitiveID + 1],         //
-	                  indices[nonuniformEXT(objId)].i[3 * gl_PrimitiveID + 2]);        //
-	// Vertex of the triangle
-	Vertex v0 = vertices[nonuniformEXT(objId)].v[ind.x];
-	Vertex v1 = vertices[nonuniformEXT(objId)].v[ind.y];
-	Vertex v2 = vertices[nonuniformEXT(objId)].v[ind.z];
+	uvec3 ind = indices.i[gl_PrimitiveID];
 
+	// Vertex of the triangle
+	Vertex v0 = vertices.v[ind.x];
+	Vertex v1 = vertices.v[ind.y];
+	Vertex v2 = vertices.v[ind.z];
+
+	// Barycentric coordinates of the triangle
 	const vec3 barycentrics = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
 
 	// Computing the normal at hit position
