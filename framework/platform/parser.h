@@ -217,7 +217,8 @@ class CommandParser
 		auto values = get_command_value(command);
 
 		Type type{};
-		assert(convert_type(values, &type) && "Failed to retrieve value. Type unsupported");
+		bool implemented_type_conversion = convert_type(values, &type);
+		assert(implemented_type_conversion && "Failed to retrieve value. Type unsupported");
 		return type;
 	}
 
