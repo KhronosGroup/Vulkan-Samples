@@ -415,7 +415,7 @@ void Instance::query_gpus()
 	}
 }
 
-PhysicalDevice &Instance::get_suitable_gpu()
+PhysicalDevice &Instance::get_first_gpu()
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
@@ -425,6 +425,32 @@ PhysicalDevice &Instance::get_suitable_gpu()
 		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
 			return *gpu;
+		}
+	}
+
+	// Otherwise just pick the first one
+	LOGW("Couldn't find a discrete physical device, picking default GPU");
+	return *gpus.at(0);
+}
+
+PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
+{
+	assert(!gpus.empty() && "No physical devices were found on the system.");
+
+	// Find a discrete GPU
+	for (auto &gpu : gpus)
+	{
+		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		{
+			//See if it work with the surface
+			size_t queue_count = gpu->get_queue_family_properties().size();
+			for (uint32_t queue_idx = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++)
+			{
+				if (gpu->is_present_supported(surface, queue_idx))
+				{
+					return *gpu;
+				}
+			}
 		}
 	}
 

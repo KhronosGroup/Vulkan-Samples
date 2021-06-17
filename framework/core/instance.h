@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,10 +76,17 @@ class Instance
 	void query_gpus();
 
 	/**
+	 * @brief Tries to find the first available discrete GPU that can render to the given surface
+	 * @param surface to test against
+	 * @returns A valid physical device
+	 */
+	PhysicalDevice &get_suitable_gpu(VkSurfaceKHR);
+
+	/**
 	 * @brief Tries to find the first available discrete GPU
 	 * @returns A valid physical device
 	 */
-	PhysicalDevice &get_suitable_gpu();
+	PhysicalDevice &get_first_gpu();
 
 	/**
 	 * @brief Checks if the given extension is enabled in the VkInstance

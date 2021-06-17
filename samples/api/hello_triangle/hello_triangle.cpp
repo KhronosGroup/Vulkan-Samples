@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -277,19 +277,39 @@ void HelloTriangle::init_device(Context &                        context,
 	std::vector<VkPhysicalDevice> gpus(gpu_count);
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
 
-	// Select the first GPU we find in the system.
-	context.gpu = gpus.front();
-
-	uint32_t queue_family_count;
-	vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
-
-	if (queue_family_count < 1)
+	for (size_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
 	{
-		throw std::runtime_error("No queue family found.");
+		context.gpu = gpus[i];
+
+		uint32_t queue_family_count;
+		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
+
+		if (queue_family_count < 1)
+		{
+			throw std::runtime_error("No queue family found.");
+		}
+
+		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+
+		for (uint32_t i = 0; i < queue_family_count; i++)
+		{
+			VkBool32 supports_present;
+			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
+
+			// Find a queue family which supports graphics and presentation.
+			if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+			{
+				context.graphics_queue_index = i;
+				break;
+			}
+		}
 	}
 
-	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+	if (context.graphics_queue_index < 0)
+	{
+		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
+	}
 
 	uint32_t device_extension_count;
 	VK_CHECK(vkEnumerateDeviceExtensionProperties(context.gpu, nullptr, &device_extension_count, nullptr));
@@ -299,24 +319,6 @@ void HelloTriangle::init_device(Context &                        context,
 	if (!validate_extensions(required_device_extensions, device_extensions))
 	{
 		throw std::runtime_error("Required device extensions are missing, will try without.");
-	}
-
-	for (uint32_t i = 0; i < queue_family_count; i++)
-	{
-		VkBool32 supports_present;
-		vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
-
-		// Find a queue family which supports graphics and presentation.
-		if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
-		{
-			context.graphics_queue_index = i;
-			break;
-		}
-	}
-
-	if (context.graphics_queue_index < 0)
-	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
 	}
 
 	float queue_priority = 1.0f;
