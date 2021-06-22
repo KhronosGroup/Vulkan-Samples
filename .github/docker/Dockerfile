@@ -47,14 +47,17 @@ RUN pip3 --no-cache-dir install \
     requests
 
 # Install Clang-Format and Clang-Tidy
+# Clang-Tidy-9 required for Doxygen
 ENV LLVM_VERSION=10
 
 RUN wget -O- https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
     && apt-add-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-$LLVM_VERSION main" \
+    && apt-add-repository "deb http://apt.llvm.org/focal/ llvm-toolchain-focal-9 main" \
     && apt-get -yqq update \
     && apt-get -yqq install \
         clang-format-$LLVM_VERSION \
-        clang-tidy-$LLVM_VERSION   
+        clang-tidy-$LLVM_VERSION \
+        clang-tidy-9
 
 # Install Gradle
 ENV GRADLE_VERSION_MAJOR=6 \
