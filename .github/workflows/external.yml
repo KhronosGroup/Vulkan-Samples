@@ -28,7 +28,7 @@ jobs:
 
   android_external_project:
     name: Build as external project
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
