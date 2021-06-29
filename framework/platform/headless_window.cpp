@@ -24,7 +24,7 @@ HeadlessWindow::HeadlessWindow(Platform &platform, uint32_t width, uint32_t heig
 {
 }
 
-VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
+VkSurfaceKHR HeadlessWindow::create_surface(VkInstance instance)
 {
 	return VK_NULL_HANDLE;
 }

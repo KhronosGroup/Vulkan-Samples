@@ -34,7 +34,7 @@ class GlfwWindow : public Window
 
 	virtual ~GlfwWindow();
 
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 
 	virtual bool should_close() override;
 

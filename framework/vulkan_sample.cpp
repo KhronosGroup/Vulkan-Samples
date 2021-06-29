@@ -91,7 +91,7 @@ bool VulkanSample::prepare(Platform &platform)
 	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), is_headless(), api_version);
 
 	// Getting a valid vulkan surface from the platform
-	surface = platform.get_window().create_surface(*instance);
+	surface = platform.get_window().create_surface(instance->get_handle());
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);

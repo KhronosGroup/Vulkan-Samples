@@ -146,6 +146,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
+A clone of the API sample [Hello Triangle](#hello-triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
 

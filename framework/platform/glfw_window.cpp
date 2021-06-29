@@ -325,16 +325,16 @@ GlfwWindow::~GlfwWindow()
 	glfwTerminate();
 }
 
-VkSurfaceKHR GlfwWindow::create_surface(Instance &instance)
+VkSurfaceKHR GlfwWindow::create_surface(VkInstance instance)
 {
-	if (instance.get_handle() == VK_NULL_HANDLE || !handle)
+	if (instance == VK_NULL_HANDLE || !handle)
 	{
 		return VK_NULL_HANDLE;
 	}
 
 	VkSurfaceKHR surface;
 
-	VkResult errCode = glfwCreateWindowSurface(instance.get_handle(), handle, NULL, &surface);
+	VkResult errCode = glfwCreateWindowSurface(instance, handle, NULL, &surface);
 
 	if (errCode != VK_SUCCESS)
 	{

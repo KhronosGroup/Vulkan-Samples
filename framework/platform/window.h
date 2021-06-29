@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,7 +45,7 @@ class Window
 	 * @param instance A Vulkan instance
 	 * @returns A VkSurfaceKHR handle, for use by the application
 	 */
-	virtual VkSurfaceKHR create_surface(Instance &instance) = 0;
+	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
 
 	/**
 	 * @brief Checks if the window should be closed

@@ -35,7 +35,7 @@ class HeadlessWindow : public Window
 	 * @brief A direct window doesn't have a surface
 	 * @returns VK_NULL_HANDLE
 	 */
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	virtual VkSurfaceKHR create_surface(VkInstance instance) override;
 
 	virtual bool should_close() override;
 
