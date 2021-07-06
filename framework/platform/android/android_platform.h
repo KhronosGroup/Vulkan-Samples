@@ -56,7 +56,7 @@ class AndroidPlatform : public Platform
 
 	ANativeActivity *get_activity();
 
-	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface) const override;
+	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const override;
 
 	void set_surface_ready();
 

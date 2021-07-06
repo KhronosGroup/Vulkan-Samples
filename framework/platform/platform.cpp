@@ -154,16 +154,15 @@ void Platform::run()
 	}
 }
 
-std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface) const
+std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
 {
+	assert(!surface_format_priority.empty() && "Surface format priority list must contain atleast one preffered surface format");
+
 	auto context = std::make_unique<RenderContext>(device, surface, window->get_width(), window->get_height());
 
-	context->set_surface_format_priority({{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                      {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                      {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                      {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
+	context->set_surface_format_priority(surface_format_priority);
 
-	context->request_image_format(VK_FORMAT_R8G8B8A8_SRGB);
+	context->request_image_format(surface_format_priority[0].format);
 
 	context->set_present_mode_priority({
 	    VK_PRESENT_MODE_MAILBOX_KHR,

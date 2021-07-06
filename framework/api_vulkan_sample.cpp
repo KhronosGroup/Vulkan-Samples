@@ -164,9 +164,18 @@ vkb::Device &ApiVulkanSample::get_device()
 	return *device;
 }
 
+void ApiVulkanSample::create_render_context(vkb::Platform &platform)
+{
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
+}
+
 void ApiVulkanSample::prepare_render_context()
 {
-	render_context->request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
 	VulkanSample::prepare_render_context();
 }
 

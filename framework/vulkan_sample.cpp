@@ -113,14 +113,22 @@ bool VulkanSample::prepare(Platform &platform)
 
 	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
 
-	// Preparing render context for rendering
-	render_context = platform.create_render_context(*device, surface);
-
+	create_render_context(platform);
 	prepare_render_context();
 
 	stats = std::make_unique<vkb::Stats>(*render_context);
 
 	return true;
+}
+
+void VulkanSample::create_render_context(Platform &platform)
+{
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
 
 void VulkanSample::prepare_render_context()

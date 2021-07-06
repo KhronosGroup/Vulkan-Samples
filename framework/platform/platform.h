@@ -100,7 +100,7 @@ class Platform
 	 */
 	virtual const char *get_surface_extension() = 0;
 
-	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface) const;
+	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const;
 
 	Window &get_window() const;
 

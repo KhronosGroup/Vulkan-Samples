@@ -503,9 +503,9 @@ android_app *AndroidPlatform::get_android_app()
 	return app;
 }
 
-std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &device, VkSurfaceKHR surface) const
+std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
 {
-	auto context = Platform::create_render_context(device, surface);
+	auto context = Platform::create_render_context(device, surface, surface_format_priority);
 
 	context->set_present_mode_priority({VK_PRESENT_MODE_FIFO_KHR,
 	                                    VK_PRESENT_MODE_MAILBOX_KHR,

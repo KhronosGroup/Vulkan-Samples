@@ -102,6 +102,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
+	virtual void create_render_context(vkb::Platform &platform) override;
 	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
@@ -369,8 +370,8 @@ class ApiVulkanSample : public vkb::VulkanSample
 	glm::vec3 camera_pos = glm::vec3();
 	glm::vec2 mouse_pos;
 
-	std::string title       = "Vulkan Example";
-	std::string name        = "vulkanExample";
+	std::string title = "Vulkan Example";
+	std::string name  = "vulkanExample";
 
 	struct
 	{
