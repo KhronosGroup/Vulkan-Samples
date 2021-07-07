@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,6 +25,7 @@
 #include "common/vk_common.h"
 #include "platform/application.h"
 #include "platform/filesystem.h"
+#include "platform/parser.h"
 #include "platform/window.h"
 
 namespace vkb
@@ -110,7 +111,26 @@ class Platform
 
 	static void set_temp_directory(const std::string &dir);
 
+	static PositionalCommand app;
+	static SubCommand        samples;
+	static FlagCommand       sample;
+	static FlagCommand       test;
+	static FlagCommand       benchmark;
+	static FlagCommand       width;
+	static FlagCommand       height;
+	static FlagCommand       headless;
+	static FlagCommand       batch_tags;
+	static FlagCommand       batch_categories;
+	static SubCommand        batch;
+
+	CommandParser *get_parser() const
+	{
+		return parser.get();
+	}
+
   protected:
+	std::unique_ptr<CommandParser> parser;
+
 	std::unique_ptr<Window> window{nullptr};
 
 	std::unique_ptr<Application> active_app{nullptr};

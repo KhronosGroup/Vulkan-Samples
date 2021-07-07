@@ -10,7 +10,7 @@ env:
 jobs:
   doxygen:
     name: Doxygen Syntax Check
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -20,7 +20,7 @@ jobs:
 
   copyright_headers:
     name: Copyright Headers Check
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -29,7 +29,7 @@ jobs:
 
   snake_case_check:
     name: Snake Case Check
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
@@ -39,7 +39,7 @@ jobs:
 
   clang_format:
     name: Clang Format Check
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -50,7 +50,7 @@ jobs:
 
   clang_tidy:
     name: Clang Tidy Check
-    container: khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
