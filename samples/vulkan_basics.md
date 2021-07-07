@@ -71,7 +71,7 @@ OpenGL ES uses a single global state, and must recreate the necessary render sta
 binding tables for every draw call that is made. The used state combinations are only known at draw
 time, meaning that some optimizations are difficult and/or expensive to apply.
 
-Vulkan uses object-based states -- known as descriptors -- allowing the application to prepackage
+Vulkan uses object-based states -- known as pipelines -- allowing the application to prepackage
 combinations of used states ahead of time. Compiled pipeline objects combine all relevant state,
 allowing shader-based optimizations to be applied more predictably for lower run-time cost.
 
