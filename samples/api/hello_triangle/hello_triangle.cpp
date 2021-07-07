@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -266,19 +266,61 @@ void HelloTriangle::init_device(Context &                        context,
 {
 	LOGI("Initializing vulkan device.");
 
+	// Select the best GPU we find in the system (or throw).
 	uint32_t gpu_count = 0;
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, nullptr));
 
-	if (gpu_count < 1)
+	if (gpu_count == 0)
 	{
-		throw std::runtime_error("No physical device found.");
+		throw std::runtime_error("No physical devices found.");
 	}
 
-	std::vector<VkPhysicalDevice> gpus(gpu_count);
-	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
+	std::vector<VkPhysicalDevice> physical_devices(gpu_count);
+	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, physical_devices.data()));
 
-	// Select the first GPU we find in the system.
-	context.gpu = gpus.front();
+	uint32_t count_device_type[VK_PHYSICAL_DEVICE_TYPE_CPU + 1];
+	memset(count_device_type, 0, sizeof(count_device_type));
+
+	VkPhysicalDeviceProperties physicalDeviceProperties;
+	for (uint32_t i = 0; i < gpu_count; i++)
+	{
+		vkGetPhysicalDeviceProperties(physical_devices[i], &physicalDeviceProperties);
+		assert(physicalDeviceProperties.deviceType <= VK_PHYSICAL_DEVICE_TYPE_CPU);
+		count_device_type[physicalDeviceProperties.deviceType]++;
+	}
+
+	const VkPhysicalDeviceType device_type_preference[] = {
+	    VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_INTEGRATED_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_VIRTUAL_GPU,
+	    VK_PHYSICAL_DEVICE_TYPE_CPU,
+	    VK_PHYSICAL_DEVICE_TYPE_OTHER};
+
+	VkPhysicalDeviceType search_for_device_type = VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU;
+	for (uint32_t i = 0; i < sizeof(device_type_preference) / sizeof(VkPhysicalDeviceType); i++)
+	{
+		if (count_device_type[device_type_preference[i]])
+		{
+			search_for_device_type = device_type_preference[i];
+			break;
+		}
+	}
+
+	int gpu_number = -1;
+	for (uint32_t i = 0; i < gpu_count; i++)
+	{
+		vkGetPhysicalDeviceProperties(physical_devices[i], &physicalDeviceProperties);
+		if (physicalDeviceProperties.deviceType == search_for_device_type)
+		{
+			LOGI("Using GPU {}: {}, type: {}", i, physicalDeviceProperties.deviceName, physicalDeviceProperties.deviceType);
+			gpu_number = i;
+			break;
+		}
+	}
+
+	assert(gpu_number >= 0);
+
+	context.gpu = physical_devices[gpu_number];
 
 	uint32_t queue_family_count;
 	vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
