@@ -28,7 +28,7 @@ This tutorial, along with the accompanying example code, demonstrates how to use
 
 ## Basis Universal
 
-[Basis Universal](https://github.com/BinomialLLC/basis_universal) is a supercompressed GPU texture data interchange system that implements the UASTC and ETC1S compressed formats that server as **transmission formats**. Both can be quickly transcoded to a wide variety of GPU native compressed an uncompressed formats like RGB/RGBA, PVRTC1, BCn, ETC1, ETC2, etc. This means that unlike a KTX 2.0 file storing a BC3 textures, the data needs to be transcoded at runtime.
+[Basis Universal](https://github.com/BinomialLLC/basis_universal) is a supercompressed GPU texture data interchange system that implements the UASTC and ETC1S compressed formats that serve as **transmission formats**. Both can be quickly transcoded to a wide variety of GPU native compressed and uncompressed formats like RGB/RGBA, PVRTC1, BCn, ETC1, ETC2, etc. This means that unlike a KTX 2.0 file storing a BC3 textures, the data needs to be transcoded at runtime.
 
 ![KTX and BasisU](./images/2021-ktx-universal-gpu-compressed-textures.png)
 
