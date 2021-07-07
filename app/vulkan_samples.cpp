@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -113,45 +113,26 @@ inline const CreateAppFunc &get_create_func(const std::string &id)
 
 VulkanSamples::VulkanSamples()
 {
-	set_usage(
-	    R"(Vulkan Samples.
-	Usage:
-		vulkan_samples <sample>
-		vulkan_samples (--sample <arg> | --test <arg> | --batch <arg> [<tags>...]) [--benchmark <frames>] [--width <arg>] [--height <arg>] [--headless] 
-		vulkan_samples --help
-
-	Options:
-		--help                    Show this screen.
-		--sample SAMPLE_ID        Run sample.
-		--test TEST_ID            Run test.
-		--batch CATEGORY          Run all samples within a certain category, specify 'all' to run all.
-		--benchmark FRAMES        Run app under benchmark mode for n amount of frames.
-		--headless                Run the app with headless rendering.)"
-#ifndef VK_USE_PLATFORM_DISPLAY_KHR
-	    R"(
-		--width WIDTH             The width of the screen if visible [default: 1280].
-		--height HEIGHT           The height of the screen if visible [default: 720].)"
-#endif
-	    "\n");
 }
 
 bool VulkanSamples::prepare(Platform &platform)
 {
 	this->platform = &platform;
 
-	if (options.contains("--help"))
+	auto parser = platform.get_parser();
+
+	if (parser->contains(&Platform::samples))
 	{
 		print_info();
-		options.print_usage();
 		return false;
 	}
 
 	auto result = false;
 
-	if (options.contains("--batch"))
+	if (parser->contains(&Platform::batch))
 	{
-		auto &category_arg = options.get_string("--batch");
-		auto &tags         = options.get_list("<tags>");
+		auto category_arg = parser->as<std::string>(&Platform::batch_categories);
+		auto tags         = parser->as<std::vector<std::string>>(&Platform::batch_tags);
 
 		// If category is all, and either no tags were given, or one of the tags is 'any', then we use the entire list
 		if (category_arg == "all" && (std::find(tags.begin(), tags.end(), "any") != tags.end() || tags.empty()))
@@ -190,9 +171,9 @@ bool VulkanSamples::prepare(Platform &platform)
 		    false,
 		    true);
 	}
-	else if (options.contains("--sample"))
+	else if (parser->contains(&Platform::sample))
 	{
-		const auto &sample_arg = options.get_string("--sample");
+		const auto &sample_arg = parser->as<std::string>(&Platform::sample);
 
 		result = prepare_active_app(
 		    get_create_func(sample_arg),
@@ -200,9 +181,9 @@ bool VulkanSamples::prepare(Platform &platform)
 		    false,
 		    false);
 	}
-	else if (options.contains("<sample>"))
+	else if (parser->contains(&Platform::app))
 	{
-		const auto &sample_arg = options.get_string("<sample>");
+		const auto &sample_arg = parser->as<std::string>(&Platform::app);
 
 		result = prepare_active_app(
 		    get_create_func(sample_arg),
@@ -210,9 +191,9 @@ bool VulkanSamples::prepare(Platform &platform)
 		    false,
 		    false);
 	}
-	else if (options.contains("--test"))
+	else if (parser->contains(&Platform::test))
 	{
-		const auto &test_arg = options.get_string("--test");
+		const auto &test_arg = parser->as<std::string>(&Platform::test);
 
 		result = prepare_active_app(
 		    get_create_func(test_arg),
@@ -224,7 +205,12 @@ bool VulkanSamples::prepare(Platform &platform)
 	{
 		// The user didn't supply any arguments so print the usage
 		print_info();
-		options.print_usage();
+		LOGI("");
+		for (auto &line : parser->help())
+		{
+			LOGI(line);
+		}
+		LOGI("");
 		LOGE("No arguments given, exiting");
 		return false;
 	}

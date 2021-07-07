@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -138,7 +138,7 @@ void PipelineState::reset()
 
 	specialization_constant_state.reset();
 
-	vertex_input_sate = {};
+	vertex_input_state = {};
 
 	input_assembly_state = {};
 
@@ -201,11 +201,11 @@ void PipelineState::set_specialization_constant(uint32_t constant_id, const std:
 	}
 }
 
-void PipelineState::set_vertex_input_state(const VertexInputState &new_vertex_input_sate)
+void PipelineState::set_vertex_input_state(const VertexInputState &new_vertex_input_state)
 {
-	if (vertex_input_sate != new_vertex_input_sate)
+	if (vertex_input_state != new_vertex_input_state)
 	{
-		vertex_input_sate = new_vertex_input_sate;
+		vertex_input_state = new_vertex_input_state;
 
 		dirty = true;
 	}
@@ -299,7 +299,7 @@ const SpecializationConstantState &PipelineState::get_specialization_constant_st
 
 const VertexInputState &PipelineState::get_vertex_input_state() const
 {
-	return vertex_input_sate;
+	return vertex_input_state;
 }
 
 const InputAssemblyState &PipelineState::get_input_assembly_state() const

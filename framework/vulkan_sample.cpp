@@ -35,6 +35,7 @@ VKBP_ENABLE_WARNINGS()
 #include "platform/window.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/script.h"
+#include "scene_graph/scripts/animation.h"
 #include "scene_graph/scripts/free_camera.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -146,6 +147,17 @@ void VulkanSample::update_scene(float delta_time)
 			for (auto script : scripts)
 			{
 				script->update(delta_time);
+			}
+		}
+
+		//Update animations
+		if (scene->has_component<sg::Animation>())
+		{
+			auto animations = scene->get_components<sg::Animation>();
+
+			for (auto animation : animations)
+			{
+				animation->update(delta_time);
 			}
 		}
 	}

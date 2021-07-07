@@ -156,7 +156,7 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 		}
 
 		const char *shader = "16bit_arithmetic/compute_buffer_fp16.comp";
-		auto &module_fp16 =
+		auto &      module_fp16 =
 		    device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 		                                                      vkb::ShaderSource{shader}, variant);
 		compute_layout_fp16 = &device.get_resource_cache().request_pipeline_layout({&module_fp16});

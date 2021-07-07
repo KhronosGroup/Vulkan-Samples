@@ -109,9 +109,10 @@ Vulkan gives the application some significant control over the number of swapcha
 ### [Wait idle](./performance/wait_idle)<br/>
 This sample compares two methods for synchronizing between the CPU and GPU, ``WaitIdle`` and ``Fences`` demonstrating which one is the best option in order to avoid stalling.
 
+- 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
+
 ### [16-bit storage InputOutput](./performance/16bit_storage_input_output)
 This sample compares bandwidth consumption when using FP32 varyings compared to using FP16 varyings with `VK_KHR_16bit_storage`.
-- 🎓 [How to synchronize back to the CPU and avoid stalling](./performance/wait_idle/wait_idle_tutorial.md)
 
 ### [16-bit arithmetic](./performance/16bit_arithmetic)
 This sample compares arithmetic throughput for 32-bit arithmetic operations and 16-bit arithmetic.

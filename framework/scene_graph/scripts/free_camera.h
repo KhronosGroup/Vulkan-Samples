@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,7 @@ namespace vkb
 {
 namespace sg
 {
-class FreeCamera : public Script
+class FreeCamera : public NodeScript
 {
   public:
 	static const float TOUCH_DOWN_MOVE_FORWARD_WAIT_TIME;

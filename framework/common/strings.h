@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,6 +33,8 @@ namespace sg
 {
 enum class AlphaMode;
 }
+
+std::vector<std::string> split(const std::string &str, const std::string &delimiter);
 
 /**
  * @brief Helper function to convert a VkFormat enum to a string

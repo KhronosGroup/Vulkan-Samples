@@ -1,5 +1,5 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,7 +22,7 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
-#include <vk_format.h>
+#include <ktxvulkan.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -32,14 +32,14 @@ namespace sg
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
-static KTX_error_code KTXAPIENTRY optimal_tiling_callback(int mip_level,
-                                                          int /*face*/,
-                                                          int          width,
-                                                          int          height,
-                                                          int          depth,
-                                                          ktx_uint32_t face_lod_size,
-                                                          void * /*pixels*/,
-                                                          void *user_data)
+static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_level,
+                                                             int          face,
+                                                             int          width,
+                                                             int          height,
+                                                             int          depth,
+                                                             ktx_uint64_t face_lod_size,
+                                                             void *       pixels,
+                                                             void *       user_data)
 {
 	// Get mipmaps
 	auto &mipmaps = *reinterpret_cast<std::vector<Mipmap> *>(user_data);
@@ -55,7 +55,7 @@ static KTX_error_code KTXAPIENTRY optimal_tiling_callback(int mip_level,
 	auto next_mip_level = static_cast<size_t>(mip_level + 1);
 	if (next_mip_level < mipmaps.size())
 	{
-		mipmaps.at(next_mip_level).offset = mipmap.offset + face_lod_size;
+		mipmaps.at(next_mip_level).offset = mipmap.offset + static_cast<uint32_t>(face_lod_size);
 	}
 
 	return KTX_SUCCESS;
@@ -86,7 +86,7 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	{
 		// Load
 		auto &mut_data = get_mut_data();
-		auto  size     = ktxTexture_GetSize(texture);
+		auto  size     = texture->dataSize;
 		mut_data.resize(size);
 		auto load_data_result = ktxTexture_LoadImageData(texture, mut_data.data(), size);
 		if (load_data_result != KTX_SUCCESS)
@@ -111,7 +111,7 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	}
 
 	// Update format
-	auto updated_format = vkGetFormatFromOpenGLInternalFormat(texture->glInternalformat);
+	auto updated_format = ktxTexture_GetVkFormat(texture);
 	set_format(updated_format);
 
 	// Update mip levels

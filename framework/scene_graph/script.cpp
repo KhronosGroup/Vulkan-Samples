@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,9 +21,8 @@ namespace vkb
 {
 namespace sg
 {
-Script::Script(Node &node, const std::string &name) :
-    Component{name},
-    node{node}
+Script::Script(const std::string &name) :
+    Component{name}
 {}
 
 std::type_index Script::get_type()
@@ -39,7 +38,13 @@ void Script::resize(uint32_t /*width*/, uint32_t /*height*/)
 {
 }
 
-Node &Script::get_node()
+NodeScript::NodeScript(Node &node, const std::string &name) :
+    Script{name},
+    node{node}
+{
+}
+
+Node &NodeScript::get_node()
 {
 	return node;
 }
