@@ -1,5 +1,5 @@
 '''
-Copyright (c) 2019-2020, Arm Limited and Contributors
+Copyright (c) 2019-2021, Arm Limited and Contributors
 
 SPDX-License-Identifier: Apache-2.0
 
@@ -52,7 +52,7 @@ class Subtest:
     def run(self, application_path):
         result = True
         path = root_path + application_path
-        arguments = ["--test", "{}".format(self.test_name), "--headless"]
+        arguments = ["test", "{}".format(self.test_name), "--headless"]
         try:
             subprocess.run([path] + arguments, cwd=root_path)
         except FileNotFoundError:

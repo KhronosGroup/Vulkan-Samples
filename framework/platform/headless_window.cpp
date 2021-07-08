@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,8 +19,8 @@
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(Platform &platform, uint32_t width, uint32_t height) :
-    Window(platform, width, height)
+HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
+    Window(properties)
 {
 }
 

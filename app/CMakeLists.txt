@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,78 +15,39 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.10)
-
+cmake_minimum_required(VERSION 3.12)
 include(android_package)
 
 # create sample app project
 project(vulkan_samples LANGUAGES C CXX)
 
-# generate header files
-generate_samples_header(
-    SAMPLE_ID_LIST ${TOTAL_SAMPLE_ID_LIST}
-    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+add_subdirectory(plugins)
+add_subdirectory(apps)
 
-generate_tests_header(
-    TEST_ID_LIST ${TOTAL_TEST_ID_LIST}
-    OUTPUT_DIR ${CMAKE_CURRENT_BINARY_DIR})
+set(SRC
+    main.cpp
+)
 
-# generate entrypoint file (main function with per platform support)
-generate_entrypoint(
-    ID vulkan_samples
-    NAME "Vulkan Samples"
-    INCLUDE_PATH vulkan_samples
-    OUTPUT_PATH ${CMAKE_CURRENT_BINARY_DIR}/main.cpp)
-
-# create list of project files (header + source)
-set(PROJECT_FILES 
-    ${CMAKE_CURRENT_BINARY_DIR}/main.cpp
-    ${CMAKE_CURRENT_BINARY_DIR}/samples.h
-    ${CMAKE_CURRENT_BINARY_DIR}/tests.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_samples.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/vulkan_samples.cpp)
-
-source_group("\\" FILES ${PROJECT_FILES})
+source_group("\\" FILES ${SRC})
 
 # select target type based on platform
 if(ANDROID)
     if(CMAKE_VS_NsightTegra_VERSION)
-        list(APPEND PROJECT_FILES ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
+        list(APPEND SRC ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
     endif()
 
-    add_library(${PROJECT_NAME} SHARED ${PROJECT_FILES})
+    add_library(${PROJECT_NAME} SHARED ${SRC})
 else()
-    add_executable(${PROJECT_NAME} WIN32 ${PROJECT_FILES})
+    add_executable(${PROJECT_NAME} WIN32 ${SRC})
 endif()
 
 target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR} 
-    ${CMAKE_CURRENT_BINARY_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../samples
-    ${CMAKE_CURRENT_SOURCE_DIR}/../tests/system_test/sub_tests
-    ${CMAKE_CURRENT_SOURCE_DIR}/../tests/system_test)
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/../framework)
 
-target_link_libraries(${PROJECT_NAME} PUBLIC framework)
+target_link_libraries(${PROJECT_NAME} PRIVATE framework plugins apps spdlog)
 
-# Link the test framework
-if(VKB_BUILD_TESTS)
-    target_include_directories(${PROJECT_NAME} PUBLIC
-        $<TARGET_PROPERTY:test_framework,INCLUDE_DIRECTORIES>)
-    target_link_libraries(${PROJECT_NAME} PUBLIC test_framework)
-endif()
-
-# Link all samples and tests
-set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST} ${TOTAL_TEST_ID_LIST})
-foreach(ID ${PROJECT_ID_LIST})
-    if(TARGET ${ID})
-        get_target_property(TARGET_TYPE ${ID} TYPE)
-
-        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
-            target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
-        endif()
-    endif()
-endforeach()
-
+# Create android project
 if(ANDROID)
     set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
     
@@ -110,20 +71,9 @@ if(ANDROID)
     # Sync assets and shaders
     android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
     android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../shaders)
-else()
-    if(${VKB_SYMLINKS})
-        create_symlink(
-            NAME ${PROJECT_NAME}
-            DIR ${CMAKE_CURRENT_SOURCE_DIR}/../assets
-            LINK ${CMAKE_CURRENT_BINARY_DIR}/assets)
-            
-        create_symlink(
-            NAME ${PROJECT_NAME}
-            DIR ${CMAKE_SOURCE_DIR}/../outputs
-            LINK ${CMAKE_CURRENT_BINARY_DIR}/outputs)
-    endif()
 endif()
 
+# Create MSVC project
 if(MSVC)
     #Set the working directory to the source of the project so developer dont have to
     set_property(TARGET ${PROJECT_NAME} PROPERTY VS_DEBUGGER_WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}")

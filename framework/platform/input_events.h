@@ -34,15 +34,11 @@ enum class EventSource
 class InputEvent
 {
   public:
-	InputEvent(Platform &platform, EventSource source);
-
-	const Platform &get_platform() const;
+	InputEvent(EventSource source);
 
 	EventSource get_source() const;
 
   private:
-	Platform &platform;
-
 	EventSource source;
 };
 
@@ -165,7 +161,7 @@ enum class KeyAction
 class KeyInputEvent : public InputEvent
 {
   public:
-	KeyInputEvent(Platform &platform, KeyCode code, KeyAction action);
+	KeyInputEvent(KeyCode code, KeyAction action);
 
 	KeyCode get_code() const;
 
@@ -198,7 +194,7 @@ enum class MouseAction
 class MouseButtonInputEvent : public InputEvent
 {
   public:
-	MouseButtonInputEvent(Platform &platform, MouseButton button, MouseAction action, float pos_x, float pos_y);
+	MouseButtonInputEvent(MouseButton button, MouseAction action, float pos_x, float pos_y);
 
 	MouseButton get_button() const;
 
@@ -232,7 +228,7 @@ enum class TouchAction
 class TouchInputEvent : public InputEvent
 {
   public:
-	TouchInputEvent(Platform &platform, int32_t pointer_id, size_t pointer_count, TouchAction action, float pos_x, float pos_y);
+	TouchInputEvent(int32_t pointer_id, size_t pointer_count, TouchAction action, float pos_x, float pos_y);
 
 	TouchAction get_action() const;
 

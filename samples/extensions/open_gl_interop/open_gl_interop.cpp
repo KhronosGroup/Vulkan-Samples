@@ -688,7 +688,7 @@ void OpenGLInterop::build_command_buffers()
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
 	{
 		// Set target frame buffer
 		render_pass_begin_info.framebuffer = framebuffers[i];

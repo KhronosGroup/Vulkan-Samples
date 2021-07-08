@@ -46,20 +46,17 @@ void window_close_callback(GLFWwindow *window)
 
 void window_size_callback(GLFWwindow *window, int width, int height)
 {
-	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
+	if (auto platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
-		auto &platform = glfw_window->get_platform();
-		platform.get_app().resize(width, height);
-		glfw_window->resize(width, height);
+		platform->resize(width, height);
 	}
 }
 
 void window_focus_callback(GLFWwindow *window, int focused)
 {
-	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
+	if (auto platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
-		auto &platform = glfw_window->get_platform();
-		platform.get_app().set_focus(focused ? true : false);
+		platform->set_focus(focused);
 	}
 }
 
@@ -204,10 +201,9 @@ void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action, int
 	KeyCode   key_code   = translate_key_code(key);
 	KeyAction key_action = translate_key_action(action);
 
-	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
+	if (auto platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
-		auto &platform = glfw_window->get_platform();
-		platform.get_app().input_event(KeyInputEvent{platform, key_code, key_action});
+		platform->input_event(KeyInputEvent{key_code, key_action});
 	}
 }
 
@@ -237,11 +233,9 @@ inline MouseAction translate_mouse_action(int action)
 
 void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 {
-	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
+	if (auto *platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
-		auto &platform = glfw_window->get_platform();
-		platform.get_app().input_event(MouseButtonInputEvent{
-		    platform,
+		platform->input_event(MouseButtonInputEvent{
 		    MouseButton::Unknown,
 		    MouseAction::Move,
 		    static_cast<float>(xpos),
@@ -253,14 +247,12 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 {
 	MouseAction mouse_action = translate_mouse_action(action);
 
-	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
+	if (auto *platform = reinterpret_cast<Platform *>(glfwGetWindowUserPointer(window)))
 	{
-		auto & platform = glfw_window->get_platform();
 		double xpos, ypos;
 		glfwGetCursorPos(window, &xpos, &ypos);
 
-		platform.get_app().input_event(MouseButtonInputEvent{
-		    platform,
+		platform->input_event(MouseButtonInputEvent{
 		    translate_mouse_button(button),
 		    mouse_action,
 		    static_cast<float>(xpos),
@@ -269,8 +261,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 }
 }        // namespace
 
-GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
-    Window(platform, width, height)
+GlfwWindow::GlfwWindow(Platform *platform, const Window::Properties &properties) :
+    Window(properties)
 {
 	if (!glfwInit())
 	{
@@ -278,29 +270,39 @@ GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
 	}
 
 	glfwSetErrorCallback(error_callback);
-
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
-	auto parser = platform.get_parser();
-
-	if (parser->contains(&Platform::width))
+	switch (properties.mode)
 	{
-		width = parser->as<uint32_t>(&Platform::width);
-	}
+		case Window::Mode::Fullscreen: {
+			auto *      monitor = glfwGetPrimaryMonitor();
+			const auto *mode    = glfwGetVideoMode(monitor);
+			handle              = glfwCreateWindow(mode->width, mode->height, properties.title.c_str(), monitor, NULL);
+			break;
+		}
 
-	if (parser->contains(&Platform::height))
-	{
-		height = parser->as<uint32_t>(&Platform::height);
-	}
+		case Window::Mode::FullscreenBorderless: {
+			auto *      monitor = glfwGetPrimaryMonitor();
+			const auto *mode    = glfwGetVideoMode(monitor);
+			glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+			glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+			glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+			glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+			handle = glfwCreateWindow(mode->width, mode->height, properties.title.c_str(), monitor, NULL);
+			break;
+		}
 
-	handle = glfwCreateWindow(width, height, platform.get_app().get_name().c_str(), NULL, NULL);
+		default:
+			handle = glfwCreateWindow(properties.extent.width, properties.extent.height, properties.title.c_str(), NULL, NULL);
+			break;
+	}
 
 	if (!handle)
 	{
 		throw std::runtime_error("Couldn't create glfw window.");
 	}
 
-	glfwSetWindowUserPointer(handle, this);
+	glfwSetWindowUserPointer(handle, platform);
 
 	glfwSetWindowCloseCallback(handle, window_close_callback);
 	glfwSetWindowSizeCallback(handle, window_size_callback);

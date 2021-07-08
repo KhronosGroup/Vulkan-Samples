@@ -746,7 +746,7 @@ void MSAASample::draw_gui()
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
 		    if (ImGui::BeginCombo("##sample_count", to_string(gui_sample_count).c_str()))
 		    {
-			    for (int n = 0; n < supported_sample_count_list.size(); n++)
+			    for (size_t n = 0; n < supported_sample_count_list.size(); n++)
 			    {
 				    bool is_selected = (gui_sample_count == supported_sample_count_list[n]);
 				    if (ImGui::Selectable(to_string(supported_sample_count_list[n]).c_str(), is_selected))

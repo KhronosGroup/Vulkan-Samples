@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,6 +23,37 @@
 
 namespace vkb
 {
+/**
+ * @brief Process android lifecycle events
+ * 
+ * @param app Android app context
+ * @return true Events processed
+ * @return false Program should close
+ */
+inline bool process_android_events(android_app *app)
+{
+	android_poll_source *source;
+
+	int ident;
+	int events;
+
+	while ((ident = ALooper_pollAll(0, nullptr, &events,
+	                                (void **) &source)) >= 0)
+	{
+		if (source)
+		{
+			source->process(app, source);
+		}
+
+		if (app->destroyRequested != 0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 class AndroidPlatform : public Platform
 {
   public:
@@ -30,11 +61,8 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
+	virtual bool initialize(const std::vector<Plugin *> &plugins) override;
 
-	virtual void create_window() override;
-
-	virtual void main_loop() override;
 
 	virtual void terminate(ExitCode code) override;
 
@@ -56,13 +84,24 @@ class AndroidPlatform : public Platform
 
 	ANativeActivity *get_activity();
 
-  private:
+	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface) const override;
+
+	void set_surface_ready();
+
+  protected:
 	void poll_events();
 
+	virtual void create_window(const Window::Properties &properties) override;
+
+  private:
 	android_app *app{nullptr};
 
 	std::string log_output;
 
+	bool ready = false;
+
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+
+	bool surface_ready{false};
 };
 }        // namespace vkb

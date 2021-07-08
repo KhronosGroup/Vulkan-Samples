@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,13 +24,15 @@ struct GLFWwindow;
 
 namespace vkb
 {
+class Platform;
+
 /**
  * @brief An implementation of GLFW, inheriting the behaviour of the Window interface
  */
 class GlfwWindow : public Window
 {
   public:
-	GlfwWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
+	GlfwWindow(Platform *platform, const Window::Properties &properties);
 
 	virtual ~GlfwWindow();
 

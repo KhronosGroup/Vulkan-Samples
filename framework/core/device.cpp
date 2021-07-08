@@ -186,12 +186,6 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 
 		VkBool32 present_supported = gpu.is_present_supported(surface, queue_family_index);
 
-		// Only check if surface is valid to allow for headless applications
-		if (surface != VK_NULL_HANDLE)
-		{
-			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu.get_handle(), queue_family_index, surface, &present_supported));
-		}
-
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
 		{
 			queues[queue_family_index].emplace_back(*this, queue_family_index, queue_family_property, present_supported, queue_index);

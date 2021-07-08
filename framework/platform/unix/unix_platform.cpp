@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,13 +19,13 @@
 
 #include "common/error.h"
 
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
+
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
-
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
 
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
@@ -70,23 +70,6 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixPlatform::initialize(std::unique_ptr<Application> &&app)
-{
-	return Platform::initialize(std::move(app)) && prepare();
-}
-
-void UnixPlatform::create_window()
-{
-	if (active_app->is_headless())
-	{
-		window = std::make_unique<HeadlessWindow>(*this);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(*this);
-	}
-}
-
 const char *UnixPlatform::get_surface_extension()
 {
 	if (type == UnixType::Mac)
@@ -99,10 +82,17 @@ const char *UnixPlatform::get_surface_extension()
 	}
 }
 
-std::vector<spdlog::sink_ptr> UnixPlatform::get_platform_sinks()
+void UnixPlatform::create_window(const Window::Properties &properties)
 {
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	return sinks;
+	auto mode = properties.mode.has_value() ? properties.mode.value() : vkb::Window::Mode::Default;
+
+	if (properties.mode == vkb::Window::Mode::Headless)
+	{
+		window = std::make_unique<HeadlessWindow>(properties);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(this, properties);
+	}
 }
 }        // namespace vkb

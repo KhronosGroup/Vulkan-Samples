@@ -19,8 +19,8 @@
 
 #include "core/instance.h"
 
-#include "platform/headless_window.h"
-#include "platform/unix/direct_window.h"
+#include "platform/desktop/headless_window.h"
+#include "platform/desktop/unix/direct_window.h"
 
 namespace vkb
 {
@@ -209,8 +209,9 @@ static KeyCode map_multichar_key(int tty_fd, KeyCode initial)
 }
 
 }        // namespace
-DirectWindow::DirectWindow(Platform &platform, uint32_t width, uint32_t height) :
-    Window(platform, width, height)
+DirectWindow::DirectWindow(Platform *platform, const Window::Properties &properties) :
+    Window(properties),
+    platform{platform}
 {
 	// Setup tty for reading keyboard from console
 	if ((tty_fd = open("/dev/tty", O_RDWR | O_NDELAY)) > 0)
@@ -367,7 +368,7 @@ void DirectWindow::process_events()
 		{
 			// Signal release for the key we previously reported as down
 			// (we don't get separate press & release from the terminal)
-			platform.get_app().input_event(KeyInputEvent{platform, key_down, KeyAction::Up});
+			platform->input_event(KeyInputEvent{key_down, KeyAction::Up});
 			key_down = KeyCode::Unknown;
 		}
 
@@ -387,7 +388,7 @@ void DirectWindow::process_events()
 			}
 
 			// Signal the press
-			platform.get_app().input_event(KeyInputEvent{platform, key_down, KeyAction::Down});
+			platform->input_event(KeyInputEvent{key_down, KeyAction::Down});
 		}
 	}
 }

@@ -32,6 +32,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import android.support.v7.widget.Toolbar;
 
@@ -56,6 +57,9 @@ public class SampleLauncherActivity extends AppCompatActivity {
     // Required sample permissions
     List<Permission> permissions;
 
+    File external_files_dir;
+    File temp_files_dir;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -66,9 +70,13 @@ public class SampleLauncherActivity extends AppCompatActivity {
 
         if (loadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
             // Initialize cpp android platform
-            File external_files_dir = getExternalFilesDir("");
-            File temp_files_dir = getCacheDir();
+            external_files_dir = getExternalFilesDir("");
+            temp_files_dir = getCacheDir();
             if (external_files_dir != null && temp_files_dir != null) {
+                // User no longer has permissions to access applications' storage, save files in
+                // top level (shared) external storage directory
+                String shared_storage = external_files_dir.getPath().split(Pattern.quote("Android"))[0];
+                external_files_dir = new File(shared_storage, getPackageName());
                 initFilePath(external_files_dir.toString(), temp_files_dir.toString());
             }
 
@@ -161,6 +169,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
      */
     public void setArguments(String... args) {
         List<String> arguments = new ArrayList<>(Arrays.asList(args));
+        arguments.add(0, "vulkan_samples");
         if (isBenchmarkMode) {
             arguments.add("--benchmark");
             arguments.add("2000");
@@ -278,7 +287,14 @@ public class SampleLauncherActivity extends AppCompatActivity {
         // Handle argument passing
         Bundle extras = this.getIntent().getExtras();
         if (extras != null) {
-            if (extras.containsKey("sample")) {
+            if (extras.containsKey("cmd")) {
+                Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
+                intent.putExtra("arguments", extras.getString("cmd"));
+                intent.putExtra("external_dir", external_files_dir.toString());
+                intent.putExtra("temp_dir", temp_files_dir.toString());
+                startActivity(intent);
+                finishAffinity();
+            } else if (extras.containsKey("sample")) {
                 String sampleID = extras.getString("sample");
                 Sample sample = samples.findByID(sampleID);
                 if (sample != null) {

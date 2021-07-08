@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,13 +24,13 @@
 
 #include "common/error.h"
 
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
+
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
-
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
 
 namespace vkb
 {
@@ -121,45 +121,22 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool WindowsPlatform::initialize(std::unique_ptr<Application> &&app)
-{
-	return Platform::initialize(std::move(app)) && prepare();
-}
-
-void WindowsPlatform::create_window()
-{
-	if (active_app->is_headless())
-	{
-		window = std::make_unique<HeadlessWindow>(*this);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(*this);
-	}
-}
-
-void WindowsPlatform::terminate(ExitCode code)
-{
-	Platform::terminate(code);
-
-	if (code != ExitCode::Success || benchmark_mode)
-	{
-		std::cout << "Press enter to close...\n";
-		std::cin.get();
-	}
-
-	FreeConsole();
-}
-
 const char *WindowsPlatform::get_surface_extension()
 {
 	return VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 }
 
-std::vector<spdlog::sink_ptr> WindowsPlatform::get_platform_sinks()
+void WindowsPlatform::create_window(const Window::Properties &properties)
 {
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	return sinks;
+	
+
+	if (properties.mode == vkb::Window::Mode::Headless)
+	{
+		window = std::make_unique<HeadlessWindow>(properties);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(this, properties);
+	}
 }
 }        // namespace vkb

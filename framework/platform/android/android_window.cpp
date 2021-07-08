@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,11 +21,11 @@
 
 namespace vkb
 {
-AndroidWindow::AndroidWindow(Platform &platform, ANativeWindow *&window, bool headless) :
-    Window(platform, 0, 0),
-    handle{window},
-    headless{headless}
+AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties) :
+    Window(properties),
+    handle{window}
 {
+	headless = properties.mode == Mode::Headless;
 }
 
 VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
@@ -46,6 +46,11 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 	return surface;
 }
 
+void AndroidWindow::process_events()
+{
+	process_android_events(platform->get_android_app());
+}
+
 bool AndroidWindow::should_close()
 {
 	return finish_called ? true : handle == nullptr;
@@ -53,15 +58,12 @@ bool AndroidWindow::should_close()
 
 void AndroidWindow::close()
 {
-	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
-	ANativeActivity_finish(android_platform.get_activity());
-
+	ANativeActivity_finish(platform->get_activity());
 	finish_called = true;
 }
 
 float AndroidWindow::get_dpi_factor() const
 {
-	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
-	return AConfiguration_getDensity(android_platform.get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
 }        // namespace vkb

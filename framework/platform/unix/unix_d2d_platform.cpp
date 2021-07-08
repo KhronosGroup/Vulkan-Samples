@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,7 @@ VKBP_ENABLE_WARNINGS()
 
 #include "platform/headless_window.h"
 #include "platform/unix/direct_window.h"
+#include "window_options/window_options.h"
 
 namespace vkb
 {
@@ -61,32 +62,22 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixD2DPlatform::initialize(std::unique_ptr<Application> &&app)
+void UnixD2DPlatform::create_window(const Window::Properties &properties)
 {
-	return Platform::initialize(std::move(app)) && prepare();
-}
+	
 
-void UnixD2DPlatform::create_window()
-{
-	if (active_app->is_headless())
+	if (properties.mode == vkb::Window::Mode::Headless)
 	{
-		window = std::make_unique<HeadlessWindow>(*this);
+		window = std::make_unique<HeadlessWindow>(extent, properties);
 	}
 	else
 	{
-		window = std::make_unique<DirectWindow>(*this);
+		window = std::make_unique<DirectWindow>(this, extent, properties);
 	}
 }
 
 const char *UnixD2DPlatform::get_surface_extension()
 {
 	return VK_KHR_DISPLAY_EXTENSION_NAME;
-}
-
-std::vector<spdlog::sink_ptr> UnixD2DPlatform::get_platform_sinks()
-{
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	return sinks;
 }
 }        // namespace vkb

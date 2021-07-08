@@ -25,6 +25,8 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
+#include "window_options/window_options.h"
+
 bool ApiVulkanSample::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -48,7 +50,8 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	// Command buffer submission info is set by each example
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
-	if (!is_headless())
+
+	if (platform.get_window().get_window_mode() != vkb::Window::Mode::Headless)
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -78,24 +81,6 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void ApiVulkanSample::prepare_render_context()
-{
-	get_render_context().set_present_mode_priority({VK_PRESENT_MODE_MAILBOX_KHR,
-	                                                VK_PRESENT_MODE_IMMEDIATE_KHR,
-	                                                VK_PRESENT_MODE_FIFO_KHR});
-
-	get_render_context().set_surface_format_priority({{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
-
-	get_render_context().request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
-
-	get_render_context().request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
-
-	get_render_context().prepare();
-}
-
 void ApiVulkanSample::update(float delta_time)
 {
 	if (view_updated)
@@ -112,6 +97,8 @@ void ApiVulkanSample::update(float delta_time)
 	{
 		view_updated = true;
 	}
+
+	platform->on_post_draw(get_render_context());
 }
 
 void ApiVulkanSample::resize(const uint32_t, const uint32_t)
@@ -180,6 +167,12 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 vkb::Device &ApiVulkanSample::get_device()
 {
 	return *device;
+}
+
+void ApiVulkanSample::prepare_render_context()
+{
+	render_context->request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
+	VulkanSample::prepare_render_context();
 }
 
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
@@ -438,7 +431,7 @@ void ApiVulkanSample::update_overlay(float delta_time)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(fps), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
 			on_update_ui_overlay(gui->get_drawer());
 		});
 
