@@ -1,5 +1,5 @@
-# Copyright (c) 2020, Bradley Austin Davis
-# Copyright (c) 2020, Arm Limited
+# Copyright (c) 2020-2021, Bradley Austin Davis
+# Copyright (c) 2020-2021, Arm Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -40,8 +40,7 @@ target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 set_property(TARGET glad PROPERTY FOLDER "ThirdParty")
 
 # Only Compile on platforms that support glfw
-# Corresponds to the logic in framework/CMakeLists.txt near "if(VKB_DIRECT_2_DISPLAY)"
-if (NOT (VKB_DIRECT_2_DISPLAY OR ANDROID OR DIRECT_TO_DISPLAY))
+if (NOT (ANDROID OR DIRECT_TO_DISPLAY))
     add_sample_with_tags(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}

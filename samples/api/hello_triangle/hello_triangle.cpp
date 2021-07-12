@@ -187,6 +187,10 @@ void HelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+	active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
 	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
 #else
@@ -468,7 +472,16 @@ void HelloTriangle::init_swapchain(Context &context)
 		}
 	}
 
-	VkExtent2D swapchain_size = surface_properties.currentExtent;
+	VkExtent2D swapchain_size;
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		swapchain_size.width  = context.swapchain_dimensions.width;
+		swapchain_size.height = context.swapchain_dimensions.height;
+	}
+	else
+	{
+		swapchain_size = surface_properties.currentExtent;
+	}
 
 	// FIFO must be supported by all implementations.
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -1075,6 +1088,8 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
 	context.surface = platform.get_window().create_surface(*vk_instance);
+	context.swapchain_dimensions.width  = platform.get_window().get_width(),
+	context.swapchain_dimensions.height = platform.get_window().get_height(),
 
 	init_device(context, {"VK_KHR_swapchain"});
 
