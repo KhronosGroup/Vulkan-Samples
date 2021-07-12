@@ -32,6 +32,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 import android.support.v7.widget.Toolbar;
 
@@ -69,6 +70,10 @@ public class SampleLauncherActivity extends AppCompatActivity {
             File external_files_dir = getExternalFilesDir("");
             File temp_files_dir = getCacheDir();
             if (external_files_dir != null && temp_files_dir != null) {
+                // User no longer has permissions to access applications' storage, save files in
+                // top level (shared) external storage directory
+                String shared_storage = external_files_dir.getPath().split(Pattern.quote("Android"))[0];
+                external_files_dir = new File(shared_storage, getPackageName());
                 initFilePath(external_files_dir.toString(), temp_files_dir.toString());
             }
 

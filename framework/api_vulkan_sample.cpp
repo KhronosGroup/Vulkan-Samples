@@ -78,24 +78,6 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void ApiVulkanSample::prepare_render_context()
-{
-	get_render_context().set_present_mode_priority({VK_PRESENT_MODE_MAILBOX_KHR,
-	                                                VK_PRESENT_MODE_IMMEDIATE_KHR,
-	                                                VK_PRESENT_MODE_FIFO_KHR});
-
-	get_render_context().set_surface_format_priority({{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                  {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
-
-	get_render_context().request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
-
-	get_render_context().request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
-
-	get_render_context().prepare();
-}
-
 void ApiVulkanSample::update(float delta_time)
 {
 	if (view_updated)
@@ -180,6 +162,21 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 vkb::Device &ApiVulkanSample::get_device()
 {
 	return *device;
+}
+
+void ApiVulkanSample::create_render_context(vkb::Platform &platform)
+{
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
+}
+
+void ApiVulkanSample::prepare_render_context()
+{
+	VulkanSample::prepare_render_context();
 }
 
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)

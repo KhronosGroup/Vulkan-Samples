@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,13 +28,8 @@ class UnixD2DPlatform : public Platform
 
 	virtual ~UnixD2DPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
-
 	virtual void create_window() override;
 
 	virtual const char *get_surface_extension() override;
-
-  private:
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

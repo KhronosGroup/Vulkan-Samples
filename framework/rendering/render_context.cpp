@@ -109,12 +109,14 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 
 void RenderContext::set_present_mode_priority(const std::vector<VkPresentModeKHR> &new_present_mode_priority_list)
 {
-	this->present_mode_priority_list = new_present_mode_priority_list;
+	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
+	present_mode_priority_list = new_present_mode_priority_list;
 }
 
 void RenderContext::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &new_surface_format_priority_list)
 {
-	this->surface_format_priority_list = new_surface_format_priority_list;
+	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
+	surface_format_priority_list = new_surface_format_priority_list;
 }
 
 VkFormat RenderContext::get_format()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,6 +56,10 @@ class AndroidPlatform : public Platform
 
 	ANativeActivity *get_activity();
 
+	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const override;
+
+	void set_surface_ready();
+
   private:
 	void poll_events();
 
@@ -64,5 +68,7 @@ class AndroidPlatform : public Platform
 	std::string log_output;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
+
+	bool surface_ready{false};
 };
 }        // namespace vkb

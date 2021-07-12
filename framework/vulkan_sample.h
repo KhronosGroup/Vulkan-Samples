@@ -258,6 +258,11 @@ class VulkanSample : public Application
 	virtual void request_gpu_features(PhysicalDevice &gpu);
 
 	/** 
+	 * @brief Override this to customise the creation of the render_context
+	 */
+	virtual void create_render_context(Platform &platform);
+
+	/** 
 	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
 	virtual void prepare_render_context();

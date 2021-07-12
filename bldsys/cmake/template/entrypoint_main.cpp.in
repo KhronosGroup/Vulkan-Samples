@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
 #endif
 		auto app = create_@TARGET_CREATE_FUNC@();
 		app->set_name("@TARGET_NAME@");
-		if (platform.initialize(std::move(app)))
+
+		if (platform.initialize(std::move(app)) && platform.prepare())
 		{
 			platform.main_loop();
 			platform.terminate(vkb::ExitCode::Success);
