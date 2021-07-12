@@ -93,7 +93,7 @@ bool VulkanSample::prepare(Platform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 
-	auto &gpu = instance->get_suitable_gpu();
+	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
