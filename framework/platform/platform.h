@@ -28,6 +28,10 @@
 #include "platform/parser.h"
 #include "platform/window.h"
 
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+#	undef Success
+#endif
+
 namespace vkb
 {
 enum class ExitCode

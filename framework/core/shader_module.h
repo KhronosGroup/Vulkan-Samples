@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,10 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+#	undef None
+#endif
 
 namespace vkb
 {
