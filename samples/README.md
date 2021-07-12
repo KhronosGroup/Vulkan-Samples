@@ -125,6 +125,11 @@ This sample demonstrates using multiple Vulkan queues to get better hardware uti
 
 - 🎓 [Using async compute to saturate GPU](./performance/async_compute/async_compute_tutorial.md)
 
+## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
+This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
+
+- 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
