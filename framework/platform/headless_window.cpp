@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,7 @@ HeadlessWindow::HeadlessWindow(Platform &platform, uint32_t width, uint32_t heig
 {
 }
 
-VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
+VkSurfaceKHR HeadlessWindow::create_surface(VkInstance instance)
 {
 	return VK_NULL_HANDLE;
 }
