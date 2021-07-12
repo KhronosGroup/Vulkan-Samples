@@ -243,7 +243,7 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 		return VK_NULL_HANDLE;
 	}
 
-	auto phys_dev = instance.get_suitable_gpu().get_handle();
+	auto phys_dev = instance.get_first_gpu().get_handle();
 	if (phys_dev == VK_NULL_HANDLE)
 	{
 		return VK_NULL_HANDLE;
