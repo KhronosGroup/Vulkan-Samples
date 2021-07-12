@@ -959,7 +959,7 @@ VkResult HelloTriangle::present_image(Context &context, uint32_t index)
 }
 
 /**
- * @brief Initializes the Vulkan frambuffers.
+ * @brief Initializes the Vulkan framebuffers.
  * @param context A Vulkan context with the render pass already set up.
  */
 void HelloTriangle::init_framebuffers(Context &context)
