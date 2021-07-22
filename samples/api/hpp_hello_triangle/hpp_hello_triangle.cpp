@@ -86,8 +86,8 @@ bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &    
 bool HPPHelloTriangle::validate_layers(const std::vector<const char *> &       required,
                                        const std::vector<vk::LayerProperties> &available)
 {
-	// inner find_if gives true if the layer was not found
-	// outer find_if gives true if none of the layers were not found, that is if all layers were found
+	// inner find_if returns true if the layer was not found
+	// outer find_if returns true if none of the layers were not found, that is if all layers were found
 	return std::find_if(required.begin(),
 	                    required.end(),
 	                    [&available](auto layer) {
@@ -138,26 +138,22 @@ VkShaderStageFlagBits HPPHelloTriangle::find_shader_stage(const std::string &ext
 bool validate_layers(const std::vector<const char *> &       required,
                      const std::vector<vk::LayerProperties> &available)
 {
-	for (auto layer : required)
+	// inner find_if returns true if the layer was not found
+	// outer find_if returns iterator to the not found layer, if any
+	auto requiredButNotFoundIt = std::find_if(required.begin(),
+	                                          required.end(),
+	                                          [&available](auto layer) {
+		                                          return std::find_if(available.begin(),
+		                                                              available.end(),
+		                                                              [&layer](auto const &lp) {
+			                                                              return strcmp(lp.layerName, layer) == 0;
+		                                                              }) == available.end();
+	                                          });
+	if (requiredButNotFoundIt != required.end())
 	{
-		bool found = false;
-		for (auto &available_layer : available)
-		{
-			if (strcmp(available_layer.layerName, layer) == 0)
-			{
-				found = true;
-				break;
-			}
-		}
-
-		if (!found)
-		{
-			LOGE("Validation Layer {} not found", layer);
-			return false;
-		}
+		LOGE("Validation Layer {} not found", *requiredButNotFoundIt);
 	}
-
-	return true;
+	return (requiredButNotFoundIt == required.end());
 }
 
 std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers)
@@ -286,7 +282,33 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 }
 
 /**
- * @brief Initializes the Vulkan physical device and logical device.
+ * @brief Select a physical device.
+ *
+ * @param context A Vulkan context with an instance already set up.
+ */
+void HPPHelloTriangle::select_physical_device(Context &context)
+{
+	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
+
+	if (gpus.empty())
+	{
+		throw std::runtime_error("No physical device found.");
+	}
+
+	// Select a discrete GPU we find in the system.
+	auto gpuIt = std::find_if(gpus.begin(),
+	                          gpus.end(),
+	                          [](vk::PhysicalDevice const &gpu) { return gpu.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu; });
+	if (gpuIt == gpus.end())
+	{
+		throw std::runtime_error("No discrete device found.");
+	}
+
+	context.gpu = *gpuIt;
+}
+
+/**
+ * @brief Initializes the logical device.
  *
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
@@ -295,16 +317,6 @@ void HPPHelloTriangle::init_device(Context &                        context,
                                    const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
-
-	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
-
-	if (gpus.empty())
-	{
-		throw std::runtime_error("No physical device found.");
-	}
-
-	// Select the first GPU we find in the system.
-	context.gpu = gpus.front();
 
 	std::vector<vk::QueueFamilyProperties> queue_family_properties = context.gpu.getQueueFamilyProperties();
 
@@ -988,8 +1000,9 @@ HPPHelloTriangle::~HPPHelloTriangle()
 bool HPPHelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
+	select_physical_device(context);
 
-	context.surface = platform.get_window().create_surface(context.instance);
+	context.surface = platform.get_window().create_surface(context.instance, context.gpu);
 
 	init_device(context, {"VK_KHR_swapchain"});
 

@@ -142,6 +142,8 @@ class HPPHelloTriangle : public vkb::Application
 	                   const std::vector<const char *> &required_instance_extensions,
 	                   const std::vector<const char *> &required_validation_layers);
 
+	void select_physical_device(Context &context);
+
 	void init_device(Context &                        context,
 	                 const std::vector<const char *> &required_device_extensions);
 

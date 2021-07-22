@@ -19,6 +19,7 @@
 
 #include "common/vk_common.h"
 #include "core/instance.h"
+#include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
@@ -45,7 +46,15 @@ class Window
 	 * @param instance A Vulkan instance
 	 * @returns A VkSurfaceKHR handle, for use by the application
 	 */
-	virtual VkSurfaceKHR create_surface(VkInstance instance) = 0;
+	virtual VkSurfaceKHR create_surface(Instance &instance) = 0;
+
+	/**
+	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @param instance A Vulkan instance
+	 * @param physical_device A Vulkan PhysicalDevice
+	 * @returns A vk::SurfaceKHR handle, for use by the application
+	 */
+	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) = 0;
 
 	/**
 	 * @brief Checks if the window should be closed

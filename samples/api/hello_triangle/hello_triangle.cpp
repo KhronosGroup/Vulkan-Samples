@@ -1068,6 +1068,8 @@ void HelloTriangle::teardown(Context &context)
 		vkDestroyDebugReportCallbackEXT(context.instance, context.debug_callback, nullptr);
 		context.debug_callback = VK_NULL_HANDLE;
 	}
+
+	vk_instance.reset();
 }
 
 HelloTriangle::HelloTriangle()
@@ -1083,7 +1085,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	context.surface = platform.get_window().create_surface(context.instance);
+	vk_instance = std::make_unique<vkb::Instance>(context.instance);
+
+	context.surface = platform.get_window().create_surface(*vk_instance);
 
 	context.surface = platform.get_window().create_surface(*vk_instance);
 	context.swapchain_dimensions.width  = platform.get_window().get_width(),
