@@ -487,11 +487,13 @@ VkImageUsageFlags Swapchain::get_usage() const
 
 void Swapchain::set_present_mode_priority(const std::vector<VkPresentModeKHR> &new_present_mode_priority_list)
 {
+	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
 	present_mode_priority_list = new_present_mode_priority_list;
 }
 
 void Swapchain::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &new_surface_format_priority_list)
 {
+	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
 	surface_format_priority_list = new_surface_format_priority_list;
 }
 VkPresentModeKHR Swapchain::get_present_mode() const
