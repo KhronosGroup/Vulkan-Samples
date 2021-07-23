@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,15 +29,8 @@ class WindowsPlatform : public Platform
 
 	virtual ~WindowsPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
-
 	virtual void create_window() override;
 
-	virtual void terminate(ExitCode code) override;
-
 	virtual const char *get_surface_extension() override;
-
-  private:
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 };
 }        // namespace vkb

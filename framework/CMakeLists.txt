@@ -248,17 +248,17 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/headless_window.h
-    platform/glfw_window.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
+    platform/headless_window.h
+
     # Source Files
+    platform/headless_window.cpp
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
