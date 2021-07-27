@@ -56,14 +56,23 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct ModelBuffer
 	{
-		std::unique_ptr<vkb::core::Buffer>       vertex_buffer;
-		std::unique_ptr<vkb::core::Buffer>       index_buffer;
+		size_t                                   vertex_offset = 0; // in bytes
+		size_t                                   index_offset = 0; // in bytes
 		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer;
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
 		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
 		AccelerationStructureExtended            bottom_level_acceleration_structure;
 	};
+
+	struct SceneOptions
+	{
+		bool use_vertex_staging_buffer = true;
+	} scene_options;
+
+	// fixed buffers
+	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
+	std::unique_ptr<vkb::core::Buffer> index_buffer = nullptr;
 
 	struct SceneLoadInfo
 	{
@@ -96,8 +105,6 @@ class RaytracingExtended : public ApiVulkanSample
 
 	AccelerationStructureExtended top_level_acceleration_structure;
 
-	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer>                index_buffer;
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
 

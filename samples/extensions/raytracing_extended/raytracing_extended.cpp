@@ -220,55 +220,86 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	auto &modelBuffers = raytracing_scene->modelBuffers;
 	modelBuffers.resize(0);
 
-	uint32_t firstVertex = 0, primitiveOffset = 0;
-
-	for (auto &&model : models)
+	// Determine the size of the total buffer we need to create
+	std::vector<uint32_t> vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
+	uint32_t nTotalVertices = 0, nTotalTriangles = 0;
+	for (size_t i = 0; i < models.size(); ++i)
 	{
-		const auto &vertices = model.vertices;
-		const auto &indices  = model.triangles;
 
-		auto vertex_buffer_size = vertices.size() * sizeof(vertices[0]);
-		auto index_buffer_size  = indices.size() * sizeof(indices[0]);
+		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
+		nTotalVertices += models[i].vertices.size();
 
-		// Create buffers for the bottom level geometry
-		// For the sake of simplicity we won't stage the vertex data to the GPU memory
+		index_buffer_offsets[i] = nTotalTriangles * sizeof(models[i].triangles[0]);
+		nTotalTriangles += models[i].triangles.size();
+	}
+	
+	//uint32_t firstVertex = 0, primitiveOffset = 0;
+	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
+	auto index_buffer_size  = nTotalTriangles * sizeof(models[0].triangles);
 
-		// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-		const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	// Create a staging buffer. (If staging buffer use is disabled, then this will be the final buffer)
+	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
+	const VkBufferUsageFlags           buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VkBufferUsageFlags           staging_flags      = scene_options.use_vertex_staging_buffer ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : buffer_usage_flags;
+	staging_vertex_buffer                                 = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_index_buffer                                  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-		ModelBuffer modelBuffer;
-		const bool  useStagingBuffer = false;
-		if (useStagingBuffer)
-		{
-			auto stagingBuffer        = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-			modelBuffer.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-			stagingBuffer->update((const uint8_t *) vertices.data(), vertex_buffer_size, 0);
+	// Copy over the data for each of the models
+	for (size_t i = 0; i < models.size(); ++i)
+	{
+		auto &model = models[i];
+		staging_vertex_buffer->update(model.vertices.data(), model.vertices.size() * sizeof(model.vertices[0]), vertex_buffer_offsets[i]);
+		staging_index_buffer->update(model.triangles.data(), model.triangles.size() * sizeof(model.triangles[0]), index_buffer_offsets[i]);
+	}
 
-			auto &cmd = device->request_command_buffer();
-			cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-			cmd.copy_buffer(*stagingBuffer, *modelBuffer.vertex_buffer, vertex_buffer_size);
+	// now transfer over to the end buffer
+	if (scene_options.use_vertex_staging_buffer)
+	{
+		auto &cmd  = device->request_command_buffer();
+		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
+			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
 			vkb::BufferMemoryBarrier barrier;
 			barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 			barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-			cmd.buffer_memory_barrier(*modelBuffer.vertex_buffer, 0, VK_WHOLE_SIZE, barrier);
-			cmd.end();
+			cmd.buffer_memory_barrier(*output_buffer, 0, VK_WHOLE_SIZE, barrier);
+			return output_buffer;
+		};
+		vertex_buffer = copy(*staging_vertex_buffer);
+		index_buffer = copy(*staging_index_buffer);
 
-			auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-			queue.submit(cmd, device->request_fence());
-			device->get_fence_pool().wait();
-		}
-		else
-		{
-			modelBuffer.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-			modelBuffer.vertex_buffer->update((const uint8_t *) vertices.data(), vertex_buffer_size, 0);
-		}
+		cmd.end();
+		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		auto  fence = device->request_fence();
+		queue.submit(cmd, fence);
+		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
+		vkDestroyFence(device->get_handle(), fence, nullptr);
+		
+	}
+	else
+	{
+		vertex_buffer = std::move(staging_vertex_buffer);
+		index_buffer = std::move(staging_index_buffer);
+	}
 
-		modelBuffer.index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-		modelBuffer.index_buffer->update((const uint8_t *) indices.data(), index_buffer_size);
+	for (size_t i = 0; i < models.size(); ++i)
+	{
+		auto &      model = models[i];
+		const auto &vertices = model.vertices;
+		const auto &indices  = model.triangles;
 
+
+		// Create buffers for the bottom level geometry
+		// For the sake of simplicity we won't stage the vertex data to the GPU memory
+
+		// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
+		
+
+		ModelBuffer modelBuffer;
 		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
 		VkTransformMatrixKHR transform_matrix = model.defaultTransform;
 		modelBuffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -278,8 +309,11 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		VkDeviceOrHostAddressConstKHR index_data_device_address{};
 		VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
 
-		vertex_data_device_address.deviceAddress      = get_buffer_device_address(modelBuffer.vertex_buffer->get_handle());
-		index_data_device_address.deviceAddress       = get_buffer_device_address(modelBuffer.index_buffer->get_handle());
+		modelBuffer.vertex_offset = vertex_buffer_offsets[i];
+		modelBuffer.index_offset = index_buffer_offsets[i];
+
+		vertex_data_device_address.deviceAddress      = get_buffer_device_address(vertex_buffer->get_handle()) + vertex_buffer_offsets[i];
+		index_data_device_address.deviceAddress = get_buffer_device_address(index_buffer->get_handle()) + index_buffer_offsets[i];
 		transform_matrix_device_address.deviceAddress = get_buffer_device_address(modelBuffer.transform_matrix_buffer->get_handle());
 
 		// The bottom level acceleration structure contains one set of triangles as the input geometry
@@ -305,8 +339,6 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_build_range_info.firstVertex     = 0;        //firstVertex;
 		acceleration_structure_build_range_info.transformOffset = 0;
 
-		firstVertex += vertices.size();
-		primitiveOffset += indices.size() * sizeof(indices[0]);
 
 		// now create BLAS
 		VkAccelerationStructureBuildGeometryInfoKHR acceleration_structure_build_geometry_info{};
