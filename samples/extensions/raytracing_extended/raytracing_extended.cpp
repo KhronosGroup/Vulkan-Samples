@@ -33,13 +33,13 @@
 	{if (!(cond)) { LOGE(msg); throw std::runtime_error(msg); }}
 
 // contains information about the vertex
+
 struct RaytracingExtended::NewVertex
 {
-	alignas(16) glm::vec3 position;
-	alignas(16) glm::vec3 normal;
-	alignas(16) std::array<uint32_t, 4> materialInformation;        // { material type, texture index, ... }
-	alignas(8) glm::vec2 texcoords;
+	alignas(16) glm::vec4 A; // {x, y, z, nx}
+	alignas(16) glm::vec4 B; // {ny, nz, uv0, uv1}
 };
+
 struct RaytracingExtended::Model
 {
 	std::vector<NewVertex>               vertices;
@@ -294,7 +294,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
 		acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
 		acceleration_structure_geometry.geometry.triangles.maxVertex     = (uint32_t) vertices.size();
-		acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(Vertex);
+		acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(NewVertex);
 		acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
 		acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
 		acceleration_structure_geometry.geometry.triangles.transformData = transform_matrix_device_address;
@@ -1112,10 +1112,10 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				model.vertices.resize(pts.size());
 				for (size_t i = 0; i < pts.size(); ++i)
 				{
-					model.vertices[i].position            = pts[i];
-					model.vertices[i].normal              = i < normals.size() ? normals[i] : glm::vec3{};
-					model.vertices[i].texcoords           = i < uvcoords.size() ? uvcoords[i] : glm::vec2{};
-					model.vertices[i].materialInformation = {uint32_t(sceneIndex), textureIndex32, 0, 0};
+					auto texcoords = i < uvcoords.size() ? uvcoords[i] : glm::vec2{};
+					auto normal    = i < normals.size() ? normals[i] : glm::vec3{};
+					model.vertices[i].A = {pts[i].x, pts[i].y, pts[i].z, normal.x};
+					model.vertices[i].B = {normal.y, normal.z, texcoords.x, texcoords.y};
 				}
 
 				assert(sub_mesh->index_type == VK_INDEX_TYPE_UINT16);

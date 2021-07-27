@@ -50,5 +50,7 @@ void main()
     hitValue = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
   } else if (render_settings.render_mode[0] == 3){ // distance
     hitValue = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
+  } else if (render_settings.render_mode[0] == 4) { // global xyz
+    hitValue = vec4();
   }
 }

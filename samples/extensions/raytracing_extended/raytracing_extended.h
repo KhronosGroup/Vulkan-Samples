@@ -39,7 +39,8 @@ class RaytracingExtended : public ApiVulkanSample
 		RENDER_DEFAULT,
 		RENDER_BARYCENTRIC,
 		RENDER_INSTANCE_ID,
-		RENDER_DISTANCE
+		RENDER_DISTANCE,
+		RENDER_GLOBAL_XYZ
 	};
 
 	// Wraps all data required for an acceleration structure
