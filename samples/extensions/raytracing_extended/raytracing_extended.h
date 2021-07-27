@@ -84,9 +84,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
 
-	
 
-	AccelerationStructureExtended bottom_level_acceleration_structure;
 	AccelerationStructureExtended top_level_acceleration_structure;
 
 	std::unique_ptr<vkb::core::Buffer>                vertex_buffer;
@@ -123,6 +121,7 @@ class RaytracingExtended : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
+	std::vector<VkCommandBuffer> raytracing_command_buffers;
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;
 	VkDescriptorSet       descriptor_set;
@@ -144,10 +143,12 @@ class RaytracingExtended : public ApiVulkanSample
 	void          create_shader_binding_tables();
 	void          create_descriptor_sets();
 	void          create_ray_tracing_pipeline();
+	void          create_display_pipeline();
 	void          create_uniform_buffer();
 	void          build_command_buffers() override;
 	void          update_uniform_buffers();
 	void          draw();
+	void          draw_gui() override;
 	bool          prepare(vkb::Platform &platform) override;
 	virtual void  render(float delta_time) override;
 };

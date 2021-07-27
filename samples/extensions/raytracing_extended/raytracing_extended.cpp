@@ -81,7 +81,7 @@ RaytracingExtended::~RaytracingExtended()
 		vkDestroyImage(get_device().get_handle(), storage_image.image, nullptr);
 		vkFreeMemory(get_device().get_handle(), storage_image.memory, nullptr);
 		delete_acceleration_structure(top_level_acceleration_structure);
-		delete_acceleration_structure(bottom_level_acceleration_structure);
+		raytracing_scene.reset();
 		vertex_buffer.reset();
 		index_buffer.reset();
 		ubo.reset();
@@ -714,7 +714,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray generation group
 	{
-		shader_stages.push_back(load_shader("khr_ray_tracing_basic/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+		shader_stages.push_back(load_shader("khr_ray_tracing_extended/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -727,7 +727,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray miss group
 	{
-		shader_stages.push_back(load_shader("khr_ray_tracing_basic/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+		shader_stages.push_back(load_shader("khr_ray_tracing_extended/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -740,7 +740,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
-		shader_stages.push_back(load_shader("khr_ray_tracing_basic/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+		shader_stages.push_back(load_shader("khr_ray_tracing_extended/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -763,6 +763,10 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	raytracing_pipeline_create_info.maxPipelineRayRecursionDepth = 1;
 	raytracing_pipeline_create_info.layout                       = pipeline_layout;
 	VK_CHECK(vkCreateRayTracingPipelinesKHR(get_device().get_handle(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &raytracing_pipeline_create_info, nullptr, &pipeline));
+}
+
+void RaytracingExtended::create_display_pipeline()
+{
 }
 
 /*
@@ -817,11 +821,24 @@ void RaytracingExtended::build_command_buffers()
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	auto device_ptr = device->get_handle();
+	auto command_pool = device->get_command_pool().get_handle();
+	if (!raytracing_command_buffers.empty())
 	{
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+		vkFreeCommandBuffers(device_ptr, command_pool, raytracing_command_buffers.size(), &raytracing_command_buffers[0]);
+		raytracing_command_buffers.resize(0);
+	}
+
+	raytracing_command_buffers.resize(draw_cmd_buffers.size());
+	for (auto&& command_buffer : raytracing_command_buffers)
+	{
+		command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
+	}
+
+	for (int32_t i = 0; i < raytracing_command_buffers.size(); ++i)
+	{
+		VK_CHECK(vkBeginCommandBuffer(raytracing_command_buffers[i], &command_buffer_begin_info));
 
 		/*
 			Setup the strided device address regions pointing at the shader identifiers in the shader binding table
@@ -849,11 +866,11 @@ void RaytracingExtended::build_command_buffers()
 		/*
 			Dispatch the ray tracing commands
 		*/
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
+		vkCmdBindPipeline(raytracing_command_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
+		vkCmdBindDescriptorSets(raytracing_command_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
 
 		vkCmdTraceRaysKHR(
-		    draw_cmd_buffers[i],
+		    raytracing_command_buffers[i],
 		    &raygen_shader_sbt_entry,
 		    &miss_shader_sbt_entry,
 		    &hit_shader_sbt_entry,
@@ -862,51 +879,7 @@ void RaytracingExtended::build_command_buffers()
 		    height,
 		    1);
 
-		/*
-			Copy ray tracing output to swap chain image
-		*/
-
-		// Prepare current swap chain image as transfer destination
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    get_render_context().get_swapchain().get_images()[i],
-		    VK_IMAGE_LAYOUT_UNDEFINED,
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    subresource_range);
-
-		// Prepare ray tracing output image as transfer source
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    storage_image.image,
-		    VK_IMAGE_LAYOUT_GENERAL,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    subresource_range);
-
-		VkImageCopy copy_region{};
-		copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-		copy_region.srcOffset      = {0, 0, 0};
-		copy_region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
-		copy_region.dstOffset      = {0, 0, 0};
-		copy_region.extent         = {width, height, 1};
-		vkCmdCopyImage(draw_cmd_buffers[i], storage_image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
-
-		// Transition swap chain image back for presentation
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    get_render_context().get_swapchain().get_images()[i],
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		    subresource_range);
-
-		// Transition ray tracing output image back to general layout
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    storage_image.image,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    VK_IMAGE_LAYOUT_GENERAL,
-		    subresource_range);
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		VK_CHECK(vkEndCommandBuffer(raytracing_command_buffers[i]));
 	}
 }
 
@@ -951,20 +924,94 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	create_scene();
 	create_uniform_buffer();
 	create_ray_tracing_pipeline();
+	create_display_pipeline();
 	create_shader_binding_tables();
 	create_descriptor_sets();
 	build_command_buffers();
+
 	prepared = true;
 	return true;
 }
 
 void RaytracingExtended::draw()
 {
+	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytacing command buffers must match the render queue size");
 	ApiVulkanSample::prepare_frame();
+	size_t i = current_buffer;
+	
+	VkSubmitInfo submit = vkb::initializers::submit_info();
+	submit.commandBufferCount  = 1;
+	submit.pCommandBuffers      = &raytracing_command_buffers[i];
+
+	static auto fence = device->request_fence();
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
+	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
+	VK_CHECK(vkResetFences(device->get_handle(), 1, &fence));
+
+	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
+	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));
+
+	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+	/*
+		Copy ray tracing output to swap chain image
+	*/
+	// Prepare current swap chain image as transfer destination
+	vkb::set_image_layout(
+	    draw_cmd_buffers[i],
+	    get_render_context().get_swapchain().get_images()[i],
+	    VK_IMAGE_LAYOUT_UNDEFINED,
+	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	    subresource_range);
+
+	// Prepare ray tracing output image as transfer source
+	vkb::set_image_layout(
+	    draw_cmd_buffers[i],
+	    storage_image.image,
+	    VK_IMAGE_LAYOUT_GENERAL,
+	    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	    subresource_range);
+
+	VkImageCopy copy_region{};
+	copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+	copy_region.srcOffset      = {0, 0, 0};
+	copy_region.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+	copy_region.dstOffset      = {0, 0, 0};
+	copy_region.extent         = {width, height, 1};
+	vkCmdCopyImage(draw_cmd_buffers[i], storage_image.image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
+
+	// Transition swap chain image back for presentation
+	vkb::set_image_layout(
+	    draw_cmd_buffers[i],
+	    get_render_context().get_swapchain().get_images()[i],
+	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+	    subresource_range);
+
+	// Transition ray tracing output image back to general layout
+	vkb::set_image_layout(
+	    draw_cmd_buffers[i],
+	    storage_image.image,
+	    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+	    VK_IMAGE_LAYOUT_GENERAL,
+	    subresource_range);
+	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+
+	const VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
+}
+
+void RaytracingExtended::draw_gui()
+{
+	gui->show_options_window(
+		[this]() {
+			int current_mode = 0;
+		    ImGui::Combo("Draw mode", &current_mode, "Mode\0\0");
+		}
+	);
 }
 
 void RaytracingExtended::render(float delta_time)
