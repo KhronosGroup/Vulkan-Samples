@@ -353,6 +353,8 @@ vk::SurfaceKHR DirectWindow::create_surface(vk::Instance instance, vk::PhysicalD
 		return nullptr;
 	}
 
+	vk::DisplayModePropertiesKHR &mode_props = display_mode_properties.front();
+
 	// Get the list of planes
 	std::vector<vk::DisplayPlanePropertiesKHR> plane_properties = physical_device.getDisplayPlanePropertiesKHR();
 

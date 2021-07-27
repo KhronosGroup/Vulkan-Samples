@@ -76,30 +76,6 @@ bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &    
 }
 
 /**
- * @brief Validates a list of required layers, comparing it with the available ones.
- *
- * @param required A vector containing required layer names.
- * @param available A vk::LayerProperties object containing available layers.
- * @return true if all required extensions are available
- * @return false otherwise
- */
-bool HPPHelloTriangle::validate_layers(const std::vector<const char *> &       required,
-                                       const std::vector<vk::LayerProperties> &available)
-{
-	// inner find_if returns true if the layer was not found
-	// outer find_if returns true if none of the layers were not found, that is if all layers were found
-	return std::find_if(required.begin(),
-	                    required.end(),
-	                    [&available](auto layer) {
-		                    return std::find_if(available.begin(),
-		                                        available.end(),
-		                                        [&layer](auto const &lp) {
-			                                        return strcmp(lp.layerName, layer) == 0;
-		                                        }) == available.end();
-	                    }) == required.end();
-}
-
-/**
  * @brief Find the vulkan shader stage for a given a string.
  *
  * @param ext A string containing the shader stage name.
@@ -226,6 +202,10 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+	active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
 	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
 #else
@@ -285,26 +265,46 @@ void HPPHelloTriangle::init_instance(Context &                        context,
  * @brief Select a physical device.
  *
  * @param context A Vulkan context with an instance already set up.
+ * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device(Context &context)
+void HPPHelloTriangle::select_physical_device_and_surface(Context &context, vkb::Platform &platform)
 {
 	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
 
-	if (gpus.empty())
+	for (size_t i = 0; i < gpus.size() && (context.graphics_queue_index < 0); i++)
 	{
-		throw std::runtime_error("No physical device found.");
+		context.gpu = gpus[i];
+
+		std::vector<vk::QueueFamilyProperties> queue_family_properties = context.gpu.getQueueFamilyProperties();
+
+		if (queue_family_properties.empty())
+		{
+			throw std::runtime_error("No queue family found.");
+		}
+
+		if (context.surface)
+		{
+			context.instance.destroySurfaceKHR(context.surface);
+		}
+		context.surface = platform.get_window().create_surface(context.instance, context.gpu);
+
+		for (uint32_t j = 0; j < vkb::to_u32(queue_family_properties.size()); j++)
+		{
+			vk::Bool32 supports_present = context.gpu.getSurfaceSupportKHR(j, context.surface);
+
+			// Find a queue family which supports graphics and presentation.
+			if ((queue_family_properties[j].queueFlags & vk::QueueFlagBits::eGraphics) && supports_present)
+			{
+				context.graphics_queue_index = j;
+				break;
+			}
+		}
 	}
 
-	// Select a discrete GPU we find in the system.
-	auto gpuIt = std::find_if(gpus.begin(),
-	                          gpus.end(),
-	                          [](vk::PhysicalDevice const &gpu) { return gpu.getProperties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu; });
-	if (gpuIt == gpus.end())
+	if (context.graphics_queue_index < 0)
 	{
-		throw std::runtime_error("No discrete device found.");
+		LOGE("Did not find suitable queue which supports graphics and presentation.");
 	}
-
-	context.gpu = *gpuIt;
 }
 
 /**
@@ -318,36 +318,11 @@ void HPPHelloTriangle::init_device(Context &                        context,
 {
 	LOGI("Initializing vulkan device.");
 
-	std::vector<vk::QueueFamilyProperties> queue_family_properties = context.gpu.getQueueFamilyProperties();
-
-	if (queue_family_properties.empty())
-	{
-		throw std::runtime_error("No queue family found.");
-	}
-
 	std::vector<vk::ExtensionProperties> device_extensions = context.gpu.enumerateDeviceExtensionProperties();
 
 	if (!validate_extensions(required_device_extensions, device_extensions))
 	{
 		throw std::runtime_error("Required device extensions are missing, will try without.");
-	}
-
-	uint32_t queue_family_count = vkb::to_u32(queue_family_properties.size());
-	for (uint32_t i = 0; i < queue_family_count; i++)
-	{
-		vk::Bool32 supports_present = context.gpu.getSurfaceSupportKHR(i, context.surface);
-
-		// Find a queue family which supports graphics and presentation.
-		if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) && supports_present)
-		{
-			context.graphics_queue_index = i;
-			break;
-		}
-	}
-
-	if (context.graphics_queue_index < 0)
-	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
 	}
 
 	float queue_priority = 1.0f;
@@ -480,7 +455,16 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 		}
 	}
 
-	vk::Extent2D swapchain_size = surface_properties.currentExtent;
+	vk::Extent2D swapchain_size;
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		swapchain_size.width  = context.swapchain_dimensions.width;
+		swapchain_size.height = context.swapchain_dimensions.height;
+	}
+	else
+	{
+		swapchain_size = surface_properties.currentExtent;
+	}
 
 	// FIFO must be supported by all implementations.
 	vk::PresentModeKHR swapchain_present_mode = vk::PresentModeKHR::eFifo;
@@ -986,6 +970,8 @@ void HPPHelloTriangle::teardown(Context &context)
 		context.instance.destroyDebugReportCallbackEXT(context.debug_callback);
 		context.debug_callback = nullptr;
 	}
+
+	context.instance.destroy();
 }
 
 HPPHelloTriangle::HPPHelloTriangle()
@@ -1000,11 +986,12 @@ HPPHelloTriangle::~HPPHelloTriangle()
 bool HPPHelloTriangle::prepare(vkb::Platform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
-	select_physical_device(context);
+	select_physical_device_and_surface(context, platform);
 
-	context.surface = platform.get_window().create_surface(context.instance, context.gpu);
+	context.swapchain_dimensions.width  = platform.get_window().get_width();
+	context.swapchain_dimensions.height = platform.get_window().get_height();
 
-	init_device(context, {"VK_KHR_swapchain"});
+	init_device(context, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 
 	init_swapchain(context);
 
