@@ -42,6 +42,24 @@ class RaytracingExtended : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> buffer;
 	};
 
+	struct NewVertex;
+	struct Model;
+
+	struct RaytracingScene
+	{
+		RaytracingScene();
+		~RaytracingScene();
+		RaytracingScene(std::vector<std::unique_ptr<vkb::sg::Scene>>&& scenesIn);
+		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
+		std::vector<vkb::sg::Image *>      images;
+		std::vector<VkDescriptorImageInfo> imageInfos;
+		std::vector<Model>                 models;
+	};
+
+	std::unique_ptr<RaytracingScene> raytracing_scene;
+
+	
+
 	AccelerationStructureExtended bottom_level_acceleration_structure;
 	AccelerationStructureExtended top_level_acceleration_structure;
 
@@ -95,6 +113,10 @@ class RaytracingExtended : public ApiVulkanSample
 	void          create_bottom_level_acceleration_structure();
 	void          create_top_level_acceleration_structure();
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
+
+	// for loading different models
+	std::unique_ptr<vkb::sg::Scene> load_scene_separate(const std::string &path);
+
 	void          create_scene();
 	void          create_shader_binding_tables();
 	void          create_descriptor_sets();

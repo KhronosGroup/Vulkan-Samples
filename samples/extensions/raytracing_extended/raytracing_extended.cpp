@@ -20,6 +20,28 @@
   */
 
 #include "raytracing_extended.h"
+#include "gltf_loader.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/image.h"
+#include "scene_graph/components/material.h"
+#include "scene_graph/components/mesh.h"
+#include "scene_graph/components/pbr_material.h"
+#include "scene_graph/components/texture.h"
+
+
+// contains information about the vertex
+struct RaytracingExtended::NewVertex
+{
+	alignas(16) glm::vec3 position;
+	alignas(16) glm::vec3 normal;
+	alignas(16) std::array<uint32_t, 4> materialInformation;        // { material type, texture index, ... }
+	alignas(8) glm::vec2 texcoords;
+};
+struct RaytracingExtended::Model
+{
+	std::vector<NewVertex>               vertices;
+	std::vector<std::array<uint32_t, 3>> triangles;
+};
 
 RaytracingExtended::RaytracingExtended()
 {
@@ -434,11 +456,64 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
+std::unique_ptr<vkb::sg::Scene> RaytracingExtended::load_scene_separate(const std::string &path)
+{
+	vkb::GLTFLoader loader {*device};
+	auto            out = loader.read_scene_from_file(path);
+	if (!out)
+	{
+		const auto err = std::string("Cannot load scene: ").append(path);
+		LOGE(err);
+		throw std::runtime_error(err);
+	}
+	return out;
+}
+
+
+namespace
+{
+template <typename T>
+struct CopyBuffer
+{
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *bufferName)
+	{
+		auto iter = buffers.find(bufferName);
+		if (iter == buffers.cend())
+		{
+			return {};
+		}
+		auto &         buffer = iter->second;
+		std::vector<T> out;
+
+		const size_t sz = buffer.get_size();
+		out.resize(sz / sizeof(T));
+		const bool alreadyMapped = !!buffer.get_data();
+		if (!alreadyMapped)
+		{
+			buffer.map();
+		}
+		memcpy(&out[0], buffer.get_data(), sz);
+		if (!alreadyMapped)
+		{
+			buffer.unmap();
+		}
+		return out;
+	}
+};
+}        // namespace
+
 /*
 	Create scene geometry and ray tracing acceleration structures
 */
 void RaytracingExtended::create_scene()
 {
+
+	std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
+	for (auto&& scene_name : { "scenes/sponza/Sponza01.gltf" })
+	{
+		scenes.emplace_back(load_scene_separate(scene_name));
+	}
+	raytracing_scene = std::make_unique<RaytracingScene>(std::move(scenes));
 	create_bottom_level_acceleration_structure();
 	create_top_level_acceleration_structure();
 }
@@ -853,4 +928,93 @@ void RaytracingExtended::render(float delta_time)
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended()
 {
 	return std::make_unique<RaytracingExtended>();
+}
+
+RaytracingExtended::RaytracingScene::RaytracingScene()
+{
+}
+
+RaytracingExtended::RaytracingScene::~RaytracingScene()
+{
+}
+
+RaytracingExtended::RaytracingScene::RaytracingScene(std::vector<std::unique_ptr<vkb::sg::Scene>> &&scenesIn) 
+	: scenes(std::move(scenesIn))
+{
+	for (size_t sceneIndex = 0; sceneIndex < scenes.size(); ++sceneIndex)
+	{
+		auto &scene = scenes[sceneIndex];
+		assert(!!scene);
+		for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+		{
+			for (auto &&sub_mesh : mesh->get_submeshes())
+			{
+				auto   material        = sub_mesh->get_material();
+				auto & textures        = material->textures;
+				size_t textureIndex    = std::numeric_limits<size_t>::max();
+				auto   baseTextureIter = textures.find("base_color_texture");
+				if (baseTextureIter != textures.cend())
+				{
+					auto texture = baseTextureIter->second;
+					if (!texture)
+						continue;
+
+					// determine the index of the texture to assign
+					auto textureIter = std::find(images.cbegin(), images.cend(), texture->get_image());
+					if (textureIter == images.cend())
+					{
+						textureIndex = images.size();
+						auto image   = texture->get_image();
+						assert(!!image);
+						images.push_back(image);
+						VkDescriptorImageInfo imageInfo;
+						imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+						imageInfo.imageView   = image->get_vk_image_view().get_handle();
+						imageInfo.sampler     = baseTextureIter->second->get_sampler()->vk_sampler.get_handle();
+						imageInfos.push_back(imageInfo);
+					}
+					else
+					{
+						textureIndex = std::distance(images.cbegin(), textureIter);
+					}
+				}
+
+				const auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
+				const auto uvcoords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
+				const auto normals  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+
+				assert(textureIndex < std::numeric_limits<uint32_t>::max());
+				const uint32_t textureIndex32 = static_cast<uint32_t>(textureIndex);
+				Model          model;
+				model.vertices.resize(pts.size());
+				for (size_t i = 0; i < pts.size(); ++i)
+				{
+					model.vertices[i].position            = pts[i];
+					model.vertices[i].normal              = i < normals.size() ? normals[i] : glm::vec3{};
+					model.vertices[i].texcoords           = i < uvcoords.size() ? uvcoords[i] : glm::vec2{};
+					model.vertices[i].materialInformation = {uint32_t(sceneIndex), textureIndex32, 0, 0};
+				}
+
+				assert(sub_mesh->index_type == VK_INDEX_TYPE_UINT16);
+				auto buffer = sub_mesh->index_buffer.get();
+				if (buffer)
+				{
+					const size_t sz         = buffer->get_size();
+					const size_t nTriangles = sz / sizeof(uint16_t) / 3;
+					model.triangles.resize(nTriangles);
+					auto ptr = buffer->get_data();
+					assert(!!ptr);
+					std::vector<uint16_t> tempBuffer(nTriangles * 3);
+					memcpy(&tempBuffer[0], ptr, sz);
+					for (size_t i = 0; i < nTriangles; ++i)
+					{
+						model.triangles[i] = {uint32_t(tempBuffer[3 * i]),
+						                      uint32_t(tempBuffer[3 * i + 1]),
+						                      uint32_t(tempBuffer[3 * i + 2])};
+					}
+				}
+				models.emplace_back(std::move(model));
+			}
+		}
+	}
 }
