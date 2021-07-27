@@ -29,6 +29,9 @@
 #include "scene_graph/components/texture.h"
 
 
+#define ASSERT_LOG(cond, msg) \
+	{if (!(cond)) { LOGE(msg); throw std::runtime_error(msg); }}
+
 // contains information about the vertex
 struct RaytracingExtended::NewVertex
 {
@@ -41,6 +44,7 @@ struct RaytracingExtended::Model
 {
 	std::vector<NewVertex>               vertices;
 	std::vector<std::array<uint32_t, 3>> triangles;
+	VkTransformMatrixKHR                 defaultTransform;
 };
 
 RaytracingExtended::RaytracingExtended()
@@ -210,135 +214,187 @@ void RaytracingExtended::delete_scratch_buffer(ScratchBuffer &scratch_buffer)
 */
 void RaytracingExtended::create_bottom_level_acceleration_structure()
 {
-	// Setup vertices and indices for a single triangle
-	struct Vertex
+	assert(!!raytracing_scene);
+	auto &models = raytracing_scene->models;
+	auto &modelBuffers = raytracing_scene->modelBuffers;
+	modelBuffers.resize(0);
+
+	uint32_t firstVertex = 0, primitiveOffset = 0;
+
+	for (auto &&model : models)
 	{
-		float pos[3];
-	};
-	std::vector<Vertex> vertices = {
-	    {{1.0f, 1.0f, 0.0f}},
-	    {{-1.0f, 1.0f, 0.0f}},
-	    {{0.0f, -1.0f, 0.0f}}};
-	std::vector<uint32_t> indices = {0, 1, 2};
+		const auto &vertices = model.vertices;
+		const auto &indices  = model.triangles;
 
-	auto vertex_buffer_size = vertices.size() * sizeof(Vertex);
-	auto index_buffer_size  = indices.size() * sizeof(uint32_t);
+		auto vertex_buffer_size = vertices.size() * sizeof(vertices[0]);
+		auto index_buffer_size  = indices.size() * sizeof(indices[0]);
 
-	// Create buffers for the bottom level geometry
-	// For the sake of simplicity we won't stage the vertex data to the GPU memory
+		// Create buffers for the bottom level geometry
+		// For the sake of simplicity we won't stage the vertex data to the GPU memory
 
-	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-	const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+		// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
+		const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	vertex_buffer->update(vertices.data(), vertex_buffer_size);
+		ModelBuffer modelBuffer;
+		const bool  useStagingBuffer = false;
+		if (useStagingBuffer)
+		{
+			auto stagingBuffer        = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+			modelBuffer.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+			stagingBuffer->update((const uint8_t *) vertices.data(), vertex_buffer_size, 0);
 
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	index_buffer->update(indices.data(), index_buffer_size);
+			auto &cmd = device->request_command_buffer();
+			cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+			cmd.copy_buffer(*stagingBuffer, *modelBuffer.vertex_buffer, vertex_buffer_size);
 
-	// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-	VkTransformMatrixKHR transform_matrix = {
-	    1.0f, 0.0f, 0.0f, 0.0f,
-	    0.0f, 1.0f, 0.0f, 0.0f,
-	    0.0f, 0.0f, 1.0f, 0.0f};
-	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
+			vkb::BufferMemoryBarrier barrier;
+			barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+			barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
+			barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+			cmd.buffer_memory_barrier(*modelBuffer.vertex_buffer, 0, VK_WHOLE_SIZE, barrier);
+			cmd.end();
 
-	VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
-	VkDeviceOrHostAddressConstKHR index_data_device_address{};
-	VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
+			auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+			queue.submit(cmd, device->request_fence());
+			device->get_fence_pool().wait();
+		}
+		else
+		{
+			modelBuffer.vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+			modelBuffer.vertex_buffer->update((const uint8_t *) vertices.data(), vertex_buffer_size, 0);
+		}
 
-	vertex_data_device_address.deviceAddress      = get_buffer_device_address(vertex_buffer->get_handle());
-	index_data_device_address.deviceAddress       = get_buffer_device_address(index_buffer->get_handle());
-	transform_matrix_device_address.deviceAddress = get_buffer_device_address(transform_matrix_buffer->get_handle());
+		modelBuffer.index_buffer = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		modelBuffer.index_buffer->update((const uint8_t *) indices.data(), index_buffer_size);
 
-	// The bottom level acceleration structure contains one set of triangles as the input geometry
-	VkAccelerationStructureGeometryKHR acceleration_structure_geometry{};
-	acceleration_structure_geometry.sType                            = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
-	acceleration_structure_geometry.geometryType                     = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
-	acceleration_structure_geometry.flags                            = VK_GEOMETRY_OPAQUE_BIT_KHR;
-	acceleration_structure_geometry.geometry.triangles.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
-	acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
-	acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
-	acceleration_structure_geometry.geometry.triangles.maxVertex     = 3;
-	acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(Vertex);
-	acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
-	acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
-	acceleration_structure_geometry.geometry.triangles.transformData = transform_matrix_device_address;
+		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
+		VkTransformMatrixKHR transform_matrix = model.defaultTransform;
+		modelBuffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		modelBuffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
-	// Get the size requirements for buffers involved in the acceleration structure build process
-	VkAccelerationStructureBuildGeometryInfoKHR acceleration_structure_build_geometry_info{};
-	acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	acceleration_structure_build_geometry_info.flags         = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-	acceleration_structure_build_geometry_info.geometryCount = 1;
-	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
+		VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
+		VkDeviceOrHostAddressConstKHR index_data_device_address{};
+		VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
 
-	const uint32_t primitive_count = 1;
+		vertex_data_device_address.deviceAddress      = get_buffer_device_address(modelBuffer.vertex_buffer->get_handle());
+		index_data_device_address.deviceAddress       = get_buffer_device_address(modelBuffer.index_buffer->get_handle());
+		transform_matrix_device_address.deviceAddress = get_buffer_device_address(modelBuffer.transform_matrix_buffer->get_handle());
 
-	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
-	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
-	vkGetAccelerationStructureBuildSizesKHR(
-	    device->get_handle(),
-	    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
-	    &acceleration_structure_build_geometry_info,
-	    &primitive_count,
-	    &acceleration_structure_build_sizes_info);
+		// The bottom level acceleration structure contains one set of triangles as the input geometry
+		auto &acceleration_structure_geometry                            = modelBuffer.acceleration_structure_geometry;
+		acceleration_structure_geometry.sType                            = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
+		acceleration_structure_geometry.pNext                            = nullptr;
+		acceleration_structure_geometry.geometryType                     = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
+		acceleration_structure_geometry.flags                            = VK_GEOMETRY_OPAQUE_BIT_KHR;
+		acceleration_structure_geometry.geometry.triangles               = {};
+		acceleration_structure_geometry.geometry.triangles.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
+		acceleration_structure_geometry.geometry.triangles.pNext         = nullptr;
+		acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
+		acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
+		acceleration_structure_geometry.geometry.triangles.maxVertex     = (uint32_t) vertices.size();
+		acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(Vertex);
+		acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
+		acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
+		acceleration_structure_geometry.geometry.triangles.transformData = transform_matrix_device_address;
 
-	// Create a buffer to hold the acceleration structure
-	bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
-	    get_device(),
-	    acceleration_structure_build_sizes_info.accelerationStructureSize,
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+		auto &acceleration_structure_build_range_info           = modelBuffer.buildRangeInfo;
+		acceleration_structure_build_range_info.primitiveCount  = indices.size();
+		acceleration_structure_build_range_info.primitiveOffset = 0;        //primitiveOffset;
+		acceleration_structure_build_range_info.firstVertex     = 0;        //firstVertex;
+		acceleration_structure_build_range_info.transformOffset = 0;
 
-	// Create the acceleration structure
-	VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
-	acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
-	acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
-	acceleration_structure_create_info.size   = acceleration_structure_build_sizes_info.accelerationStructureSize;
-	acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
+		firstVertex += vertices.size();
+		primitiveOffset += indices.size() * sizeof(indices[0]);
 
-	// The actual build process starts here
+		// now create BLAS
+		VkAccelerationStructureBuildGeometryInfoKHR acceleration_structure_build_geometry_info{};
+		acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+		acceleration_structure_build_geometry_info.pNext         = nullptr;
+		acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		acceleration_structure_build_geometry_info.flags         = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+		acceleration_structure_build_geometry_info.geometryCount = 1;
+		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-	// Create a scratch buffer as a temporary storage for the acceleration structure build
-	ScratchBuffer scratch_buffer = create_scratch_buffer(acceleration_structure_build_sizes_info.buildScratchSize);
+		uint32_t primitive_count = indices.size();
 
-	VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
-	acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
-	acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-	acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
-	acceleration_build_geometry_info.mode                      = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
-	acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure.handle;
-	acceleration_build_geometry_info.geometryCount             = 1;
-	acceleration_build_geometry_info.pGeometries               = &acceleration_structure_geometry;
-	acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer.device_address;
+		auto &acceleration_structure_build_sizes_info = modelBuffer.buildSize;
+		acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
+		vkGetAccelerationStructureBuildSizesKHR(
+		    device->get_handle(),
+		    VK_ACCELERATION_STRUCTURE_BUILD_TYPE_DEVICE_KHR,
+		    &acceleration_structure_build_geometry_info,
+		    &primitive_count,
+		    &acceleration_structure_build_sizes_info);
 
-	VkAccelerationStructureBuildRangeInfoKHR acceleration_structure_build_range_info;
-	acceleration_structure_build_range_info.primitiveCount                                           = 1;
-	acceleration_structure_build_range_info.primitiveOffset                                          = 0;
-	acceleration_structure_build_range_info.firstVertex                                              = 0;
-	acceleration_structure_build_range_info.transformOffset                                          = 0;
-	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
+		// push to modelBuffers
+		modelBuffers.emplace_back(std::move(modelBuffer));
+	}
 
-	// Build the acceleration structure on the device via a one-time command buffer submission
-	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
-	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkCmdBuildAccelerationStructuresKHR(
-	    command_buffer,
-	    1,
-	    &acceleration_build_geometry_info,
-	    acceleration_build_structure_range_infos.data());
-	get_device().flush_command_buffer(command_buffer, queue);
+	std::vector<VkAccelerationStructureGeometryKHR>         geometries;
+	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> rangeInfos;
+	for (size_t i = 0; i < modelBuffers.size(); ++i)
+	{
+		geometries.push_back(modelBuffers[i].acceleration_structure_geometry);
+		rangeInfos.push_back(&modelBuffers[i].buildRangeInfo);
+	}
 
-	delete_scratch_buffer(scratch_buffer);
+	for (size_t i = 0; i < modelBuffers.size(); ++i)
+	{
+		// Create a buffer to hold the acceleration structure
+		auto &bottom_level_acceleration_structure  = modelBuffers[i].bottom_level_acceleration_structure;
+		bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
+		    get_device(),
+		    modelBuffers[i].buildSize.accelerationStructureSize,
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		    VMA_MEMORY_USAGE_GPU_ONLY);
 
-	// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
-	VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
-	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-	acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
-	bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+		// Create the acceleration structure
+		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
+		acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
+		acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
+		acceleration_structure_create_info.size   = modelBuffers[i].buildSize.accelerationStructureSize;
+		acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+		vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
+
+		// The actual build process starts here
+
+		// Create a scratch buffer as a temporary storage for the acceleration structure build
+		ScratchBuffer scratch_buffer = create_scratch_buffer(modelBuffers[i].buildSize.buildScratchSize);
+		size_t                currentOffset  = 0;
+		{
+			VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
+			acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
+			acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
+			acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+			acceleration_build_geometry_info.mode                      = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
+			acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure.handle;
+			acceleration_build_geometry_info.geometryCount             = 1;
+			acceleration_build_geometry_info.pGeometries               = &geometries[i];
+			acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer.device_address + currentOffset;
+
+			// Build the acceleration structure on the device via a one-time command buffer submission
+			// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+			VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+			// = {&modelBuffer.buildRangeInfo};
+			vkCmdBuildAccelerationStructuresKHR(
+			    command_buffer,
+			    1,
+			    &acceleration_build_geometry_info,
+			    &rangeInfos[i]);
+			get_device().flush_command_buffer(command_buffer, queue);
+
+			currentOffset += modelBuffers[i].buildSize.buildScratchSize;
+		}
+
+		delete_scratch_buffer(scratch_buffer);
+
+		// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
+		VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
+		acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
+		bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+	}
 }
 
 /*
@@ -346,24 +402,32 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 */
 void RaytracingExtended::create_top_level_acceleration_structure()
 {
+	assert(!!raytracing_scene);
 	VkTransformMatrixKHR transform_matrix = {
 	    1.0f, 0.0f, 0.0f, 0.0f,
 	    0.0f, 1.0f, 0.0f, 0.0f,
 	    0.0f, 0.0f, 1.0f, 0.0f};
 
-	VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-	acceleration_structure_instance.transform                              = transform_matrix;
-	acceleration_structure_instance.instanceCustomIndex                    = 0;
-	acceleration_structure_instance.mask                                   = 0xFF;
-	acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-	acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-	acceleration_structure_instance.accelerationStructureReference         = bottom_level_acceleration_structure.device_address;
+	// create a vector
+	std::vector<VkAccelerationStructureInstanceKHR> instances;
+	for (auto &&modelBuffer : raytracing_scene->modelBuffers)
+	{
+		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
+		acceleration_structure_instance.transform                              = transform_matrix;
+		acceleration_structure_instance.instanceCustomIndex                    = 0;
+		acceleration_structure_instance.mask                                   = 0xFF;
+		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
+		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+		acceleration_structure_instance.accelerationStructureReference         = modelBuffer.bottom_level_acceleration_structure.device_address;
+		instances.emplace_back(acceleration_structure_instance);
+	}
 
-	std::unique_ptr<vkb::core::Buffer> instances_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                                          sizeof(VkAccelerationStructureInstanceKHR),
-	                                                                                          VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-	                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
+	const size_t                       instancesDatasize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
+	std::unique_ptr<vkb::core::Buffer> instances_buffer  = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                                                              instancesDatasize,
+                                                                                              VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                                                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instances_buffer->update(instances.data(), instancesDatasize);
 
 	VkDeviceOrHostAddressConstKHR instance_data_device_address{};
 	instance_data_device_address.deviceAddress = get_buffer_device_address(instances_buffer->get_handle());
@@ -373,6 +437,7 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 	acceleration_structure_geometry.sType                              = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 	acceleration_structure_geometry.geometryType                       = VK_GEOMETRY_TYPE_INSTANCES_KHR;
 	acceleration_structure_geometry.flags                              = VK_GEOMETRY_OPAQUE_BIT_KHR;
+	acceleration_structure_geometry.geometry.instances                 = {};
 	acceleration_structure_geometry.geometry.instances.sType           = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_INSTANCES_DATA_KHR;
 	acceleration_structure_geometry.geometry.instances.arrayOfPointers = VK_FALSE;
 	acceleration_structure_geometry.geometry.instances.data            = instance_data_device_address;
@@ -385,7 +450,7 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 	acceleration_structure_build_geometry_info.geometryCount = 1;
 	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-	const uint32_t primitive_count = 1;
+	const uint32_t primitive_count = instances.size();
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -426,7 +491,7 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 	acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer.device_address;
 
 	VkAccelerationStructureBuildRangeInfoKHR acceleration_structure_build_range_info;
-	acceleration_structure_build_range_info.primitiveCount                                           = 1;
+	acceleration_structure_build_range_info.primitiveCount                                           = primitive_count;
 	acceleration_structure_build_range_info.primitiveOffset                                          = 0;
 	acceleration_structure_build_range_info.firstVertex                                              = 0;
 	acceleration_structure_build_range_info.transformOffset                                          = 0;
@@ -454,19 +519,6 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 {
 	return (value + alignment - 1) & ~(alignment - 1);
-}
-
-std::unique_ptr<vkb::sg::Scene> RaytracingExtended::load_scene_separate(const std::string &path)
-{
-	vkb::GLTFLoader loader {*device};
-	auto            out = loader.read_scene_from_file(path);
-	if (!out)
-	{
-		const auto err = std::string("Cannot load scene: ").append(path);
-		LOGE(err);
-		throw std::runtime_error(err);
-	}
-	return out;
 }
 
 
@@ -507,13 +559,12 @@ struct CopyBuffer
 */
 void RaytracingExtended::create_scene()
 {
-
-	std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
-	for (auto&& scene_name : { "scenes/sponza/Sponza01.gltf" })
-	{
-		scenes.emplace_back(load_scene_separate(scene_name));
-	}
-	raytracing_scene = std::make_unique<RaytracingScene>(std::move(scenes));
+	std::vector<SceneLoadInfo> scenesToLoad;
+	const float SponzaScale = 0.01f;
+	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", VkTransformMatrixKHR{0.f, SponzaScale, 0.f, 0.f,
+	                                                                              0.f, 0.f, SponzaScale, 0.f,
+	                                                                              SponzaScale, 0.f, 0.f, 0.f});
+	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
 	create_bottom_level_acceleration_structure();
 	create_top_level_acceleration_structure();
 }
@@ -891,10 +942,10 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	device_features.pNext = &acceleration_structure_features;
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
-	camera.type = vkb::CameraType::LookAt;
+	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
-	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
+	camera.set_translation(glm::vec3(0.0f, 1.f, 0.f));
 
 	create_storage_image();
 	create_scene();
@@ -938,11 +989,14 @@ RaytracingExtended::RaytracingScene::~RaytracingScene()
 {
 }
 
-RaytracingExtended::RaytracingScene::RaytracingScene(std::vector<std::unique_ptr<vkb::sg::Scene>> &&scenesIn) 
-	: scenes(std::move(scenesIn))
+RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad) 
 {
-	for (size_t sceneIndex = 0; sceneIndex < scenes.size(); ++sceneIndex)
+	vkb::GLTFLoader loader{device};
+	scenes.resize(scenesToLoad.size());
+	for (size_t sceneIndex = 0; sceneIndex < scenesToLoad.size(); ++sceneIndex)
 	{
+		scenes[sceneIndex] = loader.read_scene_from_file(scenesToLoad[sceneIndex].filename);
+		ASSERT_LOG(scenes[sceneIndex], "Cannot load file");
 		auto &scene = scenes[sceneIndex];
 		assert(!!scene);
 		for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
@@ -1013,6 +1067,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(std::vector<std::unique_ptr
 						                      uint32_t(tempBuffer[3 * i + 2])};
 					}
 				}
+				model.defaultTransform = scenesToLoad[sceneIndex].transform;
 				models.emplace_back(std::move(model));
 			}
 		}

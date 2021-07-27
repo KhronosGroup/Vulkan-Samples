@@ -45,15 +45,41 @@ class RaytracingExtended : public ApiVulkanSample
 	struct NewVertex;
 	struct Model;
 
+	struct ModelBuffer
+	{
+		std::unique_ptr<vkb::core::Buffer>       vertex_buffer;
+		std::unique_ptr<vkb::core::Buffer>       index_buffer;
+		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer;
+		VkAccelerationStructureBuildSizesInfoKHR buildSize;
+		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
+		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
+		AccelerationStructureExtended            bottom_level_acceleration_structure;
+	};
+
+	struct SceneLoadInfo
+	{
+		SceneLoadInfo()
+		{}
+		SceneLoadInfo(const char *filename, VkTransformMatrixKHR transform) :
+		    filename(filename), transform(transform)
+		{}
+		const char *filename = "";
+		VkTransformMatrixKHR transform = {
+		    1.0f, 0.0f, 0.0f, 0.0f,
+		    0.0f, 1.0f, 0.0f, 0.0f,
+		    0.0f, 0.0f, 1.0f, 0.0f};
+	};
+
 	struct RaytracingScene
 	{
 		RaytracingScene();
 		~RaytracingScene();
-		RaytracingScene(std::vector<std::unique_ptr<vkb::sg::Scene>>&& scenesIn);
+		RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
 		std::vector<vkb::sg::Image *>      images;
 		std::vector<VkDescriptorImageInfo> imageInfos;
 		std::vector<Model>                 models;
+		std::vector<ModelBuffer>		   modelBuffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
@@ -113,9 +139,6 @@ class RaytracingExtended : public ApiVulkanSample
 	void          create_bottom_level_acceleration_structure();
 	void          create_top_level_acceleration_structure();
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
-
-	// for loading different models
-	std::unique_ptr<vkb::sg::Scene> load_scene_separate(const std::string &path);
 
 	void          create_scene();
 	void          create_shader_binding_tables();
