@@ -34,6 +34,14 @@ class RaytracingExtended : public ApiVulkanSample
 	VkPhysicalDeviceRayTracingPipelinePropertiesKHR  ray_tracing_pipeline_properties{};
 	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
 
+	enum RenderMode : uint32_t
+	{
+		RENDER_DEFAULT,
+		RENDER_BARYCENTRIC,
+		RENDER_INSTANCE_ID,
+		RENDER_DISTANCE
+	};
+
 	// Wraps all data required for an acceleration structure
 	struct AccelerationStructureExtended
 	{
@@ -121,11 +129,18 @@ class RaytracingExtended : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
+	struct RenderSettings
+	{
+		glm::uvec4 render_settings = { RenderMode::RENDER_DISTANCE, 12, 0, 0}; // { RenderMode, MaxRays, ...}
+	} render_settings;
+	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
+
 	std::vector<VkCommandBuffer> raytracing_command_buffers;
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
+
 
 	RaytracingExtended();
 	~RaytracingExtended();

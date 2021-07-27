@@ -18,12 +18,37 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
-layout(location = 0) rayPayloadInEXT vec3 hitValue;
+layout(location = 0) rayPayloadInEXT vec4 hitValue;
 hitAttributeEXT vec3 attribs;
+
+layout(binding = 3, set = 0) uniform RenderSettings
+{
+	uvec4 render_mode;
+} render_settings;
+
+vec3 heatmap(float value, float minValue, float maxValue)
+{
+  float scaled = min(max(value, minValue), maxValue) / maxValue;
+  float r = scaled * (3.14159265359 / 2.);
+  return vec3(sin(r), sin(2 * r), cos(r));
+}
+
+/*
+// Geometry instance ids
+in     int   gl_PrimitiveID;
+in     int   gl_InstanceID;
+in     int   gl_InstanceCustomIndexEXT;
+in     int   gl_GeometryIndexEXT;
+*/
 
 void main()
 {
   const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
-  hitValue = barycentricCoords;
-  //hitValue = vec3(gl_HitTEXT, gl_HitTEXT / 10, gl_HitTEXT / 100);
+  if (render_settings.render_mode[0] == 1){ // barycentric
+    hitValue = vec4(barycentricCoords, 1);
+  } else if (render_settings.render_mode[0] == 2){ // index
+    hitValue = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
+  } else if (render_settings.render_mode[0] == 3){ // distance
+    hitValue = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
+  }
 }

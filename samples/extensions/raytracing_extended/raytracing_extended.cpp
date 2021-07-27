@@ -84,6 +84,7 @@ RaytracingExtended::~RaytracingExtended()
 		raytracing_scene.reset();
 		vertex_buffer.reset();
 		index_buffer.reset();
+		render_settings_ubo.reset();
 		ubo.reset();
 	}
 }
@@ -410,11 +411,12 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 
 	// create a vector
 	std::vector<VkAccelerationStructureInstanceKHR> instances;
-	for (auto &&modelBuffer : raytracing_scene->modelBuffers)
+	for (size_t i = 0; i < raytracing_scene->modelBuffers.size(); ++i)
 	{
+		auto &modelBuffer                                                      = raytracing_scene->modelBuffers[i];
 		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
 		acceleration_structure_instance.transform                              = transform_matrix;
-		acceleration_structure_instance.instanceCustomIndex                    = 0;
+		acceleration_structure_instance.instanceCustomIndex                    = i;
 		acceleration_structure_instance.mask                                   = 0xFF;
 		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
 		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
@@ -650,14 +652,18 @@ void RaytracingExtended::create_descriptor_sets()
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*ubo);
+	VkDescriptorBufferInfo render_settings_descriptor = create_descriptor(*render_settings_ubo);
 
 	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
+	VkWriteDescriptorSet render_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &render_settings_descriptor);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
 	    result_image_write,
-	    uniform_buffer_write};
+	    uniform_buffer_write,
+	    render_buffer_write
+	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
@@ -685,10 +691,18 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	uniform_buffer_binding.descriptorCount = 1;
 	uniform_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
+	VkDescriptorSetLayoutBinding render_settings_buffer_binding{};
+	render_settings_buffer_binding.binding = 3;
+	render_settings_buffer_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	render_settings_buffer_binding.descriptorCount = 1;
+	render_settings_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
-	    uniform_buffer_binding};
+	    uniform_buffer_binding,
+	    render_settings_buffer_binding
+	};
 
 	VkDescriptorSetLayoutCreateInfo layout_info{};
 	layout_info.sType        = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -795,6 +809,12 @@ void RaytracingExtended::create_uniform_buffer()
 	                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	ubo->convert_and_update(uniform_data);
 
+	render_settings_ubo = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                          sizeof(uniform_data),
+	                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
+	render_settings_ubo->convert_and_update(render_settings);
+
 	update_uniform_buffers();
 }
 
@@ -888,6 +908,8 @@ void RaytracingExtended::update_uniform_buffers()
 	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
 	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
 	ubo->convert_and_update(uniform_data);
+
+	render_settings_ubo->convert_and_update(render_settings);
 }
 
 bool RaytracingExtended::prepare(vkb::Platform &platform)
