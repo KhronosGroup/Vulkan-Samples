@@ -142,6 +142,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint32_t vertex_index; // index of first data
 		uint32_t indices_index;
 		uint32_t image_index;
+		uint32_t object_id; // whether to load from buffer for static objects or dynamic objects
 	};
 	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
 

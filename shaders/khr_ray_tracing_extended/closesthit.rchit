@@ -18,8 +18,13 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
+struct Payload
+{
+  vec4 color;
+  uint intersectionType;
+};
 
-layout(location = 0) rayPayloadInEXT vec4 hitValue;
+layout(location = 0) rayPayloadInEXT Payload hitValue;
 hitAttributeEXT vec3 attribs;
 
 layout(binding = 3, set = 0) uniform RenderSettings
@@ -47,7 +52,7 @@ layout(binding=7, set = 0) uniform sampler2D textures[25];
 
 vec3 heatmap(float value, float minValue, float maxValue)
 {
-  float scaled = min(max(value, minValue), maxValue) / maxValue;
+  float scaled = (min(max(value, minValue), maxValue) - minValue) / (maxValue - minValue);
   float r = scaled * (3.14159265359 / 2.);
   return vec3(sin(r), sin(2 * r), cos(r));
 }
@@ -83,9 +88,9 @@ void handleDraw()
 {
     uint index = gl_InstanceCustomIndexEXT;
 
-    uint vertexOffset = data_map.indices[3 * index];
-    uint triangleOffset = data_map.indices[3*index + 1];
-    uint imageOffset = data_map.indices[3 * index + 2];
+    uint vertexOffset = data_map.indices[4 * index];
+    uint triangleOffset = data_map.indices[4*index + 1];
+    uint imageOffset = data_map.indices[4 * index + 2];
     if (imageOffset >= 25){
        return;
     }
@@ -106,7 +111,7 @@ void handleDraw()
     // obtain texture coordinate
     vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
     vec4 tex_value = texture(textures[imageOffset], texcoord);
-    hitValue = tex_value;
+    hitValue.color = tex_value;
     //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
 }
 
@@ -116,12 +121,12 @@ void main()
   if (render_settings.render_mode[0] == 0){ // draw
     handleDraw();
   } else if (render_settings.render_mode[0] == 1){ // barycentric
-    hitValue = vec4(barycentricCoords, 1);
+    hitValue.color = vec4(barycentricCoords, 1);
   } else if (render_settings.render_mode[0] == 2){ // index
-    hitValue = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
+    hitValue.color = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
   } else if (render_settings.render_mode[0] == 3){ // distance
-    hitValue = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
+    hitValue.color = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
   } else if (render_settings.render_mode[0] == 4) { // global xyz
-    hitValue = vec4(0, 0, 0, 1);
+    hitValue.color = vec4(0, 0, 0, 1);
   }
 }

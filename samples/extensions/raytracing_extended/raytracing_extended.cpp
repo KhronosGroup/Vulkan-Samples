@@ -27,6 +27,7 @@
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/texture.h"
+#include <map>
 
 
 #define ASSERT_LOG(cond, msg) \
@@ -221,7 +222,6 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	auto &modelBuffers = raytracing_scene->modelBuffers;
 	modelBuffers.resize(0);
 
-	// Determine the size of the total buffer we need to create
 	std::vector<uint32_t> vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
 	uint32_t nTotalVertices = 0, nTotalTriangles = 0;
 	std::vector<SceneInstanceData> model_indices(models.size());
@@ -1016,7 +1016,7 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
-	camera.set_translation(glm::vec3(0.0f, 1.f, 0.f));
+	camera.set_translation(glm::vec3(0.0f, 1.5f, 0.f));
 
 	create_storage_image();
 	create_scene();
@@ -1134,10 +1134,71 @@ RaytracingExtended::RaytracingScene::~RaytracingScene()
 {
 }
 
+/*
+namespace
+{
+
+
+void updateVase(RaytracingExtended::Model &model)
+{
+	// There are much more efficient ways to perform this, e.g. using a half-edge structure
+	// Even without using a half-edge structure, data locality can be improved by using something
+	// like boost::small_container
+	std::set<uint32_t>                     visited;
+	{
+		std::map<uint32_t, std::set<uint32_t>> connected_vertex_map;
+		for (size_t triIndex = 0; triIndex < model.triangles.size(); ++triIndex)
+		{
+			const auto tri = model.triangles[triIndex];
+			for (size_t i = 0; i < 3; ++i)
+			{
+				connected_vertex_map[tri[i]].insert(tri[(i + 1) % 3]);
+				connected_vertex_map[tri[i]].insert(tri[(i + 2) % 3]);
+			}
+		}
+
+		visited = {};
+		std::vector<uint32_t> vertices_to_visit = {0};
+		while (vertices_to_visit.size())
+		{
+			uint32_t vertex = vertices_to_visit.back();
+			vertices_to_visit.pop_back();
+			if (visited.count(vertex))
+			{
+				continue;
+			}
+			visited.insert(vertex);
+			for (auto &&other : connected_vertex_map[vertex])
+			{
+				vertices_to_visit.push_back(other);
+			}
+		}
+	}
+
+	glm::vec3 average_point = {0.f, 0.f, 0.f};
+	for (auto&& vertex : visited)
+	{
+		average_point += model.vertices[vertex].A.xyz;
+	}
+	average_point /= visited.size();
+	
+	std::map<uint32_t, uint32_t> vertex_to_new_vertex;
+	glm::vec3                    translation = { };
+	for (auto&& vertex : visited)
+	{
+
+	}
+	
+}
+}
+*/
+
 RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad) 
 {
+
 	vkb::GLTFLoader loader{device};
 	scenes.resize(scenesToLoad.size());
+	std::vector<std::string> names;
 	for (size_t sceneIndex = 0; sceneIndex < scenesToLoad.size(); ++sceneIndex)
 	{
 		scenes[sceneIndex] = loader.read_scene_from_file(scenesToLoad[sceneIndex].filename);
@@ -1152,12 +1213,16 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				auto & textures        = material->textures;
 				size_t textureIndex    = std::numeric_limits<size_t>::max();
 				auto   baseTextureIter = textures.find("base_color_texture");
+				bool is_vase           = false;
 				if (baseTextureIter != textures.cend())
 				{
 					auto texture = baseTextureIter->second;
 					if (!texture)
 						continue;
 
+					const auto name = texture->get_image()->get_name();
+					names.push_back(name);
+					is_vase = (name.find("vase_dif.ktx") != name.npos);
 					// determine the index of the texture to assign
 					auto textureIter = std::find(images.cbegin(), images.cend(), texture->get_image());
 					if (textureIter == images.cend())
@@ -1212,7 +1277,18 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 						                      uint32_t(tempBuffer[3 * i + 2])};
 					}
 				}
+
+
 				model.default_transform = scenesToLoad[sceneIndex].transform;
+				if (is_vase)
+				{
+					const float sponzaScale = 0.01f;
+					model.default_transform = VkTransformMatrixKHR{0.f, sponzaScale, 0.f, 4.3f,
+					                                               0.f, 0.f, sponzaScale, 0.f,
+					                                               sponzaScale, 0.f, 0.f, 9.5f};
+				}
+
+				
 				model.texture_index = textureIndex32;
 				models.emplace_back(std::move(model));
 			}

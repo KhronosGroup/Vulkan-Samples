@@ -30,7 +30,14 @@ layout(binding = 3, set = 0) uniform RenderSettings
 	uvec4 render_mode;
 } render_settings;
 
-layout(location = 0) rayPayloadEXT vec4 hitValue;
+
+struct Payload
+{
+  vec4 color;
+  uint intersectionType;
+};
+
+layout(location = 0) rayPayloadEXT Payload hitValue;
 
 void main() 
 {
@@ -45,9 +52,8 @@ void main()
 	float tmin = 0.001;
 	float tmax = 10000.0;
 
-    hitValue = vec4(0.0);
 
     traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 
-	imageStore(image, ivec2(gl_LaunchIDEXT.xy), hitValue);
+	imageStore(image, ivec2(gl_LaunchIDEXT.xy), hitValue.color);
 }
