@@ -22,11 +22,9 @@
 #include "raytracing_extended.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/camera.h"
-#include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/texture.h"
 #include <map>
 
 
@@ -48,9 +46,18 @@ struct RaytracingExtended::Model
 	VkTransformMatrixKHR                 default_transform;
 	uint32_t                             texture_index;
 	uint32_t                             object_type;
+	Model()
+	    : default_transform()
+	    , texture_index(0)
+	    , object_type(0) {}
 };
 
 RaytracingExtended::RaytracingExtended()
+    : index_count(0)
+    , pipeline(nullptr)
+    , pipeline_layout(nullptr)
+    , descriptor_set(nullptr)
+    , descriptor_set_layout(nullptr)
 {
 	title = "Ray tracing with extended features";
 
@@ -241,7 +248,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	
 	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
-	auto index_buffer_size  = nTotalTriangles * sizeof(models[0].triangles);
+	auto index_buffer_size  = nTotalTriangles * models[0].triangles.size();
 
 	// Create a staging buffer. (If staging buffer use is disabled, then this will be the final buffer)
 	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
@@ -263,7 +270,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	{
 		auto &cmd  = device->request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
+		auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
@@ -283,8 +290,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		auto  fence = device->request_fence();
 		queue.submit(cmd, fence);
 		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
-		vkDestroyFence(device->get_handle(), fence, nullptr);
-		
+
 	}
 	else
 	{
@@ -372,10 +378,10 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 
 	std::vector<VkAccelerationStructureGeometryKHR>         geometries;
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> rangeInfos;
-	for (size_t i = 0; i < modelBuffers.size(); ++i)
+	for (auto & modelBuffer : modelBuffers)
 	{
-		geometries.push_back(modelBuffers[i].acceleration_structure_geometry);
-		rangeInfos.push_back(&modelBuffers[i].buildRangeInfo);
+		geometries.push_back(modelBuffer.acceleration_structure_geometry);
+		rangeInfos.push_back(&modelBuffer.buildRangeInfo);
 	}
 
 	for (size_t i = 0; i < modelBuffers.size(); ++i)
@@ -423,7 +429,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 			    &rangeInfos[i]);
 			get_device().flush_command_buffer(command_buffer, queue);
 
-			currentOffset += modelBuffers[i].buildSize.buildScratchSize;
+			// currentOffset += modelBuffers[i].buildSize.buildScratchSize; //NB: Due to line 410 not being outside for loop, this would never get used.
 		}
 
 		delete_scratch_buffer(scratch_buffer);
@@ -462,12 +468,12 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 		instances.emplace_back(acceleration_structure_instance);
 	}
 
-	const size_t                       instancesDatasize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
+	const size_t                       instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
 	std::unique_ptr<vkb::core::Buffer> instances_buffer  = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                                              instancesDatasize,
+                                                                                              instancesDataSize,
                                                                                               VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
                                                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instances_buffer->update(instances.data(), instancesDatasize);
+	instances_buffer->update(instances.data(), instancesDataSize);
 
 	VkDeviceOrHostAddressConstKHR instance_data_device_address{};
 	instance_data_device_address.deviceAddress = get_buffer_device_address(instances_buffer->get_handle());
@@ -579,7 +585,7 @@ struct CopyBuffer
 
 		const size_t sz = buffer.get_size();
 		out.resize(sz / sizeof(T));
-		const bool alreadyMapped = !!buffer.get_data();
+		const bool alreadyMapped = !buffer.get_data();
 		if (!alreadyMapped)
 		{
 			buffer.map();
@@ -629,24 +635,23 @@ void RaytracingExtended::create_shader_binding_tables()
 {
 	const uint32_t           handle_size             = ray_tracing_pipeline_properties.shaderGroupHandleSize;
 	const uint32_t           handle_size_aligned     = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-	const uint32_t           handle_alignment        = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
-	const uint32_t           group_count             = static_cast<uint32_t>(shader_groups.size());
+	auto           group_count             = static_cast<uint32_t>(shader_groups.size());
 	const uint32_t           sbt_size                = group_count * handle_size_aligned;
-	const VkBufferUsageFlags sbt_buffer_usafge_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VkBufferUsageFlags sbt_buffer_usage_flags  = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	const VmaMemoryUsage     sbt_memory_usage        = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
 	VK_CHECK(vkGetRayTracingShaderGroupHandlesKHR(get_device().get_handle(), pipeline, 0, group_count, sbt_size, shader_handle_storage.data()));
 
 	// Copy the shader handles from the host buffer to the binding tables
-	uint8_t *data = static_cast<uint8_t *>(raygen_shader_binding_table->map());
+	auto *data = static_cast<uint8_t *>(raygen_shader_binding_table->map());
 	memcpy(data, shader_handle_storage.data(), handle_size);
 	data = static_cast<uint8_t *>(miss_shader_binding_table->map());
 	memcpy(data, shader_handle_storage.data() + handle_size_aligned, handle_size);
@@ -796,7 +801,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
-	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target envinroment for the glslang compiler
+	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the GLSLang compiler
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
 	/*
@@ -863,7 +868,7 @@ void RaytracingExtended::create_display_pipeline()
 }
 
 /*
-	Deletes all ressources acquired by an acceleration structure
+	Deletes all resources acquired by an acceleration structure
 */
 void RaytracingExtended::delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure)
 {
@@ -935,9 +940,9 @@ void RaytracingExtended::build_command_buffers()
 		command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
 	}
 
-	for (int32_t i = 0; i < raytracing_command_buffers.size(); ++i)
+	for (auto & raytracing_command_buffer : raytracing_command_buffers)
 	{
-		VK_CHECK(vkBeginCommandBuffer(raytracing_command_buffers[i], &command_buffer_begin_info));
+		VK_CHECK(vkBeginCommandBuffer(raytracing_command_buffer, &command_buffer_begin_info));
 
 		/*
 			Setup the strided device address regions pointing at the shader identifiers in the shader binding table
@@ -965,11 +970,11 @@ void RaytracingExtended::build_command_buffers()
 		/*
 			Dispatch the ray tracing commands
 		*/
-		vkCmdBindPipeline(raytracing_command_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
-		vkCmdBindDescriptorSets(raytracing_command_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
+		vkCmdBindPipeline(raytracing_command_buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
+		vkCmdBindDescriptorSets(raytracing_command_buffer, VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 		vkCmdTraceRaysKHR(
-		    raytracing_command_buffers[i],
+		    raytracing_command_buffer,
 		    &raygen_shader_sbt_entry,
 		    &miss_shader_sbt_entry,
 		    &hit_shader_sbt_entry,
@@ -978,7 +983,7 @@ void RaytracingExtended::build_command_buffers()
 		    height,
 		    1);
 
-		VK_CHECK(vkEndCommandBuffer(raytracing_command_buffers[i]));
+		VK_CHECK(vkEndCommandBuffer(raytracing_command_buffer));
 	}
 }
 
@@ -1036,7 +1041,7 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 
 void RaytracingExtended::draw()
 {
-	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytacing command buffers must match the render queue size");
+	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytracing command buffers must match the render queue size")
 	ApiVulkanSample::prepare_frame();
 	size_t i = current_buffer;
 	
@@ -1047,7 +1052,7 @@ void RaytracingExtended::draw()
 	static auto fence = device->request_fence();
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
 	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
-	VK_CHECK(vkResetFences(device->get_handle(), 1, &fence));
+    device->get_fence_pool().reset();
 
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));
@@ -1098,7 +1103,6 @@ void RaytracingExtended::draw()
 	    subresource_range);
 	VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 
-	const VkPipelineStageFlags waitMask = VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR;
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
@@ -1108,7 +1112,7 @@ void RaytracingExtended::draw()
 void RaytracingExtended::draw_gui()
 {
 	gui->show_options_window(
-		[this]() {
+		[]() {
 			int current_mode = 0;
 		    ImGui::Combo("Draw mode", &current_mode, "Mode\0\0");
 		}
@@ -1129,14 +1133,6 @@ std::unique_ptr<vkb::VulkanSample> create_raytracing_extended()
 	return std::make_unique<RaytracingExtended>();
 }
 
-RaytracingExtended::RaytracingScene::RaytracingScene()
-{
-}
-
-RaytracingExtended::RaytracingScene::~RaytracingScene()
-{
-}
-
 RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad) 
 {
 
@@ -1145,7 +1141,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 	for (size_t sceneIndex = 0; sceneIndex < scenesToLoad.size(); ++sceneIndex)
 	{
 		scenes[sceneIndex] = loader.read_scene_from_file(scenesToLoad[sceneIndex].filename);
-		ASSERT_LOG(scenes[sceneIndex], "Cannot load file");
+		ASSERT_LOG(scenes[sceneIndex], "Cannot load file")
 		auto &scene = scenes[sceneIndex];
 		assert(!!scene);
 		for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
@@ -1164,7 +1160,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 						continue;
 
 					const auto name = texture->get_image()->get_name();
-					is_vase = (name.find("vase_dif.ktx") != name.npos);
+					is_vase = (name.find("vase_dif.ktx") != std::basic_string<char>::npos);
 					// determine the index of the texture to assign
 					auto textureIter = std::find(images.cbegin(), images.cend(), texture->get_image());
 					if (textureIter == images.cend())
@@ -1186,7 +1182,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				}
 
 				auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
-				const auto uvcoords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
+				const auto UV_coords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
 				const auto normals  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
 
 				
@@ -1202,20 +1198,19 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				for (auto&& pt : pts)
 				{
 					const auto translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
-					auto       newpt       = glm::vec3(glm::mat4(transform) * glm::vec4(pt, 1.f)) + translation;
-					pt = newpt;
+					pt       = glm::vec3(glm::mat4(transform) * glm::vec4(pt, 1.f)) + translation;
 				}
 
 				assert(textureIndex < std::numeric_limits<uint32_t>::max());
-				const uint32_t textureIndex32 = static_cast<uint32_t>(textureIndex);
+				const auto textureIndex32 = static_cast<uint32_t>(textureIndex);
 				Model          model;
 				model.vertices.resize(pts.size());
 				for (size_t i = 0; i < pts.size(); ++i)
 				{
-					auto texcoords = i < uvcoords.size() ? uvcoords[i] : glm::vec2{};
-					auto normal    = i < normals.size() ? normals[i] : glm::vec3{};
+					auto tex_coords     = i < UV_coords.size() ? UV_coords[i] : glm::vec2{};
+					auto normal         = i < normals.size() ? normals[i] : glm::vec3{};
 					model.vertices[i].A = {pts[i].x, pts[i].y, pts[i].z, normal.x};
-					model.vertices[i].B = {normal.y, normal.z, texcoords.x, texcoords.y};
+					model.vertices[i].B = {normal.y, normal.z, tex_coords.x, tex_coords.y};
 				}
 
 				assert(sub_mesh->index_type == VK_INDEX_TYPE_UINT16);

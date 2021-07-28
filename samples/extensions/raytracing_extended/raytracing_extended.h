@@ -40,14 +40,14 @@ class RaytracingExtended : public ApiVulkanSample
 		RENDER_BARYCENTRIC,
 		RENDER_INSTANCE_ID,
 		RENDER_DISTANCE,
-		RENDER_GLOBAL_XYZ,
-		RENDER_SHADOW_MAP,
+		RENDER_GLOBAL_XYZ __attribute__((unused)),
+		RENDER_SHADOW_MAP __attribute__((unused)),
 		RENDER_AO
 	};
 
 	enum ObjectType : uint32_t
 	{
-		OBJECT_NORMAL, // has AO and raytraced shadows
+		OBJECT_NORMAL, // has AO and ray traced shadows
 		OBJECT_REFRACTION, // pass-through with IOR
 		OBJECT_FLAME // emission surface; constant amplitude
 	};
@@ -85,20 +85,19 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct SceneLoadInfo
 	{
-		SceneLoadInfo()
-		{}
+		SceneLoadInfo() = default;
 		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) :
 		    filename(filename), transform(transform), object_type(object_type)
 		{}
 		const char *filename = "";
 		glm::mat3x4 transform;
-		uint32_t object_type;
+		uint32_t object_type = 0;
 	};
 
 	struct RaytracingScene
 	{
-		RaytracingScene();
-		~RaytracingScene();
+		RaytracingScene() = default;
+		~RaytracingScene() = default;
 		RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
 		std::vector<vkb::sg::Image *>      images;
@@ -135,18 +134,25 @@ class RaytracingExtended : public ApiVulkanSample
 		VkFormat       format;
 		uint32_t       width;
 		uint32_t       height;
+		StorageImage()
+		    : memory(nullptr)
+		    , image(VK_NULL_HANDLE)
+		    , view(nullptr)
+		    , format()
+		    , width(0)
+		    , height(0) {}
 	} storage_image;
 
 	struct UniformData
 	{
 		glm::mat4 view_inverse;
-		glm::mat4 proj_inverse;
+		__attribute__((unused)) glm::mat4 proj_inverse;
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
 	struct SceneInstanceData
 	{
-		uint32_t vertex_index; // index of first data
+		__attribute__((unused)) uint32_t vertex_index; // index of first data
 		uint32_t indices_index;
 		uint32_t image_index;
 		uint32_t object_type; // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
@@ -167,7 +173,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 
 	RaytracingExtended();
-	~RaytracingExtended();
+	~RaytracingExtended() override;
 
 	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
@@ -189,7 +195,7 @@ class RaytracingExtended : public ApiVulkanSample
 	void          draw();
 	void          draw_gui() override;
 	bool          prepare(vkb::Platform &platform) override;
-	virtual void  render(float delta_time) override;
+	void          render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended();
