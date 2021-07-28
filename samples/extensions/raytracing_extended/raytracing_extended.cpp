@@ -44,7 +44,8 @@ struct RaytracingExtended::Model
 {
 	std::vector<NewVertex>               vertices;
 	std::vector<std::array<uint32_t, 3>> triangles;
-	VkTransformMatrixKHR                 defaultTransform;
+	VkTransformMatrixKHR                 default_transform;
+	uint32_t                             texture_index;
 };
 
 RaytracingExtended::RaytracingExtended()
@@ -226,8 +227,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	std::vector<SceneInstanceData> model_indices(models.size());
 	for (size_t i = 0; i < models.size(); ++i)
 	{
-
-		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles)};
+		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index)};
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
@@ -306,7 +306,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 
 		ModelBuffer modelBuffer;
 		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-		VkTransformMatrixKHR transform_matrix = model.defaultTransform;
+		VkTransformMatrixKHR transform_matrix = model.default_transform;
 		modelBuffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		modelBuffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
@@ -700,6 +700,7 @@ void RaytracingExtended::create_descriptor_sets()
 	VkWriteDescriptorSet vertex_buffer_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &vertex_descriptor);
 	VkWriteDescriptorSet index_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &index_descriptor);
 	VkWriteDescriptorSet data_map_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &data_map_descriptor);
+	VkWriteDescriptorSet texture_array_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, raytracing_scene->imageInfos.data(), raytracing_scene->imageInfos.size());
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
@@ -708,7 +709,8 @@ void RaytracingExtended::create_descriptor_sets()
 	    render_buffer_write,
 		vertex_buffer_write,
 		index_buffer_write,
-	    data_map_write
+	    data_map_write,
+	    texture_array_write 
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
@@ -761,6 +763,12 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	data_map_binding.descriptorCount = 1;
 	data_map_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
+	VkDescriptorSetLayoutBinding texture_array_binding{};
+	texture_array_binding.binding    = 7;
+	texture_array_binding.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	texture_array_binding.descriptorCount = raytracing_scene->imageInfos.size();
+	texture_array_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
@@ -768,7 +776,8 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	    render_settings_buffer_binding,
 		vertex_binding,
 		index_binding,
-	    data_map_binding
+	    data_map_binding,
+		texture_array_binding
 	};
 
 	VkDescriptorSetLayoutCreateInfo layout_info{};
@@ -1203,7 +1212,8 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 						                      uint32_t(tempBuffer[3 * i + 2])};
 					}
 				}
-				model.defaultTransform = scenesToLoad[sceneIndex].transform;
+				model.default_transform = scenesToLoad[sceneIndex].transform;
+				model.texture_index = textureIndex32;
 				models.emplace_back(std::move(model));
 			}
 		}

@@ -18,6 +18,7 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 
+
 layout(location = 0) rayPayloadInEXT vec4 hitValue;
 hitAttributeEXT vec3 attribs;
 
@@ -40,6 +41,9 @@ layout(binding=6, set = 0) readonly buffer DataMap
 {
   uint[] indices;
 } data_map;
+
+layout(binding=7, set = 0) uniform sampler2D textures[25];
+
 
 vec3 heatmap(float value, float minValue, float maxValue)
 {
@@ -79,8 +83,12 @@ void handleDraw()
 {
     uint index = gl_InstanceCustomIndexEXT;
 
-    uint vertexOffset = data_map.indices[2 * index];
-    uint triangleOffset = data_map.indices[2*index + 1];
+    uint vertexOffset = data_map.indices[3 * index];
+    uint triangleOffset = data_map.indices[3*index + 1];
+    uint imageOffset = data_map.indices[3 * index + 2];
+    if (imageOffset >= 25){
+       return;
+    }
 
     uint index0 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID)];
     uint index1 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID) + 1];
@@ -88,14 +96,18 @@ void handleDraw()
 
     Vertex A = getVertex(vertexOffset, index0), B = getVertex(vertexOffset, index1), C = getVertex(vertexOffset, index2);
 
-    // interpolate point
+    // interpolate and obtain world point
     const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
+    float alpha = barycentricCoords.x, beta = barycentricCoords.y, gamma = barycentricCoords.z;
     vec3 pt = barycentricCoords.x * A.pt + barycentricCoords.y * B.pt + barycentricCoords.z * C.pt;
-
     mat4x3 transform = gl_ObjectToWorldEXT;
     vec3 worldPt = transform * vec4(pt, 1);
 
-    hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
+    // obtain texture coordinate
+    vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
+    vec4 tex_value = texture(textures[imageOffset], texcoord);
+    hitValue = tex_value;
+    //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
 }
 
 void main()
