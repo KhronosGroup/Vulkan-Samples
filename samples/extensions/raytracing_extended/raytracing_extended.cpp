@@ -47,6 +47,7 @@ struct RaytracingExtended::Model
 	std::vector<std::array<uint32_t, 3>> triangles;
 	VkTransformMatrixKHR                 default_transform;
 	uint32_t                             texture_index;
+	uint32_t                             object_type;
 };
 
 RaytracingExtended::RaytracingExtended()
@@ -227,7 +228,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	std::vector<SceneInstanceData> model_indices(models.size());
 	for (size_t i = 0; i < models.size(); ++i)
 	{
-		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index)};
+		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index), uint32_t(models[i].object_type)};
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
@@ -599,10 +600,11 @@ struct CopyBuffer
 void RaytracingExtended::create_scene()
 {
 	std::vector<SceneLoadInfo> scenesToLoad;
-	const float SponzaScale = 0.01f;
-	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", VkTransformMatrixKHR{0.f, SponzaScale, 0.f, 0.f,
-	                                                                              0.f, 0.f, SponzaScale, 0.f,
-	                                                                              SponzaScale, 0.f, 0.f, 0.f});
+	const float sponza_scale = 0.01f;
+	const glm::mat3x4          sponza_transform{0.f, 0.f, sponza_scale, 0.f,
+                                       sponza_scale, 0.f, 0.f, 0.f,
+                                       0.f, sponza_scale, 0.f, 0.f};
+	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
 	create_bottom_level_acceleration_structure();
 	create_top_level_acceleration_structure();
@@ -1134,71 +1136,11 @@ RaytracingExtended::RaytracingScene::~RaytracingScene()
 {
 }
 
-/*
-namespace
-{
-
-
-void updateVase(RaytracingExtended::Model &model)
-{
-	// There are much more efficient ways to perform this, e.g. using a half-edge structure
-	// Even without using a half-edge structure, data locality can be improved by using something
-	// like boost::small_container
-	std::set<uint32_t>                     visited;
-	{
-		std::map<uint32_t, std::set<uint32_t>> connected_vertex_map;
-		for (size_t triIndex = 0; triIndex < model.triangles.size(); ++triIndex)
-		{
-			const auto tri = model.triangles[triIndex];
-			for (size_t i = 0; i < 3; ++i)
-			{
-				connected_vertex_map[tri[i]].insert(tri[(i + 1) % 3]);
-				connected_vertex_map[tri[i]].insert(tri[(i + 2) % 3]);
-			}
-		}
-
-		visited = {};
-		std::vector<uint32_t> vertices_to_visit = {0};
-		while (vertices_to_visit.size())
-		{
-			uint32_t vertex = vertices_to_visit.back();
-			vertices_to_visit.pop_back();
-			if (visited.count(vertex))
-			{
-				continue;
-			}
-			visited.insert(vertex);
-			for (auto &&other : connected_vertex_map[vertex])
-			{
-				vertices_to_visit.push_back(other);
-			}
-		}
-	}
-
-	glm::vec3 average_point = {0.f, 0.f, 0.f};
-	for (auto&& vertex : visited)
-	{
-		average_point += model.vertices[vertex].A.xyz;
-	}
-	average_point /= visited.size();
-	
-	std::map<uint32_t, uint32_t> vertex_to_new_vertex;
-	glm::vec3                    translation = { };
-	for (auto&& vertex : visited)
-	{
-
-	}
-	
-}
-}
-*/
-
 RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad) 
 {
 
 	vkb::GLTFLoader loader{device};
 	scenes.resize(scenesToLoad.size());
-	std::vector<std::string> names;
 	for (size_t sceneIndex = 0; sceneIndex < scenesToLoad.size(); ++sceneIndex)
 	{
 		scenes[sceneIndex] = loader.read_scene_from_file(scenesToLoad[sceneIndex].filename);
@@ -1221,7 +1163,6 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 						continue;
 
 					const auto name = texture->get_image()->get_name();
-					names.push_back(name);
 					is_vase = (name.find("vase_dif.ktx") != name.npos);
 					// determine the index of the texture to assign
 					auto textureIter = std::find(images.cbegin(), images.cend(), texture->get_image());
@@ -1243,9 +1184,24 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 					}
 				}
 
-				const auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
+				auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
 				const auto uvcoords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
 				const auto normals  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+
+				
+
+				auto transform = scenesToLoad[sceneIndex].transform;
+				if (is_vase)
+				{
+					const float sponzaScale = 0.01f;
+					transform         = glm::mat3x4{0.f, sponzaScale, 0.f, 4.3f,
+                                                     0.f, 0.f, sponzaScale, 0.f,
+                                                     sponzaScale, 0.f, 0.f, 9.5f};
+				}
+				for (auto&& pt : pts)
+				{
+					pt = transform * glm::vec4(pt.xyz, 1.f);
+				}
 
 				assert(textureIndex < std::numeric_limits<uint32_t>::max());
 				const uint32_t textureIndex32 = static_cast<uint32_t>(textureIndex);
@@ -1279,17 +1235,11 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				}
 
 
-				model.default_transform = scenesToLoad[sceneIndex].transform;
-				if (is_vase)
-				{
-					const float sponzaScale = 0.01f;
-					model.default_transform = VkTransformMatrixKHR{0.f, sponzaScale, 0.f, 4.3f,
-					                                               0.f, 0.f, sponzaScale, 0.f,
-					                                               sponzaScale, 0.f, 0.f, 9.5f};
-				}
-
-				
+				model.default_transform = VkTransformMatrixKHR{1.f, 0.f, 0.f, 0.f,
+				                                               0.f, 1.f, 0.f, 0.f,
+				                                               0.f, 0.f, 1.f, 0.f};
 				model.texture_index = textureIndex32;
+				model.object_type   = scenesToLoad[sceneIndex].object_type;
 				models.emplace_back(std::move(model));
 			}
 		}

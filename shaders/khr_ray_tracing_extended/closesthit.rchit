@@ -21,7 +21,8 @@
 struct Payload
 {
   vec4 color;
-  uint intersectionType;
+  vec4 intersection; // {x, y, z, intersectionType}
+  float distance;
 };
 
 layout(location = 0) rayPayloadInEXT Payload hitValue;
@@ -91,6 +92,7 @@ void handleDraw()
     uint vertexOffset = data_map.indices[4 * index];
     uint triangleOffset = data_map.indices[4*index + 1];
     uint imageOffset = data_map.indices[4 * index + 2];
+    uint objectType = data_map.indices[4 * index + 3];
     if (imageOffset >= 25){
        return;
     }
@@ -105,13 +107,15 @@ void handleDraw()
     const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
     float alpha = barycentricCoords.x, beta = barycentricCoords.y, gamma = barycentricCoords.z;
     vec3 pt = barycentricCoords.x * A.pt + barycentricCoords.y * B.pt + barycentricCoords.z * C.pt;
-    mat4x3 transform = gl_ObjectToWorldEXT;
-    vec3 worldPt = transform * vec4(pt, 1);
+    mat4x3 transform = gl_WorldToObjectEXT;
+    vec3 worldPt =  transform * vec4(pt, 1);
 
     // obtain texture coordinate
     vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
     vec4 tex_value = texture(textures[imageOffset], texcoord);
     hitValue.color = tex_value;
+    hitValue.intersection = vec4(worldPt.xyz, objectType);
+    hitValue.distance = gl_HitTEXT;
     //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
 }
 

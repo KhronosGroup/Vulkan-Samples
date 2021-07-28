@@ -34,8 +34,16 @@ layout(binding = 3, set = 0) uniform RenderSettings
 struct Payload
 {
   vec4 color;
-  uint intersectionType;
+  vec4 intersection; // {x, y, z, intersectionType}
+  float distance;
 };
+
+vec3 heatmap(float value, float minValue, float maxValue)
+{
+  float scaled = (min(max(value, minValue), maxValue) - minValue) / (maxValue - minValue);
+  float r = scaled * (3.14159265359 / 2.);
+  return vec3(sin(r), sin(2 * r), cos(r));
+}
 
 layout(location = 0) rayPayloadEXT Payload hitValue;
 
@@ -52,8 +60,44 @@ void main()
 	float tmin = 0.001;
 	float tmax = 10000.0;
 
+	uint max_rays = 2;//render_settings.render_mode.y;
+	if (render_settings.render_mode[0] != 0)
+	{
+		max_rays = 1;
+	}
 
-    traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
+	uint object_type = 100;
+	vec4 color = vec4(0, 0, 0, 1);
+	bool isShadow = false;
+	bool shouldContinue = true;
+	vec3 currentOrigin = origin.xyz;
+	vec3 currentDirection = direction.xyz;
+	float expectedDistance = -1;
+	for (uint i = 0; i < max_rays && shouldContinue; ++i)
+	{
+		traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, currentOrigin, tmin, currentDirection, tmax, 0);
+		object_type = uint(hitValue.intersection.w);
+		if (object_type == 0)
+		{
+			if (isShadow)
+			{
+				float r = expectedDistance;
+				float scale = hitValue.distance < expectedDistance ? 0.2 : max(min(1, 40 / (r*r)), 0.2);
+				color.xyz *= scale;
+				isShadow = false;
+			} 
+			else 
+			{
+				color = hitValue.color;
+				isShadow = true;
+				vec3 lightPt = vec3(0, -5, 0);
+				currentOrigin = hitValue.intersection.xyz;
+				currentDirection = lightPt - hitValue.intersection.xyz;
+				expectedDistance = sqrt(dot(currentDirection, currentDirection));
+				currentDirection = normalize(currentDirection);
+			}
+		}
+	}
 
-	imageStore(image, ivec2(gl_LaunchIDEXT.xy), hitValue.color);
+	imageStore(image, ivec2(gl_LaunchIDEXT.xy), color);
 }

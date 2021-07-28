@@ -43,6 +43,13 @@ class RaytracingExtended : public ApiVulkanSample
 		RENDER_GLOBAL_XYZ
 	};
 
+	enum ObjectType : uint32_t
+	{
+		OBJECT_NORMAL, // has AO and raytraced shadows
+		OBJECT_REFRACTION, // pass-through with IOR
+		OBJECT_FLAME // emission surface; constant amplitude
+	};
+
 	// Wraps all data required for an acceleration structure
 	struct AccelerationStructureExtended
 	{
@@ -78,14 +85,12 @@ class RaytracingExtended : public ApiVulkanSample
 	{
 		SceneLoadInfo()
 		{}
-		SceneLoadInfo(const char *filename, VkTransformMatrixKHR transform) :
-		    filename(filename), transform(transform)
+		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) :
+		    filename(filename), transform(transform), object_type(object_type)
 		{}
 		const char *filename = "";
-		VkTransformMatrixKHR transform = {
-		    1.0f, 0.0f, 0.0f, 0.0f,
-		    0.0f, 1.0f, 0.0f, 0.0f,
-		    0.0f, 0.0f, 1.0f, 0.0f};
+		glm::mat3x4 transform;
+		uint32_t object_type;
 	};
 
 	struct RaytracingScene
@@ -142,7 +147,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint32_t vertex_index; // index of first data
 		uint32_t indices_index;
 		uint32_t image_index;
-		uint32_t object_id; // whether to load from buffer for static objects or dynamic objects
+		uint32_t object_type; // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
 	};
 	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
 
