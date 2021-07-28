@@ -223,15 +223,20 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	// Determine the size of the total buffer we need to create
 	std::vector<uint32_t> vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
 	uint32_t nTotalVertices = 0, nTotalTriangles = 0;
+	std::vector<SceneInstanceData> model_indices(models.size());
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 
+		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles)};
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
 		index_buffer_offsets[i] = nTotalTriangles * sizeof(models[i].triangles[0]);
 		nTotalTriangles += models[i].triangles.size();
 	}
+
+	data_to_model_buffer = std::make_unique<vkb::core::Buffer>(get_device(), model_indices.size() * sizeof(model_indices[0]), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	data_to_model_buffer->update(model_indices.data(), model_indices.size() * sizeof(model_indices[0]), 0);
 	
 	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
@@ -687,12 +692,14 @@ void RaytracingExtended::create_descriptor_sets()
 	VkDescriptorBufferInfo render_settings_descriptor = create_descriptor(*render_settings_ubo);
 	VkDescriptorBufferInfo vertex_descriptor          = create_descriptor(*vertex_buffer);
 	VkDescriptorBufferInfo index_descriptor           = create_descriptor(*index_buffer);
+	VkDescriptorBufferInfo data_map_descriptor        = create_descriptor(*data_to_model_buffer);
 
 	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
 	VkWriteDescriptorSet render_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &render_settings_descriptor);
 	VkWriteDescriptorSet vertex_buffer_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &vertex_descriptor);
 	VkWriteDescriptorSet index_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &index_descriptor);
+	VkWriteDescriptorSet data_map_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &data_map_descriptor);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
@@ -700,7 +707,8 @@ void RaytracingExtended::create_descriptor_sets()
 	    uniform_buffer_write,
 	    render_buffer_write,
 		vertex_buffer_write,
-		index_buffer_write
+		index_buffer_write,
+	    data_map_write
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
@@ -747,13 +755,20 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	index_binding.descriptorCount                  = 1;
 	index_binding.stageFlags                       = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
+	VkDescriptorSetLayoutBinding data_map_binding{};
+	data_map_binding.binding      = 6;
+	data_map_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	data_map_binding.descriptorCount = 1;
+	data_map_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
 	    uniform_buffer_binding,
 	    render_settings_buffer_binding,
 		vertex_binding,
-		index_binding
+		index_binding,
+	    data_map_binding
 	};
 
 	VkDescriptorSetLayoutCreateInfo layout_info{};

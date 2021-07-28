@@ -137,9 +137,16 @@ class RaytracingExtended : public ApiVulkanSample
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
+	struct SceneInstanceData
+	{
+		uint32_t vertex_index; // index of first data
+		uint32_t indices_index;
+	};
+	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
+
 	struct RenderSettings
 	{
-		glm::uvec4 render_settings = { RenderMode::RENDER_DISTANCE, 12, 0, 0}; // { RenderMode, MaxRays, ...}
+		glm::uvec4 render_settings = { RenderMode::RENDER_DEFAULT, 12, 0, 0}; // { RenderMode, MaxRays, ...}
 	} render_settings;
 	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
 
