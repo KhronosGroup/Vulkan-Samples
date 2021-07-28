@@ -85,18 +85,18 @@ void main()
 			{
 				const float shadow_mult = 2;
 				const float shadow_scale = 0.25;
-				vec3 lightPt = vec3(0, -5, 0);
+				vec3 lightPt = vec3(0, -20, 0);
 				vec3 currentDirection = lightPt - hitValue.intersection.xyz;
 				expectedDistance = sqrt(dot(currentDirection, currentDirection));
 				currentDirection = normalize(currentDirection);
 				traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, object_intersection_pt, tmin, currentDirection, tmax, 0);
 				float r = expectedDistance;
 				float actDistance = hitValue.normal.w;
-				float scale = actDistance < expectedDistance ? shadow_scale : max(min(1, 60 / (r*r)), shadow_scale);
+				float scale = actDistance < expectedDistance ? shadow_scale : 1;
 				scale = min(scale * shadow_mult, 1);
 				color.xyz *= scale;
 				current_mode = 101;
-				if (render_settings.render_mode[0] == 6)
+				if (render_settings.render_mode[0] == 5)
 				{
 					color = vec4(scale, scale, scale, 1);
 					break;
@@ -131,14 +131,13 @@ void main()
 				}
 				accumulated_ao /= (max_dist * accumulated_factor);
 				accumulated_ao *= accumulated_ao;
+				accumulated_ao = max(min((accumulated_ao) * ao_mult, 1), 0);
 				if (render_settings.render_mode[0] == 6)
 				{
-					color = vec4(heatmap(accumulated_ao, 0, 1), 1);
+					color = vec4(accumulated_ao, accumulated_ao, accumulated_ao, 1);
 					break;
 				}
-				accumulated_ao = max(min((accumulated_ao) * ao_mult, 1), 0);
-				//color = vec4(accumulated_ao, accumulated_ao, accumulated_ao, 1);
-				//color.w = 1;
+				
 				color.xyz *= accumulated_ao;
 			}
 			

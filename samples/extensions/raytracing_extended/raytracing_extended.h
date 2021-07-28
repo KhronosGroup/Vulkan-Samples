@@ -155,7 +155,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct RenderSettings
 	{
-		glm::uvec4 render_settings = { RenderMode::RENDER_DEFAULT, 12, 0, 0}; // { RenderMode, MaxRays, ...}
+		glm::uvec4 render_settings = {RenderMode::RENDER_AO, 12, 0, 0};        // { RenderMode, MaxRays, ...}
 	} render_settings;
 	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
 
