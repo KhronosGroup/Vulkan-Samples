@@ -40,7 +40,9 @@ class RaytracingExtended : public ApiVulkanSample
 		RENDER_BARYCENTRIC,
 		RENDER_INSTANCE_ID,
 		RENDER_DISTANCE,
-		RENDER_GLOBAL_XYZ
+		RENDER_GLOBAL_XYZ,
+		RENDER_SHADOW_MAP,
+		RENDER_AO
 	};
 
 	enum ObjectType : uint32_t

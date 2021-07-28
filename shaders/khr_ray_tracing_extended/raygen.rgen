@@ -35,7 +35,7 @@ struct Payload
 {
   vec4 color;
   vec4 intersection; // {x, y, z, intersectionType}
-  float distance;
+  vec4 normal; // {nx, ny, nz, distance}
 };
 
 vec3 heatmap(float value, float minValue, float maxValue)
@@ -60,7 +60,7 @@ void main()
 	float tmin = 0.001;
 	float tmax = 10000.0;
 
-	uint max_rays = 2;//render_settings.render_mode.y;
+	uint max_rays = 16;//render_settings.render_mode.y;
 	if (render_settings.render_mode[0] != 0)
 	{
 		max_rays = 1;
@@ -68,34 +68,80 @@ void main()
 
 	uint object_type = 100;
 	vec4 color = vec4(0, 0, 0, 1);
-	bool isShadow = false;
-	bool shouldContinue = true;
-	vec3 currentOrigin = origin.xyz;
-	vec3 currentDirection = direction.xyz;
+	// 0 = normal, 1 = shadow, 2 = AO
+	uint current_mode = 0;
 	float expectedDistance = -1;
-	for (uint i = 0; i < max_rays && shouldContinue; ++i)
+	for (uint i = 0; i < max_rays && current_mode < 100; ++i)
 	{
-		traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, currentOrigin, tmin, currentDirection, tmax, 0);
+		traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 		object_type = uint(hitValue.intersection.w);
+		const vec3 object_intersection_pt = hitValue.intersection.xyz;
+		const vec3 object_normal = hitValue.normal.xyz;
 		if (object_type == 0)
 		{
-			if (isShadow)
+			color = hitValue.color;
+			
+			//shadow
 			{
-				float r = expectedDistance;
-				float scale = hitValue.distance < expectedDistance ? 0.2 : max(min(1, 40 / (r*r)), 0.2);
-				color.xyz *= scale;
-				isShadow = false;
-			} 
-			else 
-			{
-				color = hitValue.color;
-				isShadow = true;
+				const float shadow_mult = 2;
+				const float shadow_scale = 0.25;
 				vec3 lightPt = vec3(0, -5, 0);
-				currentOrigin = hitValue.intersection.xyz;
-				currentDirection = lightPt - hitValue.intersection.xyz;
+				vec3 currentDirection = lightPt - hitValue.intersection.xyz;
 				expectedDistance = sqrt(dot(currentDirection, currentDirection));
 				currentDirection = normalize(currentDirection);
+				traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, object_intersection_pt, tmin, currentDirection, tmax, 0);
+				float r = expectedDistance;
+				float actDistance = hitValue.normal.w;
+				float scale = actDistance < expectedDistance ? shadow_scale : max(min(1, 60 / (r*r)), shadow_scale);
+				scale = min(scale * shadow_mult, 1);
+				color.xyz *= scale;
+				current_mode = 101;
+				if (render_settings.render_mode[0] == 6)
+				{
+					color = vec4(scale, scale, scale, 1);
+					break;
+				}
 			}
+			
+			// ambient occlusion
+			{
+				const float ao_mult = 1;
+				uint max_ao_each = 4;
+				uint max_ao = max_ao_each * max_ao_each;
+				const float max_dist = 2;
+				float accumulated_ao = 0.f;
+				vec3 u = dot(object_normal, vec3(0, 0, 1)) > 0.9 ? cross(object_normal, vec3(1, 0, 0)) : cross(object_normal, vec3(0, 0, 1));
+				vec3 v = cross(object_normal, u);
+				float accumulated_factor = 0;
+				for (uint j = 0; j < max_ao_each; ++j)
+				{
+					float phi = 0.5*(-3.14159 + 2 * 3.14159 * (float(j + 1) / float(max_ao_each + 2)));
+					for (uint k = 0; k < max_ao_each; ++k){
+						float theta =  0.5*(-3.14159 + 2 * 3.14159 * (float(k + 1) / float(max_ao_each + 2)));
+						float x = cos(phi) * sin(theta);
+						float y = sin(phi) * sin(theta);
+						float z = cos(theta);
+						vec3 direction = x * u + y * v + z * object_normal;
+						traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, object_intersection_pt, tmin, direction, tmax, 0);
+						float ao = min(hitValue.normal.w, max_dist);
+						float factor = 0.2 + 0.8 * z * z;
+						accumulated_factor += factor;
+						accumulated_ao += ao * factor;
+					}
+				}
+				accumulated_ao /= (max_dist * accumulated_factor);
+				accumulated_ao *= accumulated_ao;
+				if (render_settings.render_mode[0] == 6)
+				{
+					color = vec4(heatmap(accumulated_ao, 0, 1), 1);
+					break;
+				}
+				accumulated_ao = max(min((accumulated_ao) * ao_mult, 1), 0);
+				//color = vec4(accumulated_ao, accumulated_ao, accumulated_ao, 1);
+				//color.w = 1;
+				color.xyz *= accumulated_ao;
+			}
+			
 		}
 	}
 

@@ -22,7 +22,7 @@ struct Payload
 {
   vec4 color;
   vec4 intersection; // {x, y, z, intersectionType}
-  float distance;
+  vec4 normal; // {nx, ny, nz, distance}
 };
 
 layout(location = 0) rayPayloadInEXT Payload hitValue;
@@ -106,25 +106,25 @@ void handleDraw()
     // interpolate and obtain world point
     const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
     float alpha = barycentricCoords.x, beta = barycentricCoords.y, gamma = barycentricCoords.z;
-    vec3 pt = barycentricCoords.x * A.pt + barycentricCoords.y * B.pt + barycentricCoords.z * C.pt;
+    vec3 pt = alpha * A.pt + beta * B.pt + gamma * C.pt;
     mat4x3 transform = gl_WorldToObjectEXT;
     vec3 worldPt =  transform * vec4(pt, 1);
+    vec3 normal = normalize(alpha * A.normal + beta * B.normal + gamma * C.normal);
+    vec3 worldNormal = normalize(cross(B.pt - A.pt, C.pt - A.pt));
 
     // obtain texture coordinate
     vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
     vec4 tex_value = texture(textures[imageOffset], texcoord);
     hitValue.color = tex_value;
     hitValue.intersection = vec4(worldPt.xyz, objectType);
-    hitValue.distance = gl_HitTEXT;
+    hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
     //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
 }
 
 void main()
 {
   const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
-  if (render_settings.render_mode[0] == 0){ // draw
-    handleDraw();
-  } else if (render_settings.render_mode[0] == 1){ // barycentric
+  if (render_settings.render_mode[0] == 1){ // barycentric
     hitValue.color = vec4(barycentricCoords, 1);
   } else if (render_settings.render_mode[0] == 2){ // index
     hitValue.color = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
@@ -132,5 +132,7 @@ void main()
     hitValue.color = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
   } else if (render_settings.render_mode[0] == 4) { // global xyz
     hitValue.color = vec4(0, 0, 0, 1);
+  } else {
+    handleDraw();
   }
 }

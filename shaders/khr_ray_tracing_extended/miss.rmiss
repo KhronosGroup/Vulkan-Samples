@@ -22,7 +22,7 @@ struct Payload
 {
   vec4 color;
   vec4 intersection; // {x, y, z, intersectionType}
-  float distance;
+  vec4 normal; // {nx, ny, nz, distance}
 };
 
 
@@ -31,5 +31,5 @@ layout(location = 0) rayPayloadInEXT Payload hitValue;
 void main()
 {
     hitValue.intersection.w = 100;
-    hitValue.distance = 1000;
+    hitValue.normal.w = 10000;
 }
