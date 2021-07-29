@@ -65,13 +65,17 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct ModelBuffer
 	{
-		size_t                                   vertex_offset = 0; // in bytes
-		size_t                                   index_offset = 0; // in bytes
-		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer;
+		size_t                                   vertex_offset = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                   index_offset  = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                   num_vertices  = std::numeric_limits<size_t>::max();
+		size_t                                   num_triangles = std::numeric_limits<size_t>::max();
+		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer = nullptr;
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
 		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
 		AccelerationStructureExtended            bottom_level_acceleration_structure;
+		VkTransformMatrixKHR                     default_transform;
+		bool                                     is_static = true;
 	};
 
 	struct SceneOptions
@@ -155,7 +159,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct RenderSettings
 	{
-		glm::uvec4 render_settings = {RenderMode::RENDER_AO, 12, 0, 0};        // { RenderMode, MaxRays, ...}
+		glm::uvec4 render_settings = {RenderMode::RENDER_DEFAULT, 12, 0, 0};        // { RenderMode, MaxRays, ...}
 	} render_settings;
 	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
 
@@ -174,6 +178,7 @@ class RaytracingExtended : public ApiVulkanSample
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
 	void          delete_scratch_buffer(ScratchBuffer &scratch_buffer);
 	void          create_storage_image();
+	void          create_static_object_buffers();
 	void          create_bottom_level_acceleration_structure();
 	void          create_top_level_acceleration_structure();
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);

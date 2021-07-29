@@ -106,7 +106,7 @@ void main()
 			// ambient occlusion
 			{
 				const float ao_mult = 1;
-				uint max_ao_each = 4;
+				uint max_ao_each = 2;
 				uint max_ao = max_ao_each * max_ao_each;
 				const float max_dist = 2;
 				float accumulated_ao = 0.f;

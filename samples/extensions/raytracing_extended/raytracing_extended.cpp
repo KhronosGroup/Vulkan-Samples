@@ -213,22 +213,20 @@ void RaytracingExtended::delete_scratch_buffer(ScratchBuffer &scratch_buffer)
 	}
 }
 
-/*
-	Create the bottom level acceleration structure that contains the scene's geometry (triangles)
-*/
-void RaytracingExtended::create_bottom_level_acceleration_structure()
+
+void RaytracingExtended::create_static_object_buffers()
 {
 	assert(!!raytracing_scene);
-	auto &models = raytracing_scene->models;
+	auto &models       = raytracing_scene->models;
 	auto &modelBuffers = raytracing_scene->modelBuffers;
 	modelBuffers.resize(0);
 
-	std::vector<uint32_t> vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
-	uint32_t nTotalVertices = 0, nTotalTriangles = 0;
+	std::vector<uint32_t>          vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
+	uint32_t                       nTotalVertices = 0, nTotalTriangles = 0;
 	std::vector<SceneInstanceData> model_indices(models.size());
 	for (size_t i = 0; i < models.size(); ++i)
 	{
-		model_indices[i] = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index), uint32_t(models[i].object_type)};
+		model_indices[i]         = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index), uint32_t(models[i].object_type)};
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
@@ -238,7 +236,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 
 	data_to_model_buffer = std::make_unique<vkb::core::Buffer>(get_device(), model_indices.size() * sizeof(model_indices[0]), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	data_to_model_buffer->update(model_indices.data(), model_indices.size() * sizeof(model_indices[0]), 0);
-	
+
 	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
 	auto index_buffer_size  = nTotalTriangles * sizeof(models[0].triangles);
@@ -261,7 +259,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	// now transfer over to the end buffer
 	if (scene_options.use_vertex_staging_buffer)
 	{
-		auto &cmd  = device->request_command_buffer();
+		auto &cmd = device->request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -276,7 +274,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 			return output_buffer;
 		};
 		vertex_buffer = copy(*staging_vertex_buffer);
-		index_buffer = copy(*staging_index_buffer);
+		index_buffer  = copy(*staging_index_buffer);
 
 		cmd.end();
 		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -284,30 +282,39 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		queue.submit(cmd, fence);
 		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
 		vkDestroyFence(device->get_handle(), fence, nullptr);
-		
 	}
 	else
 	{
 		vertex_buffer = std::move(staging_vertex_buffer);
-		index_buffer = std::move(staging_index_buffer);
+		index_buffer  = std::move(staging_index_buffer);
 	}
+
 
 	for (size_t i = 0; i < models.size(); ++i)
 	{
-		auto &      model = models[i];
-		const auto &vertices = model.vertices;
-		const auto &indices  = model.triangles;
+		ModelBuffer buffer;
+		buffer.vertex_offset  = vertex_buffer_offsets[i];
+		buffer.index_offset   = index_buffer_offsets[i];
+		buffer.is_static      = true;
+		buffer.default_transform = models[i].default_transform;
+		buffer.num_vertices      = models[i].vertices.size();
+		buffer.num_triangles      = models[i].triangles.size();
+		modelBuffers.emplace_back(std::move(buffer));
+	}
+}
 
+/*
+	Create the bottom level acceleration structure that contains the scene's geometry (triangles)
+*/
+void RaytracingExtended::create_bottom_level_acceleration_structure()
+{
+	assert(!!raytracing_scene);
+	for (auto &&modelBuffer : raytracing_scene->modelBuffers)
+	{
+		const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
-		// Create buffers for the bottom level geometry
-		// For the sake of simplicity we won't stage the vertex data to the GPU memory
-
-		// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
-		
-
-		ModelBuffer modelBuffer;
 		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-		VkTransformMatrixKHR transform_matrix = model.default_transform;
+		VkTransformMatrixKHR transform_matrix = modelBuffer.default_transform;
 		modelBuffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 		modelBuffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
@@ -315,11 +322,8 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		VkDeviceOrHostAddressConstKHR index_data_device_address{};
 		VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
 
-		modelBuffer.vertex_offset = vertex_buffer_offsets[i];
-		modelBuffer.index_offset = index_buffer_offsets[i];
-
-		vertex_data_device_address.deviceAddress      = get_buffer_device_address(vertex_buffer->get_handle()) + vertex_buffer_offsets[i];
-		index_data_device_address.deviceAddress = get_buffer_device_address(index_buffer->get_handle()) + index_buffer_offsets[i];
+		vertex_data_device_address.deviceAddress      = get_buffer_device_address(vertex_buffer->get_handle()) + modelBuffer.vertex_offset;
+		index_data_device_address.deviceAddress = get_buffer_device_address(index_buffer->get_handle()) + modelBuffer.index_offset;
 		transform_matrix_device_address.deviceAddress = get_buffer_device_address(modelBuffer.transform_matrix_buffer->get_handle());
 
 		// The bottom level acceleration structure contains one set of triangles as the input geometry
@@ -333,14 +337,15 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_geometry.geometry.triangles.pNext         = nullptr;
 		acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
 		acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
-		acceleration_structure_geometry.geometry.triangles.maxVertex     = (uint32_t) vertices.size();
+		acceleration_structure_geometry.geometry.triangles.maxVertex     = modelBuffer.num_vertices;
 		acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(NewVertex);
 		acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
 		acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
 		acceleration_structure_geometry.geometry.triangles.transformData = transform_matrix_device_address;
 
+		modelBuffer.buildRangeInfo                              = {};
 		auto &acceleration_structure_build_range_info           = modelBuffer.buildRangeInfo;
-		acceleration_structure_build_range_info.primitiveCount  = indices.size();
+		acceleration_structure_build_range_info.primitiveCount  = modelBuffer.num_triangles;
 		acceleration_structure_build_range_info.primitiveOffset = 0;        //primitiveOffset;
 		acceleration_structure_build_range_info.firstVertex     = 0;        //firstVertex;
 		acceleration_structure_build_range_info.transformOffset = 0;
@@ -355,7 +360,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_build_geometry_info.geometryCount = 1;
 		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-		uint32_t primitive_count = indices.size();
+		uint32_t primitive_count = modelBuffer.num_triangles;
 
 		auto &acceleration_structure_build_sizes_info = modelBuffer.buildSize;
 		acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -365,11 +370,9 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		    &acceleration_structure_build_geometry_info,
 		    &primitive_count,
 		    &acceleration_structure_build_sizes_info);
-
-		// push to modelBuffers
-		modelBuffers.emplace_back(std::move(modelBuffer));
 	}
 
+	auto &                                                  modelBuffers = raytracing_scene->modelBuffers;
 	std::vector<VkAccelerationStructureGeometryKHR>         geometries;
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> rangeInfos;
 	for (size_t i = 0; i < modelBuffers.size(); ++i)
@@ -435,6 +438,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
 }
+
 
 /*
 	Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
@@ -607,6 +611,7 @@ void RaytracingExtended::create_scene()
 										0.f, 0.f, 0.f, 1.f};
 	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
+	create_static_object_buffers();
 	create_bottom_level_acceleration_structure();
 	create_top_level_acceleration_structure();
 }
