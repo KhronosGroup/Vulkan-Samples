@@ -287,9 +287,8 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 
 		cmd.end();
 		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		auto  fence = device->request_fence();
-		queue.submit(cmd, fence);
-		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
+		queue.submit(cmd, device->request_fence());
+        device->get_fence_pool().wait();
 
 	}
 	else
@@ -1049,10 +1048,8 @@ void RaytracingExtended::draw()
 	submit.commandBufferCount  = 1;
 	submit.pCommandBuffers      = &raytracing_command_buffers[i];
 
-	static auto fence = device->request_fence();
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
-	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, 1, UINT64_MAX));
-    device->get_fence_pool().reset();
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
+    device->get_fence_pool().wait();
 
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));

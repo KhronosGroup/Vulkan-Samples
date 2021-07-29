@@ -146,13 +146,13 @@ class RaytracingExtended : public ApiVulkanSample
 	struct UniformData
 	{
 		glm::mat4 view_inverse;
-		__attribute__((unused)) glm::mat4 proj_inverse;
+		glm::mat4 proj_inverse;
 	} uniform_data;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
 	struct SceneInstanceData
 	{
-		__attribute__((unused)) uint32_t vertex_index; // index of first data
+		uint32_t vertex_index; // index of first data
 		uint32_t indices_index;
 		uint32_t image_index;
 		uint32_t object_type; // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
