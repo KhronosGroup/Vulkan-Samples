@@ -86,6 +86,8 @@ class RaytracingExtended : public ApiVulkanSample
 	// fixed buffers
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::Buffer> index_buffer = nullptr;
+	std::unique_ptr<vkb::core::Buffer> dynamic_vertex_buffer = nullptr;
+	std::unique_ptr<vkb::core::Buffer> dynamic_index_buffer  = nullptr;
 
 	struct SceneLoadInfo
 	{

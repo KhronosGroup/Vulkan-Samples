@@ -309,6 +309,17 @@ void RaytracingExtended::create_static_object_buffers()
 void RaytracingExtended::create_bottom_level_acceleration_structure()
 {
 	assert(!!raytracing_scene);
+	/**
+	Though we use similar code to handle static and dynamic objects, several parts differ:
+	1. Static / dynamic objects have different buffers (device-only vs host-visible)
+	2. Dynamic objects use different flags (i.e. for fast rebuilds)
+	*/
+
+	assert(!!vertex_buffer && !!index_buffer);
+	const uint64_t static_vertex_handle = get_buffer_device_address(vertex_buffer->get_handle()),
+	               static_index_handle  = get_buffer_device_address(index_buffer->get_handle()),
+	               dynamic_vertex_handle = dynamic_vertex_buffer ? get_buffer_device_address(dynamic_vertex_buffer->get_handle()) : 0,
+	               dynamic_index_handle  = dynamic_index_buffer ? get_buffer_device_address(dynamic_index_buffer->get_handle()) : 0;
 	for (auto &&modelBuffer : raytracing_scene->modelBuffers)
 	{
 		const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
@@ -322,8 +333,8 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		VkDeviceOrHostAddressConstKHR index_data_device_address{};
 		VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
 
-		vertex_data_device_address.deviceAddress      = get_buffer_device_address(vertex_buffer->get_handle()) + modelBuffer.vertex_offset;
-		index_data_device_address.deviceAddress = get_buffer_device_address(index_buffer->get_handle()) + modelBuffer.index_offset;
+		vertex_data_device_address.deviceAddress      =  modelBuffer.vertex_offset + (modelBuffer.is_static ? static_vertex_handle : dynamic_vertex_handle);
+		index_data_device_address.deviceAddress = modelBuffer.index_offset + (modelBuffer.is_static ? static_index_handle : dynamic_index_handle);
 		transform_matrix_device_address.deviceAddress = get_buffer_device_address(modelBuffer.transform_matrix_buffer->get_handle());
 
 		// The bottom level acceleration structure contains one set of triangles as the input geometry
@@ -356,7 +367,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 		acceleration_structure_build_geometry_info.pNext         = nullptr;
 		acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		acceleration_structure_build_geometry_info.flags         = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+		acceleration_structure_build_geometry_info.flags         = modelBuffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 		acceleration_structure_build_geometry_info.geometryCount = 1;
 		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
@@ -408,7 +419,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 			VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
 			acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 			acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-			acceleration_build_geometry_info.flags                     = VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR;
+			acceleration_build_geometry_info.flags                     = modelBuffers[i].is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 			acceleration_build_geometry_info.mode                      = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 			acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure.handle;
 			acceleration_build_geometry_info.geometryCount             = 1;
