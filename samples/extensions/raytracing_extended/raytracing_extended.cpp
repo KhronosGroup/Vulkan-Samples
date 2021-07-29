@@ -48,6 +48,8 @@ namespace
 	};
 }
 
+using Triangle = std::array<uint32_t, 3>;
+
 #define ASSERT_LOG(cond, msg) \
 	{if (!(cond)) { LOGE(msg); throw std::runtime_error(msg); }}
 
@@ -201,14 +203,11 @@ void RaytracingExtended::create_static_object_buffers()
 	auto &models       = raytracing_scene->models;
 	auto &modelBuffers = raytracing_scene->modelBuffers;
 	modelBuffers.resize(0);
-	using Triangle = decltype(models[0].triangles[0]);
 
 	std::vector<uint32_t>          vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
 	uint32_t                       nTotalVertices = 0, nTotalTriangles = 0;
-	std::vector<SceneInstanceData> model_indices(models.size());
 	for (size_t i = 0; i < models.size(); ++i)
 	{
-		model_indices[i]         = {uint32_t(nTotalVertices), uint32_t(nTotalTriangles), uint32_t(models[i].texture_index), uint32_t(models[i].object_type)};
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
@@ -216,8 +215,7 @@ void RaytracingExtended::create_static_object_buffers()
 		nTotalTriangles += models[i].triangles.size();
 	}
 
-	data_to_model_buffer = std::make_unique<vkb::core::Buffer>(get_device(), model_indices.size() * sizeof(model_indices[0]), VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	data_to_model_buffer->update(model_indices.data(), model_indices.size() * sizeof(model_indices[0]), 0);
+	
 
 	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
@@ -278,9 +276,10 @@ void RaytracingExtended::create_static_object_buffers()
 		buffer.index_offset   = index_buffer_offsets[i];
 		buffer.is_static      = true;
 		buffer.default_transform = models[i].default_transform;
-		buffer.num_vertices      = models[i].vertices.size();
-		buffer.num_triangles      = models[i].triangles.size();
-		buffer.object_type        = 0;
+		buffer.num_vertices    = models[i].vertices.size();
+		buffer.num_triangles   = models[i].triangles.size();
+		buffer.texture_index   = models[i].texture_index;
+		buffer.object_type     = 0;
 		modelBuffers.emplace_back(std::move(buffer));
 	}
 	timer.stop_and_log();
@@ -454,20 +453,38 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 	    0.0f, 1.0f, 0.0f, 0.0f,
 	    0.0f, 0.0f, 1.0f, 0.0f};
 
-	// create a vector
+	// This buffer is used to correlate the instance information with model information
+	// and is required because the number and type of instances is dynamic
+	std::vector<SceneInstanceData> model_instance_data;
+
+	// Add the instances for the static scene, billboard texture, and refraction model
 	std::vector<VkAccelerationStructureInstanceKHR> instances;
 	for (size_t i = 0; i < raytracing_scene->modelBuffers.size(); ++i)
 	{
-		auto &modelBuffer                                                      = raytracing_scene->modelBuffers[i];
+		auto &model_buffer                                                      = raytracing_scene->modelBuffers[i];
 		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
 		acceleration_structure_instance.transform                              = transform_matrix;
 		acceleration_structure_instance.instanceCustomIndex                    = i;
 		acceleration_structure_instance.mask                                   = 0xFF;
 		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
 		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		acceleration_structure_instance.accelerationStructureReference         = modelBuffer.bottom_level_acceleration_structure.device_address;
+		acceleration_structure_instance.accelerationStructureReference         = model_buffer.bottom_level_acceleration_structure.device_address;
 		instances.emplace_back(acceleration_structure_instance);
+
+		SceneInstanceData scene_instance;
+		scene_instance.vertex_index  = model_buffer.vertex_offset / sizeof(NewVertex);
+		scene_instance.indices_index = model_buffer.index_offset / sizeof(Triangle);
+		scene_instance.object_type   = model_buffer.object_type;
+		scene_instance.image_index   = model_buffer.texture_index;
+		model_instance_data.emplace_back(scene_instance);
 	}
+
+	size_t data_to_model_size                                                         = model_instance_data.size() * sizeof(model_instance_data[0]);
+	if (!data_to_model_buffer || data_to_model_buffer->get_size() < data_to_model_size)
+	{
+		data_to_model_buffer = std::make_unique<vkb::core::Buffer>(get_device(), data_to_model_size, VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
+	data_to_model_buffer->update(model_instance_data.data(), data_to_model_size, 0);
 
 	const size_t                       instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
 	std::unique_ptr<vkb::core::Buffer> instances_buffer  = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -772,7 +789,6 @@ void RaytracingExtended::create_dynamic_object_buffers()
 	buffer.num_vertices      = vertices_out.size();
 	buffer.num_triangles     = indices.size();
 	buffer.object_type       = ObjectType::OBJECT_FLAME;
-	raytracing_scene->modelBuffers.emplace_back(std::move(buffer));
 }
 
 /*

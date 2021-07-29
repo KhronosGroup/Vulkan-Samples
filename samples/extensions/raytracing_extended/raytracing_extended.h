@@ -69,6 +69,7 @@ class RaytracingExtended : public ApiVulkanSample
 		size_t                                   index_offset  = std::numeric_limits<size_t>::max();        // in bytes
 		size_t                                   num_vertices  = std::numeric_limits<size_t>::max();
 		size_t                                   num_triangles = std::numeric_limits<size_t>::max();
+		uint32_t                                 texture_index = std::numeric_limits<uint32_t>::max();
 		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer = nullptr;
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
@@ -114,6 +115,7 @@ class RaytracingExtended : public ApiVulkanSample
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
+	ModelBuffer refraction_model;
 
 
 	AccelerationStructureExtended top_level_acceleration_structure;
