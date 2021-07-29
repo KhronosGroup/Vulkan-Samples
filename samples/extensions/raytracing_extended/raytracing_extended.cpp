@@ -854,10 +854,10 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 		{
 			const float x  = float(i) / float(grid_size);
 			const float y  = float(j) / float(grid_size);
-			const float   lateral_scale = 1.f;//glm::distance(glm::vec2(x, y), glm::vec2(0.5f, 0.5f));
+			const float   lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
 			glm::vec3   pt = {2 * x,
                             y,
-                            lateral_scale * 0.01f * cos((25.f * time + 25.f * x) / (2.f * 3.14159))
+                            lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))
 			};
 			pts.emplace_back(transform_pt(pt, true));
 			normals.emplace_back(glm::vec3{0, 0, 0});

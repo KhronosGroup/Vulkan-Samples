@@ -142,7 +142,7 @@ void handleDraw()
     } else {
       // the refraction itself is colorless, so
       // encode the index of refraction in the color
-      const float base_IOR = 1.02;
+      const float base_IOR = 1.01;
       const float x = texcoord.x, y = texcoord.y;
       const float t = min(min(min(min(x, 1-x), y), 1-y), 0.5) / 0.5;
       const float IOR = t * base_IOR + (1 - t) * 1;
