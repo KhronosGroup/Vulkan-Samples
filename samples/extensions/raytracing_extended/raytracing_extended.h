@@ -40,8 +40,8 @@ class RaytracingExtended : public ApiVulkanSample
 		RENDER_BARYCENTRIC,
 		RENDER_INSTANCE_ID,
 		RENDER_DISTANCE,
-		RENDER_GLOBAL_XYZ __attribute__((unused)),
-		RENDER_SHADOW_MAP __attribute__((unused)),
+		RENDER_GLOBAL_XYZ,
+		RENDER_SHADOW_MAP,
 		RENDER_AO
 	};
 

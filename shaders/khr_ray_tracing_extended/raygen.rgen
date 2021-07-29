@@ -25,11 +25,6 @@ layout(binding = 2, set = 0) uniform CameraProperties
 	mat4 viewInverse;
 	mat4 projInverse;
 } cam;
-layout(binding = 3, set = 0) uniform RenderSettings
-{
-	uvec4 render_mode;
-} render_settings;
-
 
 struct Payload
 {
@@ -46,6 +41,8 @@ vec3 heatmap(float value, float minValue, float maxValue)
 }
 
 layout(location = 0) rayPayloadEXT Payload hitValue;
+layout (constant_id = 0) const uint render_mode = 0;
+layout (constant_id = 1) const uint maxRays = 12;
 
 void main() 
 {
@@ -60,8 +57,8 @@ void main()
 	float tmin = 0.001;
 	float tmax = 10000.0;
 
-	uint max_rays = 16;//render_settings.render_mode.y;
-	if (render_settings.render_mode[0] != 0)
+	uint max_rays = maxRays;
+	if (render_mode != 0)
 	{
 		max_rays = 1;
 	}
@@ -96,7 +93,7 @@ void main()
 				scale = min(scale * shadow_mult, 1);
 				color.xyz *= scale;
 				current_mode = 101;
-				if (render_settings.render_mode[0] == 5)
+				if (render_mode == 5)
 				{
 					color = vec4(scale, scale, scale, 1);
 					break;
@@ -132,7 +129,7 @@ void main()
 				accumulated_ao /= (max_dist * accumulated_factor);
 				accumulated_ao *= accumulated_ao;
 				accumulated_ao = max(min((accumulated_ao) * ao_mult, 1), 0);
-				if (render_settings.render_mode[0] == 6)
+				if (render_mode == 6)
 				{
 					color = vec4(accumulated_ao, accumulated_ao, accumulated_ao, 1);
 					break;

@@ -114,7 +114,6 @@ RaytracingExtended::~RaytracingExtended()
 		raytracing_scene.reset();
 		vertex_buffer.reset();
 		index_buffer.reset();
-		render_settings_ubo.reset();
 		ubo.reset();
 	}
 }
@@ -703,14 +702,12 @@ void RaytracingExtended::create_descriptor_sets()
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*ubo);
-	VkDescriptorBufferInfo render_settings_descriptor = create_descriptor(*render_settings_ubo);
 	VkDescriptorBufferInfo vertex_descriptor          = create_descriptor(*vertex_buffer);
 	VkDescriptorBufferInfo index_descriptor           = create_descriptor(*index_buffer);
 	VkDescriptorBufferInfo data_map_descriptor        = create_descriptor(*data_to_model_buffer);
 
 	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
-	VkWriteDescriptorSet render_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3, &render_settings_descriptor);
 	VkWriteDescriptorSet vertex_buffer_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &vertex_descriptor);
 	VkWriteDescriptorSet index_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &index_descriptor);
 	VkWriteDescriptorSet data_map_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &data_map_descriptor);
@@ -720,7 +717,6 @@ void RaytracingExtended::create_descriptor_sets()
 	    acceleration_structure_write,
 	    result_image_write,
 	    uniform_buffer_write,
-	    render_buffer_write,
 		vertex_buffer_write,
 		index_buffer_write,
 	    data_map_write,
@@ -800,11 +796,16 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	uniform_buffer_binding.descriptorCount = 1;
 	uniform_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR;
 
-	VkDescriptorSetLayoutBinding render_settings_buffer_binding{};
-	render_settings_buffer_binding.binding = 3;
-	render_settings_buffer_binding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	render_settings_buffer_binding.descriptorCount = 1;
-	render_settings_buffer_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+	// Pass render mode constant
+	struct SpecialConsts_s {
+		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
+		uint32_t maxRays = 12;
+	}specialConsts;
+	std::vector<VkSpecializationMapEntry> specializationMapEntries;
+	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecialConsts_s, renderMode), sizeof(uint32_t)));
+	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(1, offsetof(SpecialConsts_s, maxRays), sizeof(uint32_t)));
+	VkSpecializationInfo specializationInfo = vkb::initializers::specialization_info(
+		specializationMapEntries.size(), &specializationMapEntries.front(), sizeof(SpecialConsts_s), &specialConsts);
 
 	VkDescriptorSetLayoutBinding vertex_binding{};
 	vertex_binding.binding                         = 4;
@@ -834,7 +835,6 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
 	    uniform_buffer_binding,
-	    render_settings_buffer_binding,
 		vertex_binding,
 		index_binding,
 	    data_map_binding,
@@ -866,6 +866,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	// Ray generation group
 	{
 		shader_stages.push_back(load_shader("khr_ray_tracing_extended/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+		shader_stages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -892,6 +893,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	// Ray closest hit group
 	{
 		shader_stages.push_back(load_shader("khr_ray_tracing_extended/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+		shader_stages.back().pSpecializationInfo = &specializationInfo;
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;
@@ -945,13 +947,6 @@ void RaytracingExtended::create_uniform_buffer()
 	                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	ubo->convert_and_update(uniform_data);
-
-	render_settings_ubo = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                          sizeof(uniform_data),
-	                                                          VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
-	render_settings_ubo->convert_and_update(render_settings);
-
 	update_uniform_buffers();
 }
 
@@ -1045,8 +1040,6 @@ void RaytracingExtended::update_uniform_buffers()
 	uniform_data.proj_inverse = glm::inverse(camera.matrices.perspective);
 	uniform_data.view_inverse = glm::inverse(camera.matrices.view);
 	ubo->convert_and_update(uniform_data);
-
-	render_settings_ubo->convert_and_update(render_settings);
 }
 
 bool RaytracingExtended::prepare(vkb::Platform &platform)
