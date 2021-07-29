@@ -138,6 +138,10 @@ void main()
 				color.xyz *= accumulated_ao;
 			}
 			
+		} else if (object_type == 1)
+		{
+			color = vec4(0.25, 0.25, 0.25, 1);
+			break;
 		}
 	}
 

@@ -111,11 +111,10 @@ class RaytracingExtended : public ApiVulkanSample
 		std::vector<vkb::sg::Image *>      images;
 		std::vector<VkDescriptorImageInfo> imageInfos;
 		std::vector<Model>                 models;
-		std::vector<ModelBuffer>		   modelBuffers;
+		std::vector<ModelBuffer>		   model_buffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
-	ModelBuffer refraction_model;
 
 
 	AccelerationStructureExtended top_level_acceleration_structure;

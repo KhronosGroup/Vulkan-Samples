@@ -88,8 +88,10 @@ void handleDraw()
     uint triangleOffset = data_map.indices[4*index + 1];
     uint imageOffset = data_map.indices[4 * index + 2];
     uint objectType = data_map.indices[4 * index + 3];
-    if (imageOffset >= 25){
-       return;
+
+    if (objectType == 1){
+      hitValue.intersection = vec4(vec3(0, 0, 0), objectType);
+      hitValue.normal = vec4(vec3(0, 0, 0), gl_HitTEXT);
     }
 
     uint index0 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID)];
@@ -107,13 +109,18 @@ void handleDraw()
     vec3 normal = normalize(alpha * A.normal + beta * B.normal + gamma * C.normal);
     vec3 worldNormal = normalize(cross(B.pt - A.pt, C.pt - A.pt));
 
-    // obtain texture coordinate
-    vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
-    vec4 tex_value = texture(textures[imageOffset], texcoord);
-    hitValue.color = tex_value;
-    hitValue.intersection = vec4(worldPt.xyz, objectType);
-    hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
-    //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
+    if ((objectType == 0 || objectType == 2)){
+      if (imageOffset >= 25){
+        return; // this shouldn't happen
+      }
+      // obtain texture coordinate
+      vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
+      vec4 tex_value = texture(textures[imageOffset], texcoord);
+      hitValue.color = tex_value;
+      hitValue.intersection = vec4(worldPt.xyz, objectType);
+      hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
+      //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
+    }
 }
 
 void main()
