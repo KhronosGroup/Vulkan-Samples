@@ -840,7 +840,7 @@ void RaytracingExtended::create_descriptor_sets()
 void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
 	auto transform_pt = [](glm::vec3 pt, bool translate) {
-		glm::vec3 translation = {-0.70, -2, -2.3};
+		glm::vec3 translation = {-0.70, -3.35, -2.3};
 		return glm::vec3{pt.y, pt.x, pt.z} + translation;
 	};
 	uint32_t grid_size = 100;
@@ -854,10 +854,10 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 		{
 			const float x  = float(i) / float(grid_size);
 			const float y  = float(j) / float(grid_size);
-			const float lateral_scale = 16 * x * (1 - x) * y * (1 - y);
-			glm::vec3   pt = {x,
+			const float   lateral_scale = 1.f;//glm::distance(glm::vec2(x, y), glm::vec2(0.5f, 0.5f));
+			glm::vec3   pt = {2 * x,
                             y,
-                lateral_scale * 0.025 * cos((15 * time + 5 * y) / (2.f * 3.14159)) * (0.9 + 0.1 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
+                            lateral_scale * 0.01f * cos((25.f * time + 25.f * x) / (2.f * 3.14159))
 			};
 			pts.emplace_back(transform_pt(pt, true));
 			normals.emplace_back(glm::vec3{0, 0, 0});
