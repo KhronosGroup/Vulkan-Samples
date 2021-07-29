@@ -142,7 +142,7 @@ void main()
 		{
 			origin = vec4(hitValue.intersection.xyz, 0);
 			const float IOR = hitValue.color.x;
-			const float max_IOR = 1.5;
+			const float max_IOR = 1.01;
 			float eta = 1 / IOR;
 			float c = dot(object_normal, direction.xyz);
 			float t = (IOR - 1) / (max_IOR - 1);

@@ -139,9 +139,9 @@ void handleDraw()
     } else {
       // the refraction itself is colorless, so
       // encode the index of refraction in the color
-      const float base_IOR = 1.5;
+      const float base_IOR = 1.01;
       const float x = texcoord.x, y = texcoord.y;
-      const float IOR = 1 + x * (1 - x) * y * (1 - y) * (base_IOR - 1);
+      const float IOR = 1 + 16 * x * (1 - x) * y * (1 - y) * (base_IOR - 1);
       hitValue.color = vec4(IOR, 0, 0, 0);
       hitValue.normal = vec4(normal.x, normal.y, normal.z, gl_HitTEXT);
     }

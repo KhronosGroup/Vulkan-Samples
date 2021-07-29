@@ -779,10 +779,10 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 		{
 			const float x  = float(i) / float(grid_size);
 			const float y  = float(j) / float(grid_size);
-			const float lateral_scale = x * (1 - x) * y * (1 - y);
+			const float lateral_scale = 16 * x * (1 - x) * y * (1 - y);
 			glm::vec3   pt = {x,
                             y,
-                            lateral_scale * 1.f * cos(25.f * (float(time) * x) / (2.f * 3.14159))* (0.75 + 0.25 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
+                lateral_scale * 0.025 * cos((15 * time + 5 * y) / (2.f * 3.14159)) * (0.9 + 0.1 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
 			};
 			pts.emplace_back(transform_pt(pt, true));
 			normals.emplace_back(glm::vec3{0, 0, 0});
