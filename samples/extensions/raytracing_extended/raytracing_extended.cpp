@@ -315,7 +315,10 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 
 		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
 		VkTransformMatrixKHR transform_matrix = model_buffer.default_transform;
-		model_buffer.transform_matrix_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		if (!model_buffer.transform_matrix_buffer || model_buffer.transform_matrix_buffer->get_size() != sizeof(transform_matrix))
+		{
+			model_buffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		}
 		model_buffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 		VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
@@ -373,11 +376,14 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 
 		// Create a buffer to hold the acceleration structure
 		auto &bottom_level_acceleration_structure  = model_buffers[i].bottom_level_acceleration_structure;
-		bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
-		    get_device(),
-		    model_buffers[i].buildSize.accelerationStructureSize,
-		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-		    VMA_MEMORY_USAGE_GPU_ONLY);
+		if (!bottom_level_acceleration_structure.buffer || bottom_level_acceleration_structure.buffer->get_size() != model_buffers[i].buildSize.accelerationStructureSize)
+		{
+			bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
+			    get_device(),
+			    model_buffers[i].buildSize.accelerationStructureSize,
+			    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+			    VMA_MEMORY_USAGE_GPU_ONLY);
+		}
 
 		// Create the acceleration structure
 		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
@@ -485,10 +491,13 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	data_to_model_buffer->update(model_instance_data.data(), data_to_model_size, 0);
 
 	const size_t                       instancesDataSize = sizeof(VkAccelerationStructureInstanceKHR) * instances.size();
-	std::unique_ptr<vkb::core::Buffer> instances_buffer  = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                                              instancesDataSize,
-                                                                                              VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-                                                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
+	if (!instances_buffer || instances_buffer->get_size() != instancesDataSize)
+	{
+		instances_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                       instancesDataSize,
+		                                                       VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+		                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	}
 	instances_buffer->update(instances.data(), instancesDataSize);
 
 	VkDeviceOrHostAddressConstKHR instance_data_device_address{};
@@ -637,7 +646,7 @@ void RaytracingExtended::create_scene()
 	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
 	create_static_object_buffers();
-	create_dynamic_object_buffers();
+	create_dynamic_object_buffers(0.f);
 	create_bottom_level_acceleration_structure(false);
 	create_top_level_acceleration_structure();
 }
@@ -745,18 +754,41 @@ void RaytracingExtended::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
-void RaytracingExtended::create_dynamic_object_buffers()
+void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
-	std::vector<glm::vec3> pts = { {0.f, 0.f, 0.f},
-		                           {1.f, 0.f, 0.f},
-		                           {1.f, 1.f, 0.f},
-		                           {0.f, 1.f, 0.f} };
-	std::vector<std::array<uint32_t, 3>> indices = { {0, 1, 2},
-		                                {0, 2, 3} };
-	glm::vec3               translation = {-0.70, -2, -2.3};
-	for (auto&& pt : pts)
+	auto transform_pt = [](glm::vec3 pt) {
+		glm::vec3 translation = {-0.70, -2, -2.3};
+		return glm::vec3{pt.y, pt.x, pt.z} + translation;
+	};
+	uint32_t grid_size = 100;
+	std::vector<glm::vec3> pts;
+	std::vector<Triangle> indices;
+	for (uint32_t i = 0; i < grid_size; ++i)
 	{
-		pt = 1.f * glm::vec3{pt.y, pt.x, pt.z} + translation;
+		for (uint32_t j = 0; j < grid_size; ++j)
+		{
+			const float x  = float(i) / float(grid_size);
+			const float y  = float(j) / float(grid_size);
+			const float lateral_scale = x * (1 - x) * y * (1 - y);
+			glm::vec3   pt = {x,
+                            y,
+                            lateral_scale * 1.f * cos((float(time) * x) / (2.f * 3.14159) * 10.f)* (0.5 + 0.5 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
+			};
+			pts.emplace_back(transform_pt(pt));
+
+			if (i + 1 < grid_size && j + 1 < grid_size)
+			{
+				indices.emplace_back(Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1});
+				indices.emplace_back(Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1});
+			}
+		}
+	}
+	for (auto&& tri : indices)
+	{
+		for (auto&& index : tri)
+		{
+			ASSERT_LOG(index >= 0 && index < pts.size(), "Valid tri");
+		}
 	}
 
 	std::vector<NewVertex> vertices_out(pts.size());
@@ -782,7 +814,15 @@ void RaytracingExtended::create_dynamic_object_buffers()
 	dynamic_vertex_buffer->update(vertices_out.data(), vertex_buffer_size);
 	dynamic_index_buffer->update(indices.data(), index_buffer_size);
 
-	ModelBuffer buffer;
+	auto iter = std::find_if(raytracing_scene->model_buffers.begin(), raytracing_scene->model_buffers.end(), [](const ModelBuffer &in) {
+		return in.object_type == OBJECT_REFRACTION;
+	});
+	if (iter == raytracing_scene->model_buffers.cend())
+	{
+		raytracing_scene->model_buffers.emplace_back(ModelBuffer{});
+	}
+
+	ModelBuffer &buffer      = iter == raytracing_scene->model_buffers.cend() ? raytracing_scene->model_buffers.back() : *iter;
 	buffer.vertex_offset     = 0;
 	buffer.index_offset      = 0;
 	buffer.is_static         = false;
@@ -790,17 +830,6 @@ void RaytracingExtended::create_dynamic_object_buffers()
 	buffer.num_vertices      = vertices_out.size();
 	buffer.num_triangles     = indices.size();
 	buffer.object_type       = ObjectType::OBJECT_REFRACTION;
-	auto iter                = std::find_if(raytracing_scene->model_buffers.begin(), raytracing_scene->model_buffers.end(), [](const ModelBuffer& in){
-		return in.object_type == OBJECT_REFRACTION;
-	});
-	if (iter != raytracing_scene->model_buffers.cend())
-	{
-		*iter = std::move(buffer);
-	}
-	else
-	{
-		raytracing_scene->model_buffers.emplace_back(std::move(buffer));
-	}
 }
 
 /*
@@ -1180,7 +1209,8 @@ void RaytracingExtended::draw()
 
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, device->request_fence()));
+	device->get_fence_pool().wait();
 	ApiVulkanSample::submit_frame();
 }
 
@@ -1200,7 +1230,8 @@ void RaytracingExtended::render(float delta_time)
 		return;
 	frame_count = (frame_count + 1) % 60;
 	bool print_time = !frame_count;
-	create_dynamic_object_buffers();
+	auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	create_dynamic_object_buffers(time.count() / 1000. / 1000.);
 	create_bottom_level_acceleration_structure(true, print_time);
 	create_top_level_acceleration_structure(print_time);
 	draw();

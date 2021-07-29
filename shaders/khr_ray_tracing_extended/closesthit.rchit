@@ -92,6 +92,8 @@ void handleDraw()
     if (objectType == 1){
       hitValue.intersection = vec4(vec3(0, 0, 0), objectType);
       hitValue.normal = vec4(vec3(0, 0, 0), gl_HitTEXT);
+      hitValue.color = vec4(1.0 - attribs.x - attribs.y, attribs.x, attribs.y, 1.f);
+      return;
     }
 
     uint index0 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID)];
