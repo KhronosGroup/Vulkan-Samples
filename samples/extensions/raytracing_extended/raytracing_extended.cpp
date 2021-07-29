@@ -69,8 +69,10 @@ struct RaytracingExtended::Model
 	VkTransformMatrixKHR                 default_transform;
 	uint32_t                             texture_index;
 	uint32_t                             object_type;
-	Model()
-	    : default_transform()
+	Model() :
+	    default_transform({1.0f, 0.0f, 0.0f, 0.0f,
+	                       0.0f, 1.0f, 0.0f, 0.0f,
+	                       0.0f, 0.0f, 1.0f, 0.0f})
 	    , texture_index(0)
 	    , object_type(0) {}
 };
@@ -101,12 +103,15 @@ RaytracingExtended::RaytracingExtended()
 
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+
+	
 }
 
 RaytracingExtended::~RaytracingExtended()
 {
 	if (device)
 	{
+		flame_texture.image.reset();
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
@@ -133,6 +138,11 @@ void RaytracingExtended::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_ray_tracing_features.rayTracingPipeline               = VK_TRUE;
 	auto &requested_acceleration_structure_features                 = gpu.request_extension_features<VkPhysicalDeviceAccelerationStructureFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
 	requested_acceleration_structure_features.accelerationStructure = VK_TRUE;
+
+	if (gpu.get_features().samplerAnisotropy)
+	{
+		gpu.get_mutable_requested_features().samplerAnisotropy = true;
+	}
 }
 
 /*
@@ -196,7 +206,39 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
 }
 
+void RaytracingExtended::create_flame_model()
+{
+	flame_texture = load_texture("textures/generated_flame.ktx");
+	std::vector<glm::vec3> pts     = { {0, 0, 0},
+                                   {1, 0, 0},
+                                   {1, 1, 0},
+                                   {0, 1, 0} };
+	std::vector<Triangle>  indices = { {0, 1, 2},
+                                      {0, 2, 3} };
 
+	std::vector<NewVertex> vertices;
+	for (size_t i = 0; i < pts.size(); ++i)
+	{
+		NewVertex vertex;
+		vertex.pos = pts[i];
+		vertex.normal = {0, 0, 1};
+		vertex.texcoord = { float(pts[i].x), float(pts[i].y) };
+		vertices.push_back(vertex);
+	}
+
+	Model model;
+	model.vertices = vertices;
+	model.triangles = indices;
+	model.object_type = OBJECT_FLAME;
+	model.texture_index = raytracing_scene->imageInfos.size();
+	VkDescriptorImageInfo image_info;
+	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	image_info.imageView   = flame_texture.image->get_vk_image_view().get_handle();
+	image_info.sampler = flame_texture.sampler;
+
+	raytracing_scene->models.emplace_back(std::move(model));
+	raytracing_scene->imageInfos.push_back(image_info);
+}
 
 void RaytracingExtended::create_static_object_buffers()
 {
@@ -281,7 +323,7 @@ void RaytracingExtended::create_static_object_buffers()
 		buffer.num_vertices    = models[i].vertices.size();
 		buffer.num_triangles   = models[i].triangles.size();
 		buffer.texture_index   = models[i].texture_index;
-		buffer.object_type     = 0;
+		buffer.object_type     = models[i].object_type;
 		model_buffers.emplace_back(std::move(buffer));
 	}
 	timer.stop_and_log();
@@ -464,26 +506,36 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 	// Add the instances for the static scene, billboard texture, and refraction model
 	std::vector<VkAccelerationStructureInstanceKHR> instances;
+	auto                                            add_instance = [&](ModelBuffer &model_buffer, const VkTransformMatrixKHR& transform_matrix, uint32_t instance_index) {
+        VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
+        acceleration_structure_instance.transform                              = transform_matrix;
+        acceleration_structure_instance.instanceCustomIndex                    = instance_index;
+        acceleration_structure_instance.mask                                   = 0xFF;
+        acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
+        acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
+        acceleration_structure_instance.accelerationStructureReference         = model_buffer.bottom_level_acceleration_structure.device_address;
+        instances.emplace_back(acceleration_structure_instance);
+	};
+
 	for (size_t i = 0; i < raytracing_scene->model_buffers.size(); ++i)
 	{
-		auto &model_buffer                                                      = raytracing_scene->model_buffers[i];
-		VkAccelerationStructureInstanceKHR acceleration_structure_instance{};
-		acceleration_structure_instance.transform                              = transform_matrix;
-		acceleration_structure_instance.instanceCustomIndex                    = i;
-		acceleration_structure_instance.mask                                   = 0xFF;
-		acceleration_structure_instance.instanceShaderBindingTableRecordOffset = 0;
-		acceleration_structure_instance.flags                                  = VK_GEOMETRY_INSTANCE_TRIANGLE_FACING_CULL_DISABLE_BIT_KHR;
-		acceleration_structure_instance.accelerationStructureReference         = model_buffer.bottom_level_acceleration_structure.device_address;
-		instances.emplace_back(acceleration_structure_instance);
+		auto &model_buffer = raytracing_scene->model_buffers[i];
 
 		SceneInstanceData scene_instance;
 		scene_instance.vertex_index  = model_buffer.vertex_offset / sizeof(NewVertex);
 		scene_instance.indices_index = model_buffer.index_offset / sizeof(Triangle);
 		scene_instance.object_type   = model_buffer.object_type;
 		scene_instance.image_index   = model_buffer.texture_index;
-		ASSERT_LOG(scene_instance.object_type == ObjectType::OBJECT_REFRACTION || scene_instance.image_index < raytracing_scene->images.size(), "Only the refraction model can be textureless.")
+		ASSERT_LOG(scene_instance.object_type == ObjectType::OBJECT_REFRACTION || scene_instance.image_index < raytracing_scene->imageInfos.size(), "Only the refraction model can be textureless.")
 		model_instance_data.emplace_back(scene_instance);
+
+		// these objects have a single instance with the identity transform
+		if (model_buffer.object_type == ObjectType::OBJECT_NORMAL || model_buffer.object_type == ObjectType::OBJECT_REFRACTION)
+		{
+			add_instance(model_buffer, transform_matrix, i);
+		}
 	}
+
 
 	size_t data_to_model_size                                                         = model_instance_data.size() * sizeof(model_instance_data[0]);
 	if (!data_to_model_buffer || data_to_model_buffer->get_size() < data_to_model_size)
@@ -647,6 +699,8 @@ void RaytracingExtended::create_scene()
 										0.f, 0.f, 0.f, 1.f};
 	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
+	
+	create_flame_model();
 	create_static_object_buffers();
 	create_dynamic_object_buffers(0.f);
 	create_bottom_level_acceleration_structure(false);
@@ -1305,24 +1359,13 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 
 					const auto name = texture->get_image()->get_name();
 					is_vase = (name.find("vase_dif.ktx") != std::basic_string<char>::npos);
-					// determine the index of the texture to assign
-					auto textureIter = std::find(images.cbegin(), images.cend(), texture->get_image());
-					if (textureIter == images.cend())
-					{
-						textureIndex = images.size();
-						auto image   = texture->get_image();
-						assert(!!image);
-						images.push_back(image);
-						VkDescriptorImageInfo imageInfo;
-						imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-						imageInfo.imageView   = image->get_vk_image_view().get_handle();
-						imageInfo.sampler     = baseTextureIter->second->get_sampler()->vk_sampler.get_handle();
-						imageInfos.push_back(imageInfo);
-					}
-					else
-					{
-						textureIndex = std::distance(images.cbegin(), textureIter);
-					}
+					textureIndex = imageInfos.size();
+					auto image   = texture->get_image();
+					VkDescriptorImageInfo imageInfo;
+					imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+					imageInfo.imageView   = image->get_vk_image_view().get_handle();
+					imageInfo.sampler     = baseTextureIter->second->get_sampler()->vk_sampler.get_handle();
+					imageInfos.push_back(imageInfo);
 				}
 
 				auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");

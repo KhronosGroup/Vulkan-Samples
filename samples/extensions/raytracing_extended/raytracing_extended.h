@@ -111,13 +111,13 @@ class RaytracingExtended : public ApiVulkanSample
 		~RaytracingScene() = default;
 		RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
-		std::vector<vkb::sg::Image *>      images;
 		std::vector<VkDescriptorImageInfo> imageInfos;
 		std::vector<Model>                 models;
 		std::vector<ModelBuffer>		   model_buffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
+	Texture                          flame_texture;
 
 
 	AccelerationStructureExtended top_level_acceleration_structure;
@@ -177,6 +177,7 @@ class RaytracingExtended : public ApiVulkanSample
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	void          create_storage_image();
 	void          create_static_object_buffers();
+	void          create_flame_model();
 	void          create_dynamic_object_buffers(float time);
 	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
 	void          create_top_level_acceleration_structure(bool print_time = true);
