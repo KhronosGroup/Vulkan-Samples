@@ -116,7 +116,9 @@ RaytracingExtended::~RaytracingExtended()
 		delete_acceleration_structure(top_level_acceleration_structure);
 		raytracing_scene.reset();
 		vertex_buffer.reset();
+		dynamic_vertex_buffer.reset();
 		index_buffer.reset();
+		dynamic_index_buffer.reset();
 		ubo.reset();
 	}
 }
@@ -730,10 +732,12 @@ void RaytracingExtended::create_descriptor_sets()
 	image_descriptor.imageView   = storage_image.view;
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*ubo);
-	VkDescriptorBufferInfo vertex_descriptor          = create_descriptor(*vertex_buffer);
-	VkDescriptorBufferInfo index_descriptor           = create_descriptor(*index_buffer);
-	VkDescriptorBufferInfo data_map_descriptor        = create_descriptor(*data_to_model_buffer);
+	VkDescriptorBufferInfo buffer_descriptor         = create_descriptor(*ubo);
+	VkDescriptorBufferInfo vertex_descriptor         = create_descriptor(*vertex_buffer);
+	VkDescriptorBufferInfo index_descriptor          = create_descriptor(*index_buffer);
+	VkDescriptorBufferInfo dynamic_vertex_descriptor = create_descriptor(*dynamic_vertex_buffer);
+	VkDescriptorBufferInfo dynamic_index_descriptor  = create_descriptor(*dynamic_index_buffer);
+	VkDescriptorBufferInfo data_map_descriptor       = create_descriptor(*data_to_model_buffer);
 
 	VkWriteDescriptorSet result_image_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 	VkWriteDescriptorSet uniform_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor);
@@ -741,6 +745,8 @@ void RaytracingExtended::create_descriptor_sets()
 	VkWriteDescriptorSet index_buffer_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5, &index_descriptor);
 	VkWriteDescriptorSet data_map_write   = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6, &data_map_descriptor);
 	VkWriteDescriptorSet texture_array_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7, raytracing_scene->imageInfos.data(), raytracing_scene->imageInfos.size());
+	VkWriteDescriptorSet dynamic_vertex_buffer_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 8, &dynamic_vertex_descriptor);
+	VkWriteDescriptorSet dynamic_index_buffer_write  = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 9, &dynamic_index_descriptor);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    acceleration_structure_write,
@@ -749,19 +755,23 @@ void RaytracingExtended::create_descriptor_sets()
 		vertex_buffer_write,
 		index_buffer_write,
 	    data_map_write,
-	    texture_array_write 
+	    texture_array_write ,
+		dynamic_vertex_buffer_write,
+		dynamic_index_buffer_write
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
 void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
-	auto transform_pt = [](glm::vec3 pt) {
+	auto transform_pt = [](glm::vec3 pt, bool translate) {
 		glm::vec3 translation = {-0.70, -2, -2.3};
 		return glm::vec3{pt.y, pt.x, pt.z} + translation;
 	};
 	uint32_t grid_size = 100;
 	std::vector<glm::vec3> pts;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
 	std::vector<Triangle> indices;
 	for (uint32_t i = 0; i < grid_size; ++i)
 	{
@@ -772,23 +782,32 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 			const float lateral_scale = x * (1 - x) * y * (1 - y);
 			glm::vec3   pt = {x,
                             y,
-                            lateral_scale * 1.f * cos((float(time) * x) / (2.f * 3.14159) * 10.f)* (0.5 + 0.5 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
+                            lateral_scale * 1.f * cos(25.f * (float(time) * x) / (2.f * 3.14159))* (0.75 + 0.25 * cos(100.f * x / 3.14159) * cos(100.f * y / 3.14159) * cos((float(time)) / (2.f * 3.14159) * 10.f))
 			};
-			pts.emplace_back(transform_pt(pt));
+			pts.emplace_back(transform_pt(pt, true));
+			normals.emplace_back(glm::vec3{0, 0, 0});
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
 			{
 				indices.emplace_back(Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1});
 				indices.emplace_back(Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1});
 			}
+			uvs.emplace_back(glm::vec2{x, y});
 		}
 	}
 	for (auto&& tri : indices)
 	{
+		glm::vec3 normal = glm::normalize(glm::cross(pts[tri[1]] - pts[tri[0]], pts[tri[2]] - pts[tri[0]]));
 		for (auto&& index : tri)
 		{
 			ASSERT_LOG(index >= 0 && index < pts.size(), "Valid tri");
+			normals[index] += normal;
 		}
+	}
+
+	for (size_t i = 0; i < normals.size(); ++i)
+	{
+		normals[i] = glm::normalize(transform_pt(normals[i], false));
 	}
 
 	std::vector<NewVertex> vertices_out(pts.size());
@@ -796,8 +815,8 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 	{
 		NewVertex vertex;
 		vertex.pos = pts[i];
-		vertex.normal = {0.f, 0.f, 0.f};
-		vertex.texcoord = {0.0f, 0.0f};
+		vertex.normal = normals[i];
+		vertex.texcoord = uvs[i];
 		vertices_out[i] = vertex;
 	}
 
@@ -891,6 +910,18 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	texture_array_binding.descriptorCount = raytracing_scene->imageInfos.size();
 	texture_array_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
 
+	VkDescriptorSetLayoutBinding dynamic_vertex_binding{};
+	dynamic_vertex_binding.binding = 8;
+	dynamic_vertex_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	dynamic_vertex_binding.descriptorCount = 1;
+	dynamic_vertex_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
+	VkDescriptorSetLayoutBinding dynamic_index_binding{};
+	dynamic_index_binding.binding = 9;
+	dynamic_index_binding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	dynamic_index_binding.descriptorCount = 1;
+	dynamic_index_binding.stageFlags      = VK_SHADER_STAGE_RAYGEN_BIT_KHR | VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR;
+
 	std::vector<VkDescriptorSetLayoutBinding> bindings = {
 	    acceleration_structure_layout_binding,
 	    result_image_layout_binding,
@@ -898,7 +929,9 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 		vertex_binding,
 		index_binding,
 	    data_map_binding,
-		texture_array_binding
+		texture_array_binding,
+	    dynamic_vertex_binding,
+	    dynamic_index_binding
 	};
 
 	VkDescriptorSetLayoutCreateInfo layout_info{};

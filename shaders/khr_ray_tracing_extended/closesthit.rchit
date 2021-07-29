@@ -44,6 +44,17 @@ layout(binding=6, set = 0) readonly buffer DataMap
 } data_map;
 
 layout(binding=7, set = 0) uniform sampler2D textures[25];
+
+layout(binding=8, set = 0) readonly buffer DynamicVertexBuffer
+{
+  vec4[] data;
+} dynamic_vertex_buffer;
+
+layout(binding=9, set = 0) readonly buffer DynamicIndexBuffer
+{
+  uint[] indices;
+} dynamic_index_buffer;
+
 layout (constant_id = 0) const uint render_mode = 0;
 
 vec3 heatmap(float value, float minValue, float maxValue)
@@ -68,16 +79,27 @@ struct Vertex
   vec2 coordinate;
 };
 
-Vertex getVertex(uint vertexOffset, uint index)
+Vertex getVertex(uint vertexOffset, uint index, bool is_static)
 {
-  vec4 A =  vertex_buffer.data[2 * (vertexOffset + index)];
-  vec4 B =  vertex_buffer.data[2 * (vertexOffset + index) + 1];
+  uint base_index = 2 * (vertexOffset + index);
+  vec4 A = is_static ? vertex_buffer.data[base_index] : dynamic_vertex_buffer.data[base_index];
+  vec4 B = is_static ? vertex_buffer.data[base_index + 1] : dynamic_vertex_buffer.data[base_index + 1];
 
   Vertex v;
   v.pt = A.xyz;
   v.normal = vec3(A.w, B.x, B.y);
   v.coordinate = vec2(B.z, B.w);
   return v;
+}
+
+uvec3 getIndices(uint triangle_offset, uint primitive_id, bool is_static)
+{
+    uint base_index = 3 * (triangle_offset + primitive_id);
+    uint index0 = is_static ? index_buffer.indices[base_index] : dynamic_index_buffer.indices[base_index];
+    uint index1 = is_static ? index_buffer.indices[base_index + 1] : dynamic_index_buffer.indices[base_index + 1];
+    uint index2 = is_static ? index_buffer.indices[base_index + 2] : dynamic_index_buffer.indices[base_index + 2];
+
+    return uvec3(index0, index1, index2);
 }
 
 void handleDraw()
@@ -88,19 +110,10 @@ void handleDraw()
     uint triangleOffset = data_map.indices[4*index + 1];
     uint imageOffset = data_map.indices[4 * index + 2];
     uint objectType = data_map.indices[4 * index + 3];
+    bool is_static = objectType != 1;
 
-    if (objectType == 1){
-      hitValue.intersection = vec4(vec3(0, 0, 0), objectType);
-      hitValue.normal = vec4(vec3(0, 0, 0), gl_HitTEXT);
-      hitValue.color = vec4(1.0 - attribs.x - attribs.y, attribs.x, attribs.y, 1.f);
-      return;
-    }
-
-    uint index0 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID)];
-    uint index1 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID) + 1];
-    uint index2 = index_buffer.indices[3 * (triangleOffset + gl_PrimitiveID) + 2];
-
-    Vertex A = getVertex(vertexOffset, index0), B = getVertex(vertexOffset, index1), C = getVertex(vertexOffset, index2);
+    uvec3 indices = getIndices(triangleOffset, gl_PrimitiveID, is_static);
+    Vertex A = getVertex(vertexOffset, indices.x, is_static), B = getVertex(vertexOffset, indices.y, is_static), C = getVertex(vertexOffset, indices.z, is_static);
 
     // interpolate and obtain world point
     const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
@@ -111,18 +124,29 @@ void handleDraw()
     vec3 normal = normalize(alpha * A.normal + beta * B.normal + gamma * C.normal);
     vec3 worldNormal = normalize(cross(B.pt - A.pt, C.pt - A.pt));
 
+    vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
+
+    hitValue.intersection = vec4(worldPt.xyz, objectType);
+    hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
+
     if ((objectType == 0 || objectType == 2)){
       if (imageOffset >= 25){
         return; // this shouldn't happen
       }
       // obtain texture coordinate
-      vec2 texcoord = alpha * A.coordinate + beta * B.coordinate + gamma * C.coordinate;
       vec4 tex_value = texture(textures[imageOffset], texcoord);
       hitValue.color = tex_value;
-      hitValue.intersection = vec4(worldPt.xyz, objectType);
-      hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
-      //hitValue = vec4(heatmap(worldPt.y, -1000, 1000), 1);
+    } else {
+      // the refraction itself is colorless, so
+      // encode the index of refraction in the color
+      const float base_IOR = 1.5;
+      const float x = texcoord.x, y = texcoord.y;
+      const float IOR = 1 + x * (1 - x) * y * (1 - y) * (base_IOR - 1);
+      hitValue.color = vec4(IOR, 0, 0, 0);
+      hitValue.normal = vec4(normal.x, normal.y, normal.z, gl_HitTEXT);
     }
+    
+
 }
 
 void main()

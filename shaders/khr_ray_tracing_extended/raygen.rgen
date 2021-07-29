@@ -140,8 +140,13 @@ void main()
 			
 		} else if (object_type == 1)
 		{
-			color = hitValue.color;
-			break;
+			origin = vec4(hitValue.intersection.xyz, 0);
+			const float IOR = hitValue.color.x;
+			const float max_IOR = 1.5;
+			float eta = 1 / IOR;
+			float c = dot(object_normal, direction.xyz);
+			float t = (IOR - 1) / (max_IOR - 1);
+			direction = normalize((1 - t) * direction + t * (eta * direction + (eta * c - (1 - eta*eta*(1 - c*c)))));
 		}
 	}
 
