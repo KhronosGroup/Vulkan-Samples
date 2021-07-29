@@ -84,6 +84,7 @@ class RaytracingExtended : public ApiVulkanSample
 	{
 		bool use_vertex_staging_buffer = true;
 	} scene_options;
+	size_t frame_count = 0;
 
 	// fixed buffers
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
@@ -175,8 +176,8 @@ class RaytracingExtended : public ApiVulkanSample
 	void          create_storage_image();
 	void          create_static_object_buffers();
 	void          create_dynamic_object_buffers();
-	void          create_bottom_level_acceleration_structure();
-	void          create_top_level_acceleration_structure();
+	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
+	void          create_top_level_acceleration_structure(bool print_time = true);
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
 
 	void          create_scene();

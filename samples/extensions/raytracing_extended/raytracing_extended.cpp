@@ -288,7 +288,7 @@ void RaytracingExtended::create_static_object_buffers()
 /*
 	Create the bottom level acceleration structure that contains the scene's geometry (triangles)
 */
-void RaytracingExtended::create_bottom_level_acceleration_structure()
+void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_update, bool print_time)
 {
 	QuickTimer timer{"BLAS Build"};
 	assert(!!raytracing_scene);
@@ -303,25 +303,31 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 	               static_index_handle  = get_buffer_device_address(index_buffer->get_handle()),
 	               dynamic_vertex_handle = dynamic_vertex_buffer ? get_buffer_device_address(dynamic_vertex_buffer->get_handle()) : 0,
 	               dynamic_index_handle  = dynamic_index_buffer ? get_buffer_device_address(dynamic_index_buffer->get_handle()) : 0;
-	for (auto &&modelBuffer : raytracing_scene->model_buffers)
+	auto &model_buffers                  = raytracing_scene->model_buffers;
+	for (size_t i = 0; i < model_buffers.size(); ++i)
 	{
+		auto &model_buffer = model_buffers[i];
+		if (model_buffer.is_static && is_update)
+		{
+			continue;
+		}
 		const VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
 		// Setup a single transformation matrix that can be used to transform the whole geometry for a single bottom level acceleration structure
-		VkTransformMatrixKHR transform_matrix = modelBuffer.default_transform;
-		modelBuffer.transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-		modelBuffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
+		VkTransformMatrixKHR transform_matrix = model_buffer.default_transform;
+		model_buffer.transform_matrix_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		model_buffer.transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
 		VkDeviceOrHostAddressConstKHR vertex_data_device_address{};
 		VkDeviceOrHostAddressConstKHR index_data_device_address{};
 		VkDeviceOrHostAddressConstKHR transform_matrix_device_address{};
 
-		vertex_data_device_address.deviceAddress      =  modelBuffer.vertex_offset + (modelBuffer.is_static ? static_vertex_handle : dynamic_vertex_handle);
-		index_data_device_address.deviceAddress = modelBuffer.index_offset + (modelBuffer.is_static ? static_index_handle : dynamic_index_handle);
-		transform_matrix_device_address.deviceAddress = get_buffer_device_address(modelBuffer.transform_matrix_buffer->get_handle());
+		vertex_data_device_address.deviceAddress      = model_buffer.vertex_offset + (model_buffer.is_static ? static_vertex_handle : dynamic_vertex_handle);
+		index_data_device_address.deviceAddress       = model_buffer.index_offset + (model_buffer.is_static ? static_index_handle : dynamic_index_handle);
+		transform_matrix_device_address.deviceAddress = get_buffer_device_address(model_buffer.transform_matrix_buffer->get_handle());
 
 		// The bottom level acceleration structure contains one set of triangles as the input geometry
-		auto &acceleration_structure_geometry                            = modelBuffer.acceleration_structure_geometry;
+		auto &acceleration_structure_geometry                            = model_buffer.acceleration_structure_geometry;
 		acceleration_structure_geometry.sType                            = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
 		acceleration_structure_geometry.pNext                            = nullptr;
 		acceleration_structure_geometry.geometryType                     = VK_GEOMETRY_TYPE_TRIANGLES_KHR;
@@ -331,15 +337,15 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_geometry.geometry.triangles.pNext         = nullptr;
 		acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
 		acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
-		acceleration_structure_geometry.geometry.triangles.maxVertex     = modelBuffer.num_vertices;
+		acceleration_structure_geometry.geometry.triangles.maxVertex     = model_buffer.num_vertices;
 		acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(NewVertex);
 		acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
 		acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
 		acceleration_structure_geometry.geometry.triangles.transformData = transform_matrix_device_address;
 
-		modelBuffer.buildRangeInfo                              = {};
-		auto &acceleration_structure_build_range_info           = modelBuffer.buildRangeInfo;
-		acceleration_structure_build_range_info.primitiveCount  = modelBuffer.num_triangles;
+		model_buffer.buildRangeInfo                             = {};
+		auto &acceleration_structure_build_range_info           = model_buffer.buildRangeInfo;
+		acceleration_structure_build_range_info.primitiveCount  = model_buffer.num_triangles;
 		acceleration_structure_build_range_info.primitiveOffset = 0;        //primitiveOffset;
 		acceleration_structure_build_range_info.firstVertex     = 0;        //firstVertex;
 		acceleration_structure_build_range_info.transformOffset = 0;
@@ -350,13 +356,13 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 		acceleration_structure_build_geometry_info.pNext         = nullptr;
 		acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		acceleration_structure_build_geometry_info.flags         = modelBuffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+		acceleration_structure_build_geometry_info.flags         = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 		acceleration_structure_build_geometry_info.geometryCount = 1;
 		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-		uint32_t primitive_count = modelBuffer.num_triangles;
+		uint32_t primitive_count = model_buffer.num_triangles;
 
-		auto &acceleration_structure_build_sizes_info = modelBuffer.buildSize;
+		auto &acceleration_structure_build_sizes_info = model_buffer.buildSize;
 		acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
 		vkGetAccelerationStructureBuildSizesKHR(
 		    device->get_handle(),
@@ -364,19 +370,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		    &acceleration_structure_build_geometry_info,
 		    &primitive_count,
 		    &acceleration_structure_build_sizes_info);
-	}
 
-	auto &                                                  model_buffers = raytracing_scene->model_buffers;
-	std::vector<VkAccelerationStructureGeometryKHR>         geometries;
-	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> rangeInfos;
-	for (auto & modelBuffer : model_buffers)
-	{
-		geometries.push_back(modelBuffer.acceleration_structure_geometry);
-		rangeInfos.push_back(&modelBuffer.buildRangeInfo);
-	}
-
-	for (size_t i = 0; i < model_buffers.size(); ++i)
-	{
 		// Create a buffer to hold the acceleration structure
 		auto &bottom_level_acceleration_structure  = model_buffers[i].bottom_level_acceleration_structure;
 		bottom_level_acceleration_structure.buffer = std::make_unique<vkb::core::Buffer>(
@@ -389,7 +383,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
 		acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
 		acceleration_structure_create_info.buffer = bottom_level_acceleration_structure.buffer->get_handle();
-		acceleration_structure_create_info.size   = model_buffers[i].buildSize.accelerationStructureSize;
+		acceleration_structure_create_info.size   = model_buffer.buildSize.accelerationStructureSize;
 		acceleration_structure_create_info.type   = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
 		vkCreateAccelerationStructureKHR(device->get_handle(), &acceleration_structure_create_info, nullptr, &bottom_level_acceleration_structure.handle);
 
@@ -397,7 +391,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 
 		// Create a scratch buffer as a temporary storage for the acceleration structure build
 		auto          scratch_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                  model_buffers[i].buildSize.buildScratchSize,
+                                                                  model_buffer.buildSize.buildScratchSize,
                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 		size_t                currentOffset  = 0;
@@ -405,22 +399,22 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 			VkAccelerationStructureBuildGeometryInfoKHR acceleration_build_geometry_info{};
 			acceleration_build_geometry_info.sType                     = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 			acceleration_build_geometry_info.type                      = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-			acceleration_build_geometry_info.flags                     = model_buffers[i].is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+			acceleration_build_geometry_info.flags                     = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
 			acceleration_build_geometry_info.mode                      = VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR;
 			acceleration_build_geometry_info.dstAccelerationStructure  = bottom_level_acceleration_structure.handle;
 			acceleration_build_geometry_info.geometryCount             = 1;
-			acceleration_build_geometry_info.pGeometries               = &geometries[i];
+			acceleration_build_geometry_info.pGeometries               = &model_buffer.acceleration_structure_geometry;
 			acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer->get_device_address() + currentOffset;
 
 			// Build the acceleration structure on the device via a one-time command buffer submission
 			// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
 			VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-			// = {&modelBuffer.buildRangeInfo};
+			std::array<VkAccelerationStructureBuildRangeInfoKHR *,1> build_range_infos = {&model_buffers[i].buildRangeInfo};
 			vkCmdBuildAccelerationStructuresKHR(
 			    command_buffer,
 			    1,
 			    &acceleration_build_geometry_info,
-			    &rangeInfos[i]);
+			    &build_range_infos[0]);
 			get_device().flush_command_buffer(command_buffer, queue);
 
 			// currentOffset += model_buffers[i].buildSize.buildScratchSize; //NB: Due to line 410 not being outside for loop, this would never get used.
@@ -434,14 +428,17 @@ void RaytracingExtended::create_bottom_level_acceleration_structure()
 		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
 		bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
-	timer.stop_and_log();
+	if (print_time)
+	{
+		timer.stop_and_log();
+	}
 }
 
 
 /*
 	Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
 */
-void RaytracingExtended::create_top_level_acceleration_structure()
+void RaytracingExtended::create_top_level_acceleration_structure(bool print_time)
 {
 	/*
 	Often, good performance can be obtained when the TLAS uses PREFER_FAST_TRACE with full rebuilds.
@@ -582,7 +579,10 @@ void RaytracingExtended::create_top_level_acceleration_structure()
 	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure.handle;
 	top_level_acceleration_structure.device_address        = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
-	timer.stop_and_log();
+	if (print_time)
+	{
+		timer.stop_and_log();
+	}
 }
 
 inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
@@ -638,7 +638,7 @@ void RaytracingExtended::create_scene()
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
 	create_static_object_buffers();
 	create_dynamic_object_buffers();
-	create_bottom_level_acceleration_structure();
+	create_bottom_level_acceleration_structure(false);
 	create_top_level_acceleration_structure();
 }
 
@@ -790,7 +790,17 @@ void RaytracingExtended::create_dynamic_object_buffers()
 	buffer.num_vertices      = vertices_out.size();
 	buffer.num_triangles     = indices.size();
 	buffer.object_type       = ObjectType::OBJECT_REFRACTION;
-	raytracing_scene->model_buffers.emplace_back(std::move(buffer));
+	auto iter                = std::find_if(raytracing_scene->model_buffers.begin(), raytracing_scene->model_buffers.end(), [](const ModelBuffer& in){
+		return in.object_type == OBJECT_REFRACTION;
+	});
+	if (iter != raytracing_scene->model_buffers.cend())
+	{
+		*iter = std::move(buffer);
+	}
+	else
+	{
+		raytracing_scene->model_buffers.emplace_back(std::move(buffer));
+	}
 }
 
 /*
@@ -1188,6 +1198,11 @@ void RaytracingExtended::render(float delta_time)
 {
 	if (!prepared)
 		return;
+	frame_count = (frame_count + 1) % 60;
+	bool print_time = !frame_count;
+	create_dynamic_object_buffers();
+	create_bottom_level_acceleration_structure(true, print_time);
+	create_top_level_acceleration_structure(print_time);
 	draw();
 	if (camera.updated)
 		update_uniform_buffers();
