@@ -159,12 +159,6 @@ class RaytracingExtended : public ApiVulkanSample
 	};
 	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
 
-	struct RenderSettings
-	{
-		glm::uvec4 render_settings = {RenderMode::RENDER_DEFAULT, 12, 0, 0};        // { RenderMode, MaxRays, ...}
-	} render_settings;
-	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
-
 	std::vector<VkCommandBuffer> raytracing_command_buffers;
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;

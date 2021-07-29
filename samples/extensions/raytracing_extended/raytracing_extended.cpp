@@ -32,17 +32,17 @@ namespace
 	struct QuickTimer
 	{
 		using clock = std::chrono::high_resolution_clock;
-	    const char *name = "";
+	    const char *name;
 		const clock::time_point start;
-	    QuickTimer(const char *name) :
+	    explicit QuickTimer(const char *name) :
 	        name(name), start(clock::now())
 	    {}
 
 		void stop_and_log()
 		{
 			using namespace std::chrono;
-		    const double dur = duration_cast<microseconds>(clock::now() - start).count();
-		    LOGI(fmt::format("{:s} duration: {:f} ms", name, dur / 1000.));
+		    const auto dur = duration_cast<microseconds>(clock::now() - start).count();
+		    LOGI(fmt::format("{:s} duration: {:f} ms", name, dur / 1000.))
 		}
 
 	};
@@ -55,8 +55,9 @@ namespace
 
 struct RaytracingExtended::NewVertex
 {
-	alignas(16) glm::vec4 A; // {x, y, z, nx}
-	alignas(16) glm::vec4 B; // {ny, nz, uv0, uv1}
+	glm::vec3 pos;
+	glm::vec3 normal;
+	glm::vec2 texcoord;
 };
 
 struct RaytracingExtended::Model
@@ -588,7 +589,7 @@ struct CopyBuffer
 
 		const size_t sz = buffer.get_size();
 		out.resize(sz / sizeof(T));
-		const bool alreadyMapped = !!buffer.get_data();
+		const bool alreadyMapped = buffer.get_data() != nullptr;
 		if (!alreadyMapped)
 		{
 			buffer.map();
@@ -743,8 +744,9 @@ void RaytracingExtended::create_dynamic_object_buffers()
 	for (size_t i = 0; i < pts.size(); ++i)
 	{
 		NewVertex vertex;
-		vertex.A = {pts[i].x, pts[i].y, pts[i].z, 0.f};
-		vertex.B = { 0.f, 1.f, 0.f, 0.f };
+		vertex.pos = pts[i];
+		vertex.normal = {0.f, 0.f, 0.f};
+		vertex.texcoord = {0.0f, 0.0f};
 		vertices_out[i] = vertex;
 	}
 
@@ -1253,8 +1255,9 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 				{
 					auto tex_coords     = i < UV_coords.size() ? UV_coords[i] : glm::vec2{};
 					auto normal         = i < normals.size() ? normals[i] : glm::vec3{};
-					model.vertices[i].A = {pts[i].x, pts[i].y, pts[i].z, normal.x};
-					model.vertices[i].B = {normal.y, normal.z, tex_coords.x, tex_coords.y};
+					model.vertices[i].pos = pts[i];
+					model.vertices[i].normal = normal;
+					model.vertices[i].texcoord = tex_coords;
 				}
 
 				assert(sub_mesh->index_type == VK_INDEX_TYPE_UINT16);
