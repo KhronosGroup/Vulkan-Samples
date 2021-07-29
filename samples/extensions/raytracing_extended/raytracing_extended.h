@@ -63,6 +63,92 @@ class RaytracingExtended : public ApiVulkanSample
 	struct NewVertex;
 	struct Model;
 
+	struct FlameParticle
+	{
+		glm::vec3 position;
+		glm::vec3 velocity;
+		float duration= 0.f;
+	};
+
+	struct FlameParticleGenerator
+	{
+		FlameParticleGenerator()
+		{
+		}
+
+		FlameParticleGenerator(glm::vec3 generator_origin, glm::vec3 generator_direction, float generator_radius, size_t n_particles) :
+		    origin(generator_origin), direction(generator_direction), radius(generator_radius), n_particles(n_particles)
+		{
+			using namespace glm;
+			u = normalize(abs(dot(generator_direction, vec3(0, 0, 1))) > 0.9f ? cross(generator_direction, vec3(1, 0, 0)) : cross(generator_direction, vec3(0, 0, 1)));
+			v = normalize(cross(generator_direction, u));
+
+			for (size_t i = 0; i < n_particles; ++i)
+			{
+				float starting_lifetime = generate_random() * lifetime;
+				particles.emplace_back(generateParticle(starting_lifetime));
+			}
+		}
+		~FlameParticleGenerator()
+		{
+		}
+		FlameParticle generateParticle(float lifetime = 0.f) const
+		{
+			using namespace glm;
+			const float theta              = 2 * 3.14159 * generate_random();
+			const float R                  = radius * generate_random();
+			const vec3  velocity_direction = generate_random_direction();
+
+			FlameParticle particle;
+			particle.position = origin + R * (sin(theta) * u + cos(theta) * v);
+			particle.velocity = generate_random() * 0.2f * velocity_direction;
+			particle.duration = lifetime;
+			return particle;
+		}
+		glm::vec3 generate_random_direction() const 
+		{
+			using namespace glm;
+			return normalize(0.2f * generate_random() * u + 0.2f * generate_random() * v + 0.8f * direction * generate_random());
+		}
+		void update_particles(float time_delta)
+		{
+			particles.erase(std::remove_if(particles.begin(), particles.end(), [this, lifetime{this->lifetime}](const FlameParticle &particle) {
+				return particle.duration > (generate_random() * lifetime);
+				}), particles.end());
+
+			for (auto &&particle : particles)
+			{
+				particle.position += time_delta * particle.velocity;
+				//particle.velocity = 0.75f * particle.velocity + 0.25f * generate_random_direction();
+				particle.duration += time_delta;
+			}
+
+			for (size_t i = particles.size(); i < n_particles; ++i)
+			{
+				particles.emplace_back(generateParticle(0.f));
+			}
+			
+		}
+
+		float generate_random() const
+		{
+			std::uniform_real_distribution<float> distribution = std::uniform_real_distribution<float>(0, 1);
+			return distribution(generator);
+		}
+
+		mutable std::default_random_engine generator;
+		std::vector<FlameParticle> particles;
+		glm::vec3                          origin = {0, 0, 0};
+		glm::vec3                          direction = {0, 0, 0};
+		glm::vec3                          u = {0, 0, 0}, v = {0, 0, 0};
+		float lifetime = 5;
+		float radius = 0.f;
+		size_t n_particles = 0;
+	};
+
+	FlameParticleGenerator flame_generator;
+
+
 	struct ModelBuffer
 	{
 		size_t                                   vertex_offset = std::numeric_limits<size_t>::max();        // in bytes

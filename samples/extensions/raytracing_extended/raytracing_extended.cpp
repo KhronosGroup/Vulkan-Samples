@@ -208,7 +208,7 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 
 void RaytracingExtended::create_flame_model()
 {
-	flame_texture = load_texture("textures/generated_flame.ktx");
+	flame_texture = load_texture("textures/generated_flame.png");
 	std::vector<glm::vec3> pts     = { {0, 0, 0},
                                    {1, 0, 0},
                                    {1, 1, 0},
@@ -220,7 +220,7 @@ void RaytracingExtended::create_flame_model()
 	for (size_t i = 0; i < pts.size(); ++i)
 	{
 		NewVertex vertex;
-		vertex.pos = pts[i];
+		vertex.pos = pts[i] - glm::vec3(0.5f, 0.5f, 0.f); // center the point
 		vertex.normal = {0, 0, 1};
 		vertex.texcoord = { float(pts[i].x), float(pts[i].y) };
 		vertices.push_back(vertex);
@@ -238,6 +238,8 @@ void RaytracingExtended::create_flame_model()
 
 	raytracing_scene->models.emplace_back(std::move(model));
 	raytracing_scene->imageInfos.push_back(image_info);
+
+	flame_generator = FlameParticleGenerator(glm::vec3{-0.15, -1.5, -2.3}, glm::vec3{0, -1, 0}, 0.5f, 512);
 }
 
 void RaytracingExtended::create_static_object_buffers()
@@ -533,6 +535,25 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 		if (model_buffer.object_type == ObjectType::OBJECT_NORMAL || model_buffer.object_type == ObjectType::OBJECT_REFRACTION)
 		{
 			add_instance(model_buffer, transform_matrix, i);
+		}
+	}
+
+	{
+		// find the flame particle object, then add the particles as instances
+		auto &model_buffers = raytracing_scene->model_buffers;
+		auto iter = std::find_if(model_buffers.begin(), model_buffers.end(), [](const ModelBuffer& model_buffer) {
+			return model_buffer.object_type == ObjectType::OBJECT_FLAME;
+		});
+		ASSERT_LOG(iter != model_buffers.cend(), "Can't find flame object.")
+		auto& model_buffer = *iter;
+		uint32_t index        = std::distance(model_buffers.begin(), iter);
+		for (auto &&particle : flame_generator.particles)
+		{
+			VkTransformMatrixKHR transform_matrix = {
+			    0.25f, 0.0f, 0.0f, particle.position.x,
+			    0.0f, 0.25f, 0.0f, particle.position.y,
+			    0.0f, 0.0f, 0.25f, particle.position.z};
+			add_instance(model_buffer, transform_matrix, index);
 		}
 	}
 
@@ -1318,6 +1339,7 @@ void RaytracingExtended::render(float delta_time)
 	frame_count = (frame_count + 1) % 60;
 	bool print_time = !frame_count;
 	auto time = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
+	flame_generator.update_particles(delta_time);
 	create_dynamic_object_buffers(time.count() / 1000. / 1000.);
 	create_bottom_level_acceleration_structure(true, print_time);
 	create_top_level_acceleration_structure(print_time);

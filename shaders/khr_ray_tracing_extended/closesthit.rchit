@@ -43,7 +43,7 @@ layout(binding=6, set = 0) readonly buffer DataMap
   uint[] indices;
 } data_map;
 
-layout(binding=7, set = 0) uniform sampler2D textures[25];
+layout(binding=7, set = 0) uniform sampler2D textures[26];
 
 layout(binding=8, set = 0) readonly buffer DynamicVertexBuffer
 {
@@ -120,7 +120,7 @@ void handleDraw()
     float alpha = barycentricCoords.x, beta = barycentricCoords.y, gamma = barycentricCoords.z;
     vec3 pt = alpha * A.pt + beta * B.pt + gamma * C.pt;
     mat4x3 transform = gl_WorldToObjectEXT;
-    vec3 worldPt =  transform * vec4(pt, 1);
+    vec3 worldPt =  gl_WorldRayOriginEXT + gl_HitTEXT * gl_WorldRayDirectionEXT;//transform * vec4(pt, 0) + vec3(transform[3][0], transform[3][1], transform[3][2]);
     vec3 normal = normalize(alpha * A.normal + beta * B.normal + gamma * C.normal);
     vec3 worldNormal = normalize(cross(B.pt - A.pt, C.pt - A.pt));
 
@@ -128,9 +128,12 @@ void handleDraw()
 
     hitValue.intersection = vec4(worldPt.xyz, objectType);
     hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
-
+    if (render_mode == 4) { // global xyz
+      hitValue.color = vec4(heatmap(worldPt.x, -10, 10), 1);
+      return;
+    }
     if ((objectType == 0 || objectType == 2)){
-      if (imageOffset >= 25){
+      if (imageOffset >= 26){
         return; // this shouldn't happen
       }
       // obtain texture coordinate
@@ -152,14 +155,12 @@ void handleDraw()
 void main()
 {
   const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
-  if (render_mode == 1){ // barycentric
+  if (render_mode == 1 ){ // barycentric
     hitValue.color = vec4(barycentricCoords, 1);
   } else if (render_mode == 2){ // index
     hitValue.color = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
   } else if (render_mode == 3){ // distance
     hitValue.color = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
-  } else if (render_mode == 4) { // global xyz
-    hitValue.color = vec4(0, 0, 0, 1);
   } else {
     handleDraw();
   }
