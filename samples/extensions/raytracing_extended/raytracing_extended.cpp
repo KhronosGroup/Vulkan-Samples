@@ -201,6 +201,7 @@ void RaytracingExtended::create_static_object_buffers()
 	auto &models       = raytracing_scene->models;
 	auto &modelBuffers = raytracing_scene->modelBuffers;
 	modelBuffers.resize(0);
+	using Triangle = decltype(models[0].triangles[0]);
 
 	std::vector<uint32_t>          vertex_buffer_offsets(models.size()), index_buffer_offsets(models.size());
 	uint32_t                       nTotalVertices = 0, nTotalTriangles = 0;
@@ -211,7 +212,7 @@ void RaytracingExtended::create_static_object_buffers()
 		vertex_buffer_offsets[i] = nTotalVertices * sizeof(NewVertex);
 		nTotalVertices += models[i].vertices.size();
 
-		index_buffer_offsets[i] = nTotalTriangles * sizeof(models[i].triangles[0]);
+		index_buffer_offsets[i] = nTotalTriangles * sizeof(Triangle);
 		nTotalTriangles += models[i].triangles.size();
 	}
 
@@ -220,7 +221,7 @@ void RaytracingExtended::create_static_object_buffers()
 
 	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
-	auto index_buffer_size  = nTotalTriangles * models[0].triangles.size();
+	auto index_buffer_size  = nTotalTriangles * sizeof(Triangle);
 
 	// Create a staging buffer. (If staging buffer use is disabled, then this will be the final buffer)
 	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
@@ -242,7 +243,7 @@ void RaytracingExtended::create_static_object_buffers()
 	{
 		auto &cmd = device->request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-		auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer) {
+		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
