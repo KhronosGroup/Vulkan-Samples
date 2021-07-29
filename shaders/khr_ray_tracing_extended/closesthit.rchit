@@ -28,11 +28,6 @@ struct Payload
 layout(location = 0) rayPayloadInEXT Payload hitValue;
 hitAttributeEXT vec3 attribs;
 
-layout(binding = 3, set = 0) uniform RenderSettings
-{
-	uvec4 render_mode;
-} render_settings;
-
 layout(binding=4, set = 0) readonly buffer VertexBuffer
 {
   vec4[] data;
@@ -49,7 +44,7 @@ layout(binding=6, set = 0) readonly buffer DataMap
 } data_map;
 
 layout(binding=7, set = 0) uniform sampler2D textures[25];
-
+layout (constant_id = 0) const uint render_mode = 0;
 
 vec3 heatmap(float value, float minValue, float maxValue)
 {
@@ -124,13 +119,13 @@ void handleDraw()
 void main()
 {
   const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
-  if (render_settings.render_mode[0] == 1){ // barycentric
+  if (render_mode == 1){ // barycentric
     hitValue.color = vec4(barycentricCoords, 1);
-  } else if (render_settings.render_mode[0] == 2){ // index
+  } else if (render_mode == 2){ // index
     hitValue.color = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
-  } else if (render_settings.render_mode[0] == 3){ // distance
+  } else if (render_mode == 3){ // distance
     hitValue.color = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
-  } else if (render_settings.render_mode[0] == 4) { // global xyz
+  } else if (render_mode == 4) { // global xyz
     hitValue.color = vec4(0, 0, 0, 1);
   } else {
     handleDraw();

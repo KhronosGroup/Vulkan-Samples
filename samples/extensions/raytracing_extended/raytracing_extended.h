@@ -47,7 +47,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 	enum ObjectType : uint32_t
 	{
-		OBJECT_NORMAL, // has AO and raytraced shadows
+		OBJECT_NORMAL, // has AO and ray traced shadows
 		OBJECT_REFRACTION, // pass-through with IOR
 		OBJECT_FLAME // emission surface; constant amplitude
 	};
@@ -92,20 +92,19 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct SceneLoadInfo
 	{
-		SceneLoadInfo()
-		{}
+		SceneLoadInfo() = default;
 		SceneLoadInfo(const char *filename, glm::mat3x4 transform, uint32_t object_type) :
 		    filename(filename), transform(transform), object_type(object_type)
 		{}
 		const char *filename = "";
 		glm::mat3x4 transform;
-		uint32_t object_type;
+		uint32_t object_type = 0;
 	};
 
 	struct RaytracingScene
 	{
-		RaytracingScene();
-		~RaytracingScene();
+		RaytracingScene() = default;
+		~RaytracingScene() = default;
 		RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
 		std::vector<vkb::sg::Image *>      images;
@@ -135,6 +134,13 @@ class RaytracingExtended : public ApiVulkanSample
 		VkFormat       format;
 		uint32_t       width;
 		uint32_t       height;
+		StorageImage()
+		    : memory(nullptr)
+		    , image(VK_NULL_HANDLE)
+		    , view(nullptr)
+		    , format()
+		    , width(0)
+		    , height(0) {}
 	} storage_image;
 
 	struct UniformData
@@ -153,12 +159,6 @@ class RaytracingExtended : public ApiVulkanSample
 	};
 	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
 
-	struct RenderSettings
-	{
-		glm::uvec4 render_settings = {RenderMode::RENDER_DEFAULT, 12, 0, 0};        // { RenderMode, MaxRays, ...}
-	} render_settings;
-	std::unique_ptr<vkb::core::Buffer> render_settings_ubo;
-
 	std::vector<VkCommandBuffer> raytracing_command_buffers;
 	VkPipeline            pipeline;
 	VkPipelineLayout      pipeline_layout;
@@ -167,7 +167,7 @@ class RaytracingExtended : public ApiVulkanSample
 
 
 	RaytracingExtended();
-	~RaytracingExtended();
+	~RaytracingExtended() override;
 
 	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
@@ -189,7 +189,7 @@ class RaytracingExtended : public ApiVulkanSample
 	void          draw();
 	void          draw_gui() override;
 	bool          prepare(vkb::Platform &platform) override;
-	virtual void  render(float delta_time) override;
+	void          render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended();
