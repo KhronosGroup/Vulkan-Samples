@@ -75,6 +75,7 @@ class RaytracingExtended : public ApiVulkanSample
 		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
 		AccelerationStructureExtended            bottom_level_acceleration_structure;
 		VkTransformMatrixKHR                     default_transform;
+		uint32_t                                 object_type = 0;
 		bool                                     is_static = true;
 	};
 
@@ -125,13 +126,6 @@ class RaytracingExtended : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
 	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
 
-	// Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
-	struct ScratchBuffer
-	{
-		uint64_t       device_address;
-		VkBuffer       handle;
-		VkDeviceMemory memory;
-	};
 
 	struct StorageImage
 	{
@@ -177,10 +171,9 @@ class RaytracingExtended : public ApiVulkanSample
 
 	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
-	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
-	void          delete_scratch_buffer(ScratchBuffer &scratch_buffer);
 	void          create_storage_image();
 	void          create_static_object_buffers();
+	void          create_dynamic_object_buffers();
 	void          create_bottom_level_acceleration_structure();
 	void          create_top_level_acceleration_structure();
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
