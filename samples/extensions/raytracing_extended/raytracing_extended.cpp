@@ -103,8 +103,6 @@ RaytracingExtended::RaytracingExtended()
 
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-
-	
 }
 
 RaytracingExtended::~RaytracingExtended()
@@ -261,9 +259,6 @@ void RaytracingExtended::create_static_object_buffers()
 		nTotalTriangles += models[i].triangles.size();
 	}
 
-	
-
-	//uint32_t firstVertex = 0, primitiveOffset = 0;
 	auto vertex_buffer_size = nTotalVertices * sizeof(NewVertex);
 	auto index_buffer_size  = nTotalTriangles * sizeof(Triangle);
 
@@ -1269,10 +1264,10 @@ void RaytracingExtended::draw()
 	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytracing command buffers must match the render queue size")
 	ApiVulkanSample::prepare_frame();
 	size_t i = current_buffer;
-	
-	VkSubmitInfo submit = vkb::initializers::submit_info();
-	submit.commandBufferCount  = 1;
-	submit.pCommandBuffers      = &raytracing_command_buffers[i];
+
+	VkSubmitInfo submit       = vkb::initializers::submit_info();
+	submit.commandBufferCount = 1;
+	submit.pCommandBuffers    = &raytracing_command_buffers[i];
 
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
     device->get_fence_pool().wait();
@@ -1364,7 +1359,8 @@ std::unique_ptr<vkb::VulkanSample> create_raytracing_extended()
 	return std::make_unique<RaytracingExtended>();
 }
 
-RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad) 
+
+RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const std::vector<SceneLoadInfo> &scenesToLoad)
 {
 
 	vkb::GLTFLoader loader{device};
@@ -1403,9 +1399,8 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device& device, const 
 
 				auto pts      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
 				const auto UV_coords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
-				const auto normals  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+				const auto normals   = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
 
-				
 
 				auto transform = scenesToLoad[sceneIndex].transform;
 				if (is_vase)

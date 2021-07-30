@@ -127,7 +127,6 @@ class RaytracingExtended : public ApiVulkanSample
 			{
 				particles.emplace_back(generateParticle(0.f));
 			}
-			
 		}
 
 		float generate_random() const
