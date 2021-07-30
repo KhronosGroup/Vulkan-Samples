@@ -24,10 +24,6 @@
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
 
-
-
-
-
 class RaytracingExtended : public ApiVulkanSample
 {
   public:
@@ -47,9 +43,9 @@ class RaytracingExtended : public ApiVulkanSample
 
 	enum ObjectType : uint32_t
 	{
-		OBJECT_NORMAL, // has AO and ray traced shadows
-		OBJECT_REFRACTION, // pass-through with IOR
-		OBJECT_FLAME // emission surface; constant amplitude
+		OBJECT_NORMAL,            // has AO and ray traced shadows
+		OBJECT_REFRACTION,        // pass-through with IOR
+		OBJECT_FLAME              // emission surface; constant amplitude
 	};
 
 	// Wraps all data required for an acceleration structure
@@ -67,7 +63,7 @@ class RaytracingExtended : public ApiVulkanSample
 	{
 		glm::vec3 position;
 		glm::vec3 velocity;
-		float duration= 0.f;
+		float     duration = 0.f;
 	};
 
 	struct FlameParticleGenerator
@@ -105,7 +101,7 @@ class RaytracingExtended : public ApiVulkanSample
 			particle.duration = lifetime;
 			return particle;
 		}
-		glm::vec3 generate_random_direction() const 
+		glm::vec3 generate_random_direction() const
 		{
 			using namespace glm;
 			return normalize(0.2f * generate_random() * u + 0.2f * generate_random() * v + 0.8f * direction * generate_random());
@@ -113,13 +109,14 @@ class RaytracingExtended : public ApiVulkanSample
 		void update_particles(float time_delta)
 		{
 			particles.erase(std::remove_if(particles.begin(), particles.end(), [this, lifetime{this->lifetime}](const FlameParticle &particle) {
-				return particle.duration > (generate_random() * lifetime);
-				}), particles.end());
+				                return particle.duration > (generate_random() * lifetime);
+			                }),
+			                particles.end());
 
 			for (auto &&particle : particles)
 			{
 				particle.position += time_delta * particle.velocity;
-				//particle.velocity = 0.75f * particle.velocity + 0.25f * generate_random_direction();
+				// particle.velocity = 0.75f * particle.velocity + 0.25f * generate_random_direction();
 				particle.duration += time_delta;
 			}
 
@@ -127,7 +124,6 @@ class RaytracingExtended : public ApiVulkanSample
 			{
 				particles.emplace_back(generateParticle(0.f));
 			}
-			
 		}
 
 		float generate_random() const
@@ -137,25 +133,24 @@ class RaytracingExtended : public ApiVulkanSample
 		}
 
 		mutable std::default_random_engine generator;
-		std::vector<FlameParticle> particles;
-		glm::vec3                          origin = {0, 0, 0};
+		std::vector<FlameParticle>         particles;
+		glm::vec3                          origin    = {0, 0, 0};
 		glm::vec3                          direction = {0, 0, 0};
 		glm::vec3                          u = {0, 0, 0}, v = {0, 0, 0};
-		float lifetime = 5;
-		float radius = 0.f;
-		size_t n_particles = 0;
+		float                              lifetime    = 5;
+		float                              radius      = 0.f;
+		size_t                             n_particles = 0;
 	};
 
 	FlameParticleGenerator flame_generator;
 
-
 	struct ModelBuffer
 	{
-		size_t                                   vertex_offset = std::numeric_limits<size_t>::max();        // in bytes
-		size_t                                   index_offset  = std::numeric_limits<size_t>::max();        // in bytes
-		size_t                                   num_vertices  = std::numeric_limits<size_t>::max();
-		size_t                                   num_triangles = std::numeric_limits<size_t>::max();
-		uint32_t                                 texture_index = std::numeric_limits<uint32_t>::max();
+		size_t                                   vertex_offset           = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                   index_offset            = std::numeric_limits<size_t>::max();        // in bytes
+		size_t                                   num_vertices            = std::numeric_limits<size_t>::max();
+		size_t                                   num_triangles           = std::numeric_limits<size_t>::max();
+		uint32_t                                 texture_index           = std::numeric_limits<uint32_t>::max();
 		std::unique_ptr<vkb::core::Buffer>       transform_matrix_buffer = nullptr;
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
@@ -163,22 +158,22 @@ class RaytracingExtended : public ApiVulkanSample
 		AccelerationStructureExtended            bottom_level_acceleration_structure;
 		VkTransformMatrixKHR                     default_transform;
 		uint32_t                                 object_type = 0;
-		bool                                     is_static = true;
+		bool                                     is_static   = true;
 	};
 
 	struct SceneOptions
 	{
 		bool use_vertex_staging_buffer = true;
 	} scene_options;
-	size_t frame_count = 0;
+	size_t                                         frame_count = 0;
 	std::chrono::high_resolution_clock::time_point start       = std::chrono::high_resolution_clock::now();
 
 	// fixed buffers
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
-	std::unique_ptr<vkb::core::Buffer> index_buffer = nullptr;
+	std::unique_ptr<vkb::core::Buffer> vertex_buffer         = nullptr;
+	std::unique_ptr<vkb::core::Buffer> index_buffer          = nullptr;
 	std::unique_ptr<vkb::core::Buffer> dynamic_vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::Buffer> dynamic_index_buffer  = nullptr;
-	std::unique_ptr<vkb::core::Buffer> instances_buffer = nullptr;
+	std::unique_ptr<vkb::core::Buffer> instances_buffer      = nullptr;
 
 	struct SceneLoadInfo
 	{
@@ -188,23 +183,22 @@ class RaytracingExtended : public ApiVulkanSample
 		{}
 		const char *filename = "";
 		glm::mat3x4 transform;
-		uint32_t object_type = 0;
+		uint32_t    object_type = 0;
 	};
 
 	struct RaytracingScene
 	{
-		RaytracingScene() = default;
+		RaytracingScene()  = default;
 		~RaytracingScene() = default;
-		RaytracingScene(vkb::Device& device, const std::vector<SceneLoadInfo> &scenesToLoad);
+		RaytracingScene(vkb::Device &device, const std::vector<SceneLoadInfo> &scenesToLoad);
 		std::vector<std::unique_ptr<vkb::sg::Scene>> scenes;
-		std::vector<VkDescriptorImageInfo> imageInfos;
-		std::vector<Model>                 models;
-		std::vector<ModelBuffer>		   model_buffers;
+		std::vector<VkDescriptorImageInfo>           imageInfos;
+		std::vector<Model>                           models;
+		std::vector<ModelBuffer>                     model_buffers;
 	};
 
 	std::unique_ptr<RaytracingScene> raytracing_scene;
 	Texture                          flame_texture;
-
 
 	AccelerationStructureExtended top_level_acceleration_structure;
 
@@ -215,7 +209,6 @@ class RaytracingExtended : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> miss_shader_binding_table;
 	std::unique_ptr<vkb::core::Buffer> hit_shader_binding_table;
 
-
 	struct StorageImage
 	{
 		VkDeviceMemory memory;
@@ -224,13 +217,9 @@ class RaytracingExtended : public ApiVulkanSample
 		VkFormat       format;
 		uint32_t       width;
 		uint32_t       height;
-		StorageImage()
-		    : memory(nullptr)
-		    , image(VK_NULL_HANDLE)
-		    , view(nullptr)
-		    , format()
-		    , width(0)
-		    , height(0) {}
+		StorageImage() :
+		    memory(nullptr), image(VK_NULL_HANDLE), view(nullptr), format(), width(0), height(0)
+		{}
 	} storage_image;
 
 	struct UniformData
@@ -242,45 +231,44 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct SceneInstanceData
 	{
-		uint32_t vertex_index; // index of first data
+		uint32_t vertex_index;        // index of first data
 		uint32_t indices_index;
 		uint32_t image_index;
-		uint32_t object_type; // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
+		uint32_t object_type;        // controls how shader handles object / whether to load from buffer for static objects or dynamic objects
 	};
 	std::unique_ptr<vkb::core::Buffer> data_to_model_buffer;
 
 	std::vector<VkCommandBuffer> raytracing_command_buffers;
-	VkPipeline            pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
-
+	VkPipeline                   pipeline;
+	VkPipelineLayout             pipeline_layout;
+	VkDescriptorSet              descriptor_set;
+	VkDescriptorSetLayout        descriptor_set_layout;
 
 	RaytracingExtended();
 	~RaytracingExtended() override;
 
-	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	uint64_t      get_buffer_device_address(VkBuffer buffer);
-	void          create_storage_image();
-	void          create_static_object_buffers();
-	void          create_flame_model();
-	void          create_dynamic_object_buffers(float time);
-	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
-	void          create_top_level_acceleration_structure(bool print_time = true);
-	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
+	void     request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	uint64_t get_buffer_device_address(VkBuffer buffer);
+	void     create_storage_image();
+	void     create_static_object_buffers();
+	void     create_flame_model();
+	void     create_dynamic_object_buffers(float time);
+	void     create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
+	void     create_top_level_acceleration_structure(bool print_time = true);
+	void     delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
 
-	void          create_scene();
-	void          create_shader_binding_tables();
-	void          create_descriptor_sets();
-	void          create_ray_tracing_pipeline();
-	void          create_display_pipeline();
-	void          create_uniform_buffer();
-	void          build_command_buffers() override;
-	void          update_uniform_buffers();
-	void          draw();
-	void          draw_gui() override;
-	bool          prepare(vkb::Platform &platform) override;
-	void          render(float delta_time) override;
+	void create_scene();
+	void create_shader_binding_tables();
+	void create_descriptor_sets();
+	void create_ray_tracing_pipeline();
+	void create_display_pipeline();
+	void create_uniform_buffer();
+	void build_command_buffers() override;
+	void update_uniform_buffers();
+	void draw();
+	void draw_gui() override;
+	bool prepare(vkb::Platform &platform) override;
+	void render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended();
