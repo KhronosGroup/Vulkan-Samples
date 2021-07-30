@@ -222,7 +222,7 @@ void RaytracingExtended::create_flame_model()
 		NewVertex vertex;
 		vertex.pos = pt - glm::vec3(0.5f, 0.5f, 0.f); // center the point
 		vertex.normal = {0, 0, 1};
-		vertex.tex_coord = { float(pt.x), float(pt.y) };
+		vertex.tex_coord = { float(pt.x), 1.f - float(pt.y) };
 		vertices.push_back(vertex);
 	}
 
@@ -486,17 +486,27 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 	}
 }
 
-VkTransformMatrixKHR RaytracingExtended::calculate_rotation(glm::vec3 pt)
+VkTransformMatrixKHR RaytracingExtended::calculate_rotation(glm::vec3 pt, float scale, bool freeze_z)
 {
 	using namespace glm;
-	const auto normal = normalize(pt - camera.position);
-	const auto u      = normalize(abs(dot(normal, vec3(1, 0, 0))) > 0.9f ? cross(normal, vec3(0, 1, 0)) : cross(normal, vec3(1, 0, 0)));
-	const auto v      = normalize(cross(normal, u));
+	auto normal = normalize(pt + camera.position);
+	if (freeze_z)
+	{
+		normal = normalize(abs(dot(normal, vec3{0, 1, 0})) > 0.99f ? vec3{0, 0, 1} : vec3{normal.x, 0.f, normal.z});
+	}
+	auto u      = normalize(cross(normal, vec3(0, 1, 0)));
+	auto v      = normalize(cross(normal, u));
+
+
+	// wait to multiply by scale until after calculating basis to prevent floating point problems
+	normal *= scale;
+	u *= scale;
+	v *= scale;
 	return
 	{
-	    v.x, u.x, normal.x, -pt.x,
-	    v.y, u.y, normal.y, -pt.y,
-	    v.z, u.z, normal.z, -pt.z
+	    u.x, v.x, normal.x, pt.x,
+	    u.y, v.y, normal.y, pt.y,
+	    u.z, v.z, normal.z, pt.z
 	};
 }
 
@@ -551,7 +561,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 				add_instance(model_buffer, transform_matrix, i);
 				break;
 			case (ObjectType::OBJECT_REFRACTION):
-				add_instance(model_buffer, calculate_rotation({0.70, 2.3, 3.35}), i);
+				add_instance(model_buffer, calculate_rotation({-0.25, -2.5, -2.35}, 1.f, true), i);
 				break;
 			default:
 				// handle flame separately
@@ -570,11 +580,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 		uint32_t index        = std::distance(model_buffers.begin(), iter);
 		for (auto &&particle : flame_generator.particles)
 		{
-			transform_matrix = {
-			    0.25f, 0.0f, 0.0f, particle.position.x,
-			    0.0f, 0.25f, 0.0f, particle.position.y,
-			    0.0f, 0.0f, 0.25f, particle.position.z};
-			add_instance(model_buffer, transform_matrix, index);
+			add_instance(model_buffer, calculate_rotation(particle.position, 0.25f, true), index);
 		}
 	}
 
@@ -981,7 +987,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Pass render mode constant
 	struct SpecialConsts_s {
-		uint32_t renderMode = RenderMode::RENDER_BARYCENTRIC;
+		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
 		uint32_t maxRays = 12;
 	}specialConsts;
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;

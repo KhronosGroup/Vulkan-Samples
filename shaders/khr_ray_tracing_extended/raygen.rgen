@@ -69,7 +69,7 @@ void main()
 	// 0 = normal, 1 = shadow, 2 = AO
 	uint current_mode = 0;
 	float expectedDistance = -1;
-	for (uint i = 0; i < max_rays && current_mode < 100 && color.a < 0.95; ++i)
+	for (uint i = 0; i < max_rays && current_mode < 100 && color.a < 0.95 && (color.r < 0.99 || color.b < 0.99 || color.g < 0.99); ++i)
 	{
 		traceRayEXT(topLevelAS, gl_RayFlagsOpaqueEXT, 0xff, 0, 0, 0, origin.xyz, tmin, direction.xyz, tmax, 0);
 		object_type = uint(hitValue.intersection.w);

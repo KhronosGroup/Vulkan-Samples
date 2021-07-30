@@ -147,7 +147,7 @@ void handleDraw()
       const float t = min(min(min(min(x, 1-x), y), 1-y), 0.5) / 0.5;
       const float IOR = t * base_IOR + (1 - t) * 1;
       hitValue.color = vec4(IOR, 0, 0, 0);
-      hitValue.normal = vec4(normal.x, normal.y, normal.z, gl_HitTEXT);
+      //hitValue.normal = vec4(normal.x, normal.y, normal.z, gl_HitTEXT);
     }
     
 

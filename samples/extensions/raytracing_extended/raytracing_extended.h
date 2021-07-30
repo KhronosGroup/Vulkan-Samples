@@ -267,7 +267,7 @@ class RaytracingExtended : public ApiVulkanSample
 	void          create_dynamic_object_buffers(float time);
 	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
 	void          create_top_level_acceleration_structure(bool print_time = true);
-	VkTransformMatrixKHR calculate_rotation(glm::vec3 pt);
+	VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
 	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
 
 	void          create_scene();
