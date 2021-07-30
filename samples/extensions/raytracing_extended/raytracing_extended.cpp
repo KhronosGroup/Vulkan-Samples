@@ -269,7 +269,7 @@ void RaytracingExtended::create_static_object_buffers()
 
 	// Create a staging buffer. (If staging buffer use is disabled, then this will be the final buffer)
 	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
-	const VkBufferUsageFlags           buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	static constexpr VkBufferUsageFlags           buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 	const VkBufferUsageFlags           staging_flags      = scene_options.use_vertex_staging_buffer ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : buffer_usage_flags;
 	staging_vertex_buffer                                 = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_index_buffer                                  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -287,7 +287,7 @@ void RaytracingExtended::create_static_object_buffers()
 	{
 		auto &cmd = device->request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
+		auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
@@ -486,6 +486,19 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 	}
 }
 
+VkTransformMatrixKHR RaytracingExtended::calculate_rotation(glm::vec3 pt)
+{
+	using namespace glm;
+	const auto normal = normalize(pt - camera.position);
+	const auto u      = normalize(abs(dot(normal, vec3(1, 0, 0))) > 0.9f ? cross(normal, vec3(0, 1, 0)) : cross(normal, vec3(1, 0, 0)));
+	const auto v      = normalize(cross(normal, u));
+	return
+	{
+	    v.x, u.x, normal.x, -pt.x,
+	    v.y, u.y, normal.y, -pt.y,
+	    v.z, u.z, normal.z, -pt.z
+	};
+}
 
 /*
 	Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
@@ -532,9 +545,17 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 		model_instance_data.emplace_back(scene_instance);
 
 		// these objects have a single instance with the identity transform
-		if (model_buffer.object_type == ObjectType::OBJECT_NORMAL || model_buffer.object_type == ObjectType::OBJECT_REFRACTION)
+		switch (model_buffer.object_type)
 		{
-			add_instance(model_buffer, transform_matrix, i);
+			case (ObjectType::OBJECT_NORMAL):
+				add_instance(model_buffer, transform_matrix, i);
+				break;
+			case (ObjectType::OBJECT_REFRACTION):
+				add_instance(model_buffer, calculate_rotation({0.70, 2.3, 3.35}), i);
+				break;
+			default:
+				// handle flame separately
+				break;
 		}
 	}
 
@@ -839,11 +860,7 @@ void RaytracingExtended::create_descriptor_sets()
 
 void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
-	auto transform_pt = [](glm::vec3 pt, bool translate) {
-		glm::vec3 translation = {-0.70, -3.35, -2.3};
-		std::swap(pt.x, pt.y);
-		return pt + translation;
-	};
+	
 	uint32_t grid_size = 100;
 	std::vector<glm::vec3> pts;
 	std::vector<glm::vec2> uvs;
@@ -856,11 +873,12 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 			const float x  = float(i) / float(grid_size);
 			const float y  = float(j) / float(grid_size);
 			const float   lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
-			glm::vec3   pt = {2 * x,
-                            y,
+			glm::vec3   pt = {2 * x - 1.f,
+                            y - 0.5f,
                             lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))
 			};
-			pts.emplace_back(transform_pt(pt, true));
+			std::swap(pt.x, pt.y);
+			pts.emplace_back(pt);
 			normals.emplace_back(glm::vec3{0, 0, 0});
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
@@ -883,7 +901,7 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 
 	for (auto & normal : normals)
 	{
-		normal = glm::normalize(transform_pt(normal, false));
+		normal = glm::normalize(normal);
 	}
 
 	std::vector<NewVertex> vertices_out(pts.size());
@@ -963,7 +981,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 
 	// Pass render mode constant
 	struct SpecialConsts_s {
-		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
+		uint32_t renderMode = RenderMode::RENDER_BARYCENTRIC;
 		uint32_t maxRays = 12;
 	}specialConsts;
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;
