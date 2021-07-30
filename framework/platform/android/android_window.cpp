@@ -23,14 +23,14 @@ namespace vkb
 {
 AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties) :
     Window(properties),
-    handle{window}
+    handle{window},
+    platform{platform}
 {
-	headless = properties.mode == Mode::Headless;
 }
 
 VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 {
-	if (instance.get_handle() == VK_NULL_HANDLE || !handle || headless)
+	if (instance.get_handle() == VK_NULL_HANDLE || !handle || properties.mode == Mode::Headless)
 	{
 		return VK_NULL_HANDLE;
 	}

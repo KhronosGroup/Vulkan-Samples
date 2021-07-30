@@ -22,8 +22,6 @@
 
 #include "synchronization_2.h"
 
-#include "window_options/window_options.h"
-
 Synchronization2::Synchronization2()
 {
 	title       = "Compute shader N-body simulation using VK_KHR_synchronization2";

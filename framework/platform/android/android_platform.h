@@ -63,7 +63,6 @@ class AndroidPlatform : public Platform
 
 	virtual bool initialize(const std::vector<Plugin *> &plugins) override;
 
-
 	virtual void terminate(ExitCode code) override;
 
 	virtual const char *get_surface_extension() override;
@@ -97,8 +96,6 @@ class AndroidPlatform : public Platform
 	android_app *app{nullptr};
 
 	std::string log_output;
-
-	bool ready = false;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
 

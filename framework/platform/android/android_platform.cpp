@@ -36,7 +36,6 @@ VKBP_ENABLE_WARNINGS()
 #include "common/strings.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
-#include "window_options/window_options.h"
 
 extern "C"
 {
@@ -420,11 +419,10 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 	}
 
 	// Wait until the android window is loaded before allowing the app to continue
+	LOGI("Waiting on window surface to be ready");
 	do
 	{
-		poll_events();
-
-		if (app->destroyRequested != 0)
+		if (!process_android_events(app))
 		{
 			return false;
 		}
@@ -435,12 +433,6 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 
 void AndroidPlatform::create_window(const Window::Properties &properties)
 {
-	LOGI("Waiting on window surface to be ready");
-	while (!ready)
-	{
-		process_android_events(app);
-	}
-
 	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
 	window = std::make_unique<AndroidWindow>(*this, app->window, properties);

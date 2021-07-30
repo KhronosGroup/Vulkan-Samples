@@ -23,8 +23,8 @@ namespace plugins
 {
 StartSample::StartSample() :
     StartSampleTags("Apps",
-                 "A collection of flags to samples and apps.",
-                 {}, {&sample_subcmd})
+                    "A collection of flags to samples and apps.",
+                    {}, {&sample_subcmd})
 {
 }
 

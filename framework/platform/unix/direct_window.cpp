@@ -19,8 +19,8 @@
 
 #include "core/instance.h"
 
-#include "platform/desktop/headless_window.h"
-#include "platform/desktop/unix/direct_window.h"
+#include "platform/headless_window.h"
+#include "platform/unix/direct_window.h"
 
 namespace vkb
 {

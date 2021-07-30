@@ -36,9 +36,8 @@ class AndroidWindow : public Window
 	/**
 	 * @brief Constructor
 	 * @param platform The platform this window is created for
-	 * @param mode The mode that the window should run in (ignored on android)
 	 * @param window A reference to the location of the Android native window
-	 * @param headless Whether the application is being rendered in headless mode
+	 * @param properties Window configuration
 	 */
 	AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties);
 
@@ -69,9 +68,6 @@ class AndroidWindow : public Window
 
 	// Handle to the android window
 	ANativeWindow *&handle;
-
-	// If true, return a VK_NULL_HANDLE on create_surface()
-	bool headless;
 
 	bool finish_called{false};
 };

@@ -30,7 +30,6 @@ namespace plugins
 {
 using BatchModeTags = vkb::PluginBase<vkb::tags::Entrypoint, vkb::tags::FullControl>;
 
-
 /**
  * @brief Batch Mode
  * 

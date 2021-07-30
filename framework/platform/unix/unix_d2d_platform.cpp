@@ -26,7 +26,6 @@ VKBP_ENABLE_WARNINGS()
 
 #include "platform/headless_window.h"
 #include "platform/unix/direct_window.h"
-#include "window_options/window_options.h"
 
 namespace vkb
 {

@@ -154,6 +154,7 @@ std::vector<std::string> CLI11CommandParser::get_command_value(Command *command)
 	return it->second->results();
 }
 
+// TODO: Explain this
 bool CLI11CommandParser::parse(const std::vector<Plugin *> &plugins)
 {
 	// Generate all command groups

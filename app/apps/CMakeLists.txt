@@ -69,7 +69,6 @@ configure_file(${CMAKE_CURRENT_SOURCE_DIR}/apps.cpp.in ${CMAKE_CURRENT_BINARY_DI
 
 # Create apps library
 
-
 set(SRC
     apps.h
     ${CMAKE_CURRENT_BINARY_DIR}/apps.cpp

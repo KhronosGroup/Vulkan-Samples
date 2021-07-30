@@ -38,7 +38,6 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/script.h"
 #include "scene_graph/scripts/animation.h"
 #include "scene_graph/scripts/free_camera.h"
-#include "window_options/window_options.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"

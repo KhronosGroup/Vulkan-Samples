@@ -93,7 +93,7 @@ class Plugin
 	 * @brief Conducts the process of activating and initializing an plugin
 	 * 
 	 * @param platform The platform
-	 * @param parseer The parser used to check if the plugins flags are present
+	 * @param parser The parser used to check if the plugins flags are present
 	 * @param force_activation Force a plugin to be activated, not advised unless the plugin works without inputs
 	 * @return true If the plugin is to be activated
 	 * @return false If the plugin is not active
@@ -208,7 +208,6 @@ class Plugin
 	/**
 	 * @brief Sets up an plugin by using values from the parser
 	 * 
-	 * @param platform The platform
 	 * @param parser The parser
 	 */
 	virtual void init(const CommandParser &parser) = 0;

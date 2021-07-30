@@ -25,8 +25,6 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
-#include "window_options/window_options.h"
-
 bool ApiVulkanSample::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -171,18 +169,16 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
 }
 
 void ApiVulkanSample::prepare_render_context()
 {
-	render_context->request_image_format(VK_FORMAT_B8G8R8A8_UNORM);
-
 	VulkanSample::prepare_render_context();
 }
 
