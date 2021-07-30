@@ -287,7 +287,7 @@ void RaytracingExtended::create_static_object_buffers()
 	{
 		auto &cmd = device->request_command_buffer();
 		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-		auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer) {
+		auto copy = [this, &cmd, buffer_usage_flags](vkb::core::Buffer &staging_buffer) {
 			auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 			cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
@@ -909,22 +909,32 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 	dynamic_vertex_buffer->update(vertices_out.data(), vertex_buffer_size);
 	dynamic_index_buffer->update(indices.data(), index_buffer_size);
 
-	auto iter = std::find_if(raytracing_scene->model_buffers.begin(), raytracing_scene->model_buffers.end(), [](const ModelBuffer &in) {
-		return in.object_type == OBJECT_REFRACTION;
-	});
-	if (iter == raytracing_scene->model_buffers.cend())
-	{
-		raytracing_scene->model_buffers.emplace_back(ModelBuffer{});
-	}
 
-	ModelBuffer &buffer      = iter == raytracing_scene->model_buffers.cend() ? raytracing_scene->model_buffers.back() : *iter;
-	buffer.vertex_offset     = 0;
-	buffer.index_offset      = 0;
-	buffer.is_static         = false;
-	buffer.default_transform = VkTransformMatrixKHR{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
-	buffer.num_vertices      = vertices_out.size();
-	buffer.num_triangles     = indices.size();
-	buffer.object_type       = ObjectType::OBJECT_REFRACTION;
+	auto assign_buffer = [&](ModelBuffer &buffer) {
+		buffer.vertex_offset     = 0;
+		buffer.index_offset      = 0;
+		buffer.is_static         = false;
+		buffer.default_transform = VkTransformMatrixKHR{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
+		buffer.num_vertices      = vertices_out.size();
+		buffer.num_triangles     = indices.size();
+		buffer.object_type       = ObjectType::OBJECT_REFRACTION;
+	};
+	bool found = false;
+	for (auto&& buffer : raytracing_scene->model_buffers)
+	{
+		if (buffer.object_type == OBJECT_REFRACTION)
+		{
+			assign_buffer(buffer);
+			found = true;
+			break;
+		}
+	}
+	if (!found)
+	{
+		ModelBuffer new_buffer;
+		assign_buffer(new_buffer);
+		raytracing_scene->model_buffers.emplace_back(std::move(new_buffer));
+	}
 }
 
 /*
