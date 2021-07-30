@@ -247,28 +247,31 @@ class RaytracingExtended : public ApiVulkanSample
 	RaytracingExtended();
 	~RaytracingExtended() override;
 
-	void     request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	uint64_t get_buffer_device_address(VkBuffer buffer);
-	void     create_storage_image();
-	void     create_static_object_buffers();
-	void     create_flame_model();
-	void     create_dynamic_object_buffers(float time);
-	void     create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
-	void     create_top_level_acceleration_structure(bool print_time = true);
-	void     delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
 
-	void create_scene();
-	void create_shader_binding_tables();
-	void create_descriptor_sets();
-	void create_ray_tracing_pipeline();
-	void create_display_pipeline();
-	void create_uniform_buffer();
-	void build_command_buffers() override;
-	void update_uniform_buffers();
-	void draw();
-	void draw_gui() override;
-	bool prepare(vkb::Platform &platform) override;
-	void render(float delta_time) override;
+	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	uint64_t      get_buffer_device_address(VkBuffer buffer);
+	void          create_storage_image();
+	void          create_static_object_buffers();
+	void          create_flame_model();
+	void          create_dynamic_object_buffers(float time);
+	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
+        VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
+	void          create_top_level_acceleration_structure(bool print_time = true);
+	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
+
+	void          create_scene();
+	void          create_shader_binding_tables();
+	void          create_descriptor_sets();
+	void          create_ray_tracing_pipeline();
+	void          create_display_pipeline();
+	void          create_uniform_buffer();
+	void          build_command_buffers() override;
+	void          update_uniform_buffers();
+	void          draw();
+	void          draw_gui() override;
+	bool          prepare(vkb::Platform &platform) override;
+	void          render(float delta_time) override;
+
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended();
