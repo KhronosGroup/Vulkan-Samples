@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2021 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -68,12 +68,10 @@ class RaytracingExtended : public ApiVulkanSample
 
 	struct FlameParticleGenerator
 	{
-		FlameParticleGenerator()
-		{
-		}
+		FlameParticleGenerator() = default;
 
 		FlameParticleGenerator(glm::vec3 generator_origin, glm::vec3 generator_direction, float generator_radius, size_t n_particles) :
-		    origin(generator_origin), direction(generator_direction), radius(generator_radius), n_particles(n_particles)
+		    origin(generator_origin), direction(generator_direction), radius(generator_radius), n_particles(n_particles), generator(std::chrono::system_clock::now().time_since_epoch().count())
 		{
 			using namespace glm;
 			u = normalize(abs(dot(generator_direction, vec3(0, 0, 1))) > 0.9f ? cross(generator_direction, vec3(1, 0, 0)) : cross(generator_direction, vec3(0, 0, 1)));
@@ -85,20 +83,18 @@ class RaytracingExtended : public ApiVulkanSample
 				particles.emplace_back(generateParticle(starting_lifetime));
 			}
 		}
-		~FlameParticleGenerator()
-		{
-		}
-		FlameParticle generateParticle(float lifetime = 0.f) const
+		~FlameParticleGenerator() = default;
+		FlameParticle generateParticle(float _lifetime = 0.f) const
 		{
 			using namespace glm;
-			const float theta              = 2 * 3.14159 * generate_random();
+			const float theta              = 2.f * 3.14159f * generate_random();
 			const float R                  = radius * generate_random();
 			const vec3  velocity_direction = generate_random_direction();
 
 			FlameParticle particle;
 			particle.position = origin + R * (sin(theta) * u + cos(theta) * v);
 			particle.velocity = generate_random() * 0.2f * velocity_direction;
-			particle.duration = lifetime;
+			particle.duration = _lifetime;
 			return particle;
 		}
 		glm::vec3 generate_random_direction() const
@@ -243,35 +239,39 @@ class RaytracingExtended : public ApiVulkanSample
 	VkPipelineLayout             pipeline_layout;
 	VkDescriptorSet              descriptor_set;
 	VkDescriptorSetLayout        descriptor_set_layout;
+	using Triangle                   = std::array<uint32_t, 3>;
+	uint32_t               grid_size = 100;
+	std::vector<glm::vec3> pts;
+	std::vector<glm::vec2> uvs;
+	std::vector<glm::vec3> normals;
+	std::vector<Triangle>  indices;
 
 	RaytracingExtended();
 	~RaytracingExtended() override;
 
+	void                 request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	uint64_t             get_buffer_device_address(VkBuffer buffer);
+	void                 create_storage_image();
+	void                 create_static_object_buffers();
+	void                 create_flame_model();
+	void                 create_dynamic_object_buffers(float time);
+	void                 create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
+	VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
+	void                 create_top_level_acceleration_structure(bool print_time = true);
+	void                 delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
 
-	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	uint64_t      get_buffer_device_address(VkBuffer buffer);
-	void          create_storage_image();
-	void          create_static_object_buffers();
-	void          create_flame_model();
-	void          create_dynamic_object_buffers(float time);
-	void          create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
-        VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
-	void          create_top_level_acceleration_structure(bool print_time = true);
-	void          delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
-
-	void          create_scene();
-	void          create_shader_binding_tables();
-	void          create_descriptor_sets();
-	void          create_ray_tracing_pipeline();
-	void          create_display_pipeline();
-	void          create_uniform_buffer();
-	void          build_command_buffers() override;
-	void          update_uniform_buffers();
-	void          draw();
-	void          draw_gui() override;
-	bool          prepare(vkb::Platform &platform) override;
-	void          render(float delta_time) override;
-
+	void create_scene();
+	void create_shader_binding_tables();
+	void create_descriptor_sets();
+	void create_ray_tracing_pipeline();
+	void create_display_pipeline();
+	void create_uniform_buffer();
+	void build_command_buffers() override;
+	void update_uniform_buffers();
+	void draw();
+	void draw_gui() override;
+	bool prepare(vkb::Platform &platform) override;
+	void render(float delta_time) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended();
