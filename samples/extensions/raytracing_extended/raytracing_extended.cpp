@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2021 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,20 +34,22 @@ struct QuickTimer
 	using clock = std::chrono::high_resolution_clock;
 	const char             *name;
 	const clock::time_point start;
-	explicit QuickTimer(const char *name) :
-	    name(name), start(clock::now())
+	bool                    print_on_exit;
+	explicit QuickTimer(const char *name_, bool print_on_exit_ = true) :
+	    name(name_), start(clock::now()), print_on_exit(print_on_exit_)
 	{}
 
-	void stop_and_log()
+	~QuickTimer()
 	{
-		using namespace std::chrono;
-		const auto dur = duration_cast<microseconds>(clock::now() - start).count();
-		LOGI(fmt::format("{:s} duration: {:f} ms", name, dur / 1000.))
+		if (print_on_exit)
+		{
+			using namespace std::chrono;
+			const auto dur = duration_cast<microseconds>(clock::now() - start).count();
+			LOGI(fmt::format("{:s} duration: {:f} ms", name, dur / 1000.))
+		}
 	}
 };
 }        // namespace
-
-using Triangle = std::array<uint32_t, 3>;
 
 #define ASSERT_LOG(cond, msg)              \
 	{                                      \
@@ -208,16 +210,16 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 
 void RaytracingExtended::create_flame_model()
 {
-	flame_texture                  = load_texture("textures/generated_flame.ktx");
-	std::vector<glm::vec3> pts     = {{0, 0, 0},
-                                  {1, 0, 0},
-                                  {1, 1, 0},
-                                  {0, 1, 0}};
-	std::vector<Triangle>  indices = {{0, 1, 2},
-                                     {0, 2, 3}};
+	flame_texture                   = load_texture("textures/generated_flame.ktx");
+	std::vector<glm::vec3> pts_     = {{0, 0, 0},
+                                   {1, 0, 0},
+                                   {1, 1, 0},
+                                   {0, 1, 0}};
+	std::vector<Triangle>  indices_ = {{0, 1, 2},
+                                      {0, 2, 3}};
 
 	std::vector<NewVertex> vertices;
-	for (auto &pt : pts)
+	for (auto &pt : pts_)
 	{
 		NewVertex vertex;
 		vertex.pos       = pt - glm::vec3(0.5f, 0.5f, 0.f);        // center the point
@@ -228,7 +230,7 @@ void RaytracingExtended::create_flame_model()
 
 	Model model;
 	model.vertices      = vertices;
-	model.triangles     = indices;
+	model.triangles     = indices_;
 	model.object_type   = OBJECT_FLAME;
 	model.texture_index = raytracing_scene->imageInfos.size();
 	VkDescriptorImageInfo image_info;
@@ -266,11 +268,11 @@ void RaytracingExtended::create_static_object_buffers()
 	auto index_buffer_size  = nTotalTriangles * sizeof(Triangle);
 
 	// Create a staging buffer. (If staging buffer use is disabled, then this will be the final buffer)
-	std::unique_ptr<vkb::core::Buffer> staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
-	static constexpr VkBufferUsageFlags           buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
-	const VkBufferUsageFlags           staging_flags      = scene_options.use_vertex_staging_buffer ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : buffer_usage_flags;
-	staging_vertex_buffer                                 = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	staging_index_buffer                                  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	std::unique_ptr<vkb::core::Buffer>  staging_vertex_buffer = nullptr, staging_index_buffer = nullptr;
+	static constexpr VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+	const VkBufferUsageFlags            staging_flags      = scene_options.use_vertex_staging_buffer ? VK_BUFFER_USAGE_TRANSFER_SRC_BIT : buffer_usage_flags;
+	staging_vertex_buffer                                  = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_index_buffer                                   = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, staging_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Copy over the data for each of the models
 	for (size_t i = 0; i < models.size(); ++i)
@@ -324,7 +326,6 @@ void RaytracingExtended::create_static_object_buffers()
 		buffer.object_type       = models[i].object_type;
 		model_buffers.emplace_back(std::move(buffer));
 	}
-	timer.stop_and_log();
 }
 
 /*
@@ -332,7 +333,7 @@ void RaytracingExtended::create_static_object_buffers()
 */
 void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_update, bool print_time)
 {
-	QuickTimer timer{"BLAS Build"};
+	QuickTimer timer{"BLAS Build", print_time};
 	assert(!!raytracing_scene);
 	/**
 	Though we use similar code to handle static and dynamic objects, several parts differ:
@@ -475,10 +476,6 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
 		bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 	}
-	if (print_time)
-	{
-		timer.stop_and_log();
-	}
 }
 
 VkTransformMatrixKHR RaytracingExtended::calculate_rotation(glm::vec3 pt, float scale, bool freeze_z)
@@ -489,20 +486,17 @@ VkTransformMatrixKHR RaytracingExtended::calculate_rotation(glm::vec3 pt, float 
 	{
 		normal = normalize(abs(dot(normal, vec3{0, 1, 0})) > 0.99f ? vec3{0, 0, 1} : vec3{normal.x, 0.f, normal.z});
 	}
-	auto u      = normalize(cross(normal, vec3(0, 1, 0)));
-	auto v      = normalize(cross(normal, u));
-
+	auto u = normalize(cross(normal, vec3(0, 1, 0)));
+	auto v = normalize(cross(normal, u));
 
 	// wait to multiply by scale until after calculating basis to prevent floating point problems
 	normal *= scale;
 	u *= scale;
 	v *= scale;
-	return
-	{
+	return {
 	    u.x, v.x, normal.x, pt.x,
 	    u.y, v.y, normal.y, pt.y,
-	    u.z, v.z, normal.z, pt.z
-	};
+	    u.z, v.z, normal.z, pt.z};
 }
 
 /*
@@ -513,7 +507,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	/*
 	Often, good performance can be obtained when the TLAS uses PREFER_FAST_TRACE with full rebuilds.
 	*/
-	QuickTimer timer{"TLAS Build"};
+	QuickTimer timer{"TLAS Build", print_time};
 	assert(!!raytracing_scene);
 	VkTransformMatrixKHR transform_matrix = {
 	    1.0f, 0.0f, 0.0f, 0.0f,
@@ -684,10 +678,6 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 	acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
 	acceleration_device_address_info.accelerationStructure = top_level_acceleration_structure.handle;
 	top_level_acceleration_structure.device_address        = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
-	if (print_time)
-	{
-		timer.stop_and_log();
-	}
 }
 
 inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
@@ -732,6 +722,10 @@ struct CopyBuffer
 */
 void RaytracingExtended::create_scene()
 {
+	pts.resize(grid_size * grid_size);
+	normals.resize(grid_size * grid_size);
+	uvs.resize(grid_size * grid_size);
+	indices.resize(grid_size * grid_size);
 	std::vector<SceneLoadInfo> scenesToLoad;
 	const float                sponza_scale = 0.01f;
 	const glm::mat4x4          sponza_transform{0.f, 0.f, sponza_scale, 0.f,
@@ -858,33 +852,26 @@ void RaytracingExtended::create_descriptor_sets()
 
 void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
-	
-	uint32_t grid_size = 100;
-	std::vector<glm::vec3> pts;
-	std::vector<glm::vec2> uvs;
-	std::vector<glm::vec3> normals;
-	std::vector<Triangle>  indices;
+	normals.assign(normals.size(), {0, 0, 0});
 	for (uint32_t i = 0; i < grid_size; ++i)
 	{
 		for (uint32_t j = 0; j < grid_size; ++j)
 		{
-			const float x  = float(i) / float(grid_size);
-			const float y  = float(j) / float(grid_size);
-			const float   lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
-			glm::vec3   pt = {2 * x - 1.f,
+			const float x             = float(i) / float(grid_size);
+			const float y             = float(j) / float(grid_size);
+			const float lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
+			glm::vec3   pt            = {2 * x - 1.f,
                             y - 0.5f,
-                            lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))
-			};
+                            lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
 			std::swap(pt.x, pt.y);
-			pts.emplace_back(pt);
-			normals.emplace_back(glm::vec3{0, 0, 0});
+			pts[grid_size * i + j] = pt;
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
 			{
-				indices.emplace_back(Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1});
-				indices.emplace_back(Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1});
+				indices[grid_size * i + j]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
+				indices[grid_size * i + j + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
 			}
-			uvs.emplace_back(glm::vec2{x, y});
+			uvs[grid_size * i + j] = glm::vec2{x, y};
 		}
 	}
 	for (auto &&tri : indices)
@@ -1413,9 +1400,9 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 					imageInfos.push_back(imageInfo);
 				}
 
-				auto       pts       = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
+				auto       pts_      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
 				const auto UV_coords = CopyBuffer<glm::vec2>{}(sub_mesh->vertex_buffers, "texcoord_0");
-				const auto normals   = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+				const auto normals_  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
 
 				auto transform = scenesToLoad[sceneIndex].transform;
 				if (is_vase)
@@ -1425,7 +1412,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
                                             sponza_scale, 0.f, 0.f, 0.f,
                                             0.f, sponza_scale, 0.f, 9.5f};
 				}
-				for (auto &&pt : pts)
+				for (auto &&pt : pts_)
 				{
 					const auto translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
 					pt                     = glm::vec3(glm::mat4(transform) * glm::vec4(pt, 1.f)) + translation;
@@ -1434,12 +1421,12 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 				assert(textureIndex < std::numeric_limits<uint32_t>::max());
 				const auto textureIndex32 = static_cast<uint32_t>(textureIndex);
 				Model      model;
-				model.vertices.resize(pts.size());
-				for (size_t i = 0; i < pts.size(); ++i)
+				model.vertices.resize(pts_.size());
+				for (size_t i = 0; i < pts_.size(); ++i)
 				{
 					auto tex_coords             = i < UV_coords.size() ? UV_coords[i] : glm::vec2{};
-					auto normal                 = i < normals.size() ? normals[i] : glm::vec3{};
-					model.vertices[i].pos       = pts[i];
+					auto normal                 = i < normals_.size() ? normals_[i] : glm::vec3{};
+					model.vertices[i].pos       = pts_[i];
 					model.vertices[i].normal    = normal;
 					model.vertices[i].tex_coord = tex_coords;
 				}
