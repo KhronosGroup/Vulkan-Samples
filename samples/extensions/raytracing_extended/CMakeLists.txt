@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Sascha Willems
+# Copyright (c) 2021 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,6 +22,6 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Sascha Wilems"
-    NAME "Ray tracing basic"
-    DESCRIPTION "Basic example for hardware accelerated ray tracing")
+    AUTHOR "Holochip Corporation"
+    NAME "Ray tracing extended"
+    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Acceleration Structure rebuild and AO.")

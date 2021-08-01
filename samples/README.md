@@ -182,6 +182,14 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 **Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
 Render a basic scene using the official cross-vendor ray tracing extension. Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses. After dispatching the rays, the final result is copied to the swapchain image.<br/>
 
+### [Extended hardware accelerated ray tracing](./extensions/raytracing_extended)<br/>
+**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
+Render Sponza with Ambient Oclusion.  Place a vase in center.  Generate a particle fire that 
+demonstrates the TLAS (Top Level Acceleration Structure) animation for the same underlining geometry.
+Procedurally generate a transparent quad and deform the geometry of the quad in the BLAS (Bottom Level Acceleration 
+Structure) to demonstrate how to animate with deforming geometry.
+Shows how to rebuild the acceleration structure and when to set it to fast rebuild vs fast traversal.
+
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
