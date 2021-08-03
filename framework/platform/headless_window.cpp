@@ -29,6 +29,11 @@ VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
 	return VK_NULL_HANDLE;
 }
 
+vk::SurfaceKHR HeadlessWindow::create_surface(vk::Instance, vk::PhysicalDevice)
+{
+	return nullptr;
+}
+
 bool HeadlessWindow::should_close()
 {
 	return closed;
