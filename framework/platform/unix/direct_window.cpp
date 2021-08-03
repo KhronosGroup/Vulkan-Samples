@@ -322,6 +322,66 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 	return surface;
 }
 
+vk::SurfaceKHR DirectWindow::create_surface(vk::Instance instance, vk::PhysicalDevice physical_device)
+{
+	if (!instance || !physical_device)
+	{
+		return nullptr;
+	}
+
+	// Query the display properties
+	std::vector<vk::DisplayPropertiesKHR> display_properties_all = physical_device.getDisplayPropertiesKHR();
+
+	if (display_properties_all.empty())
+	{
+		LOGE("Direct-to-display: No displays found");
+		return nullptr;
+	}
+
+	// select the first display
+	vk::DisplayPropertiesKHR &display_properties = display_properties_all.front();
+
+	// Calculate the display DPI
+	dpi = 25.4f * display_properties.physicalResolution.width / display_properties.physicalDimensions.width;
+
+	// Query display mode properties
+	std::vector<vk::DisplayModePropertiesKHR> display_mode_properties = physical_device.getDisplayModePropertiesKHR(display_properties.display);
+
+	if (display_mode_properties.empty())
+	{
+		LOGE("Direct-to-display: No display modes found");
+		return nullptr;
+	}
+
+	vk::DisplayModePropertiesKHR &mode_props = display_mode_properties.front();
+
+	// Get the list of planes
+	std::vector<vk::DisplayPlanePropertiesKHR> plane_properties = physical_device.getDisplayPlanePropertiesKHR();
+
+	if (plane_properties.empty())
+	{
+		LOGE("Direct-to-display: No display planes found");
+		return nullptr;
+	}
+
+	// Find a compatible plane index
+	uint32_t plane_index = find_compatible_plane(physical_device, display_properties.display, plane_properties);
+	if (plane_index == ~0U)
+	{
+		return nullptr;
+	}
+
+	vk::DisplaySurfaceCreateInfoKHR surface_create_info;
+	surface_create_info.displayMode     = mode_props.displayMode;
+	surface_create_info.planeIndex      = plane_index;
+	surface_create_info.planeStackIndex = plane_properties[plane_index].currentStackIndex;
+	surface_create_info.transform       = vk::SurfaceTransformFlagBitsKHR::eIdentity;
+	surface_create_info.alphaMode       = vk::DisplayPlaneAlphaFlagBitsKHR::eOpaque;
+	surface_create_info.imageExtent     = mode_props.parameters.visibleRegion;
+
+	return instance.createDisplayPlaneSurfaceKHR(surface_create_info);
+}
+
 uint32_t DirectWindow::find_compatible_plane(VkPhysicalDevice phys_dev, VkDisplayKHR display,
                                              const std::vector<VkDisplayPlanePropertiesKHR> &plane_properties)
 {
@@ -349,6 +409,29 @@ uint32_t DirectWindow::find_compatible_plane(VkPhysicalDevice phys_dev, VkDispla
 		for (uint32_t i = 0; i < num_supported; ++i)
 		{
 			if (supported_displays[i] == display)
+			{
+				return pi;
+			}
+		}
+	}
+
+	LOGE("Direct-to-display: No plane found compatible with the display");
+	return ~0U;
+}
+
+uint32_t DirectWindow::find_compatible_plane(vk::PhysicalDevice physical_device, vk::DisplayKHR display,
+                                             const std::vector<vk::DisplayPlanePropertiesKHR> &plane_properties) const
+{
+	assert(display);
+	// Find a plane compatible with the display
+	for (uint32_t pi = 0; pi < plane_properties.size(); ++pi)
+	{
+		if (plane_properties[pi].currentDisplay == display)
+		{
+			std::vector<vk::DisplayKHR> supported_displays = physical_device.getDisplayPlaneSupportedDisplaysKHR(pi);
+
+			auto display_it = std::find(supported_displays.begin(), supported_displays.end(), display);
+			if (display_it != supported_displays.end())
 			{
 				return pi;
 			}

@@ -85,7 +85,10 @@ set(ORDER_LIST
     "afbc"
     "16bit_storage_input_output"
     "16bit_arithmetic"
-    "async_compute")
+    "async_compute"
+
+    #HPP API Samples
+    "hpp_hello_triangle")
 
 # Orders the sample ids by the order list above
 order_sample_list(
