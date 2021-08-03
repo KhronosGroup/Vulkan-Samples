@@ -17,8 +17,8 @@
 
 #pragma once
 
-#include <unordered_map>
 #include <functional>
+#include <unordered_map>
 
 #include <CLI/FormatterFwd.hpp>
 namespace vkb
