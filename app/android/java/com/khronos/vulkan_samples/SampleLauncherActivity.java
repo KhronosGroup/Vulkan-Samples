@@ -262,12 +262,34 @@ public class SampleLauncherActivity extends AppCompatActivity {
         Bundle extras = this.getIntent().getExtras();
         if (extras != null) {
             if (extras.containsKey("cmd")) {
-                launchWithCommandArguments(extras.getString("cmd").split(" "));
+                String[] commands = null;
+                String[] command_arguments = extras.getStringArray("cmd");
+                String command = extras.getString("cmd");
+                if (command_arguments != null) {
+                    commands = command_arguments;
+                } else if (command != null) {
+                    commands = command.split("[ ]+");
+                }
+
+                if (commands != null) {
+                    for (String cmd : commands) {
+                        if (cmd.equals("test")) {
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                            break;
+                        }
+                    }
+                    launchWithCommandArguments(commands);
+                    finishAffinity();
+                }
+
             } else if (extras.containsKey("sample")) {
                 launchSample(extras.getString("sample"));
+                finishAffinity();
             } else if (extras.containsKey("test")) {
                 launchTest(extras.getString("test"));
+                finishAffinity();
             }
+
         }
     }
 
@@ -292,7 +314,6 @@ public class SampleLauncherActivity extends AppCompatActivity {
         setArguments(args);
         Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
         startActivity(intent);
-        // finishAffinity();
     }
 
     public void launchTest(String testID) {

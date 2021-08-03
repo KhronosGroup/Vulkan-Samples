@@ -454,6 +454,11 @@ void AndroidPlatform::terminate(ExitCode code)
 			break;
 	}
 
+	while (process_android_events(app))
+	{
+		// Process events until app->destroyRequested is set
+	}
+
 	Platform::terminate(code);
 }
 
