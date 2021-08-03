@@ -88,8 +88,6 @@ class AndroidPlatform : public Platform
 	void set_surface_ready();
 
   private:
-	void poll_events();
-
 	virtual void create_window(const Window::Properties &properties) override;
 
   private:

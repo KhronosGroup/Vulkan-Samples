@@ -45,7 +45,6 @@ extern "C"
 		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
 		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
 		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
-		auto sample_list = apps::get_samples();
 
 		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
 		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
