@@ -48,7 +48,7 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 
 vk::SurfaceKHR AndroidWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
 {
-	if (!instance || !handle || headless)
+	if (!instance || !handle || properties.mode == Mode::Headless)
 	{
 		return nullptr;
 	}
