@@ -60,7 +60,7 @@ struct SceneInstanceData
 ```
 
 *Per-primitive level*  In this sample, each vertex is encoded with a per-vertex normal and texture coordinate, though
-other applications may with to provide other information at the per-vertex level. To allow the bottom-level acceleration
+other applications may wish to provide other information at the per-vertex level. To allow the bottom-level acceleration
 structure to reference geometry data with a custom-defined layout, the `VkAccelerationStructureGeometryKHR` provides the
 ability to set geometry offsets and strides (i.e. `vertexStride`). In the code below, the
 struct `acceleration_structure_geometry` of type `VkAccelerationStructureGeometryKHR` references the data layout
@@ -103,7 +103,7 @@ if (dist < distance(object_pt, light_pt)):
 ```
 
 The ambient occlusion effect is used to simulate the light diminishing effect of clustered geometry. It's simulated by
-tracing rays from distributed about a hemisphere centered at the intersection point with the object's normal. The
+tracing rays distributed about a hemisphere centered at the intersection point with the object's normal. The
 light-diminishing effect is estimated using the distance to the nearest ray intersection. In some implementations, a
 hard threshold is used. In pseudocode:
 
