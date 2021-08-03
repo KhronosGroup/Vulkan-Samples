@@ -21,32 +21,32 @@
 
 namespace plugins
 {
-class StopOnClose;
+class ForceClose;
 
 // Passive behaviour
-using StopOnCloseTags = vkb::PluginBase<StopOnClose, vkb::tags::Passive>;
+using ForceCloseTags = vkb::PluginBase<ForceClose, vkb::tags::Passive>;
 
 /**
- * @brief Stop On Close
+ * @brief Force Close
  * 
- * Manually halt the application before exiting
+ * Force the close of the application if halted before exiting
  * 
- * Usage: vulkan_sample sample afbc --stop-on-close
+ * The plugin is used as a boolean with platform->using_plugin<ForceClose>();
+ * 
+ * Usage: vulkan_sample sample afbc --force-close
  * 
  */
-class StopOnClose : public StopOnCloseTags
+class ForceClose : public ForceCloseTags
 {
   public:
-	StopOnClose();
+	ForceClose();
 
-	virtual ~StopOnClose() = default;
+	virtual ~ForceClose() = default;
 
 	virtual bool is_active(const vkb::CommandParser &parser) override;
 
 	virtual void init(const vkb::CommandParser &parser) override;
 
-	virtual void on_platform_close() override;
-
-	vkb::FlagCommand stop_cmd = {vkb::FlagType::FlagOnly, "stop-on-close", "", "Halt the application before closing"};
+	vkb::FlagCommand stop_cmd = {vkb::FlagType::FlagOnly, "force-close", "", "Force the close of the application if halted before exiting"};
 };
 }        // namespace plugins

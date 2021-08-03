@@ -39,6 +39,19 @@ VKBP_ENABLE_WARNINGS()
 
 extern "C"
 {
+	JNIEXPORT void JNICALL
+	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
+	{
+		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
+		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
+		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
+		auto sample_list = apps::get_samples();
+
+		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
+		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
+		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
+	}
+
 	JNIEXPORT jobjectArray JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
@@ -68,6 +81,25 @@ extern "C"
 		}
 
 		return j_sample_list;
+	}
+
+	JNIEXPORT void JNICALL
+	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
+	{
+		std::vector<std::string> args;
+
+		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
+		{
+			jstring arg_string = (jstring)(env->GetObjectArrayElement(arg_strings, i));
+
+			const char *arg = env->GetStringUTFChars(arg_string, 0);
+
+			args.push_back(std::string(arg));
+
+			env->ReleaseStringUTFChars(arg_string, arg);
+		}
+
+		vkb::Platform::set_arguments(args);
 	}
 }
 
@@ -375,35 +407,6 @@ void create_directory(const std::string &path)
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {
-	JNIEnv *env;
-	app->activity->vm->AttachCurrentThread(&env, NULL);
-
-	jclass    cls        = env->GetObjectClass(app->activity->clazz);
-	jmethodID get_intent = env->GetMethodID(cls, "getIntent", "()Landroid/content/Intent;");
-	jobject   intent     = env->CallObjectMethod(app->activity->clazz, get_intent);
-
-	jclass    intent_cls = env->GetObjectClass(intent);
-	jmethodID get_string = env->GetMethodID(intent_cls, "getStringExtra", "(Ljava/lang/String;)Ljava/lang/String;");
-
-	jstring     external_dir_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("external_dir"));
-	const char *external_dir_raw = env->GetStringUTFChars(external_dir_str, 0);
-	vkb::Platform::set_external_storage_directory(std::string(external_dir_raw) + "/");
-	env->ReleaseStringUTFChars(external_dir_str, external_dir_raw);
-
-	jstring     temp_dir_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("temp_dir"));
-	const char *temp_dir_raw = env->GetStringUTFChars(temp_dir_str, 0);
-	vkb::Platform::set_temp_directory(std::string(temp_dir_raw) + "/");
-	env->ReleaseStringUTFChars(temp_dir_str, temp_dir_raw);
-
-	jstring     arguments_str = (jstring) env->CallObjectMethod(intent, get_string, env->NewStringUTF("arguments"));
-	const char *arguments_raw = env->GetStringUTFChars(arguments_str, 0);
-
-	std::string args = std::string(arguments_raw);
-
-	std::vector<std::string> arguments = vkb::split(args, ' ');
-	vkb::Platform::set_arguments(arguments);
-
-	env->ReleaseStringUTFChars(arguments_str, arguments_raw);
 }
 
 bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
@@ -413,7 +416,7 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	if (!Platform::initialize(std::move(application)))
+	if (!Platform::initialize(plugins))
 	{
 		return false;
 	}
@@ -435,7 +438,7 @@ void AndroidPlatform::create_window(const Window::Properties &properties)
 {
 	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, properties);
+	window = std::make_unique<AndroidWindow>(this, app->window, properties);
 }
 
 void AndroidPlatform::terminate(ExitCode code)
@@ -492,7 +495,7 @@ std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &de
 	                                    VK_PRESENT_MODE_MAILBOX_KHR,
 	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
 
-	switch (window_properties.vsync)
+	switch (state.window_properties.vsync)
 	{
 		case Window::Vsync::OFF:
 			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);

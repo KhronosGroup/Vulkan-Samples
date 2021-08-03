@@ -148,8 +148,8 @@ class Platform
 
 	void on_post_draw(RenderContext &context);
 
-	static const uint32_t MIN_WINDOW_WIDTH  = 420;
-	static const uint32_t MIN_WINDOW_HEIGHT = 320;
+	static const uint32_t MIN_WINDOW_WIDTH;
+	static const uint32_t MIN_WINDOW_HEIGHT;
 
   protected:
 	std::unique_ptr<CommandParser> parser;

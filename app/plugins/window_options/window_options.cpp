@@ -19,6 +19,7 @@
 
 #include <algorithm>
 
+#include "platform/platform.h"
 #include "platform/window.h"
 
 namespace plugins
@@ -42,10 +43,10 @@ void WindowOptions::init(const vkb::CommandParser &parser)
 	if (parser.contains(&width_flag))
 	{
 		auto width = parser.as<uint32_t>(&width_flag);
-		if (width < vkb::Platform::MIN_WINDOW_WIDTH)
+		if (width < platform->MIN_WINDOW_WIDTH)
 		{
-			LOGD("[Window Options] {} is smaller than the minimum width {}, resorting to minimum width", width, vkb::Platform::MIN_WINDOW_WIDTH);
-			width = vkb::Platform::MIN_WINDOW_WIDTH;
+			LOGD("[Window Options] {} is smaller than the minimum width {}, resorting to minimum width", width, platform->MIN_WINDOW_WIDTH);
+			width = platform->MIN_WINDOW_WIDTH;
 		}
 		properties.extent.width = width;
 	}
@@ -53,10 +54,10 @@ void WindowOptions::init(const vkb::CommandParser &parser)
 	if (parser.contains(&height_flag))
 	{
 		auto height = parser.as<uint32_t>(&height_flag);
-		if (height < vkb::Platform::MIN_WINDOW_HEIGHT)
+		if (height < platform->MIN_WINDOW_HEIGHT)
 		{
-			LOGD("[Window Options] {} is smaller than the minimum height {}, resorting to minimum height", height, vkb::Platform::MIN_WINDOW_HEIGHT);
-			height = vkb::Platform::MIN_WINDOW_HEIGHT;
+			LOGD("[Window Options] {} is smaller than the minimum height {}, resorting to minimum height", height, platform->MIN_WINDOW_HEIGHT);
+			height = platform->MIN_WINDOW_HEIGHT;
 		}
 		properties.extent.height = height;
 	}

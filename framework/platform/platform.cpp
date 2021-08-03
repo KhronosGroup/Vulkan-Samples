@@ -29,14 +29,16 @@
 #include <spdlog/spdlog.h>
 
 #include "common/logging.h"
+#include "force_close/force_close.h"
 #include "platform/filesystem.h"
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 
 namespace vkb
 {
+const uint32_t Platform::MIN_WINDOW_WIDTH  = 420;
+const uint32_t Platform::MIN_WINDOW_HEIGHT = 320;
+
 std::vector<std::string> Platform::arguments = {};
 
 std::string Platform::external_storage_directory = "";
@@ -200,18 +202,6 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 	return std::move(context);
 }
 
-void Platform::create_window(const Window::Properties &properties)
-{
-	if (properties.mode == vkb::Window::Mode::Headless)
-	{
-		window = std::make_unique<HeadlessWindow>(properties);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(this, properties);
-	}
-}
-
 void Platform::terminate(ExitCode code)
 {
 	if (code == ExitCode::UnableToRun)
@@ -239,7 +229,7 @@ void Platform::terminate(ExitCode code)
 
 	on_platform_close();
 
-	if (code == ExitCode::UnableToRun)
+	if (code == ExitCode::UnableToRun && !using_plugin<::plugins::ForceClose>())
 	{
 #ifndef ANDROID
 		std::cout << "Press any key to continue";

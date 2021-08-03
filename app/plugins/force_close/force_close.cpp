@@ -15,33 +15,25 @@
  * limitations under the License.
  */
 
-#include "stop_on_close.h"
+#include "force_close.h"
 
 #include <iostream>
 
 namespace plugins
 {
-StopOnClose::StopOnClose() :
-    StopOnCloseTags("Stop on Close",
-                    "Halt the application before exiting. (Desktop Only)",
-                    {vkb::Hook::OnPlatformClose}, {&stop_cmd})
+ForceClose::ForceClose() :
+    ForceCloseTags("Force Close",
+                   "Force the application to close if it has been halted before exiting",
+                   {}, {&stop_cmd})
 {
 }
 
-bool StopOnClose::is_active(const vkb::CommandParser &parser)
+bool ForceClose::is_active(const vkb::CommandParser &parser)
 {
 	return parser.contains(&stop_cmd);
 }
 
-void StopOnClose::init(const vkb::CommandParser &parser)
+void ForceClose::init(const vkb::CommandParser &parser)
 {
-}
-
-void StopOnClose::on_platform_close()
-{
-#ifndef ANDROID
-	std::cout << "Press any key to continue";
-	std::cin.get();
-#endif
 }
 }        // namespace plugins
