@@ -36,7 +36,9 @@
 * Ryan O'Shea
 * Sascha Willems
 * Spencer Fricke
+* Steven Winston
 * Tobias Hector
 * Tom Atkinson
 * Wasim Abbas
+* William Lohry
 * Zandro Fargnoli
