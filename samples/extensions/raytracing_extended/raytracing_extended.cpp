@@ -722,10 +722,8 @@ struct CopyBuffer
 */
 void RaytracingExtended::create_scene()
 {
-	pts.resize(grid_size * grid_size);
-	normals.resize(grid_size * grid_size);
-	uvs.resize(grid_size * grid_size);
-    indices.resize(2 * grid_size * grid_size);
+    refraction_model.resize(grid_size * grid_size);
+    refraction_indices.resize(2 * grid_size * grid_size);
 	std::vector<SceneLoadInfo> scenesToLoad;
 	const float                sponza_scale = 0.01f;
 	const glm::mat4x4          sponza_transform{0.f, 0.f, sponza_scale, 0.f,
@@ -852,7 +850,6 @@ void RaytracingExtended::create_descriptor_sets()
 
 void RaytracingExtended::create_dynamic_object_buffers(float time)
 {
-	normals.assign(normals.size(), {0, 0, 0});
 	for (uint32_t i = 0; i < grid_size; ++i)
 	{
 		for (uint32_t j = 0; j < grid_size; ++j)
@@ -860,47 +857,36 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 			const float x             = float(i) / float(grid_size);
 			const float y             = float(j) / float(grid_size);
 			const float lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
-			glm::vec3   pt            = {2 * x - 1.f,
-                            y - 0.5f,
+            refraction_model[grid_size * i + j].normal = {0.f, 0.f, 0.f};
+            refraction_model[grid_size * i + j].pos = {y - 0.5f,
+                            2 * x - 1.f,
                             lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
-			std::swap(pt.x, pt.y);
-			pts[grid_size * i + j] = pt;
+            refraction_model[grid_size * i + j].tex_coord = glm::vec2{x, y};
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
 			{
-                indices[2 * (grid_size * i + j)]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
-                indices[2 * (grid_size * i + j) + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
+                refraction_indices[2 * (grid_size * i + j)]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
+                refraction_indices[2 * (grid_size * i + j) + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
 			}
-			uvs[grid_size * i + j] = glm::vec2{x, y};
 		}
 	}
-	for (auto &&tri : indices)
+    for (auto &&tri : refraction_indices)
 	{
-		glm::vec3 normal = glm::normalize(glm::cross(pts[tri[1]] - pts[tri[0]], pts[tri[2]] - pts[tri[0]]));
+        glm::vec3 normal = glm::normalize(glm::cross(refraction_model[tri[1]].pos - refraction_model[tri[0]].pos, refraction_model[tri[2]].pos - refraction_model[tri[0]].pos));
 		for (auto &&index : tri)
 		{
-			ASSERT_LOG(index >= 0 && index < pts.size(), "Valid tri")
-			normals[index] += normal;
+            ASSERT_LOG(index >= 0 && index < refraction_model.size(), "Valid tri")
+            refraction_model[index].normal += normal;
 		}
 	}
 
-	for (auto &normal : normals)
-	{
-		normal = glm::normalize(normal);
-	}
+    for (auto &&vert : refraction_model)
+    {
+        vert.normal = glm::normalize(vert.normal);
+    }
 
-	std::vector<NewVertex> vertices_out(pts.size());
-	for (size_t i = 0; i < pts.size(); ++i)
-	{
-		NewVertex vertex;
-		vertex.pos       = pts[i];
-		vertex.normal    = normals[i];
-		vertex.tex_coord = uvs[i];
-		vertices_out[i]  = vertex;
-	}
-
-	size_t vertex_buffer_size = vertices_out.size() * sizeof(NewVertex);
-	size_t index_buffer_size  = indices.size() * sizeof(indices[0]);
+    size_t vertex_buffer_size = refraction_model.size() * sizeof(NewVertex);
+    size_t index_buffer_size  = refraction_indices.size() * sizeof(refraction_indices[0]);
 
 	if (!dynamic_vertex_buffer || !dynamic_index_buffer)
 	{
@@ -909,16 +895,16 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 		dynamic_index_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
-	dynamic_vertex_buffer->update(vertices_out.data(), vertex_buffer_size);
-	dynamic_index_buffer->update(indices.data(), index_buffer_size);
+    dynamic_vertex_buffer->update(refraction_model.data(), vertex_buffer_size);
+    dynamic_index_buffer->update(refraction_indices.data(), index_buffer_size);
 
 	auto assign_buffer = [&](ModelBuffer &buffer) {
 		buffer.vertex_offset     = 0;
 		buffer.index_offset      = 0;
 		buffer.is_static         = false;
 		buffer.default_transform = VkTransformMatrixKHR{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
-		buffer.num_vertices      = vertices_out.size();
-		buffer.num_triangles     = indices.size();
+        buffer.num_vertices      = refraction_model.size();
+        buffer.num_triangles     = refraction_indices.size();
 		buffer.object_type       = ObjectType::OBJECT_REFRACTION;
 	};
 	bool found = false;
