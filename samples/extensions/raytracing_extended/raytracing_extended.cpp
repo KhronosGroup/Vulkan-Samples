@@ -725,7 +725,7 @@ void RaytracingExtended::create_scene()
 	pts.resize(grid_size * grid_size);
 	normals.resize(grid_size * grid_size);
 	uvs.resize(grid_size * grid_size);
-	indices.resize(grid_size * grid_size);
+    indices.resize(2 * grid_size * grid_size);
 	std::vector<SceneLoadInfo> scenesToLoad;
 	const float                sponza_scale = 0.01f;
 	const glm::mat4x4          sponza_transform{0.f, 0.f, sponza_scale, 0.f,
@@ -868,8 +868,8 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
 			{
-				indices[grid_size * i + j]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
-				indices[grid_size * i + j + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
+                indices[2 * (grid_size * i + j)]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
+                indices[2 * (grid_size * i + j) + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
 			}
 			uvs[grid_size * i + j] = glm::vec2{x, y};
 		}
@@ -1277,8 +1277,8 @@ void RaytracingExtended::draw()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &raytracing_command_buffers[i];
 
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
-	device->get_fence_pool().wait();
+    VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
+    device->get_fence_pool().wait();
 
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));
