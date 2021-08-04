@@ -62,6 +62,7 @@ set(ORDER_LIST
     "fragment_shading_rate"
     "push_descriptors"
     "raytracing_basic"
+    "raytracing_extended"
     "timeline_semaphore"
     "synchronization_2"
     "buffer_device_address"
