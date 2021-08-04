@@ -1267,6 +1267,8 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 
 void RaytracingExtended::draw()
 {
+    device->get_fence_pool().wait();
+    device->get_fence_pool().reset();
 	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytracing command buffers must match the render queue size")
 	ApiVulkanSample::prepare_frame();
 	size_t i = current_buffer;
