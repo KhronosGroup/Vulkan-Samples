@@ -138,7 +138,8 @@ void handleDraw()
         return; // this shouldn't happen
       }
       // obtain texture coordinate
-      vec4 tex_value = texture(textures[nonuniformEXT(imageOffset)], texcoord);
+      // NB: texture() is valid here as well as mipmaps are not used in this demo.
+      vec4 tex_value = textureLod(textures[nonuniformEXT(imageOffset)], texcoord, 0);
       hitValue.color = tex_value;
     } else {
       // the refraction itself is colorless, so
