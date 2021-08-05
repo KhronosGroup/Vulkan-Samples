@@ -17,6 +17,7 @@
 
 #version 460
 #extension GL_EXT_ray_tracing : enable
+#extension GL_EXT_nonuniform_qualifier : enable
 
 struct Payload
 {
@@ -137,7 +138,7 @@ void handleDraw()
         return; // this shouldn't happen
       }
       // obtain texture coordinate
-      vec4 tex_value = texture(textures[imageOffset], texcoord);
+      vec4 tex_value = texture(textures[nonuniformEXT(imageOffset)], texcoord);
       hitValue.color = tex_value;
     } else {
       // the refraction itself is colorless, so
