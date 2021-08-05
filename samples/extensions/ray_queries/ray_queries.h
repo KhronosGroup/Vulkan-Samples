@@ -35,18 +35,51 @@ class Camera;
 }        // namespace sg
 }
 
-class RayQueries : public vkb::VulkanSample
+class RayQueries : public ApiVulkanSample
 {
 public:
     void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
     virtual void prepare_render_context() override;
-    //void render(float delta_time) override;
+    virtual void render(float delta_time) override;
     bool          prepare(vkb::Platform &platform) override;
     virtual void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
     //virtual void draw_render(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
     //void          build_command_buffers() override;
 
 private:
+    struct GlobalUniform
+    {
+        alignas(16) glm::mat4x4 model;
+        alignas(16) glm::mat4x4 view_proj;
+        alignas(4) glm::vec3 camera_position;
+        alignas(4) glm::vec3 light_position;
+    } global_uniform;
+
+    struct Vertex
+    {
+        alignas(4) glm::vec3 position;
+        alignas(4) glm::vec3 normal;
+    };
+
+    struct Model
+    {
+        std::vector<Vertex> vertices;
+        std::vector<std::array<uint32_t, 3>> indices;
+    } model;
+
+    VkPipeline pipeline;
+    VkPipelineLayout pipeline_layout;
+    VkDescriptorSet descriptor_set;
+    VkDescriptorSetLayout descriptor_set_layout;
+
+    void build_command_buffers() override {}
+    void load_scene();
+    void setup_descriptor_pool();
+    void setup_descriptor_set_layout();
+    void setup_descriptor_set();
+    void prepare_pipelines();
+    void update_uniform_buffers();
+
     uint32_t max_thread_count{1};
     vkb::sg::Camera *camera{nullptr};
     bool enable_shadows{false};
