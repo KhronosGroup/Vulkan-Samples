@@ -1,6 +1,5 @@
 #include "ray_queries.h"
 #include "gltf_loader.h"
-#include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "scene_graph/components/perspective_camera.h"
@@ -71,8 +70,9 @@ RayQueries::RayQueries()
     add_device_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
     add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 
-    // Required for VK_KHR_ray_tracing_pipeline
+    // Required for ray queries
     add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+    add_device_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
     // Required by VK_KHR_spirv_1_4
     add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
@@ -143,7 +143,7 @@ void RayQueries::build_command_buffers()
 
 bool RayQueries::prepare(vkb::Platform &platform)
 {
-    if (!VulkanSample::prepare(platform))
+    if (!ApiVulkanSample::prepare(platform))
     {
         return false;
     }
@@ -160,7 +160,6 @@ bool RayQueries::prepare(vkb::Platform &platform)
     prepare_pipelines();
     create_descriptor_sets();
     build_command_buffers();
-    gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
     prepared = true;
 
     return true;
@@ -238,6 +237,9 @@ void RayQueries::create_descriptor_pool()
             vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 1)
     };
 
+    VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+    VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
+
     VkPipelineLayoutCreateInfo pipeline_layout_create_info =
         vkb::initializers::pipeline_layout_create_info(
             &descriptor_set_layout,
@@ -294,6 +296,15 @@ void RayQueries::prepare_pipelines()
 
     VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
+    std::vector<VkDynamicState> dynamic_state_enables = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR};
+    VkPipelineDynamicStateCreateInfo dynamic_state =
+        vkb::initializers::pipeline_dynamic_state_create_info(
+            dynamic_state_enables.data(),
+            static_cast<uint32_t>(dynamic_state_enables.size()),
+            0);
+
     VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
 
@@ -319,6 +330,7 @@ void RayQueries::prepare_pipelines()
     pipeline_create_info.pMultisampleState            = &multisample_state;
     pipeline_create_info.pViewportState               = &viewport_state;
     pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
+    pipeline_create_info.pDynamicState                = &dynamic_state;
 
     const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
         load_shader("ray_queries/ray_shadow.vert", VK_SHADER_STAGE_VERTEX_BIT),
@@ -356,7 +368,7 @@ void RayQueries::create_uniforms()
 
     uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
                                                          index_buffer_size,
-                                                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
     update_uniform_buffers();
 }
