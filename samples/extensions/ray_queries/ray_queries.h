@@ -40,19 +40,17 @@ class RayQueries : public ApiVulkanSample
 public:
     RayQueries();
     ~RayQueries();
-    void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+    virtual void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
     virtual void prepare_render_context() override;
     virtual void render(float delta_time) override;
-    bool          prepare(vkb::Platform &platform) override;
-    virtual void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
-    //virtual void draw_render(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
-    //void          build_command_buffers() override;
+    virtual bool          prepare(vkb::Platform &platform) override;
+
 
 private:
     struct GlobalUniform
     {
-        alignas(16) glm::mat4x4 model;
-        alignas(16) glm::mat4x4 view_proj;
+        glm::mat4x4 view;
+        glm::mat4x4 proj;
         alignas(4) glm::vec3 camera_position;
         alignas(4) glm::vec3 light_position;
     } global_uniform;
@@ -98,9 +96,9 @@ private:
     void create_descriptor_sets();
     void prepare_pipelines();
     void update_uniform_buffers();
+    void draw();
 
     uint32_t max_thread_count{1};
-    vkb::Camera camera;
     bool enable_shadows{false};
 };
 

@@ -110,34 +110,60 @@ void RayQueries::prepare_render_context()
 
 void RayQueries::render(float delta_time)
 {
+    if (!prepared)
+    {
+        return;
+    }
 
-}
+    draw();
 
-
-
-
-void RayQueries::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target)
-{
-    auto &extent = render_target.get_extent();
-
-    VkViewport viewport{};
-    viewport.width    = static_cast<float>(extent.width);
-    viewport.height   = static_cast<float>(extent.height);
-    viewport.minDepth = 0.0f;
-    viewport.maxDepth = 1.0f;
-    command_buffer.set_viewport(0, {viewport});
-
-    VkRect2D scissor{};
-    scissor.extent = extent;
-    command_buffer.set_scissor(0, {scissor});
-
-    render_pipeline->draw(command_buffer, render_target);
-    command_buffer.end_render_pass();
+    update_uniform_buffers();
 }
 
 void RayQueries::build_command_buffers()
 {
+    VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
+    VkClearValue clear_values[2];
+    clear_values[0].color        = default_clear_color;
+    clear_values[1].depthStencil = {1.0f, 0};
+
+    VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+    render_pass_begin_info.renderPass               = render_pass;
+    render_pass_begin_info.renderArea.offset.x      = 0;
+    render_pass_begin_info.renderArea.offset.y      = 0;
+    render_pass_begin_info.renderArea.extent.width  = width;
+    render_pass_begin_info.renderArea.extent.height = height;
+    render_pass_begin_info.clearValueCount          = 2;
+    render_pass_begin_info.pClearValues             = clear_values;
+
+    for (size_t i = 0; i < draw_cmd_buffers.size(); ++i)
+    {
+        render_pass_begin_info.framebuffer = framebuffers[i];
+
+        VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+
+        vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+        vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+
+        VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+        vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+
+        vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+        vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+        VkDeviceSize offsets[1] = {0};
+        vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
+        vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+        vkCmdDrawIndexed(draw_cmd_buffers[i], model.indices.size() * 3, 1, 0, 0, 0);
+
+        draw_ui(draw_cmd_buffers[i]);
+
+        vkCmdEndRenderPass(draw_cmd_buffers[i]);
+
+        VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+    }
 }
 
 
@@ -169,12 +195,6 @@ void RayQueries::load_scene()
 {
     model = {};
 
-    model.vertices = {Vertex{{0, 0, 0}, {0, 0, 1}},
-                      Vertex{{0, 1, 0}, {0, 0, 1}},
-                      Vertex{{1, 1, 0}, {0, 0, 1}}};
-    model.indices = {{0, 1, 2}};
-    return;
-
     vkb::GLTFLoader loader{*device};
     auto scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
 
@@ -184,37 +204,45 @@ void RayQueries::load_scene()
         {
             auto       pts_      = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
             const auto normals_  = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+            const uint32_t vertex_start_index = model.vertices.size();
 
-            const uint32_t start_index = model.vertices.size();
-            model.vertices.resize(start_index + pts_.size());
-            const float sponza_scale = 0.01f;
-            const glm::mat3x4 transform                = glm::mat3x4{0.f, 0.f, sponza_scale, 4.3f,
-                                                        sponza_scale, 0.f, 0.f, 0.f,
-                                                        0.f, sponza_scale, 0.f, 9.5f};
-            for (size_t i = 0; i < pts_.size(); ++i)
+            // Copy vertex data
             {
-                const auto translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
-                const auto pt                     = glm::vec3(glm::mat4(transform) * glm::vec4(pts_[i], 1.f)) + translation;
-                model.vertices[start_index + i].position = pt;
-                model.vertices[start_index + i].normal = i < normals_.size() ? normals_[i] : glm::vec3{0.f, 0.f, 0.f};
+                model.vertices.resize(vertex_start_index + pts_.size());
+                const float sponza_scale = 0.01f;
+                const glm::mat4x4 transform{0.f, 0.f, sponza_scale, 0.f,
+                                                       sponza_scale, 0.f, 0.f, 0.f,
+                                                       0.f, sponza_scale, 0.f, 0.f,
+                                                       0.f, 0.f, 0.f, 1.f};
+                for (size_t i = 0; i < pts_.size(); ++i)
+                {
+                    const auto translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
+                    const auto pt                     = glm::vec3(glm::mat4(transform) * glm::vec4(pts_[i], 1.f)) + translation;
+                    model.vertices[vertex_start_index + i].position = pt;
+                    model.vertices[vertex_start_index + i].normal = i < normals_.size() ? normals_[i] : glm::vec3{0.f, 0.f, 0.f};
+                }
             }
 
-            auto index_buffer = sub_mesh->index_buffer.get();
-            if (index_buffer)
+            // Copy index data
             {
-                const size_t sz         = index_buffer->get_size();
-                const size_t nTriangles = sz / sizeof(uint16_t) / 3;
-                const size_t triangle_start_index = model.indices.size();
-                model.indices.resize(triangle_start_index + nTriangles);
-                auto ptr = index_buffer->get_data();
-                assert(!!ptr);
-                std::vector<uint16_t> tempBuffer(nTriangles * 3);
-                memcpy(&tempBuffer[0], ptr, sz);
-                for (size_t i = 0; i < nTriangles; ++i)
+                auto index_buffer = sub_mesh->index_buffer.get();
+                if (index_buffer)
                 {
-                    model.indices[triangle_start_index + i] = {start_index + uint32_t(tempBuffer[3 * i]),
-                                        start_index + uint32_t(tempBuffer[3 * i + 1]),
-                                        start_index + uint32_t(tempBuffer[3 * i + 2])};
+                    assert(sub_mesh->index_type == VkIndexType::VK_INDEX_TYPE_UINT16);
+                    const size_t sz         = index_buffer->get_size();
+                    const size_t nTriangles = sz / sizeof(uint16_t) / 3;
+                    const uint32_t triangle_start_index = model.indices.size();
+                    model.indices.resize(triangle_start_index + nTriangles);
+                    auto ptr = index_buffer->get_data();
+                    assert(!!ptr);
+                    std::vector<uint16_t> tempBuffer(nTriangles * 3);
+                    memcpy(&tempBuffer[0], ptr, sz);
+                    for (size_t i = 0; i < nTriangles; ++i)
+                    {
+                        model.indices[triangle_start_index + i] = {vertex_start_index + uint32_t(tempBuffer[3 * i]),
+                                                                   vertex_start_index + uint32_t(tempBuffer[3 * i + 1]),
+                                                                   vertex_start_index + uint32_t(tempBuffer[3 * i + 2])};
+                    }
                 }
             }
         }
@@ -292,7 +320,10 @@ void RayQueries::prepare_pipelines()
 
     VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-    VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS);
+    depth_stencil_state.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil_state.minDepthBounds = 0.f;
+    depth_stencil_state.maxDepthBounds = 1.f;
 
     VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
@@ -353,11 +384,11 @@ void RayQueries::create_uniforms()
     const auto index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
     vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
                                                         vertex_buffer_size,
-                                                        buffer_usage_flags,
+                                                        buffer_usage_flags | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
     index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
                                                        index_buffer_size,
-                                                       buffer_usage_flags,
+                                                       buffer_usage_flags | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
     if (vertex_buffer_size){
         vertex_buffer->update(model.vertices.data(), vertex_buffer_size);
@@ -367,7 +398,7 @@ void RayQueries::create_uniforms()
     }
 
     uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                         index_buffer_size,
+                                                         sizeof(global_uniform),
                                                          VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
     update_uniform_buffers();
@@ -376,7 +407,26 @@ void RayQueries::create_uniforms()
 void RayQueries::update_uniform_buffers()
 {
     assert(!!uniform_buffer);
+    global_uniform.camera_position = camera.position;
+    global_uniform.proj = camera.matrices.perspective;
+    global_uniform.view = camera.matrices.view;
+    global_uniform.light_position = glm::vec3(5, 5, 5);
+
     uniform_buffer->update(&global_uniform, sizeof(global_uniform));
+}
+
+void RayQueries::draw()
+{
+    ApiVulkanSample::prepare_frame();
+
+    // Command buffer to be sumitted to the queue
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+
+    // Submit to queue
+    VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+
+    ApiVulkanSample::submit_frame();
 }
 
 std::unique_ptr<vkb::VulkanSample> create_ray_queries()

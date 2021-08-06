@@ -62,4 +62,5 @@ void main(void)
 	}
 	outcolor.rgb += light_contribution;
 	o_color = outcolor;
+	o_color = vec4(abs(normal.x), abs(normal.y), abs(normal.z), 1.0);
 }

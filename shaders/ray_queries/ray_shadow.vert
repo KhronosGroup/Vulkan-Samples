@@ -24,8 +24,8 @@ layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
-	mat4 model;
-	mat4 view_proj;
+	mat4 view;
+	mat4 proj;
 	vec3 camera_position;
 	vec3 light_position;
 }
@@ -36,9 +36,9 @@ layout (location = 1) out vec3 o_normal;
 
 void main(void)
 {
-    o_pos = global_uniform.model * vec4(position, 1.0);
+    o_pos = global_uniform.view * vec4(position, 1);
 
-    o_normal = mat3(global_uniform.model) * normal;
+    o_normal = normal;
 
-    gl_Position = global_uniform.view_proj * o_pos;
+    gl_Position = global_uniform.proj * global_uniform.view * vec4(position, 1.0);
 }
