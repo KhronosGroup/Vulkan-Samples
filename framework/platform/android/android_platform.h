@@ -61,7 +61,7 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize(const std::vector<Plugin *> &plugins) override;
+	virtual ExitCode initialize(const std::vector<Plugin *> &plugins) override;
 
 	virtual void terminate(ExitCode code) override;
 

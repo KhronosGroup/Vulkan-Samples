@@ -415,9 +415,10 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	if (!Platform::initialize(plugins))
+	auto code = Platform::initialize(plugins);
+	if (code != ExitCode::Success)
 	{
-		return false;
+		return code;
 	}
 
 	// Wait until the android window is loaded before allowing the app to continue
@@ -426,7 +427,8 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 	{
 		if (!process_android_events(app))
 		{
-			return false;
+			// Android requested for the app to close
+			return ExitCode::Success;
 		}
 	} while (!surface_ready);
 
@@ -445,7 +447,7 @@ void AndroidPlatform::terminate(ExitCode code)
 	switch (code)
 	{
 		case ExitCode::Success:
-		case ExitCode::UnableToRun:
+		case ExitCode::Close:
 			log_output.clear();
 			break;
 		case ExitCode::FatalError:

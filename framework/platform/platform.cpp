@@ -45,7 +45,7 @@ std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-bool Platform::initialize(const std::vector<Plugin *> &plugins = {})
+ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 {
 	auto sinks = get_platform_sinks();
 
@@ -67,7 +67,7 @@ bool Platform::initialize(const std::vector<Plugin *> &plugins = {})
 	// Process command line arguments
 	if (!parser->parse(associate_plugins(plugins)))
 	{
-		return false;
+		return ExitCode::Help;
 	}
 
 	// Subscribe plugins to requested hooks and store activated plugins
@@ -97,24 +97,23 @@ bool Platform::initialize(const std::vector<Plugin *> &plugins = {})
 		}
 	}
 
+	if (state.graceful_shutdown)
+	{
+		return ExitCode::Close;
+	}
+
 	create_window(state.window_properties);
 
 	if (!window)
 	{
 		LOGE("Window creation failed!");
-		return false;
+		return ExitCode::FatalError;
 	}
 
-	if (!app_requested())
-	{
-		LOGE("An app was not requested, can not continue");
-		return false;
-	}
-
-	return true;
+	return ExitCode::Success;
 }
 
-void Platform::main_loop()
+ExitCode Platform::main_loop()
 {
 	while (!window->should_close())
 	{
@@ -125,12 +124,18 @@ void Platform::main_loop()
 			{
 				if (!start_app())
 				{
-					throw std::runtime_error{"Failed to load Application"};
+					LOGE("Failed to load requested application");
+					return ExitCode::FatalError;
 				}
 
 				// Compensate for load times of the app by rendering the first frame pre-emptively
 				timer.tick<Timer::Seconds>();
 				active_app->update(0.01667f);
+			}
+			else
+			{
+				LOGE("An app was not requested, can not continue");
+				return ExitCode::Close;
 			}
 
 			update();
@@ -139,19 +144,23 @@ void Platform::main_loop()
 		}
 		catch (std::exception e)
 		{
-			LOGE("{}", e.what());
+			LOGE("Error Message: {}", e.what());
 			LOGE("Failed when running application {}", active_app->get_name());
-			LOGI("Attempting to continue");
 
 			on_app_error(active_app->get_name());
 
-			if (!app_requested())
+			if (app_requested())
 			{
-				LOGI("No application queued - exiting");
-				throw e;
+				LOGI("Attempting to load next application");
+			}
+			else
+			{
+				return ExitCode::FatalError;
 			}
 		}
 	}
+
+	return ExitCode::Success;
 }
 
 void Platform::update()
@@ -204,7 +213,7 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 
 void Platform::terminate(ExitCode code)
 {
-	if (code == ExitCode::UnableToRun)
+	if (code == ExitCode::Help)
 	{
 		auto help = parser->help();
 		for (auto &line : help)
@@ -229,7 +238,8 @@ void Platform::terminate(ExitCode code)
 
 	on_platform_close();
 
-	if (code == ExitCode::UnableToRun && !using_plugin<::plugins::ForceClose>())
+	// Halt on all unsuccessful exit codes unless ForceClose is in use
+	if (code != ExitCode::Success && !using_plugin<::plugins::ForceClose>())
 	{
 #ifndef ANDROID
 		std::cout << "Press any key to continue";
@@ -250,6 +260,11 @@ void Platform::force_simulation_fps(float fps)
 {
 	state.fixed_simulation_fps  = true;
 	state.simulation_frame_time = 1 / fps;
+}
+
+void Platform::graceful_shutdown()
+{
+	state.graceful_shutdown = true;
 }
 
 void Platform::disable_input_processing()

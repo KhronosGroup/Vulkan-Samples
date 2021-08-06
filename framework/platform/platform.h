@@ -40,9 +40,10 @@ namespace vkb
 {
 enum class ExitCode
 {
-	Success     = 0, /* App prepare succeeded, it ran correctly and exited properly with no errors */
-	UnableToRun = 1, /* App prepare failed, could not run */
-	FatalError  = 2  /* App encountered an unexpected error */
+	Success = 0, /* App executed as expected */
+	Help,        /* App should show help */
+	Close,       /* App has been requested to close at initialization */
+	FatalError   /* App encountered an unexpected error */
 };
 
 struct PlatformState
@@ -52,6 +53,7 @@ struct PlatformState
 	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
 	bool               process_input_events{true};     /* App should continue processing input events */
 	bool               focused;                        /* App is currently in focus at an operating system level */
+	bool               graceful_shutdown{false};       /* Close the app before loading an application */
 };
 
 class Platform
@@ -64,14 +66,16 @@ class Platform
 	/**
 	 * @brief Initialize the platform
 	 * @param plugins plugins available to the platform
+	 * @return An exit code representing the outcome of initialization
 	 */
-	virtual bool initialize(const std::vector<Plugin *> &plugins);
+	virtual ExitCode initialize(const std::vector<Plugin *> &plugins);
 
 	/**
 	 * @brief Handles the main loop of the platform
 	 * This should be overriden if a platform requires a specific main loop setup.
+	 * @return An exit code representing the outcome of the loop
 	 */
-	void main_loop();
+	ExitCode main_loop();
 
 	/**
 	 * @brief Runs the application for one frame
@@ -143,6 +147,14 @@ class Platform
 	void force_simulation_fps(float fps);
 
 	void disable_input_processing();
+
+	/**
+	 * @brief Stops the platform from attempting to load an app
+	 * 
+	 * To be used in the plugin evaluation stage
+	 * 
+	 */
+	void graceful_shutdown();
 
 	void set_window_properties(const Window::OptionalProperties &properties);
 

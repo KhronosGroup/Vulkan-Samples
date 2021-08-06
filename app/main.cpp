@@ -47,27 +47,14 @@ int main(int argc, char *argv[])
 #	endif
 #endif
 
-#ifndef DEBUG
-	try
+	auto code = platform.initialize(plugins::get_all());
+
+	if (code == vkb::ExitCode::Success)
 	{
-#endif
-		if (platform.initialize(plugins::get_all()))
-		{
-			platform.main_loop();
-			platform.terminate(vkb::ExitCode::Success);
-		}
-		else
-		{
-			platform.terminate(vkb::ExitCode::UnableToRun);
-		}
-#ifndef DEBUG
+		code = platform.main_loop();
 	}
-	catch (const std::exception &e)
-	{
-		LOGE(e.what());
-		platform.terminate(vkb::ExitCode::FatalError);
-	}
-#endif
+
+	platform.terminate(code);
 
 #ifndef VK_USE_PLATFORM_ANDROID_KHR
 	return EXIT_SUCCESS;
