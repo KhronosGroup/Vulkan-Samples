@@ -69,23 +69,33 @@ private:
         std::vector<std::array<uint32_t, 3>> indices;
     } model;
 
+    struct AccelerationStructure
+    {
+        VkAccelerationStructureKHR         handle = nullptr;
+        uint64_t                           device_address = 0;
+        std::unique_ptr<vkb::core::Buffer> buffer = nullptr;
+    };
 
-    // memory
+
+    // Buffers
     std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
     std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
     std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
 
-    VkPipeline pipeline;
-    VkPipelineLayout pipeline_layout;
-    VkDescriptorSet descriptor_set;
-    VkDescriptorSetLayout descriptor_set_layout;
+    // Ray tracing structures
+    AccelerationStructure            top_level_acceleration_structure{};
+    AccelerationStructure            bottom_level_acceleration_structure{};
+
+    VkPipeline pipeline{nullptr};
+    VkPipelineLayout pipeline_layout{nullptr};
+    VkDescriptorSet descriptor_set{nullptr};
+    VkDescriptorSetLayout descriptor_set_layout{nullptr};
 
     void build_command_buffers() override;
     void create_uniforms();
     void load_scene();
-    void setup_descriptor_pool();
-    void setup_descriptor_set_layout();
-    void setup_descriptor_set();
+    void create_descriptor_pool();
+    void create_descriptor_sets();
     void prepare_pipelines();
     void update_uniform_buffers();
 

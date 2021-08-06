@@ -1,4 +1,5 @@
-#version 320 es
+#version 460
+#extension GL_EXT_ray_query : enable
 /* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -17,7 +18,9 @@
  */
 
 layout(location = 0) in vec3 position;
-layout(location = 2) in vec3 normal;
+layout(location = 1) in vec3 normal;
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
@@ -29,7 +32,7 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 global_uniform;
 
 layout (location = 0) out vec4 o_pos;
-layout (location = 2) out vec3 o_normal;
+layout (location = 1) out vec3 o_normal;
 
 void main(void)
 {

@@ -1,4 +1,5 @@
-#version 430
+#version 460
+#extension GL_EXT_ray_query : enable
 /* Copyright (c) 2019-2020, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,15 +17,9 @@
  * limitations under the License.
  */
 
-precision highp float;
-
-#ifdef HAS_BASE_COLOR_TEXTURE
-layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
-#endif
 
 layout(location = 0) in vec4 in_pos;
-layout(location = 1) in vec2 in_uv;
-layout(location = 2) in vec3 in_normal;
+layout(location = 1) in vec3 in_normal;
 
 layout(location = 0) out vec4 o_color;
 
