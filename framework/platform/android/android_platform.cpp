@@ -428,11 +428,12 @@ bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 		if (!process_android_events(app))
 		{
 			// Android requested for the app to close
-			return ExitCode::Success;
+			LOGI("Android app has been destroyed by the OS");
+			return ExitCode::Close;
 		}
 	} while (!surface_ready);
 
-	return true;
+	return ExitCode::Success;
 }
 
 void AndroidPlatform::create_window(const Window::Properties &properties)
