@@ -38,6 +38,8 @@ class Camera;
 class RayQueries : public ApiVulkanSample
 {
 public:
+    RayQueries();
+    ~RayQueries();
     void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
     virtual void prepare_render_context() override;
     virtual void render(float delta_time) override;
@@ -67,12 +69,19 @@ private:
         std::vector<std::array<uint32_t, 3>> indices;
     } model;
 
+
+    // memory
+    std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
+    std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
+    std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+
     VkPipeline pipeline;
     VkPipelineLayout pipeline_layout;
     VkDescriptorSet descriptor_set;
     VkDescriptorSetLayout descriptor_set_layout;
 
-    void build_command_buffers() override {}
+    void build_command_buffers() override;
+    void create_uniforms();
     void load_scene();
     void setup_descriptor_pool();
     void setup_descriptor_set_layout();
@@ -81,7 +90,7 @@ private:
     void update_uniform_buffers();
 
     uint32_t max_thread_count{1};
-    vkb::sg::Camera *camera{nullptr};
+    vkb::Camera camera;
     bool enable_shadows{false};
 };
 

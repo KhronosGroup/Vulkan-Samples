@@ -56,6 +56,36 @@ namespace
     };
 }
 
+RayQueries::RayQueries()
+{
+    title = "Ray queries";
+    // SPIRV 1.4 requires Vulkan 1.1
+    set_api_version(VK_API_VERSION_1_1);
+
+    // Ray tracing related extensions required by this sample
+    add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
+
+    // Required by VK_KHR_acceleration_structure
+    add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
+    add_device_extension(VK_KHR_DEFERRED_HOST_OPERATIONS_EXTENSION_NAME);
+    add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
+
+    // Required for VK_KHR_ray_tracing_pipeline
+    add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+
+    // Required by VK_KHR_spirv_1_4
+    add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+}
+
+RayQueries::~RayQueries()
+{
+    if (device)
+    {
+        vertex_buffer.reset();
+        index_buffer.reset();
+    }
+}
+
 void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
     RequestFeature(gpu)
@@ -99,6 +129,11 @@ void RayQueries::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
     command_buffer.end_render_pass();
 }
 
+void RayQueries::build_command_buffers()
+{
+
+}
+
 
 bool RayQueries::prepare(vkb::Platform &platform)
 {
@@ -107,13 +142,18 @@ bool RayQueries::prepare(vkb::Platform &platform)
         return false;
     }
 
-    auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
-    camera            = &camera_node.get_component<vkb::sg::Camera>();
+    camera.type = vkb::CameraType::FirstPerson;
+    camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+    camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
+    camera.set_translation(glm::vec3(0.0f, 1.5f, 0.f));
 
     vkb::ShaderSource vert_shader("ray_queries/ray_shadow.vert");
     vkb::ShaderSource frag_shader("ray_queries/ray_shadow.frag");
 
     load_scene();
+    create_uniforms();
+
+    throw -1;
 
     gui = std::make_unique<vkb::Gui>(*this, platform.get_window());
 
@@ -135,9 +175,15 @@ void RayQueries::load_scene()
 
             const uint32_t start_index = model.vertices.size();
             model.vertices.resize(start_index + pts_.size());
+            const float sponza_scale = 0.01f;
+            const glm::mat3x4 transform                = glm::mat3x4{0.f, 0.f, sponza_scale, 4.3f,
+                                                        sponza_scale, 0.f, 0.f, 0.f,
+                                                        0.f, sponza_scale, 0.f, 9.5f};
             for (size_t i = 0; i < pts_.size(); ++i)
             {
-                model.vertices[start_index + i].position = pts_[i];
+                const auto translation = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
+                const auto pt                     = glm::vec3(glm::mat4(transform) * glm::vec4(pts_[i], 1.f)) + translation;
+                model.vertices[start_index + i].position = pt;
                 model.vertices[start_index + i].normal = i < normals_.size() ? normals_[i] : glm::vec3{0.f, 0.f, 0.f};
             }
 
@@ -161,8 +207,41 @@ void RayQueries::load_scene()
             }
         }
     }
+}
 
+void RayQueries::create_uniforms()
+{
+    // Note that in contrast to a typical pipeline, our vertex/index buffer requires the acceleration structure build flag
+    static constexpr VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
 
+    const auto vertex_buffer_size = model.vertices.size() * sizeof(model.vertices[0]);
+    const auto index_buffer_size  = model.indices.size() * sizeof(model.indices[0]);
+    vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                        vertex_buffer_size,
+                                                        buffer_usage_flags,
+                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+    index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                       index_buffer_size,
+                                                       buffer_usage_flags,
+                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+    if (vertex_buffer_size){
+        vertex_buffer->update(model.vertices.data(), vertex_buffer_size);
+    }
+    if (index_buffer_size){
+        index_buffer->update(model.indices.data(), index_buffer_size);
+    }
+
+    uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                         index_buffer_size,
+                                                         VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+    update_uniform_buffers();
+}
+
+void RayQueries::update_uniform_buffers()
+{
+    assert(!!uniform_buffer);
+    uniform_buffer->update(&global_uniform, sizeof(global_uniform));
 }
 
 std::unique_ptr<vkb::VulkanSample> create_ray_queries()
