@@ -67,7 +67,7 @@ void StartSample::init(const vkb::CommandParser &parser)
 			LOGI("");
 		}
 
-		platform->graceful_shutdown();
+		platform->close();
 	}
 }
 }        // namespace plugins

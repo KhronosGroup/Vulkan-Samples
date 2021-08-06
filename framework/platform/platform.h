@@ -46,16 +46,6 @@ enum class ExitCode
 	FatalError   /* App encountered an unexpected error */
 };
 
-struct PlatformState
-{
-	Window::Properties window_properties;              /* Source of truth for window state */
-	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
-	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
-	bool               process_input_events{true};     /* App should continue processing input events */
-	bool               focused;                        /* App is currently in focus at an operating system level */
-	bool               graceful_shutdown{false};       /* Close the app before loading an application */
-};
-
 class Platform
 {
   public:
@@ -91,7 +81,7 @@ class Platform
 	/**
 	 * @brief Requests to close the platform at the next available point
 	 */
-	virtual void close() const;
+	virtual void close();
 
 	/**
 	 * @brief Returns the working directory of the application set by the platform
@@ -148,14 +138,6 @@ class Platform
 
 	void disable_input_processing();
 
-	/**
-	 * @brief Stops the platform from attempting to load an app
-	 * 
-	 * To be used in the plugin evaluation stage
-	 * 
-	 */
-	void graceful_shutdown();
-
 	void set_window_properties(const Window::OptionalProperties &properties);
 
 	void on_post_draw(RenderContext &context);
@@ -189,7 +171,12 @@ class Platform
 	void on_app_close(const std::string &app_id);
 	void on_platform_close();
 
-	PlatformState state;
+	Window::Properties window_properties;              /* Source of truth for window state */
+	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
+	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
+	bool               process_input_events{true};     /* App should continue processing input events */
+	bool               focused;                        /* App is currently in focus at an operating system level */
+	bool               close_requested{false};         /* Close requested */
 
   private:
 	Timer timer;

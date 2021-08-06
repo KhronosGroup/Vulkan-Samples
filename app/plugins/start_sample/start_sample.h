@@ -43,8 +43,8 @@ class StartSample : public StartSampleTags
 
 	virtual void init(const vkb::CommandParser &parser) override;
 
-	vkb::PositionalCommand sample_cmd    = {"sample_id", "ID of the sample to run"};
-	vkb::SubCommand        sample_subcmd = {"sample", "Run a specific sample", {&sample_cmd}};
+	vkb::PositionalCommand sample_cmd     = {"sample_id", "ID of the sample to run"};
+	vkb::SubCommand        sample_subcmd  = {"sample", "Run a specific sample", {&sample_cmd}};
 	vkb::SubCommand        samples_subcmd = {"samples", "List available samples", {}};
 };
 }        // namespace plugins

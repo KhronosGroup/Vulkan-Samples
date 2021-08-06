@@ -97,12 +97,12 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 		}
 	}
 
-	if (state.graceful_shutdown)
+	if (close_requested)
 	{
 		return ExitCode::Close;
 	}
 
-	create_window(state.window_properties);
+	create_window(window_properties);
 
 	if (!window)
 	{
@@ -115,7 +115,7 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 
 ExitCode Platform::main_loop()
 {
-	while (!window->should_close())
+	while (!window->should_close() && !close_requested)
 	{
 		try
 		{
@@ -167,13 +167,13 @@ void Platform::update()
 {
 	auto delta_time = static_cast<float>(timer.tick<Timer::Seconds>());
 
-	if (state.focused)
+	if (focused)
 	{
 		on_update(delta_time);
 
-		if (state.fixed_simulation_fps)
+		if (fixed_simulation_fps)
 		{
-			delta_time = state.simulation_frame_time;
+			delta_time = simulation_frame_time;
 		}
 
 		active_app->update(delta_time);
@@ -197,7 +197,7 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 	    VK_PRESENT_MODE_IMMEDIATE_KHR,
 	});
 
-	switch (state.window_properties.vsync)
+	switch (window_properties.vsync)
 	{
 		case Window::Vsync::ON:
 			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
@@ -248,43 +248,41 @@ void Platform::terminate(ExitCode code)
 	}
 }
 
-void Platform::close() const
+void Platform::close()
 {
 	if (window)
 	{
 		window->close();
 	}
+
+	// Fallback incase a window is not yet in use
+	close_requested = true;
 }
 
 void Platform::force_simulation_fps(float fps)
 {
-	state.fixed_simulation_fps  = true;
-	state.simulation_frame_time = 1 / fps;
-}
-
-void Platform::graceful_shutdown()
-{
-	state.graceful_shutdown = true;
+	fixed_simulation_fps  = true;
+	simulation_frame_time = 1 / fps;
 }
 
 void Platform::disable_input_processing()
 {
-	state.process_input_events = false;
+	process_input_events = false;
 }
 
 void Platform::set_focus(bool focused)
 {
-	state.focused = focused;
+	focused = focused;
 }
 
 void Platform::set_window_properties(const Window::OptionalProperties &properties)
 {
-	state.window_properties.title         = properties.title.has_value() ? properties.title.value() : state.window_properties.title;
-	state.window_properties.mode          = properties.mode.has_value() ? properties.mode.value() : state.window_properties.mode;
-	state.window_properties.resizable     = properties.resizable.has_value() ? properties.resizable.value() : state.window_properties.resizable;
-	state.window_properties.vsync         = properties.vsync.has_value() ? properties.vsync.value() : state.window_properties.vsync;
-	state.window_properties.extent.width  = properties.extent.width.has_value() ? properties.extent.width.value() : state.window_properties.extent.width;
-	state.window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : state.window_properties.extent.height;
+	window_properties.title         = properties.title.has_value() ? properties.title.value() : window_properties.title;
+	window_properties.mode          = properties.mode.has_value() ? properties.mode.value() : window_properties.mode;
+	window_properties.resizable     = properties.resizable.has_value() ? properties.resizable.value() : window_properties.resizable;
+	window_properties.vsync         = properties.vsync.has_value() ? properties.vsync.value() : window_properties.vsync;
+	window_properties.extent.width  = properties.extent.width.has_value() ? properties.extent.width.value() : window_properties.extent.width;
+	window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : window_properties.extent.height;
 }
 
 const std::string &Platform::get_external_storage_directory()
@@ -390,7 +388,7 @@ bool Platform::start_app()
 
 void Platform::input_event(const InputEvent &input_event)
 {
-	if (state.process_input_events && active_app)
+	if (process_input_events && active_app)
 	{
 		active_app->input_event(input_event);
 	}

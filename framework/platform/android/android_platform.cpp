@@ -501,7 +501,7 @@ std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &de
 	                                    VK_PRESENT_MODE_MAILBOX_KHR,
 	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
 
-	switch (state.window_properties.vsync)
+	switch (window_properties.vsync)
 	{
 		case Window::Vsync::OFF:
 			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
