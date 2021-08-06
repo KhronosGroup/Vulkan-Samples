@@ -210,9 +210,9 @@ void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::Rend
 		{
 			get_render_context().get_active_frame().update_descriptor_sets();
 		}
-	}
 
-	command_buffer.end_render_pass();
+		command_buffer.end_render_pass();
+	}
 }
 
 inline ConstantData::Method ConstantData::get_active_method()
