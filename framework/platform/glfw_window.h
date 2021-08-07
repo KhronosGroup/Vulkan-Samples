@@ -36,6 +36,8 @@ class GlfwWindow : public Window
 
 	virtual VkSurfaceKHR create_surface(Instance &instance) override;
 
+	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
+
 	virtual bool should_close() override;
 
 	virtual void process_events() override;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,6 +44,18 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 	VK_CHECK(vkCreateAndroidSurfaceKHR(instance.get_handle(), &info, nullptr, &surface));
 
 	return surface;
+}
+
+vk::SurfaceKHR AndroidWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
+{
+	if (!instance || !handle || headless)
+	{
+		return nullptr;
+	}
+
+	vk::AndroidSurfaceCreateInfoKHR info({}, handle);
+
+	return instance.createAndroidSurfaceKHR(info);
 }
 
 bool AndroidWindow::should_close()

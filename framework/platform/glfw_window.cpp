@@ -344,6 +344,25 @@ VkSurfaceKHR GlfwWindow::create_surface(Instance &instance)
 	return surface;
 }
 
+vk::SurfaceKHR GlfwWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
+{
+	if (!instance || !handle)
+	{
+		return nullptr;
+	}
+
+	VkSurfaceKHR surface;
+
+	VkResult errCode = glfwCreateWindowSurface(instance, handle, NULL, &surface);
+
+	if (errCode != VK_SUCCESS)
+	{
+		return nullptr;
+	}
+
+	return surface;
+}
+
 bool GlfwWindow::should_close()
 {
 	return glfwWindowShouldClose(handle);

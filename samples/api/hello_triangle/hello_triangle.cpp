@@ -959,7 +959,7 @@ VkResult HelloTriangle::present_image(Context &context, uint32_t index)
 }
 
 /**
- * @brief Initializes the Vulkan frambuffers.
+ * @brief Initializes the Vulkan framebuffers.
  * @param context A Vulkan context with the render pass already set up.
  */
 void HelloTriangle::init_framebuffers(Context &context)
@@ -1086,6 +1086,8 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
+
+	context.surface = platform.get_window().create_surface(*vk_instance);
 
 	context.surface = platform.get_window().create_surface(*vk_instance);
 	context.swapchain_dimensions.width  = platform.get_window().get_width(),
