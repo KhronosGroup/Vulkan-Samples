@@ -33,81 +33,77 @@ class Mesh;
 class SubMesh;
 class Camera;
 }        // namespace sg
-}
+}        // namespace vkb
 
 class RayQueries : public ApiVulkanSample
 {
-public:
-    RayQueries();
-    ~RayQueries();
-    virtual void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
-    virtual void prepare_render_context() override;
-    virtual void render(float delta_time) override;
-    virtual bool          prepare(vkb::Platform &platform) override;
+  public:
+	RayQueries();
+	~RayQueries() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void prepare_render_context() override;
+	void render(float delta_time) override;
+	bool prepare(vkb::Platform &platform) override;
 
+  private:
+	struct GlobalUniform
+	{
+		glm::mat4x4 view;
+		glm::mat4x4 proj;
+		alignas(4) glm::vec3 camera_position;
+		alignas(4) glm::vec3 light_position;
+	} global_uniform;
 
-private:
-    struct GlobalUniform
-    {
-        glm::mat4x4 view;
-        glm::mat4x4 proj;
-        alignas(4) glm::vec3 camera_position;
-        alignas(4) glm::vec3 light_position;
-    } global_uniform;
+	struct Vertex
+	{
+		alignas(4) glm::vec3 position;
+		alignas(4) glm::vec3 normal;
+	};
 
-    struct Vertex
-    {
-        alignas(4) glm::vec3 position;
-        alignas(4) glm::vec3 normal;
-    };
+	struct Model
+	{
+		std::vector<Vertex>                  vertices;
+		std::vector<std::array<uint32_t, 3>> indices;
+	} model;
 
-    struct Model
-    {
-        std::vector<Vertex> vertices;
-        std::vector<std::array<uint32_t, 3>> indices;
-    } model;
+	struct AccelerationStructure
+	{
+		VkAccelerationStructureKHR         handle         = nullptr;
+		uint64_t                           device_address = 0;
+		std::unique_ptr<vkb::core::Buffer> buffer         = nullptr;
+	};
 
-    struct AccelerationStructure
-    {
-        VkAccelerationStructureKHR         handle = nullptr;
-        uint64_t                           device_address = 0;
-        std::unique_ptr<vkb::core::Buffer> buffer = nullptr;
-    };
+	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
 
+	// Buffers
+	std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
+	std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
+	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
 
-    std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
+	// Ray tracing structures
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
+	AccelerationStructure                            top_level_acceleration_structure{};
+	AccelerationStructure                            bottom_level_acceleration_structure{};
+	uint64_t                                         get_buffer_device_address(VkBuffer buffer);
+	void                                             create_top_level_acceleration_structure();
+	void                                             create_bottom_level_acceleration_structure();
 
-    // Buffers
-    std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
-    std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
-    std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
+	VkPipeline            pipeline{nullptr};
+	VkPipelineLayout      pipeline_layout{nullptr};
+	VkDescriptorSet       descriptor_set{nullptr};
+	VkDescriptorSetLayout descriptor_set_layout{nullptr};
 
-    // Ray tracing structures
-    VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
-    AccelerationStructure            top_level_acceleration_structure{};
-    AccelerationStructure            bottom_level_acceleration_structure{};
-    uint64_t get_buffer_device_address(VkBuffer buffer);
-    void create_top_level_acceleration_structure();
-    void create_bottom_level_acceleration_structure();
+	void build_command_buffers() override;
+	void create_uniforms();
+	void load_scene();
+	void create_descriptor_pool();
+	void create_descriptor_sets();
+	void prepare_pipelines();
+	void update_uniform_buffers();
+	void draw();
 
-    VkPipeline pipeline{nullptr};
-    VkPipelineLayout pipeline_layout{nullptr};
-    VkDescriptorSet descriptor_set{nullptr};
-    VkDescriptorSetLayout descriptor_set_layout{nullptr};
-
-    void build_command_buffers() override;
-    void create_uniforms();
-    void load_scene();
-    void create_descriptor_pool();
-    void create_descriptor_sets();
-    void prepare_pipelines();
-    void update_uniform_buffers();
-    void draw();
-
-    uint32_t max_thread_count{1};
-    bool enable_shadows{false};
+	uint32_t max_thread_count{1};
+	bool     enable_shadows{false};
 };
-
-
 
 std::unique_ptr<vkb::VulkanSample> create_ray_queries();

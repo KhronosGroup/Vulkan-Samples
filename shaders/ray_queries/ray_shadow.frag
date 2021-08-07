@@ -18,7 +18,6 @@
  * limitations under the License.
  */
 
-
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec3 in_normal;
 layout(location = 2) in vec4 in_scene_pos;
@@ -36,15 +35,14 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 }
 global_uniform;
 
-
 /**
 Apply ray tracing to determine whether the point intersects light
 */
 bool intersects_light(vec3 light_origin, vec3 pos)
 {
 	const float tmin = 0.01, tmax = 1000;
-	const vec3 direction = light_origin - pos;
-	const float distance = sqrt(dot(direction, direction));
+	const vec3  direction = light_origin - pos;
+	const float distance  = sqrt(dot(direction, direction));
 
 	rayQueryEXT query;
 
@@ -52,9 +50,10 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 	// For performance, could use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
 	// whether an intersection exists, and not necessarily any particular intersection
 	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, distance);
-	while (rayQueryProceedEXT(query)) {
+	while (rayQueryProceedEXT(query))
+	{
 	}
-	if(rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+	if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 	{
 		// e.g. to get distance:
 		// const float dist = rayQueryGetIntersectionTEXT(query, false);
@@ -65,12 +64,6 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 
 void main(void)
 {
-	const vec3 normal = normalize(in_normal);
-
-	const vec3 origin = in_scene_pos.xyz;
-
 	// this is where we apply the shadow
-	//const bool intersects = intersects_light(global_uniform.light_position, origin, normal);
-	//o_color = intersects ? vec4(0.2, 0.2, 0.2, 1) : vec4(0.7, 0.7, 0.7, 1);
-	o_color = intersects_light(global_uniform.light_position, origin) ? vec4(0.2, 0.2, 0.2, 1) : vec4(0.9, 0.9, 0.9, 1);
+	o_color = intersects_light(global_uniform.light_position, in_scene_pos.xyz) ? vec4(0.2, 0.2, 0.2, 1) : vec4(0.9, 0.9, 0.9, 1);
 }
