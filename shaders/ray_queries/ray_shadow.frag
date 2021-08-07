@@ -1,6 +1,7 @@
 #version 460
 #extension GL_EXT_ray_query : enable
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+
+/* Copyright (c) 2021 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +21,11 @@
 
 layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec3 in_normal;
+layout(location = 2) in vec4 in_scene_pos;
 
 layout(location = 0) out vec4 o_color;
+
+layout(set = 0, binding = 0) uniform accelerationStructureEXT topLevelAS;
 
 layout(set = 0, binding = 1) uniform GlobalUniform
 {
@@ -32,35 +36,41 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 }
 global_uniform;
 
-/**
-This does not take into account shadows by itself
-*/
-vec3 apply_point_light(vec3 light_origin, vec4 light_color, vec3 pos, vec3 normal)
-{
-	vec3  world_to_light = light_origin.xyz - pos;
-	float dist           = length(world_to_light) * 0.005;
-	float atten          = 1.0 / (dist * dist);
-	world_to_light       = normalize(world_to_light);
-	float ndotl          = clamp(dot(normal, world_to_light), 0.0, 1.0);
-	return ndotl * light_color.w * atten * light_color.rgb;
-}
 
+/**
+Apply ray tracing to determine whether the point intersects light
+*/
+bool intersects_light(vec3 light_origin, vec3 pos)
+{
+	const float tmin = 0.01, tmax = 1000;
+	const vec3 direction = light_origin - pos;
+	const float distance = sqrt(dot(direction, direction));
+
+	rayQueryEXT query;
+
+	// The following runs the actual ray query
+	// For performance, could use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
+	// whether an intersection exists, and not necessarily any particular intersection
+	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, distance);
+	while (rayQueryProceedEXT(query)) {
+	}
+	if(rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
+	{
+		// e.g. to get distance:
+		// const float dist = rayQueryGetIntersectionTEXT(query, false);
+		return true;
+	}
+	return false;
+}
 
 void main(void)
 {
 	const vec3 normal = normalize(in_normal);
 
-	const vec3 origin = in_pos.xyz;
+	const vec3 origin = in_scene_pos.xyz;
 
 	// this is where we apply the shadow
-	const bool intersects = false;
-	vec3 light_contribution = vec3(0, 0, 0);
-	vec4 outcolor = vec4(0.4, 0.4, 0.4, 1.0);
-	if (!intersects)
-	{
-		light_contribution += apply_point_light(global_uniform.light_position, vec4(0.7, 0.9, 0.7, 1.0), origin, normal);
-	}
-	outcolor.rgb += light_contribution;
-	o_color = outcolor;
-	o_color = vec4(abs(normal.x), abs(normal.y), abs(normal.z), 1.0);
+	//const bool intersects = intersects_light(global_uniform.light_position, origin, normal);
+	//o_color = intersects ? vec4(0.2, 0.2, 0.2, 1) : vec4(0.7, 0.7, 0.7, 1);
+	o_color = intersects_light(global_uniform.light_position, origin) ? vec4(0.2, 0.2, 0.2, 1) : vec4(0.9, 0.9, 0.9, 1);
 }

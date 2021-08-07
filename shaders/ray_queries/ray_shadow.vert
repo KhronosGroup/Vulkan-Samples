@@ -1,6 +1,7 @@
 #version 460
 #extension GL_EXT_ray_query : enable
-/* Copyright (c) 2019, Arm Limited and Contributors
+
+/* Copyright (c) 2021 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,9 +34,13 @@ global_uniform;
 
 layout (location = 0) out vec4 o_pos;
 layout (location = 1) out vec3 o_normal;
+layout (location = 2) out vec4 scene_pos; // scene with respect to BVH coordinates
 
 void main(void)
 {
+	// We want to be able to perform ray tracing, so don't apply any matrix to scene_pos
+	scene_pos = vec4(position, 1);
+
     o_pos = global_uniform.view * vec4(position, 1);
 
     o_normal = normal;

@@ -75,14 +75,20 @@ private:
     };
 
 
+    std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
+
     // Buffers
     std::unique_ptr<vkb::core::Buffer> vertex_buffer{nullptr};
     std::unique_ptr<vkb::core::Buffer> index_buffer{nullptr};
     std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
 
     // Ray tracing structures
+    VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
     AccelerationStructure            top_level_acceleration_structure{};
     AccelerationStructure            bottom_level_acceleration_structure{};
+    uint64_t get_buffer_device_address(VkBuffer buffer);
+    void create_top_level_acceleration_structure();
+    void create_bottom_level_acceleration_structure();
 
     VkPipeline pipeline{nullptr};
     VkPipelineLayout pipeline_layout{nullptr};
