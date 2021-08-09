@@ -408,7 +408,7 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 {
 }
 
-bool AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
+ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
@@ -453,6 +453,8 @@ void AndroidPlatform::terminate(ExitCode code)
 			break;
 		case ExitCode::FatalError:
 			send_notification(log_output);
+			break;
+		default:
 			break;
 	}
 
