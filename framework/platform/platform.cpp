@@ -97,6 +97,7 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 		}
 	}
 
+	// Platform has been closed by a plugins initialization phase
 	if (close_requested)
 	{
 		return ExitCode::Close;
@@ -115,6 +116,12 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 
 ExitCode Platform::main_loop()
 {
+	if (!app_requested())
+	{
+		LOGI("An app was not requested, can not continue");
+		return ExitCode::Close;
+	}
+
 	while (!window->should_close() && !close_requested)
 	{
 		try
@@ -131,11 +138,6 @@ ExitCode Platform::main_loop()
 				// Compensate for load times of the app by rendering the first frame pre-emptively
 				timer.tick<Timer::Seconds>();
 				active_app->update(0.01667f);
-			}
-			else
-			{
-				LOGE("An app was not requested, can not continue");
-				return ExitCode::Close;
 			}
 
 			update();
