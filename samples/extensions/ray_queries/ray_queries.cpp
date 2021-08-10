@@ -35,9 +35,9 @@ struct RequestFeature
 	{}
 
 	template <typename T>
-	RequestFeature &request(VkStructureType sType, VkBool32 T::*member)
+	RequestFeature &request(VkStructureType s_type, VkBool32 T::*member)
 	{
-		auto &member_feature   = gpu.request_extension_features<T>(sType);
+		auto &member_feature   = gpu.request_extension_features<T>(s_type);
 		member_feature.*member = VK_TRUE;
 		return *this;
 	}
@@ -46,9 +46,9 @@ struct RequestFeature
 template <typename T>
 struct CopyBuffer
 {
-	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *bufferName)
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
 	{
-		auto iter = buffers.find(bufferName);
+		auto iter = buffers.find(buffer_name);
 		if (iter == buffers.cend())
 		{
 			return {};
