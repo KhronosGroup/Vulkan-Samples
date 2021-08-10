@@ -447,7 +447,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
 
 	// Build the acceleration structure on the device via a one-time command buffer submission
-	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we show device build here
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	vkCmdBuildAccelerationStructuresKHR(
 	    command_buffer,
