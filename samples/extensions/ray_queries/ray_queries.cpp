@@ -503,9 +503,9 @@ void RayQueries::load_scene()
 				if (index_buffer_)
 				{
 					assert(sub_mesh->index_type == VkIndexType::VK_INDEX_TYPE_UINT16);
-					const size_t   sz                   = index_buffer_->get_size();
-					const size_t   nTriangles           = sz / sizeof(uint16_t) / 3;
-					const auto triangle_start_index = static_cast<uint32_t>(model.indices.size());
+					const size_t sz                   = index_buffer_->get_size();
+					const size_t nTriangles           = sz / sizeof(uint16_t) / 3;
+					const auto   triangle_start_index = static_cast<uint32_t>(model.indices.size());
 					model.indices.resize(triangle_start_index + nTriangles);
 					auto ptr = index_buffer_->get_data();
 					assert(!!ptr);
