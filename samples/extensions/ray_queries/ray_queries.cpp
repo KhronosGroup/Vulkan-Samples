@@ -58,13 +58,13 @@ struct CopyBuffer
 
 		const size_t sz = buffer.get_size();
 		out.resize(sz / sizeof(T));
-		const bool alreadyMapped = buffer.get_data() != nullptr;
-		if (!alreadyMapped)
+		const bool already_mapped = buffer.get_data() != nullptr;
+		if (!already_mapped)
 		{
 			buffer.map();
 		}
 		memcpy(&out[0], buffer.get_data(), sz);
-		if (!alreadyMapped)
+		if (!already_mapped)
 		{
 			buffer.unmap();
 		}
@@ -130,11 +130,6 @@ void RayQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
 	    .request(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_FEATURES_KHR, &VkPhysicalDeviceRayTracingPipelineFeaturesKHR::rayTracingPipeline);
 }
 
-void RayQueries::prepare_render_context()
-{
-	get_render_context().prepare();
-}
-
 void RayQueries::render(float delta_time)
 {
 	if (!prepared)
@@ -183,7 +178,7 @@ void RayQueries::build_command_buffers()
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], model.indices.size() * 3, 1, 0, 0, 0);
+		vkCmdDrawIndexed(draw_cmd_buffers[i], static_cast<uint32_t>(model.indices.size()) * 3, 1, 0, 0, 0);
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -326,7 +321,7 @@ void RayQueries::create_top_level_acceleration_structure()
 	std::vector<VkAccelerationStructureBuildRangeInfoKHR *> acceleration_build_structure_range_infos = {&acceleration_structure_build_range_info};
 
 	// Build the acceleration structure on the device via a one-time command buffer submission
-	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we prefer device builds
+	// Some implementations may support acceleration structure building on the host (VkPhysicalDeviceAccelerationStructureFeaturesKHR->accelerationStructureHostCommands), but we show device build here
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	vkCmdBuildAccelerationStructuresKHR(
 	    command_buffer,
@@ -385,7 +380,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	acceleration_structure_geometry.geometry.triangles.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_TRIANGLES_DATA_KHR;
 	acceleration_structure_geometry.geometry.triangles.vertexFormat  = VK_FORMAT_R32G32B32_SFLOAT;
 	acceleration_structure_geometry.geometry.triangles.vertexData    = vertex_data_device_address;
-	acceleration_structure_geometry.geometry.triangles.maxVertex     = model.vertices.size();
+	acceleration_structure_geometry.geometry.triangles.maxVertex     = static_cast<uint32_t>(model.vertices.size());
 	acceleration_structure_geometry.geometry.triangles.vertexStride  = sizeof(Vertex);
 	acceleration_structure_geometry.geometry.triangles.indexType     = VK_INDEX_TYPE_UINT32;
 	acceleration_structure_geometry.geometry.triangles.indexData     = index_data_device_address;
@@ -399,7 +394,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	acceleration_structure_build_geometry_info.geometryCount = 1;
 	acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
-	const uint32_t primitive_count = model.indices.size();
+	const auto primitive_count = static_cast<uint32_t>(model.indices.size());
 
 	VkAccelerationStructureBuildSizesInfoKHR acceleration_structure_build_sizes_info{};
 	acceleration_structure_build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -445,7 +440,7 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	acceleration_build_geometry_info.scratchData.deviceAddress = scratch_buffer_address;
 
 	VkAccelerationStructureBuildRangeInfoKHR acceleration_structure_build_range_info;
-	acceleration_structure_build_range_info.primitiveCount                                           = model.indices.size();
+	acceleration_structure_build_range_info.primitiveCount                                           = static_cast<uint32_t>(model.indices.size());
 	acceleration_structure_build_range_info.primitiveOffset                                          = 0;
 	acceleration_structure_build_range_info.firstVertex                                              = 0;
 	acceleration_structure_build_range_info.transformOffset                                          = 0;
@@ -481,9 +476,9 @@ void RayQueries::load_scene()
 	{
 		for (auto &&sub_mesh : mesh->get_submeshes())
 		{
-			auto           pts_               = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
-			const auto     normals_           = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
-			const uint32_t vertex_start_index = model.vertices.size();
+			auto       pts_               = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "position");
+			const auto normals_           = CopyBuffer<glm::vec3>{}(sub_mesh->vertex_buffers, "normal");
+			const auto vertex_start_index = static_cast<uint32_t>(model.vertices.size());
 
 			// Copy vertex data
 			{
@@ -510,7 +505,7 @@ void RayQueries::load_scene()
 					assert(sub_mesh->index_type == VkIndexType::VK_INDEX_TYPE_UINT16);
 					const size_t   sz                   = index_buffer_->get_size();
 					const size_t   nTriangles           = sz / sizeof(uint16_t) / 3;
-					const uint32_t triangle_start_index = model.indices.size();
+					const auto triangle_start_index = static_cast<uint32_t>(model.indices.size());
 					model.indices.resize(triangle_start_index + nTriangles);
 					auto ptr = index_buffer_->get_data();
 					assert(!!ptr);

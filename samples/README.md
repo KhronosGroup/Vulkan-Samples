@@ -182,7 +182,7 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 - 🎓 [Using the debug utilities extension](./extensions/debug_utils/debug_utils_tutorial.md)
 
 ### [Basic ray queries](./extensions/ray_queries)<br/>
-**Extensions**: [```VK_KHR_RAY_QUERY_EXTENSION_NAME```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>
+**Extensions**: [```VK_KHR_ray_query```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>
 Render a sponza scene using the ray query extension. Shows how to set up all data structures required for ray queries, including the bottom and top level acceleration structures for the geometry and a standard vertex/fragment shader pipeline. Shadows are cast dynamically by ray queries being cast by the fragment shader.<br/>
 
 ### [Basic hardware accelerated ray tracing](./extensions/raytracing_basic)<br/>

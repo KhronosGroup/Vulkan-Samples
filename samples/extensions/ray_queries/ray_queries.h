@@ -41,7 +41,6 @@ class RayQueries : public ApiVulkanSample
 	RayQueries();
 	~RayQueries() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void prepare_render_context() override;
 	void render(float delta_time) override;
 	bool prepare(vkb::Platform &platform) override;
 
@@ -68,7 +67,7 @@ class RayQueries : public ApiVulkanSample
 
 	struct AccelerationStructure
 	{
-		VkAccelerationStructureKHR         handle         = nullptr;
+		VkAccelerationStructureKHR         handle         = VK_NULL_HANDLE;
 		uint64_t                           device_address = 0;
 		std::unique_ptr<vkb::core::Buffer> buffer         = nullptr;
 	};
@@ -88,10 +87,10 @@ class RayQueries : public ApiVulkanSample
 	void                                             create_top_level_acceleration_structure();
 	void                                             create_bottom_level_acceleration_structure();
 
-	VkPipeline            pipeline{nullptr};
-	VkPipelineLayout      pipeline_layout{nullptr};
-	VkDescriptorSet       descriptor_set{nullptr};
-	VkDescriptorSetLayout descriptor_set_layout{nullptr};
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	void build_command_buffers() override;
 	void create_uniforms();
