@@ -17,6 +17,7 @@
  */
 #include "offscreen_context.h"
 
+#include <common/error.h>
 #include <string>
 #include <vector>
 
@@ -154,6 +155,11 @@ void OffscreenContext::init_context()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwMakeContextCurrent(data.window);
 	gladLoadGL();
+	if(glGenSemaphoresEXT == nullptr)
+	{
+		LOGE("Required openGL extension glGenSemaphoresEXT not available, cannot run");
+		throw vkb::VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
+	}
 }
 
 void OffscreenContext::destroy_context()
