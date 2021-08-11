@@ -24,4 +24,4 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip Corporation"
     NAME "Ray tracing extended"
-    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Acceleration Structure rebuild and AO.")
+    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO.")
