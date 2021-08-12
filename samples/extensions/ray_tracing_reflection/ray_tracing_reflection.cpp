@@ -490,14 +490,14 @@ void RaytracingReflection::create_buffer_references()
 void RaytracingReflection::create_scene()
 {
 	// Materials
-	ObjMaterial mat_red     = {{1, 0, 0}, {1, 1, 1}, {0}};
-	ObjMaterial mat_green   = {{0, 1, 0}, {1, 1, 1}, {0}};
-	ObjMaterial mat_blue    = {{0, 0, 1}, {1, 1, 1}, {0}};
-	ObjMaterial mat_yellow  = {{1, 1, 0}, {1, 1, 1}, {0}};
-	ObjMaterial mat_cyan    = {{0, 1, 1}, {1, 1, 1}, {0}};
-	ObjMaterial mat_magenta = {{1, 0, 1}, {1, 1, 1}, {0}};
-	ObjMaterial mat_grey    = {{0.7f, 0.7f, 0.7f}, {0.9f, 0.9f, 0.9f}, {0.1f}};        // Slightly reflective
-	ObjMaterial mat_mirror  = {{0.3f, 0.9f, 1.0f}, {0.9f, 0.9f, 0.9f}, {0.9f}};        // Mirror Slightly blue
+	ObjMaterial mat_red     = {{1, 0, 0}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_green   = {{0, 1, 0}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_blue    = {{0, 0, 1}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_yellow  = {{1, 1, 0}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_cyan    = {{0, 1, 1}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_magenta = {{1, 0, 1}, {1, 1, 1}, 0.0f};
+	ObjMaterial mat_grey    = {{0.7f, 0.7f, 0.7f}, {0.9f, 0.9f, 0.9f}, 0.1f};        // Slightly reflective
+	ObjMaterial mat_mirror  = {{0.3f, 0.9f, 1.0f}, {0.9f, 0.9f, 0.9f}, 0.9f};        // Mirror Slightly blue
 
 	// Geometries
 	auto cube  = ObjCube();
