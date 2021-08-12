@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -181,7 +181,7 @@ class PipelineState
 
 	void set_specialization_constant(uint32_t constant_id, const std::vector<uint8_t> &data);
 
-	void set_vertex_input_state(const VertexInputState &vertex_input_sate);
+	void set_vertex_input_state(const VertexInputState &vertex_input_state);
 
 	void set_input_assembly_state(const InputAssemblyState &input_assembly_state);
 
@@ -232,7 +232,7 @@ class PipelineState
 
 	SpecializationConstantState specialization_constant_state{};
 
-	VertexInputState vertex_input_sate{};
+	VertexInputState vertex_input_state{};
 
 	InputAssemblyState input_assembly_state{};
 

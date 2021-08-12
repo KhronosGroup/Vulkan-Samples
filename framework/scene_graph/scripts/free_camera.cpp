@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
- * Copyright (c) 2020, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
+ * Copyright (c) 2020-2021, Andrew Cox, Huawei Technologies Research & Development (UK) Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ const float FreeCamera::TRANSLATION_MOVE_STEP = 50.0f;
 const uint32_t FreeCamera::TRANSLATION_MOVE_SPEED = 4;
 
 FreeCamera::FreeCamera(Node &node) :
-    Script{node, "FreeCamera"}
+    NodeScript{node, "FreeCamera"}
 {}
 
 void FreeCamera::update(float delta_time)
