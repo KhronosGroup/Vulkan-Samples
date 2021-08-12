@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,6 +35,8 @@ class GlfwWindow : public Window
 	virtual ~GlfwWindow();
 
 	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+
+	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
 
 	virtual bool should_close() override;
 

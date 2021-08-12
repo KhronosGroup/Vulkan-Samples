@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,13 +19,13 @@
 
 #include "common/error.h"
 
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
+
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
-
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
 
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
@@ -33,6 +33,14 @@ VKBP_ENABLE_WARNINGS()
 
 #ifndef VK_KHR_XCB_SURFACE_EXTENSION_NAME
 #	define VK_KHR_XCB_SURFACE_EXTENSION_NAME "VK_KHR_xcb_surface"
+#endif
+
+#ifndef VK_KHR_XLIB_SURFACE_EXTENSION_NAME
+#	define VK_KHR_XLIB_SURFACE_EXTENSION_NAME "VK_KHR_xlib_surface"
+#endif
+
+#ifndef VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME
+#	define VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME "VK_KHR_wayland_surface"
 #endif
 
 namespace vkb
@@ -70,11 +78,6 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-bool UnixPlatform::initialize(std::unique_ptr<Application> &&app)
-{
-	return Platform::initialize(std::move(app)) && prepare();
-}
-
 void UnixPlatform::create_window()
 {
 	if (active_app->is_headless())
@@ -95,14 +98,13 @@ const char *UnixPlatform::get_surface_extension()
 	}
 	else
 	{
+#if defined(VK_USE_PLATFORM_XCB_KHR)
 		return VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+		return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+		return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+#endif
 	}
-}
-
-std::vector<spdlog::sink_ptr> UnixPlatform::get_platform_sinks()
-{
-	std::vector<spdlog::sink_ptr> sinks;
-	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
-	return sinks;
 }
 }        // namespace vkb

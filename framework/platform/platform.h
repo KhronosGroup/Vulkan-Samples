@@ -27,6 +27,11 @@
 #include "platform/filesystem.h"
 #include "platform/parser.h"
 #include "platform/window.h"
+#include "rendering/render_context.h"
+
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+#	undef Success
+#endif
 
 namespace vkb
 {
@@ -98,6 +103,8 @@ class Platform
 	 * @return The VkInstance extension name for the platform
 	 */
 	virtual const char *get_surface_extension() = 0;
+
+	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const;
 
 	Window &get_window() const;
 

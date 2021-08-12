@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -187,6 +187,10 @@ void HelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+	active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
 	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
 #else
@@ -277,19 +281,39 @@ void HelloTriangle::init_device(Context &                        context,
 	std::vector<VkPhysicalDevice> gpus(gpu_count);
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
 
-	// Select the first GPU we find in the system.
-	context.gpu = gpus.front();
-
-	uint32_t queue_family_count;
-	vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
-
-	if (queue_family_count < 1)
+	for (size_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
 	{
-		throw std::runtime_error("No queue family found.");
+		context.gpu = gpus[i];
+
+		uint32_t queue_family_count;
+		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
+
+		if (queue_family_count < 1)
+		{
+			throw std::runtime_error("No queue family found.");
+		}
+
+		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+
+		for (uint32_t i = 0; i < queue_family_count; i++)
+		{
+			VkBool32 supports_present;
+			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
+
+			// Find a queue family which supports graphics and presentation.
+			if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+			{
+				context.graphics_queue_index = i;
+				break;
+			}
+		}
 	}
 
-	std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
-	vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+	if (context.graphics_queue_index < 0)
+	{
+		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
+	}
 
 	uint32_t device_extension_count;
 	VK_CHECK(vkEnumerateDeviceExtensionProperties(context.gpu, nullptr, &device_extension_count, nullptr));
@@ -299,24 +323,6 @@ void HelloTriangle::init_device(Context &                        context,
 	if (!validate_extensions(required_device_extensions, device_extensions))
 	{
 		throw std::runtime_error("Required device extensions are missing, will try without.");
-	}
-
-	for (uint32_t i = 0; i < queue_family_count; i++)
-	{
-		VkBool32 supports_present;
-		vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
-
-		// Find a queue family which supports graphics and presentation.
-		if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
-		{
-			context.graphics_queue_index = i;
-			break;
-		}
-	}
-
-	if (context.graphics_queue_index < 0)
-	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
 	}
 
 	float queue_priority = 1.0f;
@@ -466,7 +472,16 @@ void HelloTriangle::init_swapchain(Context &context)
 		}
 	}
 
-	VkExtent2D swapchain_size = surface_properties.currentExtent;
+	VkExtent2D swapchain_size;
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		swapchain_size.width  = context.swapchain_dimensions.width;
+		swapchain_size.height = context.swapchain_dimensions.height;
+	}
+	else
+	{
+		swapchain_size = surface_properties.currentExtent;
+	}
 
 	// FIFO must be supported by all implementations.
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -944,7 +959,7 @@ VkResult HelloTriangle::present_image(Context &context, uint32_t index)
 }
 
 /**
- * @brief Initializes the Vulkan frambuffers.
+ * @brief Initializes the Vulkan framebuffers.
  * @param context A Vulkan context with the render pass already set up.
  */
 void HelloTriangle::init_framebuffers(Context &context)
@@ -1073,6 +1088,10 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
 	context.surface = platform.get_window().create_surface(*vk_instance);
+
+	context.surface = platform.get_window().create_surface(*vk_instance);
+	context.swapchain_dimensions.width  = platform.get_window().get_width(),
+	context.swapchain_dimensions.height = platform.get_window().get_height(),
 
 	init_device(context, {"VK_KHR_swapchain"});
 

@@ -93,7 +93,7 @@ bool VulkanSample::prepare(Platform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 
-	auto &gpu = instance->get_suitable_gpu();
+	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
 
 	// Request to enable ASTC
@@ -113,21 +113,22 @@ bool VulkanSample::prepare(Platform &platform)
 
 	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
 
-	// Preparing render context for rendering
-	render_context = std::make_unique<vkb::RenderContext>(*device, surface, platform.get_window().get_width(), platform.get_window().get_height());
-	render_context->set_present_mode_priority({VK_PRESENT_MODE_FIFO_KHR,
-	                                           VK_PRESENT_MODE_MAILBOX_KHR});
-
-	render_context->set_surface_format_priority({{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
-
+	create_render_context(platform);
 	prepare_render_context();
 
 	stats = std::make_unique<vkb::Stats>(*render_context);
 
 	return true;
+}
+
+void VulkanSample::create_render_context(Platform &platform)
+{
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+
+	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
 
 void VulkanSample::prepare_render_context()

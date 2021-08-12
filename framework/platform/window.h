@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include "common/vk_common.h"
 #include "core/instance.h"
+#include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
@@ -46,6 +47,14 @@ class Window
 	 * @returns A VkSurfaceKHR handle, for use by the application
 	 */
 	virtual VkSurfaceKHR create_surface(Instance &instance) = 0;
+
+	/**
+	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @param instance A Vulkan instance
+	 * @param physical_device A Vulkan PhysicalDevice
+	 * @returns A vk::SurfaceKHR handle, for use by the application
+	 */
+	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) = 0;
 
 	/**
 	 * @brief Checks if the window should be closed

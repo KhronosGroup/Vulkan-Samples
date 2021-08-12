@@ -28,7 +28,19 @@ RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, uint32_t wind
 {
 	if (surface != VK_NULL_HANDLE)
 	{
-		swapchain = std::make_unique<Swapchain>(device, surface);
+		VkSurfaceCapabilitiesKHR surface_properties;
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(),
+		                                                   surface,
+		                                                   &surface_properties));
+
+		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+		{
+			swapchain = std::make_unique<Swapchain>(device, surface, surface_extent);
+		}
+		else
+		{
+			swapchain = std::make_unique<Swapchain>(device, surface);
+		}
 	}
 }
 
@@ -97,12 +109,14 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 
 void RenderContext::set_present_mode_priority(const std::vector<VkPresentModeKHR> &new_present_mode_priority_list)
 {
-	this->present_mode_priority_list = new_present_mode_priority_list;
+	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
+	present_mode_priority_list = new_present_mode_priority_list;
 }
 
 void RenderContext::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &new_surface_format_priority_list)
 {
-	this->surface_format_priority_list = new_surface_format_priority_list;
+	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
+	surface_format_priority_list = new_surface_format_priority_list;
 }
 
 VkFormat RenderContext::get_format()
@@ -236,6 +250,11 @@ void RenderContext::handle_surface_changes()
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device.get_gpu().get_handle(),
 	                                                   swapchain->get_surface(),
 	                                                   &surface_properties));
+
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		return;
+	}
 
 	// Only recreate the swapchain if the dimensions have changed;
 	// handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,

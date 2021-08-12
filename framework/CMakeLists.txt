@@ -248,17 +248,17 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/headless_window.h
-    platform/glfw_window.h
     platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
+    platform/headless_window.h
+
     # Source Files
+    platform/headless_window.cpp
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/headless_window.cpp
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
@@ -353,27 +353,21 @@ set(PROJECT_FILES
     ${GRAPHING_FILES})
 
 # Add files based on platform
-if(VKB_DIRECT_2_DISPLAY)
-    message(STATUS "VKB_DIRECT_2_DISPLAY enabled, forcing D2D support")
-    list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
+if(ANDROID)
+    list(APPEND PROJECT_FILES ${ANDROID_FILES})
+    message(STATUS "Android platform detected")
 else()
-    # Add files based on platform
-    if(ANDROID)
-        list(APPEND PROJECT_FILES ${ANDROID_FILES})
-        message(STATUS "Android platform detected")
+    if(DIRECT_TO_DISPLAY)
+        list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
+        message(STATUS "Unix d2d platform detected")
     else()
-        if(DIRECT_TO_DISPLAY)
-            list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
-            message(STATUS "Unix d2d platform detected")
+        list(APPEND PROJECT_FILES ${GLFW_FILES})
+        if(WIN32)
+            list(APPEND PROJECT_FILES ${WINDOWS_FILES})
+            message(STATUS "Windows platform detected")
         else()
-            list(APPEND PROJECT_FILES ${GLFW_FILES})
-            if(WIN32)
-                list(APPEND PROJECT_FILES ${WINDOWS_FILES})
-                message(STATUS "Windows platform detected")
-            else()
-                list(APPEND PROJECT_FILES ${UNIX_FILES})
-                message(STATUS "Unix platform detected")
-            endif()
+            list(APPEND PROJECT_FILES ${UNIX_FILES})
+            message(STATUS "Unix platform detected")
         endif()
     endif()
 endif()

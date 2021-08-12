@@ -45,7 +45,7 @@ int main(int argc, char *argv[])
 {
 #	if defined(VK_USE_PLATFORM_MACOS_MVK)
 	vkb::UnixPlatform platform{vkb::UnixType::Mac, argc, argv};
-#	elif defined(VK_USE_PLATFORM_XCB_KHR)
+#	elif defined(VK_USE_PLATFORM_XCB_KHR) || defined(VK_USE_PLATFORM_XLIB_KHR) || defined(VK_USE_PLATFORM_WAYLAND_KHR)
 	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
 #	endif
 #endif
@@ -57,7 +57,8 @@ int main(int argc, char *argv[])
 #endif
 		auto app = create_@TARGET_CREATE_FUNC@();
 		app->set_name("@TARGET_NAME@");
-		if (platform.initialize(std::move(app)))
+
+		if (platform.initialize(std::move(app)) && platform.prepare())
 		{
 			platform.main_loop();
 			platform.terminate(vkb::ExitCode::Success);

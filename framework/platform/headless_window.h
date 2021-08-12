@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,6 +36,12 @@ class HeadlessWindow : public Window
 	 * @returns VK_NULL_HANDLE
 	 */
 	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+
+	/**
+	 * @brief A direct window doesn't have a surface
+	 * @returns nullptr
+	 */
+	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
 
 	virtual bool should_close() override;
 

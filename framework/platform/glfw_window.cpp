@@ -22,6 +22,7 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
+#define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
@@ -272,6 +273,10 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
     Window(platform, width, height)
 {
+#if defined(VK_USE_PLATFORM_XLIB_KHR)
+	glfwInitHint(GLFW_X11_XCB_VULKAN_SURFACE, false);
+#endif
+
 	if (!glfwInit())
 	{
 		throw std::runtime_error("GLFW couldn't be initialized.");
@@ -292,6 +297,8 @@ GlfwWindow::GlfwWindow(Platform &platform, uint32_t width, uint32_t height) :
 	{
 		height = parser->as<uint32_t>(&Platform::height);
 	}
+
+	resize(width, height);
 
 	handle = glfwCreateWindow(width, height, platform.get_app().get_name().c_str(), NULL, NULL);
 
@@ -332,6 +339,25 @@ VkSurfaceKHR GlfwWindow::create_surface(Instance &instance)
 	if (errCode != VK_SUCCESS)
 	{
 		return VK_NULL_HANDLE;
+	}
+
+	return surface;
+}
+
+vk::SurfaceKHR GlfwWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
+{
+	if (!instance || !handle)
+	{
+		return nullptr;
+	}
+
+	VkSurfaceKHR surface;
+
+	VkResult errCode = glfwCreateWindowSurface(instance, handle, NULL, &surface);
+
+	if (errCode != VK_SUCCESS)
+	{
+		return nullptr;
 	}
 
 	return surface;

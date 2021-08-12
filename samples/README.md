@@ -125,6 +125,11 @@ This sample demonstrates using multiple Vulkan queues to get better hardware uti
 
 - 🎓 [Using async compute to saturate GPU](./performance/async_compute/async_compute_tutorial.md)
 
+## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
+This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
+
+- 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
@@ -140,6 +145,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+
+### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
+A clone of the API sample [Hello Triangle](#hello-triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
@@ -201,3 +209,9 @@ Demonstrates how to use descriptor indexing to enable update-after-bind and non-
 ### [Fragment shading rate](./extensions/fragment_shading_rate)<br/>
 **Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)<br/>
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
+
+### [Ray tracing: reflection, shadow rays](./extensions/ray_tracing_reflection)<br/>
+**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure), [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html), [```VK_EXT_scalar_block_layout```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_scalar_block_layout.html)
+<br/>
+Render a simple scene showing the basics of ray tracing, including reflection and shadow rays. The sample creates some geometries and create a bottom acceleration structure for each, then make instances of those, using different materials and placing them at different locations.
+<br/>
