@@ -50,7 +50,7 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 	// For performance, use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
 	// whether an intersection exists, and not necessarily any particular intersection
 	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, distance);
-	// The following is the cononical way of using ray Queries from the fragment shader when
+	// The following is the canonical way of using ray Queries from the fragment shader when
 	// there's more than one bounce or hit to traverse:
 	// while (rayQueryProceedEXT(query)) { }
 	// This sample has set flags to gl_RayFlagsTerminateOnFirstHitEXT which means that there
