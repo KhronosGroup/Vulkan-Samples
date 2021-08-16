@@ -1,2 +1,8 @@
 glfw*
 glad*
+cl.h
+cl_ext.h
+cl_gl.h
+cl_platform.h
+cl_version.h
+opencl.h
