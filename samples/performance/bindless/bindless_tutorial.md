@@ -1,0 +1,47 @@
+# GPU Rendering and Bindless Resources
+
+This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
+
+## Draw Call Generation
+
+A common method of rendering large scenes is to iterate through each model and bind its resources such as vertex buffers, index buffers, and descriptors prior to each draw call. However, each bound resource has an overhead both in command buffer generation (e.g. calls to `vkCmdBindVertexBuffer`) and rendering (e.g. binding the resource).
+
+An alternative method is introduced by using GPU rendering and the use of the indirect call functions introduced in Vulkan 1.2. Whereas the draw parameters to the function `vkCmdDrawIndexed` are provided by the CPU, calls to the function `vkCmdDrawIndexIndirect` query commands from a GPU buffer. This has two significant advantages:
+
+1. Draw calls can be generated from the GPU (such as in a compute shader), and
+2. An array of draw calls can be called at once, reducing command buffer overhead
+
+The information for indirect commands is provided by the struct `VkDrawIndexedIndirectCommand`, which contains information about the vertices and indices to draw. Since the struct allows for offsets of both vertex and index buffers (through firstIndex and vertexOffset), multiple models from a scene can be placed into a single index buffer and vertex buffer and bound just once, wherein each portion of the index buffer is zero-indexed. This also means that a large index buffer of type `uint16_t` can be used even when the total number of vertices in the scene exceeds the upper limit of `2^16` for a single draw call.
+
+In this sample, the scene is composed of a 16x16 grid of sub-meshes. One vertex buffer and one index buffer contain all the geometry information in the scene, and the draw calls are placed into a device-local buffer containing an array of `VkDrawIndexedIndirectCommand` commands. Each command contains the vertex offset, index offset, and index count. To control whether a sub-mesh is drawn, the instance count is set to either 0 or 1. Alternatively, the draw command could be completely removed from the array.
+
+If = device supports multi-draw indirect (`VkPhysicalDeviceFeatures2::bufferDeviceAddress`), then the entire array of draw commands can be executed through a single call to `VkDrawIndexedIndirectCommand`. Otherwise, each draw call must be executed through a separate call to `VkDrawIndexIndirectCommand`:
+
+```cpp
+// m_enable_mci: supports multiDrawIndirect
+if (m_enable_mci && m_supports_mci)
+{
+    vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, cpu_commands.size(), sizeof(cpu_commands[0]));
+}
+else
+{
+    for (size_t j = 0; j < cpu_commands.size(); ++j)
+    {
+        vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), j * sizeof(cpu_commands[0]), 1, sizeof(cpu_commands[0]));
+    }
+}
+```
+
+## CPU vs. GPU Call Generation
+
+The sample provides three methods of generating draw calls: CPU-only, GPU, and GPU using buffer device address. In all three methods, the model vertex/index information is fixed, and only the number of instances is changed (to disable / enable drawing) by determining whether the bounding sphere of the model fits within the view (i.e. frustum culling).
+
+In the CPU method, frustum culling is performed through the structure `VisibilityTester` using the model/view matrix. An on-CPU array is modified each frame, and then pushed to the GPU through a staging buffer.
+
+In the GPU method, a compute shader is called. Each invocation of the compute shader corresponds to a `VkDrawIndexedIndirectCommand` struct, and the bounding sphere is queried from an SSBO (`ModelInformationBuffer`). To determine whether that model is drawn, the instance count is toggled between 0 and 1. The GPU is entirely responsible for generating the draw calls apart from the initial set up of the draw command buffer, which is performed by the GPU.
+
+The GPU method using buffer device address is similar to the standard GPU method, but with an additional feature: the starting address of the `VkDrawIndexedIndirectCommand` array is provided using `buffer_reference`. The advantage of this method is that each invocation of the culling compute shader can point to a different indirect command array without needing to change descriptor sets if the camera information and buffer address is provided through push constants. This allows culling of the next frame to occur prior to completion of rendering of the current frame with minimal overhead.
+
+## Texture / Resource Access
+
+One of the biggest advantages of GPU rendering and draw call generation is the elimination of binding calls. Rather than re-binding descriptor sets for textures or other resources with each model, an array can be used. In this sample, the textures of all sub-meshes are placed into an indexed array, and the `ModelInformationBuffer` is used to determine the correct index of the texture. This allows rendering of the entire scene without requiring different textures to be bound before each render call.
