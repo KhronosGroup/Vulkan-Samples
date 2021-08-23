@@ -130,6 +130,11 @@ This sample demonstrates how to use Basis universal supercompressed GPU textures
 
 - 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
 
+## [GPU Rendering and Bindless Resources](./performance/bindless) <br/>
+This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
+
+- 🎓 [Using GPU Rendering and Bindless Resources](./performance/bindless/bindless_tutorial.md)
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
@@ -184,14 +189,6 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 ### [Basic hardware accelerated ray tracing](./extensions/raytracing_basic)<br/>
 **Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
 Render a basic scene using the official cross-vendor ray tracing extension. Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses. After dispatching the rays, the final result is copied to the swapchain image.<br/>
-
-### [Extended hardware accelerated ray tracing](./extensions/raytracing_extended)<br/>
-**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
-Render Sponza with Ambient Oclusion.  Place a vase in center.  Generate a particle fire that 
-demonstrates the TLAS (Top Level Acceleration Structure) animation for the same underlining geometry.
-Procedurally generate a transparent quad and deform the geometry of the quad in the BLAS (Bottom Level Acceleration 
-Structure) to demonstrate how to animate with deforming geometry.
-Shows how to rebuild the acceleration structure and when to set it to fast rebuild vs fast traversal.
 
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
