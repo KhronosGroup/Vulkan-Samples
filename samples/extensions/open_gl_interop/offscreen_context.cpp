@@ -155,7 +155,7 @@ void OffscreenContext::init_context()
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 	glfwMakeContextCurrent(data.window);
 	gladLoadGL();
-	if(glGenSemaphoresEXT == nullptr)
+	if (glGenSemaphoresEXT == nullptr)
 	{
 		LOGE("Required openGL extension glGenSemaphoresEXT not available, cannot run");
 		throw vkb::VulkanException(VK_ERROR_EXTENSION_NOT_PRESENT, "Extensions not present");
