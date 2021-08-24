@@ -318,7 +318,6 @@ void BindlessResources::load_scene()
 		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
 		image_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-		// The semaphore takes care of srcStageMask.
 		vkCmdPipelineBarrier(texture_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 
 		auto              offsets              = image->get_offsets();
@@ -336,6 +335,7 @@ void BindlessResources::load_scene()
 		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 		queue.submit(texture_cmd, device->request_fence());
 		device->get_fence_pool().wait();
+		device->get_fence_pool().reset();
 
 		texture.image_view = std::make_unique<vkb::core::ImageView>(*texture.image, VK_IMAGE_VIEW_TYPE_2D);
 
@@ -403,7 +403,6 @@ void BindlessResources::load_scene()
 		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		image_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		// The semaphore takes care of srcStageMask.
 		vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 	}
 	cmd.end();
