@@ -798,7 +798,8 @@ void BindlessResources::run_gpu_cull()
 		bind(device_address_pipeline, device_address_pipeline_layout, device_address_descriptor_set);
 	}
 
-	vkCmdDispatch(cmd, models.size(), 1, 1);
+	const uint32_t dispatch_x = models.size() ? 1 + static_cast<uint32_t>((models.size() - 1) / 64) : 1;
+	vkCmdDispatch(cmd, dispatch_x, 1, 1);
 	vkEndCommandBuffer(cmd);
 
 	VkSubmitInfo submit       = vkb::initializers::submit_info();

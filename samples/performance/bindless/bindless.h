@@ -71,6 +71,7 @@ class BindlessResources : public ApiVulkanSample
 		glm::mat4 view;
 		glm::mat4 proj;
 		glm::mat4 proj_view;
+		uint32_t model_count;
 	} scene_uniform;
 
 	struct SceneModel

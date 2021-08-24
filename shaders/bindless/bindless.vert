@@ -28,6 +28,7 @@ layout(set = 0, binding = 2) uniform GlobalUniform
 	mat4 view;
 	mat4 proj;
 	mat4 proj_view;
+	uint model_count;
 }
 global_uniform;
 

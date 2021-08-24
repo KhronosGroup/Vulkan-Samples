@@ -17,6 +17,8 @@
  * limitations under the License.
  */
 
+layout (local_size_x = 64) in;
+
 struct ModelInformation
 {
 	float x;
@@ -49,6 +51,7 @@ layout(set = 0, binding = 2) uniform GlobalUniform
 	mat4 view;
 	mat4 proj;
 	mat4 proj_view;
+	uint model_count;
 }
 global_uniform;
 
@@ -84,6 +87,9 @@ bool check_is_visible(mat4 mat, vec3 origin, float radius)
 void main()
 {
 	uint             id                       = gl_GlobalInvocationID.x;
+	if (id >= global_uniform.model_count){
+		return;
+	}
 	ModelInformation model                    = model_buffer.arr[id];
 	bool             is_visible               = check_is_visible(global_uniform.proj_view, vec3(model.x, model.y, model.z), model.r);
 	command_buffer.commands[id].instanceCount = is_visible ? 1 : 0;
