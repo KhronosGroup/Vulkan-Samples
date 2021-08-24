@@ -235,8 +235,8 @@ Instance::Instance(const std::string &                           application_nam
 			else
 			{
 				LOGE("Required instance extension {} not available, cannot run", extension_name);
+				extension_error = true;
 			}
-			extension_error = !extension_is_optional;
 		}
 		else
 		{

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -184,7 +184,7 @@ std::uint32_t DescriptorPool::find_available_pool(std::uint32_t search_index)
 
 		if (result != VK_SUCCESS)
 		{
-			return VK_NULL_HANDLE;
+			return 0;
 		}
 
 		// Store internally the Vulkan handle
