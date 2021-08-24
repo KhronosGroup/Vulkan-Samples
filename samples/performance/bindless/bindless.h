@@ -125,6 +125,7 @@ class BindlessResources : public ApiVulkanSample
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
 	const vkb::Queue *              compute_queue{nullptr};
+	std::vector<uint32_t>           queue_families;
 
 	// CPU Draw Calls
 	void                                      cpu_cull();

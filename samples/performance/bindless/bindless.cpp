@@ -244,6 +244,17 @@ bool BindlessResources::prepare(vkb::Platform &platform)
 		compute_queue = &device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
 	}
 
+	queue_families.clear();
+	for (auto&& queue_bit : { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT })
+	{
+		const auto index = device->get_queue_by_flags(queue_bit, 0).get_family_index();
+		if (std::find(queue_families.cbegin(), queue_families.cend(), index) == queue_families.cend())
+		{
+			queue_families.emplace_back(index);
+		}
+	}
+	
+
 	create_sampler();
 	load_scene();
 	initialize_resources();
@@ -290,7 +301,7 @@ void BindlessResources::load_scene()
                                                            0);
 
 		const auto &data        = image->get_data();
-		auto        data_buffer = std::make_unique<vkb::core::Buffer>(*device, data.size() * sizeof(data[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		auto        data_buffer = std::make_unique<vkb::core::Buffer>(*device, data.size() * sizeof(data[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 		data_buffer->update(data.data(), data.size() * sizeof(data[0]), 0);
 
 		auto &texture_cmd = device->get_command_pool().request_command_buffer();
@@ -427,7 +438,7 @@ void BindlessResources::initialize_resources()
 	{
 		indirect_flags |= VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
 	}
-	indirect_call_buffer = std::make_unique<vkb::core::Buffer>(get_device(), models.size() * sizeof(VkDrawIndexedIndirectCommand), indirect_flags, VMA_MEMORY_USAGE_GPU_ONLY);
+	indirect_call_buffer = std::make_unique<vkb::core::Buffer>(get_device(), models.size() * sizeof(VkDrawIndexedIndirectCommand), indirect_flags, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 
 	// Create a buffer containing the addresses of the indirect calls.
 	// In this sample, the order of the addresses will match that of the other buffers, but in general they could be in any order
@@ -462,7 +473,7 @@ void BindlessResources::initialize_resources()
 	auto &cmd = device->request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
 	auto copy = [this, &cmd](vkb::core::Buffer &staging_buffer, VkBufferUsageFlags buffer_usage_flags) {
-		auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		auto output_buffer = std::make_unique<vkb::core::Buffer>(get_device(), staging_buffer.get_size(), buffer_usage_flags | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 		cmd.copy_buffer(staging_buffer, *output_buffer, staging_buffer.get_size());
 
 		vkb::BufferMemoryBarrier barrier;
@@ -709,7 +720,7 @@ void BindlessResources::update_scene_uniform()
 {
 	if (!scene_uniform_buffer)
 	{
-		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(*device, sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(*device, sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 	}
 	scene_uniform.proj = camera.matrices.perspective;
 	scene_uniform.view = camera.matrices.view;

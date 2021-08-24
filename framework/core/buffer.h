@@ -41,7 +41,8 @@ class Buffer
 	       VkDeviceSize             size,
 	       VkBufferUsageFlags       buffer_usage,
 	       VmaMemoryUsage           memory_usage,
-	       VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	       VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	       const std::vector<uint32_t> &queue_family_indices = {});
 
 	Buffer(const Buffer &) = delete;
 
