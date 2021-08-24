@@ -36,7 +36,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -245,7 +245,7 @@ bool BindlessResources::prepare(vkb::Platform &platform)
 	}
 
 	queue_families.clear();
-	for (auto&& queue_bit : { VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT })
+	for (auto &&queue_bit : {VK_QUEUE_GRAPHICS_BIT, VK_QUEUE_COMPUTE_BIT})
 	{
 		const auto index = device->get_queue_by_flags(queue_bit, 0).get_family_index();
 		if (std::find(queue_families.cbegin(), queue_families.cend(), index) == queue_families.cend())
@@ -253,7 +253,6 @@ bool BindlessResources::prepare(vkb::Platform &platform)
 			queue_families.emplace_back(index);
 		}
 	}
-	
 
 	create_sampler();
 	load_scene();
@@ -282,7 +281,7 @@ void BindlessResources::load_scene()
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
-		const auto & short_name    = mesh->get_name();
+		const auto  &short_name    = mesh->get_name();
 		auto         image_name    = scene_path + short_name + ".ktx";
 		auto         image         = vkb::sg::Image::load(image_name, image_name);
 
@@ -722,9 +721,9 @@ void BindlessResources::update_scene_uniform()
 	{
 		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(*device, sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 	}
-	scene_uniform.proj = camera.matrices.perspective;
-	scene_uniform.view = camera.matrices.view;
-	scene_uniform.proj_view = scene_uniform.proj *scene_uniform.view;
+	scene_uniform.proj      = camera.matrices.perspective;
+	scene_uniform.view      = camera.matrices.view;
+	scene_uniform.proj_view = scene_uniform.proj * scene_uniform.view;
 
 	scene_uniform_buffer->update(&scene_uniform, sizeof(scene_uniform), 0);
 }
@@ -880,7 +879,7 @@ void BindlessResources::cpu_cull()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		// we control visibility by changing the instance count
-		auto &                       model = models[i];
+		auto                        &model = models[i];
 		VkDrawIndexedIndirectCommand cmd{};
 		cmd.firstIndex    = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		cmd.indexCount    = static_cast<uint32_t>(model.triangles.size()) * 3;

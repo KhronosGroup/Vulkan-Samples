@@ -71,7 +71,7 @@ class BindlessResources : public ApiVulkanSample
 		glm::mat4 view;
 		glm::mat4 proj;
 		glm::mat4 proj_view;
-		uint32_t model_count;
+		uint32_t  model_count;
 	} scene_uniform;
 
 	struct SceneModel
@@ -124,7 +124,7 @@ class BindlessResources : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
-	const vkb::Queue *              compute_queue{nullptr};
+	const vkb::Queue               *compute_queue{nullptr};
 	std::vector<uint32_t>           queue_families;
 
 	// CPU Draw Calls
