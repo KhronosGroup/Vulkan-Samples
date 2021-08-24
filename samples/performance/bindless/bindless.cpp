@@ -721,11 +721,29 @@ void BindlessResources::update_scene_uniform()
 	{
 		scene_uniform_buffer = std::make_unique<vkb::core::Buffer>(*device, sizeof(SceneUniform), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 	}
-	scene_uniform.proj      = camera.matrices.perspective;
-	scene_uniform.view      = camera.matrices.view;
-	scene_uniform.proj_view = scene_uniform.proj * scene_uniform.view;
+	scene_uniform.proj        = camera.matrices.perspective;
+	scene_uniform.view        = camera.matrices.view;
+	scene_uniform.proj_view   = scene_uniform.proj * scene_uniform.view;
+	scene_uniform.model_count = static_cast<uint32_t>(models.size());
 
 	scene_uniform_buffer->update(&scene_uniform, sizeof(scene_uniform), 0);
+
+	auto &memory_cmd = device->get_command_pool().request_command_buffer();
+	memory_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+
+	VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
+	memory_barrier.buffer                = scene_uniform_buffer->get_handle();
+	memory_barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT;
+	memory_barrier.dstAccessMask         = VK_ACCESS_MEMORY_READ_BIT;
+	memory_barrier.size                  = scene_uniform_buffer->get_size();
+
+	vkCmdPipelineBarrier(memory_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, VK_NULL_HANDLE, 1, &memory_barrier, 0, VK_NULL_HANDLE);
+
+	memory_cmd.end();
+
+	auto &queue = device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
+	queue.submit(memory_cmd, device->request_fence());
+	device->get_fence_pool().wait();
 }
 
 void BindlessResources::draw()
