@@ -36,7 +36,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto          &buffer = iter->second;
+		auto &         buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -281,7 +281,7 @@ void BindlessResources::load_scene()
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
-		const auto  &short_name    = mesh->get_name();
+		const auto & short_name    = mesh->get_name();
 		auto         image_name    = scene_path + short_name + ".ktx";
 		auto         image         = vkb::sg::Image::load(image_name, image_name);
 
@@ -826,7 +826,7 @@ void BindlessResources::run_gpu_cull()
 		bind(device_address_pipeline, device_address_pipeline_layout, device_address_descriptor_set);
 	}
 
-	const uint32_t dispatch_x = models.size() ? 1 + static_cast<uint32_t>((models.size() - 1) / 64) : 1;
+	const uint32_t dispatch_x = !models.empty() ? 1 + static_cast<uint32_t>((models.size() - 1) / 64) : 1;
 	vkCmdDispatch(cmd, dispatch_x, 1, 1);
 	vkEndCommandBuffer(cmd);
 
@@ -897,7 +897,7 @@ void BindlessResources::cpu_cull()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		// we control visibility by changing the instance count
-		auto                        &model = models[i];
+		auto &                       model = models[i];
 		VkDrawIndexedIndirectCommand cmd{};
 		cmd.firstIndex    = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		cmd.indexCount    = static_cast<uint32_t>(model.triangles.size()) * 3;

@@ -17,7 +17,6 @@
  * limitations under the License.
  */
 
-
 layout(location = 1) in vec2 in_uv;
 layout(location = 2) flat in uint in_texture_index;
 
