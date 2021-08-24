@@ -70,6 +70,7 @@ class BindlessResources : public ApiVulkanSample
 	{
 		glm::mat4 view;
 		glm::mat4 proj;
+		glm::mat4 proj_view;
 	} scene_uniform;
 
 	struct SceneModel
@@ -141,7 +142,7 @@ class BindlessResources : public ApiVulkanSample
 	void initialize_descriptors();
 	void update_scene_uniform();
 	void draw();
-	bool m_supports_mci            = false;
+	bool m_supports_mdi            = false;
 	bool m_supports_first_instance = false;
 	bool m_supports_buffer_device  = false;
 };

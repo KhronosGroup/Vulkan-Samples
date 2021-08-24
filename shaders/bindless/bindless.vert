@@ -27,17 +27,16 @@ layout(set = 0, binding = 2) uniform GlobalUniform
 {
 	mat4 view;
 	mat4 proj;
+	mat4 proj_view;
 }
 global_uniform;
 
-layout(location = 0) out vec4 o_pos;
 layout(location = 1) out vec2 o_uv;
-layout(location = 2) out float o_texture_index;
+layout(location = 2) out uint o_texture_index;
 
 void main(void)
 {
-	o_pos = global_uniform.view * vec4(position, 1);
 	o_uv = uv;
 	gl_Position = global_uniform.proj * global_uniform.view * vec4(position, 1.0);
-	o_texture_index = float(texture_index);
+	o_texture_index = texture_index;
 }

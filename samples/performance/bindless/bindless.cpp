@@ -75,7 +75,7 @@ void BindlessResources::request_gpu_features(vkb::PhysicalDevice &gpu)
 	if (gpu.get_features().multiDrawIndirect)
 	{
 		gpu.get_mutable_requested_features().multiDrawIndirect = VK_TRUE;
-		m_supports_mci                                         = true;
+		m_supports_mdi                                         = true;
 	}
 
 	if (gpu.get_features().drawIndirectFirstInstance)
@@ -142,7 +142,7 @@ void BindlessResources::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, model_information_buffer->get(), offsets);
 
-		if (m_enable_mci && m_supports_mci)
+		if (m_enable_mci && m_supports_mdi)
 		{
 			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, cpu_commands.size(), sizeof(cpu_commands[0]));
 		}
@@ -167,7 +167,7 @@ void BindlessResources::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("GPU Rendering"))
 	{
 		static const std::array<const char *, 2> supported = {"Not supported", "Supported"};
-		drawer.text("Multi-Draw Indirect: %s", supported[this->m_supports_mci]);
+		drawer.text("Multi-Draw Indirect: %s", supported[this->m_supports_mdi]);
 		drawer.text("drawIndirectFirstInstance: %s", supported[this->m_supports_first_instance]);
 		drawer.text("Device buffer address: %s", supported[this->m_supports_buffer_device]);
 
@@ -713,6 +713,7 @@ void BindlessResources::update_scene_uniform()
 	}
 	scene_uniform.proj = camera.matrices.perspective;
 	scene_uniform.view = camera.matrices.view;
+	scene_uniform.proj_view = scene_uniform.proj *scene_uniform.view;
 
 	scene_uniform_buffer->update(&scene_uniform, sizeof(scene_uniform), 0);
 }
@@ -806,6 +807,7 @@ void BindlessResources::run_gpu_cull()
 
 	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, device->request_fence());
 	device->get_fence_pool().wait();
+	device->get_fence_pool().reset();
 }
 
 namespace

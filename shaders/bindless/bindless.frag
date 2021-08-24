@@ -18,9 +18,8 @@
  */
 
 
-layout(location = 0) in vec4 in_pos;
 layout(location = 1) in vec2 in_uv;
-layout(location = 2) in float in_texture_index;
+layout(location = 2) flat in uint in_texture_index;
 
 layout(location = 0) out vec4 o_color;
 
