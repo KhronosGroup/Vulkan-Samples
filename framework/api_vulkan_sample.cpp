@@ -680,11 +680,12 @@ void ApiVulkanSample::setup_render_pass()
 	// Color attachment
 	attachments[0].format         = render_context->get_format();
 	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
-	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[0].loadOp         = color_attachment_load_op;
+	attachments[0].storeOp        = color_attachment_store_op;
 	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	// If the attachment is cleared, we don't care for the initial layout
+	attachments[0].initialLayout  = (color_attachment_load_op == VK_ATTACHMENT_LOAD_OP_CLEAR) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	// Depth attachment
 	attachments[1].format         = depth_format;

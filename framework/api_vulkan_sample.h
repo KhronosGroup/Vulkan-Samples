@@ -403,4 +403,8 @@ class ApiVulkanSample : public vkb::VulkanSample
 	bool    touch_down    = false;
 	double  touch_timer   = 0.0;
 	int64_t last_tap_time = 0;
+
+	// The color attachment load and store ops can be overridden for samples that e.g. render directly to the attachments and want to display something afterwards
+	VkAttachmentLoadOp  color_attachment_load_op  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	VkAttachmentStoreOp color_attachment_store_op = VK_ATTACHMENT_STORE_OP_STORE;
 };
