@@ -656,6 +656,15 @@ void ApiVulkanSample::setup_framebuffer()
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
 
+	// Delete existing frame buffers
+	if (framebuffers.size() > 0)
+	{
+		for (uint32_t i = 0; i < framebuffers.size(); i++)
+		{
+			vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+		}
+	}
+
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
