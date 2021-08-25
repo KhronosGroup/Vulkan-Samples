@@ -81,9 +81,9 @@ class RaytracingReflection : public ApiVulkanSample
 
 	struct StorageImage
 	{
-		VkDeviceMemory memory{nullptr};
-		VkImage        image{nullptr};
-		VkImageView    view{nullptr};
+		VkDeviceMemory memory{VK_NULL_HANDLE};
+		VkImage        image{VK_NULL_HANDLE};
+		VkImageView    view{VK_NULL_HANDLE};
 		VkFormat       format{VK_FORMAT_UNDEFINED};
 		uint32_t       width{0};
 		uint32_t       height{0};
@@ -105,10 +105,10 @@ class RaytracingReflection : public ApiVulkanSample
 	} obj_buffers;
 	std::unique_ptr<vkb::core::Buffer> scene_desc;
 
-	VkPipeline            pipeline{nullptr};
-	VkPipelineLayout      pipeline_layout{nullptr};
-	VkDescriptorSet       descriptor_set{nullptr};
-	VkDescriptorSetLayout descriptor_set_layout{nullptr};
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	RaytracingReflection();
 	~RaytracingReflection();
