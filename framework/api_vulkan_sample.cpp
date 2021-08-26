@@ -129,6 +129,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+		framebuffers[i] = VK_NULL_HANDLE;
 	}
 	setup_framebuffer();
 
@@ -661,7 +662,10 @@ void ApiVulkanSample::setup_framebuffer()
 	{
 		for (uint32_t i = 0; i < framebuffers.size(); i++)
 		{
-			vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			if (framebuffers[i] != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			}
 		}
 	}
 
