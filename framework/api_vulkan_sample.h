@@ -159,6 +159,15 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 */
 	void create_swapchain_buffers();
 
+	/**
+	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
+	 * @param image_usage_flags The usage flags the new swapchain images will have
+ 	 */
+	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
+
+	/**
+	 * @brief Handles changes to the surface, e.g. on resize
+	 */
 	void handle_surface_changes();
 
 	/**

@@ -685,8 +685,8 @@ void ApiVulkanSample::setup_render_pass()
 	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	// If the attachment is cleared, we don't care for the initial layout
-	attachments[0].initialLayout  = (color_attachment_load_op == VK_ATTACHMENT_LOAD_OP_CLEAR) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[0].initialLayout = (color_attachment_load_op == VK_ATTACHMENT_LOAD_OP_CLEAR) ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	attachments[0].finalLayout   = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 	// Depth attachment
 	attachments[1].format         = depth_format;
 	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -804,6 +804,13 @@ void ApiVulkanSample::create_swapchain_buffers()
 			swapchain_buffers[i].view  = image_view.get_handle();
 		}
 	}
+}
+
+void ApiVulkanSample::update_swapchain_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags)
+{
+	get_render_context().update_swapchain(image_usage_flags);
+	create_swapchain_buffers();
+	setup_framebuffer();
 }
 
 void ApiVulkanSample::handle_surface_changes()
