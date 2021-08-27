@@ -953,7 +953,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	struct SpecialConsts_s
 	{
 		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
-		uint32_t maxRays    = 12;
+		uint32_t maxRays    = 60;
 	} specialConsts;
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecialConsts_s, renderMode), sizeof(uint32_t)));
@@ -1177,6 +1177,38 @@ void RaytracingExtended::build_command_buffers()
 
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
+		std::vector<VkBufferMemoryBarrier> barriers;
+		for (auto &&model_buffer : raytracing_scene->model_buffers)
+		{
+			if (!model_buffer.is_static)
+			{
+				VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
+				barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+				barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+				barrier.buffer                = model_buffer.bottom_level_acceleration_structure.buffer->get_handle();
+				barrier.size                  = model_buffer.bottom_level_acceleration_structure.buffer->get_size();
+				barriers.push_back(barrier);
+			}
+		}
+
+		auto getBufferBarrier = [](const vkb::core::Buffer &buffer) {
+			VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
+			barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
+			barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT;
+			barrier.buffer                = buffer.get_handle();
+			barrier.size                  = buffer.get_size();
+			return barrier;
+		};
+		barriers.emplace_back(getBufferBarrier(*dynamic_vertex_buffer));
+		barriers.emplace_back(getBufferBarrier(*dynamic_index_buffer));
+		barriers.emplace_back(getBufferBarrier(*instances_buffer));
+		barriers.emplace_back(getBufferBarrier(*ubo));
+
+		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0,
+							 0, VK_NULL_HANDLE,                                              // memory barrier
+							 static_cast<uint32_t>(barriers.size()), barriers.data(),        // buffer memory barrier
+							 0, VK_NULL_HANDLE);                                             // image memory barrier
+
 		/*
 		    Dispatch the ray tracing commands
 		*/
@@ -1238,7 +1270,6 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	create_scene();
 	create_uniform_buffer();
 	create_ray_tracing_pipeline();
-	create_display_pipeline();
 	create_shader_binding_tables();
 	create_descriptor_sets();
 	build_command_buffers();

@@ -57,6 +57,12 @@ layout(binding=9, set = 0) readonly buffer DynamicIndexBuffer
 
 layout (constant_id = 0) const uint render_mode = 0;
 
+vec3 heatmap(float value, float minValue, float maxValue)
+{
+  float scaled = (min(max(value, minValue), maxValue) - minValue) / (maxValue - minValue);
+  float r = scaled * (3.14159265359 / 2.);
+  return vec3(sin(r), sin(2 * r), cos(r));
+}
 
 /*
 // Geometry instance ids
