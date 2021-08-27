@@ -241,8 +241,8 @@ class RaytracingExtended : public ApiVulkanSample
 	VkDescriptorSetLayout        descriptor_set_layout;
 	using Triangle                   = std::array<uint32_t, 3>;
 	uint32_t               grid_size = 100;
-    std::vector<NewVertex> refraction_model;
-    std::vector<Triangle>  refraction_indices;
+	std::vector<NewVertex> refraction_model;
+	std::vector<Triangle>  refraction_indices;
 
 	RaytracingExtended();
 	~RaytracingExtended() override;
@@ -262,12 +262,10 @@ class RaytracingExtended : public ApiVulkanSample
 	void create_shader_binding_tables();
 	void create_descriptor_sets();
 	void create_ray_tracing_pipeline();
-	void create_display_pipeline();
 	void create_uniform_buffer();
 	void build_command_buffers() override;
 	void update_uniform_buffers();
 	void draw();
-	void draw_gui() override;
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 };

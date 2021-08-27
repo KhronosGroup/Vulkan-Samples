@@ -33,12 +33,6 @@ struct Payload
   vec4 normal; // {nx, ny, nz, distance}
 };
 
-vec3 heatmap(float value, float minValue, float maxValue)
-{
-  float scaled = (min(max(value, minValue), maxValue) - minValue) / (maxValue - minValue);
-  float r = scaled * (3.14159265359 / 2.);
-  return vec3(sin(r), sin(2 * r), cos(r));
-}
 
 layout(location = 0) rayPayloadEXT Payload hitValue;
 layout (constant_id = 0) const uint render_mode = 0;
@@ -58,7 +52,6 @@ void main()
 	float tmax = 10000.0;
 
 	uint max_rays = maxRays;
-	max_rays = 100;
 	if (render_mode != 0)
 	{
 		max_rays = 1;

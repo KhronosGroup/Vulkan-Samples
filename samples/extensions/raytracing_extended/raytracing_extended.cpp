@@ -401,7 +401,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 		acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 		acceleration_structure_build_geometry_info.pNext         = nullptr;
 		acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		acceleration_structure_build_geometry_info.flags         = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+		acceleration_structure_build_geometry_info.flags         = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
 		acceleration_structure_build_geometry_info.geometryCount = 1;
 		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
@@ -690,9 +690,9 @@ namespace
 template <typename T>
 struct CopyBuffer
 {
-	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *bufferName)
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
 	{
-		auto iter = buffers.find(bufferName);
+		auto iter = buffers.find(buffer_name);
 		if (iter == buffers.cend())
 		{
 			return {};
@@ -702,13 +702,13 @@ struct CopyBuffer
 
 		const size_t sz = buffer.get_size();
 		out.resize(sz / sizeof(T));
-		const bool alreadyMapped = buffer.get_data() != nullptr;
-		if (!alreadyMapped)
+		const bool already_mapped = buffer.get_data() != nullptr;
+		if (!already_mapped)
 		{
 			buffer.map();
 		}
 		memcpy(&out[0], buffer.get_data(), sz);
-		if (!alreadyMapped)
+		if (!already_mapped)
 		{
 			buffer.unmap();
 		}
@@ -722,8 +722,8 @@ struct CopyBuffer
 */
 void RaytracingExtended::create_scene()
 {
-    refraction_model.resize(grid_size * grid_size);
-    refraction_indices.resize(2 * grid_size * grid_size);
+	refraction_model.resize(grid_size * grid_size);
+	refraction_indices.resize(2 * grid_size * grid_size);
 	std::vector<SceneLoadInfo> scenesToLoad;
 	const float                sponza_scale = 0.01f;
 	const glm::mat4x4          sponza_transform{0.f, 0.f, sponza_scale, 0.f,
@@ -854,39 +854,39 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 	{
 		for (uint32_t j = 0; j < grid_size; ++j)
 		{
-			const float x             = float(i) / float(grid_size);
-			const float y             = float(j) / float(grid_size);
-			const float lateral_scale = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
-            refraction_model[grid_size * i + j].normal = {0.f, 0.f, 0.f};
-            refraction_model[grid_size * i + j].pos = {y - 0.5f,
-                            2 * x - 1.f,
-                            lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
-            refraction_model[grid_size * i + j].tex_coord = glm::vec2{x, y};
+			const float x                                 = float(i) / float(grid_size);
+			const float y                                 = float(j) / float(grid_size);
+			const float lateral_scale                     = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
+			refraction_model[grid_size * i + j].normal    = {0.f, 0.f, 0.f};
+			refraction_model[grid_size * i + j].pos       = {y - 0.5f,
+													   2 * x - 1.f,
+													   lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
+			refraction_model[grid_size * i + j].tex_coord = glm::vec2{x, y};
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
 			{
-                refraction_indices[2 * (grid_size * i + j)]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
-                refraction_indices[2 * (grid_size * i + j) + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
+				refraction_indices[2 * (grid_size * i + j)]     = Triangle{i * grid_size + j, (i + 1) * grid_size + j, i * grid_size + j + 1};
+				refraction_indices[2 * (grid_size * i + j) + 1] = Triangle{(i + 1) * grid_size + j, (i + 1) * grid_size + j + 1, i * grid_size + j + 1};
 			}
 		}
 	}
-    for (auto &&tri : refraction_indices)
+	for (auto &&tri : refraction_indices)
 	{
-        glm::vec3 normal = glm::normalize(glm::cross(refraction_model[tri[1]].pos - refraction_model[tri[0]].pos, refraction_model[tri[2]].pos - refraction_model[tri[0]].pos));
+		glm::vec3 normal = glm::normalize(glm::cross(refraction_model[tri[1]].pos - refraction_model[tri[0]].pos, refraction_model[tri[2]].pos - refraction_model[tri[0]].pos));
 		for (auto &&index : tri)
 		{
-            ASSERT_LOG(index >= 0 && index < refraction_model.size(), "Valid tri")
-            refraction_model[index].normal += normal;
+			ASSERT_LOG(index >= 0 && index < refraction_model.size(), "Valid tri")
+			refraction_model[index].normal += normal;
 		}
 	}
 
-    for (auto &&vert : refraction_model)
-    {
-        vert.normal = glm::normalize(vert.normal);
-    }
+	for (auto &&vert : refraction_model)
+	{
+		vert.normal = glm::normalize(vert.normal);
+	}
 
-    size_t vertex_buffer_size = refraction_model.size() * sizeof(NewVertex);
-    size_t index_buffer_size  = refraction_indices.size() * sizeof(refraction_indices[0]);
+	size_t vertex_buffer_size = refraction_model.size() * sizeof(NewVertex);
+	size_t index_buffer_size  = refraction_indices.size() * sizeof(refraction_indices[0]);
 
 	if (!dynamic_vertex_buffer || !dynamic_index_buffer)
 	{
@@ -895,16 +895,16 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 		dynamic_index_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), index_buffer_size, VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	}
 
-    dynamic_vertex_buffer->update(refraction_model.data(), vertex_buffer_size);
-    dynamic_index_buffer->update(refraction_indices.data(), index_buffer_size);
+	dynamic_vertex_buffer->update(refraction_model.data(), vertex_buffer_size);
+	dynamic_index_buffer->update(refraction_indices.data(), index_buffer_size);
 
 	auto assign_buffer = [&](ModelBuffer &buffer) {
 		buffer.vertex_offset     = 0;
 		buffer.index_offset      = 0;
 		buffer.is_static         = false;
 		buffer.default_transform = VkTransformMatrixKHR{1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0};
-        buffer.num_vertices      = refraction_model.size();
-        buffer.num_triangles     = refraction_indices.size();
+		buffer.num_vertices      = refraction_model.size();
+		buffer.num_triangles     = refraction_indices.size();
 		buffer.object_type       = ObjectType::OBJECT_REFRACTION;
 	};
 	bool found = false;
@@ -1085,10 +1085,6 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	VK_CHECK(vkCreateRayTracingPipelinesKHR(get_device().get_handle(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &raytracing_pipeline_create_info, nullptr, &pipeline));
 }
 
-void RaytracingExtended::create_display_pipeline()
-{
-}
-
 /*
     Deletes all resources acquired by an acceleration structure
 */
@@ -1253,8 +1249,8 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 
 void RaytracingExtended::draw()
 {
-    device->get_fence_pool().wait();
-    device->get_fence_pool().reset();
+	device->get_fence_pool().wait();
+	device->get_fence_pool().reset();
 	ASSERT_LOG(raytracing_command_buffers.size() == draw_cmd_buffers.size(), "The number of raytracing command buffers must match the render queue size")
 	ApiVulkanSample::prepare_frame();
 	size_t i = current_buffer;
@@ -1263,8 +1259,8 @@ void RaytracingExtended::draw()
 	submit.commandBufferCount = 1;
 	submit.pCommandBuffers    = &raytracing_command_buffers[i];
 
-    VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
-    device->get_fence_pool().wait();
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
+	device->get_fence_pool().wait();
 
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));
@@ -1320,15 +1316,6 @@ void RaytracingExtended::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, device->request_fence()));
 	device->get_fence_pool().wait();
 	ApiVulkanSample::submit_frame();
-}
-
-void RaytracingExtended::draw_gui()
-{
-	gui->show_options_window(
-	    []() {
-		    int current_mode = 0;
-		    ImGui::Combo("Draw mode", &current_mode, "Mode\0\0");
-	    });
 }
 
 void RaytracingExtended::render(float delta_time)
