@@ -68,8 +68,8 @@ class PushDescriptors : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout;
 
 	PushDescriptors();
-	~PushDescriptors();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~PushDescriptors() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         load_assets();
 	void         setup_descriptor_set_layout();
@@ -79,8 +79,8 @@ class PushDescriptors : public ApiVulkanSample
 	void         update_cube_uniform_buffers(float delta_time);
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_push_descriptors();

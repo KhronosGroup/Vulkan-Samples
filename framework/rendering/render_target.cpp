@@ -46,11 +46,11 @@ const RenderTarget::CreateFunc RenderTarget::DEFAULT_CREATE_FUNC = [](core::Imag
 	                        VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
 	                        VMA_MEMORY_USAGE_GPU_ONLY};
 
-	std::vector<core::Image> images;
-	images.push_back(std::move(swapchain_image));
-	images.push_back(std::move(depth_image));
+	std::vector<core::Image> _images;
+	_images.push_back(std::move(swapchain_image));
+	_images.push_back(std::move(depth_image));
 
-	return std::make_unique<RenderTarget>(std::move(images));
+	return std::make_unique<RenderTarget>(std::move(_images));
 };
 
 vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :

@@ -20,7 +20,6 @@
 #include "core/instance.h"
 
 #include "platform/headless_window.h"
-#include "platform/unix/direct_window.h"
 
 namespace vkb
 {
@@ -224,7 +223,7 @@ DirectWindow::DirectWindow(Platform &platform, uint32_t width, uint32_t height) 
 		termio.c_cc[VTIME] = 0;
 
 		if (tcsetattr(tty_fd, TCSANOW, &termio) == -1)
-			LOGW("Failed to set attribs for '/dev/tty'");
+			LOGW("Failed to set attribs for '/dev/tty'")
 	}
 }
 
@@ -255,7 +254,7 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 
 	if (num_displays == 0)
 	{
-		LOGE("Direct-to-display: No displays found");
+		LOGE("Direct-to-display: No displays found")
 		return VK_NULL_HANDLE;
 	}
 
@@ -274,7 +273,7 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 
 	if (num_modes == 0)
 	{
-		LOGE("Direct-to-display: No display modes found");
+		LOGE("Direct-to-display: No display modes found")
 		return VK_NULL_HANDLE;
 	}
 
@@ -288,7 +287,7 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 
 	if (num_planes == 0)
 	{
-		LOGE("Direct-to-display: No display planes found");
+		LOGE("Direct-to-display: No display planes found")
 		return VK_NULL_HANDLE;
 	}
 
@@ -334,7 +333,7 @@ vk::SurfaceKHR DirectWindow::create_surface(vk::Instance instance, vk::PhysicalD
 
 	if (display_properties_all.empty())
 	{
-		LOGE("Direct-to-display: No displays found");
+		LOGE("Direct-to-display: No displays found")
 		return nullptr;
 	}
 
@@ -349,7 +348,7 @@ vk::SurfaceKHR DirectWindow::create_surface(vk::Instance instance, vk::PhysicalD
 
 	if (display_mode_properties.empty())
 	{
-		LOGE("Direct-to-display: No display modes found");
+		LOGE("Direct-to-display: No display modes found")
 		return nullptr;
 	}
 
@@ -360,7 +359,7 @@ vk::SurfaceKHR DirectWindow::create_surface(vk::Instance instance, vk::PhysicalD
 
 	if (plane_properties.empty())
 	{
-		LOGE("Direct-to-display: No display planes found");
+		LOGE("Direct-to-display: No display planes found")
 		return nullptr;
 	}
 
@@ -415,7 +414,7 @@ uint32_t DirectWindow::find_compatible_plane(VkPhysicalDevice phys_dev, VkDispla
 		}
 	}
 
-	LOGE("Direct-to-display: No plane found compatible with the display");
+	LOGE("Direct-to-display: No plane found compatible with the display")
 	return ~0U;
 }
 
@@ -438,7 +437,7 @@ uint32_t DirectWindow::find_compatible_plane(vk::PhysicalDevice physical_device,
 		}
 	}
 
-	LOGE("Direct-to-display: No plane found compatible with the display");
+	LOGE("Direct-to-display: No plane found compatible with the display")
 	return ~0U;
 }
 

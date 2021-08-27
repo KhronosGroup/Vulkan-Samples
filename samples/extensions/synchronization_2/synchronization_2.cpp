@@ -22,7 +22,7 @@
 
 #include "synchronization_2.h"
 
-Synchronization2::Synchronization2()
+Synchronization2::Synchronization2() : num_particles()
 {
 	title       = "Compute shader N-body simulation using VK_KHR_synchronization2";
 	camera.type = vkb::CameraType::LookAt;
@@ -43,23 +43,23 @@ Synchronization2::~Synchronization2()
 	{
 		// Graphics
 		graphics.uniform_buffer.reset();
-		vkDestroyPipeline(get_device().get_handle(), graphics.pipeline, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), graphics.pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), graphics.descriptor_set_layout, nullptr);
-		vkDestroySemaphore(get_device().get_handle(), graphics.semaphore, nullptr);
+		vkDestroyPipeline(device->get_handle(), graphics.pipeline, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), graphics.pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), graphics.descriptor_set_layout, nullptr);
+		vkDestroySemaphore(device->get_handle(), graphics.semaphore, nullptr);
 
 		// Compute
 		compute.storage_buffer.reset();
 		compute.uniform_buffer.reset();
-		vkDestroyPipelineLayout(get_device().get_handle(), compute.pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), compute.descriptor_set_layout, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), compute.pipeline_calculate, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), compute.pipeline_integrate, nullptr);
-		vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
-		vkDestroyCommandPool(get_device().get_handle(), compute.command_pool, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, nullptr);
+		vkDestroyPipeline(device->get_handle(), compute.pipeline_calculate, nullptr);
+		vkDestroyPipeline(device->get_handle(), compute.pipeline_integrate, nullptr);
+		vkDestroySemaphore(device->get_handle(), compute.semaphore, nullptr);
+		vkDestroyCommandPool(device->get_handle(), compute.command_pool, nullptr);
 
-		vkDestroySampler(get_device().get_handle(), textures.particle.sampler, nullptr);
-		vkDestroySampler(get_device().get_handle(), textures.gradient.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), textures.particle.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), textures.gradient.sampler, nullptr);
 	}
 }
 
@@ -137,10 +137,10 @@ void Synchronization2::build_command_buffers()
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphics.pipeline);
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphics.pipeline_layout, 0, 1, &graphics.descriptor_set, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, graphics.pipeline_layout, 0, 1, &graphics.descriptor_set, 0, nullptr);
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, compute.storage_buffer->get(), offsets);
 		vkCmdDraw(draw_cmd_buffers[i], num_particles, 1, 0, 0);
@@ -200,7 +200,7 @@ void Synchronization2::build_compute_command_buffer()
 	// First pass: Calculate particle movement
 	// -------------------------------------------------------------------------------------------------------
 	vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_calculate);
-	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &compute.descriptor_set, 0, 0);
+	vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &compute.descriptor_set, 0, nullptr);
 	vkCmdDispatch(compute.command_buffer, num_particles / work_group_size, 1, 1);
 
 	// Add memory barrier to ensure that the computer shader has finished writing to the buffer
@@ -228,27 +228,27 @@ void Synchronization2::build_compute_command_buffer()
 	// Release
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
-		VkBufferMemoryBarrier2KHR buffer_barrier{};
-		buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
-		buffer_barrier.srcAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
-		buffer_barrier.dstAccessMask       = VK_ACCESS_2_NONE_KHR;
-		buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
-		buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
-		buffer_barrier.srcQueueFamilyIndex = compute.queue_family_index;
-		buffer_barrier.dstQueueFamilyIndex = graphics.queue_family_index;
-		buffer_barrier.buffer              = compute.storage_buffer->get_handle();
-		buffer_barrier.size                = compute.storage_buffer->get_size();
-		VkDependencyInfoKHR dependency_info{};
-		dependency_info.sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
-		dependency_info.bufferMemoryBarrierCount = 1;
-		dependency_info.pBufferMemoryBarriers    = &buffer_barrier;
-		vkCmdPipelineBarrier2KHR(compute.command_buffer, &dependency_info);
+		VkBufferMemoryBarrier2KHR _buffer_barrier{};
+		_buffer_barrier.sType               = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER_2_KHR;
+		_buffer_barrier.srcAccessMask       = VK_ACCESS_2_SHADER_WRITE_BIT_KHR;
+		_buffer_barrier.dstAccessMask       = VK_ACCESS_2_NONE_KHR;
+		_buffer_barrier.srcStageMask        = VK_PIPELINE_STAGE_2_COMPUTE_SHADER_BIT_KHR;
+		_buffer_barrier.dstStageMask        = VK_PIPELINE_STAGE_2_VERTEX_INPUT_BIT_KHR;
+		_buffer_barrier.srcQueueFamilyIndex = compute.queue_family_index;
+		_buffer_barrier.dstQueueFamilyIndex = graphics.queue_family_index;
+		_buffer_barrier.buffer              = compute.storage_buffer->get_handle();
+		_buffer_barrier.size                = compute.storage_buffer->get_size();
+		VkDependencyInfoKHR _dependency_info{};
+		_dependency_info.sType                    = VK_STRUCTURE_TYPE_DEPENDENCY_INFO_KHR;
+		_dependency_info.bufferMemoryBarrierCount = 1;
+		_dependency_info.pBufferMemoryBarriers    = &_buffer_barrier;
+		vkCmdPipelineBarrier2KHR(compute.command_buffer, &_dependency_info);
 	}
 
 	vkEndCommandBuffer(compute.command_buffer);
 }
 
-// Setup and fill the compute shader storage buffers containing the particles
+// Setup and fill the "compute shader" storage buffers containing the particles
 void Synchronization2::prepare_storage_buffers()
 {
 	std::vector<glm::vec3> attractors = {
@@ -297,11 +297,11 @@ void Synchronization2::prepare_storage_buffers()
 			}
 
 			// Color gradient offset
-			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+			particle.vel.w = (float) i * 1.0f / static_cast<float >(attractors.size());
 		}
 	}
 
-	compute.ubo.particle_count = num_particles;
+	compute.ubo.particle_count = static_cast<int>(num_particles);
 
 	VkDeviceSize storage_buffer_size = particle_buffer.size() * sizeof(Particle);
 
@@ -357,7 +357,7 @@ void Synchronization2::setup_descriptor_pool()
 	        pool_sizes.data(),
 	        2);
 
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+	VK_CHECK(vkCreateDescriptorPool(device->get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void Synchronization2::setup_descriptor_set_layout()
@@ -374,14 +374,14 @@ void Synchronization2::setup_descriptor_set_layout()
 	        set_layout_bindings.data(),
 	        static_cast<uint32_t>(set_layout_bindings.size()));
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &graphics.descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &descriptor_layout, nullptr, &graphics.descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(
 	        &graphics.descriptor_set_layout,
 	        1);
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &graphics.pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &pipeline_layout_create_info, nullptr, &graphics.pipeline_layout));
 }
 
 void Synchronization2::setup_descriptor_set()
@@ -392,7 +392,7 @@ void Synchronization2::setup_descriptor_set()
 	        &graphics.descriptor_set_layout,
 	        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &graphics.descriptor_set));
+	VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &alloc_info, &graphics.descriptor_set));
 
 	VkDescriptorBufferInfo            buffer_descriptor         = create_descriptor(*graphics.uniform_buffer);
 	VkDescriptorImageInfo             particle_image_descriptor = create_descriptor(textures.particle);
@@ -403,7 +403,7 @@ void Synchronization2::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(graphics.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &gradient_image_descriptor),
 	    vkb::initializers::write_descriptor_set(graphics.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &buffer_descriptor),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(device->get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void Synchronization2::prepare_pipelines()
@@ -456,7 +456,7 @@ void Synchronization2::prepare_pipelines()
 
 	// Rendering pipeline
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	shader_stages[0] = load_shader("synchronization_2/particle.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("synchronization_2/particle.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -502,7 +502,7 @@ void Synchronization2::prepare_pipelines()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &graphics.pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(device->get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &graphics.pipeline));
 }
 
 void Synchronization2::prepare_graphics()
@@ -515,13 +515,13 @@ void Synchronization2::prepare_graphics()
 
 	// Semaphore for compute & graphics sync
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
-	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &graphics.semaphore));
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &graphics.semaphore));
 }
 
 void Synchronization2::prepare_compute()
 {
 	// Get compute queue
-	vkGetDeviceQueue(get_device().get_handle(), compute.queue_family_index, 0, &compute.queue);
+	vkGetDeviceQueue(device->get_handle(), compute.queue_family_index, 0, &compute.queue);
 
 	// Create compute pipeline
 	// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
@@ -544,14 +544,14 @@ void Synchronization2::prepare_compute()
 	        set_layout_bindings.data(),
 	        static_cast<uint32_t>(set_layout_bindings.size()));
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(
 	        &compute.descriptor_set_layout,
 	        1);
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &compute.pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &pipeline_layout_create_info, nullptr, &compute.pipeline_layout));
 
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
@@ -559,7 +559,7 @@ void Synchronization2::prepare_compute()
 	        &compute.descriptor_set_layout,
 	        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
+	VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &alloc_info, &compute.descriptor_set));
 
 	VkDescriptorBufferInfo            storage_buffer_descriptor = create_descriptor(*compute.storage_buffer);
 	VkDescriptorBufferInfo            uniform_buffer_descriptor = create_descriptor(*compute.uniform_buffer);
@@ -578,7 +578,7 @@ void Synchronization2::prepare_compute()
 	            1,
 	            &uniform_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(device->get_handle(), static_cast<uint32_t>(compute_write_descriptor_sets.size()), compute_write_descriptor_sets.data(), 0, nullptr);
 
 	// Create pipelines
 	VkComputePipelineCreateInfo compute_pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout, 0);
@@ -594,7 +594,7 @@ void Synchronization2::prepare_compute()
 		float    gravity;
 		float    power;
 		float    soften;
-	} specialization_data;
+	} specialization_data{};
 
 	std::vector<VkSpecializationMapEntry> specialization_map_entries;
 	specialization_map_entries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecializationData, workgroup_size), sizeof(uint32_t)));
@@ -613,7 +613,7 @@ void Synchronization2::prepare_compute()
 	    vkb::initializers::specialization_info(static_cast<uint32_t>(specialization_map_entries.size()), specialization_map_entries.data(), sizeof(specialization_data), &specialization_data);
 	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
 
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_calculate));
 
 	// 2nd pass - Particle integration
 	compute_pipeline_create_info.stage = load_shader("synchronization_2/particle_integrate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
@@ -624,14 +624,14 @@ void Synchronization2::prepare_compute()
 	    vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(work_group_size), &work_group_size);
 
 	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_integrate));
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), pipeline_cache, 1, &compute_pipeline_create_info, nullptr, &compute.pipeline_integrate));
 
-	// Separate command pool as queue family for compute may be different than graphics
+	// Separate command pool as queue family for compute may be different from graphics
 	VkCommandPoolCreateInfo command_pool_create_info = {};
 	command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.queueFamilyIndex        = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	command_pool_create_info.queueFamilyIndex        = device->get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 	command_pool_create_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
+	VK_CHECK(vkCreateCommandPool(device->get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
 
 	// Create a command buffer for compute operations
 	VkCommandBufferAllocateInfo command_buffer_allocate_info =
@@ -640,11 +640,11 @@ void Synchronization2::prepare_compute()
 	        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 	        1);
 
-	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &compute.command_buffer));
+	VK_CHECK(vkAllocateCommandBuffers(device->get_handle(), &command_buffer_allocate_info, &compute.command_buffer));
 
 	// Semaphore for compute & graphics sync
 	VkSemaphoreCreateInfo semaphore_create_info = vkb::initializers::semaphore_create_info();
-	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &compute.semaphore));
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &compute.semaphore));
 
 	// Signal the semaphore
 	VkSubmitInfo submit_info         = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
@@ -653,7 +653,7 @@ void Synchronization2::prepare_compute()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	VK_CHECK(vkQueueWaitIdle(queue));
 
-	// Build a single command buffer containing the compute dispatch commands
+	// Build a single command buffer containing the "compute dispatch" commands
 	build_compute_command_buffer();
 
 	// If necessary, acquire and immediately release the storage buffer, so that the initial acquire
@@ -663,13 +663,13 @@ void Synchronization2::prepare_compute()
 		VkCommandBuffer transfer_command;
 
 		// Create a transient command buffer for setting up the initial buffer transfer state
-		VkCommandBufferAllocateInfo command_buffer_allocate_info =
+		VkCommandBufferAllocateInfo _command_buffer_allocate_info =
 		    vkb::initializers::command_buffer_allocate_info(
 		        compute.command_pool,
 		        VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 		        1);
 
-		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &transfer_command));
+		VK_CHECK(vkAllocateCommandBuffers(device->get_handle(), &_command_buffer_allocate_info, &transfer_command));
 
 		VkCommandBufferBeginInfo command_buffer_info{};
 		command_buffer_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -706,10 +706,10 @@ void Synchronization2::prepare_compute()
 		VK_CHECK(vkEndCommandBuffer(transfer_command));
 
 		// Submit compute commands
-		VkSubmitInfo submit_info{};
-		submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submit_info.commandBufferCount = 1;
-		submit_info.pCommandBuffers    = &transfer_command;
+		VkSubmitInfo _submit_info{};
+		_submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		_submit_info.commandBufferCount = 1;
+		_submit_info.pCommandBuffers    = &transfer_command;
 
 		// Create fence to ensure that the command buffer has finished executing
 		VkFenceCreateInfo fence_info{};
@@ -719,7 +719,7 @@ void Synchronization2::prepare_compute()
 		VkFence fence;
 		VK_CHECK(vkCreateFence(device->get_handle(), &fence_info, nullptr, &fence));
 		// Submit to the *compute* queue
-		VkResult result = vkQueueSubmit(compute.queue, 1, &submit_info, fence);
+		vkQueueSubmit(compute.queue, 1, &_submit_info, fence);
 		// Wait for the fence to signal that command buffer has finished executing
 		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 		vkDestroyFence(device->get_handle(), fence, nullptr);
@@ -765,7 +765,7 @@ void Synchronization2::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Use synchronization 2 for the compute and graphics submissions
+	// Use synchronization 2 for the "compute and graphics" submissions
 	VkSemaphoreSubmitInfoKHR graphics_wait_semaphores[2]{};
 	graphics_wait_semaphores[0].sType     = VK_STRUCTURE_TYPE_SEMAPHORE_SUBMIT_INFO_KHR;
 	graphics_wait_semaphores[0].semaphore = compute.semaphore;
@@ -825,13 +825,13 @@ bool Synchronization2::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	graphics.queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
-	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
+	graphics.queue_family_index = device->get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	compute.queue_family_index  = device->get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
-	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
+	work_group_size = std::min((uint32_t) 256, (uint32_t) device->get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
-	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(device->get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	load_assets();
 	setup_descriptor_pool();

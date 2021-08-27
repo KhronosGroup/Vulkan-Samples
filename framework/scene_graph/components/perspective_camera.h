@@ -54,9 +54,9 @@ class PerspectiveCamera : public Camera
 
 	void set_near_plane(float znear);
 
-	float get_aspect_ratio();
+	float get_aspect_ratio() const;
 
-	float get_field_of_view();
+	float get_field_of_view() const;
 
 	virtual glm::mat4 get_projection() override;
 

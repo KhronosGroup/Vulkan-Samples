@@ -29,7 +29,7 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-HeightMap::HeightMap(const std::string &file_name, const uint32_t patchsize)
+HeightMap::HeightMap(const std::string &file_name, const uint32_t patch_size)
 {
 	std::string file_path = fs::path::get(fs::path::Assets, file_name);
 
@@ -47,7 +47,7 @@ HeightMap::HeightMap(const std::string &file_name, const uint32_t patchsize)
 
 	memcpy(data, ktx_image, ktx_size);
 
-	this->scale = dim / patchsize;
+	this->scale = dim / patch_size;
 
 	ktxTexture_Destroy(ktx_texture);
 }
@@ -59,10 +59,10 @@ HeightMap::~HeightMap()
 
 float HeightMap::get_height(const uint32_t x, const uint32_t y)
 {
-	glm::ivec2 rpos = glm::ivec2(x, y) * glm::ivec2(scale);
+	glm::ivec2 rpos = glm::ivec2(x, y) * glm::ivec2(static_cast<int>(scale));
 	rpos.x          = std::max(0, std::min(rpos.x, (int) dim - 1));
 	rpos.y          = std::max(0, std::min(rpos.y, (int) dim - 1));
-	rpos /= glm::ivec2(scale);
-	return *(data + (rpos.x + rpos.y * dim) * scale) / 65535.0f;
+	rpos /= glm::ivec2(static_cast<int>(scale));
+	return static_cast<float>(*(data + (rpos.x + rpos.y * dim) * scale)) / 65535.0f;
 }
 }        // namespace vkb

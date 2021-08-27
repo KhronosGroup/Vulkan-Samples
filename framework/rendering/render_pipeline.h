@@ -39,7 +39,7 @@ namespace vkb
 class RenderPipeline
 {
   public:
-	RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
+	explicit RenderPipeline(std::vector<std::unique_ptr<Subpass>> &&subpasses = {});
 
 	RenderPipeline(const RenderPipeline &) = delete;
 

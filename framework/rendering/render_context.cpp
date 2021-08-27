@@ -22,9 +22,10 @@ namespace vkb
 VkFormat RenderContext::DEFAULT_VK_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
 
 RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height) :
-    device{device},
-    queue{device.get_suitable_graphics_queue()},
-    surface_extent{window_width, window_height}
+	surface_extent{window_width, window_height},
+	device{device},
+	queue{device.get_suitable_graphics_queue()},
+	acquired_semaphore()
 {
 	if (surface != VK_NULL_HANDLE)
 	{
@@ -62,7 +63,7 @@ void RenderContext::request_image_format(const VkFormat format)
 	}
 }
 
-void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create_render_target_func)
+void RenderContext::prepare(size_t _thread_count, const RenderTarget::CreateFunc& _create_render_target_func)
 {
 	device.wait_idle();
 
@@ -83,8 +84,8 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 			    extent,
 			    swapchain->get_format(),
 			    swapchain->get_usage()};
-			auto render_target = create_render_target_func(std::move(swapchain_image));
-			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
+			auto render_target = _create_render_target_func(std::move(swapchain_image));
+			frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), _thread_count));
 		}
 	}
 	else
@@ -98,12 +99,12 @@ void RenderContext::prepare(size_t thread_count, RenderTarget::CreateFunc create
 		                               VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
 		                               VMA_MEMORY_USAGE_GPU_ONLY};
 
-		auto render_target = create_render_target_func(std::move(color_image));
-		frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), thread_count));
+		auto render_target = _create_render_target_func(std::move(color_image));
+		frames.emplace_back(std::make_unique<RenderFrame>(device, std::move(render_target), _thread_count));
 	}
 
-	this->create_render_target_func = create_render_target_func;
-	this->thread_count              = thread_count;
+	this->create_render_target_func = _create_render_target_func;
+	this->thread_count              = _thread_count;
 	this->prepared                  = true;
 }
 
@@ -135,7 +136,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent in headless mode, skipping.")
 		return;
 	}
 
@@ -150,7 +151,7 @@ void RenderContext::update_swapchain(const uint32_t image_count)
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image count in headless mode, skipping.");
+		LOGW("Can't update the swapchains image count in headless mode, skipping.")
 		return;
 	}
 
@@ -167,7 +168,7 @@ void RenderContext::update_swapchain(const std::set<VkImageUsageFlagBits> &image
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains image usage in headless mode, skipping.");
+		LOGW("Can't update the swapchains image usage in headless mode, skipping.")
 		return;
 	}
 
@@ -182,7 +183,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 {
 	if (!swapchain)
 	{
-		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.");
+		LOGW("Can't update the swapchains extent and surface transform in headless mode, skipping.")
 		return;
 	}
 
@@ -206,7 +207,7 @@ void RenderContext::update_swapchain(const VkExtent2D &extent, const VkSurfaceTr
 
 void RenderContext::recreate()
 {
-	LOGI("Recreated swapchain");
+	LOGI("Recreated swapchain")
 
 	VkExtent2D swapchain_extent = swapchain->get_extent();
 	VkExtent3D extent{swapchain_extent.width, swapchain_extent.height, 1};
@@ -242,7 +243,7 @@ void RenderContext::handle_surface_changes()
 {
 	if (!swapchain)
 	{
-		LOGW("Can't handle surface changes in headless mode, skipping.");
+		LOGW("Can't handle surface changes in headless mode, skipping.")
 		return;
 	}
 
@@ -285,8 +286,8 @@ CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
 		throw std::runtime_error("Couldn't begin frame");
 	}
 
-	const auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-	return get_active_frame().request_command_buffer(queue, reset_mode);
+	const auto &_queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	return get_active_frame().request_command_buffer(_queue, reset_mode);
 }
 
 void RenderContext::submit(CommandBuffer &command_buffer)
@@ -354,7 +355,7 @@ void RenderContext::begin_frame()
 	wait_frame();
 }
 
-VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
+VkSemaphore RenderContext::submit(const Queue &_queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
 	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
@@ -380,12 +381,12 @@ VkSemaphore RenderContext::submit(const Queue &queue, const std::vector<CommandB
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	_queue.submit({submit_info}, fence);
 
 	return signal_semaphore;
 }
 
-void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers)
+void RenderContext::submit(const Queue &_queue, const std::vector<CommandBuffer *> &command_buffers)
 {
 	std::vector<VkCommandBuffer> cmd_buf_handles(command_buffers.size(), VK_NULL_HANDLE);
 	std::transform(command_buffers.begin(), command_buffers.end(), cmd_buf_handles.begin(), [](const CommandBuffer *cmd_buf) { return cmd_buf->get_handle(); });
@@ -399,7 +400,7 @@ void RenderContext::submit(const Queue &queue, const std::vector<CommandBuffer *
 
 	VkFence fence = frame.request_fence();
 
-	queue.submit({submit_info}, fence);
+	_queue.submit({submit_info}, fence);
 }
 
 void RenderContext::wait_frame()

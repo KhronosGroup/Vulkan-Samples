@@ -56,13 +56,13 @@ struct Mipmap
 class Image : public Component
 {
   public:
-	Image(const std::string &name, std::vector<uint8_t> &&data = {}, std::vector<Mipmap> &&mipmaps = {{}});
+	explicit Image(const std::string &name, std::vector<uint8_t> &&data = {}, std::vector<Mipmap> &&mipmaps = {{}});
 
 	static std::unique_ptr<Image> load(const std::string &name, const std::string &uri);
 
-	virtual ~Image() = default;
+	~Image() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	const std::vector<uint8_t> &get_data() const;
 
@@ -72,7 +72,7 @@ class Image : public Component
 
 	const VkExtent3D &get_extent() const;
 
-	const uint32_t get_layers() const;
+	uint32_t get_layers() const;
 
 	const std::vector<Mipmap> &get_mipmaps() const;
 

@@ -45,7 +45,7 @@ class Buffer
 
 	Buffer(const Buffer &) = delete;
 
-	Buffer(Buffer &&other);
+	Buffer(Buffer &&other) noexcept ;
 
 	~Buffer();
 
@@ -92,18 +92,18 @@ class Buffer
 	/**
 	 * @brief Copies byte data into the buffer
 	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
+	 * @param _size The amount of bytes to copy
 	 * @param offset The offset to start the copying into the mapped data
 	 */
-	void update(const uint8_t *data, size_t size, size_t offset = 0);
+	void update(const uint8_t *data, size_t _size, size_t offset = 0);
 
 	/**
 	 * @brief Converts any non byte data into bytes and then updates the buffer
 	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
+	 * @param _size The amount of bytes to copy
 	 * @param offset The offset to start the copying into the mapped data
 	 */
-	void update(void *data, size_t size, size_t offset = 0);
+	void update(void *data, size_t _size, size_t offset = 0);
 
 	/**
 	 * @brief Copies a vector of bytes into the buffer

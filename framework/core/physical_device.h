@@ -45,15 +45,15 @@ class PhysicalDevice
 
 	VkBool32 is_present_supported(VkSurfaceKHR surface, uint32_t queue_family_index) const;
 
-	const VkFormatProperties get_format_properties(VkFormat format) const;
+	VkFormatProperties get_format_properties(VkFormat format) const;
 
 	VkPhysicalDevice get_handle() const;
 
 	const VkPhysicalDeviceFeatures &get_features() const;
 
-	const VkPhysicalDeviceProperties get_properties() const;
+	VkPhysicalDeviceProperties get_properties() const;
 
-	const VkPhysicalDeviceMemoryProperties get_memory_properties() const;
+	VkPhysicalDeviceMemoryProperties get_memory_properties() const;
 
 	const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const;
 
@@ -66,7 +66,7 @@ class PhysicalDevice
 	    VkPerformanceCounterKHR *           counters,
 	    VkPerformanceCounterDescriptionKHR *descriptions) const;
 
-	const VkPhysicalDeviceFeatures get_requested_features() const;
+	VkPhysicalDeviceFeatures get_requested_features() const;
 
 	VkPhysicalDeviceFeatures &get_mutable_requested_features();
 

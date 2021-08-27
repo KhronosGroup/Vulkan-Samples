@@ -52,10 +52,10 @@ inline void read_processes(std::istringstream &is, std::vector<std::string> &val
 
 ResourceReplay::ResourceReplay()
 {
-	stream_resources[ResourceType::ShaderModule]     = std::bind(&ResourceReplay::create_shader_module, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::PipelineLayout]   = std::bind(&ResourceReplay::create_pipeline_layout, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::RenderPass]       = std::bind(&ResourceReplay::create_render_pass, this, std::placeholders::_1, std::placeholders::_2);
-	stream_resources[ResourceType::GraphicsPipeline] = std::bind(&ResourceReplay::create_graphics_pipeline, this, std::placeholders::_1, std::placeholders::_2);
+	stream_resources[ResourceType::ShaderModule]     = [this](auto && PH1, auto && PH2) { create_shader_module(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2)); };
+	stream_resources[ResourceType::PipelineLayout]   = [this](auto && PH1, auto && PH2) { create_pipeline_layout(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2)); };
+	stream_resources[ResourceType::RenderPass]       = [this](auto && PH1, auto && PH2) { create_render_pass(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2)); };
+	stream_resources[ResourceType::GraphicsPipeline] = [this](auto && PH1, auto && PH2) { create_graphics_pipeline(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2)); };
 }
 
 void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorder)
@@ -84,7 +84,7 @@ void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorde
 		}
 		else
 		{
-			LOGE("Replay command not supported.");
+			LOGE("Replay command not supported.")
 		}
 	}
 }
@@ -106,7 +106,7 @@ void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::is
 	read_processes(stream, processes);
 
 	ShaderSource shader_source{};
-	shader_source.set_source(std::move(glsl_source));
+	shader_source.set_source(glsl_source);
 	ShaderVariant shader_variant(std::move(preamble), std::move(processes));
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);

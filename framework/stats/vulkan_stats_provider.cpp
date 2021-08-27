@@ -84,7 +84,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 
 		VendorStat &init      = s.second;
 		bool        found_ctr = false;
-		bool        found_div = (init.divisor_name == "");
+		bool        found_div = (init.divisor_name.empty());
 		uint32_t    ctr_idx, div_idx;
 
 		std::regex name_regex(init.name);
@@ -107,14 +107,14 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 		if (found_ctr && found_div)
 		{
 			if ((descs[ctr_idx].flags & VK_PERFORMANCE_COUNTER_DESCRIPTION_PERFORMANCE_IMPACTING_KHR) ||
-			    (init.divisor_name != "" && descs[div_idx].flags != VK_PERFORMANCE_COUNTER_DESCRIPTION_PERFORMANCE_IMPACTING_KHR))
+			    (!init.divisor_name.empty() && descs[div_idx].flags != VK_PERFORMANCE_COUNTER_DESCRIPTION_PERFORMANCE_IMPACTING_KHR))
 			{
 				performance_impact = true;
 			}
 
 			// Record the counter data
 			counter_indices.emplace_back(ctr_idx);
-			if (init.divisor_name == "")
+			if (init.divisor_name.empty())
 			{
 				stat_data[index] = StatData(ctr_idx, counters[ctr_idx].storage);
 			}
@@ -128,9 +128,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	}
 
 	if (performance_impact)
-		LOGW("The collection of performance counters may impact performance");
+		LOGW("The collection of performance counters may impact performance")
 
-	if (counter_indices.size() == 0)
+	if (counter_indices.empty())
 		return;        // No stats available
 
 	// Acquire the profiling lock, without which we can't collect stats
@@ -142,7 +142,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	{
 		stat_data.clear();
 		counter_indices.clear();
-		LOGW("Profiling lock acquisition timed-out");
+		LOGW("Profiling lock acquisition timed-out")
 		return;
 	}
 
@@ -163,7 +163,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 
 VulkanStatsProvider::~VulkanStatsProvider()
 {
-	if (stat_data.size() > 0)
+	if (!stat_data.empty())
 	{
 		// Release profiling lock
 		vkReleaseProfilingLockKHR(render_context.get_device().get_handle());
@@ -175,7 +175,7 @@ bool VulkanStatsProvider::fill_vendor_data()
 	const auto &pd_props = render_context.get_device().get_gpu().get_properties();
 	if (pd_props.vendorID == 0x14E4)        // Broadcom devices
 	{
-		LOGI("Using Vulkan performance counters from Broadcom device");
+		LOGI("Using Vulkan performance counters from Broadcom device")
 
 		// NOTE: The names here are actually regular-expressions.
 		// Counter names can change between hardware variants for the same vendor,
@@ -216,7 +216,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
 	Device &              device           = render_context.get_device();
 	const PhysicalDevice &gpu              = device.get_gpu();
-	uint32_t              num_framebuffers = uint32_t(render_context.get_render_frames().size());
+	auto              num_framebuffers = uint32_t(render_context.get_render_frames().size());
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would
@@ -231,7 +231,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 	if (passes_needed != 1)
 	{
 		// Needs more than one pass, remove all our supported stats
-		LOGW("Requested Vulkan stats require multiple passes, we won't collect them");
+		LOGW("Requested Vulkan stats require multiple passes, we won't collect them")
 		return false;
 	}
 
@@ -246,12 +246,12 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 
 	if (!query_pool)
 	{
-		LOGW("Failed to create performance query pool");
+		LOGW("Failed to create performance query pool")
 		return false;
 	}
 
 	// Reset the query pool before first use. We cannot do these in the command buffer
-	// as that is invalid usage for performance queries due to the potential for multple
+	// as that is invalid usage for performance queries due to the potential for multiple
 	// passes being required.
 	query_pool->host_reset(0, num_framebuffers);
 
@@ -322,9 +322,9 @@ void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
 	if (timestamp_pool)
 	{
 		// We use TimestampQueries when available to provide a more accurate delta_time.
-		// This counters are from a single command buffer execution, but the passed
-		// delta time is a frame-to-frame s/w measure. A timestamp query in the the cmd
-		// buffer gives the actual elapsed time where the counters were measured.
+		// These counters are from a single command buffer execution, but the passed
+		// delta time is a frame-to-frame s/w measure. A timestamp query in the cmd
+		// buffer gives the actual elapsed time when the counters were measured.
 		cb.reset_query_pool(*timestamp_pool, active_frame_idx * 2, 1);
 		cb.write_timestamp(VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, *timestamp_pool,
 		                   active_frame_idx * 2);
@@ -391,7 +391,7 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 	float delta_time = sw_delta_time;
 
 	// Query the timestamps to get an accurate delta time
-	std::array<uint64_t, 2> timestamps;
+	std::array<uint64_t, 2> timestamps{};
 
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 

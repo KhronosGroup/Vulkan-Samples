@@ -38,7 +38,7 @@ class Astc : public Image
 	 * @brief Decodes an ASTC image
 	 * @param image Image to decode
 	 */
-	Astc(const Image &image);
+	explicit Astc(const Image &image);
 
 	/**
 	 * @brief Decodes ASTC data with an ASTC header
@@ -47,7 +47,7 @@ class Astc : public Image
 	 */
 	Astc(const std::string &name, const std::vector<uint8_t> &data);
 
-	virtual ~Astc() = default;
+	~Astc() override = default;
 
   private:
 	/**
@@ -61,7 +61,7 @@ class Astc : public Image
 	/**
 	 * @brief Initializes ASTC library
 	 */
-	void init();
+	static void init();
 };
 }        // namespace sg
 }        // namespace vkb

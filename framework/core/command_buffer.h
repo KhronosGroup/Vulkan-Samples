@@ -78,7 +78,7 @@ class CommandBuffer
 
 	CommandBuffer(const CommandBuffer &) = delete;
 
-	CommandBuffer(CommandBuffer &&other);
+	CommandBuffer(CommandBuffer &&other) noexcept ;
 
 	~CommandBuffer();
 
@@ -130,11 +130,11 @@ class CommandBuffer
 
 	void next_subpass();
 
-	void execute_commands(CommandBuffer &secondary_command_buffer);
+	void execute_commands(CommandBuffer &secondary_command_buffer) const;
 
-	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers);
+	void execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers) const;
 
-	void end_render_pass();
+	void end_render_pass() const;
 
 	void bind_pipeline_layout(PipelineLayout &pipeline_layout);
 
@@ -173,9 +173,9 @@ class CommandBuffer
 
 	void bind_input(const core::ImageView &image_view, uint32_t set, uint32_t binding, uint32_t array_element);
 
-	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets);
+	void bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets) const;
 
-	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type);
+	void bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type) const;
 
 	void bind_lighting(LightingState &lighting_state, uint32_t set, uint32_t binding);
 
@@ -193,17 +193,17 @@ class CommandBuffer
 
 	void set_color_blend_state(const ColorBlendState &state_info);
 
-	void set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports);
+	void set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports) const;
 
-	void set_scissor(uint32_t first_scissor, const std::vector<VkRect2D> &scissors);
+	void set_scissor(uint32_t first_scissor, const std::vector<VkRect2D> &scissors) const;
 
-	void set_line_width(float line_width);
+	void set_line_width(float line_width) const;
 
-	void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor);
+	void set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor) const;
 
-	void set_blend_constants(const std::array<float, 4> &blend_constants);
+	void set_blend_constants(const std::array<float, 4> &blend_constants) const;
 
-	void set_depth_bounds(float min_depth_bounds, float max_depth_bounds);
+	void set_depth_bounds(float min_depth_bounds, float max_depth_bounds) const;
 
 	void draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance);
 
@@ -215,35 +215,35 @@ class CommandBuffer
 
 	void dispatch_indirect(const core::Buffer &buffer, VkDeviceSize offset);
 
-	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data);
+	void update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data) const;
 
-	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions);
+	void blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions) const;
 
-	void resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions);
+	void resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions) const;
 
-	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size);
+	void copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size) const;
 
-	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions);
+	void copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions) const;
 
-	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions);
+	void copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions) const;
 
-	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions);
+	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions) const;
 
-	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const;
 
-	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
+	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier) const;
 
-	const State get_state() const;
+	State get_state() const;
 
 	void set_update_after_bind(bool update_after_bind_);
 
-	void reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count);
+	void reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count) const;
 
-	void begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags);
+	void begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags) const;
 
-	void end_query(const QueryPool &query_pool, uint32_t query);
+	void end_query(const QueryPool &query_pool, uint32_t query) const;
 
-	void write_timestamp(VkPipelineStageFlagBits pipeline_stage, const QueryPool &query_pool, uint32_t query);
+	void write_timestamp(VkPipelineStageFlagBits pipeline_stage, const QueryPool &query_pool, uint32_t query) const;
 
 	/**
 	 * @brief Reset the command buffer to a state where it can be recorded to
@@ -284,12 +284,12 @@ class CommandBuffer
 
 	const RenderPassBinding &get_current_render_pass() const;
 
-	const uint32_t get_current_subpass_index() const;
+	uint32_t get_current_subpass_index() const;
 
 	/**
 	 * @brief Check that the render area is an optimal size by comparing to the render area granularity
 	 */
-	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
+	bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area) const;
 
 	/**
 	 * @brief Flush the piplines state

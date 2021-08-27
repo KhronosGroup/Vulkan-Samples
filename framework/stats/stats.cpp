@@ -17,6 +17,8 @@
  */
 
 #include "stats/stats.h"
+
+#include <utility>
 #include "common/error.h"
 #include "core/device.h"
 
@@ -28,6 +30,7 @@ namespace vkb
 {
 Stats::Stats(RenderContext &render_context, size_t buffer_size) :
     render_context(render_context),
+    frame_time_provider(nullptr),
     buffer_size(buffer_size)
 {
 	assert(buffer_size >= 2 && "Buffers size should be greater than 2");
@@ -49,7 +52,7 @@ Stats::~Stats()
 void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
                           CounterSamplingConfig      config)
 {
-	if (providers.size() != 0)
+	if (!providers.empty())
 	{
 		throw std::runtime_error("Stats must only be requested once");
 	}
@@ -68,7 +71,7 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 	providers.emplace_back(std::make_unique<VulkanStatsProvider>(stats, sampling_config, render_context));
 
 	// In continuous sampling mode we still need to update the frame times as if we are polling
-	// Store the frame time provider here so we can easily access it later.
+	// Store the frame time provider here, so we can easily access it later.
 	frame_time_provider = providers[0].get();
 
 	for (const auto &stat : requested_stats)
@@ -93,7 +96,7 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 	{
 		if (!is_available(stat_index))
 		{
-			LOGW(vkb::StatsProvider::default_graph_data(stat_index).name + " : not available");
+			LOGW(vkb::StatsProvider::default_graph_data(stat_index).name + " : not available")
 		}
 	}
 }
@@ -150,7 +153,7 @@ void Stats::update(float delta_time)
 		}
 		case CounterSamplingMode::Continuous: {
 			// Check that we have no pending samples to be shown
-			if (pending_samples.size() == 0)
+			if (pending_samples.empty())
 			{
 				std::unique_lock<std::mutex> lock(continuous_sampling_mutex);
 				if (!should_add_to_continuous_samples)
@@ -169,13 +172,13 @@ void Stats::update(float delta_time)
 				}
 			}
 
-			if (pending_samples.size() == 0)
+			if (pending_samples.empty())
 				return;
 
 			// Ensure the number of pending samples is capped at a reasonable value
 			if (pending_samples.size() > 100)
 			{
-				// Prefer later samples over new samples.
+				// Prefer later samples to new samples.
 				std::move(pending_samples.end() - 100, pending_samples.end(), pending_samples.begin());
 				pending_samples.erase(pending_samples.begin() + 100, pending_samples.end());
 
@@ -199,13 +202,13 @@ void Stats::update(float delta_time)
 			StatsProvider::Counters frame_time_sample = frame_time_provider->sample(delta_time);
 
 			// Push the samples to circular buffers
-			std::for_each(pending_samples.begin(), pending_samples.begin() + sample_count, [this, frame_time_sample](auto &s) {
+			std::for_each(pending_samples.begin(), pending_samples.begin() + static_cast<int>(sample_count), [this, frame_time_sample](auto &s) {
 				// Write the correct frame time into the continuous stats
 				s.insert(frame_time_sample.begin(), frame_time_sample.end());
 				// Then push the sample to the counters list
 				this->push_sample(s);
 			});
-			pending_samples.erase(pending_samples.begin(), pending_samples.begin() + sample_count);
+			pending_samples.erase(pending_samples.begin(), pending_samples.begin() + static_cast<int>(sample_count));
 
 			break;
 		}
@@ -262,7 +265,7 @@ void Stats::push_sample(const StatsProvider::Counters &sample)
 		if (smp == sample.end())
 			continue;
 
-		float measurement = static_cast<float>(smp->second.result);
+		auto measurement = static_cast<float>(smp->second.result);
 
 		add_smoothed_value(values, measurement, alpha_smoothing);
 	}
@@ -292,13 +295,13 @@ const StatGraphData &Stats::get_graph_data(StatIndex index) const
 	return StatsProvider::default_graph_data(index);
 }
 
-StatGraphData::StatGraphData(const std::string &name,
-                             const std::string &graph_label_format,
+StatGraphData::StatGraphData(std::string name,
+                             std::string graph_label_format,
                              float              scale_factor,
                              bool               has_fixed_max,
                              float              max_value) :
-    name(name),
-    format{graph_label_format},
+    name(std::move(name)),
+    format{std::move(graph_label_format)},
     scale_factor{scale_factor},
     has_fixed_max{has_fixed_max},
     max_value{max_value}

@@ -32,7 +32,7 @@ Queue::Queue(Device &device, uint32_t family_index, VkQueueFamilyProperties prop
 	vkGetDeviceQueue(device.get_handle(), family_index, index, &handle);
 }
 
-Queue::Queue(Queue &&other) :
+Queue::Queue(Queue &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     family_index{other.family_index},

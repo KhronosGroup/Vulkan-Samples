@@ -54,7 +54,7 @@ Node *Camera::get_node()
 	return node;
 }
 
-const glm::mat4 Camera::get_pre_rotation()
+glm::mat4 Camera::get_pre_rotation()
 {
 	return pre_rotation;
 }

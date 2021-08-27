@@ -77,10 +77,10 @@ class PostProcessingSubpass : public Subpass
 	PostProcessingSubpass(const PostProcessingSubpass &to_copy) = delete;
 	PostProcessingSubpass &operator=(const PostProcessingSubpass &to_copy) = delete;
 
-	PostProcessingSubpass(PostProcessingSubpass &&to_move);
+	PostProcessingSubpass(PostProcessingSubpass &&to_move) noexcept ;
 	PostProcessingSubpass &operator=(PostProcessingSubpass &&to_move) = delete;
 
-	~PostProcessingSubpass() = default;
+	~PostProcessingSubpass() override = default;
 
 	/**
 	* @brief Maps the names of input attachments in the shader to indices into the render target's images.
@@ -206,7 +206,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
   public:
 	friend class PostProcessingSubpass;
 
-	PostProcessingRenderPass(PostProcessingPipeline *parent, std::unique_ptr<core::Sampler> &&default_sampler = nullptr);
+	explicit PostProcessingRenderPass(PostProcessingPipeline *parent, std::unique_ptr<core::Sampler> &&default_sampler = nullptr);
 
 	PostProcessingRenderPass(const PostProcessingRenderPass &to_copy) = delete;
 	PostProcessingRenderPass &operator=(const PostProcessingRenderPass &to_copy) = delete;

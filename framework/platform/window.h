@@ -85,9 +85,9 @@ class Window
 
 	void resize(uint32_t width, uint32_t height);
 
-	uint32_t get_width();
+	uint32_t get_width() const;
 
-	uint32_t get_height();
+	uint32_t get_height() const;
 
   protected:
 	Platform &platform;

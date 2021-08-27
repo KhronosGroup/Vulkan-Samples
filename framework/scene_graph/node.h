@@ -35,11 +35,11 @@ class Component;
 class Node
 {
   public:
-	Node(const size_t id, const std::string &name);
+	Node(size_t id, std::string name);
 
 	virtual ~Node() = default;
 
-	const size_t get_id() const;
+	size_t get_id() const;
 
 	const std::string &get_name() const;
 
@@ -64,7 +64,7 @@ class Node
 		return dynamic_cast<T &>(get_component(typeid(T)));
 	}
 
-	Component &get_component(const std::type_index index);
+	Component &get_component(std::type_index index);
 
 	template <class T>
 	bool has_component()
@@ -72,7 +72,7 @@ class Node
 		return has_component(typeid(T));
 	}
 
-	bool has_component(const std::type_index index);
+	bool has_component(std::type_index index);
 
   private:
 	size_t id;

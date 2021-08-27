@@ -22,7 +22,8 @@ namespace vkb
 namespace sg
 {
 Light::Light(const std::string &name) :
-    Component{name}
+    Component{name},
+    light_type()
 {}
 
 std::type_index Light::get_type()
@@ -50,9 +51,9 @@ const LightType &Light::get_light_type()
 	return light_type;
 }
 
-void Light::set_properties(const LightProperties &properties)
+void Light::set_properties(const LightProperties &_properties)
 {
-	this->properties = properties;
+	this->properties = _properties;
 }
 
 const LightProperties &Light::get_properties()

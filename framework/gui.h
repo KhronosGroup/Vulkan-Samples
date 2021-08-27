@@ -22,10 +22,14 @@
 #include <functional>
 #include <future>
 #include <imgui.h>
-#include <imgui_internal.h>
 #include <thread>
 
 #include "core/buffer.h"
+VKBP_PUSH_WARNINGS()
+VKBP_DISABLE_WARNING(-Wunknown-pragmas)
+VKBP_DISABLE_WARNING(-Wclass-memaccess)
+#include <imgui_internal.h>
+VKBP_ENABLE_WARNINGS()
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
@@ -86,7 +90,7 @@ class Drawer
 	/** 
 	 * @brief Returns true if the drawer has been updated
 	 */
-	bool is_dirty();
+	bool is_dirty() const;
 
 	/**
 	 * @brief May be used to force drawer update
@@ -98,7 +102,7 @@ class Drawer
 	 * @param caption The text to display
 	 * @returns True if adding item was successful
 	 */
-	bool header(const char *caption);
+	static bool header(const char *caption);
 
 	/**
 	 * @brief Adds a checkbox to the gui
@@ -149,11 +153,11 @@ class Drawer
 	/**
 	 * @brief Adds a multiple choice drop box to the gui
 	 * @param caption The text to display
-	 * @param itemindex The item index to display
+	 * @param item_index The item index to display
 	 * @param items The items to display in the box
 	 * @returns True if adding item was successful
 	 */
-	bool combo_box(const char *caption, int32_t *itemindex, std::vector<std::string> items);
+	bool combo_box(const char *caption, int32_t *item_index, const std::vector<std::string>& items);
 
 	/**
 	 * @brief Adds a clickable button to the gui
@@ -164,9 +168,9 @@ class Drawer
 
 	/**
 	 * @brief Adds a label to the gui
-	 * @param formatstr The format string
+	 * @param format_str The format string
 	 */
-	void text(const char *formatstr, ...);
+	static void text(const char *format_str, ...);
 
   private:
 	bool dirty{false};
@@ -190,7 +194,7 @@ class Gui
 		 * @brief Constructs a StatsView
 		 * @param stats Const pointer to the Stats data object; may be null
 		 */
-		StatsView(const Stats *stats);
+		explicit StatsView(const Stats *stats);
 
 		/**
 		 * @brief Resets the max values for the stats
@@ -201,7 +205,7 @@ class Gui
 		/**
 		 * @brief Resets the max value for a specific stat
 		 */
-		void reset_max_value(const StatIndex index);
+		void reset_max_value(StatIndex index);
 
 		std::map<StatIndex, StatGraphData> graph_map;
 
@@ -243,33 +247,33 @@ class Gui
 	 * @param explicit_update If true, update buffers every frame
 	 */
 	Gui(VulkanSample &sample, const Window &window, const Stats *stats = nullptr,
-	    const float font_size = 21.0f, bool explicit_update = false);
+	    float font_size = 21.0f, bool explicit_update = false);
 
 	/**
 	 * @brief Destroys the Gui
 	 */
 	~Gui();
 
-	void prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages);
+	void prepare(VkPipelineCache pipeline_cache, VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages);
 
 	/**
 	 * @brief Handles resizing of the window
 	 * @param width New width of the window
 	 * @param height New height of the window
 	 */
-	void resize(const uint32_t width, const uint32_t height) const;
+	static void resize(uint32_t width, uint32_t height) ;
 
 	/**
 	 * @brief Starts a new ImGui frame
 	 *        to be called before drawing any window
 	 */
-	inline void new_frame();
+	static inline void new_frame();
 
 	/**
 	 * @brief Updates the Gui
 	 * @param delta_time Time passed since last update
 	 */
-	void update(const float delta_time);
+	void update(float delta_time);
 
 	bool update_buffers();
 
@@ -296,7 +300,7 @@ class Gui
 	/**
 	 * @brief Shows the ImGui Demo window
 	 */
-	void show_demo_window();
+	static void show_demo_window();
 
 	/**
 	 * @brief Shows an child with app info
@@ -305,7 +309,7 @@ class Gui
 	void show_app_info(const std::string &app_name);
 
 	/**
-	 * @brief Shows a moveable window with debug information
+	 * @brief Shows a move-able window with debug information
 	 * @param debug_info The object holding the data fields to be displayed
 	 * @param position The absolute position to set
 	 */
@@ -324,9 +328,9 @@ class Gui
 	 * @param lines The number of lines of text to draw in the window
 	 *        These will help the gui to calculate the height of the window
 	 */
-	void show_options_window(std::function<void()> body, const uint32_t lines = 3);
+	static void show_options_window(const std::function<void()>& body, uint32_t lines = 3);
 
-	void show_simple_window(const std::string &name, uint32_t last_fps, std::function<void()> body);
+	void show_simple_window(const std::string &name, uint32_t last_fps, const std::function<void()>& body);
 
 	bool input_event(const InputEvent &input_event);
 
@@ -414,8 +418,6 @@ class Gui
 
 	/// Whether or not the GUI has detected a multi touch gesture
 	bool two_finger_tap = false;
-
-	bool show_graph_file_output = false;
 };
 
 void Gui::new_frame()

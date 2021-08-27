@@ -35,10 +35,10 @@ class ScratchBuffer
 	/**
 	 * @brief Creates a scratch buffer using VMA with pre-defined usage flags
 	 * @param device A valid Vulkan device
-	 * @param size The size in bytes of the buffer
+	 * @param _size The size in bytes of the buffer
 	 */
 	ScratchBuffer(Device &     device,
-	              VkDeviceSize size);
+	              VkDeviceSize _size);
 
 	~ScratchBuffer();
 

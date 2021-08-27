@@ -40,7 +40,7 @@ enum LightType
 	Directional = 0,
 	Point       = 1,
 	Spot        = 2,
-	// Insert new lightype here
+	// Insert new light type here
 	Max
 };
 
@@ -62,13 +62,13 @@ struct LightProperties
 class Light : public Component
 {
   public:
-	Light(const std::string &name);
+	explicit Light(const std::string &name);
 
 	Light(Light &&other) = default;
 
-	virtual ~Light() = default;
+	~Light() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	void set_node(Node &node);
 

@@ -188,7 +188,7 @@ struct hash<vkb::SpecializationConstantState>
 	{
 		std::size_t result = 0;
 
-		for (auto constants : specialization_constant_state.get_specialization_constant_state())
+		for (const auto& constants : specialization_constant_state.get_specialization_constant_state())
 		{
 			vkb::hash_combine(result, constants.first);
 			for (const auto data : constants.second)
@@ -302,7 +302,7 @@ struct hash<VkWriteDescriptorSet>
 			default:
 				// Not implemented
 				break;
-		};
+		}
 
 		return result;
 	}
@@ -743,7 +743,7 @@ T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map
 	const char *res_type = typeid(T).name();
 	size_t      res_id   = resources.size();
 
-	LOGD("Building #{} cache object ({})", res_id, res_type);
+	LOGD("Building #{} cache object ({})", res_id, res_type)
 
 // Only error handle in release
 #ifndef DEBUG

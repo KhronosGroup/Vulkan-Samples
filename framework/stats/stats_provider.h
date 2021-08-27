@@ -43,8 +43,7 @@ class StatsProvider
 	/**
 	 * @brief Virtual Destructor
 	 */
-	virtual ~StatsProvider()
-	{}
+	virtual ~StatsProvider() = default;
 
 	/**
 	 * @brief Checks if this provider can supply the given enabled stat
@@ -80,7 +79,7 @@ class StatsProvider
 	 */
 	virtual Counters continuous_sample(float delta_time)
 	{
-		return Counters();
+		return {};
 	}
 
 	/**

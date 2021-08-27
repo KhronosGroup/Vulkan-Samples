@@ -56,7 +56,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	if (!camera_node)
 	{
-		LOGW("Camera node not found. Looking for `default_camera` node.");
+		LOGW("Camera node not found. Looking for `default_camera` node.")
 
 		camera_node = scene->find_node("default_camera");
 	}

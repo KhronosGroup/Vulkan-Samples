@@ -33,10 +33,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
-#include "core/descriptor_set.h"
-#include "core/descriptor_set_layout.h"
 #include "core/pipeline.h"
-#include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 #include "imgui_internal.h"
 #include "platform/filesystem.h"
@@ -51,8 +48,8 @@ namespace
 {
 void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
 {
-	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx * idx_dst = (ImDrawIdx *) index_data;
+	auto *vtx_dst = (ImDrawVert *) vertex_data;
+	auto * idx_dst = (ImDrawIdx *) index_data;
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -96,10 +93,12 @@ const ImGuiWindowFlags Gui::info_flags = Gui::common_flags | ImGuiWindowFlags_No
 Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
          const float font_size, bool explicit_update) :
     sample{sample_},
-    content_scale_factor{window.get_content_scale_factor()},
-    dpi_factor{window.get_dpi_factor() * content_scale_factor},
-    explicit_update{explicit_update},
-    stats_view(stats)
+    last_vertex_buffer_size(),
+	last_index_buffer_size(),
+	content_scale_factor{window.get_content_scale_factor()},
+	dpi_factor{window.get_dpi_factor() * content_scale_factor},
+	explicit_update{explicit_update},
+	stats_view(stats)
 {
 	ImGui::CreateContext();
 
@@ -177,7 +176,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 		FencePool fence_pool{device};
 
 		// Begin recording
-		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 
 		{
 			// Prepare for transfer
@@ -466,7 +465,7 @@ void Gui::update_buffers(CommandBuffer &command_buffer, RenderFrame &render_fram
 	command_buffer.bind_index_buffer(index_allocation.get_buffer(), index_allocation.get_offset(), VK_INDEX_TYPE_UINT16);
 }
 
-void Gui::resize(const uint32_t width, const uint32_t height) const
+void Gui::resize(const uint32_t width, const uint32_t height)
 {
 	auto &io         = ImGui::GetIO();
 	io.DisplaySize.x = static_cast<float>(width);
@@ -572,7 +571,7 @@ void Gui::draw(CommandBuffer &command_buffer)
 	else
 	{
 		std::vector<std::reference_wrapper<const vkb::core::Buffer>> buffers;
-		buffers.push_back(*vertex_buffer);
+		buffers.emplace_back(*vertex_buffer);
 		command_buffer.bind_vertex_buffers(0, buffers, {0});
 
 		command_buffer.bind_index_buffer(*index_buffer, 0, VK_INDEX_TYPE_UINT16);
@@ -606,22 +605,22 @@ void Gui::draw(CommandBuffer &command_buffer)
 				auto transform = sample.get_render_context().get_swapchain().get_transform();
 				if (transform & VK_SURFACE_TRANSFORM_ROTATE_90_BIT_KHR)
 				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
-					scissor_rect.offset.y      = static_cast<uint32_t>(cmd->ClipRect.x);
+					scissor_rect.offset.x      = static_cast<int32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+					scissor_rect.offset.y      = static_cast<int32_t>(cmd->ClipRect.x);
 					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
 					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
 				}
 				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_180_BIT_KHR)
 				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.y - cmd->ClipRect.w);
+					scissor_rect.offset.x      = static_cast<int32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+					scissor_rect.offset.y      = static_cast<int32_t>(io.DisplaySize.y - cmd->ClipRect.w);
 					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
 					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
 				}
 				else if (transform & VK_SURFACE_TRANSFORM_ROTATE_270_BIT_KHR)
 				{
-					scissor_rect.offset.x      = static_cast<uint32_t>(cmd->ClipRect.y);
-					scissor_rect.offset.y      = static_cast<uint32_t>(io.DisplaySize.x - cmd->ClipRect.z);
+					scissor_rect.offset.x      = static_cast<int32_t>(cmd->ClipRect.y);
+					scissor_rect.offset.y      = static_cast<int32_t>(io.DisplaySize.x - cmd->ClipRect.z);
 					scissor_rect.extent.width  = static_cast<uint32_t>(cmd->ClipRect.w - cmd->ClipRect.y);
 					scissor_rect.extent.height = static_cast<uint32_t>(cmd->ClipRect.z - cmd->ClipRect.x);
 				}
@@ -653,7 +652,7 @@ void Gui::draw(VkCommandBuffer command_buffer)
 	}
 
 	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get_handle(), 0, 1, &descriptor_set, 0, NULL);
+	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout->get_handle(), 0, 1, &descriptor_set, 0, nullptr);
 
 	// Push constants
 	auto push_transform = glm::mat4(1.0f);
@@ -683,7 +682,7 @@ void Gui::draw(VkCommandBuffer command_buffer)
 
 			vkCmdSetScissor(command_buffer, 0, 1, &scissor_rect);
 			vkCmdDrawIndexed(command_buffer, cmd->ElemCount, 1, index_offset, vertex_offset, 0);
-			index_offset += cmd->ElemCount;
+			index_offset += static_cast<int32_t>(cmd->ElemCount);
 		}
 		vertex_offset += cmd_list->VtxBuffer.Size;
 	}
@@ -725,7 +724,7 @@ Font &Gui::get_font(const std::string &font_name)
 	}
 	else
 	{
-		LOGW("Couldn't find font with name {}", font_name);
+		LOGW("Couldn't find font with name {}", font_name)
 		return *fonts.begin();
 	}
 }
@@ -845,7 +844,7 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 
 	auto field_count = debug_info.get_fields().size() > debug_view.max_fields ? debug_view.max_fields : debug_info.get_fields().size();
 
-	ImGui::BeginChild("Table", ImVec2(0, field_count * (font.size + style.ItemSpacing.y)), false);
+	ImGui::BeginChild("Table", ImVec2(0, static_cast<float>(field_count) * (font.size + style.ItemSpacing.y)), false);
 	ImGui::Columns(2);
 	ImGui::SetColumnWidth(0, debug_view.label_column_width);
 	ImGui::SetColumnWidth(1, io.DisplaySize.x - debug_view.label_column_width);
@@ -931,7 +930,7 @@ void Gui::show_stats(const Stats &stats)
 		    stats_view.graph_height /* dpi */ * dpi_factor};
 
 		std::stringstream graph_label;
-		float             avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / graph_elements.size();
+		float             avg = std::accumulate(graph_elements.begin(), graph_elements.end(), 0.0f) / static_cast<float>(graph_elements.size());
 
 		// Check if the stat is available in the current platform
 		if (stats.is_available(stat_index))
@@ -949,14 +948,14 @@ void Gui::show_stats(const Stats &stats)
 	}
 }
 
-void Gui::show_options_window(std::function<void()> body, const uint32_t lines)
+void Gui::show_options_window(const std::function<void()>& body, const uint32_t lines)
 {
 	// Add padding around the text so that the options are not
 	// too close to the edges and are easier to interact with.
 	// Also add double vertical padding to avoid rounded corners.
 	const float window_padding = ImGui::CalcTextSize("T").x;
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2{window_padding, window_padding * 2.0f});
-	auto window_height = lines * ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().WindowPadding.y * 2.0f;
+	auto window_height = static_cast<float>(lines) * ImGui::GetTextLineHeightWithSpacing() + ImGui::GetStyle().WindowPadding.y * 2.0f;
 	auto window_width  = ImGui::GetIO().DisplaySize.x;
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	const ImVec2 size = ImVec2(window_width, 0);
@@ -978,10 +977,8 @@ void Gui::show_options_window(std::function<void()> body, const uint32_t lines)
 	ImGui::PopStyleVar();
 }
 
-void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::function<void()> body)
+void Gui::show_simple_window(const std::string &name, uint32_t last_fps, const std::function<void()>& body)
 {
-	ImGuiIO &io = ImGui::GetIO();
-
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
@@ -989,7 +986,7 @@ void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::fu
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_gpu().get_properties().deviceName).c_str());
-	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / last_fps), last_fps);
+	ImGui::Text("%.2f ms/frame (%.1d fps)", (1000.0f / static_cast<float>(last_fps)), last_fps);
 	ImGui::PushItemWidth(110.0f * dpi_factor);
 
 	body();
@@ -1006,7 +1003,7 @@ bool Gui::input_event(const InputEvent &input_event)
 
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
-		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+		const auto &key_event = dynamic_cast<const KeyInputEvent &>(input_event);
 
 		if (key_event.get_action() == KeyAction::Down)
 		{
@@ -1019,7 +1016,7 @@ bool Gui::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Mouse)
 	{
-		const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
+		const auto &mouse_button = dynamic_cast<const MouseButtonInputEvent &>(input_event);
 
 		io.MousePos = ImVec2{mouse_button.get_pos_x() * content_scale_factor,
 		                     mouse_button.get_pos_y() * content_scale_factor};
@@ -1041,7 +1038,7 @@ bool Gui::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Touchscreen)
 	{
-		const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
+		const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
 
 		io.MousePos = ImVec2{touch_event.get_pos_x(), touch_event.get_pos_y()};
 
@@ -1062,15 +1059,15 @@ bool Gui::input_event(const InputEvent &input_event)
 	// Toggle GUI elements when tap or clicking outside the GUI windows
 	if (!io.WantCaptureMouse)
 	{
-		bool press_down = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
-		bool press_up   = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Up) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Up);
+		bool press_down = (input_event.get_source() == EventSource::Mouse && dynamic_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && dynamic_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
+		bool press_up   = (input_event.get_source() == EventSource::Mouse && dynamic_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Up) || (input_event.get_source() == EventSource::Touchscreen && dynamic_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Up);
 
 		if (press_down)
 		{
 			timer.start();
 			if (input_event.get_source() == EventSource::Touchscreen)
 			{
-				const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
+				const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
 				if (touch_event.get_touch_points() == 2)
 				{
 					two_finger_tap = true;
@@ -1084,7 +1081,7 @@ bool Gui::input_event(const InputEvent &input_event)
 			{
 				if (input_event.get_source() == EventSource::Mouse)
 				{
-					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
+					const auto &mouse_button = dynamic_cast<const MouseButtonInputEvent &>(input_event);
 					if (mouse_button.get_button() == MouseButton::Left)
 					{
 						visible = !visible;
@@ -1096,7 +1093,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				}
 				else if (input_event.get_source() == EventSource::Touchscreen)
 				{
-					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
+					const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
 					if (!two_finger_tap && touch_event.get_touch_points() == 1)
 					{
 						visible = !visible;
@@ -1122,14 +1119,14 @@ void Drawer::clear()
 	dirty = false;
 }
 
-bool Drawer::is_dirty()
+bool Drawer::is_dirty() const
 {
 	return dirty;
 }
 
-void Drawer::set_dirty(bool dirty)
+void Drawer::set_dirty(bool _dirty)
 {
-	this->dirty = dirty;
+	this->dirty = _dirty;
 }
 
 bool Drawer::header(const char *caption)
@@ -1143,7 +1140,7 @@ bool Drawer::checkbox(const char *caption, bool *value)
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
@@ -1155,17 +1152,17 @@ bool Drawer::checkbox(const char *caption, int32_t *value)
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
 bool Drawer::input_float(const char *caption, float *value, float step, uint32_t precision)
 {
-	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, precision);
+	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, static_cast<int32_t>(precision));
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
@@ -1175,7 +1172,7 @@ bool Drawer::slider_float(const char *caption, float *value, float min, float ma
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
@@ -1185,28 +1182,28 @@ bool Drawer::slider_int(const char *caption, int32_t *value, int32_t min, int32_
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
-bool Drawer::combo_box(const char *caption, int32_t *itemindex, std::vector<std::string> items)
+bool Drawer::combo_box(const char *caption, int32_t *item_index, const std::vector<std::string>& items)
 {
 	if (items.empty())
 	{
 		return false;
 	}
-	std::vector<const char *> charitems;
-	charitems.reserve(items.size());
-	for (size_t i = 0; i < items.size(); i++)
+	std::vector<const char *> char_items;
+	char_items.reserve(items.size());
+	for (auto & item : items)
 	{
-		charitems.push_back(items[i].c_str());
+		char_items.push_back(item.c_str());
 	}
-	uint32_t itemCount = static_cast<uint32_t>(charitems.size());
-	bool     res       = ImGui::Combo(caption, itemindex, &charitems[0], itemCount, itemCount);
+	auto     item_count = static_cast<int32_t>(char_items.size());
+	bool     res       = ImGui::Combo(caption, item_index, &char_items[0], item_count, item_count);
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
@@ -1216,15 +1213,15 @@ bool Drawer::button(const char *caption)
 	if (res)
 	{
 		dirty = true;
-	};
+	}
 	return res;
 }
 
-void Drawer::text(const char *formatstr, ...)
+void Drawer::text(const char *format_str, ...)
 {
 	va_list args;
-	va_start(args, formatstr);
-	ImGui::TextV(formatstr, args);
+	va_start(args, format_str);
+	ImGui::TextV(format_str, args);
 	va_end(args);
 }
 

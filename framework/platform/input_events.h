@@ -35,6 +35,7 @@ class InputEvent
 {
   public:
 	InputEvent(Platform &platform, EventSource source);
+	virtual ~InputEvent() = default;
 
 	const Platform &get_platform() const;
 
@@ -166,6 +167,7 @@ class KeyInputEvent : public InputEvent
 {
   public:
 	KeyInputEvent(Platform &platform, KeyCode code, KeyAction action);
+	~KeyInputEvent() override = default;
 
 	KeyCode get_code() const;
 

@@ -17,6 +17,8 @@
 
 #include "subpass.h"
 
+#include <utility>
+
 #include "render_context.h"
 
 namespace vkb
@@ -28,7 +30,7 @@ const std::vector<std::string> light_type_definitions = {
 
 glm::mat4 vulkan_style_projection(const glm::mat4 &proj)
 {
-	// Flip Y in clipspace. X = -1, Y = -1 is topLeft in Vulkan.
+	// Flip Y in clip space. X = -1, Y = -1 is topLeft in Vulkan.
 	glm::mat4 mat = proj;
 	mat[1][1] *= -1;
 
@@ -75,7 +77,7 @@ const std::vector<uint32_t> &Subpass::get_input_attachments() const
 
 void Subpass::set_input_attachments(std::vector<uint32_t> input)
 {
-	input_attachments = input;
+	input_attachments = std::move(input);
 }
 
 const std::vector<uint32_t> &Subpass::get_output_attachments() const
@@ -85,7 +87,7 @@ const std::vector<uint32_t> &Subpass::get_output_attachments() const
 
 void Subpass::set_output_attachments(std::vector<uint32_t> output)
 {
-	output_attachments = output;
+	output_attachments = std::move(output);
 }
 
 const std::vector<uint32_t> &Subpass::get_color_resolve_attachments() const
@@ -95,7 +97,7 @@ const std::vector<uint32_t> &Subpass::get_color_resolve_attachments() const
 
 void Subpass::set_color_resolve_attachments(std::vector<uint32_t> color_resolve)
 {
-	color_resolve_attachments = color_resolve;
+	color_resolve_attachments = std::move(color_resolve);
 }
 
 const bool &Subpass::get_disable_depth_stencil_attachment() const
@@ -118,7 +120,7 @@ void Subpass::set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolv
 	depth_stencil_resolve_attachment = depth_stencil_resolve;
 }
 
-const VkResolveModeFlagBits Subpass::get_depth_stencil_resolve_mode() const
+VkResolveModeFlagBits Subpass::get_depth_stencil_resolve_mode() const
 {
 	return depth_stencil_resolve_mode;
 }
@@ -128,9 +130,9 @@ void Subpass::set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode)
 	depth_stencil_resolve_mode = mode;
 }
 
-void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
+void Subpass::set_sample_count(VkSampleCountFlagBits _sample_count)
 {
-	this->sample_count = sample_count;
+	this->sample_count = _sample_count;
 }
 
 LightingState &Subpass::get_lighting_state()

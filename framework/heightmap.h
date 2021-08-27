@@ -31,9 +31,9 @@ class HeightMap
 	/**
 	 * @brief Loads in a ktx texture as a heightmap
 	 * @param filename The ktx file to load
-	 * @param patchsize The patch size
+	 * @param patch_size The patch size
 	 */
-	HeightMap(const std::string &filename, const uint32_t patchsize);
+	HeightMap(const std::string &filename, const uint32_t patch_size);
 
 	~HeightMap();
 

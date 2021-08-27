@@ -26,11 +26,11 @@ class DescriptorManagement : public vkb::VulkanSample
   public:
 	DescriptorManagement();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual ~DescriptorManagement() = default;
+	~DescriptorManagement() override = default;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
   private:
 	/**
@@ -58,7 +58,7 @@ class DescriptorManagement : public vkb::VulkanSample
 
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
-	virtual void draw_gui() override;
+	void draw_gui() override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_descriptor_management();

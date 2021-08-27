@@ -57,7 +57,7 @@ struct AnimationChannel
 {
 	Node &node;
 
-	AnimationTarget target;
+	AnimationTarget target{};
 
 	AnimationSampler sampler;
 };
@@ -65,11 +65,11 @@ struct AnimationChannel
 class Animation : public Script
 {
   public:
-	Animation(const std::string &name = "");
+	explicit Animation(const std::string &name = "");
 
 	Animation(const Animation &);
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
 	void update_times(float start_time, float end_time);
 

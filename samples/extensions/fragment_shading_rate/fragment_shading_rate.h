@@ -83,8 +83,8 @@ class FragmentShadingRate : public ApiVulkanSample
 	} push_const_block;
 
 	FragmentShadingRate();
-	~FragmentShadingRate();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~FragmentShadingRate() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         create_shading_rate_attachment();
 	void         invalidate_shading_rate_attachment();
 	void         setup_render_pass() override;
@@ -99,9 +99,9 @@ class FragmentShadingRate : public ApiVulkanSample
 	void         update_uniform_buffers();
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate();

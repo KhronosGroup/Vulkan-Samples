@@ -61,9 +61,9 @@ class RenderTarget
 
 	static const CreateFunc DEFAULT_CREATE_FUNC;
 
-	RenderTarget(std::vector<core::Image> &&images);
+	explicit RenderTarget(std::vector<core::Image> &&images);
 
-	RenderTarget(std::vector<core::ImageView> &&image_views);
+	explicit RenderTarget(std::vector<core::ImageView> &&image_views);
 
 	RenderTarget(const RenderTarget &) = delete;
 

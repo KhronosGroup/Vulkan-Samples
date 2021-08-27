@@ -89,9 +89,9 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 		acceleration_structure_build_range_infos.push_back(build_range_info);
 		primitive_counts.push_back(1);
 	}
-	for (size_t i = 0; i < acceleration_structure_build_range_infos.size(); i++)
+	for (auto & acceleration_structure_build_range_info : acceleration_structure_build_range_infos)
 	{
-		pp_acceleration_structure_build_range_infos.push_back(&acceleration_structure_build_range_infos[i]);
+		pp_acceleration_structure_build_range_infos.push_back(&acceleration_structure_build_range_info);
 	}
 
 	VkAccelerationStructureBuildGeometryInfoKHR build_geometry_info{};
@@ -101,8 +101,6 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	build_geometry_info.mode          = mode;
 	build_geometry_info.geometryCount = static_cast<uint32_t>(acceleration_structure_geometries.size());
 	build_geometry_info.pGeometries   = acceleration_structure_geometries.data();
-
-	uint32_t primitive_count = build_geometry_info.geometryCount;
 
 	// Get required build sizes
 	build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;

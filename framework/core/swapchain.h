@@ -32,15 +32,15 @@ enum ImageFormat
 
 struct SwapchainProperties
 {
-	VkSwapchainKHR                old_swapchain;
+	VkSwapchainKHR                old_swapchain{};
 	uint32_t                      image_count{3};
 	VkExtent2D                    extent{};
 	VkSurfaceFormatKHR            surface_format{};
-	uint32_t                      array_layers;
-	VkImageUsageFlags             image_usage;
-	VkSurfaceTransformFlagBitsKHR pre_transform;
-	VkCompositeAlphaFlagBitsKHR   composite_alpha;
-	VkPresentModeKHR              present_mode;
+	uint32_t                      array_layers{};
+	VkImageUsageFlags             image_usage{};
+	VkSurfaceTransformFlagBitsKHR pre_transform{};
+	VkCompositeAlphaFlagBitsKHR   composite_alpha{};
+	VkPresentModeKHR              present_mode{};
 };
 
 class Swapchain
@@ -56,7 +56,7 @@ class Swapchain
 	 * @brief Constructor to create a swapchain by changing the image count
 	 *        only and preserving the configuration from the old swapchain.
 	 */
-	Swapchain(Swapchain &old_swapchain, const uint32_t image_count);
+	Swapchain(Swapchain &old_swapchain, uint32_t image_count);
 
 	/**
 	 * @brief Constructor to create a swapchain by changing the image usage
@@ -68,7 +68,7 @@ class Swapchain
 	 * @brief Constructor to create a swapchain by changing the extent
 	 *        and transform only and preserving the configuration from the old swapchain.
 	 */
-	Swapchain(Swapchain &swapchain, const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform);
+	Swapchain(Swapchain &swapchain, const VkExtent2D &extent, VkSurfaceTransformFlagBitsKHR transform);
 
 	/**
 	 * @brief Constructor to create a swapchain.
@@ -76,9 +76,9 @@ class Swapchain
 	Swapchain(Device &                              device,
 	          VkSurfaceKHR                          surface,
 	          const VkExtent2D &                    extent            = {},
-	          const uint32_t                        image_count       = 3,
-	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
+	          uint32_t                        image_count       = 3,
+	          VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
 	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	/**
@@ -89,14 +89,14 @@ class Swapchain
 	          Device &                              device,
 	          VkSurfaceKHR                          surface,
 	          const VkExtent2D &                    extent            = {},
-	          const uint32_t                        image_count       = 3,
-	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
+	          uint32_t                        image_count       = 3,
+	          VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
 	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	Swapchain(const Swapchain &) = delete;
 
-	Swapchain(Swapchain &&other);
+	Swapchain(Swapchain &&other) noexcept ;
 
 	~Swapchain();
 

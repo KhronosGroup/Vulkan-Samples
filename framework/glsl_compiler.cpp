@@ -18,11 +18,9 @@
 #include "glsl_compiler.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
 #include <glslang/Include/ShHandle.h>
-#include <glslang/OSDependent/osinclude.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -100,7 +98,7 @@ bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
 	// Initialize glslang library.
 	glslang::InitializeProcess();
 
-	EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
+	auto messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
 	EShLanguage language = FindShaderLanguage(stage);
 	std::string source   = std::string(glsl_source.begin(), glsl_source.end());

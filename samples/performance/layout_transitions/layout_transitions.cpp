@@ -18,16 +18,13 @@
 #include "layout_transitions.h"
 
 #include "core/device.h"
-#include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/components/material.h"
-#include "scene_graph/components/pbr_material.h"
 #include "stats/stats.h"
 
 LayoutTransitions::LayoutTransitions()

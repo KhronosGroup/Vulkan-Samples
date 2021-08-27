@@ -37,18 +37,18 @@ Platform &Window::get_platform()
 	return platform;
 }
 
-void Window::resize(uint32_t width, uint32_t height)
+void Window::resize(uint32_t _width, uint32_t _height)
 {
-	this->width  = width;
-	this->height = height;
+	this->width  = _width;
+	this->height = _height;
 }
 
-uint32_t Window::get_width()
+uint32_t Window::get_width() const
 {
 	return width;
 }
 
-uint32_t Window::get_height()
+uint32_t Window::get_height() const
 {
 	return height;
 }

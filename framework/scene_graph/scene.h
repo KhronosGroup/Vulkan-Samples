@@ -42,7 +42,7 @@ class Scene
   public:
 	Scene() = default;
 
-	Scene(const std::string &name);
+	explicit Scene(std::string name);
 
 	void set_name(const std::string &name);
 
@@ -71,10 +71,10 @@ class Scene
 	 * @brief Set list of components casted from the given template type
 	 */
 	template <class T>
-	void set_components(std::vector<std::unique_ptr<T>> &&components)
+	void set_components(std::vector<std::unique_ptr<T>> &&_components)
 	{
-		std::vector<std::unique_ptr<Component>> result(components.size());
-		std::transform(components.begin(), components.end(), result.begin(),
+		std::vector<std::unique_ptr<Component>> result(_components.size());
+		std::transform(_components.begin(), _components.end(), result.begin(),
 		               [](std::unique_ptr<T> &component) -> std::unique_ptr<Component> {
 			               return std::unique_ptr<Component>(std::move(component));
 		               });

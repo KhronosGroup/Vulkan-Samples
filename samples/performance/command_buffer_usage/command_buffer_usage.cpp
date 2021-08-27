@@ -21,7 +21,6 @@
 #include <numeric>
 
 #include "core/device.h"
-#include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 #include "gltf_loader.h"
 #include "gui.h"
@@ -102,7 +101,7 @@ void CommandBufferUsage::prepare_render_context()
 
 void CommandBufferUsage::update(float delta_time)
 {
-	auto &subpass_state = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get())->get_state();
+	auto &subpass_state = dynamic_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get())->get_state();
 
 	// Process GUI input
 	subpass_state.secondary_cmd_buf_count = vkb::to_u32(gui_secondary_cmd_buf_count);
@@ -142,13 +141,13 @@ void CommandBufferUsage::draw_gui()
 	const bool landscape = camera->get_aspect_ratio() > 1.0f;
 	uint32_t   lines     = landscape ? 3 : 5;
 
-	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = dynamic_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
 
 	gui->show_options_window(
 	    /* body = */ [&]() {
 		    // Secondary command buffer count
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.55f);
-		    ImGui::SliderInt("", &gui_secondary_cmd_buf_count, 0, max_secondary_command_buffer_count, "Secondary CmdBuffs: %d");
+		    ImGui::SliderInt("", &gui_secondary_cmd_buf_count, 0, static_cast<int>(max_secondary_command_buffer_count), "Secondary CmdBuffs: %d");
 		    ImGui::SameLine();
 		    ImGui::Text("Draws/buf: %.1f", subpass->get_avg_draws_per_buffer());
 
@@ -192,7 +191,7 @@ void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 
 void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
 {
-	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
+	const auto &subpass = dynamic_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
 	auto &      extent  = render_target.get_extent();
 
 	VkViewport viewport{};
@@ -296,9 +295,9 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 	// Sort opaque objects in front-to-back order
 	// Note: sorting objects does not help on PowerVR, so it can be avoided to save CPU cycles
 	std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> sorted_opaque_nodes;
-	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
+	for (auto & opaque_node : opaque_nodes)
 	{
-		sorted_opaque_nodes.push_back(node_it->second);
+		sorted_opaque_nodes.push_back(opaque_node.second);
 	}
 	const auto opaque_submeshes = vkb::to_u32(sorted_opaque_nodes.size());
 
@@ -318,16 +317,16 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 
 	// Draw opaque objects. Depending on the subpass state, use one or multiple
 	// command buffers, and one or multiple threads
-	const bool                        use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
+	const bool                        _use_secondary_command_buffers = state.secondary_cmd_buf_count > 0;
 	std::vector<vkb::CommandBuffer *> secondary_command_buffers;
-	avg_draws_per_buffer = (state.secondary_cmd_buf_count > 0) ? static_cast<float>(opaque_submeshes) / state.secondary_cmd_buf_count : 0;
+	avg_draws_per_buffer = (state.secondary_cmd_buf_count > 0) ? static_cast<float>(opaque_submeshes) / static_cast<float>(state.secondary_cmd_buf_count) : 0;
 
 	if (state.thread_count != thread_pool.size())
 	{
-		thread_pool.resize(state.thread_count);
+		thread_pool.resize(static_cast<int>(state.thread_count));
 	}
 
-	if (use_secondary_command_buffers)
+	if (_use_secondary_command_buffers)
 	{
 		std::vector<std::future<vkb::CommandBuffer *>> secondary_cmd_buf_futures;
 
@@ -349,7 +348,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 			if (state.multi_threading)
 			{
 				auto fut = thread_pool.push(
-				    [this, cb_count, &primary_command_buffer, &sorted_opaque_nodes, mesh_start, mesh_end](size_t thread_id) {
+				    [this, &primary_command_buffer, &sorted_opaque_nodes, mesh_start, mesh_end](size_t thread_id) {
 					    return record_draw_secondary(primary_command_buffer, sorted_opaque_nodes, mesh_start, mesh_end, thread_id);
 				    });
 
@@ -387,7 +386,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 	// Draw transparent objects
 	if (transparent_submeshes > 0)
 	{
-		if (use_secondary_command_buffers)
+		if (_use_secondary_command_buffers)
 		{
 			secondary_command_buffers.push_back(record_draw_secondary(primary_command_buffer, sorted_transparent_nodes, 0, transparent_submeshes));
 		}
@@ -397,20 +396,20 @@ void CommandBufferUsage::ForwardSubpassSecondary::draw(vkb::CommandBuffer &prima
 		}
 	}
 
-	if (use_secondary_command_buffers)
+	if (_use_secondary_command_buffers)
 	{
 		primary_command_buffer.execute_commands(secondary_command_buffers);
 	}
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::set_viewport(VkViewport &viewport)
+void CommandBufferUsage::ForwardSubpassSecondary::set_viewport(VkViewport &_viewport)
 {
-	this->viewport = viewport;
+	this->viewport = _viewport;
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::set_scissor(VkRect2D &scissor)
+void CommandBufferUsage::ForwardSubpassSecondary::set_scissor(VkRect2D &_scissor)
 {
-	this->scissor = scissor;
+	this->scissor = _scissor;
 }
 
 float CommandBufferUsage::ForwardSubpassSecondary::get_avg_draws_per_buffer() const

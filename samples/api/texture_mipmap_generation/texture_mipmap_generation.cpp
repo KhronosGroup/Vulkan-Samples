@@ -22,6 +22,11 @@
 #include "texture_mipmap_generation.h"
 
 TextureMipMapGeneration::TextureMipMapGeneration()
+	: texture()
+	, pipeline()
+	, pipeline_layout()
+	, descriptor_set()
+	, descriptor_set_layout()
 {
 	zoom     = -2.5f;
 	rotation = {0.0f, 15.0f, 0.0f};
@@ -32,12 +37,12 @@ TextureMipMapGeneration::~TextureMipMapGeneration()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
 		for (auto sampler : samplers)
 		{
-			vkDestroySampler(get_device().get_handle(), sampler, nullptr);
+			vkDestroySampler(device->get_handle(), sampler, nullptr);
 		}
 	}
 	destroy_texture(texture);
@@ -57,14 +62,12 @@ void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
 /*
 	Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
 */
-void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_name)
+void TextureMipMapGeneration::load_texture_generate_mipmaps(const std::string& file_name)
 {
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
 	ktxTexture *   ktx_texture;
-	KTX_error_code result;
-
-	result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
 	// @todo: get format from libktx
 
 	if (ktx_texture == nullptr)
@@ -77,7 +80,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	// numLevels = 1 + floor(log2(max(w, h, d)))
 	texture.mip_levels = static_cast<uint32_t>(floor(log2(std::max(texture.width, texture.height))) + 1);
 
-	// Get device properites for the requested texture format
+	// Get device properties for the requested texture format
 	// Check if the selected format supports blit source and destination, which is required for generating the mip levels
 	// If this is not supported you could implement a fallback via compute shader image writes and stores
 	VkFormatProperties formatProperties;
@@ -163,7 +166,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	buffer_copy_region.imageExtent.depth               = 1;
 	vkCmdCopyBufferToImage(copy_command, staging_buffer, texture.image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
-	// Transition first mip level to transfer source so we can blit(read) from it
+	// Transition first mip level to transfer source, so we can blit(read) from it
 	vkb::insert_image_memory_barrier(
 	    copy_command,
 	    texture.image,
@@ -306,11 +309,11 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 }
 
 // Free all Vulkan resources used by a texture object
-void TextureMipMapGeneration::destroy_texture(Texture texture)
+void TextureMipMapGeneration::destroy_texture(Texture _texture)
 {
-	vkDestroyImageView(get_device().get_handle(), texture.view, nullptr);
-	vkDestroyImage(get_device().get_handle(), texture.image, nullptr);
-	vkFreeMemory(get_device().get_handle(), texture.device_memory, nullptr);
+	vkDestroyImageView(get_device().get_handle(), _texture.view, nullptr);
+	vkDestroyImage(get_device().get_handle(), _texture.image, nullptr);
+	vkFreeMemory(get_device().get_handle(), _texture.device_memory, nullptr);
 }
 
 void TextureMipMapGeneration::load_assets()
@@ -347,10 +350,10 @@ void TextureMipMapGeneration::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		draw_model(scene, draw_cmd_buffers[i]);
@@ -367,7 +370,7 @@ void TextureMipMapGeneration::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -467,9 +470,9 @@ void TextureMipMapGeneration::setup_descriptor_set()
 
 	// Binding 2: Sampler array
 	std::vector<VkDescriptorImageInfo> sampler_descriptors;
-	for (auto i = 0; i < samplers.size(); i++)
+	for (auto & sampler : samplers)
 	{
-		sampler_descriptors.push_back({samplers[i], VK_NULL_HANDLE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
+		sampler_descriptors.push_back({sampler, VK_NULL_HANDLE, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL});
 	}
 	VkWriteDescriptorSet write_descriptor_set{};
 	write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -533,7 +536,7 @@ void TextureMipMapGeneration::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	shader_stages[0] = load_shader("texture_mipmap_generation/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("texture_mipmap_generation/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -632,7 +635,7 @@ void TextureMipMapGeneration::view_changed()
 
 void TextureMipMapGeneration::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Settings"))
+	if (vkb::Drawer::header("Settings"))
 	{
 		drawer.checkbox("Rotate", &rotate_scene);
 		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, (float) texture.mip_levels))

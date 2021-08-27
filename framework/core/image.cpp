@@ -26,7 +26,7 @@ namespace
 {
 inline VkImageType find_image_type(VkExtent3D extent)
 {
-	VkImageType result{};
+	VkImageType result;
 
 	uint32_t dim_num{0};
 
@@ -58,7 +58,6 @@ inline VkImageType find_image_type(VkExtent3D extent)
 			break;
 		default:
 			throw std::runtime_error("No image type found.");
-			break;
 	}
 
 	return result;
@@ -79,14 +78,14 @@ Image::Image(Device &              device,
              VkImageCreateFlags    flags,
              uint32_t              num_queue_families,
              const uint32_t *      queue_families) :
-    device{device},
-    type{find_image_type(extent)},
-    extent{extent},
-    format{format},
-    sample_count{sample_count},
-    usage{image_usage},
-    array_layer_count{array_layers},
-    tiling{tiling}
+	device{device},
+	type{find_image_type(extent)},
+	extent{extent},
+	format{format},
+	usage{image_usage},
+	sample_count{sample_count},
+	tiling{tiling},
+	array_layer_count{array_layers}
 {
 	assert(mip_levels > 0 && "Image should have at least one level");
 	assert(array_layers > 0 && "Image should have at least one layer");
@@ -137,25 +136,25 @@ Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat 
     type{find_image_type(extent)},
     extent{extent},
     format{format},
-    sample_count{sample_count},
-    usage{image_usage}
+    usage{image_usage},
+	sample_count{sample_count}
 {
 	subresource.mipLevel   = 1;
 	subresource.arrayLayer = 1;
 }
 
-Image::Image(Image &&other) :
+Image::Image(Image &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     memory{other.memory},
     type{other.type},
     extent{other.extent},
     format{other.format},
-    sample_count{other.sample_count},
     usage{other.usage},
-    tiling{other.tiling},
-    subresource{other.subresource},
-    mapped_data{other.mapped_data},
+	sample_count{other.sample_count},
+	tiling{other.tiling},
+	subresource{other.subresource},
+	mapped_data{other.mapped_data},
     mapped{other.mapped}
 {
 	other.handle      = VK_NULL_HANDLE;
@@ -200,7 +199,7 @@ uint8_t *Image::map()
 	{
 		if (tiling != VK_IMAGE_TILING_LINEAR)
 		{
-			LOGW("Mapping image memory that is not linear");
+			LOGW("Mapping image memory that is not linear")
 		}
 		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
 		mapped = true;

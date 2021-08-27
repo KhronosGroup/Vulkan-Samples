@@ -17,17 +17,13 @@
 
 #include "rendering/subpasses/forward_subpass.h"
 
-#include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
-#include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
-#include "scene_graph/components/texture.h"
-#include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 
 namespace vkb
@@ -51,8 +47,8 @@ void ForwardSubpass::prepare()
 
 			variant.add_definitions(light_type_definitions);
 
-			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
-			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
+			device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
+			device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 		}
 	}
 }

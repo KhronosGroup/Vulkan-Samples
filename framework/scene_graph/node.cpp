@@ -17,6 +17,8 @@
 
 #include "node.h"
 
+#include <utility>
+
 #include "component.h"
 #include "components/transform.h"
 
@@ -24,15 +26,15 @@ namespace vkb
 {
 namespace sg
 {
-Node::Node(const size_t id, const std::string &name) :
+Node::Node(const size_t id, std::string name) :
     id{id},
-    name{name},
+    name{std::move(name)},
     transform{*this}
 {
 	set_component(transform);
 }
 
-const size_t Node::get_id() const
+size_t Node::get_id() const
 {
 	return id;
 }

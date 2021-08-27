@@ -35,7 +35,7 @@ BufferDeviceAddress::~BufferDeviceAddress()
 {
 	if (device)
 	{
-		VkDevice vk_device = get_device().get_handle();
+		VkDevice vk_device = device->get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.compute_pipeline_layout, nullptr);
 		vkDestroyPipelineLayout(vk_device, pipelines.graphics_pipeline_layout, nullptr);
 		vkDestroyPipeline(vk_device, pipelines.bindless_vbo_pipeline, nullptr);
@@ -166,7 +166,7 @@ void BufferDeviceAddress::create_pipelines()
 }
 
 // A straight forward way of creating a "tessellated" quad mesh.
-// Choose a low resolution per mesh so it's more visible in the vertex shader what is happening.
+// Choose a low resolution per mesh, so it's more visible in the vertex shader what is happening.
 static constexpr unsigned mesh_width             = 16;
 static constexpr unsigned mesh_height            = 16;
 static constexpr unsigned mesh_strips            = mesh_height - 1;
@@ -179,7 +179,7 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 
 	// Build a simple subdivided quad mesh. We can tweak the vertices later in compute to create a simple cloth-y/wave-like effect.
 
-	auto index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	auto _index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        size,
 	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
@@ -203,20 +203,20 @@ std::unique_ptr<vkb::core::Buffer> BufferDeviceAddress::create_index_buffer()
 
 	auto &cmd = get_device().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	cmd.copy_buffer(*staging_buffer, *index_buffer, size);
+	cmd.copy_buffer(*staging_buffer, *_index_buffer, size);
 
 	vkb::BufferMemoryBarrier memory_barrier;
 	memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 	memory_barrier.dst_access_mask = VK_ACCESS_INDEX_READ_BIT;
 	memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_VERTEX_INPUT_BIT;
-	cmd.buffer_memory_barrier(*index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
+	cmd.buffer_memory_barrier(*_index_buffer, 0, VK_WHOLE_SIZE, memory_barrier);
 	VK_CHECK(cmd.end());
 
 	// Not very optimal, but it's the simplest solution.
 	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
 	get_device().get_suitable_graphics_queue().wait_idle();
-	return index_buffer;
+	return _index_buffer;
 }
 
 void BufferDeviceAddress::create_vbo_buffers()
@@ -316,7 +316,7 @@ void BufferDeviceAddress::update_pointer_buffer(VkCommandBuffer cmd)
 	{
 		pointers.push_back(test_buffer.gpu_address);
 	}
-	// Simple approach. A proxy for a compute shader which culls meshlets.
+	// Simple approach. A proxy for a "compute shader" which culls meshlets.
 	vkCmdUpdateBuffer(cmd, pointer_buffer.buffer, 0, test_buffers.size() * sizeof(VkDeviceAddress), pointers.data());
 
 	VkMemoryBarrier global_memory_barrier = vkb::initializers::memory_barrier();
@@ -371,7 +371,7 @@ void BufferDeviceAddress::render(float delta_time)
 	vkBeginCommandBuffer(cmd, &begin_info);
 
 	// First thing is to update the pointer buffer.
-	// We could use a compute shader here if we're doing
+	// We could use a "compute shader" here if we're doing
 	// GPU-driven rendering for example.
 	update_pointer_buffer(cmd);
 

@@ -160,7 +160,7 @@ void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &o
 							}
 							else
 							{
-								LOGE("Shader layout set does not use image binding at #{}", binding);
+								LOGE("Shader layout set does not use image binding at #{}", binding)
 							}
 						}
 					}

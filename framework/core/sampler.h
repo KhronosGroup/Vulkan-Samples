@@ -41,7 +41,7 @@ class Sampler
 
 	Sampler(const Sampler &) = delete;
 
-	Sampler(Sampler &&sampler);
+	Sampler(Sampler &&sampler) noexcept ;
 
 	~Sampler();
 

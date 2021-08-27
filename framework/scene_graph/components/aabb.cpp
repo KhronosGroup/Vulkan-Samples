@@ -48,20 +48,20 @@ void AABB::update(const glm::vec3 &point)
 void AABB::update(const std::vector<glm::vec3> &vertex_data, const std::vector<uint16_t> &index_data)
 {
 	// Check if submesh is indexed
-	if (index_data.size() > 0)
+	if (!index_data.empty())
 	{
 		// Update bounding box for each indexed vertex
-		for (size_t index_id = 0; index_id < index_data.size(); index_id++)
+		for (unsigned short index_id : index_data)
 		{
-			update(vertex_data[index_data[index_id]]);
+			update(vertex_data[index_id]);
 		}
 	}
 	else
 	{
 		// Update bounding box for each vertex
-		for (size_t vertex_id = 0; vertex_id < vertex_data.size(); vertex_id++)
+		for (auto vertex_id : vertex_data)
 		{
-			update(vertex_data[vertex_id]);
+			update(vertex_id);
 		}
 	}
 }

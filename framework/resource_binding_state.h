@@ -88,7 +88,7 @@ class ResourceBindingState
   public:
 	void reset();
 
-	bool is_dirty();
+	bool is_dirty() const;
 
 	void clear_dirty();
 

@@ -22,6 +22,10 @@
 #include "instancing.h"
 
 Instancing::Instancing()
+: pipeline_layout()
+, pipelines()
+, descriptor_set_layout()
+, descriptor_sets()
 {
 	title = "Instanced mesh rendering";
 }
@@ -30,15 +34,15 @@ Instancing::~Instancing()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipelines.instanced_rocks, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.planet, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.starfield, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
-		vkDestroyBuffer(get_device().get_handle(), instance_buffer.buffer, nullptr);
-		vkFreeMemory(get_device().get_handle(), instance_buffer.memory, nullptr);
-		vkDestroySampler(get_device().get_handle(), textures.rocks.sampler, nullptr);
-		vkDestroySampler(get_device().get_handle(), textures.planet.sampler, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.instanced_rocks, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.planet, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.starfield, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyBuffer(device->get_handle(), instance_buffer.buffer, nullptr);
+		vkFreeMemory(device->get_handle(), instance_buffer.memory, nullptr);
+		vkDestroySampler(device->get_handle(), textures.rocks.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), textures.planet.sampler, nullptr);
 	}
 }
 
@@ -64,7 +68,7 @@ void Instancing::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		requested_features.textureCompressionETC2 = VK_TRUE;
 	}
-};
+}
 
 void Instancing::build_command_buffers()
 {
@@ -93,20 +97,20 @@ void Instancing::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		VkDeviceSize offsets[1] = {0};
 
 		// Star field
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.starfield);
 		vkCmdDraw(draw_cmd_buffers[i], 4, 1, 0, 0);
 
 		// Planet
 		auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
 		auto &planet_index_buffer  = models.planet->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.planet);
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, planet_vertex_buffer.get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], planet_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -115,7 +119,7 @@ void Instancing::build_command_buffers()
 		// Instanced rocks
 		auto &rock_vertex_buffer = models.rock->vertex_buffers.at("vertex_buffer");
 		auto &rock_index_buffer  = models.rock->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.instanced_rocks);
 		// Binding point 0 : Mesh vertex buffer
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, rock_vertex_buffer.get(), offsets);
@@ -212,7 +216,7 @@ void Instancing::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Planet
 	buffer_descriptor = create_descriptor(*uniform_buffers.scene);
@@ -222,7 +226,7 @@ void Instancing::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void Instancing::prepare_pipelines()
@@ -276,7 +280,7 @@ void Instancing::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
@@ -389,11 +393,11 @@ void Instancing::prepare_instance_data()
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
 		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale *= 0.75f;
+		instance_data[static_cast<int>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[static_cast<int>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[static_cast<int>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[static_cast<int>(i + INSTANCE_COUNT / 2)].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[static_cast<int>(i + INSTANCE_COUNT / 2)].scale *= 0.75f;
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);
@@ -407,7 +411,7 @@ void Instancing::prepare_instance_data()
 	{
 		VkDeviceMemory memory;
 		VkBuffer       buffer;
-	} staging_buffer;
+	} staging_buffer{};
 
 	staging_buffer.buffer = get_device().create_buffer(
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -523,9 +527,9 @@ void Instancing::render(float delta_time)
 
 void Instancing::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Statistics"))
+	if (vkb::Drawer::header("Statistics"))
 	{
-		drawer.text("Instances: %d", INSTANCE_COUNT);
+		vkb::Drawer::text("Instances: %d", INSTANCE_COUNT);
 	}
 }
 

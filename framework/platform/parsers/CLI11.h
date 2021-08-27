@@ -28,15 +28,15 @@ namespace vkb
 struct CLI11CommandContextState
 
 {
-	std::string group_name = "";
+	std::string group_name;
 };
 
 class CLI11CommandContext : public CommandParserContext
 {
   public:
-	CLI11CommandContext(CLI::App *cli, const CLI11CommandContextState &state = {});
+	explicit CLI11CommandContext(CLI::App *cli, CLI11CommandContextState state = {});
 
-	virtual ~CLI11CommandContext() = default;
+	~CLI11CommandContext() override = default;
 
 	bool                     has_group_name() const;
 	const std::string &      get_group_name() const;
@@ -52,11 +52,11 @@ class CLI11CommandParser : public CommandParser
 {
   public:
 	CLI11CommandParser(const std::string &name, const std::string &description, const std::vector<std::string> &args);
-	virtual ~CLI11CommandParser() = default;
+	~CLI11CommandParser() override = default;
 
-	virtual std::vector<std::string> help() const override;
+	std::vector<std::string> help() const override;
 
-	virtual bool parse(CommandParserContext *context, const std::vector<Command *> &commands) override;
+	bool parse(CommandParserContext *context, const std::vector<Command *> &commands) override;
 
 #define CAST(type) virtual void parse(CommandParserContext *context, type *command) override;
 	CAST(CommandGroup);
@@ -70,7 +70,7 @@ class CLI11CommandParser : public CommandParser
 	void parse(CLI11CommandContext *context, PositionalCommand *command);
 	void parse(CLI11CommandContext *context, FlagCommand *command);
 
-	virtual bool contains(Command *command) const override;
+	bool contains(Command *command) const override;
 
   private:
 	std::vector<char *>       _args;
@@ -79,6 +79,6 @@ class CLI11CommandParser : public CommandParser
 
 	std::unordered_map<Command *, CLI::Option *> _options;
 
-	virtual std::vector<std::string> get_command_value(Command *command) const override;
+	std::vector<std::string> get_command_value(Command *command) const override;
 };
 }        // namespace vkb

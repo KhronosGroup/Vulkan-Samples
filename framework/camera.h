@@ -66,11 +66,11 @@ class Camera
 		bool down  = false;
 	} keys;
 
-	bool moving();
+	bool moving() const;
 
-	float get_near_clip();
+	float get_near_clip() const;
 
-	float get_far_clip();
+	float get_far_clip() const;
 
 	void set_perspective(float fov, float aspect, float znear, float zfar);
 

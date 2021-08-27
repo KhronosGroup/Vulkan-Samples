@@ -27,15 +27,15 @@ class TimelineSemaphore : public ApiVulkanSample
 {
   public:
 	TimelineSemaphore();
-	~TimelineSemaphore();
+	~TimelineSemaphore() override;
 
   private:
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual bool prepare(vkb::Platform &platform) override;
-	virtual void finish() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	bool prepare(vkb::Platform &platform) override;
+	void finish() override;
 
 	void create_resources();
 	void create_pipelines();
@@ -107,9 +107,9 @@ class TimelineSemaphore : public ApiVulkanSample
 	void wait_timeline_gpu(VkQueue queue, const Timeline &timeline, TimelineLock &lock);
 	void wait_timeline_cpu(const Timeline &timeline);
 	void signal_timeline_cpu(const Timeline &timeline, TimelineLock &lock);
-	void update_pending(TimelineLock &lock, uint64_t timeline);
+	static void update_pending(TimelineLock &lock, uint64_t timeline);
 	void wait_pending_in_order_queue(TimelineLock &lock, uint64_t timeline);
-	void wait_pending(TimelineLock &lock, uint64_t timeline);
+	static void wait_pending(TimelineLock &lock, uint64_t timeline);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_timeline_semaphore();

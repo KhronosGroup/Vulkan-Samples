@@ -59,7 +59,7 @@ class HelloTriangle : public vkb::Application
 
 		VkSemaphore swapchain_release_semaphore = VK_NULL_HANDLE;
 
-		int32_t queue_index;
+		int32_t queue_index{};
 	};
 
 	/**
@@ -120,52 +120,52 @@ class HelloTriangle : public vkb::Application
 	};
 
   public:
-	HelloTriangle();
+	HelloTriangle() = default;
 
-	virtual ~HelloTriangle();
+	~HelloTriangle() override;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void resize(uint32_t width, uint32_t height) override;
 
-	bool validate_extensions(const std::vector<const char *> &         required,
+	static bool validate_extensions(const std::vector<const char *> &         required,
 	                         const std::vector<VkExtensionProperties> &available);
 
-	bool validate_layers(const std::vector<const char *> &     required,
+	static bool validate_layers(const std::vector<const char *> &     required,
 	                     const std::vector<VkLayerProperties> &available);
 
-	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
+	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 
-	void init_instance(Context &                        context,
+	static void init_instance(Context &_context,
 	                   const std::vector<const char *> &required_instance_extensions,
 	                   const std::vector<const char *> &required_validation_layers);
 
-	void init_device(Context &                        context,
+	static void init_device(Context &_context,
 	                 const std::vector<const char *> &required_device_extensions);
 
-	void init_per_frame(Context &context, PerFrame &per_frame);
+	static void init_per_frame(Context &context, PerFrame &per_frame);
 
-	void teardown_per_frame(Context &context, PerFrame &per_frame);
+	static void teardown_per_frame(Context &context, PerFrame &per_frame);
 
-	void init_swapchain(Context &context);
+	static void init_swapchain(Context &context);
 
-	void init_render_pass(Context &context);
+	static void init_render_pass(Context &context);
 
-	VkShaderModule load_shader_module(Context &context, const char *path);
+	static VkShaderModule load_shader_module(Context &context, const char *path);
 
-	void init_pipeline(Context &context);
+	static void init_pipeline(Context &context);
 
-	VkResult acquire_next_image(Context &context, uint32_t *image);
+	static VkResult acquire_next_image(Context &context, uint32_t *image);
 
-	void render_triangle(Context &context, uint32_t swapchain_index);
+	static void render_triangle(Context &context, uint32_t swapchain_index);
 
-	VkResult present_image(Context &context, uint32_t index);
+	static VkResult present_image(Context &context, uint32_t index);
 
-	void init_framebuffers(Context &context);
+	static void init_framebuffers(Context &context);
 
-	void teardown_framebuffers(Context &context);
+	static void teardown_framebuffers(Context &context);
 
 	void teardown(Context &context);
 

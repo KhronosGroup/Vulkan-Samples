@@ -58,8 +58,8 @@ class Instancing : public ApiVulkanSample
 		VkBuffer               buffer = VK_NULL_HANDLE;
 		VkDeviceMemory         memory = VK_NULL_HANDLE;
 		size_t                 size   = 0;
-		VkDescriptorBufferInfo descriptor;
-	} instance_buffer;
+		VkDescriptorBufferInfo descriptor{};
+	} instance_buffer{};
 
 	struct UBOVS
 	{
@@ -91,8 +91,8 @@ class Instancing : public ApiVulkanSample
 	} descriptor_sets;
 
 	Instancing();
-	~Instancing();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~Instancing() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         load_assets();
 	void         setup_descriptor_pool();
@@ -104,9 +104,9 @@ class Instancing : public ApiVulkanSample
 	void         update_uniform_buffer(float delta_time);
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_instancing();

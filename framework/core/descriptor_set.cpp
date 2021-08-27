@@ -49,7 +49,7 @@ void DescriptorSet::reset(const BindingMap<VkDescriptorBufferInfo> &new_buffer_i
 	}
 	else
 	{
-		LOGW("Calling reset on Descriptor Set with no new buffer infos and no new image infos.");
+		LOGW("Calling reset on Descriptor Set with no new buffer infos and no new image infos.")
 	}
 
 	this->write_descriptor_sets.clear();
@@ -63,7 +63,7 @@ void DescriptorSet::prepare()
 	// We don't want to prepare twice during the life cycle of a Descriptor Set
 	if (!write_descriptor_sets.empty())
 	{
-		LOGW("Trying to prepare a descriptor set that has already been prepared, skipping.");
+		LOGW("Trying to prepare a descriptor set that has already been prepared, skipping.")
 		return;
 	}
 
@@ -83,16 +83,16 @@ void DescriptorSet::prepare()
 				size_t uniform_buffer_range_limit = device.get_gpu().get_properties().limits.maxUniformBufferRange;
 				size_t storage_buffer_range_limit = device.get_gpu().get_properties().limits.maxStorageBufferRange;
 
-				size_t buffer_range_limit = static_cast<size_t>(buffer_info.range);
+				auto buffer_range_limit = static_cast<size_t>(buffer_info.range);
 
 				if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC) && buffer_range_limit > uniform_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, uniform_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the uniform buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, uniform_buffer_range_limit)
 					buffer_range_limit = uniform_buffer_range_limit;
 				}
 				else if ((binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER || binding_info->descriptorType == VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC) && buffer_range_limit > storage_buffer_range_limit)
 				{
-					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, storage_buffer_range_limit);
+					LOGE("Set {} binding {} cannot be updated: buffer size {} exceeds the storage buffer range limit {}", descriptor_set_layout.get_index(), binding_index, buffer_info.range, storage_buffer_range_limit)
 					buffer_range_limit = storage_buffer_range_limit;
 				}
 
@@ -113,7 +113,7 @@ void DescriptorSet::prepare()
 		}
 		else
 		{
-			LOGE("Shader layout set does not use buffer binding at #{}", binding_index);
+			LOGE("Shader layout set does not use buffer binding at #{}", binding_index)
 		}
 	}
 
@@ -144,7 +144,7 @@ void DescriptorSet::prepare()
 		}
 		else
 		{
-			LOGE("Shader layout set does not use image binding at #{}", binding_index);
+			LOGE("Shader layout set does not use image binding at #{}", binding_index)
 		}
 	}
 }
@@ -158,11 +158,9 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	// (but skipping all to-update bindings that haven't been written yet)
 	if (bindings_to_update.empty())
 	{
-		for (size_t i = 0; i < write_descriptor_sets.size(); i++)
+		for (auto & write_operation : write_descriptor_sets)
 		{
-			const auto &write_operation = write_descriptor_sets[i];
-
-			size_t write_operation_hash = 0;
+				size_t write_operation_hash = 0;
 			hash_param(write_operation_hash, write_operation);
 
 			auto update_pair_it = updated_bindings.find(write_operation.dstBinding);
@@ -175,13 +173,11 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	}
 	else
 	{
-		// Otherwise we want to update the binding indices present in the 'bindings_to_update' vector.
+		// Otherwise, we want to update the binding indices present in the 'bindings_to_update' vector.
 		// (again, skipping those to update but not updated yet)
-		for (size_t i = 0; i < write_descriptor_sets.size(); i++)
+		for (auto & write_operation : write_descriptor_sets)
 		{
-			const auto &write_operation = write_descriptor_sets[i];
-
-			if (std::find(bindings_to_update.begin(), bindings_to_update.end(), write_operation.dstBinding) != bindings_to_update.end())
+				if (std::find(bindings_to_update.begin(), bindings_to_update.end(), write_operation.dstBinding) != bindings_to_update.end())
 			{
 				size_t write_operation_hash = 0;
 				hash_param(write_operation_hash, write_operation);
@@ -214,7 +210,7 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	}
 }
 
-DescriptorSet::DescriptorSet(DescriptorSet &&other) :
+DescriptorSet::DescriptorSet(DescriptorSet &&other)  noexcept :
     device{other.device},
     descriptor_set_layout{other.descriptor_set_layout},
     descriptor_pool{other.descriptor_pool},

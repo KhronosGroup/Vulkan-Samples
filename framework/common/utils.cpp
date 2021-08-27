@@ -118,7 +118,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		cmd_buf.buffer_memory_barrier(dst_buffer, 0, dst_size, memory_barrier);
 	}
 
-	// Revert back the framebuffer image view from transfer to present
+	// Revert the framebuffer image view from transfer to present
 	{
 		ImageMemoryBarrier memory_barrier{};
 		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
@@ -264,7 +264,7 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 
 	if (!camera_node)
 	{
-		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
+		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str())
 
 		camera_node = scene.find_node("default_camera");
 	}
@@ -295,12 +295,12 @@ bool generate_all(RenderContext &context, sg::Scene &scene)
 	bool success = true;
 	if (!graphing::framework_graph::generate(context))
 	{
-		LOGE("Failed to save render context graph");
+		LOGE("Failed to save render context graph")
 		success = false;
 	}
 	if (!graphing::scene_graph::generate(scene))
 	{
-		LOGE("Failed to save scene graph");
+		LOGE("Failed to save scene graph")
 		success = false;
 	}
 	return success;

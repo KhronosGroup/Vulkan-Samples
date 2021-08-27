@@ -61,7 +61,7 @@ TimelineSemaphore::~TimelineSemaphore()
 {
 	if (device)
 	{
-		VkDevice vk_device = get_device().get_handle();
+		VkDevice vk_device = device->get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.compute_pipeline_layout, nullptr);
 		vkDestroyPipelineLayout(vk_device, pipelines.graphics_pipeline_layout, nullptr);
 		vkDestroyPipeline(vk_device, pipelines.visualize_pipeline, nullptr);
@@ -131,7 +131,7 @@ void TimelineSemaphore::create_timeline_semaphore(Timeline &timeline)
 	type_create_info.initialValue  = 0;
 	create_info.pNext              = &type_create_info;
 
-	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &create_info, nullptr, &timeline.semaphore));
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &create_info, nullptr, &timeline.semaphore));
 
 	timeline.timeline = 0;
 }
@@ -539,23 +539,23 @@ void TimelineSemaphore::create_compute_pipeline()
 	layout_info.pushConstantRangeCount = 1;
 	layout_info.pPushConstantRanges    = &range;
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &pipelines.compute_pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &layout_info, nullptr, &pipelines.compute_pipeline_layout));
 	VkComputePipelineCreateInfo info = vkb::initializers::compute_pipeline_create_info(pipelines.compute_pipeline_layout);
 
 	info.stage = load_shader("timeline_semaphore/game_of_life_update.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_update_pipeline));
 
 	info.stage = load_shader("timeline_semaphore/game_of_life_mutate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_mutate_pipeline));
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_mutate_pipeline));
 
 	info.stage = load_shader("timeline_semaphore/game_of_life_init.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_init_pipeline));
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.compute_init_pipeline));
 }
 
 void TimelineSemaphore::create_graphics_pipeline()
 {
 	auto layout_info = vkb::initializers::pipeline_layout_create_info(&descriptors.sampled_layout, 1);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &pipelines.graphics_pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &layout_info, nullptr, &pipelines.graphics_pipeline_layout));
 
 	VkGraphicsPipelineCreateInfo info = vkb::initializers::pipeline_create_info(pipelines.graphics_pipeline_layout, render_pass);
 
@@ -595,7 +595,7 @@ void TimelineSemaphore::create_graphics_pipeline()
 
 	stages[0] = load_shader("timeline_semaphore/render.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	stages[1] = load_shader("timeline_semaphore/render.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.visualize_pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.visualize_pipeline));
 }
 
 void TimelineSemaphore::create_pipelines()
@@ -624,8 +624,8 @@ void TimelineSemaphore::render(float delta_time)
 {
 	ApiVulkanSample::prepare_frame();
 
-	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
-	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
+	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
+	VK_CHECK(vkResetFences(device->get_handle(), 1, &wait_fences[current_buffer]));
 
 	VkViewport viewport = {0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};

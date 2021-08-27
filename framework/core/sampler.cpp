@@ -29,7 +29,7 @@ Sampler::Sampler(Device &d, const VkSamplerCreateInfo &info) :
 	VK_CHECK(vkCreateSampler(device.get_handle(), &info, nullptr, &handle));
 }
 
-Sampler::Sampler(Sampler &&other) :
+Sampler::Sampler(Sampler &&other)  noexcept :
     device{other.device},
     handle{other.handle}
 {

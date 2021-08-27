@@ -54,7 +54,7 @@ inline void read(std::istringstream &is, std::string &value)
 	std::size_t size;
 	read(is, size);
 	value.resize(size);
-	is.read(const_cast<char *>(value.data()), size);
+	is.read(const_cast<char *>(value.data()), static_cast<std::streamsize>(size));
 }
 
 template <class T>
@@ -118,7 +118,7 @@ inline void write(std::ostringstream &os, const T &value)
 inline void write(std::ostringstream &os, const std::string &value)
 {
 	write(os, value.size());
-	os.write(value.data(), value.size());
+	os.write(value.data(), static_cast<std::streamsize>(value.size()));
 }
 
 template <class T>

@@ -53,13 +53,13 @@ enum class AlphaMode
 class Material : public Component
 {
   public:
-	Material(const std::string &name);
+	explicit Material(const std::string &name);
 
 	Material(Material &&other) = default;
 
-	virtual ~Material() = default;
+	~Material() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	std::unordered_map<std::string, Texture *> textures;
 

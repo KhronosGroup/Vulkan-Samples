@@ -24,6 +24,12 @@
 #include "scene_graph/components/sub_mesh.h"
 
 HDR::HDR()
+: pipelines()
+, pipeline_layouts()
+, descriptor_sets()
+, descriptor_set_layouts()
+, filter_pass()
+, offscreen()
 {
 	title = "High dynamic range rendering";
 }
@@ -32,36 +38,36 @@ HDR::~HDR()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.bloom[0], nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.bloom[1], nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.skybox, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.reflect, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.composition, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.bloom[0], nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.bloom[1], nullptr);
 
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.models, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.composition, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.bloom_filter, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layouts.models, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layouts.composition, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layouts.bloom_filter, nullptr);
 
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.models, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.composition, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.bloom_filter, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layouts.models, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layouts.composition, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layouts.bloom_filter, nullptr);
 
-		vkDestroyRenderPass(get_device().get_handle(), offscreen.render_pass, nullptr);
-		vkDestroyRenderPass(get_device().get_handle(), filter_pass.render_pass, nullptr);
+		vkDestroyRenderPass(device->get_handle(), offscreen.render_pass, nullptr);
+		vkDestroyRenderPass(device->get_handle(), filter_pass.render_pass, nullptr);
 
-		vkDestroyFramebuffer(get_device().get_handle(), offscreen.framebuffer, nullptr);
-		vkDestroyFramebuffer(get_device().get_handle(), filter_pass.framebuffer, nullptr);
+		vkDestroyFramebuffer(device->get_handle(), offscreen.framebuffer, nullptr);
+		vkDestroyFramebuffer(device->get_handle(), filter_pass.framebuffer, nullptr);
 
-		vkDestroySampler(get_device().get_handle(), offscreen.sampler, nullptr);
-		vkDestroySampler(get_device().get_handle(), filter_pass.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), offscreen.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), filter_pass.sampler, nullptr);
 
-		offscreen.depth.destroy(get_device().get_handle());
-		offscreen.color[0].destroy(get_device().get_handle());
-		offscreen.color[1].destroy(get_device().get_handle());
+		offscreen.depth.destroy(device->get_handle());
+		offscreen.color[0].destroy(device->get_handle());
+		offscreen.color[1].destroy(device->get_handle());
 
-		filter_pass.color[0].destroy(get_device().get_handle());
+		filter_pass.color[0].destroy(device->get_handle());
 
-		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, nullptr);
+		vkDestroySampler(device->get_handle(), textures.envmap.sampler, nullptr);
 	}
 }
 
@@ -98,20 +104,20 @@ void HDR::build_command_buffers()
 				First pass: Render scene to offscreen framebuffer
 			*/
 
-			std::array<VkClearValue, 3> clear_values;
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[2].depthStencil = {0.0f, 0};
+			std::array<VkClearValue, 3> _clear_values{};
+			_clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			_clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			_clear_values[2].depthStencil = {0.0f, 0};
 
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.renderPass               = offscreen.render_pass;
-			render_pass_begin_info.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info.clearValueCount          = 3;
-			render_pass_begin_info.pClearValues             = clear_values.data();
+			VkRenderPassBeginInfo _render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			_render_pass_begin_info.renderPass               = offscreen.render_pass;
+			_render_pass_begin_info.framebuffer              = offscreen.framebuffer;
+			_render_pass_begin_info.renderArea.extent.width  = offscreen.width;
+			_render_pass_begin_info.renderArea.extent.height = offscreen.height;
+			_render_pass_begin_info.clearValueCount          = 3;
+			_render_pass_begin_info.pClearValues             = _clear_values.data();
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
@@ -119,20 +125,18 @@ void HDR::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			VkDeviceSize offsets[1] = {0};
-
 			// Skybox
 			if (display_skybox)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, NULL);
+				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
 
 				draw_model(models.skybox, draw_cmd_buffers[i]);
 			}
 
 			// 3D object
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
 
 			draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
 
@@ -144,20 +148,20 @@ void HDR::build_command_buffers()
 		*/
 		if (bloom)
 		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			VkClearValue _clear_values[2];
+			_clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			_clear_values[1].depthStencil = {0.0f, 0};
 
 			// Bloom filter
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
-			render_pass_begin_info.renderPass               = filter_pass.render_pass;
-			render_pass_begin_info.clearValueCount          = 1;
-			render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
-			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
-			render_pass_begin_info.pClearValues             = clear_values;
+			VkRenderPassBeginInfo _render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			_render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
+			_render_pass_begin_info.renderPass               = filter_pass.render_pass;
+			_render_pass_begin_info.clearValueCount          = 1;
+			_render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
+			_render_pass_begin_info.renderArea.extent.height = filter_pass.height;
+			_render_pass_begin_info.pClearValues             = _clear_values;
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
@@ -165,7 +169,7 @@ void HDR::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, nullptr);
 
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
@@ -181,28 +185,28 @@ void HDR::build_command_buffers()
 			Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			VkClearValue _clear_values[2];
+			_clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			_clear_values[1].depthStencil = {0.0f, 0};
 
 			// Final composition
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = 2;
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.pClearValues             = clear_values;
+			VkRenderPassBeginInfo _render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			_render_pass_begin_info.framebuffer              = framebuffers[i];
+			_render_pass_begin_info.renderPass               = render_pass;
+			_render_pass_begin_info.clearValueCount          = 2;
+			_render_pass_begin_info.renderArea.extent.width  = width;
+			_render_pass_begin_info.renderArea.extent.height = height;
+			_render_pass_begin_info.pClearValues             = _clear_values;
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
 
 			// Scene
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
@@ -227,14 +231,12 @@ void HDR::build_command_buffers()
 void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
 {
 	VkImageAspectFlags aspect_mask = 0;
-	VkImageLayout      image_layout;
 
 	attachment->format = format;
 
 	if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 	{
 		aspect_mask  = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	}
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
@@ -244,7 +246,6 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 		{
 			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
-		image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	assert(aspect_mask > 0);
@@ -288,19 +289,19 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 void HDR::prepare_offscreen_buffer()
 {
 	{
-		offscreen.width  = width;
-		offscreen.height = height;
+		offscreen.width  = static_cast<int>(width);
+		offscreen.height = static_cast<int>(height);
 
 		// Color attachments
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate render pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
 
 		// Init attachment properties
@@ -343,7 +344,7 @@ void HDR::prepare_offscreen_buffer()
 		subpass.pDepthStencilAttachment = &depth_reference;
 
 		// Use subpass dependencies for attachment layput transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -372,14 +373,14 @@ void HDR::prepare_offscreen_buffer()
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
 
-		std::array<VkImageView, 3> attachments;
+		std::array<VkImageView, 3> attachments{};
 		attachments[0] = offscreen.color[0].view;
 		attachments[1] = offscreen.color[1].view;
 		attachments[2] = offscreen.depth.view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = offscreen.render_pass;
 		framebuffer_create_info.pAttachments            = attachments.data();
 		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
@@ -406,8 +407,8 @@ void HDR::prepare_offscreen_buffer()
 
 	// Bloom separable filter pass
 	{
-		filter_pass.width  = width;
-		filter_pass.height = height;
+		filter_pass.width  = static_cast<int>(width);
+		filter_pass.height = static_cast<int>(height);
 
 		// Color attachments
 
@@ -435,8 +436,8 @@ void HDR::prepare_offscreen_buffer()
 		subpass.pColorAttachments    = color_references.data();
 		subpass.colorAttachmentCount = 1;
 
-		// Use subpass dependencies for attachment layput transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		// Use subpass dependencies for attachment layout transitions
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -465,12 +466,12 @@ void HDR::prepare_offscreen_buffer()
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &filter_pass.render_pass));
 
-		std::array<VkImageView, 1> attachments;
+		std::array<VkImageView, 1> attachments{};
 		attachments[0] = filter_pass.color[0].view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = filter_pass.render_pass;
 		framebuffer_create_info.pAttachments            = attachments.data();
 		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
@@ -502,7 +503,7 @@ void HDR::load_assets()
 	models.skybox                      = load_model("scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
-	for (auto file : filenames)
+	for (const auto& file : filenames)
 	{
 		auto object = load_model("scenes/" + file);
 		models.objects.emplace_back(std::move(object));
@@ -597,7 +598,7 @@ void HDR::setup_descriptor_sets()
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Sky box descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
@@ -610,7 +611,7 @@ void HDR::setup_descriptor_sets()
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Bloom filter
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.bloom_filter, 1);
@@ -625,7 +626,7 @@ void HDR::setup_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Composition descriptor set
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
@@ -640,7 +641,7 @@ void HDR::setup_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void HDR::prepare_pipelines()
@@ -711,12 +712,12 @@ void HDR::prepare_pipelines()
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
 	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries;
+	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 
 	// Full screen pipelines
 
@@ -841,7 +842,7 @@ void HDR::update_uniform_buffers()
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
-void HDR::update_params()
+void HDR::update_params() const
 {
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
@@ -866,7 +867,7 @@ bool HDR::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
@@ -892,7 +893,7 @@ void HDR::render(float delta_time)
 
 void HDR::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Settings"))
+	if (vkb::Drawer::header("Settings"))
 	{
 		if (drawer.combo_box("Object type", &models.object_index, object_names))
 		{

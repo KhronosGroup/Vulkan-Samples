@@ -173,7 +173,7 @@ class MSAASample : public vkb::VulkanSample
 	 *        disables color resolve and updates the load/store operations of
 	 *        color attachments
 	 */
-	void use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment);
+	void use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment) const;
 
 	/**
 	 * @brief Submits a transfer operation to resolve the multisampled color attachment
@@ -209,7 +209,7 @@ class MSAASample : public vkb::VulkanSample
 	 * @brief Disables depth writeback resolve and updates the load/store operations of
 	 *        the depth resolve attachment
 	 */
-	void disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store);
+	void disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store) const;
 
 	/**
 	 * @brief Selects the depth resolve mode (e.g. min or max sample values)

@@ -26,7 +26,7 @@ class Device;
 class FencePool
 {
   public:
-	FencePool(Device &device);
+	explicit FencePool(Device &device);
 
 	FencePool(const FencePool &) = delete;
 

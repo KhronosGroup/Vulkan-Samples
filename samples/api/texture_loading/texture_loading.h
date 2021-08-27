@@ -73,8 +73,8 @@ class TextureLoading : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout;
 
 	TextureLoading();
-	~TextureLoading();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~TextureLoading() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         load_texture();
 	void         destroy_texture(Texture texture);
 	void         build_command_buffers() override;
@@ -87,9 +87,9 @@ class TextureLoading : public ApiVulkanSample
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void view_changed() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_texture_loading();

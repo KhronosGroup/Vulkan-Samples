@@ -74,17 +74,17 @@ class OffscreenContext
 	~OffscreenContext();
 
 	// Shared
-	GLuint build_program(const char *vertex_shader_source, const char *fragment_shader_source);
+	static GLuint build_program(const char *vertex_shader_source, const char *fragment_shader_source);
 
   private:
 	// Platform specific
 	void init_context();
 
-	void destroy_context();
+	void destroy_context() const;
 
-	std::string get_shader_header();
+	static std::string get_shader_header();
 
 	ContextData data;
 
-	GLuint load_shader(const char *shader_source, GLenum shader_type);
+	static GLuint load_shader(const char *shader_source, GLenum shader_type);
 };

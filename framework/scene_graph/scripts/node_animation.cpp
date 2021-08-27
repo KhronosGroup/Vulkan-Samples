@@ -17,15 +17,7 @@
 
 #include "node_animation.h"
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
-
-#include "scene_graph/components/perspective_camera.h"
+#include <utility>
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 
@@ -35,7 +27,7 @@ namespace sg
 {
 NodeAnimation::NodeAnimation(Node &node, TransformAnimFn animation_fn) :
     NodeScript{node, ""},
-    animation_fn{animation_fn}
+    animation_fn{std::move(animation_fn)}
 {
 }
 
@@ -49,7 +41,7 @@ void NodeAnimation::update(float delta_time)
 
 void NodeAnimation::set_animation(TransformAnimFn handle)
 {
-	animation_fn = handle;
+	animation_fn = std::move(handle);
 }
 
 void NodeAnimation::clear_animation()

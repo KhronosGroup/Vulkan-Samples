@@ -62,7 +62,7 @@ class GLSLCompiler
 	 * @param[out] spirv The generated SPIRV code
 	 * @param[out] info_log Stores any log messages during the compilation process
 	 */
-	bool compile_to_spirv(VkShaderStageFlagBits       stage,
+	static bool compile_to_spirv(VkShaderStageFlagBits       stage,
 	                      const std::vector<uint8_t> &glsl_source,
 	                      const std::string &         entry_point,
 	                      const ShaderVariant &       shader_variant,

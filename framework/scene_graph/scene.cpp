@@ -18,6 +18,7 @@
 #include "scene.h"
 
 #include <queue>
+#include <utility>
 
 #include "common/error.h"
 #include "component.h"
@@ -28,8 +29,8 @@ namespace vkb
 {
 namespace sg
 {
-Scene::Scene(const std::string &name) :
-    name{name}
+Scene::Scene(std::string name) :
+    name{std::move(name)}
 {}
 
 void Scene::set_name(const std::string &new_name)

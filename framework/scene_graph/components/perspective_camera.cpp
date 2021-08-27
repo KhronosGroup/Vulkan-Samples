@@ -59,19 +59,19 @@ void PerspectiveCamera::set_aspect_ratio(float new_aspect_ratio)
 	aspect_ratio = new_aspect_ratio;
 }
 
-float PerspectiveCamera::get_field_of_view()
+float PerspectiveCamera::get_field_of_view() const
 {
 	return fov;
 }
 
-float PerspectiveCamera::get_aspect_ratio()
+float PerspectiveCamera::get_aspect_ratio() const
 {
 	return aspect_ratio;
 }
 
 glm::mat4 PerspectiveCamera::get_projection()
 {
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	return glm::perspective(fov, aspect_ratio, far_plane, near_plane);
 }
 }        // namespace sg

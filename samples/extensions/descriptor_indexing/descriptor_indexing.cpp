@@ -37,7 +37,7 @@ DescriptorIndexing::~DescriptorIndexing()
 {
 	if (device)
 	{
-		VkDevice vk_device = get_device().get_handle();
+		VkDevice vk_device = device->get_handle();
 		vkDestroyPipelineLayout(vk_device, pipelines.pipeline_layout, nullptr);
 		vkDestroyPipeline(vk_device, pipelines.non_uniform_indexing, nullptr);
 		vkDestroyPipeline(vk_device, pipelines.update_after_bind, nullptr);
@@ -67,8 +67,8 @@ void DescriptorIndexing::render(float delta_time)
 {
 	ApiVulkanSample::prepare_frame();
 
-	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
-	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
+	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
+	VK_CHECK(vkResetFences(device->get_handle(), 1, &wait_fences[current_buffer]));
 
 	VkViewport viewport = {0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
@@ -122,11 +122,11 @@ void DescriptorIndexing::render(float delta_time)
 		write.dstArrayElement = descriptor_offset;
 		vkCmdPushConstants(cmd, pipelines.pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uint32_t), sizeof(uint32_t), &descriptor_offset);
 		descriptor_offset = (descriptor_offset + 1) % NumDescriptorsStreaming;
-		vkUpdateDescriptorSets(get_device().get_handle(), 1, &write, 0, nullptr);
+		vkUpdateDescriptorSets(device->get_handle(), 1, &write, 0, nullptr);
 
 		// We can use base instance as a way to offset gl_InstanceIndex in a shader.
 		// This can also be a nice way to pass down an offset for bindless purposes in vertex shaders that does not consume a push constant.
-		// In this case however, we only use the instance offset to place the textures where we expect
+		// In this case however, we only use the instance offset to place the textures where we expect,
 		// and we cannot directly access gl_InstanceIndex in fragment shaders.
 		vkCmdDraw(cmd, 4, 1, 0, i);
 	}
@@ -144,14 +144,14 @@ void DescriptorIndexing::render(float delta_time)
 
 void DescriptorIndexing::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Device properties"))
+	if (vkb::Drawer::header("Device properties"))
 	{
 		// Display some common properties. Only bother with sampled image since that's what we're using here.
-		drawer.text("maxDescriptorSetUpdateAfterBindSampledImages: %u", descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages);
-		drawer.text("maxPerStageUpdateAfterBindResources: %u", descriptor_indexing_properties.maxPerStageUpdateAfterBindResources);
-		drawer.text("quadDivergentImplicitLod: %u", descriptor_indexing_properties.quadDivergentImplicitLod);
-		drawer.text("shaderSampledImageArrayNonUniformIndexingNative: %u", descriptor_indexing_properties.shaderSampledImageArrayNonUniformIndexingNative);
-		drawer.text("maxUpdateAfterBindDescriptorsInAllPools: %u", descriptor_indexing_properties.maxUpdateAfterBindDescriptorsInAllPools);
+		vkb::Drawer::text("maxDescriptorSetUpdateAfterBindSampledImages: %u", descriptor_indexing_properties.maxDescriptorSetUpdateAfterBindSampledImages);
+		vkb::Drawer::text("maxPerStageUpdateAfterBindResources: %u", descriptor_indexing_properties.maxPerStageUpdateAfterBindResources);
+		vkb::Drawer::text("quadDivergentImplicitLod: %u", descriptor_indexing_properties.quadDivergentImplicitLod);
+		vkb::Drawer::text("shaderSampledImageArrayNonUniformIndexingNative: %u", descriptor_indexing_properties.shaderSampledImageArrayNonUniformIndexingNative);
+		vkb::Drawer::text("maxUpdateAfterBindDescriptorsInAllPools: %u", descriptor_indexing_properties.maxUpdateAfterBindDescriptorsInAllPools);
 	}
 }
 
@@ -169,21 +169,21 @@ void DescriptorIndexing::create_immutable_sampler_descriptor_set()
 	create_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
 	create_info.maxLod              = VK_LOD_CLAMP_NONE;
 
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &create_info, nullptr, &sampler.sampler));
+	VK_CHECK(vkCreateSampler(device->get_handle(), &create_info, nullptr, &sampler.sampler));
 
 	VkDescriptorSetLayoutBinding binding = vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0);
 	binding.pImmutableSamplers           = &sampler.sampler;
 
 	VkDescriptorSetLayoutCreateInfo set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(&binding, 1);
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &set_layout_create_info, nullptr, &sampler.set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &set_layout_create_info, nullptr, &sampler.set_layout));
 
 	VkDescriptorPoolSize       pool_size = vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLER, 1);
 	VkDescriptorPoolCreateInfo pool      = vkb::initializers::descriptor_pool_create_info(1, &pool_size, 1);
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &pool, nullptr, &sampler.descriptor_pool));
+	VK_CHECK(vkCreateDescriptorPool(device->get_handle(), &pool, nullptr, &sampler.descriptor_pool));
 
 	VkDescriptorSetAllocateInfo allocate_info = vkb::initializers::descriptor_set_allocate_info(sampler.descriptor_pool, &sampler.set_layout, 1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocate_info, &sampler.descriptor_set));
+	VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &allocate_info, &sampler.descriptor_set));
 }
 
 void DescriptorIndexing::create_bindless_descriptors()
@@ -218,7 +218,7 @@ void DescriptorIndexing::create_bindless_descriptors()
 	    VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT |
 	    VK_DESCRIPTOR_BINDING_UPDATE_UNUSED_WHILE_PENDING_BIT_EXT;
 
-	// In unextended Vulkan, there is no way to pass down flags to a binding, so we're going to do so via a pNext.
+	// In un-extended Vulkan, there is no way to pass down flags to a binding, so we're going to do so via a pNext.
 	// Each pBinding has a corresponding pBindingFlags.
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT binding_flags{};
 	binding_flags.sType          = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
@@ -226,7 +226,7 @@ void DescriptorIndexing::create_bindless_descriptors()
 	binding_flags.pBindingFlags  = &flags;
 	set_layout_create_info.pNext = &binding_flags;
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &set_layout_create_info, nullptr, &descriptors.set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &set_layout_create_info, nullptr, &descriptors.set_layout));
 
 	// We're going to allocate two separate descriptor sets from the same pool, and here VARIABLE_DESCRIPTOR_COUNT comes in handy!
 	// For the non-uniform indexing part, we allocate few descriptors, and for the streaming case, we allocate a fairly large ring buffer of descriptors we can play around with.
@@ -236,7 +236,7 @@ void DescriptorIndexing::create_bindless_descriptors()
 	// The pool is marked update-after-bind. Be aware that there is a global limit to the number of descriptors can be allocated at any one time.
 	// UPDATE_AFTER_BIND descriptors is somewhat of a precious resource, but min-spec in Vulkan is at least 500k descriptors, which should be more than enough.
 	pool.flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT_EXT;
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &pool, nullptr, &descriptors.descriptor_pool));
+	VK_CHECK(vkCreateDescriptorPool(device->get_handle(), &pool, nullptr, &descriptors.descriptor_pool));
 
 	VkDescriptorSetAllocateInfo allocate_info = vkb::initializers::descriptor_set_allocate_info(descriptors.descriptor_pool, &descriptors.set_layout, 1);
 
@@ -247,9 +247,9 @@ void DescriptorIndexing::create_bindless_descriptors()
 	allocate_info.pNext              = &variable_info;
 
 	variable_info.pDescriptorCounts = &NumDescriptorsStreaming;
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocate_info, &descriptors.descriptor_set_update_after_bind));
+	VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &allocate_info, &descriptors.descriptor_set_update_after_bind));
 	variable_info.pDescriptorCounts = &NumDescriptorsNonUniform;
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &allocate_info, &descriptors.descriptor_set_nonuniform));
+	VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &allocate_info, &descriptors.descriptor_set_nonuniform));
 }
 
 void DescriptorIndexing::create_pipelines()
@@ -265,7 +265,7 @@ void DescriptorIndexing::create_pipelines()
 	};
 	layout_create_info.pushConstantRangeCount = uint32_t(ranges.size());
 	layout_create_info.pPushConstantRanges    = ranges.data();
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_create_info, nullptr, &pipelines.pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &layout_create_info, nullptr, &pipelines.pipeline_layout));
 
 	VkGraphicsPipelineCreateInfo    info{};
 	VkPipelineShaderStageCreateInfo stages[2];
@@ -306,16 +306,16 @@ void DescriptorIndexing::create_pipelines()
 
 	stages[0] = load_shader("descriptor_indexing/nonuniform-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	stages[1] = load_shader("descriptor_indexing/nonuniform-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.non_uniform_indexing));
+	VK_CHECK(vkCreateGraphicsPipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.non_uniform_indexing));
 
 	stages[0] = load_shader("descriptor_indexing/update-after-bind-quads.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	stages[1] = load_shader("descriptor_indexing/update-after-bind-quads.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.update_after_bind));
+	VK_CHECK(vkCreateGraphicsPipelines(device->get_handle(), VK_NULL_HANDLE, 1, &info, nullptr, &pipelines.update_after_bind));
 }
 
 DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3], unsigned image_seed)
 {
-	// Fairly basic setup, generate some random textures so we can visualize that we are sampling many different textures.
+	// Fairly basic setup, generate some random textures, so we can visualize that we are sampling many textures.
 	DescriptorIndexing::TestImage test_image;
 
 	VkImageCreateInfo image_info = vkb::initializers::image_create_info();
@@ -330,16 +330,16 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	image_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
 
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_info, nullptr, &test_image.image));
+	VK_CHECK(vkCreateImage(device->get_handle(), &image_info, nullptr, &test_image.image));
 
 	VkMemoryAllocateInfo memory_allocation_info = vkb::initializers::memory_allocate_info();
 	VkMemoryRequirements memory_requirements;
 
-	vkGetImageMemoryRequirements(get_device().get_handle(), test_image.image, &memory_requirements);
+	vkGetImageMemoryRequirements(device->get_handle(), test_image.image, &memory_requirements);
 	memory_allocation_info.allocationSize  = memory_requirements.size;
-	memory_allocation_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation_info, nullptr, &test_image.memory));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), test_image.image, test_image.memory, 0));
+	memory_allocation_info.memoryTypeIndex = device->get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(device->get_handle(), &memory_allocation_info, nullptr, &test_image.memory));
+	VK_CHECK(vkBindImageMemory(device->get_handle(), test_image.image, test_image.memory, 0));
 
 	VkImageViewCreateInfo image_view           = vkb::initializers::image_view_create_info();
 	image_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
@@ -350,7 +350,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	image_view.subresourceRange.baseArrayLayer = 0;
 	image_view.subresourceRange.layerCount     = 1;
 	image_view.image                           = test_image.image;
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view, nullptr, &test_image.image_view));
+	VK_CHECK(vkCreateImageView(device->get_handle(), &image_view, nullptr, &test_image.image_view));
 
 	auto staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                          image_info.extent.width * image_info.extent.height * sizeof(uint32_t),
@@ -369,7 +369,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 			const auto float_to_unorm8 = [](float v) -> uint8_t {
 				v *= 255.0f;
-				int rounded = int(v + 0.5f);
+				long rounded = lround(v + 0.5f);
 				if (rounded < 0)
 				{
 					return 0;
@@ -416,7 +416,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 			for (unsigned i = 0; i < 3; i++)
 			{
-				// Add in some random noise for good measure so we're sure we're not sampling the exact same texture over and over.
+				// Add in some random noise for good measure, so we're sure we're not sampling the exact same texture over and over.
 				rgba[i] = float_to_unorm8(pattern_color * rgb[i] + distribution(rnd));
 			}
 			rgba[3] = 0xff;
@@ -424,7 +424,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	}
 	staging_buffer->unmap();
 
-	auto &cmd = get_device().request_command_buffer();
+	auto &cmd = device->request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	VkImageMemoryBarrier barrier = vkb::initializers::image_memory_barrier();
@@ -452,8 +452,8 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 	VK_CHECK(cmd.end());
 
 	// Not very optimal, but it's the simplest solution.
-	get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
-	get_device().get_suitable_graphics_queue().wait_idle();
+	device->get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
+	device->get_suitable_graphics_queue().wait_idle();
 
 	return test_image;
 }
@@ -463,11 +463,11 @@ void DescriptorIndexing::create_images()
 	std::uniform_real_distribution<float> color_distribution{0.2f, 0.8f};
 	float                                 colors[NumDescriptorsNonUniform][3];
 
-	for (unsigned i = 0; i < NumDescriptorsNonUniform; i++)
+	for (auto & color : colors)
 	{
-		for (unsigned j = 0; j < 3; j++)
+		for (float & j : color)
 		{
-			colors[i][j] = color_distribution(rnd);
+			j = color_distribution(rnd);
 		}
 	}
 
@@ -484,7 +484,7 @@ void DescriptorIndexing::create_images()
 		VkDescriptorImageInfo image_info = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, test_images[i].image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		VkWriteDescriptorSet  write      = vkb::initializers::write_descriptor_set(descriptors.descriptor_set_nonuniform, VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 0, &image_info);
 		write.dstArrayElement            = i;
-		vkUpdateDescriptorSets(get_device().get_handle(), 1, &write, 0, nullptr);
+		vkUpdateDescriptorSets(device->get_handle(), 1, &write, 0, nullptr);
 	}
 }
 
@@ -521,16 +521,16 @@ void DescriptorIndexing::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// Enables use of runtimeDescriptorArrays in SPIR-V shaders.
 	features.runtimeDescriptorArray = VK_TRUE;
 
-	// There are lot of properties associated with descriptor_indexing, grab them here.
-	auto vkGetPhysicalDeviceProperties2KHR =
+	// There are a lot of properties associated with descriptor_indexing, grab them here.
+	auto _vkGetPhysicalDeviceProperties2KHR =
 	    reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
-	assert(vkGetPhysicalDeviceProperties2KHR);
+	assert(_vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 
 	descriptor_indexing_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_PROPERTIES_EXT;
 	device_properties.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext              = &descriptor_indexing_properties;
-	vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
+	_vkGetPhysicalDeviceProperties2KHR(gpu.get_handle(), &device_properties);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_descriptor_indexing()

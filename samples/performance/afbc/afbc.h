@@ -30,16 +30,16 @@ class AFBCSample : public vkb::VulkanSample
   public:
 	AFBCSample();
 
-	virtual ~AFBCSample() = default;
+	~AFBCSample() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
   private:
 	vkb::sg::Camera *camera{nullptr};
 
-	virtual void draw_gui() override;
+	void draw_gui() override;
 
 	void recreate_swapchain();
 

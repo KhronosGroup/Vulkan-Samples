@@ -18,7 +18,6 @@
 #include "pipeline.h"
 
 #include "device.h"
-#include "pipeline_layout.h"
 #include "shader_module.h"
 
 namespace vkb
@@ -27,7 +26,7 @@ Pipeline::Pipeline(Device &device) :
     device{device}
 {}
 
-Pipeline::Pipeline(Pipeline &&other) :
+Pipeline::Pipeline(Pipeline &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     state{other.state}
@@ -90,7 +89,7 @@ ComputePipeline::ComputePipeline(Device &        device,
 
 	const auto specialization_constant_state = pipeline_state.get_specialization_constant_state().get_specialization_constant_state();
 
-	for (const auto specialization_constant : specialization_constant_state)
+	for (const auto &specialization_constant : specialization_constant_state)
 	{
 		map_entries.push_back({specialization_constant.first, to_u32(data.size()), specialization_constant.second.size()});
 		data.insert(data.end(), specialization_constant.second.begin(), specialization_constant.second.end());
@@ -134,7 +133,7 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 
 	const auto specialization_constant_state = pipeline_state.get_specialization_constant_state().get_specialization_constant_state();
 
-	for (const auto specialization_constant : specialization_constant_state)
+	for (const auto &specialization_constant : specialization_constant_state)
 	{
 		map_entries.push_back({specialization_constant.first, to_u32(data.size()), specialization_constant.second.size()});
 		data.insert(data.end(), specialization_constant.second.begin(), specialization_constant.second.end());

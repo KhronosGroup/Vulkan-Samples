@@ -41,9 +41,9 @@ class NodeAnimation : public NodeScript
   public:
 	NodeAnimation(Node &node, TransformAnimFn animation_fn);
 
-	virtual ~NodeAnimation() = default;
+	~NodeAnimation() override = default;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
 	void set_animation(TransformAnimFn handle);
 

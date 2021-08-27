@@ -127,12 +127,12 @@ void Animation::update(float delta_time)
 					// This equation is taken from the GLTF 2.0 specification Appendix C (https://github.com/KhronosGroup/glTF/tree/master/specification/2.0#appendix-c-spline-interpolation)
 					glm::vec4 result = (2.0f * glm::pow(time, 3.0f) - 3.0f * glm::pow(time, 2.0f) + 1.0f) * p0 + (glm::pow(time, 3.0f) - 2.0f * glm::pow(time, 2.0f) + time) * m0 + (-2.0f * glm::pow(time, 3.0f) + 3.0f * glm::pow(time, 2.0f)) * p1 + (glm::pow(time, 3.0f) - glm::pow(time, 2.0f)) * m1;
 
-					auto &transform = channel.node.get_transform();
+					auto &_transform = channel.node.get_transform();
 
 					switch (channel.target)
 					{
 						case Translation: {
-							transform.set_translation(glm::vec3(result));
+							_transform.set_translation(glm::vec3(result));
 							break;
 						}
 						case Rotation: {
@@ -142,12 +142,12 @@ void Animation::update(float delta_time)
 							q1.z = result.z;
 							q1.w = result.w;
 
-							transform.set_rotation(glm::normalize(q1));
+							_transform.set_rotation(glm::normalize(q1));
 							break;
 						}
 
 						case Scale: {
-							transform.set_scale(glm::vec3(result));
+							_transform.set_scale(glm::vec3(result));
 						}
 					}
 				}

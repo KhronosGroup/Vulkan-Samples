@@ -17,13 +17,15 @@
 
 #include "CLI11.h"
 
+#include <utility>
+
 #include "common/logging.h"
 #include "common/strings.h"
 
 namespace vkb
 {
-CLI11CommandContext::CLI11CommandContext(CLI::App *cli, const CLI11CommandContextState &state) :
-    CommandParserContext(), cli11(cli), _state(state)
+CLI11CommandContext::CLI11CommandContext(CLI::App *cli, CLI11CommandContextState state) :
+    CommandParserContext(), cli11(cli), _state(std::move(state))
 {}
 
 bool CLI11CommandContext::has_group_name() const
@@ -68,11 +70,11 @@ bool CLI11CommandParser::parse(CommandParserContext *context, const std::vector<
 	{
 		_cli->parse(static_cast<int>(_args.size()), _args.data());
 	}
-	catch (CLI::ParseError e)
+	catch (CLI::ParseError &e)
 	{
 		if (e.get_name() == "RuntimeError")
 		{
-			LOGE("CLI11 Parse Error");
+			LOGE("CLI11 Parse Error")
 			return false;
 		}
 
@@ -93,10 +95,10 @@ bool CLI11CommandParser::parse(CommandParserContext *context, const std::vector<
 	{                                                                                                       \
 		parse(context == nullptr ? &_base_context : dynamic_cast<CLI11CommandContext *>(context), command); \
 	}
-CAST(CommandGroup);
-CAST(SubCommand);
-CAST(PositionalCommand);
-CAST(FlagCommand);
+CAST(CommandGroup)
+CAST(SubCommand)
+CAST(PositionalCommand)
+CAST(FlagCommand)
 #undef CAST
 
 void CLI11CommandParser::parse(CLI11CommandContext *context, CommandGroup *command)

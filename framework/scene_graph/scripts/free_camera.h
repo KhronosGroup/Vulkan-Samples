@@ -50,15 +50,15 @@ class FreeCamera : public NodeScript
 
 	static const uint32_t TRANSLATION_MOVE_SPEED;
 
-	FreeCamera(Node &node);
+	explicit FreeCamera(Node &node);
 
-	virtual ~FreeCamera() = default;
+	~FreeCamera() override = default;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual void input_event(const InputEvent &input_event) override;
+	void input_event(const InputEvent &input_event) override;
 
-	virtual void resize(uint32_t width, uint32_t height) override;
+	void resize(uint32_t width, uint32_t height) override;
 
   private:
 	float speed_multiplier{3.0f};

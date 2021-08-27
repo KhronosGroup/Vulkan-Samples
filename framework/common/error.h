@@ -30,6 +30,7 @@
 #	define VKBP_DISABLE_WARNINGS()                             \
 		_Pragma("clang diagnostic push")                        \
 		    _Pragma("clang diagnostic ignored \"-Wall\"")       \
+				_Pragma("clang diagnostic ignored \"-Wunknown-pragmas\"") \
 		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
 		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
 
@@ -37,12 +38,16 @@
 		_Pragma("clang diagnostic pop")
 #elif defined(__GNUC__) || defined(__GNUG__)
 // GCC ENABLE/DISABLE WARNING DEFINITION
+#define DO_PRAGMA(x) _Pragma (#x)
+#	define VKBP_PUSH_WARNINGS() _Pragma("GCC diagnostic push")
+# 	define VKBP_DISABLE_WARNING(_warn_text) DO_PRAGMA(GCC diagnostic ignored #_warn_text)
 #	define VKBP_DISABLE_WARNINGS()                             \
 		_Pragma("GCC diagnostic push")                          \
 		    _Pragma("GCC diagnostic ignored \"-Wall\"")         \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
-
+			_Pragma("GCC diagnostic ignored \"-Wunknown-pragmas\"") \
+			_Pragma("GCC diagnostic ignored \"-Wextra\"")             \
+			_Pragma("GCC diagnostic ignored \"-Wtautological-compare\"") \
+			_Pragma("GCC diagnostic ignored \"-Wclass-memaccess\"") //This is for imgui_internal.h:580
 #	define VKBP_ENABLE_WARNINGS() \
 		_Pragma("GCC diagnostic pop")
 #elif defined(_MSC_VER)
@@ -65,7 +70,7 @@ class VulkanException : public std::runtime_error
 	/**
 	 * @brief Vulkan exception constructor
 	 */
-	VulkanException(VkResult result, const std::string &msg = "Vulkan error");
+	explicit VulkanException(VkResult result, const std::string &msg = "Vulkan error");
 
 	/**
 	 * @brief Returns the Vulkan error code as string

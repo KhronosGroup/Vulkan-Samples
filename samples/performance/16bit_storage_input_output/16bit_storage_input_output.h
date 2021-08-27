@@ -27,18 +27,18 @@ class KHR16BitStorageInputOutputSample : public vkb::VulkanSample
   public:
 	KHR16BitStorageInputOutputSample();
 
-	virtual ~KHR16BitStorageInputOutputSample() = default;
+	~KHR16BitStorageInputOutputSample() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
   private:
 	vkb::sg::Camera *camera{nullptr};
 
-	virtual void draw_gui() override;
+	void draw_gui() override;
 
 	void recreate_swapchain();
 

@@ -39,7 +39,7 @@ const std::unordered_map<Type, std::string> relative_paths = {{Type::Assets, "as
                                                               {Type::Logs, "output/logs/"},
                                                               {Type::Graphs, "output/graphs/"}};
 
-const std::string get(const Type type, const std::string &file)
+std::string get(const Type type, const std::string &file)
 {
 	assert(relative_paths.size() == Type::TotalRelativePathTypes && "Not all paths are defined in filesystem, please check that each enum is specified");
 
@@ -82,8 +82,8 @@ const std::string get(const Type type, const std::string &file)
 
 bool is_directory(const std::string &path)
 {
-	struct stat info;
-	if (stat(path.c_str(), &info) != 0)
+	struct stat info{};
+	if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
 	{
 		return false;
 	}
@@ -91,10 +91,7 @@ bool is_directory(const std::string &path)
 	{
 		return true;
 	}
-	else
-	{
-		return false;
-	}
+	return false;
 }
 
 bool is_file(const std::string &filename)
@@ -151,7 +148,7 @@ std::vector<uint8_t> read_binary_file(const std::string &filename, const uint32_
 	}
 
 	data.resize(static_cast<size_t>(read_count));
-	file.read(reinterpret_cast<char *>(data.data()), read_count);
+	file.read(reinterpret_cast<char *>(data.data()), static_cast<std::streamsize>(read_count));
 	file.close();
 
 	return data;
@@ -174,7 +171,7 @@ static void write_binary_file(const std::vector<uint8_t> &data, const std::strin
 		write_count = data.size();
 	}
 
-	file.write(reinterpret_cast<const char *>(data.data()), write_count);
+	file.write(reinterpret_cast<const char *>(data.data()), static_cast<std::streamsize>(write_count));
 	file.close();
 }
 
@@ -205,7 +202,7 @@ void write_temp(const std::vector<uint8_t> &data, const std::string &filename, c
 
 void write_image(const uint8_t *data, const std::string &filename, const uint32_t width, const uint32_t height, const uint32_t components, const uint32_t row_stride)
 {
-	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), width, height, components, data, row_stride);
+	stbi_write_png((path::get(path::Type::Screenshots) + filename + ".png").c_str(), static_cast<int>(width), static_cast<int>(height), components, data, static_cast<int>(row_stride));
 }
 
 bool write_json(nlohmann::json &data, const std::string &filename)
@@ -220,13 +217,13 @@ bool write_json(nlohmann::json &data, const std::string &filename)
 	catch (std::exception &e)
 	{
 		// JSON dump errors
-		LOGE(e.what());
+		LOGE(e.what())
 		return false;
 	}
 
 	if (!nlohmann::json::accept(json.str()))
 	{
-		LOGE("Invalid JSON string");
+		LOGE("Invalid JSON string")
 		return false;
 	}
 
@@ -239,7 +236,7 @@ bool write_json(nlohmann::json &data, const std::string &filename)
 	}
 	else
 	{
-		LOGE("Could not load JSON file " + filename);
+		LOGE("Could not load JSON file " + filename)
 		return false;
 	}
 

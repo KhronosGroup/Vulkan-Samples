@@ -35,13 +35,13 @@ class Sampler;
 class Texture : public Component
 {
   public:
-	Texture(const std::string &name);
+	explicit Texture(const std::string &name);
 
 	Texture(Texture &&other) = default;
 
-	virtual ~Texture() = default;
+	~Texture() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	void set_image(Image &image);
 

@@ -54,7 +54,7 @@ class Image
 
 	Image(const Image &) = delete;
 
-	Image(Image &&other);
+	Image(Image &&other) noexcept ;
 
 	~Image();
 

@@ -31,19 +31,19 @@ class AsyncComputeSample : public vkb::VulkanSample
   public:
 	AsyncComputeSample();
 
-	virtual ~AsyncComputeSample() = default;
+	~AsyncComputeSample() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual void finish() override;
+	void finish() override;
 
   private:
 	vkb::sg::Camera *camera{nullptr};
 	vkb::sg::Camera *shadow_camera{nullptr};
 
-	virtual void draw_gui() override;
+	void draw_gui() override;
 
 	std::chrono::system_clock::time_point start_time;
 
@@ -84,7 +84,7 @@ class AsyncComputeSample : public vkb::VulkanSample
 		DepthMapSubpass(vkb::RenderContext &render_context,
 		                vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
 		                vkb::sg::Scene &scene, vkb::sg::Camera &camera);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		void draw(vkb::CommandBuffer &command_buffer) override;
 	};
 
 	struct ShadowMapForwardSubpass : vkb::ForwardSubpass
@@ -93,7 +93,7 @@ class AsyncComputeSample : public vkb::VulkanSample
 		                        vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader,
 		                        vkb::sg::Scene &scene, vkb::sg::Camera &camera, vkb::sg::Camera &shadow_camera);
 		void         set_shadow_map(const vkb::core::ImageView *view, const vkb::core::Sampler *sampler);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		void draw(vkb::CommandBuffer &command_buffer) override;
 
 		const vkb::core::ImageView *shadow_view{nullptr};
 		const vkb::core::Sampler *  shadow_sampler{nullptr};
@@ -106,8 +106,8 @@ class AsyncComputeSample : public vkb::VulkanSample
 		                 vkb::ShaderSource &&vertex_shader, vkb::ShaderSource &&fragment_shader);
 		void         set_texture(const vkb::core::ImageView *hdr_view, const vkb::core::ImageView *bloom_view,
 		                         const vkb::core::Sampler *sampler);
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
-		virtual void prepare() override;
+		void draw(vkb::CommandBuffer &command_buffer) override;
+		void prepare() override;
 
 		const vkb::core::ImageView *hdr_view{nullptr};
 		const vkb::core::ImageView *bloom_view{nullptr};

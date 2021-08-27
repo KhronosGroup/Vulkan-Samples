@@ -60,8 +60,10 @@ class HWCPipeStatsProvider : public StatsProvider
 		         hwcpipe::CpuCounter divisor      = hwcpipe::CpuCounter::MaxValue) :
 		    type(StatType::Cpu),
 		    scaling(stat_scaling),
-		    cpu_counter(c),
-		    divisor_cpu_counter(divisor)
+			cpu_counter(c),
+			divisor_cpu_counter(divisor),
+			gpu_counter(),
+			divisor_gpu_counter()
 		{}
 
 		/**
@@ -75,6 +77,8 @@ class HWCPipeStatsProvider : public StatsProvider
 		         hwcpipe::GpuCounter divisor      = hwcpipe::GpuCounter::MaxValue) :
 		    type(StatType::Gpu),
 		    scaling(stat_scaling),
+		    cpu_counter(),
+		    divisor_cpu_counter(),
 		    gpu_counter(c),
 		    divisor_gpu_counter(divisor)
 		{}
@@ -87,7 +91,7 @@ class HWCPipeStatsProvider : public StatsProvider
 	 * @brief Constructs a HWCPipeStateProvider
 	 * @param requested_stats Set of stats to be collected. Supported stats will be removed from the set.
 	 */
-	HWCPipeStatsProvider(std::set<StatIndex> &requested_stats);
+	explicit HWCPipeStatsProvider(std::set<StatIndex> &requested_stats);
 
 	/**
 	 * @brief Checks if this provider can supply the given enabled stat

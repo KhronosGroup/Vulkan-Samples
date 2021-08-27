@@ -29,6 +29,12 @@
 #include "dynamic_uniform_buffers.h"
 
 DynamicUniformBuffers::DynamicUniformBuffers()
+: index_count()
+, pipeline()
+, pipeline_layout()
+, descriptor_set()
+, descriptor_set_layout()
+, dynamic_alignment()
 {
 	title = "Dynamic uniform buffers";
 }
@@ -44,10 +50,10 @@ DynamicUniformBuffers ::~DynamicUniformBuffers()
 
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
-		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
 
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
 	}
 }
 
@@ -103,7 +109,7 @@ void DynamicUniformBuffers::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
@@ -135,7 +141,7 @@ void DynamicUniformBuffers::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -279,7 +285,7 @@ void DynamicUniformBuffers::setup_descriptor_set()
         vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
     };
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void DynamicUniformBuffers::prepare_pipelines()
@@ -332,7 +338,7 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	shader_stages[0] = load_shader("dynamic_uniform_buffers/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_uniform_buffers/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -438,7 +444,7 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 	}
 
 	// Dynamic ubo with per-object model matrices indexed by offsets in the command buffer
-	uint32_t  dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto  dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
 	glm::vec3 offset(5.0f);
 
 	for (uint32_t x = 0; x < dim; x++)
@@ -450,13 +456,13 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 				uint32_t index = x * dim * dim + y * dim + z;
 
 				// Aligned offset
-				glm::mat4 *model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
+				auto *model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
 
 				// Update rotations
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos = glm::vec3(-((dim * offset.x) / 2.0f) + offset.x / 2.0f + x * offset.x, -((dim * offset.y) / 2.0f) + offset.y / 2.0f + y * offset.y, -((dim * offset.z) / 2.0f) + offset.z / 2.0f + z * offset.z);
+				glm::vec3 pos = glm::vec3(-((static_cast<float>(dim) * offset.x) / 2.0f) + offset.x / 2.0f + static_cast<float>(x) * offset.x, -((static_cast<float>(dim) * offset.y) / 2.0f) + offset.y / 2.0f + static_cast<float>(y) * offset.y, -((static_cast<float>(dim) * offset.z) / 2.0f) + offset.z / 2.0f + static_cast<float>(z) * offset.z);
 				*model_mat    = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat    = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
 				*model_mat    = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
@@ -484,7 +490,7 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	generate_cube();

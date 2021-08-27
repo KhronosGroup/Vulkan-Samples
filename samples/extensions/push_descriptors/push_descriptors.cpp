@@ -29,9 +29,12 @@
 #include "push_descriptors.h"
 
 #include "core/buffer.h"
-#include "scene_graph/components/sub_mesh.h"
 
-PushDescriptors::PushDescriptors()
+PushDescriptors::PushDescriptors() 
+    : vkCmdPushDescriptorSetKHR()
+    , pipeline_layout()
+    , pipeline()
+    , descriptor_set_layout()
 {
 	title = "Push descriptors";
 
@@ -44,14 +47,14 @@ PushDescriptors::~PushDescriptors()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipeline, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
 		for (auto &cube : cubes)
 		{
 			cube.uniform_buffer.reset();
 			cube.texture.image.reset();
-			vkDestroySampler(get_device().get_handle(), cube.texture.sampler, nullptr);
+			vkDestroySampler(device->get_handle(), cube.texture.sampler, nullptr);
 		}
 		uniform_buffers.scene.reset();
 	}
@@ -96,7 +99,7 @@ void PushDescriptors::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		const auto &vertex_buffer = models.cube->vertex_buffers.at("vertex_buffer");
@@ -109,16 +112,16 @@ void PushDescriptors::build_command_buffers()
 		// Render two cubes using different descriptor sets using push descriptors
 		for (auto &cube : cubes)
 		{
-			// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
+			// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside a command buffer
 			// This allows a more dynamic approach without the need to create descriptor sets for each model
-			// Note: dstSet for each descriptor set write is left at zero as this is ignored when ushing push descriptors
+			// Note: dstSet for each descriptor set write is left at zero as this is ignored when pushing descriptors
 
 			std::array<VkWriteDescriptorSet, 3> write_descriptor_sets{};
 
 			// Scene matrices
 			VkDescriptorBufferInfo scene_buffer_descriptor = create_descriptor(*uniform_buffers.scene);
 			write_descriptor_sets[0].sType                 = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[0].dstSet                = 0;
+			write_descriptor_sets[0].dstSet                = nullptr;
 			write_descriptor_sets[0].dstBinding            = 0;
 			write_descriptor_sets[0].descriptorCount       = 1;
 			write_descriptor_sets[0].descriptorType        = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -127,7 +130,7 @@ void PushDescriptors::build_command_buffers()
 			// Model matrices
 			VkDescriptorBufferInfo cube_buffer_descriptor = create_descriptor(*cube.uniform_buffer);
 			write_descriptor_sets[1].sType                = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[1].dstSet               = 0;
+			write_descriptor_sets[1].dstSet               = nullptr;
 			write_descriptor_sets[1].dstBinding           = 1;
 			write_descriptor_sets[1].descriptorCount      = 1;
 			write_descriptor_sets[1].descriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -136,7 +139,7 @@ void PushDescriptors::build_command_buffers()
 			// Texture
 			VkDescriptorImageInfo image_descriptor   = create_descriptor(cube.texture);
 			write_descriptor_sets[2].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			write_descriptor_sets[2].dstSet          = 0;
+			write_descriptor_sets[2].dstSet          = nullptr;
 			write_descriptor_sets[2].dstBinding      = 2;
 			write_descriptor_sets[2].descriptorCount = 1;
 			write_descriptor_sets[2].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -176,10 +179,10 @@ void PushDescriptors::setup_descriptor_set_layout()
 	descriptor_layout_create_info.flags        = VK_DESCRIPTOR_SET_LAYOUT_CREATE_PUSH_DESCRIPTOR_BIT_KHR;
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void PushDescriptors::prepare_pipelines()
@@ -244,7 +247,7 @@ void PushDescriptors::prepare_pipelines()
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+	VK_CHECK(vkCreateGraphicsPipelines(device->get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
 void PushDescriptors::prepare_uniform_buffers()
@@ -323,16 +326,16 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 		Extension specific functions
 	*/
 
-	// The push descriptor update function is part of an extension so it has to be manually loaded
-	vkCmdPushDescriptorSetKHR = (PFN_vkCmdPushDescriptorSetKHR) vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdPushDescriptorSetKHR");
+	// The push descriptor update function is part of an extension, so it has to be manually loaded
+	vkCmdPushDescriptorSetKHR = (PFN_vkCmdPushDescriptorSetKHR) vkGetDeviceProcAddr(device->get_handle(), "vkCmdPushDescriptorSetKHR");
 	if (!vkCmdPushDescriptorSetKHR)
 	{
 		throw std::runtime_error("Could not get a valid function pointer for vkCmdPushDescriptorSetKHR");
 	}
 
 	// Get device push descriptor properties (to display them)
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
-	if (!vkGetPhysicalDeviceProperties2KHR)
+	auto _vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
+	if (!_vkGetPhysicalDeviceProperties2KHR)
 	{
 		throw std::runtime_error("Could not get a valid function pointer for vkGetPhysicalDeviceProperties2KHR");
 	}
@@ -340,15 +343,15 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	push_descriptor_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PUSH_DESCRIPTOR_PROPERTIES_KHR;
 	device_properties.sType          = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext          = &push_descriptor_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
+	_vkGetPhysicalDeviceProperties2KHR(device->get_gpu().get_handle(), &device_properties);
 
 	/*
 		End of extension specific functions
 	*/
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, static_cast<float>(width) / height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -5.0f));
 
@@ -378,13 +381,13 @@ void PushDescriptors::render(float delta_time)
 
 void PushDescriptors::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Settings"))
+	if (vkb::Drawer::header("Settings"))
 	{
 		drawer.checkbox("Animate", &animate);
 	}
-	if (drawer.header("Device properties"))
+	if (vkb::Drawer::header("Device properties"))
 	{
-		drawer.text("maxPushDescriptors: %d", push_descriptor_properties.maxPushDescriptors);
+		vkb::Drawer::text("maxPushDescriptors: %d", push_descriptor_properties.maxPushDescriptors);
 	}
 }
 

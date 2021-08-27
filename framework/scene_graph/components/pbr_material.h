@@ -38,11 +38,11 @@ namespace sg
 class PBRMaterial : public Material
 {
   public:
-	PBRMaterial(const std::string &name);
+	explicit PBRMaterial(const std::string &name);
 
-	virtual ~PBRMaterial() = default;
+	~PBRMaterial() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	glm::vec4 base_color_factor{0.0f, 0.0f, 0.0f, 0.0f};
 

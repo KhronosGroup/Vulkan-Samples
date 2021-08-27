@@ -74,7 +74,7 @@ class TerrainTessellation : public ApiVulkanSample
 		float tessellated_edge_size = 20.0f;
 	} ubo_tess;
 
-	// Skysphere vertex shader stage
+	// Sky sphere vertex shader stage
 	struct
 	{
 		glm::mat4 mvp;
@@ -82,10 +82,10 @@ class TerrainTessellation : public ApiVulkanSample
 
 	struct Pipelines
 	{
-		VkPipeline terrain;
+		VkPipeline terrain{};
 		VkPipeline wireframe = VK_NULL_HANDLE;
-		VkPipeline skysphere;
-	} pipelines;
+		VkPipeline skysphere{};
+	} pipelines{};
 
 	struct
 	{
@@ -118,8 +118,8 @@ class TerrainTessellation : public ApiVulkanSample
 	vkb::Frustum frustum;
 
 	TerrainTessellation();
-	~TerrainTessellation();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~TerrainTessellation() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         setup_query_result_buffer();
 	void         get_query_results();
 	void         load_assets();
@@ -133,9 +133,9 @@ class TerrainTessellation : public ApiVulkanSample
 	void         update_uniform_buffers();
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void view_changed() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_terrain_tessellation();

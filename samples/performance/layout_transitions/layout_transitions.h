@@ -30,9 +30,9 @@ class LayoutTransitions : public vkb::VulkanSample
   public:
 	LayoutTransitions();
 
-	virtual ~LayoutTransitions() = default;
+	~LayoutTransitions() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
   private:
 	enum LayoutTransitionType : int
@@ -43,13 +43,13 @@ class LayoutTransitions : public vkb::VulkanSample
 
 	vkb::sg::Camera *camera{nullptr};
 
-	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
+	static std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
-	virtual void prepare_render_context() override;
+	void prepare_render_context() override;
 
 	void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 
-	virtual void draw_gui() override;
+	void draw_gui() override;
 
 	VkImageLayout pick_old_layout(VkImageLayout last_layout);
 

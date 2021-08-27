@@ -36,9 +36,9 @@ class Sampler : public Component
 
 	Sampler(Sampler &&other) = default;
 
-	virtual ~Sampler() = default;
+	~Sampler() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	core::Sampler vk_sampler;
 };

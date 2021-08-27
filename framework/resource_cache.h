@@ -79,7 +79,7 @@ struct ResourceCacheState
 class ResourceCache
 {
   public:
-	ResourceCache(Device &device);
+	explicit ResourceCache(Device &device);
 
 	ResourceCache(const ResourceCache &) = delete;
 
@@ -99,7 +99,7 @@ class ResourceCache
 
 	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
 
-	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                     set_index,
+	DescriptorSetLayout &request_descriptor_set_layout(uint32_t                     set_index,
 	                                                   const std::vector<ShaderModule *> &shader_modules,
 	                                                   const std::vector<ShaderResource> &set_resources);
 

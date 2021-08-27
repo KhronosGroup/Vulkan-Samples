@@ -112,7 +112,7 @@ class GLTFLoader
 	 * @param requested_extension The extension to check
 	 * @returns True if the loader knows how to load the extension and it is present in the glTF file, false if not
 	 */
-	bool is_extension_enabled(const std::string &requested_extension);
+	static bool is_extension_enabled(const std::string &requested_extension);
 
 	/**
 	 * @brief Finds whether an extension exists inside a tinygltf extension map and returns the result
@@ -120,7 +120,7 @@ class GLTFLoader
 	 * @param extension The extension to check
 	 * @returns A pointer to the value of the extension object, nullptr if it isn't found
 	 */
-	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
+	static tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
 
 	Device &device;
 

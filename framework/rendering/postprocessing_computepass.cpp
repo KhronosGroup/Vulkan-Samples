@@ -17,20 +17,22 @@
 
 #include "postprocessing_computepass.h"
 
+#include <utility>
+
 #include "postprocessing_pipeline.h"
 
 namespace vkb
 {
-PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant,
+PostProcessingComputePass::PostProcessingComputePass(PostProcessingPipeline *parent, ShaderSource cs_source, ShaderVariant cs_variant,
                                                      std::shared_ptr<core::Sampler> &&default_sampler) :
     PostProcessingPass{parent},
-    cs_source{cs_source},
-    cs_variant{cs_variant},
+    cs_source{std::move(cs_source)},
+    cs_variant{std::move(cs_variant)},
     default_sampler{std::move(default_sampler)}
 {
 	if (this->default_sampler == nullptr)
 	{
-		// Setup a sane default sampler if none was passed
+		// Set up a sane default sampler if none was passed
 		VkSamplerCreateInfo sampler_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 		sampler_info.minFilter        = VK_FILTER_LINEAR;
 		sampler_info.magFilter        = VK_FILTER_LINEAR;
@@ -128,8 +130,6 @@ void PostProcessingComputePass::transition_images(CommandBuffer &command_buffer,
 			sampled_rt->set_layout(*attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 	}
-
-	const auto &bindings = pipeline_layout.get_descriptor_set_layout(0);
 
 	for (const auto &storage : storage_images)
 	{

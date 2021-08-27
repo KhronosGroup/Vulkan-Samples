@@ -35,7 +35,7 @@ using SampledImageMap = std::unordered_map<std::string, core::SampledImage>;
 class PostProcessingComputePass : public PostProcessingPass<PostProcessingComputePass>
 {
   public:
-	PostProcessingComputePass(PostProcessingPipeline *parent, const ShaderSource &cs_source, const ShaderVariant &cs_variant = {},
+	PostProcessingComputePass(PostProcessingPipeline *parent, ShaderSource cs_source, ShaderVariant cs_variant = {},
 	                          std::shared_ptr<core::Sampler> &&default_sampler = {});
 
 	PostProcessingComputePass(const PostProcessingComputePass &to_copy) = delete;

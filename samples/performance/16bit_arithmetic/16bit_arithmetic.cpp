@@ -80,12 +80,12 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	std::uniform_real_distribution<float> falloff_dist(50.0f, 100.0f);
 
 	glm::vec4 initial_data_fp32[NumBlobs];
-	for (unsigned i = 0; i < NumBlobs; i++)
+	for (auto & i : initial_data_fp32)
 	{
-		initial_data_fp32[i].x = position_dist(rng);
-		initial_data_fp32[i].y = position_dist(rng);
-		initial_data_fp32[i].z = intensity_dist(rng);
-		initial_data_fp32[i].w = falloff_dist(rng);
+		i.x = position_dist(rng);
+		i.y = position_dist(rng);
+		i.z = intensity_dist(rng);
+		i.w = falloff_dist(rng);
 	}
 
 	// Convert FP32 to FP16.
@@ -166,7 +166,7 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 		compute_layout_fp16 = compute_layout;
 	}
 
-	// Setup the visualization subpass which is there to blit the final result to screen.
+	// Set up the visualization sub pass which is there to blit the final result to screen.
 	vkb::ShaderSource vertex_source{"16bit_arithmetic/visualize.vert"};
 	vkb::ShaderSource fragment_source{"16bit_arithmetic/visualize.frag"};
 	auto              subpass = std::make_unique<VisualizationSubpass>(get_render_context(),
@@ -176,9 +176,9 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	subpass->view    = image_view.get();
 	subpass->sampler = sampler.get();
 	subpasses.emplace_back(std::move(subpass));
-	for (auto &subpass : subpasses)
+	for (auto &_subpass : subpasses)
 	{
-		subpass->prepare();
+		_subpass->prepare();
 	}
 
 	return true;
@@ -284,8 +284,8 @@ void KHR16BitArithmeticSample::draw_renderpass(vkb::CommandBuffer &command_buffe
 	{
 		push16.num_blobs = push32.num_blobs;
 		push16.fp16_seed = uint16_t(glm::packHalf2x16(glm::vec2(push32.fp32_seed)));
-		push16.range_x   = push32.range_x;
-		push16.range_y   = push32.range_y;
+		push16.range_x   = static_cast<int16_t>(push32.range_x);
+		push16.range_y   = static_cast<int16_t>(push32.range_y);
 		command_buffer.push_constants(push16);
 	}
 	else

@@ -92,7 +92,7 @@ class DebugUtils : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device)
+		void           destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
@@ -126,18 +126,18 @@ class DebugUtils : public ApiVulkanSample
 	} push_const_block;
 
 	DebugUtils();
-	~DebugUtils();
+	~DebugUtils() override;
 	void                            debug_check_extension();
-	void                            cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
-	void                            cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color);
-	void                            cmd_end_label(VkCommandBuffer command_buffer);
-	void                            queue_begin_label(VkQueue queue, const char *label_name, std::vector<float> color);
-	void                            queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color);
-	void                            queue_end_label(VkQueue queue);
+	void                            cmd_begin_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color) const;
+	void                            cmd_insert_label(VkCommandBuffer command_buffer, const char *label_name, std::vector<float> color) const;
+	void                            cmd_end_label(VkCommandBuffer command_buffer) const;
+	void                            queue_begin_label(VkQueue queue, const char *label_name, std::vector<float> color) const;
+	void                            queue_insert_label(VkQueue queue, const char *label_name, std::vector<float> color) const;
+	void                            queue_end_label(VkQueue queue) const;
 	void                            set_object_name(VkObjectType object_type, uint64_t object_handle, const char *object_name);
 	VkPipelineShaderStageCreateInfo debug_load_shader(const std::string &file, VkShaderStageFlagBits stage);
 	void                            debug_name_objects();
-	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                            build_command_buffers() override;
 	void                            create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
 	void                            prepare_offscreen_buffer();
@@ -150,9 +150,9 @@ class DebugUtils : public ApiVulkanSample
 	void                            update_uniform_buffers();
 	void                            draw();
 	bool                            prepare(vkb::Platform &platform) override;
-	virtual void                    render(float delta_time) override;
-	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void                    resize(const uint32_t width, const uint32_t height) override;
+	void                    render(float delta_time) override;
+	void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void                    resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_debug_utils();
