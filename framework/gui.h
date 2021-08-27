@@ -25,9 +25,7 @@
 #include <thread>
 
 #include "core/buffer.h"
-VKBP_PUSH_WARNINGS()
-VKBP_DISABLE_WARNING(-Wunknown-pragmas)
-VKBP_DISABLE_WARNING(-Wclass-memaccess)
+VKBP_DISABLE_WARNINGS()
 #include <imgui_internal.h>
 VKBP_ENABLE_WARNINGS()
 #include "core/command_buffer.h"

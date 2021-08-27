@@ -38,9 +38,6 @@
 		_Pragma("clang diagnostic pop")
 #elif defined(__GNUC__) || defined(__GNUG__)
 // GCC ENABLE/DISABLE WARNING DEFINITION
-#define DO_PRAGMA(x) _Pragma (#x)
-#	define VKBP_PUSH_WARNINGS() _Pragma("GCC diagnostic push")
-# 	define VKBP_DISABLE_WARNING(_warn_text) DO_PRAGMA(GCC diagnostic ignored #_warn_text)
 #	define VKBP_DISABLE_WARNINGS()                             \
 		_Pragma("GCC diagnostic push")                          \
 		    _Pragma("GCC diagnostic ignored \"-Wall\"")         \
