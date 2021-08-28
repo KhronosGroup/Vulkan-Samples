@@ -811,7 +811,7 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
 	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
