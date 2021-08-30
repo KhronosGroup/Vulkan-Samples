@@ -302,6 +302,7 @@ void BindlessResources::load_scene()
 		const auto &data        = image->get_data();
 		auto        data_buffer = std::make_unique<vkb::core::Buffer>(*device, data.size() * sizeof(data[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT, queue_families);
 		data_buffer->update(data.data(), data.size() * sizeof(data[0]), 0);
+		data_buffer->flush();
 
 		auto &texture_cmd = device->get_command_pool().request_command_buffer();
 		texture_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -312,14 +313,13 @@ void BindlessResources::load_scene()
 
 		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
 		image_barrier.srcAccessMask        = 0;
-		image_barrier.dstAccessMask        = 0;
+		image_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
 		image_barrier.image                = texture.image->get_handle();
 		image_barrier.subresourceRange     = subresource_range;
 		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_UNDEFINED;
 		image_barrier.newLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
-		// The semaphore takes care of srcStageMask.
-		vkCmdPipelineBarrier(texture_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		vkCmdPipelineBarrier(texture_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
 
 		auto              offsets              = image->get_offsets();
 		VkBufferImageCopy region               = {};
@@ -389,6 +389,8 @@ void BindlessResources::load_scene()
 
 	auto &cmd = device->get_command_pool().request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
+	std::vector<VkImageMemoryBarrier> image_barriers;
+	image_barriers.reserve(textures.size());
 	for (auto &&texture : textures)
 	{
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
@@ -396,16 +398,16 @@ void BindlessResources::load_scene()
 		subresource_range.levelCount              = texture.n_mip_maps;
 
 		VkImageMemoryBarrier image_barrier = vkb::initializers::image_memory_barrier();
-		image_barrier.srcAccessMask        = 0;
-		image_barrier.dstAccessMask        = 0;
+		image_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
+		image_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
 		image_barrier.image                = texture.image->get_handle();
 		image_barrier.subresourceRange     = subresource_range;
 		image_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 		image_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-		// The semaphore takes care of srcStageMask.
-		vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, 0, 0, nullptr, 0, nullptr, 1, &image_barrier);
+		image_barriers.emplace_back(image_barrier);
 	}
+	vkCmdPipelineBarrier(cmd.get_handle(), VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, static_cast<uint32_t>(image_barriers.size()), image_barriers.data());
 	cmd.end();
 	auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 	queue.submit(cmd, device->request_fence());
@@ -468,6 +470,10 @@ void BindlessResources::initialize_resources()
 		model_information.indexCount             = static_cast<uint32_t>(model.triangles.size());
 		staging_model_buffer->update(&model_information, sizeof(GpuModelInformation), i * sizeof(GpuModelInformation));
 	}
+
+	staging_vertex_buffer->flush();
+	staging_index_buffer->flush();
+	staging_model_buffer->flush();
 
 	auto &cmd = device->request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
@@ -728,22 +734,7 @@ void BindlessResources::update_scene_uniform()
 
 	scene_uniform_buffer->update(&scene_uniform, sizeof(scene_uniform), 0);
 
-	auto &memory_cmd = device->get_command_pool().request_command_buffer();
-	memory_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
-
-	VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-	memory_barrier.buffer                = scene_uniform_buffer->get_handle();
-	memory_barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT;
-	memory_barrier.dstAccessMask         = VK_ACCESS_MEMORY_READ_BIT;
-	memory_barrier.size                  = scene_uniform_buffer->get_size();
-
-	vkCmdPipelineBarrier(memory_cmd.get_handle(), VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_HOST_BIT, 0, 0, VK_NULL_HANDLE, 1, &memory_barrier, 0, VK_NULL_HANDLE);
-
-	memory_cmd.end();
-
-	auto &queue = device->get_queue_by_flags(VK_QUEUE_COMPUTE_BIT, 0);
-	queue.submit(memory_cmd, device->request_fence());
-	device->get_fence_pool().wait();
+	scene_uniform_buffer->flush();
 }
 
 void BindlessResources::draw()
@@ -916,6 +907,7 @@ void BindlessResources::cpu_cull()
 	}
 
 	cpu_staging_buffer->update(cpu_commands.data(), call_buffer_size, 0);
+	cpu_staging_buffer->flush();
 
 	auto &transfer_cmd = device->get_command_pool().request_command_buffer();
 	transfer_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, VK_NULL_HANDLE);
