@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include "api_vulkan_sample.h"
 #include <random>
 #include <vector>
+
+#include "api_vulkan_sample.h"
 
 class DescriptorIndexing : public ApiVulkanSample
 {

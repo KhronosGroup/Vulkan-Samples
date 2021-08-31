@@ -17,11 +17,7 @@
 
 #include "transform.h"
 
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtx/matrix_decompose.hpp>
-VKBP_ENABLE_WARNINGS()
-
+#include "common/glm.h"
 #include "scene_graph/node.h"
 
 namespace vkb

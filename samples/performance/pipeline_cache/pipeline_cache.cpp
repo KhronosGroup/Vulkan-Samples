@@ -17,7 +17,11 @@
 
 #include "pipeline_cache.h"
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <imgui_internal.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
 #include "core/device.h"

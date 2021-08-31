@@ -31,19 +31,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message)
+		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message)
+		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message)
+		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message)
+		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
@@ -160,7 +160,7 @@ void HelloTriangle::init_instance(Context &_context,
                                   const std::vector<const char *> &required_instance_extensions,
                                   const std::vector<const char *> &required_validation_layers)
 {
-	LOGI("Initializing vulkan instance.")
+	LOGI("Initializing vulkan instance.");
 
 	if (volkInitialize())
 	{
@@ -218,10 +218,10 @@ void HelloTriangle::init_instance(Context &_context,
 
 	if (validate_layers(requested_validation_layers, supported_validation_layers))
 	{
-		LOGI("Enabled Validation Layers:")
+		LOGI("Enabled Validation Layers:");
 		for (const auto &layer : requested_validation_layers)
 		{
-			LOGI("	\t{}", layer)
+			LOGI("	\t{}", layer);
 		}
 	}
 	else
@@ -268,7 +268,7 @@ void HelloTriangle::init_instance(Context &_context,
 void HelloTriangle::init_device(Context &_context,
                                 const std::vector<const char *> &required_device_extensions)
 {
-	LOGI("Initializing vulkan device.")
+	LOGI("Initializing vulkan device.");
 
 	uint32_t gpu_count = 0;
 	VK_CHECK(vkEnumeratePhysicalDevices(_context.instance, &gpu_count, nullptr));
@@ -296,7 +296,7 @@ void HelloTriangle::init_device(Context &_context,
 		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(_context.gpu, &queue_family_count, queue_family_properties.data());
 
-		for (int32_t j = 0; j < queue_family_count; j++)
+		for (int32_t j = 0; j < static_cast<int32_t>(queue_family_count); j++)
 		{
 			VkBool32 supports_present;
 			vkGetPhysicalDeviceSurfaceSupportKHR(_context.gpu, j, _context.surface, &supports_present);
@@ -312,7 +312,7 @@ void HelloTriangle::init_device(Context &_context,
 
 	if (_context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.")
+		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
 	}
 
 	uint32_t device_extension_count;
@@ -694,7 +694,7 @@ VkShaderModule HelloTriangle::load_shader_module(Context &_context, const char *
 	// Compile the GLSL source
 	if (!vkb::GLSLCompiler::compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;
 	}
 
@@ -1128,7 +1128,7 @@ void HelloTriangle::update(float delta_time)
 	}
 	else if (res != VK_SUCCESS)
 	{
-		LOGE("Failed to present swapchain image.")
+		LOGE("Failed to present swapchain image.");
 	}
 }
 

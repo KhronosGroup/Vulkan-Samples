@@ -17,9 +17,10 @@
 
 #pragma once
 
+#include <memory>
+
 #include "core/image.h"
 #include "core/sampler.h"
-#include <memory>
 
 namespace vkb
 {

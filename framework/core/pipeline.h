@@ -32,7 +32,7 @@ class Pipeline
 
 	Pipeline(const Pipeline &) = delete;
 
-	Pipeline(Pipeline &&other) noexcept ;
+	Pipeline(Pipeline &&other) noexcept;
 
 	virtual ~Pipeline();
 
@@ -55,7 +55,10 @@ class Pipeline
 class ComputePipeline : public Pipeline
 {
   public:
-	ComputePipeline(ComputePipeline &&) = default;
+	ComputePipeline(ComputePipeline &&)      = default;
+	ComputePipeline(const ComputePipeline &) = delete;
+	ComputePipeline &operator=(const ComputePipeline &) = delete;
+	ComputePipeline &operator=(ComputePipeline &&) = delete;
 
 	~ComputePipeline() override = default;
 
@@ -67,7 +70,10 @@ class ComputePipeline : public Pipeline
 class GraphicsPipeline : public Pipeline
 {
   public:
-	GraphicsPipeline(GraphicsPipeline &&) = default;
+	GraphicsPipeline(GraphicsPipeline &&)      = default;
+	GraphicsPipeline(const GraphicsPipeline &) = delete;
+	GraphicsPipeline &operator=(const GraphicsPipeline &) = delete;
+	GraphicsPipeline &operator=(GraphicsPipeline &&) = delete;
 
 	~GraphicsPipeline() override = default;
 

@@ -20,10 +20,14 @@
 #include <mutex>
 #include <vector>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "common/logging.h"
 #include "platform/filesystem.h"
@@ -67,7 +71,7 @@ bool Platform::initialize(std::unique_ptr<Application> &&_app)
 	logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(logger);
 
-	LOGI("Logger initialized")
+	LOGI("Logger initialized");
 
 	auto args = get_arguments();
 	args.insert(args.begin(), "vulkan_samples");
@@ -78,12 +82,12 @@ bool Platform::initialize(std::unique_ptr<Application> &&_app)
 	if (!parser->parse({&Platform::app, &Platform::sample, &Platform::test, &Platform::batch, &Platform::samples, &Platform::benchmark, &window_options}))
 	{
 		auto help = parser->help();
-		LOGI("")
+		LOGI("");
 		for (auto &line : help)
 		{
-			LOGI(line)
+			LOGI(line);
 		}
-		LOGI("")
+		LOGI("");
 		return false;
 	}
 
@@ -106,7 +110,7 @@ bool Platform::initialize(std::unique_ptr<Application> &&_app)
 		throw std::runtime_error("Window creation failed, make sure platform overrides create_window() and creates a valid window.");
 	}
 
-	LOGI("Window created")
+	LOGI("Window created");
 
 	return true;
 }
@@ -139,7 +143,7 @@ void Platform::run()
 		if (remaining_benchmark_frames == 0)
 		{
 			auto time_taken = timer.stop();
-			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken)
+			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
 			close();
 			return;
 		}

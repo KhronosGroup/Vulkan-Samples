@@ -19,7 +19,7 @@
 
 #include <mutex>
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_RESIZE_IMPLEMENTATION

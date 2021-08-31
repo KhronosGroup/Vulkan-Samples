@@ -42,6 +42,11 @@ enum class ResourceType
 class ResourceRecord
 {
   public:
+	ResourceRecord()                       = default;
+	ResourceRecord(const ResourceRecord &) = delete;
+	ResourceRecord &operator=(const ResourceRecord &) = delete;
+	ResourceRecord &operator=(ResourceRecord &&) = delete;
+
 	void set_data(const std::vector<uint8_t> &data);
 
 	std::vector<uint8_t> get_data();

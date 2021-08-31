@@ -18,8 +18,12 @@
 #pragma once
 
 #include "common/vk_common.h"
+#include "common/warnings.h"
 #include "core/instance.h"
-#include "vulkan/vulkan.hpp"
+
+VKBP_DISABLE_WARNINGS()
+#include <vulkan/vulkan.hpp>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

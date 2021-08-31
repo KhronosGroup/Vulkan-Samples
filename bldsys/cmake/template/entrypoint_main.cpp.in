@@ -17,6 +17,9 @@
 
 // Generated file by CMake. Don't edit.
 
+// Always include warnings first
+#include "common/warnings.h"
+
 #include "common/logging.h"
 #include "platform/platform.h"
 

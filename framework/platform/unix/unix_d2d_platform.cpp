@@ -17,7 +17,7 @@
 
 #include "unix_d2d_platform.h"
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>

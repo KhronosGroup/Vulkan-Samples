@@ -19,7 +19,11 @@
 
 #include <unordered_map>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <CLI/CLI.hpp>
+VKBP_ENABLE_WARNINGS()
 
 #include "platform/parser.h"
 

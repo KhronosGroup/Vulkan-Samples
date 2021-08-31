@@ -706,7 +706,7 @@ void MSAASample::prepare_depth_resolve_mode_list()
 
 		if (depth_resolve_properties.supportedDepthResolveModes == 0)
 		{
-			LOGW("No depth stencil resolve modes supported")
+			LOGW("No depth stencil resolve modes supported");
 			depth_writeback_resolve_supported = false;
 		}
 		else

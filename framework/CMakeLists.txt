@@ -61,7 +61,7 @@ set(COMMON_FILES
     # Header Files
     common/vk_common.h
     common/vk_initializers.h
-    common/glm_common.h 
+    common/glm.h 
     common/resource_caching.h
     common/logging.h
     common/helpers.h

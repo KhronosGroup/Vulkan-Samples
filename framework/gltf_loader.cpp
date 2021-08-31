@@ -22,17 +22,13 @@
 #include <limits>
 #include <queue>
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtc/type_ptr.hpp>
-VKBP_ENABLE_WARNINGS()
-
 #include "api_vulkan_sample.h"
+#include "common/error.h"
+#include "common/glm.h"
 #include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
+#include "common/warnings.h"
 #include "core/device.h"
 #include "core/image.h"
 #include "platform/filesystem.h"
@@ -51,7 +47,9 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/scene.h"
 #include "scene_graph/scripts/animation.h"
 
+VKBP_DISABLE_WARNINGS()
 #include <ctpl_stl.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -338,21 +336,21 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str())
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
 		return nullptr;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: {}.", err.c_str())
+		LOGE("Error loading gltf model: {}.", err.c_str());
 
 		return nullptr;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("{}", warn.c_str())
+		LOGI("{}", warn.c_str());
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -380,21 +378,21 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str())
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
 		return nullptr;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: {}.", err.c_str())
+		LOGE("Error loading gltf model: {}.", err.c_str());
 
 		return nullptr;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("{}", warn.c_str())
+		LOGI("{}", warn.c_str());
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -431,13 +429,13 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			else
 			{
 				// Otherwise, if extension isn't required (but is in the file) then print a warning to the user
-				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension)
+				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension);
 			}
 		}
 		else
 		{
 			// Extension is supported, so enable it
-			LOGI("glTF file contains extension: {}", used_extension)
+			LOGI("glTF file contains extension: {}", used_extension);
 			it->second = true;
 		}
 	}
@@ -476,7 +474,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		    [this, image_index](size_t) {
 			    auto image = parse_image(model.images.at(image_index));
 
-			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str())
+			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str());
 
 			    return image;
 		    });
@@ -530,7 +528,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	auto elapsed_time = timer.stop();
 
-	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count)
+	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
@@ -660,7 +658,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 						submesh->index_type = VK_INDEX_TYPE_UINT32;
 						break;
 					default:
-						LOGE("gltf primitive has invalid format type")
+						LOGE("gltf primitive has invalid format type");
 						break;
 				}
 
@@ -753,9 +751,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	std::vector<std::unique_ptr<sg::Animation>> animations;
 
 	// Load animations
-	for (auto & gltf_animation : model.animations)
+	for (auto &gltf_animation : model.animations)
 	{
-			std::vector<sg::AnimationSampler> _samplers;
+		std::vector<sg::AnimationSampler> _samplers;
 
 		for (size_t sampler_index = 0; sampler_index < gltf_animation.samplers.size(); ++sampler_index)
 		{
@@ -776,7 +774,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			}
 			else
 			{
-				LOGW("Gltf animation sampler #{} has unknown interpolation value", sampler_index)
+				LOGW("Gltf animation sampler #{} has unknown interpolation value", sampler_index);
 			}
 
 			auto input_accessor      = model.accessors[gltf_sampler.input];
@@ -810,7 +808,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					break;
 				}
 				default: {
-					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index)
+					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index);
 					continue;
 				}
 			}
@@ -839,12 +837,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			}
 			else if (gltf_channel.target_path == "weights")
 			{
-				LOGW("Gltf animation channel #{} has unsupported target path: {}", channel_index, gltf_channel.target_path)
+				LOGW("Gltf animation channel #{} has unsupported target path: {}", channel_index, gltf_channel.target_path);
 				continue;
 			}
 			else
 			{
-				LOGW("Gltf animation channel #{} has unknown target path", channel_index)
+				LOGW("Gltf animation channel #{} has unknown target path", channel_index);
 				continue;
 			}
 
@@ -1069,9 +1067,9 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 		submesh->index_type = VK_INDEX_TYPE_UINT32;
 
 		core::Buffer _stage_buffer{device,
-		                          index_data.size(),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
+		                           index_data.size(),
+		                           VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                           VMA_MEMORY_USAGE_CPU_ONLY};
 
 		_stage_buffer.update(index_data);
 
@@ -1158,7 +1156,7 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	}
 	else
 	{
-		LOGW("Camera type not supported")
+		LOGW("Camera type not supported");
 	}
 
 	return camera;
@@ -1254,7 +1252,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		if (!device.is_image_format_supported(image->get_format()))
 		{
-			LOGW("ASTC not supported: decoding {}", image->get_name())
+			LOGW("ASTC not supported: decoding {}", image->get_name());
 			image = std::make_unique<sg::Astc>(*image);
 			image->generate_mipmaps();
 		}
@@ -1353,7 +1351,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 			// Spec states a light has to have a type to be valid
 			if (!khr_light.Has("type"))
 			{
-				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index)
+				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index);
 				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 			}
 
@@ -1378,7 +1376,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 			}
 			else
 			{
-				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type)
+				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type);
 				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 			}
 
@@ -1403,7 +1401,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 				{
 					if (!khr_light.Has("spot"))
 					{
-						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type)
+						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type);
 						throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 					}
 

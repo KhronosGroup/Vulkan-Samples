@@ -21,7 +21,7 @@
 #include <unistd.h>
 #include <unordered_map>
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <imgui.h>
@@ -265,7 +265,7 @@ inline TouchAction translate_touch_action(int action)
 
 void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 {
-	LOGI("ContentRectChanged: {:p}\n", static_cast<void *>(activity))
+	LOGI("ContentRectChanged: {:p}\n", static_cast<void *>(activity));
 	struct android_app *app = reinterpret_cast<struct android_app *>(activity->instance);
 	auto                cmd = APP_CMD_CONTENT_RECT_CHANGED;
 
@@ -273,7 +273,7 @@ void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
 
 	if (write(app->msgwrite, &cmd, sizeof(cmd)) != sizeof(cmd))
 	{
-		LOGE("Failure writing android_app cmd: {}\n", strerror(errno))
+		LOGE("Failure writing android_app cmd: {}\n", strerror(errno));
 	}
 }
 

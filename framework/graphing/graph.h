@@ -21,10 +21,14 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <unordered_map>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <json.hpp>
+VKBP_ENABLE_WARNINGS()
 
-#include "common/error.h"
 #include "graph_node.h"
 
 namespace vkb

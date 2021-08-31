@@ -18,7 +18,7 @@
 
 #include "scene_graph/components/image/ktx.h"
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
@@ -32,14 +32,14 @@ namespace sg
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
-static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_level,
-                                                             int          ,
+static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int mip_level,
+                                                             int,
                                                              int          width,
                                                              int          height,
                                                              int          depth,
                                                              ktx_uint64_t face_lod_size,
-                                                             void *       ,
-                                                             void *       user_data)
+                                                             void *,
+                                                             void *user_data)
 {
 	// Get mipmaps
 	auto &mipmaps = *reinterpret_cast<std::vector<Mipmap> *>(user_data);
@@ -128,13 +128,13 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	{
 		uint32_t layer_count = cubemap ? texture->numFaces : texture->numLayers;
 
-		std::vector<std::vector<VkDeviceSize>> offsets;
+		std::vector<std::vector<VkDeviceSize>> device_offsets;
 		for (uint32_t layer = 0; layer < layer_count; layer++)
 		{
 			std::vector<VkDeviceSize> layer_offsets{};
 			for (uint32_t level = 0; level < texture->numLevels; level++)
 			{
-				ktx_size_t     offset;
+				ktx_size_t offset;
 				if (cubemap)
 				{
 					ktxTexture_GetImageOffset(texture, level, 0, layer, &offset);
@@ -145,19 +145,19 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 				}
 				layer_offsets.push_back(static_cast<VkDeviceSize>(offset));
 			}
-			offsets.push_back(layer_offsets);
+			device_offsets.push_back(layer_offsets);
 		}
-		set_offsets(offsets);
+		set_offsets(device_offsets);
 	}
 	else
 	{
-		std::vector<std::vector<VkDeviceSize>> offsets{};
-		offsets.resize(1);
-		for (auto & mipmap_level : mipmap_levels)
+		std::vector<std::vector<VkDeviceSize>> device_offsets{};
+		device_offsets.resize(1);
+		for (auto &mipmap_level : mipmap_levels)
 		{
-			offsets[0].push_back(static_cast<VkDeviceSize>(mipmap_level.offset));
+			device_offsets[0].push_back(static_cast<VkDeviceSize>(mipmap_level.offset));
 		}
-		set_offsets(offsets);
+		set_offsets(device_offsets);
 	}
 
 	ktxTexture_Destroy(texture);

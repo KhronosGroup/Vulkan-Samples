@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include "common/glm_common.h"
+#include "common/glm.h"
 #include "core/sampled_image.h"
 #include "core/shader_module.h"
 #include "postprocessing_pass.h"

@@ -84,7 +84,7 @@ void ResourceReplay::play(ResourceCache &resource_cache, ResourceRecord &recorde
 		}
 		else
 		{
-			LOGE("Replay command not supported.")
+			LOGE("Replay command not supported.");
 		}
 	}
 }

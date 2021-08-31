@@ -181,7 +181,7 @@ void OpenGLInterop::prepare_shared_resources()
 #if WIN32
 		VkSemaphoreGetWin32HandleInfoKHR semaphoreGetHandleInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR, nullptr,
-		    VK_NULL_HANDLE, compatable_semaphore_type};
+		    VK_NULL_HANDLE, compatible_semaphore_type};
 		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_ready;
 		VK_CHECK(vkGetSemaphoreWin32HandleKHR(deviceHandle, &semaphoreGetHandleInfo, &shareHandles.gl_ready));
 		semaphoreGetHandleInfo.semaphore = sharedSemaphores.gl_complete;

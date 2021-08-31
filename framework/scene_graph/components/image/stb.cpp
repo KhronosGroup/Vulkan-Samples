@@ -17,8 +17,12 @@
 
 #include "scene_graph/components/image/stb.h"
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

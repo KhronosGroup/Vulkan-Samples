@@ -19,7 +19,8 @@
 
 #include <mutex>
 
-#include "common/error.h"
+#include "common/glm.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #if defined(_WIN32) || defined(_WIN64)

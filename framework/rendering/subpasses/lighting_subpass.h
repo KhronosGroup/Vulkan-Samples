@@ -18,11 +18,8 @@
 #pragma once
 
 #include "buffer_pool.h"
+#include "common/glm.h"
 #include "rendering/subpass.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-VKBP_ENABLE_WARNINGS()
 
 // This value is per type of light that we feed into the shader
 #define MAX_DEFERRED_LIGHT_COUNT 32

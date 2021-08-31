@@ -17,10 +17,11 @@
 
 #pragma once
 
+#include <functional>
+
 #include "core/command_buffer.h"
 #include "render_context.h"
 #include "render_target.h"
-#include <functional>
 
 namespace vkb
 {

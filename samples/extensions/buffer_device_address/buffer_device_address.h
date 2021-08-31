@@ -17,9 +17,10 @@
 
 #pragma once
 
-#include "api_vulkan_sample.h"
 #include <memory>
 #include <vector>
+
+#include "api_vulkan_sample.h"
 
 class BufferDeviceAddress : public ApiVulkanSample
 {

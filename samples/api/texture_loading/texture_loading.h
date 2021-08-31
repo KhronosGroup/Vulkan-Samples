@@ -21,7 +21,11 @@
 
 #pragma once
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "api_vulkan_sample.h"
 
@@ -75,18 +79,18 @@ class TextureLoading : public ApiVulkanSample
 	TextureLoading();
 	~TextureLoading() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void         load_texture();
-	void         destroy_texture(Texture texture);
-	void         build_command_buffers() override;
-	void         draw();
-	void         generate_quad();
-	void         setup_descriptor_pool();
-	void         setup_descriptor_set_layout();
-	void         setup_descriptor_set();
-	void         prepare_pipelines();
-	void         prepare_uniform_buffers();
-	void         update_uniform_buffers();
-	bool         prepare(vkb::Platform &platform) override;
+	void load_texture();
+	void destroy_texture(Texture texture);
+	void build_command_buffers() override;
+	void draw();
+	void generate_quad();
+	void setup_descriptor_pool();
+	void setup_descriptor_set_layout();
+	void setup_descriptor_set();
+	void prepare_pipelines();
+	void prepare_uniform_buffers();
+	void update_uniform_buffers();
+	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 	void view_changed() override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;

@@ -40,7 +40,7 @@ PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, R
 	set_input_attachments(_input_attachments);
 }
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingSubpass &&to_move)  noexcept :
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingSubpass &&to_move) noexcept :
     Subpass{std::move(to_move)},
     parent{to_move.parent},
     fs_variant{std::move(to_move.fs_variant)},
@@ -132,8 +132,8 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	rasterization_state.cull_mode = VK_CULL_MODE_NONE;
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	auto &         render_target       = *parent->draw_render_target;
-	const auto &   target_views        = render_target.get_views();
+	auto &      render_target = *parent->draw_render_target;
+	const auto &target_views  = render_target.get_views();
 
 	if (parent->uniform_buffer_alloc != nullptr)
 	{
@@ -223,21 +223,21 @@ void PostProcessingRenderPass::update_load_stores(
 		return;
 	}
 
-	const auto &render_target = this->render_target ? *this->render_target : fallback_render_target;
+	const auto &render_target_ref = render_target ? *render_target : fallback_render_target;
 
 	// Update load/stores accordingly
 	load_stores.clear();
 
-	for (uint32_t j = 0; j < uint32_t(render_target.get_attachments().size()); j++)
+	for (uint32_t j = 0; j < uint32_t(render_target_ref.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
 		const bool is_sampled = std::find_if(sampled_attachments.begin(), sampled_attachments.end(),
-		                                     [&render_target, j](auto &pair) {
+		                                     [&render_target_ref, j](auto &pair) {
 			                                     // NOTE: if RT not set, default is the currently-active one
-			                                     auto *sampled_rt = pair.first ? pair.first : &render_target;
+			                                     auto *sampled_rt = pair.first ? pair.first : &render_target_ref;
 			                                     // unpack attachment
 			                                     uint32_t attachment = pair.second & ATTACHMENT_BITMASK;
-			                                     return attachment == j && sampled_rt == &render_target;
+			                                     return attachment == j && sampled_rt == &render_target_ref;
 		                                     }) != sampled_attachments.end();
 		const bool is_output  = output_attachments.find(j) != output_attachments.end();
 
@@ -296,11 +296,14 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 {
 	if (src_access == 0)
 	{
-		if(layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+		if (layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
 			src_stage  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 			src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 			src_access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-		} else {
+		}
+		else
+		{
 			src_stage  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 			src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		}
@@ -314,8 +317,8 @@ void PostProcessingRenderPass::transition_attachments(
     CommandBuffer &             command_buffer,
     RenderTarget &              fallback_render_target)
 {
-	auto &      render_target = this->render_target ? *this->render_target : fallback_render_target;
-	const auto &views         = render_target.get_views();
+	auto &      render_target_ref = render_target ? *render_target : fallback_render_target;
+	const auto &views             = render_target_ref.get_views();
 
 	BarrierInfo fallback_barrier_src{};
 	fallback_barrier_src.pipeline_stage     = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
@@ -325,7 +328,7 @@ void PostProcessingRenderPass::transition_attachments(
 
 	for (uint32_t input : input_attachments)
 	{
-		const VkImageLayout prev_layout = render_target.get_layout(input);
+		const VkImageLayout prev_layout = render_target_ref.get_layout(input);
 		if (prev_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 		{
 			// No-op
@@ -336,7 +339,7 @@ void PostProcessingRenderPass::transition_attachments(
 		                  prev_layout);
 
 		vkb::ImageMemoryBarrier barrier;
-		barrier.old_layout      = render_target.get_layout(input);
+		barrier.old_layout      = render_target_ref.get_layout(input);
 		barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		barrier.src_access_mask = prev_pass_barrier_info.image_write_access;
 		barrier.dst_access_mask = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
@@ -344,12 +347,12 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
 		command_buffer.image_memory_barrier(views.at(input), barrier);
-		render_target.set_layout(input, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+		render_target_ref.set_layout(input, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	for (const auto &sampled : sampled_attachments)
 	{
-		auto *     sampled_rt  = sampled.first ? sampled.first : &render_target;
+		auto *sampled_rt = sampled.first ? sampled.first : &render_target_ref;
 
 		// unpack depth resolve flag and attachment
 		bool     is_depth_resolve = sampled.second & DEPTH_RESOLVE_BITMASK;
@@ -393,7 +396,7 @@ void PostProcessingRenderPass::transition_attachments(
 		const VkFormat      attachment_format = views.at(output).get_format();
 		const bool          is_depth_stencil  = vkb::is_depth_only_format(attachment_format) || vkb::is_depth_stencil_format(attachment_format);
 		const VkImageLayout output_layout     = is_depth_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		if (render_target.get_layout(output) == output_layout)
+		if (render_target_ref.get_layout(output) == output_layout)
 		{
 			// No-op
 			continue;
@@ -417,7 +420,7 @@ void PostProcessingRenderPass::transition_attachments(
 		}
 
 		command_buffer.image_memory_barrier(views.at(output), barrier);
-		render_target.set_layout(output, output_layout);
+		render_target_ref.set_layout(output, output_layout);
 	}
 
 	// NOTE: Unused attachments might be carried over to other render passes,
@@ -443,7 +446,7 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 		{
 			if (const uint32_t *sampled_attachment = it.second.get_target_attachment())
 			{
-				auto *image_rt = it.second.get_render_target();
+				auto *image_rt                  = it.second.get_render_target();
 				auto  packed_sampled_attachment = *sampled_attachment;
 
 				// pack sampled attachment

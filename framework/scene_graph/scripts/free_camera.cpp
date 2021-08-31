@@ -18,13 +18,6 @@
 
 #include "free_camera.h"
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtx/euler_angles.hpp>
-VKBP_ENABLE_WARNINGS()
-
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"

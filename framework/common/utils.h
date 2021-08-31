@@ -17,13 +17,7 @@
 
 #pragma once
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include "glm/gtx/quaternion.hpp"
-VKBP_ENABLE_WARNINGS()
-
+#include "common/glm.h"
 #include "platform/filesystem.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"

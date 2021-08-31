@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <glslang/Public/ShaderLang.h>
@@ -63,10 +63,10 @@ class GLSLCompiler
 	 * @param[out] info_log Stores any log messages during the compilation process
 	 */
 	static bool compile_to_spirv(VkShaderStageFlagBits       stage,
-	                      const std::vector<uint8_t> &glsl_source,
-	                      const std::string &         entry_point,
-	                      const ShaderVariant &       shader_variant,
-	                      std::vector<std::uint32_t> &spirv,
-	                      std::string &               info_log);
+	                             const std::vector<uint8_t> &glsl_source,
+	                             const std::string &         entry_point,
+	                             const ShaderVariant &       shader_variant,
+	                             std::vector<std::uint32_t> &spirv,
+	                             std::string &               info_log);
 };
 }        // namespace vkb

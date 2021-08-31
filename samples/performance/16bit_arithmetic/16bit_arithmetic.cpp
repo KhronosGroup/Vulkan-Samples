@@ -16,9 +16,11 @@
  */
 
 #include "16bit_arithmetic.h"
+
+#include <random>
+
 #include "platform/platform.h"
 #include "stats/stats.h"
-#include <random>
 
 static constexpr unsigned Width    = 1024;
 static constexpr unsigned Height   = 1024;

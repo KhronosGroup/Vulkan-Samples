@@ -104,8 +104,8 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 
 	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
 	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename())
-		LOGE("{}", info_log)
+		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
+		LOGE("{}", info_log);
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 

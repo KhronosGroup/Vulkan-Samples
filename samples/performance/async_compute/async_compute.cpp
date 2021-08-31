@@ -177,23 +177,23 @@ void AsyncComputeSample::setup_queues()
 
 		if (device->get_num_queues_for_queue_family(graphics_family_index) >= 2)
 		{
-			LOGI("Device has 2 or more graphics queues.")
+			LOGI("Device has 2 or more graphics queues.");
 			early_graphics_queue = &device->get_queue(graphics_family_index, 1);
 		}
 		else
 		{
-			LOGI("Device has just 1 graphics queue.")
+			LOGI("Device has just 1 graphics queue.");
 			early_graphics_queue = present_graphics_queue;
 		}
 
 		if (graphics_family_index == compute_family_index)
 		{
-			LOGI("Device has does not have a dedicated compute queue family.")
+			LOGI("Device has does not have a dedicated compute queue family.");
 			post_compute_queue = early_graphics_queue;
 		}
 		else
 		{
-			LOGI("Device has async compute queue.")
+			LOGI("Device has async compute queue.");
 			post_compute_queue = &device->get_queue(compute_family_index, 0);
 		}
 	}
@@ -590,7 +590,7 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 	}
 
 	command_buffer.bind_pipeline_layout(*blur_up_pipeline);
-	for (uint32_t index = blur_chain_views.size() - 2; index >= 1; index--)
+	for (uint32_t index = static_cast<uint32_t>(blur_chain_views.size()) - 2; index >= 1; index--)
 	{
 		dispatch_pass(*blur_chain_views[index], *blur_chain_views[index + 1], index == 1);
 	}

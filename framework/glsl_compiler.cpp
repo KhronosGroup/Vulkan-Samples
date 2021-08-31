@@ -17,6 +17,8 @@
 
 #include "glsl_compiler.h"
 
+#include "common/warnings.h"
+
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>

@@ -17,20 +17,17 @@
 
 #include "gltf_loader_test.h"
 
+#include "common/glm.h"
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtx/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkbtest
 {
@@ -56,7 +53,7 @@ bool GLTFLoaderTest::prepare(vkb::Platform &platform)
 
 	if (!camera_node)
 	{
-		LOGW("Camera node not found. Looking for `default_camera` node.")
+		LOGW("Camera node not found. Looking for `default_camera` node.");
 
 		camera_node = scene->find_node("default_camera");
 	}

@@ -1156,7 +1156,7 @@ std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string 
 
 	if (!model)
 	{
-		LOGE("Cannot load model from file: {}", file.c_str())
+		LOGE("Cannot load model from file: {}", file.c_str());
 		throw std::runtime_error("Cannot load model from: " + file);
 	}
 

@@ -80,7 +80,7 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 	// Binding count has to equal flag count as it's a 1:1 mapping
 	if (bindings.size() != flags.size())
 	{
-		LOGE("Binding count has to be equal to flag count.")
+		LOGE("Binding count has to be equal to flag count.");
 		return false;
 	}
 

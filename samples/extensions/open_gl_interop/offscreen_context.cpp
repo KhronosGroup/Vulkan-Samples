@@ -27,17 +27,17 @@ void APIENTRY debug_message_callback(GLenum , GLenum , GLuint , GLenum severity,
 	switch (severity)
 	{
 		case GL_DEBUG_SEVERITY_HIGH:
-			LOGE("OpenGL: {}", message)
+			LOGE("OpenGL: {}", message);
 			break;
 		case GL_DEBUG_SEVERITY_MEDIUM:
-			LOGW("OpenGL: {}", message)
+			LOGW("OpenGL: {}", message);
 			break;
 		case GL_DEBUG_SEVERITY_LOW:
-			LOGI("OpenGL: {}", message)
+			LOGI("OpenGL: {}", message);
 			break;
 		default:
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			LOGD("OpenGL: {}", message)
+			LOGD("OpenGL: {}", message);
 	}
 }
 
@@ -80,7 +80,7 @@ GLuint OffscreenContext::load_shader(const char *shader_source, GLenum shader_ty
 		// Provide the info log in whatever manor you deem best.
 		// Exit with failure.
 		glDeleteShader(shader);        // Don't leak the shader.
-		LOGE("OpenGL: Shader compilation failed", str_error.c_str())
+		LOGE("OpenGL: Shader compilation failed", str_error.c_str());
 	}
 	return shader;
 }

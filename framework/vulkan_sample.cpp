@@ -17,10 +17,10 @@
 
 #include "vulkan_sample.h"
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
+#include "common/glm.h"
 #include <imgui.h>
 VKBP_ENABLE_WARNINGS()
 

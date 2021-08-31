@@ -17,7 +17,11 @@
 
 #pragma once
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <android_native_app_glue.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "platform/platform.h"
 

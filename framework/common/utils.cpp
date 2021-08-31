@@ -264,7 +264,7 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 
 	if (!camera_node)
 	{
-		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str())
+		LOGW("Camera node `{}` not found. Looking for `default_camera` node.", node_name.c_str());
 
 		camera_node = scene.find_node("default_camera");
 	}
@@ -295,12 +295,12 @@ bool generate_all(RenderContext &context, sg::Scene &scene)
 	bool success = true;
 	if (!graphing::framework_graph::generate(context))
 	{
-		LOGE("Failed to save render context graph")
+		LOGE("Failed to save render context graph");
 		success = false;
 	}
 	if (!graphing::scene_graph::generate(scene))
 	{
-		LOGE("Failed to save scene graph")
+		LOGE("Failed to save scene graph");
 		success = false;
 	}
 	return success;

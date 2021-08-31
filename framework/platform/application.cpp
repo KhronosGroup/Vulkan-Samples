@@ -62,7 +62,7 @@ void Application::step()
 		fps        = static_cast<float>(frame_count - last_frame_count) / elapsed_time;
 		frame_time = delta_time * 1000.0f;
 
-		LOGI("FPS: {:.1f}", fps)
+		LOGI("FPS: {:.1f}", fps);
 
 		last_frame_count = frame_count;
 		timer.lap();
@@ -72,7 +72,7 @@ void Application::step()
 void Application::finish()
 {
 	auto execution_time = timer.stop();
-	LOGI("Closing App (Runtime: {:.1f})", execution_time)
+	LOGI("Closing App (Runtime: {:.1f})", execution_time);
 }
 
 void Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)

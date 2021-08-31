@@ -17,12 +17,7 @@
 
 #pragma once
 
-#include "common/error.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-VKBP_ENABLE_WARNINGS()
-
+#include "common/glm.h"
 #include "scene_graph/components/camera.h"
 
 namespace vkb

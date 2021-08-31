@@ -98,7 +98,7 @@ BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 		return **it;
 	}
 
-	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage)
+	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
 
 	// Create a new block, store and return it
 	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, std::max(block_size, minimum_size), usage, memory_usage));
@@ -135,7 +135,7 @@ void BufferAllocation::update(const std::vector<uint8_t> &data, uint32_t offset)
 	}
 	else
 	{
-		LOGE("Ignore buffer allocation update")
+		LOGE("Ignore buffer allocation update");
 	}
 }
 

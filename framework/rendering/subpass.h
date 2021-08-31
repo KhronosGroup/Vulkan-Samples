@@ -18,6 +18,7 @@
 #pragma once
 
 #include "buffer_pool.h"
+#include "common/glm.h"
 #include "common/helpers.h"
 #include "core/shader_module.h"
 #include "rendering/pipeline_state.h"
@@ -25,10 +26,6 @@
 #include "rendering/render_frame.h"
 #include "scene_graph/components/light.h"
 #include "scene_graph/node.h"
-
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
@@ -165,24 +162,21 @@ class Subpass
 
 			switch (scene_light->get_light_type())
 			{
-				case sg::LightType::Directional:
-				{
+				case sg::LightType::Directional: {
 					if (lighting_state.directional_lights.size() < light_count)
 					{
 						lighting_state.directional_lights.push_back(light);
 					}
 					break;
 				}
-				case sg::LightType::Point:
-				{
+				case sg::LightType::Point: {
 					if (lighting_state.point_lights.size() < light_count)
 					{
 						lighting_state.point_lights.push_back(light);
 					}
 					break;
 				}
-				case sg::LightType::Spot:
-				{
+				case sg::LightType::Spot: {
 					if (lighting_state.spot_lights.size() < light_count)
 					{
 						lighting_state.spot_lights.push_back(light);

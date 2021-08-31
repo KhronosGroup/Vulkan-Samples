@@ -20,7 +20,7 @@
 
 #include "graphing/scene_graph.h"
 
-#include "glm/gtx/string_cast.hpp"
+#include "common/glm.h"
 
 namespace vkb
 {

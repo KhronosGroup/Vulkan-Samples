@@ -23,7 +23,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

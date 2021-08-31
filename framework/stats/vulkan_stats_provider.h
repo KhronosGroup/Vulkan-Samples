@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include <utility>
+
 #include "core/query_pool.h"
 #include "stats_provider.h"
-
-#include <utility>
 
 namespace vkb
 {

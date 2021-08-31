@@ -17,7 +17,9 @@
 
 #include "strings.h"
 
+VKBP_DISABLE_WARNINGS()
 #include <spdlog/fmt/fmt.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "core/shader_module.h"
 #include "scene_graph/components/material.h"

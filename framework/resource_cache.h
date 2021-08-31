@@ -79,7 +79,7 @@ struct ResourceCacheState
 class ResourceCache
 {
   public:
-	explicit ResourceCache(Device &device);
+	ResourceCache(Device &device);
 
 	ResourceCache(const ResourceCache &) = delete;
 

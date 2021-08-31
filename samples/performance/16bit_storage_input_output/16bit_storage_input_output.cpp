@@ -16,11 +16,13 @@
  */
 
 #include "16bit_storage_input_output.h"
+
+#include <random>
+
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
-#include <random>
 
 KHR16BitStorageInputOutputSample::KHR16BitStorageInputOutputSample()
 {

@@ -17,7 +17,11 @@
 
 #pragma once
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <ctpl_stl.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
 #include "common/utils.h"

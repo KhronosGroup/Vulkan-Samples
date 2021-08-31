@@ -18,6 +18,8 @@
 
 #include "device.h"
 
+#include "common/warnings.h"
+
 VKBP_DISABLE_WARNINGS()
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
@@ -29,7 +31,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
     gpu{gpu},
     resource_cache{*this}
 {
-	LOGI("Selected GPU: {}", gpu.get_properties().deviceName)
+	LOGI("Selected GPU: {}", gpu.get_properties().deviceName);
 
 	// Prepare the device queues
 	uint32_t                             queue_family_properties_count = to_u32(gpu.get_queue_family_properties().size());
@@ -78,10 +80,10 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 	// Display supported extensions
 	if (!device_extensions.empty())
 	{
-		LOGD("Device supports the following extensions:")
+		LOGD("Device supports the following extensions:");
 		for (auto &extension : device_extensions)
 		{
-			LOGD("  \t{}", extension.extensionName)
+			LOGD("  \t{}", extension.extensionName);
 		}
 	}
 
@@ -93,7 +95,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 		enabled_extensions.push_back("VK_KHR_get_memory_requirements2");
 		enabled_extensions.push_back("VK_KHR_dedicated_allocation");
 
-		LOGI("Dedicated Allocation enabled")
+		LOGI("Dedicated Allocation enabled");
 	}
 
 	// For performance queries, we also use host query reset since queryPool resets cannot
@@ -108,7 +110,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 		{
 			enabled_extensions.push_back("VK_KHR_performance_query");
 			enabled_extensions.push_back("VK_EXT_host_query_reset");
-			LOGI("Performance query enabled")
+			LOGI("Performance query enabled");
 		}
 	}
 
@@ -128,10 +130,10 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 
 	if (!enabled_extensions.empty())
 	{
-		LOGI("Device supports the following requested extensions:")
+		LOGI("Device supports the following requested extensions:");
 		for (auto &extension : enabled_extensions)
 		{
-			LOGI("  \t{}", extension)
+			LOGI("  \t{}", extension);
 		}
 	}
 
@@ -143,11 +145,11 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 			auto extension_is_optional = requested_extensions[extension];
 			if (extension_is_optional)
 			{
-				LOGW("Optional device extension {} not available, some features may be disabled", extension)
+				LOGW("Optional device extension {} not available, some features may be disabled", extension);
 			}
 			else
 			{
-				LOGE("Required device extension {} not available, cannot run", extension)
+				LOGE("Required device extension {} not available, cannot run", extension);
 			}
 			error = !extension_is_optional;
 		}
@@ -253,7 +255,7 @@ Device::~Device()
 		VmaStats stats;
 		vmaCalculateStats(memory_allocator, &stats);
 
-		LOGI("Total device memory leaked: {} bytes.", stats.total.usedBytes)
+		LOGI("Total device memory leaked: {} bytes.", stats.total.usedBytes);
 
 		vmaDestroyAllocator(memory_allocator);
 	}

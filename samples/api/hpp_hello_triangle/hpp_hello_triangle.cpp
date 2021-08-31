@@ -229,7 +229,7 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 
 	if (validate_layers(requested_validation_layers, supported_validation_layers))
 	{
-		LOGI("Enabled Validation Layers:")
+		LOGI("Enabled Validation Layers:");
 		for (const auto &layer : requested_validation_layers)
 		{
 			LOGI("	\t{}", layer);

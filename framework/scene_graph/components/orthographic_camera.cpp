@@ -17,10 +17,6 @@
 
 #include "orthographic_camera.h"
 
-VKBP_DISABLE_WARNINGS()
-#include <glm/gtc/matrix_transform.hpp>
-VKBP_ENABLE_WARNINGS()
-
 namespace vkb
 {
 namespace sg
@@ -34,8 +30,8 @@ OrthographicCamera::OrthographicCamera(const std::string &name, float left, floa
     left{left},
     right{right},
     bottom{bottom},
-	top{top},
-	near_plane{near_plane},
+    top{top},
+    near_plane{near_plane},
     far_plane{far_plane}
 {
 }

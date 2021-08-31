@@ -18,6 +18,8 @@
 #include "node_animation.h"
 
 #include <utility>
+
+#include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 

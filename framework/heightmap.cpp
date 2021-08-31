@@ -19,10 +19,10 @@
 
 #include <cstring>
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
+#include "common/glm.h"
 VKBP_ENABLE_WARNINGS()
 
 #include "platform/filesystem.h"

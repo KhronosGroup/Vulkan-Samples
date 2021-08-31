@@ -121,7 +121,6 @@ class BufferPool
 
   private:
 	Device &device;
-
 	/// List of blocks requested
 	std::vector<std::unique_ptr<BufferBlock>> buffer_blocks;
 

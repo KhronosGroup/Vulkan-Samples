@@ -197,7 +197,7 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const R
 		if (framebuffer_extent.width != last_framebuffer_extent.width || framebuffer_extent.height != last_framebuffer_extent.height ||
 		    begin_info.renderArea.extent.width != last_render_area_extent.width || begin_info.renderArea.extent.height != last_render_area_extent.height)
 		{
-			LOGW("Render target extent is not an optimal size, this may result in reduced performance.")
+			LOGW("Render target extent is not an optimal size, this may result in reduced performance.");
 		}
 
 		last_framebuffer_extent = current_render_pass.framebuffer->get_extent();
@@ -266,7 +266,7 @@ void CommandBuffer::push_constants(const std::vector<uint8_t> &values)
 
 	if (push_constant_size > max_push_constants_size)
 	{
-		LOGE("Push constant limit of {} exceeded (pushing {} bytes for a total of {} bytes)", max_push_constants_size, values.size(), push_constant_size)
+		LOGE("Push constant limit of {} exceeded (pushing {} bytes for a total of {} bytes)", max_push_constants_size, values.size(), push_constant_size);
 		throw std::runtime_error("Push constant limit exceeded.");
 	}
 	else
@@ -755,7 +755,7 @@ void CommandBuffer::flush_push_constants()
 	}
 	else
 	{
-		LOGW("Push constant range [{}, {}] not found", 0, stored_push_constants.size())
+		LOGW("Push constant range [{}, {}] not found", 0, stored_push_constants.size());
 	}
 
 	stored_push_constants.clear();

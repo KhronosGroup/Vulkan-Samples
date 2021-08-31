@@ -74,7 +74,7 @@ bool CLI11CommandParser::parse(CommandParserContext *context, const std::vector<
 	{
 		if (e.get_name() == "RuntimeError")
 		{
-			LOGE("CLI11 Parse Error")
+			LOGE("CLI11 Parse Error");
 			return false;
 		}
 

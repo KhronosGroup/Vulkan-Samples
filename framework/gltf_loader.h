@@ -21,10 +21,14 @@
 #include <memory>
 #include <mutex>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #define TINYGLTF_NO_STB_IMAGE
 #define TINYGLTF_NO_STB_IMAGE_WRITE
 #define TINYGLTF_NO_EXTERNAL_IMAGE
 #include <tiny_gltf.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "timer.h"
 

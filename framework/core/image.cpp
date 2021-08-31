@@ -199,7 +199,7 @@ uint8_t *Image::map()
 	{
 		if (tiling != VK_IMAGE_TILING_LINEAR)
 		{
-			LOGW("Mapping image memory that is not linear")
+			LOGW("Mapping image memory that is not linear");
 		}
 		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
 		mapped = true;

@@ -17,8 +17,13 @@
 
 #pragma once
 
-#include "volk.h"
 #include <vector>
+
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
+#include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

@@ -17,10 +17,6 @@
 
 #include "perspective_camera.h"
 
-VKBP_DISABLE_WARNINGS()
-#include <glm/gtc/matrix_transform.hpp>
-VKBP_ENABLE_WARNINGS()
-
 namespace vkb
 {
 namespace sg

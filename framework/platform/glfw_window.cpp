@@ -19,7 +19,7 @@
 
 #include <unordered_map>
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #define GLFW_INCLUDE_NONE
@@ -36,7 +36,7 @@ namespace
 {
 void error_callback(int error, const char *description)
 {
-	LOGE("GLFW Error (code {}): {}", error, description)
+	LOGE("GLFW Error (code {}): {}", error, description);
 }
 
 void window_close_callback(GLFWwindow *window)
@@ -364,7 +364,7 @@ vk::SurfaceKHR GlfwWindow::create_surface(vk::Instance instance, vk::PhysicalDev
 
 bool GlfwWindow::should_close()
 {
-	return glfwWindowShouldClose(handle);
+	return glfwWindowShouldClose(handle) == GLFW_TRUE;
 }
 
 void GlfwWindow::process_events()
@@ -391,8 +391,8 @@ float GlfwWindow::get_dpi_factor() const
 	static const float inch_to_mm       = 25.0f;
 	static const float win_base_density = 96.0f;
 
-	auto dpi        = static_cast<uint32_t>(vidmode->width / (width_mm / inch_to_mm));
-	auto dpi_factor = dpi / win_base_density;
+	auto dpi        = static_cast<uint32_t>(static_cast<float>(vidmode->width) / (static_cast<float>(width_mm) / inch_to_mm));
+	auto dpi_factor = static_cast<float>(dpi) / win_base_density;
 	return dpi_factor;
 }
 
@@ -406,7 +406,7 @@ float GlfwWindow::get_content_scale_factor() const
 	// We could return a 2D result here instead of a scalar,
 	// but non-uniform scaling is very unlikely, and would
 	// require significantly more changes in the IMGUI integration
-	return static_cast<float>(fb_width) / win_width;
+	return static_cast<float>(fb_width) / static_cast<float>(win_width);
 }
 
 }        // namespace vkb

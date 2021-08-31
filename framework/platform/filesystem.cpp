@@ -17,7 +17,7 @@
 
 #include "platform/filesystem.h"
 
-#include "common/error.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #define STB_IMAGE_WRITE_IMPLEMENTATION
@@ -82,7 +82,8 @@ std::string get(const Type type, const std::string &file)
 
 bool is_directory(const std::string &path)
 {
-	struct stat info{};
+	struct stat info
+	{};
 	if (stat(path.c_str(), &info) != 0 || !(info.st_mode & S_IFDIR))
 	{
 		return false;
@@ -217,13 +218,13 @@ bool write_json(nlohmann::json &data, const std::string &filename)
 	catch (std::exception &e)
 	{
 		// JSON dump errors
-		LOGE(e.what())
+		LOGE(e.what());
 		return false;
 	}
 
 	if (!nlohmann::json::accept(json.str()))
 	{
-		LOGE("Invalid JSON string")
+		LOGE("Invalid JSON string");
 		return false;
 	}
 
@@ -236,7 +237,7 @@ bool write_json(nlohmann::json &data, const std::string &filename)
 	}
 	else
 	{
-		LOGE("Could not load JSON file " + filename)
+		LOGE("Could not load JSON file " + filename);
 		return false;
 	}
 

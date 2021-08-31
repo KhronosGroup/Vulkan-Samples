@@ -221,7 +221,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 
 	if (size > BUFFER_POOL_BLOCK_SIZE * 1024 * block_multiplier)
 	{
-		LOGE("Trying to allocate {} buffer of size {}KB which is larger than the buffer pool block size ({} KB)!", buffer_usage_to_string(usage), size / 1024, BUFFER_POOL_BLOCK_SIZE * block_multiplier)
+		LOGE("Trying to allocate {} buffer of size {}KB which is larger than the buffer pool block size ({} KB)!", buffer_usage_to_string(usage), size / 1024, BUFFER_POOL_BLOCK_SIZE * block_multiplier);
 		throw std::runtime_error("Couldn't allocate render frame buffer.");
 	}
 
@@ -229,7 +229,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	auto buffer_pool_it = buffer_pools.find(usage);
 	if (buffer_pool_it == buffer_pools.end())
 	{
-		LOGE("No buffer pool for buffer usage {}", usage)
+		LOGE("No buffer pool for buffer usage {}", usage);
 		return BufferAllocation{};
 	}
 

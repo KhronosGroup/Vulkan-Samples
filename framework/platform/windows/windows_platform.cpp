@@ -22,15 +22,15 @@
 #include <shellapi.h>
 #include <stdexcept>
 
-#include "common/error.h"
-
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
+#include "common/warnings.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
+
+#include "platform/glfw_window.h"
+#include "platform/headless_window.h"
 
 namespace vkb
 {

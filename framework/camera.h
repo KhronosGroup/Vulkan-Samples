@@ -19,11 +19,7 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/quaternion.hpp>
-VKBP_ENABLE_WARNINGS()
+#include "common/glm.h"
 
 namespace vkb
 {

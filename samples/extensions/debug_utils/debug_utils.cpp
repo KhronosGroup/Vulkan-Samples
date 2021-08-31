@@ -88,8 +88,8 @@ void DebugUtils::debug_check_extension()
 	}
 	if (!debug_utils_supported)
 	{
-		LOGE("Required extension {} not supported or available, no debugging possible with this sample", VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
-		LOGE("Make sure to compile the sample in debug mode and/or enable the validation layers")
+		LOGE("Required extension {} not supported or available, no debugging possible with this sample", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		LOGE("Make sure to compile the sample in debug mode and/or enable the validation layers");
 	}
 }
 

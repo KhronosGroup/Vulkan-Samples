@@ -25,7 +25,11 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <json.hpp>
+VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {

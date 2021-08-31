@@ -29,7 +29,7 @@ PhysicalDevice::PhysicalDevice(Instance &instance, VkPhysicalDevice physical_dev
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
 	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
-	LOGI("Found GPU: {}", properties.deviceName)
+	LOGI("Found GPU: {}", properties.deviceName);
 
 	uint32_t queue_family_properties_count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);

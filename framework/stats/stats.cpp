@@ -19,9 +19,9 @@
 #include "stats/stats.h"
 
 #include <utility>
+
 #include "common/error.h"
 #include "core/device.h"
-
 #include "frame_time_stats_provider.h"
 #include "hwcpipe_stats_provider.h"
 #include "vulkan_stats_provider.h"
@@ -96,7 +96,7 @@ void Stats::request_stats(const std::set<StatIndex> &wanted_stats,
 	{
 		if (!is_available(stat_index))
 		{
-			LOGW(vkb::StatsProvider::default_graph_data(stat_index).name + " : not available")
+			LOGW(vkb::StatsProvider::default_graph_data(stat_index).name + " : not available");
 		}
 	}
 }
@@ -297,9 +297,9 @@ const StatGraphData &Stats::get_graph_data(StatIndex index) const
 
 StatGraphData::StatGraphData(std::string name,
                              std::string graph_label_format,
-                             float              scale_factor,
-                             bool               has_fixed_max,
-                             float              max_value) :
+                             float       scale_factor,
+                             bool        has_fixed_max,
+                             float       max_value) :
     name(std::move(name)),
     format{std::move(graph_label_format)},
     scale_factor{scale_factor},

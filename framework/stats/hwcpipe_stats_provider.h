@@ -18,14 +18,13 @@
 
 #pragma once
 
-#include "common/error.h"
 #include "common/vk_common.h"
+#include "common/warnings.h"
+#include "stats_provider.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <hwcpipe.h>
 VKBP_ENABLE_WARNINGS()
-
-#include "stats_provider.h"
 
 namespace vkb
 {
@@ -60,10 +59,10 @@ class HWCPipeStatsProvider : public StatsProvider
 		         hwcpipe::CpuCounter divisor      = hwcpipe::CpuCounter::MaxValue) :
 		    type(StatType::Cpu),
 		    scaling(stat_scaling),
-			cpu_counter(c),
-			divisor_cpu_counter(divisor),
-			gpu_counter(),
-			divisor_gpu_counter()
+		    cpu_counter(c),
+		    divisor_cpu_counter(divisor),
+		    gpu_counter(),
+		    divisor_gpu_counter()
 		{}
 
 		/**

@@ -25,8 +25,12 @@
 #include <unordered_map>
 #include <vector>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <vk_mem_alloc.h>
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 #define VK_FLAGS_NONE 0        // Custom define for better code readability
 

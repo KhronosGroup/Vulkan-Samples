@@ -17,11 +17,12 @@
 
 #pragma once
 
-#include "api_vulkan_sample.h"
 #include <memory>
 #include <mutex>
 #include <thread>
 #include <vector>
+
+#include "api_vulkan_sample.h"
 
 class TimelineSemaphore : public ApiVulkanSample
 {

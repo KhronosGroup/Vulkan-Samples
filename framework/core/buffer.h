@@ -45,7 +45,7 @@ class Buffer
 
 	Buffer(const Buffer &) = delete;
 
-	Buffer(Buffer &&other) noexcept ;
+	Buffer(Buffer &&other) noexcept;
 
 	~Buffer();
 

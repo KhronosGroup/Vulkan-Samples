@@ -18,7 +18,11 @@
 
 #include "vk_common.h"
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <spdlog/fmt/fmt.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
@@ -160,7 +164,7 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_
 
 	if (depth_format != VK_FORMAT_UNDEFINED)
 	{
-		LOGI("Depth format selected: {}", to_string(depth_format))
+		LOGI("Depth format selected: {}", to_string(depth_format));
 		return depth_format;
 	}
 
@@ -362,7 +366,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;
 	}
 

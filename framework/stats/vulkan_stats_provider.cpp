@@ -15,14 +15,13 @@
  * limitations under the License.
  */
 
-#include "common/error.h"
-#include "core/device.h"
+#include <regex>
 
+#include "common/error.h"
 #include "core/command_buffer.h"
+#include "core/device.h"
 #include "rendering/render_context.h"
 #include "vulkan_stats_provider.h"
-
-#include <regex>
 
 namespace vkb
 {
@@ -38,7 +37,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	Device &              device = render_context.get_device();
 	const PhysicalDevice &gpu    = device.get_gpu();
 
-	has_timestamps   = gpu.get_properties().limits.timestampComputeAndGraphics;
+	has_timestamps   = static_cast<bool>(gpu.get_properties().limits.timestampComputeAndGraphics);
 	timestamp_period = gpu.get_properties().limits.timestampPeriod;
 
 	// Interrogate device for supported stats
@@ -85,7 +84,8 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 		VendorStat &init      = s.second;
 		bool        found_ctr = false;
 		bool        found_div = (init.divisor_name.empty());
-		uint32_t    ctr_idx, div_idx;
+		uint32_t    ctr_idx   = 0;
+		uint32_t    div_idx   = 0;
 
 		std::regex name_regex(init.name);
 		std::regex div_regex(init.divisor_name);
@@ -128,7 +128,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	}
 
 	if (performance_impact)
-		LOGW("The collection of performance counters may impact performance")
+		LOGW("The collection of performance counters may impact performance");
 
 	if (counter_indices.empty())
 		return;        // No stats available
@@ -142,7 +142,7 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	{
 		stat_data.clear();
 		counter_indices.clear();
-		LOGW("Profiling lock acquisition timed-out")
+		LOGW("Profiling lock acquisition timed-out");
 		return;
 	}
 
@@ -175,7 +175,7 @@ bool VulkanStatsProvider::fill_vendor_data()
 	const auto &pd_props = render_context.get_device().get_gpu().get_properties();
 	if (pd_props.vendorID == 0x14E4)        // Broadcom devices
 	{
-		LOGI("Using Vulkan performance counters from Broadcom device")
+		LOGI("Using Vulkan performance counters from Broadcom device");
 
 		// NOTE: The names here are actually regular-expressions.
 		// Counter names can change between hardware variants for the same vendor,
@@ -216,7 +216,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
 	Device &              device           = render_context.get_device();
 	const PhysicalDevice &gpu              = device.get_gpu();
-	auto              num_framebuffers = uint32_t(render_context.get_render_frames().size());
+	auto                  num_framebuffers = uint32_t(render_context.get_render_frames().size());
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would
@@ -231,7 +231,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 	if (passes_needed != 1)
 	{
 		// Needs more than one pass, remove all our supported stats
-		LOGW("Requested Vulkan stats require multiple passes, we won't collect them")
+		LOGW("Requested Vulkan stats require multiple passes, we won't collect them");
 		return false;
 	}
 
@@ -246,7 +246,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 
 	if (!query_pool)
 	{
-		LOGW("Failed to create performance query pool")
+		LOGW("Failed to create performance query pool");
 		return false;
 	}
 

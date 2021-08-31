@@ -27,7 +27,7 @@ inline void read_shader_resource(const spirv_cross::Compiler &compiler,
                                  std::vector<ShaderResource> &resources,
                                  const ShaderVariant &        variant)
 {
-	LOGE("Not implemented! Read shader resources of type.")
+	LOGE("Not implemented! Read shader resources of type.");
 }
 
 template <spv::Decoration T>
@@ -36,7 +36,7 @@ inline void read_resource_decoration(const spirv_cross::Compiler & /*compiler*/,
                                      ShaderResource & /*shader_resource*/,
                                      const ShaderVariant & /* variant */)
 {
-	LOGE("Not implemented! Read resources decoration of type.")
+	LOGE("Not implemented! Read resources decoration of type.");
 }
 
 template <>

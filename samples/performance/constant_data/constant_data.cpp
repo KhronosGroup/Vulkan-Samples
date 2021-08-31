@@ -92,7 +92,7 @@ bool ConstantData::prepare(vkb::Platform &platform)
 	}
 	else
 	{
-		LOGW("Update-after-bind descriptor sets are not supported by your device, this sample option will be disabled.")
+		LOGW("Update-after-bind descriptor sets are not supported by your device, this sample option will be disabled.");
 	}
 
 	// Load a scene from the assets folder

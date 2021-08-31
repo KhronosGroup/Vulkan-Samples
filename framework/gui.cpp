@@ -23,12 +23,8 @@
 
 #include "common/error.h"
 
-VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
-#include <glm/gtc/matrix_transform.hpp>
-VKBP_ENABLE_WARNINGS()
-
 #include "buffer_pool.h"
+#include "common/glm.h"
 #include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
@@ -724,7 +720,7 @@ Font &Gui::get_font(const std::string &font_name)
 	}
 	else
 	{
-		LOGW("Couldn't find font with name {}", font_name)
+		LOGW("Couldn't find font with name {}", font_name);
 		return *fonts.begin();
 	}
 }
@@ -860,7 +856,7 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
-	static Timer       timer;
+	static Timer       graph_timer;
 	static const char *message;
 
 	if (ImGui::Button("Save Debug Graphs"))
@@ -874,21 +870,21 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 			message = "Error outputting graphs!";
 		}
 
-		if (timer.is_running())
+		if (graph_timer.is_running())
 		{
-			timer.lap();
+			graph_timer.lap();
 		}
 		else
 		{
-			timer.start();
+			graph_timer.start();
 		}
 	}
 
-	if (timer.is_running())
+	if (graph_timer.is_running())
 	{
-		if (timer.elapsed() > 2.0)
+		if (graph_timer.elapsed() > 2.0)
 		{
-			timer.stop();
+			graph_timer.stop();
 		}
 		else
 		{

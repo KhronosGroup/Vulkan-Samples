@@ -23,14 +23,13 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/transform.h"
 #include "stats/stats.h"
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 #endif
-
-#include "scene_graph/components/camera.h"
-#include "scene_graph/components/transform.h"
 
 AFBCSample::AFBCSample()
 {

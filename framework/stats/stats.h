@@ -26,7 +26,6 @@
 #include <vector>
 
 #include "common/error.h"
-
 #include "stats_common.h"
 #include "stats_provider.h"
 #include "timer.h"

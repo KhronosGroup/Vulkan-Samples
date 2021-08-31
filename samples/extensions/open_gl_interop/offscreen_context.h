@@ -19,7 +19,11 @@
 
 #include <memory>
 
+#include "common/warnings.h"
+
+VKBP_DISABLE_WARNINGS()
 #include <glad/glad.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "common/vk_common.h"
 

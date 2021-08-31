@@ -24,10 +24,13 @@
 #include <imgui.h>
 #include <thread>
 
-#include "core/buffer.h"
+#include "common/warnings.h"
+
 VKBP_DISABLE_WARNINGS()
 #include <imgui_internal.h>
 VKBP_ENABLE_WARNINGS()
+
+#include "core/buffer.h"
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
@@ -155,7 +158,7 @@ class Drawer
 	 * @param items The items to display in the box
 	 * @returns True if adding item was successful
 	 */
-	bool combo_box(const char *caption, int32_t *item_index, const std::vector<std::string>& items);
+	bool combo_box(const char *caption, int32_t *item_index, const std::vector<std::string> &items);
 
 	/**
 	 * @brief Adds a clickable button to the gui
@@ -259,7 +262,7 @@ class Gui
 	 * @param width New width of the window
 	 * @param height New height of the window
 	 */
-	static void resize(uint32_t width, uint32_t height) ;
+	static void resize(uint32_t width, uint32_t height);
 
 	/**
 	 * @brief Starts a new ImGui frame
@@ -326,9 +329,9 @@ class Gui
 	 * @param lines The number of lines of text to draw in the window
 	 *        These will help the gui to calculate the height of the window
 	 */
-	static void show_options_window(const std::function<void()>& body, uint32_t lines = 3);
+	static void show_options_window(const std::function<void()> &body, uint32_t lines = 3);
 
-	void show_simple_window(const std::string &name, uint32_t last_fps, const std::function<void()>& body);
+	void show_simple_window(const std::string &name, uint32_t last_fps, const std::function<void()> &body);
 
 	bool input_event(const InputEvent &input_event);
 

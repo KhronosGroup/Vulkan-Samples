@@ -25,37 +25,6 @@
 #include "logging.h"
 #include "vk_common.h"
 
-#if defined(__clang__)
-// CLANG ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("clang diagnostic push")                        \
-		    _Pragma("clang diagnostic ignored \"-Wall\"")       \
-				_Pragma("clang diagnostic ignored \"-Wunknown-pragmas\"") \
-		        _Pragma("clang diagnostic ignored \"-Wextra\"") \
-		            _Pragma("clang diagnostic ignored \"-Wtautological-compare\"")
-
-#	define VKBP_ENABLE_WARNINGS() \
-		_Pragma("clang diagnostic pop")
-#elif defined(__GNUC__) || defined(__GNUG__)
-// GCC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS()                             \
-		_Pragma("GCC diagnostic push")                          \
-		    _Pragma("GCC diagnostic ignored \"-Wall\"")         \
-			_Pragma("GCC diagnostic ignored \"-Wunknown-pragmas\"") \
-			_Pragma("GCC diagnostic ignored \"-Wextra\"")             \
-			_Pragma("GCC diagnostic ignored \"-Wtautological-compare\"") \
-			_Pragma("GCC diagnostic ignored \"-Wclass-memaccess\"") //This is for imgui_internal.h:580
-#	define VKBP_ENABLE_WARNINGS() \
-		_Pragma("GCC diagnostic pop")
-#elif defined(_MSC_VER)
-// MSVC ENABLE/DISABLE WARNING DEFINITION
-#	define VKBP_DISABLE_WARNINGS() \
-		__pragma(warning(push, 0))
-
-#	define VKBP_ENABLE_WARNINGS() \
-		__pragma(warning(pop))
-#endif
-
 namespace vkb
 {
 /**

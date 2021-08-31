@@ -17,8 +17,9 @@
 
 #pragma once
 
-#include "vulkan_sample.h"
 #include <memory>
+
+#include "vulkan_sample.h"
 
 /**
  * @brief Using 16-bit arithmetic extension to improve arithmetic throughput
