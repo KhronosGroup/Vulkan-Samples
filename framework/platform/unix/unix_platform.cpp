@@ -108,7 +108,7 @@ const char *UnixPlatform::get_surface_extension()
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
 	return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
 #else
-	assert(surface_extesion && "Platform not supported, no surface extension available");
+	assert(0 && "Platform not supported, no surface extension available");
 	return "";
 #endif
 
