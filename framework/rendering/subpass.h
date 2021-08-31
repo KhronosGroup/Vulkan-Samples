@@ -39,7 +39,7 @@ struct alignas(16) Light
 	glm::vec4 position;         // position.w represents type of light
 	glm::vec4 color;            // color.w represents light intensity
 	glm::vec4 direction;        // direction.w represents range
-	glm::vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
+	glm::vec2 info;             // (only used for spotlights) info.x represents light inner cone angle, info.y represents light outer cone angle
 };
 
 struct LightingState
@@ -130,7 +130,7 @@ class Subpass
 
 	void set_depth_stencil_resolve_attachment(uint32_t depth_stencil_resolve);
 
-	const VkResolveModeFlagBits get_depth_stencil_resolve_mode() const;
+	VkResolveModeFlagBits get_depth_stencil_resolve_mode() const;
 
 	void set_depth_stencil_resolve_mode(VkResolveModeFlagBits mode);
 

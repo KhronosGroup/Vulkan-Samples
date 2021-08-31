@@ -81,8 +81,8 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	LightUniform light_uniform;
 
 	// Inverse resolution
-	light_uniform.inv_resolution.x = 1.0f / render_target.get_extent().width;
-	light_uniform.inv_resolution.y = 1.0f / render_target.get_extent().height;
+	light_uniform.inv_resolution.x = 1.0f / static_cast<float>(render_target.get_extent().width);
+	light_uniform.inv_resolution.y = 1.0f / static_cast<float>(render_target.get_extent().height);
 
 	// Inverse view projection
 	light_uniform.inv_view_proj = glm::inverse(vulkan_style_projection(camera.get_projection()) * camera.get_view());
@@ -93,7 +93,7 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	allocation.update(light_uniform);
 	command_buffer.bind_buffer(allocation.get_buffer(), allocation.get_offset(), allocation.get_size(), 0, 3, 0);
 
-	// Draw full screen triangle triangle
+	// Draw full screen triangle
 	command_buffer.draw(3, 1, 0, 0);
 }
 }        // namespace vkb

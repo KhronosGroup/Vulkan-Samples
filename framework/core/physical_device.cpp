@@ -21,13 +21,15 @@ namespace vkb
 {
 PhysicalDevice::PhysicalDevice(Instance &instance, VkPhysicalDevice physical_device) :
     instance{instance},
-    handle{physical_device}
+    handle{physical_device},
+    properties(),
+    memory_properties()
 {
 	vkGetPhysicalDeviceFeatures(physical_device, &features);
 	vkGetPhysicalDeviceProperties(physical_device, &properties);
 	vkGetPhysicalDeviceMemoryProperties(physical_device, &memory_properties);
 
-	LOGI("Found GPU: {}", properties.deviceName);
+	LOGI("Found GPU: {}", properties.deviceName)
 
 	uint32_t queue_family_properties_count = 0;
 	vkGetPhysicalDeviceQueueFamilyProperties(physical_device, &queue_family_properties_count, nullptr);
@@ -52,7 +54,7 @@ VkBool32 PhysicalDevice::is_present_supported(VkSurfaceKHR surface, uint32_t que
 	return present_supported;
 }
 
-const VkFormatProperties PhysicalDevice::get_format_properties(VkFormat format) const
+VkFormatProperties PhysicalDevice::get_format_properties(VkFormat format) const
 {
 	VkFormatProperties format_properties;
 
@@ -71,12 +73,12 @@ const VkPhysicalDeviceFeatures &PhysicalDevice::get_features() const
 	return features;
 }
 
-const VkPhysicalDeviceProperties PhysicalDevice::get_properties() const
+VkPhysicalDeviceProperties PhysicalDevice::get_properties() const
 {
 	return properties;
 }
 
-const VkPhysicalDeviceMemoryProperties PhysicalDevice::get_memory_properties() const
+VkPhysicalDeviceMemoryProperties PhysicalDevice::get_memory_properties() const
 {
 	return memory_properties;
 }
@@ -105,7 +107,7 @@ void PhysicalDevice::enumerate_queue_family_performance_query_counters(
 	    get_handle(), queue_family_index, count, counters, descriptions));
 }
 
-const VkPhysicalDeviceFeatures PhysicalDevice::get_requested_features() const
+VkPhysicalDeviceFeatures PhysicalDevice::get_requested_features() const
 {
 	return requested_features;
 }

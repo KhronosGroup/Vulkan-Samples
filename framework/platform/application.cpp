@@ -29,9 +29,9 @@ Application::Application() :
 
 bool Application::prepare(Platform & /*platform*/)
 {
-	auto &debug_info = get_debug_info();
-	debug_info.insert<field::MinMax, float>("fps", fps);
-	debug_info.insert<field::MinMax, float>("frame_time", frame_time);
+	auto &_debug_info = get_debug_info();
+	_debug_info.insert<field::MinMax, float>("fps", fps);
+	_debug_info.insert<field::MinMax, float>("frame_time", frame_time);
 
 	timer.start();
 	return true;
@@ -59,10 +59,10 @@ void Application::step()
 
 	if (elapsed_time > 0.5f)
 	{
-		fps        = (frame_count - last_frame_count) / elapsed_time;
+		fps        = static_cast<float>(frame_count - last_frame_count) / elapsed_time;
 		frame_time = delta_time * 1000.0f;
 
-		LOGI("FPS: {:.1f}", fps);
+		LOGI("FPS: {:.1f}", fps)
 
 		last_frame_count = frame_count;
 		timer.lap();
@@ -72,7 +72,7 @@ void Application::step()
 void Application::finish()
 {
 	auto execution_time = timer.stop();
-	LOGI("Closing App (Runtime: {:.1f})", execution_time);
+	LOGI("Closing App (Runtime: {:.1f})", execution_time)
 }
 
 void Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
@@ -83,7 +83,7 @@ void Application::input_event(const InputEvent &input_event)
 {
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
-		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
+		const auto &key_event = dynamic_cast<const KeyInputEvent &>(input_event);
 
 		if (key_event.get_code() == KeyCode::Back ||
 		    key_event.get_code() == KeyCode::Escape)
@@ -123,9 +123,9 @@ bool Application::is_headless() const
 	return headless;
 }
 
-void Application::set_headless(bool headless)
+void Application::set_headless(bool _headless)
 {
-	this->headless = headless;
+	this->headless = _headless;
 }
 
 void Application::set_focus(bool flag)
@@ -136,6 +136,10 @@ void Application::set_focus(bool flag)
 bool Application::is_focused() const
 {
 	return focus;
+}
+
+void Application::parse_options(const std::vector<std::string> &args)
+{
 }
 
 }        // namespace vkb

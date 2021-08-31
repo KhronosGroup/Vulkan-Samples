@@ -32,11 +32,11 @@ namespace sg
 class OrthographicCamera : public Camera
 {
   public:
-	OrthographicCamera(const std::string &name);
+	explicit OrthographicCamera(const std::string &name);
 
 	OrthographicCamera(const std::string &name, float left, float right, float bottom, float top, float near_plane, float far_plane);
 
-	virtual ~OrthographicCamera() = default;
+	~OrthographicCamera() override = default;
 
 	void set_left(float left);
 
@@ -62,7 +62,7 @@ class OrthographicCamera : public Camera
 
 	float get_far_plane() const;
 
-	virtual glm::mat4 get_projection() override;
+	glm::mat4 get_projection() override;
 
   private:
 	float left{-1.0f};

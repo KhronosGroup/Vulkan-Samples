@@ -67,7 +67,7 @@ size_t device_node(Graph &graph, const Device &device);
 size_t render_context_node(Graph &graph, const RenderContext &context);
 size_t semaphore_pool_node(Graph &graph, const SemaphorePool &semaphore_pool);
 size_t fence_pool_node(Graph &graph, const FencePool &fence_pool);
-size_t render_frame_node(Graph &graph, const std::unique_ptr<RenderFrame> &frame, std::string label);
+size_t render_frame_node(Graph &graph, const std::unique_ptr<RenderFrame> &frame, const std::string& label);
 size_t render_target_node(Graph &graph, const RenderTarget &render_target);
 size_t image_view_node(Graph &graph, const core::ImageView &image_view);
 size_t image_node(Graph &graph, const core::Image &image);

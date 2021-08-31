@@ -149,7 +149,7 @@ class ShaderVariant
 	void clear();
 
   private:
-	size_t id;
+	size_t id{};
 
 	std::string preamble;
 
@@ -165,7 +165,7 @@ class ShaderSource
   public:
 	ShaderSource() = default;
 
-	ShaderSource(const std::string &filename);
+	explicit ShaderSource(const std::string &filename);
 
 	size_t get_id() const;
 
@@ -176,7 +176,7 @@ class ShaderSource
 	const std::string &get_source() const;
 
   private:
-	size_t id;
+	size_t id{};
 
 	std::string filename;
 
@@ -203,7 +203,7 @@ class ShaderModule
 
 	ShaderModule(const ShaderModule &) = delete;
 
-	ShaderModule(ShaderModule &&other);
+	ShaderModule(ShaderModule &&other) noexcept ;
 
 	ShaderModule &operator=(const ShaderModule &) = delete;
 

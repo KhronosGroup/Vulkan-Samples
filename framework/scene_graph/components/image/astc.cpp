@@ -22,7 +22,6 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
-#include "common/glm_common.h"
 #if defined(_WIN32) || defined(_WIN64)
 // Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
 #	undef IGNORE
@@ -131,9 +130,9 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 		throw std::runtime_error{"Error reading astc: invalid block"};
 	}
 
-	int xsize = extent.width;
-	int ysize = extent.height;
-	int zsize = extent.depth;
+	int xsize = static_cast<int>(extent.width);
+	int ysize = static_cast<int>(extent.height);
+	int zsize = static_cast<int>(extent.depth);
 
 	if (xsize == 0 || ysize == 0 || zsize == 0)
 	{
@@ -144,10 +143,10 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 	int yblocks = (ysize + ydim - 1) / ydim;
 	int zblocks = (zsize + zdim - 1) / zdim;
 
-	auto astc_image = allocate_image(bitness, xsize, ysize, zsize, 0);
+	auto astc_image = allocate_image(static_cast<int>(bitness), xsize, ysize, zsize, 0);
 	initialize_image(astc_image);
 
-	imageblock pb;
+	imageblock pb{};
 	for (int z = 0; z < zblocks; z++)
 	{
 		for (int y = 0; y < yblocks; y++)
@@ -158,7 +157,7 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 				const uint8_t *bp     = data_ + offset;
 
 				physical_compressed_block pcb = *reinterpret_cast<const physical_compressed_block *>(bp);
-				symbolic_compressed_block scb;
+				symbolic_compressed_block scb{};
 
 				physical_to_symbolic(xdim, ydim, zdim, pcb, &scb);
 				decompress_symbolic_block(decode_mode, xdim, ydim, zdim, x * xdim, y * ydim, z * zdim, &scb, &pb);

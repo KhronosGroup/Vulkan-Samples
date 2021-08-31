@@ -25,14 +25,14 @@ class DescriptorIndexing : public ApiVulkanSample
 {
   public:
 	DescriptorIndexing();
-	~DescriptorIndexing();
+	~DescriptorIndexing() override;
 
   private:
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual bool prepare(vkb::Platform &platform) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	bool prepare(vkb::Platform &platform) override;
 
 	void create_bindless_descriptors();
 	void create_immutable_sampler_descriptor_set();

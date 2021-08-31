@@ -44,10 +44,10 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 {
 	load_scene("scenes/teapot.gltf");
 
-	// Setup the scene so we have many teapots.
+	// Set up the scene so we have many teapots.
 	vkb::sg::Mesh *teapot_mesh = nullptr;
 
-	// Override the default material so it's not rendering all black.
+	// Override the default material, so it's not rendering all black.
 	auto materials = scene->get_components<vkb::sg::PBRMaterial>();
 	for (auto *material : materials)
 	{
@@ -61,7 +61,7 @@ void KHR16BitStorageInputOutputSample::setup_scene()
 	const auto                            get_random_axis = [&]() -> glm::vec3 {
         glm::vec3 axis;
 
-        for (unsigned i = 0; i < 3; i++)
+        for (int i = 0; i < 3; i++)
         {
             axis[i] = float_distribution(rng);
         }

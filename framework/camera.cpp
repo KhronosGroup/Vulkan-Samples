@@ -42,27 +42,27 @@ void Camera::update_view_matrix()
 	updated = true;
 }
 
-bool Camera::moving()
+bool Camera::moving() const
 {
 	return keys.left || keys.right || keys.up || keys.down;
 }
 
-float Camera::get_near_clip()
+float Camera::get_near_clip() const
 {
 	return znear;
 }
 
-float Camera::get_far_clip()
+float Camera::get_far_clip() const
 {
 	return zfar;
 }
 
-void Camera::set_perspective(float fov, float aspect, float znear, float zfar)
+void Camera::set_perspective(float _fov, float _aspect, float _znear, float _zfar)
 {
-	this->fov            = fov;
-	this->znear          = znear;
-	this->zfar           = zfar;
-	matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
+	this->fov            = _fov;
+	this->znear          = _znear;
+	this->zfar           = _zfar;
+	matrices.perspective = glm::perspective(glm::radians(_fov), _aspect, _znear, _zfar);
 }
 
 void Camera::update_aspect_ratio(float aspect)
@@ -70,15 +70,15 @@ void Camera::update_aspect_ratio(float aspect)
 	matrices.perspective = glm::perspective(glm::radians(fov), aspect, znear, zfar);
 }
 
-void Camera::set_position(const glm::vec3 &position)
+void Camera::set_position(const glm::vec3 &_position)
 {
-	this->position = position;
+	this->position = _position;
 	update_view_matrix();
 }
 
-void Camera::set_rotation(const glm::vec3 &rotation)
+void Camera::set_rotation(const glm::vec3 &_rotation)
 {
-	this->rotation = rotation;
+	this->rotation = _rotation;
 	update_view_matrix();
 }
 
@@ -108,9 +108,9 @@ void Camera::update(float deltaTime)
 		if (moving())
 		{
 			glm::vec3 front;
-			front.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-			front.y = sin(glm::radians(rotation.x));
-			front.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+			front.x = -cosf(glm::radians(rotation.x)) * sinf(glm::radians(rotation.y));
+			front.y = sinf(glm::radians(rotation.x));
+			front.z = cosf(glm::radians(rotation.x)) * cosf(glm::radians(rotation.y));
 			front   = glm::normalize(front);
 
 			float move_speed = deltaTime * translation_speed;
@@ -143,16 +143,16 @@ bool Camera::update_gamepad(glm::vec2 axis_left, glm::vec2 axis_right, float del
 
 	if (type == CameraType::FirstPerson)
 	{
-		// Use the common console thumbstick layout
+		// Use the common console thumb stick layout
 		// Left = view, right = move
 
 		const float dead_zone = 0.0015f;
 		const float range     = 1.0f - dead_zone;
 
 		glm::vec3 front;
-		front.x = -cos(glm::radians(rotation.x)) * sin(glm::radians(rotation.y));
-		front.y = sin(glm::radians(rotation.x));
-		front.z = cos(glm::radians(rotation.x)) * cos(glm::radians(rotation.y));
+		front.x = -cosf(glm::radians(rotation.x)) * sinf(glm::radians(rotation.y));
+		front.y = sinf(glm::radians(rotation.x));
+		front.z = cosf(glm::radians(rotation.x)) * cosf(glm::radians(rotation.y));
 		front   = glm::normalize(front);
 
 		float move_speed         = delta_time * translation_speed * 2.0f;

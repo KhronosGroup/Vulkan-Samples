@@ -21,7 +21,6 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "scene_graph/components/orthographic_camera.h"
 #include "stats/stats.h"
@@ -154,10 +153,10 @@ void AsyncComputeSample::setup_queues()
 	// The pipeline we ideally want is:
 	// - Low priority graphics queue renders the HDR frames
 	// - Async compute queue does post
-	// - High priority queue does (HDR + Bloom) tonemap + UI in one graphics pass and presents.
+	// - High priority queue does (HDR + Bloom) tone map + UI in one graphics pass and presents.
 	//
 	// We want to present in the high priority graphics queue since on at least Arm devices,
-	// we can get pre-emption behavior
+	// we can get preemption behavior
 	// where we can start rendering the next frame in parallel with async compute post,
 	// but the next frame will not block presentation. This keeps latency low, and
 	// is important to achieve full utilization of the fragment queue.
@@ -166,9 +165,9 @@ void AsyncComputeSample::setup_queues()
 	// On desktop, in particular on architectures with just one graphics queue, this setup isn't very appealing
 	// since we cannot have a low and high priority graphics queue.
 	// We would ideally change the entire pipeline to be geared towards presenting in the async compute queue where
-	// tonemap + UI happens in compute instead.
+	// tone map + UI happens in compute instead.
 	// This complicates things since we would have to render UI in a fragment pass, which compute just composites.
-	// The hardcore alternative is to render the UI entirely in compute, but all of these consideration
+	// The hardcore alternative is to render the UI entirely in compute, but all of these considerations
 	// are outside the scope of this sample.
 
 	if (async_enabled)
@@ -178,23 +177,23 @@ void AsyncComputeSample::setup_queues()
 
 		if (device->get_num_queues_for_queue_family(graphics_family_index) >= 2)
 		{
-			LOGI("Device has 2 or more graphics queues.");
+			LOGI("Device has 2 or more graphics queues.")
 			early_graphics_queue = &device->get_queue(graphics_family_index, 1);
 		}
 		else
 		{
-			LOGI("Device has just 1 graphics queue.");
+			LOGI("Device has just 1 graphics queue.")
 			early_graphics_queue = present_graphics_queue;
 		}
 
 		if (graphics_family_index == compute_family_index)
 		{
-			LOGI("Device has does not have a dedicated compute queue family.");
+			LOGI("Device has does not have a dedicated compute queue family.")
 			post_compute_queue = early_graphics_queue;
 		}
 		else
 		{
-			LOGI("Device has async compute queue.");
+			LOGI("Device has async compute queue.")
 			post_compute_queue = &device->get_queue(compute_family_index, 0);
 		}
 	}
@@ -416,7 +415,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	command_buffer.end();
 
 	// Conditionally waits on hdr_wait_semaphore.
-	// This resolves the write-after-read hazard where previous frame tonemap read from HDR buffer.
+	// This resolves the write-after-read hazard where previous frame tone map read from HDR buffer.
 	auto signal_semaphore = render_context->submit(queue, {&command_buffer},
 	                                               hdr_wait_semaphore, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
 
@@ -655,8 +654,8 @@ void AsyncComputeSample::update(float delta_time)
 		forward_render_target_index = 0;
 	}
 
-	auto *forward_subpass   = static_cast<ShadowMapForwardSubpass *>(forward_render_pipeline.get_subpasses()[0].get());
-	auto *composite_subpass = static_cast<CompositeSubpass *>(render_pipeline->get_subpasses()[0].get());
+	auto *forward_subpass   = dynamic_cast<ShadowMapForwardSubpass *>(forward_render_pipeline.get_subpasses()[0].get());
+	auto *composite_subpass = dynamic_cast<CompositeSubpass *>(render_pipeline->get_subpasses()[0].get());
 
 	forward_subpass->set_shadow_map(&shadow_render_target->get_views()[0], comparison_sampler.get());
 	composite_subpass->set_texture(&get_current_forward_render_target().get_views()[0], blur_chain_views[1].get(), linear_sampler.get());
@@ -665,7 +664,7 @@ void AsyncComputeSample::update(float delta_time)
 
 	glm::quat orientation;
 
-	// Lots of random jank to get a desired orientation quaternion for the directional light.
+	// Lots of random junk to get a desired orientation quaternion for the directional light.
 	if (rotate_shadows)
 	{
 		// Move shadows and directional light slightly.

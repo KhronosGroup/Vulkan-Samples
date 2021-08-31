@@ -47,31 +47,21 @@ SampledImage::SampledImage(const SampledImage &to_copy) :
     isDepthResolve{false}
 {}
 
-SampledImage &SampledImage::operator=(const SampledImage &to_copy)
-{
-	image_view        = to_copy.image_view;
-	target_attachment = to_copy.target_attachment;
-	render_target     = to_copy.render_target;
-	sampler           = to_copy.sampler;
-	isDepthResolve    = to_copy.isDepthResolve;
-	return *this;
-}
-
-SampledImage::SampledImage(SampledImage &&to_move) :
-    image_view{std::move(to_move.image_view)},
-    target_attachment{std::move(to_move.target_attachment)},
-    render_target{std::move(to_move.render_target)},
-    sampler{std::move(to_move.sampler)},
-    isDepthResolve{std::move(to_move.isDepthResolve)}
+SampledImage::SampledImage(SampledImage &&to_move)  noexcept :
+    image_view{to_move.image_view},
+    target_attachment{to_move.target_attachment},
+    render_target{to_move.render_target},
+    sampler{to_move.sampler},
+    isDepthResolve{to_move.isDepthResolve}
 {}
 
-SampledImage &SampledImage::operator=(SampledImage &&to_move)
+SampledImage &SampledImage::operator=(SampledImage &&to_move) noexcept
 {
-	image_view        = std::move(to_move.image_view);
-	target_attachment = std::move(to_move.target_attachment);
-	render_target     = std::move(to_move.render_target);
-	sampler           = std::move(to_move.sampler);
-	isDepthResolve    = std::move(to_move.isDepthResolve);
+	image_view        = to_move.image_view;
+	target_attachment = to_move.target_attachment;
+	render_target     = to_move.render_target;
+	sampler           = to_move.sampler;
+	isDepthResolve    = to_move.isDepthResolve;
 	return *this;
 }
 

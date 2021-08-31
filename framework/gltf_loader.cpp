@@ -68,11 +68,10 @@ inline VkFilter find_min_filter(int min_filter)
 		case TINYGLTF_TEXTURE_FILTER_LINEAR:
 		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_NEAREST:
 		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-			return VK_FILTER_LINEAR;
 		default:
 			return VK_FILTER_LINEAR;
 	}
-};
+}
 
 inline VkSamplerMipmapMode find_mipmap_mode(int min_filter)
 {
@@ -83,11 +82,10 @@ inline VkSamplerMipmapMode find_mipmap_mode(int min_filter)
 			return VK_SAMPLER_MIPMAP_MODE_NEAREST;
 		case TINYGLTF_TEXTURE_FILTER_NEAREST_MIPMAP_LINEAR:
 		case TINYGLTF_TEXTURE_FILTER_LINEAR_MIPMAP_LINEAR:
-			return VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		default:
 			return VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	}
-};
+}
 
 inline VkFilter find_mag_filter(int mag_filter)
 {
@@ -96,11 +94,10 @@ inline VkFilter find_mag_filter(int mag_filter)
 		case TINYGLTF_TEXTURE_FILTER_NEAREST:
 			return VK_FILTER_NEAREST;
 		case TINYGLTF_TEXTURE_FILTER_LINEAR:
-			return VK_FILTER_LINEAR;
 		default:
 			return VK_FILTER_LINEAR;
 	}
-};
+}
 
 inline VkSamplerAddressMode find_wrap_mode(int wrap)
 {
@@ -115,7 +112,7 @@ inline VkSamplerAddressMode find_wrap_mode(int wrap)
 		default:
 			return VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	}
-};
+}
 
 inline std::vector<uint8_t> get_attribute_data(const tinygltf::Model *model, uint32_t accessorId)
 {
@@ -127,13 +124,13 @@ inline std::vector<uint8_t> get_attribute_data(const tinygltf::Model *model, uin
 	size_t startByte = accessor.byteOffset + bufferView.byteOffset;
 	size_t endByte   = startByte + accessor.count * stride;
 
-	return {buffer.data.begin() + startByte, buffer.data.begin() + endByte};
-};
+	return {buffer.data.begin() + static_cast<int>(startByte), buffer.data.begin() + static_cast<int>(endByte)};
+}
 
 inline size_t get_attribute_size(const tinygltf::Model *model, uint32_t accessorId)
 {
 	return model->accessors.at(accessorId).count;
-};
+}
 
 inline size_t get_attribute_stride(const tinygltf::Model *model, uint32_t accessorId)
 {
@@ -141,7 +138,7 @@ inline size_t get_attribute_stride(const tinygltf::Model *model, uint32_t access
 	auto &bufferView = model->bufferViews.at(accessor.bufferView);
 
 	return accessor.ByteStride(bufferView);
-};
+}
 
 inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t accessorId)
 {
@@ -252,7 +249,7 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 	}
 
 	return format;
-};
+}
 
 inline std::vector<uint8_t> convert_underlying_data_stride(const std::vector<uint8_t> &src_data, uint32_t src_stride, uint32_t dst_stride)
 {
@@ -337,25 +334,25 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
 
-	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
+	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file);
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str())
 
 		return nullptr;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: {}.", err.c_str());
+		LOGE("Error loading gltf model: {}.", err.c_str())
 
 		return nullptr;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("{}", warn.c_str());
+		LOGI("{}", warn.c_str())
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -379,25 +376,25 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 
 	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
 
-	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
+	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file);
 
 	if (!importResult)
 	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str())
 
 		return nullptr;
 	}
 
 	if (!err.empty())
 	{
-		LOGE("Error loading gltf model: {}.", err.c_str());
+		LOGE("Error loading gltf model: {}.", err.c_str())
 
 		return nullptr;
 	}
 
 	if (!warn.empty())
 	{
-		LOGI("{}", warn.c_str());
+		LOGI("{}", warn.c_str())
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -409,7 +406,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 		model_path.clear();
 	}
 
-	return std::move(load_model(index));
+	return load_model(index);
 }
 
 sg::Scene GLTFLoader::load_scene(int scene_index)
@@ -434,13 +431,13 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			else
 			{
 				// Otherwise, if extension isn't required (but is in the file) then print a warning to the user
-				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension);
+				LOGW("glTF file contains an unsupported extension, unexpected results may occur: {}", used_extension)
 			}
 		}
 		else
 		{
 			// Extension is supported, so enable it
-			LOGI("glTF file contains extension: {}", used_extension);
+			LOGI("glTF file contains extension: {}", used_extension)
 			it->second = true;
 		}
 	}
@@ -479,7 +476,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		    [this, image_index](size_t) {
 			    auto image = parse_image(model.images.at(image_index));
 
-			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str());
+			    LOGI("Loaded gltf image #{} ({})", image_index, model.images.at(image_index).uri.c_str())
 
 			    return image;
 		    });
@@ -498,7 +495,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	auto &command_buffer = device.request_command_buffer();
 
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, nullptr);
 
 	for (size_t image_index = 0; image_index < image_count; image_index++)
 	{
@@ -533,7 +530,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 	auto elapsed_time = timer.stop();
 
-	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count);
+	LOGI("Time spent loading images: {} seconds across {} threads.", vkb::to_string(elapsed_time), thread_count)
 
 	// Load textures
 	auto images          = scene.get_components<sg::Image>();
@@ -663,7 +660,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 						submesh->index_type = VK_INDEX_TYPE_UINT32;
 						break;
 					default:
-						LOGE("gltf primitive has invalid format type");
+						LOGE("gltf primitive has invalid format type")
 						break;
 				}
 
@@ -756,11 +753,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	std::vector<std::unique_ptr<sg::Animation>> animations;
 
 	// Load animations
-	for (size_t animation_index = 0; animation_index < model.animations.size(); ++animation_index)
+	for (auto & gltf_animation : model.animations)
 	{
-		auto &gltf_animation = model.animations[animation_index];
-
-		std::vector<sg::AnimationSampler> samplers;
+			std::vector<sg::AnimationSampler> _samplers;
 
 		for (size_t sampler_index = 0; sampler_index < gltf_animation.samplers.size(); ++sampler_index)
 		{
@@ -781,13 +776,13 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			}
 			else
 			{
-				LOGW("Gltf animation sampler #{} has unknown interpolation value", sampler_index);
+				LOGW("Gltf animation sampler #{} has unknown interpolation value", sampler_index)
 			}
 
 			auto input_accessor      = model.accessors[gltf_sampler.input];
 			auto input_accessor_data = get_attribute_data(&model, gltf_sampler.input);
 
-			const float *data = reinterpret_cast<const float *>(input_accessor_data.data());
+			const auto *data = reinterpret_cast<const float *>(input_accessor_data.data());
 			for (size_t i = 0; i < input_accessor.count; ++i)
 			{
 				sampler.inputs.push_back(data[i]);
@@ -799,28 +794,28 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			switch (output_accessor.type)
 			{
 				case TINYGLTF_TYPE_VEC3: {
-					const glm::vec3 *data = reinterpret_cast<const glm::vec3 *>(output_accessor_data.data());
+					const auto *_data = reinterpret_cast<const glm::vec3 *>(output_accessor_data.data());
 					for (size_t i = 0; i < output_accessor.count; ++i)
 					{
-						sampler.outputs.push_back(glm::vec4(data[i], 0.0f));
+						sampler.outputs.emplace_back(_data[i], 0.0f);
 					}
 					break;
 				}
 				case TINYGLTF_TYPE_VEC4: {
-					const glm::vec4 *data = reinterpret_cast<const glm::vec4 *>(output_accessor_data.data());
+					const auto *_data = reinterpret_cast<const glm::vec4 *>(output_accessor_data.data());
 					for (size_t i = 0; i < output_accessor.count; ++i)
 					{
-						sampler.outputs.push_back(glm::vec4(data[i]));
+						sampler.outputs.emplace_back(_data[i]);
 					}
 					break;
 				}
 				default: {
-					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index);
+					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index)
 					continue;
 				}
 			}
 
-			samplers.push_back(sampler);
+			_samplers.push_back(sampler);
 		}
 
 		auto animation = std::make_unique<sg::Animation>(gltf_animation.name);
@@ -844,19 +839,19 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			}
 			else if (gltf_channel.target_path == "weights")
 			{
-				LOGW("Gltf animation channel #{} has unsupported target path: {}", channel_index, gltf_channel.target_path);
+				LOGW("Gltf animation channel #{} has unsupported target path: {}", channel_index, gltf_channel.target_path)
 				continue;
 			}
 			else
 			{
-				LOGW("Gltf animation channel #{} has unknown target path", channel_index);
+				LOGW("Gltf animation channel #{} has unknown target path", channel_index)
 				continue;
 			}
 
 			float start_time{std::numeric_limits<float>::max()};
 			float end_time{std::numeric_limits<float>::min()};
 
-			for (auto input : samplers[gltf_channel.sampler].inputs)
+			for (auto input : _samplers[gltf_channel.sampler].inputs)
 			{
 				if (input < start_time)
 				{
@@ -870,7 +865,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 			animation->update_times(start_time, end_time);
 
-			animation->add_channel(*nodes[gltf_channel.target_node], target, samplers[gltf_channel.sampler]);
+			animation->add_channel(*nodes[gltf_channel.target_node], target, _samplers[gltf_channel.sampler]);
 		}
 
 		animations.push_back(std::move(animation));
@@ -891,7 +886,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	{
 		gltf_scene = &model.scenes[model.defaultScene];
 	}
-	else if (model.scenes.size() > 0)
+	else if (!model.scenes.empty())
 	{
 		gltf_scene = &model.scenes[0];
 	}
@@ -969,7 +964,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 	std::vector<Vertex> vertex_data;
 
-	const float *   pos     = nullptr;
+	const float *   pos;
 	const float *   normals = nullptr;
 	const float *   uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
@@ -1073,21 +1068,21 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 		//Always do uint32
 		submesh->index_type = VK_INDEX_TYPE_UINT32;
 
-		core::Buffer stage_buffer{device,
+		core::Buffer _stage_buffer{device,
 		                          index_data.size(),
 		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		                          VMA_MEMORY_USAGE_CPU_ONLY};
 
-		stage_buffer.update(index_data);
+		_stage_buffer.update(index_data);
 
 		submesh->index_buffer = std::make_unique<core::Buffer>(device,
 		                                                       index_data.size(),
 		                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                                       VMA_MEMORY_USAGE_GPU_ONLY);
 
-		command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
+		command_buffer.copy_buffer(_stage_buffer, *submesh->index_buffer, index_data.size());
 
-		transient_buffers.push_back(std::move(stage_buffer));
+		transient_buffers.push_back(std::move(_stage_buffer));
 	}
 
 	command_buffer.end();
@@ -1098,7 +1093,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 	device.get_fence_pool().reset();
 	device.get_command_pool().reset_pool();
 
-	return std::move(submesh);
+	return submesh;
 }
 
 std::unique_ptr<sg::Node> GLTFLoader::parse_node(const tinygltf::Node &gltf_node, size_t index) const
@@ -1163,7 +1158,7 @@ std::unique_ptr<sg::Camera> GLTFLoader::parse_camera(const tinygltf::Camera &glt
 	}
 	else
 	{
-		LOGW("Camera type not supported");
+		LOGW("Camera type not supported")
 	}
 
 	return camera;
@@ -1259,7 +1254,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		if (!device.is_image_format_supported(image->get_format()))
 		{
-			LOGW("ASTC not supported: decoding {}", image->get_name());
+			LOGW("ASTC not supported: decoding {}", image->get_name())
 			image = std::make_unique<sg::Astc>(*image);
 			image->generate_mipmaps();
 		}
@@ -1358,7 +1353,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 			// Spec states a light has to have a type to be valid
 			if (!khr_light.Has("type"))
 			{
-				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index);
+				LOGE("KHR_lights_punctual extension: light {} doesn't have a type!", light_index)
 				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 			}
 
@@ -1383,7 +1378,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 			}
 			else
 			{
-				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type);
+				LOGE("KHR_lights_punctual extension: light type '{}' is invalid", gltf_light_type)
 				throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 			}
 
@@ -1408,7 +1403,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 				{
 					if (!khr_light.Has("spot"))
 					{
-						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type);
+						LOGE("KHR_lights_punctual extension: spot light doesn't have a 'spot' property set", gltf_light_type)
 						throw std::runtime_error("Couldn't load glTF file, KHR_lights_punctual extension is invalid");
 					}
 
@@ -1425,7 +1420,7 @@ std::vector<std::unique_ptr<sg::Light>> GLTFLoader::parse_khr_lights_punctual()
 					}
 				}
 			}
-			else if (type == sg::LightType::Directional || type == sg::LightType::Spot)
+			else
 			{
 				// The spec states that the light will inherit the transform of the node.
 				// The light's direction is defined as the 3-vector (0.0, 0.0, -1.0) and

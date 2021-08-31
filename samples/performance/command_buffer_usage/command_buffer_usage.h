@@ -38,11 +38,11 @@ class CommandBufferUsage : public vkb::VulkanSample
   public:
 	CommandBufferUsage();
 
-	virtual ~CommandBufferUsage() = default;
+	~CommandBufferUsage() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
 	/**
 	 * @brief Helper structure used to set subpass state
@@ -122,7 +122,7 @@ class CommandBufferUsage : public vkb::VulkanSample
 	};
 
   private:
-	virtual void prepare_render_context() override;
+	void prepare_render_context() override;
 
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 

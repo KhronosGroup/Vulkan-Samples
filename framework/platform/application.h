@@ -63,7 +63,7 @@ class Application
 	 * @param width New width of the window
 	 * @param height New height of the window
 	 */
-	virtual void resize(const uint32_t width, const uint32_t height);
+	virtual void resize(uint32_t width, uint32_t height);
 
 	/**
 	 * @brief Handles input events of the window
@@ -87,7 +87,7 @@ class Application
 
 	bool is_headless() const;
 
-	void set_headless(bool headless);
+	void set_headless(bool _headless);
 
 	bool is_focused() const;
 

@@ -24,7 +24,6 @@
 VKBP_DISABLE_WARNINGS()
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
-#include <GLFW/glfw3native.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
@@ -37,7 +36,7 @@ namespace
 {
 void error_callback(int error, const char *description)
 {
-	LOGE("GLFW Error (code {}): {}", error, description);
+	LOGE("GLFW Error (code {}): {}", error, description)
 }
 
 void window_close_callback(GLFWwindow *window)
@@ -60,7 +59,7 @@ void window_focus_callback(GLFWwindow *window, int focused)
 	if (auto glfw_window = reinterpret_cast<GlfwWindow *>(glfwGetWindowUserPointer(window)))
 	{
 		auto &platform = glfw_window->get_platform();
-		platform.get_app().set_focus(focused ? true : false);
+		platform.get_app().set_focus(focused != 0);
 	}
 }
 

@@ -20,15 +20,15 @@
 #include "command_pool.h"
 #include "common/error.h"
 #include "device.h"
-#include "rendering/render_frame.h"
 #include "rendering/subpass.h"
 
 namespace vkb
 {
 CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level) :
-    command_pool{command_pool},
-    max_push_constants_size{command_pool.get_device().get_gpu().get_properties().limits.maxPushConstantsSize},
-    level{level}
+	level{level},
+	command_pool{command_pool},
+    current_render_pass(),
+	max_push_constants_size{command_pool.get_device().get_gpu().get_properties().limits.maxPushConstantsSize}
 {
 	VkCommandBufferAllocateInfo allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
 
@@ -53,12 +53,14 @@ CommandBuffer::~CommandBuffer()
 	}
 }
 
-CommandBuffer::CommandBuffer(CommandBuffer &&other) :
-    command_pool{other.command_pool},
+CommandBuffer::CommandBuffer(CommandBuffer &&other)  noexcept :
     level{other.level},
-    handle{other.handle},
     state{other.state},
-    update_after_bind{other.update_after_bind}
+	command_pool{other.command_pool},
+	handle{other.handle},
+	current_render_pass(),
+    max_push_constants_size(),
+	update_after_bind{other.update_after_bind}
 {
 	other.handle = VK_NULL_HANDLE;
 	other.state  = State::Invalid;
@@ -195,7 +197,7 @@ void CommandBuffer::begin_render_pass(const RenderTarget &render_target, const R
 		if (framebuffer_extent.width != last_framebuffer_extent.width || framebuffer_extent.height != last_framebuffer_extent.height ||
 		    begin_info.renderArea.extent.width != last_render_area_extent.width || begin_info.renderArea.extent.height != last_render_area_extent.height)
 		{
-			LOGW("Render target extent is not an optimal size, this may result in reduced performance.");
+			LOGW("Render target extent is not an optimal size, this may result in reduced performance.")
 		}
 
 		last_framebuffer_extent = current_render_pass.framebuffer->get_extent();
@@ -230,12 +232,12 @@ void CommandBuffer::next_subpass()
 	vkCmdNextSubpass(get_handle(), VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void CommandBuffer::execute_commands(CommandBuffer &secondary_command_buffer)
+void CommandBuffer::execute_commands(CommandBuffer &secondary_command_buffer) const
 {
 	vkCmdExecuteCommands(get_handle(), 1, &secondary_command_buffer.get_handle());
 }
 
-void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers)
+void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_command_buffers) const
 {
 	std::vector<VkCommandBuffer> sec_cmd_buf_handles(secondary_command_buffers.size(), VK_NULL_HANDLE);
 	std::transform(secondary_command_buffers.begin(), secondary_command_buffers.end(), sec_cmd_buf_handles.begin(),
@@ -243,7 +245,7 @@ void CommandBuffer::execute_commands(std::vector<CommandBuffer *> &secondary_com
 	vkCmdExecuteCommands(get_handle(), to_u32(sec_cmd_buf_handles.size()), sec_cmd_buf_handles.data());
 }
 
-void CommandBuffer::end_render_pass()
+void CommandBuffer::end_render_pass() const
 {
 	vkCmdEndRenderPass(get_handle());
 }
@@ -264,7 +266,7 @@ void CommandBuffer::push_constants(const std::vector<uint8_t> &values)
 
 	if (push_constant_size > max_push_constants_size)
 	{
-		LOGE("Push constant limit of {} exceeded (pushing {} bytes for a total of {} bytes)", max_push_constants_size, values.size(), push_constant_size);
+		LOGE("Push constant limit of {} exceeded (pushing {} bytes for a total of {} bytes)", max_push_constants_size, values.size(), push_constant_size)
 		throw std::runtime_error("Push constant limit exceeded.");
 	}
 	else
@@ -293,7 +295,7 @@ void CommandBuffer::bind_input(const core::ImageView &image_view, uint32_t set, 
 	resource_binding_state.bind_input(image_view, set, binding, array_element);
 }
 
-void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets)
+void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vector<std::reference_wrapper<const vkb::core::Buffer>> &buffers, const std::vector<VkDeviceSize> &offsets) const
 {
 	std::vector<VkBuffer> buffer_handles(buffers.size(), VK_NULL_HANDLE);
 	std::transform(buffers.begin(), buffers.end(), buffer_handles.begin(),
@@ -301,7 +303,7 @@ void CommandBuffer::bind_vertex_buffers(uint32_t first_binding, const std::vecto
 	vkCmdBindVertexBuffers(get_handle(), first_binding, to_u32(buffer_handles.size()), buffer_handles.data(), offsets.data());
 }
 
-void CommandBuffer::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type)
+void CommandBuffer::bind_index_buffer(const core::Buffer &buffer, VkDeviceSize offset, VkIndexType index_type) const
 {
 	vkCmdBindIndexBuffer(get_handle(), buffer.get_handle(), offset, index_type);
 }
@@ -350,32 +352,32 @@ void CommandBuffer::set_color_blend_state(const ColorBlendState &state_info)
 	pipeline_state.set_color_blend_state(state_info);
 }
 
-void CommandBuffer::set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports)
+void CommandBuffer::set_viewport(uint32_t first_viewport, const std::vector<VkViewport> &viewports) const
 {
 	vkCmdSetViewport(get_handle(), first_viewport, to_u32(viewports.size()), viewports.data());
 }
 
-void CommandBuffer::set_scissor(uint32_t first_scissor, const std::vector<VkRect2D> &scissors)
+void CommandBuffer::set_scissor(uint32_t first_scissor, const std::vector<VkRect2D> &scissors) const
 {
 	vkCmdSetScissor(get_handle(), first_scissor, to_u32(scissors.size()), scissors.data());
 }
 
-void CommandBuffer::set_line_width(float line_width)
+void CommandBuffer::set_line_width(float line_width) const
 {
 	vkCmdSetLineWidth(get_handle(), line_width);
 }
 
-void CommandBuffer::set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor)
+void CommandBuffer::set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor) const
 {
 	vkCmdSetDepthBias(get_handle(), depth_bias_constant_factor, depth_bias_clamp, depth_bias_slope_factor);
 }
 
-void CommandBuffer::set_blend_constants(const std::array<float, 4> &blend_constants)
+void CommandBuffer::set_blend_constants(const std::array<float, 4> &blend_constants) const
 {
 	vkCmdSetBlendConstants(get_handle(), blend_constants.data());
 }
 
-void CommandBuffer::set_depth_bounds(float min_depth_bounds, float max_depth_bounds)
+void CommandBuffer::set_depth_bounds(float min_depth_bounds, float max_depth_bounds) const
 {
 	vkCmdSetDepthBounds(get_handle(), min_depth_bounds, max_depth_bounds);
 }
@@ -415,53 +417,53 @@ void CommandBuffer::dispatch_indirect(const core::Buffer &buffer, VkDeviceSize o
 	vkCmdDispatchIndirect(get_handle(), buffer.get_handle(), offset);
 }
 
-void CommandBuffer::update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data)
+void CommandBuffer::update_buffer(const core::Buffer &buffer, VkDeviceSize offset, const std::vector<uint8_t> &data) const
 {
 	vkCmdUpdateBuffer(get_handle(), buffer.get_handle(), offset, data.size(), data.data());
 }
 
-void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions)
+void CommandBuffer::blit_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageBlit> &regions) const
 {
 	vkCmdBlitImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 	               dst_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	               to_u32(regions.size()), regions.data(), VK_FILTER_NEAREST);
 }
 
-void CommandBuffer::resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions)
+void CommandBuffer::resolve_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageResolve> &regions) const
 {
 	vkCmdResolveImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 	                  dst_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                  to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size)
+void CommandBuffer::copy_buffer(const core::Buffer &src_buffer, const core::Buffer &dst_buffer, VkDeviceSize size) const
 {
 	VkBufferCopy copy_region = {};
 	copy_region.size         = size;
 	vkCmdCopyBuffer(get_handle(), src_buffer.get_handle(), dst_buffer.get_handle(), 1, &copy_region);
 }
 
-void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions)
+void CommandBuffer::copy_image(const core::Image &src_img, const core::Image &dst_img, const std::vector<VkImageCopy> &regions) const
 {
 	vkCmdCopyImage(get_handle(), src_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 	               dst_img.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	               to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions)
+void CommandBuffer::copy_buffer_to_image(const core::Buffer &buffer, const core::Image &image, const std::vector<VkBufferImageCopy> &regions) const
 {
 	vkCmdCopyBufferToImage(get_handle(), buffer.get_handle(),
 	                       image.get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 	                       to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions)
+void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions) const
 {
 	vkCmdCopyImageToBuffer(get_handle(), image.get_handle(), image_layout,
 	                       buffer.get_handle(), to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
+void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const
 {
 	// Adjust barrier's subresource range for depth images
 	auto subresource_range = image_view.get_subresource_range();
@@ -499,7 +501,7 @@ void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, cons
 	    &image_memory_barrier);
 }
 
-void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
+void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier) const
 {
 	VkBufferMemoryBarrier buffer_memory_barrier{VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER};
 	buffer_memory_barrier.srcAccessMask = memory_barrier.src_access_mask;
@@ -551,7 +553,7 @@ void CommandBuffer::flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point
 	}
 	else
 	{
-		throw "Only graphics and compute pipeline bind points are supported now";
+		throw std::runtime_error("Only graphics and compute pipeline bind points are supported now");
 	}
 }
 
@@ -598,7 +600,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 	{
 		resource_binding_state.clear_dirty();
 
-		// Iterate over all of the resource sets bound by the command buffer
+		// Iterate over all the resource sets bound by the command buffer
 		for (auto &resource_set_it : resource_binding_state.get_resource_sets())
 		{
 			uint32_t descriptor_set_id = resource_set_it.first;
@@ -674,7 +676,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = std::move(buffer_info);
+							buffer_infos[binding_index][array_element] = buffer_info;
 						}
 
 						// Get image info
@@ -712,7 +714,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								}
 							}
 
-							image_infos[binding_index][array_element] = std::move(image_info);
+							image_infos[binding_index][array_element] = image_info;
 						}
 					}
 				}
@@ -753,13 +755,13 @@ void CommandBuffer::flush_push_constants()
 	}
 	else
 	{
-		LOGW("Push constant range [{}, {}] not found", 0, stored_push_constants.size());
+		LOGW("Push constant range [{}, {}] not found", 0, stored_push_constants.size())
 	}
 
 	stored_push_constants.clear();
 }
 
-const CommandBuffer::State CommandBuffer::get_state() const
+CommandBuffer::State CommandBuffer::get_state() const
 {
 	return state;
 }
@@ -774,12 +776,12 @@ const CommandBuffer::RenderPassBinding &CommandBuffer::get_current_render_pass()
 	return current_render_pass;
 }
 
-const uint32_t CommandBuffer::get_current_subpass_index() const
+uint32_t CommandBuffer::get_current_subpass_index() const
 {
 	return pipeline_state.get_subpass_index();
 }
 
-const bool CommandBuffer::is_render_size_optimal(const VkExtent2D &framebuffer_extent, const VkRect2D &render_area)
+bool CommandBuffer::is_render_size_optimal(const VkExtent2D &framebuffer_extent, const VkRect2D &render_area) const
 {
 	auto render_area_granularity = current_render_pass.render_pass->get_render_area_granularity();
 
@@ -788,23 +790,23 @@ const bool CommandBuffer::is_render_size_optimal(const VkExtent2D &framebuffer_e
 	        ((render_area.extent.height % render_area_granularity.height == 0) || (render_area.offset.y + render_area.extent.height == framebuffer_extent.height)));
 }
 
-void CommandBuffer::reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count)
+void CommandBuffer::reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count) const
 {
 	vkCmdResetQueryPool(get_handle(), query_pool.get_handle(), first_query, query_count);
 }
 
-void CommandBuffer::begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags)
+void CommandBuffer::begin_query(const QueryPool &query_pool, uint32_t query, VkQueryControlFlags flags) const
 {
 	vkCmdBeginQuery(get_handle(), query_pool.get_handle(), query, flags);
 }
 
-void CommandBuffer::end_query(const QueryPool &query_pool, uint32_t query)
+void CommandBuffer::end_query(const QueryPool &query_pool, uint32_t query) const
 {
 	vkCmdEndQuery(get_handle(), query_pool.get_handle(), query);
 }
 
 void CommandBuffer::write_timestamp(VkPipelineStageFlagBits pipeline_stage,
-                                    const QueryPool &query_pool, uint32_t query)
+                                    const QueryPool &query_pool, uint32_t query) const
 {
 	vkCmdWriteTimestamp(get_handle(), pipeline_stage, query_pool.get_handle(), query);
 }
@@ -828,7 +830,7 @@ VkResult CommandBuffer::reset(ResetMode reset_mode)
 RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget &render_target, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<std::unique_ptr<Subpass>> &subpasses)
 {
 	// Create render pass
-	assert(subpasses.size() > 0 && "Cannot create a render pass without any subpass");
+	assert(!subpasses.empty() && "Cannot create a render pass without any sub pass");
 
 	std::vector<vkb::SubpassInfo> subpass_infos(subpasses.size());
 	auto                          subpass_info_it = subpass_infos.begin();

@@ -33,9 +33,9 @@ OrthographicCamera::OrthographicCamera(const std::string &name, float left, floa
     Camera{name},
     left{left},
     right{right},
-    top{top},
     bottom{bottom},
-    near_plane{near_plane},
+	top{top},
+	near_plane{near_plane},
     far_plane{far_plane}
 {
 }
@@ -102,7 +102,7 @@ float OrthographicCamera::get_far_plane() const
 
 glm::mat4 OrthographicCamera::get_projection()
 {
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	return glm::ortho(left, right, bottom, top, far_plane, near_plane);
 }
 }        // namespace sg

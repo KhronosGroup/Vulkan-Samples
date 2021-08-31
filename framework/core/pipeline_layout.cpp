@@ -19,7 +19,6 @@
 
 #include "descriptor_set_layout.h"
 #include "device.h"
-#include "pipeline.h"
 #include "shader_module.h"
 
 namespace vkb
@@ -39,7 +38,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 			// Since 'Input' and 'Output' resources can have the same name, we modify the key string
 			if (shader_resource.type == ShaderResourceType::Input || shader_resource.type == ShaderResourceType::Output)
 			{
-				key = std::to_string(shader_resource.stages) + "_" + key;
+				key = std::to_string(shader_resource.stages).append("_").append(key);
 			}
 
 			auto it = shader_resources.find(key);
@@ -86,11 +85,11 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 
 	// Collect all the descriptor set layout handles, maintaining set order
 	std::vector<VkDescriptorSetLayout> descriptor_set_layout_handles;
-	for (uint32_t i = 0; i < descriptor_set_layouts.size(); ++i)
+	for (auto & descriptor_set_layout : descriptor_set_layouts)
 	{
-		if (descriptor_set_layouts[i])
+		if (descriptor_set_layout)
 		{
-			descriptor_set_layout_handles.push_back(descriptor_set_layouts[i]->get_handle());
+			descriptor_set_layout_handles.push_back(descriptor_set_layout->get_handle());
 		}
 		else
 		{
@@ -121,7 +120,7 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	}
 }
 
-PipelineLayout::PipelineLayout(PipelineLayout &&other) :
+PipelineLayout::PipelineLayout(PipelineLayout &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     shader_modules{std::move(other.shader_modules)},
@@ -151,7 +150,7 @@ const std::vector<ShaderModule *> &PipelineLayout::get_shader_modules() const
 	return shader_modules;
 }
 
-const std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderResourceType &type, VkShaderStageFlagBits stage) const
+std::vector<ShaderResource> PipelineLayout::get_resources(const ShaderResourceType &type, VkShaderStageFlagBits stage) const
 {
 	std::vector<ShaderResource> found_resources;
 

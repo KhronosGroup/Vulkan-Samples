@@ -28,11 +28,11 @@ class Device;
 class Pipeline
 {
   public:
-	Pipeline(Device &device);
+	explicit Pipeline(Device &device);
 
 	Pipeline(const Pipeline &) = delete;
 
-	Pipeline(Pipeline &&other);
+	Pipeline(Pipeline &&other) noexcept ;
 
 	virtual ~Pipeline();
 
@@ -57,7 +57,7 @@ class ComputePipeline : public Pipeline
   public:
 	ComputePipeline(ComputePipeline &&) = default;
 
-	virtual ~ComputePipeline() = default;
+	~ComputePipeline() override = default;
 
 	ComputePipeline(Device &        device,
 	                VkPipelineCache pipeline_cache,
@@ -69,7 +69,7 @@ class GraphicsPipeline : public Pipeline
   public:
 	GraphicsPipeline(GraphicsPipeline &&) = default;
 
-	virtual ~GraphicsPipeline() = default;
+	~GraphicsPipeline() override = default;
 
 	GraphicsPipeline(Device &        device,
 	                 VkPipelineCache pipeline_cache,

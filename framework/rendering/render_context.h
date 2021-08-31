@@ -80,12 +80,12 @@ class RenderContext
 	/**
 	 * @brief Requests to set the present mode of the swapchain, must be called before prepare
 	 */
-	void request_present_mode(const VkPresentModeKHR present_mode);
+	void request_present_mode(VkPresentModeKHR present_mode);
 
 	/**
 	 * @brief Requests to set a specific image format for the swapchain
 	 */
-	void request_image_format(const VkFormat format);
+	void request_image_format(VkFormat format);
 
 	/**
 	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
@@ -99,10 +99,10 @@ class RenderContext
 
 	/**
 	 * @brief Prepares the RenderFrames for rendering
-	 * @param thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
-	 * @param create_render_target_func A function delegate, used to create a RenderTarget
+	 * @param _thread_count The number of threads in the application, necessary to allocate this many resource pools for each RenderFrame
+	 * @param _create_render_target_func A function delegate, used to create a RenderTarget
 	 */
-	void prepare(size_t thread_count = 1, RenderTarget::CreateFunc create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
+	void prepare(size_t _thread_count = 1, const RenderTarget::CreateFunc& _create_render_target_func = RenderTarget::DEFAULT_CREATE_FUNC);
 
 	/**
 	 * @brief Updates the swapchains extent, if a swapchain exists
@@ -114,7 +114,7 @@ class RenderContext
 	 * @brief Updates the swapchains image count, if a swapchain exists
 	 * @param image_count The amount of images in the new swapchain
 	 */
-	void update_swapchain(const uint32_t image_count);
+	void update_swapchain(uint32_t image_count);
 
 	/**
 	 * @brief Updates the swapchains image usage, if a swapchain exists
@@ -127,7 +127,7 @@ class RenderContext
 	 * @param extent The width and height of the new swapchain images
 	 * @param transform The surface transform flags
 	 */
-	void update_swapchain(const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform);
+	void update_swapchain(const VkExtent2D &extent, VkSurfaceTransformFlagBitsKHR transform);
 
 	/**
 	 * @returns True if a valid swapchain exists in the RenderContext
@@ -169,12 +169,12 @@ class RenderContext
 	 */
 	void begin_frame();
 
-	VkSemaphore submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
+	VkSemaphore submit(const Queue &_queue, const std::vector<CommandBuffer *> &command_buffers, VkSemaphore wait_semaphore, VkPipelineStageFlags wait_pipeline_stage);
 
 	/**
 	 * @brief Submits a command buffer related to a frame to a queue
 	 */
-	void submit(const Queue &queue, const std::vector<CommandBuffer *> &command_buffers);
+	void submit(const Queue &_queue, const std::vector<CommandBuffer *> &command_buffers);
 
 	/**
 	 * @brief Waits a frame to finish its rendering

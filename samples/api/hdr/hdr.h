@@ -98,7 +98,7 @@ class HDR : public ApiVulkanSample
 		VkDeviceMemory mem;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device)
+		void           destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
@@ -127,8 +127,8 @@ class HDR : public ApiVulkanSample
 	std::vector<std::string> object_names;
 
 	HDR();
-	~HDR();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~HDR() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
 	void         prepare_offscreen_buffer();
@@ -139,12 +139,12 @@ class HDR : public ApiVulkanSample
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
-	void         update_params();
+	void         update_params() const;
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_hdr();

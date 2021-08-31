@@ -52,7 +52,7 @@ class DescriptorSet
 
 	DescriptorSet(const DescriptorSet &) = delete;
 
-	DescriptorSet(DescriptorSet &&other);
+	DescriptorSet(DescriptorSet &&other) noexcept ;
 
 	// The descriptor set handle is managed by the pool, and will be destroyed when the pool is reset
 	~DescriptorSet() = default;
@@ -107,7 +107,7 @@ class DescriptorSet
 	// The list of write operations for the descriptor set
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets;
 
-	// The bindings of the write descriptors that have had vkUpdateDescriptorSets since the last call to update().
+	// The bindings of the "write descriptors" that have had vkUpdateDescriptorSets since the last call to update().
 	// Each binding number is mapped to a hash of the binding description that it will be updated to.
 	std::unordered_map<uint32_t, size_t> updated_bindings;
 };

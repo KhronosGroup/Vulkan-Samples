@@ -23,11 +23,11 @@ namespace
 {
 template <ShaderResourceType T>
 inline void read_shader_resource(const spirv_cross::Compiler &compiler,
-                                 VkShaderStageFlagBits        stage,
+                                 VkShaderStageFlagBits        ,
                                  std::vector<ShaderResource> &resources,
                                  const ShaderVariant &        variant)
 {
-	LOGE("Not implemented! Read shader resources of type.");
+	LOGE("Not implemented! Read shader resources of type.")
 }
 
 template <spv::Decoration T>
@@ -36,7 +36,7 @@ inline void read_resource_decoration(const spirv_cross::Compiler & /*compiler*/,
                                      ShaderResource & /*shader_resource*/,
                                      const ShaderVariant & /* variant */)
 {
-	LOGE("Not implemented! Read resources decoration of type.");
+	LOGE("Not implemented! Read resources decoration of type.")
 }
 
 template <>
@@ -111,7 +111,7 @@ inline void read_resource_array_size(const spirv_cross::Compiler &compiler,
 {
 	const auto &spirv_type = compiler.get_type_from_variable(resource.id);
 
-	shader_resource.array_size = spirv_type.array.size() ? spirv_type.array[0] : 1;
+	shader_resource.array_size = !spirv_type.array.empty() ? spirv_type.array[0] : 1;
 }
 
 inline void read_resource_size(const spirv_cross::Compiler &compiler,
@@ -407,13 +407,13 @@ void SPIRVReflection::parse_push_constants(const spirv_cross::Compiler &compiler
 
 	for (auto &resource : shader_resources.push_constant_buffers)
 	{
-		const auto &spivr_type = compiler.get_type_from_variable(resource.id);
+		const auto &spirv_type = compiler.get_type_from_variable(resource.id);
 
 		std::uint32_t offset = std::numeric_limits<std::uint32_t>::max();
 
-		for (auto i = 0U; i < spivr_type.member_types.size(); ++i)
+		for (auto i = 0U; i < spirv_type.member_types.size(); ++i)
 		{
-			auto mem_offset = compiler.get_member_decoration(spivr_type.self, i, spv::DecorationOffset);
+			auto mem_offset = compiler.get_member_decoration(spirv_type.self, i, spv::DecorationOffset);
 
 			offset = std::min(offset, mem_offset);
 		}

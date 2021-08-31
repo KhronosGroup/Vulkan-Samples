@@ -48,7 +48,7 @@ class Stats
 	 * @param render_context The RenderContext for this sample
 	 * @param buffer_size Size of the circular buffers
 	 */
-	Stats(RenderContext &render_context, size_t buffer_size = 16);
+	explicit Stats(RenderContext &render_context, size_t buffer_size = 16);
 
 	/**
 	 * @brief Destroys the Stats object

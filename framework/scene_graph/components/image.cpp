@@ -102,7 +102,7 @@ const VkExtent3D &Image::get_extent() const
 	return mipmaps.at(0).extent;
 }
 
-const uint32_t Image::get_layers() const
+uint32_t Image::get_layers() const
 {
 	return layers;
 }
@@ -181,10 +181,10 @@ void Image::generate_mipmaps()
 		next_mipmap.extent = {next_width, next_height, 1u};
 
 		// Fill next mipmap memory
-		stbir_resize_uint8(data.data() + prev_mipmap.offset, prev_mipmap.extent.width, prev_mipmap.extent.height, 0,
-		                   data.data() + next_mipmap.offset, next_mipmap.extent.width, next_mipmap.extent.height, 0, channels);
+		stbir_resize_uint8(data.data() + prev_mipmap.offset, static_cast<int>(prev_mipmap.extent.width), static_cast<int>(prev_mipmap.extent.height), 0,
+		                   data.data() + next_mipmap.offset, static_cast<int>(next_mipmap.extent.width), static_cast<int>(next_mipmap.extent.height), 0, channels);
 
-		mipmaps.emplace_back(std::move(next_mipmap));
+		mipmaps.emplace_back(next_mipmap);
 
 		// Next mipmap values
 		next_width  = std::max<uint32_t>(1u, next_width / 2);
@@ -261,11 +261,7 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 	{
 		image = std::make_unique<Astc>(name, data);
 	}
-	else if (extension == "ktx")
-	{
-		image = std::make_unique<Ktx>(name, data);
-	}
-	else if (extension == "ktx2")
+	else if (extension == "ktx" || extension == "ktx2")
 	{
 		image = std::make_unique<Ktx>(name, data);
 	}

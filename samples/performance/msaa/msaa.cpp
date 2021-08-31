@@ -28,7 +28,7 @@
 
 namespace
 {
-const std::string to_string(VkSampleCountFlagBits count)
+std::string to_string(VkSampleCountFlagBits count)
 {
 	switch (count)
 	{
@@ -51,7 +51,7 @@ const std::string to_string(VkSampleCountFlagBits count)
 	}
 }
 
-const std::string to_string(VkResolveModeFlagBits mode)
+std::string to_string(VkResolveModeFlagBits mode)
 {
 	switch (mode)
 	{
@@ -413,7 +413,7 @@ void MSAASample::use_multisampled_color(std::unique_ptr<vkb::Subpass> &subpass, 
 	}
 }
 
-void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment)
+void MSAASample::use_singlesampled_color(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store, uint32_t output_attachment) const
 {
 	// Render to a single-sampled attachment
 	subpass->set_output_attachments({output_attachment});
@@ -455,7 +455,7 @@ void MSAASample::store_multisampled_depth(std::unique_ptr<vkb::Subpass> &subpass
 	}
 }
 
-void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store)
+void MSAASample::disable_depth_writeback_resolve(std::unique_ptr<vkb::Subpass> &subpass, std::vector<vkb::LoadStoreInfo> &load_store) const
 {
 	// Auxiliary single-sampled depth attachment is not used
 	load_store[i_depth_resolve].store_op = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -495,10 +495,10 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		for (auto &i_depth : depth_atts)
+		for (auto &_i_depth : depth_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(i_depth), memory_barrier);
-			render_target.set_layout(i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			command_buffer.image_memory_barrier(views.at(_i_depth), memory_barrier);
+			render_target.set_layout(_i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		}
 	}
 
@@ -706,7 +706,7 @@ void MSAASample::prepare_depth_resolve_mode_list()
 
 		if (depth_resolve_properties.supportedDepthResolveModes == 0)
 		{
-			LOGW("No depth stencil resolve modes supported");
+			LOGW("No depth stencil resolve modes supported")
 			depth_writeback_resolve_supported = false;
 		}
 		else
@@ -746,11 +746,11 @@ void MSAASample::draw_gui()
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
 		    if (ImGui::BeginCombo("##sample_count", to_string(gui_sample_count).c_str()))
 		    {
-			    for (int n = 0; n < supported_sample_count_list.size(); n++)
+			    for (auto & n : supported_sample_count_list)
 			    {
-				    bool is_selected = (gui_sample_count == supported_sample_count_list[n]);
-				    if (ImGui::Selectable(to_string(supported_sample_count_list[n]).c_str(), is_selected))
-					    gui_sample_count = supported_sample_count_list[n];
+				    bool is_selected = (gui_sample_count == n);
+				    if (ImGui::Selectable(to_string(n).c_str(), is_selected))
+					    gui_sample_count = n;
 				    if (is_selected)
 				    {
 					    ImGui::SetItemDefaultFocus();
@@ -790,11 +790,11 @@ void MSAASample::draw_gui()
 				    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
 				    if (ImGui::BeginCombo("##resolve_mode", to_string(gui_depth_resolve_mode).c_str()))
 				    {
-					    for (int n = 0; n < supported_depth_resolve_mode_list.size(); n++)
+					    for (auto & n : supported_depth_resolve_mode_list)
 					    {
-						    bool is_selected = (gui_depth_resolve_mode == supported_depth_resolve_mode_list[n]);
-						    if (ImGui::Selectable(to_string(supported_depth_resolve_mode_list[n]).c_str(), is_selected))
-							    gui_depth_resolve_mode = supported_depth_resolve_mode_list[n];
+						    bool is_selected = (gui_depth_resolve_mode == n);
+						    if (ImGui::Selectable(to_string(n).c_str(), is_selected))
+							    gui_depth_resolve_mode = n;
 						    if (is_selected)
 						    {
 							    ImGui::SetItemDefaultFocus();

@@ -32,29 +32,29 @@ std::ostream &operator<<(std::ostream &os, const VkResult result)
 
 	switch (result)
 	{
-		WRITE_VK_ENUM(NOT_READY);
-		WRITE_VK_ENUM(TIMEOUT);
-		WRITE_VK_ENUM(EVENT_SET);
-		WRITE_VK_ENUM(EVENT_RESET);
-		WRITE_VK_ENUM(INCOMPLETE);
-		WRITE_VK_ENUM(ERROR_OUT_OF_HOST_MEMORY);
-		WRITE_VK_ENUM(ERROR_OUT_OF_DEVICE_MEMORY);
-		WRITE_VK_ENUM(ERROR_INITIALIZATION_FAILED);
-		WRITE_VK_ENUM(ERROR_DEVICE_LOST);
-		WRITE_VK_ENUM(ERROR_MEMORY_MAP_FAILED);
-		WRITE_VK_ENUM(ERROR_LAYER_NOT_PRESENT);
-		WRITE_VK_ENUM(ERROR_EXTENSION_NOT_PRESENT);
-		WRITE_VK_ENUM(ERROR_FEATURE_NOT_PRESENT);
-		WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DRIVER);
-		WRITE_VK_ENUM(ERROR_TOO_MANY_OBJECTS);
-		WRITE_VK_ENUM(ERROR_FORMAT_NOT_SUPPORTED);
-		WRITE_VK_ENUM(ERROR_SURFACE_LOST_KHR);
-		WRITE_VK_ENUM(ERROR_NATIVE_WINDOW_IN_USE_KHR);
-		WRITE_VK_ENUM(SUBOPTIMAL_KHR);
-		WRITE_VK_ENUM(ERROR_OUT_OF_DATE_KHR);
-		WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DISPLAY_KHR);
-		WRITE_VK_ENUM(ERROR_VALIDATION_FAILED_EXT);
-		WRITE_VK_ENUM(ERROR_INVALID_SHADER_NV);
+		WRITE_VK_ENUM(NOT_READY)
+		WRITE_VK_ENUM(TIMEOUT)
+		WRITE_VK_ENUM(EVENT_SET)
+		WRITE_VK_ENUM(EVENT_RESET)
+		WRITE_VK_ENUM(INCOMPLETE)
+		WRITE_VK_ENUM(ERROR_OUT_OF_HOST_MEMORY)
+		WRITE_VK_ENUM(ERROR_OUT_OF_DEVICE_MEMORY)
+		WRITE_VK_ENUM(ERROR_INITIALIZATION_FAILED)
+		WRITE_VK_ENUM(ERROR_DEVICE_LOST)
+		WRITE_VK_ENUM(ERROR_MEMORY_MAP_FAILED)
+		WRITE_VK_ENUM(ERROR_LAYER_NOT_PRESENT)
+		WRITE_VK_ENUM(ERROR_EXTENSION_NOT_PRESENT)
+		WRITE_VK_ENUM(ERROR_FEATURE_NOT_PRESENT)
+		WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DRIVER)
+		WRITE_VK_ENUM(ERROR_TOO_MANY_OBJECTS)
+		WRITE_VK_ENUM(ERROR_FORMAT_NOT_SUPPORTED)
+		WRITE_VK_ENUM(ERROR_SURFACE_LOST_KHR)
+		WRITE_VK_ENUM(ERROR_NATIVE_WINDOW_IN_USE_KHR)
+		WRITE_VK_ENUM(SUBOPTIMAL_KHR)
+		WRITE_VK_ENUM(ERROR_OUT_OF_DATE_KHR)
+		WRITE_VK_ENUM(ERROR_INCOMPATIBLE_DISPLAY_KHR)
+		WRITE_VK_ENUM(ERROR_VALIDATION_FAILED_EXT)
+		WRITE_VK_ENUM(ERROR_INVALID_SHADER_NV)
 		default:
 			os << "UNKNOWN_ERROR";
 	}
@@ -160,7 +160,7 @@ VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_
 
 	if (depth_format != VK_FORMAT_UNDEFINED)
 	{
-		LOGI("Depth format selected: {}", to_string(depth_format));
+		LOGI("Depth format selected: {}", to_string(depth_format))
 		return depth_format;
 	}
 
@@ -246,7 +246,6 @@ int32_t get_bits_per_pixel(VkFormat format)
 		case VK_FORMAT_A8B8G8R8_UINT_PACK32:
 		case VK_FORMAT_A8B8G8R8_SINT_PACK32:
 		case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
-			return 32;
 		case VK_FORMAT_A2R10G10B10_UNORM_PACK32:
 		case VK_FORMAT_A2R10G10B10_SNORM_PACK32:
 		case VK_FORMAT_A2R10G10B10_USCALED_PACK32:
@@ -325,13 +324,11 @@ int32_t get_bits_per_pixel(VkFormat format)
 		case VK_FORMAT_R64G64B64A64_SFLOAT:
 			return 256;
 		case VK_FORMAT_B10G11R11_UFLOAT_PACK32:
-			return 32;
 		case VK_FORMAT_E5B9G9R9_UFLOAT_PACK32:
+		case VK_FORMAT_X8_D24_UNORM_PACK32:
 			return 32;
 		case VK_FORMAT_D16_UNORM:
 			return 16;
-		case VK_FORMAT_X8_D24_UNORM_PACK32:
-			return 32;
 		case VK_FORMAT_D32_SFLOAT:
 			return 32;
 		case VK_FORMAT_S8_UINT:
@@ -348,7 +345,7 @@ int32_t get_bits_per_pixel(VkFormat format)
 	}
 }
 
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
@@ -357,7 +354,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	std::string file_ext = filename;
 
 	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+	file_ext = file_ext.substr(file_ext.find_last_of('.') + 1);
 
 	std::vector<uint32_t> spirv;
 	std::string           info_log;
@@ -365,7 +362,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
 		return VK_NULL_HANDLE;
 	}
 
@@ -375,7 +372,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	module_create_info.codeSize = spirv.size() * sizeof(uint32_t);
 	module_create_info.pCode    = spirv.data();
 
-	VK_CHECK(vkCreateShaderModule(device, &module_create_info, NULL, &shader_module));
+	VK_CHECK(vkCreateShaderModule(device, &module_create_info, nullptr, &shader_module));
 
 	return shader_module;
 }
@@ -416,7 +413,7 @@ void set_image_layout(
 			break;
 
 		case VK_IMAGE_LAYOUT_PREINITIALIZED:
-			// Image is preinitialized
+			// Image is pre-initialized
 			// Only valid as initial layout for linear images, preserves memory contents
 			// Make sure host writes have been finished
 			barrier.srcAccessMask = VK_ACCESS_HOST_WRITE_BIT;

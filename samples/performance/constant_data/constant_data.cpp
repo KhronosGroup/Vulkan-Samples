@@ -23,21 +23,16 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "rendering/subpasses/geometry_subpass.h"
-#include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
-#include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/texture.h"
-#include "scene_graph/components/transform.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 #include "stats/stats.h"
@@ -97,7 +92,7 @@ bool ConstantData::prepare(vkb::Platform &platform)
 	}
 	else
 	{
-		LOGW("Update-after-bind descriptor sets are not supported by your device, this sample option will be disabled.");
+		LOGW("Update-after-bind descriptor sets are not supported by your device, this sample option will be disabled.")
 	}
 
 	// Load a scene from the assets folder
@@ -395,7 +390,6 @@ void ConstantData::DescriptorSetSubpass::prepare_push_constants(vkb::CommandBuff
 	 * POI
 	 * We want to disable push constants, so we override this function and intentionally do nothing (no-op)
 	 */
-	return;
 }
 
 void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
@@ -419,19 +413,19 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, sizeof(MVPUniform) * uniforms.size());
 
 	uint32_t offset = 0;
-	for (size_t i = 0; i < uniforms.size(); ++i)
+	for (auto & uniform : uniforms)
 	{
 		// Push 128 bytes of data
-		allocation.update(uniforms[i].model, offset + 0);                    // Update bytes 0 - 63
-		allocation.update(uniforms[i].camera_view_proj, offset + 64);        // Update bytes 64 - 127
+		allocation.update(uniform.model, offset + 0);                    // Update bytes 0 - 63
+		allocation.update(uniform.camera_view_proj, offset + 64);        // Update bytes 64 - 127
 
 		offset += 128;
 
 		// If we can push another 128 bytes, push more as this will make the delta more prominent
 		if (struct_size == 256)
 		{
-			allocation.update(uniforms[i].scale, offset);               // Update bytes 128 - 191
-			allocation.update(uniforms[i].padding, offset + 64);        // Update bytes 192 - 255
+			allocation.update(uniform.scale, offset);               // Update bytes 128 - 191
+			allocation.update(uniform.padding, offset + 64);        // Update bytes 192 - 255
 
 			offset += 128;
 		}
@@ -445,7 +439,7 @@ void ConstantData::BufferArraySubpass::draw(vkb::CommandBuffer &command_buffer)
 	allocate_lights<vkb::ForwardLights>(scene.get_components<vkb::sg::Light>(), MAX_FORWARD_LIGHT_COUNT);
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
-	GeometrySubpass::draw(command_buffer);
+	vkb::ForwardSubpass::draw(command_buffer);
 }
 
 void ConstantData::BufferArraySubpass::update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index)
@@ -454,7 +448,6 @@ void ConstantData::BufferArraySubpass::update_uniform(vkb::CommandBuffer &comman
 	 * POI
 	 * We fill all uniform data before the draw, so we want this function to do nothing (no-op).
 	 */
-	return;
 }
 
 vkb::PipelineLayout &ConstantData::BufferArraySubpass::prepare_pipeline_layout(vkb::CommandBuffer &command_buffer, const std::vector<vkb::ShaderModule *> &shader_modules)
@@ -472,7 +465,6 @@ void ConstantData::BufferArraySubpass::prepare_push_constants(vkb::CommandBuffer
 	 * POI
 	 * We want to disable push constants, so we override this function and intentionally do nothing (no-op)
 	 */
-	return;
 }
 
 void ConstantData::BufferArraySubpass::draw_submesh_command(vkb::CommandBuffer &command_buffer, vkb::sg::SubMesh &sub_mesh)

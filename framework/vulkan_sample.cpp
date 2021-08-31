@@ -484,7 +484,7 @@ void VulkanSample::set_api_version(uint32_t requested_api_version)
 
 void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
 {
-	// To be overriden by sample
+	// To be overridden by sample
 }
 
 sg::Scene &VulkanSample::get_scene()

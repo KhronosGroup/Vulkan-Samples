@@ -34,13 +34,13 @@ class SubMesh;
 class Mesh : public Component
 {
   public:
-	Mesh(const std::string &name);
+	explicit Mesh(const std::string &name);
 
-	virtual ~Mesh() = default;
+	~Mesh() override = default;
 
 	void update_bounds(const std::vector<glm::vec3> &vertex_data, const std::vector<uint16_t> &index_data = {});
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	const AABB &get_bounds() const;
 

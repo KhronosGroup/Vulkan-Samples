@@ -16,7 +16,6 @@
  */
 
 #include "rendering/subpasses/geometry_subpass.h"
-#include "common/utils.h"
 #include "common/vk_common.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/camera.h"
@@ -24,7 +23,6 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
-#include "scene_graph/components/texture.h"
 #include "scene_graph/node.h"
 #include "scene_graph/scene.h"
 
@@ -32,8 +30,8 @@ namespace vkb
 {
 GeometrySubpass::GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_source, ShaderSource &&fragment_source, sg::Scene &scene_, sg::Camera &camera) :
     Subpass{render_context, std::move(vertex_source), std::move(fragment_source)},
-    meshes{scene_.get_components<sg::Mesh>()},
-    camera{camera},
+	camera{camera},
+	meshes{scene_.get_components<sg::Mesh>()},
     scene{scene_}
 {
 }
@@ -47,8 +45,8 @@ void GeometrySubpass::prepare()
 		for (auto &sub_mesh : mesh->get_submeshes())
 		{
 			auto &variant     = sub_mesh->get_shader_variant();
-			auto &vert_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
-			auto &frag_module = device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
+			device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_VERTEX_BIT, get_vertex_shader(), variant);
+			device.get_resource_cache().request_shader_module(VK_SHADER_STAGE_FRAGMENT_BIT, get_fragment_shader(), variant);
 		}
 	}
 }
@@ -93,16 +91,16 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
 	// Draw opaque objects in front-to-back order
-	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
+	for (auto & opaque_node : opaque_nodes)
 	{
-		update_uniform(command_buffer, *node_it->second.first, thread_index);
+		update_uniform(command_buffer, *opaque_node.second.first, thread_index);
 
 		// Invert the front face if the mesh was flipped
-		const auto &scale      = node_it->second.first->get_transform().get_scale();
+		const auto &scale      = opaque_node.second.first->get_transform().get_scale();
 		bool        flipped    = scale.x * scale.y * scale.z < 0;
 		VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-		draw_submesh(command_buffer, *node_it->second.second, front_face);
+		draw_submesh(command_buffer, *opaque_node.second.second, front_face);
 	}
 
 	// Enable alpha blending
@@ -131,7 +129,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	}
 }
 
-void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index)
+void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t _thread_index)
 {
 	GlobalUniform global_uniform;
 
@@ -141,7 +139,7 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 
 	auto &transform = node.get_transform();
 
-	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform), thread_index);
+	auto allocation = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(GlobalUniform), _thread_index);
 
 	global_uniform.model = transform.get_world_matrix();
 
@@ -229,7 +227,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 			buffers.emplace_back(std::ref(buffer_iter->second));
 
 			// Bind vertex buffers only for the attribute locations defined
-			command_buffer.bind_vertex_buffers(input_resource.location, std::move(buffers), {0});
+			command_buffer.bind_vertex_buffers(input_resource.location, buffers, {0});
 		}
 	}
 

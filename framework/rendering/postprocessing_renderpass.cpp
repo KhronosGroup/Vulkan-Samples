@@ -32,17 +32,17 @@ PostProcessingSubpass::PostProcessingSubpass(PostProcessingRenderPass *parent, R
 {
 	set_disable_depth_stencil_attachment(true);
 
-	std::vector<uint32_t> input_attachments{};
+	std::vector<uint32_t> _input_attachments{};
 	for (const auto &it : this->input_attachments)
 	{
-		input_attachments.push_back(it.second);
+		_input_attachments.push_back(it.second);
 	}
-	set_input_attachments(input_attachments);
+	set_input_attachments(_input_attachments);
 }
 
-PostProcessingSubpass::PostProcessingSubpass(PostProcessingSubpass &&to_move) :
+PostProcessingSubpass::PostProcessingSubpass(PostProcessingSubpass &&to_move)  noexcept :
     Subpass{std::move(to_move)},
-    parent{std::move(to_move.parent)},
+    parent{to_move.parent},
     fs_variant{std::move(to_move.fs_variant)},
     input_attachments{std::move(to_move.input_attachments)},
     sampled_images{std::move(to_move.sampled_images)}
@@ -52,12 +52,12 @@ PostProcessingSubpass &PostProcessingSubpass::bind_input_attachment(const std::s
 {
 	input_attachments[name] = new_input_attachment;
 
-	std::vector<uint32_t> input_attachments{};
+	std::vector<uint32_t> _input_attachments{};
 	for (const auto &it : this->input_attachments)
 	{
-		input_attachments.push_back(it.second);
+		_input_attachments.push_back(it.second);
 	}
-	set_input_attachments(input_attachments);
+	set_input_attachments(_input_attachments);
 
 	parent->load_stores_dirty = true;
 	return *this;
@@ -134,7 +134,6 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 
 	auto &         render_target       = *parent->draw_render_target;
 	const auto &   target_views        = render_target.get_views();
-	const uint32_t n_input_attachments = uint32_t(get_input_attachments().size());
 
 	if (parent->uniform_buffer_alloc != nullptr)
 	{
@@ -193,7 +192,7 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 {
 	if (this->default_sampler == nullptr)
 	{
-		// Setup a sane default sampler if none was passed
+		// Set up a sane default sampler if none was passed
 		VkSamplerCreateInfo sampler_info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
 		sampler_info.minFilter        = VK_FILTER_LINEAR;
 		sampler_info.magFilter        = VK_FILTER_LINEAR;
@@ -297,17 +296,13 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 {
 	if (src_access == 0)
 	{
-		switch (layout)
-		{
-			case VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL:
-				src_stage  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-				src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
-				src_access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
-				break;
-			default:
-				src_stage  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-				src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-				break;
+		if(layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) {
+			src_stage  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			src_access = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+			src_access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+		} else {
+			src_stage  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			src_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		}
 	}
 }
@@ -502,7 +497,7 @@ void PostProcessingRenderPass::draw(CommandBuffer &command_buffer, RenderTarget 
 		command_buffer.set_scissor(0, {scissor});
 	}
 
-	// Finally draw all subpasses
+	// Finally, draw all subpasses
 	pipeline.draw(command_buffer, *draw_render_target);
 
 	if (parent->get_current_pass_index() < (parent->get_passes().size() - 1))

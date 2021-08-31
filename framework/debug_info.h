@@ -40,13 +40,13 @@ struct Base
 {
 	std::string label;
 
-	Base(const std::string &label) :
-	    label{label}
+	explicit Base(std::string label) :
+	    label{std::move(label)}
 	{}
 
 	virtual ~Base() = default;
 
-	virtual const std::string to_string() = 0;
+	virtual std::string to_string() = 0;
 };
 
 /**
@@ -64,9 +64,9 @@ struct Static : public Base
 	    value{value}
 	{}
 
-	virtual ~Static() = default;
+	~Static() override = default;
 
-	const std::string to_string() override
+	std::string to_string() override
 	{
 		return vkb::to_string(value);
 	}
@@ -87,9 +87,9 @@ struct Dynamic : public Base
 	    value{value}
 	{}
 
-	virtual ~Dynamic() = default;
+	~Dynamic() override = default;
 
-	const std::string to_string() override
+	std::string to_string() override
 	{
 		return vkb::to_string(value);
 	}
@@ -117,7 +117,7 @@ struct Vector final : public Static<T>
 
 	virtual ~Vector() = default;
 
-	const std::string to_string() override
+	std::string to_string() override
 	{
 		return "x: " + vkb::to_string(x) + " " +
 		       "y: " + vkb::to_string(y) + " " +
@@ -145,7 +145,7 @@ struct MinMax final : public Dynamic<T>
 
 	virtual ~MinMax() = default;
 
-	const std::string to_string() override
+	std::string to_string() override
 	{
 		if (Dynamic<T>::value > max)
 		{

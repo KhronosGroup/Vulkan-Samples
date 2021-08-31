@@ -51,7 +51,7 @@ struct Edge
 class Graph
 {
   public:
-	Graph(const char *name);
+	explicit Graph(const char *name);
 
 	static const size_t node_not_found = 0;
 
@@ -61,7 +61,7 @@ class Graph
 	 * @param style_name the group name
 	 * @param color the hex color of the group
 	 */
-	void new_style(std::string style_name, std::string color);
+	void new_style(const std::string& style_name, const std::string& color);
 
 	/**
 	 * @brief Create a node object
@@ -71,7 +71,7 @@ class Graph
 	 * @param data json data to be displayed with node
 	 * @return size_t id of node
 	 */
-	size_t create_node(const char *title = "Node", const char *style = NULL, const nlohmann::json &data = {})
+	size_t create_node(const char *title = "Node", const char *style = nullptr, const nlohmann::json &data = {})
 	{
 		size_t id = new_id();
 		nodes[id] = std::make_unique<Node>(id, title, style, data);
@@ -82,10 +82,10 @@ class Graph
 	 * @brief Find a node from a reference
 	 * 		  If the node does not exist then the reference will be node_not_found
 	 * 
-	 * @param name of node
+	 * @param _name of node
 	 * @return size_t if of node
 	 */
-	size_t find_ref(std::string &name);
+	size_t find_ref(std::string &_name);
 
 	/**
 	 * @brief Add a readable reference to a node
@@ -120,7 +120,7 @@ class Graph
 	 * @brief Dump the graphs state to json in the given file name
 	 * @param file_name to dump to
 	 */
-	bool dump_to_file(std::string file_name);
+	bool dump_to_file(const std::string& file_name);
 
 	size_t new_id();
 

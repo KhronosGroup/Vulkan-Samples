@@ -35,7 +35,7 @@ class CommandPool
 
 	CommandPool(const CommandPool &) = delete;
 
-	CommandPool(CommandPool &&other);
+	CommandPool(CommandPool &&other) noexcept ;
 
 	~CommandPool();
 
@@ -57,7 +57,7 @@ class CommandPool
 
 	CommandBuffer &request_command_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY);
 
-	const CommandBuffer::ResetMode get_reset_mode() const;
+	CommandBuffer::ResetMode get_reset_mode() const;
 
   private:
 	Device &device;

@@ -108,8 +108,8 @@ class ConservativeRasterization : public ApiVulkanSample
 	} offscreen_pass;
 
 	ConservativeRasterization();
-	~ConservativeRasterization();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~ConservativeRasterization() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         prepare_offscreen();
 	void         load_assets();
@@ -121,8 +121,8 @@ class ConservativeRasterization : public ApiVulkanSample
 	void         update_uniform_buffers_scene();
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_conservative_rasterization();

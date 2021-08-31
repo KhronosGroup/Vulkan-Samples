@@ -33,7 +33,7 @@ class Framebuffer
 
 	Framebuffer(const Framebuffer &) = delete;
 
-	Framebuffer(Framebuffer &&other);
+	Framebuffer(Framebuffer &&other) noexcept ;
 
 	~Framebuffer();
 

@@ -48,10 +48,10 @@ class SampledImage
 	SampledImage(uint32_t target_attachment, RenderTarget *render_target = nullptr, Sampler *sampler = nullptr, bool isDepthResolve = false);
 
 	SampledImage(const SampledImage &to_copy);
-	SampledImage &operator=(const SampledImage &to_copy);
+	SampledImage &operator=(const SampledImage &to_copy) = default;
 
-	SampledImage(SampledImage &&to_move);
-	SampledImage &operator=(SampledImage &&to_move);
+	SampledImage(SampledImage &&to_move) noexcept ;
+	SampledImage &operator=(SampledImage &&to_move) noexcept ;
 
 	~SampledImage() = default;
 
@@ -123,7 +123,7 @@ class SampledImage
 	 */
 	inline void set_render_target(RenderTarget *new_render_target)
 	{
-		render_target = std::move(new_render_target);
+		render_target = new_render_target;
 	}
 
 	inline bool is_depth_resolve() const

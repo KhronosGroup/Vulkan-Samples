@@ -38,11 +38,11 @@ namespace sg
 class Camera : public Component
 {
   public:
-	Camera(const std::string &name);
+	explicit Camera(const std::string &name);
 
-	virtual ~Camera() = default;
+	~Camera() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	virtual glm::mat4 get_projection() = 0;
 
@@ -52,7 +52,7 @@ class Camera : public Component
 
 	Node *get_node();
 
-	const glm::mat4 get_pre_rotation();
+	glm::mat4 get_pre_rotation();
 
 	void set_pre_rotation(const glm::mat4 &pre_rotation);
 

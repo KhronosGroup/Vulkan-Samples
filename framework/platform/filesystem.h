@@ -60,7 +60,7 @@ extern const std::unordered_map<Type, std::string> relative_paths;
  * @throws runtime_error if the platform didn't initialize each path properly, path wasn't found or the path was found but is empty
  * @return Path to the directory of a certain type
  */
-const std::string get(const Type type, const std::string &file = "");
+std::string get(const Type type, const std::string &file = "");
 }        // namespace path
 
 /**

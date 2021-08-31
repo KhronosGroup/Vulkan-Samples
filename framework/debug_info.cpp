@@ -31,7 +31,7 @@ float DebugInfo::get_longest_label() const
 	{
 		const std::string &label = field->label;
 
-		if (label.size() > column_width)
+		if (static_cast<float>(label.size()) > column_width)
 		{
 			column_width = static_cast<float>(label.size());
 		}

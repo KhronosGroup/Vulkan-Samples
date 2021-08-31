@@ -34,7 +34,7 @@ class ImageView
 
 	ImageView(ImageView &) = delete;
 
-	ImageView(ImageView &&other);
+	ImageView(ImageView &&other) noexcept ;
 
 	~ImageView();
 

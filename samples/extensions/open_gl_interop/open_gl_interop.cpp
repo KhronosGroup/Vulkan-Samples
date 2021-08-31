@@ -21,7 +21,6 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 
@@ -42,7 +41,7 @@ const vec4 VERTICES[] = vec4[](
 void main() { gl_Position = VERTICES[gl_VertexID]; }
 )SHADER";
 
-// Derived from Shadertoy Vornoi noise shader by Inigo Quilez
+// Derived from Shader toy Vornoi noise shader by Inigo Quilez
 // https://www.shadertoy.com/view/Xd23Dh
 constexpr const char *OPENGL_FRAGMENT_SHADER =
     R"SHADER(
@@ -117,7 +116,7 @@ struct GLData
 	GLuint vao{0};
 };
 
-OpenGLInterop::OpenGLInterop()
+OpenGLInterop::OpenGLInterop() : index_count()
 {
 	zoom  = -2.5f;
 	title = "Interoperability with OpenGL";
@@ -151,14 +150,14 @@ void OpenGLInterop::prepare_shared_resources()
 		                                   nullptr};
 
 		bool                                  found = false;
-		VkExternalSemaphoreHandleTypeFlagBits compatable_semaphore_type;
-		for (size_t i = 0; i < 5; i++)
+		VkExternalSemaphoreHandleTypeFlagBits compatible_semaphore_type;
+		for (auto & flag : flags)
 		{
-			zzzz.handleType = flags[i];
+			zzzz.handleType = flag;
 			vkGetPhysicalDeviceExternalSemaphorePropertiesKHR(physicalDeviceHandle, &zzzz, &aaaa);
-			if (aaaa.compatibleHandleTypes & flags[i] && aaaa.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_EXPORTABLE_BIT)
+			if (aaaa.compatibleHandleTypes & flag && aaaa.externalSemaphoreFeatures & VK_EXTERNAL_SEMAPHORE_FEATURE_EXPORTABLE_BIT)
 			{
-				compatable_semaphore_type = flags[i];
+				compatible_semaphore_type = flag;
 				found                     = true;
 				break;
 			}
@@ -171,7 +170,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{
 		    VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr,
-		    VkExternalSemaphoreHandleTypeFlags(compatable_semaphore_type)};
+		    VkExternalSemaphoreHandleTypeFlags(compatible_semaphore_type)};
 		VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		                                          &exportSemaphoreCreateInfo};
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
@@ -190,7 +189,7 @@ void OpenGLInterop::prepare_shared_resources()
 #else
 		VkSemaphoreGetFdInfoKHR semaphoreGetFdInfo{
 		    VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR, nullptr,
-		    VK_NULL_HANDLE, compatable_semaphore_type};
+		    VK_NULL_HANDLE, compatible_semaphore_type};
 		semaphoreGetFdInfo.semaphore = sharedSemaphores.gl_ready;
 		VK_CHECK(vkGetSemaphoreFdKHR(deviceHandle, &semaphoreGetFdInfo, &shareHandles.gl_ready));
 		semaphoreGetFdInfo.semaphore = sharedSemaphores.gl_complete;
@@ -382,9 +381,9 @@ void OpenGLInterop::setup_descriptor_set()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
-	// Setup a descriptor image info for the current texture to be used as a combined image sampler
+	// Set up a descriptor image info for the current texture to be used as a combined image sampler
 	VkDescriptorImageInfo image_descriptor;
-	image_descriptor.imageView   = sharedTexture.view;                              // The image's view (images are never directly accessed by the shader, but rather through views defining subresources)
+	image_descriptor.imageView   = sharedTexture.view;                              // The image's view (images are never directly accessed by the shader, but rather through views defining sub resources)
 	image_descriptor.sampler     = sharedTexture.sampler;                           // The sampler (Telling the pipeline how to sample the texture, including repeat, border, etc.)
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;        // The current layout of the image (Note: Should always fit the actual use, e.g. shader read)
 
@@ -406,7 +405,7 @@ void OpenGLInterop::setup_descriptor_set()
 	    };
 
 	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(), 0, NULL);
+	                       write_descriptor_sets.data(), 0, nullptr);
 }
 
 void OpenGLInterop::prepare_pipelines()
@@ -460,7 +459,7 @@ void OpenGLInterop::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	shader_stages[0] = load_shader("texture_loading/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("texture_loading/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
@@ -543,13 +542,13 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Create off screen context
+	// Create off-screen context
 	gl_context = new OffscreenContext{};
 	gl_data    = new GLData{};
 
 	prepare_shared_resources();
 
-	gl_data->program = gl_context->build_program(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
+	gl_data->program = OffscreenContext::build_program(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
 
 	timer.start();
 
@@ -574,7 +573,7 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 	glImportMemory(gl_data->mem, sharedTexture.allocationSize, GL_HANDLE_TYPE, shareHandles.memory);
 
 	// Use the imported memory as backing for the OpenGL texture.  The internalFormat, dimensions
-	// and mip count should match the ones used by Vulkan to create the image and determine it's memory
+	// and mip count should match the ones used by Vulkan to create the image and determine its memory
 	// allocation.
 	glTextureStorageMem2DEXT(gl_data->color, 1, GL_RGBA8, SHARED_TEXTURE_DIMENSION,
 	                         SHARED_TEXTURE_DIMENSION, gl_data->mem, 0);
@@ -607,12 +606,12 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 
 void OpenGLInterop::render(float)
 {
-	if (!prepared)
+	if (!prepared || gl_data == nullptr)
 		return;
 
 	ApiVulkanSample::prepare_frame();
 	// RENDER
-	float time = (float) timer.elapsed();
+	auto time = (float) timer.elapsed();
 	// The GL shader animates the image, so provide the time as input
 	glProgramUniform1f(gl_data->program, 1, time);
 
@@ -624,7 +623,7 @@ void OpenGLInterop::render(float)
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
 
 	// Once drawing is complete, signal the Vulkan semaphore indicating
-	// it can continue with it's render
+	// it can continue with its render
 	GLenum dstLayout = GL_LAYOUT_SHADER_READ_ONLY_EXT;
 	glSignalSemaphoreEXT(gl_data->gl_complete, 0, nullptr, 1, &gl_data->color, &dstLayout);
 
@@ -644,7 +643,7 @@ void OpenGLInterop::render(float)
 	std::array<VkSemaphore, 2>          waitSemaphores{{semaphores.acquired_image_ready, sharedSemaphores.gl_complete}};
 
 	std::array<VkSemaphore, 2> signalSemaphores{{semaphores.render_complete, sharedSemaphores.gl_ready}};
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.waitSemaphoreCount   = vkb::to_u32(waitSemaphores.size());
 	submit_info.pWaitSemaphores      = waitSemaphores.data();
 	submit_info.pWaitDstStageMask    = waitStages.data();
@@ -666,7 +665,7 @@ void OpenGLInterop::view_changed()
 
 void OpenGLInterop::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Settings"))
+	if (vkb::Drawer::header("Settings"))
 	{
 	}
 }
@@ -721,11 +720,11 @@ void OpenGLInterop::build_command_buffers()
 		                                                  1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+		                        pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkDeviceSize offsets[1] = {0};
@@ -753,8 +752,8 @@ void OpenGLInterop::build_command_buffers()
 			subresource_range.layerCount               = 1;
 
 			// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-			// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
-			// Destination pipeline stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+			// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
+			// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 			vkCmdPipelineBarrier(
 			    draw_cmd_buffers[i],
 			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
@@ -774,12 +773,15 @@ OpenGLInterop::~OpenGLInterop()
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	glBindVertexArray(0);
 	glUseProgram(0);
-	glDeleteFramebuffers(1, &gl_data->fbo);
-	glDeleteTextures(1, &gl_data->color);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
-	glDeleteVertexArrays(1, &gl_data->vao);
-	glDeleteProgram(gl_data->program);
+	if(gl_data != nullptr)
+	{
+		glDeleteFramebuffers(1, &gl_data->fbo);
+		glDeleteTextures(1, &gl_data->color);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
+		glDeleteVertexArrays(1, &gl_data->vao);
+		glDeleteProgram(gl_data->program);
+	}
 	glFlush();
 	glFinish();
 
@@ -805,6 +807,9 @@ OpenGLInterop::~OpenGLInterop()
 		vkDestroyPipelineLayout(deviceHandle, pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(deviceHandle, descriptor_set_layout, nullptr);
 	}
+}
+void OpenGLInterop::draw()
+{
 }
 
 std::unique_ptr<vkb::VulkanSample> create_open_gl_interop()

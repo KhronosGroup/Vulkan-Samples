@@ -40,13 +40,13 @@ class Node;
 class Transform : public Component
 {
   public:
-	Transform(Node &node);
+	explicit Transform(Node &node);
 
-	virtual ~Transform() = default;
+	~Transform() override = default;
 
 	Node &get_node();
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	void set_translation(const glm::vec3 &translation);
 

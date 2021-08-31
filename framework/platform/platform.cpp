@@ -17,13 +17,11 @@
 
 #include "platform.h"
 
-#include <ctime>
 #include <mutex>
 #include <vector>
 
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
-#include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
@@ -51,10 +49,10 @@ FlagCommand       Platform::batch_categories(FlagType::ManyValues, "category", "
 FlagCommand       Platform::batch_tags(FlagType::ManyValues, "tag", "t", "A tag to run in batch mode, --tag={any,Arm}");
 SubCommand        Platform::batch("batch", "Run multiple samples", {&Platform::batch_categories, &Platform::batch_tags});
 
-bool Platform::initialize(std::unique_ptr<Application> &&app)
+bool Platform::initialize(std::unique_ptr<Application> &&_app)
 {
-	assert(app && "Application is not valid");
-	active_app = std::move(app);
+	assert(_app && "Application is not valid");
+	active_app = std::move(_app);
 
 	auto sinks = get_platform_sinks();
 
@@ -69,7 +67,7 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 	logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(logger);
 
-	LOGI("Logger initialized");
+	LOGI("Logger initialized")
 
 	auto args = get_arguments();
 	args.insert(args.begin(), "vulkan_samples");
@@ -80,12 +78,12 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 	if (!parser->parse({&Platform::app, &Platform::sample, &Platform::test, &Platform::batch, &Platform::samples, &Platform::benchmark, &window_options}))
 	{
 		auto help = parser->help();
-		LOGI("");
+		LOGI("")
 		for (auto &line : help)
 		{
-			LOGI(line);
+			LOGI(line)
 		}
-		LOGI("");
+		LOGI("")
 		return false;
 	}
 
@@ -108,7 +106,7 @@ bool Platform::initialize(std::unique_ptr<Application> &&app)
 		throw std::runtime_error("Window creation failed, make sure platform overrides create_window() and creates a valid window.");
 	}
 
-	LOGI("Window created");
+	LOGI("Window created")
 
 	return true;
 }
@@ -141,7 +139,7 @@ void Platform::run()
 		if (remaining_benchmark_frames == 0)
 		{
 			auto time_taken = timer.stop();
-			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken);
+			LOGI("Benchmark completed in {} seconds (ran {} frames, averaged {} fps)", time_taken, total_benchmark_frames, total_benchmark_frames / time_taken)
 			close();
 			return;
 		}
@@ -156,7 +154,7 @@ void Platform::run()
 
 std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
 {
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain atleast one preffered surface format");
+	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
 
 	auto context = std::make_unique<RenderContext>(device, surface, window->get_width(), window->get_height());
 
@@ -172,7 +170,7 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 
 	context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
 
-	return std::move(context);
+	return context;
 }
 
 void Platform::terminate(ExitCode code)

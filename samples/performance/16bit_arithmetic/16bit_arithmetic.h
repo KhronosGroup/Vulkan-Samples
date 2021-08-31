@@ -28,16 +28,16 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
   public:
 	KHR16BitArithmeticSample();
 
-	virtual ~KHR16BitArithmeticSample() = default;
+	~KHR16BitArithmeticSample() override = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
-	virtual void draw_renderpass(vkb::CommandBuffer &cmd, vkb::RenderTarget &render_target) override;
+	void draw_renderpass(vkb::CommandBuffer &cmd, vkb::RenderTarget &render_target) override;
 
   private:
-	virtual void draw_gui() override;
+	void draw_gui() override;
 
 	bool khr_16bit_arith_enabled{false};
 
@@ -60,8 +60,8 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 	struct VisualizationSubpass : vkb::Subpass
 	{
 		VisualizationSubpass(vkb::RenderContext &context, vkb::ShaderSource &&vertex_source, vkb::ShaderSource &&fragment_source);
-		virtual void prepare() override;
-		virtual void draw(vkb::CommandBuffer &command_buffer) override;
+		void prepare() override;
+		void draw(vkb::CommandBuffer &command_buffer) override;
 
 		vkb::PipelineLayout *       layout{nullptr};
 		const vkb::core::ImageView *view{nullptr};

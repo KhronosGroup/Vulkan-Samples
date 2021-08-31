@@ -62,7 +62,7 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	}
 }
 
-Buffer::Buffer(Buffer &&other) :
+Buffer::Buffer(Buffer &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     allocation{other.allocation},
@@ -156,22 +156,22 @@ uint64_t Buffer::get_device_address()
 	return vkGetBufferDeviceAddressKHR(device.get_handle(), &buffer_device_address_info);
 }
 
-void Buffer::update(void *data, size_t size, size_t offset)
+void Buffer::update(void *data, size_t _size, size_t offset)
 {
-	update(reinterpret_cast<const uint8_t *>(data), size, offset);
+	update(reinterpret_cast<const uint8_t *>(data), _size, offset);
 }
 
-void Buffer::update(const uint8_t *data, const size_t size, const size_t offset)
+void Buffer::update(const uint8_t *data, const size_t _size, const size_t offset)
 {
 	if (persistent)
 	{
-		std::copy(data, data + size, mapped_data + offset);
+		std::copy(data, data + _size, mapped_data + offset);
 		flush();
 	}
 	else
 	{
 		map();
-		std::copy(data, data + size, mapped_data + offset);
+		std::copy(data, data + _size, mapped_data + offset);
 		flush();
 		unmap();
 	}

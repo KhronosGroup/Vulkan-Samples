@@ -59,14 +59,14 @@ class ForwardSubpass : public GeometrySubpass
 	 */
 	ForwardSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
-	virtual ~ForwardSubpass() = default;
+	~ForwardSubpass() override = default;
 
-	virtual void prepare() override;
+	void prepare() override;
 
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	void draw(CommandBuffer &command_buffer) override;
 };
 
 }        // namespace vkb

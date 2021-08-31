@@ -42,7 +42,7 @@ inline std::vector<std::string> precompile_shader(const std::string &source)
 		{
 			// Include paths are relative to the base shader directory
 			std::string include_path = line.substr(10);
-			size_t      last_quote   = include_path.find("\"");
+			size_t      last_quote   = include_path.find('\"');
 			if (!include_path.empty() && last_quote != std::string::npos)
 			{
 				include_path = include_path.substr(0, last_quote);
@@ -104,14 +104,14 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 
 	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
 	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
-		LOGE("{}", info_log);
+		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename())
+		LOGE("{}", info_log)
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 
 	SPIRVReflection spirv_reflection;
 
-	// Reflect all shader resouces
+	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
@@ -123,7 +123,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 	                        reinterpret_cast<const char *>(spirv.data() + spirv.size())});
 }
 
-ShaderModule::ShaderModule(ShaderModule &&other) :
+ShaderModule::ShaderModule(ShaderModule &&other)  noexcept :
     device{other.device},
     id{other.id},
     stage{other.stage},

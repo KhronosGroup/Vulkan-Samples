@@ -34,7 +34,7 @@ class Component
   public:
 	Component() = default;
 
-	Component(const std::string &name);
+	explicit Component(std::string name);
 
 	Component(Component &&other) = default;
 

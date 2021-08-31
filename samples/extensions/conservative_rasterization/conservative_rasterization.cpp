@@ -29,6 +29,11 @@
 #define ZOOM_FACTOR 16
 
 ConservativeRasterization::ConservativeRasterization()
+: pipelines()
+, pipeline_layouts()
+, descriptor_set_layouts()
+, descriptor_sets()
+, offscreen_pass()
 {
 	title = "Conservative rasterization";
 
@@ -43,27 +48,27 @@ ConservativeRasterization::~ConservativeRasterization()
 {
 	if (device)
 	{
-		vkDestroyImageView(get_device().get_handle(), offscreen_pass.color.view, nullptr);
-		vkDestroyImage(get_device().get_handle(), offscreen_pass.color.image, nullptr);
-		vkFreeMemory(get_device().get_handle(), offscreen_pass.color.mem, nullptr);
-		vkDestroyImageView(get_device().get_handle(), offscreen_pass.depth.view, nullptr);
-		vkDestroyImage(get_device().get_handle(), offscreen_pass.depth.image, nullptr);
-		vkFreeMemory(get_device().get_handle(), offscreen_pass.depth.mem, nullptr);
+		vkDestroyImageView(device->get_handle(), offscreen_pass.color.view, nullptr);
+		vkDestroyImage(device->get_handle(), offscreen_pass.color.image, nullptr);
+		vkFreeMemory(device->get_handle(), offscreen_pass.color.mem, nullptr);
+		vkDestroyImageView(device->get_handle(), offscreen_pass.depth.view, nullptr);
+		vkDestroyImage(device->get_handle(), offscreen_pass.depth.image, nullptr);
+		vkFreeMemory(device->get_handle(), offscreen_pass.depth.mem, nullptr);
 
-		vkDestroyRenderPass(get_device().get_handle(), offscreen_pass.render_pass, nullptr);
-		vkDestroySampler(get_device().get_handle(), offscreen_pass.sampler, nullptr);
-		vkDestroyFramebuffer(get_device().get_handle(), offscreen_pass.framebuffer, nullptr);
+		vkDestroyRenderPass(device->get_handle(), offscreen_pass.render_pass, nullptr);
+		vkDestroySampler(device->get_handle(), offscreen_pass.sampler, nullptr);
+		vkDestroyFramebuffer(device->get_handle(), offscreen_pass.framebuffer, nullptr);
 
-		vkDestroyPipeline(get_device().get_handle(), pipelines.triangle, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.triangle_overlay, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.triangle_conservative_raster, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.fullscreen, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.triangle, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.triangle_overlay, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.triangle_conservative_raster, nullptr);
+		vkDestroyPipeline(device->get_handle(), pipelines.fullscreen, nullptr);
 
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.fullscreen, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.scene, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layouts.fullscreen, nullptr);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layouts.scene, nullptr);
 
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.scene, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.fullscreen, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layouts.scene, nullptr);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layouts.fullscreen, nullptr);
 	}
 
 	uniform_buffers.scene.reset();
@@ -80,8 +85,8 @@ void ConservativeRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
 // Setup offscreen framebuffer, attachments and render passes for lower resolution rendering of the scene
 void ConservativeRasterization::prepare_offscreen()
 {
-	offscreen_pass.width  = width / ZOOM_FACTOR;
-	offscreen_pass.height = height / ZOOM_FACTOR;
+	offscreen_pass.width  = static_cast<int>(width) / ZOOM_FACTOR;
+	offscreen_pass.height = static_cast<int>(height) / ZOOM_FACTOR;
 
 	// Find a suitable depth format
 	VkFormat framebuffer_depth_format = vkb::get_suitable_depth_format(get_device().get_gpu().get_handle());
@@ -196,7 +201,7 @@ void ConservativeRasterization::prepare_offscreen()
 	subpass_description.pDepthStencilAttachment = &depth_reference;
 
 	// Use subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies;
+	std::array<VkSubpassDependency, 2> dependencies{};
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
@@ -309,7 +314,7 @@ void ConservativeRasterization::build_command_buffers()
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 			// Low-res triangle from offscreen framebuffer
@@ -464,7 +469,7 @@ void ConservativeRasterization::prepare_pipelines()
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables);
 
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layouts.fullscreen, render_pass, 0);
@@ -473,13 +478,13 @@ void ConservativeRasterization::prepare_pipelines()
 
 	// Get device properties for conservative rasterization
 	// Requires VK_KHR_get_physical_device_properties2 and manual function pointer creation
-	PFN_vkGetPhysicalDeviceProperties2KHR vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
-	assert(vkGetPhysicalDeviceProperties2KHR);
+	auto _vkGetPhysicalDeviceProperties2KHR = reinterpret_cast<PFN_vkGetPhysicalDeviceProperties2KHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetPhysicalDeviceProperties2KHR"));
+	assert(_vkGetPhysicalDeviceProperties2KHR);
 	VkPhysicalDeviceProperties2KHR device_properties{};
 	conservative_raster_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONSERVATIVE_RASTERIZATION_PROPERTIES_EXT;
 	device_properties.sType              = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext              = &conservative_raster_properties;
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
+	_vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	// Vertex bindings and attributes
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -581,7 +586,7 @@ bool ConservativeRasterization::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f));
@@ -610,23 +615,23 @@ void ConservativeRasterization::render(float delta_time)
 
 void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Settings"))
+	if (vkb::Drawer::header("Settings"))
 	{
 		if (drawer.checkbox("Conservative rasterization", &conservative_raster_enabled))
 		{
 			build_command_buffers();
 		}
 	}
-	if (drawer.header("Device properties"))
+	if (vkb::Drawer::header("Device properties"))
 	{
-		drawer.text("maxExtraPrimitiveOverestimationSize: %f", conservative_raster_properties.maxExtraPrimitiveOverestimationSize);
-		drawer.text("extraPrimitiveOverestimationSizeGranularity: %f", conservative_raster_properties.extraPrimitiveOverestimationSizeGranularity);
-		drawer.text("primitiveUnderestimation:  %s", conservative_raster_properties.primitiveUnderestimation ? "yes" : "no");
-		drawer.text("conservativePointAndLineRasterization:  %s", conservative_raster_properties.conservativePointAndLineRasterization ? "yes" : "no");
-		drawer.text("degenerateTrianglesRasterized: %s", conservative_raster_properties.degenerateTrianglesRasterized ? "yes" : "no");
-		drawer.text("degenerateLinesRasterized: %s", conservative_raster_properties.degenerateLinesRasterized ? "yes" : "no");
-		drawer.text("fullyCoveredFragmentShaderInputVariable: %s", conservative_raster_properties.fullyCoveredFragmentShaderInputVariable ? "yes" : "no");
-		drawer.text("conservativeRasterizationPostDepthCoverage: %s", conservative_raster_properties.conservativeRasterizationPostDepthCoverage ? "yes" : "no");
+		vkb::Drawer::text("maxExtraPrimitiveOverestimationSize: %f", conservative_raster_properties.maxExtraPrimitiveOverestimationSize);
+		vkb::Drawer::text("extraPrimitiveOverestimationSizeGranularity: %f", conservative_raster_properties.extraPrimitiveOverestimationSizeGranularity);
+		vkb::Drawer::text("primitiveUnderestimation:  %s", conservative_raster_properties.primitiveUnderestimation ? "yes" : "no");
+		vkb::Drawer::text("conservativePointAndLineRasterization:  %s", conservative_raster_properties.conservativePointAndLineRasterization ? "yes" : "no");
+		vkb::Drawer::text("degenerateTrianglesRasterized: %s", conservative_raster_properties.degenerateTrianglesRasterized ? "yes" : "no");
+		vkb::Drawer::text("degenerateLinesRasterized: %s", conservative_raster_properties.degenerateLinesRasterized ? "yes" : "no");
+		vkb::Drawer::text("fullyCoveredFragmentShaderInputVariable: %s", conservative_raster_properties.fullyCoveredFragmentShaderInputVariable ? "yes" : "no");
+		vkb::Drawer::text("conservativeRasterizationPostDepthCoverage: %s", conservative_raster_properties.conservativeRasterizationPostDepthCoverage ? "yes" : "no");
 	}
 }
 

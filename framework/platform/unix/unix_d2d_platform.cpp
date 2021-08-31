@@ -21,7 +21,6 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
 #include "platform/headless_window.h"

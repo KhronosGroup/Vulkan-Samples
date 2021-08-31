@@ -27,7 +27,7 @@ class Device;
 class SemaphorePool
 {
   public:
-	SemaphorePool(Device &device);
+	explicit SemaphorePool(Device &device);
 
 	SemaphorePool(const SemaphorePool &) = delete;
 

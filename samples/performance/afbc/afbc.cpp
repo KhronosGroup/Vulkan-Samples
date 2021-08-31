@@ -31,7 +31,6 @@
 
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/transform.h"
-#include "scene_graph/node.h"
 
 AFBCSample::AFBCSample()
 {

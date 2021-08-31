@@ -64,23 +64,23 @@ inline void print_info()
 {
 	std::string col_delim(30, '-');
 
-	LOGI("Vulkan Samples");
-	LOGI("");
-	LOGI("\tA collection of samples to demonstrate the Vulkan best practice.");
-	LOGI("");
-	LOGI("Available samples:");
-	LOGI("");
-	LOGI("{:20s} | {:20s} | {:20s}", "Id", "Name", "Description");
-	LOGI("{}---{}---{}", col_delim.c_str(), col_delim.c_str(), col_delim.c_str());
+	LOGI("Vulkan Samples")
+	LOGI("")
+	LOGI("\tA collection of samples to demonstrate the Vulkan best practice.")
+	LOGI("")
+	LOGI("Available samples:")
+	LOGI("")
+	LOGI("{:20s} | {:20s} | {:20s}", "Id", "Name", "Description")
+	LOGI("{}---{}---{}", col_delim.c_str(), col_delim.c_str(), col_delim.c_str())
 
 	for (auto &sample_info : sample_list)
 	{
-		LOGI("{:20s} | {:20s} | {}", sample_info.id.c_str(), sample_info.name.c_str(), sample_info.description.c_str());
+		LOGI("{:20s} | {:20s} | {}", sample_info.id.c_str(), sample_info.name.c_str(), sample_info.description.c_str())
 	}
 
-	LOGI("");
-	LOGI("Project home: https://github.com/KhronosGroup/Vulkan-Samples");
-	LOGI("");
+	LOGI("")
+	LOGI("Project home: https://github.com/KhronosGroup/Vulkan-Samples")
+	LOGI("")
 }
 
 inline std::vector<SampleInfo>::const_iterator get_sample_info(const std::string &sample_id)
@@ -142,7 +142,7 @@ bool VulkanSamples::prepare(Platform &platform)
 		else
 		{
 			std::copy_if(sample_list.begin(), sample_list.end(), std::back_inserter(batch_mode_sample_list), [category_arg, tags](const SampleInfo &sample) {
-				bool category_match = category_arg == "all" ? true : sample.category == category_arg;
+				bool category_match = category_arg == "all" || sample.category == category_arg;
 				bool tag_match      = tags.empty();
 				for (auto &tag : tags)
 				{
@@ -159,7 +159,7 @@ bool VulkanSamples::prepare(Platform &platform)
 
 		if (batch_mode_sample_list.empty())
 		{
-			LOGE("Couldn't find any samples by the given batch mode category and tags");
+			LOGE("Couldn't find any samples by the given batch mode category and tags")
 			return false;
 		}
 
@@ -205,19 +205,19 @@ bool VulkanSamples::prepare(Platform &platform)
 	{
 		// The user didn't supply any arguments so print the usage
 		print_info();
-		LOGI("");
+		LOGI("")
 		for (auto &line : parser->help())
 		{
-			LOGI(line);
+			LOGI(line)
 		}
-		LOGI("");
-		LOGE("No arguments given, exiting");
+		LOGI("")
+		LOGE("No arguments given, exiting")
 		return false;
 	}
 
 	if (!result)
 	{
-		LOGE("Failed to prepare application");
+		LOGE("Failed to prepare application")
 	}
 
 	return result;
@@ -238,7 +238,7 @@ bool VulkanSamples::prepare_active_app(CreateAppFunc create_app_func, const std:
 
 	if (!active_app)
 	{
-		LOGE("Failed to create a valid vulkan app.");
+		LOGE("Failed to create a valid vulkan app.")
 		return false;
 	}
 
@@ -266,7 +266,7 @@ bool VulkanSamples::prepare_active_app(CreateAppFunc create_app_func, const std:
 
 	if (!result)
 	{
-		LOGE("Failed to prepare vulkan app.");
+		LOGE("Failed to prepare vulkan app.")
 		return result;
 	}
 
@@ -318,7 +318,7 @@ void VulkanSamples::update(float delta_time)
 
 			if (!result)
 			{
-				LOGE("Failed to prepare vulkan sample.");
+				LOGE("Failed to prepare vulkan sample.")
 				platform->close();
 			}
 		}

@@ -33,7 +33,7 @@ class Queue
 
 	Queue(const Queue &) = default;
 
-	Queue(Queue &&other);
+	Queue(Queue &&other) noexcept ;
 
 	Queue &operator=(const Queue &) = delete;
 

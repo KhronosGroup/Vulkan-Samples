@@ -61,7 +61,7 @@ class ComputeNBody : public ApiVulkanSample
 		} ubo;
 	} graphics;
 
-	// Resources for the compute part of the example
+	// Resources for the "compute" part of the example
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> storage_buffer;               // (Shader) storage buffer object containing the particles
@@ -72,7 +72,7 @@ class ComputeNBody : public ApiVulkanSample
 		VkSemaphore                        semaphore;                    // Execution dependency between compute & graphic submission
 		VkDescriptorSetLayout              descriptor_set_layout;        // Compute shader binding layout
 		VkDescriptorSet                    descriptor_set;               // Compute shader bindings
-		VkPipelineLayout                   pipeline_layout;              // Layout of the compute pipeline
+		VkPipelineLayout                   pipeline_layout;              // Layout of the "compute pipeline"
 		VkPipeline                         pipeline_calculate;           // Compute pipeline for N-Body velocity calculation (1st pass)
 		VkPipeline                         pipeline_integrate;           // Compute pipeline for euler integration (2nd pass)
 		VkPipeline                         blur;
@@ -95,8 +95,8 @@ class ComputeNBody : public ApiVulkanSample
 	};
 
 	ComputeNBody();
-	~ComputeNBody();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~ComputeNBody() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         load_assets();
 	void         build_command_buffers() override;
 	void         build_compute_command_buffer();
@@ -112,8 +112,8 @@ class ComputeNBody : public ApiVulkanSample
 	void         update_graphics_uniform_buffers();
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void render(float delta_time) override;
+	void resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_compute_nbody();

@@ -45,9 +45,9 @@ class AABB : public Component
 
 	AABB(const glm::vec3 &min, const glm::vec3 &max);
 
-	virtual ~AABB() = default;
+	~AABB() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	/**
 	 * @brief Update the bounding box based on the given vertex position

@@ -151,7 +151,7 @@ bool generate(RenderContext &context)
 		std::string label = "Render Frame";
 		if (i == const_context.get_active_frame_index())
 		{
-			label = "Last " + label;
+			label = std::string("Last ").append(label);
 		}
 		i++;
 
@@ -233,7 +233,7 @@ size_t fence_pool_node(Graph &graph, const FencePool &fence_pool)
 	return graph.create_node("Fence Pool", "Framework");
 }
 
-size_t render_frame_node(Graph &graph, const std::unique_ptr<RenderFrame> &frame, std::string label)
+size_t render_frame_node(Graph &graph, const std::unique_ptr<RenderFrame> &frame, const std::string& label)
 {
 	return graph.create_node(label.c_str(), "Rendering");
 }
@@ -273,12 +273,11 @@ size_t image_view_node(Graph &graph, const core::ImageView &image_view)
 
 size_t image_node(Graph &graph, const core::Image &image)
 {
-	std::string result{""};
+	std::string result;
 	bool        append = false;
 	auto        flags  = image.get_usage();
 	if (flags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 	{
-		result += append ? " / " : "";
 		result += "COLOR";
 		append = true;
 	}
@@ -286,7 +285,6 @@ size_t image_node(Graph &graph, const core::Image &image)
 	{
 		result += append ? " / " : "";
 		result += "DEPTH STENCIL";
-		append = true;
 	}
 	auto subresource = image.get_subresource();
 

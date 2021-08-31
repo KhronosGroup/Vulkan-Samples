@@ -39,7 +39,7 @@ class QueryPool
 
 	QueryPool(const QueryPool &) = delete;
 
-	QueryPool(QueryPool &&pool);
+	QueryPool(QueryPool &&pool) noexcept ;
 
 	~QueryPool();
 

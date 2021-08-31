@@ -22,30 +22,30 @@
 
 #include "common/logging.h"
 
-void APIENTRY debug_message_callback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *user_param)
+void APIENTRY debug_message_callback(GLenum , GLenum , GLuint , GLenum severity, GLsizei , const GLchar *message, const void *)
 {
 	switch (severity)
 	{
 		case GL_DEBUG_SEVERITY_HIGH:
-			LOGE("OpenGL: {}", message);
+			LOGE("OpenGL: {}", message)
 			break;
 		case GL_DEBUG_SEVERITY_MEDIUM:
-			LOGW("OpenGL: {}", message);
+			LOGW("OpenGL: {}", message)
 			break;
 		case GL_DEBUG_SEVERITY_LOW:
-			LOGI("OpenGL: {}", message);
+			LOGI("OpenGL: {}", message)
 			break;
 		default:
 		case GL_DEBUG_SEVERITY_NOTIFICATION:
-			LOGD("OpenGL: {}", message);
+			LOGD("OpenGL: {}", message)
 	}
 }
 
-OffscreenContext::OffscreenContext()
+OffscreenContext::OffscreenContext() : data()
 {
 	init_context();
 
-	glDebugMessageCallback(debug_message_callback, NULL);
+	glDebugMessageCallback(debug_message_callback, nullptr);
 	glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 }
 
@@ -58,7 +58,7 @@ GLuint OffscreenContext::load_shader(const char *shader_source, GLenum shader_ty
 {
 	std::string source     = get_shader_header() + "\n" + std::string(shader_source);
 	const char *source_ptr = source.c_str();
-	const GLint size       = static_cast<GLint>(source.size());
+	const auto size       = static_cast<GLint>(source.size());
 
 	GLuint shader = glCreateShader(shader_type);
 	glShaderSource(shader, 1, &source_ptr, &size);
@@ -77,10 +77,10 @@ GLuint OffscreenContext::load_shader(const char *shader_source, GLenum shader_ty
 		std::string str_error;
 		str_error.insert(str_error.end(), error_log.begin(), error_log.end());
 
-		// Provide the infolog in whatever manor you deem best.
+		// Provide the info log in whatever manor you deem best.
 		// Exit with failure.
 		glDeleteShader(shader);        // Don't leak the shader.
-		LOGE("OpenGL: Shader compilation failed", str_error.c_str());
+		LOGE("OpenGL: Shader compilation failed", str_error.c_str())
 	}
 	return shader;
 }
@@ -156,7 +156,7 @@ void OffscreenContext::init_context()
 	gladLoadGL();
 }
 
-void OffscreenContext::destroy_context()
+void OffscreenContext::destroy_context() const
 {
 	glfwDestroyWindow(data.window);
 }

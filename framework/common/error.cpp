@@ -17,13 +17,11 @@
 
 #include "error.h"
 
-#include "helpers.h"
-
 namespace vkb
 {
 VulkanException::VulkanException(const VkResult result, const std::string &msg) :
-    result{result},
-    std::runtime_error{msg}
+    std::runtime_error{msg},
+    result{result}
 {
 	error_message = std::string(std::runtime_error::what()) + std::string{" : "} + to_string(result);
 }

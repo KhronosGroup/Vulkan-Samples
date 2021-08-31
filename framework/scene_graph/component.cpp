@@ -18,15 +18,14 @@
 #include "component.h"
 
 #include <algorithm>
-
-#include "node.h"
+#include <utility>
 
 namespace vkb
 {
 namespace sg
 {
-Component::Component(const std::string &name) :
-    name{name}
+Component::Component(std::string name) :
+    name{std::move(name)}
 {}
 
 const std::string &Component::get_name() const

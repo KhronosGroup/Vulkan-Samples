@@ -68,7 +68,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 	image->get_views().emplace(this);
 }
 
-ImageView::ImageView(ImageView &&other) :
+ImageView::ImageView(ImageView &&other)  noexcept :
     device{other.device},
     image{other.image},
     handle{other.handle},

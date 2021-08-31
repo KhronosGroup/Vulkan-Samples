@@ -35,8 +35,8 @@
 class DynamicUniformBuffers : public ApiVulkanSample
 {
   private:
-	void *aligned_alloc(size_t size, size_t alignment);
-	void  aligned_free(void *data);
+	static void *aligned_alloc(size_t size, size_t alignment);
+	static void  aligned_free(void *data);
 
   public:
 	struct Vertex

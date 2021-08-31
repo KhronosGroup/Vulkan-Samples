@@ -51,9 +51,9 @@ class Platform
 
 	/**
 	 * @brief Sets up the window and logger
-	 * @param app The application to prepare after the platform is prepared
+	 * @param _app The application to prepare after the platform is prepared
 	 */
-	virtual bool initialize(std::unique_ptr<Application> &&app);
+	virtual bool initialize(std::unique_ptr<Application> &&_app);
 
 	/**
 	 * @brief Prepares the active app supplied in the initialize function
@@ -62,7 +62,7 @@ class Platform
 
 	/**
 	 * @brief Handles the main loop of the platform
-	 * This should be overriden if a platform requires a specific main loop setup.
+	 * This should be overridden if a platform requires a specific main loop setup.
 	 */
 	virtual void main_loop();
 
@@ -110,7 +110,7 @@ class Platform
 
 	Application &get_app() const;
 
-	std::vector<std::string> &get_arguments();
+	static std::vector<std::string> &get_arguments();
 
 	static void set_arguments(const std::vector<std::string> &args);
 

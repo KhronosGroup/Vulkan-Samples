@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
@@ -110,12 +109,12 @@ void DescriptorManagement::draw_gui()
 	}
 
 	gui->show_options_window(
-	    /* body = */ [this, lines]() {
+	    /* body = */ [this]() {
 		    // For every option set
 		    for (size_t i = 0; i < radio_buttons.size(); ++i)
 		    {
 			    // Avoid conflicts between buttons with identical labels
-			    ImGui::PushID(vkb::to_u32(i));
+			    ImGui::PushID(static_cast<int>(vkb::to_u32(i)));
 
 			    auto &radio_button = radio_buttons[i];
 
@@ -130,7 +129,7 @@ void DescriptorManagement::draw_gui()
 			    // For every option
 			    for (size_t j = 0; j < radio_button->options.size(); ++j)
 			    {
-				    ImGui::RadioButton(radio_button->options[j], &radio_button->value, vkb::to_u32(j));
+				    ImGui::RadioButton(radio_button->options[j], &radio_button->value, static_cast<int>(vkb::to_u32(j)));
 
 				    if (j < radio_button->options.size() - 1)
 				    {

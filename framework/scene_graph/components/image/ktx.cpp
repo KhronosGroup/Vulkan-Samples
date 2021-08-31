@@ -33,12 +33,12 @@ namespace sg
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
 static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_level,
-                                                             int          face,
+                                                             int          ,
                                                              int          width,
                                                              int          height,
                                                              int          depth,
                                                              ktx_uint64_t face_lod_size,
-                                                             void *       pixels,
+                                                             void *       ,
                                                              void *       user_data)
 {
 	// Get mipmaps
@@ -52,7 +52,7 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
 	mipmap.extent.depth  = depth;
 
 	// Set offset for the next mip level
-	auto next_mip_level = static_cast<size_t>(mip_level + 1);
+	auto next_mip_level = static_cast<size_t>(mip_level) + 1;
 	if (next_mip_level < mipmaps.size())
 	{
 		mipmaps.at(next_mip_level).offset = mipmap.offset + static_cast<uint32_t>(face_lod_size);
@@ -135,14 +135,13 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 			for (uint32_t level = 0; level < texture->numLevels; level++)
 			{
 				ktx_size_t     offset;
-				KTX_error_code result;
 				if (cubemap)
 				{
-					result = ktxTexture_GetImageOffset(texture, level, 0, layer, &offset);
+					ktxTexture_GetImageOffset(texture, level, 0, layer, &offset);
 				}
 				else
 				{
-					result = ktxTexture_GetImageOffset(texture, level, layer, 0, &offset);
+					ktxTexture_GetImageOffset(texture, level, layer, 0, &offset);
 				}
 				layer_offsets.push_back(static_cast<VkDeviceSize>(offset));
 			}
@@ -154,9 +153,9 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	{
 		std::vector<std::vector<VkDeviceSize>> offsets{};
 		offsets.resize(1);
-		for (size_t level = 0; level < mipmap_levels.size(); level++)
+		for (auto & mipmap_level : mipmap_levels)
 		{
-			offsets[0].push_back(static_cast<VkDeviceSize>(mipmap_levels[level].offset));
+			offsets[0].push_back(static_cast<VkDeviceSize>(mipmap_level.offset));
 		}
 		set_offsets(offsets);
 	}

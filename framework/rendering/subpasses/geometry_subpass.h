@@ -76,14 +76,14 @@ class GeometrySubpass : public Subpass
 	 */
 	GeometrySubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Scene &scene, sg::Camera &camera);
 
-	virtual ~GeometrySubpass() = default;
+	~GeometrySubpass() override = default;
 
-	virtual void prepare() override;
+	void prepare() override;
 
 	/**
 	 * @brief Record draw commands
 	 */
-	virtual void draw(CommandBuffer &command_buffer) override;
+	void draw(CommandBuffer &command_buffer) override;
 
 	/**
 	 * @brief Thread index to use for allocating resources
@@ -91,7 +91,7 @@ class GeometrySubpass : public Subpass
 	void set_thread_index(uint32_t index);
 
   protected:
-	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
+	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t _thread_index = 0);
 
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 

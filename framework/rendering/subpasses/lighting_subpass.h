@@ -62,7 +62,7 @@ class LightingSubpass : public Subpass
   public:
 	LightingSubpass(RenderContext &render_context, ShaderSource &&vertex_shader, ShaderSource &&fragment_shader, sg::Camera &camera, sg::Scene &scene);
 
-	virtual void prepare() override;
+	void prepare() override;
 
 	void draw(CommandBuffer &command_buffer) override;
 

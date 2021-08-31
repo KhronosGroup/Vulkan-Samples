@@ -84,47 +84,47 @@ class ApiVulkanSample : public vkb::VulkanSample
   public:
 	ApiVulkanSample() = default;
 
-	virtual ~ApiVulkanSample();
+	~ApiVulkanSample() override;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
-	virtual void input_event(const vkb::InputEvent &input_event) override;
+	void input_event(const vkb::InputEvent &input_event) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	void resize(uint32_t width, uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
 
-	vkb::Device &get_device();
+	vkb::Device &get_device() override;
 
   protected:
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::Platform &platform) override;
-	virtual void prepare_render_context() override;
+	void create_render_context(vkb::Platform &platform) override;
+	void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
-	VkQueue queue;
+	VkQueue queue{};
 
 	// Depth buffer format (selected during Vulkan initialization)
-	VkFormat depth_format;
+	VkFormat depth_format{};
 
 	// Command buffer pool
-	VkCommandPool cmd_pool;
+	VkCommandPool cmd_pool{};
 
 	/** @brief Pipeline stages used to wait at for graphics queue submissions */
 	VkPipelineStageFlags submit_pipeline_stages = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
 	// Contains command buffers and semaphores to be presented to the queue
-	VkSubmitInfo submit_info;
+	VkSubmitInfo submit_info{};
 
 	// Command buffers used for rendering
 	std::vector<VkCommandBuffer> draw_cmd_buffers;
 
 	// Global render pass for frame buffer writes
-	VkRenderPass render_pass;
+	VkRenderPass render_pass{};
 
 	// List of available frame buffers (same as number of swap chain images)
 	std::vector<VkFramebuffer> framebuffers;
@@ -139,7 +139,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<VkShaderModule> shader_modules;
 
 	// Pipeline cache object
-	VkPipelineCache pipeline_cache;
+	VkPipelineCache pipeline_cache{};
 
 	// Synchronization semaphores
 	struct
@@ -149,7 +149,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 		// Command buffer submission and execution
 		VkSemaphore render_complete;
-	} semaphores;
+	} semaphores{};
 
 	// Synchronization fences
 	std::vector<VkFence> wait_fences;
@@ -167,14 +167,14 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param size The size of the descriptor (default: VK_WHOLE_SIZE)
 	 * @param offset The offset of the descriptor (default: 0)
 	 */
-	VkDescriptorBufferInfo create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
+	static VkDescriptorBufferInfo create_descriptor(vkb::core::Buffer &buffer, VkDeviceSize size = VK_WHOLE_SIZE, VkDeviceSize offset = 0);
 
 	/**
 	 * @brief Creates an image descriptor
 	 * @param texture The texture from which to create the descriptor from
 	 * @param descriptor_type The type of image descriptor (default: VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER)
 	 */
-	VkDescriptorImageInfo create_descriptor(Texture &texture, VkDescriptorType descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
+	static VkDescriptorImageInfo create_descriptor(Texture &texture, VkDescriptorType descriptor_type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER);
 
 	/**
 	 * @brief Loads in a ktx 2D texture
@@ -206,7 +206,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
 	 */
-	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer);
+	static void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -252,13 +252,13 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	/**
 	 * @brief Create framebuffers for all requested swap chain images
-	 *        Can be overriden in derived class to setup a custom framebuffer (e.g. for MSAA)
+	 *        Can be overridden in derived class to setup a custom framebuffer (e.g. for MSAA)
 	 */
 	virtual void setup_framebuffer();
 
 	/**
 	 * @brief Setup a default render pass
-	 *        Can be overriden in derived class to setup a custom render pass (e.g. for MSAA)
+	 *        Can be overridden in derived class to setup a custom render pass (e.g. for MSAA)
 	 */
 	virtual void setup_render_pass();
 
@@ -299,7 +299,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief If the gui is enabled, then record the drawing commands to a command buffer
 	 * @param command_buffer A valid command buffer that is ready to be recorded to
 	 */
-	void draw_ui(const VkCommandBuffer command_buffer);
+	void draw_ui(VkCommandBuffer command_buffer);
 
 	/**
 	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and 
@@ -322,8 +322,8 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */
 	bool view_updated = false;
 	// Destination dimensions for resizing the window
-	uint32_t dest_width;
-	uint32_t dest_height;
+	uint32_t dest_width{};
+	uint32_t dest_height{};
 	bool     resizing = false;
 
 	void handle_mouse_move(int32_t x, int32_t y);
@@ -359,9 +359,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	bool paused = false;
 
-	// Use to adjust mouse rotation speed
+	// Used to adjust mouse rotation speed
 	float rotation_speed = 1.0f;
-	// Use to adjust mouse zoom speed
+	// Used to adjust mouse zoom speed
 	float zoom_speed = 1.0f;
 
 	vkb::Camera camera;
@@ -378,7 +378,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 		VkImage        image;
 		VkDeviceMemory mem;
 		VkImageView    view;
-	} depth_stencil;
+	} depth_stencil{};
 
 	struct
 	{
@@ -399,7 +399,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	{
 		int32_t x;
 		int32_t y;
-	} touch_pos;
+	} touch_pos{};
 	bool    touch_down    = false;
 	double  touch_timer   = 0.0;
 	int64_t last_tap_time = 0;

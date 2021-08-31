@@ -20,6 +20,8 @@
 #include "core/query_pool.h"
 #include "stats_provider.h"
 
+#include <utility>
+
 namespace vkb
 {
 class RenderContext;
@@ -29,12 +31,12 @@ class VulkanStatsProvider : public StatsProvider
   private:
 	struct StatData
 	{
-		StatScaling                    scaling;
-		uint32_t                       counter_index;
-		uint32_t                       divisor_counter_index;
-		VkPerformanceCounterStorageKHR storage;
-		VkPerformanceCounterStorageKHR divisor_storage;
-		StatGraphData                  graph_data;
+		StatScaling                    scaling{};
+		uint32_t                       counter_index{};
+		uint32_t                       divisor_counter_index{};
+		VkPerformanceCounterStorageKHR storage{};
+		VkPerformanceCounterStorageKHR divisor_storage{};
+		StatGraphData                  graph_data{};
 
 		StatData() = default;
 
@@ -46,17 +48,18 @@ class VulkanStatsProvider : public StatsProvider
 		    counter_index(counter_index),
 		    divisor_counter_index(divisor_index),
 		    storage(storage),
-		    divisor_storage(divisor_storage)
+		    divisor_storage(divisor_storage),
+		    graph_data()
 		{}
 	};
 
 	struct VendorStat
 	{
-		VendorStat(const std::string &name, const std::string &divisor_name = "") :
-		    name(name),
+		VendorStat(std::string name, const std::string &divisor_name = "") :
+		    name(std::move(name)),
 		    divisor_name(divisor_name)
 		{
-			if (divisor_name != "")
+			if (!divisor_name.empty())
 				scaling = StatScaling::ByCounter;
 		}
 
@@ -89,7 +92,7 @@ class VulkanStatsProvider : public StatsProvider
 	/**
 	 * @brief Destructs a VulkanStatsProvider
 	 */
-	~VulkanStatsProvider();
+	~VulkanStatsProvider() override;
 
 	/**
 	 * @brief Checks if this provider can supply the given enabled stat

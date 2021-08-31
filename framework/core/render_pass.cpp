@@ -464,7 +464,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 	}
 }
 
-RenderPass::RenderPass(RenderPass &&other) :
+RenderPass::RenderPass(RenderPass &&other)  noexcept :
     device{other.device},
     handle{other.handle},
     subpass_count{other.subpass_count},
@@ -482,12 +482,12 @@ RenderPass::~RenderPass()
 	}
 }
 
-const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
+uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
 {
 	return color_output_count[subpass_index];
 }
 
-const VkExtent2D RenderPass::get_render_area_granularity() const
+VkExtent2D RenderPass::get_render_area_granularity() const
 {
 	VkExtent2D render_area_granularity = {};
 	vkGetRenderAreaGranularity(device.get_handle(), get_handle(), &render_area_granularity);

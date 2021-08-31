@@ -34,7 +34,7 @@ class PostProcessingPassBase
 	friend class PostProcessingPipeline;
 
   public:
-	PostProcessingPassBase(PostProcessingPipeline *parent);
+	explicit PostProcessingPassBase(PostProcessingPipeline *parent);
 
 	PostProcessingPassBase(const PostProcessingPassBase &to_copy) = delete;
 	PostProcessingPassBase &operator=(const PostProcessingPassBase &to_copy) = delete;
@@ -127,10 +127,10 @@ class PostProcessingPass : public PostProcessingPassBase
 	PostProcessingPass(const PostProcessingPass &to_copy) = delete;
 	PostProcessingPass &operator=(const PostProcessingPass &to_copy) = delete;
 
-	PostProcessingPass(PostProcessingPass &&to_move) = default;
-	PostProcessingPass &operator=(PostProcessingPass &&to_move) = default;
+	PostProcessingPass(PostProcessingPass &&to_move)  noexcept = default;
+	PostProcessingPass &operator=(PostProcessingPass &&to_move)  noexcept = default;
 
-	virtual ~PostProcessingPass() = default;
+	~PostProcessingPass() override = default;
 
 	/**
 	 * @brief Sets a functor that, if non-null, will be invoked before draw()ing this pass.

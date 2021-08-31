@@ -36,11 +36,11 @@ namespace sg
 class Script : public Component
 {
   public:
-	Script(const std::string &name = "");
+	explicit Script(const std::string &name = "");
 
-	virtual ~Script() = default;
+	~Script() override = default;
 
-	virtual std::type_index get_type() override;
+	std::type_index get_type() override;
 
 	/**
 	 * @brief Main loop script events
@@ -55,9 +55,9 @@ class Script : public Component
 class NodeScript : public Script
 {
   public:
-	NodeScript(Node &node, const std::string &name = "");
+	explicit NodeScript(Node &node, const std::string &name = "");
 
-	virtual ~NodeScript() = default;
+	~NodeScript() override = default;
 
 	Node &get_node();
 

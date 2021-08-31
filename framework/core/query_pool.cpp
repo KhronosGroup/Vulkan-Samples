@@ -27,7 +27,7 @@ QueryPool::QueryPool(Device &d, const VkQueryPoolCreateInfo &info) :
 	VK_CHECK(vkCreateQueryPool(device.get_handle(), &info, nullptr, &handle));
 }
 
-QueryPool::QueryPool(QueryPool &&other) :
+QueryPool::QueryPool(QueryPool &&other)  noexcept :
     device{other.device},
     handle{other.handle}
 {

@@ -23,13 +23,12 @@ namespace vkb
 {
 namespace core
 {
-ScratchBuffer::ScratchBuffer(Device &device, VkDeviceSize size) :
-    device{device},
-    size{size}
+ScratchBuffer::ScratchBuffer(Device &device, VkDeviceSize _size) :
+    device{device}
 {
 	VkBufferCreateInfo buffer_info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
 	buffer_info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-	buffer_info.size  = size;
+	buffer_info.size  = _size;
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -42,10 +41,8 @@ ScratchBuffer::ScratchBuffer(Device &device, VkDeviceSize size) :
 
 	if (result != VK_SUCCESS)
 	{
-		throw VulkanException{result, "Could not create Scratchbuffer"};
+		throw VulkanException{result, "Could not create Scratch buffer"};
 	}
-
-	memory = allocation_info.deviceMemory;
 
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType  = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;

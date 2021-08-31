@@ -48,8 +48,6 @@ ShaderBindingTable::ShaderBindingTable(Device &       device,
 		throw VulkanException{result, "Could not create ShaderBindingTable"};
 	}
 
-	memory = allocation_info.deviceMemory;
-
 	VkBufferDeviceAddressInfoKHR buffer_device_address_info{};
 	buffer_device_address_info.sType            = VK_STRUCTURE_TYPE_BUFFER_DEVICE_ADDRESS_INFO;
 	buffer_device_address_info.buffer           = handle;

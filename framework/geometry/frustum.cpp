@@ -51,18 +51,18 @@ void Frustum::update(const glm::mat4 &matrix)
 	planes[FRONT].z = matrix[2].w - matrix[2].z;
 	planes[FRONT].w = matrix[3].w - matrix[3].z;
 
-	for (size_t i = 0; i < planes.size(); i++)
+	for (auto & plane : planes)
 	{
-		float length = sqrtf(planes[i].x * planes[i].x + planes[i].y * planes[i].y + planes[i].z * planes[i].z);
-		planes[i] /= length;
+		float length = sqrtf(plane.x * plane.x + plane.y * plane.y + plane.z * plane.z);
+		plane /= length;
 	}
 }
 
 bool Frustum::check_sphere(glm::vec3 pos, float radius)
 {
-	for (size_t i = 0; i < planes.size(); i++)
+	for (auto & plane : planes)
 	{
-		if ((planes[i].x * pos.x) + (planes[i].y * pos.y) + (planes[i].z * pos.z) + planes[i].w <= -radius)
+		if ((plane.x * pos.x) + (plane.y * pos.y) + (plane.z * pos.z) + plane.w <= -radius)
 		{
 			return false;
 		}

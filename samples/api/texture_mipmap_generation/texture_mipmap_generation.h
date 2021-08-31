@@ -69,10 +69,10 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout;
 
 	TextureMipMapGeneration();
-	~TextureMipMapGeneration();
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void         load_texture_generate_mipmaps(std::string file_name);
-	void         destroy_texture(Texture texture);
+	~TextureMipMapGeneration() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         load_texture_generate_mipmaps(const std::string& file_name);
+	void         destroy_texture(Texture _texture);
 	void         load_assets();
 	void         build_command_buffers() override;
 	void         draw();
@@ -83,9 +83,9 @@ class TextureMipMapGeneration : public ApiVulkanSample
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers(float delta_time = 0.0f);
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void render(float delta_time) override;
+	void view_changed() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_texture_mipmap_generation();

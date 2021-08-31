@@ -47,9 +47,9 @@ class OpenGLInterop : public ApiVulkanSample
 {
   public:
 	OpenGLInterop();
-	~OpenGLInterop();
+	~OpenGLInterop() override;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
 	void render(float delta_time) override;
 	void build_command_buffers() override;
