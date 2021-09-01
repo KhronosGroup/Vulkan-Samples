@@ -154,7 +154,15 @@ std::vector<std::string> CLI11CommandParser::get_command_value(Command *command)
 	return it->second->results();
 }
 
-// TODO: Explain this
+/*
+
+To create a CLI composed of multiple interoperable plugins using CLI11, we must create a CLI11 app from each plugin.
+This acts as a group for the commands used in said plugin. Once we have groups for each plugin we can then nest then
+nest them inside each other using the CLI11::App::add_subcommand() method.
+
+This is required as CLI11 does not allow the redefinition of the same flag. Within the same app context.
+
+*/
 bool CLI11CommandParser::parse(const std::vector<Plugin *> &plugins)
 {
 	// Generate all command groups
