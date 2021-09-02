@@ -1205,9 +1205,9 @@ void RaytracingExtended::build_command_buffers()
 		barriers.emplace_back(getBufferBarrier(*ubo));
 
 		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0,
-							 0, VK_NULL_HANDLE,                                              // memory barrier
-							 static_cast<uint32_t>(barriers.size()), barriers.data(),        // buffer memory barrier
-							 0, VK_NULL_HANDLE);                                             // image memory barrier
+		                     0, VK_NULL_HANDLE,                                              // memory barrier
+		                     static_cast<uint32_t>(barriers.size()), barriers.data(),        // buffer memory barrier
+		                     0, VK_NULL_HANDLE);                                             // image memory barrier
 
 		/*
 		    Dispatch the ray tracing commands
