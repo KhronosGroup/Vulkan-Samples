@@ -101,9 +101,6 @@ class RayQueries : public ApiVulkanSample
 	void prepare_pipelines();
 	void update_uniform_buffers();
 	void draw();
-
-	uint32_t max_thread_count{1};
-	bool     enable_shadows{false};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_ray_queries();
