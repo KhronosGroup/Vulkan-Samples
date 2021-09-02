@@ -32,13 +32,13 @@ class RaytracingExtended : public ApiVulkanSample
 
 	enum RenderMode : uint32_t
 	{
-		RENDER_DEFAULT,
-		RENDER_BARYCENTRIC,
-		RENDER_INSTANCE_ID,
-		RENDER_DISTANCE,
-		RENDER_GLOBAL_XYZ,
-		RENDER_SHADOW_MAP,
-		RENDER_AO
+		RENDER_DEFAULT     = 0,
+		RENDER_BARYCENTRIC = 1,
+		RENDER_INSTANCE_ID = 2,
+		RENDER_DISTANCE    = 3,
+		RENDER_GLOBAL_XYZ  = 4,
+		RENDER_SHADOW_MAP  = 5,
+		RENDER_AO          = 6
 	};
 
 	enum ObjectType : uint32_t
@@ -262,12 +262,10 @@ class RaytracingExtended : public ApiVulkanSample
 	void create_shader_binding_tables();
 	void create_descriptor_sets();
 	void create_ray_tracing_pipeline();
-	void create_display_pipeline();
 	void create_uniform_buffer();
 	void build_command_buffers() override;
 	void update_uniform_buffers();
 	void draw();
-	void draw_gui() override;
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 };

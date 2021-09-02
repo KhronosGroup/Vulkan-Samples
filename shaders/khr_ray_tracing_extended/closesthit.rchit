@@ -18,6 +18,13 @@
 #version 460
 #extension GL_EXT_ray_tracing : enable
 #extension GL_EXT_nonuniform_qualifier : enable
+#define RENDER_DEFAULT 0
+#define RENDER_BARYCENTRIC 1
+#define RENDER_INSTANCE_ID 2
+#define RENDER_DISTANCE 3
+#define RENDER_GLOBAL_XYZ 4
+#define RENDER_SHADOW_MAP 5
+#define RENDER_AO 6
 
 struct Payload
 {
@@ -56,7 +63,7 @@ layout(binding=9, set = 0) readonly buffer DynamicIndexBuffer
   uint[] indices;
 } dynamic_index_buffer;
 
-layout (constant_id = 0) const uint render_mode = 0;
+layout (constant_id = 0) const uint render_mode = RENDER_DEFAULT;
 
 vec3 heatmap(float value, float minValue, float maxValue)
 {
@@ -129,7 +136,7 @@ void handleDraw()
 
     hitValue.intersection = vec4(worldPt.xyz, objectType);
     hitValue.normal = vec4(worldNormal.xyz, gl_HitTEXT);
-    if (render_mode == 4) { // global xyz
+    if (render_mode == RENDER_GLOBAL_XYZ) { // global xyz
       hitValue.color = vec4(heatmap(worldPt.x, -10, 10), 1);
       return;
     }
@@ -158,11 +165,11 @@ void handleDraw()
 void main()
 {
   const vec3 barycentricCoords = vec3(1.0f - attribs.x - attribs.y, attribs.x, attribs.y);
-  if (render_mode == 1 ){ // barycentric
+  if (render_mode == RENDER_BARYCENTRIC ){
     hitValue.color = vec4(barycentricCoords, 1);
-  } else if (render_mode == 2){ // index
+  } else if (render_mode == RENDER_INSTANCE_ID){
     hitValue.color = vec4(heatmap(gl_InstanceCustomIndexEXT, 0, 25), 1);
-  } else if (render_mode == 3){ // distance
+  } else if (render_mode == RENDER_DISTANCE){
     hitValue.color = vec4(heatmap(log(1 + gl_HitTEXT), 0, log(1 + 25)), 1);
   } else {
     handleDraw();

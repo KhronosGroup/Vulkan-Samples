@@ -17,6 +17,13 @@
 
 #version 460
 #extension GL_EXT_ray_tracing : enable
+#define RENDER_DEFAULT 0
+#define RENDER_BARYCENTRIC 1
+#define RENDER_INSTANCE_ID 2
+#define RENDER_DISTANCE 3
+#define RENDER_GLOBAL_XYZ 4
+#define RENDER_SHADOW_MAP 5
+#define RENDER_AO 6
 
 layout(binding = 0, set = 0) uniform accelerationStructureEXT topLevelAS;
 layout(binding = 1, set = 0, rgba8) uniform image2D image;
@@ -33,12 +40,6 @@ struct Payload
   vec4 normal; // {nx, ny, nz, distance}
 };
 
-vec3 heatmap(float value, float minValue, float maxValue)
-{
-  float scaled = (min(max(value, minValue), maxValue) - minValue) / (maxValue - minValue);
-  float r = scaled * (3.14159265359 / 2.);
-  return vec3(sin(r), sin(2 * r), cos(r));
-}
 
 layout(location = 0) rayPayloadEXT Payload hitValue;
 layout (constant_id = 0) const uint render_mode = 0;
@@ -58,8 +59,7 @@ void main()
 	float tmax = 10000.0;
 
 	uint max_rays = maxRays;
-	max_rays = 100;
-	if (render_mode != 0)
+	if (render_mode != RENDER_DEFAULT)
 	{
 		max_rays = 1;
 	}
@@ -75,7 +75,7 @@ void main()
 		object_type = uint(hitValue.intersection.w);
 		const vec3 object_intersection_pt = hitValue.intersection.xyz;
 		const vec3 object_normal = hitValue.normal.xyz;
-		if (render_mode != 0)
+		if (render_mode != RENDER_DEFAULT)
 		{
 			color = hitValue.color;
 			break;
@@ -99,7 +99,7 @@ void main()
 				scale = min(scale * shadow_mult, 1);
 				newColor.xyz *= scale;
 				current_mode = 101;
-				if (render_mode == 5)
+				if (render_mode == RENDER_SHADOW_MAP)
 				{
 					color = vec4(scale, scale, scale, 1);
 					break;
@@ -135,7 +135,7 @@ void main()
 				accumulated_ao /= (max_dist * accumulated_factor);
 				accumulated_ao *= accumulated_ao;
 				accumulated_ao = max(min((accumulated_ao) * ao_mult, 1), 0);
-				if (render_mode == 6)
+				if (render_mode == RENDER_AO)
 				{
 					color = vec4(accumulated_ao, accumulated_ao, accumulated_ao, 1);
 					break;

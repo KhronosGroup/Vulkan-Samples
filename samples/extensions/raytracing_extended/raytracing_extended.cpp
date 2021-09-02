@@ -401,7 +401,7 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 		acceleration_structure_build_geometry_info.sType         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_GEOMETRY_INFO_KHR;
 		acceleration_structure_build_geometry_info.pNext         = nullptr;
 		acceleration_structure_build_geometry_info.type          = VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR;
-		acceleration_structure_build_geometry_info.flags         = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR;
+		acceleration_structure_build_geometry_info.flags         = model_buffer.is_static ? VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR : VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_BUILD_BIT_KHR | VK_BUILD_ACCELERATION_STRUCTURE_ALLOW_UPDATE_BIT_KHR;
 		acceleration_structure_build_geometry_info.geometryCount = 1;
 		acceleration_structure_build_geometry_info.pGeometries   = &acceleration_structure_geometry;
 
@@ -690,9 +690,9 @@ namespace
 template <typename T>
 struct CopyBuffer
 {
-	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *bufferName)
+	std::vector<T> operator()(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
 	{
-		auto iter = buffers.find(bufferName);
+		auto iter = buffers.find(buffer_name);
 		if (iter == buffers.cend())
 		{
 			return {};
@@ -702,13 +702,13 @@ struct CopyBuffer
 
 		const size_t sz = buffer.get_size();
 		out.resize(sz / sizeof(T));
-		const bool alreadyMapped = buffer.get_data() != nullptr;
-		if (!alreadyMapped)
+		const bool already_mapped = buffer.get_data() != nullptr;
+		if (!already_mapped)
 		{
 			buffer.map();
 		}
 		memcpy(&out[0], buffer.get_data(), sz);
-		if (!alreadyMapped)
+		if (!already_mapped)
 		{
 			buffer.unmap();
 		}
@@ -953,7 +953,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	struct SpecialConsts_s
 	{
 		uint32_t renderMode = RenderMode::RENDER_DEFAULT;
-		uint32_t maxRays    = 12;
+		uint32_t maxRays    = 60;
 	} specialConsts;
 	std::vector<VkSpecializationMapEntry> specializationMapEntries;
 	specializationMapEntries.push_back(vkb::initializers::specialization_map_entry(0, offsetof(SpecialConsts_s, renderMode), sizeof(uint32_t)));
@@ -1085,10 +1085,6 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	VK_CHECK(vkCreateRayTracingPipelinesKHR(get_device().get_handle(), VK_NULL_HANDLE, VK_NULL_HANDLE, 1, &raytracing_pipeline_create_info, nullptr, &pipeline));
 }
 
-void RaytracingExtended::create_display_pipeline()
-{
-}
-
 /*
     Deletes all resources acquired by an acceleration structure
 */
@@ -1181,6 +1177,38 @@ void RaytracingExtended::build_command_buffers()
 
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
+		std::vector<VkBufferMemoryBarrier> barriers;
+		for (auto &&model_buffer : raytracing_scene->model_buffers)
+		{
+			if (!model_buffer.is_static)
+			{
+				VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
+				barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_WRITE_BIT_KHR;
+				barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_ACCELERATION_STRUCTURE_READ_BIT_KHR;
+				barrier.buffer                = model_buffer.bottom_level_acceleration_structure.buffer->get_handle();
+				barrier.size                  = model_buffer.bottom_level_acceleration_structure.buffer->get_size();
+				barriers.push_back(barrier);
+			}
+		}
+
+		auto getBufferBarrier = [](const vkb::core::Buffer &buffer) {
+			VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
+			barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
+			barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT;
+			barrier.buffer                = buffer.get_handle();
+			barrier.size                  = buffer.get_size();
+			return barrier;
+		};
+		barriers.emplace_back(getBufferBarrier(*dynamic_vertex_buffer));
+		barriers.emplace_back(getBufferBarrier(*dynamic_index_buffer));
+		barriers.emplace_back(getBufferBarrier(*instances_buffer));
+		barriers.emplace_back(getBufferBarrier(*ubo));
+
+		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0,
+							 0, VK_NULL_HANDLE,                                              // memory barrier
+							 static_cast<uint32_t>(barriers.size()), barriers.data(),        // buffer memory barrier
+							 0, VK_NULL_HANDLE);                                             // image memory barrier
+
 		/*
 		    Dispatch the ray tracing commands
 		*/
@@ -1242,7 +1270,6 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	create_scene();
 	create_uniform_buffer();
 	create_ray_tracing_pipeline();
-	create_display_pipeline();
 	create_shader_binding_tables();
 	create_descriptor_sets();
 	build_command_buffers();
@@ -1320,15 +1347,6 @@ void RaytracingExtended::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, device->request_fence()));
 	device->get_fence_pool().wait();
 	ApiVulkanSample::submit_frame();
-}
-
-void RaytracingExtended::draw_gui()
-{
-	gui->show_options_window(
-	    []() {
-		    int current_mode = 0;
-		    ImGui::Combo("Draw mode", &current_mode, "Mode\0\0");
-	    });
 }
 
 void RaytracingExtended::render(float delta_time)
