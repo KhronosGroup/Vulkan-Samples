@@ -53,7 +53,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto          &buffer = iter->second;
+		auto &         buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
