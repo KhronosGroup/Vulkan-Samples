@@ -36,7 +36,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -471,17 +471,11 @@ void RayQueries::load_scene()
 			// Copy vertex data
 			{
 				model.vertices.resize(vertex_start_index + pts_.size());
-				const float       sponza_scale = 0.01f;
-				const glm::mat4x4 transform{0.f, 0.f, sponza_scale, 0.f,
-				                            sponza_scale, 0.f, 0.f, 0.f,
-				                            0.f, sponza_scale, 0.f, 0.f,
-				                            0.f, 0.f, 0.f, 1.f};
+				const float sponza_scale = 0.01f;
 				for (size_t i = 0; i < pts_.size(); ++i)
 				{
-					const auto translation                          = glm::vec3(transform[0][3], transform[1][3], transform[2][3]);
-					const auto pt                                   = glm::vec3(glm::mat4(transform) * glm::vec4(pts_[i], 1.f)) + translation;
-					model.vertices[vertex_start_index + i].position = pt;
-					model.vertices[vertex_start_index + i].normal   = i < normals_.size() ? normals_[i] : glm::vec3{0.f, 0.f, 0.f};
+					model.vertices[vertex_start_index + i].position = sponza_scale * pts_[i].yzx;
+					model.vertices[vertex_start_index + i].normal   = normals_[i].yzx;
 				}
 			}
 
