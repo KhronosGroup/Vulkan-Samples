@@ -38,7 +38,15 @@ AccelerationStructure::~AccelerationStructure()
 	}
 }
 
-void AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core::Buffer> &vertex_buffer, std::unique_ptr<vkb::core::Buffer> &index_buffer, std::unique_ptr<vkb::core::Buffer> &transform_buffer, uint32_t triangle_count, uint32_t max_vertex, VkDeviceSize vertex_stride, uint32_t transform_offset, VkFormat vertex_format, VkGeometryFlagsKHR flags)
+void AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
+                                                  std::unique_ptr<vkb::core::Buffer> &index_buffer,
+                                                  std::unique_ptr<vkb::core::Buffer> &transform_buffer,
+                                                  uint32_t triangle_count, uint32_t max_vertex,
+                                                  VkDeviceSize vertex_stride, uint32_t transform_offset,
+                                                  VkFormat vertex_format, VkGeometryFlagsKHR flags,
+                                                  uint64_t vertex_buffer_data_address,
+                                                  uint64_t index_buffer_data_address,
+                                                  uint64_t transform_buffer_data_address)
 {
 	VkAccelerationStructureGeometryKHR geometry{};
 	geometry.sType                                          = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_GEOMETRY_KHR;
@@ -49,9 +57,9 @@ void AccelerationStructure::add_triangle_geometry(std::unique_ptr<vkb::core::Buf
 	geometry.geometry.triangles.maxVertex                   = max_vertex;
 	geometry.geometry.triangles.vertexStride                = vertex_stride;
 	geometry.geometry.triangles.indexType                   = VK_INDEX_TYPE_UINT32;
-	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer->get_device_address();
-	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer->get_device_address();
-	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer->get_device_address();
+	geometry.geometry.triangles.vertexData.deviceAddress    = vertex_buffer_data_address == 0 ? vertex_buffer->get_device_address() : vertex_buffer_data_address;
+	geometry.geometry.triangles.indexData.deviceAddress     = index_buffer_data_address == 0 ? index_buffer->get_device_address() : index_buffer_data_address;
+	geometry.geometry.triangles.transformData.deviceAddress = transform_buffer_data_address == 0 ? transform_buffer->get_device_address() : transform_buffer_data_address;
 
 	geometries.push_back({geometry, triangle_count, transform_offset});
 }
@@ -87,11 +95,11 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 		build_range_info.firstVertex     = 0;
 		build_range_info.transformOffset = geometry.transform_offset;
 		acceleration_structure_build_range_infos.push_back(build_range_info);
-		primitive_counts.push_back(1);
+		primitive_counts.push_back(geometry.primitive_count);
 	}
-	for (size_t i = 0; i < acceleration_structure_build_range_infos.size(); i++)
+	for (auto &acceleration_structure_build_range_info : acceleration_structure_build_range_infos)
 	{
-		pp_acceleration_structure_build_range_infos.push_back(&acceleration_structure_build_range_infos[i]);
+		pp_acceleration_structure_build_range_infos.push_back(&acceleration_structure_build_range_info);
 	}
 
 	VkAccelerationStructureBuildGeometryInfoKHR build_geometry_info{};
@@ -101,8 +109,6 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	build_geometry_info.mode          = mode;
 	build_geometry_info.geometryCount = static_cast<uint32_t>(acceleration_structure_geometries.size());
 	build_geometry_info.pGeometries   = acceleration_structure_geometries.data();
-
-	uint32_t primitive_count = build_geometry_info.geometryCount;
 
 	// Get required build sizes
 	build_sizes_info.sType = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_BUILD_SIZES_INFO_KHR;
@@ -114,11 +120,14 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	    &build_sizes_info);
 
 	// Create a buffer for the acceleration structure
-	buffer = std::make_unique<vkb::core::Buffer>(
-	    device,
-	    build_sizes_info.accelerationStructureSize,
-	    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
-	    VMA_MEMORY_USAGE_GPU_ONLY);
+	if (!buffer || buffer->get_size() != build_sizes_info.accelerationStructureSize)
+	{
+		buffer = std::make_unique<vkb::core::Buffer>(
+		    device,
+		    build_sizes_info.accelerationStructureSize,
+		    VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_STORAGE_BIT_KHR,
+		    VMA_MEMORY_USAGE_GPU_ONLY);
+	}
 
 	VkAccelerationStructureCreateInfoKHR acceleration_structure_create_info{};
 	acceleration_structure_create_info.sType  = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_CREATE_INFO_KHR;
@@ -139,7 +148,10 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	device_address                                         = vkGetAccelerationStructureDeviceAddressKHR(device.get_handle(), &acceleration_device_address_info);
 
 	// Create a scratch buffer as a temporary storage for the acceleration structure build
-	std::unique_ptr<vkb::core::ScratchBuffer> scratch_buffer = std::make_unique<vkb::core::ScratchBuffer>(device, build_sizes_info.buildScratchSize);
+	if (!scratch_buffer || scratch_buffer->get_size() != build_sizes_info.buildScratchSize)
+	{
+		scratch_buffer = std::make_unique<vkb::core::ScratchBuffer>(device, build_sizes_info.buildScratchSize);
+	}
 
 	build_geometry_info.scratchData.deviceAddress = scratch_buffer->get_device_address();
 	build_geometry_info.dstAccelerationStructure  = handle;

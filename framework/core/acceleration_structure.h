@@ -25,7 +25,6 @@
 namespace vkb
 {
 class Device;
-class AccelerationStructureGeometry;
 
 namespace core
 {
@@ -56,6 +55,9 @@ class AccelerationStructure
 	 * @param transform_offset Offset of this geometry in the transform data buffer
 	 * @param vertex_format Format of the vertex structure 
 	 * @param flags Ray tracing geometry flags
+	 * @param vertex_buffer_data_address set this if don't want the vertex_buffer data_address
+	 * @param index_buffer_data_address set this if don't want the index_buffer data_address
+	 * @param transform_buffer_data_address set this if don't want the transform_buffer data_address
 	 */
 	void add_triangle_geometry(std::unique_ptr<vkb::core::Buffer> &vertex_buffer,
 	                           std::unique_ptr<vkb::core::Buffer> &index_buffer,
@@ -63,9 +65,12 @@ class AccelerationStructure
 	                           uint32_t                            triangle_count,
 	                           uint32_t                            max_vertex,
 	                           VkDeviceSize                        vertex_stride,
-	                           uint32_t                            transform_offset = 0,
-	                           VkFormat                            vertex_format    = VK_FORMAT_R32G32B32_SFLOAT,
-	                           VkGeometryFlagsKHR                  flags            = VK_GEOMETRY_OPAQUE_BIT_KHR);
+	                           uint32_t                            transform_offset              = 0,
+	                           VkFormat                            vertex_format                 = VK_FORMAT_R32G32B32_SFLOAT,
+	                           VkGeometryFlagsKHR                  flags                         = VK_GEOMETRY_OPAQUE_BIT_KHR,
+	                           uint64_t                            vertex_buffer_data_address    = 0,
+	                           uint64_t                            index_buffer_data_address     = 0,
+	                           uint64_t                            transform_buffer_data_address = 0);
 
 	/**
 	 * @brief Adds instance geometry to the acceleration structure (only valid for top level)
@@ -95,6 +100,16 @@ class AccelerationStructure
 
 	uint64_t get_device_address() const;
 
+	vkb::core::Buffer *get_buffer() const
+	{
+		return buffer.get();
+	}
+
+	void resetGeometries()
+	{
+		geometries.clear();
+	}
+
   private:
 	Device &device;
 
@@ -112,6 +127,8 @@ class AccelerationStructure
 		uint32_t                           primitive_count;
 		uint32_t                           transform_offset;
 	};
+
+	std::unique_ptr<vkb::core::ScratchBuffer> scratch_buffer;
 
 	std::vector<Geometry> geometries{};
 

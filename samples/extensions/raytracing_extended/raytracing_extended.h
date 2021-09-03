@@ -21,8 +21,11 @@
 
 #pragma once
 
+#define USE_FRAMEWORK_ACCELERATION_STRUCTURE
+
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
+#include <core/acceleration_structure.h>
 
 class RaytracingExtended : public ApiVulkanSample
 {
@@ -48,6 +51,7 @@ class RaytracingExtended : public ApiVulkanSample
 		OBJECT_FLAME              // emission surface; constant amplitude
 	};
 
+#ifndef USE_FRAMEWORK_ACCELERATION_STRUCTURE
 	// Wraps all data required for an acceleration structure
 	struct AccelerationStructureExtended
 	{
@@ -55,6 +59,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint64_t                           device_address;
 		std::unique_ptr<vkb::core::Buffer> buffer;
 	};
+#endif
 
 	struct NewVertex;
 	struct Model;
@@ -151,10 +156,14 @@ class RaytracingExtended : public ApiVulkanSample
 		VkAccelerationStructureBuildSizesInfoKHR buildSize;
 		VkAccelerationStructureGeometryKHR       acceleration_structure_geometry;
 		VkAccelerationStructureBuildRangeInfoKHR buildRangeInfo;
-		AccelerationStructureExtended            bottom_level_acceleration_structure;
-		VkTransformMatrixKHR                     default_transform;
-		uint32_t                                 object_type = 0;
-		bool                                     is_static   = true;
+#ifdef USE_FRAMEWORK_ACCELERATION_STRUCTURE
+		std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure = nullptr;
+#else
+		AccelerationStructureExtended bottom_level_acceleration_structure;
+#endif
+		VkTransformMatrixKHR default_transform;
+		uint32_t             object_type = 0;
+		bool                 is_static   = true;
 	};
 
 	struct SceneOptions
@@ -196,7 +205,11 @@ class RaytracingExtended : public ApiVulkanSample
 	std::unique_ptr<RaytracingScene> raytracing_scene;
 	Texture                          flame_texture;
 
+#ifdef USE_FRAMEWORK_ACCELERATION_STRUCTURE
+	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure = nullptr;
+#else
 	AccelerationStructureExtended top_level_acceleration_structure;
+#endif
 
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
@@ -256,7 +269,9 @@ class RaytracingExtended : public ApiVulkanSample
 	void                 create_bottom_level_acceleration_structure(bool is_update, bool print_time = true);
 	VkTransformMatrixKHR calculate_rotation(glm::vec3 pt, float scale = 1.f, bool freeze_y = false);
 	void                 create_top_level_acceleration_structure(bool print_time = true);
-	void                 delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
+#ifndef USE_FRAMEWORK_ACCELERATION_STRUCTURE
+	void delete_acceleration_structure(AccelerationStructureExtended &acceleration_structure);
+#endif
 
 	void create_scene();
 	void create_shader_binding_tables();
