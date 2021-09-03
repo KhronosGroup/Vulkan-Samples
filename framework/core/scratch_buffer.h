@@ -46,10 +46,13 @@ class ScratchBuffer
 
 	uint64_t get_device_address() const;
 
-    /**
+	/**
 	 * @return The size of the buffer
 	 */
-    VkDeviceSize get_size() const { return size; }
+	VkDeviceSize get_size() const
+	{
+		return size;
+	}
 
   private:
 	Device &device;
