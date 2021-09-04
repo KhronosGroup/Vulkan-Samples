@@ -21,7 +21,7 @@
 
 #pragma once
 
-#define USE_FRAMEWORK_ACCELERATION_STRUCTURE
+//#define USE_FRAMEWORK_ACCELERATION_STRUCTURE
 
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
@@ -164,6 +164,7 @@ class RaytracingExtended : public ApiVulkanSample
 		VkTransformMatrixKHR default_transform;
 		uint32_t             object_type = 0;
 		bool                 is_static   = true;
+		uint64_t             object_id   = 0;
 	};
 
 	struct SceneOptions
@@ -210,7 +211,7 @@ class RaytracingExtended : public ApiVulkanSample
 #else
 	AccelerationStructureExtended top_level_acceleration_structure;
 #endif
-
+	uint64_t                                          instance_uid = 0;
 	uint32_t                                          index_count;
 	std::vector<VkRayTracingShaderGroupCreateInfoKHR> shader_groups{};
 
