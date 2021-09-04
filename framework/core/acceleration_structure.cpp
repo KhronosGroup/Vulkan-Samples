@@ -91,6 +91,7 @@ void AccelerationStructure::update_triangle_geometry(uint64_t                   
 	geometry->geometry.triangles.transformData.deviceAddress = transform_buffer_data_address == 0 ? transform_buffer->get_device_address() : transform_buffer_data_address;
 	geometries[triangleUUID].primitive_count                 = triangle_count;
 	geometries[triangleUUID].transform_offset                = transform_offset;
+	geometries[triangleUUID].updated                         = true;
 }
 
 uint64_t AccelerationStructure::add_instance_geometry(std::unique_ptr<vkb::core::Buffer> &instance_buffer, uint32_t instance_count, uint32_t transform_offset, VkGeometryFlagsKHR flags)
@@ -122,6 +123,7 @@ void AccelerationStructure::update_instance_geometry(uint64_t                   
 	geometry->geometry.instances.data.deviceAddress = instance_buffer->get_device_address();
 	geometries[instance_UID].primitive_count        = instance_count;
 	geometries[instance_UID].transform_offset       = transform_offset;
+	geometries[instance_UID].updated                = true;
 }
 
 void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFlagsKHR flags, VkBuildAccelerationStructureModeKHR mode)
@@ -133,6 +135,10 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	std::vector<uint32_t>                                 primitive_counts;
 	for (auto &geometry : geometries)
 	{
+		if (mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR && !geometry.second.updated)
+		{
+			continue;
+		}
 		acceleration_structure_geometries.push_back(geometry.second.geometry);
 		// Infer build range info from geometry
 		VkAccelerationStructureBuildRangeInfoKHR build_range_info;
@@ -142,6 +148,7 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 		build_range_info.transformOffset = geometry.second.transform_offset;
 		acceleration_structure_build_range_infos.push_back(build_range_info);
 		primitive_counts.push_back(geometry.second.primitive_count);
+		geometry.second.updated = false;
 	}
 
 	VkAccelerationStructureBuildGeometryInfoKHR build_geometry_info{};

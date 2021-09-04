@@ -142,9 +142,10 @@ class AccelerationStructure
 
 	struct Geometry
 	{
-		VkAccelerationStructureGeometryKHR geometry;
-		uint32_t                           primitive_count;
-		uint32_t                           transform_offset;
+		VkAccelerationStructureGeometryKHR geometry{};
+		uint32_t                           primitive_count{};
+		uint32_t                           transform_offset{};
+		bool                               updated = false;
 	};
 
 	std::unique_ptr<vkb::core::ScratchBuffer> scratch_buffer;

@@ -21,7 +21,7 @@
 
 #pragma once
 
-//#define USE_FRAMEWORK_ACCELERATION_STRUCTURE
+#define USE_FRAMEWORK_ACCELERATION_STRUCTURE
 
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
