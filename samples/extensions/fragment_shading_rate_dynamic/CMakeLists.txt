@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Sascha Willems
+# Copyright (c) 2021, Holochip
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,6 +22,6 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Sascha Wilems"
-    NAME "Fragment shading rate"
-    DESCRIPTION "Using variable fragment shading rate patterns via VK_KHR_fragment_shading_rate")
+    AUTHOR "Holochip"
+    NAME "Dynamic fragment shading rate"
+    DESCRIPTION "Using dynamically-generated fragment shading rate patterns generated each frame")
