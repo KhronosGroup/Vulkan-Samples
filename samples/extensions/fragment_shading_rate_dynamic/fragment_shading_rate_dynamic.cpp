@@ -386,7 +386,7 @@ void FragmentShadingRateDynamic::load_assets()
 	models.skysphere   = load_model("scenes/geosphere.gltf");
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
 	models.scene       = load_model("scenes/textured_unit_cube.gltf");
-	textures.scene     = load_texture("textures/metalplate01_rgba.ktx");
+	textures.scene     = load_texture("textures/vulkan_logo_full.ktx");
 }
 
 void FragmentShadingRateDynamic::setup_descriptor_pool()
@@ -539,8 +539,8 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	pipeline_create_info.renderPass = render_pass;
 
 	// Skysphere
-	shader_stages[0] = load_shader("fragment_shading_rate/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("fragment_shading_rate/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("fragment_shading_rate_dynamic/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("fragment_shading_rate_dynamic/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Objects
