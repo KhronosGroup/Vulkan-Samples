@@ -57,12 +57,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
 	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};
 
-	struct ShadingRateImage
-	{
-		VkImage        image  = VK_NULL_HANDLE;
-		VkDeviceMemory memory = VK_NULL_HANDLE;
-		VkImageView    view   = VK_NULL_HANDLE;
-	} shading_rate_image;
+	std::unique_ptr<vkb::core::Image>     shading_rate_image;
+	std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
 
 	struct
 	{
