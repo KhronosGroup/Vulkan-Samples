@@ -87,7 +87,22 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 															VMA_MEMORY_USAGE_GPU_ONLY,
 															VK_SAMPLE_COUNT_1_BIT);
 
-	std::vector<uint8_t> temp_buffer(frame_height * frame_width, (4 >> 1) | (4 << 1));
+	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
+	uint32_t                                            fragment_shading_rate_count = 0;
+	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
+	if (fragment_shading_rate_count > 0)
+	{
+		fragment_shading_rates.resize(fragment_shading_rate_count);
+		for (VkPhysicalDeviceFragmentShadingRateKHR &fragment_shading_rate : fragment_shading_rates)
+		{
+			fragment_shading_rate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR;
+		}
+		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
+	}
+
+	// initialize to the lowest shading rate, equal to (min_shading_rate >> 1) | (min_shading_rate << 1));
+	const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
+	std::vector<uint8_t> temp_buffer(frame_height * frame_width, (min_shading_rate.width >> 1) | (min_shading_rate.height << 1));
 	auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	staging_buffer->update(temp_buffer);
 
