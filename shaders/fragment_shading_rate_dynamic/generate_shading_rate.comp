@@ -1,0 +1,76 @@
+#version 450
+/* Copyright (c) 2020-2021, Holochip
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+layout(local_size_x = 8, local_size_y = 8) in;
+
+layout(binding = 0, r8) uniform readonly image2D input_frequency;
+layout(binding = 1, r8) uniform writeonly image2D output_sampling_rate;
+
+layout(binding = 2) buffer FrequencyInformation {
+     uvec4 settings; // {frame_width, frame_height, output_width, output_height}
+     uvec4 frequency_information; // { max_rate_x, max_rate_y, n_rates, scale_factor}
+     uvec2 rates[];
+ } device;
+
+void main()
+{
+    const uint x0 = gl_GlobalInvocationID.x, 
+               y0 = gl_GlobalInvocationID.y,
+               frame_width = device.settings[0], 
+               frame_height = device.settings[1],
+               output_width = device.settings[2],
+               output_height = device.settings[3];
+
+
+    const uint delta_x = max(1, frame_width / output_width),
+               delta_y = max(1, frame_height / output_height);
+    if (x0 >= output_width || y0 >= output_height){
+        return;
+    }
+
+    float frequency = 0;
+    for (uint i = 0; i < delta_x; ++i)
+    {
+        for (uint j = 0; j < delta_y; ++j)
+        {
+            frequency += float(imageLoad(input_frequency, ivec2(delta_x*x0 + i, delta_y*y0 + j))) / 255.f;
+        }
+    }
+    frequency /= (delta_x * delta_y);
+    frequency = max(0, min(frequency, 1));
+
+    const float min_rate = 1,
+                max_rate = max(device.frequency_information.x, device.frequency_information.y);
+    const uint optimal_rate = uint(round(frequency * max_rate + (1 - frequency * min_rate)));
+
+    const uint n_rates = device.frequency_information.z;
+    uint optimal_rate_index = 0;
+    for (uint rate_index = 1; rate_index < n_rates; ++rate_index)
+    {
+        const uint rate_x = device.rates[rate_index].x, 
+                   rate_y = device.rates[rate_index].y;
+        if (max(rate_x, rate_y) <= optimal_rate)
+        {
+            optimal_rate_index = rate_index;
+        }
+    }
+
+    uint optimal_rate_x = device.rates[optimal_rate_index].x, optimal_rate_y = device.rates[optimal_rate_index].y;
+    uint rate_code = uint(optimal_rate_x >> 1) | (optimal_rate_y << 1);
+    imageStore(output_sampling_rate, ivec2(x0, y0), uvec4(rate_code));
+}
