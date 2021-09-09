@@ -148,8 +148,8 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 			else
 			{
 				LOGE("Required device extension {} not available, cannot run", extension);
+				error = true;
 			}
-			error = !extension_is_optional;
 		}
 
 		if (error)
