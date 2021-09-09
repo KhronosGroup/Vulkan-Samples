@@ -35,6 +35,7 @@ layout (binding = 0) uniform UBO {
 } ubo;
 
 layout (location = 0) out vec4 outColor;
+layout (location = 1) out uint outFrequency;
 
 layout(push_constant) uniform Push_Constants {
 	vec4 offset;
@@ -44,17 +45,20 @@ layout(push_constant) uniform Push_Constants {
 void main() 
 {
 	vec4 color;
+	float normalized_frequency;
 
 	switch (push_constants.object_type) {
 		case 0: // Skysphere			
 			{
 				color = texture(samplerEnvMap, vec2(inUV.s, 1.0 - inUV.t));
+				normalized_frequency = 0.5;
 			}
 			break;
 		
 		case 1: // Phong shading
 			{
-				vec3 ambient = texture(samplerSphere, inUV).rgb;
+				vec4 tex_value = texture(samplerSphere, inUV);
+				vec3 ambient = tex_value.rgb;
 				vec3 N = normalize(inNormal);
 				vec3 L = normalize(inLightVec);
 				vec3 V = normalize(inViewVec);
@@ -62,6 +66,7 @@ void main()
 				vec3 diffuse = vec3(max(dot(N, L), 0.0));
 				vec3 specular = vec3(pow(max(dot(R, V), 0.0), 8.0));
 				color = vec4(ambient + diffuse + specular, 1.0);	
+				normalized_frequency = tex_value.w;
 			}
 			break;
 	}
@@ -93,5 +98,5 @@ void main()
 	} else {
 		outColor = vec4(color.rgb, 1.0);
 	}
-
+	outFrequency = uint(255 * normalized_frequency);
 }

@@ -148,12 +148,26 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
 
 	shading_rate_image_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, requested_format);
+
+	// Create an attachment to store the frequency content of the rendered image during the render pass
+	VkExtent3D frequency_image_extent{};
+	frequency_image_extent.width  = this->width;
+	frequency_image_extent.height = this->height;
+	frequency_image_extent.depth  = 1;
+	frequency_content_image       = std::make_unique<vkb::core::Image>(*device,
+																 frequency_image_extent,
+																 VK_FORMAT_R8_UINT,
+																 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+																 VMA_MEMORY_USAGE_GPU_ONLY);
+	frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
 }
 
 void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
 {
 	shading_rate_image.reset();
 	shading_rate_image_view.reset();
+	frequency_content_image.reset();
+	frequency_content_image_view.reset();
 }
 
 void FragmentShadingRateDynamic::setup_render_pass()
@@ -165,7 +179,9 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	device_properties.pNext = &physical_device_fragment_shading_rate_properties;
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
-	std::array<VkAttachmentDescription2KHR, 3> attachments = {};
+	// In contrast to the static fragment shading rate example, include
+	// an attachment for the output of the frequency content of the rendered image
+	std::array<VkAttachmentDescription2KHR, 4> attachments = {};
 	// Color attachment
 	attachments[0].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
 	attachments[0].format         = render_context->get_format();
@@ -196,12 +212,16 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	attachments[2].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[2].initialLayout  = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	attachments[2].finalLayout    = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
-
-	VkAttachmentReference2KHR color_reference = {};
-	color_reference.sType                     = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
-	color_reference.attachment                = 0;
-	color_reference.layout                    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	color_reference.aspectMask                = VK_IMAGE_ASPECT_COLOR_BIT;
+	// Frequency content attachment
+	attachments[3].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
+	attachments[3].format         = VK_FORMAT_R8_UINT;
+	attachments[3].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[3].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[3].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+	attachments[3].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[3].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[3].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[3].finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;        // will be used by compute shader
 
 	VkAttachmentReference2KHR depth_reference = {};
 	depth_reference.sType                     = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
@@ -222,11 +242,26 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width   = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
+	VkAttachmentReference2KHR color_reference = {};
+	color_reference.sType                     = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+	color_reference.attachment                = 0;
+	color_reference.layout                    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	color_reference.aspectMask                = VK_IMAGE_ASPECT_COLOR_BIT;
+
+	// Setup attachment for frequency information
+	VkAttachmentReference2 frequency_reference = {};
+	frequency_reference.sType                  = VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2;
+	frequency_reference.attachment             = 3;
+	frequency_reference.layout                 = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	frequency_reference.aspectMask             = VK_IMAGE_ASPECT_COLOR_BIT;
+
+	std::array<VkAttachmentReference2, 2> color_references = {color_reference, frequency_reference};
+
 	VkSubpassDescription2KHR subpass_description = {};
 	subpass_description.sType                    = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
 	subpass_description.pipelineBindPoint        = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass_description.colorAttachmentCount     = 1;
-	subpass_description.pColorAttachments        = &color_reference;
+	subpass_description.colorAttachmentCount     = static_cast<uint32_t>(color_references.size());
+	subpass_description.pColorAttachments        = color_references.data();
 	subpass_description.pDepthStencilAttachment  = &depth_reference;
 	subpass_description.inputAttachmentCount     = 0;
 	subpass_description.pInputAttachments        = nullptr;
@@ -276,17 +311,18 @@ void FragmentShadingRateDynamic::setup_framebuffer()
 		create_shading_rate_attachment();
 	}
 
-	VkImageView attachments[3];
+	std::array<VkImageView, 4> attachments;
 	// Depth/Stencil attachment is the same for all frame buffers
 	attachments[1] = depth_stencil.view;
 	// Fragment shading rate attachment
 	attachments[2] = shading_rate_image_view->get_handle();
+	attachments[3] = frequency_content_image_view->get_handle();
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 	framebuffer_create_info.renderPass              = render_pass;
-	framebuffer_create_info.attachmentCount         = 3;
-	framebuffer_create_info.pAttachments            = attachments;
+	framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
+	framebuffer_create_info.pAttachments            = attachments.data();
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
@@ -304,35 +340,24 @@ void FragmentShadingRateDynamic::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[3];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values[1].depthStencil = {0.0f, 0};
-	clear_values[2].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass            = render_pass;
-	render_pass_begin_info.renderArea.offset.x   = 0;
-	render_pass_begin_info.renderArea.offset.y   = 0;
-	render_pass_begin_info.clearValueCount       = 3;
-	render_pass_begin_info.pClearValues          = clear_values;
-
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		VkClearValue clear_values[3];
+		std::array<VkClearValue, 4> clear_values;
 		clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 		clear_values[1].depthStencil = {0.0f, 0};
 		clear_values[2].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+		clear_values[3].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 
 		// Final composition
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.framebuffer              = framebuffers[i];
 		render_pass_begin_info.renderPass               = render_pass;
-		render_pass_begin_info.clearValueCount          = 3;
+		render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
+		render_pass_begin_info.pClearValues             = clear_values.data();
 		render_pass_begin_info.renderArea.extent.width  = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.pClearValues             = clear_values;
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -474,15 +499,14 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 			VK_FRONT_FACE_COUNTER_CLOCKWISE,
 			0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-		vkb::initializers::pipeline_color_blend_attachment_state(
-			0xf,
-			VK_FALSE);
+	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_state(2, vkb::initializers::pipeline_color_blend_attachment_state(
+																				   0xf,
+																				   VK_FALSE));
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 		vkb::initializers::pipeline_color_blend_state_create_info(
-			1,
-			&blend_attachment_state);
+			blend_attachment_state.size(),
+			blend_attachment_state.data());
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =

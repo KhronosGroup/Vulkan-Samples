@@ -57,8 +57,17 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
 	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};
 
+	// Shading rate image is an input to the graphics pipeline
+	// and is produced by the compute shader.
+	// It has a lower resolution than the framebuffer
 	std::unique_ptr<vkb::core::Image>     shading_rate_image;
 	std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
+
+	// Frequency content image is an output of the graphics pipeline
+	// and is consumed by the compute shader to produce the shading rate image.
+	// It has the same resolution as the framebuffer
+	std::unique_ptr<vkb::core::Image>     frequency_content_image;
+	std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
 
 	struct
 	{
@@ -84,6 +93,10 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		glm::mat4 skysphere_modelview;
 		int32_t   color_shading_rate;
 	} ubo_scene;
+
+	struct ShadingRateCapability
+	{
+	};
 
 	VkPipelineLayout pipeline_layout;
 	struct Pipelines
