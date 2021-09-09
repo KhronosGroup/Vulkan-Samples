@@ -75,6 +75,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
 	std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
 
+	VkFence compute_fence{VK_NULL_HANDLE};
+
 	struct FrequencyInformation
 	{
 		glm::uvec2 frame_dimensions;

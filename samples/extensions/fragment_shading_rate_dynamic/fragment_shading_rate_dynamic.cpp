@@ -154,6 +154,23 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, requested_format);
 	shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, requested_format);
 
+	{
+		auto &cmd = device->request_command_buffer();
+		cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		auto memory_barrier            = vkb::ImageMemoryBarrier();
+		memory_barrier.dst_access_mask = 0;
+		memory_barrier.src_access_mask = 0;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
+		cmd.image_memory_barrier(*shading_rate_image_compute_view, memory_barrier);
+		cmd.end();
+
+		auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		auto  fence = device->request_fence();
+		queue.submit(cmd, fence);
+		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
+	}
+
 	// Create an attachment to store the frequency content of the rendered image during the render pass
 	VkExtent3D frequency_image_extent{};
 	frequency_image_extent.width  = this->width;
@@ -708,11 +725,45 @@ void FragmentShadingRateDynamic::update_uniform_buffers()
 
 void FragmentShadingRateDynamic::draw()
 {
+	VkSemaphore        semaphore{VK_NULL_HANDLE};
+	const VkSemaphore *old_semaphore{VK_NULL_HANDLE};
+	auto               semaphore_create = vkb::initializers::semaphore_create_info();
+	vkCreateSemaphore(device->get_handle(), &semaphore_create, VK_NULL_HANDLE, &semaphore);
+
 	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+	assert(submit_info.signalSemaphoreCount == 1);
+	old_semaphore = submit_info.pSignalSemaphores;
+	std::vector<VkSemaphore> semaphores{submit_info.pSignalSemaphores[0], semaphore};
+
+	submit_info.commandBufferCount   = 1;
+	submit_info.pCommandBuffers      = &draw_cmd_buffers[current_buffer];
+	submit_info.signalSemaphoreCount = 2;
+	submit_info.pSignalSemaphores    = semaphores.data();
+
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
+
+	const VkPipelineStageFlags wait_mask           = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	auto                       compute_submit_info = vkb::initializers::submit_info();
+	compute_submit_info.commandBufferCount         = 1;
+	compute_submit_info.pCommandBuffers            = &compute.command_buffer;
+	compute_submit_info.pWaitDstStageMask          = &wait_mask;
+	compute_submit_info.pWaitSemaphores            = &semaphore;
+	compute_submit_info.waitSemaphoreCount         = 1;
+
+	if (!compute_fence)
+	{
+		auto fence_create = vkb::initializers::fence_create_info();
+		VK_CHECK(vkCreateFence(device->get_handle(), &fence_create, VK_NULL_HANDLE, &compute_fence));
+	}
+
+	VK_CHECK(vkQueueSubmit(queue, 1, &compute_submit_info, compute_fence));
+	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &compute_fence, VK_TRUE, UINT64_MAX));
+	VK_CHECK(vkResetFences(device->get_handle(), 1, &compute_fence));
+
+	vkDestroySemaphore(device->get_handle(), semaphore, VK_NULL_HANDLE);
+	submit_info.signalSemaphoreCount = 1;
+	submit_info.pSignalSemaphores    = old_semaphore;
 }
 
 bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
@@ -746,7 +797,9 @@ void FragmentShadingRateDynamic::render(float delta_time)
 		return;
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
