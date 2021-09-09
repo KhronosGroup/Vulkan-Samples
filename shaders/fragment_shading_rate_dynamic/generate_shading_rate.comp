@@ -48,27 +48,29 @@ void main()
     {
         for (uint j = 0; j < delta_y; ++j)
         {
-            frequency += float(imageLoad(input_frequency, ivec2(delta_x*x0 + i, delta_y*y0 + j))) / 255.f;
+            float frequency_input = float(imageLoad(input_frequency, ivec2(delta_x*x0 + i, delta_y*y0 + j))) / 127.f;
+            frequency = max(frequency, frequency_input);
         }
     }
-    frequency /= (delta_x * delta_y);
-    frequency = max(0, min(frequency, 1));
+    frequency = max(0, min(sqrt(frequency), 1));
 
     const float min_rate = 1,
                 max_rate = max(params.frequency_information.x, params.frequency_information.y);
-    const uint optimal_rate = uint(round(frequency * max_rate + (1 - frequency * min_rate)));
+    const float optimal_rate = round(frequency * min_rate + (1 - frequency) * max_rate);
 
     const uint n_rates = params.frequency_information.z;
     uint optimal_rate_index = 0;
-    for (uint rate_index = 1; rate_index < n_rates; ++rate_index)
+    float current_cost = 1000;
+    for (uint i = 0; i < n_rates; ++i)
     {
-        const uint rate_x = params.rates[rate_index].x, 
-                   rate_y = params.rates[rate_index].y;
-        if (max(rate_x, rate_y) <= optimal_rate)
-        {
-            optimal_rate_index = rate_index;
+        uvec2 rate = params.rates[i];
+        float cost = (rate.x - optimal_rate) * (rate.x - optimal_rate) + (rate.y - optimal_rate) * (rate.y - optimal_rate);
+        if (cost < current_cost){
+            current_cost = cost;
+            optimal_rate_index = i;
         }
     }
+    //optimal_rate_index = uint(round(min(n_rates - 1, max(0, frequency * n_rates))));
 
     uint optimal_rate_x = params.rates[optimal_rate_index].x, optimal_rate_y = params.rates[optimal_rate_index].y;
     uint rate_code = uint(optimal_rate_x >> 1) | (optimal_rate_y << 1);
