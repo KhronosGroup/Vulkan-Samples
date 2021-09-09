@@ -595,6 +595,22 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &compute.descriptor_set, 0, 0);
 	vkCmdDispatch(command_buffer, 1 + (fragment_width - 1) / 8, 1 + (fragment_height - 1) / 8, 1);
 
+	VkImageCopy image_copy;
+	image_copy.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+	image_copy.dstOffset      = {0, 0, 0};
+	image_copy.dstSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
+	image_copy.extent         = shading_rate_image->get_extent();
+	image_copy.srcOffset      = {0, 0, 0};
+
+	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+	vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
+	vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+
+	vkCmdCopyImage(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
+
+	vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
+	vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, subresource_range);
+
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 }
 
