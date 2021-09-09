@@ -69,6 +69,9 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Image>     frequency_content_image;
 	std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
 
+	std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
+	std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+
 	struct
 	{
 		Texture skysphere;

@@ -80,12 +80,17 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	image_extent.height = static_cast<uint32_t>(ceil(frame_height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
 	image_extent.depth  = 1;
 
-	shading_rate_image = std::make_unique<vkb::core::Image>(*device,
-															image_extent,
-															VK_FORMAT_R8_UINT,
-															VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-															VMA_MEMORY_USAGE_GPU_ONLY,
-															VK_SAMPLE_COUNT_1_BIT);
+	auto create_shading_rate = [&](VkImageUsageFlags image_usage) {
+		return std::make_unique<vkb::core::Image>(*device,
+												  image_extent,
+												  VK_FORMAT_R8_UINT,
+												  image_usage,
+												  VMA_MEMORY_USAGE_GPU_ONLY,
+												  VK_SAMPLE_COUNT_1_BIT);
+	};
+
+	shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
+	shading_rate_image_compute = create_shading_rate(VK_IMAGE_USAGE_STORAGE_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
 	uint32_t                                            fragment_shading_rate_count = 0;
@@ -147,7 +152,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
 	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
 
-	shading_rate_image_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, requested_format);
+	shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, requested_format);
+	shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, requested_format);
 
 	// Create an attachment to store the frequency content of the rendered image during the render pass
 	VkExtent3D frequency_image_extent{};
