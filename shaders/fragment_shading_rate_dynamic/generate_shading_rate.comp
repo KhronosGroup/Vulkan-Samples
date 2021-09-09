@@ -18,23 +18,23 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(binding = 0, r8) uniform readonly image2D input_frequency;
-layout(binding = 1, r8) uniform writeonly image2D output_sampling_rate;
+layout(binding = 0, r8ui) uniform readonly uimage2D input_frequency;
+layout(binding = 1, r8ui) uniform writeonly uimage2D output_sampling_rate;
 
 layout(binding = 2) buffer FrequencyInformation {
      uvec4 settings; // {frame_width, frame_height, output_width, output_height}
-     uvec4 frequency_information; // { max_rate_x, max_rate_y, n_rates, scale_factor}
+     uvec4 frequency_information; // { max_rate_x, max_rate_y, n_rates, ...}
      uvec2 rates[];
- } device;
+ } params;
 
 void main()
 {
     const uint x0 = gl_GlobalInvocationID.x, 
                y0 = gl_GlobalInvocationID.y,
-               frame_width = device.settings[0], 
-               frame_height = device.settings[1],
-               output_width = device.settings[2],
-               output_height = device.settings[3];
+               frame_width = params.settings[0], 
+               frame_height = params.settings[1],
+               output_width = params.settings[2],
+               output_height = params.settings[3];
 
 
     const uint delta_x = max(1, frame_width / output_width),
@@ -55,22 +55,22 @@ void main()
     frequency = max(0, min(frequency, 1));
 
     const float min_rate = 1,
-                max_rate = max(device.frequency_information.x, device.frequency_information.y);
+                max_rate = max(params.frequency_information.x, params.frequency_information.y);
     const uint optimal_rate = uint(round(frequency * max_rate + (1 - frequency * min_rate)));
 
-    const uint n_rates = device.frequency_information.z;
+    const uint n_rates = params.frequency_information.z;
     uint optimal_rate_index = 0;
     for (uint rate_index = 1; rate_index < n_rates; ++rate_index)
     {
-        const uint rate_x = device.rates[rate_index].x, 
-                   rate_y = device.rates[rate_index].y;
+        const uint rate_x = params.rates[rate_index].x, 
+                   rate_y = params.rates[rate_index].y;
         if (max(rate_x, rate_y) <= optimal_rate)
         {
             optimal_rate_index = rate_index;
         }
     }
 
-    uint optimal_rate_x = device.rates[optimal_rate_index].x, optimal_rate_y = device.rates[optimal_rate_index].y;
+    uint optimal_rate_x = params.rates[optimal_rate_index].x, optimal_rate_y = params.rates[optimal_rate_index].y;
     uint rate_code = uint(optimal_rate_x >> 1) | (optimal_rate_y << 1);
     imageStore(output_sampling_rate, ivec2(x0, y0), uvec4(rate_code));
 }

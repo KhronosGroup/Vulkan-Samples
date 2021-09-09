@@ -48,14 +48,17 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
     void prepare_pipelines();
     void setup_descriptor_pool();
     void setup_descriptor_sets();
+    void create_compute_pipeline();
+    void update_compute_pipeline();
     void draw();
 
 	bool enable_attachment_shading_rate = true;
 	bool color_shading_rate             = false;
 	bool display_skysphere              = true;
 
-	VkPhysicalDeviceFragmentShadingRatePropertiesKHR physical_device_fragment_shading_rate_properties{};
-	VkPhysicalDeviceFragmentShadingRateFeaturesKHR   enabled_physical_device_fragment_shading_rate_features{};
+	VkPhysicalDeviceFragmentShadingRatePropertiesKHR    physical_device_fragment_shading_rate_properties{};
+	VkPhysicalDeviceFragmentShadingRateFeaturesKHR      enabled_physical_device_fragment_shading_rate_features{};
+	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
 
 	// Shading rate image is an input to the graphics pipeline
 	// and is produced by the compute shader.
@@ -71,6 +74,27 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 
 	std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
 	std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+
+	struct FrequencyInformation
+	{
+		glm::uvec2 frame_dimensions;
+		glm::uvec2 shading_rate_dimensions;
+		glm::uvec2 max_rates;
+		uint32_t   n_rates;
+		uint32_t   _pad;
+	};
+	std::unique_ptr<vkb::core::Buffer> frequency_information_params;
+
+	struct
+	{
+		VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
+		VkPipeline            pipeline              = VK_NULL_HANDLE;
+		VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+		VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
+		VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
+		VkCommandPool         command_pool          = VK_NULL_HANDLE;
+		VkCommandBuffer       command_buffer        = VK_NULL_HANDLE;
+	} compute;
 
 	struct
 	{
