@@ -38,8 +38,22 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
+
+		vkDestroyPipeline(device->get_handle(), compute.pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
+		vkDestroyCommandPool(device->get_handle(), compute.command_pool, VK_NULL_HANDLE);
+
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
+		frequency_content_image.reset();
+		frequency_content_image_view.reset();
+		shading_rate_image.reset();
+		shading_rate_image_view.reset();
+		shading_rate_image_compute.reset();
+		shading_rate_image_compute_view.reset();
+		frequency_information_params.reset();
 	}
 }
 
