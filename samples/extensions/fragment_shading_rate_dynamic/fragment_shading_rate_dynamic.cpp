@@ -94,17 +94,17 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	image_extent.height = static_cast<uint32_t>(ceil(frame_height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
 	image_extent.depth  = 1;
 
-	auto create_shading_rate = [&](VkImageUsageFlags image_usage) {
+	auto create_shading_rate = [&](VkImageUsageFlags image_usage, VkFormat format) {
 		return std::make_unique<vkb::core::Image>(*device,
 												  image_extent,
-												  VK_FORMAT_R8_UINT,
+												  format,
 												  image_usage,
 												  VMA_MEMORY_USAGE_GPU_ONLY,
 												  VK_SAMPLE_COUNT_1_BIT);
 	};
 
-	shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT);
-	shading_rate_image_compute = create_shading_rate(VK_IMAGE_USAGE_STORAGE_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VK_FORMAT_R8_UINT);
+	shading_rate_image_compute = create_shading_rate(VK_IMAGE_USAGE_STORAGE_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_FORMAT_R8_UINT);
 
 	uint32_t fragment_shading_rate_count = 0;
 	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
@@ -165,8 +165,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
 	VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
 
-	shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, requested_format);
-	shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, requested_format);
+	shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
+	shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
 
 	{
 		auto &cmd = device->request_command_buffer();
@@ -192,10 +192,10 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	frequency_image_extent.depth  = 1;
 	frequency_content_image       = std::make_unique<vkb::core::Image>(*device,
 																 frequency_image_extent,
-																 VK_FORMAT_R8_UINT,
+																 VK_FORMAT_R8G8_UINT,
 																 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
 																 VMA_MEMORY_USAGE_GPU_ONLY);
-	frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
+	frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
 }
 
 void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
@@ -250,7 +250,7 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	attachments[2].finalLayout    = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 	// Frequency content attachment
 	attachments[3].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
-	attachments[3].format         = VK_FORMAT_R8_UINT;
+	attachments[3].format         = VK_FORMAT_R8G8_UINT;
 	attachments[3].samples        = VK_SAMPLE_COUNT_1_BIT;
 	attachments[3].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[3].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;

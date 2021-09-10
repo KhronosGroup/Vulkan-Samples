@@ -35,7 +35,7 @@ layout (binding = 0) uniform UBO {
 } ubo;
 
 layout (location = 0) out vec4 outColor;
-layout (location = 1) out uint outFrequency;
+layout (location = 1) out uvec2 outFrequency;
 
 layout(push_constant) uniform Push_Constants {
 	vec4 offset;
@@ -45,13 +45,16 @@ layout(push_constant) uniform Push_Constants {
 void main() 
 {
 	vec4 color;
-	float normalized_frequency;
+	float freq_x =0, freq_y = 0;
 
 	switch (push_constants.object_type) {
 		case 0: // Skysphere			
 			{
 				color = texture(samplerEnvMap, vec2(inUV.s, 1.0 - inUV.t));
-				normalized_frequency = 0.5;
+				vec3 dx = dFdx(color.xyz);
+				vec3 dy = dFdx(color.xyz);
+				freq_x = dot(dx, dx);
+				freq_y = dot(dy, dy);
 			}
 			break;
 		
@@ -65,8 +68,11 @@ void main()
 				vec3 R = reflect(-L, N);
 				vec3 diffuse = vec3(max(dot(N, L), 0.0));
 				vec3 specular = vec3(pow(max(dot(R, V), 0.0), 8.0));
-				color = vec4(ambient + diffuse + specular, 1.0);	
-				normalized_frequency = tex_value.w;
+				color = vec4(ambient + diffuse + specular, 1.0);
+				vec3 dx = dFdx(color.xyz);
+				vec3 dy = dFdy(color.xyz);
+				freq_x = dot(dx, dx);
+				freq_y = dot(dy, dy);
 			}
 			break;
 	}
@@ -99,5 +105,5 @@ void main()
 	} else {
 		outColor = vec4(color.rgb, 1.0);
 	}
-	outFrequency = uint(255 * normalized_frequency);
+	outFrequency = uvec2(255 * freq_x, 255 * freq_y);
 }

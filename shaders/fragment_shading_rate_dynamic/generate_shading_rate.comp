@@ -18,7 +18,7 @@
 
 layout(local_size_x = 8, local_size_y = 8) in;
 
-layout(binding = 0, r8ui) uniform readonly uimage2D input_frequency;
+layout(binding = 0, rg8ui) uniform readonly uimage2D input_frequency;
 layout(binding = 1, r8ui) uniform writeonly uimage2D output_sampling_rate;
 
 layout(binding = 2) buffer FrequencyInformation {
@@ -43,34 +43,39 @@ void main()
         return;
     }
 
-    float frequency = 0;
+    vec2 freqs = vec2(0, 0);
+    vec2 max_freqs = vec2(0, 0);
     for (uint i = 0; i < delta_x; ++i)
     {
         for (uint j = 0; j < delta_y; ++j)
         {
-            float frequency_input = float(imageLoad(input_frequency, ivec2(delta_x*x0 + i, delta_y*y0 + j))) / 127.f;
-            frequency = max(frequency, frequency_input);
+            ivec2 coord = ivec2(delta_x*x0 + i, delta_y*y0 + j);
+            vec2 freq = vec2(imageLoad(input_frequency, coord)) / 255.f;
+            max_freqs = max(max_freqs, freq);
+            freqs += freq;
         }
     }
-    frequency = max(0, min(sqrt(frequency), 1));
+    freqs /= float(delta_x * delta_y);
+    //freqs = sqrt(sqrt(freqs));
+    freqs = max_freqs;
 
     const float min_rate = 1,
                 max_rate = max(params.frequency_information.x, params.frequency_information.y);
-    const float optimal_rate = round(frequency * min_rate + (1 - frequency) * max_rate);
+
+    const vec2 optimal_rate = freqs * vec2(min_rate, min_rate) + (1 - freqs) * vec2(max_rate, max_rate); //round(frequency * min_rate + (1 - frequency) * max_rate);
 
     const uint n_rates = params.frequency_information.z;
     uint optimal_rate_index = 0;
-    float current_cost = 1000;
+    float current_cost = 1 + 2 * max_rate * max_rate;
     for (uint i = 0; i < n_rates; ++i)
     {
         uvec2 rate = params.rates[i];
-        float cost = (rate.x - optimal_rate) * (rate.x - optimal_rate) + (rate.y - optimal_rate) * (rate.y - optimal_rate);
+        float cost = (rate.x - optimal_rate.x) * (rate.x - optimal_rate.x) + (rate.y - optimal_rate.y) * (rate.y - optimal_rate.y);
         if (cost < current_cost){
             current_cost = cost;
             optimal_rate_index = i;
         }
     }
-    //optimal_rate_index = uint(round(min(n_rates - 1, max(0, frequency * n_rates))));
 
     uint optimal_rate_x = params.rates[optimal_rate_index].x, optimal_rate_y = params.rates[optimal_rate_index].y;
     uint rate_code = uint(optimal_rate_x >> 1) | (optimal_rate_y << 1);
