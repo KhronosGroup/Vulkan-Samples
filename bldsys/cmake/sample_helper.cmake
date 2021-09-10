@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2020, Arm Limited and Contributors
+ Copyright (c) 2019-2021, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -136,7 +136,7 @@ endfunction()
 function(add_sample)
     set(options)  
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs FILES LIBS)
+    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -148,6 +148,14 @@ function(add_sample)
     # Append extra files if present
     if (TARGET_FILES)
         list(APPEND SRC_FILES ${TARGET_FILES})
+    endif()
+
+    # Add GLSL shader files for this sample
+    if (TARGET_SHADER_FILES_GLSL)
+        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
+        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
+            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+        endforeach()        
     endif()
 
     add_project(
@@ -162,13 +170,15 @@ function(add_sample)
         FILES
             ${SRC_FILES}
         LIBS
-            ${TARGET_LIBS})
+            ${TARGET_LIBS}
+        SHADERS_GLSL
+            ${SHADERS_GLSL})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -184,7 +194,14 @@ function(add_sample_with_tags)
         list(APPEND SRC_FILES ${TARGET_FILES})
     endif()
 
-
+    # Add GLSL shader files for this sample
+    if (TARGET_SHADER_FILES_GLSL)
+        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
+        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
+            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
+        endforeach()        
+    endif()
+    
     add_project(
         TYPE "Sample"
         ID ${TARGET_ID}
@@ -197,8 +214,9 @@ function(add_sample_with_tags)
         FILES
             ${SRC_FILES}
         LIBS
-            ${TARGET_LIBS})
-
+            ${TARGET_LIBS}
+        SHADERS_GLSL
+            ${SHADERS_GLSL})
 endfunction()
 
 function(add_test_)
@@ -224,7 +242,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -244,8 +262,13 @@ function(add_project)
 
     source_group("\\" FILES ${TARGET_FILES})
 
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES})
-    
+    # Add shaders to project group
+    if(SHADERS_GLSL)
+        source_group("\\Shaders" FILES ${SHADERS_GLSL})
+    endif()
+
+    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+  
     # inherit compile definitions from framework target
     target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
 
