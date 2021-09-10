@@ -24,4 +24,9 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Subpasses"
-    DESCRIPTION "Use of Vulkan subpasses.")
+    DESCRIPTION "Use of Vulkan subpasses."
+    SHADER_FILES_GLSL
+        "deferred/geometry.vert"
+        "deferred/geometry.frag"
+        "deferred/lighting.vert"
+        "deferred/lighting.frag")
