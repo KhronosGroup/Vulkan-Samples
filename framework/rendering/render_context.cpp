@@ -262,6 +262,8 @@ bool RenderContext::handle_surface_changes(bool force_update)
 	if (surface_properties.currentExtent.width != surface_extent.width ||
 	    surface_properties.currentExtent.height != surface_extent.height || force_update)
 	{
+		LOGW("RC::HANDLE_SURFACE_CHANGES current: {}, {};", surface_properties.currentExtent.width, surface_properties.currentExtent.height);
+		LOGW("RC::HANDLE_SURFACE_CHANGES surface_extent: {}, {};", surface_extent.width, surface_extent.height);
 		// Recreate swapchain
 		device.wait_idle();
 

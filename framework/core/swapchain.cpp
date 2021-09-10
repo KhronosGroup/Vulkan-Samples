@@ -403,8 +403,9 @@ void Swapchain::create()
 	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
 
 	VkSwapchainCreateInfoKHR create_info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
-	create_info.minImageCount    = properties.image_count;
-	create_info.imageExtent      = properties.extent;
+	create_info.minImageCount = properties.image_count;
+	create_info.imageExtent   = properties.extent;
+	LOGW("SW::CREATE: {}, {};", properties.extent.width, properties.extent.height);
 	create_info.presentMode      = properties.present_mode;
 	create_info.imageFormat      = properties.surface_format.format;
 	create_info.imageColorSpace  = properties.surface_format.colorSpace;
