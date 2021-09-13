@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,18 +15,25 @@
  * limitations under the License.
  */
 
-// Generated file by CMake. Don't edit.
-#pragma once
+#include "force_close.h"
 
-#include <functional>
-#include <memory>
-#include <unordered_map>
-#include <vector>
+#include <iostream>
 
-#include "platform/application.h"
+namespace plugins
+{
+ForceClose::ForceClose() :
+    ForceCloseTags("Force Close",
+                   "Force the application to close if it has been halted before exiting",
+                   {}, {&stop_cmd})
+{
+}
 
-@TEST_INCLUDE_FILES@
+bool ForceClose::is_active(const vkb::CommandParser &parser)
+{
+	return parser.contains(&stop_cmd);
+}
 
-const std::unordered_map<std::string, std::function<std::unique_ptr<vkb::Application>()>> test_create_functions = {
-@TEST_NAME_FUNC_PAIRS@
-};
+void ForceClose::init(const vkb::CommandParser &parser)
+{
+}
+}        // namespace plugins

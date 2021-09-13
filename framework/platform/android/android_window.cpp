@@ -21,16 +21,16 @@
 
 namespace vkb
 {
-AndroidWindow::AndroidWindow(Platform &platform, ANativeWindow *&window, bool headless) :
-    Window(platform, 0, 0),
+AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, const Window::Properties &properties) :
+    Window(properties),
     handle{window},
-    headless{headless}
+    platform{platform}
 {
 }
 
 VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 {
-	if (instance.get_handle() == VK_NULL_HANDLE || !handle || headless)
+	if (instance.get_handle() == VK_NULL_HANDLE || !handle || properties.mode == Mode::Headless)
 	{
 		return VK_NULL_HANDLE;
 	}
@@ -48,7 +48,7 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 
 vk::SurfaceKHR AndroidWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
 {
-	if (!instance || !handle || headless)
+	if (!instance || !handle || properties.mode == Mode::Headless)
 	{
 		return nullptr;
 	}
@@ -58,6 +58,11 @@ vk::SurfaceKHR AndroidWindow::create_surface(vk::Instance instance, vk::Physical
 	return instance.createAndroidSurfaceKHR(info);
 }
 
+void AndroidWindow::process_events()
+{
+	process_android_events(platform->get_android_app());
+}
+
 bool AndroidWindow::should_close()
 {
 	return finish_called ? true : handle == nullptr;
@@ -65,15 +70,12 @@ bool AndroidWindow::should_close()
 
 void AndroidWindow::close()
 {
-	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
-	ANativeActivity_finish(android_platform.get_activity());
-
+	ANativeActivity_finish(platform->get_activity());
 	finish_called = true;
 }
 
 float AndroidWindow::get_dpi_factor() const
 {
-	auto &android_platform = dynamic_cast<AndroidPlatform &>(platform);
-	return AConfiguration_getDensity(android_platform.get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
 }        // namespace vkb

@@ -27,7 +27,7 @@ namespace vkb
 class HeadlessWindow : public Window
 {
   public:
-	HeadlessWindow(Platform &platform, uint32_t width = 1028, uint32_t height = 720);
+	HeadlessWindow(const Window::Properties &properties);
 
 	virtual ~HeadlessWindow() = default;
 

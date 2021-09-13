@@ -61,15 +61,15 @@ UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-void UnixD2DPlatform::create_window()
+void UnixD2DPlatform::create_window(const Window::Properties &properties)
 {
-	if (active_app->is_headless())
+	if (properties.mode == vkb::Window::Mode::Headless)
 	{
-		window = std::make_unique<HeadlessWindow>(*this);
+		window = std::make_unique<HeadlessWindow>(properties);
 	}
 	else
 	{
-		window = std::make_unique<DirectWindow>(*this);
+		window = std::make_unique<DirectWindow>(this, properties);
 	}
 }
 
