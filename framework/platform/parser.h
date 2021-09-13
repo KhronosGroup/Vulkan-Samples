@@ -24,6 +24,8 @@
 
 namespace vkb
 {
+class Plugin;
+
 /**
  * @brief Abstract wrapper for implementing lists of commands. Useful for the CommandParser
  */
@@ -133,7 +135,7 @@ class TypedCommand : public Command
 };
 
 /**
- * @brief Command groups allow seperate commands to be shown in a labeled group
+ * @brief Command groups allow separate commands to be shown in a labeled group
  */
 class CommandGroup : public TypedCommand<CommandGroup>, public MultipleCommands
 {
@@ -143,12 +145,12 @@ class CommandGroup : public TypedCommand<CommandGroup>, public MultipleCommands
 };
 
 /**
- * @brief Subcommands act as seperate entrypoints to the application and may implement a subset of commands
+ * @brief Subcommands act as separate entrypoints to the application and may implement a subset of commands
  */
 class SubCommand : public TypedCommand<SubCommand>, public MultipleCommands
 {
   public:
-	SubCommand(const std::string &name, const std::string &help_line, const std::vector<Command *> &comamnds);
+	SubCommand(const std::string &name, const std::string &help_line, const std::vector<Command *> &commands);
 	virtual ~SubCommand() = default;
 };
 
@@ -185,7 +187,7 @@ class FlagCommand : public TypedCommand<FlagCommand>
 };
 
 /**
- * @brief Abstract context which different command parsers may use to pass their own specialised contexts
+ * @brief Abstract context which different command parsers may use to pass their own specialized contexts
  */
 class CommandParserContext
 {
@@ -215,7 +217,6 @@ class CommandParser
 	Type as(Command *command) const
 	{
 		auto values = get_command_value(command);
-
 		Type type{};
 		bool implemented_type_conversion = convert_type(values, &type);
 		assert(implemented_type_conversion && "Failed to retrieve value. Type unsupported");
@@ -229,10 +230,13 @@ class CommandParser
 	 */
 	virtual std::vector<std::string> help() const = 0;
 
-	bool parse(const std::vector<Command *> &commands);
+	virtual bool parse(const std::vector<Plugin *> &plugins) = 0;
 
+	virtual bool parse(const std::vector<Command *> &commands) = 0;
+
+  protected:
 	/*
-	 * Individual parse functions visit each type of command to configure the underly CLI implementation
+	 * Individual parse functions visit each type of command to configure the underlying CLI implementation
 	 */
 	virtual bool parse(CommandParserContext *context, const std::vector<Command *> &commands);
 	virtual void parse(CommandParserContext *context, CommandGroup *command)      = 0;
@@ -276,6 +280,20 @@ inline bool CommandParser::convert_type(const std::vector<std::string> &values, 
 	{
 		auto number = atoi(values[0].c_str());
 		*type       = static_cast<uint32_t>(number);
+	}
+	return true;
+}
+
+template <>
+inline bool CommandParser::convert_type(const std::vector<std::string> &values, float *type) const
+{
+	if (values.size() != 1)
+	{
+		*type = 0.0f;
+	}
+	else
+	{
+		*type = std::stof(values[0].c_str());
 	}
 	return true;
 }

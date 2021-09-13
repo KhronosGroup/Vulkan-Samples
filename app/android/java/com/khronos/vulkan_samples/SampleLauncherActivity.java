@@ -122,22 +122,19 @@ public class SampleLauncherActivity extends AppCompatActivity {
                 return true;
             case R.id.menu_run_samples:
                 String category = "";
-                List<String> arguments = new ArrayList<>();
-                List<String> filterTags = sampleListView.dialog.getFilter();
-
                 ViewPagerAdapter adapter = ((ViewPagerAdapter) sampleListView.viewPager.getAdapter());
                 if (adapter != null) {
                     category = adapter.getCurrentFragment().getCategory();
                 }
 
+                List<String> arguments = new ArrayList<>();
                 arguments.add("batch");
                 arguments.add("--category");
                 arguments.add(category);
-                arguments.addAll(filterTags);
+                arguments.addAll(sampleListView.dialog.getFilter());
 
-                setArguments(Utils.toStringArray(arguments));
-                Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
-                startActivity(intent);
+                String[] sa = {};
+                launchWithCommandArguments(arguments.toArray(sa));
                 return true;
             case R.id.menu_benchmark_mode:
                 isBenchmarkMode = !item.isChecked();
@@ -154,27 +151,8 @@ public class SampleLauncherActivity extends AppCompatActivity {
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
-                                           @NonNull int[] grantResults) {
+            @NonNull int[] grantResults) {
         requestNextPermission();
-    }
-
-    /**
-     * Set arguments of the Native Activity You may also use a
-     * String[]
-     *
-     * @param args A string array of arguments
-     */
-    public void setArguments(String... args) {
-        List<String> arguments = new ArrayList<>(Arrays.asList(args));
-        if (isBenchmarkMode) {
-            arguments.add("--benchmark");
-            arguments.add("2000");
-        }
-        if (isHeadless) {
-            arguments.add("--headless");
-        }
-        String[] argArray = new String[arguments.size()];
-        sendArgumentsToPlatform(arguments.toArray(argArray));
     }
 
     /**
@@ -198,10 +176,10 @@ public class SampleLauncherActivity extends AppCompatActivity {
     }
 
     /**
-     * Chain request permissions from the required permission list. When
-     * called the next unrequested permission with be requested If all
-     * permission are requested but not all granted; requested states will be
-     * reset and the PermissionView will be shown
+     * Chain request permissions from the required permission list. When called the
+     * next unrequested permission with be requested If all permission are requested
+     * but not all granted; requested states will be reset and the PermissionView
+     * will be shown
      */
     public void requestNextPermission() {
         boolean granted = true;
@@ -283,34 +261,81 @@ public class SampleLauncherActivity extends AppCompatActivity {
         // Handle argument passing
         Bundle extras = this.getIntent().getExtras();
         if (extras != null) {
-            if (extras.containsKey("sample")) {
-                String sampleID = extras.getString("sample");
-                Sample sample = samples.findByID(sampleID);
-                if (sample != null) {
-                    setArguments("--sample", sampleID);
-                    Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
-                    startActivity(intent);
-                    finishAffinity();
-                } else {
-                    Notifications.toast(this, "Could not find sample " + sampleID);
-
-                    // Continue showing app launcher
-                    return;
+            if (extras.containsKey("cmd")) {
+                String[] commands = null;
+                String[] command_arguments = extras.getStringArray("cmd");
+                String command = extras.getString("cmd");
+                if (command_arguments != null) {
+                    commands = command_arguments;
+                } else if (command != null) {
+                    commands = command.split("[ ]+");
                 }
+
+                if (commands != null) {
+                    for (String cmd : commands) {
+                        if (cmd.equals("test")) {
+                            setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+                            break;
+                        }
+                    }
+                    launchWithCommandArguments(commands);
+                    finishAffinity();
+                }
+
+            } else if (extras.containsKey("sample")) {
+                launchSample(extras.getString("sample"));
+                finishAffinity();
             } else if (extras.containsKey("test")) {
-                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-                setArguments("--test", extras.getString("test"));
-                Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
-                startActivity(intent);
-                finishAndRemoveTask();
+                launchTest(extras.getString("test"));
+                finishAffinity();
             }
+
         }
+    }
+
+    /**
+     * Set arguments of the Native Activity You may also use a String[]
+     *
+     * @param args A string array of arguments
+     */
+    public void setArguments(String... args) {
+        List<String> arguments = new ArrayList<>(Arrays.asList(args));
+        if (isBenchmarkMode) {
+            arguments.add("--benchmark");
+        }
+        if (isHeadless) {
+            arguments.add("--headless");
+        }
+        String[] argArray = new String[arguments.size()];
+        sendArgumentsToPlatform(arguments.toArray(argArray));
+    }
+
+    public void launchWithCommandArguments(String... args) {
+        setArguments(args);
+        Intent intent = new Intent(SampleLauncherActivity.this, NativeSampleActivity.class);
+        startActivity(intent);
+    }
+
+    public void launchTest(String testID) {
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+        launchWithCommandArguments("test", testID);
+    }
+
+    public void launchSample(String sampleID) {
+        Sample sample = samples.findByID(sampleID);
+        if (sample == null) {
+            Notifications.toast(this, "Could not find sample " + sampleID);
+            showSamples();
+            return;
+        }
+        launchWithCommandArguments("sample", sampleID);
     }
 
     /**
      * Get samples from the Native Application
      *
-     * @return A list of Samples that are currently installed in the Native Application
+     * @return A list of Samples that are currently installed in the Native
+     *         Application
      */
     private native Sample[] getSamples();
 

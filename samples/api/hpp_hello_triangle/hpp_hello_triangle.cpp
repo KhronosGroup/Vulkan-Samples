@@ -988,8 +988,9 @@ bool HPPHelloTriangle::prepare(vkb::Platform &platform)
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 	select_physical_device_and_surface(context, platform);
 
-	context.swapchain_dimensions.width  = platform.get_window().get_width();
-	context.swapchain_dimensions.height = platform.get_window().get_height();
+	const auto &extent                  = platform.get_window().get_extent();
+	context.swapchain_dimensions.width  = extent.width;
+	context.swapchain_dimensions.height = extent.height;
 
 	init_device(context, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,31 +16,37 @@
  */
 
 // Generated file by CMake. Don't edit.
-#pragma once
 
-#include <functional>
+#include "plugins.h"
+
 #include <memory>
-#include <unordered_map>
-#include <vector>
 
-#include "platform/application.h"
+@PLUGIN_INCLUDE_FILES@
 
-@SAMPLE_INCLUDE_FILES@
-
-struct SampleInfo
+namespace plugins
 {
-	std::string id;
-	std::string category;
-	std::string author;
-	std::string name;
-	std::string description;
-	std::vector<std::string> tags;
-};
 
-const std::vector<SampleInfo> sample_list = {
-@SAMPLE_INFO_LIST@
-};
+#define ADD_PLUGIN(name) \
+	plugins.emplace_back(std::make_unique<name>())
 
-const std::unordered_map<std::string, std::function<std::unique_ptr<vkb::Application>()>> sample_create_functions = {
-@SAMPLE_NAME_FUNC_PAIRS@
-};
+std::vector<vkb::Plugin *> get_all()
+{
+	static bool once = true;
+	static std::vector<std::unique_ptr<vkb::Plugin>> plugins;
+
+	if (once) {
+		once = false;
+@INIT_PLUGINS@
+	}
+
+	std::vector<vkb::Plugin *> ptrs;
+	ptrs.reserve(plugins.size());
+
+	for (auto &plugin : plugins)
+	{
+		ptrs.push_back(plugin.get());
+	}
+
+	return ptrs;
+}
+}        // namespace plugins

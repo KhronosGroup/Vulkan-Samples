@@ -498,6 +498,6 @@ void Swapchain::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR
 }
 VkPresentModeKHR Swapchain::get_present_mode() const
 {
-	return present_mode;
+	return properties.present_mode;
 }
 }        // namespace vkb
