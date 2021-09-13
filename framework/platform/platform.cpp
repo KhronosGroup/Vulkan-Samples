@@ -144,7 +144,7 @@ ExitCode Platform::main_loop()
 
 			window->process_events();
 		}
-		catch (std::exception e)
+		catch (std::exception & e)
 		{
 			LOGE("Error Message: {}", e.what());
 			LOGE("Failed when running application {}", active_app->get_name());
