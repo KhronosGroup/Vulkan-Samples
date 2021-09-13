@@ -23,7 +23,7 @@ layout(location = 2) flat in uint in_texture_index;
 
 layout(location = 0) out vec4 o_color;
 
-layout(binding = 1, set = 0) uniform sampler2D textures[256];
+layout(binding = 1, set = 0) uniform sampler2D textures[225];
 
 void main(void)
 {
