@@ -66,7 +66,28 @@ BindlessResources::~BindlessResources()
 {
 	if (device)
 	{
+		vertex_buffer.reset();
+		index_buffer.reset();
+		model_information_buffer.reset();
+		scene_uniform_buffer.reset();
+
+		vkDestroyPipeline(device->get_handle(), pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
 		vkDestroySampler(device->get_handle(), sampler, VK_NULL_HANDLE);
+
+		vkDestroyPipeline(device->get_handle(), gpu_cull_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(device->get_handle(), gpu_cull_pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(device->get_handle(), gpu_cull_descriptor_set_layout, VK_NULL_HANDLE);
+
+		vkDestroyPipeline(device->get_handle(), device_address_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(device->get_handle(), device_address_pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(device->get_handle(), device_address_descriptor_set_layout, VK_NULL_HANDLE);
+
+		device_address_buffer.reset();
+
+		cpu_staging_buffer.reset();
+		indirect_call_buffer.reset();
 	}
 }
 
