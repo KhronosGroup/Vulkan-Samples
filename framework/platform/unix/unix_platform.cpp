@@ -78,18 +78,6 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-void UnixPlatform::create_window()
-{
-	if (active_app->is_headless())
-	{
-		window = std::make_unique<HeadlessWindow>(*this);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(*this);
-	}
-}
-
 const char *UnixPlatform::get_surface_extension()
 {
 	if (type == UnixType::Mac)
@@ -105,6 +93,18 @@ const char *UnixPlatform::get_surface_extension()
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
 		return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
 #endif
+	}
+}
+
+void UnixPlatform::create_window(const Window::Properties &properties)
+{
+	if (properties.mode == vkb::Window::Mode::Headless)
+	{
+		window = std::make_unique<HeadlessWindow>(properties);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(this, properties);
 	}
 }
 }        // namespace vkb
