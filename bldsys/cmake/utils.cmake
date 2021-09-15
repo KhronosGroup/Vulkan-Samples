@@ -40,3 +40,15 @@ function(scan_dirs)
 
     set(${TARGET_LIST} ${DIR_LIST} PARENT_SCOPE)
 endfunction()
+
+function(string_join)
+    set(options)
+    set(oneValueArgs GLUE)
+    set(multiValueArgs INPUT OUTPUT)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    string(REPLACE ";" "${TARGET_GLUE}" RESULT_STR "${TARGET_INPUT}")
+
+    set(${TARGET_OUTPUT} ${RESULT_STR} PARENT_SCOPE)
+endfunction()

@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10.2)
 project(apps)
 
 # Generate apps.cpp
@@ -38,7 +38,7 @@ foreach(SAMPLE_ID ${TOTAL_SAMPLE_ID_LIST})
 
         set(SAMPLE_TAGS_VECTOR)
 
-        list(JOIN SAMPLE_TAGS "\", \"" SAMPLE_TAGS_VECTOR)
+        string_join(INPUT ${SAMPLE_TAGS} GLUE "\", \"" OUTPUT SAMPLE_TAGS_VECTOR)
 
         list(APPEND SAMPLE_INCLUDE_FILES "#include \"${INCLUDE_DIR}/${SAMPLE_ID}.h\"")
         list(APPEND SAMPLE_INFO_LIST "\tSampleInfo{\"${SAMPLE_ID}\", create_${SAMPLE_ID}, \"${SAMPLE_CATEGORY}\"\, \"${SAMPLE_AUTHOR}\"\, \"${SAMPLE_NAME}\"\, \"${SAMPLE_DESCRIPTION}\", {\"${SAMPLE_TAGS_VECTOR}\"}},")
@@ -58,12 +58,12 @@ foreach(TEST_ID ${TOTAL_TEST_ID_LIST})
     endif()
 endforeach()
 
-list(JOIN SAMPLE_INCLUDE_FILES "\n" SAMPLE_INCLUDE_FILES)
-list(JOIN SAMPLE_INFO_LIST "\n" SAMPLE_INFO_LIST)
-list(JOIN TEST_INCLUDE_FILES "\n" TEST_INCLUDE_FILES)
-list(JOIN TEST_INFO_LIST "\n" TEST_INFO_LIST)
-list(JOIN TEST_APP_INFO_LIST "\n" TEST_APP_INFO_LIST)
-list(JOIN APP_INFO_LIST "\n" APP_INFO_LIST)
+string_join(INPUT ${SAMPLE_INCLUDE_FILES} GLUE "\n" OUTPUT SAMPLE_INCLUDE_FILES)
+string_join(INPUT ${SAMPLE_INFO_LIST} GLUE "\n" OUTPUT SAMPLE_INFO_LIST)
+string_join(INPUT ${TEST_INCLUDE_FILES} GLUE "\n" OUTPUT TEST_INCLUDE_FILES)
+string_join(INPUT ${TEST_INFO_LIST} GLUE "\n" OUTPUT TEST_INFO_LIST)
+string_join(INPUT ${TEST_APP_INFO_LIST} GLUE "\n" OUTPUT TEST_APP_INFO_LIST)
+string_join(INPUT ${APP_INFO_LIST} GLUE "\n" OUTPUT APP_INFO_LIST)
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/apps.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/apps.cpp)
 

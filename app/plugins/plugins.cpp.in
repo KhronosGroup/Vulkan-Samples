@@ -27,7 +27,7 @@ namespace plugins
 {
 
 #define ADD_PLUGIN(name) \
-	plugins.emplace_back(std::make_unique<name>())
+	plugins.emplace_back(std::make_unique<name>());
 
 std::vector<vkb::Plugin *> get_all()
 {

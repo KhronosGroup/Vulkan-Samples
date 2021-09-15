@@ -17,7 +17,7 @@
 
  ]]
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10.2)
 
 # Snake case to Pascal case helper
 
@@ -49,10 +49,22 @@ function(snake_case_to_pascal_case SNAKE PASCAL)
 endfunction()
 
 # Plugins
-file(GLOB PLUGINS_FILES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/*")
+set(PLUGIN_NAMES
+    batch_mode
+    benchmark_mode
+    force_close
+    fps_logger
+    screenshot
+    start_sample
+    start_test
+    stop_after
+    window_options
+)
+
+string(REGEX REPLACE "([^;]+)" "${CMAKE_CURRENT_SOURCE_DIR}/\\1" PLUGIN_FILES "${PLUGIN_NAMES}")
 
 set(PLUGINS)
-foreach(DIR IN LISTS PLUGINS_FILES)
+foreach(DIR IN LISTS PLUGIN_FILES)
     if (IS_DIRECTORY ${DIR})
         string(REPLACE "${CMAKE_CURRENT_SOURCE_DIR}/" "" PLUGIN ${DIR})
         list(APPEND PLUGINS "${PLUGIN}")
@@ -77,9 +89,9 @@ foreach(EXT_SNAKE IN LISTS PLUGINS)
     list(APPEND INIT_PLUGINS "\t\tADD_PLUGIN(${EXT_PASCAL})")
 endforeach()
 
-list(JOIN PLUGIN_INCLUDE_FILES "\n" PLUGIN_INCLUDE_FILES)
-list(JOIN INIT_PLUGINS ";\n" INIT_PLUGINS)
-set(INIT_PLUGINS "${INIT_PLUGINS};")
+string_join(INPUT ${PLUGIN_INCLUDE_FILES} GLUE "\n" OUTPUT PLUGIN_INCLUDE_FILES)
+string_join(INPUT ${INIT_PLUGINS} GLUE "\n" OUTPUT INIT_PLUGINS)
+set(INIT_PLUGINS "${INIT_PLUGINS}")
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/plugins.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/plugins.cpp)
 
