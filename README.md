@@ -25,13 +25,13 @@
 
 - [Introduction](#introduction)
   - [Goals](#goals)
-- [General information](#general-information)
 - [Samples](#samples)
+- [General information](#general-information)
 - [Setup](#setup)
 - [Build](#build)
   - [Supported Platforms](#supported-platforms)
 - [Usage](#usage)
-- [Testing](#tests)
+- [Tests](#tests)
 - [License](#license)
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
@@ -96,16 +96,16 @@ The following shows some example command line usage on how to configure and run 
 vulkan_samples swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_samples --sample afbc --benchmark 5000
+vulkan_samples sample afbc --benchmark 5000
 
 # Run bonza test offscreen
-vulkan_samples --test bonza --hide
+vulkan_samples test bonza --headless
 
 # Run all the performance samples
-vulkan_samples --batch performance
+vulkan_samples batch performance
 
 # Run Swapchain Images sample on an Android device
-adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
+adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -es "cmd" "sample swapchain_images"
 ```
 
 ## Tests
