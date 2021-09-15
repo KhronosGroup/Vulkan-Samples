@@ -76,7 +76,7 @@ void create_directory(const std::string &path)
 }        // namespace fs
 
 UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
-    type{type}
+	type{type}
 {
 	Platform::set_arguments({argv + 1, argv + argc});
 	Platform::set_temp_directory(get_temp_path_from_environment());
