@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2020, Arm Limited and Contributors
+- Copyright (c) 2019-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -105,8 +105,7 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
-			platform->get_app().resize(width, height);
-			platform->get_window().resize(width, height);
+			platform->resize(width, height);
 			break;
 		}
 	}
