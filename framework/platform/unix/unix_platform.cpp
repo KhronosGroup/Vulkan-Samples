@@ -76,7 +76,7 @@ void create_directory(const std::string &path)
 }        // namespace fs
 
 UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
-	type{type}
+    type{type}
 {
 	Platform::set_arguments({argv + 1, argv + argc});
 	Platform::set_temp_directory(get_temp_path_from_environment());
@@ -99,7 +99,6 @@ const char *UnixPlatform::get_surface_extension()
 	assert(0 && "Platform not supported, no surface extension available");
 	return "";
 #endif
-
 }
 
 void UnixPlatform::create_window(const Window::Properties &properties)
