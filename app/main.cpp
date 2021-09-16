@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 #	include "platform/unix/unix_platform.h"
 int main(int argc, char *argv[])
 {
-#	if defined(VK_USE_PLATFORM_MACOS_MVK)
+#	if defined(VK_USE_PLATFORM_METAL_EXT)
 	vkb::UnixPlatform platform{vkb::UnixType::Mac, argc, argv};
 #	elif defined(VK_USE_PLATFORM_XCB_KHR) || defined(VK_USE_PLATFORM_XLIB_KHR) || defined(VK_USE_PLATFORM_WAYLAND_KHR)
 	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
