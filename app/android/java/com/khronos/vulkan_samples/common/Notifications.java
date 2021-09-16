@@ -23,8 +23,8 @@ import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Handler;
 import android.os.Looper;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
 import android.widget.Toast;
 import android.content.Context;
 
@@ -52,7 +52,7 @@ public class Notifications {
     }
 
     public static int getNotificationId(Context context) {
-        SharedPreferences prefs = context.getSharedPreferences(NOTIFICATION_PREFS, context.MODE_PRIVATE);
+        SharedPreferences prefs = context.getSharedPreferences(NOTIFICATION_PREFS, Context.MODE_PRIVATE);
         int id = initialId;
         if (prefs.contains(NOTIFICATION_KEY)) {
             id = prefs.getInt(NOTIFICATION_KEY, initialId);
@@ -89,12 +89,7 @@ public class Notifications {
      * @param message A string of a message to be shown
      */
     public static void toast(final Context context, final String message) {
-        new Handler(Looper.getMainLooper()).post(new Runnable() {
-            @Override
-            public void run() {
-                Toast.makeText(context, message, Toast.LENGTH_LONG).show();
-            }
-        });
+        new Handler(Looper.getMainLooper()).post(() -> Toast.makeText(context, message, Toast.LENGTH_LONG).show());
     }
 
 }

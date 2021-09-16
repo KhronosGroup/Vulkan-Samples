@@ -63,7 +63,7 @@ public class Utils {
      * Comparator orders with a predefined list
      */
     public static class PredefinedOrderComparator implements Comparator<String> {
-        private List<String> defined_order;
+        private final List<String> defined_order;
 
         public PredefinedOrderComparator(String... predefined_order) {
             defined_order = Collections.unmodifiableList(Arrays.asList(predefined_order));

@@ -27,14 +27,14 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class Sample implements Comparable<Sample> {
-    private String id;
-    private String category;
-    private String author;
-    private String name;
-    private String description;
+    private final String id;
+    private final String category;
+    private final String author;
+    private final String name;
+    private final String description;
 
     private String tagText;
-    private List<String> tags;
+    private final List<String> tags;
 
     public Sample(String id, String category, String author, String name, String description, String[] tags) {
         this.id = id;

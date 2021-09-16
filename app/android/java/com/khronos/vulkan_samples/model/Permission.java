@@ -20,12 +20,12 @@ package com.khronos.vulkan_samples.model;
 import android.app.Activity;
 import android.content.Context;
 import android.content.pm.PackageManager;
-import android.support.v4.app.ActivityCompat;
-import android.support.v4.content.ContextCompat;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 
 public class Permission {
-    private String name;
-    private int code;
+    private final String name;
+    private final int code;
     private boolean requested = false;
 
     public Permission(String name, int code) {

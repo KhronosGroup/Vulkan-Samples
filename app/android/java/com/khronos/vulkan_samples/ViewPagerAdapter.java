@@ -17,10 +17,10 @@
 
 package com.khronos.vulkan_samples;
 
-import android.support.annotation.NonNull;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentStatePagerAdapter;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 
@@ -36,9 +36,9 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
 
     private List<Sample> viewableSamples = new ArrayList<>();
 
-    private SampleStore samples;
+    private final SampleStore samples;
 
-    private AdapterView.OnItemClickListener clickListener;
+    private final AdapterView.OnItemClickListener clickListener;
 
     public ViewPagerAdapter(FragmentManager manager, SampleStore samples, AdapterView.OnItemClickListener clickListener) {
         super(manager);
@@ -58,6 +58,7 @@ public class ViewPagerAdapter extends FragmentStatePagerAdapter {
         viewableSamples = new ArrayList<>(samples.getByTags(filterTags));
     }
 
+    @NonNull
     @Override
     public Fragment getItem(int position) {
         List<Sample> fragmentSamples = new ArrayList<>();

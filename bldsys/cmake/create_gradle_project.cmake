@@ -40,7 +40,7 @@ set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDAT
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
 
 # minSdkVersion
-set(MIN_SDK_VERSION "minSdkVersion ${ANDROID_API}")
+set(MIN_SDK_VERSION "minSdk ${ANDROID_API}")
 
 # manifest.srcFile
 if(NOT IS_ABSOLUTE ${ANDROID_MANIFEST})
@@ -68,7 +68,7 @@ endforeach()
 list(JOIN ABI_LIST "', '" ABI_LIST)
 
 if(NOT ${ABI_LIST})
-    set(NDK_ABI_FILTERS "ndk { abiFilters '${ABI_LIST}' }")
+    set(NDK_ABI_FILTERS "abiFilters.addAll( '${ABI_LIST}' )")
 else()
     message(FATAL_ERROR "Minimum one android arch abi required.")
 endif()
