@@ -23,6 +23,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)
 set(GRADLE_BUILD_FILE ${SCRIPT_DIR}/template/gradle/build.gradle.in)
 set(GRADLE_SETTINGS_FILE ${SCRIPT_DIR}/template/gradle/settings.gradle.in)
+set(GRADLE_WRAPPER_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle-wrapper.properties.in)
 set(VALID_ABI "armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64")
 
 include(${SCRIPT_DIR}/utils.cmake)
@@ -185,7 +186,9 @@ if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
     set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\targuments '${ARGS_LIST}' \n\t\t\t}")
 endif()
 
+file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)
 configure_file(${GRADLE_BUILD_FILE} ${OUTPUT_DIR}/build.gradle)
 configure_file(${GRADLE_SETTINGS_FILE} ${OUTPUT_DIR}/settings.gradle)
+configure_file(${GRADLE_WRAPPER_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle/wrapper/gradle-wrapper.properties)
 
 message(STATUS "Android Gradle Project (With Native Support) generated at:\n\t${OUTPUT_DIR}")
