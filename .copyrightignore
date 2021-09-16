@@ -10,6 +10,7 @@
 doxyfile
 build.gradle.in
 settings.gradle.in
+gradle-wrapper.properties.in
 pull_request_template.md
 glad.h
 glad.c
