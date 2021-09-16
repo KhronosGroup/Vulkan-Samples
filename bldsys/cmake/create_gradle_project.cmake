@@ -183,7 +183,7 @@ endforeach()
 list(JOIN ARGS_LIST "', '" ARGS_LIST)
     
 if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
-    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\targuments '${ARGS_LIST}' \n\t\t\t}")
+    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\t${NDK_ABI_FILTERS}\n\t\t\t\targuments '${ARGS_LIST}'\n\t\t\t}")
 endif()
 
 file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)

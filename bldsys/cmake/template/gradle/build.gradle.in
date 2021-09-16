@@ -25,7 +25,6 @@ android {
         targetSdk 31
 
         externalNativeBuild {
-            @NDK_ABI_FILTERS@
             @CMAKE_ARGUMENTS@
         }
     }
