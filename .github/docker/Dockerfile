@@ -90,7 +90,7 @@ RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_
     && mv /usr/local/android-ndk-* $ANDROID_NDK
 
 # Confugre SDK Tools
-ENV SDK_TOOLS_VERSION=7583922
+ENV SDK_TOOLS_VERSION=6514223
 
 ADD files/package-list.txt $ANDROID_HOME/package-list.txt
 
