@@ -90,15 +90,15 @@ RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_
     && mv /usr/local/android-ndk-* $ANDROID_NDK
 
 # Confugre SDK Tools
-ENV SDK_TOOLS_VERSION=7583922
+ENV SDK_TOOLS_VERSION=6514223
 
 ADD files/package-list.txt $ANDROID_HOME/package-list.txt
 
 RUN set -x && wget -q https://dl.google.com/android/repository/commandlinetools-linux-${SDK_TOOLS_VERSION}_latest.zip -O /tmp/sdk-tools-linux.zip \
     && echo ${ANDROID_SDK_TOOLS} \
     && mkdir -p ${ANDROID_SDK_TOOLS} \
-    && unzip -qq /tmp/sdk-tools-linux.zip -d ${ANDROID_SDK_TOOLS}/.. \
-    && echo y | $ANDROID_SDK_TOOLS/bin/sdkmanager --package_file=$ANDROID_HOME/package-list.txt --verbose
+    && unzip -qq /tmp/sdk-tools-linux.zip -d ${ANDROID_SDK_TOOLS} \
+    && echo y | $ANDROID_SDK_TOOLS/tools/bin/sdkmanager --package_file=$ANDROID_HOME/package-list.txt --verbose
 
 # Install Doxygen
 ENV DOXYGEN_VERSION_MAJOR=1 \
