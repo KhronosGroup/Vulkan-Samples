@@ -98,7 +98,7 @@ RUN set -x && wget -q https://dl.google.com/android/repository/commandlinetools-
     && echo ${ANDROID_SDK_TOOLS} \
     && mkdir -p ${ANDROID_SDK_TOOLS} \
     && unzip -qq /tmp/sdk-tools-linux.zip -d ${ANDROID_SDK_TOOLS} \
-    && echo y | $ANDROID_SDK_TOOLS/tools/bin/sdkmanager --package_file=$ANDROID_HOME/package-list.txt --verbose
+    && echo y | $ANDROID_SDK_TOOLS/bin/sdkmanager --package_file=$ANDROID_HOME/package-list.txt --verbose
 
 # Install Doxygen
 ENV DOXYGEN_VERSION_MAJOR=1 \
