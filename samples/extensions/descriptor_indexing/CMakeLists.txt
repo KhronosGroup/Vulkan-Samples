@@ -24,4 +24,9 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Hans-Kristian Arntzen"
         NAME "Descriptor indexing"
-        DESCRIPTION "Demonstrates update-after-bind as well as non-uniform indexing of descriptors (VK_EXT_descriptor_indexing)")
+        DESCRIPTION "Demonstrates update-after-bind as well as non-uniform indexing of descriptors (VK_EXT_descriptor_indexing)"
+        SHADER_FILES_GLSL
+                "descriptor_indexing/nonuniform-quads.vert"
+                "descriptor_indexing/nonuniform-quads.frag"
+                "descriptor_indexing/update-after-bind-quads.vert"
+                "descriptor_indexing/update-after-bind-quads.frag")

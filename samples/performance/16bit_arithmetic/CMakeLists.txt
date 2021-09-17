@@ -24,4 +24,8 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Hans-Kristian Arntzen"
         NAME "16-bit arithmetic"
-        DESCRIPTION "Using VK_KHR_shader_float16_int8 to improve arithmetic throughput.")
+        DESCRIPTION "Using VK_KHR_shader_float16_int8 to improve arithmetic throughput."
+        SHADER_FILES_GLSL
+                "16bit_arithmetic/visualize.vert"
+                "16bit_arithmetic/visualize.frag"
+                "16bit_arithmetic/compute_buffer.comp")
