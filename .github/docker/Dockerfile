@@ -33,7 +33,7 @@ RUN apt-get update && apt-get install -y \
         checkinstall \
         dos2unix \
         unzip \
-        openjdk-8-jdk \
+        openjdk-11-jdk \
         python3 \
         python3-pip \
         flex \
