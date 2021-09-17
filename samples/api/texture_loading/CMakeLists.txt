@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Texture loading and mapping"
-    DESCRIPTION "Loading a texture and displaying it on a simple object")
+    DESCRIPTION "Loading a texture and displaying it on a simple object"
+    SHADER_FILES_GLSL
+        "texture_loading/texture.vert"
+        "texture_loading/texture.frag")

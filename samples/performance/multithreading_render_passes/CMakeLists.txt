@@ -1,4 +1,4 @@
-# Copyright (c) 2020, Arm Limited and Contributors
+# Copyright (c) 2020-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,9 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "RP Multithreading"
-    DESCRIPTION "Multithreading with multiple render passes.")
+    DESCRIPTION "Multithreading with multiple render passes."
+    SHADER_FILES_GLSL
+        "shadows/shadowmap.vert"
+        "shadows/shadowmap.frag"
+        "shadows/main.vert"
+        "shadows/main.frag")
