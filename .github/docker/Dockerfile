@@ -83,14 +83,14 @@ ENV PATH="$PATH:$ANDROID_HOME/platform-tools:${ANDROID_SDK_TOOLS}/tools/bin:$AND
 RUN mkdir -p $ANDROID_HOME
 
 # Configure Android NDK
-ENV NDK_VERSION=r21d
+ENV NDK_VERSION=r23
 
 RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux-x86_64.zip -O /tmp/android-ndk.zip \
     && unzip -qq /tmp/android-ndk.zip -d /usr/local \
     && mv /usr/local/android-ndk-* $ANDROID_NDK
 
 # Confugre SDK Tools
-ENV SDK_TOOLS_VERSION=6514223
+ENV SDK_TOOLS_VERSION=7583922
 
 ADD files/package-list.txt $ANDROID_HOME/package-list.txt
 
