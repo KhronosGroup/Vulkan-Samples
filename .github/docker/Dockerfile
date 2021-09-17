@@ -60,13 +60,12 @@ RUN wget -O- https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
         clang-tidy-9
 
 # Install Gradle
-ENV GRADLE_VERSION_MAJOR=6 \
-    GRADLE_VERSION_MINOR=3 \
-    GRADLE_VERSION_PATCH=0 \
+ENV GRADLE_VERSION_MAJOR=7 \
+    GRADLE_VERSION_MINOR=0 \
+    GRADLE_VERSION_PATCH=2 \
     GRADLE_HOME=/usr/local/gradle
 
-# Append .$GRADLE_VERSION_PATCH to use a patch version
-ENV GRADLE_VERSION=$GRADLE_VERSION_MAJOR.$GRADLE_VERSION_MINOR
+ENV GRADLE_VERSION=$GRADLE_VERSION_MAJOR.$GRADLE_VERSION_MINOR.$GRADLE_VERSION_PATCH
 
 RUN wget -q https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin.zip -O /tmp/gradle.zip \
     && unzip -qq /tmp/gradle.zip -d /usr/local \
