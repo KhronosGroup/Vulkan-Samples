@@ -85,7 +85,7 @@ RUN mkdir -p $ANDROID_HOME
 # Configure Android NDK
 ENV NDK_VERSION=r23
 
-RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux-x86_64.zip -O /tmp/android-ndk.zip \
+RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux.zip -O /tmp/android-ndk.zip \
     && unzip -qq /tmp/android-ndk.zip -d /usr/local \
     && mv /usr/local/android-ndk-* $ANDROID_NDK
 
