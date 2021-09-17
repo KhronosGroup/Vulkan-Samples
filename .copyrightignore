@@ -7,9 +7,11 @@
 .png
 .ttf
 .github
+.jar
 doxyfile
 build.gradle.in
 settings.gradle.in
+gradle.properties.in
 gradle-wrapper.properties.in
 pull_request_template.md
 glad.h
