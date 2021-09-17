@@ -97,7 +97,7 @@ ADD files/package-list.txt $ANDROID_HOME/package-list.txt
 RUN set -x && wget -q https://dl.google.com/android/repository/commandlinetools-linux-${SDK_TOOLS_VERSION}_latest.zip -O /tmp/sdk-tools-linux.zip \
     && echo ${ANDROID_SDK_TOOLS} \
     && mkdir -p ${ANDROID_SDK_TOOLS} \
-    && unzip -qq /tmp/sdk-tools-linux.zip -d ${ANDROID_SDK_TOOLS} \
+    && unzip -qq /tmp/sdk-tools-linux.zip -d ${ANDROID_SDK_TOOLS}/.. \
     && echo y | $ANDROID_SDK_TOOLS/bin/sdkmanager --package_file=$ANDROID_HOME/package-list.txt --verbose
 
 # Install Doxygen
