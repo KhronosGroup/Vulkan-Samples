@@ -32,62 +32,62 @@ The difference between separating and combining them starts at the descriptor le
 A separate setup uses descriptors of type `VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE` for the sampled image:
 
 ```cpp
-    // Image info only references the image
-	VkDescriptorImageInfo image_info{};
-	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
-	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+// Image info only references the image
+VkDescriptorImageInfo image_info{};
+image_info.imageView   = texture.image->get_vk_image_view().get_handle();
+image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    // Sampled image descriptor
-	VkWriteDescriptorSet image_write_descriptor_set{};
-	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	image_write_descriptor_set.dstSet          = base_descriptor_set;
-	image_write_descriptor_set.dstBinding      = 1;
-	image_write_descriptor_set.descriptorCount = 1;
-	image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-	image_write_descriptor_set.pImageInfo      = &image_info;
+// Sampled image descriptor
+VkWriteDescriptorSet image_write_descriptor_set{};
+image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+image_write_descriptor_set.dstSet          = base_descriptor_set;
+image_write_descriptor_set.dstBinding      = 1;
+image_write_descriptor_set.descriptorCount = 1;
+image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+image_write_descriptor_set.pImageInfo      = &image_info;
 
-    // One set for the sampled image
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-        ...
-	    // Binding 1 : Fragment shader sampled image
-        image_write_descriptor_set};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+// One set for the sampled image
+std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	...
+	// Binding 1 : Fragment shader sampled image
+	image_write_descriptor_set};
+vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 ```
 
 And `VK_DESCRIPTOR_TYPE_SAMPLER` for the sampler. For this sample, we create two different samplers:
 
 ```cpp
-	// Sets for each of the sampler
-	descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
-	for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
-	{
-		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &sampler_descriptor_sets[i]));
+// Sets for each of the sampler
+descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
+for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
+{
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &sampler_descriptor_sets[i]));
 
-        // Descriptor info only references the sampler
-		VkDescriptorImageInfo sampler_info{};
-		sampler_info.sampler = samplers[i];
+	// Descriptor info only references the sampler
+	VkDescriptorImageInfo sampler_info{};
+	sampler_info.sampler = samplers[i];
 
-		VkWriteDescriptorSet sampler_write_descriptor_set{};
-		sampler_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		sampler_write_descriptor_set.dstSet          = sampler_descriptor_sets[i];
-		sampler_write_descriptor_set.dstBinding      = 0;
-		sampler_write_descriptor_set.descriptorCount = 1;
-		sampler_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-		sampler_write_descriptor_set.pImageInfo      = &sampler_info;
+	VkWriteDescriptorSet sampler_write_descriptor_set{};
+	sampler_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	sampler_write_descriptor_set.dstSet          = sampler_descriptor_sets[i];
+	sampler_write_descriptor_set.dstBinding      = 0;
+	sampler_write_descriptor_set.descriptorCount = 1;
+	sampler_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
+	sampler_write_descriptor_set.pImageInfo      = &sampler_info;
 
-		vkUpdateDescriptorSets(get_device().get_handle(), 1, &sampler_write_descriptor_set, 0, nullptr);
-	}
+	vkUpdateDescriptorSets(get_device().get_handle(), 1, &sampler_write_descriptor_set, 0, nullptr);
+}
 ```
 
 At draw-time, the descriptor containing the sampled image is bound to set 0 and the descriptor for the currently selected sampler is bound to set 1:
 
 ```cpp
-    // Base descriptor with the image to be sampled in set 0
-    vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &base_descriptor_set, 0, nullptr);
-    // Descriptor for the selected sampler in set 1
-    vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &sampler_descriptor_sets[selected_sampler], 0, nullptr);
-    ...
-    vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+// Base descriptor with the image to be sampled in set 0
+vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &base_descriptor_set, 0, nullptr);
+// Descriptor for the selected sampler in set 1
+vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &sampler_descriptor_sets[selected_sampler], 0, nullptr);
+...
+vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
 ``` 
 
 ## In the shader
