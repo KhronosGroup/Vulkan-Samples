@@ -11,6 +11,8 @@
 doxyfile
 build.gradle.in
 settings.gradle.in
+gradlew
+gradlew.bat
 gradle.properties.in
 gradle-wrapper.properties.in
 pull_request_template.md
