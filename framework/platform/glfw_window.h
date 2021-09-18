@@ -24,13 +24,15 @@ struct GLFWwindow;
 
 namespace vkb
 {
+class Platform;
+
 /**
  * @brief An implementation of GLFW, inheriting the behaviour of the Window interface
  */
 class GlfwWindow : public Window
 {
   public:
-	GlfwWindow(Platform &platform, uint32_t width = 1280, uint32_t height = 720);
+	GlfwWindow(Platform *platform, const Window::Properties &properties);
 
 	virtual ~GlfwWindow();
 

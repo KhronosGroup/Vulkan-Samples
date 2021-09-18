@@ -106,7 +106,7 @@ void Synchronization2::build_command_buffers()
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
 	{
 		// Set target frame buffer
 		render_pass_begin_info.framebuffer = framebuffers[i];
@@ -265,7 +265,7 @@ void Synchronization2::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine(is_benchmark_mode() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->get_window().get_window_mode() == vkb::Window::Mode::Headless ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -308,7 +308,7 @@ void Synchronization2::prepare_storage_buffers()
 	// Staging
 	// SSBO won't be changed on the host after upload so copy to device local memory
 	vkb::core::Buffer staging_buffer{get_device(), storage_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_ONLY};
-	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
+	staging_buffer.update(particle_buffer.data(), static_cast<size_t>(storage_buffer_size));
 
 	compute.storage_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                             storage_buffer_size,

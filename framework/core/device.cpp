@@ -148,8 +148,8 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 			else
 			{
 				LOGE("Required device extension {} not available, cannot run", extension);
+				error = true;
 			}
-			error = !extension_is_optional;
 		}
 
 		if (error)
@@ -417,7 +417,7 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	{
 		for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
 		{
-			if ((queue_family_properties[i].queueFlags & queue_flag) && ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
+			if ((queue_family_properties[i].queueFlags & queue_flag) && !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				return i;
 				break;
@@ -431,7 +431,7 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	{
 		for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
 		{
-			if ((queue_family_properties[i].queueFlags & queue_flag) && ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0))
+			if ((queue_family_properties[i].queueFlags & queue_flag) && !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && !(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT))
 			{
 				return i;
 				break;

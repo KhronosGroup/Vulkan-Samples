@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,9 +210,9 @@ void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::Rend
 		{
 			get_render_context().get_active_frame().update_descriptor_sets();
 		}
-	}
 
-	command_buffer.end_render_pass();
+		command_buffer.end_render_pass();
+	}
 }
 
 inline ConstantData::Method ConstantData::get_active_method()
