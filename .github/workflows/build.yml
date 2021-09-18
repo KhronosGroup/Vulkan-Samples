@@ -68,4 +68,4 @@ jobs:
           echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew
+        run: ./gradlew :assembleRelease
