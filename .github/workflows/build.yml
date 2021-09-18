@@ -68,8 +68,8 @@ jobs:
           echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
       - name: "Ensure Ninja is installed."
         run: |
-          sudo apt-get update
-          sudo apt install ninja-build
+          apt-get update
+          apt install ninja-build
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: ./gradlew :assembleRelease
