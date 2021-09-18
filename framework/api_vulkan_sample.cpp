@@ -48,7 +48,8 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	// Command buffer submission info is set by each example
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
-	if (!is_headless())
+
+	if (platform.get_window().get_window_mode() != vkb::Window::Mode::Headless)
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -94,6 +95,8 @@ void ApiVulkanSample::update(float delta_time)
 	{
 		view_updated = true;
 	}
+
+	platform->on_post_draw(get_render_context());
 }
 
 void ApiVulkanSample::resize(const uint32_t, const uint32_t)
@@ -129,6 +132,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+		framebuffers[i] = VK_NULL_HANDLE;
 	}
 	setup_framebuffer();
 
@@ -166,10 +170,10 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
 }
@@ -435,7 +439,7 @@ void ApiVulkanSample::update_overlay(float delta_time)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(fps), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
 			on_update_ui_overlay(gui->get_drawer());
 		});
 
@@ -656,6 +660,18 @@ void ApiVulkanSample::setup_framebuffer()
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
 
+	// Delete existing frame buffers
+	if (framebuffers.size() > 0)
+	{
+		for (uint32_t i = 0; i < framebuffers.size(); i++)
+		{
+			if (framebuffers[i] != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			}
+		}
+	}
+
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
@@ -737,6 +753,91 @@ void ApiVulkanSample::setup_render_pass()
 	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
 }
 
+void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
+{
+	vkDestroyRenderPass(device->get_handle(), render_pass, nullptr);
+
+	VkAttachmentLoadOp  color_attachment_load_op      = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	VkAttachmentStoreOp color_attachment_store_op     = VK_ATTACHMENT_STORE_OP_STORE;
+	VkImageLayout       color_attachment_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	// Samples can keep the color attachment contents, e.g. if they have previously written to the swap chain images
+	if (flags & RenderPassCreateFlags::ColorAttachmentLoad)
+	{
+		color_attachment_load_op      = VK_ATTACHMENT_LOAD_OP_LOAD;
+		color_attachment_image_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
+	std::array<VkAttachmentDescription, 2> attachments = {};
+	// Color attachment
+	attachments[0].format         = render_context->get_format();
+	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp         = color_attachment_load_op;
+	attachments[0].storeOp        = color_attachment_store_op;
+	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout  = color_attachment_image_layout;
+	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	// Depth attachment
+	attachments[1].format         = depth_format;
+	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference color_reference = {};
+	color_reference.attachment            = 0;
+	color_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depth_reference = {};
+	depth_reference.attachment            = 1;
+	depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass_description    = {};
+	subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass_description.colorAttachmentCount    = 1;
+	subpass_description.pColorAttachments       = &color_reference;
+	subpass_description.pDepthStencilAttachment = &depth_reference;
+	subpass_description.inputAttachmentCount    = 0;
+	subpass_description.pInputAttachments       = nullptr;
+	subpass_description.preserveAttachmentCount = 0;
+	subpass_description.pPreserveAttachments    = nullptr;
+	subpass_description.pResolveAttachments     = nullptr;
+
+	// Subpass dependencies for layout transitions
+	std::array<VkSubpassDependency, 2> dependencies;
+
+	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass      = 0;
+	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass      = 0;
+	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkRenderPassCreateInfo render_pass_create_info = {};
+	render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachments.size());
+	render_pass_create_info.pAttachments           = attachments.data();
+	render_pass_create_info.subpassCount           = 1;
+	render_pass_create_info.pSubpasses             = &subpass_description;
+	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
+	render_pass_create_info.pDependencies          = dependencies.data();
+
+	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+}
+
 void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
 
@@ -794,6 +895,13 @@ void ApiVulkanSample::create_swapchain_buffers()
 			swapchain_buffers[i].view  = image_view.get_handle();
 		}
 	}
+}
+
+void ApiVulkanSample::update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags)
+{
+	get_render_context().update_swapchain(image_usage_flags);
+	create_swapchain_buffers();
+	setup_framebuffer();
 }
 
 void ApiVulkanSample::handle_surface_changes()

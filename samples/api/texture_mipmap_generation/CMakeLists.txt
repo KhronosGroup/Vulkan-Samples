@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Texture mipmap generation"
-    DESCRIPTION "Generate mipmaps for a texture")
+    DESCRIPTION "Generate mipmaps for a texture"
+    SHADER_FILES_GLSL
+        "texture_mipmap_generation/texture.vert"
+        "texture_mipmap_generation/texture.frag")

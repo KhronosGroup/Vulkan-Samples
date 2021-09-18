@@ -121,20 +121,20 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-void WindowsPlatform::create_window()
-{
-	if (active_app->is_headless())
-	{
-		window = std::make_unique<HeadlessWindow>(*this);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(*this);
-	}
-}
-
 const char *WindowsPlatform::get_surface_extension()
 {
 	return VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
+}
+
+void WindowsPlatform::create_window(const Window::Properties &properties)
+{
+	if (properties.mode == vkb::Window::Mode::Headless)
+	{
+		window = std::make_unique<HeadlessWindow>(properties);
+	}
+	else
+	{
+		window = std::make_unique<GlfwWindow>(this, properties);
+	}
 }
 }        // namespace vkb
