@@ -57,6 +57,11 @@ android {
     externalNativeBuild {
         @CMAKE_PATH@
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
