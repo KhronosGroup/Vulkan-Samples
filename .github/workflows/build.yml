@@ -60,5 +60,7 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "recursive"
-      - run: cmake -G "Unix Makefiles" -H. -Bbuild/android -DCMAKE_TOOLCHAIN_FILE=bldsys/toolchain/android_gradle.cmake -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-      - run: cmake --build build/android --config ${{ matrix.build_type }} --target vulkan_samples_package -- -j$(($(nproc)/2+1))
+      - name: "Run generate script"
+        run: ./bldsys/scripts/generate_android_gradle.sh
+      - name: "Build Android using gradlew."
+        run: cd ./build/android-gradle/ && ./gradlew.sh
