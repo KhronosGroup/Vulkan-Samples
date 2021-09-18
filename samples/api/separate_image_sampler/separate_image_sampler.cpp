@@ -289,6 +289,7 @@ void SeparateImageSampler::setup_descriptor_set()
 	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
 	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+    // Sampled image descriptor
 	VkWriteDescriptorSet image_write_descriptor_set{};
 	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	image_write_descriptor_set.dstSet          = base_descriptor_set;
@@ -308,7 +309,7 @@ void SeparateImageSampler::setup_descriptor_set()
 		image_write_descriptor_set};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Descriptors sets for each of the sampler
+	// Sets for each of the sampler
 	descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
 	for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
 	{
