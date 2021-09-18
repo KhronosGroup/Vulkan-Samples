@@ -64,4 +64,4 @@ jobs:
         run: ./bldsys/scripts/generate_android_gradle.sh
       - name: "Build Android using gradlew."
         working-directory: build/android-gradle
-        run: ./gradlew.sh
+        run: ./gradlew
