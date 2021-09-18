@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,11 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "HDR"
-    DESCRIPTION "High-dynamic-range rendering")
+    DESCRIPTION "High-dynamic-range rendering"
+    SHADER_FILES_GLSL
+        "hdr/composition.vert"
+        "hdr/composition.frag"
+        "hdr/bloom.vert"
+        "hdr/bloom.frag"
+        "hdr/gbuffer.vert"
+        "hdr/gbuffer.frag")
