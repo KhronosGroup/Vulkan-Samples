@@ -25,13 +25,3 @@ jobs:
           sudo apt install xorg-dev libglu1-mesa-dev
 
       - run: cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF
-
-  android_external_project:
-    name: Build as external project
-    container: ghcr.io/khronosgroup/vulkan-samples
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "recursive"
-      - run: cmake -DCMAKE_TOOLCHAIN_FILE=../../bldsys/toolchain/android_gradle.cmake -Htests/external_project -Bbuild -DVKB_BUILD_SAMPLES=OFF

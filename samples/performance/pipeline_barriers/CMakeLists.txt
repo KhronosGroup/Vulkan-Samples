@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,9 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Pipeline Barriers"
-    DESCRIPTION "Using pipeline barriers efficiently.")
+    DESCRIPTION "Using pipeline barriers efficiently."
+    SHADER_FILES_GLSL
+        "deferred/geometry.vert"
+        "deferred/geometry.frag"
+        "deferred/lighting.vert"
+        "deferred/lighting.frag")

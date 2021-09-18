@@ -24,4 +24,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Basis Universal texture compression"
-    DESCRIPTION "Loading and displaying a Basis Universal compressed texture from kTX2")
+    DESCRIPTION "Loading and displaying a Basis Universal compressed texture from KTX2"
+    SHADER_FILES_GLSL
+        "texture_compression_basisu/texture.vert"
+        "texture_compression_basisu/texture.frag")

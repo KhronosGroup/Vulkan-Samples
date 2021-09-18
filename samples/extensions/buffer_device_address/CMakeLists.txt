@@ -24,4 +24,8 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Hans-Kristian Arntzen"
         NAME "Buffer device address"
-        DESCRIPTION "Demonstrates use of buffer device address for flexible vertex attribute fetch")
+        DESCRIPTION "Demonstrates use of buffer device address for flexible vertex attribute fetch"
+        SHADER_FILES_GLSL
+                "buffer_device_address/update_vbo.comp"
+                "buffer_device_address/render.vert"
+                "buffer_device_address/render.frag")

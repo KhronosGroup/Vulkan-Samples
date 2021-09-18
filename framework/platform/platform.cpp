@@ -272,9 +272,9 @@ void Platform::disable_input_processing()
 	process_input_events = false;
 }
 
-void Platform::set_focus(bool focused)
+void Platform::set_focus(bool _focused)
 {
-	focused = focused;
+	focused = _focused;
 }
 
 void Platform::set_window_properties(const Window::OptionalProperties &properties)
