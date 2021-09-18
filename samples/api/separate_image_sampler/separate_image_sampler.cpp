@@ -284,9 +284,18 @@ void SeparateImageSampler::setup_descriptor_set()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
+    // Image info only references the image
 	VkDescriptorImageInfo image_info{};
 	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
 	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	VkWriteDescriptorSet image_write_descriptor_set{};
+	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	image_write_descriptor_set.dstSet          = base_descriptor_set;
+	image_write_descriptor_set.dstBinding      = 1;
+	image_write_descriptor_set.descriptorCount = 1;
+	image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+	image_write_descriptor_set.pImageInfo      = &image_info;
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    // Binding 0 : Vertex shader uniform buffer
@@ -295,14 +304,8 @@ void SeparateImageSampler::setup_descriptor_set()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
 	        &buffer_descriptor),
-
 	    // Binding 1 : Fragment shader sampled image
-	    vkb::initializers::write_descriptor_set(
-	        base_descriptor_set,
-	        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
-	        1,
-	        &image_info)};
-
+		image_write_descriptor_set};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Descriptors sets for each of the sampler
@@ -311,16 +314,17 @@ void SeparateImageSampler::setup_descriptor_set()
 	{
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &sampler_descriptor_sets[i]));
 
+        // Descriptor info only references the sampler
 		VkDescriptorImageInfo sampler_info{};
 		sampler_info.sampler = samplers[i];
 
-		VkWriteDescriptorSet sampler_write_descriptor_set =
-			// Binding 0 : Fragment shader sampler
-		    vkb::initializers::write_descriptor_set(
-		        sampler_descriptor_sets[i],
-		        VK_DESCRIPTOR_TYPE_SAMPLER,
-		        0,
-		        &sampler_info);
+		VkWriteDescriptorSet sampler_write_descriptor_set{};
+		sampler_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		sampler_write_descriptor_set.dstSet          = sampler_descriptor_sets[i];
+		sampler_write_descriptor_set.dstBinding      = 0;
+		sampler_write_descriptor_set.descriptorCount = 1;
+		sampler_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
+		sampler_write_descriptor_set.pImageInfo      = &sampler_info;
 
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &sampler_write_descriptor_set, 0, nullptr);
 	}
