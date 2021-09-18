@@ -62,6 +62,10 @@ jobs:
           submodules: "recursive"
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
+      - name: "Explicitly setup SDK path with local.properties."
+        run: echo "sdk.path=/usr/local/android-sdk" > build/android_gradle/local.properties
+      - name: "Explicitly setup NDK path with local.properties."
+        run: echo "ndk.path=/usr/local/android-ndk" >> build/android_gradle/local.properties
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: ./gradlew
