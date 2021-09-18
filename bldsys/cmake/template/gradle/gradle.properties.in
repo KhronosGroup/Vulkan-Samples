@@ -1,2 +1,4 @@
 android.useAndroidX=true
 android.enableJetifier=true
+gradle=build -x lint -x lintVitalRelease
+org.gradle.parallel=true
