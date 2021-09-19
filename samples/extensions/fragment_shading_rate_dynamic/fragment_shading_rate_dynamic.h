@@ -27,34 +27,34 @@
 class FragmentShadingRateDynamic : public ApiVulkanSample
 {
   public:
-    FragmentShadingRateDynamic();
-    ~FragmentShadingRateDynamic() override;
-    bool prepare(vkb::Platform &platform) override;
-    void resize(uint32_t new_width, uint32_t new_height) override;
-    void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-    void render(float delta_time) override;
-    void build_command_buffers() override;
-    void setup_framebuffer() override;
-    void setup_render_pass() override;
-    void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	FragmentShadingRateDynamic();
+	~FragmentShadingRateDynamic() override;
+	bool prepare(vkb::Platform &platform) override;
+	void resize(uint32_t new_width, uint32_t new_height) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	void setup_framebuffer() override;
+	void setup_render_pass() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
-    void create_shading_rate_attachment();
-    void invalidate_shading_rate_attachment();
-    void load_assets();
-    void prepare_uniform_buffers();
-    void update_uniform_buffers();
-    void setup_descriptor_set_layout();
-    void prepare_pipelines();
-    void setup_descriptor_pool();
-    void setup_descriptor_sets();
-    void create_compute_pipeline();
-    void update_compute_pipeline();
-    void draw();
+	void create_shading_rate_attachment();
+	void invalidate_shading_rate_attachment();
+	void load_assets();
+	void prepare_uniform_buffers();
+	void update_uniform_buffers();
+	void setup_descriptor_set_layout();
+	void prepare_pipelines();
+	void setup_descriptor_pool();
+	void setup_descriptor_sets();
+	void create_compute_pipeline();
+	void update_compute_pipeline();
+	void draw();
 
 	bool enable_attachment_shading_rate = true;
 	bool color_shading_rate             = false;
-	bool display_sky_sphere              = true;
+	bool display_sky_sphere             = true;
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR    physical_device_fragment_shading_rate_properties{};
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
