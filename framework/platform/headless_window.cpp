@@ -19,8 +19,8 @@
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(Platform &platform, uint32_t width, uint32_t height) :
-    Window(platform, width, height)
+HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
+    Window(properties)
 {
 }
 

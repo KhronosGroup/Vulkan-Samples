@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -79,9 +79,7 @@ class SampleItemClickListener implements AdapterView.OnItemClickListener {
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String sampleId = ((Sample) parent.getItemAtPosition(position)).getId();
-        activity.setArguments("--sample", sampleId);
-        Intent intent = new Intent(activity, NativeSampleActivity.class);
-        activity.startActivity(intent);
+        String sampleID = ((Sample) parent.getItemAtPosition(position)).getId();
+        activity.launchSample(sampleID);
     }
 }

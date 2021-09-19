@@ -28,5 +28,11 @@ if (NOT WIN32)
             CATEGORY ${CATEGORY_NAME}
             AUTHOR "Hans-Kristian Arntzen"
             NAME "Timeline semaphore"
-            DESCRIPTION "Demonstrates use of timeline semaphores to express complex queue dependency graphs")
+            DESCRIPTION "Demonstrates use of timeline semaphores to express complex queue dependency graphs"
+            SHADER_FILES_GLSL            
+                "timeline_semaphore/game_of_life_update.comp"
+                "timeline_semaphore/game_of_life_mutate.comp"
+                "timeline_semaphore/game_of_life_init.comp"
+                "timeline_semaphore/render.vert"
+                "timeline_semaphore/render.frag")
 endif()
