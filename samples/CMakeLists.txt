@@ -60,6 +60,7 @@ set(ORDER_LIST
     #Extension Samples
     "conservative_rasterization"
     "fragment_shading_rate"
+    "fragment_shading_rate_dynamic"
     "push_descriptors"
     "raytracing_basic"
     "raytracing_reflection"
