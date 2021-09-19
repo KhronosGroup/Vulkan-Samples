@@ -55,6 +55,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	bool enable_attachment_shading_rate = true;
 	bool color_shading_rate             = false;
 	bool display_sky_sphere             = true;
+	bool debug_utils_supported          = false;
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR    physical_device_fragment_shading_rate_properties{};
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};

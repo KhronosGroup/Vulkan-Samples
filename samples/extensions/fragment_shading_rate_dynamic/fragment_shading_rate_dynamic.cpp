@@ -167,23 +167,6 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
 	shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
 
-	{
-		auto &_cmd = device->request_command_buffer();
-		_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-		auto _memory_barrier            = vkb::ImageMemoryBarrier();
-		_memory_barrier.dst_access_mask = 0;
-		_memory_barrier.src_access_mask = 0;
-		_memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
-		_memory_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
-		_cmd.image_memory_barrier(*shading_rate_image_compute_view, _memory_barrier);
-		_cmd.end();
-
-		auto &queue  = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-		auto  _fence = device->request_fence();
-		queue.submit(_cmd, _fence);
-		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &_fence, VK_TRUE, UINT64_MAX));
-	}
-
 	// Create an attachment to store the frequency content of the rendered image during the render pass
 	VkExtent3D frequency_image_extent{};
 	frequency_image_extent.width  = this->width;
@@ -195,6 +178,24 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
                                                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
                                                                  VMA_MEMORY_USAGE_GPU_ONLY);
     frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
+
+	{
+		auto &_cmd = device->request_command_buffer();
+		_cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+		auto _memory_barrier            = vkb::ImageMemoryBarrier();
+		_memory_barrier.dst_access_mask = 0;
+		_memory_barrier.src_access_mask = 0;
+		_memory_barrier.old_layout      = VK_IMAGE_LAYOUT_UNDEFINED;
+		_memory_barrier.new_layout      = VK_IMAGE_LAYOUT_GENERAL;
+		_cmd.image_memory_barrier(*shading_rate_image_compute_view, _memory_barrier);
+		_cmd.image_memory_barrier(*frequency_content_image_view, _memory_barrier);
+		_cmd.end();
+
+		auto &queue  = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		auto  _fence = device->request_fence();
+		queue.submit(_cmd, _fence);
+		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &_fence, VK_TRUE, UINT64_MAX));
+	}
 }
 
 void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
@@ -641,6 +642,23 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 	vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, subresource_range);
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
+
+	if (debug_utils_supported)
+	{
+		auto set_name = [device{get_device().get_handle()}](VkObjectType object_type, const char *name, const void *handle) {
+			VkDebugUtilsObjectNameInfoEXT name_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
+			name_info.objectType                    = object_type;
+			name_info.objectHandle                  = (uint64_t) handle;
+			name_info.pObjectName                   = name;
+			vkSetDebugUtilsObjectNameEXT(device, &name_info);
+		};
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_compute_view", shading_rate_image_compute_view->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_view", shading_rate_image_view->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "frequency_content_image_view", frequency_content_image_view->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image_compute", shading_rate_image_compute->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image", shading_rate_image->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE, "frequency_content_image", frequency_content_image->get_handle());
+	}
 }
 
 void FragmentShadingRateDynamic::prepare_pipelines()
@@ -817,6 +835,11 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
+
+	const auto enabled_instance_extensions = instance->get_extensions();
+	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
+								return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
+											 }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
