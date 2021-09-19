@@ -22,9 +22,9 @@ FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
 {
 	title = "Dynamic fragment shading rate";
 
-    (void)ubo_scene.skysphere_modelview; // this is used in the shader
+	(void) ubo_scene.skysphere_modelview;        // this is used in the shader
 
-    // Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
+	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
@@ -194,24 +194,24 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
                                                                  VK_FORMAT_R8G8_UINT,
                                                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
                                                                  VMA_MEMORY_USAGE_GPU_ONLY);
-	frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
+    frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
 }
 
 void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
 {
-    device->wait_idle();
+	device->wait_idle();
 	shading_rate_image.reset();
-    shading_rate_image_compute.reset();
+	shading_rate_image_compute.reset();
 	shading_rate_image_view.reset();
-    shading_rate_image_compute_view.reset();
+	shading_rate_image_compute_view.reset();
 	frequency_content_image.reset();
 	frequency_content_image_view.reset();
 
-    // invalidate compute pipeline
-    vkDestroyPipeline(device->get_handle(), compute.pipeline, VK_NULL_HANDLE);
-    vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
-    vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
-    vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
+	// invalidate compute pipeline
+	vkDestroyPipeline(device->get_handle(), compute.pipeline, VK_NULL_HANDLE);
+	vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
+	vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
+	vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
 }
 
 void FragmentShadingRateDynamic::setup_render_pass()
@@ -267,36 +267,36 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	attachments[3].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
 	attachments[3].finalLayout    = VK_IMAGE_LAYOUT_GENERAL;        // will be used by compute shader
 
-	VkAttachmentReference2KHR depth_reference = { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+	VkAttachmentReference2KHR depth_reference = {VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2};
 	depth_reference.attachment                = 1;
 	depth_reference.layout                    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	depth_reference.aspectMask                = VK_IMAGE_ASPECT_DEPTH_BIT;
 
 	// Set up the attachment reference for the shading rate image attachment in slot 2
-	VkAttachmentReference2 fragment_shading_rate_reference = { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+	VkAttachmentReference2 fragment_shading_rate_reference = {VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2};
 	fragment_shading_rate_reference.attachment             = 2;
 	fragment_shading_rate_reference.layout                 = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 
 	// Set up the attachment info for the shading rate image, which will be added to the sub pass via structure chaining (in pNext)
-	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = { VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR };
+	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR};
 	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width   = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
 	fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
-	VkAttachmentReference2KHR color_reference = { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+	VkAttachmentReference2KHR color_reference = {VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2};
 	color_reference.attachment                = 0;
 	color_reference.layout                    = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	color_reference.aspectMask                = VK_IMAGE_ASPECT_COLOR_BIT;
 
 	// Setup attachment for frequency information
-	VkAttachmentReference2 frequency_reference = { VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2 };
+	VkAttachmentReference2 frequency_reference = {VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2};
 	frequency_reference.attachment             = 3;
 	frequency_reference.layout                 = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	frequency_reference.aspectMask             = VK_IMAGE_ASPECT_COLOR_BIT;
 
 	std::array<VkAttachmentReference2, 2> color_references = {color_reference, frequency_reference};
 
-	VkSubpassDescription2KHR sub_pass_description = { VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2 };
+	VkSubpassDescription2KHR sub_pass_description = {VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2};
 	sub_pass_description.pipelineBindPoint        = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	sub_pass_description.colorAttachmentCount     = static_cast<uint32_t>(color_references.size());
 	sub_pass_description.pColorAttachments        = color_references.data();
@@ -358,7 +358,7 @@ void FragmentShadingRateDynamic::setup_framebuffer()
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_create_info.pNext                   = nullptr;
+	framebuffer_create_info.pNext                   = nullptr;
 	framebuffer_create_info.renderPass              = render_pass;
 	framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
 	framebuffer_create_info.pAttachments            = attachments.data();
@@ -366,17 +366,17 @@ void FragmentShadingRateDynamic::setup_framebuffer()
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
 
-    // Delete existing frame buffers
-    if (!framebuffers.empty())
-    {
-        for (auto & framebuffer : framebuffers)
-        {
-            if (framebuffer != VK_NULL_HANDLE)
-            {
-                vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
-            }
-        }
-    }
+	// Delete existing frame buffers
+	if (!framebuffers.empty())
+	{
+		for (auto &framebuffer : framebuffers)
+		{
+			if (framebuffer != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+			}
+		}
+	}
 
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
@@ -869,12 +869,16 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t new_height)
 {
 	invalidate_shading_rate_attachment();
-	if(!ApiVulkanSample::resize(width, height)) {
-        create_shading_rate_attachment();
-    }
-    create_compute_pipeline();
-    update_uniform_buffers();
-    return true;
+	if (!ApiVulkanSample::resize(width, height))
+	{
+		create_shading_rate_attachment();
+	}
+
+	create_compute_pipeline();
+	update_uniform_buffers();
+	setup_framebuffer();
+	build_command_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate_dynamic()
