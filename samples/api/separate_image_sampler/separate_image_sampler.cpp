@@ -284,12 +284,12 @@ void SeparateImageSampler::setup_descriptor_set()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
-    // Image info only references the image
+	// Image info only references the image
 	VkDescriptorImageInfo image_info{};
 	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
 	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
-    // Sampled image descriptor
+	// Sampled image descriptor
 	VkWriteDescriptorSet image_write_descriptor_set{};
 	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	image_write_descriptor_set.dstSet          = base_descriptor_set;
@@ -306,7 +306,7 @@ void SeparateImageSampler::setup_descriptor_set()
 	        0,
 	        &buffer_descriptor),
 	    // Binding 1 : Fragment shader sampled image
-		image_write_descriptor_set};
+	    image_write_descriptor_set};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Sets for each of the sampler
@@ -315,7 +315,7 @@ void SeparateImageSampler::setup_descriptor_set()
 	{
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &sampler_descriptor_sets[i]));
 
-        // Descriptor info only references the sampler
+		// Descriptor info only references the sampler
 		VkDescriptorImageInfo sampler_info{};
 		sampler_info.sampler = samplers[i];
 

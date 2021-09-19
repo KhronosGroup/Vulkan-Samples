@@ -39,8 +39,8 @@ class SeparateImageSampler : public ApiVulkanSample
 	Texture texture;
 
 	// @todo: comment
-	std::array<VkSampler,2> samplers;
-	int32_t   selected_sampler{0};
+	std::array<VkSampler, 2>       samplers;
+	int32_t                        selected_sampler{0};
 	std::array<VkDescriptorSet, 2> sampler_descriptor_sets;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
@@ -56,9 +56,9 @@ class SeparateImageSampler : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	VkPipeline            pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       base_descriptor_set;
+	VkPipeline       pipeline;
+	VkPipelineLayout pipeline_layout;
+	VkDescriptorSet  base_descriptor_set;
 
 	VkDescriptorSetLayout base_descriptor_set_layout;
 	VkDescriptorSetLayout sampler_descriptor_set_layout;
