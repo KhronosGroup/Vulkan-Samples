@@ -95,7 +95,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
 	virtual void render(float delta_time) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_dynamic_uniform_buffers();

@@ -99,19 +99,19 @@ void ApiVulkanSample::update(float delta_time)
 	platform->on_post_draw(get_render_context());
 }
 
-void ApiVulkanSample::resize(const uint32_t, const uint32_t)
+bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 {
 	if (!prepared)
 	{
-		return;
+		return false;
 	}
 
 	get_render_context().handle_surface_changes();
 
 	// Don't recreate the swapchain if the dimensions haven't changed
-	if (width == get_render_context().get_surface_extent().width && height == get_render_context().get_surface_extent().height)
+	if (_width == get_render_context().get_surface_extent().width && _height == get_render_context().get_surface_extent().height)
 	{
-		return;
+		return false;
 	}
 
 	width  = get_render_context().get_surface_extent().width;
@@ -161,6 +161,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	view_changed();
 
 	prepared = true;
+    return true;
 }
 
 vkb::Device &ApiVulkanSample::get_device()

@@ -28,13 +28,13 @@ Application::Application() :
 {
 }
 
-bool Application::prepare(Platform &platform)
+bool Application::prepare(Platform &_platform)
 {
-	auto &debug_info = get_debug_info();
-	debug_info.insert<field::MinMax, float>("fps", fps);
-	debug_info.insert<field::MinMax, float>("frame_time", frame_time);
+	auto &_debug_info = get_debug_info();
+	_debug_info.insert<field::MinMax, float>("fps", fps);
+	_debug_info.insert<field::MinMax, float>("frame_time", frame_time);
 
-	this->platform = &platform;
+	this->platform = &_platform;
 
 	return true;
 }
@@ -43,8 +43,9 @@ void Application::finish()
 {
 }
 
-void Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
+bool Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
 {
+    return true;
 }
 
 void Application::input_event(const InputEvent &input_event)

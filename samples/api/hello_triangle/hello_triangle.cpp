@@ -1137,11 +1137,11 @@ void HelloTriangle::update(float delta_time)
 	}
 }
 
-void HelloTriangle::resize(const uint32_t, const uint32_t)
+bool HelloTriangle::resize(const uint32_t, const uint32_t)
 {
 	if (context.device == VK_NULL_HANDLE)
 	{
-		return;
+		return false;
 	}
 
 	VkSurfaceCapabilitiesKHR surface_properties;
@@ -1151,7 +1151,7 @@ void HelloTriangle::resize(const uint32_t, const uint32_t)
 	if (surface_properties.currentExtent.width == context.swapchain_dimensions.width &&
 	    surface_properties.currentExtent.height == context.swapchain_dimensions.height)
 	{
-		return;
+		return false;
 	}
 
 	vkDeviceWaitIdle(context.device);
@@ -1159,6 +1159,7 @@ void HelloTriangle::resize(const uint32_t, const uint32_t)
 
 	init_swapchain(context);
 	init_framebuffers(context);
+    return true;
 }
 
 std::unique_ptr<vkb::Application> create_hello_triangle()

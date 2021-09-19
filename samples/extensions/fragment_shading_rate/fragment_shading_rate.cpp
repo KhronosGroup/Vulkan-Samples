@@ -732,11 +732,14 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
+bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 {
 	invalidate_shading_rate_attachment();
-	ApiVulkanSample::resize(width, height);
+	if(!ApiVulkanSample::resize(width, height)) {
+        create_shading_rate_attachment();
+    }
 	update_uniform_buffers();
+    return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate()

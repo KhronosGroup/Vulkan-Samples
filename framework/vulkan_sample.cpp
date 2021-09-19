@@ -303,7 +303,7 @@ void VulkanSample::render(CommandBuffer &command_buffer)
 	}
 }
 
-void VulkanSample::resize(uint32_t width, uint32_t height)
+bool VulkanSample::resize(uint32_t width, uint32_t height)
 {
 	Application::resize(width, height);
 
@@ -326,6 +326,7 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 	{
 		stats->resize(width);
 	}
+    return true;
 }
 
 void VulkanSample::input_event(const InputEvent &input_event)

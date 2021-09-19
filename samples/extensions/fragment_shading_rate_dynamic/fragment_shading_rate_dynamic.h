@@ -30,7 +30,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	FragmentShadingRateDynamic();
 	~FragmentShadingRateDynamic() override;
 	bool prepare(vkb::Platform &platform) override;
-	void resize(uint32_t new_width, uint32_t new_height) override;
+	bool resize(uint32_t new_width, uint32_t new_height) override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
@@ -93,7 +93,6 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 		VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 		VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
-		VkCommandPool         command_pool          = VK_NULL_HANDLE;
 		VkCommandBuffer       command_buffer        = VK_NULL_HANDLE;
 	} compute;
 
