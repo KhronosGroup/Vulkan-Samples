@@ -21,15 +21,15 @@
 
 This tutorial, along with the accompanying example code, shows how to separate samplers and images in a Vulkan application. Opposite to combined image and samplers, this allows the application to freely mix an arbitrary set of samplers and images in the shader.
 
-In the sample code, a single image and multiple samplers with different options will be created. The sampler to be used for sampling the image can then be selected at runtime.
+In the sample code, a single image and multiple samplers with different options will be created. The sampler to be used for sampling the image can then be selected at runtime. As image and sampler objects are separated, this only requires selecting a different descriptor at runtime.
 
 ## In the application
 
-From the application's point of view, images and samplers are always created separately. Access to the image is handled through a `VkImageView` based on a `VkImage`. Samplers are created using a `VkSampler` object, specifying how an image will be sampled.
+From the application's point of view, images and samplers are always created separately. Access to the image is done via the image's `VkImageView`. Samplers are created using a `VkSampler` object, specifying how an image will be sampled.
 
 The difference between separating and combining them starts at the descriptor level, which defines how the shader accesses the samplers and images.
 
-A separate setup uses descriptors of type `VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE` for the sampled image:
+A separate setup uses a descriptor of type `VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE` for the sampled image, and a `VK_DESCRIPTOR_TYPE_SAMPLER` for the sampler, separating the image and sampler object:
 
 ```cpp
 // Image info only references the image
@@ -54,7 +54,7 @@ std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 ```
 
-And `VK_DESCRIPTOR_TYPE_SAMPLER` for the sampler. For this sample, we create two different samplers:
+For this sample, we then create two samplers with different filtering options:
 
 ```cpp
 // Sets for each of the sampler
@@ -138,3 +138,5 @@ void main()
     vec4 color = texture(_combined_image, inUV);
 }
 ```
+
+Compared to the separated setup, changing a sampler in this setup would either require creating multiple descriptors with each image/sampler combination or rebuilding the descriptor.
