@@ -42,10 +42,9 @@ CLI11CommandContextState CLI11CommandContext::get_state() const
 }
 
 CLI11CommandParser::CLI11CommandParser(const std::string &name, const std::string &description, const std::vector<std::string> &args) :
-    _cli(std::make_unique<CLI::App>(description, name)),
-    _base_context(_cli.get())
+    _cli11{std::make_unique<CLI::App>(description, name)}, _formatter{std::make_shared<HelpFormatter>()}
 {
-	_cli->allow_extras();
+	_cli11->formatter(_formatter);
 
 	_args.resize(args.size());
 	std::transform(args.begin(), args.end(), _args.begin(), [](const std::string &string) -> char * { return const_cast<char *>(string.c_str()); });
@@ -53,45 +52,14 @@ CLI11CommandParser::CLI11CommandParser(const std::string &name, const std::strin
 
 std::vector<std::string> CLI11CommandParser::help() const
 {
-	return split(_cli->help(), "\n");
+	return split(_cli11->help(), "\n");
 }
 
-bool CLI11CommandParser::parse(CommandParserContext *context, const std::vector<Command *> &commands)
-{
-	if (!CommandParser::parse(&_base_context, commands))
-	{
-		std::cerr << "CLI11 Parser Error: Commands are not in the expected format\n";
-		return false;
-	}
-
-	try
-	{
-		_cli->parse(static_cast<int>(_args.size()), _args.data());
-	}
-	catch (CLI::ParseError e)
-	{
-		if (e.get_name() == "RuntimeError")
-		{
-			LOGE("CLI11 Parse Error");
-			return false;
-		}
-
-		if (e.get_name() == "CallForHelp")
-		{
-			return false;
-		}
-
-		return e.get_exit_code() == static_cast<int>(CLI::ExitCodes::Success);
-	}
-
-	return true;
-}
-
-// Helper to reduce duplication
-#define CAST(type)                                                                                          \
-	void CLI11CommandParser::parse(CommandParserContext *context, type *command)                            \
-	{                                                                                                       \
-		parse(context == nullptr ? &_base_context : dynamic_cast<CLI11CommandContext *>(context), command); \
+// Helper to reduce duplication - throw should not occur as there should always be a valid context passed
+#define CAST(type)                                                                                 \
+	void CLI11CommandParser::parse(CommandParserContext *context, type *command)                   \
+	{                                                                                              \
+		parse(context == nullptr ? throw : dynamic_cast<CLI11CommandContext *>(context), command); \
 	}
 CAST(CommandGroup);
 CAST(SubCommand);
@@ -109,14 +77,16 @@ void CLI11CommandParser::parse(CLI11CommandContext *context, CommandGroup *comma
 
 void CLI11CommandParser::parse(CLI11CommandContext *context, SubCommand *command)
 {
-	auto *              subcommand = context->cli11->add_subcommand(command->get_name(), command->get_help_line());
+	auto *subcommand       = context->cli11->add_subcommand(command->get_name(), command->get_help_line());
+	_sub_commands[command] = subcommand;
+	subcommand->formatter(_formatter);
 	CLI11CommandContext subcommand_context(subcommand, context->get_state());
 	CommandParser::parse(&subcommand_context, command->get_commands());
 }
 
 void CLI11CommandParser::parse(CLI11CommandContext *context, PositionalCommand *command)
 {
-	auto option = context->cli11->add_option(command->get_name(), command->get_help_line());
+	auto *option = context->cli11->add_option(command->get_name(), command->get_help_line());
 
 	_options.emplace(command, option);
 
@@ -151,14 +121,25 @@ void CLI11CommandParser::parse(CLI11CommandContext *context, FlagCommand *comman
 
 bool CLI11CommandParser::contains(Command *command) const
 {
-	auto it = _options.find(command);
-
-	if (it == _options.end())
 	{
-		return false;
+		auto it = _options.find(command);
+
+		if (it != _options.end())
+		{
+			return it->second->count() > 0;
+		}
 	}
 
-	return it->second->count() > 0;
+	{
+		auto it = _sub_commands.find(command);
+
+		if (it != _sub_commands.end())
+		{
+			return it->second->count() > 0;
+		}
+	}
+
+	return false;
 }
 
 std::vector<std::string> CLI11CommandParser::get_command_value(Command *command) const
@@ -171,5 +152,92 @@ std::vector<std::string> CLI11CommandParser::get_command_value(Command *command)
 	}
 
 	return it->second->results();
+}
+
+/*
+
+To create a CLI composed of multiple interoperable plugins using CLI11, we must create a CLI11 app from each plugin.
+This acts as a group for the commands used in said plugin. Once we have groups for each plugin we can then nest then
+nest them inside each other using the CLI11::App::add_subcommand() method.
+
+This is required as CLI11 does not allow the redefinition of the same flag. Within the same app context.
+
+*/
+bool CLI11CommandParser::parse(const std::vector<Plugin *> &plugins)
+{
+	// Generate all command groups
+	for (auto plugin : plugins)
+	{
+		auto group = std::make_unique<CLI::App>();
+
+		_formatter->register_meta(group.get(), {plugin->get_name(), plugin->get_description()});
+
+		CLI11CommandContext context(group.get());
+		CommandParser::parse(&context, plugin->get_cli_commands());
+
+		_option_groups[plugin] = std::move(group);
+	}
+
+	// Associate correct command groups
+	for (auto plugin : plugins)
+	{
+		auto plugin_cli       = _option_groups[plugin];
+		auto included_plugins = plugin->get_inclusions();
+		auto commands         = plugin->get_cli_commands();
+
+		for (auto command : commands)
+		{
+			// Share flags and options with sub commands
+			if (command->is<SubCommand>())
+			{
+				auto cli11_sub_command = _sub_commands[command];
+
+				for (auto included_plugin : included_plugins)
+				{
+					cli11_sub_command->add_subcommand(_option_groups[included_plugin]);
+				}
+			}
+		}
+
+		_cli11->add_subcommand(plugin_cli);
+	}
+
+	return cli11_parse(_cli11.get());
+}
+
+bool CLI11CommandParser::parse(const std::vector<Command *> &commands)
+{
+	CLI11CommandContext context(_cli11.get());
+	if (!CommandParser::parse(&context, commands))
+	{
+		return false;
+	}
+
+	return cli11_parse(_cli11.get());
+}
+
+bool CLI11CommandParser::cli11_parse(CLI::App *app)
+{
+	try
+	{
+		_args.insert(_args.begin(), "vulkan_samples");
+		app->parse(static_cast<int>(_args.size()), _args.data());
+	}
+	catch (CLI::CallForHelp e)
+	{
+		return false;
+	}
+	catch (CLI::ParseError e)
+	{
+		bool success = e.get_exit_code() == static_cast<int>(CLI::ExitCodes::Success);
+
+		if (!success)
+		{
+			LOGE("CLI11 Parse Error: [{}] {}", e.get_name(), e.what());
+			return false;
+		}
+	}
+
+	return true;
 }
 }        // namespace vkb

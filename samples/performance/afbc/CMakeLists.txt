@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,4 +26,7 @@ add_sample_with_tags(
     NAME "AFBC"
     DESCRIPTION "Using framebuffer compression to reduce bandwidth."
     TAGS
-        "arm")
+        "arm"
+    SHADER_FILES_GLSL
+        "base.vert"
+        "base.frag")

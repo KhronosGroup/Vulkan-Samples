@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Hello Triangle"
-    DESCRIPTION "An introduction into Vulkan and its respective objects.")
+    DESCRIPTION "An introduction into Vulkan and its respective objects."
+    SHADER_FILES_GLSL
+        "triangle.vert"
+        "triangle.frag")

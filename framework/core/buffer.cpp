@@ -27,7 +27,7 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
     device{device},
     size{size}
 {
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#ifdef VK_USE_PLATFORM_METAL_EXT
 	// Workaround for Mac (MoltenVK requires unmapping https://github.com/KhronosGroup/MoltenVK/issues/175)
 	// Force cleares the flag VMA_ALLOCATION_CREATE_MAPPED_BIT
 	flags &= ~VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -42,9 +42,9 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
 	{
 		buffer_info.sharingMode           = VK_SHARING_MODE_CONCURRENT;
 		buffer_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
-		buffer_info.pQueueFamilyIndices = queue_family_indices.data();
+		buffer_info.pQueueFamilyIndices   = queue_family_indices.data();
 	}
-	
+
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.flags = flags;
 	memory_info.usage = memory_usage;

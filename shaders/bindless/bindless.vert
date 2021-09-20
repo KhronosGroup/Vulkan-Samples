@@ -37,7 +37,7 @@ layout(location = 2) out uint o_texture_index;
 
 void main(void)
 {
-	o_uv = uv;
-	gl_Position = global_uniform.proj * global_uniform.view * vec4(position, 1.0);
+	o_uv            = uv;
+	gl_Position     = global_uniform.proj * global_uniform.view * vec4(position, 1.0);
 	o_texture_index = texture_index;
 }

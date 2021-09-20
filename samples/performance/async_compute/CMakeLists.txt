@@ -24,4 +24,11 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Hans-Kristian Arntzen"
     NAME "Async compute"
-    DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU.")
+    DESCRIPTION "Using multiple queues to achieve more parallelism on the GPU."
+    SHADER_FILES_GLSL
+        "async_compute/forward.vert"
+        "async_compute/forward.frag"
+        "async_compute/shadow.vert"
+        "async_compute/shadow.frag"
+        "async_compute/composite.vert"
+        "async_compute/composite.frag")

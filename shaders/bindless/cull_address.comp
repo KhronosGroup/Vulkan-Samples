@@ -19,7 +19,7 @@
 
 #extension GL_EXT_buffer_reference : require
 
-layout (local_size_x = 64) in;
+layout(local_size_x = 64) in;
 
 struct ModelInformation
 {
