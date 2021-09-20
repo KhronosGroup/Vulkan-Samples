@@ -272,14 +272,18 @@ void DynamicUniformBuffers::setup_descriptor_set()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo            view_buffer_descriptor    = create_descriptor(*uniform_buffers.view);
-	VkDescriptorBufferInfo            dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets     = {
-        // Binding 0 : Projection/View matrix uniform buffer
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
-        // Binding 1 : Instance matrix as dynamic uniform buffer
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
-    };
+	VkDescriptorBufferInfo view_buffer_descriptor    = create_descriptor(*uniform_buffers.view);
+	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic);
+
+	// Override the default VK_WHOLE_SIZE range for the descriptor with the actual dynamic alignment
+	dynamic_buffer_descriptor.range = dynamic_alignment;
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    // Binding 0 : Projection/View matrix uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
+	    // Binding 1 : Instance matrix as dynamic uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
@@ -486,7 +490,7 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	generate_cube();
