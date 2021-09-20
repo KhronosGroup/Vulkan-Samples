@@ -127,6 +127,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	{
 		VkPipeline skysphere;
 		VkPipeline sphere;
+		VkPipeline ui;
 	} pipelines;
 
 	VkDescriptorSetLayout descriptor_set_layout;

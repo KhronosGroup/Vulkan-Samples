@@ -297,20 +297,40 @@ void FragmentShadingRateDynamic::setup_render_pass()
 
 	std::array<VkAttachmentReference2, 2> color_references = {color_reference, frequency_reference};
 
-	VkSubpassDescription2KHR sub_pass_description = {VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2};
-	sub_pass_description.pipelineBindPoint        = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	sub_pass_description.colorAttachmentCount     = static_cast<uint32_t>(color_references.size());
-	sub_pass_description.pColorAttachments        = color_references.data();
-	sub_pass_description.pDepthStencilAttachment  = &depth_reference;
-	sub_pass_description.inputAttachmentCount     = 0;
-	sub_pass_description.pInputAttachments        = nullptr;
-	sub_pass_description.preserveAttachmentCount  = 0;
-	sub_pass_description.pPreserveAttachments     = nullptr;
-	sub_pass_description.pResolveAttachments      = nullptr;
-	sub_pass_description.pNext                    = &fragment_shading_rate_attachment_info;
+	std::array<VkSubpassDescription2KHR, 3> sub_passes;
+
+	sub_passes[0].sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+	sub_passes[0].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	sub_passes[0].colorAttachmentCount    = 1;
+	sub_passes[0].pColorAttachments       = &color_reference;
+	sub_passes[0].pDepthStencilAttachment = &depth_reference;
+	sub_passes[0].inputAttachmentCount    = 0;
+	sub_passes[0].pInputAttachments       = nullptr;
+	sub_passes[0].preserveAttachmentCount = 0;
+	sub_passes[0].pPreserveAttachments    = nullptr;
+	sub_passes[0].pResolveAttachments     = nullptr;
+	sub_passes[0].pNext                   = nullptr;
+
+	// This subpass will draw the 3D scene and generate the fragment shading rate
+	// The color attachments includes both the (RGB) color output as well as the fragment shading rate image
+	sub_passes[1].sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
+	sub_passes[1].pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	sub_passes[1].colorAttachmentCount    = static_cast<uint32_t>(color_references.size());
+	sub_passes[1].pColorAttachments       = color_references.data();
+	sub_passes[1].pDepthStencilAttachment = &depth_reference;
+	sub_passes[1].inputAttachmentCount    = 0;
+	sub_passes[1].pInputAttachments       = nullptr;
+	sub_passes[1].preserveAttachmentCount = 0;
+	sub_passes[1].pPreserveAttachments    = nullptr;
+	sub_passes[1].pResolveAttachments     = nullptr;
+	sub_passes[1].pNext                   = &fragment_shading_rate_attachment_info;
+
+	// This subpass is used by the GUI. We don't need to include the fragment shading rate image or frequency attachment,
+	// only the (RGB) color output.
+	sub_passes[2] = sub_passes[0];
 
 	// Sub-pass dependencies for layout transitions
-	std::array<VkSubpassDependency2KHR, 2> dependencies = {};
+	std::array<VkSubpassDependency2KHR, 4> dependencies = {};
 
 	dependencies[0].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -330,12 +350,30 @@ void FragmentShadingRateDynamic::setup_render_pass()
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
+	dependencies[2].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	dependencies[2].srcSubpass      = 0;
+	dependencies[2].dstSubpass      = 1;
+	dependencies[2].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[2].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[2].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[2].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[2].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[3].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
+	dependencies[3].srcSubpass      = 1;
+	dependencies[3].dstSubpass      = 2;
+	dependencies[3].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[3].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[3].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[3].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[3].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
 	VkRenderPassCreateInfo2KHR render_pass_create_info = {};
 	render_pass_create_info.sType                      = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO_2;
 	render_pass_create_info.attachmentCount            = static_cast<uint32_t>(attachments.size());
 	render_pass_create_info.pAttachments               = attachments.data();
-	render_pass_create_info.subpassCount               = 1;
-	render_pass_create_info.pSubpasses                 = &sub_pass_description;
+	render_pass_create_info.subpassCount               = static_cast<uint32_t>(sub_passes.size());
+	render_pass_create_info.pSubpasses                 = sub_passes.data();
 	render_pass_create_info.dependencyCount            = static_cast<uint32_t>(dependencies.size());
 	render_pass_create_info.pDependencies              = dependencies.data();
 
@@ -441,6 +479,9 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		}
 		vkCmdSetFragmentShadingRateKHR(draw_cmd_buffers[i], &fragment_size, combiner_ops);
 
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.ui);
+		vkCmdNextSubpass(draw_cmd_buffers[i], VK_SUBPASS_CONTENTS_INLINE);
+
 		if (display_sky_sphere)
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
@@ -465,6 +506,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 			draw_model(models.scene, draw_cmd_buffers[i]);
 		}
 
+		vkCmdNextSubpass(draw_cmd_buffers[i], VK_SUBPASS_CONTENTS_INLINE);
 		draw_ui(draw_cmd_buffers[i]);
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
@@ -690,7 +732,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
 	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+			VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -750,13 +792,14 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
-
-	pipeline_create_info.layout     = pipeline_layout;
-	pipeline_create_info.renderPass = render_pass;
+	pipeline_create_info.layout            = pipeline_layout;
+	pipeline_create_info.renderPass        = render_pass;
+	pipeline_create_info.subpass           = 1;
 
 	// Sky-sphere
 	shader_stages[0] = load_shader("fragment_shading_rate_dynamic/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("fragment_shading_rate_dynamic/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
 
 	// Objects
@@ -766,6 +809,14 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.sphere));
+
+	// UI: Use the second subpass, which doesn't use the fragment shading rate
+	pipeline_create_info.subpass = 0;
+
+	// Update the color blend state
+	color_blend_state                     = vkb::initializers::pipeline_color_blend_state_create_info(1, blend_attachment_state.data());
+	pipeline_create_info.pColorBlendState = &color_blend_state;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.ui));
 }
 
 void FragmentShadingRateDynamic::prepare_uniform_buffers()
@@ -835,6 +886,11 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
+
+	gui->prepare(pipeline_cache, render_pass,
+				 {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+				  load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)},
+				 2);
 
 	const auto enabled_instance_extensions = instance->get_extensions();
 	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
