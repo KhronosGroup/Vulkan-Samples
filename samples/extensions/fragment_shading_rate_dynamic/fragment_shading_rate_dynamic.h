@@ -59,6 +59,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 
 	VkPhysicalDeviceFragmentShadingRatePropertiesKHR    physical_device_fragment_shading_rate_properties{};
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
+	VkRenderPass                                        fragment_render_pass{VK_NULL_HANDLE};
+	std::vector<VkFramebuffer>                          fragment_framebuffers;
 
 	// Shading rate image is an input to the graphics pipeline
 	// and is produced by the "compute shader."
