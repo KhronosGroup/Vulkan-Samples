@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -918,7 +918,7 @@ bool HDR::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
-    return true;
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_hdr()

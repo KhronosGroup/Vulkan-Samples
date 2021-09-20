@@ -1058,7 +1058,7 @@ bool HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 
 	init_swapchain(context);
 	init_framebuffers(context);
-    return true;
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hello_triangle()

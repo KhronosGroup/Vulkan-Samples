@@ -45,7 +45,7 @@ void Application::finish()
 
 bool Application::resize(const uint32_t /*width*/, const uint32_t /*height*/)
 {
-    return true;
+	return true;
 }
 
 void Application::input_event(const InputEvent &input_event)

@@ -504,7 +504,7 @@ bool DynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
-    return true;
+	return true;
 }
 
 void DynamicUniformBuffers::render(float delta_time)

@@ -535,7 +535,7 @@ bool Instancing::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	build_command_buffers();
-    return true;
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_instancing()
