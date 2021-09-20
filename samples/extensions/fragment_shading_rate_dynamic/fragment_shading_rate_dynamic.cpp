@@ -43,6 +43,13 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.scene.sampler, nullptr);
 
+		vkDestroyRenderPass(get_device().get_handle(), fragment_render_pass, nullptr);
+		for (auto &&framebuffer : fragment_framebuffers)
+		{
+			vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+		}
+		fragment_framebuffers.clear();
+
 		vkDestroyFence(device->get_handle(), compute_fence, VK_NULL_HANDLE);
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
@@ -239,7 +246,7 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 		attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 		attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[0].initialLayout  = use_fragment_shading_rate ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 		// Depth attachment
 		attachments[1].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
@@ -249,7 +256,7 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 		attachments[1].stencilLoadOp  = use_fragment_shading_rate ? VK_ATTACHMENT_LOAD_OP_CLEAR : VK_ATTACHMENT_LOAD_OP_LOAD;
 		attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachments[1].initialLayout  = use_fragment_shading_rate ? VK_IMAGE_LAYOUT_UNDEFINED : VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 		// Fragment shading rate attachment
 		attachments[2].sType          = VK_STRUCTURE_TYPE_ATTACHMENT_DESCRIPTION_2;
