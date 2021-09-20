@@ -1087,7 +1087,7 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
-	context.surface = platform.get_window().create_surface(*vk_instance);
+	context.surface                     = platform.get_window().create_surface(*vk_instance);
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
@@ -1159,7 +1159,7 @@ bool HelloTriangle::resize(const uint32_t, const uint32_t)
 
 	init_swapchain(context);
 	init_framebuffers(context);
-    return true;
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_hello_triangle()

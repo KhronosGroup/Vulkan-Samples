@@ -184,7 +184,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
                                                                  VK_FORMAT_R8G8_UINT,
                                                                  VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
                                                                  VMA_MEMORY_USAGE_GPU_ONLY);
-    frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
+	frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
 
 	{
 		auto &_cmd = device->request_command_buffer();
@@ -909,8 +909,8 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 
 	const auto enabled_instance_extensions = instance->get_extensions();
 	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
-								return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-											 }) != enabled_instance_extensions.cend();
+                                return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
+                            }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
@@ -965,12 +965,11 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 	invalidate_shading_rate_attachment();
 	if (!ApiVulkanSample::resize(width, height))
 	{
-		create_shading_rate_attachment();
+		setup_framebuffer();
 	}
 
 	create_compute_pipeline();
 	update_uniform_buffers();
-	setup_framebuffer();
 	build_command_buffers();
 	return true;
 }
