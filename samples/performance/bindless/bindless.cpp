@@ -59,7 +59,7 @@ struct CopyBuffer
 
 BindlessResources::BindlessResources()
 {
-    set_api_version(VK_API_VERSION_1_2);
+	set_api_version(VK_API_VERSION_1_2);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, true /* optional */);
 }
 
