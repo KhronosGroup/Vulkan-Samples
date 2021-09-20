@@ -794,7 +794,10 @@ void BindlessResources::render(float delta_time)
 
 	update_scene_uniform();
 
-	run_cull();
+	if (!m_freeze_cull)
+	{
+		run_cull();
+	}
 	device->get_fence_pool().wait();
 	device->get_fence_pool().reset();
 }
