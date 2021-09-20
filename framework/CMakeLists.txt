@@ -38,6 +38,7 @@ set(FRAMEWORK_FILES
     api_vulkan_sample.h
     timer.h
     camera.h
+	hpp_api_vulkan_sample.h
     # Source Files
     gui.cpp
     glsl_compiler.cpp
@@ -55,7 +56,8 @@ set(FRAMEWORK_FILES
     vulkan_sample.cpp
     api_vulkan_sample.cpp
     timer.cpp
-    camera.cpp)
+    camera.cpp
+	hpp_api_vulkan_sample.cpp)
 
 set(COMMON_FILES
     # Header Files
@@ -216,6 +218,8 @@ set(CORE_FILES
     core/scratch_buffer.h
     core/acceleration_structure.h
     core/shader_binding_table.h
+	core/hpp_buffer.h
+	core/hpp_device.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
@@ -242,7 +246,9 @@ set(CORE_FILES
     core/query_pool.cpp
     core/scratch_buffer.cpp
     core/acceleration_structure.cpp
-    core/shader_binding_table.cpp)
+    core/shader_binding_table.cpp
+	core/hpp_buffer.cpp
+	core/hpp_device.cpp)
 
 set(PLATFORM_FILES
     # Header Files
