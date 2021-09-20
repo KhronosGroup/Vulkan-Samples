@@ -52,7 +52,7 @@ namespace
 void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
 {
 	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
+	ImDrawIdx * idx_dst = (ImDrawIdx *) index_data;
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -255,7 +255,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	}
 }
 
-void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages, uint32_t subpass)
+void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages)
 {
 	// Descriptor pool
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -328,7 +328,7 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
-	pipeline_create_info.subpass             = subpass;
+	pipeline_create_info.subpass             = 0;
 
 	// Vertex bindings an attributes based on ImGui vertex definition
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -346,11 +346,6 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 	vertex_input_state_create_info.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state_create_info;
-
-	if (pipeline)
-	{
-		vkDestroyPipeline(sample.get_render_context().get_device().get_handle(), pipeline, nullptr);
-	}
 
 	VK_CHECK(vkCreateGraphicsPipelines(sample.get_render_context().get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }        // namespace vkb
@@ -647,7 +642,7 @@ void Gui::draw(VkCommandBuffer command_buffer)
 		return;
 	}
 
-	auto       &io            = ImGui::GetIO();
+	auto &      io            = ImGui::GetIO();
 	ImDrawData *draw_data     = ImGui::GetDrawData();
 	int32_t     vertex_offset = 0;
 	int32_t     index_offset  = 0;
@@ -917,10 +912,10 @@ void Gui::show_stats(const Stats &stats)
 		assert(pr != stats_view.graph_map.end() && "StatIndex not implemented in gui graph_map");
 
 		// Draw graph
-		auto       &graph_data     = pr->second;
+		auto &      graph_data     = pr->second;
 		const auto &graph_elements = stats.get_data(stat_index);
 		float       graph_min      = 0.0f;
-		float      &graph_max      = graph_data.max_value;
+		float &     graph_max      = graph_data.max_value;
 
 		if (!graph_data.has_fixed_max)
 		{

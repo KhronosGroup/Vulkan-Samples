@@ -78,12 +78,12 @@ class Drawer
   public:
 	Drawer() = default;
 
-	/**
+	/** 
 	 * @brief Clears the dirty bit set
 	 */
 	void clear();
 
-	/**
+	/** 
 	 * @brief Returns true if the drawer has been updated
 	 */
 	bool is_dirty();
@@ -250,7 +250,7 @@ class Gui
 	 */
 	~Gui();
 
-	void prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages, uint32_t subpass = 0);
+	void prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages);
 
 	/**
 	 * @brief Handles resizing of the window
