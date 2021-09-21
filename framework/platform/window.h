@@ -17,27 +17,69 @@
 
 #pragma once
 
+#include "common/optional.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
 #include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
-class Platform;
-
 /**
  * @brief An interface class, declaring the behaviour of a Window
  */
 class Window
 {
   public:
+	struct Extent
+	{
+		uint32_t width;
+		uint32_t height;
+	};
+
+	struct OptionalExtent
+	{
+		Optional<uint32_t> width;
+		Optional<uint32_t> height;
+	};
+
+	enum class Mode
+	{
+		Headless,
+		Fullscreen,
+		FullscreenBorderless,
+		Default
+	};
+
+	enum class Vsync
+	{
+		OFF,
+		ON,
+		Default
+	};
+
+	struct OptionalProperties
+	{
+		Optional<std::string> title;
+		Optional<Mode>        mode;
+		Optional<bool>        resizable;
+		Optional<Vsync>       vsync;
+		OptionalExtent        extent;
+	};
+
+	struct Properties
+	{
+		std::string title     = "";
+		Mode        mode      = Mode::Default;
+		bool        resizable = true;
+		Vsync       vsync     = Vsync::Default;
+		Extent      extent    = {1280, 720};
+	};
+
 	/**
 	 * @brief Constructs a Window
-	 * @param platform The platform this window is created for
-	 * @param width The width of the window
-	 * @param height The height of the window
+	 * @param properties The preferred configuration of the window
 	 */
-	Window(Platform &platform, uint32_t width, uint32_t height);
+	Window(const Properties &properties);
 
 	virtual ~Window() = default;
 
@@ -81,20 +123,19 @@ class Window
      */
 	virtual float get_content_scale_factor() const;
 
-	Platform &get_platform();
+	/**
+	 * @brief Attempt to resize the window - not gauranteed to change
+	 * 
+	 * @param extent The preferred window extent
+	 * @return Extent The new window extent
+	 */
+	Extent resize(const Extent &extent);
 
-	void resize(uint32_t width, uint32_t height);
+	const Extent &get_extent() const;
 
-	uint32_t get_width() const;
-
-	uint32_t get_height() const;
+	Mode get_window_mode() const;
 
   protected:
-	Platform &platform;
-
-  private:
-	uint32_t width;
-
-	uint32_t height;
+	Properties properties;
 };
 }        // namespace vkb

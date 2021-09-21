@@ -26,20 +26,49 @@ namespace vkb
 {
 std::vector<std::string> split(const std::string &str, const std::string &delimiter)
 {
+	if (str.size() == 0)
+	{
+		return {};
+	}
+
 	std::vector<std::string> out;
 
-	std::string buffer = str;
-	size_t      pos;
+	std::string buffer         = str;
+	size_t      last_found_pos = 0;
+	size_t      pos            = 0;
 	while ((pos = buffer.find(delimiter)) != std::string::npos)
 	{
 		out.push_back(buffer.substr(0, pos));
 		buffer.erase(0, pos + delimiter.length());
+		last_found_pos = last_found_pos + pos + delimiter.length();
+	}
+
+	if (last_found_pos == str.size())
+	{
+		out.push_back("");
 	}
 
 	return out;
 }
 
-std::string to_string(VkFormat format)
+std::string join(const std::vector<std::string> &str, const std::string &seperator)
+{
+	std::stringstream out;
+
+	for (auto it = str.begin(); it != str.end(); it++)
+	{
+		out << *it;
+
+		if (it != str.end() - 1)
+		{
+			out << seperator;
+		}
+	}
+
+	return out.str();
+}
+
+const std::string to_string(VkFormat format)
 {
 	switch (format)
 	{
@@ -310,7 +339,7 @@ std::string to_string(VkFormat format)
 	}
 }
 
-std::string to_string(VkPresentModeKHR present_mode)
+const std::string to_string(VkPresentModeKHR present_mode)
 {
 	switch (present_mode)
 	{
@@ -331,7 +360,7 @@ std::string to_string(VkPresentModeKHR present_mode)
 	}
 }
 
-std::string to_string(VkResult result)
+const std::string to_string(VkResult result)
 {
 	switch (result)
 	{
@@ -367,7 +396,7 @@ std::string to_string(VkResult result)
 	}
 }
 
-std::string to_string(VkSurfaceTransformFlagBitsKHR transform_flag)
+const std::string to_string(VkSurfaceTransformFlagBitsKHR transform_flag)
 {
 	switch (transform_flag)
 	{
@@ -396,7 +425,7 @@ std::string to_string(VkSurfaceTransformFlagBitsKHR transform_flag)
 	}
 }
 
-std::string to_string(VkSurfaceFormatKHR surface_format)
+const std::string to_string(VkSurfaceFormatKHR surface_format)
 {
 	std::string surface_format_string = to_string(surface_format.format) + ", ";
 
@@ -411,7 +440,7 @@ std::string to_string(VkSurfaceFormatKHR surface_format)
 	return surface_format_string;
 }
 
-std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha)
+const std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha)
 {
 	switch (composite_alpha)
 	{
@@ -430,7 +459,7 @@ std::string to_string(VkCompositeAlphaFlagBitsKHR composite_alpha)
 	}
 }
 
-std::string to_string(VkImageUsageFlagBits image_usage)
+const std::string to_string(VkImageUsageFlagBits image_usage)
 {
 	switch (image_usage)
 	{
@@ -457,14 +486,14 @@ std::string to_string(VkImageUsageFlagBits image_usage)
 	}
 }
 
-std::string to_string(VkExtent2D extent)
+const std::string to_string(VkExtent2D extent)
 {
 	return fmt::format("{}x{}", extent.width, extent.height);
 }
 
-std::string to_string(VkSampleCountFlagBits flags)
+const std::string to_string(VkSampleCountFlagBits flags)
 {
-	std::string result;
+	std::string result{""};
 	bool        append = false;
 	if (flags & VK_SAMPLE_COUNT_1_BIT)
 	{
@@ -509,7 +538,7 @@ std::string to_string(VkSampleCountFlagBits flags)
 	return result;
 }
 
-std::string to_string(VkPhysicalDeviceType type)
+const std::string to_string(VkPhysicalDeviceType type)
 {
 	switch (type)
 	{
@@ -528,7 +557,7 @@ std::string to_string(VkPhysicalDeviceType type)
 	}
 }
 
-std::string to_string(VkImageTiling tiling)
+const std::string to_string(VkImageTiling tiling)
 {
 	switch (tiling)
 	{
@@ -537,11 +566,11 @@ std::string to_string(VkImageTiling tiling)
 		case VK_IMAGE_TILING_LINEAR:
 			return "VK_IMAGE_TILING_LINEAR";
 		default:
-			return "UNKNOWN_TILING_METHOD";
+			return "UNKOWN_TILING_METHOD";
 	}
 }
 
-std::string to_string(VkImageType type)
+const std::string to_string(VkImageType type)
 {
 	switch (type)
 	{
@@ -552,11 +581,11 @@ std::string to_string(VkImageType type)
 		case VK_IMAGE_TYPE_3D:
 			return "VK_IMAGE_TYPE_3D";
 		default:
-			return "UNKNOWN_IMAGE_TYPE";
+			return "UNKOWN_IMAGE_TYPE";
 	}
 }
 
-std::string to_string(VkBlendFactor blend)
+const std::string to_string(VkBlendFactor blend)
 {
 	switch (blend)
 	{
@@ -603,7 +632,7 @@ std::string to_string(VkBlendFactor blend)
 	}
 }
 
-std::string to_string(VkVertexInputRate rate)
+const std::string to_string(VkVertexInputRate rate)
 {
 	switch (rate)
 	{
@@ -616,7 +645,7 @@ std::string to_string(VkVertexInputRate rate)
 	}
 }
 
-std::string to_string_vk_bool(VkBool32 state)
+const std::string to_string_vk_bool(VkBool32 state)
 {
 	if (state == VK_TRUE)
 	{
@@ -626,7 +655,7 @@ std::string to_string_vk_bool(VkBool32 state)
 	return "false";
 }
 
-std::string to_string(VkPrimitiveTopology topology)
+const std::string to_string(VkPrimitiveTopology topology)
 {
 	if (topology == VK_PRIMITIVE_TOPOLOGY_POINT_LIST)
 	{
@@ -673,10 +702,10 @@ std::string to_string(VkPrimitiveTopology topology)
 		return "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST";
 	}
 
-	return "UNKNOWN TOPOLOGY";
+	return "UNKOWN TOPOLOGY";
 }
 
-std::string to_string(VkFrontFace face)
+const std::string to_string(VkFrontFace face)
 {
 	if (face == VK_FRONT_FACE_COUNTER_CLOCKWISE)
 	{
@@ -686,10 +715,10 @@ std::string to_string(VkFrontFace face)
 	{
 		return "VK_FRONT_FACE_CLOCKWISE";
 	}
-	return "UNKNOWN";
+	return "UNKOWN";
 }
 
-std::string to_string(VkPolygonMode mode)
+const std::string to_string(VkPolygonMode mode)
 {
 	if (mode == VK_POLYGON_MODE_FILL)
 	{
@@ -707,10 +736,10 @@ std::string to_string(VkPolygonMode mode)
 	{
 		return "VK_POLYGON_MODE_FILL_RECTANGLE_NV";
 	}
-	return "UNKNOWN";
+	return "UNKOWN";
 }
 
-std::string to_string(VkCompareOp operation)
+const std::string to_string(VkCompareOp operation)
 {
 	if (operation == VK_COMPARE_OP_NEVER)
 	{
@@ -744,10 +773,10 @@ std::string to_string(VkCompareOp operation)
 	{
 		return "ALWAYS";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
-std::string to_string(VkStencilOp operation)
+const std::string to_string(VkStencilOp operation)
 {
 	if (operation == VK_STENCIL_OP_KEEP)
 	{
@@ -781,10 +810,10 @@ std::string to_string(VkStencilOp operation)
 	{
 		return "DECREMENT_AND_WRAP";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
-std::string to_string(VkLogicOp operation)
+const std::string to_string(VkLogicOp operation)
 {
 	if (operation == VK_LOGIC_OP_CLEAR)
 	{
@@ -850,10 +879,10 @@ std::string to_string(VkLogicOp operation)
 	{
 		return "SET";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
-std::string to_string(VkBlendOp operation)
+const std::string to_string(VkBlendOp operation)
 {
 	if (operation == VK_BLEND_OP_ADD)
 	{
@@ -1109,10 +1138,10 @@ std::string to_string(VkBlendOp operation)
 	{
 		return "BLUE_EXT";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
-std::string to_string(sg::AlphaMode mode)
+const std::string to_string(sg::AlphaMode mode)
 {
 	if (mode == sg::AlphaMode::Blend)
 	{
@@ -1126,19 +1155,19 @@ std::string to_string(sg::AlphaMode mode)
 	{
 		return "Opaque";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
-std::string to_string(bool flag)
+const std::string to_string(bool flag)
 {
-	if (flag)
+	if (flag == true)
 	{
 		return "true";
 	}
 	return "false";
 }
 
-std::string to_string(ShaderResourceType type)
+const std::string to_string(ShaderResourceType type)
 {
 	switch (type)
 	{
@@ -1165,11 +1194,11 @@ std::string to_string(ShaderResourceType type)
 		case ShaderResourceType::SpecializationConstant:
 			return "SpecializationConstant";
 		default:
-			return "Unknown Type";
+			return "Unkown Type";
 	}
 }
 
-std::string buffer_usage_to_string(VkBufferUsageFlags flags)
+const std::string buffer_usage_to_string(VkBufferUsageFlags flags)
 {
 	return to_string<VkBufferUsageFlagBits>(flags,
 	                                        {{VK_BUFFER_USAGE_TRANSFER_SRC_BIT, "VK_BUFFER_USAGE_TRANSFER_SRC_BIT"},
@@ -1190,7 +1219,7 @@ std::string buffer_usage_to_string(VkBufferUsageFlags flags)
 	                                         {VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR, "VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT_KHR"}});
 }
 
-std::string shader_stage_to_string(VkShaderStageFlags flags)
+const std::string shader_stage_to_string(VkShaderStageFlags flags)
 {
 	return to_string<VkShaderStageFlagBits>(flags,
 	                                        {{VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT, "TESSELLATION_CONTROL"},
@@ -1202,7 +1231,7 @@ std::string shader_stage_to_string(VkShaderStageFlags flags)
 	                                         {VK_SHADER_STAGE_ALL_GRAPHICS, "ALL GRAPHICS"}});
 }
 
-std::string image_usage_to_string(VkImageUsageFlags flags)
+const std::string image_usage_to_string(VkImageUsageFlags flags)
 {
 	return to_string<VkImageUsageFlagBits>(flags,
 	                                       {{VK_IMAGE_USAGE_TRANSFER_SRC_BIT, "VK_IMAGE_USAGE_TRANSFER_SRC_BIT"},
@@ -1215,7 +1244,7 @@ std::string image_usage_to_string(VkImageUsageFlags flags)
 	                                        {VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT, "VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT"}});
 }
 
-std::string image_aspect_to_string(VkImageAspectFlags flags)
+const std::string image_aspect_to_string(VkImageAspectFlags flags)
 {
 	return to_string<VkImageAspectFlagBits>(flags,
 	                                        {{VK_IMAGE_ASPECT_COLOR_BIT, "VK_IMAGE_ASPECT_COLOR_BIT"},
@@ -1227,7 +1256,7 @@ std::string image_aspect_to_string(VkImageAspectFlags flags)
 	                                         {VK_IMAGE_ASPECT_PLANE_2_BIT, "VK_IMAGE_ASPECT_PLANE_2_BIT"}});
 }
 
-std::string cull_mode_to_string(VkCullModeFlags flags)
+const std::string cull_mode_to_string(VkCullModeFlags flags)
 {
 	return to_string<VkCullModeFlagBits>(flags,
 	                                     {{VK_CULL_MODE_NONE, "VK_CULL_MODE_NONE"},
@@ -1236,7 +1265,7 @@ std::string cull_mode_to_string(VkCullModeFlags flags)
 	                                      {VK_CULL_MODE_FRONT_AND_BACK, "VK_CULL_MODE_FRONT_AND_BACK"}});
 }
 
-std::string color_component_to_string(VkColorComponentFlags flags)
+const std::string color_component_to_string(VkColorComponentFlags flags)
 {
 	return to_string<VkColorComponentFlagBits>(flags,
 	                                           {{VK_COLOR_COMPONENT_R_BIT, "R"},

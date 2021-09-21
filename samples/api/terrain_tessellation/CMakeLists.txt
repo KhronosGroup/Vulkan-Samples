@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,11 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Terrain tessellation"
-    DESCRIPTION "Using tessellation shaders for dynamic terrain level-of-detail")
+    DESCRIPTION "Using tessellation shaders for dynamic terrain level-of-detail"
+    SHADER_FILES_GLSL
+        "terrain_tessellation/terrain.vert"
+        "terrain_tessellation/terrain.frag"
+        "terrain_tessellation/terrain.tesc"
+        "terrain_tessellation/terrain.tese"
+        "terrain_tessellation/skysphere.vert"
+        "terrain_tessellation/skysphere.frag")

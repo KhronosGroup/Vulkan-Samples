@@ -24,13 +24,15 @@
 
 namespace vkb
 {
+class Plugin;
+
 /**
  * @brief Abstract wrapper for implementing lists of commands. Useful for the CommandParser
  */
 class Command
 {
   public:
-	Command(std::string name, std::string help_line);
+	Command(const std::string &name, const std::string &help_line);
 	virtual ~Command() = default;
 
 	/**
@@ -47,7 +49,7 @@ class Command
 	}
 
 	/**
-	 * @brief Case to a specific type of command
+	 * @brief Case to a specfic type of command
 	 * 
 	 * @tparam U The type of command to cast to
 	 * @return U* A ptr to this as the type of command
@@ -60,7 +62,7 @@ class Command
 	}
 
 	/**
-	 * @brief Case to a specific type of command
+	 * @brief Case to a specfic type of command
 	 * 
 	 * @tparam U The type of command to cast to
 	 * @return const U* A ptr to this as the type of command
@@ -98,7 +100,7 @@ class Command
 class MultipleCommands
 {
   public:
-	explicit MultipleCommands(std::vector<Command *> commands);
+	MultipleCommands(const std::vector<Command *> &commands);
 	virtual ~MultipleCommands() = default;
 
 	const std::vector<Command *> &get_commands() const;
@@ -120,10 +122,10 @@ class TypedCommand : public Command
 	    Command(name, help_line)
 	{
 	}
-	~TypedCommand() override = default;
+	virtual ~TypedCommand() = default;
 
   protected:
-	bool is_impl(const std::type_index &index) const override
+	virtual bool is_impl(const std::type_index &index) const override
 	{
 		return _type == index;
 	}
@@ -139,7 +141,7 @@ class CommandGroup : public TypedCommand<CommandGroup>, public MultipleCommands
 {
   public:
 	CommandGroup(const std::string &name, const std::vector<Command *> &commands);
-	~CommandGroup() override = default;
+	virtual ~CommandGroup() = default;
 };
 
 /**
@@ -149,7 +151,7 @@ class SubCommand : public TypedCommand<SubCommand>, public MultipleCommands
 {
   public:
 	SubCommand(const std::string &name, const std::string &help_line, const std::vector<Command *> &commands);
-	~SubCommand() override = default;
+	virtual ~SubCommand() = default;
 };
 
 /**
@@ -159,7 +161,7 @@ class PositionalCommand : public TypedCommand<PositionalCommand>
 {
   public:
 	PositionalCommand(const std::string &name, const std::string &help_line);
-	~PositionalCommand() override = default;
+	virtual ~PositionalCommand() = default;
 };
 
 enum class FlagType
@@ -170,13 +172,13 @@ enum class FlagType
 };
 
 /**
- * @brief Flag command represent a flag and value e.g --sample afbc
+ * @brief Flag command reprosent a flag and value e.g --sample afbc
  */
 class FlagCommand : public TypedCommand<FlagCommand>
 {
   public:
 	FlagCommand(FlagType type, const std::string &long_name, const std::string &short_name, const std::string &help_line);
-	~FlagCommand() override = default;
+	virtual ~FlagCommand() = default;
 
 	FlagType get_flag_type() const;
 
@@ -185,7 +187,7 @@ class FlagCommand : public TypedCommand<FlagCommand>
 };
 
 /**
- * @brief Abstract context which different command parsers may use to pass their own specialised contexts
+ * @brief Abstract context which different command parsers may use to pass their own specialized contexts
  */
 class CommandParserContext
 {
@@ -215,7 +217,6 @@ class CommandParser
 	Type as(Command *command) const
 	{
 		auto values = get_command_value(command);
-
 		Type type{};
 		bool implemented_type_conversion = convert_type(values, &type);
 		assert(implemented_type_conversion && "Failed to retrieve value. Type unsupported");
@@ -229,8 +230,11 @@ class CommandParser
 	 */
 	virtual std::vector<std::string> help() const = 0;
 
-	bool parse(const std::vector<Command *> &commands);
+	virtual bool parse(const std::vector<Plugin *> &plugins) = 0;
 
+	virtual bool parse(const std::vector<Command *> &commands) = 0;
+
+  protected:
 	/*
 	 * Individual parse functions visit each type of command to configure the underlying CLI implementation
 	 */
@@ -259,7 +263,7 @@ class CommandParser
 	 * @return false if no implementation exists
 	 */
 	template <typename Type>
-	inline bool convert_type(const std::vector<std::string> &values, Type *) const
+	inline bool convert_type(const std::vector<std::string> &values, Type *type) const
 	{
 		return false;
 	}
@@ -281,6 +285,20 @@ inline bool CommandParser::convert_type(const std::vector<std::string> &values, 
 }
 
 template <>
+inline bool CommandParser::convert_type(const std::vector<std::string> &values, float *type) const
+{
+	if (values.size() != 1)
+	{
+		*type = 0.0f;
+	}
+	else
+	{
+		*type = std::stof(values[0].c_str());
+	}
+	return true;
+}
+
+template <>
 inline bool CommandParser::convert_type(const std::vector<std::string> &values, std::vector<std::string> *type) const
 {
 	*type = values;
@@ -290,7 +308,7 @@ inline bool CommandParser::convert_type(const std::vector<std::string> &values, 
 template <>
 inline bool CommandParser::convert_type(const std::vector<std::string> &values, std::string *type) const
 {
-	if (!values.empty())
+	if (values.size() > 0)
 	{
 		*type = values[0];
 	}

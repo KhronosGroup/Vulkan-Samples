@@ -643,7 +643,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 				auto format = get_attribute_format(&model, gltf_primitive.indices);
 
-				auto vertex_data = get_attribute_data(&model, gltf_primitive.indices);
 				auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
 
 				switch (format)

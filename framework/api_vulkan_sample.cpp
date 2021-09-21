@@ -21,7 +21,9 @@
 #include "core/swapchain.h"
 #include "gltf_loader.h"
 #include "scene_graph/components/image.h"
+#include "scene_graph/components/sampler.h"
 #include "scene_graph/components/sub_mesh.h"
+#include "scene_graph/components/texture.h"
 
 bool ApiVulkanSample::prepare(vkb::Platform &platform)
 {
@@ -46,7 +48,8 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	// Command buffer submission info is set by each example
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
-	if (!is_headless())
+
+	if (platform.get_window().get_window_mode() != vkb::Window::Mode::Headless)
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -92,6 +95,8 @@ void ApiVulkanSample::update(float delta_time)
 	{
 		view_updated = true;
 	}
+
+	platform->on_post_draw(get_render_context());
 }
 
 void ApiVulkanSample::resize(const uint32_t, const uint32_t)
@@ -124,13 +129,14 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	vkDestroyImage(device->get_handle(), depth_stencil.image, nullptr);
 	vkFreeMemory(device->get_handle(), depth_stencil.mem, nullptr);
 	setup_depth_stencil();
-	for (auto & framebuffer : framebuffers)
+	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
-		vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+		vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+		framebuffers[i] = VK_NULL_HANDLE;
 	}
 	setup_framebuffer();
 
-	if ((width > 0) && (height > 0))
+	if ((width > 0.0f) && (height > 0.0f))
 	{
 		if (gui)
 		{
@@ -146,7 +152,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 	device->wait_idle();
 
-	if ((width > 0) && (height > 0))
+	if ((width > 0.0f) && (height > 0.0f))
 	{
 		camera.update_aspect_ratio((float) width / (float) height);
 	}
@@ -164,12 +170,12 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
-	render_context = platform.create_render_context(*device, surface, surface_priority_list);
+	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
 }
 
 void ApiVulkanSample::prepare_render_context()
@@ -179,7 +185,7 @@ void ApiVulkanSample::prepare_render_context()
 
 void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 {
-	vkb::VulkanSample::input_event(input_event);
+	Application::input_event(input_event);
 
 	bool gui_captures_event = false;
 
@@ -192,7 +198,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 	{
 		if (input_event.get_source() == vkb::EventSource::Mouse)
 		{
-			const auto &mouse_button = dynamic_cast<const vkb::MouseButtonInputEvent &>(input_event);
+			const auto &mouse_button = static_cast<const vkb::MouseButtonInputEvent &>(input_event);
 
 			handle_mouse_move(static_cast<int32_t>(mouse_button.get_pos_x()), static_cast<int32_t>(mouse_button.get_pos_y()));
 
@@ -233,7 +239,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 		}
 		else if (input_event.get_source() == vkb::EventSource::Touchscreen)
 		{
-			const auto &touch_event = dynamic_cast<const vkb::TouchInputEvent &>(input_event);
+			const auto &touch_event = static_cast<const vkb::TouchInputEvent &>(input_event);
 
 			if (touch_event.get_action() == vkb::TouchAction::Down)
 			{
@@ -263,8 +269,8 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 				}
 				if (!handled)
 				{
-					auto eventX = static_cast<int32_t>(touch_event.get_pos_x());
-					auto eventY = static_cast<int32_t>(touch_event.get_pos_y());
+					int32_t eventX = static_cast<int32_t>(touch_event.get_pos_x());
+					int32_t eventY = static_cast<int32_t>(touch_event.get_pos_y());
 
 					float deltaX = (float) (touch_pos.y - eventY) * rotation_speed * 0.5f;
 					float deltaY = (float) (touch_pos.x - eventX) * rotation_speed * 0.5f;
@@ -284,7 +290,7 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 		}
 		else if (input_event.get_source() == vkb::EventSource::Keyboard)
 		{
-			const auto &key_button = dynamic_cast<const vkb::KeyInputEvent &>(input_event);
+			const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
 
 			if (key_button.get_action() == vkb::KeyAction::Down)
 			{
@@ -355,22 +361,22 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 
 	if (mouse_buttons.left)
 	{
-		rotation.x += static_cast<float>(dy) * 1.25f * rotation_speed;
-		rotation.y -= static_cast<float>(dx) * 1.25f * rotation_speed;
-		camera.rotate(glm::vec3(static_cast<float>(dy) * camera.rotation_speed, static_cast<float>(-dx) * camera.rotation_speed, 0.0f));
+		rotation.x += dy * 1.25f * rotation_speed;
+		rotation.y -= dx * 1.25f * rotation_speed;
+		camera.rotate(glm::vec3(dy * camera.rotation_speed, -dx * camera.rotation_speed, 0.0f));
 		view_updated = true;
 	}
 	if (mouse_buttons.right)
 	{
-		zoom += static_cast<float>(dy) * .005f * zoom_speed;
-		camera.translate(glm::vec3(-0.0f, 0.0f, static_cast<float>(dy) * .005f * zoom_speed));
+		zoom += dy * .005f * zoom_speed;
+		camera.translate(glm::vec3(-0.0f, 0.0f, dy * .005f * zoom_speed));
 		view_updated = true;
 	}
 	if (mouse_buttons.middle)
 	{
-		camera_pos.x -= static_cast<float>(dx) * 0.01f;
-		camera_pos.y -= static_cast<float>(dy) * 0.01f;
-		camera.translate(glm::vec3(static_cast<float>(-dx) * 0.01f, static_cast<float>(-dy) * 0.01f, 0.0f));
+		camera_pos.x -= dx * 0.01f;
+		camera_pos.y -= dy * 0.01f;
+		camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
 		view_updated = true;
 	}
 	mouse_pos = glm::vec2((float) x, (float) y);
@@ -422,7 +428,7 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file, device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
@@ -433,7 +439,7 @@ void ApiVulkanSample::update_overlay(float delta_time)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(fps), [this]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
 			on_update_ui_overlay(gui->get_drawer());
 		});
 
@@ -452,7 +458,7 @@ void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer)
 	if (gui)
 	{
 		const VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		const VkRect2D   scissor  = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+		const VkRect2D   scissor  = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 		vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
@@ -483,13 +489,13 @@ void ApiVulkanSample::submit_frame()
 {
 	if (render_context->has_swapchain())
 	{
-		const auto &_queue = device->get_queue_by_present(0);
+		const auto &queue = device->get_queue_by_present(0);
 
 		VkSwapchainKHR sc = render_context->get_swapchain().get_handle();
 
 		VkPresentInfoKHR present_info = {};
 		present_info.sType            = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-		present_info.pNext            = nullptr;
+		present_info.pNext            = NULL;
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
 		present_info.pImageIndices    = &current_buffer;
@@ -500,7 +506,7 @@ void ApiVulkanSample::submit_frame()
 			present_info.waitSemaphoreCount = 1;
 		}
 
-		VkResult present_result = _queue.present(present_info);
+		VkResult present_result = queue.present(present_info);
 
 		if (!((present_result == VK_SUCCESS) || (present_result == VK_SUBOPTIMAL_KHR)))
 		{
@@ -536,9 +542,9 @@ ApiVulkanSample::~ApiVulkanSample()
 		}
 		destroy_command_buffers();
 		vkDestroyRenderPass(device->get_handle(), render_pass, nullptr);
-		for (auto & framebuffer : framebuffers)
+		for (uint32_t i = 0; i < framebuffers.size(); i++)
 		{
-			vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+			vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
 		}
 
 		for (auto &swapchain_buffer : swapchain_buffers)
@@ -646,13 +652,25 @@ void ApiVulkanSample::setup_framebuffer()
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-	framebuffer_create_info.pNext                   = nullptr;
+	framebuffer_create_info.pNext                   = NULL;
 	framebuffer_create_info.renderPass              = render_pass;
 	framebuffer_create_info.attachmentCount         = 2;
 	framebuffer_create_info.pAttachments            = attachments;
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
+
+	// Delete existing frame buffers
+	if (framebuffers.size() > 0)
+	{
+		for (uint32_t i = 0; i < framebuffers.size(); i++)
+		{
+			if (framebuffers[i] != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffers[i], nullptr);
+			}
+		}
+	}
 
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
@@ -705,13 +723,98 @@ void ApiVulkanSample::setup_render_pass()
 	subpass_description.pResolveAttachments     = nullptr;
 
 	// Subpass dependencies for layout transitions
-	std::array<VkSubpassDependency, 2> dependencies{};
+	std::array<VkSubpassDependency, 2> dependencies;
 
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	dependencies[1].srcSubpass      = 0;
+	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
+	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+	VkRenderPassCreateInfo render_pass_create_info = {};
+	render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachments.size());
+	render_pass_create_info.pAttachments           = attachments.data();
+	render_pass_create_info.subpassCount           = 1;
+	render_pass_create_info.pSubpasses             = &subpass_description;
+	render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
+	render_pass_create_info.pDependencies          = dependencies.data();
+
+	VK_CHECK(vkCreateRenderPass(device->get_handle(), &render_pass_create_info, nullptr, &render_pass));
+}
+
+void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
+{
+	vkDestroyRenderPass(device->get_handle(), render_pass, nullptr);
+
+	VkAttachmentLoadOp  color_attachment_load_op      = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	VkAttachmentStoreOp color_attachment_store_op     = VK_ATTACHMENT_STORE_OP_STORE;
+	VkImageLayout       color_attachment_image_layout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+	// Samples can keep the color attachment contents, e.g. if they have previously written to the swap chain images
+	if (flags & RenderPassCreateFlags::ColorAttachmentLoad)
+	{
+		color_attachment_load_op      = VK_ATTACHMENT_LOAD_OP_LOAD;
+		color_attachment_image_layout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	}
+
+	std::array<VkAttachmentDescription, 2> attachments = {};
+	// Color attachment
+	attachments[0].format         = render_context->get_format();
+	attachments[0].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[0].loadOp         = color_attachment_load_op;
+	attachments[0].storeOp        = color_attachment_store_op;
+	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachments[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[0].initialLayout  = color_attachment_image_layout;
+	attachments[0].finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	// Depth attachment
+	attachments[1].format         = depth_format;
+	attachments[1].samples        = VK_SAMPLE_COUNT_1_BIT;
+	attachments[1].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_CLEAR;
+	attachments[1].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachments[1].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+	attachments[1].finalLayout    = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference color_reference = {};
+	color_reference.attachment            = 0;
+	color_reference.layout                = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkAttachmentReference depth_reference = {};
+	depth_reference.attachment            = 1;
+	depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass_description    = {};
+	subpass_description.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass_description.colorAttachmentCount    = 1;
+	subpass_description.pColorAttachments       = &color_reference;
+	subpass_description.pDepthStencilAttachment = &depth_reference;
+	subpass_description.inputAttachmentCount    = 0;
+	subpass_description.pInputAttachments       = nullptr;
+	subpass_description.preserveAttachmentCount = 0;
+	subpass_description.pPreserveAttachments    = nullptr;
+	subpass_description.pResolveAttachments     = nullptr;
+
+	// Subpass dependencies for layout transitions
+	std::array<VkSubpassDependency, 2> dependencies;
+
+	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	dependencies[0].dstSubpass      = 0;
+	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_WRITE_BIT;
 	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -755,7 +858,7 @@ void ApiVulkanSample::create_swapchain_buffers()
 		{
 			VkImageViewCreateInfo color_attachment_view = {};
 			color_attachment_view.sType                 = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			color_attachment_view.pNext                 = nullptr;
+			color_attachment_view.pNext                 = NULL;
 			color_attachment_view.format                = render_context->get_swapchain().get_format();
 			color_attachment_view.components            = {
                 VK_COMPONENT_SWIZZLE_R,
@@ -792,6 +895,13 @@ void ApiVulkanSample::create_swapchain_buffers()
 			swapchain_buffers[i].view  = image_view.get_handle();
 		}
 	}
+}
+
+void ApiVulkanSample::update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags)
+{
+	get_render_context().update_swapchain(image_usage_flags);
+	create_swapchain_buffers();
+	setup_framebuffer();
 }
 
 void ApiVulkanSample::handle_surface_changes()
@@ -855,7 +965,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	texture.image = vkb::sg::Image::load(file, file);
 	texture.image->create_vk_image(*device);
 
-	const auto &_queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -918,7 +1028,7 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	    subresource_range);
 
-	device->flush_command_buffer(command_buffer, _queue.get_handle());
+	device->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -953,7 +1063,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	texture.image = vkb::sg::Image::load(file, file);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
 
-	const auto &_queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1022,7 +1132,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	    subresource_range);
 
-	device->flush_command_buffer(command_buffer, _queue.get_handle());
+	device->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -1054,7 +1164,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
 	texture.image = vkb::sg::Image::load(file, file);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
-	const auto &_queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
 
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1123,7 +1233,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
 	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
 	    subresource_range);
 
-	device->flush_command_buffer(command_buffer, _queue.get_handle());
+	device->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	VkSamplerCreateInfo sampler_create_info = {};
@@ -1156,7 +1266,7 @@ std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string 
 
 	if (!model)
 	{
-		LOGE("Cannot load model from file: {}", file.c_str())
+		LOGE("Cannot load model from file: {}", file.c_str());
 		throw std::runtime_error("Cannot load model from: " + file);
 	}
 
@@ -1175,7 +1285,7 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
 }
 
-void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuffer)> &f, VkSemaphore signalSemaphore)
+void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore)
 {
 	VkCommandBuffer command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 	f(command_buffer);

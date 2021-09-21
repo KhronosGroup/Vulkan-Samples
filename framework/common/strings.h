@@ -35,6 +35,7 @@ enum class AlphaMode;
 }
 
 std::vector<std::string> split(const std::string &str, const std::string &delimiter);
+std::string              join(const std::vector<std::string> &str, const std::string &seperator);
 
 /**
  * @brief Helper function to convert a VkFormat enum to a string

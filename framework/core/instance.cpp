@@ -27,37 +27,41 @@ namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT,
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                              void *)
+                                                              void *                                      user_data)
 {
-	// Log debug message
+	// Log debug messge
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	return VK_FALSE;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
                                                      uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
                                                      const char *layer_prefix, const char *message, void * /*user_data*/)
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("{}: {}", layer_prefix, message)
+		LOGE("{}: {}", layer_prefix, message);
 	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT || flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGW("{}: {}", layer_prefix, message)
+		LOGW("{}: {}", layer_prefix, message);
+	}
+	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+	{
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else
 	{
-		LOGI("{}: {}", layer_prefix, message)
+		LOGI("{}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
@@ -80,7 +84,7 @@ bool validate_layers(const std::vector<const char *> &     required,
 
 		if (!found)
 		{
-			LOGE("Validation Layer {} not found", layer)
+			LOGE("Validation Layer {} not found", layer);
 			return false;
 		}
 	}
@@ -96,10 +100,10 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
 	        {"VK_LAYER_KHRONOS_validation"},
 
-	        // Otherwise, we fall back to using the LunarG meta layer
+	        // Otherwise we fallback to using the LunarG meta layer
 	        {"VK_LAYER_LUNARG_standard_validation"},
 
-	        // Otherwise, we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
+	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
 	        {
 	            "VK_LAYER_GOOGLE_threading",
 	            "VK_LAYER_LUNARG_parameter_validation",
@@ -108,7 +112,7 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	            "VK_LAYER_GOOGLE_unique_objects",
 	        },
 
-	        // Otherwise, as a last resort we fall back to attempting to enable the LunarG core layer
+	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
 	        {"VK_LAYER_LUNARG_core_validation"}};
 
 	for (auto &validation_layers : validation_layer_priority_list)
@@ -118,7 +122,7 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 			return validation_layers;
 		}
 
-		LOGW("Couldn't enable validation layers (see log for error) - falling back")
+		LOGW("Couldn't enable validation layers (see log for error) - falling back");
 	}
 
 	// Else return nothing
@@ -151,7 +155,7 @@ Instance::Instance(const std::string &                           application_nam
 		if (strcmp(available_extension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
 		{
 			debug_utils = true;
-			LOGI("{} is available, enabling it", VK_EXT_DEBUG_UTILS_EXTENSION_NAME)
+			LOGI("{} is available, enabling it", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 			enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		}
 	}
@@ -175,7 +179,7 @@ Instance::Instance(const std::string &                           application_nam
 			if (strcmp(available_extension.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0)
 			{
 				validation_features = true;
-				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME)
+				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 				enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
 			}
 		}
@@ -191,13 +195,13 @@ Instance::Instance(const std::string &                           application_nam
 			if (strcmp(available_extension.extensionName, VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME) == 0)
 			{
 				headless_extension = true;
-				LOGI("{} is available, enabling it", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)
+				LOGI("{} is available, enabling it", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 				enabled_extensions.push_back(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 			}
 		}
 		if (!headless_extension)
 		{
-			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME)
+			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 		}
 	}
 	else
@@ -211,7 +215,7 @@ Instance::Instance(const std::string &                           application_nam
 		// which will be used for stats gathering where available.
 		if (strcmp(available_extension.extensionName, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) == 0)
 		{
-			LOGI("{} is available, enabling it", VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME)
+			LOGI("{} is available, enabling it", VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 			enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 		}
 	}
@@ -226,13 +230,13 @@ Instance::Instance(const std::string &                           application_nam
 		{
 			if (extension_is_optional)
 			{
-				LOGW("Optional instance extension {} not available, some features may be disabled", extension_name)
+				LOGW("Optional instance extension {} not available, some features may be disabled", extension_name);
 			}
 			else
 			{
-				LOGE("Required instance extension {} not available, cannot run", extension_name)
+				LOGE("Required instance extension {} not available, cannot run", extension_name);
+				extension_error = true;
 			}
-			extension_error = !extension_is_optional;
 		}
 		else
 		{
@@ -264,7 +268,7 @@ Instance::Instance(const std::string &                           application_nam
 		LOGI("Enabled Validation Layers:")
 		for (const auto &layer : requested_validation_layers)
 		{
-			LOGI("	\t{}", layer)
+			LOGI("	\t{}", layer);
 		}
 	}
 	else
@@ -424,8 +428,8 @@ PhysicalDevice &Instance::get_first_gpu()
 		}
 	}
 
-	// Otherwise, just pick the first one
-	LOGW("Couldn't find a discrete physical device, picking default GPU")
+	// Otherwise just pick the first one
+	LOGW("Couldn't find a discrete physical device, picking default GPU");
 	return *gpus.at(0);
 }
 
@@ -438,7 +442,7 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 	{
 		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
-			//See if it works with the surface
+			//See if it work with the surface
 			size_t queue_count = gpu->get_queue_family_properties().size();
 			for (uint32_t queue_idx = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++)
 			{
@@ -450,8 +454,8 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 		}
 	}
 
-	// Otherwise, just pick the first one
-	LOGW("Couldn't find a discrete physical device, picking default GPU")
+	// Otherwise just pick the first one
+	LOGW("Couldn't find a discrete physical device, picking default GPU");
 	return *gpus.at(0);
 }
 

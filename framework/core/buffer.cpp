@@ -27,7 +27,7 @@ Buffer::Buffer(Device &device, VkDeviceSize size, VkBufferUsageFlags buffer_usag
     device{device},
     size{size}
 {
-#ifdef VK_USE_PLATFORM_MACOS_MVK
+#ifdef VK_USE_PLATFORM_METAL_EXT
 	// Workaround for Mac (MoltenVK requires unmapping https://github.com/KhronosGroup/MoltenVK/issues/175)
 	// Force cleares the flag VMA_ALLOCATION_CREATE_MAPPED_BIT
 	flags &= ~VMA_ALLOCATION_CREATE_MAPPED_BIT;
