@@ -772,7 +772,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
 	        VK_FALSE,
-			VK_COMPARE_OP_GREATER);
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -921,7 +921,7 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	const auto enabled_instance_extensions = instance->get_extensions();
 	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
                                 return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-                                             }) != enabled_instance_extensions.cend();
+                            }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
