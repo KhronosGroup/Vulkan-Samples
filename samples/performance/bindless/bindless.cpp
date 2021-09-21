@@ -310,13 +310,14 @@ void BindlessResources::load_scene()
 		image->create_vk_image(*device);
 		Texture texture;
 		texture.n_mip_maps = uint32_t(image->get_mipmaps().size());
+        assert(texture.n_mip_maps == 1);
 		texture.image      = std::make_unique<vkb::core::Image>(*device,
                                                            image->get_extent(),
                                                            image->get_format(),
                                                            VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
                                                            VMA_MEMORY_USAGE_GPU_ONLY,
                                                            VK_SAMPLE_COUNT_1_BIT,
-                                                           texture.n_mip_maps,
+                                                           1,
                                                            1,
                                                            VK_IMAGE_TILING_OPTIMAL,
                                                            0);
