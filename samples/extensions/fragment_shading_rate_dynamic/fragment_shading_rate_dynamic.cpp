@@ -72,10 +72,6 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
 	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
 
-	// shading_rate_image_features
-	auto &shading_rate_image_features            = gpu.request_extension_features<VkPhysicalDeviceShadingRateImageFeaturesNV>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
-	shading_rate_image_features.shadingRateImage = VK_TRUE;
-
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -323,8 +319,8 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		VkSubpassDescription2KHR sub_pass = {VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2};
 		if (use_fragment_shading_rate)
 		{
-			// This subpass will draw the 3D scene and generate the fragment shading rate
-			// The color attachments includes both the (RGB) color output as well as the fragment shading rate image
+			// This sub pass will draw the 3D scene and generate the fragment shading rate
+			// The color attachments includes both the (RGB) color output and the fragment shading rate image
 			sub_pass.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
 			sub_pass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			sub_pass.colorAttachmentCount    = static_cast<uint32_t>(color_references.size());
@@ -383,7 +379,7 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		render_pass_create_info.subpassCount               = 1;
 		render_pass_create_info.pSubpasses                 = &sub_pass;
 		render_pass_create_info.dependencyCount            = static_cast<uint32_t>(dependencies.size());
-		render_pass_create_info.pDependencies              = dependencies.size() ? dependencies.data() : VK_NULL_HANDLE;
+		render_pass_create_info.pDependencies              = !dependencies.empty() ? dependencies.data() : VK_NULL_HANDLE;
 
 		VK_CHECK(vkCreateRenderPass2KHR(device->get_handle(), &render_pass_create_info, nullptr, render_passes[static_cast<size_t>(use_fragment_shading_rate)]));
 	}
@@ -498,8 +494,6 @@ void FragmentShadingRateDynamic::build_command_buffers()
 			combiner_ops[1] = VK_FRAGMENT_SHADING_RATE_COMBINER_OP_KEEP_KHR;
 		}
 		vkCmdSetFragmentShadingRateKHR(draw_cmd_buffers[i], &fragment_size, combiner_ops);
-
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.ui);
 
 		if (display_sky_sphere)
 		{
@@ -802,7 +796,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
 	        pipeline_layout,
-	        render_pass,
+	        fragment_render_pass,
 	        0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
@@ -839,7 +833,6 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 	pipeline_create_info.layout            = pipeline_layout;
-	pipeline_create_info.renderPass        = fragment_render_pass;
 	pipeline_create_info.subpass           = 0;
 
 	// Sky-sphere
@@ -855,12 +848,6 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.sphere));
-
-	// Update the color blend state
-	color_blend_state                     = vkb::initializers::pipeline_color_blend_state_create_info(1, blend_attachment_state.data());
-	pipeline_create_info.renderPass       = render_pass;
-	pipeline_create_info.pColorBlendState = &color_blend_state;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.ui));
 }
 
 void FragmentShadingRateDynamic::prepare_uniform_buffers()
