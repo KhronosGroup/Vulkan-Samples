@@ -223,11 +223,11 @@ bool CLI11CommandParser::cli11_parse(CLI::App *app)
 		_args.insert(_args.begin(), "vulkan_samples");
 		app->parse(static_cast<int>(_args.size()), _args.data());
 	}
-	catch (CLI::CallForHelp e)
+	catch (CLI::CallForHelp &e)
 	{
 		return false;
 	}
-	catch (CLI::ParseError e)
+	catch (CLI::ParseError &e)
 	{
 		bool success = e.get_exit_code() == static_cast<int>(CLI::ExitCodes::Success);
 

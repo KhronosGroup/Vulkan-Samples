@@ -601,7 +601,7 @@ void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue,
 	VK_CHECK(vkCreateFence(handle, &fence_info, nullptr, &fence));
 
 	// Submit to the queue
-	VkResult result = vkQueueSubmit(queue, 1, &submit_info, fence);
+	vkQueueSubmit(queue, 1, &submit_info, fence);
 	// Wait for the fence to signal that command buffer has finished executing
 	VK_CHECK(vkWaitForFences(handle, 1, &fence, VK_TRUE, DEFAULT_FENCE_TIMEOUT));
 

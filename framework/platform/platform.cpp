@@ -210,7 +210,7 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 			break;
 	}
 
-	return std::move(context);
+	return context;
 }
 
 void Platform::terminate(ExitCode code)

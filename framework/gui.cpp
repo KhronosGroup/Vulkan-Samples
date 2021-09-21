@@ -1003,7 +1003,7 @@ bool Gui::input_event(const InputEvent &input_event)
 
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
-		const auto &key_event = dynamic_cast<const KeyInputEvent &>(input_event);
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
 
 		if (key_event.get_action() == KeyAction::Down)
 		{
@@ -1016,7 +1016,7 @@ bool Gui::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Mouse)
 	{
-		const auto &mouse_button = dynamic_cast<const MouseButtonInputEvent &>(input_event);
+		const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
 
 		io.MousePos = ImVec2{mouse_button.get_pos_x() * content_scale_factor,
 		                     mouse_button.get_pos_y() * content_scale_factor};
@@ -1038,7 +1038,7 @@ bool Gui::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Touchscreen)
 	{
-		const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
+		const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
 
 		io.MousePos = ImVec2{touch_event.get_pos_x(), touch_event.get_pos_y()};
 
@@ -1059,15 +1059,15 @@ bool Gui::input_event(const InputEvent &input_event)
 	// Toggle GUI elements when tap or clicking outside the GUI windows
 	if (!io.WantCaptureMouse)
 	{
-		bool press_down = (input_event.get_source() == EventSource::Mouse && dynamic_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && dynamic_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
-		bool press_up   = (input_event.get_source() == EventSource::Mouse && dynamic_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Up) || (input_event.get_source() == EventSource::Touchscreen && dynamic_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Up);
+		bool press_down = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
+		bool press_up   = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Up) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Up);
 
 		if (press_down)
 		{
 			timer.start();
 			if (input_event.get_source() == EventSource::Touchscreen)
 			{
-				const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
+				const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
 				if (touch_event.get_touch_points() == 2)
 				{
 					two_finger_tap = true;
@@ -1081,7 +1081,7 @@ bool Gui::input_event(const InputEvent &input_event)
 			{
 				if (input_event.get_source() == EventSource::Mouse)
 				{
-					const auto &mouse_button = dynamic_cast<const MouseButtonInputEvent &>(input_event);
+					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
 					if (mouse_button.get_button() == MouseButton::Left)
 					{
 						visible = !visible;
@@ -1093,7 +1093,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				}
 				else if (input_event.get_source() == EventSource::Touchscreen)
 				{
-					const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
+					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
 					if (!two_finger_tap && touch_event.get_touch_points() == 1)
 					{
 						visible = !visible;
