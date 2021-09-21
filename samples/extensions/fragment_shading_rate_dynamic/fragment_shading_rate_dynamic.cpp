@@ -22,6 +22,8 @@ FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
 {
 	title = "Dynamic fragment shading rate";
 
+//    set_api_version(VK_API_VERSION_1_2);
+
 	(void) ubo_scene.skysphere_modelview;        // this is used in the shader
 
 	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
@@ -38,6 +40,7 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
+        vkDestroyPipeline(get_device().get_handle(), pipelines.ui, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
@@ -71,10 +74,6 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
 	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
 	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
-
-	// shading_rate_image_features
-	auto &shading_rate_image_features            = gpu.request_extension_features<VkPhysicalDeviceShadingRateImageFeaturesNV>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
-	shading_rate_image_features.shadingRateImage = VK_TRUE;
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -383,7 +382,7 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		render_pass_create_info.subpassCount               = 1;
 		render_pass_create_info.pSubpasses                 = &sub_pass;
 		render_pass_create_info.dependencyCount            = static_cast<uint32_t>(dependencies.size());
-		render_pass_create_info.pDependencies              = dependencies.size() ? dependencies.data() : VK_NULL_HANDLE;
+		render_pass_create_info.pDependencies              = !dependencies.empty() ? dependencies.data() : VK_NULL_HANDLE;
 
 		VK_CHECK(vkCreateRenderPass2KHR(device->get_handle(), &render_pass_create_info, nullptr, render_passes[static_cast<size_t>(use_fragment_shading_rate)]));
 	}
