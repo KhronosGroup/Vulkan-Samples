@@ -22,8 +22,6 @@ FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
 {
 	title = "Dynamic fragment shading rate";
 
-//    set_api_version(VK_API_VERSION_1_2);
-
 	(void) ubo_scene.skysphere_modelview;        // this is used in the shader
 
 	// Enable instance and device extensions required to use VK_KHR_fragment_shading_rate
@@ -40,7 +38,6 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 	{
 		vkDestroyPipeline(get_device().get_handle(), pipelines.sphere, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skysphere, nullptr);
-        vkDestroyPipeline(get_device().get_handle(), pipelines.ui, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 		vkDestroySampler(get_device().get_handle(), textures.skysphere.sampler, nullptr);
@@ -498,8 +495,6 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		}
 		vkCmdSetFragmentShadingRateKHR(draw_cmd_buffers[i], &fragment_size, combiner_ops);
 
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.ui);
-
 		if (display_sky_sphere)
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
@@ -801,7 +796,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
 	        pipeline_layout,
-	        render_pass,
+	        fragment_render_pass,
 	        0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
@@ -838,7 +833,6 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 	pipeline_create_info.layout            = pipeline_layout;
-	pipeline_create_info.renderPass        = fragment_render_pass;
 	pipeline_create_info.subpass           = 0;
 
 	// Sky-sphere
@@ -854,12 +848,6 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.sphere));
-
-	// Update the color blend state
-	color_blend_state                     = vkb::initializers::pipeline_color_blend_state_create_info(1, blend_attachment_state.data());
-	pipeline_create_info.renderPass       = render_pass;
-	pipeline_create_info.pColorBlendState = &color_blend_state;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.ui));
 }
 
 void FragmentShadingRateDynamic::prepare_uniform_buffers()
