@@ -322,8 +322,8 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		VkSubpassDescription2KHR sub_pass = {VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2};
 		if (use_fragment_shading_rate)
 		{
-			// This subpass will draw the 3D scene and generate the fragment shading rate
-			// The color attachments includes both the (RGB) color output as well as the fragment shading rate image
+			// This sub pass will draw the 3D scene and generate the fragment shading rate
+			// The color attachments includes both the (RGB) color output and the fragment shading rate image
 			sub_pass.sType                   = VK_STRUCTURE_TYPE_SUBPASS_DESCRIPTION_2;
 			sub_pass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 			sub_pass.colorAttachmentCount    = static_cast<uint32_t>(color_references.size());
