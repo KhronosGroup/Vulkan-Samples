@@ -69,8 +69,12 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	// These are passed to device creation via a pNext structure chain
 	auto &requested_extension_features                         = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
 	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
-	requested_extension_features.pipelineFragmentShadingRate   = VK_FALSE;
+	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
 	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
+
+	// shading_rate_image_features
+	auto &shading_rate_image_features            = gpu.request_extension_features<VkPhysicalDeviceShadingRateImageFeaturesNV>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADING_RATE_IMAGE_FEATURES_NV);
+	shading_rate_image_features.shadingRateImage = VK_TRUE;
 
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
