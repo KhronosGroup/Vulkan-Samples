@@ -137,7 +137,7 @@ void DynamicUniformBuffers::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -272,11 +272,10 @@ void DynamicUniformBuffers::setup_descriptor_set()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo view_buffer_descriptor    = create_descriptor(*uniform_buffers.view);
-	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic);
+	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*uniform_buffers.view);
 
-	// Override the default VK_WHOLE_SIZE range for the descriptor with the actual dynamic alignment
-	dynamic_buffer_descriptor.range = dynamic_alignment;
+	// Pass the  actual dynamic alignment as the descriptor's size
+	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    // Binding 0 : Projection/View matrix uniform buffer
