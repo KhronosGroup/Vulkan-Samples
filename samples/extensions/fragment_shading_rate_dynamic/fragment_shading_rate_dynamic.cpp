@@ -697,13 +697,33 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 	image_copy.srcOffset      = {0, 0, 0};
 
 	VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-	vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
 	vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+
+	auto image_memory_barrier                = vkb::initializers::image_memory_barrier();
+	image_memory_barrier.srcAccessMask       = VK_ACCESS_SHADER_WRITE_BIT;
+	image_memory_barrier.dstAccessMask       = VK_ACCESS_TRANSFER_READ_BIT;
+	image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	image_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	image_memory_barrier.oldLayout           = VK_IMAGE_LAYOUT_GENERAL;
+	image_memory_barrier.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+	image_memory_barrier.subresourceRange    = subresource_range;
+	image_memory_barrier.image               = shading_rate_image_compute->get_handle();
+	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
 
 	vkCmdCopyImage(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
 
+	auto shading_memory_barrier                = vkb::initializers::image_memory_barrier();
+	shading_memory_barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+	shading_memory_barrier.dstAccessMask       = VK_ACCESS_FRAGMENT_SHADING_RATE_ATTACHMENT_READ_BIT_KHR;
+	shading_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	shading_memory_barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+	shading_memory_barrier.oldLayout           = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	shading_memory_barrier.newLayout           = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
+	shading_memory_barrier.subresourceRange    = subresource_range;
+	shading_memory_barrier.image               = shading_rate_image->get_handle();
+	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &shading_memory_barrier);
+
 	vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
-	vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, subresource_range);
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 
@@ -877,7 +897,7 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
 
-	const VkPipelineStageFlags wait_mask           = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	const VkPipelineStageFlags wait_mask           = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	auto                       compute_submit_info = vkb::initializers::submit_info();
 	compute_submit_info.commandBufferCount         = 1;
 	compute_submit_info.pCommandBuffers            = &compute.command_buffer;
@@ -910,7 +930,7 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	const auto enabled_instance_extensions = instance->get_extensions();
 	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
                                 return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-                            }) != enabled_instance_extensions.cend();
+                                             }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
