@@ -855,8 +855,8 @@ void BindlessResources::run_gpu_cull()
 	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, device->request_fence());
 	device->get_fence_pool().wait();
 	device->get_fence_pool().reset();
-    //we're done so dealloc it from the pool.
-    vkFreeCommandBuffers(device->get_handle(), device->get_command_pool().get_handle(), 1, &cmd);
+	//we're done so dealloc it from the pool.
+	vkFreeCommandBuffers(device->get_handle(), device->get_command_pool().get_handle(), 1, &cmd);
 }
 
 namespace
