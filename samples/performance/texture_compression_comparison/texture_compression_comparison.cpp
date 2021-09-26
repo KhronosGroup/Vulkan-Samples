@@ -52,19 +52,50 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 
 void TextureCompressionComparison::update(float delta_time)
 {
+	if (require_redraw)
+	{
+		const auto &formats = get_texture_formats();
+		require_redraw      = false;
+		assert(current_format >= 0 && static_cast<size_t>(current_format) < formats.size());
+		auto benchmark = update_textures(formats[current_format]);
+	}
 	VulkanSample::update(delta_time);
 }
 
 void TextureCompressionComparison::draw_gui()
 {
-	gui->show_options_window([this]() {
+	static const std::vector<const char *> texture_names = []() {
+		const auto               &formats = get_texture_formats();
+		std::vector<const char *> texture_names(formats.size());
+		std::transform(formats.cbegin(), formats.cend(), texture_names.begin(), [](const CompressedTexture_t &format) {
+			return format.short_name;
+		});
+		return texture_names;
+	}();
 
+	gui->show_options_window([this]() {
+		if (ImGui::Combo("Compressed Format", &current_gui_format, texture_names.data(), texture_names.size()))
+		{
+			require_redraw     = true;
+			const auto &format = get_texture_formats()[current_gui_format];
+			if (is_texture_format_supported(format))
+			{
+				current_format = current_gui_format;
+			}
+		}
 	});
 }
 
 const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()
 {
 	static std::vector<TextureCompressionComparison::CompressedTexture_t> formats = {
+		CompressedTexture_t{nullptr,
+							"",
+							VK_FORMAT_R8G8B8A8_SRGB,
+							KTX_TTF_RGBA32,
+							"KTX_TTF_RGBA32",
+							"RGBA 32",
+							true},
 		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
 							"",
 							VK_FORMAT_BC7_SRGB_BLOCK,
@@ -94,14 +125,7 @@ const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCom
 							VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
 							KTX_TTF_PVRTC1_4_RGBA,
 							"KTX_TTF_PVRTC1_4_RGBA",
-							"PVRTC1 4"},
-		CompressedTexture_t{nullptr,
-							"",
-							VK_FORMAT_R8G8B8A8_SRGB,
-							KTX_TTF_RGBA32,
-							"KTX_TTF_RGBA32",
-							"RGBA 32",
-							true}};
+							"PVRTC1 4"}};
 	return formats;
 }
 
@@ -130,6 +154,7 @@ void TextureCompressionComparison::get_available_texture_formats()
 
 void TextureCompressionComparison::load_assets()
 {
+	get_available_texture_formats();
 	load_scene("scenes/sponza/Sponza01.gltf");
 	if (!scene)
 	{
@@ -150,12 +175,50 @@ void TextureCompressionComparison::load_assets()
 				std::string filename = image->get_name();
 				if (image && texture_raw_data.find(filename) == texture_raw_data.cend())
 				{
-					texture_raw_data[filename] = get_raw_image(vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + filename + "2");
+					texture_raw_data[filename].raw_bytes = get_raw_image(vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + filename + "2");
 				}
 			}
 		}
 	}
 }
+
+TextureCompressionComparison::TextureBenchmark TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
+{
+	TextureBenchmark benchmark;
+	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	{
+		for (auto &&sub_mesh : mesh->get_submeshes())
+		{
+			auto material = sub_mesh->get_material();
+			for (auto &name_texture : material->textures)
+			{
+				auto       &texture                  = name_texture.second;
+				auto        image                    = texture->get_image();
+				std::string filename                 = image->get_name();
+				auto        new_image                = compress(filename, new_format);
+				texture_raw_data[filename].image     = std::move(new_image.first);
+				texture_raw_data[filename].benchmark = new_image.second;
+				benchmark += new_image.second;
+				assert(texture_raw_data[filename].image);
+				texture->set_image(*texture_raw_data[filename].image);
+			}
+		}
+	}
+	return benchmark;
+}
+
+namespace
+{
+class CompressedImage : public vkb::sg::Image
+{
+  public:
+    CompressedImage(const std::string &name, std::vector<vkb::sg::Mipmap> &&mipmaps, VkFormat format) :
+        vkb::sg::Image(name, std::vector<uint8_t>{}, std::move(mipmaps))
+    {
+        vkb::sg::Image::set_format(format);
+    }
+};
+}        // namespace
 
 std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTexture2 *ktx_texture)
 {
@@ -166,30 +229,6 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	VkExtent3D              extent{ktx_texture->baseWidth, ktx_texture->baseHeight, 1};
 	VkImageSubresourceRange subresource_range{VK_IMAGE_ASPECT_COLOR_BIT, 0, ktx_texture->numLevels, 0, 1};
-
-	/*
-		VkImageCreateInfo image_create = vkb::initializers::image_create_info();
-		image_create.imageType         = VK_IMAGE_TYPE_2D;
-		image_create.format            = vk_format;
-		image_create.extent            = extent;
-		image_create.mipLevels         = 1;
-		image_create.arrayLayers       = 1;
-		image_create.samples           = VK_SAMPLE_COUNT_1_BIT;
-		image_create.tiling            = VK_IMAGE_TILING_OPTIMAL;
-		image_create.usage             = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-		image_create.initialLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-
-		VkImage image{VK_NULL_HANDLE};
-		VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create, VK_NULL_HANDLE, &image));
-
-		VkImageViewCreateInfo image_view_create = vkb::initializers::image_view_create_info();
-		image_view_create.viewType              = VK_IMAGE_VIEW_TYPE_2D;
-		image_view_create.format                = vk_format;
-		image_view_create.subresourceRange      = subresource_range;
-		image_view_create.image                 = image;
-
-		VkImageView image_view{VK_NULL_HANDLE};
-		VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create, VK_NULL_HANDLE, &image_view));*/
 
 	std::vector<VkBufferImageCopy>  buffer_copies;
 	std::unique_ptr<vkb::sg::Image> image_out;
@@ -212,7 +251,7 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 			mip_maps.push_back(mip_map);
 		}
 
-		image_out = std::make_unique<vkb::sg::Image>("", std::vector<uint8_t>{}, std::move(mip_maps));
+		image_out = std::make_unique<CompressedImage>("", std::move(mip_maps), vk_format);
 	}
 	image_out->create_vk_image(get_device(), VK_IMAGE_VIEW_TYPE_2D);
 	auto &vkb_image = image_out->get_vk_image();
@@ -222,13 +261,13 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 
 	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copies.size(), buffer_copies.data());
 
-	VkImageMemoryBarrier image_memory_barrier;
-	image_memory_barrier.image            = image;
-	image_memory_barrier.subresourceRange = subresource_range;
-	image_memory_barrier.srcAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
-	image_memory_barrier.dstAccessMask    = VK_ACCESS_TRANSFER_READ_BIT;
-	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
+	image_memory_barrier.image                = image;
+	image_memory_barrier.subresourceRange     = subresource_range;
+	image_memory_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_READ_BIT;
+	image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
 	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_TRANSFER_BIT, 0).get_handle(), true);
@@ -240,27 +279,12 @@ std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::stri
 {
 	if (filename.empty())
 	{
-		return {};
-	}
-	ktxTexture2 *ktx_texture = VK_NULL_HANDLE;
-	KTX_CHECK(ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture));
-
-	if (!ktx_texture)
-	{
-		throw std::runtime_error("Unable to create texture from memory: null result provided.");
+		return {};        //{nullptr, SampleTexture::destroy_texture};
 	}
 
-	// Transcode to an uncompressed format so that encoding can be benchmarked
-	ktxTexture2_TranscodeBasis(ktx_texture, KTX_TTF_RGBA32, 0);
-
-	std::vector<uint8_t> out;
-	if (ktx_texture->dataSize && ktx_texture->pData)
-	{
-		out.resize(ktx_texture->dataSize);
-		memcpy(out.data(), ktx_texture->pData, ktx_texture->dataSize);
-	}
-	ktxTexture_Destroy((ktxTexture *) ktx_texture);
-	return out;
+	std::ifstream                  is(filename, std::ios::binary);
+	std::istream_iterator<uint8_t> start(is), end;
+	return std::vector<uint8_t>(start, end);
 }
 
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format)
@@ -270,15 +294,14 @@ std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::Texture
 	{
 		throw std::runtime_error(std::string("Unable to find raw data for ").append(filename));
 	}
-	const std::vector<uint8_t> &bytes       = iter->second;
-	ktxTexture2	            *ktx_texture = VK_NULL_HANDLE;
-	KTX_CHECK(ktxTexture_CreateFromMemory(bytes.data(), bytes.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture));
-	assert(!!ktx_texture);
+	auto         memory      = iter->second.raw_bytes;
+	ktxTexture2 *ktx_texture = 0;
+	KTX_CHECK(ktxTexture2_CreateFromMemory(memory.data(), memory.size(), 0, &ktx_texture));
 
 	TextureBenchmark benchmark;
 	{
 		const auto start = std::chrono::high_resolution_clock::now();
-		ktxTexture2_TranscodeBasis(ktx_texture, texture_format.ktx_format, 0);
+		KTX_CHECK(ktxTexture2_TranscodeBasis(ktx_texture, texture_format.ktx_format, 0));
 		const auto end             = std::chrono::high_resolution_clock::now();
 		benchmark.compress_time_ms = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000.f;
 	}
@@ -292,4 +315,12 @@ std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::Texture
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()
 {
 	return std::make_unique<TextureCompressionComparison>();
+}
+
+void TextureCompressionComparison::SampleTexture::destroy_texture(ktxTexture2 *ktx_texture)
+{
+	if (ktx_texture)
+	{
+		ktxTexture_Destroy((ktxTexture *) ktx_texture);
+	}
 }
