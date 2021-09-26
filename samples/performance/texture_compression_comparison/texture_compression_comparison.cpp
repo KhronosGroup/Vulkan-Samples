@@ -1,4 +1,5 @@
 #include "texture_compression_comparison.h"
+#include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/material.h"
@@ -31,12 +32,27 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 
 	load_assets();
 
+	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
+	camera            = &camera_node.get_component<vkb::sg::Camera>();
+
+	vkb::ShaderSource vert_shader("base.vert");
+	vkb::ShaderSource frag_shader("base.frag");
+	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_subpass));
+
+	set_render_pipeline(std::move(render_pipeline));
+
+	stats->request_stats({vkb::StatIndex::frame_times});
+	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+
 	return true;
 }
 
 void TextureCompressionComparison::update(float delta_time)
 {
-	// VulkanSample::update(delta_time);
+	VulkanSample::update(delta_time);
 }
 
 void TextureCompressionComparison::draw_gui()

@@ -20,7 +20,7 @@
 #include "ktx.h"
 
 #include "api_vulkan_sample.h"
-#include "scene_graph/components/image.h"
+#include "scene_graph/components/camera.h"
 
 class TextureCompressionComparison : public vkb::VulkanSample
 {
@@ -48,6 +48,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
     std::vector<uint8_t>                                  get_raw_image(const std::string &filename);
     std::vector<CompressedTexture_t>                      available_texture_formats = {};
     std::unordered_map<std::string, std::vector<uint8_t>> texture_raw_data;
+    vkb::sg::Camera                                      *camera{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison();
