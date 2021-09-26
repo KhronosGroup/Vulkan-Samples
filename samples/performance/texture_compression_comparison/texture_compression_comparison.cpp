@@ -57,6 +57,9 @@ void TextureCompressionComparison::update(float delta_time)
 
 void TextureCompressionComparison::draw_gui()
 {
+	gui->show_options_window([this]() {
+
+	});
 }
 
 const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()
@@ -142,7 +145,6 @@ void TextureCompressionComparison::load_assets()
 			auto material = sub_mesh->get_material();
 			for (auto &name_texture : material->textures)
 			{
-				auto       &name     = name_texture.first;
 				auto       &texture  = name_texture.second;
 				auto        image    = texture->get_image();
 				std::string filename = image->get_name();
@@ -159,6 +161,79 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 {
 	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
+
+	const VkFormat vk_format = static_cast<VkFormat>(ktx_texture->vkFormat);
+
+	VkExtent3D              extent{ktx_texture->baseWidth, ktx_texture->baseHeight, 1};
+	VkImageSubresourceRange subresource_range{VK_IMAGE_ASPECT_COLOR_BIT, 0, ktx_texture->numLevels, 0, 1};
+
+	/*
+		VkImageCreateInfo image_create = vkb::initializers::image_create_info();
+		image_create.imageType         = VK_IMAGE_TYPE_2D;
+		image_create.format            = vk_format;
+		image_create.extent            = extent;
+		image_create.mipLevels         = 1;
+		image_create.arrayLayers       = 1;
+		image_create.samples           = VK_SAMPLE_COUNT_1_BIT;
+		image_create.tiling            = VK_IMAGE_TILING_OPTIMAL;
+		image_create.usage             = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+		image_create.initialLayout     = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
+		VkImage image{VK_NULL_HANDLE};
+		VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create, VK_NULL_HANDLE, &image));
+
+		VkImageViewCreateInfo image_view_create = vkb::initializers::image_view_create_info();
+		image_view_create.viewType              = VK_IMAGE_VIEW_TYPE_2D;
+		image_view_create.format                = vk_format;
+		image_view_create.subresourceRange      = subresource_range;
+		image_view_create.image                 = image;
+
+		VkImageView image_view{VK_NULL_HANDLE};
+		VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create, VK_NULL_HANDLE, &image_view));*/
+
+	std::vector<VkBufferImageCopy>  buffer_copies;
+	std::unique_ptr<vkb::sg::Image> image_out;
+	{
+		std::vector<vkb::sg::Mipmap> mip_maps;
+		for (uint32_t mip_level = 0; mip_level < ktx_texture->numLevels; ++mip_level)
+		{
+			ktx_size_t offset{0};
+			KTX_CHECK(ktxTexture_GetImageOffset((ktxTexture *) ktx_texture, mip_level, 0, 0, &offset));
+			VkBufferImageCopy buffer_image_copy = {};
+			buffer_image_copy.imageSubresource  = VkImageSubresourceLayers{VK_IMAGE_ASPECT_COLOR_BIT, mip_level, 0, 1};
+			buffer_image_copy.imageExtent       = VkExtent3D{extent.width >> mip_level, extent.height >> mip_level, 1};
+			buffer_image_copy.bufferOffset      = offset;
+			buffer_copies.push_back(buffer_image_copy);
+
+			vkb::sg::Mipmap mip_map;
+			mip_map.extent = buffer_image_copy.imageExtent;
+			mip_map.level  = mip_level;
+			mip_map.offset = offset;
+			mip_maps.push_back(mip_map);
+		}
+
+		image_out = std::make_unique<vkb::sg::Image>("", std::vector<uint8_t>{}, std::move(mip_maps));
+	}
+	image_out->create_vk_image(get_device(), VK_IMAGE_VIEW_TYPE_2D);
+	auto &vkb_image = image_out->get_vk_image();
+	auto  image     = vkb_image.get_handle();
+
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	vkCmdCopyBufferToImage(command_buffer, staging_buffer->get_handle(), image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, buffer_copies.size(), buffer_copies.data());
+
+	VkImageMemoryBarrier image_memory_barrier;
+	image_memory_barrier.image            = image;
+	image_memory_barrier.subresourceRange = subresource_range;
+	image_memory_barrier.srcAccessMask    = VK_ACCESS_TRANSFER_WRITE_BIT;
+	image_memory_barrier.dstAccessMask    = VK_ACCESS_TRANSFER_READ_BIT;
+	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
+	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_TRANSFER_BIT, 0).get_handle(), true);
+
+	return image_out;
 }
 
 std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::string &filename)
@@ -210,6 +285,8 @@ std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::Texture
 	benchmark.total_bytes = ktx_texture->dataSize;
 	auto image            = create_image(ktx_texture);
 	ktxTexture_Destroy((ktxTexture *) ktx_texture);
+
+	return {std::move(image), benchmark};
 }
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()
