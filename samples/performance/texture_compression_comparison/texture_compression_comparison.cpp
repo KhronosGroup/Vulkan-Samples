@@ -59,49 +59,69 @@ void TextureCompressionComparison::draw_gui()
 {
 }
 
-std::vector<TextureCompressionComparison::CompressedTexture_t> TextureCompressionComparison::get_texture_formats()
+const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()
 {
-	return {CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-								"",
-								VK_FORMAT_BC7_SRGB_BLOCK,
-								KTX_TTF_BC7_RGBA,
-								"KTX_TTF_BC7_RGBA",
-								"BC7"},
-			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-								"",
-								VK_FORMAT_BC3_SRGB_BLOCK,
-								KTX_TTF_BC3_RGBA,
-								"KTX_TTF_BC3_RGBA",
-								"BC3"},
-			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
-								"",
-								VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
-								KTX_TTF_ASTC_4x4_RGBA,
-								"KTX_TTF_ASTC_4x4_RGBA",
-								"ASTC 4x4"},
-			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
-								"",
-								VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
-								KTX_TTF_ETC2_RGBA,
-								"KTX_TTF_ETC2_RGBA",
-								"ETC2"},
-			CompressedTexture_t{nullptr,
-								VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
-								VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
-								KTX_TTF_PVRTC1_4_RGBA,
-								"KTX_TTF_PVRTC1_4_RGBA",
-								"PVRTC1 4"}};
+	static std::vector<TextureCompressionComparison::CompressedTexture_t> formats = {
+		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
+							"",
+							VK_FORMAT_BC7_SRGB_BLOCK,
+							KTX_TTF_BC7_RGBA,
+							"KTX_TTF_BC7_RGBA",
+							"BC7"},
+		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
+							"",
+							VK_FORMAT_BC3_SRGB_BLOCK,
+							KTX_TTF_BC3_RGBA,
+							"KTX_TTF_BC3_RGBA",
+							"BC3"},
+		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
+							"",
+							VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
+							KTX_TTF_ASTC_4x4_RGBA,
+							"KTX_TTF_ASTC_4x4_RGBA",
+							"ASTC 4x4"},
+		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
+							"",
+							VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
+							KTX_TTF_ETC2_RGBA,
+							"KTX_TTF_ETC2_RGBA",
+							"ETC2"},
+		CompressedTexture_t{nullptr,
+							VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
+							VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
+							KTX_TTF_PVRTC1_4_RGBA,
+							"KTX_TTF_PVRTC1_4_RGBA",
+							"PVRTC1 4"},
+		CompressedTexture_t{nullptr,
+							"",
+							VK_FORMAT_R8G8B8A8_SRGB,
+							KTX_TTF_RGBA32,
+							"KTX_TTF_RGBA32",
+							"RGBA 32",
+							true}};
+	return formats;
+}
+
+bool TextureCompressionComparison::is_texture_format_supported(const TextureCompressionComparison::CompressedTexture_t &format)
+{
+	const auto device_features = get_device().get_gpu().get_features();
+
+	const bool supported_by_feature   = format.feature_ptr && device_features.*format.feature_ptr;
+	const bool supported_by_extension = strlen(format.extension_name) && get_device().is_extension_supported(format.extension_name);
+	const bool supported_by_default   = format.always_suported;
+
+	return supported_by_default || supported_by_feature || supported_by_extension;
 }
 
 void TextureCompressionComparison::get_available_texture_formats()
 {
 	available_texture_formats.clear();
-	const auto device_features = get_device().get_gpu().get_features();
 
 	const auto all_formats = get_texture_formats();
-	std::copy_if(all_formats.cbegin(), all_formats.cend(), std::back_inserter(available_texture_formats), [&](const auto &texture_format) {
-		return (texture_format.feature_ptr && device_features.*texture_format.feature_ptr) ||
-			   (strlen(texture_format.extension_name) && get_device().is_extension_supported(texture_format.extension_name));
+
+	// Determine which formats are supported by this device
+	std::copy_if(all_formats.cbegin(), all_formats.cend(), std::back_inserter(available_texture_formats), [this](const auto &texture_format) {
+		return is_texture_format_supported(texture_format);
 	});
 }
 
@@ -113,6 +133,8 @@ void TextureCompressionComparison::load_assets()
 		throw std::runtime_error("Unable to load Sponza scene");
 	}
 
+	// Decompress all of the textures and store in memory
+	// We will use these textures later when performing benchmarks / comparisons
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		for (auto &&sub_mesh : mesh->get_submeshes())

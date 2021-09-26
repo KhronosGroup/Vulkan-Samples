@@ -35,11 +35,12 @@ class TextureCompressionComparison : public vkb::VulkanSample
     struct CompressedTexture_t
     {
         VkBool32 VkPhysicalDeviceFeatures::*feature_ptr{nullptr};
-        const char                         *extension_name = "";
-        VkFormat                            format         = VK_FORMAT_MAX_ENUM;
-        ktx_transcode_fmt_e                 ktx_format     = KTX_TTF_NOSELECTION;
-        const char                         *format_name    = "";
-        const char                         *short_name     = "";
+        const char                         *extension_name  = "";
+        VkFormat                            format          = VK_FORMAT_MAX_ENUM;
+        ktx_transcode_fmt_e                 ktx_format      = KTX_TTF_NOSELECTION;
+        const char                         *format_name     = "";
+        const char                         *short_name      = "";
+        bool                                always_suported = false;
     };
 
 	struct TextureBenchmark
@@ -56,7 +57,8 @@ class TextureCompressionComparison : public vkb::VulkanSample
 	};
 
   private:
-    static std::vector<CompressedTexture_t>                      get_texture_formats();
+    static const std::vector<CompressedTexture_t>               &get_texture_formats();
+    bool                                                         is_texture_format_supported(const CompressedTexture_t &format);
     void                                                         get_available_texture_formats();
     void                                                         load_assets();
     std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture);
