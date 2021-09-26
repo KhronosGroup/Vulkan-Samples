@@ -71,13 +71,15 @@ class TextureCompressionComparison : public vkb::VulkanSample
     void                                                         get_available_texture_formats();
     void                                                         load_assets();
     TextureBenchmark                                             update_textures(const CompressedTexture_t &new_format);
-    std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture);
+    std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture, const std::string &name);
     std::vector<uint8_t>                                         get_raw_image(const std::string &filename);
-    std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format);
+    std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format, const std::string &name);
     std::vector<CompressedTexture_t>                             available_texture_formats = {};
     std::unordered_map<std::string, SampleTexture>               texture_raw_data;
+    std::vector<std::pair<vkb::sg::Texture *, std::string>>      textures;
     vkb::sg::Camera                                             *camera{VK_NULL_HANDLE};
-    int                                                          current_format = 4, current_gui_format = 4;
+    TextureBenchmark                                             current_benchmark{};
+    int                                                          current_format = 1, current_gui_format = 1;
     bool                                                         require_redraw = true;
 };
 
