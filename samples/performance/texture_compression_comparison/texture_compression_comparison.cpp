@@ -65,27 +65,32 @@ std::vector<TextureCompressionComparison::CompressedTexture_t> TextureCompressio
 								"",
 								VK_FORMAT_BC7_SRGB_BLOCK,
 								KTX_TTF_BC7_RGBA,
-								"KTX_TTF_BC7_RGBA"},
+								"KTX_TTF_BC7_RGBA",
+								"BC7"},
 			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
 								"",
 								VK_FORMAT_BC3_SRGB_BLOCK,
 								KTX_TTF_BC3_RGBA,
-								"KTX_TTF_BC3_RGBA"},
+								"KTX_TTF_BC3_RGBA",
+								"BC3"},
 			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
 								"",
 								VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
 								KTX_TTF_ASTC_4x4_RGBA,
-								"KTX_TTF_ASTC_4x4_RGBA"},
+								"KTX_TTF_ASTC_4x4_RGBA",
+								"ASTC 4x4"},
 			CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
 								"",
 								VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
 								KTX_TTF_ETC2_RGBA,
-								"KTX_TTF_ETC2_RGBA"},
+								"KTX_TTF_ETC2_RGBA",
+								"ETC2"},
 			CompressedTexture_t{nullptr,
 								VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
 								VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
 								KTX_TTF_PVRTC1_4_RGBA,
-								"KTX_TTF_PVRTC1_4_RGBA"}};
+								"KTX_TTF_PVRTC1_4_RGBA",
+								"PVRTC1 4"}};
 }
 
 void TextureCompressionComparison::get_available_texture_formats()
@@ -128,6 +133,12 @@ void TextureCompressionComparison::load_assets()
 	}
 }
 
+std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTexture2 *ktx_texture)
+{
+	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
+}
+
 std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::string &filename)
 {
 	if (filename.empty())
@@ -153,6 +164,30 @@ std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::stri
 	}
 	ktxTexture_Destroy((ktxTexture *) ktx_texture);
 	return out;
+}
+
+std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format)
+{
+	auto iter = texture_raw_data.find(filename);
+	if (iter == texture_raw_data.cend())
+	{
+		throw std::runtime_error(std::string("Unable to find raw data for ").append(filename));
+	}
+	const std::vector<uint8_t> &bytes       = iter->second;
+	ktxTexture2	            *ktx_texture = VK_NULL_HANDLE;
+	KTX_CHECK(ktxTexture_CreateFromMemory(bytes.data(), bytes.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture));
+	assert(!!ktx_texture);
+
+	TextureBenchmark benchmark;
+	{
+		const auto start = std::chrono::high_resolution_clock::now();
+		ktxTexture2_TranscodeBasis(ktx_texture, texture_format.ktx_format, 0);
+		const auto end             = std::chrono::high_resolution_clock::now();
+		benchmark.compress_time_ms = static_cast<float>(std::chrono::duration_cast<std::chrono::microseconds>(end - start).count()) / 1000.f;
+	}
+	benchmark.total_bytes = ktx_texture->dataSize;
+	auto image            = create_image(ktx_texture);
+	ktxTexture_Destroy((ktxTexture *) ktx_texture);
 }
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()

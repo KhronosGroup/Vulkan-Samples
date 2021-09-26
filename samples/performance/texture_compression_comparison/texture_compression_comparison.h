@@ -39,16 +39,32 @@ class TextureCompressionComparison : public vkb::VulkanSample
         VkFormat                            format         = VK_FORMAT_MAX_ENUM;
         ktx_transcode_fmt_e                 ktx_format     = KTX_TTF_NOSELECTION;
         const char                         *format_name    = "";
+        const char                         *short_name     = "";
     };
 
+	struct TextureBenchmark
+	{
+		TextureBenchmark operator+(const TextureBenchmark &other)
+		{
+			total_bytes += other.total_bytes;
+			compress_time_ms += other.compress_time_ms;
+			frametime_ms += other.frametime_ms;
+		}
+		VkDeviceSize total_bytes      = 0;
+		float        compress_time_ms = 0.f;
+		float        frametime_ms     = 0.f;
+	};
+
   private:
-    static std::vector<CompressedTexture_t>               get_texture_formats();
-    void                                                  get_available_texture_formats();
-    void                                                  load_assets();
-    std::vector<uint8_t>                                  get_raw_image(const std::string &filename);
-    std::vector<CompressedTexture_t>                      available_texture_formats = {};
-    std::unordered_map<std::string, std::vector<uint8_t>> texture_raw_data;
-    vkb::sg::Camera                                      *camera{VK_NULL_HANDLE};
+    static std::vector<CompressedTexture_t>                      get_texture_formats();
+    void                                                         get_available_texture_formats();
+    void                                                         load_assets();
+    std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture);
+    std::vector<uint8_t>                                         get_raw_image(const std::string &filename);
+    std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format);
+    std::vector<CompressedTexture_t>                             available_texture_formats = {};
+    std::unordered_map<std::string, std::vector<uint8_t>>        texture_raw_data;
+    vkb::sg::Camera                                             *camera{VK_NULL_HANDLE};
 };
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison();
