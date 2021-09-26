@@ -1,42 +1,45 @@
 #include "texture_compression_comparison.h"
+#include "scene_graph/components/camera.h"
+#include "scene_graph/components/image.h"
+#include "scene_graph/components/material.h"
+#include "scene_graph/components/mesh.h"
+
+#define KTX_CHECK(x)                                                    \
+	do                                                                  \
+	{                                                                   \
+		KTX_error_code err = x;                                         \
+		if (err != KTX_SUCCESS)                                         \
+		{                                                               \
+			LOGE("Detected KTX error: {}", static_cast<uint32_t>(err)); \
+			abort();                                                    \
+		}                                                               \
+	} while (0)
 
 TextureCompressionComparison::TextureCompressionComparison()
 {
-	title = "Texture Compression Comparison";
 }
 TextureCompressionComparison::~TextureCompressionComparison()
 {
 }
 
-void TextureCompressionComparison::request_gpu_features(vkb::PhysicalDevice &gpu)
-{
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	}
-}
-
 bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 {
+	if (!VulkanSample::prepare(platform))
+	{
+		return false;
+	}
+
+	load_assets();
+
+	return true;
 }
 
-void TextureCompressionComparison::render(float delta_time)
+void TextureCompressionComparison::update(float delta_time)
 {
+	// VulkanSample::update(delta_time);
 }
 
-void TextureCompressionComparison::view_changed()
-{
-}
-
-void TextureCompressionComparison::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-}
-
-std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()
-{
-}
-
-void TextureCompressionComparison::build_command_buffers()
+void TextureCompressionComparison::draw_gui()
 {
 }
 
@@ -79,4 +82,64 @@ void TextureCompressionComparison::get_available_texture_formats()
 		return (texture_format.feature_ptr && device_features.*texture_format.feature_ptr) ||
 			   (strlen(texture_format.extension_name) && get_device().is_extension_supported(texture_format.extension_name));
 	});
+}
+
+void TextureCompressionComparison::load_assets()
+{
+	load_scene("scenes/sponza/Sponza01.gltf");
+	if (!scene)
+	{
+		throw std::runtime_error("Unable to load Sponza scene");
+	}
+
+	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
+	{
+		for (auto &&sub_mesh : mesh->get_submeshes())
+		{
+			auto material = sub_mesh->get_material();
+			for (auto &name_texture : material->textures)
+			{
+				auto       &name     = name_texture.first;
+				auto       &texture  = name_texture.second;
+				auto        image    = texture->get_image();
+				std::string filename = image->get_name();
+				if (image && texture_raw_data.find(filename) == texture_raw_data.cend())
+				{
+					texture_raw_data[filename] = get_raw_image(vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + filename + "2");
+				}
+			}
+		}
+	}
+}
+
+std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::string &filename)
+{
+	if (filename.empty())
+	{
+		return {};
+	}
+	ktxTexture2 *ktx_texture = VK_NULL_HANDLE;
+	KTX_CHECK(ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture));
+
+	if (!ktx_texture)
+	{
+		throw std::runtime_error("Unable to create texture from memory: null result provided.");
+	}
+
+	// Transcode to an uncompressed format so that encoding can be benchmarked
+	ktxTexture2_TranscodeBasis(ktx_texture, KTX_TTF_RGBA32, 0);
+
+	std::vector<uint8_t> out;
+	if (ktx_texture->dataSize && ktx_texture->pData)
+	{
+		out.resize(ktx_texture->dataSize);
+		memcpy(out.data(), ktx_texture->pData, ktx_texture->dataSize);
+	}
+	ktxTexture_Destroy((ktxTexture *) ktx_texture);
+	return out;
+}
+
+std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()
+{
+	return std::make_unique<TextureCompressionComparison>();
 }

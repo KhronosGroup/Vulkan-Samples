@@ -20,18 +20,16 @@
 #include "ktx.h"
 
 #include "api_vulkan_sample.h"
+#include "scene_graph/components/image.h"
 
-class TextureCompressionComparison : public ApiVulkanSample
+class TextureCompressionComparison : public vkb::VulkanSample
 {
   public:
     TextureCompressionComparison();
     ~TextureCompressionComparison();
-    virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
     bool         prepare(vkb::Platform &platform) override;
-    virtual void render(float delta_time) override;
-    virtual void view_changed() override;
-    virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-    void         build_command_buffers() override;
+    virtual void update(float delta_time) override;
+    virtual void draw_gui() override;
 
   private:
     struct CompressedTexture_t
@@ -44,9 +42,12 @@ class TextureCompressionComparison : public ApiVulkanSample
     };
 
   private:
-    static std::vector<CompressedTexture_t> get_texture_formats();
-    void                                    get_available_texture_formats();
-    std::vector<CompressedTexture_t>        available_texture_formats = {};
+    static std::vector<CompressedTexture_t>               get_texture_formats();
+    void                                                  get_available_texture_formats();
+    void                                                  load_assets();
+    std::vector<uint8_t>                                  get_raw_image(const std::string &filename);
+    std::vector<CompressedTexture_t>                      available_texture_formats = {};
+    std::unordered_map<std::string, std::vector<uint8_t>> texture_raw_data;
 };
 
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison();
