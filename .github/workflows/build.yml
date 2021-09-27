@@ -62,5 +62,14 @@ jobs:
           submodules: "recursive"
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
+      - name: "Explicitly setup SDK path with local.properties."
+        run: |
+          echo "sdk.dir=/usr/local/android-sdk" > build/android_gradle/local.properties
+          echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
+      - name: "Ensure Ninja is installed."
+        run: |
+          apt-get update
+          apt install ninja-build
       - name: "Build Android using gradlew."
-        run: cd ./build/android-gradle/ && ./gradlew.sh
+        working-directory: build/android_gradle
+        run: ./gradlew :assembleRelease
