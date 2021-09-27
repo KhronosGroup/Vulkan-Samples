@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Pipeline Management"
-    DESCRIPTION "Pipeline creation and caching.")
+    DESCRIPTION "Pipeline creation and caching."
+    SHADER_FILES_GLSL
+        "base.vert"
+        "base.frag")

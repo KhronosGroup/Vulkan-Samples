@@ -34,7 +34,8 @@
 		android:theme="@style/AppTheme"
 		tools:ignore="GoogleAppIndexingWarning,HardcodedDebugMode">
 
-		<activity android:name="com.khronos.vulkan_samples.SampleLauncherActivity">
+		<activity android:name="com.khronos.vulkan_samples.SampleLauncherActivity"
+			android:exported="true">
 			<intent-filter>
 				<action android:name="android.intent.action.MAIN" />
 				<category android:name="android.intent.category.LAUNCHER" />
@@ -50,7 +51,7 @@
 
 		<provider
 			android:authorities="${applicationId}.provider"
-			android:name="android.support.v4.content.FileProvider"
+			android:name="androidx.core.content.FileProvider"
 			android:exported="false"
 			android:grantUriPermissions="true">
 			<meta-data
