@@ -734,12 +734,12 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 			name_info.pObjectName                   = name;
 			vkSetDebugUtilsObjectNameEXT(device, &name_info);
 		};
-		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_compute_view", shading_rate_image_compute_view->get_handle());
-		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_view", shading_rate_image_view->get_handle());
-		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "frequency_content_image_view", frequency_content_image_view->get_handle());
-		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image_compute", shading_rate_image_compute->get_handle());
-		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image", shading_rate_image->get_handle());
-		set_name(VK_OBJECT_TYPE_IMAGE, "frequency_content_image", frequency_content_image->get_handle());
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_compute_view", reinterpret_cast<void*>(shading_rate_image_compute_view->get_handle()));
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_view", reinterpret_cast<void*>(shading_rate_image_view->get_handle()));
+		set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "frequency_content_image_view", reinterpret_cast<void*>(frequency_content_image_view->get_handle()));
+		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image_compute", reinterpret_cast<void*>(shading_rate_image_compute->get_handle()));
+		set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image", reinterpret_cast<void*>(shading_rate_image->get_handle()));
+		set_name(VK_OBJECT_TYPE_IMAGE, "frequency_content_image", reinterpret_cast<void*>(frequency_content_image->get_handle()));
 	}
 }
 
