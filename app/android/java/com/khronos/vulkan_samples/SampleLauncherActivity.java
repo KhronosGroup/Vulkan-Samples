@@ -22,8 +22,8 @@ import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v7.app.AppCompatActivity;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -34,10 +34,9 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import android.support.v7.widget.Toolbar;
+import androidx.appcompat.widget.Toolbar;
 
 import com.khronos.vulkan_samples.common.Notifications;
-import com.khronos.vulkan_samples.common.Utils;
 import com.khronos.vulkan_samples.model.Permission;
 import com.khronos.vulkan_samples.model.Sample;
 import com.khronos.vulkan_samples.model.SampleStore;
@@ -116,42 +115,42 @@ public class SampleLauncherActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.filter_button:
-                sampleListView.dialog.show(getSupportFragmentManager(), "filter");
-                return true;
-            case R.id.menu_run_samples:
-                String category = "";
-                ViewPagerAdapter adapter = ((ViewPagerAdapter) sampleListView.viewPager.getAdapter());
-                if (adapter != null) {
-                    category = adapter.getCurrentFragment().getCategory();
-                }
+        if(item.getItemId() == R.id.filter_button) {
+            sampleListView.dialog.show(getSupportFragmentManager(), "filter");
+            return true;
+        } else if(item.getItemId() == R.id.menu_run_samples) {
+            String category = "";
+            ViewPagerAdapter adapter = ((ViewPagerAdapter) sampleListView.viewPager.getAdapter());
+            if (adapter != null) {
+                category = adapter.getCurrentFragment().getCategory();
+            }
 
-                List<String> arguments = new ArrayList<>();
-                arguments.add("batch");
-                arguments.add("--category");
-                arguments.add(category);
-                arguments.addAll(sampleListView.dialog.getFilter());
+            List<String> arguments = new ArrayList<>();
+            arguments.add("batch");
+            arguments.add("--category");
+            arguments.add(category);
+            arguments.addAll(sampleListView.dialog.getFilter());
 
-                String[] sa = {};
-                launchWithCommandArguments(arguments.toArray(sa));
-                return true;
-            case R.id.menu_benchmark_mode:
-                isBenchmarkMode = !item.isChecked();
-                item.setChecked(isBenchmarkMode);
-                return true;
-            case R.id.menu_headless:
-                isHeadless = !item.isChecked();
-                item.setChecked(isHeadless);
-                return true;
-            default:
-                return super.onOptionsItemSelected(item);
+            String[] sa = {};
+            launchWithCommandArguments(arguments.toArray(sa));
+            return true;
+        } else if(item.getItemId() == R.id.menu_benchmark_mode) {
+            isBenchmarkMode = !item.isChecked();
+            item.setChecked(isBenchmarkMode);
+            return true;
+        } else if(item.getItemId() == R.id.menu_headless) {
+            isHeadless = !item.isChecked();
+            item.setChecked(isHeadless);
+            return true;
+        } else {
+            return super.onOptionsItemSelected(item);
         }
     }
 
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
             @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         requestNextPermission();
     }
 
@@ -347,7 +346,7 @@ public class SampleLauncherActivity extends AppCompatActivity {
     private native void sendArgumentsToPlatform(String[] args);
 
     /**
-     * @breif Initiate the file system for the Native Application
+     * @brief Initiate the file system for the Native Application
      */
     private native void initFilePath(String external_dir, String temp_path);
 }
