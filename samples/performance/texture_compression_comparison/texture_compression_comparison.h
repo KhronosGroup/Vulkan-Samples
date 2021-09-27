@@ -26,7 +26,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
 {
   public:
     TextureCompressionComparison();
-    ~TextureCompressionComparison();
+    virtual ~TextureCompressionComparison();
     bool         prepare(vkb::Platform &platform) override;
     virtual void update(float delta_time) override;
     virtual void draw_gui() override;

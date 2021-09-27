@@ -50,8 +50,13 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 TextureCompressionComparison::TextureCompressionComparison()
 {
 }
+
 TextureCompressionComparison::~TextureCompressionComparison()
 {
+	scene.reset();
+	available_texture_formats.clear();
+	texture_raw_data.clear();
+	textures.clear();
 }
 
 bool TextureCompressionComparison::prepare(vkb::Platform &platform)
@@ -220,6 +225,7 @@ void TextureCompressionComparison::load_assets()
 
 TextureCompressionComparison::TextureBenchmark TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
 {
+	return {};        //
 	TextureBenchmark benchmark;
 	for (auto &&texture_filename : textures)
 	{
