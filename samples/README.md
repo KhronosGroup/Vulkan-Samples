@@ -130,7 +130,7 @@ This sample demonstrates how to use Basis universal supercompressed GPU textures
 
 - 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
 
-## [Texture compression comparison] (./performance/texture_compression_comparison)
+## [Texture compression comparison](./performance/texture_compression_comparison)
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
 the timing benefits of each.
 
