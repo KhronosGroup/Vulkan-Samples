@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,9 +23,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationManagerCompat;
-import android.support.v4.content.FileProvider;
+import androidx.core.app.NotificationCompat;
+import androidx.core.app.NotificationManagerCompat;
+import androidx.core.content.FileProvider;
 import android.view.View;
 
 import com.khronos.vulkan_samples.common.Notifications;
@@ -73,7 +73,7 @@ public class NativeSampleActivity extends NativeActivity {
         Intent intent = new Intent(Intent.ACTION_VIEW);
         intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
-        Intent applicationChooser = Intent.createChooser(intent, context.getResources().getString(R.string.open_file_with));
+        Intent.createChooser(intent, context.getResources().getString(R.string.open_file_with));
         intent.setDataAndType(path, context.getContentResolver().getType(path));
         intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
 

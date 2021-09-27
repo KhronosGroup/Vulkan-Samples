@@ -23,6 +23,11 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)
 set(GRADLE_BUILD_FILE ${SCRIPT_DIR}/template/gradle/build.gradle.in)
 set(GRADLE_SETTINGS_FILE ${SCRIPT_DIR}/template/gradle/settings.gradle.in)
+set(GRADLE_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle.properties.in)
+set(GRADLE_WRAPPER_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle-wrapper.properties.in)
+set(GRADLE_WRAPPER_PROPERTIES_JAR ${SCRIPT_DIR}/template/gradle/gradle-wrapper.jar)
+set(GRADLE_WRAPPER_SCRIPT_LINUX ${SCRIPT_DIR}/template/gradle/gradlew)
+set(GRADLE_WRAPPER_SCRIPT_WIN ${SCRIPT_DIR}/template/gradle/gradlew.bat)
 set(VALID_ABI "armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64")
 
 include(${SCRIPT_DIR}/utils.cmake)
@@ -40,7 +45,7 @@ set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDAT
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
 
 # minSdkVersion
-set(MIN_SDK_VERSION "minSdkVersion ${ANDROID_API}")
+set(MIN_SDK_VERSION "minSdk ${ANDROID_API}")
 
 # manifest.srcFile
 if(NOT IS_ABSOLUTE ${ANDROID_MANIFEST})
@@ -68,7 +73,7 @@ endforeach()
 list(JOIN ABI_LIST "', '" ABI_LIST)
 
 if(NOT ${ABI_LIST})
-    set(NDK_ABI_FILTERS "ndk { abiFilters '${ABI_LIST}' }")
+    set(NDK_ABI_FILTERS "abiFilters.addAll( '${ABI_LIST}' )")
 else()
     message(FATAL_ERROR "Minimum one android arch abi required.")
 endif()
@@ -182,10 +187,16 @@ endforeach()
 list(JOIN ARGS_LIST "', '" ARGS_LIST)
     
 if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
-    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\targuments '${ARGS_LIST}' \n\t\t\t}")
+    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\t${NDK_ABI_FILTERS}\n\t\t\t\targuments '${ARGS_LIST}'\n\t\t\t}")
 endif()
 
+file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)
 configure_file(${GRADLE_BUILD_FILE} ${OUTPUT_DIR}/build.gradle)
 configure_file(${GRADLE_SETTINGS_FILE} ${OUTPUT_DIR}/settings.gradle)
+configure_file(${GRADLE_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle.properties)
+configure_file(${GRADLE_WRAPPER_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle/wrapper/gradle-wrapper.properties)
+file(COPY ${GRADLE_WRAPPER_PROPERTIES_JAR} DESTINATION ${OUTPUT_DIR}/gradle/wrapper)
+file(COPY ${GRADLE_WRAPPER_SCRIPT_LINUX} DESTINATION ${OUTPUT_DIR})
+file(COPY ${GRADLE_WRAPPER_SCRIPT_WIN} DESTINATION ${OUTPUT_DIR})
 
 message(STATUS "Android Gradle Project (With Native Support) generated at:\n\t${OUTPUT_DIR}")

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,8 +22,8 @@ import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
+import androidx.annotation.NonNull;
+import androidx.fragment.app.DialogFragment;
 
 import com.khronos.vulkan_samples.common.Utils;
 
@@ -64,7 +64,7 @@ public class FilterDialog extends DialogFragment {
     }
 
     @Override
-    public void onAttach(Context context) {
+    public void onAttach(@NonNull Context context) {
         super.onAttach(context);
     }
 
@@ -117,7 +117,7 @@ public class FilterDialog extends DialogFragment {
  * Update alteredValues, changes are discarded if the filter is not applied
  */
 class FilterMultiChoiceClickListener implements DialogInterface.OnMultiChoiceClickListener {
-    private FilterDialog dialog;
+    private final FilterDialog dialog;
 
     FilterMultiChoiceClickListener(FilterDialog dialog) {
         this.dialog = dialog;
@@ -138,7 +138,7 @@ class FilterMultiChoiceClickListener implements DialogInterface.OnMultiChoiceCli
  * When applying a filter override the current values and then notify the adapter that the current filter has been changed
  */
 class FilterClickListener implements DialogInterface.OnClickListener {
-    private FilterDialog dialog;
+    private final FilterDialog dialog;
 
     FilterClickListener(FilterDialog dialog) {
         this.dialog = dialog;
