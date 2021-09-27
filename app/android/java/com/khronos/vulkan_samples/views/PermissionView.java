@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,8 +28,8 @@ import com.khronos.vulkan_samples.SampleLauncherActivity;
  * A container for all elements related to the permission view
  */
 public class PermissionView {
-    private Button buttonPermissions;
-    private TextView textPermissions;
+    private final Button buttonPermissions;
+    private final TextView textPermissions;
 
     public PermissionView(SampleLauncherActivity activity) {
         buttonPermissions = activity.findViewById(R.id.button_permissions);
@@ -58,7 +58,7 @@ public class PermissionView {
  * Click listener for the Permission View button
  */
 class CheckPermissionClickListener implements View.OnClickListener {
-    private SampleLauncherActivity activity;
+    private final SampleLauncherActivity activity;
 
     CheckPermissionClickListener(SampleLauncherActivity activity) {
         this.activity = activity;
