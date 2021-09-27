@@ -102,25 +102,25 @@ class BindlessResources : public ApiVulkanSample
 	bool                               m_enable_mci       = true;
 	bool                               m_requires_rebuild = false;
 
-	VkPipeline            pipeline{nullptr};
-	VkPipelineLayout      pipeline_layout{nullptr};
-	VkDescriptorSetLayout descriptor_set_layout{nullptr};
-	VkDescriptorSet       descriptor_set{nullptr};
-	VkSampler             sampler{nullptr};
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkSampler             sampler{VK_NULL_HANDLE};
 
 	// GPU Draw Calls
 	void                  run_cull();
 	void                  run_gpu_cull();
-	VkPipeline            gpu_cull_pipeline{nullptr};
-	VkPipelineLayout      gpu_cull_pipeline_layout{nullptr};
-	VkDescriptorSetLayout gpu_cull_descriptor_set_layout{nullptr};
-	VkDescriptorSet       gpu_cull_descriptor_set{nullptr};
+	VkPipeline            gpu_cull_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      gpu_cull_pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout gpu_cull_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       gpu_cull_descriptor_set{VK_NULL_HANDLE};
 
 	// Device Address
-	VkPipeline                         device_address_pipeline{nullptr};
-	VkPipelineLayout                   device_address_pipeline_layout{nullptr};
-	VkDescriptorSetLayout              device_address_descriptor_set_layout{nullptr};
-	VkDescriptorSet                    device_address_descriptor_set{nullptr};
+	VkPipeline                         device_address_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout                   device_address_pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout              device_address_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet                    device_address_descriptor_set{VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
