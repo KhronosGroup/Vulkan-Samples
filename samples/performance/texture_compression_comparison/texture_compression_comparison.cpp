@@ -1,3 +1,20 @@
+/* Copyright (c) 2021, Holochip
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 #include "texture_compression_comparison.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/camera.h"
@@ -7,7 +24,7 @@
 
 namespace
 {
-static constexpr std::array<const char *, 19> error_codes = {
+constexpr std::array<const char *, 19> error_codes = {
     "KTX_SUCCESS",
     "KTX_FILE_DATA_ERROR",
     "KTX_FILE_ISPIPE",
@@ -47,18 +64,6 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 		}                                                                                         \
 	} while (0)
 
-TextureCompressionComparison::TextureCompressionComparison()
-{
-}
-
-TextureCompressionComparison::~TextureCompressionComparison()
-{
-	scene.reset();
-	available_texture_formats.clear();
-	texture_raw_data.clear();
-	textures.clear();
-}
-
 bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 {
 	if (!VulkanSample::prepare(platform))
@@ -73,10 +78,10 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 
 	vkb::ShaderSource vert_shader("base.vert");
 	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
 
 	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
+	render_pipeline.add_subpass(std::move(scene_sub_pass));
 
 	set_render_pipeline(std::move(render_pipeline));
 
@@ -110,7 +115,7 @@ void TextureCompressionComparison::draw_gui()
 	}();
 
 	gui->show_options_window([this]() {
-		if (ImGui::Combo("Compressed Format", &current_gui_format, texture_names.data(), texture_names.size()))
+		if (ImGui::Combo("Compressed Format", &current_gui_format, texture_names.data(), static_cast<int>(texture_names.size())))
 		{
 			require_redraw     = true;
 			const auto &format = get_texture_formats()[current_gui_format];
@@ -182,7 +187,7 @@ bool TextureCompressionComparison::is_texture_format_supported(const TextureComp
 
 	const bool supported_by_feature   = format.feature_ptr && device_features.*format.feature_ptr;
 	const bool supported_by_extension = strlen(format.extension_name) && get_device().is_extension_supported(format.extension_name);
-	const bool supported_by_default   = format.always_suported;
+	const bool supported_by_default   = format.always_supported;
 
 	return supported_by_default || supported_by_feature || supported_by_extension;
 }
@@ -217,7 +222,7 @@ void TextureCompressionComparison::load_assets()
 			{
 				vkb::sg::Texture *texture = name_texture.second;
 				auto              image   = texture->get_image();
-				textures.push_back({texture, get_sponza_texture_filename(image->get_name())});
+				textures.emplace_back(texture, get_sponza_texture_filename(image->get_name()));
 			}
 		}
 	}
@@ -225,7 +230,6 @@ void TextureCompressionComparison::load_assets()
 
 TextureCompressionComparison::TextureBenchmark TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
 {
-	return {};        //
 	TextureBenchmark benchmark;
 	for (auto &&texture_filename : textures)
 	{
@@ -258,7 +262,7 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 	std::unique_ptr<vkb::core::Buffer> staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), ktx_texture->dataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	memcpy(staging_buffer->map(), ktx_texture->pData, ktx_texture->dataSize);
 
-	const VkFormat vk_format = static_cast<VkFormat>(ktx_texture->vkFormat);
+	const auto vk_format = static_cast<VkFormat>(ktx_texture->vkFormat);
 
 	VkExtent3D extent{ktx_texture->baseWidth, ktx_texture->baseHeight, 1};
 
@@ -329,12 +333,12 @@ std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::stri
 {
 	if (filename.empty())
 	{
-		return {};        //{nullptr, SampleTexture::destroy_texture};
+		return {};
 	}
 
 	std::ifstream                  is(filename, std::ios::binary);
 	std::istream_iterator<uint8_t> start(is), end;
-	return std::vector<uint8_t>(start, end);
+	return {start, end};
 }
 
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)
@@ -359,12 +363,4 @@ std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::Texture
 std::unique_ptr<TextureCompressionComparison> create_texture_compression_comparison()
 {
 	return std::make_unique<TextureCompressionComparison>();
-}
-
-void TextureCompressionComparison::SampleTexture::destroy_texture(ktxTexture2 *ktx_texture)
-{
-	if (ktx_texture)
-	{
-		ktxTexture_Destroy((ktxTexture *) ktx_texture);
-	}
 }

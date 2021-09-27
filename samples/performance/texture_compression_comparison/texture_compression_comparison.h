@@ -25,11 +25,11 @@
 class TextureCompressionComparison : public vkb::VulkanSample
 {
   public:
-    TextureCompressionComparison();
-    virtual ~TextureCompressionComparison();
+    TextureCompressionComparison() = default;
+    ~TextureCompressionComparison() override = default;
     bool         prepare(vkb::Platform &platform) override;
-    virtual void update(float delta_time) override;
-    virtual void draw_gui() override;
+    void update(float delta_time) override;
+    void draw_gui() override;
 
   private:
     struct CompressedTexture_t
@@ -40,7 +40,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
         ktx_transcode_fmt_e                 ktx_format      = KTX_TTF_NOSELECTION;
         const char                         *format_name     = "";
         const char                         *short_name      = "";
-        bool                                always_suported = false;
+        bool                                always_supported = false;
     };
 
 	struct TextureBenchmark
@@ -49,18 +49,17 @@ class TextureCompressionComparison : public vkb::VulkanSample
 		{
 			total_bytes += other.total_bytes;
 			compress_time_ms += other.compress_time_ms;
-			frametime_ms += other.frametime_ms;
+            frame_time_ms += other.frame_time_ms;
 			return *this;
 		}
 		VkDeviceSize total_bytes      = 0;
 		float        compress_time_ms = 0.f;
-		float        frametime_ms     = 0.f;
+		float        frame_time_ms     = 0.f;
 	};
 
 	struct SampleTexture
 	{
-		static void                     destroy_texture(ktxTexture2 *ktx_texture);
-		std::vector<uint8_t>            raw_bytes;        //{nullptr, &destroy_texture};
+		std::vector<uint8_t>            raw_bytes;
 		std::unique_ptr<vkb::sg::Image> image;
 		TextureBenchmark                benchmark;
 	};
@@ -72,7 +71,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
     void                                                         load_assets();
     TextureBenchmark                                             update_textures(const CompressedTexture_t &new_format);
     std::unique_ptr<vkb::sg::Image>                              create_image(ktxTexture2 *ktx_texture, const std::string &name);
-    std::vector<uint8_t>                                         get_raw_image(const std::string &filename);
+    static std::vector<uint8_t>                                         get_raw_image(const std::string &filename);
     std::pair<std::unique_ptr<vkb::sg::Image>, TextureBenchmark> compress(const std::string &filename, CompressedTexture_t texture_format, const std::string &name);
     std::vector<CompressedTexture_t>                             available_texture_formats = {};
     std::unordered_map<std::string, SampleTexture>               texture_raw_data;
