@@ -228,7 +228,7 @@ class RaytracingExtended : public ApiVulkanSample
 		uint32_t       width;
 		uint32_t       height;
 		StorageImage() :
-		    memory(nullptr), image(VK_NULL_HANDLE), view(nullptr), format(), width(0), height(0)
+		    memory(VK_NULL_HANDLE), image(VK_NULL_HANDLE), view(VK_NULL_HANDLE), format(), width(0), height(0)
 		{}
 	} storage_image;
 

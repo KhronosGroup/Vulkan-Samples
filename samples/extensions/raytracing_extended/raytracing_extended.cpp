@@ -86,7 +86,7 @@ struct RaytracingExtended::Model
 };
 
 RaytracingExtended::RaytracingExtended() :
-    index_count(0), pipeline(nullptr), pipeline_layout(nullptr), descriptor_set(nullptr), descriptor_set_layout(nullptr)
+    index_count(0), pipeline(VK_NULL_HANDLE), pipeline_layout(VK_NULL_HANDLE), descriptor_set(VK_NULL_HANDLE), descriptor_set_layout(VK_NULL_HANDLE)
 {
 	title = "Ray tracing with extended features";
 
