@@ -26,4 +26,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Separating image and sampler"
-    DESCRIPTION "Displays a texture with a separted image and sampler")
+    DESCRIPTION "Displays a texture with a separted image and sampler"
+    SHADER_FILES_GLSL
+        "separate_image_sampler/separate_image_sampler.vert"
+        "separate_image_sampler/separate_image_sampler.frag")
