@@ -24,7 +24,4 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip"
     NAME "Texture compression comparison"
-    DESCRIPTION "Compare the performance of different texture formats (ASTC, BC[x], ETC2, and PVRTC)"
-    SHADER_FILES_GLSL
-        "texture_compression_comparison/texture.vert"
-        "texture_compression_comparison/texture.frag")
+    DESCRIPTION "Compare the performance of different texture formats (ASTC, BC[x], ETC2, and PVRTC)")
