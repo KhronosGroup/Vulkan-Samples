@@ -226,6 +226,8 @@ DirectWindow::DirectWindow(Platform &platform, uint32_t width, uint32_t height) 
 		if (tcsetattr(tty_fd, TCSANOW, &termio) == -1)
 			LOGW("Failed to set attribs for '/dev/tty'");
 	}
+
+	platform.set_focus(true);
 }
 
 DirectWindow::~DirectWindow()
