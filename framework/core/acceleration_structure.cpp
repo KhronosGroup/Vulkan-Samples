@@ -156,7 +156,7 @@ void AccelerationStructure::build(VkQueue queue, VkBuildAccelerationStructureFla
 	build_geometry_info.type  = type;
 	build_geometry_info.flags = flags;
 	build_geometry_info.mode  = mode;
-	if (mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR && handle != nullptr)
+	if (mode == VK_BUILD_ACCELERATION_STRUCTURE_MODE_UPDATE_KHR && handle != VK_NULL_HANDLE)
 	{
 		build_geometry_info.srcAccelerationStructure = handle;
 		build_geometry_info.dstAccelerationStructure = handle;
