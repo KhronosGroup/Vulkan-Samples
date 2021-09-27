@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,13 +32,13 @@ import java.util.TreeSet;
  * A one stop store of samples that are pre indexed for use in the App
  */
 public class SampleStore {
-    private Set<Sample> samples = new TreeSet<>();
+    private final Set<Sample> samples = new TreeSet<>();
 
-    private Set<String> categories = new TreeSet<>(new Utils.PredefinedOrderComparator("api", "performance", "extensions"));
-    private Map<String, List<Sample>> categoryIndex = new HashMap<>();
+    private final Set<String> categories = new TreeSet<>(new Utils.PredefinedOrderComparator("api", "performance", "extensions"));
+    private final Map<String, List<Sample>> categoryIndex = new HashMap<>();
 
-    private Set<String> tags = new TreeSet<>(new Utils.PredefinedOrderComparator("any"));
-    private Map<String, List<Sample>> tagIndex = new HashMap<>();
+    private final Set<String> tags = new TreeSet<>(new Utils.PredefinedOrderComparator("any"));
+    private final Map<String, List<Sample>> tagIndex = new HashMap<>();
 
     public SampleStore(List<Sample> samples) {
         if (samples == null) {
@@ -54,7 +54,7 @@ public class SampleStore {
             this.samples.add(sample);
 
             if (!categoryIndex.containsKey(sample.getCategory())) {
-                categoryIndex.put(sample.getCategory(), new ArrayList<Sample>());
+                categoryIndex.put(sample.getCategory(), new ArrayList<>());
             }
 
             List<Sample> category = categoryIndex.get(sample.getCategory());
@@ -64,7 +64,7 @@ public class SampleStore {
 
             for (String tag : sample.getTags()) {
                 if (!tagIndex.containsKey(tag)) {
-                    tagIndex.put(tag, new ArrayList<Sample>());
+                    tagIndex.put(tag, new ArrayList<>());
                 }
 
                 List<Sample> index = tagIndex.get(tag);

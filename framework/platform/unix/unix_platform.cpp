@@ -35,6 +35,10 @@ VKBP_ENABLE_WARNINGS()
 #	define VK_KHR_XCB_SURFACE_EXTENSION_NAME "VK_KHR_xcb_surface"
 #endif
 
+#ifndef VK_EXT_METAL_SURFACE_EXTENSION_NAME
+#	define VK_EXT_METAL_SURFACE_EXTENSION_NAME "VK_EXT_metal_surface"
+#endif
+
 #ifndef VK_KHR_XLIB_SURFACE_EXTENSION_NAME
 #	define VK_KHR_XLIB_SURFACE_EXTENSION_NAME "VK_KHR_xlib_surface"
 #endif
@@ -82,18 +86,19 @@ const char *UnixPlatform::get_surface_extension()
 {
 	if (type == UnixType::Mac)
 	{
-		return VK_MVK_MACOS_SURFACE_EXTENSION_NAME;
+		return VK_EXT_METAL_SURFACE_EXTENSION_NAME;
 	}
-	else
-	{
+
 #if defined(VK_USE_PLATFORM_XCB_KHR)
-		return VK_KHR_XCB_SURFACE_EXTENSION_NAME;
+	return VK_KHR_XCB_SURFACE_EXTENSION_NAME;
 #elif defined(VK_USE_PLATFORM_XLIB_KHR)
-		return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
+	return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
 #elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-		return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+	return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
+#else
+	assert(0 && "Platform not supported, no surface extension available");
+	return "";
 #endif
-	}
 }
 
 void UnixPlatform::create_window(const Window::Properties &properties)
