@@ -22,6 +22,10 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Sascha Wilems"
+    AUTHOR "Sascha Willems"
     NAME "Ray tracing basic"
-    DESCRIPTION "Basic example for hardware accelerated ray tracing")
+    DESCRIPTION "Basic example for hardware accelerated ray tracing"
+    SHADER_FILES_GLSL
+        "khr_ray_tracing_basic/raygen.rgen"
+        "khr_ray_tracing_basic/miss.rmiss"
+        "khr_ray_tracing_basic/closesthit.rchit")

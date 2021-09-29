@@ -1,32 +1,28 @@
 buildscript {
     repositories {
-        jcenter()
+        mavenCentral()
         google()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:3.4.0'
+        classpath 'com.android.tools.build:gradle:7.0.2'
     }
 }
 
 allprojects {
     repositories {
         google()
-        jcenter()
     }
 }
 
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 28
-    buildToolsVersion '28.0.3'
+    compileSdk 31
 
     defaultConfig {
         @MIN_SDK_VERSION@
-        targetSdkVersion 28
-
-        @NDK_ABI_FILTERS@
+        targetSdk 31
 
         externalNativeBuild {
             @CMAKE_ARGUMENTS@
@@ -61,9 +57,14 @@ android {
     externalNativeBuild {
         @CMAKE_PATH@
     }
+
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
 }
 
 dependencies {
-    implementation 'com.android.support:appcompat-v7:28.0.0'
-    implementation 'com.android.support:design:28.0.0'
+    implementation 'androidx.appcompat:appcompat:1.3.1'
+    implementation 'com.google.android.material:material:1.4.0'
 }

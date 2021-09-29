@@ -53,5 +53,8 @@ if (NOT (ANDROID OR DIRECT_TO_DISPLAY))
             glad
         FILES
             offscreen_context.h
-            offscreen_context.cpp)
+            offscreen_context.cpp
+        SHADER_FILES_GLSL
+            "texture_loading/texture.vert"
+            "texture_loading/texture.frag")
 endif()

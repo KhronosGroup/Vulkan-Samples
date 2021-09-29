@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Descriptor Management"
-    DESCRIPTION "Descriptor set management and buffer allocation strategies.")
+    DESCRIPTION "Descriptor set management and buffer allocation strategies."
+    SHADER_FILES_GLSL
+        "base.vert"
+        "base.frag")
