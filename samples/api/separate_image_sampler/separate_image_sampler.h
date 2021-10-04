@@ -39,9 +39,9 @@ class SeparateImageSampler : public ApiVulkanSample
 	Texture texture;
 
 	// @todo: comment
-	std::array<VkSampler, 2>       samplers;
-	int32_t                        selected_sampler{0};
-	std::array<VkDescriptorSet, 2> sampler_descriptor_sets;
+	std::array<VkSampler, 2>       samplers{};
+	int32_t                        selected_sampler = 0;
+	std::array<VkDescriptorSet, 2> sampler_descriptor_sets{};
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
@@ -56,15 +56,15 @@ class SeparateImageSampler : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	VkPipeline       pipeline;
-	VkPipelineLayout pipeline_layout;
-	VkDescriptorSet  base_descriptor_set;
+	VkPipeline       pipeline            = VK_NULL_HANDLE;
+	VkPipelineLayout pipeline_layout     = VK_NULL_HANDLE;
+	VkDescriptorSet  base_descriptor_set = VK_NULL_HANDLE;
 
 	VkDescriptorSetLayout base_descriptor_set_layout;
 	VkDescriptorSetLayout sampler_descriptor_set_layout;
 
 	SeparateImageSampler();
-	~SeparateImageSampler();
+	~SeparateImageSampler() override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         setup_samplers();

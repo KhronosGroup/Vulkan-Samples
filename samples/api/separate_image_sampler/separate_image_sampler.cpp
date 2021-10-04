@@ -47,10 +47,6 @@ SeparateImageSampler::~SeparateImageSampler()
 		// Delete the implicitly created sampler for the texture loaded via the framework
 		vkDestroySampler(get_device().get_handle(), texture.sampler, nullptr);
 	}
-
-	vertex_buffer.reset();
-	index_buffer.reset();
-	uniform_buffer_vs.reset();
 }
 
 // Enable physical device features required for this example
@@ -92,7 +88,7 @@ void SeparateImageSampler::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		// Bind the uniform buffer and sampled image to set 0
@@ -382,8 +378,7 @@ void SeparateImageSampler::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	shader_stages[0] = load_shader("separate_image_sampler/separate_image_sampler.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("separate_image_sampler/separate_image_sampler.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
