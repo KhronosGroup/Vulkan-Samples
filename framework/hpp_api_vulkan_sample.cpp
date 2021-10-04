@@ -28,7 +28,7 @@ bool HPPApiVulkanSample::prepare(vkb::Platform &platform)
 	}
 
 	// initialize function pointers for C++-bindings
-	static vk::DynamicLoader  dl;
+	static vk::DynamicLoader dl;
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance());
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
