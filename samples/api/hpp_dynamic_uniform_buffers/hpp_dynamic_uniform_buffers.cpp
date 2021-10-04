@@ -389,27 +389,31 @@ void HPPDynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, b
 	}
 
 	// Dynamic ubo with per-object model matrices indexed by offsets in the command buffer
-	uint32_t  dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto      fdim = static_cast<float>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto      dim  = static_cast<uint32_t>(fdim);
 	glm::vec3 offset(5.0f);
 
 	for (uint32_t x = 0; x < dim; x++)
 	{
+		auto fx = static_cast<float>(x);
 		for (uint32_t y = 0; y < dim; y++)
 		{
+			auto fy = static_cast<float>(y);
 			for (uint32_t z = 0; z < dim; z++)
 			{
+				auto     fz    = static_cast<float>(z);
 				uint32_t index = x * dim * dim + y * dim + z;
 
 				// Aligned offset
-				glm::mat4 *model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
+				auto model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
 
 				// Update rotations
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos = glm::vec3(-((dim * offset.x) / 2.0f) + offset.x / 2.0f + x * offset.x,
-				                          -((dim * offset.y) / 2.0f) + offset.y / 2.0f + y * offset.y,
-				                          -((dim * offset.z) / 2.0f) + offset.z / 2.0f + z * offset.z);
+				glm::vec3 pos = glm::vec3(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
+				                          -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				                          -((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
 				*model_mat    = glm::translate(glm::mat4(1.0f), pos);
 				*model_mat    = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
 				*model_mat    = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));

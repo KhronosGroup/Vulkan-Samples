@@ -36,8 +36,8 @@
 class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 {
   private:
-	void *aligned_alloc(size_t size, size_t alignment);
-	void  aligned_free(void *data);
+	static void *aligned_alloc(size_t size, size_t alignment);
+	static void  aligned_free(void *data);
 
   public:
 	struct Vertex
@@ -48,7 +48,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 
 	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
 	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
-	uint32_t                              index_count;
+	uint32_t                              index_count = 0;
 
 	struct UniformBuffers
 	{
@@ -80,7 +80,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 
 	float animation_timer = 0.0f;
 
-	size_t dynamic_alignment;
+	size_t dynamic_alignment = 0;
 
 	HPPDynamicUniformBuffers();
 	~HPPDynamicUniformBuffers();

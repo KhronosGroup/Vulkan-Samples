@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace core
 {
-class HPPDevice : public vkb::Device
+class HPPDevice : protected vkb::Device
 {
   public:
 	vk::Device get_handle() const;

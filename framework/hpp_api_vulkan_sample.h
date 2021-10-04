@@ -28,7 +28,7 @@
 class HPPApiVulkanSample : public ApiVulkanSample
 {
   public:
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
 	vk::CommandBuffer                 get_command_buffer(size_t index) const;
 	size_t                            get_command_buffers_count() const;
