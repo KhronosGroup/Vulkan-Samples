@@ -28,6 +28,8 @@ class HPPDevice : protected vkb::Device
 {
   public:
 	vk::Device get_handle() const;
+
+	operator vkb::Device &();
 };
 }        // namespace core
 }        // namespace vkb

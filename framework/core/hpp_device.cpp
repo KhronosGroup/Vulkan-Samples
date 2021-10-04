@@ -25,5 +25,10 @@ vk::Device HPPDevice::get_handle() const
 {
 	return static_cast<vk::Device>(Device::get_handle());
 }
+
+HPPDevice::operator vkb::Device &()
+{
+	return *this;
+}
 }        // namespace core
 }        // namespace vkb
