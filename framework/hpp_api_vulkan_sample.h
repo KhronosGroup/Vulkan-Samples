@@ -32,7 +32,7 @@ class HPPApiVulkanSample : public ApiVulkanSample
 
 	vk::CommandBuffer                 get_command_buffer(size_t index) const;
 	size_t                            get_command_buffers_count() const;
-	vkb::core::HPPDevice &            get_device() const;
+	vk::Device                        get_device() const;
 	vk::ClearColorValue const &       get_default_clear_color() const;
 	vk::DescriptorPool                get_descriptor_pool() const;
 	vk::Framebuffer                   get_framebuffer(size_t index) const;
@@ -41,4 +41,6 @@ class HPPApiVulkanSample : public ApiVulkanSample
 	vk::Queue                         get_queue() const;
 	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage);
 	vk::SubmitInfo const &            set_submit_info(vk::CommandBuffer const &command_buffer);
+
+	vkb::core::HPPDevice &get_device_wrapper();
 };

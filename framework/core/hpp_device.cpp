@@ -21,9 +21,5 @@ namespace vkb
 {
 namespace core
 {
-vk::Device HPPDevice::get_handle() const
-{
-	return static_cast<vk::Device>(Device::get_handle());
-}
 }        // namespace core
 }        // namespace vkb

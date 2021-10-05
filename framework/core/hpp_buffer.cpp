@@ -26,7 +26,11 @@ HPPBuffer::HPPBuffer(vkb::core::HPPDevice &   device,
                      vk::BufferUsageFlags     buffer_usage,
                      VmaMemoryUsage           memory_usage,
                      VmaAllocationCreateFlags flags) :
-    Buffer(device, static_cast<VkDeviceSize>(size), static_cast<VkBufferUsageFlags>(buffer_usage), memory_usage, flags)
+    Buffer(*reinterpret_cast<vkb::Device *>(&device),
+           static_cast<VkDeviceSize>(size),
+           static_cast<VkBufferUsageFlags>(buffer_usage),
+           memory_usage,
+           flags)
 {}
 
 void HPPBuffer::flush() const

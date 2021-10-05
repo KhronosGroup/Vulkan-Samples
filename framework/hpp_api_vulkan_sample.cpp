@@ -31,7 +31,7 @@ bool HPPApiVulkanSample::prepare(vkb::Platform &platform)
 	static vk::DynamicLoader dl;
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance());
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device());
 
 	return true;
 }
@@ -46,9 +46,9 @@ size_t HPPApiVulkanSample::get_command_buffers_count() const
 	return draw_cmd_buffers.size();
 }
 
-vkb::core::HPPDevice &HPPApiVulkanSample::get_device() const
+vk::Device HPPApiVulkanSample::get_device() const
 {
-	return static_cast<vkb::core::HPPDevice &>(*device);
+	return static_cast<vk::Device>(device->get_handle());
 }
 
 vk::ClearColorValue const &HPPApiVulkanSample::get_default_clear_color() const
@@ -91,4 +91,9 @@ vk::SubmitInfo const &HPPApiVulkanSample::set_submit_info(vk::CommandBuffer cons
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = reinterpret_cast<VkCommandBuffer const *>(&command_buffer);
 	return *reinterpret_cast<vk::SubmitInfo const *>(&submit_info);
+}
+
+vkb::core::HPPDevice &HPPApiVulkanSample::get_device_wrapper()
+{
+	return reinterpret_cast<vkb::core::HPPDevice &>(*device);
 }
