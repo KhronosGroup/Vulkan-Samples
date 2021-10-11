@@ -90,7 +90,8 @@ set(ORDER_LIST
     "async_compute"
 
     #HPP API Samples
-    "hpp_hello_triangle")
+    "hpp_hello_triangle"
+	"hpp_dynamic_uniform_buffers")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
