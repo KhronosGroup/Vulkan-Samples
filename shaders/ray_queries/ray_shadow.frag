@@ -62,9 +62,7 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 
 			rayQueryEXT query;
 			rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, object_point, tmin, direction.xyz, tmax);
-			while (rayQueryProceedEXT(query))
-			{
-			}
+			rayQueryProceedEXT(query);
 			float dist = max_dist;
 			if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 			{
