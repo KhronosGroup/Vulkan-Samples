@@ -88,6 +88,7 @@ class AccelerationStructure
 
 	/**
 	 * @brief Adds instance geometry to the acceleration structure (only valid for top level)
+	 * @returns index of the instance geometry into the structure.
 	 * @param instance_buffer Buffer containing instances
 	 * @param instance_count Number of instances for this geometry
 	 * @param transform_offset Offset of this geometry in the transform data buffer
