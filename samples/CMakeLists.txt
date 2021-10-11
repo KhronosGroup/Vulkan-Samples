@@ -63,6 +63,7 @@ set(ORDER_LIST
     "push_descriptors"
     "ray_queries"
     "raytracing_basic"
+    "raytracing_extended"
     "raytracing_reflection"
     "timeline_semaphore"
     "synchronization_2"

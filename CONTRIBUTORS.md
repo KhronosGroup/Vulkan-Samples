@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -36,7 +36,9 @@
 * Ryan O'Shea
 * Sascha Willems
 * Spencer Fricke
+* Steven Winston
 * Tobias Hector
 * Tom Atkinson
 * Wasim Abbas
+* William Lohry
 * Zandro Fargnoli
