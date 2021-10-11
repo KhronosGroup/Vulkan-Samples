@@ -28,5 +28,10 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Martin-Karl Lefrançois"
     NAME "Ray tracing reflection"
-    DESCRIPTION "Example for hardware accelerated ray tracing")
+    DESCRIPTION "Example for hardware accelerated ray tracing"
+    SHADER_FILES_GLSL
+        "ray_tracing_reflection/raygen.rgen"
+        "ray_tracing_reflection/miss.rmiss"
+        "ray_tracing_reflection/missShadow.rmiss"
+        "ray_tracing_reflection/closesthit.rchit")
 

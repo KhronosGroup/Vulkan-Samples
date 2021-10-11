@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,6 +24,9 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
     NAME "Hello Triangle HPP"
-    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp.")
+    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
+    SHADER_FILES_GLSL
+        "triangle.vert"
+        "triangle.frag")
 
 target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)

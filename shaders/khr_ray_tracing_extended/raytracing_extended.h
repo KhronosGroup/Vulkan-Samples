@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2021 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,18 +15,10 @@
  * limitations under the License.
  */
 
-// Generated file by CMake. Don't edit.
-#pragma once
-
-#include <functional>
-#include <memory>
-#include <unordered_map>
-#include <vector>
-
-#include "platform/application.h"
-
-@TEST_INCLUDE_FILES@
-
-const std::unordered_map<std::string, std::function<std::unique_ptr<vkb::Application>()>> test_create_functions = {
-@TEST_NAME_FUNC_PAIRS@
-};
+#define RENDER_DEFAULT 0
+#define RENDER_BARYCENTRIC 1
+#define RENDER_INSTANCE_ID 2
+#define RENDER_DISTANCE 3
+#define RENDER_GLOBAL_XYZ 4
+#define RENDER_SHADOW_MAP 5
+#define RENDER_AO 6

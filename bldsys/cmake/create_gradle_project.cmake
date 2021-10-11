@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2020, Arm Limited and Contributors
+ Copyright (c) 2019-2021, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -17,12 +17,17 @@
 
  ]]
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)
 set(GRADLE_BUILD_FILE ${SCRIPT_DIR}/template/gradle/build.gradle.in)
 set(GRADLE_SETTINGS_FILE ${SCRIPT_DIR}/template/gradle/settings.gradle.in)
+set(GRADLE_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle.properties.in)
+set(GRADLE_WRAPPER_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle-wrapper.properties.in)
+set(GRADLE_WRAPPER_PROPERTIES_JAR ${SCRIPT_DIR}/template/gradle/gradle-wrapper.jar)
+set(GRADLE_WRAPPER_SCRIPT_LINUX ${SCRIPT_DIR}/template/gradle/gradlew)
+set(GRADLE_WRAPPER_SCRIPT_WIN ${SCRIPT_DIR}/template/gradle/gradlew.bat)
 set(VALID_ABI "armeabi" "armeabi-v7a" "arm64-v8a" "x86" "x86_64")
 
 include(${SCRIPT_DIR}/utils.cmake)
@@ -31,16 +36,16 @@ include(${SCRIPT_DIR}/utils.cmake)
 set(ANDROID_API 24 CACHE STRING "")
 set(ANDROID_MANIFEST "AndroidManifest.xml" CACHE STRING "")
 set(ARCH_ABI "arm64-v8a;armeabi-v7a" CACHE STRING "")
-set(ASSET_DIRS "assets" CACHE PATHS "")
-set(RES_DIRS "res" CACHE PATHS "")
-set(JAVA_DIRS "java" CACHE PATHS "")
-set(JNI_LIBS_DIRS "jni" CACHE PATHS "")
-set(NATIVE_SCRIPT "CMakeLists.txt" CACHE FILE "")
+set(ASSET_DIRS "assets" CACHE STRING "")
+set(RES_DIRS "res" CACHE STRING "")
+set(JAVA_DIRS "java" CACHE STRING "")
+set(JNI_LIBS_DIRS "jni" CACHE STRING "")
+set(NATIVE_SCRIPT "CMakeLists.txt" CACHE STRING "")
 set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF" CACHE STRING "")
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
 
 # minSdkVersion
-set(MIN_SDK_VERSION "minSdkVersion ${ANDROID_API}")
+set(MIN_SDK_VERSION "minSdk ${ANDROID_API}")
 
 # manifest.srcFile
 if(NOT IS_ABSOLUTE ${ANDROID_MANIFEST})
@@ -65,13 +70,10 @@ foreach(ABI_FILTER ${ARCH_ABI})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${ABI_LIST}
-    OUTPUT ABI_LIST)
+list(JOIN ABI_LIST "', '" ABI_LIST)
 
 if(NOT ${ABI_LIST})
-    set(NDK_ABI_FILTERS "ndk { abiFilters '${ABI_LIST}' }")
+    set(NDK_ABI_FILTERS "abiFilters.addAll( '${ABI_LIST}' )")
 else()
     message(FATAL_ERROR "Minimum one android arch abi required.")
 endif()
@@ -92,10 +94,7 @@ foreach(ASSET_DIR ${ASSET_DIRS})
     endif()   
 endforeach()
 
-string_join(
-    GLUE "', '"    
-    INPUT ${ASSETS_LIST}
-    OUTPUT ASSETS_LIST)
+list(JOIN ASSETS_LIST "', '" ASSETS_LIST)
 
 if(NOT ${ASSETS_LIST})
     set(ASSETS_SRC_DIRS "assets.srcDirs += [ '${ASSETS_LIST}' ]")
@@ -117,10 +116,7 @@ foreach(RES_DIR ${RES_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"    
-    INPUT ${RES_LIST}
-    OUTPUT RES_LIST)
+list(JOIN RES_LIST "', '" RES_LIST)
 
 if(NOT ${RES_LIST})
     set(RES_SRC_DIRS "res.srcDirs += [ '${RES_LIST}' ]")
@@ -142,10 +138,7 @@ foreach(JAVA_DIR ${JAVA_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${JAVA_LIST}
-    OUTPUT JAVA_LIST)
+list(JOIN JAVA_LIST "', '" JAVA_LIST)
 
 if(NOT ${JAVA_LIST})
     set(JAVA_SRC_DIRS "java.srcDirs += [ '${JAVA_LIST}' ]")
@@ -167,10 +160,7 @@ foreach(JNI_LIBS_DIR ${JNI_LIBS_DIRS})
     endif()
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${JNI_LIBS_DIR_LIST}
-    OUTPUT JNI_LIBS_DIR_LIST)
+list(JOIN JNI_LIBS_DIR_LIST "', '" JNI_LIBS_DIR_LIST)
 
 if(NOT ${JNI_LIBS_DIR_LIST})
     set(JNI_LIBS_SRC_DIRS "jniLibs.srcDirs += [ '${JNI_LIBS_DIR_LIST}' ]")
@@ -184,7 +174,7 @@ endif()
 if(EXISTS ${NATIVE_SCRIPT})
     file(RELATIVE_PATH NATIVE_SCRIPT_TMP ${OUTPUT_DIR} ${NATIVE_SCRIPT})
 
-    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.10.2+\'\n\t\t} ")
+    set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t\tversion \'3.12.0+\'\n\t\t} ")
 endif()
 
 # cmake.arguments
@@ -194,16 +184,19 @@ foreach(NATIVE_ARG ${NATIVE_ARGUMENTS})
     list(APPEND ARGS_LIST "-D${NATIVE_ARG}")
 endforeach()
 
-string_join(
-    GLUE "', '"
-    INPUT ${ARGS_LIST}
-    OUTPUT ARGS_LIST)
+list(JOIN ARGS_LIST "', '" ARGS_LIST)
     
 if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
-    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\targuments '${ARGS_LIST}' \n\t\t\t}")
+    set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\t${NDK_ABI_FILTERS}\n\t\t\t\targuments '${ARGS_LIST}'\n\t\t\t}")
 endif()
 
+file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)
 configure_file(${GRADLE_BUILD_FILE} ${OUTPUT_DIR}/build.gradle)
 configure_file(${GRADLE_SETTINGS_FILE} ${OUTPUT_DIR}/settings.gradle)
+configure_file(${GRADLE_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle.properties)
+configure_file(${GRADLE_WRAPPER_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle/wrapper/gradle-wrapper.properties)
+file(COPY ${GRADLE_WRAPPER_PROPERTIES_JAR} DESTINATION ${OUTPUT_DIR}/gradle/wrapper)
+file(COPY ${GRADLE_WRAPPER_SCRIPT_LINUX} DESTINATION ${OUTPUT_DIR})
+file(COPY ${GRADLE_WRAPPER_SCRIPT_WIN} DESTINATION ${OUTPUT_DIR})
 
 message(STATUS "Android Gradle Project (With Native Support) generated at:\n\t${OUTPUT_DIR}")

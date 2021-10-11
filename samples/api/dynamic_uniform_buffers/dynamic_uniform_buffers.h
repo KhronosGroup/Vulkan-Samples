@@ -47,7 +47,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
+	uint32_t                           index_count = 0;
 
 	struct UniformBuffers
 	{
@@ -79,7 +79,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 
 	float animation_timer = 0.0f;
 
-	size_t dynamic_alignment;
+	size_t dynamic_alignment = 0;
 
 	DynamicUniformBuffers();
 	~DynamicUniformBuffers();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,8 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+// Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
+//			 Even though, that file is not part of this sample, it's part of the sample-project!
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
@@ -198,8 +199,8 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
 	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_MACOS_MVK)
-	active_instance_extensions.push_back(VK_MVK_MACOS_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+	active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
 	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XLIB_KHR)
@@ -988,8 +989,9 @@ bool HPPHelloTriangle::prepare(vkb::Platform &platform)
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 	select_physical_device_and_surface(context, platform);
 
-	context.swapchain_dimensions.width  = platform.get_window().get_width();
-	context.swapchain_dimensions.height = platform.get_window().get_height();
+	const auto &extent                  = platform.get_window().get_extent();
+	context.swapchain_dimensions.width  = extent.width;
+	context.swapchain_dimensions.height = extent.height;
 
 	init_device(context, {VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 

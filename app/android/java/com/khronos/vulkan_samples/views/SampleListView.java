@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,12 @@
 
 package com.khronos.vulkan_samples.views;
 
-import android.content.Intent;
-import android.support.design.widget.TabLayout;
-import android.support.v4.view.ViewPager;
+import com.google.android.material.tabs.TabLayout;
+import androidx.viewpager.widget.ViewPager;
 import android.view.View;
 import android.widget.AdapterView;
 
 import com.khronos.vulkan_samples.FilterDialog;
-import com.khronos.vulkan_samples.NativeSampleActivity;
 import com.khronos.vulkan_samples.R;
 import com.khronos.vulkan_samples.SampleLauncherActivity;
 import com.khronos.vulkan_samples.ViewPagerAdapter;
@@ -34,7 +32,7 @@ import com.khronos.vulkan_samples.model.Sample;
  * A container for all elements related to the sample view
  */
 public class SampleListView {
-    private TabLayout tabLayout;
+    private final TabLayout tabLayout;
     public ViewPager viewPager;
     public FilterDialog dialog;
 
@@ -72,16 +70,14 @@ public class SampleListView {
  * Start the Native Activity for the clicked Sample
  */
 class SampleItemClickListener implements AdapterView.OnItemClickListener {
-    private SampleLauncherActivity activity;
+    private final SampleLauncherActivity activity;
 
     SampleItemClickListener(SampleLauncherActivity activity) {
         this.activity = activity;
     }
 
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-        String sampleId = ((Sample) parent.getItemAtPosition(position)).getId();
-        activity.setArguments("--sample", sampleId);
-        Intent intent = new Intent(activity, NativeSampleActivity.class);
-        activity.startActivity(intent);
+        String sampleID = ((Sample) parent.getItemAtPosition(position)).getId();
+        activity.launchSample(sampleID);
     }
 }
