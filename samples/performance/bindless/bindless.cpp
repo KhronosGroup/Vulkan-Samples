@@ -122,6 +122,15 @@ void BindlessResources::request_gpu_features(vkb::PhysicalDevice &gpu)
 		    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BUFFER_DEVICE_ADDRESS_FEATURES_KHR);
 		features.bufferDeviceAddress = VK_TRUE;
 	}
+
+	// This sample references 128 objects. We need to check whether this is supported by the device
+	VkPhysicalDeviceProperties physical_device_properties;
+	vkGetPhysicalDeviceProperties(gpu.get_handle(), &physical_device_properties);
+
+	if (physical_device_properties.limits.maxPerStageDescriptorSamplers < 128)
+	{
+		throw std::runtime_error(fmt::format(FMT_STRING("This sample requires at least 128 descriptor samplers, but device only supports {:d}"), physical_device_properties.limits.maxPerStageDescriptorSamplers));
+	}
 }
 
 void BindlessResources::build_command_buffers()
