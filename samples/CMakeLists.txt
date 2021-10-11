@@ -61,6 +61,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "fragment_shading_rate"
     "push_descriptors"
+    "ray_queries"
     "raytracing_basic"
     "raytracing_reflection"
     "timeline_semaphore"
