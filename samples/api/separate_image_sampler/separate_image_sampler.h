@@ -38,7 +38,6 @@ class SeparateImageSampler : public ApiVulkanSample
 
 	Texture texture;
 
-	// @todo: comment
 	std::array<VkSampler, 2>       samplers{};
 	int32_t                        selected_sampler = 0;
 	std::array<VkDescriptorSet, 2> sampler_descriptor_sets{};

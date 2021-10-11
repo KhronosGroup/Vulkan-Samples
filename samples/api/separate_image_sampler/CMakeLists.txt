@@ -15,8 +15,6 @@
 # limitations under the License.
 #
 
-# @todo
-
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
@@ -26,7 +24,7 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Separating image and sampler"
-    DESCRIPTION "Displays a texture with a separted image and sampler"
+    DESCRIPTION "Displays a texture with a separated image and sampler"
     SHADER_FILES_GLSL
         "separate_image_sampler/separate_image_sampler.vert"
         "separate_image_sampler/separate_image_sampler.frag")

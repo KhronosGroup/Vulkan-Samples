@@ -265,8 +265,6 @@ void SeparateImageSampler::setup_descriptor_set_layout()
 
 void SeparateImageSampler::setup_descriptor_set()
 {
-	// @todo: comment, compare to combined setup (or better do this in the readme.md)
-
 	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
 	VkDescriptorSetAllocateInfo descriptor_set_alloc_info{};
 
