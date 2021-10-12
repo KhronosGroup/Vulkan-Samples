@@ -273,12 +273,12 @@ namespace
 class CompressedImage : public vkb::sg::Image
 {
   public:
-    CompressedImage(vkb::Device &device, const std::string &name, std::vector<vkb::sg::Mipmap> &&mipmaps, VkFormat format) :
-        vkb::sg::Image(name, std::vector<uint8_t>{}, std::move(mipmaps))
-    {
-        vkb::sg::Image::set_format(format);
-        vkb::sg::Image::create_vk_image(device);
-    }
+	CompressedImage(vkb::Device &device, const std::string &name, std::vector<vkb::sg::Mipmap> &&mipmaps, VkFormat format) :
+	    vkb::sg::Image(name, std::vector<uint8_t>{}, std::move(mipmaps))
+	{
+		vkb::sg::Image::set_format(format);
+		vkb::sg::Image::create_vk_image(device);
+	}
 };
 }        // namespace
 
