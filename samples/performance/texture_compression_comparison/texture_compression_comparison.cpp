@@ -48,7 +48,7 @@ constexpr std::array<const char *, 19> error_codes = {
 
 std::string get_sponza_texture_filename(const std::string &short_name)
 {
-    return vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + short_name + "2";
+	return vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + short_name + "2";
 }
 }        // namespace
 
@@ -139,43 +139,43 @@ void TextureCompressionComparison::draw_gui()
 const std::vector<TextureCompressionComparison::CompressedTexture_t> &TextureCompressionComparison::get_texture_formats()
 {
 	static std::vector<TextureCompressionComparison::CompressedTexture_t> formats = {
-		CompressedTexture_t{nullptr,
-							"",
-							VK_FORMAT_R8G8B8A8_SRGB,
-							KTX_TTF_RGBA32,
-							"KTX_TTF_RGBA32",
-							"RGBA 32",
-							true},
-		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-							"",
-							VK_FORMAT_BC7_SRGB_BLOCK,
-							KTX_TTF_BC7_RGBA,
-							"KTX_TTF_BC7_RGBA",
-							"BC7"},
-		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
-							"",
-							VK_FORMAT_BC3_SRGB_BLOCK,
-							KTX_TTF_BC3_RGBA,
-							"KTX_TTF_BC3_RGBA",
-							"BC3"},
-		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
-							"",
-							VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
-							KTX_TTF_ASTC_4x4_RGBA,
-							"KTX_TTF_ASTC_4x4_RGBA",
-							"ASTC 4x4"},
-		CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
-							"",
-							VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
-							KTX_TTF_ETC2_RGBA,
-							"KTX_TTF_ETC2_RGBA",
-							"ETC2"},
-		CompressedTexture_t{nullptr,
-							VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
-							VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
-							KTX_TTF_PVRTC1_4_RGBA,
-							"KTX_TTF_PVRTC1_4_RGBA",
-							"PVRTC1 4"}};
+	    CompressedTexture_t{nullptr,
+	                        "",
+	                        VK_FORMAT_R8G8B8A8_SRGB,
+	                        KTX_TTF_RGBA32,
+	                        "KTX_TTF_RGBA32",
+	                        "RGBA 32",
+	                        true},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
+	                        "",
+	                        VK_FORMAT_BC7_SRGB_BLOCK,
+	                        KTX_TTF_BC7_RGBA,
+	                        "KTX_TTF_BC7_RGBA",
+	                        "BC7"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionBC,
+	                        "",
+	                        VK_FORMAT_BC3_SRGB_BLOCK,
+	                        KTX_TTF_BC3_RGBA,
+	                        "KTX_TTF_BC3_RGBA",
+	                        "BC3"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionASTC_LDR,
+	                        "",
+	                        VK_FORMAT_ASTC_4x4_SRGB_BLOCK,
+	                        KTX_TTF_ASTC_4x4_RGBA,
+	                        "KTX_TTF_ASTC_4x4_RGBA",
+	                        "ASTC 4x4"},
+	    CompressedTexture_t{&VkPhysicalDeviceFeatures::textureCompressionETC2,
+	                        "",
+	                        VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK,
+	                        KTX_TTF_ETC2_RGBA,
+	                        "KTX_TTF_ETC2_RGBA",
+	                        "ETC2"},
+	    CompressedTexture_t{nullptr,
+	                        VK_IMG_FORMAT_PVRTC_EXTENSION_NAME,
+	                        VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG,
+	                        KTX_TTF_PVRTC1_4_RGBA,
+	                        "KTX_TTF_PVRTC1_4_RGBA",
+	                        "PVRTC1 4"}};
 	return formats;
 }
 
