@@ -76,14 +76,7 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
-
-	auto render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_sub_pass));
-
-	set_render_pipeline(std::move(render_pipeline));
+	create_subpass();
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
@@ -105,17 +98,22 @@ void TextureCompressionComparison::update(float delta_time)
 
 void TextureCompressionComparison::draw_gui()
 {
-	static const std::vector<const char *> texture_names = []() {
-		const auto               &formats = get_texture_formats();
-		std::vector<const char *> texture_names(formats.size());
-		std::transform(formats.cbegin(), formats.cend(), texture_names.begin(), [](const CompressedTexture_t &format) {
-			return format.short_name;
+	if (gui_texture_names.empty())
+	{
+		const auto &formats = get_texture_formats();
+		gui_texture_names.resize(formats.size());
+		std::transform(formats.cbegin(), formats.cend(), gui_texture_names.begin(), [this](const CompressedTexture_t &format) -> std::string {
+			return fmt::format(FMT_STRING("{:s} {:s}"), format.short_name, is_texture_format_supported(format) ? "" : "(not supported)");
 		});
-		return texture_names;
-	}();
+	}
 
-	gui->show_options_window([this]() {
-		if (ImGui::Combo("Compressed Format", &current_gui_format, texture_names.data(), static_cast<int>(texture_names.size())))
+	std::vector<const char *> name_pointers(gui_texture_names.size());
+	std::transform(gui_texture_names.cbegin(), gui_texture_names.cend(), name_pointers.begin(), [](const std::string &in) {
+		return in.c_str();
+	});
+
+	gui->show_options_window([this, &name_pointers]() {
+		if (ImGui::Combo("Compressed Format", &current_gui_format, name_pointers.data(), static_cast<int>(name_pointers.size())))
 		{
 			require_redraw     = true;
 			const auto &format = get_texture_formats()[current_gui_format];
@@ -222,24 +220,50 @@ void TextureCompressionComparison::load_assets()
 			{
 				vkb::sg::Texture *texture = name_texture.second;
 				auto              image   = texture->get_image();
-				textures.emplace_back(texture, get_sponza_texture_filename(image->get_name()));
+				textures.emplace_back(texture, image->get_name());
 			}
 		}
 	}
 }
 
+void TextureCompressionComparison::create_subpass()
+{
+	vkb::ShaderSource vert_shader("base.vert");
+	vkb::ShaderSource frag_shader("base.frag");
+	auto              scene_sub_pass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
+
+	auto render_pipeline = vkb::RenderPipeline();
+	render_pipeline.add_subpass(std::move(scene_sub_pass));
+
+	set_render_pipeline(std::move(render_pipeline));
+}
+
 TextureCompressionComparison::TextureBenchmark TextureCompressionComparison::update_textures(const TextureCompressionComparison::CompressedTexture_t &new_format)
 {
-	TextureBenchmark benchmark;
+	TextureBenchmark                benchmark;
+	std::unordered_set<std::string> visited;
 	for (auto &&texture_filename : textures)
 	{
-		assert(!!texture_filename.first);
-		auto filename                        = texture_filename.second;
-		auto new_image                       = compress(texture_filename.second, new_format, "");
-		texture_raw_data[filename].image     = std::move(new_image.first);
-		texture_raw_data[filename].benchmark = new_image.second;
-		benchmark += new_image.second;
+		vkb::sg::Texture *texture = texture_filename.first;
+		assert(!!texture);
+		auto &internal_name = texture_filename.second;
+		if (!visited.count(internal_name))
+		{
+			auto filename                             = get_sponza_texture_filename(internal_name);
+			auto new_image                            = compress(filename, new_format, "");
+			texture_raw_data[internal_name].image     = std::move(new_image.first);
+			texture_raw_data[internal_name].benchmark = new_image.second;
+			benchmark += new_image.second;
+		}
+
+		vkb::sg::Image *image = texture_raw_data[internal_name].image.get();
+		assert(image);
+		texture->set_image(*image);
+		visited.insert(internal_name);
 	}
+
+	// update the forward subpass to use the new textures
+	create_subpass();
 
 	return benchmark;
 }
@@ -249,10 +273,11 @@ namespace
 class CompressedImage : public vkb::sg::Image
 {
   public:
-    CompressedImage(const std::string &name, std::vector<vkb::sg::Mipmap> &&mipmaps, VkFormat format) :
+    CompressedImage(vkb::Device &device, const std::string &name, std::vector<vkb::sg::Mipmap> &&mipmaps, VkFormat format) :
         vkb::sg::Image(name, std::vector<uint8_t>{}, std::move(mipmaps))
     {
         vkb::sg::Image::set_format(format);
+        vkb::sg::Image::create_vk_image(device);
     }
 };
 }        // namespace
@@ -293,9 +318,8 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 			mip_maps.push_back(mip_map);
 		}
 
-		image_out = std::make_unique<CompressedImage>(name, std::move(mip_maps), vk_format);
+		image_out = std::make_unique<CompressedImage>(get_device(), name, std::move(mip_maps), vk_format);
 	}
-	image_out->create_vk_image(get_device(), VK_IMAGE_VIEW_TYPE_2D);
 	auto &vkb_image = image_out->get_vk_image();
 	auto  image     = vkb_image.get_handle();
 
