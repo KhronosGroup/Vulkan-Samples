@@ -227,6 +227,8 @@ DirectWindow::DirectWindow(Platform *platform, const Window::Properties &propert
 		if (tcsetattr(tty_fd, TCSANOW, &termio) == -1)
 			LOGW("Failed to set attribs for '/dev/tty'");
 	}
+
+	platform->set_focus(true);
 }
 
 DirectWindow::~DirectWindow()

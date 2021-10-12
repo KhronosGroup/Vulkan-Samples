@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
