@@ -136,8 +136,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkPipeline sphere;
 	} pipelines;
 
-	VkDescriptorSetLayout descriptor_set_layout;
-	VkDescriptorSet       descriptor_set;
+	VkDescriptorSetLayout        descriptor_set_layout;
+	std::vector<VkDescriptorSet> render_descriptor_sets;
 
 	struct
 	{

@@ -20,6 +20,9 @@
 
 layout(binding = 1) uniform sampler2D samplerEnvMap;
 layout(binding = 2) uniform sampler2D samplerSphere;
+layout(binding = 3, rg8ui) uniform readonly uimage2D input_frequency;
+layout(binding = 4, r8ui) uniform readonly uimage2D output_sampling_rate;
+
 
 layout(location = 0) in vec2 inUV;
 layout(location = 1) in vec3 inPos;
