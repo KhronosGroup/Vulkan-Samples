@@ -110,11 +110,15 @@ void main()
 		}
 
 		outColor = vec4(vec3(1, 1, 1) * (1 - h * v / 16.0), 1);
-		/*if (v == 1 && h == 1) {
-			outColor = vec4(color.rrr * 1.0, 1.0);
-		} else {
- 			outColor = vec4(color.rrr * 1.0 - ((v+h) * 0.05), 1.0);
-		}*/
+	}
+	else if (ubo.color_shading_rates == 2)
+	{
+		ivec2 coord = ivec2(gl_FragCoord);
+		outColor = imageLoad(input_frequency, coord);
+	}
+	else if (ubo.color_shading_rates == 3)
+	{
+
 	}
 	else
 	{

@@ -53,7 +53,6 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	void draw();
 
 	bool enable_attachment_shading_rate = true;
-	bool color_shading_rate             = false;
 	bool display_sky_sphere             = true;
 	bool debug_utils_supported          = false;
 

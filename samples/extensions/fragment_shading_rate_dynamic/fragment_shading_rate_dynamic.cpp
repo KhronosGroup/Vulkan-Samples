@@ -566,8 +566,8 @@ void FragmentShadingRateDynamic::setup_descriptor_set_layout()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),        // sampler env map
 		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),        // sampler sphere
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 3),                  // input_frequency
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4)                   // output_sampling_rate
+		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 3),                 // input_frequency
+		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 4)                  // output_sampling_rate
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -596,14 +596,17 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 
 	for (size_t i = 0; i < render_descriptor_sets.size(); ++i)
 	{
-		auto &descriptor_set = render_descriptor_sets[i];
+		const size_t prev_frame     = (i + compute_buffers.size() - 1) % compute_buffers.size();
+		auto        &descriptor_set = render_descriptor_sets[i];
 		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
 		VkDescriptorBufferInfo scene_buffer_descriptor      = create_descriptor(*uniform_buffers.scene);
 		VkDescriptorImageInfo  environment_image_descriptor = create_descriptor(textures.skysphere);
 		VkDescriptorImageInfo  sphere_image_descriptor      = create_descriptor(textures.scene);
-		VkDescriptorImageInfo  frequency_descriptor         = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[i].frequency_content_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
-		VkDescriptorImageInfo  shading_image                = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[i].shading_rate_image_compute_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+
+		// We want to visualize the previous frame's frequency and shading rate image
+		VkDescriptorImageInfo frequency_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[prev_frame].frequency_content_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+		VkDescriptorImageInfo shading_image        = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
 
 		std::vector<VkWriteDescriptorSet>
 			write_descriptor_sets = {
@@ -906,7 +909,6 @@ void FragmentShadingRateDynamic::update_uniform_buffers()
 	ubo_scene.projection          = camera.matrices.perspective;
 	ubo_scene.modelview           = camera.matrices.view * glm::mat4(1.0f);
 	ubo_scene.skysphere_modelview = camera.matrices.view;
-	ubo_scene.color_shading_rate  = color_shading_rate;
 	uniform_buffers.scene->convert_and_update(ubo_scene);
 }
 
@@ -1002,10 +1004,13 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			build_command_buffers();
 		}
-		if (drawer.checkbox("Color shading rates", &color_shading_rate))
+
+		static const std::vector<std::string> shading_rate_names = {"Render output", "Shading Rates", "Frequency channel", "Sampling Rate"};
+		if (drawer.combo_box("Data visualize", &ubo_scene.color_shading_rate, shading_rate_names))
 		{
 			update_uniform_buffers();
 		}
+
 		if (drawer.checkbox("sky-sphere", &display_sky_sphere))
 		{
 			build_command_buffers();
