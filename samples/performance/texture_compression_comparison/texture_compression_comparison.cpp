@@ -78,7 +78,7 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 
 	create_subpass();
 
-	stats->request_stats({vkb::StatIndex::frame_times});
+	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
 	return true;
