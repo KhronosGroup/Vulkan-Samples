@@ -65,17 +65,24 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	// Shading rate image is an input to the graphics pipeline
 	// and is produced by the "compute shader."
 	// It has a lower resolution than the framebuffer
-	std::unique_ptr<vkb::core::Image>     shading_rate_image;
-	std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
+	struct ComputeBuffers
+	{
+		std::unique_ptr<vkb::core::Image>     shading_rate_image;
+		std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
 
-	// Frequency content image is an output of the graphics pipeline
-	// and is consumed by the "compute shader" to produce the shading rate image.
-	// It has the same resolution as the framebuffer
-	std::unique_ptr<vkb::core::Image>     frequency_content_image;
-	std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
+		// Frequency content image is an output of the graphics pipeline
+		// and is consumed by the "compute shader" to produce the shading rate image.
+		// It has the same resolution as the framebuffer
+		std::unique_ptr<vkb::core::Image>     frequency_content_image;
+		std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
 
-	std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
-	std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+		std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
+		std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+
+		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
+		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+	};
+	std::vector<ComputeBuffers> compute_buffers;
 
 	VkFence compute_fence{VK_NULL_HANDLE};
 
@@ -94,9 +101,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
 		VkPipeline            pipeline              = VK_NULL_HANDLE;
 		VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
-		VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 		VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
-		VkCommandBuffer       command_buffer        = VK_NULL_HANDLE;
 	} compute;
 
 	struct
