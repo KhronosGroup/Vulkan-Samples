@@ -226,7 +226,7 @@ class RenderContext
 	/**
 	 * @brief Handles surface changes, only applicable if the render_context makes use of a swapchain
 	 */
-	virtual void handle_surface_changes();
+	virtual bool handle_surface_changes(bool force_update = false);
 
 	/**
 	 * @brief Returns the WSI acquire semaphore. Only to be used in very special circumstances.
