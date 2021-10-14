@@ -221,6 +221,7 @@ void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
 	vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
 	vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
 	vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
+	compute.descriptor_pool = VK_NULL_HANDLE;
 }
 
 void FragmentShadingRateDynamic::setup_render_pass()
@@ -549,6 +550,12 @@ void FragmentShadingRateDynamic::setup_descriptor_pool()
 {
 	const uint32_t N = static_cast<uint32_t>(draw_cmd_buffers.size());
 
+	if (descriptor_pool)
+	{
+		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
+		descriptor_pool = VK_NULL_HANDLE;
+	}
+
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 * N),
 		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 * N),
@@ -640,6 +647,7 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 	if (compute.descriptor_pool)
 	{
 		vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
+		compute.descriptor_pool = VK_NULL_HANDLE;
 	}
 
 	const uint32_t                    N     = static_cast<uint32_t>(draw_cmd_buffers.size());
@@ -1026,9 +1034,12 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 		setup_framebuffer();
 	}
 
+	
+	setup_descriptor_pool();
 	create_compute_pipeline();
-	update_uniform_buffers();
+	setup_descriptor_sets();
 	build_command_buffers();
+	update_uniform_buffers();
 	return true;
 }
 
