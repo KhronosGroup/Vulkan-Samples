@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -19,14 +19,12 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
+add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Arm"
-    NAME "Hello Triangle HPP"
-    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
+    AUTHOR "Sascha Willems"
+    NAME "Separating image and sampler"
+    DESCRIPTION "Displays a texture with a separated image and sampler"
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+        "separate_image_sampler/separate_image_sampler.vert"
+        "separate_image_sampler/separate_image_sampler.frag")

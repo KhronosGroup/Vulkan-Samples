@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,8 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 
-VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+// Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
+//			 Even though, that file is not part of this sample, it's part of the sample-project!
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.

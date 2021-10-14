@@ -62,7 +62,9 @@ set(ORDER_LIST
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
     "push_descriptors"
+    "ray_queries"
     "raytracing_basic"
+    "raytracing_extended"
     "raytracing_reflection"
     "timeline_semaphore"
     "synchronization_2"
@@ -90,7 +92,8 @@ set(ORDER_LIST
     "async_compute"
 
     #HPP API Samples
-    "hpp_hello_triangle")
+    "hpp_hello_triangle"
+	"hpp_dynamic_uniform_buffers")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
