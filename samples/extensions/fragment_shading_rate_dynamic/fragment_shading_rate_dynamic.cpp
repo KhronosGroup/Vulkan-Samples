@@ -81,6 +81,10 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	compute_buffers.clear();
 	compute_buffers.resize(draw_cmd_buffers.size());
 
+	subpass_extent = VkExtent2D{
+		.width  = static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
+		.height = static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
+
 	for (auto &&compute_buffer : compute_buffers)
 	{
 		auto &shading_rate_image              = compute_buffer.shading_rate_image;
@@ -561,9 +565,9 @@ void FragmentShadingRateDynamic::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		const VkExtent3D small_extent = compute_buffers[i].shading_rate_image->get_extent();
-		RenderTarget     small_target{
-			small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {small_extent.width, small_extent.height}, false, false};
+		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 && subpass_extent.height < height);
+		RenderTarget small_target{
+			small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, subpass_extent, false, false};
 		RenderTarget full_target{
 			draw_cmd_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {width, height}, true, true};
 		build_command_buffer(small_target);
@@ -727,7 +731,8 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 	assert(max_rate_x && max_rate_y);
 	FrequencyInformation params{
 		glm::uvec2(this->width, this->height),
-		glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width, compute_buffers[0].shading_rate_image->get_extent().height),
+		// glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width, compute_buffers[0].shading_rate_image->get_extent().height),
+		glm::uvec2(subpass_extent.width, subpass_extent.height),
 		glm::uvec2(max_rate_x, max_rate_y),
 		static_cast<uint32_t>(fragment_shading_rates.size()),
 		uint32_t(0)};
@@ -1072,7 +1077,7 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 			build_command_buffers();
 		}
 
-		static const std::vector<std::string> shading_rate_names = {"Render output", "Shading Rates", "Frequency channel", "Sampling Rate"};
+		static const std::vector<std::string> shading_rate_names = {"Render output", "Shading Rates", "Frequency channel"};
 		if (drawer.combo_box("Data visualize", &ubo_scene.color_shading_rate, shading_rate_names))
 		{
 			update_uniform_buffers();

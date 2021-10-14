@@ -116,10 +116,6 @@ void main()
 		ivec2 coord = ivec2(gl_FragCoord);
 		outColor = imageLoad(input_frequency, coord);
 	}
-	else if (ubo.color_shading_rates == 3)
-	{
-
-	}
 	else
 	{
 		outColor = vec4(color.rgb, 1.0);

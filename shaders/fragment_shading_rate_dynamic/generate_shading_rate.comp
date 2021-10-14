@@ -61,11 +61,8 @@ void main()
 			}
 		}
 		
-		//freqs /= float(delta_x * delta_y);
+		freqs /= float(delta_x * delta_y);
 		freqs = max_freqs;
-	} else {
-		ivec2 coord = ivec2(delta_x * x0, delta_y * y0);
-		freqs = vec2(imageLoad(input_frequency, coord)) / 255.f;
 	}
 
 	const float min_rate = 1,

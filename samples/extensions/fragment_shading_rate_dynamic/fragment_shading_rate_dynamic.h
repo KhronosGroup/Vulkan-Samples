@@ -84,6 +84,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	};
 	std::vector<ComputeBuffers>  compute_buffers;
 	std::vector<VkCommandBuffer> small_command_buffers;
+	VkExtent2D                   subpass_extent;
+	uint32_t                     subpass_extent_ratio = 4;
 
 	VkFence compute_fence{VK_NULL_HANDLE};
 
