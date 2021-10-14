@@ -155,6 +155,11 @@ A transcoded version of the API sample [Hello Triangle](#hello_triangle) that il
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
 
+### [Separate image sampler](./api/separate_image_sampler)<br/>
+Separate image and samplers, both in the application and the shaders. The sample demonstrates how to use different samplers for the same image without the need to recreate descriptors.
+
+- 🎓 [Separating samplers and images](./api/separate_image_sampler/README.md)
+
 ### [Terrain Tessellation](./api/terrain_tessellation)<br/>
 Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.
 
