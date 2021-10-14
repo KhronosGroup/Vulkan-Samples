@@ -459,7 +459,7 @@ bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t heigh
 {
 	HPPApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
-    return true;
+	return true;
 }
 
 void HPPDynamicUniformBuffers::render(float delta_time)
