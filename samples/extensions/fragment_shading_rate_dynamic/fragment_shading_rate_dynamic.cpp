@@ -219,14 +219,19 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
 {
 	device->wait_idle();
-	compute_buffers.clear();
 
 	// invalidate compute pipeline
+	/*
 	vkDestroyPipeline(device->get_handle(), compute.pipeline, VK_NULL_HANDLE);
 	vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
 	vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
-	vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, VK_NULL_HANDLE);
-	compute.descriptor_pool = VK_NULL_HANDLE;
+	render_descriptor_sets.clear();
+	for (auto &&compute_buffer : compute_buffers)
+	{
+		vkFreeCommandBuffers(get_device().get_handle(), command_pool, 1, &compute_buffer.command_buffer);
+	}
+	compute_buffers.clear();
+	*/
 }
 
 void FragmentShadingRateDynamic::setup_render_pass()
@@ -395,7 +400,15 @@ void FragmentShadingRateDynamic::setup_render_pass()
 void FragmentShadingRateDynamic::setup_framebuffer()
 {
 	// Create ths shading rate image attachment if not defined (first run and resize)
-	if (compute_buffers.empty() || !compute_buffers[0].shading_rate_image)
+	auto check_dimension = [this](const vkb::core::ImageView *view) {
+		if (!view)
+		{
+			return false;
+		}
+		auto extent = view->get_image().get_extent();
+		return extent.width == this->width && extent.height == this->height;
+	};
+	if (compute_buffers.empty() || !check_dimension(compute_buffers[0].frequency_content_image_view.get()))
 	{
 		create_shading_rate_attachment();
 	}
@@ -451,6 +464,7 @@ void FragmentShadingRateDynamic::setup_framebuffer()
 
 void FragmentShadingRateDynamic::build_command_buffers()
 {
+	setup_descriptor_sets();
 	if (small_command_buffers.size() < draw_cmd_buffers.size())
 	{
 		const size_t old_size = small_command_buffers.size();
@@ -565,7 +579,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 && subpass_extent.height < height);
+		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 && subpass_extent.height <= height);
 		RenderTarget small_target{
 			small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, subpass_extent, false, false};
 		RenderTarget full_target{
@@ -637,12 +651,16 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 		vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	render_descriptor_sets.resize(draw_cmd_buffers.size(), VK_NULL_HANDLE);
+	assert(!compute_buffers.empty());
 
 	for (size_t i = 0; i < render_descriptor_sets.size(); ++i)
 	{
 		const size_t prev_frame     = (i + compute_buffers.size() - 1) % compute_buffers.size();
 		auto        &descriptor_set = render_descriptor_sets[i];
-		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+		if (!descriptor_set)
+		{
+			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+		}
 
 		VkDescriptorBufferInfo scene_buffer_descriptor      = create_descriptor(*uniform_buffers.scene);
 		VkDescriptorImageInfo  environment_image_descriptor = create_descriptor(textures.skysphere);
@@ -708,7 +726,8 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 
 	for (auto &&compute_buffer : compute_buffers)
 	{
-		compute_buffer.command_buffer = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, false);
+		auto create = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
+		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &create, &compute_buffer.command_buffer));
 	}
 	update_compute_pipeline();
 }
@@ -730,9 +749,8 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 
 	assert(max_rate_x && max_rate_y);
 	FrequencyInformation params{
-		glm::uvec2(this->width, this->height),
-		// glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width, compute_buffers[0].shading_rate_image->get_extent().height),
 		glm::uvec2(subpass_extent.width, subpass_extent.height),
+		glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width, compute_buffers[0].shading_rate_image->get_extent().height),
 		glm::uvec2(max_rate_x, max_rate_y),
 		static_cast<uint32_t>(fragment_shading_rates.size()),
 		uint32_t(0)};
@@ -1092,14 +1110,15 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t new_height)
 {
+	const size_t _width = this->width, _height = this->height;
 	invalidate_shading_rate_attachment();
-	if (!ApiVulkanSample::resize(width, height))
+	if (!ApiVulkanSample::resize(new_width, new_height))
 	{
 		setup_framebuffer();
 	}
-
-	setup_descriptor_pool();
+	create_shading_rate_attachment();
 	create_compute_pipeline();
+	setup_framebuffer();
 	setup_descriptor_sets();
 	build_command_buffers();
 	update_uniform_buffers();

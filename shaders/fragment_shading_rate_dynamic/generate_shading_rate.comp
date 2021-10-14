@@ -38,8 +38,8 @@ void main()
 	           output_width  = params.settings[2],
 	           output_height = params.settings[3];
 
-	const uint delta_x = max(1, frame_width / output_width),
-	           delta_y = max(1, frame_height / output_height);
+	const uint delta_x = max(1, uint(round(float(frame_width) / float(output_width)))),
+	           delta_y = max(1, uint(round(float(frame_height) / float(output_height))));
 	if (x0 >= output_width || y0 >= output_height)
 	{
 		return;
