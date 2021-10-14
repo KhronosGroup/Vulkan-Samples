@@ -1097,16 +1097,7 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		static const std::vector<std::string> frequency_decimation_rates = {"1", "2", "4", "8", "16"};
 
-		int32_t selection = [](uint32_t current_ratio) -> int32_t {
-			for (int32_t i = 0; i < static_cast<int32_t>(frequency_decimation_rates.size()); ++i)
-			{
-				if (current_ratio == (1 << i))
-				{
-					return i;
-				}
-			}
-			return 0;
-		}(subpass_extent_ratio);
+		int32_t selection = std::min(int32_t(frequency_decimation_rates.size()) - 1, int32_t(log2f(subpass_extent_ratio)));
 		if (drawer.combo_box("Subpass size reduction", &selection, frequency_decimation_rates))
 		{
 			subpass_extent_ratio = (1 << selection);
