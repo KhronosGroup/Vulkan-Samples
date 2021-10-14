@@ -462,6 +462,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		VkFramebuffer   _framebuffer;
 		VkDescriptorSet _descriptor_set;
 		VkRenderPass    _render_pass;
+		VkExtent2D      image_extent;
 		bool            enable_ui;
 		bool            enable_fragment_shading_rate;
 	};
@@ -477,20 +478,20 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		clear_values[3].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 
 		// Final composition
-		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.framebuffer              = render_target._fragment_framebuffer;
-		render_pass_begin_info.renderPass               = render_target._render_pass;
-		render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
-		render_pass_begin_info.pClearValues             = clear_values.data();
-		render_pass_begin_info.renderArea.extent.width  = width;
-		render_pass_begin_info.renderArea.extent.height = height;
+		VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.framebuffer           = render_target._fragment_framebuffer;
+		render_pass_begin_info.renderPass            = render_target._render_pass;
+		render_pass_begin_info.clearValueCount       = static_cast<uint32_t>(clear_values.size());
+		render_pass_begin_info.pClearValues          = clear_values.data();
+		render_pass_begin_info.renderArea.extent     = render_target.image_extent;
 
 		vkCmdBeginRenderPass(render_target._command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		const uint32_t _width = render_target.image_extent.width, _height = render_target.image_extent.height;
+		VkViewport     viewport = vkb::initializers::viewport((float) _width, (float) _height, 0.0f, 1.0f);
 		vkCmdSetViewport(render_target._command_buffer, 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(_width), static_cast<int32_t>(_height), 0, 0);
 		vkCmdSetScissor(render_target._command_buffer, 0, 1, &scissor);
 
 		VkDescriptorSet descriptor_set = render_target._descriptor_set;
@@ -560,8 +561,13 @@ void FragmentShadingRateDynamic::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		build_command_buffer({small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, false, false});
-		build_command_buffer({draw_cmd_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, true, true});
+		const VkExtent3D small_extent = compute_buffers[i].shading_rate_image->get_extent();
+		RenderTarget     small_target{
+			small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {small_extent.width, small_extent.height}, false, false};
+		RenderTarget full_target{
+			draw_cmd_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {width, height}, true, true};
+		build_command_buffer(small_target);
+		build_command_buffer(full_target);
 	}
 }
 
@@ -951,12 +957,15 @@ void FragmentShadingRateDynamic::draw()
 {
 	VkSemaphore        semaphore{VK_NULL_HANDLE};
 	const VkSemaphore *old_semaphore{VK_NULL_HANDLE};
+	const VkSemaphore *wait_semaphore{VK_NULL_HANDLE};
 	auto               semaphore_create = vkb::initializers::semaphore_create_info();
 	vkCreateSemaphore(device->get_handle(), &semaphore_create, VK_NULL_HANDLE, &semaphore);
 
 	ApiVulkanSample::prepare_frame();
+	const auto start_submit = submit_info;
 	assert(submit_info.signalSemaphoreCount == 1);
-	old_semaphore = submit_info.pSignalSemaphores;
+	old_semaphore  = submit_info.pSignalSemaphores;
+	wait_semaphore = submit_info.pWaitSemaphores;
 	std::vector<VkSemaphore> semaphores{submit_info.pSignalSemaphores[0], semaphore};
 
 	submit_info.commandBufferCount   = 1;
@@ -967,13 +976,26 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
 
+	const std::array<VkPipelineStageFlags, 2> small_wait_mask = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
+	VkSemaphore                               small_semaphore{VK_NULL_HANDLE};
+	vkCreateSemaphore(device->get_handle(), &semaphore_create, VK_NULL_HANDLE, &small_semaphore);
+	submit_info.pCommandBuffers      = &small_command_buffers[current_buffer];
+	submit_info.signalSemaphoreCount = 1;
+	submit_info.pSignalSemaphores    = &small_semaphore;
+	submit_info.waitSemaphoreCount   = 1;
+	submit_info.pWaitDstStageMask    = small_wait_mask.data();
+	submit_info.pWaitSemaphores      = &semaphore;
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+
 	const VkPipelineStageFlags wait_mask           = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 	auto                       compute_submit_info = vkb::initializers::submit_info();
 	compute_submit_info.commandBufferCount         = 1;
 	compute_submit_info.pCommandBuffers            = &compute_buffers[current_buffer].command_buffer;
 	compute_submit_info.pWaitDstStageMask          = &wait_mask;
-	compute_submit_info.pWaitSemaphores            = &semaphore;
+	compute_submit_info.pWaitSemaphores            = &small_semaphore;
 	compute_submit_info.waitSemaphoreCount         = 1;
+	compute_submit_info.signalSemaphoreCount       = 0;
+	compute_submit_info.pSignalSemaphores          = VK_NULL_HANDLE;
 
 	if (!compute_fence)
 	{
@@ -986,8 +1008,12 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkResetFences(device->get_handle(), 1, &compute_fence));
 
 	vkDestroySemaphore(device->get_handle(), semaphore, VK_NULL_HANDLE);
+	vkDestroySemaphore(device->get_handle(), small_semaphore, VK_NULL_HANDLE);
 	submit_info.signalSemaphoreCount = 1;
 	submit_info.pSignalSemaphores    = old_semaphore;
+	submit_info.waitSemaphoreCount   = 1;
+	submit_info.pWaitSemaphores      = wait_semaphore;
+	submit_info.pWaitDstStageMask    = start_submit.pWaitDstStageMask;
 }
 
 bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
