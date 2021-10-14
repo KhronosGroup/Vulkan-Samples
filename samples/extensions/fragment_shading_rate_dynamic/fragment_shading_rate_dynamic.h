@@ -60,6 +60,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
 	VkRenderPass                                        fragment_render_pass{VK_NULL_HANDLE};
 	std::vector<VkFramebuffer>                          fragment_framebuffers;
+	VkCommandPool                                       command_pool{VK_NULL_HANDLE};
 
 	// Shading rate image is an input to the graphics pipeline
 	// and is produced by the "compute shader."
@@ -81,7 +82,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
 		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
 	};
-	std::vector<ComputeBuffers> compute_buffers;
+	std::vector<ComputeBuffers>  compute_buffers;
+	std::vector<VkCommandBuffer> small_command_buffers;
 
 	VkFence compute_fence{VK_NULL_HANDLE};
 
