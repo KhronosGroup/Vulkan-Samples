@@ -55,6 +55,32 @@ class Buffer
 
 	Buffer &operator=(Buffer &&) = delete;
 
+	template <typename T>
+	static std::vector<T> copy(std::unordered_map<std::string, vkb::core::Buffer> &buffers, const char *buffer_name)
+	{
+		auto iter = buffers.find(buffer_name);
+		if (iter == buffers.cend())
+		{
+			return {};
+		}
+		auto &         buffer = iter->second;
+		std::vector<T> out;
+
+		const size_t sz = buffer.get_size();
+		out.resize(sz / sizeof(T));
+		const bool already_mapped = buffer.get_data() != nullptr;
+		if (!already_mapped)
+		{
+			buffer.map();
+		}
+		memcpy(&out[0], buffer.get_data(), sz);
+		if (!already_mapped)
+		{
+			buffer.unmap();
+		}
+		return out;
+	}
+
 	const Device &get_device() const;
 
 	VkBuffer get_handle() const;

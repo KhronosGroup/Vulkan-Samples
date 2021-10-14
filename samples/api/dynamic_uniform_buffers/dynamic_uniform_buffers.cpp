@@ -137,7 +137,7 @@ void DynamicUniformBuffers::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -272,14 +272,17 @@ void DynamicUniformBuffers::setup_descriptor_set()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo            view_buffer_descriptor    = create_descriptor(*uniform_buffers.view);
-	VkDescriptorBufferInfo            dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets     = {
-        // Binding 0 : Projection/View matrix uniform buffer
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
-        // Binding 1 : Instance matrix as dynamic uniform buffer
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
-    };
+	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*uniform_buffers.view);
+
+	// Pass the  actual dynamic alignment as the descriptor's size
+	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    // Binding 0 : Projection/View matrix uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
+	    // Binding 1 : Instance matrix as dynamic uniform buffer
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
@@ -440,29 +443,35 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 	}
 
 	// Dynamic ubo with per-object model matrices indexed by offsets in the command buffer
-	uint32_t  dim = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto      dim  = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto      fdim = static_cast<float>(dim);
 	glm::vec3 offset(5.0f);
 
 	for (uint32_t x = 0; x < dim; x++)
 	{
+		auto fx = static_cast<float>(x);
 		for (uint32_t y = 0; y < dim; y++)
 		{
+			auto fy = static_cast<float>(y);
 			for (uint32_t z = 0; z < dim; z++)
 			{
-				uint32_t index = x * dim * dim + y * dim + z;
+				auto fz    = static_cast<float>(z);
+				auto index = x * dim * dim + y * dim + z;
 
 				// Aligned offset
-				glm::mat4 *model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
+				auto model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
 
 				// Update rotations
 				rotations[index] += animation_timer * rotation_speeds[index];
 
 				// Update matrices
-				glm::vec3 pos = glm::vec3(-((dim * offset.x) / 2.0f) + offset.x / 2.0f + x * offset.x, -((dim * offset.y) / 2.0f) + offset.y / 2.0f + y * offset.y, -((dim * offset.z) / 2.0f) + offset.z / 2.0f + z * offset.z);
-				*model_mat    = glm::translate(glm::mat4(1.0f), pos);
-				*model_mat    = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
-				*model_mat    = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
-				*model_mat    = glm::rotate(*model_mat, rotations[index].z, glm::vec3(0.0f, 0.0f, 1.0f));
+				glm::vec3 pos(-((fdim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
+				              -((fdim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				              -((fdim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
+				*model_mat = glm::translate(glm::mat4(1.0f), pos);
+				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
+				*model_mat = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
+				*model_mat = glm::rotate(*model_mat, rotations[index].z, glm::vec3(0.0f, 0.0f, 1.0f));
 			}
 		}
 	}
@@ -486,7 +495,7 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	generate_cube();

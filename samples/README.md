@@ -151,8 +151,11 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [HPP Dynamic Uniform Buffers](./api/hpp_dynamic_uniform_buffers)<br/>
+A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
-A clone of the API sample [Hello Triangle](#hello-triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
@@ -186,9 +189,21 @@ Uses the debug utilities extension to name and group Vulkan objects (command buf
 
 - 🎓 [Using the debug utilities extension](./extensions/debug_utils/debug_utils_tutorial.md)
 
+### [Basic ray queries](./extensions/ray_queries)<br/>
+**Extensions**: [```VK_KHR_ray_query```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>
+Render a sponza scene using the ray query extension. Shows how to set up all data structures required for ray queries, including the bottom and top level acceleration structures for the geometry and a standard vertex/fragment shader pipeline. Shadows are cast dynamically by ray queries being cast by the fragment shader.<br/>
+
 ### [Basic hardware accelerated ray tracing](./extensions/raytracing_basic)<br/>
 **Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
 Render a basic scene using the official cross-vendor ray tracing extension. Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses. After dispatching the rays, the final result is copied to the swapchain image.<br/>
+
+### [Extended hardware accelerated ray tracing](./extensions/raytracing_extended)<br/>
+**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
+Render Sponza with Ambient Occlusion.  Place a vase in center.  Generate a particle fire that 
+demonstrates the TLAS (Top Level Acceleration Structure) animation for the same underlying geometry.
+Procedurally generate a transparent quad and deform the geometry of the quad in the BLAS (Bottom Level Acceleration 
+Structure) to demonstrate how to animate with deforming geometry.
+Shows how to rebuild the acceleration structure and when to set it to fast rebuild vs fast traversal.
 
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>

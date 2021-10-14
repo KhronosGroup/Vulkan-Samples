@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021 Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -19,14 +19,9 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
+add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Arm"
-    NAME "Hello Triangle HPP"
-    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
-    SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+    AUTHOR "Holochip Corporation"
+    NAME "Ray tracing extended"
+    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO.")

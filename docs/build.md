@@ -158,6 +158,16 @@ cmake -G"Visual Studio 15 2017 Win64" -S . -Bbuild/windows
 cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows
 ```
 
+(New in CMake v3.14. Visual Studio 2019 must be installed)
+```
+ cmake -G "Visual Studio 16 2019" -A x64 -S . -Bbuild/windows
+```
+
+(New in CMake v3.21. Visual Studio 2022 must be installed)
+```
+ cmake -G "Visual Studio 17 2022" -A x64 -S . -Bbuild/windows
+```
+
 `Step 2.` Build the Visual Studio project
 
 ```

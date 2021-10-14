@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,27 +16,28 @@
  */
 
 /*
- * Demonstrates the use of dynamic uniform buffers.
+ * Demonstrates the use of dynamic uniform buffers, using vulkan.hpp
  *
  * Instead of using one uniform buffer per-object, this example allocates one big uniform buffer
  * with respect to the alignment reported by the device via minUniformBufferOffsetAlignment that
  * contains all matrices for the objects in the scene.
  *
- * The used descriptor type VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC then allows to set a dynamic
+ * The used descriptor type vk::DescriptorType::eUniformBufferDynamic then allows to set a dynamic
  * offset used to pass data from the single uniform buffer to the connected shader binding point.
  */
 
 #pragma once
 
-#include "api_vulkan_sample.h"
+#include <core/hpp_buffer.h>
+#include <hpp_api_vulkan_sample.h>
 
 #define OBJECT_INSTANCES 125
 
-class DynamicUniformBuffers : public ApiVulkanSample
+class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 {
   private:
-	void *aligned_alloc(size_t size, size_t alignment);
-	void  aligned_free(void *data);
+	static void *aligned_alloc(size_t size, size_t alignment);
+	static void  aligned_free(void *data);
 
   public:
 	struct Vertex
@@ -45,14 +46,14 @@ class DynamicUniformBuffers : public ApiVulkanSample
 		float color[3];
 	};
 
-	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
-	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count = 0;
+	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
+	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
+	uint32_t                              index_count = 0;
 
 	struct UniformBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> view;
-		std::unique_ptr<vkb::core::Buffer> dynamic;
+		std::unique_ptr<vkb::core::HPPBuffer> view;
+		std::unique_ptr<vkb::core::HPPBuffer> dynamic;
 	} uniform_buffers;
 
 	struct UboVS
@@ -72,17 +73,17 @@ class DynamicUniformBuffers : public ApiVulkanSample
 		glm::mat4 *model = nullptr;
 	} ubo_data_dynamic;
 
-	VkPipeline            pipeline;
-	VkPipelineLayout      pipeline_layout;
-	VkDescriptorSet       descriptor_set;
-	VkDescriptorSetLayout descriptor_set_layout;
+	vk::Pipeline            pipeline;
+	vk::PipelineLayout      pipeline_layout;
+	vk::DescriptorSet       descriptor_set;
+	vk::DescriptorSetLayout descriptor_set_layout;
 
 	float animation_timer = 0.0f;
 
 	size_t dynamic_alignment = 0;
 
-	DynamicUniformBuffers();
-	~DynamicUniformBuffers();
+	HPPDynamicUniformBuffers();
+	~HPPDynamicUniformBuffers();
 	void         build_command_buffers() override;
 	void         generate_cube();
 	void         setup_descriptor_pool();
@@ -98,4 +99,4 @@ class DynamicUniformBuffers : public ApiVulkanSample
 	virtual void resize(const uint32_t width, const uint32_t height) override;
 };
 
-std::unique_ptr<vkb::Application> create_dynamic_uniform_buffers();
+std::unique_ptr<vkb::Application> create_hpp_dynamic_uniform_buffers();
