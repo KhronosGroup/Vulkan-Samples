@@ -53,7 +53,6 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	void draw();
 
 	bool enable_attachment_shading_rate = true;
-	bool color_shading_rate             = false;
 	bool display_sky_sphere             = true;
 	bool debug_utils_supported          = false;
 
@@ -61,21 +60,32 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
 	VkRenderPass                                        fragment_render_pass{VK_NULL_HANDLE};
 	std::vector<VkFramebuffer>                          fragment_framebuffers;
+	VkCommandPool                                       command_pool{VK_NULL_HANDLE};
 
 	// Shading rate image is an input to the graphics pipeline
 	// and is produced by the "compute shader."
 	// It has a lower resolution than the framebuffer
-	std::unique_ptr<vkb::core::Image>     shading_rate_image;
-	std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
+	struct ComputeBuffers
+	{
+		std::unique_ptr<vkb::core::Image>     shading_rate_image;
+		std::unique_ptr<vkb::core::ImageView> shading_rate_image_view;
 
-	// Frequency content image is an output of the graphics pipeline
-	// and is consumed by the "compute shader" to produce the shading rate image.
-	// It has the same resolution as the framebuffer
-	std::unique_ptr<vkb::core::Image>     frequency_content_image;
-	std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
+		// Frequency content image is an output of the graphics pipeline
+		// and is consumed by the "compute shader" to produce the shading rate image.
+		// It has the same resolution as the framebuffer
+		std::unique_ptr<vkb::core::Image>     frequency_content_image;
+		std::unique_ptr<vkb::core::ImageView> frequency_content_image_view;
 
-	std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
-	std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+		std::unique_ptr<vkb::core::Image>     shading_rate_image_compute;
+		std::unique_ptr<vkb::core::ImageView> shading_rate_image_compute_view;
+
+		VkCommandBuffer command_buffer = VK_NULL_HANDLE;
+		VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+	};
+	std::vector<ComputeBuffers>  compute_buffers;
+	std::vector<VkCommandBuffer> small_command_buffers;
+	VkExtent2D                   subpass_extent;
+	uint32_t                     subpass_extent_ratio = 4;
 
 	VkFence compute_fence{VK_NULL_HANDLE};
 
@@ -94,9 +104,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
 		VkPipeline            pipeline              = VK_NULL_HANDLE;
 		VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
-		VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 		VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
-		VkCommandBuffer       command_buffer        = VK_NULL_HANDLE;
 	} compute;
 
 	struct
@@ -131,8 +139,8 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
 		VkPipeline sphere;
 	} pipelines;
 
-	VkDescriptorSetLayout descriptor_set_layout;
-	VkDescriptorSet       descriptor_set;
+	VkDescriptorSetLayout        descriptor_set_layout;
+	std::vector<VkDescriptorSet> render_descriptor_sets;
 
 	struct
 	{

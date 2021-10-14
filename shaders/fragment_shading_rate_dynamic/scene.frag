@@ -20,6 +20,9 @@
 
 layout(binding = 1) uniform sampler2D samplerEnvMap;
 layout(binding = 2) uniform sampler2D samplerSphere;
+layout(binding = 3, rg8ui) uniform readonly uimage2D input_frequency;
+layout(binding = 4, r8ui) uniform readonly uimage2D output_sampling_rate;
+
 
 layout(location = 0) in vec2 inUV;
 layout(location = 1) in vec3 inPos;
@@ -65,7 +68,7 @@ void main()
 
 		case 1:        // Phong shading
 		{
-			vec4 tex_value = texture(samplerSphere, inUV);
+			vec4 tex_value = texture(samplerSphere, vec2(inUV.s, 1.0 - inUV.t));
 			vec3 ambient   = tex_value.rgb;
 			vec3 N         = normalize(inNormal);
 			vec3 L         = normalize(inLightVec);
@@ -107,11 +110,11 @@ void main()
 		}
 
 		outColor = vec4(vec3(1, 1, 1) * (1 - h * v / 16.0), 1);
-		/*if (v == 1 && h == 1) {
-			outColor = vec4(color.rrr * 1.0, 1.0);
-		} else {
- 			outColor = vec4(color.rrr * 1.0 - ((v+h) * 0.05), 1.0);
-		}*/
+	}
+	else if (ubo.color_shading_rates == 2)
+	{
+		ivec2 coord = ivec2(gl_FragCoord);
+		outColor = imageLoad(input_frequency, coord);
 	}
 	else
 	{

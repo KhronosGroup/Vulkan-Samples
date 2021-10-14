@@ -38,8 +38,8 @@ void main()
 	           output_width  = params.settings[2],
 	           output_height = params.settings[3];
 
-	const uint delta_x = max(1, frame_width / output_width),
-	           delta_y = max(1, frame_height / output_height);
+	const uint delta_x = max(1, uint(round(float(frame_width) / float(output_width)))),
+	           delta_y = max(1, uint(round(float(frame_height) / float(output_height))));
 	if (x0 >= output_width || y0 >= output_height)
 	{
 		return;
@@ -47,19 +47,23 @@ void main()
 
 	vec2 freqs     = vec2(0, 0);
 	vec2 max_freqs = vec2(0, 0);
-	for (uint i = 0; i < delta_x; ++i)
+	bool use_area = true;
+	if (use_area)
 	{
-		for (uint j = 0; j < delta_y; ++j)
+		for (uint i = 0; i < delta_x; ++i)
 		{
-			ivec2 coord = ivec2(delta_x * x0 + i, delta_y * y0 + j);
-			vec2  freq  = vec2(imageLoad(input_frequency, coord)) / 255.f;
-			max_freqs   = max(max_freqs, freq);
-			freqs += freq;
+			for (uint j = 0; j < delta_y; ++j)
+			{
+				ivec2 coord = ivec2(delta_x * x0 + i, delta_y * y0 + j);
+				vec2  freq  = vec2(imageLoad(input_frequency, coord)) / 255.f;
+				max_freqs   = max(max_freqs, freq);
+				freqs += freq;
+			}
 		}
+		
+		freqs /= float(delta_x * delta_y);
+		freqs = max_freqs;
 	}
-	freqs /= float(delta_x * delta_y);
-	//freqs = sqrt(sqrt(freqs));
-	freqs = max_freqs;
 
 	const float min_rate = 1,
 	            max_rate = max(params.frequency_information.x, params.frequency_information.y);
