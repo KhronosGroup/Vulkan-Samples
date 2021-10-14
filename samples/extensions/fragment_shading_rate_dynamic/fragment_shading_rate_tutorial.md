@@ -33,6 +33,10 @@ shading rate image through
 a [`VkFragmentShadingRateAttachmentInfoKHR`](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VkFragmentShadingRateAttachmentInfoKHR.html)
 struct attached to the `.pNext` of a sub-pass.
 
+The image below shows the scene from this sample. Note the areas of high image variation in the center of each cube face, and the areas of low image variation in the sky and plain corners of each cube face.
+
+![Rendered image](rendered.png)
+
 ## Shading Rate Image
 
 When used as an attachment, each pixel within the shading rate image controls a "texel", or fixed region within the
@@ -51,9 +55,19 @@ texel of the derivative image to determine the new fragment shading rate for the
 derivatives calculated using `dFdx` and `dFdy` will be afforded a higher shading rate during the next frame compared to
 texels with lower derivatives.
 
+The frequency information is visualized below and can be accessed by selecting "Frequency" in the data visualization dropdown in the sample GUI.
+
+![Frequency information](frequency.png)
+
+## Encoding the Shading Rate
+
 Shading rates are encoded using 8-bit unsigned integers. For instance, the lowest shading rate of a 4x4 texel is given
 by: `(4>>1) | (4<<1)`, and the general case of a `rate_x` x `rate_y` texel is `(rate_x>>1)|(rate_y<<1)`. Although
 devices vary in their supported texel sizes, the maximum texel size is guaranteed to be no larger than 4x4.
+
+The image below shows the shading rate image, where lighter colors indicate areas that will have a high sample density. This visualization can be selected by choosing the "Shading Rates" dropdown selection in the sample GUI.
+
+![Shading rate image](shading_rate.png)
 
 ## Implementation Details
 
@@ -80,3 +94,17 @@ flags: `VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR` for the shading
 and `VK_IMAGE_USAGE_STORAGE_BIT` for the "compute" image (in addition to transfer bits). However, their content is
 identical, and after the "compute shader" has completed, the contents from `shading_rate_image_compute` are copied
 to `shading_rate_image`.
+
+## Calculating Frequency Information in a Separate Renderpass
+
+![Diagram of renderpass](diagram.png)
+
+One problem with calculating the frequency information during the render pass is that each frame is using the previous
+frame's shading rate, which results in a feedback loop that lead to unstable or "stutter" in the calculated frequency information.
+To prevent this problem, this sample introduces a separate renderpass that calculates the frequency information without using the shading
+rate attachment. To maintain performance, this renderpass is performed at a lower resolution controllable by the "Subpass size reduction"
+option in the sample GUI. In production systems, MSAA can also be disabled.
+
+For instance, at a 4x4 reduction with MSAA disabled, the frequency information calculation is performed over only 1/128 as many samples
+as the full resolution with 8 MSAA samples. If the resulting shading rate image is used to reduce the full-resolution samples by half, then 
+the total sample reduction is still greater than 40%.
