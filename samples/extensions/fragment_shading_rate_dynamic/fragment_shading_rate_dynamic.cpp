@@ -18,7 +18,7 @@
 #include "fragment_shading_rate_dynamic.h"
 
 FragmentShadingRateDynamic::FragmentShadingRateDynamic() :
-	pipeline_layout(VK_NULL_HANDLE), pipelines(), descriptor_set_layout()
+    pipeline_layout(VK_NULL_HANDLE), pipelines(), descriptor_set_layout(), subpass_extent()
 {
 	title = "Dynamic fragment shading rate";
 
@@ -53,6 +53,7 @@ FragmentShadingRateDynamic::~FragmentShadingRateDynamic()
 		vkDestroyFence(device->get_handle(), compute_fence, VK_NULL_HANDLE);
 		uniform_buffers.scene.reset();
 		invalidate_shading_rate_attachment();
+		vkDestroyDescriptorPool(device->get_handle(), compute.descriptor_pool, nullptr);
 		compute_buffers.clear();
 		frequency_information_params.reset();
 		vkDestroyCommandPool(get_device().get_handle(), command_pool, VK_NULL_HANDLE);
@@ -63,7 +64,8 @@ void FragmentShadingRateDynamic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable the shading rate attachment feature required by this sample
 	// These are passed to device creation via a pNext structure chain
-	auto &requested_extension_features                         = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
+	auto &requested_extension_features = gpu.request_extension_features<VkPhysicalDeviceFragmentShadingRateFeaturesKHR>(
+	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_FEATURES_KHR);
 	requested_extension_features.attachmentFragmentShadingRate = VK_TRUE;
 	requested_extension_features.pipelineFragmentShadingRate   = VK_TRUE;
 	requested_extension_features.primitiveFragmentShadingRate  = VK_FALSE;
@@ -82,8 +84,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	compute_buffers.resize(draw_cmd_buffers.size());
 
 	subpass_extent = VkExtent2D{
-		.width  = static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
-		.height = static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
+	    .width  = static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
+	    .height = static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
 
 	for (auto &&compute_buffer : compute_buffers)
 	{
@@ -106,24 +108,31 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		// which we label here for clarity
 		const uint32_t frame_width = width, frame_height = height;
 		VkExtent3D     image_extent{};
-		image_extent.width  = static_cast<uint32_t>(ceil(static_cast<float>(frame_width) / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
-		image_extent.height = static_cast<uint32_t>(ceil(static_cast<float>(frame_height) / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
+		image_extent.width  = static_cast<uint32_t>(ceil(static_cast<float>(frame_width) /
+                                                        (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
+		image_extent.height = static_cast<uint32_t>(ceil(static_cast<float>(frame_height) /
+		                                                 (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
 		image_extent.depth  = 1;
 
 		auto create_shading_rate = [&](VkImageUsageFlags image_usage, VkFormat format) {
 			return std::make_unique<vkb::core::Image>(*device,
-													  image_extent,
-													  format,
-													  image_usage,
-													  VMA_MEMORY_USAGE_GPU_ONLY,
-													  VK_SAMPLE_COUNT_1_BIT);
+			                                          image_extent,
+			                                          format,
+			                                          image_usage,
+			                                          VMA_MEMORY_USAGE_GPU_ONLY,
+			                                          VK_SAMPLE_COUNT_1_BIT);
 		};
 
-		shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT), VK_FORMAT_R8_UINT);
-		shading_rate_image_compute = create_shading_rate(VK_IMAGE_USAGE_STORAGE_BIT | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT), VK_FORMAT_R8_UINT);
+		shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR |
+                                                     static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
+                                                 VK_FORMAT_R8_UINT);
+		shading_rate_image_compute = create_shading_rate(
+		    VK_IMAGE_USAGE_STORAGE_BIT | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
+		    VK_FORMAT_R8_UINT);
 
 		uint32_t fragment_shading_rate_count = 0;
-		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
+		vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count,
+		                                           nullptr);
 		if (fragment_shading_rate_count > 0)
 		{
 			fragment_shading_rates.resize(fragment_shading_rate_count);
@@ -131,13 +140,17 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 			{
 				fragment_shading_rate.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_KHR;
 			}
-			vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, fragment_shading_rates.data());
+			vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(),
+			                                           &fragment_shading_rate_count, fragment_shading_rates.data());
 		}
 
 		// initialize to the lowest shading rate, equal to (min_shading_rate >> 1) | (min_shading_rate << 1));
 		const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
-		std::vector<uint8_t> temp_buffer(frame_height * frame_width, (min_shading_rate.width >> 1) | (min_shading_rate.height << 1));
-		auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+		std::vector<uint8_t> temp_buffer(frame_height * frame_width,
+		                                 (min_shading_rate.width >> 1) | (min_shading_rate.height << 1));
+		auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]),
+                                                                  VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 		staging_buffer->update(temp_buffer);
 
 		VkImageSubresourceRange subresource_range = {};
@@ -154,13 +167,15 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		copy_barrier.subresourceRange     = subresource_range;
 		copy_barrier.srcAccessMask        = 0;
 		copy_barrier.dstAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
-		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &copy_barrier);
+		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0,
+		                     VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &copy_barrier);
 
 		VkBufferImageCopy buffer_copy_region           = {};
 		buffer_copy_region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		buffer_copy_region.imageSubresource.layerCount = 1;
 		buffer_copy_region.imageExtent                 = image_extent;
-		vkCmdCopyBufferToImage(cmd, staging_buffer->get_handle(), shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
+		vkCmdCopyBufferToImage(cmd, staging_buffer->get_handle(), shading_rate_image->get_handle(),
+		                       VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &buffer_copy_region);
 
 		VkImageMemoryBarrier memory_barrier = vkb::initializers::image_memory_barrier();
 		memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
@@ -169,7 +184,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		memory_barrier.subresourceRange     = subresource_range;
 		memory_barrier.srcAccessMask        = VK_ACCESS_TRANSFER_WRITE_BIT;
 		memory_barrier.dstAccessMask        = 0;
-		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &memory_barrier);
+		vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0, 0,
+		                     VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &memory_barrier);
 
 		VK_CHECK(vkEndCommandBuffer(cmd));
 
@@ -181,8 +197,11 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		VK_CHECK(vkQueueSubmit(queue, 1, &submit, fence));
 		VK_CHECK(vkWaitForFences(device->get_handle(), 1, &fence, VK_TRUE, UINT64_MAX));
 
-		shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
-		shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8_UINT);
+		shading_rate_image_view         = std::make_unique<vkb::core::ImageView>(*shading_rate_image, VK_IMAGE_VIEW_TYPE_2D,
+                                                                         VK_FORMAT_R8_UINT);
+		shading_rate_image_compute_view = std::make_unique<vkb::core::ImageView>(*shading_rate_image_compute,
+		                                                                         VK_IMAGE_VIEW_TYPE_2D,
+		                                                                         VK_FORMAT_R8_UINT);
 
 		// Create an attachment to store the frequency content of the rendered image during the render pass
 		VkExtent3D frequency_image_extent{};
@@ -190,11 +209,15 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		frequency_image_extent.height = this->height;
 		frequency_image_extent.depth  = 1;
 		frequency_content_image       = std::make_unique<vkb::core::Image>(*device,
-																	 frequency_image_extent,
-																	 VK_FORMAT_R8G8_UINT,
-																	 VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
-																	 VMA_MEMORY_USAGE_GPU_ONLY);
-		frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R8G8_UINT);
+                                                                     frequency_image_extent,
+                                                                     VK_FORMAT_R8G8_UINT,
+                                                                     VK_IMAGE_USAGE_STORAGE_BIT |
+                                                                         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
+                                                                         VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT,
+                                                                     VMA_MEMORY_USAGE_GPU_ONLY);
+		frequency_content_image_view  = std::make_unique<vkb::core::ImageView>(*frequency_content_image,
+                                                                              VK_IMAGE_VIEW_TYPE_2D,
+                                                                              VK_FORMAT_R8G8_UINT);
 
 		{
 			auto &_cmd = device->request_command_buffer();
@@ -221,17 +244,9 @@ void FragmentShadingRateDynamic::invalidate_shading_rate_attachment()
 	device->wait_idle();
 
 	// invalidate compute pipeline
-	/*
 	vkDestroyPipeline(device->get_handle(), compute.pipeline, VK_NULL_HANDLE);
 	vkDestroyPipelineLayout(device->get_handle(), compute.pipeline_layout, VK_NULL_HANDLE);
 	vkDestroyDescriptorSetLayout(device->get_handle(), compute.descriptor_set_layout, VK_NULL_HANDLE);
-	render_descriptor_sets.clear();
-	for (auto &&compute_buffer : compute_buffers)
-	{
-		vkFreeCommandBuffers(get_device().get_handle(), command_pool, 1, &compute_buffer.command_buffer);
-	}
-	compute_buffers.clear();
-	*/
 }
 
 void FragmentShadingRateDynamic::setup_render_pass()
@@ -306,10 +321,11 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		fragment_shading_rate_reference.layout                 = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 
 		// Set up the attachment info for the shading rate image, which will be added to the sub pass via structure chaining (in pNext)
-		VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR};
-		fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
-		fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width   = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
-		fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
+		VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {
+		    VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR};
+		fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment        = &fragment_shading_rate_reference;
+		fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.width  = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width;
+		fragment_shading_rate_attachment_info.shadingRateAttachmentTexelSize.height = physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height;
 
 		VkAttachmentReference2KHR color_reference = {VK_STRUCTURE_TYPE_ATTACHMENT_REFERENCE_2};
 		color_reference.attachment                = 0;
@@ -393,7 +409,8 @@ void FragmentShadingRateDynamic::setup_render_pass()
 		render_pass_create_info.dependencyCount            = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies              = !dependencies.empty() ? dependencies.data() : VK_NULL_HANDLE;
 
-		VK_CHECK(vkCreateRenderPass2KHR(device->get_handle(), &render_pass_create_info, nullptr, render_passes[static_cast<size_t>(use_fragment_shading_rate)]));
+		VK_CHECK(vkCreateRenderPass2KHR(device->get_handle(), &render_pass_create_info, nullptr,
+		                                render_passes[static_cast<size_t>(use_fragment_shading_rate)]));
 	}
 }
 
@@ -415,7 +432,8 @@ void FragmentShadingRateDynamic::setup_framebuffer()
 
 	assert(render_pass && fragment_render_pass);
 	std::array<VkRenderPass *, 2>                                     render_passes{&render_pass, &fragment_render_pass};
-	std::array<std::reference_wrapper<std::vector<VkFramebuffer>>, 2> framebuffer_refs{framebuffers, fragment_framebuffers};
+	std::array<std::reference_wrapper<std::vector<VkFramebuffer>>, 2> framebuffer_refs{framebuffers,
+	                                                                                   fragment_framebuffers};
 
 	for (auto use_fragment_shading_rate : {false, true})
 	{
@@ -469,7 +487,8 @@ void FragmentShadingRateDynamic::build_command_buffers()
 	{
 		const size_t old_size = small_command_buffers.size();
 		small_command_buffers.resize(draw_cmd_buffers.size(), VK_NULL_HANDLE);
-		auto allocate = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, draw_cmd_buffers.size() - old_size);
+		auto allocate = vkb::initializers::command_buffer_allocate_info(command_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+		                                                                draw_cmd_buffers.size() - old_size);
 		VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &allocate, &small_command_buffers[old_size]));
 	}
 
@@ -513,7 +532,8 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		vkCmdSetScissor(render_target._command_buffer, 0, 1, &scissor);
 
 		VkDescriptorSet descriptor_set = render_target._descriptor_set;
-		vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
+		                        &descriptor_set, 0, nullptr);
 
 		// Set the fragment shading rate state for the current pipeline
 		VkExtent2D                         fragment_size = {1, 1};
@@ -539,23 +559,29 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		{
 			vkCmdBindPipeline(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skysphere);
 			push_const_block.object_type = 0;
-			vkCmdPushConstants(render_target._command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
-			vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+			vkCmdPushConstants(render_target._command_buffer, pipeline_layout,
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
+			vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0,
+			                        1, &descriptor_set, 0, nullptr);
 			draw_model(models.skysphere, render_target._command_buffer);
 		}
 
 		vkCmdBindPipeline(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.sphere);
-		vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(render_target._command_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1,
+		                        &descriptor_set, 0, nullptr);
 		std::vector<glm::vec3> mesh_offsets = {
-			glm::vec3(-2.5f, 0.0f, 0.0f),
-			glm::vec3(0.0f, 0.0f, 0.0f),
-			glm::vec3(2.5f, 0.0f, 0.0f),
+		    glm::vec3(-2.5f, 0.0f, 0.0f),
+		    glm::vec3(0.0f, 0.0f, 0.0f),
+		    glm::vec3(2.5f, 0.0f, 0.0f),
 		};
 		for (uint32_t j = 0; j < 3; j++)
 		{
 			push_const_block.object_type = 1;
 			push_const_block.offset      = glm::vec4(mesh_offsets[j], 0.0f);
-			vkCmdPushConstants(render_target._command_buffer, pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(render_target._command_buffer, pipeline_layout,
+			                   VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block),
+			                   &push_const_block);
 			draw_model(models.scene, render_target._command_buffer);
 		}
 
@@ -579,11 +605,13 @@ void FragmentShadingRateDynamic::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 && subpass_extent.height <= height);
+		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 &&
+		       subpass_extent.height <= height);
 		RenderTarget small_target{
-			small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, subpass_extent, false, false};
+		    small_command_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i],
+		    fragment_render_pass, subpass_extent, false, false};
 		RenderTarget full_target{
-			draw_cmd_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {width, height}, true, true};
+		    draw_cmd_buffers[i], fragment_framebuffers[i], framebuffers[i], render_descriptor_sets[i], fragment_render_pass, {width, height}, true, true};
 		build_command_buffer(small_target);
 		build_command_buffer(full_target);
 	}
@@ -599,7 +627,7 @@ void FragmentShadingRateDynamic::load_assets()
 
 void FragmentShadingRateDynamic::setup_descriptor_pool()
 {
-	const uint32_t N = static_cast<uint32_t>(draw_cmd_buffers.size());
+	const auto N = static_cast<uint32_t>(draw_cmd_buffers.size());
 
 	if (descriptor_pool)
 	{
@@ -608,47 +636,61 @@ void FragmentShadingRateDynamic::setup_descriptor_pool()
 	}
 
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 * N),
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 * N),
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * N)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4 * N),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 * N),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * N)};
 	uint32_t                   num_descriptor_sets = std::max(static_cast<uint32_t>(4), N);
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-		vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(),
+	                                                   num_descriptor_sets);
+	VK_CHECK(
+	    vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void FragmentShadingRateDynamic::setup_descriptor_set_layout()
 {
 	// Scene rendering descriptors
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),        // sampler env map
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),        // sampler sphere
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 3),                 // input_frequency
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 4)                  // output_sampling_rate
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	                                                     0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT, 1),        // sampler env map
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT, 2),        // sampler sphere
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT,
+	                                                     3),        // input_frequency
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+	                                                     VK_SHADER_STAGE_FRAGMENT_BIT,
+	                                                     4)        // output_sampling_rate
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
-		vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(),
+	                                                         static_cast<uint32_t>(set_layout_bindings.size()));
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr,
+	                                     &descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-		vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
 	// Pass object offset and color via push constant
-	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
+	VkPushConstantRange push_constant_range = vkb::initializers::push_constant_range(
+	    VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
 	pipeline_layout_create_info.pushConstantRangeCount = 1;
 	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+	VK_CHECK(
+	    vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
 void FragmentShadingRateDynamic::setup_descriptor_sets()
 {
 	// Shared model object descriptor set
 	VkDescriptorSetAllocateInfo alloc_info =
-		vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
 	render_descriptor_sets.resize(draw_cmd_buffers.size(), VK_NULL_HANDLE);
 	assert(!compute_buffers.empty());
@@ -656,7 +698,7 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 	for (size_t i = 0; i < render_descriptor_sets.size(); ++i)
 	{
 		const size_t prev_frame     = (i + compute_buffers.size() - 1) % compute_buffers.size();
-		auto        &descriptor_set = render_descriptor_sets[i];
+		auto &       descriptor_set = render_descriptor_sets[i];
 		if (!descriptor_set)
 		{
 			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
@@ -667,18 +709,28 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 		VkDescriptorImageInfo  sphere_image_descriptor      = create_descriptor(textures.scene);
 
 		// We want to visualize the previous frame's frequency and shading rate image
-		VkDescriptorImageInfo frequency_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[prev_frame].frequency_content_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
-		VkDescriptorImageInfo shading_image        = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+		VkDescriptorImageInfo frequency_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
+		                                                                                      compute_buffers[prev_frame].frequency_content_image_view->get_handle(),
+		                                                                                      VK_IMAGE_LAYOUT_GENERAL);
+		VkDescriptorImageInfo shading_image        = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
+                                                                                       compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(),
+                                                                                       VK_IMAGE_LAYOUT_GENERAL);
 
 		std::vector<VkWriteDescriptorSet>
-			write_descriptor_sets = {
-				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_buffer_descriptor),
-				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &sphere_image_descriptor),
-				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3, &frequency_descriptor),
-				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4, &shading_image),
-			};
-		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+		    write_descriptor_sets = {
+		        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0,
+		                                                &scene_buffer_descriptor),
+		        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1,
+		                                                &environment_image_descriptor),
+		        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2,
+		                                                &sphere_image_descriptor),
+		        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3,
+		                                                &frequency_descriptor),
+		        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4,
+		                                                &shading_image),
+		    };
+		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
+		                       write_descriptor_sets.data(), 0, nullptr);
 	}
 }
 
@@ -686,17 +738,24 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 {
 	// Descriptor set layout
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0),
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1),
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+	                                                     VK_SHADER_STAGE_COMPUTE_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+	                                                     VK_SHADER_STAGE_COMPUTE_BIT, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+	                                                     VK_SHADER_STAGE_COMPUTE_BIT, 2),
 	};
 
-	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(
+	    set_layout_bindings);
 
-	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &descriptor_layout_create_info, VK_NULL_HANDLE, &compute.descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(device->get_handle(), &descriptor_layout_create_info, VK_NULL_HANDLE,
+	                                     &compute.descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&compute.descriptor_set_layout, 1);
-	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &pipeline_layout_create_info, VK_NULL_HANDLE, &compute.pipeline_layout));
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(
+	    &compute.descriptor_set_layout, 1);
+	VK_CHECK(vkCreatePipelineLayout(device->get_handle(), &pipeline_layout_create_info, VK_NULL_HANDLE,
+	                                &compute.pipeline_layout));
 
 	// Descriptor pool
 	if (compute.descriptor_pool)
@@ -705,24 +764,28 @@ void FragmentShadingRateDynamic::create_compute_pipeline()
 		compute.descriptor_pool = VK_NULL_HANDLE;
 	}
 
-	const uint32_t                    N     = static_cast<uint32_t>(draw_cmd_buffers.size());
+	const auto                        N     = static_cast<uint32_t>(draw_cmd_buffers.size());
 	std::vector<VkDescriptorPoolSize> sizes = {
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * N),
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4 * N)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4 * N),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4 * N)};
 	const auto pool_create = vkb::initializers::descriptor_pool_create_info(sizes, N);
 	VK_CHECK(vkCreateDescriptorPool(device->get_handle(), &pool_create, VK_NULL_HANDLE, &compute.descriptor_pool));
 
 	// Descriptor sets
 	for (auto &&compute_buffer : compute_buffers)
 	{
-		VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(compute.descriptor_pool, &compute.descriptor_set_layout, 1);
+		VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(
+		    compute.descriptor_pool, &compute.descriptor_set_layout, 1);
 		VK_CHECK(vkAllocateDescriptorSets(device->get_handle(), &alloc_info, &compute_buffer.descriptor_set));
 	}
 
 	// Pipeline
-	VkComputePipelineCreateInfo pipeline_create_info = vkb::initializers::compute_pipeline_create_info(compute.pipeline_layout);
-	pipeline_create_info.stage                       = load_shader("fragment_shading_rate_dynamic/generate_shading_rate.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-	VK_CHECK(vkCreateComputePipelines(device->get_handle(), pipeline_cache, 1, &pipeline_create_info, VK_NULL_HANDLE, &compute.pipeline));
+	VkComputePipelineCreateInfo pipeline_create_info = vkb::initializers::compute_pipeline_create_info(
+	    compute.pipeline_layout);
+	pipeline_create_info.stage = load_shader("fragment_shading_rate_dynamic/generate_shading_rate.comp",
+	                                         VK_SHADER_STAGE_COMPUTE_BIT);
+	VK_CHECK(vkCreateComputePipelines(device->get_handle(), pipeline_cache, 1, &pipeline_create_info, VK_NULL_HANDLE,
+	                                  &compute.pipeline));
 
 	for (auto &&compute_buffer : compute_buffers)
 	{
@@ -749,22 +812,27 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 
 	assert(max_rate_x && max_rate_y);
 	FrequencyInformation params{
-		glm::uvec2(subpass_extent.width, subpass_extent.height),
-		glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width, compute_buffers[0].shading_rate_image->get_extent().height),
-		glm::uvec2(max_rate_x, max_rate_y),
-		static_cast<uint32_t>(fragment_shading_rates.size()),
-		uint32_t(0)};
+	    glm::uvec2(subpass_extent.width, subpass_extent.height),
+	    glm::uvec2(compute_buffers[0].shading_rate_image->get_extent().width,
+	               compute_buffers[0].shading_rate_image->get_extent().height),
+	    glm::uvec2(max_rate_x, max_rate_y),
+	    static_cast<uint32_t>(fragment_shading_rates.size()),
+	    uint32_t(0)};
 
 	// Transfer frequency information to buffer
-	const uint32_t buffer_size   = sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]);
-	frequency_information_params = std::make_unique<vkb::core::Buffer>(*device, buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	const uint32_t buffer_size =
+	    sizeof(FrequencyInformation) + shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]);
+	frequency_information_params = std::make_unique<vkb::core::Buffer>(*device, buffer_size,
+	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 	frequency_information_params->update(&params, sizeof(FrequencyInformation), 0);
-	frequency_information_params->update(shading_rates_u_vec_2.data(), shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]), sizeof(FrequencyInformation));
+	frequency_information_params->update(shading_rates_u_vec_2.data(),
+	                                     shading_rates_u_vec_2.size() * sizeof(shading_rates_u_vec_2[0]),
+	                                     sizeof(FrequencyInformation));
 
 	// Update descriptor sets
-	for (size_t i = 0; i < compute_buffers.size(); ++i)
+	for (auto &compute_buffer : compute_buffers)
 	{
-		auto &compute_buffer                  = compute_buffers[i];
 		auto &shading_rate_image              = compute_buffer.shading_rate_image;
 		auto &shading_rate_image_view         = compute_buffer.shading_rate_image_view;
 		auto &frequency_content_image         = compute_buffer.frequency_content_image;
@@ -772,14 +840,22 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		auto &shading_rate_image_compute      = compute_buffer.shading_rate_image_compute;
 		auto &shading_rate_image_compute_view = compute_buffer.shading_rate_image_compute_view;
 
-		VkDescriptorImageInfo               frequency_image       = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, frequency_content_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
-		VkDescriptorImageInfo               shading_image         = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, shading_rate_image_compute_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+		VkDescriptorImageInfo               frequency_image       = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
+                                                                                         frequency_content_image_view->get_handle(),
+                                                                                         VK_IMAGE_LAYOUT_GENERAL);
+		VkDescriptorImageInfo               shading_image         = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
+                                                                                       shading_rate_image_compute_view->get_handle(),
+                                                                                       VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorBufferInfo              buffer_info           = create_descriptor(*frequency_information_params);
 		std::array<VkWriteDescriptorSet, 3> write_descriptor_sets = {
-			vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0, &frequency_image),
-			vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &shading_image),
-			vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &buffer_info)};
-		vkUpdateDescriptorSets(device->get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
+		    vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+		                                            0, &frequency_image),
+		    vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+		                                            1, &shading_image),
+		    vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set,
+		                                            VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &buffer_info)};
+		vkUpdateDescriptorSets(device->get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
+		                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 
 		// Command Buffer
 		assert(compute_buffer.command_buffer);
@@ -789,10 +865,12 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin));
 
 		const auto     fragment_extent = compute_buffer.shading_rate_image->get_extent();
-		const uint32_t fragment_width = std::max(uint32_t(1), fragment_extent.width), fragment_height = std::max(uint32_t(1), fragment_extent.height);
+		const uint32_t fragment_width = std::max(uint32_t(1), fragment_extent.width), fragment_height = std::max(
+		                                                                                  uint32_t(1), fragment_extent.height);
 
 		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline);
-		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1, &compute_buffer.descriptor_set, 0, nullptr);
+		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1,
+		                        &compute_buffer.descriptor_set, 0, nullptr);
 		vkCmdDispatch(command_buffer, 1 + (fragment_width - 1) / 8, 1 + (fragment_height - 1) / 8, 1);
 
 		VkImageCopy image_copy;
@@ -803,7 +881,9 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		image_copy.srcOffset      = {0, 0, 0};
 
 		VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-		vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
+		vkb::set_image_layout(command_buffer, shading_rate_image->get_handle(),
+		                      VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR,
+		                      VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
 
 		auto image_memory_barrier                = vkb::initializers::image_memory_barrier();
 		image_memory_barrier.srcAccessMask       = VK_ACCESS_SHADER_WRITE_BIT;
@@ -814,9 +894,11 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		image_memory_barrier.newLayout           = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 		image_memory_barrier.subresourceRange    = subresource_range;
 		image_memory_barrier.image               = shading_rate_image_compute->get_handle();
-		vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
+		vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0,
+		                     VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
 
-		vkCmdCopyImage(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
+		vkCmdCopyImage(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		               shading_rate_image->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &image_copy);
 
 		auto shading_memory_barrier                = vkb::initializers::image_memory_barrier();
 		shading_memory_barrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
@@ -827,24 +909,30 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		shading_memory_barrier.newLayout           = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 		shading_memory_barrier.subresourceRange    = subresource_range;
 		shading_memory_barrier.image               = shading_rate_image->get_handle();
-		vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &shading_memory_barrier);
+		vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                     VK_PIPELINE_STAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR, 0, 0, VK_NULL_HANDLE, 0,
+		                     VK_NULL_HANDLE, 1, &shading_memory_barrier);
 
-		vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(), VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
+		vkb::set_image_layout(command_buffer, shading_rate_image_compute->get_handle(),
+		                      VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL, subresource_range);
 
 		VK_CHECK(vkEndCommandBuffer(compute_buffer.command_buffer));
 
 		if (debug_utils_supported)
 		{
-			auto set_name = [device{get_device().get_handle()}](VkObjectType object_type, const char *name, const void *handle) {
+			auto set_name = [device{get_device().get_handle()}](VkObjectType object_type, const char *name,
+			                                                    const void *handle) {
 				VkDebugUtilsObjectNameInfoEXT name_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT};
 				name_info.objectType                    = object_type;
 				name_info.objectHandle                  = (uint64_t) handle;
 				name_info.pObjectName                   = name;
 				vkSetDebugUtilsObjectNameEXT(device, &name_info);
 			};
-			set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_compute_view", shading_rate_image_compute_view->get_handle());
+			set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_compute_view",
+			         shading_rate_image_compute_view->get_handle());
 			set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "shading_rate_image_view", shading_rate_image_view->get_handle());
-			set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "frequency_content_image_view", frequency_content_image_view->get_handle());
+			set_name(VK_OBJECT_TYPE_IMAGE_VIEW, "frequency_content_image_view",
+			         frequency_content_image_view->get_handle());
 			set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image_compute", shading_rate_image_compute->get_handle());
 			set_name(VK_OBJECT_TYPE_IMAGE, "shading_rate_image", shading_rate_image->get_handle());
 			set_name(VK_OBJECT_TYPE_IMAGE, "frequency_content_image", frequency_content_image->get_handle());
@@ -855,61 +943,62 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 void FragmentShadingRateDynamic::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-		vkb::initializers::pipeline_input_assembly_state_create_info(
-			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			0,
-			VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(
+	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	        0,
+	        VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-		vkb::initializers::pipeline_rasterization_state_create_info(
-			VK_POLYGON_MODE_FILL,
-			VK_CULL_MODE_BACK_BIT,
-			VK_FRONT_FACE_COUNTER_CLOCKWISE,
-			0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(
+	        VK_POLYGON_MODE_FILL,
+	        VK_CULL_MODE_BACK_BIT,
+	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
+	        0);
 
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_state(2, vkb::initializers::pipeline_color_blend_attachment_state(
-																				   0xf,
-																				   VK_FALSE));
+	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_state(2,
+	                                                                        vkb::initializers::pipeline_color_blend_attachment_state(
+	                                                                            0xf,
+	                                                                            VK_FALSE));
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
-		vkb::initializers::pipeline_color_blend_state_create_info(
-			blend_attachment_state.size(),
-			blend_attachment_state.data());
+	    vkb::initializers::pipeline_color_blend_state_create_info(
+	        blend_attachment_state.size(),
+	        blend_attachment_state.data());
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-		vkb::initializers::pipeline_depth_stencil_state_create_info(
-			VK_FALSE,
-			VK_FALSE,
-			VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(
+	        VK_FALSE,
+	        VK_FALSE,
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
-		vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state =
-		vkb::initializers::pipeline_multisample_state_create_info(
-			VK_SAMPLE_COUNT_1_BIT,
-			0);
+	    vkb::initializers::pipeline_multisample_state_create_info(
+	        VK_SAMPLE_COUNT_1_BIT,
+	        0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
-		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_SCISSOR,
-		// Add fragment shading rate dynamic state, so we can easily toggle this at runtime
-		VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR};
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR,
+	    // Add fragment shading rate dynamic state, so we can easily toggle this at runtime
+	    VK_DYNAMIC_STATE_FRAGMENT_SHADING_RATE_KHR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-		vkb::initializers::pipeline_dynamic_state_create_info(
-			dynamic_state_enables.data(),
-			static_cast<uint32_t>(dynamic_state_enables.size()),
-			0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(
+	        dynamic_state_enables.data(),
+	        static_cast<uint32_t>(dynamic_state_enables.size()),
+	        0);
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
-		vkb::initializers::pipeline_create_info(
-			pipeline_layout,
-			fragment_render_pass,
-			0);
+	    vkb::initializers::pipeline_create_info(
+	        pipeline_layout,
+	        fragment_render_pass,
+	        0);
 
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-		vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
 	};
 
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -926,12 +1015,15 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 
 	// Vertex bindings an attributes for model rendering
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-		vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-		vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
-		vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
-		vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // UV
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          0),        // Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          sizeof(float) * 3),        // Normal
+	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT,
+	                                                          sizeof(float) * 6),        // UV
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -948,7 +1040,8 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	shader_stages[0] = load_shader("fragment_shading_rate_dynamic/scene.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("fragment_shading_rate_dynamic/scene.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skysphere));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr,
+	                                   &pipelines.skysphere));
 
 	// Objects
 	// Enable depth test and write
@@ -956,15 +1049,16 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.sphere));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr,
+	                                   &pipelines.sphere));
 }
 
 void FragmentShadingRateDynamic::prepare_uniform_buffers()
 {
 	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-																sizeof(ubo_scene),
-																VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-																VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                            sizeof(ubo_scene),
+	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -999,7 +1093,8 @@ void FragmentShadingRateDynamic::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
 
-	const std::array<VkPipelineStageFlags, 2> small_wait_mask = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
+	const std::array<VkPipelineStageFlags, 2> small_wait_mask = {VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+	                                                             VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT};
 	VkSemaphore                               small_semaphore{VK_NULL_HANDLE};
 	vkCreateSemaphore(device->get_handle(), &semaphore_create, VK_NULL_HANDLE, &small_semaphore);
 	submit_info.pCommandBuffers      = &small_command_buffers[current_buffer];
@@ -1047,9 +1142,10 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	}
 
 	const auto enabled_instance_extensions = instance->get_extensions();
-	debug_utils_supported                  = std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
-								return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
-											 }) != enabled_instance_extensions.cend();
+	debug_utils_supported =
+	    std::find_if(enabled_instance_extensions.cbegin(), enabled_instance_extensions.cend(), [](const char *ext) {
+		    return strcmp(ext, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0;
+	    }) != enabled_instance_extensions.cend();
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
@@ -1097,14 +1193,16 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		static const std::vector<std::string> frequency_decimation_rates = {"1", "2", "4", "8", "16"};
 
-		int32_t selection = std::min(int32_t(frequency_decimation_rates.size()) - 1, int32_t(log2f(subpass_extent_ratio)));
+		int32_t selection = std::min(int32_t(frequency_decimation_rates.size()) - 1,
+		                             int32_t(log2f(static_cast<float>(subpass_extent_ratio))));
 		if (drawer.combo_box("Subpass size reduction", &selection, frequency_decimation_rates))
 		{
 			subpass_extent_ratio = (1 << selection);
 			resize(width, height);
 		}
 
-		static const std::vector<std::string> shading_rate_names = {"Render output", "Shading Rates", "Frequency channel"};
+		static const std::vector<std::string> shading_rate_names = {"Render output", "Shading Rates",
+		                                                            "Frequency channel"};
 		if (drawer.combo_box("Data visualize", &ubo_scene.color_shading_rate, shading_rate_names))
 		{
 			update_uniform_buffers();
@@ -1119,7 +1217,6 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t new_height)
 {
-	const size_t _width = this->width, _height = this->height;
 	invalidate_shading_rate_attachment();
 	if (!ApiVulkanSample::resize(new_width, new_height))
 	{

@@ -68,7 +68,7 @@ void main()
 
 		case 1:        // Phong shading
 		{
-			vec4 tex_value = texture(samplerSphere, inUV);
+			vec4 tex_value = texture(samplerSphere, vec2(inUV.s, 1.0 - inUV.t));
 			vec3 ambient   = tex_value.rgb;
 			vec3 N         = normalize(inNormal);
 			vec3 L         = normalize(inLightVec);
