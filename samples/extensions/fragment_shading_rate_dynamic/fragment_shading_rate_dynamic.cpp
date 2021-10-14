@@ -84,8 +84,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	compute_buffers.resize(draw_cmd_buffers.size());
 
 	subpass_extent = VkExtent2D{
-	    .width  = static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
-	    .height = static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
+	    static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
+	    static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
 
 	for (auto &&compute_buffer : compute_buffers)
 	{
