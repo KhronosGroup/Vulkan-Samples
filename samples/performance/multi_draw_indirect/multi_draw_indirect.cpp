@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "bindless.h"
+#include "multi_draw_indirect.h"
 #include "gltf_loader.h"
 #include "ktx.h"
 #include "scene_graph/components/camera.h"
@@ -57,13 +57,13 @@ struct CopyBuffer
 
 }        // namespace
 
-BindlessResources::BindlessResources()
+MultiDrawIndirect::MultiDrawIndirect()
 {
 	set_api_version(VK_API_VERSION_1_2);
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME, true /* optional */);
 }
 
-BindlessResources::~BindlessResources()
+MultiDrawIndirect::~MultiDrawIndirect()
 {
 	if (device)
 	{
@@ -92,7 +92,7 @@ BindlessResources::~BindlessResources()
 	}
 }
 
-void BindlessResources::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MultiDrawIndirect::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	if (gpu.get_features().multiDrawIndirect)
 	{
@@ -134,7 +134,7 @@ void BindlessResources::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void BindlessResources::build_command_buffers()
+void MultiDrawIndirect::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -193,7 +193,7 @@ void BindlessResources::build_command_buffers()
 	}
 }
 
-void BindlessResources::on_update_ui_overlay(vkb::Drawer &drawer)
+void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("GPU Rendering"))
 	{
@@ -241,7 +241,7 @@ void BindlessResources::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void BindlessResources::create_sampler()
+void MultiDrawIndirect::create_sampler()
 {
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
 	sampler_info.magFilter           = VK_FILTER_LINEAR;
@@ -258,7 +258,7 @@ void BindlessResources::create_sampler()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &sampler));
 }
 
-bool BindlessResources::prepare(vkb::Platform &platform)
+bool MultiDrawIndirect::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -301,7 +301,7 @@ bool BindlessResources::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void BindlessResources::load_scene()
+void MultiDrawIndirect::load_scene()
 {
 	assert(!!device);
 	vkb::GLTFLoader   loader{*device};
@@ -447,7 +447,7 @@ void BindlessResources::load_scene()
 	device->get_fence_pool().wait();
 }
 
-void BindlessResources::initialize_resources()
+void MultiDrawIndirect::initialize_resources()
 {
 	size_t       vertex_buffer_size = 0, index_buffer_size = 0;
 	const size_t model_buffer_size = models.size() * sizeof(SceneModel);
@@ -539,7 +539,7 @@ void BindlessResources::initialize_resources()
 	device->get_fence_pool().wait();
 }
 
-void BindlessResources::create_pipeline()
+void MultiDrawIndirect::create_pipeline()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 6},
@@ -666,8 +666,8 @@ void BindlessResources::create_pipeline()
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
-	    load_shader("bindless/bindless.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	    load_shader("bindless/bindless.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
+	    load_shader("multi_draw_indirect/multi_draw_indirect.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	    load_shader("multi_draw_indirect/multi_draw_indirect.frag", VK_SHADER_STAGE_FRAGMENT_BIT)};
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
@@ -675,7 +675,7 @@ void BindlessResources::create_pipeline()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-void BindlessResources::create_compute_pipeline()
+void MultiDrawIndirect::create_compute_pipeline()
 {
 	auto create = [this](VkPipelineLayout &layout, VkPipeline &_pipeline, const char *filename) {
 		VkComputePipelineCreateInfo compute_create_info = vkb::initializers::compute_pipeline_create_info(layout, 0);
@@ -684,15 +684,15 @@ void BindlessResources::create_compute_pipeline()
 		VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &compute_create_info, nullptr, &_pipeline));
 	};
 
-	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "bindless/cull.comp");
+	create(gpu_cull_pipeline_layout, gpu_cull_pipeline, "multi_draw_indirect/cull.comp");
 
 	if (m_supports_buffer_device)
 	{
-		create(device_address_pipeline_layout, device_address_pipeline, "bindless/cull_address.comp");
+		create(device_address_pipeline_layout, device_address_pipeline, "multi_draw_indirect/cull_address.comp");
 	}
 }
 
-void BindlessResources::initialize_descriptors()
+void MultiDrawIndirect::initialize_descriptors()
 {
 	enum class Target
 	{
@@ -754,7 +754,7 @@ void BindlessResources::initialize_descriptors()
 	}
 }
 
-void BindlessResources::update_scene_uniform()
+void MultiDrawIndirect::update_scene_uniform()
 {
 	if (!scene_uniform_buffer)
 	{
@@ -770,7 +770,7 @@ void BindlessResources::update_scene_uniform()
 	scene_uniform_buffer->flush();
 }
 
-void BindlessResources::draw()
+void MultiDrawIndirect::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
@@ -784,7 +784,7 @@ void BindlessResources::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void BindlessResources::render(float delta_time)
+void MultiDrawIndirect::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -814,11 +814,11 @@ void BindlessResources::render(float delta_time)
 	device->get_fence_pool().reset();
 }
 
-void BindlessResources::finish()
+void MultiDrawIndirect::finish()
 {
 }
 
-void BindlessResources::run_cull()
+void MultiDrawIndirect::run_cull()
 {
 	switch (render_mode)
 	{
@@ -832,7 +832,7 @@ void BindlessResources::run_cull()
 	}
 }
 
-void BindlessResources::run_gpu_cull()
+void MultiDrawIndirect::run_gpu_cull()
 {
 	assert(!!gpu_cull_pipeline);
 	auto                     cmd   = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY);
@@ -918,7 +918,7 @@ struct VisibilityTester
 
 }        // namespace
 
-void BindlessResources::cpu_cull()
+void MultiDrawIndirect::cpu_cull()
 {
 	cpu_commands.resize(models.size());
 
@@ -957,12 +957,12 @@ void BindlessResources::cpu_cull()
 	device->get_fence_pool().wait();
 }
 
-std::unique_ptr<vkb::VulkanSample> create_bindless()
+std::unique_ptr<vkb::VulkanSample> create_multi_draw_indirect()
 {
-	return std::make_unique<BindlessResources>();
+	return std::make_unique<MultiDrawIndirect>();
 }
 
-BindlessResources::BoundingSphere::BoundingSphere(const std::vector<glm::vec3> &pts)
+MultiDrawIndirect::BoundingSphere::BoundingSphere(const std::vector<glm::vec3> &pts)
 {
 	if (pts.empty())
 	{

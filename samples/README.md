@@ -130,10 +130,10 @@ This sample demonstrates how to use Basis universal supercompressed GPU textures
 
 - 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
 
-## [GPU Rendering and Bindless Resources](./performance/bindless) <br/>
+## [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
-- 🎓 [Using GPU Rendering and Bindless Resources](./performance/bindless/bindless_tutorial.md)
+- 🎓 [Using GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect/multi_draw_indirect_tutorial.md)
 
 ## API samples
 

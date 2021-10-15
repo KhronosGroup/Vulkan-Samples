@@ -22,12 +22,12 @@
 /**
  * @brief Offloading processes from CPU to GPU
  */
-class BindlessResources : public ApiVulkanSample
+class MultiDrawIndirect : public ApiVulkanSample
 {
   public:
-	BindlessResources();
+	MultiDrawIndirect();
 
-	~BindlessResources() override;
+	~MultiDrawIndirect() override;
 
 	bool prepare(vkb::Platform &platform) override;
 
@@ -149,4 +149,4 @@ class BindlessResources : public ApiVulkanSample
 	bool m_supports_buffer_device  = false;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_bindless();
+std::unique_ptr<vkb::VulkanSample> create_multi_draw_indirect();

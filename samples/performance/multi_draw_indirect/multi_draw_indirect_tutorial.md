@@ -17,7 +17,7 @@
 -
 -->
 
-# GPU Rendering and Bindless Resources
+# GPU Rendering and Multi-Draw Indirect
 
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
@@ -27,7 +27,7 @@ A common method of rendering large scenes is to iterate through each model and b
 
 An alternative method is introduced by using GPU rendering and the use of the indirect call functions introduced in Vulkan 1.2. Whereas the draw parameters to the function `vkCmdDrawIndexed` are provided by the CPU, calls to the function `vkCmdDrawIndexIndirect` query commands from a GPU buffer. This has two significant advantages:
 
-1. Draw calls can be generated from the GPU (such as in a compute shader), and
+1. Draw calls can be generated from the GPU (such as in a "compute shader"), and
 2. An array of draw calls can be called at once, reducing command buffer overhead
 
 The information for indirect commands is provided by the struct `VkDrawIndexedIndirectCommand`, which contains information about the vertices and indices to draw. Since the struct allows for offsets of both vertex and index buffers (through firstIndex and vertexOffset), multiple models from a scene can be placed into a single index buffer and vertex buffer and bound just once, wherein each portion of the index buffer is zero-indexed. This also means that a large index buffer of type `uint16_t` can be used even when the total number of vertices in the scene exceeds the upper limit of `2^16` for a single draw call.
@@ -57,7 +57,7 @@ The sample provides three methods of generating draw calls: CPU-only, GPU, and G
 
 In the CPU method, frustum culling is performed through the structure `VisibilityTester` using the model/view matrix. An on-CPU array is modified each frame, and then pushed to the GPU through a staging buffer.
 
-In the GPU method, a compute shader is called. Each invocation of the compute shader corresponds to a `VkDrawIndexedIndirectCommand` struct, and the bounding sphere is queried from an SSBO (`ModelInformationBuffer`). To determine whether that model is drawn, the instance count is toggled between 0 and 1. The GPU is entirely responsible for generating the draw calls apart from the initial set up of the draw command buffer, which is performed by the GPU.
+In the GPU method, a "compute shader" is called. Each invocation of the "compute shader" corresponds to a `VkDrawIndexedIndirectCommand` struct, and the bounding sphere is queried from an SSBO (`ModelInformationBuffer`). To determine whether that model is drawn, the instance count is toggled between 0 and 1. The GPU is entirely responsible for generating the draw calls apart from the initial set up of the draw command buffer, which is performed by the GPU.
 
 The GPU method using buffer device address is similar to the standard GPU method, but with an additional feature: the starting address of the `VkDrawIndexedIndirectCommand` array is provided using `buffer_reference`. The advantage of this method is that each invocation of the culling compute shader can point to a different indirect command array without needing to change descriptor sets if the camera information and buffer address is provided through push constants. This allows culling of the next frame to occur prior to completion of rendering of the current frame with minimal overhead.
 

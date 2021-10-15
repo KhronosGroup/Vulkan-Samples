@@ -23,5 +23,10 @@ add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip Corporation"
-    NAME "Bindless Resources"
-    DESCRIPTION "Improve performance by offloading common tasks from CPU to GPU.")
+    NAME "Multi-Draw Indirect"
+    DESCRIPTION "Improve performance by offloading common tasks from CPU to GPU."
+    SHADER_FILES_GLSL
+    "multi_draw_indirect/cull.comp"
+    "multi_draw_indirect/cull_address.comp"
+    "multi_draw_indirect/multi_draw_indirect.vert"
+    "multi_draw_indirect/multi_draw_indirect.frag")
