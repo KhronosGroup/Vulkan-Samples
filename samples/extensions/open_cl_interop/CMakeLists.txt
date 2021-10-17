@@ -20,12 +20,6 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-# OpenCL
-add_library(opencl INTERFACE)
-set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/third_party/OpenCL-Headers/)
-target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
-target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
-
 if(ANDROID)
     add_sample_with_tags(
         ID ${FOLDER_NAME}
