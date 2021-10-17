@@ -22,9 +22,3 @@ khrplatform.h
 clang_format.py
 run-clang-tidy.py
 package-list.txt
-cl.h
-cl_ext.h
-cl_gl.h
-cl_platform.h
-cl_version.h
-opencl.h
