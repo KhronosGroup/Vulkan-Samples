@@ -21,18 +21,16 @@
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
-#include <android/hardware_buffer.h>
-#include <android/hardware_buffer_jni.h>
-
 struct CLData;
+typedef struct AHardwareBuffer AHardwareBuffer;
 
 class OpenCLInterop : public ApiVulkanSample
 {
   public:
 	OpenCLInterop();
-	~OpenCLInterop();
+	~OpenCLInterop() override;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	bool prepare(vkb::Platform &platform) override;
 
 	void render(float delta_time) override;
 	void view_changed() override;
@@ -87,7 +85,7 @@ class OpenCLInterop : public ApiVulkanSample
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
+	uint32_t                           index_count{0};
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
 
 	VkFence rendering_finished_fence{VK_NULL_HANDLE};

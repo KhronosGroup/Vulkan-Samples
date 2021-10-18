@@ -25,6 +25,11 @@
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
 
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
+#include <android/hardware_buffer.h>
+#include <android/hardware_buffer_jni.h>
+#endif
+
 struct CLData
 {
 	cl_context       context{nullptr};
@@ -66,9 +71,13 @@ OpenCLInterop::~OpenCLInterop()
 	vkDestroyImage(device->get_handle(), shared_texture.image, nullptr);
 	vkFreeMemory(device->get_handle(), shared_texture.memory, nullptr);
 
-	clReleaseMemObject(cl_data->image);
-	clReleaseContext(cl_data->context);
-	delete cl_data;
+	if(cl_data)
+	{
+		clReleaseMemObject(cl_data->image);
+		clReleaseContext(cl_data->context);
+		delete cl_data;
+	}
+
 	unload_opencl();
 }
 
@@ -163,10 +172,10 @@ void OpenCLInterop::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkDeviceSize offsets[1] = {0};
@@ -298,7 +307,7 @@ void OpenCLInterop::setup_descriptor_set()
 	    };
 
 	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()),
-	                       write_descriptor_sets.data(), 0, NULL);
+	                       write_descriptor_sets.data(), 0, nullptr);
 }
 
 void OpenCLInterop::prepare_pipelines()
@@ -352,7 +361,7 @@ void OpenCLInterop::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	shader_stages[0] = load_shader("texture_loading/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("texture_loading/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
