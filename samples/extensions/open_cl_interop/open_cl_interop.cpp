@@ -26,8 +26,8 @@
 #include <open_cl_utils.h>
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
-#include <android/hardware_buffer.h>
-#include <android/hardware_buffer_jni.h>
+#	include <android/hardware_buffer.h>
+#	include <android/hardware_buffer_jni.h>
 #endif
 
 struct CLData
@@ -71,7 +71,7 @@ OpenCLInterop::~OpenCLInterop()
 	vkDestroyImage(device->get_handle(), shared_texture.image, nullptr);
 	vkFreeMemory(device->get_handle(), shared_texture.memory, nullptr);
 
-	if(cl_data)
+	if (cl_data)
 	{
 		clReleaseMemObject(cl_data->image);
 		clReleaseContext(cl_data->context);
