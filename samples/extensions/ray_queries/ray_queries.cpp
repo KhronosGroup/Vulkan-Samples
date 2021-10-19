@@ -238,10 +238,10 @@ void RayQueries::create_top_level_acceleration_structure()
 	                                                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instances_buffer->update(&acceleration_structure_instance, sizeof(VkAccelerationStructureInstanceKHR));
 
-    // Top Level AS with single instance
-    top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
-    top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
-    top_level_acceleration_structure->build(queue);
+	// Top Level AS with single instance
+	top_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(get_device(), VK_ACCELERATION_STRUCTURE_TYPE_TOP_LEVEL_KHR);
+	top_level_acceleration_structure->add_instance_geometry(instances_buffer, 1);
+	top_level_acceleration_structure->build(queue);
 }
 
 void RayQueries::create_bottom_level_acceleration_structure()
@@ -269,22 +269,22 @@ void RayQueries::create_bottom_level_acceleration_structure()
 	std::unique_ptr<vkb::core::Buffer> transform_matrix_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(transform_matrix), buffer_usage_flags, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	transform_matrix_buffer->update(&transform_matrix, sizeof(transform_matrix));
 
-    if (bottom_level_acceleration_structure == nullptr)
-    {
-        bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
-                get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
-        bottom_level_acceleration_structure->add_triangle_geometry(
-                 vertex_buffer,
-                index_buffer,
-                transform_matrix_buffer,
-                model.indices.size(),
-                model.vertices.size(),
-                sizeof(Vertex),
-                0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
-                 get_buffer_device_address(vertex_buffer->get_handle()),
-                 get_buffer_device_address(index_buffer->get_handle()));
-    }
-    bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
+	if (bottom_level_acceleration_structure == nullptr)
+	{
+		bottom_level_acceleration_structure = std::make_unique<vkb::core::AccelerationStructure>(
+		    get_device(), VK_ACCELERATION_STRUCTURE_TYPE_BOTTOM_LEVEL_KHR);
+		bottom_level_acceleration_structure->add_triangle_geometry(
+		    vertex_buffer,
+		    index_buffer,
+		    transform_matrix_buffer,
+		    model.indices.size(),
+		    model.vertices.size(),
+		    sizeof(Vertex),
+		    0, VK_FORMAT_R32G32B32_SFLOAT, VK_GEOMETRY_OPAQUE_BIT_KHR,
+		    get_buffer_device_address(vertex_buffer->get_handle()),
+		    get_buffer_device_address(index_buffer->get_handle()));
+	}
+	bottom_level_acceleration_structure->build(queue, VK_BUILD_ACCELERATION_STRUCTURE_PREFER_FAST_TRACE_BIT_KHR, VK_BUILD_ACCELERATION_STRUCTURE_MODE_BUILD_KHR);
 }
 
 void RayQueries::load_scene()
@@ -372,8 +372,8 @@ void RayQueries::create_descriptor_sets()
 	VkWriteDescriptorSetAccelerationStructureKHR descriptor_acceleration_structure_info{};
 	descriptor_acceleration_structure_info.sType                      = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET_ACCELERATION_STRUCTURE_KHR;
 	descriptor_acceleration_structure_info.accelerationStructureCount = 1;
-    auto rhs                                                       = top_level_acceleration_structure->get_handle();
-    descriptor_acceleration_structure_info.pAccelerationStructures = &rhs;
+	auto rhs                                                          = top_level_acceleration_structure->get_handle();
+	descriptor_acceleration_structure_info.pAccelerationStructures    = &rhs;
 
 	VkWriteDescriptorSet acceleration_structure_write{};
 	acceleration_structure_write.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;

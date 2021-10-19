@@ -21,8 +21,8 @@
 
 #pragma once
 
-#include <core/acceleration_structure.h>
 #include "api_vulkan_sample.h"
+#include <core/acceleration_structure.h>
 
 namespace vkb
 {
@@ -74,12 +74,12 @@ class RayQueries : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
 
 	// Ray tracing structures
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
-    std::unique_ptr<vkb::core::AccelerationStructure>                            top_level_acceleration_structure = nullptr;
-    std::unique_ptr<vkb::core::AccelerationStructure>                            bottom_level_acceleration_structure = nullptr;
-	uint64_t                                         get_buffer_device_address(VkBuffer buffer);
-	void                                             create_top_level_acceleration_structure();
-	void                                             create_bottom_level_acceleration_structure();
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};
+	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure    = nullptr;
+	std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure = nullptr;
+	uint64_t                                          get_buffer_device_address(VkBuffer buffer);
+	void                                              create_top_level_acceleration_structure();
+	void                                              create_bottom_level_acceleration_structure();
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
