@@ -1,5 +1,5 @@
-/* Copyright (c) 2020, Bradley Austin Davis
- * Copyright (c) 2020, Arm Limited
+/* Copyright (c) 2020-2021, Bradley Austin Davis
+ * Copyright (c) 2020-2021, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
