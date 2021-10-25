@@ -24,6 +24,7 @@
 
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
+#include <strstream>
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
 #	include <android/hardware_buffer.h>
@@ -563,18 +564,42 @@ void OpenCLInterop::prepare_shared_resources()
 	}
 }
 
+std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id)
+{
+	size_t extensions_info_size = 0;
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);
+
+	std::vector<char> extensions_info(extensions_info_size, '\0');
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extensions_info_size, extensions_info.data(), nullptr);
+
+	std::istrstream extensions_info_stream(extensions_info.data(), extensions_info.size());
+	return std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
+}
+
 void OpenCLInterop::prepare_open_cl_resources()
 {
-	if (!load_opencl())
+	cl_platform_id platform_id = load_opencl();
+	if (platform_id == nullptr)
 	{
 		LOGE("Cannot load OpenCL library.");
 		return;
 	}
 
-	cl_platform_id platform_id = nullptr;
-	cl_uint        num_devices;
-	cl_uint        num_platforms;
-	clGetPlatformIDs(1, &platform_id, &num_platforms);
+	auto                     available_extensions = get_available_open_cl_extensions(platform_id);
+	std::vector<std::string> required_extensions{
+	    "cl_arm_import_memory",
+	    "cl_arm_import_memory_android_hardware_buffer"};
+
+	for (auto extension : required_extensions)
+	{
+		if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+		{
+			LOGE("Required OpenCL extension '{}' is not available.", extension);
+			return;
+		}
+	}
+
+	cl_uint num_devices;
 	clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &cl_data->device_id, &num_devices);
 
 	cl_int result    = CL_SUCCESS;

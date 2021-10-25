@@ -20,23 +20,32 @@
 #include <dlfcn.h>
 
 #define OPENCL_EXPORTED_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
+#define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
 #include "open_cl_functions.inl"
 
 static void *handle = nullptr;
 
-bool load_opencl()
+cl_platform_id load_opencl()
 {
 	handle = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_LOCAL);
 
 	if (handle == nullptr)
 	{
-		return false;
+		return nullptr;
 	}
 
-#define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(dlsym(handle, #func_name));
+#define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(dlsym(handle, #func_name))
 #include "open_cl_functions.inl"
 
-	return true;
+	cl_platform_id platform_id = nullptr;
+	cl_uint        num_platforms;
+	clGetPlatformIDs_ptr(1, &platform_id, &num_platforms);
+
+#define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) func_name##_ptr = \
+	                                                      reinterpret_cast<decltype(func_name) *>(clGetExtensionFunctionAddressForPlatform_ptr(platform_id, #func_name))
+#include "open_cl_functions.inl"
+
+	return platform_id;
 }
 
 void unload_opencl()

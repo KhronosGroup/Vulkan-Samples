@@ -22,11 +22,13 @@
 #include <functional>
 
 #define OPENCL_EXPORTED_FUNCTION(func_name) extern std::function<decltype(func_name)> func_name##_ptr
+#define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) extern std::function<decltype(func_name)> func_name##_ptr
 #include "open_cl_functions.inl"
 #undef OPENCL_EXPORTED_FUNCTION
+#undef OPENCL_EXPORTED_EXTENSION_FUNCTION
 
-bool load_opencl();
-void unload_opencl();
+cl_platform_id load_opencl();
+void           unload_opencl();
 
 #ifdef CL_FUNCTION_DEFINITIONS
 
@@ -35,7 +37,6 @@ void unload_opencl();
 #	define clGetPlatformIDs clGetPlatformIDs_ptr
 #	define clCreateBuffer clCreateBuffer_ptr
 #	define clReleaseMemObject clReleaseMemObject_ptr
-#	define clImportMemoryARM clImportMemoryARM_ptr
 #	define clCreateProgramWithSource clCreateProgramWithSource_ptr
 #	define clBuildProgram clBuildProgram_ptr
 #	define clCreateKernel clCreateKernel_ptr
@@ -45,5 +46,8 @@ void unload_opencl();
 #	define clFinish clFinish_ptr
 #	define clCreateCommandQueue clCreateCommandQueue_ptr
 #	define clReleaseContext clReleaseContext_ptr
+#	define clGetPlatformInfo clGetPlatformInfo_ptr
+#	define clGetExtensionFunctionAddressForPlatform clGetExtensionFunctionAddressForPlatform_ptr
+#	define clImportMemoryARM clImportMemoryARM_ptr
 
 #endif

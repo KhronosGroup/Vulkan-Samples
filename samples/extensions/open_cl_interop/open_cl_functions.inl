@@ -15,8 +15,9 @@
  * limitations under the License.
  */
 
+// Core OpenCL functions, loaded from libOpenCL.so
 #if !defined(OPENCL_EXPORTED_FUNCTION)
-#	define OPENCL_EXPORTED_FUNCTION(fun)
+#define OPENCL_EXPORTED_FUNCTION(fun)
 #endif
 
 OPENCL_EXPORTED_FUNCTION(clCreateContext);
@@ -24,7 +25,6 @@ OPENCL_EXPORTED_FUNCTION(clGetDeviceIDs);
 OPENCL_EXPORTED_FUNCTION(clGetPlatformIDs);
 OPENCL_EXPORTED_FUNCTION(clCreateBuffer);
 OPENCL_EXPORTED_FUNCTION(clReleaseMemObject);
-OPENCL_EXPORTED_FUNCTION(clImportMemoryARM);
 OPENCL_EXPORTED_FUNCTION(clCreateProgramWithSource);
 OPENCL_EXPORTED_FUNCTION(clBuildProgram);
 OPENCL_EXPORTED_FUNCTION(clCreateKernel);
@@ -34,5 +34,16 @@ OPENCL_EXPORTED_FUNCTION(clFlush);
 OPENCL_EXPORTED_FUNCTION(clFinish);
 OPENCL_EXPORTED_FUNCTION(clCreateCommandQueue);
 OPENCL_EXPORTED_FUNCTION(clReleaseContext);
+OPENCL_EXPORTED_FUNCTION(clGetPlatformInfo);
+OPENCL_EXPORTED_FUNCTION(clGetExtensionFunctionAddressForPlatform);
 
 #undef OPENCL_EXPORTED_FUNCTION
+
+// Extension functions, loaded using clGetExtensionFunctionAddressForPlatform
+#if !defined(OPENCL_EXPORTED_EXTENSION_FUNCTION)
+#define OPENCL_EXPORTED_EXTENSION_FUNCTION(fun)
+#endif
+
+OPENCL_EXPORTED_EXTENSION_FUNCTION(clImportMemoryARM);
+
+#undef OPENCL_EXPORTED_EXTENSION_FUNCTION
