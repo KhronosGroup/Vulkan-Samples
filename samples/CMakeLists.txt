@@ -89,7 +89,7 @@ set(ORDER_LIST
     "16bit_storage_input_output"
     "16bit_arithmetic"
     "async_compute"
-    "texture_cmpression_comparison"
+    "texture_compression_comparison"
 
     #HPP API Samples
     "hpp_hello_triangle"
