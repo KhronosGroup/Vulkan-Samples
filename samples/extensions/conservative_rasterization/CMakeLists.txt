@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Sascha Willems
+# Copyright (c) 2019-2021, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,4 +24,10 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
     NAME "Conservative rasterization"
-    DESCRIPTION "Uses an offscreen buffer with lower resolution to demonstrate the effect of conservative rasterization (VK_EXT_conservative_rasterization)")
+    DESCRIPTION "Uses an offscreen buffer with lower resolution to demonstrate the effect of conservative rasterization (VK_EXT_conservative_rasterization)"
+    SHADER_FILES_GLSL
+        "conservative_rasterization/fullscreen.vert"
+        "conservative_rasterization/fullscreen.frag"        
+        "conservative_rasterization/triangle.vert"
+        "conservative_rasterization/triangle.frag"
+        "conservative_rasterization/triangleoverlay.frag")

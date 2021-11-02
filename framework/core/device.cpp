@@ -78,7 +78,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 	VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, device_extensions.data()));
 
 	// Display supported extensions
-	if (!device_extensions.empty())
+	if (device_extensions.size() > 0)
 	{
 		LOGD("Device supports the following extensions:");
 		for (auto &extension : device_extensions)
@@ -128,7 +128,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 		}
 	}
 
-	if (!enabled_extensions.empty())
+	if (enabled_extensions.size() > 0)
 	{
 		LOGI("Device supports the following requested extensions:");
 		for (auto &extension : enabled_extensions)
@@ -137,7 +137,7 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 		}
 	}
 
-	if (!unsupported_extensions.empty())
+	if (unsupported_extensions.size() > 0)
 	{
 		auto error = false;
 		for (auto &extension : unsupported_extensions)
@@ -150,8 +150,8 @@ Device::Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<con
 			else
 			{
 				LOGE("Required device extension {} not available, cannot run", extension);
+				error = true;
 			}
-			error = !extension_is_optional;
 		}
 
 		if (error)
@@ -296,7 +296,7 @@ VmaAllocator Device::get_memory_allocator() const
 
 DriverVersion Device::get_driver_version() const
 {
-	DriverVersion version{};
+	DriverVersion version;
 
 	switch (gpu.get_properties().vendorID)
 	{
@@ -370,16 +370,16 @@ const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index
 
 const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint32_t queue_index)
 {
-	for (auto & queue : queues)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queue[0];
+		Queue &first_queue = queues[queue_family_index][0];
 
 		VkQueueFlags queue_flags = first_queue.get_properties().queueFlags;
 		uint32_t     queue_count = first_queue.get_properties().queueCount;
 
 		if (((queue_flags & required_queue_flags) == required_queue_flags) && queue_index < queue_count)
 		{
-			return queue[queue_index];
+			return queues[queue_family_index][queue_index];
 		}
 	}
 
@@ -388,15 +388,15 @@ const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint3
 
 const Queue &Device::get_queue_by_present(uint32_t queue_index)
 {
-	for (auto & queue : queues)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queue[0];
+		Queue &first_queue = queues[queue_family_index][0];
 
 		uint32_t queue_count = first_queue.get_properties().queueCount;
 
 		if (first_queue.support_present() && queue_index < queue_count)
 		{
-			return queue[queue_index];
+			return queues[queue_family_index][queue_index];
 		}
 	}
 
@@ -419,9 +419,10 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	{
 		for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
 		{
-			if ((queue_family_properties[i].queueFlags & queue_flag) && ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0))
+			if ((queue_family_properties[i].queueFlags & queue_flag) && !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT))
 			{
 				return i;
+				break;
 			}
 		}
 	}
@@ -432,9 +433,10 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	{
 		for (uint32_t i = 0; i < static_cast<uint32_t>(queue_family_properties.size()); i++)
 		{
-			if ((queue_family_properties[i].queueFlags & queue_flag) && ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) == 0) && ((queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT) == 0))
+			if ((queue_family_properties[i].queueFlags & queue_flag) && !(queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && !(queue_family_properties[i].queueFlags & VK_QUEUE_COMPUTE_BIT))
 			{
 				return i;
+				break;
 			}
 		}
 	}
@@ -445,6 +447,7 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 		if (queue_family_properties[i].queueFlags & queue_flag)
 		{
 			return i;
+			break;
 		}
 	}
 
@@ -453,15 +456,15 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 
 const Queue &Device::get_suitable_graphics_queue()
 {
-	for (auto & queue : queues)
+	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queue[0];
+		Queue &first_queue = queues[queue_family_index][0];
 
 		uint32_t queue_count = first_queue.get_properties().queueCount;
 
 		if (first_queue.support_present() && 0 < queue_count)
 		{
-			return queue[0];
+			return queues[queue_family_index][0];
 		}
 	}
 
@@ -543,9 +546,9 @@ VkCommandPool Device::create_command_pool(uint32_t queue_index, VkCommandPoolCre
 	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_info.queueFamilyIndex        = queue_index;
 	command_pool_info.flags                   = flags;
-	VkCommandPool _command_pool;
-	VK_CHECK(vkCreateCommandPool(handle, &command_pool_info, nullptr, &_command_pool));
-	return _command_pool;
+	VkCommandPool command_pool;
+	VK_CHECK(vkCreateCommandPool(handle, &command_pool_info, nullptr, &command_pool));
+	return command_pool;
 }
 
 VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool begin)

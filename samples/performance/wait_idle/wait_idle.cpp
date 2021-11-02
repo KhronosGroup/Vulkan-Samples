@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,7 +71,8 @@ bool WaitIdle::prepare(vkb::Platform &plat)
 void WaitIdle::prepare_render_context()
 {
 	render_context.reset();
-	render_context = std::make_unique<CustomRenderContext>(get_device(), get_surface(), platform->get_window().get_width(), platform->get_window().get_height(), wait_idle_enabled);
+	const auto &extent = platform->get_window().get_extent();
+	render_context     = std::make_unique<CustomRenderContext>(get_device(), get_surface(), extent.width, extent.height, wait_idle_enabled);
 	VulkanSample::prepare_render_context();
 }
 

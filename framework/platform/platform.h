@@ -21,11 +21,14 @@
 #include <string>
 #include <vector>
 
+#include "apps.h"
+#include "common/optional.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
 #include "platform/filesystem.h"
 #include "platform/parser.h"
+#include "platform/plugins/plugin.h"
 #include "platform/window.h"
 #include "rendering/render_context.h"
 
@@ -37,9 +40,10 @@ namespace vkb
 {
 enum class ExitCode
 {
-	Success     = 0, /* App prepare succeeded, it ran correctly and exited properly with no errors */
-	UnableToRun = 1, /* App prepare failed, could not run */
-	FatalError  = 2  /* App encountered an unexpected error */
+	Success = 0, /* App executed as expected */
+	Help,        /* App should show help */
+	Close,       /* App has been requested to close at initialization */
+	FatalError   /* App encountered an unexpected error */
 };
 
 class Platform
@@ -50,26 +54,23 @@ class Platform
 	virtual ~Platform() = default;
 
 	/**
-	 * @brief Sets up the window and logger
-	 * @param _app The application to prepare after the platform is prepared
+	 * @brief Initialize the platform
+	 * @param plugins plugins available to the platform
+	 * @return An exit code representing the outcome of initialization
 	 */
-	virtual bool initialize(std::unique_ptr<Application> &&_app);
-
-	/**
-	 * @brief Prepares the active app supplied in the initialize function
-	 */
-	virtual bool prepare();
+	virtual ExitCode initialize(const std::vector<Plugin *> &plugins);
 
 	/**
 	 * @brief Handles the main loop of the platform
-	 * This should be overridden if a platform requires a specific main loop setup.
+	 * This should be overriden if a platform requires a specific main loop setup.
+	 * @return An exit code representing the outcome of the loop
 	 */
-	virtual void main_loop();
+	ExitCode main_loop();
 
 	/**
 	 * @brief Runs the application for one frame
 	 */
-	void run();
+	void update();
 
 	/**
 	 * @brief Terminates the platform and the application
@@ -80,7 +81,7 @@ class Platform
 	/**
 	 * @brief Requests to close the platform at the next available point
 	 */
-	virtual void close() const;
+	virtual void close();
 
 	/**
 	 * @brief Returns the working directory of the application set by the platform
@@ -95,22 +96,23 @@ class Platform
 	static const std::string &get_temp_directory();
 
 	/**
-	 * @return The dot-per-inch scale factor
-	 */
-	virtual float get_dpi_factor() const;
-
-	/**
 	 * @return The VkInstance extension name for the platform
 	 */
 	virtual const char *get_surface_extension() = 0;
 
 	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const;
 
+	virtual void resize(uint32_t width, uint32_t height);
+
+	virtual void input_event(const InputEvent &input_event);
+
 	Window &get_window() const;
 
 	Application &get_app() const;
 
-	static std::vector<std::string> &get_arguments();
+	Application &get_app();
+
+	std::vector<std::string> &get_arguments();
 
 	static void set_arguments(const std::vector<std::string> &args);
 
@@ -118,46 +120,71 @@ class Platform
 
 	static void set_temp_directory(const std::string &dir);
 
-	static PositionalCommand app;
-	static SubCommand        samples;
-	static FlagCommand       sample;
-	static FlagCommand       test;
-	static FlagCommand       benchmark;
-	static FlagCommand       width;
-	static FlagCommand       height;
-	static FlagCommand       headless;
-	static FlagCommand       batch_tags;
-	static FlagCommand       batch_categories;
-	static SubCommand        batch;
+	template <class T>
+	T *get_plugin() const;
 
-	CommandParser *get_parser() const
-	{
-		return parser.get();
-	}
+	template <class T>
+	bool using_plugin() const;
+
+	void set_focus(bool focused);
+
+	void request_application(const apps::AppInfo *app);
+
+	bool app_requested();
+
+	bool start_app();
+
+	void force_simulation_fps(float fps);
+
+	void disable_input_processing();
+
+	void set_window_properties(const Window::OptionalProperties &properties);
+
+	void on_post_draw(RenderContext &context);
+
+	static const uint32_t MIN_WINDOW_WIDTH;
+	static const uint32_t MIN_WINDOW_HEIGHT;
 
   protected:
 	std::unique_ptr<CommandParser> parser;
+
+	std::vector<Plugin *> active_plugins;
+
+	std::unordered_map<Hook, std::vector<Plugin *>> hooks;
 
 	std::unique_ptr<Window> window{nullptr};
 
 	std::unique_ptr<Application> active_app{nullptr};
 
-	bool benchmark_mode{false};
-
-	uint32_t total_benchmark_frames{0};
-
-	uint32_t remaining_benchmark_frames{0};
-
-	Timer timer;
-
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
 	/**
 	 * @brief Handles the creation of the window
+	 * 
+	 * @param properties Preferred window configuration
 	 */
-	virtual void create_window() = 0;
+	virtual void create_window(const Window::Properties &properties) = 0;
+
+	void on_update(float delta_time);
+	void on_app_error(const std::string &app_id);
+	void on_app_start(const std::string &app_id);
+	void on_app_close(const std::string &app_id);
+	void on_platform_close();
+
+	Window::Properties window_properties;              /* Source of truth for window state */
+	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
+	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
+	bool               process_input_events{true};     /* App should continue processing input events */
+	bool               focused;                        /* App is currently in focus at an operating system level */
+	bool               close_requested{false};         /* Close requested */
 
   private:
+	Timer timer;
+
+	const apps::AppInfo *requested_app{nullptr};
+
+	std::vector<Plugin *> plugins;
+
 	/// Static so can be set via JNI code in android_platform.cpp
 	static std::vector<std::string> arguments;
 
@@ -165,4 +192,18 @@ class Platform
 
 	static std::string temp_directory;
 };
+
+template <class T>
+bool Platform::using_plugin() const
+{
+	return !plugins::with_tags<T>(active_plugins).empty();
+}
+
+template <class T>
+T *Platform::get_plugin() const
+{
+	assert(using_plugin<T>() && "Plugin is not enabled but was requested");
+	const auto plugins = plugins::with_tags<T>(active_plugins);
+	return dynamic_cast<T *>(plugins[0]);
+}
 }        // namespace vkb

@@ -98,6 +98,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	vkb::Device &get_device() override;
 
+	enum RenderPassCreateFlags
+	{
+		ColorAttachmentLoad = 0x00000001
+	};
+
   protected:
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
@@ -159,6 +164,15 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 */
 	void create_swapchain_buffers();
 
+	/**
+	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
+	 * @param image_usage_flags The usage flags the new swapchain images will have
+ 	 */
+	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
+
+	/**
+	 * @brief Handles changes to the surface, e.g. on resize
+	 */
 	void handle_surface_changes();
 
 	/**
@@ -261,6 +275,12 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 *        Can be overridden in derived class to setup a custom render pass (e.g. for MSAA)
 	 */
 	virtual void setup_render_pass();
+
+	/**
+	 * @brief Update flags for the default render pass and recreate it
+	 * @param flags Optional flags for render pass creation
+	 */
+	void update_render_pass_flags(uint32_t flags = 0);
 
 	/**
 	 * @brief Check if command buffers are valid (!= VK_NULL_HANDLE)

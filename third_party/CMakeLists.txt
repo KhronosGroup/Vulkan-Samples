@@ -55,7 +55,7 @@ if(ANDROID)
 elseif(WIN32)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_MACOS_MVK)
+	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
 elseif(UNIX)
     # Choose WSI based on VKB_WSI_SELECTION
     if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)

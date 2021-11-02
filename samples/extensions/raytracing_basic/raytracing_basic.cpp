@@ -784,6 +784,26 @@ void RaytracingBasic::build_command_buffers()
 		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 		    VK_IMAGE_LAYOUT_GENERAL,
 		    subresource_range);
+
+		/*
+			Start a new render pass to draw the UI overlay on top of the ray traced image
+		*/
+		VkClearValue clear_values[2];
+		clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+		clear_values[1].depthStencil = {0.0f, 0};
+
+		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+		render_pass_begin_info.renderPass               = render_pass;
+		render_pass_begin_info.framebuffer              = framebuffers[i];
+		render_pass_begin_info.renderArea.extent.width  = width;
+		render_pass_begin_info.renderArea.extent.height = height;
+		render_pass_begin_info.clearValueCount          = 2;
+		render_pass_begin_info.pClearValues             = clear_values;
+
+		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		draw_ui(draw_cmd_buffers[i]);
+		vkCmdEndRenderPass(draw_cmd_buffers[i]);
+
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
@@ -803,8 +823,11 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	}
 
 	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags
-	std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
-	get_render_context().update_swapchain(image_usage_flags);
+	const std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
+	update_swapchain_image_usage_flags(image_usage_flags);
+
+	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
+	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
 	// Get the ray tracing pipeline properties, which we'll need later on in the sample
 	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;

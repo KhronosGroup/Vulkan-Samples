@@ -34,7 +34,6 @@ FragmentShadingRate::FragmentShadingRate() :
 	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_CREATE_RENDERPASS_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
 }
 

@@ -27,6 +27,37 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
+/**
+ * @brief Process android lifecycle events
+ * 
+ * @param app Android app context
+ * @return true Events processed
+ * @return false Program should close
+ */
+inline bool process_android_events(android_app *app)
+{
+	android_poll_source *source;
+
+	int ident;
+	int events;
+
+	while ((ident = ALooper_pollAll(0, nullptr, &events,
+	                                (void **) &source)) >= 0)
+	{
+		if (source)
+		{
+			source->process(app, source);
+		}
+
+		if (app->destroyRequested != 0)
+		{
+			return false;
+		}
+	}
+
+	return true;
+}
+
 class AndroidPlatform : public Platform
 {
   public:
@@ -34,11 +65,7 @@ class AndroidPlatform : public Platform
 
 	virtual ~AndroidPlatform() = default;
 
-	virtual bool initialize(std::unique_ptr<Application> &&app) override;
-
-	virtual void create_window() override;
-
-	virtual void main_loop() override;
+	virtual ExitCode initialize(const std::vector<Plugin *> &plugins) override;
 
 	virtual void terminate(ExitCode code) override;
 
@@ -65,8 +92,9 @@ class AndroidPlatform : public Platform
 	void set_surface_ready();
 
   private:
-	void poll_events();
+	virtual void create_window(const Window::Properties &properties) override;
 
+  private:
 	android_app *app{nullptr};
 
 	std::string log_output;

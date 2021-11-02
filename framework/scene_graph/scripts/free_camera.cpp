@@ -154,7 +154,7 @@ void FreeCamera::input_event(const InputEvent &input_event)
 {
 	if (input_event.get_source() == EventSource::Keyboard)
 	{
-		const auto &key_event = dynamic_cast<const KeyInputEvent &>(input_event);
+		const auto &key_event = static_cast<const KeyInputEvent &>(input_event);
 
 		if (key_event.get_action() == KeyAction::Down ||
 		    key_event.get_action() == KeyAction::Repeat)
@@ -168,7 +168,7 @@ void FreeCamera::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Mouse)
 	{
-		const auto &mouse_button = dynamic_cast<const MouseButtonInputEvent &>(input_event);
+		const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
 
 		glm::vec2 mouse_pos{std::floor(mouse_button.get_pos_x()), std::floor(mouse_button.get_pos_y())};
 
@@ -191,7 +191,7 @@ void FreeCamera::input_event(const InputEvent &input_event)
 	}
 	else if (input_event.get_source() == EventSource::Touchscreen)
 	{
-		const auto &touch_event = dynamic_cast<const TouchInputEvent &>(input_event);
+		const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
 
 		glm::vec2 touch_pos{std::floor(touch_event.get_pos_x()), std::floor(touch_event.get_pos_y())};
 

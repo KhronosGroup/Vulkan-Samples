@@ -31,10 +31,11 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
+#include "apps.h"
 #include "common/logging.h"
+#include "common/strings.h"
 #include "platform/android/android_window.h"
 #include "platform/input_events.h"
-#include "vulkan_sample.h"
 
 extern "C"
 {
@@ -48,6 +49,37 @@ extern "C"
 		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
 		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
 		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
+	}
+
+	JNIEXPORT jobjectArray JNICALL
+	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
+	{
+		auto sample_list = apps::get_samples();
+
+		jclass       c             = env->FindClass("com/khronos/vulkan_samples/model/Sample");
+		jmethodID    constructor   = env->GetMethodID(c, "<init>", "(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;[Ljava/lang/String;)V");
+		jobjectArray j_sample_list = env->NewObjectArray(sample_list.size(), c, 0);
+
+		for (int sample_index = 0; sample_index < sample_list.size(); sample_index++)
+		{
+			const apps::SampleInfo *sample_info = reinterpret_cast<apps::SampleInfo *>(sample_list[sample_index]);
+
+			jstring id       = env->NewStringUTF(sample_info->id.c_str());
+			jstring category = env->NewStringUTF(sample_info->category.c_str());
+			jstring author   = env->NewStringUTF(sample_info->author.c_str());
+			jstring name     = env->NewStringUTF(sample_info->name.c_str());
+			jstring desc     = env->NewStringUTF(sample_info->description.c_str());
+
+			jobjectArray j_tag_list = env->NewObjectArray(sample_info->tags.size(), env->FindClass("java/lang/String"), env->NewStringUTF(""));
+			for (int tag_index = 0; tag_index < sample_info->tags.size(); ++tag_index)
+			{
+				env->SetObjectArrayElement(j_tag_list, tag_index, env->NewStringUTF(sample_info->tags[tag_index].c_str()));
+			}
+
+			env->SetObjectArrayElement(j_sample_list, sample_index, env->NewObject(c, constructor, id, category, author, name, desc, j_tag_list));
+		}
+
+		return j_sample_list;
 	}
 
 	JNIEXPORT void JNICALL
@@ -285,8 +317,8 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	switch (cmd)
 	{
 		case APP_CMD_INIT_WINDOW: {
-			platform->get_window().resize(ANativeWindow_getWidth(app->window),
-			                              ANativeWindow_getHeight(app->window));
+			platform->resize(ANativeWindow_getWidth(app->window),
+			                 ANativeWindow_getHeight(app->window));
 			platform->set_surface_ready();
 			break;
 		}
@@ -294,16 +326,15 @@ void on_app_cmd(android_app *app, int32_t cmd)
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
-			platform->get_app().resize(width, height);
-			platform->get_window().resize(width, height);
+			platform->resize(width, height);
 			break;
 		}
 		case APP_CMD_GAINED_FOCUS: {
-			platform->get_app().set_focus(true);
+			platform->set_focus(true);
 			break;
 		}
 		case APP_CMD_LOST_FOCUS: {
-			platform->get_app().set_focus(false);
+			platform->set_focus(false);
 			break;
 		}
 	}
@@ -321,8 +352,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		int32_t key_code = AKeyEvent_getKeyCode(input_event);
 		int32_t action   = AKeyEvent_getAction(input_event);
 
-		platform->get_app().input_event(KeyInputEvent{
-		    *platform,
+		platform->input_event(KeyInputEvent{
 		    translate_key_code(key_code),
 		    translate_key_action(action)});
 	}
@@ -333,8 +363,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		float x = AMotionEvent_getX(input_event, 0);
 		float y = AMotionEvent_getY(input_event, 0);
 
-		platform->get_app().input_event(MouseButtonInputEvent{
-		    *platform,
+		platform->input_event(MouseButtonInputEvent{
 		    translate_mouse_button(0),
 		    translate_mouse_action(action),
 		    x, y});
@@ -348,8 +377,7 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 		float x = AMotionEvent_getX(input_event, 0);
 		float y = AMotionEvent_getY(input_event, 0);
 
-		platform->get_app().input_event(TouchInputEvent{
-		    *platform,
+		platform->input_event(TouchInputEvent{
 		    pointer_id,
 		    pointer_count,
 		    translate_touch_action(action),
@@ -380,76 +408,39 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 {
 }
 
-bool AndroidPlatform::initialize(std::unique_ptr<Application> &&application)
+ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
 	app->onAppCmd                                  = on_app_cmd;
 	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
-	if (!Platform::initialize(std::move(application)))
+	auto code = Platform::initialize(plugins);
+	if (code != ExitCode::Success)
 	{
-		return false;
+		return code;
 	}
 
 	// Wait until the android window is loaded before allowing the app to continue
+	LOGI("Waiting on window surface to be ready");
 	do
 	{
-		poll_events();
-
-		if (app->destroyRequested != 0)
+		if (!process_android_events(app))
 		{
-			return false;
+			// Android requested for the app to close
+			LOGI("Android app has been destroyed by the OS");
+			return ExitCode::Close;
 		}
 	} while (!surface_ready);
 
-	return true;
+	return ExitCode::Success;
 }
 
-void AndroidPlatform::create_window()
+void AndroidPlatform::create_window(const Window::Properties &properties)
 {
+	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
-	window = std::make_unique<AndroidWindow>(*this, app->window, active_app->is_headless());
-}
-
-void AndroidPlatform::main_loop()
-{
-	while (true)
-	{
-		poll_events();
-
-		if (app->destroyRequested != 0)
-		{
-			break;
-		}
-
-		if (!window->should_close())
-		{
-			run();
-		}
-	}
-}
-
-void AndroidPlatform::poll_events()
-{
-	android_poll_source *source;
-
-	int ident;
-	int events;
-
-	while ((ident = ALooper_pollAll(0, nullptr, &events,
-	                                (void **) &source)) >= 0)
-	{
-		if (source)
-		{
-			source->process(app, source);
-		}
-
-		if (app->destroyRequested != 0)
-		{
-			break;
-		}
-	}
+	window = std::make_unique<AndroidWindow>(this, app->window, properties);
 }
 
 void AndroidPlatform::terminate(ExitCode code)
@@ -457,18 +448,20 @@ void AndroidPlatform::terminate(ExitCode code)
 	switch (code)
 	{
 		case ExitCode::Success:
-		case ExitCode::UnableToRun:
+		case ExitCode::Close:
 			log_output.clear();
 			break;
 		case ExitCode::FatalError:
 			send_notification(log_output);
 			break;
+		default:
+			break;
 	}
 
-	auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
-	platform->get_window().close();
-
-	main_loop();        // Continue to process events until onDestroy()
+	while (process_android_events(app))
+	{
+		// Process events until app->destroyRequested is set
+	}
 
 	Platform::terminate(code);
 }
@@ -511,7 +504,16 @@ std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &de
 	                                    VK_PRESENT_MODE_MAILBOX_KHR,
 	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
 
-	context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+	switch (window_properties.vsync)
+	{
+		case Window::Vsync::OFF:
+			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
+			break;
+		case Window::Vsync::ON:
+		default:
+			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
+			break;
+	}
 
 	return std::move(context);
 }

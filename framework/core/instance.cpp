@@ -27,11 +27,11 @@ namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT,
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                              void *)
+                                                              void *                                      user_data)
 {
-	// Log debug message
+	// Log debug messge
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
 		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
@@ -43,7 +43,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessag
 	return VK_FALSE;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
                                                      uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
                                                      const char *layer_prefix, const char *message, void * /*user_data*/)
 {
@@ -51,7 +51,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDeb
 	{
 		LOGE("{}: {}", layer_prefix, message);
 	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT || flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+	{
+		LOGW("{}: {}", layer_prefix, message);
+	}
+	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
 		LOGW("{}: {}", layer_prefix, message);
 	}
@@ -96,10 +100,10 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
 	        {"VK_LAYER_KHRONOS_validation"},
 
-	        // Otherwise, we fall back to using the LunarG meta layer
+	        // Otherwise we fallback to using the LunarG meta layer
 	        {"VK_LAYER_LUNARG_standard_validation"},
 
-	        // Otherwise, we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
+	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
 	        {
 	            "VK_LAYER_GOOGLE_threading",
 	            "VK_LAYER_LUNARG_parameter_validation",
@@ -108,7 +112,7 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	            "VK_LAYER_GOOGLE_unique_objects",
 	        },
 
-	        // Otherwise, as a last resort we fall back to attempting to enable the LunarG core layer
+	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
 	        {"VK_LAYER_LUNARG_core_validation"}};
 
 	for (auto &validation_layers : validation_layer_priority_list)
@@ -231,8 +235,8 @@ Instance::Instance(const std::string &                           application_nam
 			else
 			{
 				LOGE("Required instance extension {} not available, cannot run", extension_name);
+				extension_error = true;
 			}
-			extension_error = !extension_is_optional;
 		}
 		else
 		{
@@ -438,7 +442,7 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 	{
 		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
-			//See if it works with the surface
+			//See if it work with the surface
 			size_t queue_count = gpu->get_queue_family_properties().size();
 			for (uint32_t queue_idx = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++)
 			{

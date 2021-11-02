@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,6 +27,8 @@
  */
 
 #include "dynamic_uniform_buffers.h"
+
+#include "benchmark_mode/benchmark_mode.h"
 
 DynamicUniformBuffers::DynamicUniformBuffers()
 : index_count()
@@ -98,7 +100,7 @@ void DynamicUniformBuffers::build_command_buffers()
 	render_pass_begin_info.clearValueCount          = 2;
 	render_pass_begin_info.pClearValues             = clear_values;
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
 	{
 		render_pass_begin_info.framebuffer = framebuffers[i];
 
@@ -384,7 +386,7 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	// We allocate this manually as the alignment of the offset differs between GPUs
 
 	// Calculate required alignment based on minimum device offset alignment
-	size_t min_ubo_alignment = get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment;
+	size_t min_ubo_alignment = static_cast<size_t>(get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment);
 	dynamic_alignment        = sizeof(glm::mat4);
 	if (min_ubo_alignment > 0)
 	{
@@ -413,7 +415,7 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
-	std::default_random_engine      rnd_engine(is_benchmark_mode() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
@@ -473,7 +475,7 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 
 	animation_timer = 0.0f;
 
-	uniform_buffers.dynamic->update(ubo_data_dynamic.model, uniform_buffers.dynamic->get_size());
+	uniform_buffers.dynamic->update(ubo_data_dynamic.model, static_cast<size_t>(uniform_buffers.dynamic->get_size()));
 
 	// Flush to make changes visible to the device
 	uniform_buffers.dynamic->flush();
