@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.12)
 
 project(framework LANGUAGES C CXX)
 
@@ -68,6 +68,7 @@ set(COMMON_FILES
     common/error.h
     common/utils.h
     common/strings.h
+    common/tags.h
     # Source Files
     common/error.cpp
     common/vk_common.cpp
@@ -253,6 +254,8 @@ set(PLATFORM_FILES
     platform/configuration.h
     platform/parser.h
     platform/headless_window.h
+    platform/plugins/plugin.h
+    platform/plugins/plugin_base.h
 
     # Source Files
     platform/headless_window.cpp
@@ -262,13 +265,23 @@ set(PLATFORM_FILES
     platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
-    platform/parser.cpp)
+    platform/parser.cpp
+    platform/plugins/plugin.cpp)
+
+set(GLFW_FILES
+    # Header Files
+    platform/glfw_window.h
+    # Source Files
+    platform/glfw_window.cpp
+)
 
 set(PARSER_FILES
     # Header Files
     platform/parsers/CLI11.h
+    platform/parsers/help_formatter.h
     # Source Files
     platform/parsers/CLI11.cpp
+    platform/parsers/help_formatter.cpp
 )
 
 set(GRAPHING_FILES
@@ -303,12 +316,6 @@ set(UNIX_FILES
     platform/unix/unix_platform.h
     # Source Files
     platform/unix/unix_platform.cpp)
-
-set(GLFW_FILES
-    # Header Files
-    platform/glfw_window.h
-    # Source Files
-    platform/glfw_window.cpp)
 
 set(LINUX_D2D_FILES
     # Header Files
@@ -408,10 +415,10 @@ if(${VKB_WARNINGS_AS_ERRORS})
     endif()
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR})
 
 # Link third party libraries
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME} PUBLIC
     volk
     ktx
     stb
@@ -427,7 +434,9 @@ target_link_libraries(${PROJECT_NAME}
     glslang-default-resource-limits
     spdlog
     ctpl
-    CLI11::CLI11)
+    CLI11::CLI11
+    apps
+    plugins)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} atomic)
@@ -435,11 +444,11 @@ endif()
 
 # Link platform specific libraries
 if(ANDROID)
-    target_link_libraries(${PROJECT_NAME} log android native_app_glue)
+    target_link_libraries(${PROJECT_NAME} PUBLIC log android native_app_glue)
 else()
     if (DIRECT_TO_DISPLAY)
-        target_link_libraries(${PROJECT_NAME} dl)
+        target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     else()
-        target_link_libraries(${PROJECT_NAME} glfw)
+        target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
     endif()
 endif()

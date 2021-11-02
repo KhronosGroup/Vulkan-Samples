@@ -28,17 +28,46 @@ namespace vkb
 {
 std::vector<std::string> split(const std::string &str, const std::string &delimiter)
 {
+	if (str.size() == 0)
+	{
+		return {};
+	}
+
 	std::vector<std::string> out;
 
-	std::string buffer = str;
-	size_t      pos;
+	std::string buffer         = str;
+	size_t      last_found_pos = 0;
+	size_t      pos            = 0;
 	while ((pos = buffer.find(delimiter)) != std::string::npos)
 	{
 		out.push_back(buffer.substr(0, pos));
 		buffer.erase(0, pos + delimiter.length());
+		last_found_pos = last_found_pos + pos + delimiter.length();
+	}
+
+	if (last_found_pos == str.size())
+	{
+		out.push_back("");
 	}
 
 	return out;
+}
+
+std::string join(const std::vector<std::string> &str, const std::string &seperator)
+{
+	std::stringstream out;
+
+	for (auto it = str.begin(); it != str.end(); it++)
+	{
+		out << *it;
+
+		if (it != str.end() - 1)
+		{
+			out << seperator;
+		}
+	}
+
+	return out.str();
 }
 
 std::string to_string(VkFormat format)
@@ -466,7 +495,7 @@ std::string to_string(VkExtent2D extent)
 
 std::string to_string(VkSampleCountFlagBits flags)
 {
-	std::string result;
+	std::string result{""};
 	bool        append = false;
 	if (flags & VK_SAMPLE_COUNT_1_BIT)
 	{
@@ -539,7 +568,7 @@ std::string to_string(VkImageTiling tiling)
 		case VK_IMAGE_TILING_LINEAR:
 			return "VK_IMAGE_TILING_LINEAR";
 		default:
-			return "UNKNOWN_TILING_METHOD";
+			return "UNKOWN_TILING_METHOD";
 	}
 }
 
@@ -554,7 +583,7 @@ std::string to_string(VkImageType type)
 		case VK_IMAGE_TYPE_3D:
 			return "VK_IMAGE_TYPE_3D";
 		default:
-			return "UNKNOWN_IMAGE_TYPE";
+			return "UNKOWN_IMAGE_TYPE";
 	}
 }
 
@@ -675,7 +704,7 @@ std::string to_string(VkPrimitiveTopology topology)
 		return "VK_PRIMITIVE_TOPOLOGY_PATCH_LIST";
 	}
 
-	return "UNKNOWN TOPOLOGY";
+	return "UNKOWN TOPOLOGY";
 }
 
 std::string to_string(VkFrontFace face)
@@ -688,7 +717,7 @@ std::string to_string(VkFrontFace face)
 	{
 		return "VK_FRONT_FACE_CLOCKWISE";
 	}
-	return "UNKNOWN";
+	return "UNKOWN";
 }
 
 std::string to_string(VkPolygonMode mode)
@@ -709,7 +738,7 @@ std::string to_string(VkPolygonMode mode)
 	{
 		return "VK_POLYGON_MODE_FILL_RECTANGLE_NV";
 	}
-	return "UNKNOWN";
+	return "UNKOWN";
 }
 
 std::string to_string(VkCompareOp operation)
@@ -746,7 +775,7 @@ std::string to_string(VkCompareOp operation)
 	{
 		return "ALWAYS";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
 std::string to_string(VkStencilOp operation)
@@ -783,7 +812,7 @@ std::string to_string(VkStencilOp operation)
 	{
 		return "DECREMENT_AND_WRAP";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
 std::string to_string(VkLogicOp operation)
@@ -852,7 +881,7 @@ std::string to_string(VkLogicOp operation)
 	{
 		return "SET";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
 std::string to_string(VkBlendOp operation)
@@ -1111,7 +1140,7 @@ std::string to_string(VkBlendOp operation)
 	{
 		return "BLUE_EXT";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
 std::string to_string(sg::AlphaMode mode)
@@ -1128,7 +1157,7 @@ std::string to_string(sg::AlphaMode mode)
 	{
 		return "Opaque";
 	}
-	return "Unknown";
+	return "Unkown";
 }
 
 std::string to_string(bool flag)
@@ -1167,7 +1196,7 @@ std::string to_string(ShaderResourceType type)
 		case ShaderResourceType::SpecializationConstant:
 			return "SpecializationConstant";
 		default:
-			return "Unknown Type";
+			return "Unkown Type";
 	}
 }
 

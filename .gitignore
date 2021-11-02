@@ -7,3 +7,4 @@ doxygen/
 tests/system_test/artifacts
 tests/system_test/tmp
 output/*
+.mypy_cache

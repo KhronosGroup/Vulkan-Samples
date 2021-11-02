@@ -26,4 +26,9 @@ add_sample_with_tags(
         NAME "16-bit Storage InputOutput"
         DESCRIPTION "Using VK_KHR_16bit_storage InputOutput feature to reduce bandwidth for varying data."
         TAGS
-        "arm")
+        "arm"
+        SHADER_FILES_GLSL
+                "16bit_storage_input_output/16bit_storage_input_output_enabled.vert"
+                "16bit_storage_input_output/16bit_storage_input_output_enabled.frag"
+                "16bit_storage_input_output/16bit_storage_input_output_disabled.vert"
+                "16bit_storage_input_output/16bit_storage_input_output_disabled.frag")

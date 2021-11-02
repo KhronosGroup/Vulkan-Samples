@@ -21,6 +21,8 @@
 
 #include "instancing.h"
 
+#include "benchmark_mode/benchmark_mode.h"
+
 Instancing::Instancing()
 : pipeline_layout()
 , pipelines()
@@ -369,7 +371,7 @@ void Instancing::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(INSTANCE_COUNT);
 
-	std::default_random_engine              rnd_generator(is_benchmark_mode() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 

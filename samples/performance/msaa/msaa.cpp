@@ -28,7 +28,7 @@
 
 namespace
 {
-std::string to_string(VkSampleCountFlagBits count)
+const std::string to_string(VkSampleCountFlagBits count)
 {
 	switch (count)
 	{
@@ -51,7 +51,7 @@ std::string to_string(VkSampleCountFlagBits count)
 	}
 }
 
-std::string to_string(VkResolveModeFlagBits mode)
+const std::string to_string(VkResolveModeFlagBits mode)
 {
 	switch (mode)
 	{
@@ -495,10 +495,10 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		for (auto &_i_depth : depth_atts)
+		for (auto &i_depth : depth_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(_i_depth), memory_barrier);
-			render_target.set_layout(_i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			command_buffer.image_memory_barrier(views.at(i_depth), memory_barrier);
+			render_target.set_layout(i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		}
 	}
 
@@ -746,11 +746,11 @@ void MSAASample::draw_gui()
 		    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.4f);
 		    if (ImGui::BeginCombo("##sample_count", to_string(gui_sample_count).c_str()))
 		    {
-			    for (auto & n : supported_sample_count_list)
+			    for (size_t n = 0; n < supported_sample_count_list.size(); n++)
 			    {
-				    bool is_selected = (gui_sample_count == n);
-				    if (ImGui::Selectable(to_string(n).c_str(), is_selected))
-					    gui_sample_count = n;
+				    bool is_selected = (gui_sample_count == supported_sample_count_list[n]);
+				    if (ImGui::Selectable(to_string(supported_sample_count_list[n]).c_str(), is_selected))
+					    gui_sample_count = supported_sample_count_list[n];
 				    if (is_selected)
 				    {
 					    ImGui::SetItemDefaultFocus();
@@ -790,11 +790,11 @@ void MSAASample::draw_gui()
 				    ImGui::PushItemWidth(ImGui::GetWindowWidth() * 0.3f);
 				    if (ImGui::BeginCombo("##resolve_mode", to_string(gui_depth_resolve_mode).c_str()))
 				    {
-					    for (auto & n : supported_depth_resolve_mode_list)
+					    for (int n = 0; n < supported_depth_resolve_mode_list.size(); n++)
 					    {
-						    bool is_selected = (gui_depth_resolve_mode == n);
-						    if (ImGui::Selectable(to_string(n).c_str(), is_selected))
-							    gui_depth_resolve_mode = n;
+						    bool is_selected = (gui_depth_resolve_mode == supported_depth_resolve_mode_list[n]);
+						    if (ImGui::Selectable(to_string(supported_depth_resolve_mode_list[n]).c_str(), is_selected))
+							    gui_depth_resolve_mode = supported_depth_resolve_mode_list[n];
 						    if (is_selected)
 						    {
 							    ImGui::SetItemDefaultFocus();
