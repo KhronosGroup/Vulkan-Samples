@@ -52,38 +52,7 @@ CLI11CommandParser::CLI11CommandParser(const std::string &name, const std::strin
 
 std::vector<std::string> CLI11CommandParser::help() const
 {
-	return split(_cli->help(), "\n");
-}
-
-bool CLI11CommandParser::parse(CommandParserContext *context, const std::vector<Command *> &commands)
-{
-	if (!CommandParser::parse(&_base_context, commands))
-	{
-		std::cerr << "CLI11 Parser Error: Commands are not in the expected format\n";
-		return false;
-	}
-
-	try
-	{
-		_cli->parse(static_cast<int>(_args.size()), _args.data());
-	}
-	catch (CLI::ParseError &e)
-	{
-		if (e.get_name() == "RuntimeError")
-		{
-			LOGE("CLI11 Parse Error");
-			return false;
-		}
-
-		if (e.get_name() == "CallForHelp")
-		{
-			return false;
-		}
-
-		return e.get_exit_code() == static_cast<int>(CLI::ExitCodes::Success);
-	}
-
-	return true;
+	return split(_cli11->help(), "\n");
 }
 
 // Helper to reduce duplication - throw should not occur as there should always be a valid context passed
