@@ -102,7 +102,7 @@ vulkan_samples <sub_command> --help
 vulkan_samples sample swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_samples sample afbc --benchmark --stop-after-frames 5000
+vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
 # Run bonza test offscreen
 vulkan_samples test bonza --headless
