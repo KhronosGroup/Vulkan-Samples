@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include <core/buffer.h>
 #include <core/hpp_device.h>
 #include <vulkan/vulkan.hpp>
 
@@ -26,11 +25,11 @@ namespace vkb
 namespace core
 {
 /**
- * @brief wrapper class for use with vulkan.hpp in the samples of this framework
+ * @brief vulkan.hpp version of the vkb::core::Buffer class
  *
  * See vkb::VulkanSample for documentation
  */
-class HPPBuffer : protected vkb::core::Buffer
+class HPPBuffer
 {
   public:
 	/**
@@ -47,6 +46,13 @@ class HPPBuffer : protected vkb::core::Buffer
 	          VmaMemoryUsage           memory_usage,
 	          VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
+	HPPBuffer(const HPPBuffer &) = delete;
+	HPPBuffer(HPPBuffer &&rhs);
+	~HPPBuffer();
+
+	HPPBuffer &operator=(const HPPBuffer &) = delete;
+	HPPBuffer &operator                     =(HPPBuffer &&rhs);
+
 	/**
 	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
 	 */
@@ -58,6 +64,17 @@ class HPPBuffer : protected vkb::core::Buffer
 	 * @return The size of the buffer
 	 */
 	vk::DeviceSize get_size() const;
+
+	/**
+	 * @brief Maps vulkan memory if it isn't already mapped to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
 
 	/**
 	 * @brief Copies byte data into the buffer
@@ -85,6 +102,17 @@ class HPPBuffer : protected vkb::core::Buffer
 	{
 		update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
 	}
+
+  private:
+	void destroy();
+
+  private:
+	vk::Buffer           handle = nullptr;
+	vk::BufferCreateInfo buffer_create_info;
+	uint8_t *            mapped_data   = nullptr;
+	bool                 persistent    = false;        /// Whether the buffer is persistently mapped or not
+	VmaAllocation        vmaAllocation = VK_NULL_HANDLE;
+	VmaAllocator         vmaAllocator  = VK_NULL_HANDLE;
 };
 }        // namespace core
 }        // namespace vkb
