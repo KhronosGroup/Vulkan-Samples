@@ -43,10 +43,6 @@ class HlslShaders : public ApiVulkanSample
 
 	Texture texture;
 
-	std::array<VkSampler, 2>       samplers{};
-	int32_t                        selected_sampler = 0;
-	std::array<VkDescriptorSet, 2> sampler_descriptor_sets{};
-
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
 	uint32_t                           index_count;
@@ -71,7 +67,6 @@ class HlslShaders : public ApiVulkanSample
 	~HlslShaders() override;
 	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                            build_command_buffers() override;
-	void                            setup_samplers();
 	void                            load_assets();
 	void                            draw();
 	void                            generate_quad();
@@ -85,7 +80,6 @@ class HlslShaders : public ApiVulkanSample
 	VkPipelineShaderStageCreateInfo load_hlsl_shader(const std::string &file, VkShaderStageFlagBits stage);
 	virtual void                    render(float delta_time) override;
 	virtual void                    view_changed() override;
-	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_hlsl_shaders();

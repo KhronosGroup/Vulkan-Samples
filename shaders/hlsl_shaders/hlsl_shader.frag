@@ -16,7 +16,7 @@
  */
 
 Texture2D textureColor : register(t1, space0);
-SamplerState samplerColor : register(s0, space1);
+SamplerState samplerColor : register(s1, space0);
 
 struct VSOutput
 {

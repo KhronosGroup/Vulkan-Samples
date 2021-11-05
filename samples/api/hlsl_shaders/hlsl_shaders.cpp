@@ -36,12 +36,12 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 
 	// Compile HLSL to SPIR-V
 
-	// Initialize glslang library.
+	// Initialize glslang library
 	glslang::InitializeProcess();
 
-	EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules | EShMsgReadHlsl);
+	EShMessages messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
-	EShLanguage language;
+	EShLanguage language{};
 	switch (stage)
 	{
 		case VK_SHADER_STAGE_VERTEX_BIT:
@@ -52,7 +52,7 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 			break;
 	}
 
-	std::string source = vkb::fs::read_shader(file);
+	std::string source        = vkb::fs::read_shader(file);
 	const char *shader_source = reinterpret_cast<const char *>(source.data());
 
 	glslang::TShader shader(language);
@@ -69,12 +69,11 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 		throw std::runtime_error("Failed to parse HLSL shader");
 	}
 
-
-	// Add shader to new program object.
+	// Add shader to new program object
 	glslang::TProgram program;
 	program.addShader(&shader);
 
-	// Link program.
+	// Link program
 	if (!program.link(messages))
 	{
 		LOGE("Failed to compile HLSL shader, Error: {}", std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog()));
@@ -90,7 +89,7 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 		info_log += std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog());
 	}
 
-	// Translate to SPIRV.
+	// Translate to SPIRV
 	glslang::TIntermediate *intermediate = program.getIntermediate(language);
 	if (!intermediate)
 	{
@@ -126,8 +125,8 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 
 HlslShaders::HlslShaders()
 {
-	zoom     = -0.5f;
-	rotation = {45.0f, 0.0f, 0.0f};
+	zoom     = -2.0f;
+	rotation = {0.0f, 0.0f, 0.0f};
 	title    = "HLSL shaders";
 }
 
@@ -143,10 +142,6 @@ HlslShaders::~HlslShaders()
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), base_descriptor_set_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), sampler_descriptor_set_layout, nullptr);
-		for (VkSampler sampler : samplers)
-		{
-			vkDestroySampler(get_device().get_handle(), sampler, nullptr);
-		}
 		// Delete the implicitly created sampler for the texture loaded via the framework
 		vkDestroySampler(get_device().get_handle(), texture.sampler, nullptr);
 	}
@@ -166,7 +161,7 @@ void HlslShaders::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[2];
+	VkClearValue clear_values[2]{};
 	clear_values[0].color        = default_clear_color;
 	clear_values[1].depthStencil = {0.0f, 0};
 
@@ -196,8 +191,6 @@ void HlslShaders::build_command_buffers()
 
 		// Bind the uniform buffer and sampled image to set 0
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &base_descriptor_set, 0, nullptr);
-		// Bind the selected sampler to set 1
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &sampler_descriptor_sets[selected_sampler], 0, nullptr);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		VkDeviceSize offsets[1] = {0};
@@ -212,43 +205,6 @@ void HlslShaders::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
-}
-
-void HlslShaders::setup_samplers()
-{
-	// Create two samplers with different options
-	VkSamplerCreateInfo samplerCI = vkb::initializers::sampler_create_info();
-	samplerCI.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-	samplerCI.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerCI.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerCI.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerCI.mipLodBias          = 0.0f;
-	samplerCI.compareOp           = VK_COMPARE_OP_NEVER;
-	samplerCI.minLod              = 0.0f;
-	samplerCI.maxLod              = (float) texture.image->get_mipmaps().size();
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
-	{
-		// Use max. level of anisotropy for this example
-		samplerCI.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
-		samplerCI.anisotropyEnable = VK_TRUE;
-	}
-	else
-	{
-		// The device does not support anisotropic filtering
-		samplerCI.maxAnisotropy    = 1.0;
-		samplerCI.anisotropyEnable = VK_FALSE;
-	}
-	samplerCI.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-
-	// First sampler with linear filtering
-	samplerCI.magFilter = VK_FILTER_LINEAR;
-	samplerCI.minFilter = VK_FILTER_LINEAR;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &samplerCI, nullptr, &samplers[0]));
-
-	// Second sampler with nearest filtering
-	samplerCI.magFilter = VK_FILTER_NEAREST;
-	samplerCI.minFilter = VK_FILTER_NEAREST;
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &samplerCI, nullptr, &samplers[1]));
 }
 
 void HlslShaders::load_assets()
@@ -381,19 +337,11 @@ void HlslShaders::setup_descriptor_set()
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
-	// Image info only references the image
-	VkDescriptorImageInfo image_info{};
-	image_info.imageView   = texture.image->get_vk_image_view().get_handle();
-	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-	// Sampled image descriptor
-	VkWriteDescriptorSet image_write_descriptor_set{};
-	image_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	image_write_descriptor_set.dstSet          = base_descriptor_set;
-	image_write_descriptor_set.dstBinding      = 1;
-	image_write_descriptor_set.descriptorCount = 1;
-	image_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
-	image_write_descriptor_set.pImageInfo      = &image_info;
+	// Combined image descriptor for the texture
+	VkDescriptorImageInfo image_descriptor{};
+	image_descriptor.imageView   = texture.image->get_vk_image_view().get_handle();
+	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	image_descriptor.sampler     = texture.sampler;
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    // Binding 0 : Vertex shader uniform buffer
@@ -403,29 +351,12 @@ void HlslShaders::setup_descriptor_set()
 	        0,
 	        &buffer_descriptor),
 	    // Binding 1 : Fragment shader sampled image
-	    image_write_descriptor_set};
+	    vkb::initializers::write_descriptor_set(
+	        base_descriptor_set,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	        1,
+	        &image_descriptor)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// Sets for each of the sampler
-	descriptor_set_alloc_info.pSetLayouts = &sampler_descriptor_set_layout;
-	for (size_t i = 0; i < sampler_descriptor_sets.size(); i++)
-	{
-		VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &sampler_descriptor_sets[i]));
-
-		// Descriptor info only references the sampler
-		VkDescriptorImageInfo sampler_info{};
-		sampler_info.sampler = samplers[i];
-
-		VkWriteDescriptorSet sampler_write_descriptor_set{};
-		sampler_write_descriptor_set.sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		sampler_write_descriptor_set.dstSet          = sampler_descriptor_sets[i];
-		sampler_write_descriptor_set.dstBinding      = 0;
-		sampler_write_descriptor_set.descriptorCount = 1;
-		sampler_write_descriptor_set.descriptorType  = VK_DESCRIPTOR_TYPE_SAMPLER;
-		sampler_write_descriptor_set.pImageInfo      = &sampler_info;
-
-		vkUpdateDescriptorSets(get_device().get_handle(), 1, &sampler_write_descriptor_set, 0, nullptr);
-	}
 }
 
 void HlslShaders::prepare_pipelines()
@@ -555,7 +486,6 @@ bool HlslShaders::prepare(vkb::Platform &platform)
 	load_assets();
 	generate_quad();
 	prepare_uniform_buffers();
-	setup_samplers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
 	setup_descriptor_pool();
@@ -575,19 +505,6 @@ void HlslShaders::render(float delta_time)
 void HlslShaders::view_changed()
 {
 	update_uniform_buffers();
-}
-
-void HlslShaders::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-	if (drawer.header("Settings"))
-	{
-		const std::vector<std::string> sampler_names = {"Linear filtering",
-		                                                "Nearest filtering"};
-		if (drawer.combo_box("Sampler", &selected_sampler, sampler_names))
-		{
-			update_uniform_buffers();
-		}
-	}
 }
 
 std::unique_ptr<vkb::Application> create_hlsl_shaders()
