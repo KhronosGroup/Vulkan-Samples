@@ -17,7 +17,7 @@
 -
 -->
 
-# Using HLSL shaders
+# Using HLSL shaders in Vulkan
 
 This tutorial, along with the accompanying example code, shows how to use shaders written in the High Level Shading Language (HLSL) in Vulkan at runtime.
 

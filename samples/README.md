@@ -171,6 +171,11 @@ Generates a complete mip-chain for a texture at runtime instead of loading it fr
 
 - 🎓 [How to generate mip maps at run-time](./api/texture_mipmap_generation/texture_mipmap_generation_tutorial.md)
 
+### [HLSL shaders](./api/hlsl_shaders)<br/>
+Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
+
+- 🎓 [Using HLSL shaders in Vulkan](./api/hlsl_shaders/README.md)
+
 ## Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.

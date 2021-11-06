@@ -56,6 +56,7 @@ set(ORDER_LIST
     "instancing"
     "compute_nbody"
     "terrain_tessellation"
+    "hlsl"
 
     #Extension Samples
     "conservative_rasterization"
