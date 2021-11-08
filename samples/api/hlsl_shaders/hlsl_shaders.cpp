@@ -288,7 +288,7 @@ void HlslShaders::setup_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        VK_SHADER_STAGE_VERTEX_BIT,
 	        0),
-	    // Binding 1 : Fragment shader combined image and sampler 
+	    // Binding 1 : Fragment shader combined image and sampler
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
