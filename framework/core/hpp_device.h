@@ -26,6 +26,8 @@ namespace core
 {
 class HPPDevice : protected vkb::Device
 {
+  public:
+	using vkb::Device::get_memory_allocator;
 };
 }        // namespace core
 }        // namespace vkb

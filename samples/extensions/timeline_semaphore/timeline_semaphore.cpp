@@ -617,6 +617,7 @@ bool TimelineSemaphore::prepare(vkb::Platform &platform)
 	create_timeline_semaphores();
 	create_timeline_workers();
 
+	prepared = true;
 	return true;
 }
 
