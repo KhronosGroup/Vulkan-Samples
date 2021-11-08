@@ -55,7 +55,7 @@ class RaytracingExtended : public ApiVulkanSample
 	// Wraps all data required for an acceleration structure
 	struct AccelerationStructureExtended
 	{
-		VkAccelerationStructureKHR         handle = nullptr;
+		VkAccelerationStructureKHR         handle         = nullptr;
 		uint64_t                           device_address = 0;
 		std::unique_ptr<vkb::core::Buffer> buffer;
 	};

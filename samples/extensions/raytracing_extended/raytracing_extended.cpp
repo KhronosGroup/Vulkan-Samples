@@ -114,7 +114,7 @@ RaytracingExtended::~RaytracingExtended()
 	if (device)
 	{
 		flame_texture.image.reset();
-        vkDestroySampler(get_device().get_handle(), flame_texture.sampler, nullptr);
+		vkDestroySampler(get_device().get_handle(), flame_texture.sampler, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
@@ -144,9 +144,9 @@ void RaytracingExtended::request_gpu_features(vkb::PhysicalDevice &gpu)
 	auto &requested_acceleration_structure_features                 = gpu.request_extension_features<VkPhysicalDeviceAccelerationStructureFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
 	requested_acceleration_structure_features.accelerationStructure = VK_TRUE;
 
-    auto &features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(
-            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
-    features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
+	auto &features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(
+	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
+	features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -645,7 +645,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 #ifdef USE_FRAMEWORK_ACCELERATION_STRUCTURE
 	// Top Level AS with single instance
-	if (instance_uid == std::numeric_limits<uint64_t>::max()) //test if first time adding
+	if (instance_uid == std::numeric_limits<uint64_t>::max())        //test if first time adding
 	{
 		instance_uid = top_level_acceleration_structure->add_instance_geometry(instances_buffer, instances.size());
 	}
