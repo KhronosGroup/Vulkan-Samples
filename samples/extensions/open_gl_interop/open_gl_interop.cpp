@@ -1,5 +1,5 @@
-/* Copyright (c) 2020, Bradley Austin Davis
- * Copyright (c) 2020, Arm Limited
+/* Copyright (c) 2020-2021, Bradley Austin Davis
+ * Copyright (c) 2020-2021, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -199,7 +199,10 @@ void OpenGLInterop::prepare_shared_resources()
 	}
 
 	{
+		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
 		VkImageCreateInfo imageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+		imageCreateInfo.pNext         = &external_memory_image_create_info;
 		imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
 		imageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
 		imageCreateInfo.mipLevels     = 1;
