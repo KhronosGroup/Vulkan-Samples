@@ -23,6 +23,6 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip"
-    NAME "VK_KHR_dynamic_rendering"
+    NAME "Dynamic Rendering"
     DESCRIPTION "Demonstrates the dynamic rendering extension to streamline render passes and avoid the requirement of render pass objects"
-)
+e)

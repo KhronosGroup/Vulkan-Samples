@@ -35,6 +35,52 @@ class DynamicRendering : public ApiVulkanSample
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
   private:
+    void load_assets();
+    void prepare_uniform_buffers();
+    void update_uniform_buffers();
+    void setup_descriptor_set_layout();
+    void create_descriptor_sets();
+    void create_attachments();
+    void create_descriptor_pool();
+    void create_pipeline();
+    void draw();
+
+	struct
+	{
+		Texture envmap;
+	} textures;
+
+	struct UBOVS
+	{
+		glm::mat4 projection;
+		glm::mat4 modelview;
+		glm::mat4 skybox_modelview;
+		float     modelscale = 0.05f;
+	} ubo_vs;
+
+	struct Attachment
+	{
+		VkImage        image{VK_NULL_HANDLE};
+		VkImageView    image_view{VK_NULL_HANDLE};
+		VkDeviceMemory device_memory{VK_NULL_HANDLE};
+		VkFormat       format;
+	} color_attachment;
+
+	std::unique_ptr<vkb::sg::SubMesh>  skybox;
+	std::unique_ptr<vkb::sg::SubMesh>  object;
+	std::unique_ptr<vkb::core::Buffer> ubo;
+
+	VkPipeline            model_pipeline{VK_NULL_HANDLE};
+	VkPipeline            skybox_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
+
+#if VK_NO_PROTOTYPES
+	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{VK_NULL_HANDLE};
+	PFN_vkCmdEndRenderingKHR   vkCmdEndRenderingKHR{VK_NULL_HANDLE};
+#endif
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering();
