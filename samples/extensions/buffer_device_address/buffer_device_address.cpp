@@ -70,6 +70,7 @@ bool BufferDeviceAddress::prepare(vkb::Platform &platform)
 	index_buffer = create_index_buffer();
 	create_pipelines();
 
+	prepared = true;
 	return true;
 }
 

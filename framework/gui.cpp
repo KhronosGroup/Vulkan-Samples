@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -205,7 +205,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 			ImageMemoryBarrier memory_barrier{};
 			memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			memory_barrier.src_access_mask = 0;
+			memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
