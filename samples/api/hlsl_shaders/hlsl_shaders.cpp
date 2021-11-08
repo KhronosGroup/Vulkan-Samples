@@ -264,7 +264,7 @@ void HlslShaders::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_SAMPLER, 2)};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
@@ -288,9 +288,9 @@ void HlslShaders::setup_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        VK_SHADER_STAGE_VERTEX_BIT,
 	        0),
-	    // Binding 1 : Fragment shader sampled image
+	    // Binding 1 : Fragment shader combined image and sampler 
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        1)};
 	descriptor_layout_create_info =
