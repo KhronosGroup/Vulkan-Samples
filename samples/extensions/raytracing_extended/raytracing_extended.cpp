@@ -114,6 +114,7 @@ RaytracingExtended::~RaytracingExtended()
 	if (device)
 	{
 		flame_texture.image.reset();
+        vkDestroySampler(get_device().get_handle(), flame_texture.sampler, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
@@ -142,6 +143,10 @@ void RaytracingExtended::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_ray_tracing_features.rayTracingPipeline               = VK_TRUE;
 	auto &requested_acceleration_structure_features                 = gpu.request_extension_features<VkPhysicalDeviceAccelerationStructureFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
 	requested_acceleration_structure_features.accelerationStructure = VK_TRUE;
+
+    auto &features = gpu.request_extension_features<VkPhysicalDeviceDescriptorIndexingFeaturesEXT>(
+            VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES_EXT);
+    features.shaderSampledImageArrayNonUniformIndexing = VK_TRUE;
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -640,7 +645,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 #ifdef USE_FRAMEWORK_ACCELERATION_STRUCTURE
 	// Top Level AS with single instance
-	if (instance_uid == 0)
+	if (instance_uid == std::numeric_limits<uint64_t>::max()) //test if first time adding
 	{
 		instance_uid = top_level_acceleration_structure->add_instance_geometry(instances_buffer, instances.size());
 	}
@@ -872,8 +877,8 @@ void RaytracingExtended::create_descriptor_sets()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1}};
+	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 26},
+	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7}};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
@@ -1285,7 +1290,7 @@ void RaytracingExtended::build_command_buffers()
 
 		auto getBufferBarrier = [](const vkb::core::Buffer &buffer) {
 			VkBufferMemoryBarrier barrier = vkb::initializers::buffer_memory_barrier();
-			barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT | VK_ACCESS_HOST_WRITE_BIT;
+			barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT;
 			barrier.dstAccessMask         = VK_ACCESS_SHADER_READ_BIT;
 			barrier.buffer                = buffer.get_handle();
 			barrier.size                  = buffer.get_size();
@@ -1296,7 +1301,7 @@ void RaytracingExtended::build_command_buffers()
 		barriers.emplace_back(getBufferBarrier(*instances_buffer));
 		barriers.emplace_back(getBufferBarrier(*ubo));
 
-		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0,
+		vkCmdPipelineBarrier(raytracing_command_buffer, VK_PIPELINE_STAGE_ACCELERATION_STRUCTURE_BUILD_BIT_KHR, VK_PIPELINE_STAGE_RAY_TRACING_SHADER_BIT_KHR | VK_PIPELINE_STAGE_HOST_BIT, 0,
 		                     0, VK_NULL_HANDLE,                                              // memory barrier
 		                     static_cast<uint32_t>(barriers.size()), barriers.data(),        // buffer memory barrier
 		                     0, VK_NULL_HANDLE);                                             // image memory barrier
