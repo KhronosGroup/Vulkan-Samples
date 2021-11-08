@@ -92,17 +92,23 @@ Follow build instructions for your platform below.
 The following shows some example command line usage on how to configure and run the Vulkan Samples.
 
 ```
+# For the entire usage use
+vulkan_samples --help
+
+# For subcommand usage use
+vulkan_samples <sub_command> --help
+
 # Run Swapchain Images sample
-vulkan_samples swapchain_images
+vulkan_samples sample swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_samples sample afbc --benchmark 5000
+vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
 # Run bonza test offscreen
 vulkan_samples test bonza --headless
 
-# Run all the performance samples
-vulkan_samples batch performance
+# Run all the performance samples for 10 seconds in each configuration
+vulkan_samples batch --category performance --duration 10
 
 # Run Swapchain Images sample on an Android device
 adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -es "cmd" "sample swapchain_images"
