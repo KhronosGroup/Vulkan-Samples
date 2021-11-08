@@ -877,8 +877,11 @@ void RaytracingExtended::create_descriptor_sets()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    {VK_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR, 1},
-	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 26},
-	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7}};
+	    {VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1},
+	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	    {VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5},
+	    {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1},
+	    {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(raytracing_scene->imageInfos.size())}};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(pool_sizes, 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
