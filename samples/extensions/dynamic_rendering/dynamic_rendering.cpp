@@ -168,17 +168,42 @@ void DynamicRendering::create_attachments()
 	VK_CHECK(vkAllocateMemory(device, &memory_allocate_info, VK_NULL_HANDLE, &color_attachment.device_memory));
 	VK_CHECK(vkBindImageMemory(device, color_attachment.image, color_attachment.device_memory, 0));
 
-	VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
-	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.format                          = color_attachment.format;
-	image_view_create_info.subresourceRange                = {};
-	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_view_create_info.subresourceRange.baseMipLevel   = 0;
-	image_view_create_info.subresourceRange.levelCount     = 1;
-	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount     = 1;
-	image_view_create_info.image                           = color_attachment.image;
+	VkImageSubresourceRange subresource_range{};
+	subresource_range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	subresource_range.baseMipLevel   = 0;
+	subresource_range.levelCount     = 1;
+	subresource_range.baseArrayLayer = 0;
+	subresource_range.layerCount     = 1;
+
+	VkImageViewCreateInfo image_view_create_info = vkb::initializers::image_view_create_info();
+	image_view_create_info.viewType              = VK_IMAGE_VIEW_TYPE_2D;
+	image_view_create_info.format                = color_attachment.format;
+	image_view_create_info.subresourceRange      = subresource_range;
+	image_view_create_info.image                 = color_attachment.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &color_attachment.image_view));
+
+	auto &cmd = get_device().request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	VkImageMemoryBarrier image_memory_barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
+	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
+	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	image_memory_barrier.srcAccessMask    = 0;
+	image_memory_barrier.dstAccessMask    = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	image_memory_barrier.image            = color_attachment.image;
+	image_memory_barrier.subresourceRange = subresource_range;
+
+	vkCmdPipelineBarrier(
+		cmd.get_handle(),
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
+		0,
+		0, nullptr,
+		0, nullptr,
+		1,
+		&image_memory_barrier);
+
+	get_device().flush_command_buffer(cmd.get_handle(), get_device().get_suitable_graphics_queue().get_handle(), true);
 }
 
 void DynamicRendering::create_descriptor_pool()
