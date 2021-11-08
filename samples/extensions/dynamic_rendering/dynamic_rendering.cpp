@@ -13,6 +13,25 @@ DynamicRendering::DynamicRendering()
 
 DynamicRendering::~DynamicRendering()
 {
+	textures    = {};
+	auto device = get_device().get_handle();
+
+	auto destroy_attachment = [](VkDevice device, Attachment &attachment) {
+		vkDestroyImage(device, attachment.image, VK_NULL_HANDLE);
+		vkDestroyImageView(device, attachment.image_view, VK_NULL_HANDLE);
+		vkFreeMemory(device, attachment.device_memory, VK_NULL_HANDLE);
+	};
+	destroy_attachment(device, color_attachment);
+
+	skybox.reset();
+	object.reset();
+	ubo.reset();
+
+	vkDestroyPipeline(device, model_pipeline, VK_NULL_HANDLE);
+	vkDestroyPipeline(device, skybox_pipeline, VK_NULL_HANDLE);
+	vkDestroyPipelineLayout(device, pipeline_layout, VK_NULL_HANDLE);
+	vkDestroyDescriptorSetLayout(device, descriptor_set_layout, VK_NULL_HANDLE);
+	vkDestroyDescriptorPool(device, descriptor_pool, VK_NULL_HANDLE);
 }
 
 bool DynamicRendering::prepare(vkb::Platform &platform)
