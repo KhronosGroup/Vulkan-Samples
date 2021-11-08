@@ -327,12 +327,19 @@ void KHR16BitArithmeticSample::draw_gui()
 	}
 	else
 	{
-		label = "Enable 16-bit arithmetic (noop - unsupported features)";
+		label = "16-bit arithmetic (unsupported features)";
 	}
 
 	gui->show_options_window(
 	    /* body = */ [this, label]() {
-		    ImGui::Checkbox(label, &khr_16bit_arith_enabled);
+		    if (!supported_extensions)
+		    {
+			    ImGui::Text("%s", label);
+		    }
+		    else
+		    {
+			    ImGui::Checkbox(label, &khr_16bit_arith_enabled);
+		    }
 	    },
 	    /* lines = */ 1);
 }
