@@ -45,9 +45,10 @@ class HlslShaders : public ApiVulkanSample
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 	std::unique_ptr<vkb::core::Buffer> index_buffer;
-	uint32_t                           index_count;
+	uint32_t                           index_count{0};
 
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
+	std::unique_ptr<vkb::core::Buffer>
+	    uniform_buffer_vs;
 
 	struct
 	{
@@ -56,16 +57,16 @@ class HlslShaders : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	VkPipeline       pipeline            = VK_NULL_HANDLE;
-	VkPipelineLayout pipeline_layout     = VK_NULL_HANDLE;
-	VkDescriptorSet  base_descriptor_set = VK_NULL_HANDLE;
+	VkPipeline       pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSet  base_descriptor_set{VK_NULL_HANDLE};
 
-	VkDescriptorSetLayout base_descriptor_set_layout;
-	VkDescriptorSetLayout sampler_descriptor_set_layout;
+	VkDescriptorSetLayout base_descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout sampler_descriptor_set_layout{VK_NULL_HANDLE};
 
 	HlslShaders();
 	~HlslShaders() override;
-	virtual void                    request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void                            request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                            build_command_buffers() override;
 	void                            load_assets();
 	void                            draw();
@@ -78,8 +79,8 @@ class HlslShaders : public ApiVulkanSample
 	void                            update_uniform_buffers();
 	bool                            prepare(vkb::Platform &platform) override;
 	VkPipelineShaderStageCreateInfo load_hlsl_shader(const std::string &file, VkShaderStageFlagBits stage);
-	virtual void                    render(float delta_time) override;
-	virtual void                    view_changed() override;
+	void                            render(float delta_time) override;
+	void                            view_changed() override;
 };
 
 std::unique_ptr<vkb::Application> create_hlsl_shaders();

@@ -22,11 +22,8 @@
 #include "hlsl_shaders.h"
 
 VKBP_DISABLE_WARNINGS()
-#include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
-#include <glslang/Include/ShHandle.h>
-#include <glslang/OSDependent/osinclude.h>
 VKBP_ENABLE_WARNINGS()
 
 VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string &file, VkShaderStageFlagBits stage)
@@ -39,7 +36,7 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 	// Initialize glslang library
 	glslang::InitializeProcess();
 
-	EShMessages messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
+	auto messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
 	EShLanguage language{};
 	switch (stage)
@@ -50,6 +47,8 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 		case VK_SHADER_STAGE_FRAGMENT_BIT:
 			language = EShLangFragment;
 			break;
+		default:
+			language = EShLangVertex;
 	}
 
 	std::string source        = vkb::fs::read_shader(file);
@@ -111,7 +110,7 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 	module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
 	module_create_info.codeSize = spirv.size() * sizeof(uint32_t);
 	module_create_info.pCode    = spirv.data();
-	VK_CHECK(vkCreateShaderModule(get_device().get_handle(), &module_create_info, NULL, &shader_module));
+	VK_CHECK(vkCreateShaderModule(get_device().get_handle(), &module_create_info, nullptr, &shader_module));
 
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
