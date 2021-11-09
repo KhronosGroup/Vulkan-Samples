@@ -1,7 +1,7 @@
 #include "dynamic_rendering.h"
 
 DynamicRendering::DynamicRendering() :
-	enable_dynamic(false)
+	enable_dynamic(true)
 {
 	title = "Dynamic Rendering";
 
@@ -333,6 +333,9 @@ void DynamicRendering::build_command_buffers()
 			// object
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
+
+			// UI
+			draw_ui(draw_cmd_buffer);
 		};
 
 		if (enable_dynamic)
