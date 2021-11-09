@@ -18,6 +18,8 @@
 #include "open_cl_utils.h"
 
 #include <dlfcn.h>
+#include <string>
+#include <vector>
 
 #define OPENCL_EXPORTED_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
 #define OPENCL_EXPORTED_EXTENSION_FUNCTION(func_name) std::function<decltype(func_name)> func_name##_ptr = nullptr
@@ -27,7 +29,15 @@ static void *handle = nullptr;
 
 cl_platform_id load_opencl()
 {
-	handle = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_LOCAL);
+	static const std::vector<std::string> possible_libraries{"libOpenCL.so", "libGLES_mali.so", "libmali.so"};
+	for (const auto &possible_library : possible_libraries)
+	{
+		handle = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_LOCAL);
+		if (handle != nullptr)
+		{
+			break;
+		}
+	}
 
 	if (handle == nullptr)
 	{

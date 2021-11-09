@@ -25,8 +25,8 @@ if(ANDROID)
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Arm"
-        NAME "OpenCL Interoperability"
-        DESCRIPTION "Example showing sharing resources between OpenCL and Vulkan"
+        NAME "Arm OpenCL Interoperability"
+        DESCRIPTION "Example showing sharing resources between OpenCL and Vulkan on Arm devices"
         TAGS "arm"
         LIBS opencl
         FILES
