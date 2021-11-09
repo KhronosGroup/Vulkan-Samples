@@ -40,7 +40,6 @@ class DynamicRendering : public ApiVulkanSample
     void update_uniform_buffers();
     void setup_descriptor_set_layout();
     void create_descriptor_sets();
-    void create_attachments();
     void create_descriptor_pool();
     void create_pipeline();
     void create_render_pass_non_dynamic();
@@ -58,14 +57,6 @@ class DynamicRendering : public ApiVulkanSample
 		glm::mat4 skybox_modelview;
 		float     modelscale = 0.05f;
 	} ubo_vs;
-
-	struct Attachment
-	{
-		VkImage        image{VK_NULL_HANDLE};
-		VkImageView    image_view{VK_NULL_HANDLE};
-		VkDeviceMemory device_memory{VK_NULL_HANDLE};
-		VkFormat       format{};
-	} color_attachment;
 
 	std::unique_ptr<vkb::sg::SubMesh>  skybox;
 	std::unique_ptr<vkb::sg::SubMesh>  object;

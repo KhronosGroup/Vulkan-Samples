@@ -1,6 +1,7 @@
 #include "dynamic_rendering.h"
 
-DynamicRendering::DynamicRendering() : enable_dynamic(false)
+DynamicRendering::DynamicRendering() :
+	enable_dynamic(false)
 {
 	title = "Dynamic Rendering";
 
@@ -19,14 +20,6 @@ DynamicRendering::~DynamicRendering()
 	if (device)
 	{
 		textures = {};
-
-		auto destroy_attachment = [](VkDevice device, Attachment &attachment) {
-			vkDestroyImage(device, attachment.image, VK_NULL_HANDLE);
-			vkDestroyImageView(device, attachment.image_view, VK_NULL_HANDLE);
-			vkFreeMemory(device, attachment.device_memory, VK_NULL_HANDLE);
-		};
-		destroy_attachment(get_device().get_handle(), color_attachment);
-
 		skybox.reset();
 		object.reset();
 		ubo.reset();
@@ -51,7 +44,10 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	assert(!!instance);
 	vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
 	vkCmdEndRenderingKHR   = (PFN_vkCmdEndRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
-	assert(!!vkCmdBeginRenderingKHR && !!vkCmdEndRenderingKHR);
+	if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
+	{
+		throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
+	}
 #endif
 
 	camera.type = vkb::CameraType::LookAt;
@@ -61,7 +57,6 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 
 	load_assets();
 	prepare_uniform_buffers();
-	create_attachments();
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
@@ -152,70 +147,6 @@ void DynamicRendering::create_descriptor_sets()
 		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-}
-
-void DynamicRendering::create_attachments()
-{
-	color_attachment.format = render_context->get_swapchain().get_format();
-
-	VkImageCreateInfo image_create = vkb::initializers::image_create_info();
-	image_create.imageType         = VK_IMAGE_TYPE_2D;
-	image_create.format            = color_attachment.format;
-	image_create.extent            = VkExtent3D{width, height, 1};
-	image_create.mipLevels         = 1;
-	image_create.arrayLayers       = 1;
-	image_create.samples           = VK_SAMPLE_COUNT_1_BIT;
-	image_create.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image_create.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	auto device = get_device().get_handle();
-	VK_CHECK(vkCreateImage(device, &image_create, VK_NULL_HANDLE, &color_attachment.image));
-
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	VkMemoryRequirements memory_requirements;
-	vkGetImageMemoryRequirements(device, color_attachment.image, &memory_requirements);
-	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-
-	VK_CHECK(vkAllocateMemory(device, &memory_allocate_info, VK_NULL_HANDLE, &color_attachment.device_memory));
-	VK_CHECK(vkBindImageMemory(device, color_attachment.image, color_attachment.device_memory, 0));
-
-	VkImageSubresourceRange subresource_range{};
-	subresource_range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	subresource_range.baseMipLevel   = 0;
-	subresource_range.levelCount     = 1;
-	subresource_range.baseArrayLayer = 0;
-	subresource_range.layerCount     = 1;
-
-	VkImageViewCreateInfo image_view_create_info = vkb::initializers::image_view_create_info();
-	image_view_create_info.viewType              = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.format                = color_attachment.format;
-	image_view_create_info.subresourceRange      = subresource_range;
-	image_view_create_info.image                 = color_attachment.image;
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &color_attachment.image_view));
-
-	auto &cmd = get_device().request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-
-	VkImageMemoryBarrier image_memory_barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-	image_memory_barrier.oldLayout        = VK_IMAGE_LAYOUT_UNDEFINED;
-	image_memory_barrier.newLayout        = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	image_memory_barrier.srcAccessMask    = 0;
-	image_memory_barrier.dstAccessMask    = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	image_memory_barrier.image            = color_attachment.image;
-	image_memory_barrier.subresourceRange = subresource_range;
-
-	vkCmdPipelineBarrier(
-		cmd.get_handle(),
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-		0,
-		0, nullptr,
-		0, nullptr,
-		1,
-		&image_memory_barrier);
-
-	get_device().flush_command_buffer(cmd.get_handle(), get_device().get_suitable_graphics_queue().get_handle(), true);
 }
 
 void DynamicRendering::create_descriptor_pool()
@@ -379,10 +310,10 @@ void DynamicRendering::build_command_buffers()
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-    int i = -1;
-	for (auto & draw_cmd_buffer : draw_cmd_buffers)
+	int i = -1;
+	for (auto &draw_cmd_buffer : draw_cmd_buffers)
 	{
-        i++;
+		i++;
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
