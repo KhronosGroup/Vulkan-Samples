@@ -8,31 +8,35 @@ DynamicRendering::DynamicRendering()
 	set_api_version(VK_API_VERSION_1_2);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+	if (enable_dynamic)
+	{
+		add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+	}
 }
 
 DynamicRendering::~DynamicRendering()
 {
-    if (device) {
-        textures = {};
+	if (device)
+	{
+		textures = {};
 
-        auto destroy_attachment = [](VkDevice device, Attachment &attachment) {
-            vkDestroyImage(device, attachment.image, VK_NULL_HANDLE);
-            vkDestroyImageView(device, attachment.image_view, VK_NULL_HANDLE);
-            vkFreeMemory(device, attachment.device_memory, VK_NULL_HANDLE);
-        };
-        destroy_attachment(get_device().get_handle(), color_attachment);
+		auto destroy_attachment = [](VkDevice device, Attachment &attachment) {
+			vkDestroyImage(device, attachment.image, VK_NULL_HANDLE);
+			vkDestroyImageView(device, attachment.image_view, VK_NULL_HANDLE);
+			vkFreeMemory(device, attachment.device_memory, VK_NULL_HANDLE);
+		};
+		destroy_attachment(get_device().get_handle(), color_attachment);
 
-        skybox.reset();
-        object.reset();
-        ubo.reset();
+		skybox.reset();
+		object.reset();
+		ubo.reset();
 
-        vkDestroyPipeline(get_device().get_handle(), model_pipeline, VK_NULL_HANDLE);
-        vkDestroyPipeline(get_device().get_handle(), skybox_pipeline, VK_NULL_HANDLE);
-        vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
-        vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
-        vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
-    }
+		vkDestroyPipeline(get_device().get_handle(), model_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), skybox_pipeline, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
+		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
+	}
 }
 
 bool DynamicRendering::prepare(vkb::Platform &platform)
@@ -61,6 +65,10 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
+	if (!enable_dynamic)
+	{
+		create_render_pass_non_dynamic();
+	}
 	create_pipeline();
 	build_command_buffers();
 	prepared = true;
@@ -70,8 +78,11 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 
 void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
-	requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+	if (enable_dynamic)
+	{
+		auto &requested_dynamic_rendering            = gpu.request_extension_features<VkPhysicalDeviceDynamicRenderingFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR);
+		requested_dynamic_rendering.dynamicRendering = VK_TRUE;
+	}
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -145,7 +156,7 @@ void DynamicRendering::create_descriptor_sets()
 
 void DynamicRendering::create_attachments()
 {
-	color_attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+	color_attachment.format = render_context->get_swapchain().get_format();
 
 	VkImageCreateInfo image_create = vkb::initializers::image_create_info();
 	image_create.imageType         = VK_IMAGE_TYPE_2D;
@@ -238,17 +249,14 @@ void DynamicRendering::create_pipeline()
 			0xf,
 			VK_FALSE);
 
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-		vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-		vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	};
+	const auto color_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 		vkb::initializers::pipeline_color_blend_state_create_info(
 			1,
 			&blend_attachment_state);
-	color_blend_state.attachmentCount = 2;
-	color_blend_state.pAttachments    = blend_attachment_states.data();
+	color_blend_state.attachmentCount = 1;
+	color_blend_state.pAttachments    = &color_attachment_state;
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
@@ -294,8 +302,8 @@ void DynamicRendering::create_pipeline()
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("hdr/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("dynamic_rendering/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
 	VkFormat color_rendering_format = VK_FORMAT_R8G8B8A8_UNORM;
@@ -333,6 +341,12 @@ void DynamicRendering::create_pipeline()
 	shader_stages[0].pSpecializationInfo = &specialization_info;
 	shader_stages[1].pSpecializationInfo = &specialization_info;
 
+	if (!enable_dynamic)
+	{
+		graphics_create.pNext      = VK_NULL_HANDLE;
+		graphics_create.renderPass = render_pass;
+	}
+
 	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &skybox_pipeline);
 
 	// Object rendering pipeline
@@ -346,6 +360,10 @@ void DynamicRendering::create_pipeline()
 	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &model_pipeline);
 }
 
+void DynamicRendering::create_render_pass_non_dynamic()
+{
+}
+
 void DynamicRendering::draw()
 {
 	ApiVulkanSample::prepare_frame();
@@ -357,7 +375,7 @@ void DynamicRendering::draw()
 
 void DynamicRendering::build_command_buffers()
 {
-	VkClearValue clear_values[2];
+	std::array<VkClearValue, 2> clear_values;
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
@@ -366,31 +384,7 @@ void DynamicRendering::build_command_buffers()
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_begin));
 
-		VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
-		color_attachment_info.imageView                    = color_attachment.image_view;
-		color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
-		color_attachment_info.clearValue                   = clear_values[0];
-
-		VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
-		depth_attachment_info.imageView                    = depth_stencil.view;
-		depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
-		depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
-		depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		depth_attachment_info.clearValue                   = clear_values[1];
-
-		auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-		auto render_info               = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-		render_info.layerCount         = 1;
-		render_info.pDepthAttachment   = &depth_attachment_info;
-		render_info.pStencilAttachment = &depth_attachment_info;
-
-		vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
-
-		{
+		auto draw_scene = [&] {
 			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
@@ -407,9 +401,54 @@ void DynamicRendering::build_command_buffers()
 			// object
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffers[i]);
+		};
+
+		if (enable_dynamic)
+		{
+			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
+			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
+			color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+			color_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+			color_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			color_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+			color_attachment_info.clearValue                   = clear_values[0];
+
+			VkRenderingAttachmentInfoKHR depth_attachment_info = vkb::initializers::rendering_attachment_info();
+			depth_attachment_info.imageView                    = depth_stencil.view;
+			depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
+			depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
+			depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
+			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+			depth_attachment_info.clearValue                   = clear_values[1];
+
+			auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
+			auto render_info               = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
+			render_info.layerCount         = 1;
+			render_info.pDepthAttachment   = &depth_attachment_info;
+			render_info.pStencilAttachment = &depth_attachment_info;
+
+			vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
+			draw_scene();
+			vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
+		}
+		else
+		{
+			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info.renderPass               = render_pass;
+			render_pass_begin_info.framebuffer              = framebuffers[i];
+			render_pass_begin_info.renderArea.extent.width  = width;
+			render_pass_begin_info.renderArea.extent.height = height;
+			render_pass_begin_info.clearValueCount          = 3;
+			render_pass_begin_info.pClearValues             = clear_values.data();
+
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+			draw_scene();
+
+			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
-		vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
+		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }
 

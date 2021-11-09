@@ -43,6 +43,7 @@ class DynamicRendering : public ApiVulkanSample
     void create_attachments();
     void create_descriptor_pool();
     void create_pipeline();
+    void create_render_pass_non_dynamic();
     void draw();
 
 	struct
@@ -81,6 +82,7 @@ class DynamicRendering : public ApiVulkanSample
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{VK_NULL_HANDLE};
 	PFN_vkCmdEndRenderingKHR   vkCmdEndRenderingKHR{VK_NULL_HANDLE};
 #endif
+	bool enable_dynamic = true;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering();
