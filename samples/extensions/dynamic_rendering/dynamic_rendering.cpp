@@ -1,6 +1,6 @@
 #include "dynamic_rendering.h"
 
-DynamicRendering::DynamicRendering()
+DynamicRendering::DynamicRendering() : enable_dynamic(false)
 {
 	title = "Dynamic Rendering";
 
@@ -151,7 +151,7 @@ void DynamicRendering::create_descriptor_sets()
 		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
 		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void DynamicRendering::create_attachments()
@@ -301,7 +301,7 @@ void DynamicRendering::create_pipeline()
 	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	shader_stages[0] = load_shader("dynamic_rendering/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -334,7 +334,7 @@ void DynamicRendering::create_pipeline()
 
 	// Skybox pipeline (background cube)
 	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries;
+	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t shadertype                  = 0;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
@@ -375,32 +375,34 @@ void DynamicRendering::draw()
 
 void DynamicRendering::build_command_buffers()
 {
-	std::array<VkClearValue, 2> clear_values;
+	std::array<VkClearValue, 2> clear_values{};
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	for (size_t i = 0; i < draw_cmd_buffers.size(); ++i)
+    int i = -1;
+	for (auto & draw_cmd_buffer : draw_cmd_buffers)
 	{
+        i++;
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_begin));
+		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
 		auto draw_scene = [&] {
 			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+			vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+			vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
 			// One descriptor set is used, and the draw type is toggled by a specialization constant
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 			// skybox
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
-			draw_model(skybox, draw_cmd_buffers[i]);
+			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
+			draw_model(skybox, draw_cmd_buffer);
 
 			// object
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
-			draw_model(object, draw_cmd_buffers[i]);
+			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
+			draw_model(object, draw_cmd_buffer);
 		};
 
 		if (enable_dynamic)
@@ -427,9 +429,9 @@ void DynamicRendering::build_command_buffers()
 			render_info.pDepthAttachment   = &depth_attachment_info;
 			render_info.pStencilAttachment = &depth_attachment_info;
 
-			vkCmdBeginRenderingKHR(draw_cmd_buffers[i], &render_info);
+			vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
 			draw_scene();
-			vkCmdEndRenderingKHR(draw_cmd_buffers[i]);
+			vkCmdEndRenderingKHR(draw_cmd_buffer);
 		}
 		else
 		{
@@ -441,14 +443,14 @@ void DynamicRendering::build_command_buffers()
 			render_pass_begin_info.clearValueCount          = 3;
 			render_pass_begin_info.pClearValues             = clear_values.data();
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			draw_scene();
 
-			vkCmdEndRenderPass(draw_cmd_buffers[i]);
+			vkCmdEndRenderPass(draw_cmd_buffer);
 		}
 
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 	}
 }
 

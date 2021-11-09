@@ -24,15 +24,15 @@ class DynamicRendering : public ApiVulkanSample
 {
   public:
     DynamicRendering();
-    ~DynamicRendering();
+    ~DynamicRendering() override;
 
-    virtual bool prepare(vkb::Platform &platform) override;
+    bool prepare(vkb::Platform &platform) override;
 
-	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
-	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	void view_changed() override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
   private:
     void load_assets();
@@ -64,7 +64,7 @@ class DynamicRendering : public ApiVulkanSample
 		VkImage        image{VK_NULL_HANDLE};
 		VkImageView    image_view{VK_NULL_HANDLE};
 		VkDeviceMemory device_memory{VK_NULL_HANDLE};
-		VkFormat       format;
+		VkFormat       format{};
 	} color_attachment;
 
 	std::unique_ptr<vkb::sg::SubMesh>  skybox;
@@ -82,7 +82,7 @@ class DynamicRendering : public ApiVulkanSample
 	PFN_vkCmdBeginRenderingKHR vkCmdBeginRenderingKHR{VK_NULL_HANDLE};
 	PFN_vkCmdEndRenderingKHR   vkCmdEndRenderingKHR{VK_NULL_HANDLE};
 #endif
-	bool enable_dynamic = true;
+	bool enable_dynamic;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_rendering();
