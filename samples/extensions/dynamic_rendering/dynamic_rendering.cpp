@@ -19,6 +19,7 @@ DynamicRendering::~DynamicRendering()
 {
 	if (device)
 	{
+        vkDestroySampler(get_device().get_handle(),textures.envmap.sampler, VK_NULL_HANDLE);
 		textures = {};
 		skybox.reset();
 		object.reset();
