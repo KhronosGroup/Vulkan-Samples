@@ -144,6 +144,8 @@ class VulkanSample : public Application
 
 	sg::Scene &get_scene();
 
+	bool has_scene();
+
   protected:
 	/**
 	 * @brief The Vulkan instance

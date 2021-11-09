@@ -19,6 +19,7 @@
 #include "platform/platform.h"
 #include "stats/stats.h"
 #include <random>
+#include <scene_graph/components/camera.h>
 
 static constexpr unsigned Width    = 1024;
 static constexpr unsigned Height   = 1024;
