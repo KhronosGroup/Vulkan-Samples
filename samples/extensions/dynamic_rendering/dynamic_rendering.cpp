@@ -60,8 +60,8 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
-	build_command_buffers();
 	create_pipeline();
+	build_command_buffers();
 	prepared = true;
 
 	return true;
