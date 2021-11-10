@@ -86,6 +86,35 @@ inline VkRenderPassCreateInfo render_pass_create_info()
 	return render_pass_create_info;
 }
 
+/** @brief Initialize rendering_attachment_info */
+inline VkRenderingAttachmentInfoKHR rendering_attachment_info()
+{
+	VkRenderingAttachmentInfoKHR attachment_info{};
+	attachment_info.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO_KHR;
+	attachment_info.pNext = VK_NULL_HANDLE;
+	return attachment_info;
+}
+
+/** @brief Initialize VkRenderingInfoKHR, e.g. for use with dynamic rendering extension */
+inline VkRenderingInfoKHR rendering_info(VkRect2D                            render_area            = {},
+                                         uint32_t                            color_attachment_count = 0,
+                                         const VkRenderingAttachmentInfoKHR *pColorAttachments      = VK_NULL_HANDLE,
+                                         VkRenderingFlagsKHR                 flags                  = 0)
+{
+	VkRenderingInfoKHR rendering_info   = {};
+	rendering_info.sType                = VK_STRUCTURE_TYPE_RENDERING_INFO_KHR;
+	rendering_info.pNext                = VK_NULL_HANDLE;
+	rendering_info.flags                = flags;
+	rendering_info.renderArea           = render_area;
+	rendering_info.layerCount           = 0;
+	rendering_info.viewMask             = 0;
+	rendering_info.colorAttachmentCount = color_attachment_count;
+	rendering_info.pColorAttachments    = pColorAttachments;
+	rendering_info.pDepthAttachment     = VK_NULL_HANDLE;
+	rendering_info.pStencilAttachment   = VK_NULL_HANDLE;
+	return rendering_info;
+}
+
 /** @brief Initialize an image memory barrier with no image transfer ownership */
 inline VkImageMemoryBarrier image_memory_barrier()
 {
@@ -487,7 +516,7 @@ inline VkPipelineMultisampleStateCreateInfo pipeline_multisample_state_create_in
 }
 
 inline VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(
-    const VkDynamicState *            dynamic_states,
+    const VkDynamicState             *dynamic_states,
     uint32_t                          dynamicStateCount,
     VkPipelineDynamicStateCreateFlags flags = 0)
 {
