@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -516,7 +516,7 @@ inline VkPipelineMultisampleStateCreateInfo pipeline_multisample_state_create_in
 }
 
 inline VkPipelineDynamicStateCreateInfo pipeline_dynamic_state_create_info(
-    const VkDynamicState             *dynamic_states,
+    const VkDynamicState *            dynamic_states,
     uint32_t                          dynamicStateCount,
     VkPipelineDynamicStateCreateFlags flags = 0)
 {
