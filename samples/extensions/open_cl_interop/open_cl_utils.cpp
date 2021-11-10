@@ -29,15 +29,7 @@ static void *handle = nullptr;
 
 cl_platform_id load_opencl()
 {
-	static const std::vector<std::string> possible_libraries{"libOpenCL.so", "libGLES_mali.so", "libmali.so"};
-	for (const auto &possible_library : possible_libraries)
-	{
-		handle = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_LOCAL);
-		if (handle != nullptr)
-		{
-			break;
-		}
-	}
+	handle = dlopen("libOpenCL.so", RTLD_LAZY | RTLD_LOCAL);
 
 	if (handle == nullptr)
 	{
