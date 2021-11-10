@@ -162,6 +162,9 @@ A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_unifor
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
 A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
+A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
 

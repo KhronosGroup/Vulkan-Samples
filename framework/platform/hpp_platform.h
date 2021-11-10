@@ -32,6 +32,8 @@ namespace platform
 class HPPPlatform : protected vkb::Platform
 {
   public:
+	using vkb::Platform::get_window;
+
 	void on_post_draw(vkb::rendering::HPPRenderContext &context) const
 	{
 		vkb::Platform::on_post_draw(reinterpret_cast<vkb::RenderContext &>(context));
