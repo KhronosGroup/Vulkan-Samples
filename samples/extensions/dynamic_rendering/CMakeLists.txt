@@ -25,4 +25,4 @@ add_sample(
     AUTHOR "Holochip"
     NAME "Dynamic Rendering"
     DESCRIPTION "Demonstrates the dynamic rendering extension to streamline render passes and avoid the requirement of render pass objects"
-e)
+)

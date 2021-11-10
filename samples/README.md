@@ -174,6 +174,10 @@ The goal of these samples is to demonstrate how to use a particular Vulkan exten
 **Extension**: [```VK_EXT_conservative_rasterization```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
 Uses conservative rasterization to change the way fragments are generated. Enables overestimation to generate fragments for every pixel touched instead of only pixels that are fully covered.
 
+### [Dynamic Rendering](./extensions/dynamic_rendering) <br/>
+**Extension**: [```VK_KHR_dynamic_rendering```] (https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_dynamic_rendering) <br/>
+Demonstrates how to use Dynamic Rendering.  Read the blog post here for discussion: (https://www.khronos.org/blog/streamlining-render-passes)
+
 ### [Push Descriptors](./extensions/push_descriptors)<br/>
 **Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
 Push descriptors apply the push constants concept to descriptor sets. Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.

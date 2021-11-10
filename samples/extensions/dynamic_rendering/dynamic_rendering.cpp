@@ -1,25 +1,21 @@
 #include "dynamic_rendering.h"
 
 DynamicRendering::DynamicRendering() :
-	enable_dynamic(true)
+    enable_dynamic(true)
 {
 	title = "Dynamic Rendering";
 
 	// Dynamic Rendering is a Vulkan 1.2 extension
 	set_api_version(VK_API_VERSION_1_2);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
-	if (enable_dynamic)
-	{
-		add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-	}
+	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
 DynamicRendering::~DynamicRendering()
 {
 	if (device)
 	{
-        vkDestroySampler(get_device().get_handle(),textures.envmap.sampler, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
 		textures = {};
 		skybox.reset();
 		object.reset();
@@ -114,19 +110,19 @@ void DynamicRendering::update_uniform_buffers()
 void DynamicRendering::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-		vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
-		vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-		vkb::initializers::pipeline_layout_create_info(
-			&descriptor_set_layout,
-			1);
+	    vkb::initializers::pipeline_layout_create_info(
+	        &descriptor_set_layout,
+	        1);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
@@ -134,96 +130,96 @@ void DynamicRendering::setup_descriptor_set_layout()
 void DynamicRendering::create_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
-		vkb::initializers::descriptor_set_allocate_info(
-			descriptor_pool,
-			&descriptor_set_layout,
-			1);
+	    vkb::initializers::descriptor_set_allocate_info(
+	        descriptor_pool,
+	        &descriptor_set_layout,
+	        1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
 	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*ubo);
 	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.envmap);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-	};
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void DynamicRendering::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-		vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
 	uint32_t                   num_descriptor_sets = 4;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-		vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void DynamicRendering::create_pipeline()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-		vkb::initializers::pipeline_input_assembly_state_create_info(
-			VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-			0,
-			VK_FALSE);
+	    vkb::initializers::pipeline_input_assembly_state_create_info(
+	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	        0,
+	        VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
-		vkb::initializers::pipeline_rasterization_state_create_info(
-			VK_POLYGON_MODE_FILL,
-			VK_CULL_MODE_BACK_BIT,
-			VK_FRONT_FACE_COUNTER_CLOCKWISE,
-			0);
+	    vkb::initializers::pipeline_rasterization_state_create_info(
+	        VK_POLYGON_MODE_FILL,
+	        VK_CULL_MODE_BACK_BIT,
+	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
+	        0);
 
 	VkPipelineColorBlendAttachmentState blend_attachment_state =
-		vkb::initializers::pipeline_color_blend_attachment_state(
-			0xf,
-			VK_FALSE);
+	    vkb::initializers::pipeline_color_blend_attachment_state(
+	        0xf,
+	        VK_FALSE);
 
 	const auto color_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
-		vkb::initializers::pipeline_color_blend_state_create_info(
-			1,
-			&blend_attachment_state);
+	    vkb::initializers::pipeline_color_blend_state_create_info(
+	        1,
+	        &blend_attachment_state);
 	color_blend_state.attachmentCount = 1;
 	color_blend_state.pAttachments    = &color_attachment_state;
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-		vkb::initializers::pipeline_depth_stencil_state_create_info(
-			VK_FALSE,
-			VK_FALSE,
-			VK_COMPARE_OP_GREATER);
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(
+	        VK_FALSE,
+	        VK_FALSE,
+	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
-		vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
 	VkPipelineMultisampleStateCreateInfo multisample_state =
-		vkb::initializers::pipeline_multisample_state_create_info(
-			VK_SAMPLE_COUNT_1_BIT,
-			0);
+	    vkb::initializers::pipeline_multisample_state_create_info(
+	        VK_SAMPLE_COUNT_1_BIT,
+	        0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
-		VK_DYNAMIC_STATE_VIEWPORT,
-		VK_DYNAMIC_STATE_SCISSOR};
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
-		vkb::initializers::pipeline_dynamic_state_create_info(
-			dynamic_state_enables.data(),
-			static_cast<uint32_t>(dynamic_state_enables.size()),
-			0);
+	    vkb::initializers::pipeline_dynamic_state_create_info(
+	        dynamic_state_enables.data(),
+	        static_cast<uint32_t>(dynamic_state_enables.size()),
+	        0);
 
 	// Vertex bindings an attributes for model rendering
 	// Binding description
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-		vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 
 	// Attribute descriptions
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-		vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
-		vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
