@@ -68,7 +68,6 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 		create_render_pass_non_dynamic();
 	}
 	create_pipeline();
-	transition_swapchain();
 	build_command_buffers();
 	prepared = true;
 
@@ -307,32 +306,6 @@ void DynamicRendering::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void DynamicRendering::transition_swapchain()
-{
-	auto &cmd = device->request_command_buffer();
-	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	for (size_t i = 0; i < swapchain_buffers.size(); ++i)
-	{
-		VkImageSubresourceRange range{};
-		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel   = 0;
-		range.levelCount     = VK_REMAINING_MIP_LEVELS;
-		range.baseArrayLayer = 0;
-		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-		vkb::insert_image_memory_barrier(cmd.get_handle(),
-										 swapchain_buffers[i].image,
-										 VK_ACCESS_MEMORY_WRITE_BIT,
-										 0,
-										 VK_IMAGE_LAYOUT_UNDEFINED,
-										 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-										 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-										 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-										 range);
-	}
-	get_device().flush_command_buffer(cmd.get_handle(), get_device().get_suitable_graphics_queue().get_handle(), true);
-}
-
 void DynamicRendering::build_command_buffers()
 {
 	std::array<VkClearValue, 2> clear_values{};
@@ -375,16 +348,28 @@ void DynamicRendering::build_command_buffers()
 		range.baseArrayLayer = 0;
 		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
 
+		VkImageSubresourceRange depth_range{range};
+		depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
 		if (enable_dynamic)
 		{
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
 											 swapchain_buffers[i].image,
 											 0,
-											 VK_ACCESS_SHADER_WRITE_BIT,
-											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+											 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+											 VK_IMAGE_LAYOUT_UNDEFINED,
 											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 											 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range);
+											 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, range);
+
+			vkb::insert_image_memory_barrier(draw_cmd_buffer,
+											 depth_stencil.image,
+											 0,
+											 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
+											 VK_IMAGE_LAYOUT_UNDEFINED,
+											 VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
+											 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+											 VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, depth_range);
 
 			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
 			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
@@ -414,11 +399,11 @@ void DynamicRendering::build_command_buffers()
 
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
 											 swapchain_buffers[i].image,
-											 VK_ACCESS_SHADER_WRITE_BIT,
+											 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
 											 VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
 											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+											 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
 											 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
 											 range);
 		}
