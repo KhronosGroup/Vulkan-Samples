@@ -19,17 +19,14 @@
 #include "dynamic_rendering.h"
 
 DynamicRendering::DynamicRendering() :
-	enable_dynamic(true)
+    enable_dynamic(true)
 {
 	title = "Dynamic Rendering";
 
 	// Dynamic Rendering is a Vulkan 1.2 extension
 	set_api_version(VK_API_VERSION_1_2);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	if (enable_dynamic)
-	{
-		add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
-	}
+	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
 }
 
 DynamicRendering::~DynamicRendering()
@@ -280,7 +277,7 @@ void DynamicRendering::create_pipeline()
 	graphics_create.pDepthStencilState  = &depth_stencil_state;
 	graphics_create.pDynamicState       = &dynamic_state;
 	graphics_create.pVertexInputState   = &vertex_input_state;
-	graphics_create.stageCount          = shader_stages.size();
+	graphics_create.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages             = shader_stages.data();
 	graphics_create.layout              = pipeline_layout;
 
@@ -329,7 +326,7 @@ void DynamicRendering::transition_swapchain()
 {
 	auto &cmd = device->request_command_buffer();
 	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
-	for (size_t i = 0; i < swapchain_buffers.size(); ++i)
+	for (auto &swapchain_buffer : swapchain_buffers)
 	{
 		VkImageSubresourceRange range{};
 		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -339,14 +336,14 @@ void DynamicRendering::transition_swapchain()
 		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
 
 		vkb::insert_image_memory_barrier(cmd.get_handle(),
-										 swapchain_buffers[i].image,
-										 VK_ACCESS_MEMORY_WRITE_BIT,
-										 0,
-										 VK_IMAGE_LAYOUT_UNDEFINED,
-										 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-										 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-										 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-										 range);
+		                                 swapchain_buffer.image,
+		                                 VK_ACCESS_MEMORY_WRITE_BIT,
+		                                 0,
+		                                 VK_IMAGE_LAYOUT_UNDEFINED,
+		                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+		                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+		                                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+		                                 range);
 	}
 	get_device().flush_command_buffer(cmd.get_handle(), get_device().get_suitable_graphics_queue().get_handle(), true);
 }
@@ -396,13 +393,13 @@ void DynamicRendering::build_command_buffers()
 		if (enable_dynamic)
 		{
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
-											 swapchain_buffers[i].image,
-											 0,
-											 VK_ACCESS_SHADER_WRITE_BIT,
-											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-											 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range);
+			                                 swapchain_buffers[i].image,
+			                                 0,
+			                                 VK_ACCESS_SHADER_WRITE_BIT,
+			                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+			                                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range);
 
 			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
 			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
@@ -431,14 +428,14 @@ void DynamicRendering::build_command_buffers()
 			vkCmdEndRenderingKHR(draw_cmd_buffer);
 
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
-											 swapchain_buffers[i].image,
-											 VK_ACCESS_SHADER_WRITE_BIT,
-											 VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
-											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-											 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-											 range);
+			                                 swapchain_buffers[i].image,
+			                                 VK_ACCESS_SHADER_WRITE_BIT,
+			                                 VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+			                                 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+			                                 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+			                                 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+			                                 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+			                                 range);
 		}
 		else
 		{
