@@ -44,6 +44,7 @@ class DynamicRendering : public ApiVulkanSample
 	void create_pipeline();
 	void create_render_pass_non_dynamic();
 	void draw();
+	void transition_swapchain();
 
 	struct
 	{

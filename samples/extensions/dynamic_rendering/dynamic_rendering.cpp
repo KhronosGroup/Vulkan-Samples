@@ -19,14 +19,17 @@
 #include "dynamic_rendering.h"
 
 DynamicRendering::DynamicRendering() :
-    enable_dynamic(true)
+	enable_dynamic(true)
 {
 	title = "Dynamic Rendering";
 
 	// Dynamic Rendering is a Vulkan 1.2 extension
 	set_api_version(VK_API_VERSION_1_2);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+	if (enable_dynamic)
+	{
+		add_device_extension(VK_KHR_DYNAMIC_RENDERING_EXTENSION_NAME);
+	}
 }
 
 DynamicRendering::~DynamicRendering()
@@ -55,13 +58,16 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	}
 
 #if VK_NO_PROTOTYPES
-	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
-	assert(!!instance);
-	vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
-	vkCmdEndRenderingKHR   = (PFN_vkCmdEndRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
-	if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
+	if (enable_dynamic)
 	{
-		throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
+		VkInstance instance = get_device().get_gpu().get_instance().get_handle();
+		assert(!!instance);
+		vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
+		vkCmdEndRenderingKHR   = (PFN_vkCmdEndRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
+		if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
+		{
+			throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
+		}
 	}
 #endif
 
@@ -80,6 +86,7 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 		create_render_pass_non_dynamic();
 	}
 	create_pipeline();
+	transition_swapchain();
 	build_command_buffers();
 	prepared = true;
 
@@ -318,6 +325,32 @@ void DynamicRendering::draw()
 	ApiVulkanSample::submit_frame();
 }
 
+void DynamicRendering::transition_swapchain()
+{
+	auto &cmd = device->request_command_buffer();
+	cmd.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+	for (size_t i = 0; i < swapchain_buffers.size(); ++i)
+	{
+		VkImageSubresourceRange range{};
+		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseMipLevel   = 0;
+		range.levelCount     = VK_REMAINING_MIP_LEVELS;
+		range.baseArrayLayer = 0;
+		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
+		vkb::insert_image_memory_barrier(cmd.get_handle(),
+										 swapchain_buffers[i].image,
+										 VK_ACCESS_MEMORY_WRITE_BIT,
+										 0,
+										 VK_IMAGE_LAYOUT_UNDEFINED,
+										 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+										 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+										 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+										 range);
+	}
+	get_device().flush_command_buffer(cmd.get_handle(), get_device().get_suitable_graphics_queue().get_handle(), true);
+}
+
 void DynamicRendering::build_command_buffers()
 {
 	std::array<VkClearValue, 2> clear_values{};
@@ -353,8 +386,24 @@ void DynamicRendering::build_command_buffers()
 			draw_ui(draw_cmd_buffer);
 		};
 
+		VkImageSubresourceRange range{};
+		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		range.baseMipLevel   = 0;
+		range.levelCount     = VK_REMAINING_MIP_LEVELS;
+		range.baseArrayLayer = 0;
+		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
+
 		if (enable_dynamic)
 		{
+			vkb::insert_image_memory_barrier(draw_cmd_buffer,
+											 swapchain_buffers[i].image,
+											 0,
+											 VK_ACCESS_SHADER_WRITE_BIT,
+											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+											 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, range);
+
 			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
 			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
 			color_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -380,6 +429,16 @@ void DynamicRendering::build_command_buffers()
 			vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
 			draw_scene();
 			vkCmdEndRenderingKHR(draw_cmd_buffer);
+
+			vkb::insert_image_memory_barrier(draw_cmd_buffer,
+											 swapchain_buffers[i].image,
+											 VK_ACCESS_SHADER_WRITE_BIT,
+											 VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
+											 VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+											 VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
+											 range);
 		}
 		else
 		{
