@@ -239,7 +239,7 @@ void DynamicRendering::create_pipeline()
 	shader_stages[1] = load_shader("dynamic_rendering/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Create graphics pipeline for dynamic rendering
-	VkFormat color_rendering_format = VK_FORMAT_R8G8B8A8_UNORM;
+	VkFormat color_rendering_format = render_context->get_format();
 
 	// Provide information for dynamic rendering
 	VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
@@ -384,7 +384,7 @@ void DynamicRendering::build_command_buffers()
 			depth_attachment_info.imageLayout                  = VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL;
 			depth_attachment_info.resolveMode                  = VK_RESOLVE_MODE_NONE;
 			depth_attachment_info.loadOp                       = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_STORE;
+			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_attachment_info.clearValue                   = clear_values[1];
 
 			auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
@@ -400,7 +400,7 @@ void DynamicRendering::build_command_buffers()
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
 											 swapchain_buffers[i].image,
 											 VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
-											 VK_ACCESS_COLOR_ATTACHMENT_READ_BIT,
+											 0,
 											 VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
 											 VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
 											 VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
