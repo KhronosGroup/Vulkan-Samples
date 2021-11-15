@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,7 @@
  */
 
 /*
- * Debug Utils labeling
- * Note that you need to run this example inside a debugging tool like RenderDoc to see those labels
+ * Using VK_EXT_conditional_rendering, which executes or discards draw commands based on values sourced from a buffer
  */
 
 #pragma once

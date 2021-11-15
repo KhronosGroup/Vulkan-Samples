@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,15 +16,12 @@
  */
 
 /*
- * Debug Utils labeling
- * Note that you need to run this example inside a debugging tool like RenderDoc to see those labels
+ * Using VK_EXT_conditional_rendering, which executes or discards draw commands based on values sourced from a buffer
  */
 
 #include "conditional_rendering.h"
 
 #include "gltf_loader.h"
-#include "scene_graph/components/camera.h"
-#include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -100,7 +97,7 @@ void ConditionalRendering::build_command_buffers()
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 		uint32_t idx = 0;
-		for (auto & node : linear_nodes)
+		for (auto &node : linear_nodes)
 		{
 			glm::mat4 node_transform = node.node->get_transform().get_world_matrix();
 
@@ -117,11 +114,13 @@ void ConditionalRendering::build_command_buffers()
 			conditional_rendering_info.buffer = conditional_visibility_buffer->get_handle();
 			conditional_rendering_info.offset = sizeof(int32_t) * idx;
 
+			// Start a conditional rendering block, commands in this block are only executed if the buffer at the current position is = 1
 			vkCmdBeginConditionalRenderingEXT(draw_cmd_buffers[i], &conditional_rendering_info);
 
+			// Pass data for the current node via push commands
 			push_const_block.model_matrix = node_transform;
 			push_const_block.color        = glm::vec4(mat->base_color_factor.rgb, 1.0f);
-			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(push_const_block), &push_const_block);
+			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
 
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer_pos.get(), offsets);
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, vertex_buffer_normal.get(), offsets);
@@ -146,7 +145,7 @@ void ConditionalRendering::load_assets()
 {
 	vkb::GLTFLoader loader{get_device()};
 	scene = loader.read_scene_from_file("scenes/buggy/glTF-Embedded/Buggy.gltf");
-	// @todo: wip
+	// Store all scene nodes in a linear vector for easier access
 	for (auto &mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		for (auto &node : mesh->get_nodes())
@@ -157,7 +156,7 @@ void ConditionalRendering::load_assets()
 			}
 		}
 	}
-
+	// The visibility list contains a value for each node in the scene, 1 = draw the node
 	conditional_visibility_list.resize(linear_nodes.size());
 	for (auto i = 0; i < conditional_visibility_list.size(); i++)
 	{
@@ -168,21 +167,17 @@ void ConditionalRendering::load_assets()
 void ConditionalRendering::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
-	uint32_t                   num_descriptor_sets = 4;
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4)};
+
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void ConditionalRendering::setup_descriptor_set_layout()
 {
-	// Object rendering (into offscreen buffer)
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -194,8 +189,8 @@ void ConditionalRendering::setup_descriptor_set_layout()
 	        &descriptor_set_layout,
 	        1);
 
-	// Pass object offset and color via push constant
-	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(push_const_block), 0);
+	// Pass scene node information via push constants
+	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(push_const_block), 0);
 	pipeline_layout_create_info.pushConstantRangeCount = 1;
 	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
 
@@ -214,8 +209,7 @@ void ConditionalRendering::setup_descriptor_sets()
 
 	VkDescriptorBufferInfo            matrix_buffer_descriptor = create_descriptor(*uniform_buffer);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets    = {
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor)
-    };
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
@@ -341,7 +335,7 @@ void ConditionalRendering::update_uniform_buffers()
 	uniform_data.projection = camera.matrices.perspective;
 	uniform_data.view       = camera.matrices.view * glm::mat4(1.0f);
 	// @todo: comment
-	uniform_data.view       = glm::scale(uniform_data.view, glm::vec3(0.1f, -0.1f, 0.1f));
+	uniform_data.view = glm::scale(uniform_data.view, glm::vec3(0.1f, -0.1f, 0.1f));
 	uniform_buffer->convert_and_update(uniform_data);
 }
 
