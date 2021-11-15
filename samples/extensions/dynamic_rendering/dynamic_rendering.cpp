@@ -364,7 +364,7 @@ void DynamicRendering::build_command_buffers()
 
 			vkb::insert_image_memory_barrier(draw_cmd_buffer,
 											 depth_stencil.image,
-											 0,
+											 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT,
 											 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 											 VK_IMAGE_LAYOUT_UNDEFINED,
 											 VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
