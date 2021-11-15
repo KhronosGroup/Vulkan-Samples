@@ -368,8 +368,8 @@ void DynamicRendering::build_command_buffers()
 											 VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT,
 											 VK_IMAGE_LAYOUT_UNDEFINED,
 											 VK_IMAGE_LAYOUT_DEPTH_ATTACHMENT_OPTIMAL,
-											 VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
-											 VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, depth_range);
+											 VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT,
+											 VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT, depth_range);
 
 			VkRenderingAttachmentInfoKHR color_attachment_info = vkb::initializers::rendering_attachment_info();
 			color_attachment_info.imageView                    = swapchain_buffers[i].view;        // color_attachment.image_view;
