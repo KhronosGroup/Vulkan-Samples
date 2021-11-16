@@ -500,6 +500,7 @@ bool DescriptorIndexing::prepare(vkb::Platform &platform)
 	create_pipelines();
 	create_images();
 
+	prepared = true;
 	return true;
 }
 
