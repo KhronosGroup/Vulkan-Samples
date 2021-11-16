@@ -135,6 +135,11 @@ This sample demonstrates how to reduce CPU usage by offloading draw call generat
 
 - 🎓 [Using GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect/multi_draw_indirect_tutorial.md)
 
+## [Texture compression comparison](./performance/texture_compression_comparison)
+This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
+the timing benefits of each.
+
+
 ## API samples
 
 The goal of these samples is to demonstrate how to use a given Vulkan feature at the API level with as little abstraction as possible.
@@ -159,6 +164,11 @@ A transcoded version of the API sample [Hello Triangle](#hello_triangle) that il
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
+
+### [Separate image sampler](./api/separate_image_sampler)<br/>
+Separate image and samplers, both in the application and the shaders. The sample demonstrates how to use different samplers for the same image without the need to recreate descriptors.
+
+- 🎓 [Separating samplers and images](./api/separate_image_sampler/README.md)
 
 ### [Terrain Tessellation](./api/terrain_tessellation)<br/>
 Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.

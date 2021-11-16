@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#version 450
+/* Copyright (c) 2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,19 +16,21 @@
  * limitations under the License.
  */
 
-#pragma once
+layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec2 inUV;
+layout (location = 2) in vec3 inNormal;
 
-#include <core/device.h>
-#include <vulkan/vulkan.hpp>
+layout (set = 0, binding = 0) uniform UBO 
+{
+	mat4 projection;
+	mat4 model;
+	vec4 viewPos;
+} ubo;
 
-namespace vkb
+layout (location = 0) out vec2 outUV;
+
+void main() 
 {
-namespace core
-{
-class HPPDevice : protected vkb::Device
-{
-  public:
-	using vkb::Device::get_memory_allocator;
-};
-}        // namespace core
-}        // namespace vkb
+	outUV = inUV;
+	gl_Position = ubo.projection * ubo.model * vec4(inPos.xyz, 1.0);
+}

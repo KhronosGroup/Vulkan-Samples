@@ -90,6 +90,7 @@ set(ORDER_LIST
     "16bit_arithmetic"
     "async_compute"
     "multi_draw_indirect"
+    "texture_compression_comparison"
 
     #HPP API Samples
     "hpp_hello_triangle"

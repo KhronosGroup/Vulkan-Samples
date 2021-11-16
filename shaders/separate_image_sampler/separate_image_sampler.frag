@@ -1,4 +1,5 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+#version 450
+/* Copyright (c) 2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,19 +16,15 @@
  * limitations under the License.
  */
 
-#pragma once
+layout (set = 0, binding = 1) uniform texture2D _texture;
+layout (set = 1, binding = 0) uniform sampler _sampler;
 
-#include <core/device.h>
-#include <vulkan/vulkan.hpp>
+layout (location = 0) in vec2 inUV;
+layout (location = 0) out vec4 outFragColor;
 
-namespace vkb
+void main() 
 {
-namespace core
-{
-class HPPDevice : protected vkb::Device
-{
-  public:
-	using vkb::Device::get_memory_allocator;
-};
-}        // namespace core
-}        // namespace vkb
+    // Sample the texture by combining the sampled image and selected sampler
+    vec4 color = texture(sampler2D(_texture, _sampler), inUV);
+	outFragColor = color;	
+}
