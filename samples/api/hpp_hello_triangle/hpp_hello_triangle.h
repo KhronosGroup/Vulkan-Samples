@@ -128,7 +128,7 @@ class HPPHelloTriangle : public vkb::Application
 
 	virtual void update(float delta_time) override;
 
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	bool validate_extensions(const std::vector<const char *> &           required,
 	                         const std::vector<vk::ExtensionProperties> &available);

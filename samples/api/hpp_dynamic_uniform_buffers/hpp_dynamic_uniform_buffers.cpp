@@ -455,10 +455,11 @@ bool HPPDynamicUniformBuffers::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
+bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 {
 	HPPApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+	return true;
 }
 
 void HPPDynamicUniformBuffers::render(float delta_time)

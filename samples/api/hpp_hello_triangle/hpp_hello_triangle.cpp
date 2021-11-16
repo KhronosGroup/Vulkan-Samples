@@ -1038,11 +1038,11 @@ void HPPHelloTriangle::update(float delta_time)
 	}
 }
 
-void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
+bool HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 {
 	if (!context.device)
 	{
-		return;
+		return false;
 	}
 
 	vk::SurfaceCapabilitiesKHR surface_properties = context.gpu.getSurfaceCapabilitiesKHR(context.surface);
@@ -1051,7 +1051,7 @@ void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 	if (surface_properties.currentExtent.width == context.swapchain_dimensions.width &&
 	    surface_properties.currentExtent.height == context.swapchain_dimensions.height)
 	{
-		return;
+		return false;
 	}
 
 	context.device.waitIdle();
@@ -1059,6 +1059,7 @@ void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 
 	init_swapchain(context);
 	init_framebuffers(context);
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hello_triangle()
