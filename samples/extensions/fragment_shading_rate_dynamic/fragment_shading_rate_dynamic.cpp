@@ -109,7 +109,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		const uint32_t frame_width = width, frame_height = height;
 		VkExtent3D     image_extent{};
 		image_extent.width  = static_cast<uint32_t>(ceil(static_cast<float>(frame_width) /
-														 (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
+                                                        (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
 		image_extent.height = static_cast<uint32_t>(ceil(static_cast<float>(frame_height) /
 		                                                 (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
 		image_extent.depth  = 1;
@@ -124,8 +124,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		};
 
 		shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR |
-															 static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
-														 VK_FORMAT_R8_UINT);
+                                                     static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
+                                                 VK_FORMAT_R8_UINT);
 		shading_rate_image_compute = create_shading_rate(
 		    VK_IMAGE_USAGE_STORAGE_BIT | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
 		    VK_FORMAT_R8_UINT);
@@ -147,7 +147,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		// initialize to the lowest shading rate, equal to (min_shading_rate >> 1) | (min_shading_rate << 1));
 		const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
 		std::vector<uint8_t> temp_buffer(frame_height * frame_width,
-										 (min_shading_rate.height >> 1) | ((min_shading_rate.width << 1) & 12));
+		                                 (min_shading_rate.height >> 1) | ((min_shading_rate.width << 1) & 12));
 		auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]),
                                                                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -698,7 +698,7 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 	for (size_t i = 0; i < render_descriptor_sets.size(); ++i)
 	{
 		const size_t prev_frame     = (i + compute_buffers.size() - 1) % compute_buffers.size();
-		auto        &descriptor_set = render_descriptor_sets[i];
+		auto &       descriptor_set = render_descriptor_sets[i];
 		if (!descriptor_set)
 		{
 			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
@@ -713,8 +713,8 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 		                                                                                      compute_buffers[prev_frame].frequency_content_image_view->get_handle(),
 		                                                                                      VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorImageInfo shading_image        = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-																							  compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(),
-																							  VK_IMAGE_LAYOUT_GENERAL);
+                                                                                       compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(),
+                                                                                       VK_IMAGE_LAYOUT_GENERAL);
 
 		std::vector<VkWriteDescriptorSet>
 		    write_descriptor_sets = {
@@ -841,11 +841,11 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		auto &shading_rate_image_compute_view = compute_buffer.shading_rate_image_compute_view;
 
 		VkDescriptorImageInfo               frequency_image       = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-																											 frequency_content_image_view->get_handle(),
-																											 VK_IMAGE_LAYOUT_GENERAL);
+                                                                                         frequency_content_image_view->get_handle(),
+                                                                                         VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorImageInfo               shading_image         = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-																											 shading_rate_image_compute_view->get_handle(),
-																											 VK_IMAGE_LAYOUT_GENERAL);
+                                                                                       shading_rate_image_compute_view->get_handle(),
+                                                                                       VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorBufferInfo              buffer_info           = create_descriptor(*frequency_information_params);
 		std::array<VkWriteDescriptorSet, 3> write_descriptor_sets = {
 		    vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
