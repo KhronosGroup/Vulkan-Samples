@@ -19,6 +19,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -29,7 +30,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler
+class Sampler : public VulkanResource<VkSampler, VK_OBJECT_TYPE_SAMPLER, const Device>
 {
   public:
 	/**
@@ -48,16 +49,6 @@ class Sampler
 	Sampler &operator=(const Sampler &) = delete;
 
 	Sampler &operator=(Sampler &&) = delete;
-
-	/**
-	 * @return The vulkan sampler handle
-	 */
-	VkSampler get_handle() const;
-
-  private:
-	Device const &device;
-
-	VkSampler handle{VK_NULL_HANDLE};
 };
 }        // namespace core
 }        // namespace vkb

@@ -130,6 +130,16 @@ class PostProcessingSubpass : public Subpass
 	}
 
 	/**
+	 * @brief Changes the debug name of this Subpass.
+	 */
+	inline PostProcessingSubpass &set_debug_name(const std::string &name)
+	{
+		Subpass::set_debug_name(name);
+
+		return *this;
+	}
+
+	/**
 	 * @brief Changes (or adds) the input attachment at name for this step.
 	 */
 	PostProcessingSubpass &bind_input_attachment(const std::string &name, uint32_t new_input_attachment);

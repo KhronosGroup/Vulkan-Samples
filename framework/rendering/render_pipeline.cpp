@@ -105,6 +105,12 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 			command_buffer.next_subpass();
 		}
 
+		if (subpass->get_debug_name().empty())
+		{
+			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+		}
+		ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
+
 		subpass->draw(command_buffer);
 	}
 

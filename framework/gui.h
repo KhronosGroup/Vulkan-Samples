@@ -57,6 +57,11 @@ struct Font
 		ImFontConfig font_config{};
 		font_config.FontDataOwnedByAtlas = false;
 
+		if (size < 1.0f)
+		{
+			size = 20.0f;
+		}
+
 		ImGuiIO &io = ImGui::GetIO();
 		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), static_cast<int>(data.size()), size, &font_config);
 	}

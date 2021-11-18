@@ -19,6 +19,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -38,13 +39,13 @@ struct SubpassInfo
 	uint32_t depth_stencil_resolve_attachment;
 
 	VkResolveModeFlagBits depth_stencil_resolve_mode;
+
+	std::string debug_name;
 };
 
-class RenderPass
+class RenderPass : public core::VulkanResource<VkRenderPass, VK_OBJECT_TYPE_RENDER_PASS>
 {
   public:
-	VkRenderPass get_handle() const;
-
 	RenderPass(Device &                          device,
 	           const std::vector<Attachment> &   attachments,
 	           const std::vector<LoadStoreInfo> &load_store_infos,
@@ -65,10 +66,6 @@ class RenderPass
 	const VkExtent2D get_render_area_granularity() const;
 
   private:
-	Device &device;
-
-	VkRenderPass handle{VK_NULL_HANDLE};
-
 	size_t subpass_count;
 
 	template <typename T_SubpassDescription, typename T_AttachmentDescription, typename T_AttachmentReference, typename T_SubpassDependency, typename T_RenderPassCreateInfo>

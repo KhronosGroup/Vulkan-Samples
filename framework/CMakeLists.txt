@@ -202,6 +202,7 @@ set(CORE_FILES
     core/instance.h
     core/physical_device.h
     core/device.h
+    core/debug.h
     core/shader_module.h
     core/pipeline_layout.h
     core/pipeline.h
@@ -231,10 +232,12 @@ set(CORE_FILES
     core/hpp_physical_device.h
     core/hpp_queue.h
     core/hpp_swapchain.h
+    core/vulkan_resource.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
     core/device.cpp
+    core/debug.cpp
     core/image.cpp
     core/shader_module.cpp
     core/pipeline_layout.cpp
@@ -258,7 +261,8 @@ set(CORE_FILES
     core/scratch_buffer.cpp
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
-    core/hpp_buffer.cpp)
+    core/hpp_buffer.cpp
+    core/vulkan_resource.cpp)
 
 set(PLATFORM_FILES
     # Header Files
@@ -426,6 +430,10 @@ if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
     else()
         target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_GPU_ASSISTED)
     endif()
+endif()
+
+if(${VKB_VULKAN_DEBUG})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VULKAN_DEBUG)
 endif()
 
 if(${VKB_WARNINGS_AS_ERRORS})

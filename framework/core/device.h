@@ -23,18 +23,19 @@
 #include "common/vk_common.h"
 #include "core/command_buffer.h"
 #include "core/command_pool.h"
+#include "core/debug.h"
 #include "core/descriptor_set.h"
 #include "core/descriptor_set_layout.h"
 #include "core/framebuffer.h"
 #include "core/instance.h"
-#include "core/pipeline.h"
-
 #include "core/physical_device.h"
+#include "core/pipeline.h"
 #include "core/pipeline_layout.h"
 #include "core/queue.h"
 #include "core/render_pass.h"
 #include "core/shader_module.h"
 #include "core/swapchain.h"
+#include "core/vulkan_resource.h"
 #include "fence_pool.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
@@ -49,16 +50,20 @@ struct DriverVersion
 	uint16_t patch;
 };
 
-class Device
+class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 {
   public:
 	/**
 	 * @brief Device constructor
 	 * @param gpu A valid Vulkan physical device and the requested gpu features
 	 * @param surface The surface
+	 * @param debug_utils The debug utils to be associated to this device
 	 * @param requested_extensions (Optional) List of required device extensions and whether support is optional or not
 	 */
-	Device(PhysicalDevice &gpu, VkSurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {});
+	Device(PhysicalDevice &                       gpu,
+	       VkSurfaceKHR                           surface,
+	       std::unique_ptr<DebugUtils> &&         debug_utils,
+	       std::unordered_map<const char *, bool> requested_extensions = {});
 
 	Device(const Device &) = delete;
 
@@ -72,9 +77,15 @@ class Device
 
 	const PhysicalDevice &get_gpu() const;
 
-	VkDevice get_handle() const;
-
 	VmaAllocator get_memory_allocator() const;
+
+	/**
+	 * @brief Returns the debug utils associated with this Device.
+	 */
+	inline const DebugUtils &get_debug_utils() const
+	{
+		return *debug_utils;
+	}
 
 	/**
 	 * @return The version of the driver of the current physical device
@@ -185,7 +196,7 @@ class Device
 
 	VkSurfaceKHR surface{VK_NULL_HANDLE};
 
-	VkDevice handle{VK_NULL_HANDLE};
+	std::unique_ptr<DebugUtils> debug_utils;
 
 	std::vector<VkExtensionProperties> device_extensions;
 

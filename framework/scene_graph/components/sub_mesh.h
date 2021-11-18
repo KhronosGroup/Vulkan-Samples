@@ -46,6 +46,8 @@ struct VertexAttribute
 class SubMesh : public Component
 {
   public:
+	SubMesh(const std::string &name = {});
+
 	virtual ~SubMesh() = default;
 
 	virtual std::type_index get_type() override;

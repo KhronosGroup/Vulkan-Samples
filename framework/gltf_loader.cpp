@@ -609,9 +609,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	{
 		auto mesh = parse_mesh(gltf_mesh);
 
-		for (auto &gltf_primitive : gltf_mesh.primitives)
+		for (size_t i_primitive = 0; i_primitive < gltf_mesh.primitives.size(); i_primitive++)
 		{
-			auto submesh = std::make_unique<sg::SubMesh>();
+			const auto &gltf_primitive = gltf_mesh.primitives[i_primitive];
+
+			auto submesh_name = fmt::format("'{}' mesh, primitive #{}", gltf_mesh.name, i_primitive);
+			auto submesh      = std::make_unique<sg::SubMesh>(std::move(submesh_name));
 
 			for (auto &attribute : gltf_primitive.attributes)
 			{
@@ -630,6 +633,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
 				buffer.update(vertex_data);
+				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
+				                                  gltf_mesh.name, i_primitive, attrib_name));
 
 				submesh->vertex_buffers.insert(std::make_pair(attrib_name, std::move(buffer)));
 
@@ -670,6 +675,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				                                                       index_data.size(),
 				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
+				                                                  gltf_mesh.name, i_primitive));
 
 				submesh->index_buffer->update(index_data);
 			}
@@ -1294,6 +1301,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	sampler_info.maxLod       = std::numeric_limits<float>::max();
 
 	core::Sampler vk_sampler{device, sampler_info};
+	vk_sampler.set_debug_name(gltf_sampler.name);
 
 	return std::make_unique<sg::Sampler>(name, std::move(vk_sampler));
 }

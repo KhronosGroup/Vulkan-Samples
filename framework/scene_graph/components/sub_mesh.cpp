@@ -24,6 +24,10 @@ namespace vkb
 {
 namespace sg
 {
+SubMesh::SubMesh(const std::string &name) :
+    Component{name}
+{}
+
 std::type_index SubMesh::get_type()
 {
 	return typeid(SubMesh);
