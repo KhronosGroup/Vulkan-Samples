@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(Device &d, const VkSamplerCreateInfo &info) :
+Sampler::Sampler(Device const &d, const VkSamplerCreateInfo &info) :
     device{d}
 {
 	VK_CHECK(vkCreateSampler(device.get_handle(), &info, nullptr, &handle));

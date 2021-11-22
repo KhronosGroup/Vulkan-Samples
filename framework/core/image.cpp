@@ -67,7 +67,7 @@ inline VkImageType find_image_type(VkExtent3D extent)
 
 namespace core
 {
-Image::Image(Device &              device,
+Image::Image(Device const &        device,
              const VkExtent3D &    extent,
              VkFormat              format,
              VkImageUsageFlags     image_usage,
@@ -131,7 +131,7 @@ Image::Image(Device &              device,
 	}
 }
 
-Image::Image(Device &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
+Image::Image(Device const &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
     device{device},
     handle{handle},
     type{find_image_type(extent)},
@@ -179,7 +179,7 @@ Image::~Image()
 	}
 }
 
-Device &Image::get_device()
+Device const &Image::get_device()
 {
 	return device;
 }

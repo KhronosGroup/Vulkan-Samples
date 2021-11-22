@@ -38,7 +38,7 @@ class Buffer
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device &                     device,
+	Buffer(Device const&                     device,
 	       VkDeviceSize                 size,
 	       VkBufferUsageFlags           buffer_usage,
 	       VmaMemoryUsage               memory_usage,
@@ -157,7 +157,7 @@ class Buffer
 	uint64_t get_device_address();
 
   private:
-	Device &device;
+	Device const &device;
 
 	VkBuffer handle{VK_NULL_HANDLE};
 

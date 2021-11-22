@@ -431,7 +431,7 @@ void Platform::resize(uint32_t width, uint32_t height)
 		}                               \
 	}
 
-void Platform::on_post_draw(RenderContext &context)
+void Platform::on_post_draw(RenderContext &context) const
 {
 	HOOK(Hook::PostDraw, on_post_draw(context));
 }

@@ -58,7 +58,7 @@ class Application
 	 * @param width New width of the window
 	 * @param height New height of the window
 	 */
-	virtual void resize(const uint32_t width, const uint32_t height);
+	virtual bool resize(const uint32_t width, const uint32_t height);
 
 	/**
 	 * @brief Handles input events of the window

@@ -189,6 +189,10 @@ The goal of these samples is to demonstrate how to use a particular Vulkan exten
 **Extension**: [```VK_EXT_conservative_rasterization```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization)<br/>
 Uses conservative rasterization to change the way fragments are generated. Enables overestimation to generate fragments for every pixel touched instead of only pixels that are fully covered.
 
+### [Dynamic Rendering](./extensions/dynamic_rendering) <br/>
+**Extension**: [```VK_KHR_dynamic_rendering```] (https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_dynamic_rendering) <br/>
+Demonstrates how to use Dynamic Rendering.  Read the blog post here for discussion: (https://www.khronos.org/blog/streamlining-render-passes)
+
 ### [Push Descriptors](./extensions/push_descriptors)<br/>
 **Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
 Push descriptors apply the push constants concept to descriptor sets. Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.
@@ -239,6 +243,12 @@ Demonstrates how to use descriptor indexing to enable update-after-bind and non-
 ### [Fragment shading rate](./extensions/fragment_shading_rate)<br/>
 **Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)<br/>
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
+
+### [Fragment shading rate_dynamic](./extensions/fragment_shading_rate) <br/>
+**Extension**: [```VK_KHR_fragment_shading_rate```] (https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html) <br/>
+Render a simple scene showing the basics of shading rate dynamic.  This sample shows low and high frequency textures 
+over several cubes.  It creates a sample rate map based upon this frequency every frame. Then it uses that dynamic 
+sample rate map as a base for the next frame.
 
 ### [Ray tracing: reflection, shadow rays](./extensions/ray_tracing_reflection)<br/>
 **Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure), [```VK_EXT_descriptor_indexing```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_descriptor_indexing.html), [```VK_EXT_scalar_block_layout```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_EXT_scalar_block_layout.html)

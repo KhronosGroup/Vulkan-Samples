@@ -21,11 +21,8 @@ namespace vkb
 {
 namespace core
 {
-HPPBuffer::HPPBuffer(vkb::core::HPPDevice &   device,
-                     vk::DeviceSize           size,
-                     vk::BufferUsageFlags     buffer_usage,
-                     VmaMemoryUsage           memory_usage,
-                     VmaAllocationCreateFlags flags) :
+HPPBuffer::HPPBuffer(
+    vkb::core::HPPDevice const &device, vk::DeviceSize size, vk::BufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags) :
     buffer_create_info({}, size, buffer_usage), vmaAllocator(device.get_memory_allocator())
 {
 #ifdef VK_USE_PLATFORM_METAL_EXT
@@ -140,13 +137,18 @@ void HPPBuffer::update(void *data, size_t size, size_t offset)
 	update(reinterpret_cast<const uint8_t *>(data), size, offset);
 }
 
+void HPPBuffer::update(const std::vector<uint8_t> &data, size_t offset)
+{
+	update(data.data(), data.size(), offset);
+}
+
 void HPPBuffer::destroy()
 {
 	if (handle)
 	{
 		assert(vmaAllocation != VK_NULL_HANDLE);
 		unmap();
-		vmaDestroyBuffer(vmaAllocator, handle, vmaAllocation);
+		vmaDestroyBuffer(vmaAllocator, static_cast<VkBuffer>(handle), vmaAllocation);
 	}
 }
 

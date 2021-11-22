@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2020-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1119,10 +1119,11 @@ void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void DebugUtils::resize(const uint32_t width, const uint32_t height)
+bool DebugUtils::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_debug_utils()
