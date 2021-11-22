@@ -101,11 +101,11 @@ void HPPApiVulkanSample::update(float delta_time)
 	get_platform().on_post_draw(get_render_context());
 }
 
-void HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
+bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 {
 	if (!prepared)
 	{
-		return;
+		return false;
 	}
 
 	get_render_context().handle_surface_changes();
@@ -113,7 +113,7 @@ void HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	// Don't recreate the swapchain if the dimensions haven't changed
 	if (extent == get_render_context().get_surface_extent())
 	{
-		return;
+		return false;
 	}
 
 	extent = get_render_context().get_surface_extent();
@@ -159,6 +159,7 @@ void HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	view_changed();
 
 	prepared = true;
+    return true;
 }
 
 void HPPApiVulkanSample::create_render_context(vkb::Platform &platform)
