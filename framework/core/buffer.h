@@ -36,12 +36,14 @@ class Buffer
 	 * @param buffer_usage The usage flags for the VkBuffer
 	 * @param memory_usage The memory usage of the buffer
 	 * @param flags The allocation create flags
+	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device const &           device,
-	       VkDeviceSize             size,
-	       VkBufferUsageFlags       buffer_usage,
-	       VmaMemoryUsage           memory_usage,
-	       VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	Buffer(Device const &               device,
+	       VkDeviceSize                 size,
+	       VkBufferUsageFlags           buffer_usage,
+	       VmaMemoryUsage               memory_usage,
+	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	       const std::vector<uint32_t> &queue_family_indices = {});
 
 	Buffer(const Buffer &) = delete;
 

@@ -91,6 +91,7 @@ set(ORDER_LIST
     "16bit_storage_input_output"
     "16bit_arithmetic"
     "async_compute"
+    "multi_draw_indirect"
     "texture_compression_comparison"
 
     #HPP API Samples
