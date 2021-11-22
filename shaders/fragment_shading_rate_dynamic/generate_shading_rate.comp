@@ -78,6 +78,6 @@ void main()
 	}
 
 	uint optimal_rate_x = params.rates[optimal_rate_index].x, optimal_rate_y = params.rates[optimal_rate_index].y;
-	uint rate_code = uint(optimal_rate_x >> 1) | (optimal_rate_y << 1);
+	uint rate_code = uint(optimal_rate_y >> 1) | ((optimal_rate_x << 1) & 12);
 	imageStore(output_sampling_rate, ivec2(x0, y0), uvec4(rate_code));
 }

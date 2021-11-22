@@ -147,7 +147,7 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		// initialize to the lowest shading rate, equal to (min_shading_rate >> 1) | (min_shading_rate << 1));
 		const auto           min_shading_rate = fragment_shading_rates.front().fragmentSize;
 		std::vector<uint8_t> temp_buffer(frame_height * frame_width,
-		                                 (min_shading_rate.width >> 1) | (min_shading_rate.height << 1));
+		                                 (min_shading_rate.height >> 1) | ((min_shading_rate.width << 1) & 12));
 		auto                 staging_buffer = std::make_unique<vkb::core::Buffer>(*device, temp_buffer.size() * sizeof(temp_buffer[0]),
                                                                   VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
