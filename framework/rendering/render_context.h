@@ -213,11 +213,11 @@ class RenderContext
 	/**
 	 * @brief Returns the format that the RenderTargets are created with within the RenderContext
 	 */
-	VkFormat get_format();
+	VkFormat get_format() const;
 
-	Swapchain &get_swapchain();
+	Swapchain const &get_swapchain() const;
 
-	VkExtent2D get_surface_extent() const;
+	VkExtent2D const &get_surface_extent() const;
 
 	uint32_t get_active_frame_index() const;
 

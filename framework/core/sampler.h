@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,7 +37,7 @@ class Sampler
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	Sampler(Device &d, const VkSamplerCreateInfo &info);
+	Sampler(Device const &d, const VkSamplerCreateInfo &info);
 
 	Sampler(const Sampler &) = delete;
 
@@ -55,7 +55,7 @@ class Sampler
 	VkSampler get_handle() const;
 
   private:
-	Device &device;
+	Device const &device;
 
 	VkSampler handle{VK_NULL_HANDLE};
 };
