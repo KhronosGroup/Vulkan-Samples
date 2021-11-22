@@ -130,6 +130,11 @@ This sample demonstrates how to use Basis universal supercompressed GPU textures
 
 - 🎓 [Using Basis Universal supercompressed GPU texture codec with Vulkan](./performance/texture_compression_basisu/texture_compression_basisu_tutorial.md)
 
+## [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
+This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
+
+- 🎓 [Using GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect/multi_draw_indirect_tutorial.md)
+
 ## [Texture compression comparison](./performance/texture_compression_comparison)
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
 the timing benefits of each.

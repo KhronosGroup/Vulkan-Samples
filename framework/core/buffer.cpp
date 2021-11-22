@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags) :
+Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffer_usage, VmaMemoryUsage memory_usage, VmaAllocationCreateFlags flags, const std::vector<uint32_t> &queue_family_indices) :
     device{device},
     size{size}
 {
@@ -38,6 +38,12 @@ Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffe
 	VkBufferCreateInfo buffer_info{VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO};
 	buffer_info.usage = buffer_usage;
 	buffer_info.size  = size;
+	if (queue_family_indices.size() >= 2)
+	{
+		buffer_info.sharingMode           = VK_SHARING_MODE_CONCURRENT;
+		buffer_info.queueFamilyIndexCount = static_cast<uint32_t>(queue_family_indices.size());
+		buffer_info.pQueueFamilyIndices   = queue_family_indices.data();
+	}
 
 	VmaAllocationCreateInfo memory_info{};
 	memory_info.flags = flags;
