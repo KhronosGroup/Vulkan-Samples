@@ -35,7 +35,7 @@ Below is a comparison of the common Vulkan render pass construction and dynamic 
 | Graphics pipeline creation references a `VkRenderPass` | Graphics pipeline creation references a `VkPipelineRenderingCreateInfoKHR` |
 | | |
 
-More detailed is provided in the sections that follow.
+More detail is provided in the sections that follow.
 
 
 ## Rendering Attachments
