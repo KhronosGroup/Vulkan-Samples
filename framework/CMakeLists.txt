@@ -450,7 +450,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     plugins)
 
 if(${NEED_LINK_ATOMIC})
-    target_link_libraries(${PROJECT_NAME} atomic)
+    target_link_libraries(${PROJECT_NAME} PUBLIC atomic)
 endif()
 
 # Link platform specific libraries
