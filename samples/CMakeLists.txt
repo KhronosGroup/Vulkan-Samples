@@ -58,6 +58,7 @@ set(ORDER_LIST
     "terrain_tessellation"
 
     #Extension Samples
+    "dynamic_rendering"
     "conservative_rasterization"
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
