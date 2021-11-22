@@ -464,7 +464,7 @@ bool Instance::is_enabled(const char *extension) const
 	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
-VkInstance Instance::get_handle()
+VkInstance Instance::get_handle() const
 {
 	return handle;
 }

@@ -15,11 +15,37 @@
  * limitations under the License.
  */
 
-#include <core/hpp_device.h>
+#pragma once
+
+#include <core/physical_device.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
+/**
+ * @brief facade class around vkb::PhysicalDevice, providing a vulkan.hpp-based interface
+ *
+ * See vkb::PhysicalDevice for documentation
+ */
+class HPPPhysicalDevice : protected vkb::PhysicalDevice
+{
+  public:
+	vk::PhysicalDeviceFeatures const &get_features() const
+	{
+		return *reinterpret_cast<vk::PhysicalDeviceFeatures const *>(&vkb::PhysicalDevice::get_features());
+	}
+
+	vk::PhysicalDevice get_handle() const
+	{
+		return vkb::PhysicalDevice::get_handle();
+	}
+
+	vk::PhysicalDeviceProperties const &get_properties() const
+	{
+		return *reinterpret_cast<vk::PhysicalDeviceProperties const *>(&vkb::PhysicalDevice::get_properties());
+	}
+};
 }        // namespace core
 }        // namespace vkb

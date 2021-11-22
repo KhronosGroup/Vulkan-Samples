@@ -37,7 +37,7 @@ class Buffer
 	 * @param memory_usage The memory usage of the buffer
 	 * @param flags The allocation create flags
 	 */
-	Buffer(Device &                 device,
+	Buffer(Device const &           device,
 	       VkDeviceSize             size,
 	       VkBufferUsageFlags       buffer_usage,
 	       VmaMemoryUsage           memory_usage,
@@ -155,7 +155,7 @@ class Buffer
 	uint64_t get_device_address();
 
   private:
-	Device &device;
+	Device const &device;
 
 	VkBuffer handle{VK_NULL_HANDLE};
 

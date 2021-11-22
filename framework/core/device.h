@@ -88,15 +88,15 @@ class Device
 
 	const Queue &get_queue(uint32_t queue_family_index, uint32_t queue_index);
 
-	const Queue &get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index);
+	const Queue &get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index) const;
 
-	const Queue &get_queue_by_present(uint32_t queue_index);
+	const Queue &get_queue_by_present(uint32_t queue_index) const;
 
 	/**
 	 * @brief Finds a suitable graphics queue to submit to
 	 * @return The first present supported queue, otherwise just any graphics queue
 	 */
-	const Queue &get_suitable_graphics_queue();
+	const Queue &get_suitable_graphics_queue() const;
 
 	bool is_extension_supported(const std::string &extension);
 
@@ -106,7 +106,7 @@ class Device
 
 	uint32_t get_num_queues_for_queue_family(uint32_t queue_family_index);
 
-	CommandPool &get_command_pool();
+	CommandPool &get_command_pool() const;
 
 	/**
 	 * @brief Checks that a given memory type is supported by the GPU
@@ -115,7 +115,7 @@ class Device
 	 * @param memory_type_found True if found, false if not found
 	 * @returns The memory type index of the found memory type
 	 */
-	uint32_t get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found = nullptr);
+	uint32_t get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found = nullptr) const;
 
 	/**
 	* @brief Creates a vulkan buffer
@@ -151,7 +151,7 @@ class Device
 	 * @param begin Whether the command buffer should be implictly started before it's returned
 	 * @returns A valid VkCommandBuffer
 	 */
-	VkCommandBuffer create_command_buffer(VkCommandBufferLevel level, bool begin = false);
+	VkCommandBuffer create_command_buffer(VkCommandBufferLevel level, bool begin = false) const;
 
 	/**
 	 * @brief Submits and frees up a given command buffer
@@ -160,23 +160,23 @@ class Device
 	 * @param free Whether the command buffer should be implictly freed up
 	 * @param signalSemaphore An optional semaphore to signal when the commands have been executed
 	 */
-	void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true, VkSemaphore signalSemaphore = VK_NULL_HANDLE);
+	void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true, VkSemaphore signalSemaphore = VK_NULL_HANDLE) const;
 
 	/**
 	 * @brief Requests a command buffer from the general command_pool
 	 * @return A new command buffer
 	 */
-	CommandBuffer &request_command_buffer();
+	CommandBuffer &request_command_buffer() const;
 
-	FencePool &get_fence_pool();
+	FencePool &get_fence_pool() const;
 
 	/**
 	 * @brief Requests a fence to the fence pool
 	 * @return A vulkan fence
 	 */
-	VkFence request_fence();
+	VkFence request_fence() const;
 
-	VkResult wait_idle();
+	VkResult wait_idle() const;
 
 	ResourceCache &get_resource_cache();
 

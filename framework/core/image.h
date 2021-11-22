@@ -32,14 +32,14 @@ class ImageView;
 class Image
 {
   public:
-	Image(Device &              device,
+	Image(Device const &        device,
 	      VkImage               handle,
 	      const VkExtent3D &    extent,
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
-	Image(Device &              device,
+	Image(Device const &        device,
 	      const VkExtent3D &    extent,
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
@@ -62,7 +62,7 @@ class Image
 
 	Image &operator=(Image &&) = delete;
 
-	Device &get_device();
+	Device const &get_device();
 
 	VkImage get_handle() const;
 
@@ -98,7 +98,7 @@ class Image
 	std::unordered_set<ImageView *> &get_views();
 
   private:
-	Device &device;
+	Device const &device;
 
 	VkImage handle{VK_NULL_HANDLE};
 

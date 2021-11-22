@@ -94,7 +94,7 @@ class Instance
 	 */
 	bool is_enabled(const char *extension) const;
 
-	VkInstance get_handle();
+	VkInstance get_handle() const;
 
 	const std::vector<const char *> &get_extensions();
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,39 +15,27 @@
  * limitations under the License.
  */
 
-#include "sampler.h"
+#pragma once
 
-#include "device.h"
+#include <core/instance.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(Device const &d, const VkSamplerCreateInfo &info) :
-    device{d}
+/**
+ * @brief facade class around vkb::Instance, providing a vulkan.hpp-based interface
+ *
+ * See vkb::Instance for documentation
+ */
+class HPPInstance : protected vkb::Instance
 {
-	VK_CHECK(vkCreateSampler(device.get_handle(), &info, nullptr, &handle));
-}
-
-Sampler::Sampler(Sampler &&other) :
-    device{other.device},
-    handle{other.handle}
-{
-	other.handle = VK_NULL_HANDLE;
-}
-
-Sampler::~Sampler()
-{
-	if (handle != VK_NULL_HANDLE)
+  public:
+	vk::Instance get_handle() const
 	{
-		vkDestroySampler(device.get_handle(), handle, nullptr);
+		return vkb::Instance::get_handle();
 	}
-}
-
-VkSampler Sampler::get_handle() const
-{
-	assert(handle != VK_NULL_HANDLE && "Sampler handle is invalid");
-	return handle;
-}
+};        // namespace Instance
 }        // namespace core
 }        // namespace vkb

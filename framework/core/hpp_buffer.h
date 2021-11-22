@@ -27,7 +27,7 @@ namespace core
 /**
  * @brief vulkan.hpp version of the vkb::core::Buffer class
  *
- * See vkb::VulkanSample for documentation
+ * See vkb::core::Buffer for documentation
  */
 class HPPBuffer
 {
@@ -40,11 +40,11 @@ class HPPBuffer
 	 * @param memory_usage The memory usage of the buffer
 	 * @param flags The allocation create flags
 	 */
-	HPPBuffer(vkb::core::HPPDevice &   device,
-	          vk::DeviceSize           size,
-	          vk::BufferUsageFlags     buffer_usage,
-	          VmaMemoryUsage           memory_usage,
-	          VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	HPPBuffer(vkb::core::HPPDevice const &device,
+	          vk::DeviceSize              size,
+	          vk::BufferUsageFlags        buffer_usage,
+	          VmaMemoryUsage              memory_usage,
+	          VmaAllocationCreateFlags    flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 	HPPBuffer(const HPPBuffer &) = delete;
 	HPPBuffer(HPPBuffer &&rhs);
@@ -91,6 +91,13 @@ class HPPBuffer
 	 * @param offset The offset to start the copying into the mapped data
 	 */
 	void update(void *data, size_t size, size_t offset = 0);
+
+	/**
+	 * @brief Copies a vector of bytes into the buffer
+	 * @param data The data vector to upload
+	 * @param offset The offset to start the copying into the mapped data
+	 */
+	void update(const std::vector<uint8_t> &data, size_t offset = 0);
 
 	/**
 	 * @brief Copies an object as byte data into the buffer
