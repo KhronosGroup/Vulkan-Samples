@@ -146,7 +146,7 @@ void HPPBuffer::destroy()
 	{
 		assert(vmaAllocation != VK_NULL_HANDLE);
 		unmap();
-		vmaDestroyBuffer(vmaAllocator, handle, vmaAllocation);
+		vmaDestroyBuffer(vmaAllocator, static_cast<VkBuffer>(handle), vmaAllocation);
 	}
 }
 
