@@ -159,7 +159,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	view_changed();
 
 	prepared = true;
-    return true;
+	return true;
 }
 
 void HPPApiVulkanSample::create_render_context(vkb::Platform &platform)

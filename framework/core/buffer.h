@@ -38,7 +38,7 @@ class Buffer
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device const&                     device,
+	Buffer(Device const &               device,
 	       VkDeviceSize                 size,
 	       VkBufferUsageFlags           buffer_usage,
 	       VmaMemoryUsage               memory_usage,
