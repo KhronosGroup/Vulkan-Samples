@@ -1,2 +1,2 @@
 ### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
