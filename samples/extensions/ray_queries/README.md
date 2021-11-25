@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2021, The Khronos Group Contributors
+- Copyright (c) 2020-2021, The Khronos Group 
 -
 - SPDX-License-Identifier: Apache-2.0
 -
