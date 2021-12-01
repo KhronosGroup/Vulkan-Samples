@@ -32,6 +32,8 @@ namespace core
 class HPPPhysicalDevice : protected vkb::PhysicalDevice
 {
   public:
+	using vkb::PhysicalDevice::set_high_priority_graphics_queue_enable;
+
 	vk::PhysicalDeviceFeatures const &get_features() const
 	{
 		return *reinterpret_cast<vk::PhysicalDeviceFeatures const *>(&vkb::PhysicalDevice::get_features());

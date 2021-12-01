@@ -309,7 +309,7 @@ Application &Platform::get_app() const
 	return *active_app;
 }
 
-Window &Platform::get_window() const
+Window &Platform::get_window()
 {
 	return *window;
 }
@@ -431,7 +431,7 @@ void Platform::resize(uint32_t width, uint32_t height)
 		}                               \
 	}
 
-void Platform::on_post_draw(RenderContext &context) const
+void Platform::on_post_draw(RenderContext &context)
 {
 	HOOK(Hook::PostDraw, on_post_draw(context));
 }

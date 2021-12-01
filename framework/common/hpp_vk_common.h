@@ -25,69 +25,63 @@ namespace vkb
 namespace common
 {
 /**
- * @brief facade helper functions around the functions in common/vk_commmon, providing a vulkan.hpp-based interface
+ * @brief facade helper functions and structs around the functions and structs in common/vk_commmon, providing a vulkan.hpp-based interface
  */
-vk::Format get_suitable_depth_format(vk::PhysicalDevice             physical_device,
-                                     bool                           depth_only                 = false,
-                                     const std::vector<vk::Format> &depth_format_priority_list = {
-                                         vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
+struct HPPImageMemoryBarrier
 {
-	std::vector<VkFormat> dfpl;
-	dfpl.reserve(depth_format_priority_list.size());
-	for (auto const &format : depth_format_priority_list)
-	{
-		dfpl.push_back(static_cast<VkFormat>(format));
-	}
-	return static_cast<vk::Format>(vkb::get_suitable_depth_format(physical_device, depth_only, dfpl));
+	vk::PipelineStageFlags src_stage_mask{vk::PipelineStageFlagBits::eBottomOfPipe};
+
+	vk::PipelineStageFlags dst_stage_mask{vk::PipelineStageFlagBits::eTopOfPipe};
+
+	vk::AccessFlags src_access_mask{};
+
+	vk::AccessFlags dst_access_mask{};
+
+	vk::ImageLayout old_layout{vk::ImageLayout::eUndefined};
+
+	vk::ImageLayout new_layout{vk::ImageLayout::eUndefined};
+
+	uint32_t old_queue_family{VK_QUEUE_FAMILY_IGNORED};
+
+	uint32_t new_queue_family{VK_QUEUE_FAMILY_IGNORED};
+};
+
+inline int32_t get_bits_per_pixel(vk::Format format)
+{
+	return vkb::get_bits_per_pixel(static_cast<VkFormat>(format));
 }
 
-bool is_depth_only_format(vk::Format format)
+inline vk::Format get_suitable_depth_format(vk::PhysicalDevice             physical_device,
+                                            bool                           depth_only                 = false,
+                                            const std::vector<vk::Format> &depth_format_priority_list = {
+                                                vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
 {
-	return format == vk::Format::eD16Unorm || format == vk::Format::eD32Sfloat;
+	return static_cast<vk::Format>(
+	    vkb::get_suitable_depth_format(physical_device, depth_only, reinterpret_cast<std::vector<VkFormat> const &>(depth_format_priority_list)));
 }
 
-bool is_depth_stencil_format(vk::Format format)
+inline bool is_depth_only_format(vk::Format format)
 {
-	return format == vk::Format::eD16UnormS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD32SfloatS8Uint ||
-	       is_depth_only_format(format);
+	return vkb::is_depth_only_format(static_cast<VkFormat>(format));
 }
 
-vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
+inline bool is_depth_stencil_format(vk::Format format)
+{
+	return vkb::is_depth_stencil_format(static_cast<VkFormat>(format));
+}
+
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
 {
 	return vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage));
 }
 
-vk::ImageLayout map_descriptor_type_to_image_layout(vk::DescriptorType descriptor_type, vk::Format format)
-{
-	switch (descriptor_type)
-	{
-		case vk::DescriptorType::eCombinedImageSampler:
-		case vk::DescriptorType::eInputAttachment:
-			if (is_depth_stencil_format(format))
-			{
-				return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-			}
-			else
-			{
-				return vk::ImageLayout::eShaderReadOnlyOptimal;
-			}
-			break;
-		case vk::DescriptorType::eStorageImage:
-			return vk::ImageLayout::eGeneral;
-			break;
-		default:
-			return vk::ImageLayout::eUndefined;
-			break;
-	}
-}
-
-void set_image_layout(vk::CommandBuffer         command_buffer,
-                      vk::Image                 image,
-                      vk::ImageLayout           old_layout,
-                      vk::ImageLayout           new_layout,
-                      vk::ImageSubresourceRange subresource_range,
-                      vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
-                      vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
+inline void set_image_layout(vk::CommandBuffer         command_buffer,
+                             vk::Image                 image,
+                             vk::ImageLayout           old_layout,
+                             vk::ImageLayout           new_layout,
+                             vk::ImageSubresourceRange subresource_range,
+                             vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
+                             vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
 {
 	vkb::set_image_layout(command_buffer,
 	                      image,

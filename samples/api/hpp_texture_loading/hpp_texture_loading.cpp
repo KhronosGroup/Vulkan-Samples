@@ -614,7 +614,7 @@ void HPPTextureLoading::view_changed()
 	update_uniform_buffers();
 }
 
-void HPPTextureLoading::on_update_ui_overlay(vkb::Drawer &drawer)
+void HPPTextureLoading::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

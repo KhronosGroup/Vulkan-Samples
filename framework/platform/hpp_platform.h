@@ -18,6 +18,9 @@
 #pragma once
 
 #include <platform/platform.h>
+
+#include <core/hpp_device.h>
+#include <platform/hpp_window.h>
 #include <rendering/hpp_render_context.h>
 
 namespace vkb
@@ -32,9 +35,25 @@ namespace platform
 class HPPPlatform : protected vkb::Platform
 {
   public:
-	using vkb::Platform::get_window;
+	using vkb::Platform::create_render_context;
+	using vkb::Platform::get_surface_extension;
 
-	void on_post_draw(vkb::rendering::HPPRenderContext &context) const
+	std::unique_ptr<vkb::rendering::HPPRenderContext>
+	    create_render_context(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const std::vector<vk::SurfaceFormatKHR> &surface_format_priority) const
+	{
+		return std::unique_ptr<vkb::rendering::HPPRenderContext>(reinterpret_cast<vkb::rendering::HPPRenderContext *>(
+		    create_render_context(reinterpret_cast<vkb::Device &>(device),
+		                          static_cast<VkSurfaceKHR>(surface),
+		                          reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_format_priority))
+		        .release()));
+	}
+
+	vkb::platform::HPPWindow &get_window()
+	{
+		return reinterpret_cast<vkb::platform::HPPWindow &>(vkb::Platform::get_window());
+	}
+
+	void on_post_draw(vkb::rendering::HPPRenderContext &context)
 	{
 		vkb::Platform::on_post_draw(reinterpret_cast<vkb::RenderContext &>(context));
 	}

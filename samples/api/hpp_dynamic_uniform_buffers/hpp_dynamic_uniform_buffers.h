@@ -28,8 +28,9 @@
 
 #pragma once
 
-#include <core/hpp_buffer.h>
 #include <hpp_api_vulkan_sample.h>
+
+#include <core/hpp_buffer.h>
 
 #define OBJECT_INSTANCES 125
 

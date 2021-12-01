@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,38 +15,28 @@
  * limitations under the License.
  */
 
-#include "headless_window.h"
+#pragma once
+
+#include <rendering/render_frame.h>
+
+#include <rendering/hpp_render_target.h>
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
-    Window(properties)
+namespace rendering
 {
-}
-
-VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
+/**
+ * @brief facade class around vkb::RenderFrame, providing a vulkan.hpp-based interface
+ *
+ * See vkb::RenderFrame for documentation
+ */
+class HPPRenderFrame : protected vkb::RenderFrame
 {
-	return VK_NULL_HANDLE;
-}
-
-VkSurfaceKHR HeadlessWindow::create_surface(VkInstance, VkPhysicalDevice)
-{
-	return VK_NULL_HANDLE;
-}
-
-bool HeadlessWindow::should_close()
-{
-	return closed;
-}
-
-void HeadlessWindow::close()
-{
-	closed = true;
-}
-
-float HeadlessWindow::get_dpi_factor() const
-{
-	// This factor is used for scaling UI elements, so return 1.0f (1 x n = n)
-	return 1.0f;
-}
+  public:
+	vkb::rendering::HPPRenderTarget &get_render_target()
+	{
+		return reinterpret_cast<vkb::rendering::HPPRenderTarget &>(vkb::RenderFrame::get_render_target());
+	}
+};
+}        // namespace rendering
 }        // namespace vkb

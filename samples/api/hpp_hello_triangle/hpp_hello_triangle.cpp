@@ -15,13 +15,10 @@
  * limitations under the License.
  */
 
-#include "hpp_hello_triangle.h"
+#include <hpp_hello_triangle.h>
 
-#include "common/logging.h"
-#include "common/vk_common.h"
-#include "glsl_compiler.h"
-#include "platform/filesystem.h"
-#include "platform/platform.h"
+#include <common/logging.h>
+#include <glsl_compiler.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -268,7 +265,7 @@ void HPPHelloTriangle::init_instance(Context &                        context,
  * @param context A Vulkan context with an instance already set up.
  * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device_and_surface(Context &context, vkb::Platform &platform)
+void HPPHelloTriangle::select_physical_device_and_surface(Context &context, vkb::platform::HPPPlatform &platform)
 {
 	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
 
@@ -984,7 +981,7 @@ HPPHelloTriangle::~HPPHelloTriangle()
 	teardown(context);
 }
 
-bool HPPHelloTriangle::prepare(vkb::Platform &platform)
+bool HPPHelloTriangle::prepare(vkb::platform::HPPPlatform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 	select_physical_device_and_surface(context, platform);

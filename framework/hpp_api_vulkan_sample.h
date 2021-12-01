@@ -20,6 +20,8 @@
 #include <hpp_vulkan_sample.h>
 
 #include <camera.h>
+#include <hpp_gui.h>
+#include <platform/hpp_platform.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
 
@@ -84,7 +86,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<HPPSwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::Platform &platform) override;
+	virtual void create_render_context(vkb::platform::HPPPlatform const &platform) override;
 	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
@@ -298,7 +300,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
    * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
    * @param drawer The drawer from the gui to draw certain elements
    */
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
+	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */

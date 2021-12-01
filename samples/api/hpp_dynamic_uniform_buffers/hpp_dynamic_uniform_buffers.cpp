@@ -26,8 +26,9 @@
  * offset used to pass data from the single uniform buffer to the connected shader binding point.
  */
 
-#include <benchmark_mode/benchmark_mode.h>
 #include <hpp_dynamic_uniform_buffers.h>
+
+#include <benchmark_mode/benchmark_mode.h>
 #include <iostream>
 #include <random>
 

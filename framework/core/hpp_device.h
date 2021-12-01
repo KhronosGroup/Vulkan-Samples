@@ -35,7 +35,12 @@ namespace core
 class HPPDevice : protected vkb::Device
 {
   public:
+	using vkb::Device::get_driver_version;
 	using vkb::Device::get_memory_allocator;
+
+	HPPDevice(vkb::core::HPPPhysicalDevice &gpu, vk::SurfaceKHR surface, std::unordered_map<const char *, bool> requested_extensions = {}) :
+	    vkb::Device(reinterpret_cast<vkb::PhysicalDevice &>(gpu), static_cast<VkSurfaceKHR>(surface), requested_extensions)
+	{}
 
 	vk::CommandBuffer create_command_buffer(vk::CommandBufferLevel level, bool begin = false) const
 	{

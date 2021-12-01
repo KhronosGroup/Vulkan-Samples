@@ -36,6 +36,11 @@ class HPPSwapchain : protected vkb::Swapchain
 		return static_cast<vk::Result>(vkb::Swapchain::acquire_next_image(image_index, image_acquired_semaphore, fence));
 	}
 
+	const vk::Extent2D &get_extent() const
+	{
+		return reinterpret_cast<vk::Extent2D const &>(vkb::Swapchain::get_extent());
+	}
+
 	vk::Format get_format() const
 	{
 		return static_cast<vk::Format>(vkb::Swapchain::get_format());

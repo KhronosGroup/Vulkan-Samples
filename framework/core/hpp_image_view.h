@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,38 +15,21 @@
  * limitations under the License.
  */
 
-#include "headless_window.h"
+#pragma once
+
+#include <core/image_view.h>
 
 namespace vkb
 {
-HeadlessWindow::HeadlessWindow(const Window::Properties &properties) :
-    Window(properties)
+namespace core
 {
-}
-
-VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
+/**
+ * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
+ *
+ * See vkb::core::ImageView for documentation
+ */
+class HPPImageView : protected vkb::core::ImageView
 {
-	return VK_NULL_HANDLE;
-}
-
-VkSurfaceKHR HeadlessWindow::create_surface(VkInstance, VkPhysicalDevice)
-{
-	return VK_NULL_HANDLE;
-}
-
-bool HeadlessWindow::should_close()
-{
-	return closed;
-}
-
-void HeadlessWindow::close()
-{
-	closed = true;
-}
-
-float HeadlessWindow::get_dpi_factor() const
-{
-	// This factor is used for scaling UI elements, so return 1.0f (1 x n = n)
-	return 1.0f;
-}
+};
+}        // namespace core
 }        // namespace vkb

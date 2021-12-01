@@ -72,7 +72,7 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	extent = get_render_context().get_surface_extent();
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
+	gui = std::make_unique<vkb::HPPGui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache,
 	             render_pass,
 	             {load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex),
@@ -162,13 +162,14 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	return true;
 }
 
-void HPPApiVulkanSample::create_render_context(vkb::Platform &platform)
+void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
-	HPPVulkanSample::create_render_context(platform,
-	                                       {{vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                        {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                        {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                        {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}});
+	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
+
+	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
 
 void HPPApiVulkanSample::prepare_render_context()
@@ -763,7 +764,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
 }
 
-void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
+void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 {}
 
 void HPPApiVulkanSample::create_swapchain_buffers()

@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <core/hpp_physical_device.h>
 #include <core/instance.h>
 #include <vulkan/vulkan.hpp>
 
@@ -32,10 +33,25 @@ namespace core
 class HPPInstance : protected vkb::Instance
 {
   public:
+	using vkb::Instance::is_enabled;
+
+	HPPInstance(const std::string &                           application_name,
+	            const std::unordered_map<const char *, bool> &required_extensions        = {},
+	            const std::vector<const char *> &             required_validation_layers = {},
+	            bool                                          headless                   = false,
+	            uint32_t                                      api_version                = VK_API_VERSION_1_0) :
+	    vkb::Instance(application_name, required_extensions, required_validation_layers, headless, api_version)
+	{}
+
 	vk::Instance get_handle() const
 	{
 		return vkb::Instance::get_handle();
 	}
-};        // namespace Instance
+
+	vkb::core::HPPPhysicalDevice &get_suitable_gpu(vk::SurfaceKHR surface)
+	{
+		return reinterpret_cast<vkb::core::HPPPhysicalDevice &>(vkb::Instance::get_suitable_gpu(surface));
+	}
+};
 }        // namespace core
 }        // namespace vkb
