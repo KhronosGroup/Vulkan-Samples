@@ -138,12 +138,10 @@ function(add_project)
     endif()
 
     add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
-    
-    # inherit compile definitions from framework target
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target
-    target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE framework)
 
     # Link against extra project specific libraries

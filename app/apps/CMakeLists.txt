@@ -74,8 +74,9 @@ set(SRC
     ${CMAKE_CURRENT_BINARY_DIR}/apps.cpp
 )
 
-add_library(${PROJECT_NAME} STATIC ${SRC})
-target_link_libraries(${PROJECT_NAME} PRIVATE framework)
+add_library(${PROJECT_NAME} SHARED ${SRC})
+
+target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/samples

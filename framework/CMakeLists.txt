@@ -404,7 +404,7 @@ endif()
 # Pre compiled headers
 vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
-add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+add_library(${PROJECT_NAME} SHARED ${PROJECT_FILES})
 
 # compiler flags based on compiler type
 if(NOT MSVC)
@@ -457,7 +457,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     spdlog
     ctpl
     CLI11::CLI11
-    apps
     plugins)
 
 if(${NEED_LINK_ATOMIC})
