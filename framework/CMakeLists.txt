@@ -404,7 +404,9 @@ endif()
 # Pre compiled headers
 vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
-add_library(${PROJECT_NAME} SHARED ${PROJECT_FILES})
+#NB: switch this to shared library and things stop working.
+add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type
 if(NOT MSVC)
