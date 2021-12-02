@@ -34,7 +34,7 @@ set(GLAD_SOURCES
     ${GLAD_DIR}/include/glad/glad.h
     ${GLAD_DIR}/include/KHR/khrplatform.h
 )
-add_library(glad ${GLAD_SOURCES})
+add_library(glad SHARED ${GLAD_SOURCES})
 target_sources(glad PRIVATE ${GLAD_SOURCES})
 target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
 set_property(TARGET glad PROPERTY FOLDER "ThirdParty")

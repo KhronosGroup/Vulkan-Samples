@@ -87,10 +87,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST} ${TOTAL_TEST_ID_LIST})
 foreach(ID ${PROJECT_ID_LIST})
     if(TARGET ${ID})
-        get_target_property(TARGET_TYPE ${ID} TYPE)
-
-        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+#        get_target_property(TARGET_TYPE ${ID} TYPE)
+#
+#        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
             target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
-        endif()
+#        endif()
     endif()
 endforeach()
