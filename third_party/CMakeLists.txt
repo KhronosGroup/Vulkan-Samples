@@ -163,7 +163,7 @@ set(KTX_INCLUDE_DIRS
     ${KTX_DIR}/other_include
 )
 
-add_library(ktx STATIC ${KTX_SOURCES})
+add_library(ktx SHARED ${KTX_SOURCES})
 
 target_compile_definitions(ktx PUBLIC LIBKTX)
 if (WIN32)
@@ -215,7 +215,7 @@ set(IMGUI_FILES
     "${IMGUI_DIR}/imstb_textedit.h"
     "${IMGUI_DIR}/imstb_truetype.h")
 
-add_library(imgui STATIC ${IMGUI_FILES})
+add_library(imgui SHARED ${IMGUI_FILES})
 
 target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
@@ -310,7 +310,7 @@ set(ASTC_SOURCES
     ${ASTC_SOURCE_DIR}/astc_ktx_dds.cpp
 )
 
-add_library(astc STATIC ${ASTC_SOURCES})
+add_library(astc SHARED ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
@@ -321,7 +321,7 @@ if(ANDROID)
 
     file(GLOB NATIVE_APP_GLUE_FILES "${NATIVE_APP_GLUE_DIR}/*.c" "${NATIVE_APP_GLUE_DIR}/*.h")
     
-    add_library(native_app_glue STATIC ${NATIVE_APP_GLUE_FILES})
+    add_library(native_app_glue SHARED ${NATIVE_APP_GLUE_FILES})
         
     target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
 
