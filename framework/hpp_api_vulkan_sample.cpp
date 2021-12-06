@@ -24,7 +24,7 @@
 // Instantiate the default dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-bool HPPApiVulkanSample::prepare(vkb::Platform &platform)
+bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 {
 	if (!HPPVulkanSample::prepare(platform))
 	{

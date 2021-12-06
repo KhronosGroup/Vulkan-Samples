@@ -421,7 +421,7 @@ void HPPDynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, b
 	uniform_buffers.dynamic->flush();
 }
 
-bool HPPDynamicUniformBuffers::prepare(vkb::Platform &platform)
+bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 {
 	if (!HPPApiVulkanSample::prepare(platform))
 	{

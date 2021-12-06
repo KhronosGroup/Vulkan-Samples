@@ -65,7 +65,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	virtual ~HPPApiVulkanSample();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
 
 	virtual void input_event(const vkb::InputEvent &input_event) override;
 
