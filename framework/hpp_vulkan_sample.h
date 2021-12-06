@@ -63,5 +63,25 @@ class HPPVulkanSample : public VulkanSample
 	{
 		return *reinterpret_cast<vkb::rendering::HPPRenderContext *>(&*render_context);
 	}
+
+	virtual bool prepare(vkb::Platform &platform) final
+	{
+		return prepare(reinterpret_cast<vkb::platform::HPPPlatform &>(platform));
+	}
+
+	virtual bool prepare(vkb::platform::HPPPlatform &platform)
+	{
+		return VulkanSample::prepare(reinterpret_cast<vkb::Platform &>(platform));
+	}
+
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) final
+	{
+		request_gpu_features(reinterpret_cast<vkb::core::HPPPhysicalDevice &>(gpu));
+	}
+
+	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
+	{
+		// To be overriden by sample
+	}
 };
 }        // namespace vkb

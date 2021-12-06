@@ -42,6 +42,11 @@ class HPPPhysicalDevice : protected vkb::PhysicalDevice
 		return vkb::PhysicalDevice::get_handle();
 	}
 
+	vk::PhysicalDeviceFeatures &get_mutable_requested_features()
+	{
+		return *reinterpret_cast<vk::PhysicalDeviceFeatures *>(&vkb::PhysicalDevice::get_mutable_requested_features());
+	}
+
 	vk::PhysicalDeviceProperties const &get_properties() const
 	{
 		return *reinterpret_cast<vk::PhysicalDeviceProperties const *>(&vkb::PhysicalDevice::get_properties());
