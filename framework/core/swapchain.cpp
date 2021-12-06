@@ -92,6 +92,7 @@ inline VkPresentModeKHR choose_present_mode(
 			if (std::find(available_present_modes.begin(), available_present_modes.end(), present_mode) != available_present_modes.end())
 			{
 				chosen_present_mode = present_mode;
+				break;
 			}
 		}
 
