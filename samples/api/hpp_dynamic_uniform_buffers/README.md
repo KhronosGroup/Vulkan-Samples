@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+### HPP Dynamic Uniform Buffers<br/>
+A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.

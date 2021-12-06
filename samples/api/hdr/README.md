@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+### High dynamic range<br/>
+Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.

@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+### Terrain Tessellation<br/>
+Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.

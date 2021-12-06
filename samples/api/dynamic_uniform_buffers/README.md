@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+### Dynamic Uniform buffers<br/>
+Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.

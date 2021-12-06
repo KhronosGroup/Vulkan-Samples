@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020, Sascha Willems
+- Copyright (c) 2021, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -

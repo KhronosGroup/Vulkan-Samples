@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+## Texture compression comparison
+This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
+the timing benefits of each.
