@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### Hello Triangle<br/>
-A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
+### Instancing<br/>
+Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
