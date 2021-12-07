@@ -94,9 +94,9 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	void         update_uniform_buffers();
 	void         update_dynamic_uniform_buffer(float delta_time, bool force = false);
 	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(vkb::platform::HPPPlatform &platform) override;
 	virtual void render(float delta_time) override;
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_dynamic_uniform_buffers();

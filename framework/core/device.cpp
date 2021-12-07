@@ -332,7 +332,7 @@ bool Device::is_image_format_supported(VkFormat format) const
 	return result != VK_ERROR_FORMAT_NOT_SUPPORTED;
 }
 
-uint32_t Device::get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found)
+uint32_t Device::get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found) const
 {
 	for (uint32_t i = 0; i < gpu.get_memory_properties().memoryTypeCount; i++)
 	{
@@ -366,11 +366,11 @@ const Queue &Device::get_queue(uint32_t queue_family_index, uint32_t queue_index
 	return queues[queue_family_index][queue_index];
 }
 
-const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint32_t queue_index)
+const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint32_t queue_index) const
 {
 	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queues[queue_family_index][0];
+		Queue const &first_queue = queues[queue_family_index][0];
 
 		VkQueueFlags queue_flags = first_queue.get_properties().queueFlags;
 		uint32_t     queue_count = first_queue.get_properties().queueCount;
@@ -384,11 +384,11 @@ const Queue &Device::get_queue_by_flags(VkQueueFlags required_queue_flags, uint3
 	throw std::runtime_error("Queue not found");
 }
 
-const Queue &Device::get_queue_by_present(uint32_t queue_index)
+const Queue &Device::get_queue_by_present(uint32_t queue_index) const
 {
 	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queues[queue_family_index][0];
+		Queue const &first_queue = queues[queue_family_index][0];
 
 		uint32_t queue_count = first_queue.get_properties().queueCount;
 
@@ -452,11 +452,11 @@ uint32_t Device::get_queue_family_index(VkQueueFlagBits queue_flag)
 	throw std::runtime_error("Could not find a matching queue family index");
 }
 
-const Queue &Device::get_suitable_graphics_queue()
+const Queue &Device::get_suitable_graphics_queue() const
 {
 	for (uint32_t queue_family_index = 0U; queue_family_index < queues.size(); ++queue_family_index)
 	{
-		Queue &first_queue = queues[queue_family_index][0];
+		Queue const &first_queue = queues[queue_family_index][0];
 
 		uint32_t queue_count = first_queue.get_properties().queueCount;
 
@@ -549,7 +549,7 @@ VkCommandPool Device::create_command_pool(uint32_t queue_index, VkCommandPoolCre
 	return command_pool;
 }
 
-VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool begin)
+VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool begin) const
 {
 	assert(command_pool && "No command pool exists in the device");
 
@@ -573,7 +573,7 @@ VkCommandBuffer Device::create_command_buffer(VkCommandBufferLevel level, bool b
 	return command_buffer;
 }
 
-void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free, VkSemaphore signalSemaphore)
+void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free, VkSemaphore signalSemaphore) const
 {
 	if (command_buffer == VK_NULL_HANDLE)
 	{
@@ -613,27 +613,27 @@ void Device::flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue,
 	}
 }
 
-CommandPool &Device::get_command_pool()
+CommandPool &Device::get_command_pool() const
 {
 	return *command_pool;
 }
 
-FencePool &Device::get_fence_pool()
+FencePool &Device::get_fence_pool() const
 {
 	return *fence_pool;
 }
 
-CommandBuffer &Device::request_command_buffer()
+CommandBuffer &Device::request_command_buffer() const
 {
 	return command_pool->request_command_buffer();
 }
 
-VkFence Device::request_fence()
+VkFence Device::request_fence() const
 {
 	return fence_pool->request_fence();
 }
 
-VkResult Device::wait_idle()
+VkResult Device::wait_idle() const
 {
 	return vkDeviceWaitIdle(handle);
 }

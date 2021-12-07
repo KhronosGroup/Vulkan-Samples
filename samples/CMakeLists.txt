@@ -56,10 +56,13 @@ set(ORDER_LIST
     "instancing"
     "compute_nbody"
     "terrain_tessellation"
+    "hlsl"
 
     #Extension Samples
+    "dynamic_rendering"
     "conservative_rasterization"
     "fragment_shading_rate"
+    "fragment_shading_rate_dynamic"
     "push_descriptors"
     "ray_queries"
     "raytracing_basic"
@@ -89,11 +92,13 @@ set(ORDER_LIST
     "16bit_storage_input_output"
     "16bit_arithmetic"
     "async_compute"
+    "multi_draw_indirect"
     "texture_compression_comparison"
 
     #HPP API Samples
     "hpp_hello_triangle"
-	"hpp_dynamic_uniform_buffers")
+	"hpp_dynamic_uniform_buffers"
+	"hpp_texture_loading")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

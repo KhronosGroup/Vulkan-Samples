@@ -50,3 +50,6 @@
 [submodule "third_party/cli11"]
 	path = third_party/cli11
 	url = https://github.com/CLIUtils/CLI11.git
+[submodule "third_party/opencl"]
+	path = third_party/opencl
+	url = https://github.com/KhronosGroup/OpenCL-Headers.git

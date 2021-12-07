@@ -117,7 +117,7 @@ class VulkanSample : public Application
 	 */
 	virtual void update(float delta_time) override;
 
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void input_event(const InputEvent &input_event) override;
 
@@ -143,6 +143,8 @@ class VulkanSample : public Application
 	Configuration &get_configuration();
 
 	sg::Scene &get_scene();
+
+	bool has_scene();
 
   protected:
 	/**

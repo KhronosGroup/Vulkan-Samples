@@ -39,6 +39,8 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
+    hpp_gltf_loader.h
+    hpp_vulkan_sample.h
     # Source Files
     gui.cpp
     glsl_compiler.cpp
@@ -71,6 +73,7 @@ set(COMMON_FILES
     common/utils.h
     common/strings.h
     common/tags.h
+    common/hpp_vk_common.h
     # Source Files
     common/error.cpp
     common/vk_common.cpp
@@ -95,6 +98,7 @@ set(RENDERING_FILES
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
+    rendering/hpp_render_context.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
@@ -147,6 +151,8 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/image/astc.h
     scene_graph/components/image/ktx.h
     scene_graph/components/image/stb.h
+    scene_graph/components/hpp_image.h
+    scene_graph/components/hpp_sub_mesh.h
     # Source Files
     scene_graph/components/aabb.cpp
     scene_graph/components/camera.cpp
@@ -220,6 +226,11 @@ set(CORE_FILES
     core/shader_binding_table.h
     core/hpp_buffer.h
     core/hpp_device.h
+    core/hpp_image.h
+    core/hpp_instance.h
+    core/hpp_physical_device.h
+    core/hpp_queue.h
+    core/hpp_swapchain.h
     # Source Files
     core/instance.cpp
     core/physical_device.cpp
@@ -247,8 +258,7 @@ set(CORE_FILES
     core/scratch_buffer.cpp
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
-    core/hpp_buffer.cpp
-    core/hpp_device.cpp)
+    core/hpp_buffer.cpp)
 
 set(PLATFORM_FILES
     # Header Files
@@ -262,6 +272,7 @@ set(PLATFORM_FILES
     platform/headless_window.h
     platform/plugins/plugin.h
     platform/plugins/plugin_base.h
+    platform/hpp_platform.h
 
     # Source Files
     platform/headless_window.cpp
@@ -450,7 +461,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     plugins)
 
 if(${NEED_LINK_ATOMIC})
-    target_link_libraries(${PROJECT_NAME} atomic)
+    target_link_libraries(${PROJECT_NAME} PUBLIC atomic)
 endif()
 
 # Link platform specific libraries

@@ -303,7 +303,7 @@ void VulkanSample::render(CommandBuffer &command_buffer)
 	}
 }
 
-void VulkanSample::resize(uint32_t width, uint32_t height)
+bool VulkanSample::resize(uint32_t width, uint32_t height)
 {
 	Application::resize(width, height);
 
@@ -326,6 +326,7 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 	{
 		stats->resize(width);
 	}
+	return true;
 }
 
 void VulkanSample::input_event(const InputEvent &input_event)
@@ -408,16 +409,21 @@ void VulkanSample::update_debug_window()
 	                                                    to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bpp)");
 
-	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
-
-	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
-
-	if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
+	if (scene != nullptr)
 	{
-		if (auto camera_node = camera->get_node())
+		get_debug_info().insert<field::Static, uint32_t>("mesh_count",
+		                                                 to_u32(scene->get_components<sg::SubMesh>().size()));
+
+		get_debug_info().insert<field::Static, uint32_t>("texture_count",
+		                                                 to_u32(scene->get_components<sg::Texture>().size()));
+
+		if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
 		{
-			const glm::vec3 &pos = camera_node->get_transform().get_translation();
-			get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
+			if (auto camera_node = camera->get_node())
+			{
+				const glm::vec3 &pos = camera_node->get_transform().get_translation();
+				get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
+			}
 		}
 	}
 }
@@ -499,6 +505,11 @@ sg::Scene &VulkanSample::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	return *scene;
+}
+
+bool VulkanSample::has_scene()
+{
+	return scene != nullptr;
 }
 
 }        // namespace vkb

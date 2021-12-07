@@ -51,7 +51,7 @@ class PhysicalDevice
 
 	const VkPhysicalDeviceFeatures &get_features() const;
 
-	const VkPhysicalDeviceProperties get_properties() const;
+	const VkPhysicalDeviceProperties &get_properties() const;
 
 	const VkPhysicalDeviceMemoryProperties get_memory_properties() const;
 

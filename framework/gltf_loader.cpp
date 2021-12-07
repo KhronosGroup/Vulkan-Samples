@@ -323,7 +323,7 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device &device) :
+GLTFLoader::GLTFLoader(Device const &device) :
     device{device}
 {
 }
@@ -646,7 +646,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 				auto format = get_attribute_format(&model, gltf_primitive.indices);
 
-				auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
+				auto index_data = get_attribute_data(&model, gltf_primitive.indices);
 
 				switch (format)
 				{

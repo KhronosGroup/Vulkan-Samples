@@ -873,10 +873,11 @@ void ComputeNBody::render(float delta_time)
 	}
 }
 
-void ComputeNBody::resize(const uint32_t width, const uint32_t height)
+bool ComputeNBody::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_graphics_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_compute_nbody()
