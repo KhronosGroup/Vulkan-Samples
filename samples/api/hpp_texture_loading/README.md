@@ -16,5 +16,5 @@
 - limitations under the License.
 -
 -->
-### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
+### HPP Texture Loading<br/>
 A transcoded version of the API sample [Texture loading](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
