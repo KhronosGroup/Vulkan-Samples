@@ -21,7 +21,7 @@
 
 ## Overview
 
-Vulkan introduces the concept of _subpasses_ to subdivide a single [render pass](../render_passes/render_passes_tutorial.md) into separate logical phases. The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations. Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
+Vulkan introduces the concept of _subpasses_ to subdivide a single [render pass](../render_passes/README.md) into separate logical phases. The benefit of using subpasses over multiple render passes is that a GPU is able to perform various optimizations. Tile-based renderers, for example, can take advantage of tile memory, which being on chip is decisively faster than external memory, potentially saving a considerable amount of bandwidth.
 
 ## Deferred rendering
 
