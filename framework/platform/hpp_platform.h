@@ -35,16 +35,15 @@ namespace platform
 class HPPPlatform : protected vkb::Platform
 {
   public:
-	using vkb::Platform::create_render_context;
 	using vkb::Platform::get_surface_extension;
 
 	std::unique_ptr<vkb::rendering::HPPRenderContext>
 	    create_render_context(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const std::vector<vk::SurfaceFormatKHR> &surface_format_priority) const
 	{
 		return std::unique_ptr<vkb::rendering::HPPRenderContext>(reinterpret_cast<vkb::rendering::HPPRenderContext *>(
-		    create_render_context(reinterpret_cast<vkb::Device &>(device),
-		                          static_cast<VkSurfaceKHR>(surface),
-		                          reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_format_priority))
+		    vkb::Platform::create_render_context(reinterpret_cast<vkb::Device &>(device),
+		                                         static_cast<VkSurfaceKHR>(surface),
+		                                         reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_format_priority))
 		        .release()));
 	}
 

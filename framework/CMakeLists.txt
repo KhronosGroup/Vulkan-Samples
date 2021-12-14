@@ -272,7 +272,6 @@ set(CORE_FILES
     core/scratch_buffer.cpp
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
-    core/hpp_buffer.cpp
     core/vulkan_resource.cpp)
 
 set(PLATFORM_FILES
