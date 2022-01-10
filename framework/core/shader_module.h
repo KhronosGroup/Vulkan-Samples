@@ -221,6 +221,16 @@ class ShaderModule
 
 	const std::vector<uint32_t> &get_binary() const;
 
+	inline const std::string &get_debug_name() const
+	{
+		return debug_name;
+	}
+
+	inline void set_debug_name(const std::string &name)
+	{
+		debug_name = name;
+	}
+
 	/**
 	 * @brief Flags a resource to use a different method of being bound to the shader
 	 * @param resource_name The name of the shader resource
@@ -239,6 +249,9 @@ class ShaderModule
 
 	/// Name of the main function
 	std::string entry_point;
+
+	/// Human-readable name for the shader
+	std::string debug_name;
 
 	/// Compiled source
 	std::vector<uint32_t> spirv;

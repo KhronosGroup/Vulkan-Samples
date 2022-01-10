@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -56,6 +56,11 @@ struct Font
 		// Keep ownership of the font data to avoid a double delete
 		ImFontConfig font_config{};
 		font_config.FontDataOwnedByAtlas = false;
+
+		if (size < 1.0f)
+		{
+			size = 20.0f;
+		}
 
 		ImGuiIO &io = ImGui::GetIO();
 		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), static_cast<int>(data.size()), size, &font_config);

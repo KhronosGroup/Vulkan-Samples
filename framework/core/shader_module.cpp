@@ -82,6 +82,9 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
     stage{stage},
     entry_point{entry_point}
 {
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
+	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
+
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{
@@ -128,6 +131,7 @@ ShaderModule::ShaderModule(ShaderModule &&other) :
     id{other.id},
     stage{other.stage},
     entry_point{other.entry_point},
+    debug_name{other.debug_name},
     spirv{other.spirv},
     resources{other.resources},
     info_log{other.info_log}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -136,6 +136,10 @@ class Subpass
 
 	LightingState &get_lighting_state();
 
+	const std::string &get_debug_name() const;
+
+	void set_debug_name(const std::string &name);
+
 	/**
 	 * @brief Prepares the lighting state to have its lights 
 	 * 
@@ -217,6 +221,8 @@ class Subpass
 	LightingState lighting_state{};
 
   private:
+	std::string debug_name{};
+
 	ShaderSource vertex_shader;
 
 	ShaderSource fragment_shader;

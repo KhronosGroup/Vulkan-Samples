@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -44,6 +44,8 @@ std::string get_extension(const std::string &uri);
  * @return a snake case version of the string
  */
 std::string to_snake_case(const std::string &name);
+
+class CommandBuffer;
 
 /**
  * @brief Takes a screenshot of the app by writing the swapchain image to file (slow function)

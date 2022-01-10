@@ -89,8 +89,39 @@ bool VulkanSample::prepare(Platform &platform)
 
 	bool headless = platform.get_window().get_window_mode() == Window::Mode::Headless;
 
+	VkResult result = volkInitialize();
+	if (result)
+	{
+		throw VulkanException(result, "Failed to initialize volk.");
+	}
+
+	std::unique_ptr<DebugUtils> debug_utils{};
+
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
+
+#ifdef VKB_VULKAN_DEBUG
+	{
+		uint32_t instance_extension_count;
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+
+		std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+		for (const auto &it : available_instance_extensions)
+		{
+			if (strcmp(it.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+			{
+				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+				debug_utils = std::make_unique<DebugUtilsExtDebugUtils>();
+				add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				break;
+			}
+		}
+	}
+#endif
+
 	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
 	// Getting a valid vulkan surface from the platform
@@ -114,7 +145,40 @@ bool VulkanSample::prepare(Platform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
-	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
+#ifdef VKB_VULKAN_DEBUG
+	if (!debug_utils)
+	{
+		uint32_t device_extension_count;
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
+
+		std::vector<VkExtensionProperties> available_device_extensions(device_extension_count);
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, available_device_extensions.data()));
+
+		for (const auto &it : available_device_extensions)
+		{
+			if (strcmp(it.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0)
+			{
+				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+
+				debug_utils = std::make_unique<DebugMarkerExtDebugUtils>();
+				add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+				break;
+			}
+		}
+	}
+
+	if (!debug_utils)
+	{
+		LOGW("Vulkan debug utils were requested, but no extension that provides them was found");
+	}
+#endif
+
+	if (!debug_utils)
+	{
+		debug_utils = std::make_unique<DummyDebugUtils>();
+	}
+
+	device = std::make_unique<vkb::Device>(gpu, surface, std::move(debug_utils), get_device_extensions());
 
 	create_render_context(platform);
 	prepare_render_context();

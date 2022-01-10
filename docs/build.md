@@ -28,6 +28,8 @@
   - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
       - [VKB_VALIDATION_LAYERS_GPU_ASSISTED](#vkb_validation_layers_gpu_assisted)
       - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
+  - [VKB_VULKAN_DEBUG](#vkb_vulkan_debug)
+  - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 - [Windows](#windows)
@@ -86,6 +88,14 @@ Enable Validation Layers
 Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_indexing.
 
 **Default:** `OFF`
+
+#### VKB_VULKAN_DEBUG
+
+Enable VK_EXT_debug_utils or VK_EXT_debug_marker, if supported.
+This enables debug names for Vulkan objects, and markers/labels in command buffers.  
+See the [debug utils sample](samples/extensions/debug_utils/debug_utils_tutorial.md) for more information.
+
+**Default:** `ON`
 
 #### VKB_WARNINGS_AS_ERRORS
 

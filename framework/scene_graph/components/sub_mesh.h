@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -46,6 +46,8 @@ struct VertexAttribute
 class SubMesh : public Component
 {
   public:
+	SubMesh(const std::string &name = {});
+
 	virtual ~SubMesh() = default;
 
 	virtual std::type_index get_type() override;

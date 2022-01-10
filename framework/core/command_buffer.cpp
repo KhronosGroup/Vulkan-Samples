@@ -23,11 +23,16 @@
 #include "rendering/render_frame.h"
 #include "rendering/subpass.h"
 
+VKBP_DISABLE_WARNINGS()
+#include <glm/gtc/type_ptr.hpp>
+VKBP_ENABLE_WARNINGS()
+
 namespace vkb
 {
 CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level) :
+    VulkanResource{VK_NULL_HANDLE, &command_pool.get_device()},
     command_pool{command_pool},
-    max_push_constants_size{command_pool.get_device().get_gpu().get_properties().limits.maxPushConstantsSize},
+    max_push_constants_size{device->get_gpu().get_properties().limits.maxPushConstantsSize},
     level{level}
 {
 	VkCommandBufferAllocateInfo allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
@@ -36,7 +41,7 @@ CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel lev
 	allocate_info.commandBufferCount = 1;
 	allocate_info.level              = level;
 
-	VkResult result = vkAllocateCommandBuffers(command_pool.get_device().get_handle(), &allocate_info, &handle);
+	VkResult result = vkAllocateCommandBuffers(device->get_handle(), &allocate_info, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -54,24 +59,13 @@ CommandBuffer::~CommandBuffer()
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) :
+    VulkanResource{std::move(other)},
     command_pool{other.command_pool},
     level{other.level},
-    handle{other.handle},
     state{other.state},
     update_after_bind{other.update_after_bind}
 {
-	other.handle = VK_NULL_HANDLE;
-	other.state  = State::Invalid;
-}
-
-Device &CommandBuffer::get_device()
-{
-	return command_pool.get_device();
-}
-
-const VkCommandBuffer &CommandBuffer::get_handle() const
-{
-	return handle;
+	other.state = State::Invalid;
 }
 
 bool CommandBuffer::is_recording() const
@@ -840,6 +834,7 @@ RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget &render_targe
 		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
 		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
 		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
+		subpass_info_it->debug_name                       = subpass->get_debug_name();
 
 		++subpass_info_it;
 	}
