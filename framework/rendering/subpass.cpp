@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -136,5 +136,15 @@ void Subpass::set_sample_count(VkSampleCountFlagBits sample_count)
 LightingState &Subpass::get_lighting_state()
 {
 	return lighting_state;
+}
+
+const std::string &Subpass::get_debug_name() const
+{
+	return debug_name;
+}
+
+void Subpass::set_debug_name(const std::string &name)
+{
+	debug_name = name;
 }
 }        // namespace vkb

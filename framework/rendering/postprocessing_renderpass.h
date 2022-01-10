@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -125,6 +125,16 @@ class PostProcessingSubpass : public Subpass
 	inline PostProcessingSubpass &set_fs_variant(ShaderVariant &&new_variant)
 	{
 		fs_variant = std::move(new_variant);
+
+		return *this;
+	}
+
+	/**
+	 * @brief Changes the debug name of this Subpass.
+	 */
+	inline PostProcessingSubpass &set_debug_name(const std::string &name)
+	{
+		Subpass::set_debug_name(name);
 
 		return *this;
 	}
