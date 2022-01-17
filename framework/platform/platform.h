@@ -175,7 +175,7 @@ class Platform
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
 	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
 	bool               process_input_events{true};     /* App should continue processing input events */
-	bool               focused;                        /* App is currently in focus at an operating system level */
+	bool               focused{true};                  /* App is currently in focus at an operating system level */
 	bool               close_requested{false};         /* Close requested */
 
   private:
