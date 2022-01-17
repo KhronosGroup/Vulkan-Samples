@@ -413,8 +413,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 		bool middle = false;
 	} mouse_buttons;
 
-	// true if application has focused, false if moved to background
-	bool focused = false;
 	struct TouchPos
 	{
 		int32_t x;
