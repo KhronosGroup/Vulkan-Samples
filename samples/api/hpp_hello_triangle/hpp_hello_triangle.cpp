@@ -254,6 +254,15 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	// initialize function pointers for instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(context.instance);
 
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+	// we need some additional initializing for this platform!
+	if (volkInitialize())
+	{
+		throw std::runtime_error("Failed to initialize volk.");
+	}
+	volkLoadInstance(context.instance);
+#endif
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	context.debug_callback = context.instance.createDebugReportCallbackEXT(debug_report_create_info);
 #endif
