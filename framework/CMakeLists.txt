@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2022, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -235,6 +235,7 @@ set(CORE_FILES
     core/shader_binding_table.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
+    core/hpp_debug.h
     core/hpp_device.h
     core/hpp_image.h
     core/hpp_image_view.h

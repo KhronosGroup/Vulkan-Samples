@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,12 +30,6 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	{
 		return false;
 	}
-
-	// initialize function pointers for C++-bindings
-	static vk::DynamicLoader dl;
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance().get_handle());
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
 
 	depth_format = vkb::common::get_suitable_depth_format(get_device().get_gpu().get_handle());
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,11 +66,42 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	LOGI("Initializing Vulkan sample");
 
+	// initialize function pointers
+	static vk::DynamicLoader dl;
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(dl.getProcAddress<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr"));
+
+	// for non-vulkan.hpp stuff, we need to initialize volk as well !!
+	VkResult result = volkInitialize();
+	if (result)
+	{
+		throw VulkanException(result, "Failed to initialize volk.");
+	}
+
 	bool headless = platform.get_window().get_window_mode() == Window::Mode::Headless;
 
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
+
+	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
+#ifdef VKB_VULKAN_DEBUG
+	{
+		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
+		auto                                 debugExtensionIt              = std::find_if(available_instance_extensions.begin(),
+                                             available_instance_extensions.end(),
+                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		if (debugExtensionIt != available_instance_extensions.end())
+		{
+			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+			debug_utils = std::make_unique<vkb::core::HPPDebugUtilsExtDebugUtils>();
+			add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+		}
+	}
+#endif
+
 	instance = std::make_unique<vkb::core::HPPInstance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance().get_handle());
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
@@ -93,7 +124,36 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 	}
 
-	device = std::make_unique<vkb::core::HPPDevice>(gpu, surface, get_device_extensions());
+#ifdef VKB_VULKAN_DEBUG
+	if (!debug_utils)
+	{
+		std::vector<vk::ExtensionProperties> available_device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
+		auto                                 debugExtensionIt            = std::find_if(available_device_extensions.begin(),
+                                             available_device_extensions.end(),
+                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		if (debugExtensionIt != available_device_extensions.end())
+		{
+			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+
+			debug_utils = std::make_unique<vkb::core::HPPDebugMarkerExtDebugUtils>();
+			add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+		}
+	}
+
+	if (!debug_utils)
+	{
+		LOGW("Vulkan debug utils were requested, but no extension that provides them was found");
+	}
+#endif
+
+	if (!debug_utils)
+	{
+		debug_utils = std::make_unique<vkb::core::HPPDummyDebugUtils>();
+	}
+
+	device = std::make_unique<vkb::core::HPPDevice>(gpu, surface, std::move(debug_utils), get_device_extensions());
+
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
 
 	create_render_context(platform);
 	prepare_render_context();
