@@ -34,7 +34,7 @@ class HPPStats : protected vkb::Stats
 	using vkb::Stats::resize;
 	using vkb::Stats::update;
 
-	HPPStats(vkb::rendering::HPPRenderContext &render_context, size_t buffer_size = 16) :
+	explicit HPPStats(vkb::rendering::HPPRenderContext &render_context, size_t buffer_size = 16) :
 	    vkb::Stats(reinterpret_cast<vkb::RenderContext &>(render_context), buffer_size)
 	{}
 

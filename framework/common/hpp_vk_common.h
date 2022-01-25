@@ -25,7 +25,7 @@ namespace vkb
 namespace common
 {
 /**
- * @brief facade helper functions and structs around the functions and structs in common/vk_commmon, providing a vulkan.hpp-based interface
+ * @brief facade helper functions and structs around the functions and structs in common/vk_common, providing a vulkan.hpp-based interface
  */
 struct HPPImageMemoryBarrier
 {

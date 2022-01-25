@@ -139,7 +139,7 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	                   const std::vector<const char *> &required_instance_extensions,
 	                   const std::vector<const char *> &required_validation_layers);
 
-	void select_physical_device_and_surface(Context &context, vkb::platform::HPPPlatform &platform);
+	void select_physical_device_and_surface(vkb::platform::HPPPlatform &platform);
 
 	void init_device(Context &                        context,
 	                 const std::vector<const char *> &required_device_extensions);

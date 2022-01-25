@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include <hpp_hello_triangle.h>
+#include "hpp_hello_triangle.h"
 
 #include <common/logging.h>
 #include <glsl_compiler.h>
@@ -271,10 +271,9 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 /**
  * @brief Select a physical device.
  *
- * @param context A Vulkan context with an instance already set up.
  * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device_and_surface(Context &context, vkb::platform::HPPPlatform &platform)
+void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlatform &platform)
 {
 	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
 
@@ -993,7 +992,7 @@ HPPHelloTriangle::~HPPHelloTriangle()
 bool HPPHelloTriangle::prepare(vkb::platform::HPPPlatform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
-	select_physical_device_and_surface(context, platform);
+	select_physical_device_and_surface(platform);
 
 	const auto &extent                  = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;

@@ -39,7 +39,7 @@ class HPPApplication : public vkb::Application
 		return *reinterpret_cast<vkb::platform::HPPPlatform *>(platform);
 	}
 
-	virtual bool prepare(vkb::Platform &platform) final
+	bool prepare(vkb::Platform &platform) final
 	{
 		return prepare(reinterpret_cast<vkb::platform::HPPPlatform &>(platform));
 	}

@@ -35,19 +35,19 @@ class HeadlessWindow : public Window
 	 * @brief A direct window doesn't have a surface
 	 * @returns VK_NULL_HANDLE
 	 */
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	VkSurfaceKHR create_surface(Instance &instance) override;
 
 	/**
 	 * @brief A direct window doesn't have a surface
 	 * @returns nullptr
 	 */
-	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
+	VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 
-	virtual bool should_close() override;
+	bool should_close() override;
 
-	virtual void close() override;
+	void close() override;
 
-	virtual float get_dpi_factor() const override;
+	float get_dpi_factor() const override;
 
   private:
 	bool closed{false};

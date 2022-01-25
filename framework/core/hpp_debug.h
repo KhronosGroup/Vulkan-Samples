@@ -32,21 +32,21 @@ namespace core
 class HPPDebugUtils : protected vkb::DebugUtils
 {
   public:
-	virtual void set_debug_name(VkDevice     device,
-	                            VkObjectType object_type,
-	                            uint64_t     object_handle,
-	                            const char * name) const override
+	void set_debug_name(VkDevice     device,
+	                    VkObjectType object_type,
+	                    uint64_t     object_handle,
+	                    const char * name) const override
 	{
 		set_debug_name(
 		    static_cast<vk::Device>(device), static_cast<vk::ObjectType>(object_type), object_handle, name);
 	}
 
-	virtual void set_debug_tag(VkDevice     device,
-	                           VkObjectType object_type,
-	                           uint64_t     object_handle,
-	                           uint64_t     tag_name,
-	                           const void * tag_data,
-	                           size_t       tag_data_size) const override
+	void set_debug_tag(VkDevice     device,
+	                   VkObjectType object_type,
+	                   uint64_t     object_handle,
+	                   uint64_t     tag_name,
+	                   const void * tag_data,
+	                   size_t       tag_data_size) const override
 	{
 		set_debug_tag(static_cast<vk::Device>(device),
 		              static_cast<vk::ObjectType>(object_type),
@@ -56,18 +56,17 @@ class HPPDebugUtils : protected vkb::DebugUtils
 		              tag_data_size);
 	}
 
-	virtual void
-	    cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color = {}) const override
+	void cmd_begin_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override
 	{
 		cmd_begin_label(static_cast<vk::CommandBuffer>(command_buffer), name, color);
 	}
 
-	virtual void cmd_end_label(VkCommandBuffer command_buffer) const override
+	void cmd_end_label(VkCommandBuffer command_buffer) const override
 	{
 		cmd_end_label(static_cast<vk::CommandBuffer>(command_buffer));
 	}
 
-	virtual void cmd_insert_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override
+	void cmd_insert_label(VkCommandBuffer command_buffer, const char *name, glm::vec4 color) const override
 	{
 		cmd_insert_label(static_cast<vk::CommandBuffer>(command_buffer), name, color);
 	}

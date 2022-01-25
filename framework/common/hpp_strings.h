@@ -25,7 +25,10 @@ namespace vkb
 {
 namespace common
 {
-const std::string to_string(vk::Extent2D const &extent)
+/**
+ * @brief facade helper functions around the functions in common/strings.h, providing a vulkan.hpp-based interface
+ */
+std::string to_string(vk::Extent2D const &extent)
 {
 	return vkb::to_string(static_cast<VkExtent2D const &>(extent));
 }

@@ -36,15 +36,15 @@ class GlfwWindow : public Window
 
 	virtual ~GlfwWindow();
 
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	VkSurfaceKHR create_surface(Instance &instance) override;
 
-	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
+	VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 
-	virtual bool should_close() override;
+	bool should_close() override;
 
-	virtual void process_events() override;
+	void process_events() override;
 
-	virtual void close() override;
+	void close() override;
 
 	float get_dpi_factor() const override;
 

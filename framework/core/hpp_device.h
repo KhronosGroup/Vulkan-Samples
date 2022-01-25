@@ -46,7 +46,7 @@ class HPPDevice : protected vkb::Device
 	    vkb::Device(reinterpret_cast<vkb::PhysicalDevice &>(gpu),
 	                static_cast<VkSurfaceKHR>(surface),
 	                std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
-	                requested_extensions)
+	                std::move(requested_extensions))
 	{}
 
 	vk::CommandBuffer create_command_buffer(vk::CommandBufferLevel level, bool begin = false) const

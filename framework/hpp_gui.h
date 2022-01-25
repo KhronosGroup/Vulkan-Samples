@@ -75,6 +75,7 @@ class HPPGui : protected vkb::Gui
 	void prepare(const vk::PipelineCache pipeline_cache, const vk::RenderPass render_pass, const std::vector<vk::PipelineShaderStageCreateInfo> &shader_stages)
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> pssci;
+		pssci.reserve(shader_stages.size());
 		for (auto const &ci : shader_stages)
 		{
 			pssci.push_back(*reinterpret_cast<VkPipelineShaderStageCreateInfo const *>(&ci));

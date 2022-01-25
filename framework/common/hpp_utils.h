@@ -21,6 +21,9 @@
 
 #include <rendering/hpp_render_context.h>
 
+/**
+ * @brief facade helper functions around the functions in common/utils.h, providing a vulkan.hpp-based interface
+ */
 namespace vkb
 {
 namespace common

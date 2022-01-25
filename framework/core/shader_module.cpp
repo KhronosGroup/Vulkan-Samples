@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ namespace vkb
 {
 /**
  * @brief Pre-compiles project shader files to include header code
- * @param filename The shader file
+ * @param source The shader file
  * @returns A byte array of the final shader
  */
 inline std::vector<std::string> precompile_shader(const std::string &source)

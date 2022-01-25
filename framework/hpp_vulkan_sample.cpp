@@ -406,7 +406,7 @@ void HPPVulkanSample::input_event(const InputEvent &input_event)
 
 		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
 		{
-			if (!vkb::common::graphs::generate_all(get_render_context(), *scene.get()))
+			if (!vkb::common::graphs::generate_all(get_render_context(), *scene))
 			{
 				LOGE("Failed to save Graphs");
 			}
@@ -472,7 +472,7 @@ void HPPVulkanSample::update_debug_window()
 	}
 }
 
-void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent) const
+void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent)
 {
 	command_buffer.get_handle().setViewport(0, {0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
@@ -535,7 +535,7 @@ void HPPVulkanSample::set_api_version(uint32_t requested_api_version)
 
 void HPPVulkanSample::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
-	// To be overriden by sample
+	// To be overridden by sample
 }
 
 sg::Scene const &HPPVulkanSample::get_scene() const

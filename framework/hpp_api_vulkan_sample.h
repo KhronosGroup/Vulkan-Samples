@@ -67,13 +67,13 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	virtual ~HPPApiVulkanSample();
 
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(vkb::platform::HPPPlatform &platform) override;
 
-	virtual void input_event(const vkb::InputEvent &input_event) override;
+	void input_event(const vkb::InputEvent &input_event) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual bool resize(const uint32_t width, const uint32_t height) override;
+	bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
 
@@ -86,8 +86,8 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<HPPSwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::platform::HPPPlatform const &platform) override;
-	virtual void prepare_render_context() override;
+	void create_render_context(vkb::platform::HPPPlatform const &platform) override;
+	void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
 	vk::Queue queue;

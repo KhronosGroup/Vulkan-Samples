@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -110,18 +110,18 @@ class VulkanSample : public Application
 	/**
 	 * @brief Additional sample initialization
 	 */
-	virtual bool prepare(Platform &platform) override;
+	bool prepare(Platform &platform) override;
 
 	/**
 	 * @brief Main loop sample events
 	 */
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual bool resize(const uint32_t width, const uint32_t height) override;
+	bool resize(uint32_t width, uint32_t height) override;
 
-	virtual void input_event(const InputEvent &input_event) override;
+	void input_event(const InputEvent &input_event) override;
 
-	virtual void finish() override;
+	void finish() override;
 
 	/** 
 	 * @brief Loads the scene
@@ -209,7 +209,7 @@ class VulkanSample : public Application
 	virtual void draw_renderpass(CommandBuffer &command_buffer, RenderTarget &render_target);
 
 	/**
-	 * @brief Triggers the render pipeline, it can be overriden by samples to specialize their rendering logic
+	 * @brief Triggers the render pipeline, it can be overridden by samples to specialize their rendering logic
 	 * @param command_buffer The command buffer to record the commands to
 	 */
 	virtual void render(CommandBuffer &command_buffer);
@@ -224,7 +224,7 @@ class VulkanSample : public Application
 	/**
 	 * @brief Get sample-specific instance extensions.
 	 *
-	 * @return Map of instance extensions and wether or not they are optional. Default is empty map.
+	 * @return Map of instance extensions and whether or not they are optional. Default is empty map.
 	 */
 	const std::unordered_map<const char *, bool> get_instance_extensions();
 
@@ -238,14 +238,14 @@ class VulkanSample : public Application
 	/**
 	 * @brief Add a sample-specific device extension
 	 * @param extension The extension name
-	 * @param optional (Optional) Wether the extension is optional
+	 * @param optional (Optional) Whether the extension is optional
 	 */
 	void add_device_extension(const char *extension, bool optional = false);
 
 	/**
 	 * @brief Add a sample-specific instance extension
 	 * @param extension The extension name
-	 * @param optional (Optional) Wether the extension is optional
+	 * @param optional (Optional) Whether the extension is optional
 	 */
 	void add_instance_extension(const char *extension, bool optional = false);
 
@@ -271,7 +271,7 @@ class VulkanSample : public Application
 
 	/**
 	 * @brief Resets the stats view max values for high demanding configs
-	 *        Should be overriden by the samples since they
+	 *        Should be overridden by the samples since they
 	 *        know which configuration is resource demanding
 	 */
 	virtual void reset_stats_view(){};
@@ -289,7 +289,7 @@ class VulkanSample : public Application
 	/**
 	 * @brief Set viewport and scissor state in command buffer for a given extent
 	 */
-	void set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent) const;
+	static void set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent);
 
 	static constexpr float STATS_VIEW_RESET_TIME{10.0f};        // 10 seconds
 
@@ -316,7 +316,7 @@ class VulkanSample : public Application
 	}
 
   private:
-	/** @brief Set of device extensions to be enabled for this example and wether they are optional (must be set in the derived constructor) */
+	/** @brief Set of device extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
 	std::unordered_map<const char *, bool> device_extensions;
 
 	/** @brief Set of instance extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */
