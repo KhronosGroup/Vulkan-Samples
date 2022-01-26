@@ -28,7 +28,7 @@
 namespace vkb
 {
 /**
- * @brief Handles of stats to be optionally enabled in @ref Stats
+ * @brief Handles of stats to be optionally enabled in @ref vkb::Stats
  */
 enum class StatIndex
 {
