@@ -65,6 +65,13 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	       std::unique_ptr<DebugUtils> &&         debug_utils,
 	       std::unordered_map<const char *, bool> requested_extensions = {});
 
+	/**
+	 * @todo
+	 */
+	Device(PhysicalDevice &              gpu,
+	       VkDevice &                    vulkan_device,
+	       VkSurfaceKHR                  surface);
+
 	Device(const Device &) = delete;
 
 	Device(Device &&) = delete;
@@ -102,6 +109,11 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	const Queue &get_queue_by_flags(VkQueueFlags queue_flags, uint32_t queue_index) const;
 
 	const Queue &get_queue_by_present(uint32_t queue_index) const;
+
+	/**
+	 * @todo
+	 */
+	void add_queue(size_t global_index, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
 
 	/**
 	 * @brief Finds a suitable graphics queue to submit to
@@ -180,6 +192,21 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	CommandBuffer &request_command_buffer() const;
 
 	FencePool &get_fence_pool() const;
+
+	/**
+	 * @todo
+	 */
+	void create_internal_fence_pool();
+
+	/**
+	 * @todo
+	 */
+	void create_internal_command_pool();
+
+	/**
+	 * @todo
+	 */
+	void prepare_memory_allocator();
 
 	/**
 	 * @brief Requests a fence to the fence pool

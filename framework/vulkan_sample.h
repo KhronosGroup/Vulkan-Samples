@@ -112,6 +112,12 @@ class VulkanSample : public Application
 	 */
 	virtual bool prepare(Platform &platform) override;
 
+	// @todo
+	virtual void create_device();
+
+	// @todo
+	virtual void create_instance();
+
 	/**
 	 * @brief Main loop sample events
 	 */
