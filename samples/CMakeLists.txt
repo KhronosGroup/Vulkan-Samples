@@ -95,6 +95,9 @@ set(ORDER_LIST
     "multi_draw_indirect"
     "texture_compression_comparison"
 
+    #Tooling samples
+    "profiles"
+
     #HPP API Samples
     "hpp_hello_triangle"
 	"hpp_dynamic_uniform_buffers"
