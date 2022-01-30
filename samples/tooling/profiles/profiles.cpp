@@ -32,14 +32,10 @@
 // @todo: comment
 #define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
 #define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
-#define PROFILE_MIN_API_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_MIN_API_VERSION
 
 Profiles::Profiles()
 {
-	title    = "Vulkan Profiles";
-
-	// @todo: remove (see instance creation below)
-	set_api_version(PROFILE_MIN_API_VERSION);
+	title = "Vulkan Profiles";
 }
 
 Profiles::~Profiles()
@@ -107,14 +103,14 @@ void Profiles::generate_textures()
 		// Generate a random texture
 		std::random_device                   rnd_device;
 		std::default_random_engine           rnd_engine(rnd_device());
-		std::uniform_int_distribution<short> rnd_dist(50, 255);
+		std::uniform_int_distribution<short> rnd_dist(0, 255);
 		const size_t                         buffer_size = dim * dim * 4;
 		uint8_t *                            buffer      = staging_buffer->map();
 		for (size_t i = 0; i < dim * dim; i++)
 		{
-			buffer[i * 4]     = rnd_dist(rnd_engine);
-			buffer[i * 4 + 1] = rnd_dist(rnd_engine);
-			buffer[i * 4 + 2] = rnd_dist(rnd_engine);
+			buffer[i * 4]     = static_cast<uint8_t>(rnd_dist(rnd_engine));
+			buffer[i * 4 + 1] = static_cast<uint8_t>(rnd_dist(rnd_engine));
+			buffer[i * 4 + 2] = static_cast<uint8_t>(rnd_dist(rnd_engine));
 			buffer[i * 4 + 3] = 255;
 		}
 
@@ -152,8 +148,8 @@ void Profiles::generate_textures()
 
 	// Create immutable sampler for the textures
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
-	sampler_info.magFilter           = VK_FILTER_LINEAR;
-	sampler_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_info.magFilter           = VK_FILTER_NEAREST;
+	sampler_info.minFilter           = VK_FILTER_NEAREST;
 	sampler_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	sampler_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	sampler_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
@@ -314,7 +310,7 @@ void Profiles::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, textures.size())};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(textures.size()))};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
@@ -332,8 +328,8 @@ void Profiles::setup_descriptor_set_layout()
 
 	// Mark second slot as variable for descriptor indexing
 	VkDescriptorSetLayoutBindingFlagsCreateInfoEXT descriptor_set_layout_binding_flags{};
-	descriptor_set_layout_binding_flags.sType                       = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
-	descriptor_set_layout_binding_flags.bindingCount                = 2;
+	descriptor_set_layout_binding_flags.sType                         = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO_EXT;
+	descriptor_set_layout_binding_flags.bindingCount                  = 2;
 	std::vector<VkDescriptorBindingFlagsEXT> descriptor_binding_flags = {
 	    0,
 	    VK_DESCRIPTOR_BINDING_VARIABLE_DESCRIPTOR_COUNT_BIT_EXT};
@@ -367,7 +363,7 @@ void Profiles::setup_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_SAMPLER,
 	        VK_SHADER_STAGE_FRAGMENT_BIT,
 	        0,
-			textures.size())};
+	        static_cast<uint32_t>(textures.size()))};
 	descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(
 	        set_layout_bindings.data(),
@@ -397,12 +393,12 @@ void Profiles::setup_descriptor_set()
 	        1);
 
 	VkDescriptorSetVariableDescriptorCountAllocateInfoEXT variableDescriptorCountAllocInfo = {};
-	uint32_t variableDescCounts[] = {static_cast<uint32_t>(textures.size())};
-	variableDescriptorCountAllocInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
-	variableDescriptorCountAllocInfo.descriptorSetCount = 1;
-	variableDescriptorCountAllocInfo.pDescriptorCounts  = variableDescCounts;
+	uint32_t                                              variableDescCounts[]             = {static_cast<uint32_t>(textures.size())};
+	variableDescriptorCountAllocInfo.sType                                                 = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_VARIABLE_DESCRIPTOR_COUNT_ALLOCATE_INFO_EXT;
+	variableDescriptorCountAllocInfo.descriptorSetCount                                    = 1;
+	variableDescriptorCountAllocInfo.pDescriptorCounts                                     = variableDescCounts;
 
-	descriptor_set_alloc_info.pNext       = &variableDescriptorCountAllocInfo;
+	descriptor_set_alloc_info.pNext = &variableDescriptorCountAllocInfo;
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &base_descriptor_set));
 
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
@@ -413,28 +409,22 @@ void Profiles::setup_descriptor_set()
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 	image_descriptor.sampler     = sampler;
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(
-	        base_descriptor_set,
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        0,
-	        &buffer_descriptor),
-	    // Binding 1 : Fragment shader sampled image
-		// @todo
-	    vkb::initializers::write_descriptor_set(
-	        base_descriptor_set,
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	        1,
-	        &image_descriptor)};
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets(2);
+	// Binding 0 : Vertex shader uniform buffer
+	write_descriptor_sets[0] = vkb::initializers::write_descriptor_set(
+	    base_descriptor_set,
+	    VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	    0,
+	    &buffer_descriptor);
 
+	// Binding 1 : Fragment shader sampled image
 	// Put all images into a single array
 	std::vector<VkDescriptorImageInfo> texture_descriptors(textures.size());
 	for (size_t i = 0; i < textures.size(); i++)
 	{
 		texture_descriptors[i].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 		texture_descriptors[i].sampler     = sampler;
-		texture_descriptors[i].imageView = textures[i].image_view;
+		texture_descriptors[i].imageView   = textures[i].image_view;
 	}
 
 	// Unlike an array texture, these are adressed like typical arrays
