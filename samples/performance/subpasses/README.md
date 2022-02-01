@@ -32,7 +32,7 @@ The _Subpasses sample_ implements a [deferred renderer](https://en.wikipedia.org
 
 The G-buffer layout used by the sample is below a limit of 128-bit per pixel of *tile buffer color storage* (more about that in the next section):
 
-* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://developer.arm.com/solutions/graphics-and-gaming/resources/demos/transaction-elimination).
+* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://www.arm.com/technologies/graphics-technologies/transaction-elimination).
 * Depth (`D32_SFLOAT`), which does not add up to the 128-bit limit.
 * Albedo (`RGBA8_UNORM`)
 * Normal (`RGB10A2_UNORM`)
