@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,8 +75,8 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache,
 	             render_pass,
-	             {load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex),
-	              load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment)});
+	             {static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex)),
+	              static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment))});
 
 	return true;
 }

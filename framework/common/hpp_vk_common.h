@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -93,7 +93,7 @@ void set_image_layout(vk::CommandBuffer         command_buffer,
 	                      image,
 	                      static_cast<VkImageLayout>(old_layout),
 	                      static_cast<VkImageLayout>(new_layout),
-	                      subresource_range,
+	                      static_cast<VkImageSubresourceRange>(subresource_range),
 	                      static_cast<VkPipelineStageFlags>(src_mask),
 	                      static_cast<VkPipelineStageFlags>(dst_mask));
 }
