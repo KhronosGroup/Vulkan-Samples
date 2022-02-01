@@ -120,7 +120,7 @@ In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1
 * Keep your G-buffer budget for color small.
 * Use `DEPTH_STENCIL_READ_ONLY` image layout for depth after the geometry pass is done.
 * Use `LAZILY_ALLOCATED` memory to back images for every attachment except for the light buffer, which is the only texture written out to memory.
-* Follow the basic [render pass best practices](../render_passes/render_passes_tutorial.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
+* Follow the basic [render pass best practices](../render_passes/README.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
 
 **Don't**
 

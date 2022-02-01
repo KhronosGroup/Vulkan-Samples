@@ -147,7 +147,7 @@ In this application the differences between individual reset and pool reset are 
 
 ## Further reading
 
- * [Multi-threaded recording with multiple render passes](../multithreading_render_passes/multithreading_render_passes_tutorial.md)
+ * [Multi-threaded recording with multiple render passes](../multithreading_render_passes/README.md)
  * [Command Buffer Allocation and Management](https://vulkan.lunarg.com/doc/view/1.0.33.0/linux/vkspec.chunked/ch05s02.html)
  * [Command Buffer Lifecycle](https://www.khronos.org/registry/vulkan/specs/1.0-wsi_extensions/html/chap5.html#commandbuffers-lifecycle)
  * _"Writing an efficient Vulkan renderer"_ by Arseny Kapoulkine (from "GPU Zen 2: Advanced Rendering Techniques")
