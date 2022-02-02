@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -32,7 +32,7 @@ The _Subpasses sample_ implements a [deferred renderer](https://en.wikipedia.org
 
 The G-buffer layout used by the sample is below a limit of 128-bit per pixel of *tile buffer color storage* (more about that in the next section):
 
-* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://developer.arm.com/solutions/graphics-and-gaming/resources/demos/transaction-elimination).
+* Lighting (`RGBA8_SRGB`), as attachment #0 will take advantage of [transaction elimination](https://www.arm.com/technologies/graphics-technologies/transaction-elimination).
 * Depth (`D32_SFLOAT`), which does not add up to the 128-bit limit.
 * Albedo (`RGBA8_UNORM`)
 * Normal (`RGB10A2_UNORM`)
@@ -120,7 +120,7 @@ In practice, their [image usage](https://www.khronos.org/registry/vulkan/specs/1
 * Keep your G-buffer budget for color small.
 * Use `DEPTH_STENCIL_READ_ONLY` image layout for depth after the geometry pass is done.
 * Use `LAZILY_ALLOCATED` memory to back images for every attachment except for the light buffer, which is the only texture written out to memory.
-* Follow the basic [render pass best practices](../render_passes/render_passes_tutorial.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
+* Follow the basic [render pass best practices](../render_passes/README.md), with `LOAD_OP_CLEAR` or `LOAD_OP_DONT_CARE` for attachment loads and `STORE_OP_DONT_CARE` for transient stores.
 
 **Don't**
 
