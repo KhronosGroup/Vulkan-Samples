@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2021, Arm Limited and Contributors
+- Copyright (c) 2021-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -44,21 +44,21 @@ This results in different shades of primitive color at the edges, which reduces 
 In the figure above the samples within the pixel are positioned in a rotated grid. Sampling coordinates are defined by the [spec](https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap24.html#primsrast-multisampling). Irregular patterns achieve [better results](https://pdfs.semanticscholar.org/ebd9/ddb08c4244fc7df00672cacb420212cdde54.pdf) in horizontal and vertical edges.
 Note that MSAA has no effect for pixels within the primitive, where all samples store the same color value.
 
-MSAA is different from (and more efficient than) super-sampling anti-aliasing (SSAA) where the fragment shader is evaluated for each sample. This would help reduce aliasing within primitives, but usually [mip-maps](../../api/texture_mipmap_generation/texture_mipmap_generation_tutorial.md) mitigate this already.
+MSAA is different from (and more efficient than) super-sampling anti-aliasing (SSAA) where the fragment shader is evaluated for each sample. This would help reduce aliasing within primitives, but usually [mip-maps](../../api/texture_mipmap_generation/README.md) mitigate this already.
 
 To enable MSAA, first query [`vkPhysicalDeviceLimits`](http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap32.html#VkPhysicalDeviceLimits) to select a supported level of MSAA e.g. [`VK_SAMPLE_COUNT_4_BIT`](http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap32.html#VkSampleCountFlagBits), and use this when creating the multisampled attachment, as well as when setting the [`rasterizationSamples`](http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap24.html#VkPipelineMultisampleStateCreateInfo) member of [`pMultisampleState`](http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap9.html#VkGraphicsPipelineCreateInfo) in the graphics pipeline.
 As stated earlier for MSAA we do _not_ want to set [sample shading](http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap24.html#primsrast-sampleshading) as this will enable the more expensive SSAA.
 
 ## Color resolve
 
-4x MSAA can be particularly efficient in [tiler architectures](../pipeline_barriers/pipeline_barriers_tutorial.md#tile-based-rendering), where the multi-sampled attachment is resolved in tile memory and can therefore be transient.
-This is typically the case of the [depth buffer](../render_passes/render_passes_tutorial.md#depth-attachment-store-operation) as shown below:
+4x MSAA can be particularly efficient in [tiler architectures](../pipeline_barriers/README.md#tile-based-rendering), where the multi-sampled attachment is resolved in tile memory and can therefore be transient.
+This is typically the case of the [depth buffer](../render_passes/README.md#depth-attachment-store-operation) as shown below:
 
 ![No MSAA diagram](images/no_msaa.png)
 ![No MSAA sample](images/screenshot_no_msaa.jpg)
 
 It is important to avoid writing multisampled attachments back to main memory if they are not going to be needed after rendering the scene.
-This means that the multisampled attachment must use `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` and `usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`, and allocate the image with the `LAZILY_ALLOCATED` memory property, as explained in the [Render Passes tutorial](../render_passes/render_passes_tutorial.md#depth-attachment-store-operation).
+This means that the multisampled attachment must use `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` and `usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`, and allocate the image with the `LAZILY_ALLOCATED` memory property, as explained in the [Render Passes tutorial](../render_passes/README.md#depth-attachment-store-operation).
 
 ```
 // Multisampled attachment is transient
@@ -126,7 +126,7 @@ These counters can also be recorded with a profiler such as [Streamline](https:/
 ## Depth resolve
 
 In all of the cases shown above the depth buffer has remained transient, regardless of MSAA.
-This is because once the color is calculated and written out to the swapchain for presentation to the display, the depth can be discarded and therefore we recommend to [configure load/store operations to avoid writing it out](../render_passes/render_passes_tutorial.md#depth-attachment-store-operation).
+This is because once the color is calculated and written out to the swapchain for presentation to the display, the depth can be discarded and therefore we recommend to [configure load/store operations to avoid writing it out](../render_passes/README.md#depth-attachment-store-operation).
 
 There are cases where we might need to save the depth attachment. Consider a simple post-processing pass that samples both color and depth (bound as textures) in order to compute a screen-based effect such as [SSAO](https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion):
 
