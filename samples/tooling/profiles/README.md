@@ -118,9 +118,16 @@ deviceCreateInfo.flags       = VP_DEVICE_CREATE_MERGE_EXTENSIONS_BIT;
 VkResult result = vpCreateDevice(gpu.get_handle(), &deviceCreateInfo, nullptr, &vulkan_device);
 ```
 
-This will enable all features and extensions defined in the selected profile. This will save a lot of boiler plate code, esp. if the app requires multiple extensions.
+This will enable all features and extensions defined in the selected profile, including descriptor indexing. 
 
-#### TODO
+Inspecting the device created using a profile in a graphics debugger like [RenderDoc](https://renderdoc.org/) we can see that the profile library did create the physical device pNext feature chain:
 
-- Show table with stuff supported by profile in this sample
-- maybe show screenshot from RenderDoc / nsight with enabled features and extensions
+![RenderDoc device pNext](./renderdoc_device_1.png)
+
+And also enabled all required extensions:
+
+![RenderDoc device extensions](./renderdoc_device_2.png)
+
+Esp. the physical device pNext chain for the different features is a lot of boiler plate code when done manually.
+
+The profile we use for this sample (@todo: add name) enables many more features and extensions. You can find a comparision table for the profiles in [LunarG's SDK documentation](https://vulkan.lunarg.com/doc/sdk/latest/windows/profiles_definitions.html).
