@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
+ * Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -68,9 +68,9 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	/**
 	 * @todo
 	 */
-	Device(PhysicalDevice &              gpu,
-	       VkDevice &                    vulkan_device,
-	       VkSurfaceKHR                  surface);
+	Device(PhysicalDevice &gpu,
+	       VkDevice &      vulkan_device,
+	       VkSurfaceKHR    surface);
 
 	Device(const Device &) = delete;
 

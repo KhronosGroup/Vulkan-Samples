@@ -31,8 +31,8 @@ class Profiles : public ApiVulkanSample
 	// Vertex layout for this example
 	struct VertexStructure
 	{
-		float pos[3];
-		float uv[2];
+		float   pos[3];
+		float   uv[2];
 		int32_t texture_index;
 	};
 
