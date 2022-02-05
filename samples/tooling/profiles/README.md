@@ -21,7 +21,7 @@
 
 This sample demonstrates the usage of the [Vulkan Profiles Library](https://github.com/KhronosGroup/Vulkan-Profiles). Profiles define a common requirement baseline of properties, features, extensions, etc. to make Vulkan applications more portable. Instead of having to check all of these in your app  one by one at runtime, you use the profiles library to check if the selected device supports all the requirements of that given profile. If that's the case, you then use the same library to create the device and/or instance. The library then takes care of enabling all the required features, extensions, etc.
 
-We'll demonstrate this in a sample that makes use of descriptor indexing.
+We'll show this in a sample that makes use of descriptor indexing. We'll be using the `VP_LUNARG_desktop_portability_2021` profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux.
 
 ## Without profiles
 
@@ -76,9 +76,11 @@ if (!result) {
 }
 ```
 
+With each additional device feature this code would get longer and longer, as physical device features need to be chained via the `pNext` member.
+
 ## With profiles
 
-Using the profile library and a profile that requires all the above features and extension (e.g. @todo: name) this can be simplified a lot:
+Using the profile library and a profile that requires all the above features and extension this can be simplified a lot:
 
 ```cpp
 // Profile to enable
@@ -130,4 +132,4 @@ And also enabled all required extensions:
 
 Esp. the physical device pNext chain for the different features is a lot of boiler plate code when done manually.
 
-The profile we use for this sample (@todo: add name) enables many more features and extensions. You can find a comparision table for the profiles in [LunarG's SDK documentation](https://vulkan.lunarg.com/doc/sdk/latest/windows/profiles_definitions.html).
+The `VP_LUNARG_desktop_portability_2021` profile we use for this sample enables many more features and extensions. You can find a comparison table for the profiles in [LunarG's SDK documentation](https://vulkan.lunarg.com/doc/sdk/latest/windows/profiles_definitions.html).

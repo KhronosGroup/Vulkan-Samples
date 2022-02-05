@@ -29,7 +29,7 @@
 // The Vulkan Profiles library is part of the SDK and has been copied to the sample's folder for convenience
 #include "vulkan_profiles.hpp"
 
-// @todo: comment
+// This sample uses the VP_LUNARG_desktop_portability_2021 profile that defines feature sets for common desktop platforms with drivers supporting Vulkan 1.1 on Windows and Linux
 #define PROFILE_NAME VP_LUNARG_DESKTOP_PORTABILITY_2021_NAME
 #define PROFILE_SPEC_VERSION VP_LUNARG_DESKTOP_PORTABILITY_2021_SPEC_VERSION
 
@@ -58,7 +58,7 @@ void Profiles::generate_textures()
 	// Generate random textures to be sourced from a single descriptor
 
 	// Image info is same for all textures
-	const int32_t dim = 4;
+	const int32_t dim = 2;
 
 	VkImageCreateInfo image_info = vkb::initializers::image_create_info();
 	image_info.format            = VK_FORMAT_R8G8B8A8_UNORM;
@@ -141,7 +141,6 @@ void Profiles::generate_textures()
 
 		VK_CHECK(cmd.end());
 
-		// Not very optimal, but it's the simplest solution.
 		get_device().get_suitable_graphics_queue().submit(cmd, VK_NULL_HANDLE);
 		get_device().get_suitable_graphics_queue().wait_idle();
 	}
@@ -177,44 +176,44 @@ void Profiles::generate_cubes()
 	const uint32_t count = 6;
 	for (uint32_t i = 0; i < count; i++)
 	{
-		// Get random per-Face texture indices that the shader will sample from
-		int32_t textureIndices[6];
-		for (uint32_t j = 0; j < 6; j++)
-		{
-			textureIndices[j] = rndDist(rndEngine);
-		}
+		// Get a random texture indice that the shader will sample from via the vertex attribute
+		const auto texture_index = [&rndDist, &rndEngine]() {
+			return rndDist(rndEngine);
+		};
+
 		// Push vertices to buffer
-		float                              pos  = 2.5f * i - (count * 2.5f / 2.0f);
+		float pos = 2.5f * i - (count * 2.5f / 2.0f);
+
 		const std::vector<VertexStructure> cube = {
-		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 0.0f}, textureIndices[0]},
-		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, textureIndices[0]},
-		    {{1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, textureIndices[0]},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {0.0f, 1.0f}, textureIndices[0]},
+		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, textureIndices[1]},
-		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 0.0f}, textureIndices[1]},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 1.0f}, textureIndices[1]},
-		    {{1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, textureIndices[1]},
+		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, textureIndices[2]},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, textureIndices[2]},
-		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, textureIndices[2]},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, textureIndices[2]},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, textureIndices[3]},
-		    {{-1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, textureIndices[3]},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, textureIndices[3]},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, textureIndices[3]},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, textureIndices[4]},
-		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 0.0f}, textureIndices[4]},
-		    {{-1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, textureIndices[4]},
-		    {{1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, textureIndices[4]},
+		    {{1.0f + pos, 1.0f, 1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, 1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{-1.0f + pos, 1.0f, -1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{1.0f + pos, 1.0f, -1.0f}, {0.0f, 1.0f}, texture_index()},
 
-		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, textureIndices[5]},
-		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, textureIndices[5]},
-		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 1.0f}, textureIndices[5]},
-		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, textureIndices[5]},
+		    {{-1.0f + pos, -1.0f, -1.0f}, {0.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, -1.0f}, {1.0f, 0.0f}, texture_index()},
+		    {{1.0f + pos, -1.0f, 1.0f}, {1.0f, 1.0f}, texture_index()},
+		    {{-1.0f + pos, -1.0f, 1.0f}, {0.0f, 1.0f}, texture_index()},
 		};
 		for (auto &vertex : cube)
 		{
@@ -610,7 +609,6 @@ void Profiles::create_device()
 		}
 	}
 
-	// @todo: comment
 	VkDeviceCreateInfo create_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 	create_info.pNext                = gpu.get_extension_feature_chain();
 	create_info.pQueueCreateInfos    = &queue_create_info;
@@ -639,7 +637,7 @@ void Profiles::create_device()
 		throw vkb::VulkanException{result, "Could not create device with the selected profile. The device may not support all features required by this profile!"};
 	}
 
-	// @todo: comment
+	// Post device setup required for the framework
 	device = std::make_unique<vkb::Device>(gpu, vulkan_device, surface);
 	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true, 0);
 	device->prepare_memory_allocator();
@@ -648,7 +646,7 @@ void Profiles::create_device()
 }
 
 // This sample overrides the instance creation part of the framework
-// Instead of manually setting up all properties  we use the Vulkan Profiles library to simplify device setup
+// Instead of manually setting up all properties we use the Vulkan Profiles library to simplify instance setup
 void Profiles::create_instance()
 {
 	// Initialize Volk Vulkan Loader
@@ -668,20 +666,20 @@ void Profiles::create_instance()
 		throw std::runtime_error{"The selected profile is not supported (error at creating the instance)!"};
 	}
 
-	// @todo
+	// Even when using profiles we still need to provide the platform sepcific surface extension
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	enabled_extensions.push_back(platform->get_surface_extension());
-	// @todo
-	enabled_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 
 	VkInstanceCreateInfo create_info{};
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
-	// Note: don't set application info
+	// Note: We don't explicitly set an application infor here so the one from the profile is used
+	// This also defines the api version to be used
 
-	// Create the device using the profile tool library
+	// Create the instance using the profile tool library
+	// We set VP_INSTANCE_CREATE_MERGE_EXTENSIONS_BIT so the extensions defined in the profile will be merged with the extensions we specified manually
 	VpInstanceCreateInfo instance_create_info{};
 	instance_create_info.pProfile    = &profile_properties;
 	instance_create_info.pCreateInfo = &create_info;
