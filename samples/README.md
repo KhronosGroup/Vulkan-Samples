@@ -25,6 +25,7 @@
 - [Performance samples](#performance-samples)
 - [API Samples](#api-samples)
 - [Extension Samples](#extension-samples)
+- [Tooling Samples](#tooling-samples)
 
 ## Introduction
 
@@ -219,3 +220,10 @@ sample rate map as a base for the next frame.
 <br/>
 Render a simple scene showing the basics of ray tracing, including reflection and shadow rays. The sample creates some geometries and create a bottom acceleration structure for each, then make instances of those, using different materials and placing them at different locations.
 <br/>
+
+## Tooling Samples
+
+The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
+
+### [Profiles Library](./tooling/profiles)
+Use the [Vulkan Profiles library](https://github.com/KhronosGroup/Vulkan-Profiles) to simplify instance and device setup. The library defines a common baseline of features, extensions, etc.
