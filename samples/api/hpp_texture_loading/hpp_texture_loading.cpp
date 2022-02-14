@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -243,7 +243,7 @@ void HPPTextureLoading::load_texture()
 		vk::Image mappable_image        = get_device().get_handle().createImage(image_create_info);
 
 		// Get memory requirements for this image like size and alignment
-		VkMemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(mappable_image);
+		vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(mappable_image);
 		// Set memory allocation size to required memory size
 		vk::MemoryAllocateInfo memory_allocate_info(
 		    memory_requirements.size,
