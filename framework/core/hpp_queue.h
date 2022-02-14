@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,7 +40,7 @@ class HPPQueue : protected vkb::Queue
 
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(present_infos));
+		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
 	}
 
 	vk::Result wait_idle() const
