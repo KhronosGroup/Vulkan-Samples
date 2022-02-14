@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -428,7 +428,7 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
 		{
-			if (!graphs::generate_all(get_render_context(), *scene.get()))
+			if (!graphs::generate_all(get_render_context(), *scene))
 			{
 				LOGE("Failed to save Graphs");
 			}
@@ -492,7 +492,7 @@ void VulkanSample::update_debug_window()
 	}
 }
 
-void VulkanSample::set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent) const
+void VulkanSample::set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent)
 {
 	VkViewport viewport{};
 	viewport.width    = static_cast<float>(extent.width);
@@ -562,7 +562,7 @@ void VulkanSample::set_api_version(uint32_t requested_api_version)
 
 void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
 {
-	// To be overriden by sample
+	// To be overridden by sample
 }
 
 sg::Scene &VulkanSample::get_scene()

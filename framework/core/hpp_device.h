@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include <core/device.h>
 
+#include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
 #include <core/hpp_queue.h>
 #include <vulkan/vulkan.hpp>
@@ -35,7 +36,18 @@ namespace core
 class HPPDevice : protected vkb::Device
 {
   public:
+	using vkb::Device::get_driver_version;
 	using vkb::Device::get_memory_allocator;
+
+	HPPDevice(vkb::core::HPPPhysicalDevice &              gpu,
+	          vk::SurfaceKHR                              surface,
+	          std::unique_ptr<vkb::core::HPPDebugUtils> &&debug_utils,
+	          std::unordered_map<const char *, bool>      requested_extensions = {}) :
+	    vkb::Device(reinterpret_cast<vkb::PhysicalDevice &>(gpu),
+	                static_cast<VkSurfaceKHR>(surface),
+	                std::unique_ptr<vkb::DebugUtils>(reinterpret_cast<vkb::DebugUtils *>(debug_utils.release())),
+	                std::move(requested_extensions))
+	{}
 
 	vk::CommandBuffer create_command_buffer(vk::CommandBufferLevel level, bool begin = false) const
 	{

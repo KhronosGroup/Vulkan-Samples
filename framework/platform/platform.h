@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,7 +106,7 @@ class Platform
 
 	virtual void input_event(const InputEvent &input_event);
 
-	Window &get_window() const;
+	Window &get_window();
 
 	Application &get_app() const;
 
@@ -140,7 +140,7 @@ class Platform
 
 	void set_window_properties(const Window::OptionalProperties &properties);
 
-	void on_post_draw(RenderContext &context) const;
+	void on_post_draw(RenderContext &context);
 
 	static const uint32_t MIN_WINDOW_WIDTH;
 	static const uint32_t MIN_WINDOW_HEIGHT;

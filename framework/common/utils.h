@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,6 +49,7 @@ class CommandBuffer;
 
 /**
  * @brief Takes a screenshot of the app by writing the swapchain image to file (slow function)
+ * @param render_context The RenderContext to use
  * @param filename The name of the file to save the output to
  */
 void screenshot(RenderContext &render_context, const std::string &filename);

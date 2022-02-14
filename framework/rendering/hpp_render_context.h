@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,11 @@
 
 #pragma once
 
-#include <core/hpp_swapchain.h>
 #include <rendering/render_context.h>
+
+#include <core/hpp_command_buffer.h>
+#include <core/hpp_swapchain.h>
+#include <rendering/hpp_render_frame.h>
 
 namespace vkb
 {
@@ -35,6 +38,17 @@ class HPPRenderContext : protected vkb::RenderContext
 	using vkb::RenderContext::get_render_frames;
 	using vkb::RenderContext::handle_surface_changes;
 	using vkb::RenderContext::has_swapchain;
+	using vkb::RenderContext::prepare;
+
+	vkb::core::HPPCommandBuffer &begin(vkb::CommandBuffer::ResetMode reset_mode = vkb::CommandBuffer::ResetMode::ResetPool)
+	{
+		return reinterpret_cast<vkb::core::HPPCommandBuffer &>(vkb::RenderContext::begin(reset_mode));
+	}
+
+	vkb::rendering::HPPRenderFrame &get_active_frame()
+	{
+		return reinterpret_cast<vkb::rendering::HPPRenderFrame &>(vkb::RenderContext::get_active_frame());
+	}
 
 	vk::Format get_format() const
 	{
@@ -49,6 +63,11 @@ class HPPRenderContext : protected vkb::RenderContext
 	vkb::core::HPPSwapchain const &get_swapchain() const
 	{
 		return reinterpret_cast<vkb::core::HPPSwapchain const &>(vkb::RenderContext::get_swapchain());
+	}
+
+	void submit(vkb::core::HPPCommandBuffer &command_buffer)
+	{
+		vkb::RenderContext::submit(reinterpret_cast<vkb::CommandBuffer &>(command_buffer));
 	}
 
 	void update_swapchain(const std::set<vk::ImageUsageFlagBits> &image_usage_flags)
