@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,6 +22,7 @@
 #pragma once
 
 #include <hpp_api_vulkan_sample.h>
+
 #include <ktx.h>
 
 // Vertex layout for this example
@@ -84,7 +85,7 @@ class HPPTextureLoading : public HPPApiVulkanSample
 	bool         prepare(vkb::platform::HPPPlatform &platform) override;
 	virtual void render(float delta_time) override;
 	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_texture_loading();

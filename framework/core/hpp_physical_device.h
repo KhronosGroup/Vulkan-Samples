@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,6 +32,8 @@ namespace core
 class HPPPhysicalDevice : protected vkb::PhysicalDevice
 {
   public:
+	using vkb::PhysicalDevice::set_high_priority_graphics_queue_enable;
+
 	vk::PhysicalDeviceFeatures const &get_features() const
 	{
 		return *reinterpret_cast<vk::PhysicalDeviceFeatures const *>(&vkb::PhysicalDevice::get_features());

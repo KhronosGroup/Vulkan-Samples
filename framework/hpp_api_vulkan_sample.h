@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 #include <hpp_vulkan_sample.h>
 
 #include <camera.h>
+#include <hpp_gui.h>
+#include <platform/hpp_platform.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
 
@@ -65,13 +67,13 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	virtual ~HPPApiVulkanSample();
 
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(vkb::platform::HPPPlatform &platform) override;
 
-	virtual void input_event(const vkb::InputEvent &input_event) override;
+	void input_event(const vkb::InputEvent &input_event) override;
 
-	virtual void update(float delta_time) override;
+	void update(float delta_time) override;
 
-	virtual bool resize(const uint32_t width, const uint32_t height) override;
+	bool resize(const uint32_t width, const uint32_t height) override;
 
 	virtual void render(float delta_time) = 0;
 
@@ -84,8 +86,8 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<HPPSwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::Platform &platform) override;
-	virtual void prepare_render_context() override;
+	void create_render_context(vkb::platform::HPPPlatform const &platform) override;
+	void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
 	vk::Queue queue;
@@ -298,7 +300,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
    * @brief Called when the UI overlay is updating, can be used to add custom elements to the overlay
    * @param drawer The drawer from the gui to draw certain elements
    */
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
+	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */
