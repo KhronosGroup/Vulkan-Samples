@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -98,7 +98,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 		for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 		{
-			update_uniform(command_buffer, *node_it->second.first);
+			update_uniform(command_buffer, *node_it->second.first, thread_index);
 
 			// Invert the front face if the mesh was flipped
 			const auto &scale      = node_it->second.first->get_transform().get_scale();
@@ -132,7 +132,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 		for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
 		{
-			update_uniform(command_buffer, *node_it->second.first);
+			update_uniform(command_buffer, *node_it->second.first, thread_index);
 
 			draw_submesh(command_buffer, *node_it->second.second);
 		}
