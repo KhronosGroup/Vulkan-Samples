@@ -28,19 +28,37 @@ namespace core
  *
  * See vkb::Queue for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPQueue : private vkb::Queue
 {
   public:
 	using vkb::Queue::get_family_index;
+
+	HPPQueue(vkb::core::HPPDevice &device, uint32_t family_index, vk::QueueFamilyProperties properties, vk::Bool32 can_present, uint32_t index) :
+	    vkb::Queue(reinterpret_cast<vkb::Device &>(device),
+	               family_index,
+	               static_cast<VkQueueFamilyProperties>(properties),
+	               static_cast<VkBool32>(can_present),
+	               index)
+	{}
 
 	vk::Queue get_handle() const
 	{
 		return vkb::Queue::get_handle();
 	}
 
+	vk::QueueFamilyProperties const &get_properties() const
+	{
+		return reinterpret_cast<vk::QueueFamilyProperties const &>(vkb::Queue::get_properties());
+	}
+
 	vk::Result present(const vk::PresentInfoKHR &present_infos) const
 	{
 		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
+	}
+
+	vk::Bool32 support_present() const
+	{
+		return static_cast<vk::Bool32>(vkb::Queue::support_present());
 	}
 
 	vk::Result wait_idle() const

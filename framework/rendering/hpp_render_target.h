@@ -28,7 +28,7 @@ namespace rendering
  *
  * See vkb::RenderTarget for documentation
  */
-class HPPRenderTarget : protected vkb::RenderTarget
+class HPPRenderTarget : private vkb::RenderTarget
 {
   public:
 	const vk::Extent2D &get_extent() const

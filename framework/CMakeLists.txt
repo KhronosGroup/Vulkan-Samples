@@ -39,8 +39,10 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
+    hpp_fence_pool.h
     hpp_gltf_loader.h
     hpp_gui.h
+    hpp_resource_cache.h
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
@@ -75,6 +77,7 @@ set(COMMON_FILES
     common/utils.h
     common/strings.h
     common/tags.h
+    common/hpp_error.h
     common/hpp_strings.h
     common/hpp_utils.h
     common/hpp_vk_common.h
@@ -235,6 +238,7 @@ set(CORE_FILES
     core/shader_binding_table.h
     core/hpp_buffer.h
     core/hpp_command_buffer.h
+    core/hpp_command_pool.h
     core/hpp_debug.h
     core/hpp_device.h
     core/hpp_image.h
@@ -243,6 +247,7 @@ set(CORE_FILES
     core/hpp_physical_device.h
     core/hpp_queue.h
     core/hpp_swapchain.h
+    core/hpp_vulkan_resource.h
     core/vulkan_resource.h
     # Source Files
     core/instance.cpp
@@ -272,7 +277,8 @@ set(CORE_FILES
     core/scratch_buffer.cpp
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
-    core/vulkan_resource.cpp)
+    core/vulkan_resource.cpp
+    core/hpp_device.cpp)
 
 set(PLATFORM_FILES
     # Header Files

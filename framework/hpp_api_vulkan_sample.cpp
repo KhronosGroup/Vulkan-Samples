@@ -115,7 +115,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	prepared = false;
 
 	// Ensure all operations on the device have been finished before destroying resources
-	get_device().wait_idle();
+	get_device().get_handle().waitIdle();
 
 	create_swapchain_buffers();
 
@@ -142,7 +142,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	create_command_buffers();
 	build_command_buffers();
 
-	get_device().wait_idle();
+	get_device().get_handle().waitIdle();
 
 	if (extent.width && extent.height)
 	{
@@ -517,7 +517,7 @@ HPPApiVulkanSample::~HPPApiVulkanSample()
 {
 	if (get_device().get_handle())
 	{
-		get_device().wait_idle();
+		get_device().get_handle().waitIdle();
 
 		// Clean up Vulkan resources
 		get_device().get_handle().destroyDescriptorPool(descriptor_pool);
@@ -595,7 +595,7 @@ void HPPApiVulkanSample::setup_depth_stencil()
 	depth_stencil.image            = get_device().get_handle().createImage(image_create_info);
 	vk::MemoryRequirements memReqs = get_device().get_handle().getImageMemoryRequirements(depth_stencil.image);
 
-	vk::MemoryAllocateInfo memory_allocation(memReqs.size, get_device().get_memory_type(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	vk::MemoryAllocateInfo memory_allocation(memReqs.size, get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
 	depth_stencil.mem = get_device().get_handle().allocateMemory(memory_allocation);
 	get_device().get_handle().bindImageMemory(depth_stencil.image, depth_stencil.mem, 0);
 

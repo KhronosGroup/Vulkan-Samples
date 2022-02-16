@@ -23,7 +23,7 @@
 
 namespace vkb
 {
-class HPPDrawer : protected vkb::Drawer
+class HPPDrawer : private vkb::Drawer
 {
   public:
 	using vkb::Drawer::checkbox;
@@ -40,7 +40,7 @@ class HPPDrawer : protected vkb::Drawer
  *
  * See vkb::Gui for documentation
  */
-class HPPGui : protected vkb::Gui
+class HPPGui : private vkb::Gui
 {
   public:
 	using vkb::Gui::get_drawer;

@@ -28,7 +28,7 @@ namespace stats
  *
  * See vkb::Stats for documentation
  */
-class HPPStats : protected vkb::Stats
+class HPPStats : private vkb::Stats
 {
   public:
 	using vkb::Stats::resize;

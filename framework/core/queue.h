@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,7 +47,7 @@ class Queue
 
 	uint32_t get_index() const;
 
-	VkQueueFamilyProperties get_properties() const;
+	const VkQueueFamilyProperties &get_properties() const;
 
 	VkBool32 support_present() const;
 
