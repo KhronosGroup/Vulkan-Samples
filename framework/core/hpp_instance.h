@@ -25,12 +25,14 @@ namespace vkb
 {
 namespace core
 {
+class HPPPhysicalDevice;
+
 /**
  * @brief facade class around vkb::Instance, providing a vulkan.hpp-based interface
  *
  * See vkb::Instance for documentation
  */
-class HPPInstance : protected vkb::Instance
+class HPPInstance : private vkb::Instance
 {
   public:
 	using vkb::Instance::is_enabled;

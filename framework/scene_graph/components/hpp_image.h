@@ -33,7 +33,7 @@ namespace components
  *
  * See vkb::sb::Image for documentation
  */
-class HPPImage : protected vkb::sg::Image
+class HPPImage : private vkb::sg::Image
 {
   public:
 	using vkb::sg::Image::get_data;

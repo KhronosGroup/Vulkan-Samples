@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,29 +17,32 @@
 
 #pragma once
 
-#include <core/image_view.h>
+#include <fence_pool.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
+class HPPDevice;
+}
+
 /**
- * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::FencePool, providing a vulkan.hpp-based interface
  *
- * See vkb::core::ImageView for documentation
+ * See vkb::FencePool for documentation
  */
-class HPPImageView : private vkb::core::ImageView
+class HPPFencePool : private vkb::FencePool
 {
   public:
-	vk::Format get_format() const
-	{
-		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
-	}
+	HPPFencePool(vkb::core::HPPDevice &device) :
+	    vkb::FencePool(reinterpret_cast<vkb::Device &>(device))
+	{}
 
-	vk::ImageView get_handle() const
+	vk::Fence request_fence()
 	{
-		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
+		return static_cast<vk::Fence>(vkb::FencePool::request_fence());
 	}
 };
-}        // namespace core
+
 }        // namespace vkb

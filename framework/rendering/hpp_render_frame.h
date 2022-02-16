@@ -30,7 +30,7 @@ namespace rendering
  *
  * See vkb::RenderFrame for documentation
  */
-class HPPRenderFrame : protected vkb::RenderFrame
+class HPPRenderFrame : private vkb::RenderFrame
 {
   public:
 	vkb::rendering::HPPRenderTarget &get_render_target()

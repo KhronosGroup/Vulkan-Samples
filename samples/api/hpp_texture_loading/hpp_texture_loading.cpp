@@ -122,7 +122,7 @@ void HPPTextureLoading::load_texture()
 		vk::MemoryAllocateInfo memory_allocate_info(
 		    memory_requirements.size,
 		    // Get memory type index for a host visible buffer
-		    get_device().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
 		vk::DeviceMemory staging_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
 		get_device().get_handle().bindBufferMemory(staging_buffer, staging_memory, 0);
 
@@ -166,7 +166,7 @@ void HPPTextureLoading::load_texture()
 
 		memory_requirements   = get_device().get_handle().getImageMemoryRequirements(texture.image);
 		memory_allocate_info  = {memory_requirements.size,
-                                get_device().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
+                                get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
 		texture.device_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
 		VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
 
@@ -248,7 +248,7 @@ void HPPTextureLoading::load_texture()
 		vk::MemoryAllocateInfo memory_allocate_info(
 		    memory_requirements.size,
 		    // Get memory type that can be mapped to host memory
-		    get_device().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
 		vk::DeviceMemory mappable_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
 		get_device().get_handle().bindImageMemory(mappable_image, mappable_memory, 0);
 

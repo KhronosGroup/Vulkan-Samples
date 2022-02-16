@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,29 +17,28 @@
 
 #pragma once
 
-#include <core/image_view.h>
+#include <resource_cache.h>
 
 namespace vkb
 {
 namespace core
 {
+class HPPDevice;
+}
+
 /**
- * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::ResourceCache, providing a vulkan.hpp-based interface
  *
- * See vkb::core::ImageView for documentation
+ * See vkb::ResourceCache for documentation
  */
-class HPPImageView : private vkb::core::ImageView
+class HPPResourceCache : private vkb::ResourceCache
 {
   public:
-	vk::Format get_format() const
-	{
-		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
-	}
+	using vkb::ResourceCache::clear;
 
-	vk::ImageView get_handle() const
-	{
-		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
-	}
+	HPPResourceCache(vkb::core::HPPDevice &device) :
+	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))
+	{}
 };
-}        // namespace core
+
 }        // namespace vkb

@@ -32,7 +32,7 @@ namespace rendering
  *
  * See vkb::RenderContext for documentation
  */
-class HPPRenderContext : protected vkb::RenderContext
+class HPPRenderContext : private vkb::RenderContext
 {
   public:
 	using vkb::RenderContext::get_render_frames;

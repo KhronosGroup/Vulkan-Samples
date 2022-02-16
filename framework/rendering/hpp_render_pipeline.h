@@ -28,7 +28,7 @@ namespace rendering
  *
  * See vkb::RenderPipeline for documentation
  */
-class HPPRenderPipeline : protected vkb::RenderPipeline
+class HPPRenderPipeline : private vkb::RenderPipeline
 {
   public:
 	void draw(vkb::core::HPPCommandBuffer &    command_buffer,

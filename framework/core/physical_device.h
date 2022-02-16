@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,7 +53,7 @@ class PhysicalDevice
 
 	const VkPhysicalDeviceProperties &get_properties() const;
 
-	const VkPhysicalDeviceMemoryProperties get_memory_properties() const;
+	const VkPhysicalDeviceMemoryProperties &get_memory_properties() const;
 
 	const std::vector<VkQueueFamilyProperties> &get_queue_family_properties() const;
 
