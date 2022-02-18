@@ -17,36 +17,29 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <rendering/render_target.h>
 
 namespace vkb
 {
-namespace core
+namespace rendering
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::RenderTarget, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::RenderTarget for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPRenderTarget : protected vkb::RenderTarget
 {
   public:
-	using vkb::Queue::get_family_index;
-
-	vk::Queue get_handle() const
+	const vk::Extent2D &get_extent() const
 	{
-		return vkb::Queue::get_handle();
+		return reinterpret_cast<vk::Extent2D const &>(vkb::RenderTarget::get_extent());
 	}
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
+	std::vector<vkb::core::HPPImageView> const &get_views() const
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		return reinterpret_cast<std::vector<vkb::core::HPPImageView> const &>(vkb::RenderTarget::get_views());
 	}
 };
-}        // namespace core
+}        // namespace rendering
 }        // namespace vkb

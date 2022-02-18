@@ -17,36 +17,29 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <common/utils.h>
 
+#include <rendering/hpp_render_context.h>
+
+/**
+ * @brief facade helper functions around the functions in common/utils.h, providing a vulkan.hpp-based interface
+ */
 namespace vkb
 {
-namespace core
+namespace common
 {
-/**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
- *
- * See vkb::Queue for documentation
- */
-class HPPQueue : protected vkb::Queue
+void screenshot(vkb::rendering::HPPRenderContext &render_context, const std::string &filename)
 {
-  public:
-	using vkb::Queue::get_family_index;
+	vkb::screenshot(reinterpret_cast<vkb::RenderContext &>(render_context), filename);
+}
 
-	vk::Queue get_handle() const
-	{
-		return vkb::Queue::get_handle();
-	}
+namespace graphs
+{
+bool generate_all(vkb::rendering::HPPRenderContext &context, sg::Scene &scene)
+{
+	return vkb::graphs::generate_all(reinterpret_cast<vkb::RenderContext &>(context), scene);
+}
+}        // namespace graphs
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
-	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
-	}
-};
-}        // namespace core
+}        // namespace common
 }        // namespace vkb

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -455,7 +455,7 @@ void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout
 	                       buffer.get_handle(), to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
+void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const
 {
 	// Adjust barrier's subresource range for depth images
 	auto subresource_range = image_view.get_subresource_range();

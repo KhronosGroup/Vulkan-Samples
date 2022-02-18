@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2022, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -40,6 +40,7 @@ set(FRAMEWORK_FILES
     camera.h
     hpp_api_vulkan_sample.h
     hpp_gltf_loader.h
+    hpp_gui.h
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
@@ -59,7 +60,8 @@ set(FRAMEWORK_FILES
     api_vulkan_sample.cpp
     timer.cpp
     camera.cpp
-    hpp_api_vulkan_sample.cpp)
+    hpp_api_vulkan_sample.cpp
+	hpp_vulkan_sample.cpp)
 
 set(COMMON_FILES
     # Header Files
@@ -73,6 +75,8 @@ set(COMMON_FILES
     common/utils.h
     common/strings.h
     common/tags.h
+    common/hpp_strings.h
+    common/hpp_utils.h
     common/hpp_vk_common.h
     # Source Files
     common/error.cpp
@@ -99,6 +103,9 @@ set(RENDERING_FILES
     rendering/render_target.h
     rendering/subpass.h
     rendering/hpp_render_context.h
+    rendering/hpp_render_frame.h
+    rendering/hpp_render_pipeline.h
+    rendering/hpp_render_target.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
@@ -189,6 +196,7 @@ set(STATS_FILES
     stats/frame_time_stats_provider.h
     stats/hwcpipe_stats_provider.h
     stats/vulkan_stats_provider.h
+    stats/hpp_stats.h
 
     # Source Files
     stats/stats.cpp
@@ -226,8 +234,11 @@ set(CORE_FILES
     core/acceleration_structure.h
     core/shader_binding_table.h
     core/hpp_buffer.h
+    core/hpp_command_buffer.h
+    core/hpp_debug.h
     core/hpp_device.h
     core/hpp_image.h
+    core/hpp_image_view.h
     core/hpp_instance.h
     core/hpp_physical_device.h
     core/hpp_queue.h
@@ -276,7 +287,9 @@ set(PLATFORM_FILES
     platform/headless_window.h
     platform/plugins/plugin.h
     platform/plugins/plugin_base.h
+    platform/hpp_application.h
     platform/hpp_platform.h
+    platform/hpp_window.h
 
     # Source Files
     platform/headless_window.cpp

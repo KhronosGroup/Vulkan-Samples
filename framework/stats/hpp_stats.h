@@ -17,36 +17,37 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <stats/stats.h>
 
 namespace vkb
 {
-namespace core
+namespace stats
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::Stats, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::Stats for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPStats : protected vkb::Stats
 {
   public:
-	using vkb::Queue::get_family_index;
+	using vkb::Stats::resize;
+	using vkb::Stats::update;
 
-	vk::Queue get_handle() const
+	explicit HPPStats(vkb::rendering::HPPRenderContext &render_context, size_t buffer_size = 16) :
+	    vkb::Stats(reinterpret_cast<vkb::RenderContext &>(render_context), buffer_size)
+	{}
+
+	void begin_sampling(vkb::core::HPPCommandBuffer &cb)
 	{
-		return vkb::Queue::get_handle();
+		vkb::Stats::begin_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
 	}
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
+	void end_sampling(vkb::core::HPPCommandBuffer &cb)
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		vkb::Stats::end_sampling(reinterpret_cast<vkb::CommandBuffer &>(cb));
 	}
 };
-}        // namespace core
+
+}        // namespace stats
 }        // namespace vkb

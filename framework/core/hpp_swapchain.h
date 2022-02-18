@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,6 +34,11 @@ class HPPSwapchain : protected vkb::Swapchain
 	vk::Result acquire_next_image(uint32_t &image_index, vk::Semaphore image_acquired_semaphore, vk::Fence fence = nullptr) const
 	{
 		return static_cast<vk::Result>(vkb::Swapchain::acquire_next_image(image_index, image_acquired_semaphore, fence));
+	}
+
+	const vk::Extent2D &get_extent() const
+	{
+		return reinterpret_cast<vk::Extent2D const &>(vkb::Swapchain::get_extent());
 	}
 
 	vk::Format get_format() const

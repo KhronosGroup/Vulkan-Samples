@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2020-2021, Broadcom Inc.
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2020-2022, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@
 namespace vkb
 {
 /**
- * @brief Handles of stats to be optionally enabled in @ref Stats
+ * @brief Handles of stats to be optionally enabled in @ref vkb::Stats
  */
 enum class StatIndex
 {

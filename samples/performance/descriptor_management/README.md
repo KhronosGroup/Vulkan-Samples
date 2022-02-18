@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -72,7 +72,7 @@ This system is reasonably easy to implement for a static scene, but it becomes h
 This may correspond to calling [vkFreeDescriptorSets()](https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkFreeDescriptorSets.html), but this solution poses another issue: in order to free individual descriptor sets the pool has to be created with the `VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT` flag.
 Mobile implementations may use a simpler allocator if that flag is not set, relying on the fact that pool memory will only be recycled in block.
 
-It is possible to avoid using that flag by updating descriptor sets instead of deleting them. The application can keep track of recycled descriptor sets and re-use one of them when a new one is requested. The [subpasses sample](../subpasses/subpasses_tutorial.md) uses this approach when it re-creates the G-buffer images.
+It is possible to avoid using that flag by updating descriptor sets instead of deleting them. The application can keep track of recycled descriptor sets and re-use one of them when a new one is requested. The [subpasses sample](../subpasses/README.md) uses this approach when it re-creates the G-buffer images.
 
 ## Buffer management
 

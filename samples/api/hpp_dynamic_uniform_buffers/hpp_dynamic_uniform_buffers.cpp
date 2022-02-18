@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,8 +26,9 @@
  * offset used to pass data from the single uniform buffer to the connected shader binding point.
  */
 
-#include <benchmark_mode/benchmark_mode.h>
 #include <hpp_dynamic_uniform_buffers.h>
+
+#include <benchmark_mode/benchmark_mode.h>
 #include <iostream>
 #include <random>
 

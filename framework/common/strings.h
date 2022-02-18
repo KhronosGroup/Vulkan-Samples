@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,14 +53,14 @@ const std::string to_string(VkPresentModeKHR present_mode);
 
 /**
  * @brief Helper function to convert a VkResult enum to a string
- * @param format Vulkan result to convert.
+ * @param result Vulkan result to convert.
  * @return The string to return.
  */
 const std::string to_string(VkResult result);
 
 /**
  * @brief Helper function to convert a VkPhysicalDeviceType enum to a string
- * @param format Vulkan physical device type to convert.
+ * @param type Vulkan physical device type to convert.
  * @return The string to return.
  */
 const std::string to_string(VkPhysicalDeviceType type);
@@ -95,10 +95,10 @@ const std::string to_string(VkImageUsageFlagBits image_usage);
 
 /**
  * @brief Helper function to convert a VkExtent2D flag to a string
- * @param extent Vulkan extent to convert.
+ * @param format Vulkan format to convert.
  * @return The string to return.
  */
-const std::string to_string(VkExtent2D format);
+std::string to_string(VkExtent2D format);
 
 /**
  * @brief Helper function to convert VkSampleCountFlagBits to a string

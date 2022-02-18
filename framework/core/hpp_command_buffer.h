@@ -17,35 +17,34 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <core/command_buffer.h>
+
+#include <common/hpp_vk_common.h>
+#include <core/hpp_image_view.h>
 
 namespace vkb
 {
 namespace core
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::CommandBuffer, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::CommandBuffer for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPCommandBuffer : protected vkb::CommandBuffer
 {
   public:
-	using vkb::Queue::get_family_index;
+	using vkb::CommandBuffer::end_render_pass;
 
-	vk::Queue get_handle() const
+	vk::CommandBuffer get_handle() const
 	{
-		return vkb::Queue::get_handle();
+		return static_cast<vk::CommandBuffer>(vkb::CommandBuffer::get_handle());
 	}
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
+	void image_memory_barrier(const vkb::core::HPPImageView &image_view, const vkb::common::HPPImageMemoryBarrier &memory_barrier) const
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		vkb::CommandBuffer::image_memory_barrier(reinterpret_cast<vkb::core::ImageView const &>(image_view),
+		                                         reinterpret_cast<vkb::ImageMemoryBarrier const &>(memory_barrier));
 	}
 };
 }        // namespace core

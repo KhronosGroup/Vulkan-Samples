@@ -17,36 +17,37 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <platform/application.h>
+
+#include <core/hpp_instance.h>
+#include <platform/hpp_platform.h>
 
 namespace vkb
 {
-namespace core
+namespace platform
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::Application, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::Application for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPApplication : public vkb::Application
 {
   public:
-	using vkb::Queue::get_family_index;
-
-	vk::Queue get_handle() const
+	vkb::platform::HPPPlatform &get_platform()
 	{
-		return vkb::Queue::get_handle();
+		return *reinterpret_cast<vkb::platform::HPPPlatform *>(platform);
 	}
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
+	bool prepare(vkb::Platform &platform) final
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
+		return prepare(reinterpret_cast<vkb::platform::HPPPlatform &>(platform));
 	}
 
-	vk::Result wait_idle() const
+	virtual bool prepare(vkb::platform::HPPPlatform &platform)
 	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		return vkb::Application::prepare(reinterpret_cast<vkb::Platform &>(platform));
 	}
 };
-}        // namespace core
+}        // namespace platform
 }        // namespace vkb

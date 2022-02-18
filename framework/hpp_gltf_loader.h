@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include <core/hpp_device.h>
 #include <gltf_loader.h>
+
+#include <core/hpp_device.h>
+#include <scene_graph/components/hpp_sub_mesh.h>
 
 namespace vkb
 {
@@ -30,6 +32,8 @@ namespace vkb
 class HPPGLTFLoader : protected vkb::GLTFLoader
 {
   public:
+	using vkb::GLTFLoader::read_scene_from_file;
+
 	HPPGLTFLoader(vkb::core::HPPDevice const &device) :
 	    GLTFLoader(reinterpret_cast<vkb::Device const &>(device))
 	{}

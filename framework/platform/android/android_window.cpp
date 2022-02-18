@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,12 @@ AndroidWindow::AndroidWindow(AndroidPlatform *platform, ANativeWindow *&window, 
 
 VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 {
-	if (instance.get_handle() == VK_NULL_HANDLE || !handle || properties.mode == Mode::Headless)
+	return create_surface(instance.get_handle(), VK_NULL_HANDLE);
+}
+
+VkSurfaceKHR AndroidWindow::create_surface(VkInstance instance, VkPhysicalDevice)
+{
+	if (instance == VK_NULL_HANDLE || !handle || properties.mode == Mode::Headless)
 	{
 		return VK_NULL_HANDLE;
 	}
@@ -41,21 +46,9 @@ VkSurfaceKHR AndroidWindow::create_surface(Instance &instance)
 
 	info.window = handle;
 
-	VK_CHECK(vkCreateAndroidSurfaceKHR(instance.get_handle(), &info, nullptr, &surface));
+	VK_CHECK(vkCreateAndroidSurfaceKHR(instance, &info, nullptr, &surface));
 
 	return surface;
-}
-
-vk::SurfaceKHR AndroidWindow::create_surface(vk::Instance instance, vk::PhysicalDevice)
-{
-	if (!instance || !handle || properties.mode == Mode::Headless)
-	{
-		return nullptr;
-	}
-
-	vk::AndroidSurfaceCreateInfoKHR info({}, handle);
-
-	return instance.createAndroidSurfaceKHR(info);
 }
 
 void AndroidWindow::process_events()

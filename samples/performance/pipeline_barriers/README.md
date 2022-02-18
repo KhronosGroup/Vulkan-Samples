@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -115,7 +115,7 @@ The app is fragment-bound, which allows the GPU to fully utilize pipelining.
 The sample sets up deferred rendering with two render passes and uses pipeline barriers to
 synchronize them.
 Note that a deferred rendering implementation using subpasses might be more efficient overall;
-see [the subpasses tutorial](../subpasses/subpasses_tutorial.md) for more detail.
+see [the subpasses tutorial](../subpasses/README.md) for more detail.
 
 The base case is with the most conservative barrier (`BOTTOM_OF_PIPE_BIT` → `TOP_OF_PIPE_BIT`).
 As the graphs show, vertex and fragment work are serialized, as they never happen at the same time.

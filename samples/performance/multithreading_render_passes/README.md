@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2021, Arm Limited and Contributors
+- Copyright (c) 2021-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -47,7 +47,7 @@ One way to use multi-threading with multiple render passes is to create a separa
 
 Another approach is to use secondary level command buffers. First, both of the passes are recorded into two separate secondary command buffers using two threads. Then, we can just reference them in the primary command buffer via ``vkCmdExecuteCommands``.
 
-When using both of these methods for multi-threading, general recommendations should still be taken into account (see [Multi-threaded-recording](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/command_buffer_usage_tutorial.md#Multi-threaded-recording)).
+When using both of these methods for multi-threading, general recommendations should still be taken into account (see [Multi-threaded-recording](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/README.md#Multi-threaded-recording)).
 
 This sample shows the difference between recording both render passes into a single command buffer in one thread and using the methods described above.
 
@@ -81,7 +81,7 @@ And indeed, in debug build, which was used for profiling, frame time is decrease
 
 ## Further reading
 
-[Command buffer usage and multi-threaded recording](../command_buffer_usage/command_buffer_usage_tutorial.md)
+[Command buffer usage and multi-threaded recording](../command_buffer_usage/README.md)
 
 ## Best practice summary
 

@@ -17,36 +17,28 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <rendering/render_pipeline.h>
 
 namespace vkb
 {
-namespace core
+namespace rendering
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::RenderPipeline, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::RenderPipeline for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPRenderPipeline : protected vkb::RenderPipeline
 {
   public:
-	using vkb::Queue::get_family_index;
-
-	vk::Queue get_handle() const
+	void draw(vkb::core::HPPCommandBuffer &    command_buffer,
+	          vkb::rendering::HPPRenderTarget &render_target,
+	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
 	{
-		return vkb::Queue::get_handle();
-	}
-
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
-	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		vkb::RenderPipeline::draw(reinterpret_cast<vkb::CommandBuffer &>(command_buffer),
+		                          reinterpret_cast<vkb::RenderTarget &>(render_target),
+		                          static_cast<VkSubpassContents>(contents));
 	}
 };
-}        // namespace core
+}        // namespace rendering
 }        // namespace vkb

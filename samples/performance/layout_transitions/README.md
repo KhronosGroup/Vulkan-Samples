@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -78,7 +78,7 @@ The sample sets up deferred rendering using two render passes, to show the effec
 G-buffer images from `UNDEFINED` rather than their last known layout.
 
 Note that a deferred rendering implementation using subpasses might be more efficient overall;
-see [the subpasses tutorial](../subpasses/subpasses_tutorial.md) for more detail.
+see [the subpasses tutorial](../subpasses/README.md) for more detail.
 
 The base case is with all color images being transitioned from `UNDEFINED`, as shown in the image below.
 

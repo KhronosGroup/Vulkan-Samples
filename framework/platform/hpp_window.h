@@ -17,36 +17,35 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <platform/window.h>
+
+#include <core/hpp_instance.h>
 
 namespace vkb
 {
-namespace core
+namespace platform
 {
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::Window, providing a vulkan.hpp-based interface
  *
- * See vkb::Queue for documentation
+ * See vkb::Window for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPWindow : protected vkb::Window
 {
   public:
-	using vkb::Queue::get_family_index;
+	using vkb::Window::create_surface;
+	using vkb::Window::get_extent;
+	using vkb::Window::get_window_mode;
 
-	vk::Queue get_handle() const
+	vk::SurfaceKHR create_surface(vkb::core::HPPInstance &instance)
 	{
-		return vkb::Queue::get_handle();
+		return static_cast<vk::SurfaceKHR>(create_surface(reinterpret_cast<vkb::Instance &>(instance)));
 	}
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
+	vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device)
 	{
-		return static_cast<vk::Result>(vkb::Queue::present(reinterpret_cast<VkPresentInfoKHR const &>(present_infos)));
-	}
-
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
+		return static_cast<vk::SurfaceKHR>(create_surface(static_cast<VkInstance>(instance), static_cast<VkPhysicalDevice>(physical_device)));
 	}
 };
-}        // namespace core
+}        // namespace platform
 }        // namespace vkb
