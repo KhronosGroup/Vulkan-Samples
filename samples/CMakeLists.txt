@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2022, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -98,7 +98,8 @@ set(ORDER_LIST
     #HPP API Samples
     "hpp_hello_triangle"
 	"hpp_dynamic_uniform_buffers"
-	"hpp_texture_loading")
+	"hpp_texture_loading"
+	"hpp_hdr")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ namespace components
 /**
  * @brief facade class around vkb::sg::SubMesh, providing a vulkan.hpp-based interface
  *
- * See vkb::sb::SubMeshfor documentation
+ * See vkb::sb::SubMeshfor for documentation
  */
 class HPPSubMesh : protected vkb::sg::SubMesh
 {

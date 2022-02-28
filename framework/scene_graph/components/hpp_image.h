@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,6 +60,11 @@ class HPPImage : protected vkb::sg::Image
 	vkb::core::HPPImage const &get_vk_image() const
 	{
 		return reinterpret_cast<vkb::core::HPPImage const &>(vkb::sg::Image::get_vk_image());
+	}
+
+	vkb::core::HPPImageView const &get_vk_image_view() const
+	{
+		return reinterpret_cast<vkb::core::HPPImageView const &>(vkb::sg::Image::get_vk_image_view());
 	}
 };
 

@@ -25,7 +25,7 @@ HPPTextureLoading::HPPTextureLoading()
 {
 	zoom     = -2.5f;
 	rotation = {0.0f, 15.0f, 0.0f};
-	title    = "Texture loading";
+	title    = "HPP Texture loading";
 }
 
 HPPTextureLoading::~HPPTextureLoading()

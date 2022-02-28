@@ -823,6 +823,20 @@ void HPPApiVulkanSample::handle_surface_changes()
 	}
 }
 
+vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::DescriptorType descriptor_type, vk::Format format) const
+{
+	switch (descriptor_type)
+	{
+		case vk::DescriptorType::eCombinedImageSampler:
+		case vk::DescriptorType::eInputAttachment:
+			return vkb::common::is_depth_stencil_format(format) ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
+		case vk::DescriptorType::eStorageImage:
+			return vk::ImageLayout::eGeneral;
+		default:
+			return vk::ImageLayout::eUndefined;
+	}
+}
+
 HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
 {
 	HPPTexture texture;
