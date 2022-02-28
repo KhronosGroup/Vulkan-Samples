@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2021, Arm Limited and Contributors
+- Copyright (c) 2020-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -118,6 +118,9 @@ A self-contained (minimal use of framework) sample that illustrates the renderin
 
 ### [HPP Dynamic Uniform Buffers](./api/hpp_dynamic_uniform_buffers)<br/>
 A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP High dynamic range](./api/hpp_hdr)<br/>
+A transcoded version of the API sample [High dynamic range](#hdr)that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
 A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.

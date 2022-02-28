@@ -26,8 +26,11 @@ namespace vkb
 class HPPDrawer : protected vkb::Drawer
 {
   public:
+	using vkb::Drawer::checkbox;
 	using vkb::Drawer::clear;
+	using vkb::Drawer::combo_box;
 	using vkb::Drawer::header;
+	using vkb::Drawer::input_float;
 	using vkb::Drawer::is_dirty;
 	using vkb::Drawer::slider_float;
 };

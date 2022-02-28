@@ -155,6 +155,13 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	void handle_surface_changes();
 
 	/**
+	 * @brief Determine a vk::ImageLayout out of a vk::DescriptorType
+	 * @param descriptor_type vk::DescriptorType to translate
+	 * @param format vk::Format to use if descriptor_type is vk::DescriptorType::eCombinedImageSampler or vk::DescriptorType::eInputAttachment
+	 */
+	vk::ImageLayout descriptor_type_to_image_layout(vk::DescriptorType descriptor_type, vk::Format format) const;
+
+	/**
    * @brief Loads in a ktx 2D texture
    * @param file The filename of the texture to load
    */

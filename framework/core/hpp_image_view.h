@@ -30,6 +30,16 @@ namespace core
  */
 class HPPImageView : protected vkb::core::ImageView
 {
+  public:
+	vk::Format get_format() const
+	{
+		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
+	}
+
+	vk::ImageView get_handle() const
+	{
+		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
+	}
 };
 }        // namespace core
 }        // namespace vkb
