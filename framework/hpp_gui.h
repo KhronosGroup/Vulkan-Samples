@@ -33,6 +33,7 @@ class HPPDrawer : private vkb::Drawer
 	using vkb::Drawer::input_float;
 	using vkb::Drawer::is_dirty;
 	using vkb::Drawer::slider_float;
+	using vkb::Drawer::text;
 };
 
 /**

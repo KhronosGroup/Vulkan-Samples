@@ -31,6 +31,8 @@ namespace core
 class HPPImage : private Image
 {
   public:
+	using Image::get_array_layer_count;
+
 	vk::Image get_handle() const
 	{
 		return Image::get_handle();

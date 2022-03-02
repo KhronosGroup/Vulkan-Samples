@@ -99,7 +99,8 @@ set(ORDER_LIST
     "hpp_hello_triangle"
 	"hpp_dynamic_uniform_buffers"
 	"hpp_texture_loading"
-	"hpp_hdr")
+	"hpp_hdr"
+	"hpp_instancing")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)
