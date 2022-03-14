@@ -32,7 +32,7 @@ namespace platform
  *
  * See vkb::Platform for documentation
  */
-class HPPPlatform : protected vkb::Platform
+class HPPPlatform : private vkb::Platform
 {
   public:
 	using vkb::Platform::get_surface_extension;

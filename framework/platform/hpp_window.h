@@ -30,7 +30,7 @@ namespace platform
  *
  * See vkb::Window for documentation
  */
-class HPPWindow : protected vkb::Window
+class HPPWindow : private vkb::Window
 {
   public:
 	using vkb::Window::create_surface;

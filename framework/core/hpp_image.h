@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ namespace core
  *
  * See vkb::core::Image for documentation
  */
-class HPPImage : protected Image
+class HPPImage : private Image
 {
   public:
 	vk::Image get_handle() const

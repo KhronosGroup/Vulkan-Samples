@@ -31,10 +31,17 @@ namespace core
  *
  * See vkb::CommandBuffer for documentation
  */
-class HPPCommandBuffer : protected vkb::CommandBuffer
+class HPPCommandBuffer : private vkb::CommandBuffer
 {
   public:
 	using vkb::CommandBuffer::end_render_pass;
+
+	enum class ResetMode
+	{
+		ResetPool,
+		ResetIndividually,
+		AlwaysAllocate,
+	};
 
 	vk::CommandBuffer get_handle() const
 	{

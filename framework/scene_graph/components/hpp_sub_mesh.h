@@ -31,7 +31,7 @@ namespace components
  *
  * See vkb::sb::SubMeshfor for documentation
  */
-class HPPSubMesh : protected vkb::sg::SubMesh
+class HPPSubMesh : private vkb::sg::SubMesh
 {
   public:
 	using vkb::sg::SubMesh::vertex_indices;
