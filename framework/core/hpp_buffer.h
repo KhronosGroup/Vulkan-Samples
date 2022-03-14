@@ -25,12 +25,14 @@ namespace vkb
 {
 namespace core
 {
+class HPPDevice;
+
 /**
  * @brief facade class around vkb::core::Buffer, providing a vulkan.hpp-based interface
  *
  * See vkb::core::Buffer for documentation
  */
-class HPPBuffer : protected vkb::core::Buffer
+class HPPBuffer : private vkb::core::Buffer
 {
   public:
 	using vkb::core::Buffer::convert_and_update;

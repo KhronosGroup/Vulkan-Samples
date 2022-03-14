@@ -29,7 +29,7 @@ HPPVulkanSample::~HPPVulkanSample()
 {
 	if (device)
 	{
-		device->wait_idle();
+		device->get_handle().waitIdle();
 	}
 
 	scene.reset();
@@ -420,7 +420,7 @@ void HPPVulkanSample::finish()
 
 	if (device)
 	{
-		device->wait_idle();
+		device->get_handle().waitIdle();
 	}
 }
 
@@ -445,7 +445,7 @@ void HPPVulkanSample::draw_gui() const
 
 void HPPVulkanSample::update_debug_window()
 {
-	auto        driver_version     = device->get_driver_version();
+	auto        driver_version     = device->get_gpu().get_driver_version();
 	std::string driver_version_str = fmt::format("major: {} minor: {} patch: {}", driver_version.major, driver_version.minor, driver_version.patch);
 
 	get_debug_info().insert<field::Static, std::string>("driver_version", driver_version_str);

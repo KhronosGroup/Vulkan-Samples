@@ -226,7 +226,7 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 
 	vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(image);
 	vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size,
-	                                            get_device().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	                                            get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
 	vk::DeviceMemory       mem = get_device().get_handle().allocateMemory(memory_allocate_info);
 	get_device().get_handle().bindImageMemory(image, mem, 0);
 

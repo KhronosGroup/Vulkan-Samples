@@ -29,7 +29,7 @@ namespace vkb
  *
  * See vkb::GLTFLoader for documentation
  */
-class HPPGLTFLoader : protected vkb::GLTFLoader
+class HPPGLTFLoader : private vkb::GLTFLoader
 {
   public:
 	using vkb::GLTFLoader::read_scene_from_file;

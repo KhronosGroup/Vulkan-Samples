@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,7 +76,7 @@ const VkPhysicalDeviceProperties &PhysicalDevice::get_properties() const
 	return properties;
 }
 
-const VkPhysicalDeviceMemoryProperties PhysicalDevice::get_memory_properties() const
+const VkPhysicalDeviceMemoryProperties &PhysicalDevice::get_memory_properties() const
 {
 	return memory_properties;
 }

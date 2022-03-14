@@ -28,7 +28,7 @@ namespace core
  *
  * See vkb::Swapchain for documentation
  */
-class HPPSwapchain : protected vkb::Swapchain
+class HPPSwapchain : private vkb::Swapchain
 {
   public:
 	vk::Result acquire_next_image(uint32_t &image_index, vk::Semaphore image_acquired_semaphore, vk::Fence fence = nullptr) const

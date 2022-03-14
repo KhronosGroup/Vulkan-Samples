@@ -29,7 +29,7 @@ namespace core
  *
  * See vkb::DebugUtils for documentation
  */
-class HPPDebugUtils : protected vkb::DebugUtils
+class HPPDebugUtils : private vkb::DebugUtils
 {
   public:
 	void set_debug_name(VkDevice     device,

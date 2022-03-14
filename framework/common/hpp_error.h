@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,29 +17,25 @@
 
 #pragma once
 
-#include <core/image_view.h>
+#include <common/error.h>
+
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
-namespace core
+namespace common
 {
 /**
- * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::VulkanException, providing a vulkan.hpp-based interface
  *
- * See vkb::core::ImageView for documentation
+ * See vkb::VulkanException for documentation
  */
-class HPPImageView : private vkb::core::ImageView
+class HPPVulkanException : private vkb::VulkanException
 {
   public:
-	vk::Format get_format() const
-	{
-		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
-	}
-
-	vk::ImageView get_handle() const
-	{
-		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
-	}
+	HPPVulkanException(vk::Result result, std::string const &msg = "Vulkan error") :
+	    vkb::VulkanException(static_cast<VkResult>(result), msg)
+	{}
 };
-}        // namespace core
+}        // namespace common
 }        // namespace vkb
