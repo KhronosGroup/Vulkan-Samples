@@ -38,7 +38,7 @@ if (!device_extension_supported(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME)) || (
 // See https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_descriptor_indexing.html#_extension_and_version_dependencies
 add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 
-vkCreateDevice(...);
+vkCreateInstance(...);
 
 // Device creation
 
