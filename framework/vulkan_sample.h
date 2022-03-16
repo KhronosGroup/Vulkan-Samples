@@ -112,10 +112,16 @@ class VulkanSample : public Application
 	 */
 	virtual bool prepare(Platform &platform) override;
 
-	// @todo
+	/**
+	 * @brief Create the Vulkan device used by this sample
+	 * @note Can be overridden to implement custom device creation 
+	 */
 	virtual void create_device();
 
-	// @todo
+	/**
+	 * @brief Create the Vulkan instance used by this sample
+	 * @note Can be overridden to implement custom instance creation 
+	 */
 	virtual void create_instance();
 
 	/**

@@ -183,7 +183,6 @@ bool VulkanSample::prepare(Platform &platform)
 		debug_utils = std::make_unique<DummyDebugUtils>();
 	}
 
-	// @todo: add callback for sample
 	create_device();        // create_custom_device? better way than override?
 
 	if (!device)

@@ -407,7 +407,7 @@ const Queue &Device::get_queue_by_present(uint32_t queue_index) const
 	throw std::runtime_error("Queue not found");
 }
 
-void Device::add_queue(size_t global_index, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index)
+void Device::add_queue(size_t global_index, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present)
 {
 	if (queues.size() < global_index + 1)
 	{

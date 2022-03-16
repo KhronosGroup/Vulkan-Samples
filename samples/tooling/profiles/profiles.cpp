@@ -641,7 +641,7 @@ void Profiles::create_device()
 
 	// Post device setup required for the framework
 	device = std::make_unique<vkb::Device>(gpu, vulkan_device, surface);
-	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true, 0);
+	device->add_queue(0, queue_create_info.queueFamilyIndex, queue_family_properties[selected_queue_family], true);
 	device->prepare_memory_allocator();
 	device->create_internal_command_pool();
 	device->create_internal_fence_pool();

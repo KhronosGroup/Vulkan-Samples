@@ -66,7 +66,10 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	       std::unordered_map<const char *, bool> requested_extensions = {});
 
 	/**
-	 * @todo
+	 * @brief Device constructor
+	 * @param gpu A valid Vulkan physical device and the requested gpu features
+	 * @param vulkan_device A valid Vulkan device
+	 * @param surface The surface
 	 */
 	Device(PhysicalDevice &gpu,
 	       VkDevice &      vulkan_device,
@@ -111,9 +114,13 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	const Queue &get_queue_by_present(uint32_t queue_index) const;
 
 	/**
-	 * @todo
+	 * @brief Manually adds a new queue from a given family index to this device
+	 * @param global_index Index at where the queue should be placed inside the already existing list of queues
+	 * @param family_index Index of the queue family from which the queue will be created
+	 * @param properties Vulkan queue family properties
+	 * @param can_present True if the queue is able to present images
 	 */
-	void add_queue(size_t global_index, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present, uint32_t index);
+	void add_queue(size_t global_index, uint32_t family_index, VkQueueFamilyProperties properties, VkBool32 can_present);
 
 	/**
 	 * @brief Finds a suitable graphics queue to submit to
@@ -194,17 +201,17 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	FencePool &get_fence_pool() const;
 
 	/**
-	 * @todo
+	 * @brief Creates the fence pool used by this device
 	 */
 	void create_internal_fence_pool();
 
 	/**
-	 * @todo
+	 * @brief Creates the command pool used by this device
 	 */
 	void create_internal_command_pool();
 
 	/**
-	 * @todo
+	 * @brief Creates and sets up the Vulkan memory allocator
 	 */
 	void prepare_memory_allocator();
 
