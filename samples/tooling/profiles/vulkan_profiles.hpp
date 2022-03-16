@@ -15,7 +15,6 @@
  *
  * DO NOT EDIT: This file is generated.
  */
-/* clang-format off */
 
 #ifndef VULKAN_PROFILES_HPP_
 #define VULKAN_PROFILES_HPP_ 1
@@ -63,7 +62,7 @@
 #define VP_KHR_roadmap_2022 1
 #define VP_KHR_ROADMAP_2022_NAME "VP_KHR_roadmap_2022"
 #define VP_KHR_ROADMAP_2022_SPEC_VERSION 1
-#define VP_KHR_ROADMAP_2022_MIN_API_VERSION VK_MAKE_VERSION(1, 3, 203)
+#define VP_KHR_ROADMAP_2022_MIN_API_VERSION VK_MAKE_VERSION(1, 3, 204)
 #endif
 
 #if defined(VK_VERSION_1_1) && \
@@ -2928,10 +2927,10 @@ static const VkStructureType featureStructTypes[] = {
 };
 
 static const VkStructureType propertyStructTypes[] = {
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_PROPERTIES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_PROPERTIES,
-    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR,
 };
 
 static const VpFeatureDesc featureDesc = {
@@ -3098,6 +3097,38 @@ static const VpFeatureDesc featureDesc = {
 static const VpPropertyDesc propertyDesc = {
     [](VkBaseOutStructure* p) {
             switch (p->sType) {
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR: {
+                    VkPhysicalDeviceProperties2KHR* s = static_cast<VkPhysicalDeviceProperties2KHR*>(static_cast<void*>(p));
+                    s->properties.limits.bufferImageGranularity = 4096;
+                    s->properties.limits.lineWidthGranularity = 0.5;
+                    s->properties.limits.maxColorAttachments = 7;
+                    s->properties.limits.maxComputeWorkGroupInvocations = 256;
+                    s->properties.limits.maxComputeWorkGroupSize[0] = 1024;
+                    s->properties.limits.maxComputeWorkGroupSize[1] = 1024;
+                    s->properties.limits.maxComputeWorkGroupSize[2] = 64;
+                    s->properties.limits.maxDescriptorSetSampledImages = 1800;
+                    s->properties.limits.maxDescriptorSetSamplers = 576;
+                    s->properties.limits.maxDescriptorSetStorageBuffers = 96;
+                    s->properties.limits.maxDescriptorSetStorageImages = 144;
+                    s->properties.limits.maxDescriptorSetUniformBuffers = 90;
+                    s->properties.limits.maxFragmentCombinedOutputResources = 16;
+                    s->properties.limits.maxImageArrayLayers = 2048;
+                    s->properties.limits.maxImageDimension1D = 8192;
+                    s->properties.limits.maxImageDimension2D = 8192;
+                    s->properties.limits.maxImageDimensionCube = 8192;
+                    s->properties.limits.maxPerStageDescriptorSampledImages = 200;
+                    s->properties.limits.maxPerStageDescriptorSamplers = 64;
+                    s->properties.limits.maxPerStageDescriptorStorageBuffers = 30;
+                    s->properties.limits.maxPerStageDescriptorStorageImages = 16;
+                    s->properties.limits.maxPerStageDescriptorUniformBuffers = 15;
+                    s->properties.limits.maxPerStageResources = 200;
+                    s->properties.limits.maxSamplerLodBias = 14;
+                    s->properties.limits.maxUniformBufferRange = 65536;
+                    s->properties.limits.mipmapPrecisionBits = 6;
+                    s->properties.limits.pointSizeGranularity = 0.125;
+                    s->properties.limits.standardSampleLocations = VK_TRUE;
+                    s->properties.limits.subTexelPrecisionBits = 8;
+                } break;
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES: {
                     VkPhysicalDeviceVulkan11Properties* s = static_cast<VkPhysicalDeviceVulkan11Properties*>(static_cast<void*>(p));
                     s->maxMultiviewInstanceIndex = 134217727;
@@ -3137,44 +3168,44 @@ static const VpPropertyDesc propertyDesc = {
                     s->maxPerStageDescriptorInlineUniformBlocks = 4;
                     s->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks = 4;
                 } break;
-                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR: {
-                    VkPhysicalDeviceProperties2KHR* s = static_cast<VkPhysicalDeviceProperties2KHR*>(static_cast<void*>(p));
-                    s->properties.limits.bufferImageGranularity = 4096;
-                    s->properties.limits.lineWidthGranularity = 0.5;
-                    s->properties.limits.maxColorAttachments = 7;
-                    s->properties.limits.maxComputeWorkGroupInvocations = 256;
-                    s->properties.limits.maxComputeWorkGroupSize[0] = 1024;
-                    s->properties.limits.maxComputeWorkGroupSize[1] = 1024;
-                    s->properties.limits.maxComputeWorkGroupSize[2] = 64;
-                    s->properties.limits.maxDescriptorSetSampledImages = 1800;
-                    s->properties.limits.maxDescriptorSetSamplers = 576;
-                    s->properties.limits.maxDescriptorSetStorageBuffers = 96;
-                    s->properties.limits.maxDescriptorSetStorageImages = 144;
-                    s->properties.limits.maxDescriptorSetUniformBuffers = 90;
-                    s->properties.limits.maxFragmentCombinedOutputResources = 16;
-                    s->properties.limits.maxImageArrayLayers = 2048;
-                    s->properties.limits.maxImageDimension1D = 8192;
-                    s->properties.limits.maxImageDimension2D = 8192;
-                    s->properties.limits.maxImageDimensionCube = 8192;
-                    s->properties.limits.maxPerStageDescriptorSampledImages = 200;
-                    s->properties.limits.maxPerStageDescriptorSamplers = 64;
-                    s->properties.limits.maxPerStageDescriptorStorageBuffers = 30;
-                    s->properties.limits.maxPerStageDescriptorStorageImages = 16;
-                    s->properties.limits.maxPerStageDescriptorUniformBuffers = 15;
-                    s->properties.limits.maxPerStageResources = 200;
-                    s->properties.limits.maxSamplerLodBias = 14;
-                    s->properties.limits.maxUniformBufferRange = 65536;
-                    s->properties.limits.mipmapPrecisionBits = 6;
-                    s->properties.limits.pointSizeGranularity = 0.125;
-                    s->properties.limits.standardSampleLocations = VK_TRUE;
-                    s->properties.limits.subTexelPrecisionBits = 8;
-                } break;
                 default: break;
             }
     },
     [](VkBaseOutStructure* p) -> bool {
         bool ret = true;
             switch (p->sType) {
+                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR: {
+                    VkPhysicalDeviceProperties2KHR* s = static_cast<VkPhysicalDeviceProperties2KHR*>(static_cast<void*>(p));
+                    ret = ret && (s->properties.limits.bufferImageGranularity <= 4096);
+                    ret = ret && (s->properties.limits.lineWidthGranularity <= 0.5);
+                    ret = ret && (s->properties.limits.maxColorAttachments >= 7);
+                    ret = ret && (s->properties.limits.maxComputeWorkGroupInvocations >= 256);
+                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[0] >= 1024);
+                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[1] >= 1024);
+                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[2] >= 64);
+                    ret = ret && (s->properties.limits.maxDescriptorSetSampledImages >= 1800);
+                    ret = ret && (s->properties.limits.maxDescriptorSetSamplers >= 576);
+                    ret = ret && (s->properties.limits.maxDescriptorSetStorageBuffers >= 96);
+                    ret = ret && (s->properties.limits.maxDescriptorSetStorageImages >= 144);
+                    ret = ret && (s->properties.limits.maxDescriptorSetUniformBuffers >= 90);
+                    ret = ret && (s->properties.limits.maxFragmentCombinedOutputResources >= 16);
+                    ret = ret && (s->properties.limits.maxImageArrayLayers >= 2048);
+                    ret = ret && (s->properties.limits.maxImageDimension1D >= 8192);
+                    ret = ret && (s->properties.limits.maxImageDimension2D >= 8192);
+                    ret = ret && (s->properties.limits.maxImageDimensionCube >= 8192);
+                    ret = ret && (s->properties.limits.maxPerStageDescriptorSampledImages >= 200);
+                    ret = ret && (s->properties.limits.maxPerStageDescriptorSamplers >= 64);
+                    ret = ret && (s->properties.limits.maxPerStageDescriptorStorageBuffers >= 30);
+                    ret = ret && (s->properties.limits.maxPerStageDescriptorStorageImages >= 16);
+                    ret = ret && (s->properties.limits.maxPerStageDescriptorUniformBuffers >= 15);
+                    ret = ret && (s->properties.limits.maxPerStageResources >= 200);
+                    ret = ret && (s->properties.limits.maxSamplerLodBias >= 14);
+                    ret = ret && (s->properties.limits.maxUniformBufferRange >= 65536);
+                    ret = ret && (s->properties.limits.mipmapPrecisionBits >= 6);
+                    ret = ret && (s->properties.limits.pointSizeGranularity <= 0.125);
+                    ret = ret && (s->properties.limits.standardSampleLocations == VK_TRUE);
+                    ret = ret && (s->properties.limits.subTexelPrecisionBits >= 8);
+                } break;
                 case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_1_PROPERTIES: {
                     VkPhysicalDeviceVulkan11Properties* s = static_cast<VkPhysicalDeviceVulkan11Properties*>(static_cast<void*>(p));
                     ret = ret && (s->maxMultiviewInstanceIndex >= 134217727);
@@ -3213,38 +3244,6 @@ static const VpPropertyDesc propertyDesc = {
                     ret = ret && (s->maxInlineUniformTotalSize >= 4);
                     ret = ret && (s->maxPerStageDescriptorInlineUniformBlocks >= 4);
                     ret = ret && (s->maxPerStageDescriptorUpdateAfterBindInlineUniformBlocks >= 4);
-                } break;
-                case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR: {
-                    VkPhysicalDeviceProperties2KHR* s = static_cast<VkPhysicalDeviceProperties2KHR*>(static_cast<void*>(p));
-                    ret = ret && (s->properties.limits.bufferImageGranularity <= 4096);
-                    ret = ret && (s->properties.limits.lineWidthGranularity <= 0.5);
-                    ret = ret && (s->properties.limits.maxColorAttachments >= 7);
-                    ret = ret && (s->properties.limits.maxComputeWorkGroupInvocations >= 256);
-                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[0] >= 1024);
-                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[1] >= 1024);
-                    ret = ret && (s->properties.limits.maxComputeWorkGroupSize[2] >= 64);
-                    ret = ret && (s->properties.limits.maxDescriptorSetSampledImages >= 1800);
-                    ret = ret && (s->properties.limits.maxDescriptorSetSamplers >= 576);
-                    ret = ret && (s->properties.limits.maxDescriptorSetStorageBuffers >= 96);
-                    ret = ret && (s->properties.limits.maxDescriptorSetStorageImages >= 144);
-                    ret = ret && (s->properties.limits.maxDescriptorSetUniformBuffers >= 90);
-                    ret = ret && (s->properties.limits.maxFragmentCombinedOutputResources >= 16);
-                    ret = ret && (s->properties.limits.maxImageArrayLayers >= 2048);
-                    ret = ret && (s->properties.limits.maxImageDimension1D >= 8192);
-                    ret = ret && (s->properties.limits.maxImageDimension2D >= 8192);
-                    ret = ret && (s->properties.limits.maxImageDimensionCube >= 8192);
-                    ret = ret && (s->properties.limits.maxPerStageDescriptorSampledImages >= 200);
-                    ret = ret && (s->properties.limits.maxPerStageDescriptorSamplers >= 64);
-                    ret = ret && (s->properties.limits.maxPerStageDescriptorStorageBuffers >= 30);
-                    ret = ret && (s->properties.limits.maxPerStageDescriptorStorageImages >= 16);
-                    ret = ret && (s->properties.limits.maxPerStageDescriptorUniformBuffers >= 15);
-                    ret = ret && (s->properties.limits.maxPerStageResources >= 200);
-                    ret = ret && (s->properties.limits.maxSamplerLodBias >= 14);
-                    ret = ret && (s->properties.limits.maxUniformBufferRange >= 65536);
-                    ret = ret && (s->properties.limits.mipmapPrecisionBits >= 6);
-                    ret = ret && (s->properties.limits.pointSizeGranularity <= 0.125);
-                    ret = ret && (s->properties.limits.standardSampleLocations == VK_TRUE);
-                    ret = ret && (s->properties.limits.subTexelPrecisionBits >= 8);
                 } break;
                 default: break;
             }
