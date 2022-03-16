@@ -15,6 +15,7 @@
  *
  * DO NOT EDIT: This file is generated.
  */
+/* clang-format off */
 
 #ifndef VULKAN_PROFILES_HPP_
 #define VULKAN_PROFILES_HPP_ 1
