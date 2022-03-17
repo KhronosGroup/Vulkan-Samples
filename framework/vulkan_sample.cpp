@@ -122,7 +122,12 @@ bool VulkanSample::prepare(Platform &platform)
 	}
 #endif
 
-	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	create_instance();
+
+	if (!instance)
+	{
+		instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	}
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
@@ -178,7 +183,12 @@ bool VulkanSample::prepare(Platform &platform)
 		debug_utils = std::make_unique<DummyDebugUtils>();
 	}
 
-	device = std::make_unique<vkb::Device>(gpu, surface, std::move(debug_utils), get_device_extensions());
+	create_device();        // create_custom_device? better way than override?
+
+	if (!device)
+	{
+		device = std::make_unique<vkb::Device>(gpu, surface, std::move(debug_utils), get_device_extensions());
+	}
 
 	create_render_context(platform);
 	prepare_render_context();
@@ -189,6 +199,14 @@ bool VulkanSample::prepare(Platform &platform)
 	configuration.reset();
 
 	return true;
+}
+
+void VulkanSample::create_device()
+{
+}
+
+void VulkanSample::create_instance()
+{
 }
 
 void VulkanSample::create_render_context(Platform &platform)
