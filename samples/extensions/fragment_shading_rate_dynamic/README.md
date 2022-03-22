@@ -19,7 +19,7 @@
 
 ## Fragment Shading Rate
 
-The KHV fragment shading rate extension introduces the ability to selectively render at different sample rates within
+The KHR fragment shading rate extension introduces the ability to selectively render at different sample rates within
 the same rendered image. This can be useful when rendering at very high resolutions or when the frequency content is not
 evenly spread through the rendered image. This tutorial demonstrates one way of controlling that sample rate by
 estimating the frequency content of each pixel of the rendered image.
