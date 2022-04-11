@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -263,7 +263,7 @@ For all dependencies set the following environment variables.
 
 - CMake v3.10+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
-- Android NDK r18+ `ANDROID_NDK_ROOT=<WORK_DIR>/android-ndk`
+- Android NDK r18+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
 - Gradle 5+ `GRADLE_HOME=<WORK_DIR>/gradle`
 - [CMake Options](#cmake-options)
