@@ -19,14 +19,18 @@
 
 #include <imgui_internal.h>
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/logging.h"
 #include "core/device.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/node.h"
 #include "stats/stats.h"
+
+const char *PIPELINE_CACHE_FILE = "/temp/pipeline_cache.data";
+const char *CACHE_FILE          = "/temp/cache.data";
 
 PipelineCache::PipelineCache()
 {
@@ -38,6 +42,8 @@ PipelineCache::PipelineCache()
 
 PipelineCache::~PipelineCache()
 {
+	auto &fs = vfs::instance();
+
 	if (pipeline_cache != VK_NULL_HANDLE)
 	{
 		/* Get size of pipeline cache */
@@ -49,13 +55,16 @@ PipelineCache::~PipelineCache()
 		VK_CHECK(vkGetPipelineCacheData(device->get_handle(), pipeline_cache, &size, data.data()));
 
 		/* Write pipeline cache data to a file in binary format */
-		vkb::fs::write_temp(data, "pipeline_cache.data");
+
+		fs.write_file(PIPELINE_CACHE_FILE, data.data(), data.size());
 
 		/* Destroy Vulkan pipeline cache */
 		vkDestroyPipelineCache(device->get_handle(), pipeline_cache, nullptr);
 	}
 
-	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
+	auto serialized_resource_cache = device->get_resource_cache().serialize();
+
+	fs.write_file(CACHE_FILE, serialized_resource_cache.data(), serialized_resource_cache.size());
 }
 
 bool PipelineCache::prepare(vkb::Platform &platform)
@@ -68,13 +77,16 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 	/* Try to read pipeline cache file if exists */
 	std::vector<uint8_t> pipeline_data;
 
-	try
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+	if (fs.read_file(PIPELINE_CACHE_FILE, &blob) == vfs::status::Success)
 	{
-		pipeline_data = vkb::fs::read_temp("pipeline_cache.data");
+		pipeline_data = blob->binary();
 	}
-	catch (std::runtime_error &ex)
+	else
 	{
-		LOGW("No pipeline cache found. {}", ex.what());
+		LOGE("failed to load pipeline_cache.data");
 	}
 
 	/* Add initial pipeline cache data from the cached file */
@@ -92,13 +104,13 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	std::vector<uint8_t> data_cache;
 
-	try
+	if (fs.read_file(CACHE_FILE, &blob) == vfs::status::Success)
 	{
-		data_cache = vkb::fs::read_temp("cache.data");
+		data_cache = blob->binary();
 	}
-	catch (std::runtime_error &ex)
+	else
 	{
-		LOGW("No data cache found. {}", ex.what());
+		LOGE("failed to load cache.data");
 	}
 
 	// Build all pipelines from a previous run

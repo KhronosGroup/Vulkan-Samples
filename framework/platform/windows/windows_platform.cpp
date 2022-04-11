@@ -36,24 +36,6 @@ namespace vkb
 {
 namespace
 {
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "temp/";
-
-	TCHAR temp_buffer[MAX_PATH];
-	DWORD temp_path_ret = GetTempPath(MAX_PATH, temp_buffer);
-	if (temp_path_ret > MAX_PATH || temp_path_ret == 0)
-	{
-		temp_path = "temp/";
-	}
-	else
-	{
-		temp_path = std::string(temp_buffer) + "/";
-	}
-
-	return temp_path;
-}
-
 /// @brief Converts wstring to string using Windows specific function
 /// @param wstr Wide string to convert
 /// @return A converted utf8 string
@@ -93,17 +75,6 @@ inline std::vector<std::string> get_args()
 }
 }        // namespace
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		CreateDirectory(path.c_str(), NULL);
-	}
-}
-}        // namespace fs
-
 WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
                                  PSTR lpCmdLine, INT nCmdShow)
 {
@@ -118,7 +89,6 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 	freopen_s(&fp, "conout$", "w", stderr);
 
 	Platform::set_arguments(get_args());
-	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 const char *WindowsPlatform::get_surface_extension()

@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"

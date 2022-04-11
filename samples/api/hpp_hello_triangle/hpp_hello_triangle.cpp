@@ -17,6 +17,8 @@
 
 #include "hpp_hello_triangle.h"
 
+#include <components/vfs/filesystem.hpp>
+
 #include <common/logging.h>
 #include <glsl_compiler.h>
 
@@ -649,7 +651,14 @@ vk::ShaderModule HPPHelloTriangle::load_shader_module(Context &context, const ch
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_shader_binary(path);
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(std::string{"/shaders/"} + path, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{std::string{"failed to load /shaders/"} + path};
+	}
 
 	std::string file_ext = path;
 
@@ -660,7 +669,7 @@ vk::ShaderModule HPPHelloTriangle::load_shader_module(Context &context, const ch
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), blob->binary(), "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;

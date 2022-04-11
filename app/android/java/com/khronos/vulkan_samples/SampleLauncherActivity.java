@@ -21,6 +21,8 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -70,25 +72,29 @@ public class SampleLauncherActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
 
         if (loadNativeLibrary(getResources().getString(R.string.native_lib_name))) {
-            // Initialize cpp android platform
-            File external_files_dir = getExternalFilesDir("");
-            File temp_files_dir = getCacheDir();
-            if (external_files_dir != null && temp_files_dir != null) {
-                // User no longer has permissions to access applications' storage, save files in
-                // top level (shared) external storage directory
-                String shared_storage = external_files_dir.getPath().split(Pattern.quote("Android"))[0];
-                external_files_dir = new File(shared_storage, getPackageName());
-                initFilePath(external_files_dir.toString(), temp_files_dir.toString());
-            }
-
             // Get sample info from cpp cmake generated file
             samples = new SampleStore(Arrays.asList(getSamples()));
         }
 
         // Required Permissions
+        PackageManager pm = getPackageManager();
+
         permissions = new ArrayList<>();
-        permissions.add(new Permission(Manifest.permission.WRITE_EXTERNAL_STORAGE, 1));
-        permissions.add(new Permission(Manifest.permission.READ_EXTERNAL_STORAGE, 2));
+        try {
+            PackageInfo package_info = pm.getPackageInfo(getPackageName(), PackageManager.GET_PERMISSIONS);
+            String[] requested_permissions = null;
+            if (package_info != null) {
+                requested_permissions = package_info.requestedPermissions;
+            }
+
+            if (requested_permissions != null) {
+                for (int i = 0; i < requested_permissions.length; i++) {
+                    permissions.add(new Permission(requested_permissions[i], i));
+                }
+            }
+        } catch (PackageManager.NameNotFoundException e) {
+            e.printStackTrace();
+        }
 
         if (checkPermissions()) {
             // Permissions previously granted skip requesting them
@@ -100,13 +106,12 @@ public class SampleLauncherActivity extends AppCompatActivity {
         }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-            if (!Environment.isExternalStorageManager())
-            {
+            if (!Environment.isExternalStorageManager()) {
                 // Prompt the user to "Allow access to all files"
                 Intent intent = new Intent();
-                                    intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
-                                    Uri uri = Uri.fromParts("package", this.getPackageName(), null);
-                                    intent.setData(uri);
+                intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                Uri uri = Uri.fromParts("package", this.getPackageName(), null);
+                intent.setData(uri);
                 startActivity(intent);
             }
         }
@@ -132,10 +137,10 @@ public class SampleLauncherActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        if(item.getItemId() == R.id.filter_button) {
+        if (item.getItemId() == R.id.filter_button) {
             sampleListView.dialog.show(getSupportFragmentManager(), "filter");
             return true;
-        } else if(item.getItemId() == R.id.menu_run_samples) {
+        } else if (item.getItemId() == R.id.menu_run_samples) {
             String category = "";
             ViewPagerAdapter adapter = ((ViewPagerAdapter) sampleListView.viewPager.getAdapter());
             if (adapter != null) {
@@ -151,11 +156,11 @@ public class SampleLauncherActivity extends AppCompatActivity {
             String[] sa = {};
             launchWithCommandArguments(arguments.toArray(sa));
             return true;
-        } else if(item.getItemId() == R.id.menu_benchmark_mode) {
+        } else if (item.getItemId() == R.id.menu_benchmark_mode) {
             isBenchmarkMode = !item.isChecked();
             item.setChecked(isBenchmarkMode);
             return true;
-        } else if(item.getItemId() == R.id.menu_headless) {
+        } else if (item.getItemId() == R.id.menu_headless) {
             isHeadless = !item.isChecked();
             item.setChecked(isHeadless);
             return true;
@@ -361,9 +366,4 @@ public class SampleLauncherActivity extends AppCompatActivity {
      * @param args The arguments that are to be passed to the app
      */
     private native void sendArgumentsToPlatform(String[] args);
-
-    /**
-     * @brief Initiate the file system for the Native Application
-     */
-    private native void initFilePath(String external_dir, String temp_path);
 }

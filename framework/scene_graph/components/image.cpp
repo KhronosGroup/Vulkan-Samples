@@ -26,8 +26,9 @@ VKBP_DISABLE_WARNINGS()
 #include <stb_image_resize.h>
 VKBP_ENABLE_WARNINGS()
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/utils.h"
-#include "platform/filesystem.h"
 #include "scene_graph/components/image/astc.h"
 #include "scene_graph/components/image/ktx.h"
 #include "scene_graph/components/image/stb.h"
@@ -250,26 +251,33 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 {
 	std::unique_ptr<Image> image{nullptr};
 
-	auto data = fs::read_asset(uri);
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file("/assets/" + uri, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"unable to find image"};
+	}
 
 	// Get extension
 	auto extension = get_extension(uri);
 
 	if (extension == "png" || extension == "jpg")
 	{
-		image = std::make_unique<Stb>(name, data);
+		image = std::make_unique<Stb>(name, blob->binary());
 	}
 	else if (extension == "astc")
 	{
-		image = std::make_unique<Astc>(name, data);
+		image = std::make_unique<Astc>(name, blob->binary());
 	}
 	else if (extension == "ktx")
 	{
-		image = std::make_unique<Ktx>(name, data);
+		image = std::make_unique<Ktx>(name, blob->binary());
 	}
 	else if (extension == "ktx2")
 	{
-		image = std::make_unique<Ktx>(name, data);
+		image = std::make_unique<Ktx>(name, blob->binary());
 	}
 
 	return image;

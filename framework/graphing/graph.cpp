@@ -17,7 +17,7 @@
 
 #include "graph.h"
 
-#include "platform/filesystem.h"
+#include <components/vfs/filesystem.hpp>
 
 namespace vkb
 {
@@ -118,7 +118,31 @@ bool Graph::dump_to_file(std::string file)
 	    {"edges", edges},
 	    {"styles", style_colors}};
 
-	return fs::write_json(j, file);
+	std::stringstream json;
+
+	try
+	{
+		// Whitespace needed as last character is overwritten on android causing the json to be corrupt
+		json << j << " ";
+	}
+	catch (std::exception &e)
+	{
+		// JSON dump errors
+		LOGE(e.what());
+		return false;
+	}
+
+	if (!nlohmann::json::accept(json.str()))
+	{
+		LOGE("Invalid JSON string");
+		return false;
+	}
+
+	std::string str = json.str();
+
+	std::vector<uint8_t> data{str.begin(), str.end()};
+
+	return vfs::instance().write_file(file, data.data(), data.size()) != vfs::status::Success;
 }        // namespace graphing
 
 }        // namespace graphing

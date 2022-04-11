@@ -17,10 +17,11 @@
 
 #include "shader_module.h"
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/logging.h"
 #include "device.h"
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 #include "spirv_reflection.h"
 
 namespace vkb
@@ -48,7 +49,15 @@ inline std::vector<std::string> precompile_shader(const std::string &source)
 				include_path = include_path.substr(0, last_quote);
 			}
 
-			auto include_file = precompile_shader(fs::read_shader(include_path));
+			auto fs = vfs::instance();
+
+			std::shared_ptr<vfs::Blob> blob;
+			if (fs.read_file("/shaders/" + include_path, &blob) != vfs::status::Success)
+			{
+				throw std::runtime_error{"failed to read shader"};
+			}
+
+			auto include_file = precompile_shader(blob->ascii());
 			for (auto &include_file_line : include_file)
 			{
 				final_file.push_back(include_file_line);
@@ -291,9 +300,18 @@ void ShaderVariant::update_id()
 }
 
 ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_shader(filename)}
+    filename{filename}
 {
+	auto fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+	if (fs.read_file("/shaders/" + filename, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to read shader"};
+	}
+
+	source = blob->ascii();
+
 	std::hash<std::string> hasher{};
 	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
 }

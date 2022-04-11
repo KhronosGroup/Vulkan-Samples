@@ -28,6 +28,8 @@ VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/matrix_transform.hpp>
 VKBP_ENABLE_WARNINGS()
 
+#include <components/vfs/filesystem.hpp>
+
 #include "buffer_pool.h"
 #include "common/logging.h"
 #include "common/utils.h"
@@ -39,7 +41,6 @@ VKBP_ENABLE_WARNINGS()
 #include "core/pipeline_layout.h"
 #include "core/shader_module.h"
 #include "imgui_internal.h"
-#include "platform/filesystem.h"
 #include "platform/window.h"
 #include "rendering/render_context.h"
 #include "timer.h"
@@ -146,11 +147,31 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	io.KeyMap[ImGuiKey_DownArrow]  = static_cast<int>(KeyCode::Down);
 	io.KeyMap[ImGuiKey_Tab]        = static_cast<int>(KeyCode::Tab);
 
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	// TODO: automate font loading
+
 	// Default font
-	fonts.emplace_back(default_font, font_size * dpi_factor);
+	if (fs.read_file("/fonts/" + default_font + ".ttf", &blob) == vfs::status::Success)
+	{
+		fonts.emplace_back(default_font, font_size * dpi_factor, blob->binary());
+	}
+	else
+	{
+		LOGE("failed to load font: /fonts/{}.ttf", default_font);
+	}
 
 	// Debug window font
-	fonts.emplace_back("RobotoMono-Regular", (font_size / 2) * dpi_factor);
+	if (fs.read_file("/fonts/RobotoMono-Regular.ttf", &blob) == vfs::status::Success)
+	{
+		fonts.emplace_back("RobotoMono-Regular", (font_size / 2) * dpi_factor, blob->binary());
+	}
+	else
+	{
+		LOGE("failed to load font: /fonts/{}.ttf", "RobotoMono-Regular");
+	}
 
 	// Create font texture
 	unsigned char *font_data;

@@ -23,7 +23,6 @@
 #include "common/vk_common.h"
 #include "gltf_loader.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"

@@ -21,6 +21,8 @@
 
 #include "texture_mipmap_generation.h"
 
+#include <components/vfs/filesystem.hpp>
+
 TextureMipMapGeneration::TextureMipMapGeneration()
 {
 	zoom     = -2.5f;
@@ -61,10 +63,19 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 {
 	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
 
-	ktxTexture *   ktx_texture;
-	KTX_error_code result;
+	auto &fs = vfs::instance();
 
-	result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(file_name, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load height map"};
+	}
+
+	ktxTexture *ktx_texture;
+	ktxResult   ktx_result;
+	ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+
 	// @todo: get format from libktx
 
 	if (ktx_texture == nullptr)
@@ -315,7 +326,7 @@ void TextureMipMapGeneration::destroy_texture(Texture texture)
 
 void TextureMipMapGeneration::load_assets()
 {
-	load_texture_generate_mipmaps(vkb::fs::path::get(vkb::fs::path::Assets, "textures/checkerboard_rgba.ktx"));
+	load_texture_generate_mipmaps("/assets/textures/checkerboard_rgba.ktx");
 	scene = load_model("scenes/tunnel_cylinder.gltf");
 }
 

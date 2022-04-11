@@ -21,7 +21,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 function(add_android_package_project)
     set(options)  
-    set(oneValueArgs NAME JAVA_DIR RES_DIR MANIFEST_FILE)
+    set(oneValueArgs NAME JAVA_DIR RES_DIR MANIFEST_FILE ASSETS_SYNC_MANIFEST_FILE)
     set(multiValueArgs DEPENDS ASSET_DIRS)
 
     cmake_parse_arguments(PARSE_ARGV 0 TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}")
@@ -66,6 +66,7 @@ function(add_android_package_project)
                 -DANDROID_API=${CMAKE_ANDROID_API}
                 -DARCH_ABI=${CMAKE_ANDROID_ARCH_ABI}
                 -DANDROID_MANIFEST=${TARGET_MANIFEST_FILE}
+                -DASSETS_SYNC_ANDROID_MANIFEST=${TARGET_ASSETS_SYNC_MANIFEST_FILE}
                 -DJAVA_DIRS=${TARGET_JAVA_DIR}
                 -DRES_DIRS=${TARGET_RES_DIR}
                 -DJNI_LIBS_DIRS=${JNI_LIBS_DIRS}

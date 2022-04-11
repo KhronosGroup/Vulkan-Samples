@@ -26,7 +26,6 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "platform/application.h"
-#include "platform/filesystem.h"
 #include "platform/parser.h"
 #include "platform/plugins/plugin.h"
 #include "platform/window.h"
@@ -84,18 +83,6 @@ class Platform
 	virtual void close();
 
 	/**
-	 * @brief Returns the working directory of the application set by the platform
-	 * @returns The path to the working directory
-	 */
-	static const std::string &get_external_storage_directory();
-
-	/**
-	 * @brief Returns the suitable directory for temporary files from the environment variables set in the system
-	 * @returns The path to the temp folder on the system
-	 */
-	static const std::string &get_temp_directory();
-
-	/**
 	 * @return The VkInstance extension name for the platform
 	 */
 	virtual const char *get_surface_extension() = 0;
@@ -115,10 +102,6 @@ class Platform
 	std::vector<std::string> &get_arguments();
 
 	static void set_arguments(const std::vector<std::string> &args);
-
-	static void set_external_storage_directory(const std::string &dir);
-
-	static void set_temp_directory(const std::string &dir);
 
 	template <class T>
 	T *get_plugin() const;
@@ -187,10 +170,6 @@ class Platform
 
 	/// Static so can be set via JNI code in android_platform.cpp
 	static std::vector<std::string> arguments;
-
-	static std::string external_storage_directory;
-
-	static std::string temp_directory;
 };
 
 template <class T>

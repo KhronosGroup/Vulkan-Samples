@@ -21,6 +21,8 @@
 
 #include "hlsl_shaders.h"
 
+#include <components/vfs/filesystem.hpp>
+
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
 #include <StandAlone/ResourceLimits.h>
@@ -51,7 +53,16 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 			language = EShLangVertex;
 	}
 
-	std::string source        = vkb::fs::read_shader(file);
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file("/shaders/" + file, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load shader /shaders/" + file};
+	}
+
+	std::string source        = blob->ascii();
 	const char *shader_source = reinterpret_cast<const char *>(source.data());
 
 	glslang::TShader shader(language);

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/logging.h"
 #include "platform/platform.h"
 #include "plugins/plugins.h"
@@ -23,6 +25,8 @@
 #	include "platform/android/android_platform.h"
 void android_main(android_app *state)
 {
+	// Init file system for Android
+	vfs::instance(static_cast<void *>(state));
 	vkb::AndroidPlatform platform{state};
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
 #	include "platform/windows/windows_platform.h"
@@ -46,6 +50,9 @@ int main(int argc, char *argv[])
 	vkb::UnixPlatform platform{vkb::UnixType::Linux, argc, argv};
 #	endif
 #endif
+
+	// Init file system for all OS
+	vfs::instance();
 
 	auto code = platform.initialize(plugins::get_all());
 

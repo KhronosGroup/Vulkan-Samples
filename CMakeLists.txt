@@ -47,6 +47,8 @@ include(check_atomic)
 # Add third party libraries
 add_subdirectory(third_party)
 
+add_subdirectory(components/vfs)
+
 # Add vulkan framework
 add_subdirectory(framework)
 

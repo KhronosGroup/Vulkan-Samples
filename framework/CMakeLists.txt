@@ -285,7 +285,6 @@ set(PLATFORM_FILES
     platform/application.h
     platform/platform.h
     platform/window.h
-    platform/filesystem.h
     platform/input_events.h
     platform/configuration.h
     platform/parser.h
@@ -301,7 +300,6 @@ set(PLATFORM_FILES
     platform/application.cpp
     platform/platform.cpp
     platform/window.cpp
-    platform/filesystem.cpp
     platform/input_events.cpp
     platform/configuration.cpp
     platform/parser.cpp
@@ -484,7 +482,8 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     ctpl
     CLI11::CLI11
     apps
-    plugins)
+    plugins
+    Components::VFS)
 
 if(${NEED_LINK_ATOMIC})
     target_link_libraries(${PROJECT_NAME} PUBLIC atomic)

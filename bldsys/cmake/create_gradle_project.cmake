@@ -38,13 +38,16 @@ include(${SCRIPT_DIR}/utils.cmake)
 set(ANDROID_API 30 CACHE STRING "")
 set(ANDROID_SDK "" CACHE STRING "")
 set(ANDROID_MANIFEST "AndroidManifest.xml" CACHE STRING "")
+set(ASSETS_SYNC_ANDROID_MANIFEST "sync/AndroidManifest.xml" CACHE STRING "")
 set(ARCH_ABI "arm64-v8a;armeabi-v7a" CACHE STRING "")
 set(ASSET_DIRS "assets" CACHE STRING "")
 set(RES_DIRS "res" CACHE STRING "")
 set(JAVA_DIRS "java" CACHE STRING "")
 set(JNI_LIBS_DIRS "jni" CACHE STRING "")
 set(NATIVE_SCRIPT "CMakeLists.txt" CACHE STRING "")
-set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF" CACHE STRING "")
+set(COMMON_NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF;ANDROID_NDK=\$ndkDirectory" CACHE STRING "")
+set(ASSETS_BUNDLE_NATIVE_ARGUMENTS "VKB_BUNDLE_ASSETS=ON;${COMMON_NATIVE_ARGUMENTS}" CACHE STRING "")
+set(ASSETS_SYNC_NATIVE_ARGUMENTS "VKB_BUNDLE_ASSETS=OFF;${COMMON_NATIVE_ARGUMENTS}" CACHE STRING "")
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
 
 # android sdk path
@@ -73,7 +76,19 @@ if(EXISTS ${ANDROID_MANIFEST})
 	file(RELATIVE_PATH ANDROID_MANIFEST ${OUTPUT_DIR}/app ${ANDROID_MANIFEST})
 	set(MANIFEST_FILE "manifest.srcFile '${ANDROID_MANIFEST}'")
 else()
-	message(FATAL_ERROR "Manifest file does not exists at `${ANDROID_MANIFEST}`")
+    message(FATAL_ERROR "Manifest file does not exist at `${ANDROID_MANIFEST}`")
+endif()
+
+# manifest.srcFile for sync flavor
+if(NOT IS_ABSOLUTE ${ASSETS_SYNC_ANDROID_MANIFEST})
+    set(ASSETS_SYNC_ANDROID_MANIFEST ${CMAKE_SOURCE_DIR}/${ASSETS_SYNC_ANDROID_MANIFEST})
+endif()
+
+if(EXISTS ${ASSETS_SYNC_ANDROID_MANIFEST})
+    file(RELATIVE_PATH ASSETS_SYNC_ANDROID_MANIFEST ${OUTPUT_DIR} ${ASSETS_SYNC_ANDROID_MANIFEST})
+    set(ASSETS_SYNC_MANIFEST_FILE "manifest.srcFile '${ASSETS_SYNC_ANDROID_MANIFEST}'")
+else()
+    message(FATAL_ERROR "Manifest file does not exist at `${ASSETS_SYNC_ANDROID_MANIFEST}`")
 endif()
 
 # ndk.abiFilters
@@ -195,17 +210,29 @@ if(EXISTS ${NATIVE_SCRIPT})
 endif()
 
 # cmake.arguments
-set(ARGS_LIST)
+function(make_native_arg_list native_arg_list native_arg_string)
+    set(string_list)
+	
+    foreach(NATIVE_ARG ${${native_arg_list}})
+        list(APPEND string_list "-D${NATIVE_ARG}")
+    endforeach()
 
-foreach(NATIVE_ARG ${NATIVE_ARGUMENTS})
-	list(APPEND ARGS_LIST "-D${NATIVE_ARG}")
-endforeach()
+    list(JOIN ARGS_LIST "', '" ARGS_LIST)
+    
+    if(EXISTS ${NATIVE_SCRIPT} AND NOT ${string_list})
+        set(${native_arg_string} "cmake {\n\t\t\t\targuments \"${string_list}\"\n\t\t\t}" PARENT_SCOPE)
+    endif()
+endfunction()
 
-list(JOIN ARGS_LIST "', '" ARGS_LIST)
+set(ASSETS_BUNDLE_ARGS_STRING)
+set(CMAKE_ASSETS_BUNDLE_ARGUMENTS)
+make_native_arg_list(ASSETS_BUNDLE_NATIVE_ARGUMENTS ASSETS_BUNDLE_ARGS_STRING)
+set(CMAKE_ASSETS_BUNDLE_ARGUMENTS "${ASSETS_BUNDLE_ARGS_STRING}")
 
-if(NOT ${ARGS_LIST} AND EXISTS ${NATIVE_SCRIPT})
-	set(CMAKE_ARGUMENTS "cmake {\n\t\t\t\t${NDK_ABI_FILTERS}\n\t\t\t\targuments '${ARGS_LIST}'\n\t\t\t}")
-endif()
+set(ASSETS_SYNC_ARGS_STRING)
+set(CMAKE_ASSETS_SYNC_ARGUMENTS)
+make_native_arg_list(ASSETS_SYNC_NATIVE_ARGUMENTS ASSETS_SYNC_ARGS_STRING)
+set(CMAKE_ASSETS_SYNC_ARGUMENTS "${ASSETS_SYNC_ARGS_STRING}")
 
 file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)
 file(MAKE_DIRECTORY ${OUTPUT_DIR}/app)

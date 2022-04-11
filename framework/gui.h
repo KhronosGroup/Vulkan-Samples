@@ -29,7 +29,6 @@
 #include "core/command_buffer.h"
 #include "core/sampler.h"
 #include "debug_info.h"
-#include "platform/filesystem.h"
 #include "platform/input_events.h"
 #include "rendering/render_context.h"
 #include "stats/stats.h"
@@ -48,9 +47,9 @@ struct Font
 	 * @param name The name of the font file that exists within 'assets/fonts' (without extension)
 	 * @param size The font size, scaled by DPI
 	 */
-	Font(const std::string &name, float size) :
+	Font(const std::string &name, float size, const std::vector<uint8_t> &data) :
 	    name{name},
-	    data{vkb::fs::read_asset("fonts/" + name + ".ttf")},
+	    data{data},
 	    size{size}
 	{
 		// Keep ownership of the font data to avoid a double delete
@@ -63,7 +62,7 @@ struct Font
 		}
 
 		ImGuiIO &io = ImGui::GetIO();
-		handle      = io.Fonts->AddFontFromMemoryTTF(data.data(), static_cast<int>(data.size()), size, &font_config);
+		handle      = io.Fonts->AddFontFromMemoryTTF(const_cast<void *>(static_cast<const void *>(data.data())), static_cast<int>(data.size()), size, &font_config);
 	}
 
 	ImFont *handle{nullptr};

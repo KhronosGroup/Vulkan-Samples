@@ -30,7 +30,6 @@
 
 #include "common/logging.h"
 #include "force_close/force_close.h"
-#include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
 
@@ -40,10 +39,6 @@ const uint32_t Platform::MIN_WINDOW_WIDTH  = 420;
 const uint32_t Platform::MIN_WINDOW_HEIGHT = 320;
 
 std::vector<std::string> Platform::arguments = {};
-
-std::string Platform::external_storage_directory = "";
-
-std::string Platform::temp_directory = "";
 
 ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 {
@@ -56,6 +51,8 @@ ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
 #else
 	logger->set_level(spdlog::level::info);
 #endif
+
+	// logger->set_level(spdlog::level::critical);
 
 	logger->set_pattern(LOGGER_FORMAT);
 	spdlog::set_default_logger(logger);
@@ -287,16 +284,6 @@ void Platform::set_window_properties(const Window::OptionalProperties &propertie
 	window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : window_properties.extent.height;
 }
 
-const std::string &Platform::get_external_storage_directory()
-{
-	return external_storage_directory;
-}
-
-const std::string &Platform::get_temp_directory()
-{
-	return temp_directory;
-}
-
 Application &Platform::get_app()
 {
 	assert(active_app && "Application is not valid");
@@ -322,16 +309,6 @@ std::vector<std::string> &Platform::get_arguments()
 void Platform::set_arguments(const std::vector<std::string> &args)
 {
 	arguments = args;
-}
-
-void Platform::set_external_storage_directory(const std::string &dir)
-{
-	external_storage_directory = dir;
-}
-
-void Platform::set_temp_directory(const std::string &dir)
-{
-	temp_directory = dir;
 }
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
@@ -365,6 +342,8 @@ bool Platform::start_app()
 		auto app_id = active_app->get_name();
 
 		active_app->finish();
+
+		active_app.reset();
 	}
 
 	active_app = requested_app_info->create();

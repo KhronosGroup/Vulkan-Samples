@@ -64,22 +64,10 @@ inline const std::string get_temp_path_from_environment()
 }
 }        // namespace
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
     type{type}
 {
 	Platform::set_arguments({argv + 1, argv + argc});
-	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 const char *UnixPlatform::get_surface_extension()

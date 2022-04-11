@@ -19,24 +19,33 @@
 
 #include <cstring>
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
 #include "common/glm_common.h"
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/filesystem.h"
-
 namespace vkb
 {
 HeightMap::HeightMap(const std::string &file_name, const uint32_t patchsize)
 {
-	std::string file_path = fs::path::get(fs::path::Assets, file_name);
+	std::string file_path = "/assets/" + file_name;
+
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(file_path, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load height map"};
+	}
 
 	ktxTexture *ktx_texture;
 	ktxResult   ktx_result;
-	ktx_result = ktxTexture_CreateFromNamedFile(file_path.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
-
+	ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t*>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	
 	assert(ktx_result == KTX_SUCCESS);
 
 	ktx_size_t   ktx_size  = ktxTexture_GetImageSize(ktx_texture, 0);

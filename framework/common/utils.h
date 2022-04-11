@@ -24,7 +24,6 @@ VKBP_DISABLE_WARNINGS()
 #include "glm/gtx/quaternion.hpp"
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/filesystem.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "scene_graph/components/sub_mesh.h"

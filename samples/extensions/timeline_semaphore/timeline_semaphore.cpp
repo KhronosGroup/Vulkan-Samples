@@ -213,6 +213,11 @@ void TimelineSemaphore::wait_timeline_gpu(VkQueue wait_queue, const Timeline &ti
 
 void TimelineSemaphore::wait_timeline_cpu(const Timeline &timeline)
 {
+	if (timeline.semaphore == VK_NULL_HANDLE)
+	{
+		return;
+	}
+
 	// There is no distinction between fences and semaphores anymore.
 	// We can freely wait for a timeline semaphore on host.
 	// There is also no external synchronization requirement like with VkFence!
@@ -227,6 +232,11 @@ void TimelineSemaphore::wait_timeline_cpu(const Timeline &timeline)
 
 void TimelineSemaphore::signal_timeline_cpu(const Timeline &timeline, TimelineLock &lock)
 {
+	if (timeline.semaphore == VK_NULL_HANDLE)
+	{
+		return;
+	}
+
 	VkSemaphoreSignalInfoKHR signal_info{VK_STRUCTURE_TYPE_SEMAPHORE_SIGNAL_INFO_KHR};
 	signal_info.semaphore = timeline.semaphore;
 	signal_info.value     = timeline.timeline;

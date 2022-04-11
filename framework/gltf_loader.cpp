@@ -22,6 +22,9 @@
 #include <limits>
 #include <queue>
 
+#include <components/vfs/filesystem.hpp>
+#include <components/vfs/helpers.hpp>
+
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
@@ -35,7 +38,6 @@ VKBP_ENABLE_WARNINGS()
 #include "common/vk_common.h"
 #include "core/device.h"
 #include "core/image.h"
-#include "platform/filesystem.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
 #include "scene_graph/components/image/astc.h"
@@ -328,6 +330,53 @@ GLTFLoader::GLTFLoader(Device const &device) :
 {
 }
 
+struct FSData
+{
+	std::string root_path;
+};
+
+bool file_exists(const std::string &abs_filename, void *context)
+{
+	auto *fs_data = reinterpret_cast<FSData *>(context);
+
+	if (!fs_data)
+	{
+		return false;
+	}
+
+	return vfs::instance().file_exists(fs_data->root_path + abs_filename);
+}
+
+std::string expand_file_path(const std::string &path, void *context)
+{
+	// ignore expansion
+	return "/" + path;
+}
+
+bool read_whole_file(std::vector<unsigned char> *out, std::string *err, const std::string &file_path, void *context)
+{
+	auto *fs_data = reinterpret_cast<FSData *>(context);
+
+	if (!fs_data)
+	{
+		return false;
+	}
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (vfs::instance().read_file(fs_data->root_path + file_path, &blob) != vfs::status::Success)
+	{
+		*err = "failed to read file: " + fs_data->root_path + file_path;
+		return false;
+	}
+
+	auto data = blob->binary();
+
+	*out = {data.begin(), data.end()};
+
+	return true;
+}
+
 std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
 {
 	std::string err;
@@ -335,11 +384,22 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 	tinygltf::TinyGLTF gltf_loader;
 
-	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
+	std::string gltf_file = "/assets/" + file_name;
 
-	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
+	FSData data;
+	data.root_path = vfs::helpers::directory_path(gltf_file);
 
-	if (!importResult)
+	gltf_loader.SetFsCallbacks(tinygltf::FsCallbacks{
+	    &file_exists,
+	    &expand_file_path,
+	    &read_whole_file,
+	    nullptr,
+	    static_cast<void *>(&data),
+	});
+
+	bool result = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, vfs::helpers::strip_directory(gltf_file));
+
+	if (!result)
 	{
 		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
 
@@ -377,9 +437,20 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 
 	tinygltf::TinyGLTF gltf_loader;
 
-	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
+	std::string gltf_file = "/assets/" + file_name;
 
-	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
+	FSData data;
+	data.root_path = vfs::helpers::directory_path(gltf_file);
+
+	gltf_loader.SetFsCallbacks(tinygltf::FsCallbacks{
+	    &file_exists,
+	    &expand_file_path,
+	    &read_whole_file,
+	    nullptr,
+	    static_cast<void *>(&data),
+	});
+
+	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, vfs::helpers::strip_directory(gltf_file));
 
 	if (!importResult)
 	{

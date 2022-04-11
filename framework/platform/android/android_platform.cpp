@@ -39,18 +39,6 @@ VKBP_ENABLE_WARNINGS()
 
 extern "C"
 {
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
-	{
-		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
-		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
-
-		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
-		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
-	}
-
 	JNIEXPORT jobjectArray JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
@@ -522,14 +510,6 @@ std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()
 {
 	std::vector<spdlog::sink_ptr> sinks;
 	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>(PROJECT_NAME));
-
-	char        timestamp[80];
-	std::time_t time = std::time(0);
-	std::tm     now  = thread_safe_time(time);
-	std::strftime(timestamp, 80, "%G-%m-%d_%H-%M-%S_log.txt", &now);
-	log_output = vkb::fs::path::get(vkb::fs::path::Logs) + std::string(timestamp);
-
-	sinks.push_back(std::make_shared<spdlog::sinks::basic_file_sink_mt>(log_output, true));
 
 	return sinks;
 }

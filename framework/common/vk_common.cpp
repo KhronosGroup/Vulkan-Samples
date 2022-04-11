@@ -20,8 +20,9 @@
 
 #include <spdlog/fmt/fmt.h>
 
+#include <components/vfs/filesystem.hpp>
+
 #include "glsl_compiler.h"
-#include "platform/filesystem.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
 {
@@ -352,7 +353,14 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 {
 	vkb::GLSLCompiler glsl_compiler;
 
-	auto buffer = vkb::fs::read_shader_binary(filename);
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file("/shaders/" + filename, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to read shader file"};
+	}
 
 	std::string file_ext = filename;
 
@@ -363,7 +371,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), blob->binary(), "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return VK_NULL_HANDLE;

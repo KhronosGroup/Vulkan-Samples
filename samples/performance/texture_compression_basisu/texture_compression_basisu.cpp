@@ -21,6 +21,8 @@
 
 #include "texture_compression_basisu.h"
 
+#include <components/vfs/filesystem.hpp>
+
 TextureCompressionBasisu::TextureCompressionBasisu()
 {
 	zoom     = -1.75f;
@@ -128,13 +130,22 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 		destroy_texture(texture);
 	}
 
-	std::string file_name = vkb::fs::path::get(vkb::fs::path::Assets, "textures/basisu/" + input_file);
+	std::string file_name = "/assets/textures/basisu/" + input_file;
+
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(file_name, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load height map"};
+	}
 
 	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
 	ktxTexture2 *ktx_texture;
 	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
-	if (result != KTX_SUCCESS)
+	KTX_error_code ktx_result = ktxTexture2_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	if (ktx_result != KTX_SUCCESS)
 	{
 		throw std::runtime_error("Could not load the requested image file.");
 	}
@@ -144,9 +155,9 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	if (ktxTexture2_NeedsTranscoding(ktx_texture))
 	{
 		auto tStart         = std::chrono::high_resolution_clock::now();
-		result              = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
+		ktx_result              = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
 		last_transcode_time = std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
-		if (result != KTX_SUCCESS)
+		if (ktx_result != KTX_SUCCESS)
 		{
 			throw std::runtime_error("Could not transcode the input texture to the selected target format.");
 		}

@@ -135,7 +135,7 @@ Loading a KTX 2.0 file is the same as loading a KTX1.0 file, with the exception 
 // We are working with KTX 2.0 files, so we need to use the ktxTexture2 class
 ktxTexture2 *ktx_texture;
 // Load the KTX 2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
-KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
+KTX_error_code ktx_result = ktxTexture2_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture**)&ktx_texture);
 if (result != KTX_SUCCESS)
 {
     throw std::runtime_error("Could not load the requested image file.");

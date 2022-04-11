@@ -21,6 +21,8 @@
 
 #include <hpp_texture_loading.h>
 
+#include <components/vfs/filesystem.hpp>
+
 HPPTextureLoading::HPPTextureLoading()
 {
 	zoom     = -2.5f;
@@ -78,13 +80,23 @@ void HPPTextureLoading::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 void HPPTextureLoading::load_texture()
 {
 	// We use the Khronos texture format (https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/)
-	std::string filename = vkb::fs::path::get(vkb::fs::path::Assets, "textures/metalplate01_rgba.ktx");
+	std::string filename = "/assets/textures/metalplate01_rgba.ktx";
 	// Texture data contains 4 channels (RGBA) with unnormalized 8-bit values, this is the most commonly supported format
 	vk::Format format = vk::Format::eR8G8B8A8Unorm;
 
-	ktxTexture *   ktx_texture;
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
-	if ((result != KTX_SUCCESS) || (ktx_texture == nullptr))
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(filename, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load height map"};
+	}
+
+	ktxTexture *ktx_texture;
+	ktxResult ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+
+	if ((ktx_result != KTX_SUCCESS) || (ktx_texture == nullptr))
 	{
 		throw std::runtime_error("Couldn't load texture");
 	}

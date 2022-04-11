@@ -20,6 +20,11 @@
 #include <queue>
 #include <stdexcept>
 
+VKBP_DISABLE_WARNINGS()
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include <stb_image_write.h>
+VKBP_ENABLE_WARNINGS()
+
 #include "graphing/framework_graph.h"
 #include "graphing/scene_graph.h"
 #include "scene_graph/components/material.h"
@@ -173,12 +178,7 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 		}
 	}
 
-	vkb::fs::write_image(raw_data,
-	                     filename,
-	                     width,
-	                     height,
-	                     4,
-	                     width * 4);
+	stbi_write_png(("/screenshots/" + filename + ".png").c_str(), width, height, 4, raw_data, width * 4);
 
 	dst_buffer.unmap();
 }        // namespace vkb

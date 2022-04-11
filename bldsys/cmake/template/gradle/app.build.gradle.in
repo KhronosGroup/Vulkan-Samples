@@ -30,6 +30,27 @@ android {
 		}
 	}
 
+	flavorDimensions "assets"
+	productFlavors {
+        sync {
+            dimension "assets"
+            versionNameSuffix "-sync"
+
+            externalNativeBuild {
+                @CMAKE_ASSETS_SYNC_ARGUMENTS@
+            }
+        }
+
+        bundle {
+            dimension "assets"
+            versionNameSuffix "-bundle"
+
+            externalNativeBuild {
+                @CMAKE_ASSETS_BUNDLE_ARGUMENTS@
+            }
+        }
+    }
+
 	compileOptions {
 		sourceCompatibility JavaVersion.VERSION_1_8
 		targetCompatibility JavaVersion.VERSION_1_8
@@ -37,7 +58,6 @@ android {
 
 	sourceSets {
 		main {
-			@ASSETS_SRC_DIRS@
 			@RES_SRC_DIRS@
 			@JAVA_SRC_DIRS@
 			@JNI_LIBS_SRC_DIRS@
@@ -59,6 +79,14 @@ android {
 	buildFeatures {
 		viewBinding true
 	}
+
+	bundle {
+        @ASSETS_SRC_DIRS@
+    }
+
+    sync {
+        @ASSETS_SYNC_MANIFEST_FILE@
+    }
 }
 
 dependencies {

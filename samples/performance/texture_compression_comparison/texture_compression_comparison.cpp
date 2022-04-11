@@ -48,7 +48,7 @@ constexpr std::array<const char *, 19> error_codes = {
 
 std::string get_sponza_texture_filename(const std::string &short_name)
 {
-	return vkb::fs::path::get(vkb::fs::path::Type::Assets) + "scenes/sponza/ktx2/" + short_name + "2";
+	return "/assets/scenes/sponza/ktx2/" + short_name + "2";
 }
 }        // namespace
 

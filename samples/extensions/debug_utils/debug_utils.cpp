@@ -22,6 +22,8 @@
 
 #include "debug_utils.h"
 
+#include <components/vfs/filesystem.hpp>
+
 #include "scene_graph/components/sub_mesh.h"
 
 DebugUtils::DebugUtils()
@@ -209,14 +211,22 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 		// Name the sader (by file name)
 		set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, std::string("Shader " + file).c_str());
 
-		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(file);
+		auto &fs = vfs::instance();
+
+		std::shared_ptr<vfs::Blob> blob;
+
+		if (fs.read_file("/shaders/" + file, &blob) != vfs::status::Success)
+		{
+			throw std::runtime_error{"failed to read /shaders/" + file};
+		}
+
 		// Pass the source GLSL shader code via an object tag
 		VkDebugUtilsObjectTagInfoEXT info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_TAG_INFO_EXT};
 		info.objectType                   = VK_OBJECT_TYPE_SHADER_MODULE;
 		info.objectHandle                 = (uint64_t) shader_stage.module;
 		info.tagName                      = 1;
-		info.tagSize                      = buffer.size() * sizeof(uint8_t);
-		info.pTag                         = buffer.data();
+		info.tagSize                      = blob->size() * sizeof(uint8_t);
+		info.pTag                         = blob->data();
 		vkSetDebugUtilsObjectTagEXT(device->get_handle(), &info);
 	}
 

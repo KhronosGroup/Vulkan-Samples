@@ -17,9 +17,10 @@
 
 #include "open_cl_interop.h"
 
+#include <components/vfs/filesystem.hpp>
+
 #include "common/vk_common.h"
 #include "gui.h"
-#include "platform/filesystem.h"
 #include "platform/platform.h"
 
 #define CL_FUNCTION_DEFINITIONS
@@ -613,9 +614,17 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
 
-	auto   kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
-	auto   kernel_source_data = kernel_source.data();
-	size_t kernel_source_size = kernel_source.size();
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file("/shaders/open_cl_interop/procedural_texture.cl", &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to read shader: /shaders/open_cl_interop/procedural_texture.cl"};
+	}
+
+	auto   kernel_source_data = blob->data();
+	size_t kernel_source_size = blob->size();
 
 	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, &kernel_source_data, &kernel_source_size, &result);
 	clBuildProgram(cl_data->program, 1, &cl_data->device_id, NULL, NULL, NULL);

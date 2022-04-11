@@ -65,12 +65,15 @@ if(ANDROID)
             ASSET_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/../assets
             JAVA_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/java
             RES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/android/res
-            MANIFEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml)
+            MANIFEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/android/AndroidManifest.xml
+            ASSET_SYNC_MANIFEST_FILE ${CMAKE_CURRENT_SOURCE_DIR}/android/sync/AndroidManifest.xml)
     endif()
 
     # Sync assets and shaders
-    android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
-    android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../shaders)
+    if(NOT ${VKB_BUNDLE_ASSETS})
+        android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
+        android_sync_folder(PATH ${CMAKE_CURRENT_SOURCE_DIR}/../shaders)
+    endif()
 endif()
 
 # Create MSVC project
