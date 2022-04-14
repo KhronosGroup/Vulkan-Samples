@@ -370,6 +370,8 @@ bool read_whole_file(std::vector<unsigned char> *out, std::string *err, const st
 		return false;
 	}
 
+	auto ascii = blob->ascii();
+
 	auto data = blob->binary();
 
 	*out = {data.begin(), data.end()};
@@ -399,13 +401,6 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 
 	bool result = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, vfs::helpers::strip_directory(gltf_file));
 
-	if (!result)
-	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
-
-		return nullptr;
-	}
-
 	if (!err.empty())
 	{
 		LOGE("Error loading gltf model: {}.", err.c_str());
@@ -416,6 +411,13 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 	if (!warn.empty())
 	{
 		LOGI("{}", warn.c_str());
+	}
+
+	if (!result)
+	{
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
+
+		return nullptr;
 	}
 
 	size_t pos = file_name.find_last_of('/');
@@ -1046,16 +1048,16 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 	std::vector<Vertex> vertex_data;
 
-	const float *   pos     = nullptr;
-	const float *   normals = nullptr;
-	const float *   uvs     = nullptr;
+	const float    *pos     = nullptr;
+	const float    *normals = nullptr;
+	const float    *uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
-	const float *   weights = nullptr;
+	const float    *weights = nullptr;
 
 	// Position attribute is required
-	auto & accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
+	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
 	size_t vertex_count = accessor.count;
-	auto & buffer_view  = model.bufferViews[accessor.bufferView];
+	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
@@ -1147,7 +1149,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 			}
 		}
 
-		//Always do uint32
+		// Always do uint32
 		submesh->index_type = VK_INDEX_TYPE_UINT32;
 
 		core::Buffer stage_buffer{device,
