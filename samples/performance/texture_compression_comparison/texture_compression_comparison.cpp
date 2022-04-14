@@ -16,6 +16,9 @@
  */
 
 #include "texture_compression_comparison.h"
+
+#include <components/vfs/filesystem.hpp>
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/camera.h"
 #include "scene_graph/components/image.h"
@@ -367,8 +370,23 @@ std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::stri
 
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)
 {
-	ktxTexture2 *ktx_texture{nullptr};
-	KTX_CHECK(ktxTexture2_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture));
+	auto &fs = vfs::instance();
+
+	std::shared_ptr<vfs::Blob> blob;
+
+	if (fs.read_file(filename, &blob) != vfs::status::Success)
+	{
+		throw std::runtime_error{"failed to load height map"};
+	}
+
+	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
+	ktxTexture2 *ktx_texture;
+	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
+	KTX_error_code ktx_result = ktxTexture2_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	if (ktx_result != KTX_SUCCESS)
+	{
+		throw std::runtime_error("Could not load the requested image file.");
+	}
 
 	TextureBenchmark benchmark;
 	{
