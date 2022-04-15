@@ -53,7 +53,12 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};	
+
+	std::mutex mutex;
+
+	bool new_pipeline_created = false;
+	float accumulated_time{};
 
 	GraphicsPipelineLibrary();
 	~GraphicsPipelineLibrary();
@@ -66,6 +71,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	void         compile_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv);
 	void         prepare_pipeline_library();
 	void         prepare_new_pipeline();
+	void         pipeline_creation_threadfn();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	void         draw();

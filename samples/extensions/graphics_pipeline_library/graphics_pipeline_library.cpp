@@ -31,6 +31,13 @@
 #include "scene_graph/components/sub_mesh.h"
 #include <glsl_compiler.h>
 
+void GraphicsPipelineLibrary::pipeline_creation_threadfn()
+{
+	const std::lock_guard<std::mutex> lock(mutex);
+	prepare_new_pipeline();
+	new_pipeline_created = true;
+}
+
 GraphicsPipelineLibrary::GraphicsPipelineLibrary()
 {
 	title = "Graphics pipeline library";
@@ -390,7 +397,7 @@ void GraphicsPipelineLibrary::update_uniform_buffers()
 	camera.set_perspective(60.0f, ((float) width / 3.0f) / ((float) height / 2.0f), 256.0f, 0.1f);
 
 	ubo_vs.projection = camera.matrices.perspective;
-	ubo_vs.modelview  = camera.matrices.view * glm::mat4(1.0f);
+	ubo_vs.modelview  = camera.matrices.view * glm::rotate(glm::mat4(1.0f), glm::radians(accumulated_time * 360.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	uniform_buffer->convert_and_update(ubo_vs);
 }
 
@@ -431,9 +438,17 @@ void GraphicsPipelineLibrary::render(float delta_time)
 {
 	if (!prepared)
 		return;
+	if (new_pipeline_created)
+	{
+		new_pipeline_created = false;
+		build_command_buffers();
+	}
 	draw();
-	if (camera.updated)
-		update_uniform_buffers();
+
+	accumulated_time += 0.2f * delta_time;
+	accumulated_time = glm::fract(accumulated_time);
+
+	update_uniform_buffers();
 }
 
 void GraphicsPipelineLibrary::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -442,8 +457,8 @@ void GraphicsPipelineLibrary::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.button("Add pipeline"))
 		{
-			prepare_new_pipeline();
-			build_command_buffers();
+			std::thread pipeline_generation_thread(&GraphicsPipelineLibrary::pipeline_creation_threadfn, this);
+			pipeline_generation_thread.detach();
 		}
 	}
 }
