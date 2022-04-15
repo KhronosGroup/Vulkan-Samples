@@ -23,7 +23,6 @@
  * @todo: add description
  */
 
-// @todo: multiple pipelines, all null, create building blocks upon startup, create pipelines from blocks delayed and displaye when finished (e.g. cube grid)
 // @todo: check supported features (e.g. fast linking) and only enable if supported
 
 #include "graphics_pipeline_library.h"
@@ -34,8 +33,14 @@
 void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 {
 	const std::lock_guard<std::mutex> lock(mutex);
+
+	auto start = std::chrono::steady_clock::now();
+
 	prepare_new_pipeline();
 	new_pipeline_created = true;
+
+	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
+	LOGD("Pipeline created in {} ms", milliseconds.count());
 }
 
 GraphicsPipelineLibrary::GraphicsPipelineLibrary()
@@ -419,17 +424,20 @@ bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -25.0f));
-	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
+	camera.set_rotation(glm::vec3(-30.0f, 180.0f, 0.0f));
 
 	load_assets();
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipeline_library();
-	// @todo
-	prepare_new_pipeline();
 	setup_descriptor_pool();
 	setup_descriptor_sets();
 	build_command_buffers();
+
+	// Create first pipeline using a background thread
+	std::thread pipeline_generation_thread(&GraphicsPipelineLibrary::pipeline_creation_threadfn, this);
+	pipeline_generation_thread.detach();
+
 	prepared = true;
 	return true;
 }
