@@ -110,6 +110,14 @@ void GraphicsPipelineLibrary::build_command_buffers()
 		float w = (float) width / 3.0f;
 		float h = (float) height / 2.0f;
 
+		std::vector<glm::vec3> colors = {
+		    glm::vec3(1.0f, 0.0f, 0.0f),
+		    glm::vec3(0.0f, 1.0f, 0.0f),
+		    glm::vec3(0.0f, 0.0f, 1.0f),
+		    glm::vec3(1.0f, 1.0f, 0.0f),
+		    glm::vec3(1.0f, 0.0f, 1.0f),
+		    glm::vec3(0.0f, 1.0f, 1.0f)};
+
 		uint32_t idx = 0;
 		for (uint32_t y = 0; y < 2; y++)
 		{
@@ -132,6 +140,7 @@ void GraphicsPipelineLibrary::build_command_buffers()
 				if (pipelines.size() > idx)
 				{
 					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines[idx]);
+					vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(glm::vec4), &colors[idx % colors.size()]);
 					draw_model(scene, draw_cmd_buffers[i]);
 				}
 
@@ -176,6 +185,15 @@ void GraphicsPipelineLibrary::setup_descriptor_set_layout()
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
 
+	// Pass random colors using push constants
+	VkPushConstantRange push_constant_range{};
+	push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	push_constant_range.offset     = 0;
+	push_constant_range.size       = sizeof(glm::vec4);
+
+	pipeline_layout_create_info.pushConstantRangeCount = 1;
+	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
+
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
@@ -207,120 +225,122 @@ void GraphicsPipelineLibrary::compile_shader(const std::string filename, VkShade
 
 void GraphicsPipelineLibrary::prepare_pipeline_library()
 {
-	// @todo: create building blocks
-	// @todo: multiple caches?
-
-	VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
-	library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
-
-	// @todo: Even though this is the same as for pipeline creation, here this struct is used for pipeline library creatiion
-	VkGraphicsPipelineCreateInfo pipeline_library_create_info{};
-	pipeline_library_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-	pipeline_library_create_info.flags = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT;
-
 	/**
 	* Create a pipeline library for the vertex input interface
 	*/
+	{
+		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
+		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
+		library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_VERTEX_INPUT_INTERFACE_BIT_EXT;
 
-	library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_VERTEX_INPUT_INTERFACE_BIT_EXT;
+		VkPipelineInputAssemblyStateCreateInfo       input_assembly_state  = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+		VkPipelineVertexInputStateCreateInfo         vertex_input_state    = vkb::initializers::pipeline_vertex_input_state_create_info();
+		std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+		    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+		};
+		std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+		    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
+		    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
+		    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // UV
+		};
+		vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
+		vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
+		vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
+		vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
-	VkPipelineInputAssemblyStateCreateInfo       input_assembly_state  = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	VkPipelineVertexInputStateCreateInfo         vertex_input_state    = vkb::initializers::pipeline_vertex_input_state_create_info();
-	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
-	};
-	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // UV
-	};
-	vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
+		VkGraphicsPipelineCreateInfo pipeline_library_create_info{};
+		pipeline_library_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_library_create_info.flags               = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT;
+		pipeline_library_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_library_create_info.pNext               = &library_info;
+		pipeline_library_create_info.pInputAssemblyState = &input_assembly_state;
+		pipeline_library_create_info.pVertexInputState   = &vertex_input_state;
 
-	pipeline_library_create_info.pNext               = &library_info;
-	pipeline_library_create_info.pInputAssemblyState = &input_assembly_state;
-	pipeline_library_create_info.pVertexInputState   = &vertex_input_state;
-
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.vertex_input_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.vertex_input_interface));
+	}
 
 	/** 
 	* Creata a pipeline library for the vertex shader stage
 	*/
+	{
+		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
+		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
+		library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_PRE_RASTERIZATION_SHADERS_BIT_EXT;
 
-	VkGraphicsPipelineLibraryCreateInfoEXT libraryInfo{};
-	libraryInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
-	libraryInfo.flags = VK_GRAPHICS_PIPELINE_LIBRARY_PRE_RASTERIZATION_SHADERS_BIT_EXT;
+		VkDynamicState vertexDynamicStates[2] = {
+		    VK_DYNAMIC_STATE_VIEWPORT,
+		    VK_DYNAMIC_STATE_SCISSOR};
 
-	VkDynamicState vertexDynamicStates[2] = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+		VkPipelineDynamicStateCreateInfo dynamicInfo{};
+		dynamicInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicInfo.dynamicStateCount = 2;
+		dynamicInfo.pDynamicStates    = vertexDynamicStates;
 
-	VkPipelineDynamicStateCreateInfo dynamicInfo{};
-	dynamicInfo.sType             = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
-	dynamicInfo.dynamicStateCount = 2;
-	dynamicInfo.pDynamicStates    = vertexDynamicStates;
+		VkPipelineViewportStateCreateInfo viewportState = {};
+		viewportState.sType                             = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount                     = 1;
+		viewportState.scissorCount                      = 1;
 
-	VkPipelineViewportStateCreateInfo viewportState = {};
-	viewportState.sType                             = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
-	viewportState.viewportCount                     = 1;
-	viewportState.scissorCount                      = 1;
+		VkPipelineRasterizationStateCreateInfo rasterizationState = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
-	VkPipelineRasterizationStateCreateInfo rasterizationState = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+		// @todo: we can skip the pipeline shader module info and directly consume the shader module
+		std::vector<uint32_t> spirv;
+		compile_shader("graphics_pipeline_library/shared.vert", VK_SHADER_STAGE_VERTEX_BIT, spirv);
 
-	// @todo: we can skip the pipeline shader module info and directly consume the shader module
-	std::vector<uint32_t> spirv;
-	compile_shader("graphics_pipeline_library/shared.vert", VK_SHADER_STAGE_VERTEX_BIT, spirv);
+		VkShaderModuleCreateInfo shader_module_create_info{};
+		shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		shader_module_create_info.codeSize = static_cast<uint32_t>(spirv.size()) * sizeof(uint32_t);
+		shader_module_create_info.pCode    = spirv.data();
 
-	VkShaderModuleCreateInfo shader_module_create_info{};
-	shader_module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	shader_module_create_info.codeSize = static_cast<uint32_t>(spirv.size()) * sizeof(uint32_t);
-	shader_module_create_info.pCode    = spirv.data();
+		VkPipelineShaderStageCreateInfo shader_Stage_create_info{};
+		shader_Stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+		shader_Stage_create_info.pNext = &shader_module_create_info;
+		shader_Stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+		shader_Stage_create_info.pName = "main";
 
-	VkPipelineShaderStageCreateInfo shader_Stage_create_info{};
-	shader_Stage_create_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	shader_Stage_create_info.pNext = &shader_module_create_info;
-	shader_Stage_create_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_Stage_create_info.pName = "main";
+		VkGraphicsPipelineCreateInfo pipeline_library_create_info{};
+		pipeline_library_create_info.sType               = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_library_create_info.pNext               = &library_info;
+		pipeline_library_create_info.renderPass          = render_pass;
+		pipeline_library_create_info.flags               = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT;
+		pipeline_library_create_info.stageCount          = 1;
+		pipeline_library_create_info.pStages             = &shader_Stage_create_info;
+		pipeline_library_create_info.layout              = pipeline_layout;
+		pipeline_library_create_info.pDynamicState       = &dynamicInfo;
+		pipeline_library_create_info.pViewportState      = &viewportState;
+		pipeline_library_create_info.pRasterizationState = &rasterizationState;
 
-	pipeline_library_create_info.pNext               = &libraryInfo;
-	pipeline_library_create_info.renderPass          = render_pass;
-	pipeline_library_create_info.flags               = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT;
-	pipeline_library_create_info.stageCount          = 1;
-	pipeline_library_create_info.pStages             = &shader_Stage_create_info;
-	pipeline_library_create_info.layout              = pipeline_layout;
-	pipeline_library_create_info.pDynamicState       = &dynamicInfo;
-	pipeline_library_create_info.pViewportState      = &viewportState;
-	pipeline_library_create_info.pRasterizationState = &rasterizationState;
-
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.pre_rasterization_shaders));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.pre_rasterization_shaders));
+	}
 
 	/**
 	* Create a pipeline library for the fragment output interface
 	*/
+	{
+		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
+		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
+		library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_OUTPUT_INTERFACE_BIT_EXT;
 
-	library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_OUTPUT_INTERFACE_BIT_EXT;
+		VkPipelineColorBlendAttachmentState  blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+		VkPipelineColorBlendStateCreateInfo  color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+		VkPipelineMultisampleStateCreateInfo multisample_state      = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
 
-	VkPipelineColorBlendAttachmentState  blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo  color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
-	VkPipelineMultisampleStateCreateInfo multisample_state      = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+		VkGraphicsPipelineCreateInfo pipeline_library_create_info{};
+		pipeline_library_create_info.sType             = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipeline_library_create_info.pNext             = &library_info;
+		pipeline_library_create_info.layout            = pipeline_layout;
+		pipeline_library_create_info.renderPass        = render_pass;
+		pipeline_library_create_info.pColorBlendState  = &color_blend_state;
+		pipeline_library_create_info.pMultisampleState = &multisample_state;
 
-	pipeline_library_create_info.pNext             = &library_info;
-	pipeline_library_create_info.layout            = pipeline_layout;
-	pipeline_library_create_info.renderPass        = render_pass;
-	pipeline_library_create_info.pColorBlendState  = &color_blend_state;
-	pipeline_library_create_info.pMultisampleState = &multisample_state;
-
-	// @todo: only one call?
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.fragment_output_interface));
+		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.fragment_output_interface));
+	}
 }
 
 void GraphicsPipelineLibrary::prepare_new_pipeline()
 {
 	// @todo: fragment shader should differ randomly, maybe use an ubershaders
 
-	// @todo
 	VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
 	library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
 	library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_SHADER_BIT_EXT;
@@ -341,6 +361,23 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	shader_Stage_create_info.pNext = &shader_module_create_info;
 	shader_Stage_create_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
 	shader_Stage_create_info.pName = "main";
+
+	// Select lighting model using a specialization constant
+	srand((unsigned int) time(NULL));
+	uint32_t lighting_model = (int) (rand() % 2);
+
+	// Each shader constant of a shader stage corresponds to one map entry
+	VkSpecializationMapEntry specialization_map_entry{};
+	specialization_map_entry.constantID = 0;
+	specialization_map_entry.size       = sizeof(uint32_t);
+
+	VkSpecializationInfo specialization_info{};
+	specialization_info.mapEntryCount = 1;
+	specialization_info.pMapEntries   = &specialization_map_entry;
+	specialization_info.dataSize      = sizeof(uint32_t);
+	specialization_info.pData         = &lighting_model;
+
+	shader_Stage_create_info.pSpecializationInfo = &specialization_info;
 
 	VkGraphicsPipelineCreateInfo pipeline_library_create_info{};
 	pipeline_library_create_info.sType              = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -433,6 +470,11 @@ bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_sets();
 	build_command_buffers();
+
+	// Create a separate pipeline cache for the pipeline creation thread
+	VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
+	pipeline_cache_create_info.sType                     = VK_STRUCTURE_TYPE_PIPELINE_CACHE_CREATE_INFO;
+	vkCreatePipelineCache(get_device().get_handle(), &pipeline_cache_create_info, nullptr, &thread_pipeline_cache);
 
 	// Create first pipeline using a background thread
 	std::thread pipeline_generation_thread(&GraphicsPipelineLibrary::pipeline_creation_threadfn, this);

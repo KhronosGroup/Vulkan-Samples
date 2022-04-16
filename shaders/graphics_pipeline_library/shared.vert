@@ -18,7 +18,7 @@
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec3 inUV;
+layout (location = 2) in vec2 inUV;
 
 layout (binding = 0) uniform UBO 
 {
@@ -26,6 +26,10 @@ layout (binding = 0) uniform UBO
 	mat4 model;
 	vec4 lightPos;
 } ubo;
+
+layout(push_constant) uniform PushConsts {
+	vec4 color;
+} pushConsts;
 
 layout (location = 0) out vec3 outNormal;
 layout (location = 1) out vec3 outColor;
@@ -35,8 +39,8 @@ layout (location = 3) out vec3 outLightVec;
 void main() 
 {
 	outNormal = inNormal;
-	outColor = vec3(1.0);
-	vec4 pos = vec4(inPos.xyz * 0.15, 1.0);
+	outColor = pushConsts.color.rgb;
+	vec4 pos = vec4(inPos.xyz, 1.0);
 
 	gl_Position = ubo.projection * ubo.model * pos;
 	

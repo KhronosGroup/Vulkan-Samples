@@ -36,7 +36,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
-		glm::vec4 lightPos = glm::vec4(0.0, 1.0f, 10.0f, 0.0f);
+		glm::vec4 lightPos = glm::vec4(0.0, 1.0f, 20.0f, 0.0f);
 	} ubo_vs;
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
@@ -53,11 +53,12 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};	
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
-	std::mutex mutex;
+	std::mutex      mutex;
+	VkPipelineCache thread_pipeline_cache;
 
-	bool new_pipeline_created = false;
+	bool  new_pipeline_created = false;
 	float accumulated_time{};
 
 	GraphicsPipelineLibrary();
