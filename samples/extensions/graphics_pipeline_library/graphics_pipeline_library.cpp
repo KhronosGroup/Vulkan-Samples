@@ -391,7 +391,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	pipeline_library_create_info.pMultisampleState  = &multisample_state;
 
 	VkPipeline fragment_shader = VK_NULL_HANDLE;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &fragment_shader));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &pipeline_library_create_info, nullptr, &fragment_shader));
 
 	// @todo
 	std::vector<VkPipeline> libraries{};
@@ -416,7 +416,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	executable_pipeline_create_info.flags |= optimized ? VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT : 0;
 
 	VkPipeline executable = VK_NULL_HANDLE;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &executable_pipeline_create_info, nullptr, &executable));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &executable_pipeline_create_info, nullptr, &executable));
 
 	pipelines.push_back(executable);
 }
