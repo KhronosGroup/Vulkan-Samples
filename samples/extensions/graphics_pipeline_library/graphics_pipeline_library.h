@@ -20,7 +20,8 @@
  *
  * Note: Requires a device that supports the VK_EXT_graphics_pipeline_library
  *
- * @todo: add description
+ * Creates a pipeline library for shared pipeline parts like vertex input and fragment output interfaces. These pre-built pipeline
+ * "building blocks" are then used for runtime pipeline creation, which wlll be faster than always creating a full pipeline
  */
 
 #pragma once
@@ -34,8 +35,8 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 
 	struct UBOVS
 	{
-		glm::mat4 projection;
-		glm::mat4 modelview;
+		glm::mat4 projection = glm::mat4(1.0f);
+		glm::mat4 modelview  = glm::mat4(1.0f);
 		glm::vec4 lightPos = glm::vec4(0.0, 1.0f, 20.0f, 0.0f);
 	} ubo_vs;
 
@@ -43,20 +44,20 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 
 	struct
 	{
-		VkPipeline vertex_input_interface;
-		VkPipeline pre_rasterization_shaders;
-		VkPipeline fragment_output_interface;
+		VkPipeline vertex_input_interface{VK_NULL_HANDLE};
+		VkPipeline pre_rasterization_shaders{VK_NULL_HANDLE};
+		VkPipeline fragment_output_interface{VK_NULL_HANDLE};
 	} pipeline_library;
 
 	// Will be dynamically created at runtime from pipeline library
-	std::vector<VkPipeline> pipelines;
+	std::vector<VkPipeline> pipelines{};
 
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
 	std::mutex      mutex;
-	VkPipelineCache thread_pipeline_cache;
+	VkPipelineCache thread_pipeline_cache{VK_NULL_HANDLE};
 
 	bool  new_pipeline_created = false;
 	float accumulated_time{};

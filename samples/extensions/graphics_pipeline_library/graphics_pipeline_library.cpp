@@ -20,10 +20,9 @@
  *
  * Note: Requires a device that supports the VK_EXT_graphics_pipeline_library
  *
- * @todo: add description
+ * Creates a pipeline library for shared pipeline parts like vertex input and fragment output interfaces. These pre-built pipeline
+ * "building blocks" are then used for runtime pipeline creation, which wlll be faster than always creating a full pipeline
  */
-
-// @todo: check supported features (e.g. fast linking) and only enable if supported
 
 #include "graphics_pipeline_library.h"
 
@@ -208,9 +207,10 @@ void GraphicsPipelineLibrary::setup_descriptor_sets()
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets     = {
         vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &uniform_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
+// Compiling shaders can be simplified with the new extension, so we only require code to generate the SPIR-V in thhis sample
 void GraphicsPipelineLibrary::compile_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv)
 {
 	vkb::GLSLCompiler glsl_compiler;
@@ -223,11 +223,11 @@ void GraphicsPipelineLibrary::compile_shader(const std::string filename, VkShade
 	}
 }
 
+// This function pre-builts shared pipeline parts ("pipeline library")
+// E.g. vertex input and fragment out interface, which are the same for all pipelines created in this sample
 void GraphicsPipelineLibrary::prepare_pipeline_library()
 {
-	/**
-	* Create a pipeline library for the vertex input interface
-	*/
+	// Create a pipeline library for the vertex input interface
 	{
 		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
 		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
@@ -259,9 +259,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.vertex_input_interface));
 	}
 
-	/** 
-	* Creata a pipeline library for the vertex shader stage
-	*/
+	// Creata a pipeline library for the vertex shader stage
 	{
 		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
 		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
@@ -283,7 +281,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 
 		VkPipelineRasterizationStateCreateInfo rasterizationState = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
 
-		// @todo: we can skip the pipeline shader module info and directly consume the shader module
+		// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 		std::vector<uint32_t> spirv;
 		compile_shader("graphics_pipeline_library/shared.vert", VK_SHADER_STAGE_VERTEX_BIT, spirv);
 
@@ -313,9 +311,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_library_create_info, nullptr, &pipeline_library.pre_rasterization_shaders));
 	}
 
-	/**
-	* Create a pipeline library for the fragment output interface
-	*/
+	// Create a pipeline library for the fragment output interface
 	{
 		VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
 		library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
@@ -339,8 +335,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 
 void GraphicsPipelineLibrary::prepare_new_pipeline()
 {
-	// @todo: fragment shader should differ randomly, maybe use an ubershaders
-
+	// Create the fragment shader part of the pipeline library with some random options
 	VkGraphicsPipelineLibraryCreateInfoEXT library_info{};
 	library_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT;
 	library_info.flags = VK_GRAPHICS_PIPELINE_LIBRARY_FRAGMENT_SHADER_BIT_EXT;
@@ -348,6 +343,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_LESS_OR_EQUAL);
 	VkPipelineMultisampleStateCreateInfo  multisample_state   = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
 
+	// Using the pipeline library extension, we can skip the pipeline shader module creation and directly pass the shader code to the pipeline
 	std::vector<uint32_t> spirv;
 	compile_shader("graphics_pipeline_library/uber.frag", VK_SHADER_STAGE_FRAGMENT_BIT, spirv);
 
@@ -393,7 +389,9 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	VkPipeline fragment_shader = VK_NULL_HANDLE;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &pipeline_library_create_info, nullptr, &fragment_shader));
 
-	// @todo
+
+	// Create the pipeline using the pre-built pipeline library parts
+	// Except for above fragment shader part all parts have been pre-built and will be re-used
 	std::vector<VkPipeline> libraries{};
 
 	libraries.push_back(pipeline_library.vertex_input_interface);
@@ -407,7 +405,8 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	linking_info.libraryCount = static_cast<uint32_t>(libraries.size());
 	linking_info.pLibraries   = libraries.data();
 
-	// @todo: Need to check if supported
+	// If set to true, we pass VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT which will let the implementation do additional optimizations at link time
+	// This trades in pipeline creation time for run-time performance
 	bool optimized = true;
 
 	VkGraphicsPipelineCreateInfo executable_pipeline_create_info{};
@@ -507,6 +506,7 @@ void GraphicsPipelineLibrary::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.button("Add pipeline"))
 		{
+			// Spwan a thread to create a new pipeline in the background
 			std::thread pipeline_generation_thread(&GraphicsPipelineLibrary::pipeline_creation_threadfn, this);
 			pipeline_generation_thread.detach();
 		}
