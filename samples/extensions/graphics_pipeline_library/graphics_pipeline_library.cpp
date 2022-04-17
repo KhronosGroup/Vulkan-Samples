@@ -38,6 +38,13 @@ void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 	prepare_new_pipeline();
 	new_pipeline_created = true;
 
+	// Change viewport/draw count
+	if (pipelines.size() > split_x * split_y)
+	{
+		split_x++;
+		split_y++;
+	}
+
 	auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - start);
 	LOGD("Pipeline created in {} ms", milliseconds.count());
 }
@@ -81,7 +88,7 @@ void GraphicsPipelineLibrary::build_command_buffers()
 
 	VkClearValue clear_values[2];
 	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
-	clear_values[1].depthStencil = {0.0f, 0};
+	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass            = render_pass;
@@ -106,8 +113,8 @@ void GraphicsPipelineLibrary::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		float w = (float) width / 3.0f;
-		float h = (float) height / 2.0f;
+		float w = (float) width / (float) split_x;
+		float h = (float) height / (float) split_y;
 
 		std::vector<glm::vec3> colors = {
 		    glm::vec3(1.0f, 0.0f, 0.0f),
@@ -118,15 +125,17 @@ void GraphicsPipelineLibrary::build_command_buffers()
 		    glm::vec3(0.0f, 1.0f, 1.0f)};
 
 		uint32_t idx = 0;
-		for (uint32_t y = 0; y < 2; y++)
+		for (uint32_t y = 0; y < split_y; y++)
 		{
-			for (uint32_t x = 0; x < 3; x++)
+			for (uint32_t x = 0; x < split_x; x++)
 			{
 				VkViewport viewport{};
-				viewport.x      = w * (float) x;
-				viewport.y      = h * (float) y;
-				viewport.width  = w;
-				viewport.height = h;
+				viewport.x        = w * (float) x;
+				viewport.y        = h * (float) y;
+				viewport.width    = w;
+				viewport.height   = h;
+				viewport.minDepth = 0.0f;
+				viewport.maxDepth = 1.0f;
 				vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 				VkRect2D scissor{};
@@ -157,7 +166,7 @@ void GraphicsPipelineLibrary::build_command_buffers()
 
 void GraphicsPipelineLibrary::load_assets()
 {
-	scene = load_model("scenes/cube.gltf");
+	scene = load_model("scenes/teapot.gltf");
 }
 
 void GraphicsPipelineLibrary::setup_descriptor_pool()
@@ -360,7 +369,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	// Select lighting model using a specialization constant
 	srand((unsigned int) time(NULL));
-	uint32_t lighting_model = (int) (rand() % 2);
+	uint32_t lighting_model = (int) (rand() % 3);
 
 	// Each shader constant of a shader stage corresponds to one map entry
 	VkSpecializationMapEntry specialization_map_entry{};
@@ -388,7 +397,6 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	VkPipeline fragment_shader = VK_NULL_HANDLE;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &pipeline_library_create_info, nullptr, &fragment_shader));
-
 
 	// Create the pipeline using the pre-built pipeline library parts
 	// Except for above fragment shader part all parts have been pre-built and will be re-used
@@ -434,11 +442,11 @@ void GraphicsPipelineLibrary::prepare_uniform_buffers()
 
 void GraphicsPipelineLibrary::update_uniform_buffers()
 {
-	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, ((float) width / 3.0f) / ((float) height / 2.0f), 256.0f, 0.1f);
+	camera.set_perspective(45.0f, ((float) width / (float) split_x) / ((float) height / (float) split_y), 0.1f, 256.0f);
 
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.modelview  = camera.matrices.view * glm::rotate(glm::mat4(1.0f), glm::radians(accumulated_time * 360.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+	ubo_vs.modelview  = glm::rotate(ubo_vs.modelview, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
 	uniform_buffer->convert_and_update(ubo_vs);
 }
 
@@ -459,8 +467,8 @@ bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_position(glm::vec3(0.0f, 0.0f, -25.0f));
-	camera.set_rotation(glm::vec3(-30.0f, 180.0f, 0.0f));
+	camera.set_position(glm::vec3(0.0f, 0.0f, -7.0f));
+	camera.set_rotation(glm::vec3(-30.0f, 0.0f, 0.0f));
 
 	load_assets();
 	prepare_uniform_buffers();

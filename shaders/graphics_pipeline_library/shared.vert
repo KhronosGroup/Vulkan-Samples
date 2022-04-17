@@ -35,6 +35,7 @@ layout (location = 0) out vec3 outNormal;
 layout (location = 1) out vec3 outColor;
 layout (location = 2) out vec3 outViewVec;
 layout (location = 3) out vec3 outLightVec;
+layout (location = 4) flat out vec3 outFlatNormal;
 
 void main() 
 {
@@ -46,7 +47,7 @@ void main()
 	
 	pos = ubo.model * pos;
 	outNormal = mat3(ubo.model) * inNormal;
-	vec3 lPos = mat3(ubo.model) * ubo.lightPos.xyz;
+	vec3 lPos = ubo.lightPos.xyz;
 	outLightVec = lPos - pos.xyz;
 	outViewVec = -pos.xyz;		
 }

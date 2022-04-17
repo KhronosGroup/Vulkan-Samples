@@ -20,6 +20,7 @@ layout (location = 0) in vec3 inNormal;
 layout (location = 1) in vec3 inColor;
 layout (location = 2) in vec3 inViewVec;
 layout (location = 3) in vec3 inLightVec;
+layout (location = 4) flat in vec3 inFlatNormal;
 
 layout (constant_id = 0) const int LIGHTING_MODEL = 0;
 
@@ -60,6 +61,11 @@ void main()
 			// Desaturate a bit
 			color = vec3(mix(color, vec3(dot(vec3(0.2126,0.7152,0.0722), color)), 0.25));	
 			outFragColor.rgb = color;
+			break;
+		}
+		case 2: // No shading
+		{
+			outFragColor.rgb = inColor;
 			break;
 		}
 	}

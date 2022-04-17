@@ -37,7 +37,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	{
 		glm::mat4 projection = glm::mat4(1.0f);
 		glm::mat4 modelview  = glm::mat4(1.0f);
-		glm::vec4 lightPos = glm::vec4(0.0, 1.0f, 20.0f, 0.0f);
+		glm::vec4 lightPos = glm::vec4(-10.0f, -5.0f, 15.0f, 0.0f);
 	} ubo_vs;
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
@@ -61,6 +61,9 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 
 	bool  new_pipeline_created = false;
 	float accumulated_time{};
+
+	uint32_t split_x = 3;
+	uint32_t split_y = 3;
 
 	GraphicsPipelineLibrary();
 	~GraphicsPipelineLibrary();
