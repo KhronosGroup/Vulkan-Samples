@@ -116,14 +116,6 @@ void GraphicsPipelineLibrary::build_command_buffers()
 		float w = (float) width / (float) split_x;
 		float h = (float) height / (float) split_y;
 
-		std::vector<glm::vec3> colors = {
-		    glm::vec3(1.0f, 0.0f, 0.0f),
-		    glm::vec3(0.0f, 1.0f, 0.0f),
-		    glm::vec3(0.0f, 0.0f, 1.0f),
-		    glm::vec3(1.0f, 1.0f, 0.0f),
-		    glm::vec3(1.0f, 0.0f, 1.0f),
-		    glm::vec3(0.0f, 1.0f, 1.0f)};
-
 		uint32_t idx = 0;
 		for (uint32_t y = 0; y < split_y; y++)
 		{
@@ -400,12 +392,12 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 
 	// Create the pipeline using the pre-built pipeline library parts
 	// Except for above fragment shader part all parts have been pre-built and will be re-used
-	std::vector<VkPipeline> libraries{};
-
-	libraries.push_back(pipeline_library.vertex_input_interface);
-	libraries.push_back(pipeline_library.pre_rasterization_shaders);
-	libraries.push_back(fragment_shader);
-	libraries.push_back(pipeline_library.fragment_output_interface);
+	std::vector<VkPipeline> libraries = {
+	    pipeline_library.vertex_input_interface,
+	    pipeline_library.pre_rasterization_shaders,
+	    fragment_shader,
+	    pipeline_library.fragment_output_interface
+	};
 
 	// Link the library parts into a graphics pipeline
 	VkPipelineLibraryCreateInfoKHR linking_info{};
@@ -477,6 +469,18 @@ bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_sets();
 	build_command_buffers();
+
+	// Set up some random colors
+	std::random_device                    rnd_device;
+	std::default_random_engine            rnd{rnd_device()};
+	std::uniform_real_distribution<float> color_distribution{0.2f, 0.8f};
+	colors.resize(16);
+	for (size_t i = 0; i < colors.size(); i++)
+	{
+		colors[i].r = color_distribution(rnd);
+		colors[i].g = color_distribution(rnd);
+		colors[i].b = color_distribution(rnd);
+	}
 
 	// Create a separate pipeline cache for the pipeline creation thread
 	VkPipelineCacheCreateInfo pipeline_cache_create_info = {};

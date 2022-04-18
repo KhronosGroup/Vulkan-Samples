@@ -65,6 +65,8 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	uint32_t split_x = 3;
 	uint32_t split_y = 3;
 
+	std::vector<glm::vec3> colors{};
+
 	GraphicsPipelineLibrary();
 	~GraphicsPipelineLibrary();
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
