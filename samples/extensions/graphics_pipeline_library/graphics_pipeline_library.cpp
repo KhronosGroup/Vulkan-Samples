@@ -396,8 +396,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	    pipeline_library.vertex_input_interface,
 	    pipeline_library.pre_rasterization_shaders,
 	    fragment_shader,
-	    pipeline_library.fragment_output_interface
-	};
+	    pipeline_library.fragment_output_interface};
 
 	// Link the library parts into a graphics pipeline
 	VkPipelineLibraryCreateInfoKHR linking_info{};
