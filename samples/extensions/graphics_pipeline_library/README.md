@@ -130,9 +130,6 @@ A note on `VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT`: This is an optimi
 
 This sample demonstrates that functionality by creating the shared vertex input interface, pre-rasterization shader state and fragment output interface parts only once up-front, and then re-uses them to create pipelines with customized fragment shaders using random lighting models at runtime. Pipelines are created in a background thread and once they're created, command buffers are updated to display a mesh using the new pipeline.
 
-Creating pipelines using pre-built libraries in the sample cuts pipeline creation time for this sample in half. While creating the full pipeline took around 1500ms, creating the same pipeline using pre-built libraries cuts this pretty much in half down to around 750ms. A nice reduction, although mileage may vary for more real-world use cases.
-
-
 ## Additional resources
 
 * [Reducing Draw Time Hitching with VK_EXT_graphics_pipeline_library](https://www.khronos.org/blog/reducing-draw-time-hitching-with-vk-ext-graphics-pipeline-library)
