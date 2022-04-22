@@ -72,4 +72,4 @@ jobs:
           apt install ninja-build
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew :assembleRelease
+        run: ./gradlew app:assembleRelease
