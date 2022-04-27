@@ -51,7 +51,7 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 	afbc_enabled = false;
 	recreate_swapchain();
 
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();

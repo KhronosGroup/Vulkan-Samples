@@ -42,7 +42,7 @@ KHR16BitStorageInputOutputSample::KHR16BitStorageInputOutputSample()
 
 void KHR16BitStorageInputOutputSample::setup_scene()
 {
-	load_scene("scenes/teapot.gltf");
+	load_scene("/scenes/teapot.gltf");
 
 	// Setup the scene so we have many teapots.
 	vkb::sg::Mesh *teapot_mesh = nullptr;

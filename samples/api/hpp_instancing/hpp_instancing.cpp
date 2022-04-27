@@ -131,8 +131,8 @@ void HPPInstancing::build_command_buffers()
 
 void HPPInstancing::load_assets()
 {
-	models.rock   = load_model("scenes/rock.gltf");
-	models.planet = load_model("scenes/planet.gltf");
+	models.rock   = load_model("/scenes/rock.gltf");
+	models.planet = load_model("/scenes/planet.gltf");
 
 	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
 	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");

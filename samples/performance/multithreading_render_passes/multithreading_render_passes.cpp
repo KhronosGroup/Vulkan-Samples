@@ -51,7 +51,7 @@ bool MultithreadingRenderPasses::prepare(vkb::Platform &platform)
 		shadow_render_targets[i] = create_shadow_render_target(SHADOWMAP_RESOLUTION);
 	}
 
-	load_scene("scenes/bonza/Bonza4X.gltf");
+	load_scene("/scenes/bonza/Bonza4X.gltf");
 
 	scene->clear_components<vkb::sg::Light>();
 	auto &light           = vkb::add_directional_light(*scene, glm::quat({glm::radians(-30.0f), glm::radians(175.0f), glm::radians(0.0f)}));

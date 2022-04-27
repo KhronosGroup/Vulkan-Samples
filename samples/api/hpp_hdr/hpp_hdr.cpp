@@ -404,12 +404,12 @@ void HPPHDR::prepare_offscreen_buffer()
 void HPPHDR::load_assets()
 {
 	// Models
-	models.skybox                      = load_model("scenes/cube.gltf");
+	models.skybox                      = load_model("/scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
 	for (auto file : filenames)
 	{
-		auto object = load_model("scenes/" + file);
+		auto object = load_model("/scenes/" + file);
 		models.objects.emplace_back(std::move(object));
 	}
 

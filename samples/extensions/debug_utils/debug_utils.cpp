@@ -747,9 +747,9 @@ void DebugUtils::prepare_offscreen_buffer()
 
 void DebugUtils::load_assets()
 {
-	models.skysphere   = load_model("scenes/geosphere.gltf");
+	models.skysphere   = load_model("/scenes/geosphere.gltf");
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
-	models.scene       = load_model("scenes/geosphere.gltf");
+	models.scene       = load_model("/scenes/geosphere.gltf");
 }
 
 void DebugUtils::setup_descriptor_pool()

@@ -291,7 +291,7 @@ void RayQueries::load_scene()
 	model = {};
 
 	vkb::GLTFLoader loader{*device};
-	auto            scene = loader.read_scene_from_file("scenes/sponza/Sponza01.gltf");
+	auto            scene = loader.read_scene_from_file("/scenes/sponza/Sponza01.gltf");
 
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{

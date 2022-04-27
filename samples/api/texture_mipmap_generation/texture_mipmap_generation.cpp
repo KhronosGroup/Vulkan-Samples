@@ -327,7 +327,7 @@ void TextureMipMapGeneration::destroy_texture(Texture texture)
 void TextureMipMapGeneration::load_assets()
 {
 	load_texture_generate_mipmaps("/assets/textures/checkerboard_rgba.ktx");
-	scene = load_model("scenes/tunnel_cylinder.gltf");
+	scene = load_model("/scenes/tunnel_cylinder.gltf");
 }
 
 void TextureMipMapGeneration::build_command_buffers()

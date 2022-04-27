@@ -54,7 +54,7 @@ inline std::vector<std::string> precompile_shader(const std::string &source)
 			std::shared_ptr<vfs::Blob> blob;
 			if (fs.read_file("/shaders/" + include_path, &blob) != vfs::status::Success)
 			{
-				throw std::runtime_error{"failed to read shader"};
+				throw std::runtime_error{"failed to read shader 1"};
 			}
 
 			auto include_file = precompile_shader(blob->ascii());
@@ -307,7 +307,7 @@ ShaderSource::ShaderSource(const std::string &filename) :
 	std::shared_ptr<vfs::Blob> blob;
 	if (fs.read_file("/shaders/" + filename, &blob) != vfs::status::Success)
 	{
-		throw std::runtime_error{"failed to read shader"};
+		throw std::runtime_error{"failed to read shader 2"};
 	}
 
 	source = blob->ascii();

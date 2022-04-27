@@ -379,14 +379,12 @@ bool read_whole_file(std::vector<unsigned char> *out, std::string *err, const st
 	return true;
 }
 
-std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &file_name, int scene_index)
+std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &gltf_file, int scene_index)
 {
 	std::string err;
 	std::string warn;
 
 	tinygltf::TinyGLTF gltf_loader;
-
-	std::string gltf_file = "/assets/" + file_name;
 
 	FSData data;
 	data.root_path = vfs::helpers::directory_path(gltf_file);

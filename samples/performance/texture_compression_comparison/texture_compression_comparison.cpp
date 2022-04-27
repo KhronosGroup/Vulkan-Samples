@@ -51,7 +51,7 @@ constexpr std::array<const char *, 19> error_codes = {
 
 std::string get_sponza_texture_filename(const std::string &short_name)
 {
-	return "/assets/scenes/sponza/ktx2/" + short_name + "2";
+	return "/assets//scenes/sponza/ktx2/" + short_name + "2";
 }
 }        // namespace
 
@@ -208,7 +208,7 @@ void TextureCompressionComparison::get_available_texture_formats()
 void TextureCompressionComparison::load_assets()
 {
 	get_available_texture_formats();
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 	if (!scene)
 	{
 		throw std::runtime_error("Unable to load Sponza scene");

@@ -58,7 +58,7 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 	stats->request_stats({vkb::StatIndex::gpu_ext_read_stalls,
 	                      vkb::StatIndex::gpu_ext_write_stalls});
 
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());

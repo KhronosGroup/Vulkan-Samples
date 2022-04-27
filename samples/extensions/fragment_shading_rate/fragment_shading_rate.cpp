@@ -497,9 +497,9 @@ void FragmentShadingRate::build_command_buffers()
 
 void FragmentShadingRate::load_assets()
 {
-	models.skysphere   = load_model("scenes/geosphere.gltf");
+	models.skysphere   = load_model("/scenes/geosphere.gltf");
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
-	models.scene       = load_model("scenes/textured_unit_cube.gltf");
+	models.scene       = load_model("/scenes/textured_unit_cube.gltf");
 	textures.scene     = load_texture("textures/metalplate01_rgba.ktx");
 }
 

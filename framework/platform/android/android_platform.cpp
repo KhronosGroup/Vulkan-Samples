@@ -380,17 +380,6 @@ int32_t on_input_event(android_app *app, AInputEvent *input_event)
 }
 }        // namespace
 
-namespace fs
-{
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
-	{
-		mkdir(path.c_str(), 0777);
-	}
-}
-}        // namespace fs
-
 AndroidPlatform::AndroidPlatform(android_app *app) :
     app{app}
 {

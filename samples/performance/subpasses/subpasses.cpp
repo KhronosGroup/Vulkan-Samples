@@ -112,7 +112,7 @@ bool Subpasses::prepare(vkb::Platform &platform)
 	std::set<VkImageUsageFlagBits> usage = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT};
 	get_render_context().update_swapchain(usage);
 
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 
 	scene->clear_components<vkb::sg::Light>();
 

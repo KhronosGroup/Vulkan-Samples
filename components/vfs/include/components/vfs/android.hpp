@@ -49,6 +49,8 @@ class AndroidAAssetManager : public FileSystem
 	virtual status::status enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
 
   private:
+	std::string get_path(const std::string &path);
+
 	std::string    m_base_path;
 	AAssetManager *asset_manager;
 };

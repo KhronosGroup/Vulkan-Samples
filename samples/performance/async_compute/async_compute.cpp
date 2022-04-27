@@ -215,7 +215,7 @@ bool AsyncComputeSample::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	load_scene("scenes/bonza/Bonza.gltf");
+	load_scene("/scenes/bonza/Bonza.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();

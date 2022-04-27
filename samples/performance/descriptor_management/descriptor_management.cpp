@@ -43,7 +43,7 @@ bool DescriptorManagement::prepare(vkb::Platform &platform)
 	}
 
 	// Load a scene from the assets folder
-	load_scene("scenes/bonza/Bonza4X.gltf");
+	load_scene("/scenes/bonza/Bonza4X.gltf");
 
 	// Attach a move script to the camera component in the scene
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());

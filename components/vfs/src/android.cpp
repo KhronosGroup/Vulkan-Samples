@@ -20,12 +20,13 @@ RootFileSystem &instance(void *context)
 		fs.mount("/scenes", std::make_shared<vfs::AndroidAAssetManager>(app, "scenes"));
 		fs.mount("/textures", std::make_shared<vfs::AndroidAAssetManager>(app, "textures"));
 		fs.mount("/fonts", std::make_shared<vfs::AndroidAAssetManager>(app, "fonts"));
-
+		fs.mount("/shaders", std::make_shared<vfs::AndroidAAssetManager>(app, ""));
 #else
-		fs.mount("/", std::make_shared<vfs::AndroidFileSystem>(app));
-		fs.mount("/scenes", std::make_shared<vfs::AndroidFileSystem>(app, "/assets/scenes"));
-		fs.mount("/textures", std::make_shared<vfs::AndroidFileSystem>(app, "/assets/textures"));
-		fs.mount("/fonts", std::make_shared<vfs::AndroidFileSystem>(app, "/assets/fonts"));
+		fs.mount("/", std::make_shared<vfs::AndroidExternalFileSystem>(app));
+		fs.mount("/scenes", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/scenes"));
+		fs.mount("/textures", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/textures"));
+		fs.mount("/fonts", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/fonts"));
+		fs.mount("/shaders", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/shaders"));
 #endif
 
 		first_time = false;

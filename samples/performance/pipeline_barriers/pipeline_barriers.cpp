@@ -46,7 +46,7 @@ bool PipelineBarriers::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 
 	scene->clear_components<vkb::sg::Light>();
 

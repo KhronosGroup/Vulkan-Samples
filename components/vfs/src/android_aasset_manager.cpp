@@ -9,35 +9,35 @@ jobject global_asset_manager;
 
 AAssetManager *get_aasset_manager(android_app *app)
 {
-	AAssetManager *manager{nullptr};
-
 	if (!app)
 	{
-		return manager;
+		return nullptr;
 	}
 
-	JNIEnv *env;
-	app->activity->vm->AttachCurrentThread(&env, NULL);
-
-	// Create reference frame
-	if (env->PushLocalFrame(16) >= 0)
-	{
-		jclass    activity_class           = env->GetObjectClass(app->activity->clazz);
-		jmethodID activity_class_getAssets = env->GetMethodID(activity_class, "getAssets", "()Landroid/content/res/AssetManager;");
-		jobject   asset_manager            = env->CallObjectMethod(app->activity->clazz, activity_class_getAssets);        // activity.getAssets();
-		global_asset_manager               = env->NewGlobalRef(asset_manager);
-
-		manager = AAssetManager_fromJava(env, global_asset_manager);
-	}
-
-	app->activity->vm->DetachCurrentThread();
-
-	return manager;
+	return app->activity->assetManager;
 }
 
 AndroidAAssetManager::AndroidAAssetManager(android_app *app, const std::string &base_path) :
     FileSystem{}, m_base_path{base_path}, asset_manager{get_aasset_manager(app)}
 {
+}
+
+std::string AndroidAAssetManager::get_path(const std::string &path)
+{
+	std::string real_path = m_base_path + path;
+
+	if (real_path.empty())
+	{
+		return real_path;
+	}
+
+	// remove / prefix
+	if (real_path[0] == '/')
+	{
+		real_path = real_path.substr(1, real_path.size());
+	}
+
+	return real_path;
 }
 
 bool AndroidAAssetManager::folder_exists(const std::string &file_path)
@@ -47,7 +47,7 @@ bool AndroidAAssetManager::folder_exists(const std::string &file_path)
 		return false;
 	}
 
-	std::string real_path = m_base_path + file_path;
+	std::string real_path = get_path(file_path);
 
 	AAssetDir *dir = AAssetManager_openDir(asset_manager, real_path.c_str());
 
@@ -68,7 +68,7 @@ bool AndroidAAssetManager::file_exists(const std::string &file_path)
 		return false;
 	}
 
-	std::string real_path = m_base_path + file_path;
+	std::string real_path = get_path(file_path);
 
 	AAsset *asset = AAssetManager_open(asset_manager, real_path.c_str(), AASSET_MODE_STREAMING);
 
@@ -89,7 +89,7 @@ status::status AndroidAAssetManager::read_file(const std::string &file_path, std
 		return status::FailedToRead;
 	}
 
-	std::string real_path = m_base_path + file_path;
+	std::string real_path = get_path(file_path);
 
 	AAsset *asset = AAssetManager_open(asset_manager, real_path.c_str(), AASSET_MODE_STREAMING);
 
@@ -118,7 +118,7 @@ status::status AndroidAAssetManager::read_chunk(const std::string &file_path, co
 		return status::FailedToRead;
 	}
 
-	std::string real_path = m_base_path + file_path;
+	std::string real_path = get_path(file_path);
 
 	AAsset *asset = AAssetManager_open(asset_manager, real_path.c_str(), AASSET_MODE_STREAMING);
 
@@ -154,7 +154,7 @@ size_t AndroidAAssetManager::file_size(const std::string &file_path)
 		return 0;
 	}
 
-	std::string real_path = m_base_path + file_path;
+	std::string real_path = get_path(file_path);
 
 	AAsset *asset = AAssetManager_open(asset_manager, real_path.c_str(), AASSET_MODE_STREAMING);
 

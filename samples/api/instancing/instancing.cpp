@@ -137,11 +137,11 @@ void Instancing::build_command_buffers()
 
 void Instancing::load_assets()
 {
-	models.rock   = load_model("scenes/rock.gltf");
-	models.planet = load_model("scenes/planet.gltf");
+	models.rock   = load_model("/scenes/rock.gltf");
+	models.planet = load_model("/scenes/planet.gltf");
 
-	//models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
-	//models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
+	//models.rock.loadFromFile(getAssetPath() + "/scenes/rock.gltf", device.get(), queue);
+	//models.planet.loadFromFile(getAssetPath() + "/scenes/planet.gltf", device.get(), queue);
 
 	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
 	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");

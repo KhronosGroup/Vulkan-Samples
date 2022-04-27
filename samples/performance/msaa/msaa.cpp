@@ -105,7 +105,7 @@ bool MSAASample::prepare(vkb::Platform &platform)
 		prepare_depth_resolve_mode_list();
 	}
 
-	load_scene("scenes/space_module/SpaceModule.gltf");
+	load_scene("/scenes/space_module/SpaceModule.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());

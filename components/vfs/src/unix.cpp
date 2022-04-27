@@ -10,6 +10,8 @@
 
 namespace vfs
 {
+// Android reuses the Unix filesystem. This stops a redefinition of the instance function
+#ifndef ANDROID
 RootFileSystem &instance(void *context)
 {
 	static vfs::RootFileSystem fs;
@@ -32,6 +34,7 @@ RootFileSystem &instance(void *context)
 
 	return fs;
 }
+#endif
 
 inline const std::string get_temp_path_from_environment()
 {

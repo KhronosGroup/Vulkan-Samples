@@ -37,7 +37,9 @@ android {
             versionNameSuffix "-sync"
 
             externalNativeBuild {
-                @CMAKE_ASSETS_SYNC_ARGUMENTS@
+                cmake {
+                    arguments "-DVKB_BUNDLE_ASSETS=OFF", "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static", "-DVKB_VALIDATION_LAYERS=OFF", "-DANDROID_NDK=$ndkDirectory"
+                }
             }
         }
 
@@ -46,7 +48,9 @@ android {
             versionNameSuffix "-bundle"
 
             externalNativeBuild {
-                @CMAKE_ASSETS_BUNDLE_ARGUMENTS@
+                cmake {
+				    arguments "-DVKB_BUNDLE_ASSETS=ON", "-DANDROID_TOOLCHAIN=clang", "-DANDROID_STL=c++_static", "-DVKB_VALIDATION_LAYERS=OFF", "-DANDROID_NDK=$ndkDirectory"
+                }
             }
         }
     }
@@ -65,6 +69,14 @@ android {
 
 			jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
 		}
+
+		sync {
+			manifest.srcFile '../../../app/android/sync/AndroidManifest.xml'
+		}
+
+		bundle {
+			assets.srcDirs += [ '../../../assets', '../../../shaders' ]
+		}
 	}
 
 	externalNativeBuild {
@@ -79,14 +91,6 @@ android {
 	buildFeatures {
 		viewBinding true
 	}
-
-	bundle {
-        @ASSETS_SRC_DIRS@
-    }
-
-    sync {
-        @ASSETS_SYNC_MANIFEST_FILE@
-    }
 }
 
 dependencies {

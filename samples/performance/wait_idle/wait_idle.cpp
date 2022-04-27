@@ -46,7 +46,7 @@ bool WaitIdle::prepare(vkb::Platform &plat)
 	}
 
 	// Load a scene from the assets folder
-	load_scene("scenes/bonza/Bonza.gltf");
+	load_scene("/scenes/bonza/Bonza.gltf");
 
 	// Attach a move script to the camera component in the scene
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());

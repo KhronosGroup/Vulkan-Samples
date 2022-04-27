@@ -106,8 +106,8 @@ void DynamicRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 void DynamicRendering::load_assets()
 {
 	// Models
-	skybox = load_model("scenes/cube.gltf");
-	object = load_model("scenes/geosphere.gltf");
+	skybox = load_model("/scenes/cube.gltf");
+	object = load_model("/scenes/geosphere.gltf");
 
 	// Load HDR cube map
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");

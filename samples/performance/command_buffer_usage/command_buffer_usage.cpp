@@ -56,7 +56,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	load_scene("scenes/bonza/Bonza4X.gltf");
+	load_scene("/scenes/bonza/Bonza4X.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = dynamic_cast<vkb::sg::PerspectiveCamera *>(&camera_node.get_component<vkb::sg::Camera>());

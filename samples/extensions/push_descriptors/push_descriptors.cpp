@@ -157,7 +157,7 @@ void PushDescriptors::build_command_buffers()
 
 void PushDescriptors::load_assets()
 {
-	models.cube      = load_model("scenes/textured_unit_cube.gltf");
+	models.cube      = load_model("/scenes/textured_unit_cube.gltf");
 	cubes[0].texture = load_texture("textures/crate01_color_height_rgba.ktx");
 	cubes[1].texture = load_texture("textures/crate02_color_height_rgba.ktx");
 }

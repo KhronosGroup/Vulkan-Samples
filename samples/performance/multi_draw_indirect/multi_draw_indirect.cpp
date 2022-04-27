@@ -305,7 +305,7 @@ void MultiDrawIndirect::load_scene()
 {
 	assert(!!device);
 	vkb::GLTFLoader   loader{*device};
-	const std::string scene_path = "scenes/vokselia/";
+	const std::string scene_path = "/scenes/vokselia/";
 	auto              scene      = loader.read_scene_from_file(scene_path + "vokselia.gltf");
 
 	assert(!!scene);

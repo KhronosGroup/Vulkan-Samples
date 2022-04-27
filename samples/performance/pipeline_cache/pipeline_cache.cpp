@@ -125,7 +125,7 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
 
-	load_scene("scenes/sponza/Sponza01.gltf");
+	load_scene("/scenes/sponza/Sponza01.gltf");
 
 	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
 	camera            = &camera_node.get_component<vkb::sg::Camera>();

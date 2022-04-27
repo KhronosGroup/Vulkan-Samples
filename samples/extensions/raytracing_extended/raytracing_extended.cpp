@@ -812,7 +812,7 @@ void RaytracingExtended::create_scene()
                                        sponza_scale, 0.f, 0.f, 0.f,
                                        0.f, sponza_scale, 0.f, 0.f,
                                        0.f, 0.f, 0.f, 1.f};
-	scenesToLoad.emplace_back("scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
+	scenesToLoad.emplace_back("/scenes/sponza/Sponza01.gltf", sponza_transform, ObjectType::OBJECT_NORMAL);
 	raytracing_scene = std::make_unique<RaytracingScene>(*device, std::move(scenesToLoad));
 
 	create_flame_model();

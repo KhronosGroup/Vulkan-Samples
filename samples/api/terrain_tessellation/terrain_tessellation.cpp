@@ -151,7 +151,7 @@ void TerrainTessellation::get_query_results()
 void TerrainTessellation::load_assets()
 {
 	// @todo: sascha
-	skysphere = load_model("scenes/geosphere.gltf");
+	skysphere = load_model("/scenes/geosphere.gltf");
 
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height

@@ -626,7 +626,7 @@ void OpenCLInterop::prepare_open_cl_resources()
 	auto   kernel_source_data = blob->data();
 	size_t kernel_source_size = blob->size();
 
-	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, &kernel_source_data, &kernel_source_size, &result);
+	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, reinterpret_cast<const char **>(&kernel_source_data), &kernel_source_size, &result);
 	clBuildProgram(cl_data->program, 1, &cl_data->device_id, NULL, NULL, NULL);
 	cl_data->kernel = clCreateKernel(cl_data->program, "generate_texture", &result);
 
