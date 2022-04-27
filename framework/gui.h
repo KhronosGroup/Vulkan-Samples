@@ -46,6 +46,7 @@ struct Font
 	 * @brief Constructor
 	 * @param name The name of the font file that exists within 'assets/fonts' (without extension)
 	 * @param size The font size, scaled by DPI
+	 * @param data The binary data of the font file
 	 */
 	Font(const std::string &name, float size, const std::vector<uint8_t> &data) :
 	    name{name},
