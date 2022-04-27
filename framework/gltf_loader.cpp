@@ -418,9 +418,9 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &g
 		return nullptr;
 	}
 
-	size_t pos = file_name.find_last_of('/');
+	size_t pos = gltf_file.find_last_of('/');
 
-	model_path = file_name.substr(0, pos);
+	model_path = gltf_file.substr(0, pos);
 
 	if (pos == std::string::npos)
 	{
