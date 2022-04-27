@@ -155,7 +155,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	if (ktxTexture2_NeedsTranscoding(ktx_texture))
 	{
 		auto tStart         = std::chrono::high_resolution_clock::now();
-		ktx_result              = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
+		ktx_result          = ktxTexture2_TranscodeBasis(ktx_texture, target_format, 0);
 		last_transcode_time = std::chrono::duration<float, std::milli>(std::chrono::high_resolution_clock::now() - tStart).count();
 		if (ktx_result != KTX_SUCCESS)
 		{

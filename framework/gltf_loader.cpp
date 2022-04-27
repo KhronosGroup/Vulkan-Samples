@@ -1046,16 +1046,16 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 	std::vector<Vertex> vertex_data;
 
-	const float    *pos     = nullptr;
-	const float    *normals = nullptr;
-	const float    *uvs     = nullptr;
+	const float *   pos     = nullptr;
+	const float *   normals = nullptr;
+	const float *   uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
-	const float    *weights = nullptr;
+	const float *   weights = nullptr;
 
 	// Position attribute is required
-	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
+	auto & accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
 	size_t vertex_count = accessor.count;
-	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
+	auto & buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())

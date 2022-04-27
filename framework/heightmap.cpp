@@ -44,8 +44,8 @@ HeightMap::HeightMap(const std::string &file_name, const uint32_t patchsize)
 
 	ktxTexture *ktx_texture;
 	ktxResult   ktx_result;
-	ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t*>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
-	
+	ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+
 	assert(ktx_result == KTX_SUCCESS);
 
 	ktx_size_t   ktx_size  = ktxTexture_GetImageSize(ktx_texture, 0);

@@ -94,7 +94,7 @@ void HPPTextureLoading::load_texture()
 	}
 
 	ktxTexture *ktx_texture;
-	ktxResult ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	ktxResult   ktx_result = ktxTexture_CreateFromMemory(static_cast<const ktx_uint8_t *>(blob->data()), blob->size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
 
 	if ((ktx_result != KTX_SUCCESS) || (ktx_texture == nullptr))
 	{
