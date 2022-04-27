@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2021-2022, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
