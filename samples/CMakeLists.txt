@@ -72,6 +72,7 @@ set(ORDER_LIST
     "synchronization_2"
     "buffer_device_address"
     "descriptor_indexing"
+    "portability"
 
     #Performance Samples
     "swapchain_images"

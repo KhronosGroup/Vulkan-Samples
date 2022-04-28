@@ -57,7 +57,8 @@ RUN wget -O- https://apt.llvm.org/llvm-snapshot.gpg.key | apt-key add - \
     && apt-get -yqq install \
         clang-format-$LLVM_VERSION \
         clang-tidy-$LLVM_VERSION \
-        clang-tidy-9
+        clang-tidy-9 \
+        ccache
 
 # Install Gradle
 ENV GRADLE_VERSION_MAJOR=7 \
