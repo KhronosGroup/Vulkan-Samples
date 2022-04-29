@@ -21,10 +21,9 @@
 
 ## Overview
 
-This tutorial, along with the accompanying example code, demonstrates the use of the [VK_KHR_portability_subset]
-(https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_portability_subset) extension. 
+This tutorial, along with the accompanying example code, demonstrates the use of the [VK_KHR_portability_subset](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_portability_subset) extension. 
 When the VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR is set in the ```Instance``` class, Vulkan will consider 
-devices that aren't fully conformant such as [MoltenVk] (https://github.com/KhronosGroup/MoltenVK) to be identified 
+devices that aren't fully conformant such as [MoltenVk](https://github.com/KhronosGroup/MoltenVK) to be identified 
 as a conformant implementation.  When this happens, use the VkPhysicalDevicePortabilitySubsetPropertiesKHR extension 
 with the [vkGetPhysicalDeviceFeatures2](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetPhysicalDeviceFeatures2)
 as detailed below to get the list of supported/unsupported features.

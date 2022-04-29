@@ -227,6 +227,14 @@ sample rate map as a base for the next frame.
 Render a simple scene showing the basics of ray tracing, including reflection and shadow rays. The sample creates some geometries and create a bottom acceleration structure for each, then make instances of those, using different materials and placing them at different locations.
 <br/>
 
+### [Portability](./extensions/portability) <br/>
+**Extensions**: [```VK_KHR_portability_subset```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_portability_subset)
+Demonstrate how to include non-conformant portable Vulkan implementations by using the portability extension to 
+include those implementations in the device query.  An example of a non-conformant portable Vulkan implementation is 
+MoltenVk: [MoltenVk](https://github.com/KhronosGroup/MoltenVK).  Also demonstrate use of beta extension which allows 
+for querying which features of the full Vulkan spec are not currently supported by the non-conformant Vulkan 
+implementation.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
