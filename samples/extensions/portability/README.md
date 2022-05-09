@@ -28,9 +28,7 @@ as a conformant implementation.  When this happens, use the VkPhysicalDevicePort
 with the [vkGetPhysicalDeviceFeatures2](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#vkGetPhysicalDeviceFeatures2)
 as detailed below to get the list of supported/unsupported features.
 
-This tutorial along with the accompanying code also demonstrates the use of the [VkPhysicalDevicePortabilitySubsetPropertiesKHR]
-(https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.
-html#VkPhysicalDevicePortabilitySubsetPropertiesKHR) which is currently a beta khronos extension.  This extension 
+This tutorial along with the accompanying code also demonstrates the use of the [VkPhysicalDevicePortabilitySubsetPropertiesKHR](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VkPhysicalDevicePortabilitySubsetPropertiesKHR) which is currently a beta khronos extension.  This extension 
 provides a list of supported and unsupported parts of Vulkan on a non-conformant Vulkan instance.  Build with 
 VK_ENABLE_BETA_EXTENSIONS set to enable this.
 
