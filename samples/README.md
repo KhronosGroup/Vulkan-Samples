@@ -229,7 +229,7 @@ Render a simple scene showing the basics of ray tracing, including reflection an
 
 ### [Graphics pipeline library](./extensions/graphics_pipeline_library)<br/>
 **Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
-Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-built shared pipeline parts like like vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
+Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts like like vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
 
 ## Tooling Samples
 
