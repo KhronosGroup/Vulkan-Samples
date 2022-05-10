@@ -110,7 +110,8 @@ class HPPPhysicalDevice
 		}
 
 		// If the type already exists in the map, return a casted pointer to get the extension feature struct
-		auto extension_features_it = extension_features.find(HPPStructureType::structureType);
+		vk::StructureType structureType         = HPPStructureType::structureType;        // need to instantiate this value to be usable in find()!
+		auto              extension_features_it = extension_features.find(structureType);
 		if (extension_features_it != extension_features.end())
 		{
 			return *static_cast<HPPStructureType *>(extension_features_it->second.get());
@@ -120,10 +121,10 @@ class HPPPhysicalDevice
 		vk::StructureChain<vk::PhysicalDeviceFeatures2KHR, HPPStructureType> featureChain = handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>();
 
 		// Insert the extension feature into the extension feature map so its ownership is held
-		extension_features.insert({HPPStructureType::structureType, std::make_shared<HPPStructureType>(featureChain.template get<HPPStructureType>())});
+		extension_features.insert({structureType, std::make_shared<HPPStructureType>(featureChain.template get<HPPStructureType>())});
 
 		// Pull out the dereferenced void pointer, we can assume its type based on the template
-		auto *extension_ptr = static_cast<HPPStructureType *>(extension_features.find(HPPStructureType::structureType)->second.get());
+		auto *extension_ptr = static_cast<HPPStructureType *>(extension_features.find(structureType)->second.get());
 
 		// If an extension feature has already been requested, we shift the linked list down by one
 		// Making this current extension the new base pointer
