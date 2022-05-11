@@ -36,7 +36,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -173,7 +173,7 @@ void MultiDrawIndirect::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, model_information_buffer->get(), offsets);
 
-		if (m_enable_mci && m_supports_mdi)
+		if (m_enable_mdi && m_supports_mdi)
 		{
 			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, cpu_commands.size(), sizeof(cpu_commands[0]));
 		}
@@ -229,7 +229,7 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		drawer.text("Instances: %d / %d", instance_count, 256);
 
-		m_requires_rebuild |= drawer.checkbox("Enable multi-draw", &m_enable_mci);
+		m_requires_rebuild |= drawer.checkbox("Enable multi-draw", &m_enable_mdi);
 		drawer.checkbox("Freeze culling", &m_freeze_cull);
 
 		int32_t render_selection = render_mode;
@@ -312,7 +312,7 @@ void MultiDrawIndirect::load_scene()
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
-		const auto & short_name    = mesh->get_name();
+		const auto  &short_name    = mesh->get_name();
 		auto         image_name    = scene_path + short_name + ".ktx";
 		auto         image         = vkb::sg::Image::load(image_name, image_name);
 
@@ -864,7 +864,7 @@ void MultiDrawIndirect::run_gpu_cull()
 	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, device->request_fence());
 	device->get_fence_pool().wait();
 	device->get_fence_pool().reset();
-	//we're done so dealloc it from the pool.
+	// we're done so dealloc it from the pool.
 	vkFreeCommandBuffers(device->get_handle(), device->get_command_pool().get_handle(), 1, &cmd);
 }
 
@@ -926,7 +926,7 @@ void MultiDrawIndirect::cpu_cull()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		// we control visibility by changing the instance count
-		auto &                       model = models[i];
+		auto		                &model = models[i];
 		VkDrawIndexedIndirectCommand cmd{};
 		cmd.firstIndex    = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		cmd.indexCount    = static_cast<uint32_t>(model.triangles.size()) * 3;

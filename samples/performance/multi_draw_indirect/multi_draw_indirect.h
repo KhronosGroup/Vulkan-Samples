@@ -99,7 +99,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::vector<Texture>               textures;
 	std::vector<VkDescriptorImageInfo> image_descriptors;
 	bool                               m_freeze_cull      = false;
-	bool                               m_enable_mci       = true;
+	bool                               m_enable_mdi       = true;
 	bool                               m_requires_rebuild = false;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
@@ -124,7 +124,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
-	const vkb::Queue *              compute_queue{nullptr};
+	const vkb::Queue               *compute_queue{nullptr};
 	std::vector<uint32_t>           queue_families;
 
 	// CPU Draw Calls
