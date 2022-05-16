@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip Corporation
+/* Copyright (c) 2021-2022, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -173,7 +173,7 @@ void MultiDrawIndirect::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, model_information_buffer->get(), offsets);
 
-		if (m_enable_mci && m_supports_mdi)
+		if (m_enable_mdi && m_supports_mdi)
 		{
 			vkCmdDrawIndexedIndirect(draw_cmd_buffers[i], indirect_call_buffer->get_handle(), 0, cpu_commands.size(), sizeof(cpu_commands[0]));
 		}
@@ -229,7 +229,7 @@ void MultiDrawIndirect::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		drawer.text("Instances: %d / %d", instance_count, 256);
 
-		m_requires_rebuild |= drawer.checkbox("Enable multi-draw", &m_enable_mci);
+		m_requires_rebuild |= drawer.checkbox("Enable multi-draw", &m_enable_mdi);
 		drawer.checkbox("Freeze culling", &m_freeze_cull);
 
 		int32_t render_selection = render_mode;
@@ -864,7 +864,7 @@ void MultiDrawIndirect::run_gpu_cull()
 	vkQueueSubmit(compute_queue->get_handle(), 1, &submit, device->request_fence());
 	device->get_fence_pool().wait();
 	device->get_fence_pool().reset();
-	//we're done so dealloc it from the pool.
+	// we're done so dealloc it from the pool.
 	vkFreeCommandBuffers(device->get_handle(), device->get_command_pool().get_handle(), 1, &cmd);
 }
 
