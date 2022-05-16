@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -332,6 +332,9 @@ Instance::Instance(const std::string &                           application_nam
 
 		instance_info.pNext = &debug_report_create_info;
 	}
+#endif
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
