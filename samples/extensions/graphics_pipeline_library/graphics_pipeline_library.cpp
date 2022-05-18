@@ -211,7 +211,7 @@ void GraphicsPipelineLibrary::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-// Compiling shaders can be simplified with the new extension, so we only require code to generate the SPIR-V in thhis sample
+// Compiling shaders can be simplified with the new extension, so we only require code to generate the SPIR-V in this sample
 void GraphicsPipelineLibrary::compile_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv)
 {
 	vkb::GLSLCompiler glsl_compiler;
