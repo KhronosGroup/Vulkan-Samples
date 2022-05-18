@@ -137,4 +137,4 @@ This sample demonstrates that functionality by creating the shared vertex input 
 
 ## Conclusion
 
-With the new extension it's now possible to separate the monolithic pipeline state into multiple parts that can be r-used and built independently. This opens up new possibilities for optimizing pipeline creation and reducing hick-ups at runtime.
+With the new extension it's now possible to separate the monolithic pipeline state into multiple parts that can be reused  and built independently. This opens up new possibilities for optimizing pipeline creation and reducing hitches at runtime.
