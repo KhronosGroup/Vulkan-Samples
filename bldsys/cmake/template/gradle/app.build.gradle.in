@@ -28,6 +28,13 @@ android {
 			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
 			signingConfig debug.signingConfig
 		}
+		applicationVariants.all{variant ->
+			variant.outputs.each{output->
+                def tempName = output.outputFile.name
+                tempName = tempName.replace("app-", "vulkan_samples-")
+                output.outputFileName  = tempName
+			}
+        }
 	}
 
 	compileOptions {
