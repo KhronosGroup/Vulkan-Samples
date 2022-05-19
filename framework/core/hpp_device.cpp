@@ -169,7 +169,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice &              gpu,
 	{
 		vk::QueueFamilyProperties const &queue_family_property = queue_family_properties[queue_family_index];
 
-		vk::Bool32 present_supported = gpu.is_present_supported(surface, queue_family_index);
+		vk::Bool32 present_supported = gpu.get_handle().getSurfaceSupportKHR(queue_family_index, surface);
 
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
 		{

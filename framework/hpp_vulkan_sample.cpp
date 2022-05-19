@@ -101,8 +101,6 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	instance = std::make_unique<vkb::core::HPPInstance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance().get_handle());
-
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 
