@@ -1,7 +1,7 @@
 #version 460
 #extension GL_EXT_ray_query : enable
 
-/* Copyright (c) 2021 Holochip Corporation
+/* Copyright (c) 2021-2022 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
