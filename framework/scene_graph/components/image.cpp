@@ -117,7 +117,7 @@ const std::vector<std::vector<VkDeviceSize>> &Image::get_offsets() const
 	return offsets;
 }
 
-void Image::create_vk_image(Device &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
+void Image::create_vk_image(Device const &device, VkImageViewType image_view_type, VkImageCreateFlags flags)
 {
 	assert(!vk_image && !vk_image_view && "Vulkan image already constructed");
 
@@ -131,8 +131,10 @@ void Image::create_vk_image(Device &device, VkImageViewType image_view_type, VkI
 	                                         layers,
 	                                         VK_IMAGE_TILING_OPTIMAL,
 	                                         flags);
+	vk_image->set_debug_name(get_name());
 
 	vk_image_view = std::make_unique<core::ImageView>(*vk_image, image_view_type);
+	vk_image_view->set_debug_name("View on " + get_name());
 }
 
 const core::Image &Image::get_vk_image() const

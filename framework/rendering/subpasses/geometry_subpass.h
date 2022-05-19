@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -91,7 +91,7 @@ class GeometrySubpass : public Subpass
 	void set_thread_index(uint32_t index);
 
   protected:
-	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index = 0);
+	virtual void update_uniform(CommandBuffer &command_buffer, sg::Node &node, size_t thread_index);
 
 	void draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face = VK_FRONT_FACE_COUNTER_CLOCKWISE);
 

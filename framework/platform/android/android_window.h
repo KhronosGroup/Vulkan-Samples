@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -53,7 +53,7 @@ class AndroidWindow : public Window
 	 * @brief Creates a Vulkan surface to the native window
 	 *        If headless, this will return nullptr
 	 */
-	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
+	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 
 	virtual void process_events() override;
 

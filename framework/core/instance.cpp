@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,7 @@
 #include "instance.h"
 
 #include <algorithm>
+#include <functional>
 
 namespace vkb
 {
@@ -129,18 +130,55 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 	return {};
 }
 
+namespace
+{
+bool enable_extension(const char *                              required_ext_name,
+                      const std::vector<VkExtensionProperties> &available_exts,
+                      std::vector<const char *> &               enabled_extensions)
+{
+	for (auto &avail_ext_it : available_exts)
+	{
+		if (strcmp(avail_ext_it.extensionName, required_ext_name) == 0)
+		{
+			auto it = std::find_if(enabled_extensions.begin(), enabled_extensions.end(),
+			                       [required_ext_name](const char *enabled_ext_name) {
+				                       return strcmp(enabled_ext_name, required_ext_name) == 0;
+			                       });
+			if (it != enabled_extensions.end())
+			{
+				// Extension is already enabled
+			}
+			else
+			{
+				LOGI("Extension {} found, enabling it", required_ext_name);
+				enabled_extensions.emplace_back(required_ext_name);
+			}
+			return true;
+		}
+	}
+
+	LOGI("Extension {} not found", required_ext_name);
+	return false;
+}
+
+bool enable_all_extensions(const std::vector<const char *>           required_ext_names,
+                           const std::vector<VkExtensionProperties> &available_exts,
+                           std::vector<const char *> &               enabled_extensions)
+{
+	using std::placeholders::_1;
+
+	return std::all_of(required_ext_names.begin(), required_ext_names.end(),
+	                   std::bind(enable_extension, _1, available_exts, enabled_extensions));
+}
+
+}        // namespace
+
 Instance::Instance(const std::string &                           application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
                    const std::vector<const char *> &             required_validation_layers,
                    bool                                          headless,
                    uint32_t                                      api_version)
 {
-	VkResult result = volkInitialize();
-	if (result)
-	{
-		throw VulkanException(result, "Failed to initialize volk.");
-	}
-
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
 
@@ -149,19 +187,19 @@ Instance::Instance(const std::string &                           application_nam
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
-	bool debug_utils = false;
-	for (auto &available_extension : available_instance_extensions)
+	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+                                                  available_instance_extensions, enabled_extensions);
+	bool       has_debug_report = false;
+
+	if (!has_debug_utils)
 	{
-		if (strcmp(available_extension.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+		has_debug_report = enable_extension(VK_EXT_DEBUG_REPORT_EXTENSION_NAME,
+		                                    available_instance_extensions, enabled_extensions);
+		if (!has_debug_report)
 		{
-			debug_utils = true;
-			LOGI("{} is available, enabling it", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-			enabled_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+			LOGW("Neither of {} or {} are available; disabling debug reporting",
+			     VK_EXT_DEBUG_UTILS_EXTENSION_NAME, VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 		}
-	}
-	if (!debug_utils)
-	{
-		enabled_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 	}
 #endif
 
@@ -189,17 +227,9 @@ Instance::Instance(const std::string &                           application_nam
 	// Try to enable headless surface extension if it exists
 	if (headless)
 	{
-		bool headless_extension = false;
-		for (auto &available_extension : available_instance_extensions)
-		{
-			if (strcmp(available_extension.extensionName, VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME) == 0)
-			{
-				headless_extension = true;
-				LOGI("{} is available, enabling it", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-				enabled_extensions.push_back(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
-			}
-		}
-		if (!headless_extension)
+		const bool has_headless_surface = enable_extension(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME,
+		                                                   available_instance_extensions, enabled_extensions);
+		if (!has_headless_surface)
 		{
 			LOGW("{} is not available, disabling swapchain creation", VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME);
 		}
@@ -209,24 +239,17 @@ Instance::Instance(const std::string &                           application_nam
 		enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	}
 
-	for (auto &available_extension : available_instance_extensions)
-	{
-		// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
-		// which will be used for stats gathering where available.
-		if (strcmp(available_extension.extensionName, VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) == 0)
-		{
-			LOGI("{} is available, enabling it", VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-			enabled_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-		}
-	}
+	// VK_KHR_get_physical_device_properties2 is a prerequisite of VK_KHR_performance_query
+	// which will be used for stats gathering where available.
+	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME,
+	                 available_instance_extensions, enabled_extensions);
 
 	auto extension_error = false;
 	for (auto extension : required_extensions)
 	{
 		auto extension_name        = extension.first;
 		auto extension_is_optional = extension.second;
-		if (std::find_if(available_instance_extensions.begin(), available_instance_extensions.end(),
-		                 [&extension_name](VkExtensionProperties available_extension) { return strcmp(available_extension.extensionName, extension_name) == 0; }) == available_instance_extensions.end())
+		if (!enable_extension(extension_name, available_instance_extensions, enabled_extensions))
 		{
 			if (extension_is_optional)
 			{
@@ -237,10 +260,7 @@ Instance::Instance(const std::string &                           application_nam
 				LOGE("Required instance extension {} not available, cannot run", extension_name);
 				extension_error = true;
 			}
-		}
-		else
-		{
-			enabled_extensions.push_back(extension_name);
+			extension_error = extension_error || !extension_is_optional;
 		}
 	}
 
@@ -297,7 +317,7 @@ Instance::Instance(const std::string &                           application_nam
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	if (debug_utils)
+	if (has_debug_utils)
 	{
 		debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
 		debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
@@ -312,6 +332,9 @@ Instance::Instance(const std::string &                           application_nam
 
 		instance_info.pNext = &debug_report_create_info;
 	}
+#endif
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
@@ -330,7 +353,7 @@ Instance::Instance(const std::string &                           application_nam
 #endif
 
 	// Create the Vulkan instance
-	result = vkCreateInstance(&instance_info, nullptr, &handle);
+	VkResult result = vkCreateInstance(&instance_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -340,7 +363,7 @@ Instance::Instance(const std::string &                           application_nam
 	volkLoadInstance(handle);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (debug_utils)
+	if (has_debug_utils)
 	{
 		result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
 		if (result != VK_SUCCESS)
@@ -464,7 +487,7 @@ bool Instance::is_enabled(const char *extension) const
 	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
-VkInstance Instance::get_handle()
+VkInstance Instance::get_handle() const
 {
 	return handle;
 }

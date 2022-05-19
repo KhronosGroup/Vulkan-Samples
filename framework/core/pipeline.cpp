@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,11 +78,14 @@ ComputePipeline::ComputePipeline(Device &        device,
 	vk_create_info.pCode    = shader_module->get_binary().data();
 
 	VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage.module);
-
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException{result};
 	}
+
+	device.get_debug_utils().set_debug_name(device.get_handle(),
+	                                        VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage.module),
+	                                        shader_module->get_debug_name().c_str());
 
 	// Create specialization info from tracked state.
 	std::vector<uint8_t>                  data{};
@@ -160,11 +163,14 @@ GraphicsPipeline::GraphicsPipeline(Device &        device,
 		vk_create_info.pCode    = shader_module->get_binary().data();
 
 		VkResult result = vkCreateShaderModule(device.get_handle(), &vk_create_info, nullptr, &stage_create_info.module);
-
 		if (result != VK_SUCCESS)
 		{
 			throw VulkanException{result};
 		}
+
+		device.get_debug_utils().set_debug_name(device.get_handle(),
+		                                        VK_OBJECT_TYPE_SHADER_MODULE, reinterpret_cast<uint64_t>(stage_create_info.module),
+		                                        shader_module->get_debug_name().c_str());
 
 		stage_create_info.pSpecializationInfo = &specialization_info;
 

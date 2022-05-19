@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,11 +17,8 @@
 
 #include "hpp_hello_triangle.h"
 
-#include "common/logging.h"
-#include "common/vk_common.h"
-#include "glsl_compiler.h"
-#include "platform/filesystem.h"
-#include "platform/platform.h"
+#include <common/logging.h>
+#include <glsl_compiler.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -257,6 +254,15 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	// initialize function pointers for instance
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(context.instance);
 
+#if defined(VK_USE_PLATFORM_DISPLAY_KHR)
+	// we need some additional initializing for this platform!
+	if (volkInitialize())
+	{
+		throw std::runtime_error("Failed to initialize volk.");
+	}
+	volkLoadInstance(context.instance);
+#endif
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	context.debug_callback = context.instance.createDebugReportCallbackEXT(debug_report_create_info);
 #endif
@@ -265,10 +271,9 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 /**
  * @brief Select a physical device.
  *
- * @param context A Vulkan context with an instance already set up.
  * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device_and_surface(Context &context, vkb::Platform &platform)
+void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlatform &platform)
 {
 	std::vector<vk::PhysicalDevice> gpus = context.instance.enumeratePhysicalDevices();
 
@@ -984,10 +989,10 @@ HPPHelloTriangle::~HPPHelloTriangle()
 	teardown(context);
 }
 
-bool HPPHelloTriangle::prepare(vkb::Platform &platform)
+bool HPPHelloTriangle::prepare(vkb::platform::HPPPlatform &platform)
 {
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
-	select_physical_device_and_surface(context, platform);
+	select_physical_device_and_surface(platform);
 
 	const auto &extent                  = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
@@ -1038,11 +1043,11 @@ void HPPHelloTriangle::update(float delta_time)
 	}
 }
 
-void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
+bool HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 {
 	if (!context.device)
 	{
-		return;
+		return false;
 	}
 
 	vk::SurfaceCapabilitiesKHR surface_properties = context.gpu.getSurfaceCapabilitiesKHR(context.surface);
@@ -1051,7 +1056,7 @@ void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 	if (surface_properties.currentExtent.width == context.swapchain_dimensions.width &&
 	    surface_properties.currentExtent.height == context.swapchain_dimensions.height)
 	{
-		return;
+		return false;
 	}
 
 	context.device.waitIdle();
@@ -1059,6 +1064,7 @@ void HPPHelloTriangle::resize(const uint32_t, const uint32_t)
 
 	init_swapchain(context);
 	init_framebuffers(context);
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hello_triangle()

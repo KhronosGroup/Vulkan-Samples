@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,7 @@
 #include "core/image_view.h"
 #include "core/query_pool.h"
 #include "core/sampler.h"
+#include "core/vulkan_resource.h"
 #include "rendering/pipeline_state.h"
 #include "rendering/render_target.h"
 #include "resource_binding_state.h"
@@ -46,7 +47,7 @@ struct LightingState;
  * @brief Helper class to manage and record a command buffer, building and
  *        keeping track of pipeline state and resource bindings
  */
-class CommandBuffer
+class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYPE_COMMAND_BUFFER>
 {
   public:
 	enum class ResetMode
@@ -85,10 +86,6 @@ class CommandBuffer
 	CommandBuffer &operator=(const CommandBuffer &) = delete;
 
 	CommandBuffer &operator=(CommandBuffer &&) = delete;
-
-	Device &get_device();
-
-	const VkCommandBuffer &get_handle() const;
 
 	bool is_recording() const;
 
@@ -229,7 +226,7 @@ class CommandBuffer
 
 	void copy_image_to_buffer(const core::Image &image, VkImageLayout image_layout, const core::Buffer &buffer, const std::vector<VkBufferImageCopy> &regions);
 
-	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier);
+	void image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const;
 
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
@@ -259,8 +256,6 @@ class CommandBuffer
 	State state{State::Initial};
 
 	CommandPool &command_pool;
-
-	VkCommandBuffer handle{VK_NULL_HANDLE};
 
 	RenderPassBinding current_render_pass;
 

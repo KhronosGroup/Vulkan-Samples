@@ -228,6 +228,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 */
 void FragmentShadingRate::invalidate_shading_rate_attachment()
 {
+	device->wait_idle();
 	vkDestroyImageView(device->get_handle(), shading_rate_image.view, nullptr);
 	vkDestroyImage(device->get_handle(), shading_rate_image.image, nullptr);
 	vkFreeMemory(device->get_handle(), shading_rate_image.memory, nullptr);
@@ -376,6 +377,18 @@ void FragmentShadingRate::setup_framebuffer()
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
+
+	// Delete existing frame buffers
+	if (!framebuffers.empty())
+	{
+		for (auto &framebuffer : framebuffers)
+		{
+			if (framebuffer != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+			}
+		}
+	}
 
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
@@ -732,11 +745,16 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
+bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 {
 	invalidate_shading_rate_attachment();
-	ApiVulkanSample::resize(width, height);
+	if (!ApiVulkanSample::resize(width, height))
+	{
+		setup_framebuffer();
+	}
 	update_uniform_buffers();
+	build_command_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate()

@@ -66,7 +66,7 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 			float dist = max_dist;
 			if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 			{
-				dist = rayQueryGetIntersectionTEXT(query, false);
+				dist = rayQueryGetIntersectionTEXT(query, true);
 			}
 			float ao = min(dist, max_dist);
 			float factor = 0.2 + 0.8 * z * z;
