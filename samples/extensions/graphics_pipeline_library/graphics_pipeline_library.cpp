@@ -404,14 +404,15 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	linking_info.libraryCount = static_cast<uint32_t>(libraries.size());
 	linking_info.pLibraries   = libraries.data();
 
-	// If set to true, we pass VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT which will let the implementation do additional optimizations at link time
-	// This trades in pipeline creation time for run-time performance
-	bool optimized = true;
-
 	VkGraphicsPipelineCreateInfo executable_pipeline_create_info{};
 	executable_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	executable_pipeline_create_info.pNext = &linking_info;
-	executable_pipeline_create_info.flags |= optimized ? VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT : 0;
+	if (link_time_optimization)
+	{
+		// If link time optimization is activated in the UI, we set the VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT flag which will let the implementation do additional optimizations at link time
+		// This trades in pipeline creation time for run-time performance
+		executable_pipeline_create_info.flags = VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT;
+	}
 
 	VkPipeline executable = VK_NULL_HANDLE;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &executable_pipeline_create_info, nullptr, &executable));
@@ -515,6 +516,7 @@ void GraphicsPipelineLibrary::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
+		(drawer.checkbox("Link time optimization", &link_time_optimization));
 		if (drawer.button("Add pipeline"))
 		{
 			// Spwan a thread to create a new pipeline in the background

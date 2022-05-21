@@ -31,6 +31,8 @@
 class GraphicsPipelineLibrary : public ApiVulkanSample
 {
   public:
+	bool link_time_optimization = true;
+
 	std::unique_ptr<vkb::sg::SubMesh> scene;
 
 	struct UBOVS
