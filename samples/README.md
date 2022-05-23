@@ -227,6 +227,14 @@ sample rate map as a base for the next frame.
 Render a simple scene showing the basics of ray tracing, including reflection and shadow rays. The sample creates some geometries and create a bottom acceleration structure for each, then make instances of those, using different materials and placing them at different locations.
 <br/>
 
+### [Portability](./extensions/portability) <br/>
+**Extensions**: [```VK_KHR_portability_subset```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/html/vkspec.html#VK_KHR_portability_subset)
+Demonstrate how to include non-conformant portable Vulkan implementations by using the portability extension to 
+include those implementations in the device query.  An example of a non-conformant portable Vulkan implementation is 
+MoltenVk: [MoltenVk](https://github.com/KhronosGroup/MoltenVK).  Also demonstrate use of beta extension which allows 
+for querying which features of the full Vulkan spec are not currently supported by the non-conformant Vulkan 
+implementation.
+
 ### [Graphics pipeline library](./extensions/graphics_pipeline_library)<br/>
 **Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
 Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts like like vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.

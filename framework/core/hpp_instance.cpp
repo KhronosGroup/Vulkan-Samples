@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,19 +15,17 @@
  * limitations under the License.
  */
 
-#include "physical_device.h"
+#include <core/hpp_instance.h>
 
-#include "instance.h"
-
-#include <algorithm>
-#include <functional>
+#include <common/logging.h>
+#include <core/hpp_physical_device.h>
+#include <volk.h>
 
 namespace vkb
 {
 namespace
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                               void *                                      user_data)
@@ -68,8 +66,8 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 }
 #endif
 
-bool validate_layers(const std::vector<const char *> &     required,
-                     const std::vector<VkLayerProperties> &available)
+bool validate_layers(const std::vector<const char *> &       required,
+                     const std::vector<vk::LayerProperties> &available)
 {
 	for (auto layer : required)
 	{
@@ -94,7 +92,9 @@ bool validate_layers(const std::vector<const char *> &     required,
 }
 }        // namespace
 
-std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers)
+namespace core
+{
+std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers)
 {
 	std::vector<std::vector<const char *>> validation_layer_priority_list =
 	    {
@@ -132,9 +132,9 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 
 namespace
 {
-bool enable_extension(const char *                              required_ext_name,
-                      const std::vector<VkExtensionProperties> &available_exts,
-                      std::vector<const char *> &               enabled_extensions)
+bool enable_extension(const char *                                required_ext_name,
+                      const std::vector<vk::ExtensionProperties> &available_exts,
+                      std::vector<const char *> &                 enabled_extensions)
 {
 	for (auto &avail_ext_it : available_exts)
 	{
@@ -161,9 +161,9 @@ bool enable_extension(const char *                              required_ext_nam
 	return false;
 }
 
-bool enable_all_extensions(const std::vector<const char *>           required_ext_names,
-                           const std::vector<VkExtensionProperties> &available_exts,
-                           std::vector<const char *> &               enabled_extensions)
+bool enable_all_extensions(const std::vector<const char *>             required_ext_names,
+                           const std::vector<vk::ExtensionProperties> &available_exts,
+                           std::vector<const char *> &                 enabled_extensions)
 {
 	using std::placeholders::_1;
 
@@ -173,17 +173,13 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 
 }        // namespace
 
-Instance::Instance(const std::string &                           application_name,
-                   const std::unordered_map<const char *, bool> &required_extensions,
-                   const std::vector<const char *> &             required_validation_layers,
-                   bool                                          headless,
-                   uint32_t                                      api_version)
+HPPInstance::HPPInstance(const std::string &                           application_name,
+                         const std::unordered_map<const char *, bool> &required_extensions,
+                         const std::vector<const char *> &             required_validation_layers,
+                         bool                                          headless,
+                         uint32_t                                      api_version)
 {
-	uint32_t instance_extension_count;
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
-
-	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
-	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
@@ -206,11 +202,7 @@ Instance::Instance(const std::string &                           application_nam
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
 	bool validation_features = false;
 	{
-		uint32_t layer_instance_extension_count;
-		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, nullptr));
-
-		std::vector<VkExtensionProperties> available_layer_instance_extensions(layer_instance_extension_count);
-		VK_CHECK(vkEnumerateInstanceExtensionProperties("VK_LAYER_KHRONOS_validation", &layer_instance_extension_count, available_layer_instance_extensions.data()));
+		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(std::string("VK_LAYER_KHRONOS_validation"));
 
 		for (auto &available_extension : available_layer_instance_extensions)
 		{
@@ -269,11 +261,7 @@ Instance::Instance(const std::string &                           application_nam
 		throw std::runtime_error("Required instance extensions are missing.");
 	}
 
-	uint32_t instance_layer_count;
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
-
-	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
 
 	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
@@ -296,156 +284,112 @@ Instance::Instance(const std::string &                           application_nam
 		throw std::runtime_error("Required validation layers are missing.");
 	}
 
-	VkApplicationInfo app_info{VK_STRUCTURE_TYPE_APPLICATION_INFO};
+	vk::ApplicationInfo app_info(application_name.c_str(), 0, "Vulkan Samples", 0, api_version);
 
-	app_info.pApplicationName   = application_name.c_str();
-	app_info.applicationVersion = 0;
-	app_info.pEngineName        = "Vulkan Samples";
-	app_info.engineVersion      = 0;
-	app_info.apiVersion         = api_version;
-
-	VkInstanceCreateInfo instance_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
-
-	instance_info.pApplicationInfo = &app_info;
-
-	instance_info.enabledExtensionCount   = to_u32(enabled_extensions.size());
-	instance_info.ppEnabledExtensionNames = enabled_extensions.data();
-
-	instance_info.enabledLayerCount   = to_u32(requested_validation_layers.size());
-	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
+	vk::InstanceCreateInfo instance_info({}, &app_info, requested_validation_layers, enabled_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
-	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
+	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
 	if (has_debug_utils)
 	{
-		debug_utils_create_info.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
-		debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-		debug_utils_create_info.pfnUserCallback = debug_utils_messenger_callback;
+		debug_utils_create_info =
+		    vk::DebugUtilsMessengerCreateInfoEXT({},
+		                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+		                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+		                                         debug_utils_messenger_callback);
 
 		instance_info.pNext = &debug_utils_create_info;
 	}
 	else
 	{
-		debug_report_create_info.flags       = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT | VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT;
-		debug_report_create_info.pfnCallback = debug_callback;
+		debug_report_create_info = vk::DebugReportCallbackCreateInfoEXT(
+		    vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning | vk::DebugReportFlagBitsEXT::ePerformanceWarning, debug_callback);
 
 		instance_info.pNext = &debug_report_create_info;
 	}
 #endif
-#if (defined(VKB_ENABLE_PORTABILITY))
-	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
-#endif
 
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
-	VkValidationFeaturesEXT validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	vk::ValidationFeaturesEXT validation_features_info;
 	if (validation_features)
 	{
-		static const VkValidationFeatureEnableEXT enable_features[2] = {
-		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
-		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-		};
-		validation_features_info.enabledValidationFeatureCount = 2;
-		validation_features_info.pEnabledValidationFeatures    = enable_features;
-		validation_features_info.pNext                         = instance_info.pNext;
-		instance_info.pNext                                    = &validation_features_info;
+		static const std::array<vk::ValidationFeatureEnableEXT, 2> enable_features = {{vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot,
+		                                                                               vk::ValidationFeatureEnableEXT::eGpuAssisted}};
+		validation_features_info.setEnabledValidationFeatures(enable_features);
+		validation_features_info.pNext = instance_info.pNext;
+		instance_info.pNext            = &validation_features_info;
 	}
 #endif
 
 	// Create the Vulkan instance
-	VkResult result = vkCreateInstance(&instance_info, nullptr, &handle);
+	handle = vk::createInstance(instance_info);
 
-	if (result != VK_SUCCESS)
-	{
-		throw VulkanException(result, "Could not create Vulkan instance");
-	}
+	// initialize the Vulkan-Hpp default dispatcher on the instance
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(handle);
 
+	// Need to load volk for all the not-yet Vulkan-Hpp calls
 	volkLoadInstance(handle);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	if (has_debug_utils)
 	{
-		result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
-		if (result != VK_SUCCESS)
-		{
-			throw VulkanException(result, "Could not create debug utils messenger");
-		}
+		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
 	}
 	else
 	{
-		result = vkCreateDebugReportCallbackEXT(handle, &debug_report_create_info, nullptr, &debug_report_callback);
-		if (result != VK_SUCCESS)
-		{
-			throw VulkanException(result, "Could not create debug report callback");
-		}
+		debug_report_callback = handle.createDebugReportCallbackEXT(debug_report_create_info);
 	}
 #endif
 
 	query_gpus();
 }
 
-Instance::Instance(VkInstance instance) :
+HPPInstance::HPPInstance(vk::Instance instance) :
     handle{instance}
 {
-	if (handle != VK_NULL_HANDLE)
+	if (handle)
 	{
 		query_gpus();
 	}
 	else
 	{
-		throw std::runtime_error("Instance not valid");
+		throw std::runtime_error("HPPInstance not valid");
 	}
 }
 
-Instance::~Instance()
+HPPInstance::~HPPInstance()
 {
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	if (debug_utils_messenger != VK_NULL_HANDLE)
+	if (debug_utils_messenger)
 	{
-		vkDestroyDebugUtilsMessengerEXT(handle, debug_utils_messenger, nullptr);
+		handle.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
 	}
-	if (debug_report_callback != VK_NULL_HANDLE)
+	if (debug_report_callback)
 	{
-		vkDestroyDebugReportCallbackEXT(handle, debug_report_callback, nullptr);
+		handle.destroyDebugReportCallbackEXT(debug_report_callback);
 	}
 #endif
 
-	if (handle != VK_NULL_HANDLE)
+	if (handle)
 	{
-		vkDestroyInstance(handle, nullptr);
+		handle.destroy();
 	}
 }
 
-void Instance::query_gpus()
+const std::vector<const char *> &HPPInstance::get_extensions()
 {
-	// Querying valid physical devices on the machine
-	uint32_t physical_device_count{0};
-	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, nullptr));
-
-	if (physical_device_count < 1)
-	{
-		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
-	}
-
-	std::vector<VkPhysicalDevice> physical_devices;
-	physical_devices.resize(physical_device_count);
-	VK_CHECK(vkEnumeratePhysicalDevices(handle, &physical_device_count, physical_devices.data()));
-
-	// Create gpus wrapper objects from the VkPhysicalDevice's
-	for (auto &physical_device : physical_devices)
-	{
-		gpus.push_back(std::make_unique<PhysicalDevice>(*this, physical_device));
-	}
+	return enabled_extensions;
 }
 
-PhysicalDevice &Instance::get_first_gpu()
+vkb::core::HPPPhysicalDevice &HPPInstance::get_first_gpu()
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
 	// Find a discrete GPU
 	for (auto &gpu : gpus)
 	{
-		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		if (gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 		{
 			return *gpu;
 		}
@@ -453,23 +397,28 @@ PhysicalDevice &Instance::get_first_gpu()
 
 	// Otherwise just pick the first one
 	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus.at(0);
+	return *gpus[0];
 }
 
-PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
+vk::Instance HPPInstance::get_handle() const
+{
+	return handle;
+}
+
+vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
 
 	// Find a discrete GPU
 	for (auto &gpu : gpus)
 	{
-		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
+		if (gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
 		{
 			//See if it work with the surface
 			size_t queue_count = gpu->get_queue_family_properties().size();
 			for (uint32_t queue_idx = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++)
 			{
-				if (gpu->is_present_supported(surface, queue_idx))
+				if (gpu->get_handle().getSurfaceSupportKHR(queue_idx, surface))
 				{
 					return *gpu;
 				}
@@ -482,18 +431,28 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 	return *gpus.at(0);
 }
 
-bool Instance::is_enabled(const char *extension) const
+bool HPPInstance::is_enabled(const char *extension) const
 {
-	return std::find_if(enabled_extensions.begin(), enabled_extensions.end(), [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
+	return std::find_if(enabled_extensions.begin(),
+	                    enabled_extensions.end(),
+	                    [extension](const char *enabled_extension) { return strcmp(extension, enabled_extension) == 0; }) != enabled_extensions.end();
 }
 
-VkInstance Instance::get_handle() const
+void HPPInstance::query_gpus()
 {
-	return handle;
+	// Querying valid physical devices on the machine
+	std::vector<vk::PhysicalDevice> physical_devices = handle.enumeratePhysicalDevices();
+	if (physical_devices.empty())
+	{
+		throw std::runtime_error("Couldn't find a physical device that supports Vulkan.");
+	}
+
+	// Create gpus wrapper objects from the vk::PhysicalDevice's
+	for (auto &physical_device : physical_devices)
+	{
+		gpus.push_back(std::make_unique<vkb::core::HPPPhysicalDevice>(*this, physical_device));
+	}
 }
 
-const std::vector<const char *> &Instance::get_extensions()
-{
-	return enabled_extensions;
-}
+}        // namespace core
 }        // namespace vkb

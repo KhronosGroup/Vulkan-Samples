@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip Corporation
+/* Copyright (c) 2021-2022, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,7 +99,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::vector<Texture>               textures;
 	std::vector<VkDescriptorImageInfo> image_descriptors;
 	bool                               m_freeze_cull      = false;
-	bool                               m_enable_mci       = true;
+	bool                               m_enable_mdi       = true;
 	bool                               m_requires_rebuild = false;
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
