@@ -407,6 +407,7 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	VkGraphicsPipelineCreateInfo executable_pipeline_create_info{};
 	executable_pipeline_create_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
 	executable_pipeline_create_info.pNext = &linking_info;
+	executable_pipeline_create_info.layout = pipeline_layout;
 	if (link_time_optimization)
 	{
 		// If link time optimization is activated in the UI, we set the VK_PIPELINE_CREATE_LINK_TIME_OPTIMIZATION_BIT_EXT flag which will let the implementation do additional optimizations at link time
