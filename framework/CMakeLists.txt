@@ -482,7 +482,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
-    spdlog
+    spdlog::spdlog
     ctpl
     CLI11::CLI11
     apps
