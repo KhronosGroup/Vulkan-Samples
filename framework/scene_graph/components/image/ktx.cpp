@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -29,6 +29,12 @@ namespace vkb
 {
 namespace sg
 {
+struct CallbackData final
+{
+	ktxTexture *         texture;
+	std::vector<Mipmap> *mipmaps;
+};
+
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
@@ -41,22 +47,22 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
                                                              void *       pixels,
                                                              void *       user_data)
 {
-	// Get mipmaps
-	auto &mipmaps = *reinterpret_cast<std::vector<Mipmap> *>(user_data);
-	assert(static_cast<size_t>(mip_level) < mipmaps.size() && "Not enough space in the mipmap vector");
+	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
+	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");
 
-	auto &mipmap         = mipmaps.at(mip_level);
+	ktx_size_t mipmap_offset = 0;
+	auto       result        = ktxTexture_GetImageOffset(callback_data->texture, mip_level, 0, face, &mipmap_offset);
+	if (result != KTX_SUCCESS)
+	{
+		return result;
+	}
+
+	auto &mipmap         = callback_data->mipmaps->at(mip_level);
 	mipmap.level         = mip_level;
+	mipmap.offset        = to_u32(mipmap_offset);
 	mipmap.extent.width  = width;
 	mipmap.extent.height = height;
 	mipmap.extent.depth  = depth;
-
-	// Set offset for the next mip level
-	auto next_mip_level = static_cast<size_t>(mip_level + 1);
-	if (next_mip_level < mipmaps.size())
-	{
-		mipmaps.at(next_mip_level).offset = mipmap.offset + static_cast<uint32_t>(face_lod_size);
-	}
 
 	return KTX_SUCCESS;
 }
@@ -95,7 +101,6 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 		}
 	}
 
-	// Update width and height
 	set_width(texture->baseWidth);
 	set_height(texture->baseHeight);
 	set_depth(texture->baseDepth);
@@ -110,14 +115,17 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 		set_layers(texture->numFaces);
 	}
 
-	// Update format
 	auto updated_format = ktxTexture_GetVkFormat(texture);
 	set_format(updated_format);
 
-	// Update mip levels
 	auto &mipmap_levels = get_mut_mipmaps();
 	mipmap_levels.resize(texture->numLevels);
-	auto result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &mipmap_levels);
+
+	CallbackData callback_data{};
+	callback_data.texture = texture;
+	callback_data.mipmaps = &mipmap_levels;
+
+	auto result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &callback_data);
 	if (result != KTX_SUCCESS)
 	{
 		throw std::runtime_error("Error loading KTX texture");
