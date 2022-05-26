@@ -318,12 +318,12 @@ You can now install the apk on a connected device using the Android Debug Bridge
 For a release build:
 
 ```
-adb install build/outputs/apk/release/vulkan_samples-release.apk
+adb install app/build/outputs/apk/release/vulkan_samples-release.apk
 ```
 For a debug build:
 
 ```
-adb install build/outputs/apk/debug/vulkan_samples-debug.apk
+adb install app/build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
 ## Build with Android Studio
