@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Arm Limited and Contributors
+/* Copyright (c) 2019, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,14 +15,22 @@
  * limitations under the License.
  */
 
-#include <catch2/catch_test_macros.hpp>
+#pragma once
 
-#include <components/common/strings.hpp>
+#include "components/images/image.hpp"
 
-using namespace components;
-
-TEST_CASE("strings::replace_all", "[common]")
+namespace components
 {
-	REQUIRE(strings::replace_all("/././", "./", "/") == "///");
-	REQUIRE(strings::replace_all("vulkanvulkanvulkan", "vulkan", "kan") == "kankankan");
-}
+namespace images
+{
+class KtxLoader final : public ImageLoader
+{
+  public:
+	KtxLoader()          = default;
+	virtual ~KtxLoader() = default;
+
+	virtual StackErrorPtr load_from_file(const std::string &name, vfs::FileSystem &fs, const std::string &path, ImagePtr *o_image) const;
+	virtual StackErrorPtr load_from_memory(const std::string &name, const std::vector<uint8_t> &data, ImagePtr *o_image) const;
+};
+}        // namespace images
+}        // namespace components

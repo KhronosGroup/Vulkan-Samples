@@ -59,3 +59,6 @@
 [submodule "third_party/re"]
 	path = third_party/re
 	url = https://github.com/google/re2
+[submodule "third_party/entt"]
+	path = third_party/entt
+	url = https://github.com/skypjack/entt

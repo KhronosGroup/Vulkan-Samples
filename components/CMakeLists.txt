@@ -1,3 +1,5 @@
 add_subdirectory(common)
 add_subdirectory(events)
 add_subdirectory(vfs)
+add_subdirectory(scene_graph)
+add_subdirectory(assets)
