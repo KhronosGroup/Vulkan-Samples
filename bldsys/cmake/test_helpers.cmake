@@ -65,6 +65,15 @@ function(vkb__register_tests)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
+    if(${VKB_WARNINGS_AS_ERRORS})
+        message(STATUS "Warnings as Errors Enabled")
+        if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+            target_compile_options(${TARGET_NAME} PRIVATE -Werror)
+        elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+            target_compile_options(${TARGET_NAME} PRIVATE /W3 /WX)
+        endif()
+    endif()
+
     add_test(NAME ${TARGET_NAME}
              COMMAND ${TARGET_NAME}
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
@@ -108,8 +117,26 @@ function(vkb__register_tests_no_catch2)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
-    add_test(NAME ${TARGET_NAME}
-             COMMAND ${TARGET_NAME})
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    )
+
+    if(${VKB_WARNINGS_AS_ERRORS})
+        message(STATUS "Warnings as Errors Enabled")
+        if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+            target_compile_options(${TARGET_NAME} PRIVATE -Werror)
+        elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+            target_compile_options(${TARGET_NAME} PRIVATE /W3 /WX)
+        endif()
+    endif()
+
+    add_test(
+        NAME ${TARGET_NAME}
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TARGET_NAME})
 
     add_dependencies(vkb_tests ${TARGET_NAME})
 endfunction()

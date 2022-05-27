@@ -24,13 +24,6 @@ list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake/module)
 
-include(utils)
-include(global_config)
-include(sample_helper)
-include(check_atomic)
-include(test_helpers)
-include(component_helpers)
-
 # options
 option(VKB_WARNINGS_AS_ERRORS "Enable Warnings as Errors" ON)
 option(VKB_VALIDATION_LAYERS "Enable validation layers for every application." OFF)
@@ -39,6 +32,13 @@ option(VKB_VULKAN_DEBUG "Enable VK_EXT_debug_utils or VK_EXT_debug_marker if sup
 option(VKB_BUILD_SAMPLES "Enable generation and building of Vulkan best practice samples." ON)
 option(VKB_BUILD_TESTS "Enable generation and building of Vulkan best practice tests." OFF)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
+
+include(utils)
+include(global_config)
+include(sample_helper)
+include(check_atomic)
+include(test_helpers)
+include(component_helpers)
 
 # Add third party libraries
 add_subdirectory(third_party)

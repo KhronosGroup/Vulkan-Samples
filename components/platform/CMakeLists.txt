@@ -26,21 +26,20 @@ vkb__register_component(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
+# Dummy Sample
+
+add_library(vkb__dummy_sample SHARED tests/dummy_sample.cpp)
+target_link_libraries(vkb__dummy_sample PUBLIC vkb__platform)
+add_dependencies(vkb_tests vkb__dummy_sample)
+
 vkb__register_tests_no_catch2(
   NAME "platform_test"
   SRC
     tests/platform.test.cpp
   LIBS
     vkb__platform
-    vkb__platform__dummy_sample
+    vkb__dummy_sample
 )
-
-
-# Dummy Sample
-
-add_library(vkb__platform__dummy_sample SHARED tests/dummy_sample.cpp)
-target_link_libraries(vkb__platform__dummy_sample PUBLIC vkb__platform)
-add_dependencies(vkb_tests vkb__platform__dummy_sample)
 
 vkb__register_tests_no_catch2(
   NAME "sample_test"
@@ -48,7 +47,7 @@ vkb__register_tests_no_catch2(
     tests/sample.test.cpp
   LIBS
     vkb__platform
-    vkb__platform__dummy_sample
+    vkb__dummy_sample
     vkb__vfs
 )
 

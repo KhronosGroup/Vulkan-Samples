@@ -33,7 +33,7 @@ vkb__register_component(
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     LINK_LIBS
         spdlog
-
+        fmt
 )
 
 vkb__register_tests(

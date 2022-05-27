@@ -31,9 +31,9 @@ CUSTOM_MAIN(context)
 
 	auto &fs = vfs::_default(context);
 
-	auto files = fs.enumerate_files_recursive("/", dl::os_library_name("vkb__platform__dummy_sample"));
+	auto files = fs.enumerate_files_recursive("/", dl::os_library_name("vkb__dummy_sample"));
 	if (files.size() != 1) {
-		throw std::runtime_error{"filed to find dummy dynamic library"};
+		throw std::runtime_error{"failed to find dummy dynamic library"};
 	}
 
 	Sample sample;
