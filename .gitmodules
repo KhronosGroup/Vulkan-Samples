@@ -56,3 +56,6 @@
 [submodule "third_party/catch2"]
 	path = third_party/catch2
 	url = https://github.com/catchorg/Catch2
+[submodule "third_party/re"]
+	path = third_party/re
+	url = https://github.com/google/re2
