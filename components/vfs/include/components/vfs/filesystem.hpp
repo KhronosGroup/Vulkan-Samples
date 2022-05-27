@@ -114,7 +114,6 @@ class FileSystem
 
 	void make_folder_recursive(const std::string &path);
 
-<<<<<<< HEAD
 	virtual bool          folder_exists(const std::string &file_path)                                                                    = 0;
 	virtual bool          file_exists(const std::string &file_path)                                                                      = 0;
 	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)                                           = 0;
@@ -125,18 +124,6 @@ class FileSystem
 
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files)     = 0;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) = 0;
-=======
-	virtual bool           folder_exists(const std::string &file_path)                                                                    = 0;
-	virtual bool           file_exists(const std::string &file_path)                                                                      = 0;
-	virtual status::status read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)                                           = 0;
-	virtual status::status read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) = 0;
-	virtual size_t         file_size(const std::string &file_path)                                                                        = 0;
-	virtual bool           write_file(const std::string &file_path, const void *data, size_t size)                                        = 0;
-	virtual void           make_folder(const std::string &path){};
-
-	virtual status::status enumerate_files(const std::string &file_path, std::vector<std::string> *files)     = 0;
-	virtual status::status enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) = 0;
->>>>>>> b98ebf7 ( vfs)
 };
 
 /**
@@ -151,7 +138,6 @@ class RootFileSystem : public FileSystem
 	RootFileSystem(const std::string &base_path = "");
 	virtual ~RootFileSystem() = default;
 
-<<<<<<< HEAD
 	virtual bool          folder_exists(const std::string &file_path) override;
 	virtual bool          file_exists(const std::string &file_path) override;
 	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob) override;
@@ -164,20 +150,6 @@ class RootFileSystem : public FileSystem
 	StackErrorPtr enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
 	StackErrorPtr enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
 	StackErrorPtr enumerate_folders_recursive(const std::string &file_path, std::vector<std::string> *folders);
-=======
-	virtual bool           folder_exists(const std::string &file_path) override;
-	virtual bool           file_exists(const std::string &file_path) override;
-	virtual status::status read_file(const std::string &file_path, std::shared_ptr<Blob> *blob) override;
-	virtual status::status read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) override;
-	virtual size_t         file_size(const std::string &file_path) override;
-	virtual bool           write_file(const std::string &file_path, const void *data, size_t size) override;
-	virtual status::status enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
-	virtual status::status enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
-
-	status::status enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
-	status::status enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
-	status::status enumerate_folders_recursive(const std::string &file_path, std::vector<std::string> *folders);
->>>>>>> b98ebf7 ( vfs)
 
 	void mount(const std::string &file_path, std::shared_ptr<FileSystem> file_system);
 	void unmount(const std::string &file_path);
