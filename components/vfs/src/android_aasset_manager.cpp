@@ -181,7 +181,7 @@ size_t AndroidAAssetManager::file_size(const std::string &file_path)
 
 	if (!asset)
 	{
-		return status::FileNotFound;
+		return 0;
 	}
 
 	size_t size = AAsset_getLength(asset);
