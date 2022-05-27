@@ -53,3 +53,6 @@
 [submodule "third_party/opencl"]
 	path = third_party/opencl
 	url = https://github.com/KhronosGroup/OpenCL-Headers.git
+[submodule "third_party/catch2"]
+	path = third_party/catch2
+	url = https://github.com/catchorg/Catch2
