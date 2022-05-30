@@ -44,14 +44,9 @@ ConditionalRendering::~ConditionalRendering()
 
 void ConditionalRendering::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// We need to enable conditional rendering using a new feature struct
 	auto &requested_extension_features                = gpu.request_extension_features<VkPhysicalDeviceConditionalRenderingFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_CONDITIONAL_RENDERING_FEATURES_EXT);
 	requested_extension_features.conditionalRendering = VK_TRUE;
-
-	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	}
 }
 
 void ConditionalRendering::build_command_buffers()
@@ -109,12 +104,12 @@ void ConditionalRendering::build_command_buffers()
 
 			auto mat = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
 
+			// Start a conditional rendering block, commands in this block are only executed if the buffer at the current position is 1 at command buffer submission time
 			VkConditionalRenderingBeginInfoEXT conditional_rendering_info{};
 			conditional_rendering_info.sType  = VK_STRUCTURE_TYPE_CONDITIONAL_RENDERING_BEGIN_INFO_EXT;
 			conditional_rendering_info.buffer = conditional_visibility_buffer->get_handle();
+			// We offset into the visibility buffer based on the index of the node to be drawn
 			conditional_rendering_info.offset = sizeof(int32_t) * idx;
-
-			// Start a conditional rendering block, commands in this block are only executed if the buffer at the current position is = 1
 			vkCmdBeginConditionalRenderingEXT(draw_cmd_buffers[i], &conditional_rendering_info);
 
 			// Pass data for the current node via push commands
@@ -128,6 +123,7 @@ void ConditionalRendering::build_command_buffers()
 
 			vkCmdDrawIndexed(draw_cmd_buffers[i], node.sub_mesh->vertex_indices, 1, 0, 0, 0);
 
+			// End the conditional rendering block
 			vkCmdEndConditionalRenderingEXT(draw_cmd_buffers[i]);
 
 			idx++;
@@ -279,14 +275,14 @@ void ConditionalRendering::prepare_pipelines()
 	pipeline_create_info.pViewportState      = &viewport_state;
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.layout              = pipeline_layout;
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
 	// Vertex bindings an attributes for model rendering
-	// Binding description
-	// @todo: comment on separate buffers (gltf)
+	// Binding description, we use separate buffers for the vertex attributes
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
 	    vkb::initializers::vertex_input_binding_description(1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -306,16 +302,8 @@ void ConditionalRendering::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	blend_attachment_state.blendEnable = VK_FALSE;
-	pipeline_create_info.layout        = pipeline_layout;
-	color_blend_state.attachmentCount  = 1;
-	color_blend_state.pAttachments     = blend_attachment_states.data();
-
 	shader_stages[0] = load_shader("conditional_rendering/model.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("conditional_rendering/model.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	// Flip cull mode
-	rasterization_state.cullMode = VK_CULL_MODE_NONE;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
@@ -335,14 +323,17 @@ void ConditionalRendering::update_uniform_buffers()
 {
 	uniform_data.projection = camera.matrices.perspective;
 	uniform_data.view       = camera.matrices.view * glm::mat4(1.0f);
-	// @todo: comment
+	// Scale the view matrix as the model is pretty large, and also flip it upside down
 	uniform_data.view = glm::scale(uniform_data.view, glm::vec3(0.1f, -0.1f, 0.1f));
 	uniform_buffer->convert_and_update(uniform_data);
 }
 
+// Creates a dedicated buffer to store the visibility information sourced at draw time
 void ConditionalRendering::preprare_visibility_buffer()
 {
-	// @todo
+	// Conditional values are 32 bits wide and if it's zero the rendering commands are discarded
+	// We therefore create a buffer that can hold int32 conditional values for all nodes in the glTF scene
+	// The extension also introduces the new buffer usage flag VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT that we need to set
 	conditional_visibility_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                                    sizeof(int32_t) * conditional_visibility_list.size(),
 	                                                                    VK_BUFFER_USAGE_CONDITIONAL_RENDERING_BIT_EXT,
@@ -351,6 +342,7 @@ void ConditionalRendering::preprare_visibility_buffer()
 	update_visibility_buffer();
 }
 
+// Updates the visibility buffer with the currently selected node visibility
 void ConditionalRendering::update_visibility_buffer()
 {
 	conditional_visibility_buffer->update(conditional_visibility_list.data(), sizeof(uint32_t) * conditional_visibility_list.size());
@@ -376,7 +368,7 @@ bool ConditionalRendering::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(1.9f, 2.05f, -18.0f));
 	camera.set_rotation(glm::vec3(-11.25f, -38.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 	load_assets();
 	prepare_uniform_buffers();
