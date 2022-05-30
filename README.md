@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -133,7 +133,6 @@ This project has some third-party dependencies, each of which may have independe
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator
 - [dear imgui](https://github.com/ocornut/imgui): Immediate Mode Graphical User Interface
-  - [dear imgui shaders](https://github.com/SaschaWillems/Vulkan/tree/master/data/shaders/imgui): GLSL shaders for dear imgui
 - [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
 - [KTX-Software](https://github.com/KhronosGroup/KTX-Software): Khronos Texture Library and Tools
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
@@ -159,5 +158,5 @@ Also see [CONTRIBUTING](CONTRIBUTING.md) for contribution guidelines.
 
 ## Related resources
 
-- [Mali GPU Best Practices](https://developer.arm.com/solutions/graphics/developer-guides/advanced-guides/mali-gpu-best-practices): A document with recommendations for efficient API usage
+- [Mali GPU Best Practices](https://developer.arm.com/documentation/101897/latest/): A document with recommendations for efficient API usage
 - [PerfDoc](https://github.com/ARM-software/perfdoc): A Vulkan layer which aims to validate applications against Mali GPU Best Practices

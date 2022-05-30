@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         platform: [windows, ubuntu, macos]
-        build_type: [Release]
+        build_type: [Debug, Release]
     env:
       PARALLEL: -j 2
     runs-on: "${{ matrix.platform }}-latest"
@@ -72,4 +72,4 @@ jobs:
           apt install ninja-build
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew :assembleRelease
+        run: ./gradlew app:assembleRelease

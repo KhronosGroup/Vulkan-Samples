@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,9 +29,9 @@ VkSurfaceKHR HeadlessWindow::create_surface(Instance &instance)
 	return VK_NULL_HANDLE;
 }
 
-vk::SurfaceKHR HeadlessWindow::create_surface(vk::Instance, vk::PhysicalDevice)
+VkSurfaceKHR HeadlessWindow::create_surface(VkInstance, VkPhysicalDevice)
 {
-	return nullptr;
+	return VK_NULL_HANDLE;
 }
 
 bool HeadlessWindow::should_close()

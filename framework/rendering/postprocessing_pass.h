@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,6 +72,8 @@ class PostProcessingPassBase
 	// NOTE: Protected members are exposed via getters and setters in PostProcessingPass<>
 	PostProcessingPipeline *parent{nullptr};
 	bool                    prepared{false};
+
+	std::string debug_name{};
 
 	RenderTarget *                 render_target{nullptr};
 	std::shared_ptr<core::Sampler> default_sampler{};
@@ -169,6 +171,24 @@ class PostProcessingPass : public PostProcessingPassBase
 	inline Self &set_render_target(RenderTarget *new_render_target)
 	{
 		render_target = new_render_target;
+
+		return static_cast<Self &>(*this);
+	}
+
+	/**
+	* @brief Returns the the debug name of this pass.
+	*/
+	inline const std::string &get_debug_name() const
+	{
+		return debug_name;
+	}
+
+	/**
+	* @brief Sets the debug name of this pass.
+	*/
+	inline Self &set_debug_name(const std::string &new_debug_name)
+	{
+		debug_name = new_debug_name;
 
 		return static_cast<Self &>(*this);
 	}

@@ -1,0 +1,75 @@
+plugins {
+	id 'com.android.application'
+}
+
+android {
+	compileSdk 32
+
+	defaultConfig {
+		applicationId "com.khronos.vulkan_samples"
+		@MIN_SDK_VERSION@
+		targetSdk 32
+		versionCode 1
+		versionName "1.0"
+
+		externalNativeBuild {
+			@CMAKE_ARGUMENTS@
+		}
+	}
+
+	buildTypes {
+		debug {
+			debuggable true
+			jniDebuggable true
+		}
+
+		release {
+			minifyEnabled false
+			proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
+			signingConfig debug.signingConfig
+		}
+		applicationVariants.all{variant ->
+			variant.outputs.each{output->
+                def tempName = output.outputFile.name
+                tempName = tempName.replace("app-", "vulkan_samples-")
+                output.outputFileName  = tempName
+			}
+        }
+	}
+
+	compileOptions {
+		sourceCompatibility JavaVersion.VERSION_1_8
+		targetCompatibility JavaVersion.VERSION_1_8
+	}
+
+	sourceSets {
+		main {
+			@ASSETS_SRC_DIRS@
+			@RES_SRC_DIRS@
+			@JAVA_SRC_DIRS@
+			@JNI_LIBS_SRC_DIRS@
+			@MANIFEST_FILE@
+
+			jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
+		}
+	}
+
+	externalNativeBuild {
+		@CMAKE_PATH@
+	}
+
+	lintOptions {
+		checkReleaseBuilds false
+		abortOnError false
+	}
+
+	buildFeatures {
+		viewBinding true
+	}
+}
+
+dependencies {
+	implementation 'androidx.appcompat:appcompat:1.3.0'
+	implementation 'com.google.android.material:material:1.4.0'
+	implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+}

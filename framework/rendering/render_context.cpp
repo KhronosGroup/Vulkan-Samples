@@ -119,7 +119,7 @@ void RenderContext::set_surface_format_priority(const std::vector<VkSurfaceForma
 	surface_format_priority_list = new_surface_format_priority_list;
 }
 
-VkFormat RenderContext::get_format()
+VkFormat RenderContext::get_format() const
 {
 	VkFormat format = DEFAULT_VK_FORMAT;
 
@@ -527,13 +527,13 @@ bool RenderContext::has_swapchain()
 	return swapchain != nullptr;
 }
 
-Swapchain &RenderContext::get_swapchain()
+Swapchain const &RenderContext::get_swapchain() const
 {
 	assert(swapchain && "Swapchain is not valid");
 	return *swapchain;
 }
 
-VkExtent2D RenderContext::get_surface_extent() const
+VkExtent2D const &RenderContext::get_surface_extent() const
 {
 	return surface_extent;
 }

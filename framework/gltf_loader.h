@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
- * Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
+ * Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,7 +69,7 @@ struct TypeCast
 class GLTFLoader
 {
   public:
-	GLTFLoader(Device &device);
+	GLTFLoader(Device const &device);
 
 	virtual ~GLTFLoader() = default;
 
@@ -122,7 +122,7 @@ class GLTFLoader
 	 */
 	tinygltf::Value *get_extension(tinygltf::ExtensionMap &tinygltf_extensions, const std::string &extension);
 
-	Device &device;
+	Device const &device;
 
 	tinygltf::Model model;
 

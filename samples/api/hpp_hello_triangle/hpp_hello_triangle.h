@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,15 +17,15 @@
 
 #pragma once
 
-#include "common/vk_common.h"
-#include "platform/application.h"
-#include "vulkan/vulkan.hpp"
+#include <platform/hpp_application.h>
+
+#include <platform/hpp_platform.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates
  * the rendering of a triangle
  */
-class HPPHelloTriangle : public vkb::Application
+class HPPHelloTriangle : public vkb::platform::HPPApplication
 {
 	/**
 	 * @brief Swapchain state
@@ -124,11 +124,11 @@ class HPPHelloTriangle : public vkb::Application
 
 	virtual ~HPPHelloTriangle();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
 
 	virtual void update(float delta_time) override;
 
-	virtual void resize(const uint32_t width, const uint32_t height) override;
+	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	bool validate_extensions(const std::vector<const char *> &           required,
 	                         const std::vector<vk::ExtensionProperties> &available);
@@ -139,7 +139,7 @@ class HPPHelloTriangle : public vkb::Application
 	                   const std::vector<const char *> &required_instance_extensions,
 	                   const std::vector<const char *> &required_validation_layers);
 
-	void select_physical_device_and_surface(Context &context, vkb::Platform &platform);
+	void select_physical_device_and_surface(vkb::platform::HPPPlatform &platform);
 
 	void init_device(Context &                        context,
 	                 const std::vector<const char *> &required_device_extensions);

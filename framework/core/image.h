@@ -21,6 +21,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -29,17 +30,17 @@ class Device;
 namespace core
 {
 class ImageView;
-class Image
+class Image : public VulkanResource<VkImage, VK_OBJECT_TYPE_IMAGE, const Device>
 {
   public:
-	Image(Device &              device,
+	Image(Device const &        device,
 	      VkImage               handle,
 	      const VkExtent3D &    extent,
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
 	      VkSampleCountFlagBits sample_count = VK_SAMPLE_COUNT_1_BIT);
 
-	Image(Device &              device,
+	Image(Device const &        device,
 	      const VkExtent3D &    extent,
 	      VkFormat              format,
 	      VkImageUsageFlags     image_usage,
@@ -56,15 +57,11 @@ class Image
 
 	Image(Image &&other);
 
-	~Image();
+	~Image() override;
 
 	Image &operator=(const Image &) = delete;
 
 	Image &operator=(Image &&) = delete;
-
-	Device &get_device();
-
-	VkImage get_handle() const;
 
 	VmaAllocation get_memory() const;
 
@@ -98,10 +95,6 @@ class Image
 	std::unordered_set<ImageView *> &get_views();
 
   private:
-	Device &device;
-
-	VkImage handle{VK_NULL_HANDLE};
-
 	VmaAllocation memory{VK_NULL_HANDLE};
 
 	VkImageType type{};
