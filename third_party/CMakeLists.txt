@@ -376,3 +376,6 @@ add_subdirectory(catch2)
 
 # RE2
 add_subdirectory(re)
+
+# Entt
+add_subdirectory(entt)
