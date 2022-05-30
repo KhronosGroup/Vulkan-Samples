@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -144,7 +144,8 @@ void ConditionalRendering::build_command_buffers()
 void ConditionalRendering::load_assets()
 {
 	vkb::GLTFLoader loader{get_device()};
-	scene = loader.read_scene_from_file("scenes/buggy/glTF-Embedded/Buggy.gltf");
+	scene = loader.read_scene_from_file("scenes/Buggy/glTF-Embedded/Buggy.gltf");
+	assert(scene);
 	// Store all scene nodes in a linear vector for easier access
 	for (auto &mesh : scene->get_components<vkb::sg::Mesh>())
 	{
@@ -435,10 +436,11 @@ void ConditionalRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void ConditionalRendering::resize(const uint32_t width, const uint32_t height)
+bool ConditionalRendering::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_conditional_rendering()
