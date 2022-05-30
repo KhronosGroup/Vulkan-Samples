@@ -17,22 +17,12 @@
 
 #include "animation.h"
 
-#include "scene_graph/node.h"
+#include "com/graph.hpp"
 
 namespace vkb
 {
 namespace sg
 {
-Animation::Animation(const std::string &name) :
-    Script{name}
-{
-}
-
-Animation::Animation(const Animation &other) :
-    channels{other.channels}
-{
-}
-
 void Animation::add_channel(Node &node, const AnimationTarget &target, const AnimationSampler &sampler)
 {
 	channels.push_back({node, target, sampler});

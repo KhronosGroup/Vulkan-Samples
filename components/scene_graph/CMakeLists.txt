@@ -1,5 +1,6 @@
 set(SRC
-    src/node_animation.cpp
+    src/animations.cpp
+    src/cameras.cpp
 )
 
 add_library(components__scene_graph STATIC ${SRC})

@@ -49,20 +49,3 @@ target_link_libraries(components__models INTERFACE
     components__gltf)
 
 add_library(Components::Models ALIAS components__models)
-
-
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND (BUILD_TESTING OR VKB_BUILD_TESTS))
-    set(TEST_SRC
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/main.cpp
-        ${CMAKE_CURRENT_SOURCE_DIR}/tests/gltf.torusknot.test.cpp
-    )
-
-    add_executable(tests__assets ${TEST_SRC})
-    target_link_libraries(tests__assets PUBLIC
-        components__images
-        components__models
-        Components::VFS
-        Catch2::Catch2)
-
-    vkb_register_test(tests__assets)
-endif()
