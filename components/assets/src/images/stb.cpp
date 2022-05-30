@@ -23,8 +23,6 @@
 #include <stb_image.h>
 #include <stb_image_write.h>
 
-#include <fmt/format.h>
-
 #include <components/vfs/helpers.hpp>
 
 namespace components
@@ -170,14 +168,15 @@ StackErrorPtr StbLoader::load_from_file(const std::string &name, vfs::FileSystem
 {
 	if (!fs.file_exists(path))
 	{
-		return StackError::unique("file does not exist " + path);
+		return StackError::unique("file does not exist " + path, "images/stb.cpp", __LINE__);
 	}
 
 	std::shared_ptr<vfs::Blob> blob;
 
-	if (fs.read_file(path, &blob) != vfs::status::Success)
+	if (auto err = fs.read_file(path, &blob))
 	{
-		return StackError::unique("failed to read file " + path);
+		err->push("failed to read file " + path, "images/stb.cpp", __LINE__);
+		return std::move(err);
 	}
 
 	return load_from_memory(name, blob->binary(), o_image);

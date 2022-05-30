@@ -21,7 +21,6 @@
 #include <components/images/image.hpp>
 #include <components/images/ktx.hpp>
 #include <components/images/stb.hpp>
-#include <components/scene_graph/components/material.hpp>
 #include <components/scene_graph/components/mesh.hpp>
 #include <components/vfs/helpers.hpp>
 
@@ -322,7 +321,7 @@ bool read_whole_file(std::vector<unsigned char> *out, std::string *err, const st
 		path = vfs::helpers::join({context.model_working_directory, filepath});
 	}
 
-	if (context.fs.read_file(path, &blob) != vfs::status::Success)
+	if (auto err = context.fs.read_file(path, &blob))
 	{
 		return false;
 	}
@@ -512,14 +511,14 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 
 			if (gltf_texture.source > 0)
 			{
-				texture.image = images[gltf_texture.source];
+				// texture.image = images[gltf_texture.source];
 			}
 		}
 	}
 
 	// Process All Materials
 
-	std::vector<sg::MaterialPtr> materials;
+	std::vector<sg::Material> materials;
 
 	{
 		ZoneScopedN("images");
@@ -528,7 +527,7 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 
 		for (auto &gltf_material : model.materials)
 		{
-			sg::MaterialPtr material = std::make_shared<sg::Material>();
+			sg::Material material;
 
 			for (auto &gltf_value : gltf_material.values)
 			{
@@ -537,21 +536,21 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 				{
 					if (gltf_value.second.TextureIndex() >= 0)
 					{
-						material->textures[texture_type] = textures[gltf_value.second.TextureIndex()];
+						material.textures[texture_type] = textures[gltf_value.second.TextureIndex()];
 					}
 				}
 				else if (gltf_value.first == "baseColorFactor")
 				{
-					const auto &color_factor    = gltf_value.second.ColorFactor();
-					material->base_color_factor = glm::vec4(color_factor[0], color_factor[1], color_factor[2], color_factor[3]);
+					const auto &color_factor   = gltf_value.second.ColorFactor();
+					material.base_color_factor = glm::vec4(color_factor[0], color_factor[1], color_factor[2], color_factor[3]);
 				}
 				else if (gltf_value.first == "metallicFactor")
 				{
-					material->metallic_factor = static_cast<float>(gltf_value.second.Factor());
+					material.metallic_factor = static_cast<float>(gltf_value.second.Factor());
 				}
 				else if (gltf_value.first == "roughnessFactor")
 				{
-					material->roughness_factor = static_cast<float>(gltf_value.second.Factor());
+					material.roughness_factor = static_cast<float>(gltf_value.second.Factor());
 				}
 			}
 
@@ -562,37 +561,37 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 				{
 					if (gltf_value.second.TextureIndex() >= 0)
 					{
-						material->textures[texture_type] = textures[gltf_value.second.TextureIndex()];
+						material.textures[texture_type] = textures[gltf_value.second.TextureIndex()];
 					}
 				}
 				else if (gltf_value.first == "emissiveFactor")
 				{
 					const auto &emissive_factor = gltf_value.second.number_array;
 
-					material->emissive_factor = glm::vec3(emissive_factor[0], emissive_factor[1], emissive_factor[2]);
+					material.emissive_factor = glm::vec3(emissive_factor[0], emissive_factor[1], emissive_factor[2]);
 				}
 				else if (gltf_value.first == "alphaMode")
 				{
 					if (gltf_value.second.string_value == "BLEND")
 					{
-						material->alpha_mode = sg::AlphaMode::Blend;
+						material.alpha_mode = sg::AlphaMode::Blend;
 					}
 					else if (gltf_value.second.string_value == "OPAQUE")
 					{
-						material->alpha_mode = sg::AlphaMode::Opaque;
+						material.alpha_mode = sg::AlphaMode::Opaque;
 					}
 					else if (gltf_value.second.string_value == "MASK")
 					{
-						material->alpha_mode = sg::AlphaMode::Mask;
+						material.alpha_mode = sg::AlphaMode::Mask;
 					}
 				}
 				else if (gltf_value.first == "alphaCutoff")
 				{
-					material->alpha_cutoff = static_cast<float>(gltf_value.second.number_value);
+					material.alpha_cutoff = static_cast<float>(gltf_value.second.number_value);
 				}
 				else if (gltf_value.first == "doubleSided")
 				{
-					material->double_sided = gltf_value.second.bool_value;
+					material.double_sided = gltf_value.second.bool_value;
 				}
 			}
 
@@ -676,9 +675,9 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 					mesh.material = materials[gltf_primitive.material];
 				}
 
-				auto mesh_node = sg::Node::ptr(m_registry, fmt::format("{} - sub mesh {}", gltf_mesh.name, primitive_index));
+				auto mesh_node = sg::Node::create(m_registry, fmt::format("{} - sub mesh {}", gltf_mesh.name, primitive_index));
 
-				m_registry->emplace<sg::Mesh>(mesh_node->entity, mesh);
+				mesh_node->emplace_component<sg::Mesh>(mesh);
 
 				meshes.emplace(key, mesh_node);
 			}
@@ -695,7 +694,7 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 
 	for (auto &gltf_node : model.nodes)
 	{
-		nodes.emplace_back(sg::Node::ptr(m_registry, gltf_node.name));
+		nodes.emplace_back(sg::Node::create(m_registry, gltf_node.name));
 	}
 
 	// Select Root Node
@@ -715,7 +714,7 @@ StackErrorPtr GltfLoader::load_from_file(const std::string &model_name, vfs::Fil
 	else
 	{
 		// No root node - all nodes should be treated as individuals - group them
-		root_node_ptr = sg::Node::ptr(m_registry, fmt::format("Node Group: {}", model_name));
+		root_node_ptr = sg::Node::create(m_registry, fmt::format("Node Group: {}", model_name));
 
 		for (auto &node : nodes)
 		{

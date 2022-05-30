@@ -41,6 +41,8 @@ target_link_libraries(components__gltf PUBLIC
     components__stb
     components__ktx
     Components::SceneGraph
+    fmt::fmt
+    Tracy::TracyClient
     tinygltf)
 
 # models

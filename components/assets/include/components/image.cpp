@@ -255,9 +255,9 @@ std::unique_ptr<Image> Image::load(const std::string &name, const std::string &u
 
 	std::shared_ptr<vfs::Blob> blob;
 
-	if (fs.read_file("/assets/" + uri, &blob) != vfs::status::Success)
+	if (auto err = fs.read_file("/assets/" + uri, &blob))
 	{
-		throw std::runtime_error{"unable to find image"};
+		throw;
 	}
 
 	// Get extension
