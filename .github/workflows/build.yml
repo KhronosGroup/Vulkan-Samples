@@ -48,28 +48,3 @@ jobs:
         run: cmake -H"." -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
       - name: "Build Ubuntu in Release with VKB_WSI_SELECTION=D2D"
         run: cmake --build "build/ubuntu-latest-d2d" --target vulkan_samples --config Release ${{ env.PARALLEL }}
-
-  build_android:
-    name: "Build Android in ${{ matrix.build_type }}"
-    container: ghcr.io/khronosgroup/vulkan-samples
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        build_type: [Release]
-    steps:
-      - uses: actions/checkout@v2
-        with:
-          submodules: "recursive"
-      - name: "Run generate script"
-        run: ./bldsys/scripts/generate_android_gradle.sh
-      - name: "Explicitly setup SDK path with local.properties."
-        run: |
-          echo "sdk.dir=/usr/local/android-sdk" > build/android_gradle/local.properties
-          echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
-      - name: "Ensure Ninja is installed."
-        run: |
-          apt-get update
-          apt install ninja-build
-      - name: "Build Android using gradlew."
-        working-directory: build/android_gradle
-        run: ./gradlew app:assembleRelease
