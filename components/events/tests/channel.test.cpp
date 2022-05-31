@@ -30,14 +30,14 @@ TEST_CASE("send single event", "[events]")
 		uint32_t value;
 	};
 
-	ChannelPtr<Event> channel = Channel<Event>::shared();
+	ChannelPtr<Event> channel = Channel<Event>::create();
 
 	auto send = channel->sender();
 
 	auto rec1 = channel->receiver();
 	auto rec2 = channel->receiver();
 
-	send->put(Event{42});
+	send->push(Event{42});
 	REQUIRE((rec1->has_next() && rec2->has_next()));
 
 	auto val1 = rec1->next();
@@ -54,18 +54,18 @@ TEST_CASE("send multiple events", "[events]")
 		uint32_t value;
 	};
 
-	ChannelPtr<Event> channel = Channel<Event>::shared();
+	ChannelPtr<Event> channel = Channel<Event>::create();
 
 	auto send1 = channel->sender();
 	auto send2 = channel->sender();
 
 	auto rec1 = channel->receiver();
 
-	send1->put({1});
-	send2->put({2});
-	send1->put({3});
-	send1->put({4});
-	send2->put({5});
+	send1->push({1});
+	send2->push({2});
+	send1->push({3});
+	send1->push({4});
+	send2->push({5});
 
 	std::vector<uint32_t> expected_values = {
 	    1,
@@ -89,20 +89,20 @@ TEST_CASE("create receiver whilst sending events", "[events]")
 		uint32_t value;
 	};
 
-	ChannelPtr<Event> channel = Channel<Event>::shared();
+	ChannelPtr<Event> channel = Channel<Event>::create();
 
 	auto send1 = channel->sender();
 
 	auto rec1 = channel->receiver();
 
-	send1->put({1});
-	send1->put({2});
-	send1->put({3});
+	send1->push({1});
+	send1->push({2});
+	send1->push({3});
 
 	auto rec2 = channel->receiver();
 
-	send1->put({4});
-	send1->put({5});
+	send1->push({4});
+	send1->push({5});
 
 	std::vector<uint32_t> expected_values_1 = {1, 2, 3, 4, 5};
 
@@ -119,4 +119,28 @@ TEST_CASE("create receiver whilst sending events", "[events]")
 		REQUIRE(rec2->has_next());
 		REQUIRE(rec2->next().value == val);
 	}
+}
+
+TEST_CASE("drain a channel", "[events]")
+{
+	struct Event
+	{
+		uint32_t value;
+	};
+
+	ChannelPtr<Event> channel = Channel<Event>::create();
+
+	auto send1 = channel->sender();
+
+	auto rec1 = channel->receiver();
+
+	send1->push({1});
+	send1->push({2});
+	send1->push({3});
+	send1->push({4});
+	send1->push({5});
+
+	auto last = rec1->drain();
+	REQUIRE(last.value == 5);
+	REQUIRE(rec1->has_next() == false);
 }

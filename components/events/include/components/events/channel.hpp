@@ -42,6 +42,7 @@ class ChannelSender;
 template <typename Type>
 using ChannelSenderPtr = std::unique_ptr<ChannelSender<Type>>;
 
+// Acts as a context which links receivers and senders together
 template <typename Type>
 class Channel
 {
@@ -51,28 +52,58 @@ class Channel
   public:
 	~Channel();
 
-	static ChannelPtr<Type> shared()
+	/**
+	 * @brief Create a new channel for a given type
+	 *
+	 * @return ChannelPtr<Type> A new chanel context
+	 */
+	static ChannelPtr<Type> create()
 	{
 		return std::shared_ptr<Channel<Type>>(new Channel<Type>());
 	}
 
+	/**
+	 * @brief Create a new receiver
+	 *
+	 * @return ChannelReceiverPtr<Type> A receiver
+	 */
 	ChannelReceiverPtr<Type> receiver();
 
+	/**
+	 * @brief Create a new sender
+	 *
+	 * @return ChannelSenderPtr<Type> A sender
+	 */
 	ChannelSenderPtr<Type> sender();
 
   protected:
 	Channel();
 
-	void put(const Type &type);
+	/**
+	 * @brief push a new type to all receivers
+	 *
+	 * @param type the value to give to receivers
+	 */
+	void push(const Type &type);
 
+	/**
+	 * @brief unsubscribe a receiver
+	 *
+	 * @param receiver the subscribing receiver
+	 */
 	void unsubscribe(ChannelReceiver<Type> &receiver);
 
+	/**
+	 * @brief subscribe a receiver
+	 *
+	 * @param receiver the subscribing receiver
+	 */
 	void subscribe(ChannelReceiver<Type> &receiver);
 
   private:
 	mutable std::mutex                m_mut;
 	std::set<ChannelReceiver<Type> *> m_receivers;
-};        // namespace components
+};
 
 template <typename Type>
 class ChannelReceiver
@@ -82,16 +113,34 @@ class ChannelReceiver
   public:
 	~ChannelReceiver();
 
+	/**
+	 * @brief Checks if there is a next item in the channel
+	 */
 	bool has_next() const;
 
+	/**
+	 * @brief retrieves the next item in the channel
+	 *
+	 * @return Type the next item
+	 */
 	Type next();
 
-	Type last();
+	/**
+	 * @brief empties the channel returning the last item
+	 *
+	 * @return Type the last item
+	 */
+	Type drain();
 
   private:
 	ChannelReceiver(Channel<Type> &channel);
 
-	void put(const Type &item);
+	/**
+	 * @brief private used to receive a new item from the Channel<Type> context
+	 *
+	 * @param item an incoming item
+	 */
+	void push(const Type &item);
 
 	mutable std::mutex m_mut;
 	Channel<Type>     &m_channel;
@@ -106,7 +155,12 @@ class ChannelSender
   public:
 	~ChannelSender();
 
-	void put(const Type &item);
+	/**
+	 * @brief push a new item to the channel
+	 *
+	 * @param item the item to push
+	 */
+	void push(const Type &item);
 
   private:
 	ChannelSender(Channel<Type> &channel);
@@ -148,13 +202,13 @@ ChannelSenderPtr<Type> Channel<Type>::sender()
 }
 
 template <typename Type>
-void Channel<Type>::put(const Type &type)
+void Channel<Type>::push(const Type &type)
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
 	for (auto *receiver : m_receivers)
 	{
-		receiver->put(type);
+		receiver->push(type);
 	}
 }
 
@@ -216,7 +270,7 @@ Type ChannelReceiver<Type>::next()
 }
 
 template <typename Type>
-Type ChannelReceiver<Type>::last()
+Type ChannelReceiver<Type>::drain()
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
@@ -236,7 +290,7 @@ Type ChannelReceiver<Type>::last()
 }
 
 template <typename Type>
-void ChannelReceiver<Type>::put(const Type &item)
+void ChannelReceiver<Type>::push(const Type &item)
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
@@ -254,11 +308,11 @@ ChannelSender<Type>::~ChannelSender()
 {}
 
 template <typename Type>
-void ChannelSender<Type>::put(const Type &item)
+void ChannelSender<Type>::push(const Type &item)
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
-	m_channel.put(item);
+	m_channel.push(item);
 }
 }        // namespace events
 }        // namespace components
