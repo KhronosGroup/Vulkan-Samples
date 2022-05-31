@@ -28,7 +28,7 @@ jobs:
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+        run: cmake --build "build/${{ matrix.platform }}" --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
 
   build_d2d:
@@ -47,4 +47,4 @@ jobs:
       - name: Configure
         run: cmake -H"." -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
       - name: "Build Ubuntu in Release with VKB_WSI_SELECTION=D2D"
-        run: cmake --build "build/ubuntu-latest-d2d" --target vulkan_samples --config Release ${{ env.PARALLEL }}
+        run: cmake --build "build/ubuntu-latest-d2d" --config Release ${{ env.PARALLEL }}
