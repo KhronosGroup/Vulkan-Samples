@@ -187,7 +187,7 @@ set(VOLK_FILES
 
 add_library(volk STATIC ${VOLK_FILES})
 
-target_link_libraries(volk PUBLIC dl vulkan)
+target_link_libraries(volk PUBLIC vulkan ${CMAKE_DL_LIBS})
 
 target_include_directories(volk PUBLIC ${VOLK_DIR})
 if (VKB_WSI_SELECTION STREQUAL XCB)
