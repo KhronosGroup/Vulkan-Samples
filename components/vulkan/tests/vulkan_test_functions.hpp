@@ -39,11 +39,11 @@ Override wrapper(Func &&func)
 
 // not a complete list of vulkan functions.
 // add default implementations here when they are used in testing
-extern "C" PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
-extern "C" PFN_vkCreateInstance                   vkCreateInstance;
-extern "C" PFN_vkDestroyDebugReportCallbackEXT    vkDestroyDebugReportCallbackEXT;
-extern "C" PFN_vkDestroyDebugUtilsMessengerEXT    vkDestroyDebugUtilsMessengerEXT;
-extern "C" PFN_vkDestroyInstance                  vkDestroyInstance;
+extern PFN_vkEnumerateInstanceLayerProperties vkEnumerateInstanceLayerProperties;
+extern PFN_vkCreateInstance                   vkCreateInstance;
+extern PFN_vkDestroyDebugReportCallbackEXT    vkDestroyDebugReportCallbackEXT;
+extern PFN_vkDestroyDebugUtilsMessengerEXT    vkDestroyDebugUtilsMessengerEXT;
+extern PFN_vkDestroyInstance                  vkDestroyInstance;
 }        // namespace test
 }        // namespace vulkan
 }        // namespace components
