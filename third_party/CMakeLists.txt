@@ -179,27 +179,6 @@ target_link_libraries(ktx PUBLIC vulkan)
 
 set_property(TARGET ktx PROPERTY FOLDER "ThirdParty")
 
-# volk
-set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
-set(VOLK_FILES
-    "${VOLK_DIR}/volk.c"
-    "${VOLK_DIR}/volk.h")
-
-add_library(volk STATIC ${VOLK_FILES})
-
-target_link_libraries(volk PUBLIC vulkan ${CMAKE_DL_LIBS})
-
-target_include_directories(volk PUBLIC ${VOLK_DIR})
-if (VKB_WSI_SELECTION STREQUAL XCB)
-    target_include_directories(volk PUBLIC ${XCB_INCLUDE_DIRS})
-elseif (VKB_WSI_SELECTION STREQUAL XLIB)
-    target_include_directories(volk PUBLIC ${X11_INCLUDE_DIRS})
-elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
-    target_include_directories(volk PUBLIC ${WAYLAND_INCLUDE_DIRS})
-endif()
-
-set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
-
 # imgui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
 set(IMGUI_FILES
