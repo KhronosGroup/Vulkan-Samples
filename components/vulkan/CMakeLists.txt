@@ -22,6 +22,14 @@ elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
     target_include_directories(components__vulkan PUBLIC ${WAYLAND_INCLUDE_DIRS})
 endif()
 
+
+
+## Vulkan unit tests overrite the Volk vulkan function definitions with custom written ones
+## In the custom vulkan function implementations we can add test logic to verify that our code is using Vulkan as expected
+## This does not remove the need to out of box test on specific platforms as drivers can contain bugs
+
+## This library must contain all source, libraries and include dirs as components__vulkan. It must be a single compile target to avoid linker errors when compiling on Mac
+
 vkb__register_tests(
     NAME "vulkan_tests"
     SRC
