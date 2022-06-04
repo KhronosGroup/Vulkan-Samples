@@ -22,6 +22,6 @@ vkb__register_tests(
     NAME "common_tests"
     SRC
         tests/stack_error.test.cpp
-    LIBS
+    LINK_LIBS
         components__common
 )

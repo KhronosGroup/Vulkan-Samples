@@ -26,7 +26,7 @@ add_custom_target(vkb_tests)
 function(vkb__register_tests)
     set(options)  
     set(oneValueArgs NAME)
-    set(multiValueArgs SRC LIBS)
+    set(multiValueArgs SRC LINK_LIBS INCLUDE_DIRS)
 
     if(NOT ((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
         return() # testing not enabled
@@ -45,8 +45,12 @@ function(vkb__register_tests)
     add_executable(${TARGET_NAME} ${TARGET_SRC})
     target_link_libraries(${TARGET_NAME} PUBLIC Catch2::Catch2WithMain)
 
-    if (TARGET_LIBS)
-        target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
+    if (TARGET_LINK_LIBS)
+        target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LINK_LIBS})
+    endif()
+
+    if (TARGET_INCLUDE_DIRS)
+        target_include_directories(${TARGET_NAME} PUBLIC ${TARGET_INCLUDE_DIRS})
     endif()
 
     add_test(NAME ${TARGET_NAME}

@@ -22,18 +22,18 @@ elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
     target_include_directories(components__vulkan PUBLIC ${WAYLAND_INCLUDE_DIRS})
 endif()
 
-
-add_library(components__vulkan_test_framework STATIC tests/vulkan_test_functions.cpp)
-target_include_directories(components__vulkan_test_framework PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-target_link_libraries(components__vulkan_test_framework PUBLIC components__vulkan Catch2::Catch2)
-
-# force CXX linkage
-set_target_properties(components__vulkan_test_framework PROPERTIES LINKER_LANGUAGE CXX)
-
 vkb__register_tests(
     NAME "vulkan_tests"
     SRC
+        ${SRC}
+        tests/vulkan_test_functions.cpp
         tests/instance.test.cpp
-    LIBS
-        components__vulkan_test_framework
+    LINK_LIBS
+        vulkan
+        ${CMAKE_DL_LIBS}
+        components__common
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/tests
+        ${VOLK_DIR}
 )
