@@ -23,7 +23,7 @@
 
 ## Overview
 
-The [VK_EXT_conditional_rendering](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) allows the execution of rendering commands to be conditional based on a value taken from a dedicated conditional buffer. This may help an application reduce the latency by conditionally discarding rendering commands without application intervention.
+The [VK_EXT_conditional_rendering](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) extension allows the execution of rendering commands to be conditional based on a value taken from a dedicated conditional buffer. This may help an application reduce the latency by conditionally discarding rendering commands without application intervention.
 
 This sample demonstrates usage of this extension for conditionally toggling the visibility of sub-meshes of a complex glTF model. Instead of having to update command buffers, this is done by updating the aforementioned buffer.
 
