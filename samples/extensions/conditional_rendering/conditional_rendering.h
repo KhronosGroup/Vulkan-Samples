@@ -36,7 +36,7 @@ class ConditionalRendering : public ApiVulkanSample
 		vkb::sg::Node *node;
 		vkb::sg::SubMesh *sub_mesh;
 	};
-	std::vector<SceneNode> linear_nodes;
+	std::vector<SceneNode> linear_scene_nodes;
 
 	struct UniformData
 	{

@@ -92,7 +92,7 @@ void ConditionalRendering::build_command_buffers()
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 		uint32_t idx = 0;
-		for (auto &node : linear_nodes)
+		for (auto &node : linear_scene_nodes)
 		{
 			glm::mat4 node_transform = node.node->get_transform().get_world_matrix();
 
@@ -149,16 +149,13 @@ void ConditionalRendering::load_assets()
 		{
 			for (auto &sub_mesh : mesh->get_submeshes())
 			{
-				linear_nodes.push_back({mesh->get_name(), node, sub_mesh});
+				linear_scene_nodes.push_back({mesh->get_name(), node, sub_mesh});
 			}
 		}
 	}
-	// The visibility list contains a value for each node in the scene, 1 = draw the node
-	conditional_visibility_list.resize(linear_nodes.size());
-	for (auto i = 0; i < conditional_visibility_list.size(); i++)
-	{
-		conditional_visibility_list[i] = 1;
-	}
+	// By default, all nodes should be visible, so we initialize the list with ones for each element
+	conditional_visibility_list.resize(linear_scene_nodes.size());
+	std::fill(conditional_visibility_list.begin(), conditional_visibility_list.end(), 1);
 }
 
 void ConditionalRendering::setup_descriptor_pool()
@@ -345,7 +342,7 @@ void ConditionalRendering::preprare_visibility_buffer()
 // Updates the visibility buffer with the currently selected node visibility
 void ConditionalRendering::update_visibility_buffer()
 {
-	conditional_visibility_buffer->update(conditional_visibility_list.data(), sizeof(uint32_t) * conditional_visibility_list.size());
+	conditional_visibility_buffer->update(conditional_visibility_list.data(), sizeof(int32_t) * conditional_visibility_list.size());
 }
 
 void ConditionalRendering::draw()
@@ -416,7 +413,7 @@ void ConditionalRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		ImGui::BeginChild("InnerRegion", ImVec2(200.0f, 400.0f), false);
 		uint32_t idx = 0;
-		for (auto &node : linear_nodes)
+		for (auto &node : linear_scene_nodes)
 		{
 			if (drawer.checkbox(("[" + std::to_string(idx) + "] " + node.name).c_str(), &conditional_visibility_list[idx]))
 			{
