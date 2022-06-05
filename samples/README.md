@@ -235,6 +235,10 @@ MoltenVk: [MoltenVk](https://github.com/KhronosGroup/MoltenVK).  Also demonstrat
 for querying which features of the full Vulkan spec are not currently supported by the non-conformant Vulkan 
 implementation.
 
+### [Graphics pipeline library](./extensions/graphics_pipeline_library)<br/>
+**Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
+Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts such as vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
