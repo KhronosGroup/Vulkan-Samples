@@ -239,6 +239,10 @@ implementation.
 **Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
 Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts such as vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
 
+### [Conditional rendering](./extensions/conditional_rendering)
+**Extension**: [```VK_EXT_conditional_rendering```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) <br/>
+Demonstrate how to do conditional rendering, dynamically discarding rendering commands without having to update command buffers. This is done by sourcing conditional rendering blocks from a dedicated buffer that can be updated without having to touch command buffers.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
