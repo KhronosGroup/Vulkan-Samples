@@ -19,7 +19,7 @@
 
 # Conditional rendering
 
-[![](/images/sample.png)](/imagessample.png)
+![Sample](./images/sample.png)
 
 ## Overview
 
@@ -107,7 +107,7 @@ conditional_visibility_buffer->update(conditional_visibility_list.data(), sizeof
 
 Using this setup, each visible glTF node maps to an entry in the conditional visibility buffer by it's unique node index, calculated as `node_index * sizeof(int32_t)`:
 
-[![](/images/conditional-buffer-mapping.png)](/images/conditional-buffer-mapping.png)
+![Buffer mapping](./images/conditional-buffer-mapping.png)
 
 So we can now control draws using values stored in the conditional buffer. To do so, the command buffer iterates over all nodes of the gltF scene (put into a linear vector for convenience) and wraps the draw command for each node in a conditional rendering block, so a node is only drawn when the visibility buffer value at it's offset equals 1:
 
