@@ -91,7 +91,7 @@ void ConditionalRendering::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		uint32_t idx = 0;
+		uint32_t node_index = 0;
 		for (auto &node : linear_scene_nodes)
 		{
 			glm::mat4 node_transform = node.node->get_transform().get_world_matrix();
@@ -109,7 +109,7 @@ void ConditionalRendering::build_command_buffers()
 			conditional_rendering_info.sType  = VK_STRUCTURE_TYPE_CONDITIONAL_RENDERING_BEGIN_INFO_EXT;
 			conditional_rendering_info.buffer = conditional_visibility_buffer->get_handle();
 			// We offset into the visibility buffer based on the index of the node to be drawn
-			conditional_rendering_info.offset = sizeof(int32_t) * idx;
+			conditional_rendering_info.offset = sizeof(int32_t) * node_index;
 			vkCmdBeginConditionalRenderingEXT(draw_cmd_buffers[i], &conditional_rendering_info);
 
 			// Pass data for the current node via push commands
@@ -126,7 +126,7 @@ void ConditionalRendering::build_command_buffers()
 			// End the conditional rendering block
 			vkCmdEndConditionalRenderingEXT(draw_cmd_buffers[i]);
 
-			idx++;
+			node_index++;
 		}
 
 		draw_ui(draw_cmd_buffers[i]);
