@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,8 +32,8 @@ class ConditionalRendering : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::Scene> scene;
 	struct SceneNode
 	{
-		std::string name;
-		vkb::sg::Node *node;
+		std::string       name;
+		vkb::sg::Node *   node;
 		vkb::sg::SubMesh *sub_mesh;
 	};
 	std::vector<SceneNode> linear_scene_nodes;
