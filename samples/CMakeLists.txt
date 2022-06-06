@@ -101,11 +101,12 @@ set(ORDER_LIST
     "profiles"
 
     #HPP API Samples
-    "hpp_hello_triangle"
+    "hpp_compute_nbody"
 	"hpp_dynamic_uniform_buffers"
-	"hpp_texture_loading"
+	"hpp_instancing"
 	"hpp_hdr"
-	"hpp_instancing")
+    "hpp_hello_triangle"
+	"hpp_texture_loading")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

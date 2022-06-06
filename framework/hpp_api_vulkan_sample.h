@@ -325,7 +325,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
   public:
 	bool         prepared = false;
-	vk::Extent2D extent;
+	vk::Extent2D extent{1280, 720};
 
 	/** @brief Example settings that can be changed e.g. by command line arguments */
 	struct
