@@ -117,6 +117,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [HPP Compute shader N-Body simulation](./api/hpp_compute_nbody)<br/>
+A transcoded version of the API sample [Compute N-Body](#compute_nbody) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Dynamic Uniform Buffers](./api/hpp_dynamic_uniform_buffers)<br/>
 A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
