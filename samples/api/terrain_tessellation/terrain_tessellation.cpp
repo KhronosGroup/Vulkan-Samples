@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -177,7 +177,6 @@ void TerrainTessellation::load_assets()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &textures.heightmap.sampler));
 
 	// Setup a repeating sampler for the terrain texture layers
-	VkSampler sampler;
 	vkDestroySampler(get_device().get_handle(), textures.terrain_array.sampler, nullptr);
 	sampler_create_info              = vkb::initializers::sampler_create_info();
 	sampler_create_info.magFilter    = VK_FILTER_LINEAR;
@@ -195,11 +194,7 @@ void TerrainTessellation::load_assets()
 		sampler_create_info.maxAnisotropy    = 4.0f;
 		sampler_create_info.anisotropyEnable = VK_TRUE;
 	}
-	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &sampler));
-
-	vkb::core::Sampler vk_sampler{get_device(), sampler_create_info};
-
-	textures.terrain_array.sampler = sampler;
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_create_info, nullptr, &textures.terrain_array.sampler));
 }
 
 void TerrainTessellation::build_command_buffers()
