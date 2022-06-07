@@ -21,14 +21,9 @@
 
 namespace vkb
 {
-class HPPDevice;
-
 namespace core
 {
-namespace detail
-{
-void set_debug_name(const HPPDevice *device, vk::ObjectType object_type, uint64_t handle, const char *debug_name);
-}
+class HPPDevice;
 
 namespace detail
 {
