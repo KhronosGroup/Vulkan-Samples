@@ -369,7 +369,7 @@ bool Platform::start_app()
 
 	active_app = requested_app_info->create();
 
-	active_app->set_name(requested_app_info->id);
+	active_app->set_name(requested_app_info->name);
 
 	if (!active_app)
 	{
