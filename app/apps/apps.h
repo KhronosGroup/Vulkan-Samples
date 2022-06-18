@@ -78,7 +78,7 @@ class SampleInfo : public AppInfo
 class TestInfo : public AppInfo
 {
   public:
-	TestInfo(const std::string &id, const std::string &name, const CreateFunc &create) :
+	TestInfo(const std::string &id, const CreateFunc &create) :
 	    AppInfo(id, create)
 	{}
 };
