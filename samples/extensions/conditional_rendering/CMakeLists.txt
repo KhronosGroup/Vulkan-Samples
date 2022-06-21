@@ -23,8 +23,8 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    NAME "VK_EXT_conditional_rendering"
-    DESCRIPTION "todo"
+    NAME "Conditional rendering"
+    DESCRIPTION "Demonstrates usage of VK_EXT_conditional_rendering for conditionally toggling the visibility of sub-meshes of a complex glTF model."
     SHADER_FILES_GLSL
         "conditional_rendering/model.vert"
         "conditional_rendering/model.frag")
