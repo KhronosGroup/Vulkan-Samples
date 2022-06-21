@@ -84,15 +84,9 @@ void ConditionalRendering::build_command_buffers()
 		uint32_t node_index = 0;
 		for (auto &node : linear_scene_nodes)
 		{
-			glm::mat4 node_transform = node.node->get_transform().get_world_matrix();
-
-			VkDeviceSize offsets[1] = {0};
-
 			const auto &vertex_buffer_pos    = node.sub_mesh->vertex_buffers.at("position");
 			const auto &vertex_buffer_normal = node.sub_mesh->vertex_buffers.at("normal");
 			auto &      index_buffer         = node.sub_mesh->index_buffer;
-
-			auto mat = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
 
 			// Start a conditional rendering block, commands in this block are only executed if the buffer at the current position is 1 at command buffer submission time
 			VkConditionalRenderingBeginInfoEXT conditional_rendering_info{};
@@ -103,10 +97,12 @@ void ConditionalRendering::build_command_buffers()
 			vkCmdBeginConditionalRenderingEXT(draw_cmd_buffers[i], &conditional_rendering_info);
 
 			// Pass data for the current node via push commands
-			push_const_block.model_matrix = node_transform;
-			push_const_block.color        = glm::vec4(mat->base_color_factor.rgb, 1.0f);
+			auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
+			push_const_block.model_matrix = node.node->get_transform().get_world_matrix();
+			push_const_block.color        = glm::vec4(node_material->base_color_factor.rgb, 1.0f);
 			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
 
+			VkDeviceSize offsets[1] = {0};
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer_pos.get(), offsets);
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, vertex_buffer_normal.get(), offsets);
 			vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, node.sub_mesh->index_type);
