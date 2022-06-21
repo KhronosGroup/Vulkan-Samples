@@ -51,3 +51,12 @@ target_link_libraries(components__models INTERFACE
     components__gltf)
 
 add_library(Components::Models ALIAS components__models)
+
+vkb__register_tests(
+  NAME "image_loader_tests"
+  SRC
+    tests/stb.test.cpp
+  LIBS
+    components__images
+    components__vfs
+)
