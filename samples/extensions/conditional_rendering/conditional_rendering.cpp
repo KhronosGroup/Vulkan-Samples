@@ -380,19 +380,13 @@ void ConditionalRendering::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.button("All"))
 		{
-			for (auto i = 0; i < conditional_visibility_list.size(); i++)
-			{
-				conditional_visibility_list[i] = 1;
-			}
+			std::fill(conditional_visibility_list.begin(), conditional_visibility_list.end(), 1);
 			update_visibility_buffer();
 		}
 		ImGui::SameLine();
 		if (drawer.button("None"))
 		{
-			for (auto i = 0; i < conditional_visibility_list.size(); i++)
-			{
-				conditional_visibility_list[i] = 0;
-			}
+			std::fill(conditional_visibility_list.begin(), conditional_visibility_list.end(), 0);
 			update_visibility_buffer();
 		}
 		ImGui::NewLine();
