@@ -57,28 +57,18 @@ void ConditionalRendering::build_command_buffers()
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass            = render_pass;
-	render_pass_begin_info.renderArea.offset.x   = 0;
-	render_pass_begin_info.renderArea.offset.y   = 0;
-	render_pass_begin_info.clearValueCount       = 2;
-	render_pass_begin_info.pClearValues          = clear_values;
+	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info.renderPass               = render_pass;
+	render_pass_begin_info.renderArea.extent.width  = width;
+	render_pass_begin_info.renderArea.extent.height = height;
+	render_pass_begin_info.clearValueCount          = 2;
+	render_pass_begin_info.pClearValues             = clear_values;
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		VkClearValue clear_values[2];
-		clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-		clear_values[1].depthStencil = {0.0f, 0};
-
-		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-		render_pass_begin_info.framebuffer              = framebuffers[i];
-		render_pass_begin_info.renderPass               = render_pass;
-		render_pass_begin_info.clearValueCount          = 2;
-		render_pass_begin_info.renderArea.extent.width  = width;
-		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.pClearValues             = clear_values;
+		render_pass_begin_info.framebuffer = framebuffers[i];
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
