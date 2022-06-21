@@ -26,11 +26,8 @@
 #include <limits>
 #include <sstream>
 
-<<<<<<< HEAD
 #include "components/vfs/helpers.hpp"
 
-=======
->>>>>>> 2feeebc (apply vfs changes)
 namespace components
 {
 namespace vfs
@@ -91,11 +88,7 @@ WindowsTempFileSystem::WindowsTempFileSystem() :
 
 bool WindowsFileSystem::folder_exists(const std::string &file_path)
 {
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
-=======
-	std::string full_path = m_base_path + file_path;
->>>>>>> 2feeebc (apply vfs changes)
 
 	struct _stat info;
 	if (_stat(full_path.c_str(), &info) != 0)
@@ -107,11 +100,7 @@ bool WindowsFileSystem::folder_exists(const std::string &file_path)
 
 bool WindowsFileSystem::file_exists(const std::string &file_path)
 {
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
-=======
-	std::string full_path = m_base_path + file_path;
->>>>>>> 2feeebc (apply vfs changes)
 
 	struct _stat info;
 	if (_stat(full_path.c_str(), &info) != 0)
@@ -128,11 +117,7 @@ StackErrorPtr WindowsFileSystem::read_file(const std::string &file_path, std::sh
 		return nullptr;
 	}
 
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
-=======
-	std::string full_path = m_base_path + file_path;
->>>>>>> 2feeebc (apply vfs changes)
 
 	std::fstream stream;
 	stream.open(full_path, std::ios::in | std::ios::binary);
@@ -167,11 +152,7 @@ StackErrorPtr WindowsFileSystem::read_chunk(const std::string &file_path, const 
 		return nullptr;
 	}
 
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
-=======
-	std::string full_path = m_base_path + file_path;
->>>>>>> 2feeebc (apply vfs changes)
 
 	std::fstream stream;
 	stream.open(full_path, std::ios::in | std::ios::binary);
@@ -185,11 +166,7 @@ StackErrorPtr WindowsFileSystem::read_chunk(const std::string &file_path, const 
 	std::streamsize size = stream.gcount();
 	stream.clear();
 
-<<<<<<< HEAD
 	if (offset + count > static_cast<size_t>(size))
-=======
-	if (offset + count > size)
->>>>>>> 2feeebc (apply vfs changes)
 	{
 		return StackError::unique("chunk out of file bounds: " + file_path, "vfs/windows.cpp", __LINE__);
 	}
@@ -211,11 +188,7 @@ StackErrorPtr WindowsFileSystem::read_chunk(const std::string &file_path, const 
 
 size_t WindowsFileSystem::file_size(const std::string &file_path)
 {
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
-=======
-	std::string full_path = m_base_path + file_path;
->>>>>>> 2feeebc (apply vfs changes)
 
 	std::fstream stream;
 	stream.open(full_path, std::ios::in | std::ios::binary);
@@ -235,19 +208,11 @@ StackErrorPtr WindowsFileSystem::write_file(const std::string &file_path, const 
 		return nullptr;
 	}
 
-<<<<<<< HEAD
 	std::string full_path = helpers::join({m_base_path, file_path});
 
 	std::fstream stream;
 	stream.open(full_path, std::ios::out | std::ios::binary);
 	if (!stream.good())
-=======
-	std::string full_path = m_base_path + file_path;
-
-	std::fstream stream;
-	stream.open(full_path, std::ios::out | std::ios::binary);
-	if (!!stream.good())
->>>>>>> 2feeebc (apply vfs changes)
 	{
 		return StackError::unique("failed to open file: " + file_path, "vfs/windows.cpp", __LINE__);
 	}
