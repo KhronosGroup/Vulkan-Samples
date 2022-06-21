@@ -305,9 +305,8 @@ void ConditionalRendering::prepare_uniform_buffers()
 void ConditionalRendering::update_uniform_buffers()
 {
 	uniform_data.projection = camera.matrices.perspective;
-	uniform_data.view       = camera.matrices.view * glm::mat4(1.0f);
 	// Scale the view matrix as the model is pretty large, and also flip it upside down
-	uniform_data.view = glm::scale(uniform_data.view, glm::vec3(0.1f, -0.1f, 0.1f));
+	uniform_data.view = glm::scale(camera.matrices.view, glm::vec3(0.1f, -0.1f, 0.1f));
 	uniform_buffer->convert_and_update(uniform_data);
 }
 
