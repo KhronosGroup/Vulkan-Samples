@@ -36,9 +36,7 @@ layout (location = 3) out vec3 outLightVec;
 
 void main() 
 {
-	outNormal = inNormal;
 	outColor = push_constants.color.rgb;
-	
 	vec4 localPos = ubo.view * push_constants.model * vec4(inPos, 1.0);
 	gl_Position = ubo.projection * localPos;
 	outNormal = mat3(ubo.view * push_constants.model) * inNormal;
