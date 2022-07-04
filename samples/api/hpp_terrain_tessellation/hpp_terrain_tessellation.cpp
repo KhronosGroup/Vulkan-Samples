@@ -238,33 +238,32 @@ void HPPTerrainTessellation::draw()
 // Generate a terrain quad patch for feeding to the tessellation control shader
 void HPPTerrainTessellation::generate_terrain()
 {
-#define PATCH_SIZE 64
-#define UV_SCALE 1.0f
-
-	const uint32_t      vertex_count = PATCH_SIZE * PATCH_SIZE;
+	const uint32_t      patch_size   = 64;
+	const float         uv_scale     = 1.0f;
+	const uint32_t      vertex_count = patch_size * patch_size;
 	std::vector<Vertex> vertices;
 	vertices.resize(vertex_count);
 
 	const float wx = 2.0f;
 	const float wy = 2.0f;
 
-	for (auto x = 0; x < PATCH_SIZE; x++)
+	for (auto x = 0; x < patch_size; x++)
 	{
-		for (auto y = 0; y < PATCH_SIZE; y++)
+		for (auto y = 0; y < patch_size; y++)
 		{
-			uint32_t index         = (x + y * PATCH_SIZE);
-			vertices[index].pos[0] = x * wx + wx / 2.0f - (float) PATCH_SIZE * wx / 2.0f;
+			uint32_t index         = (x + y * patch_size);
+			vertices[index].pos[0] = x * wx + wx / 2.0f - (float) patch_size * wx / 2.0f;
 			vertices[index].pos[1] = 0.0f;
-			vertices[index].pos[2] = y * wy + wy / 2.0f - (float) PATCH_SIZE * wy / 2.0f;
-			vertices[index].uv     = glm::vec2((float) x / PATCH_SIZE, (float) y / PATCH_SIZE) * UV_SCALE;
+			vertices[index].pos[2] = y * wy + wy / 2.0f - (float) patch_size * wy / 2.0f;
+			vertices[index].uv     = glm::vec2((float) x / patch_size, (float) y / patch_size) * uv_scale;
 		}
 	}
 
 	// Calculate normals from height map using a sobel filter
-	vkb::HeightMap heightmap("textures/terrain_heightmap_r16.ktx", PATCH_SIZE);
-	for (auto x = 0; x < PATCH_SIZE; x++)
+	vkb::HeightMap heightmap("textures/terrain_heightmap_r16.ktx", patch_size);
+	for (auto x = 0; x < patch_size; x++)
 	{
-		for (auto y = 0; y < PATCH_SIZE; y++)
+		for (auto y = 0; y < patch_size; y++)
 		{
 			// Get height samples centered around current position
 			float heights[3][3];
@@ -286,12 +285,12 @@ void HPPTerrainTessellation::generate_terrain()
 			// The first value controls the bump strength
 			normal.y = 0.25f * sqrt(1.0f - normal.x * normal.x - normal.z * normal.z);
 
-			vertices[x + y * PATCH_SIZE].normal = glm::normalize(normal * glm::vec3(2.0f, 1.0f, 2.0f));
+			vertices[x + y * patch_size].normal = glm::normalize(normal * glm::vec3(2.0f, 1.0f, 2.0f));
 		}
 	}
 
 	// Indices
-	const uint32_t        w           = (PATCH_SIZE - 1);
+	const uint32_t        w           = (patch_size - 1);
 	const uint32_t        index_count = w * w * 4;
 	std::vector<uint32_t> indices;
 	indices.resize(index_count);
@@ -300,8 +299,8 @@ void HPPTerrainTessellation::generate_terrain()
 		for (auto y = 0; y < w; y++)
 		{
 			uint32_t index     = (x + y * w) * 4;
-			indices[index]     = (x + y * PATCH_SIZE);
-			indices[index + 1] = indices[index] + PATCH_SIZE;
+			indices[index]     = (x + y * patch_size);
+			indices[index + 1] = indices[index] + patch_size;
 			indices[index + 2] = indices[index + 1] + 1;
 			indices[index + 3] = indices[index] + 1;
 		}
