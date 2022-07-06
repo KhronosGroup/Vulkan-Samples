@@ -373,3 +373,6 @@ target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 
 # Catch2
 add_subdirectory(catch2)
+
+# RE2
+add_subdirectory(re)
