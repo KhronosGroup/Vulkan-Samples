@@ -30,15 +30,17 @@ HPPTextureLoading::HPPTextureLoading()
 
 HPPTextureLoading::~HPPTextureLoading()
 {
-	if (get_device().get_handle())
+	if (get_device() && get_device()->get_handle())
 	{
+		vk::Device device = get_device()->get_handle();
+
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
 
-		get_device().get_handle().destroyPipeline(pipeline);
+		device.destroyPipeline(pipeline);
 
-		get_device().get_handle().destroyPipelineLayout(pipeline_layout);
-		get_device().get_handle().destroyDescriptorSetLayout(descriptor_set_layout);
+		device.destroyPipelineLayout(pipeline_layout);
+		device.destroyDescriptorSetLayout(descriptor_set_layout);
 	}
 
 	destroy_texture(texture);
@@ -102,7 +104,7 @@ void HPPTextureLoading::load_texture()
 	{
 		// Don't use linear if format is not supported for (linear) shader sampling
 		// Get device properites for the requested texture format
-		vk::FormatProperties format_properties = get_device().get_gpu().get_handle().getFormatProperties(format);
+		vk::FormatProperties format_properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
 		use_staging                            = !(format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage);
 	}
 
@@ -115,22 +117,22 @@ void HPPTextureLoading::load_texture()
 		// This buffer will be the data source for copying texture data to the optimal tiled image on the device
 		// This buffer is used as a transfer source for the buffer copy
 		vk::BufferCreateInfo buffer_create_info({}, ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, vk::SharingMode::eExclusive, {});
-		vk::Buffer           staging_buffer = get_device().get_handle().createBuffer(buffer_create_info);
+		vk::Buffer           staging_buffer = get_device()->get_handle().createBuffer(buffer_create_info);
 
 		// Get memory requirements for the staging buffer (alignment, memory type bits)
-		vk::MemoryRequirements memory_requirements = get_device().get_handle().getBufferMemoryRequirements(staging_buffer);
+		vk::MemoryRequirements memory_requirements = get_device()->get_handle().getBufferMemoryRequirements(staging_buffer);
 		vk::MemoryAllocateInfo memory_allocate_info(
 		    memory_requirements.size,
 		    // Get memory type index for a host visible buffer
-		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-		vk::DeviceMemory staging_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
-		get_device().get_handle().bindBufferMemory(staging_buffer, staging_memory, 0);
+		    get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+		vk::DeviceMemory staging_memory = get_device()->get_handle().allocateMemory(memory_allocate_info);
+		get_device()->get_handle().bindBufferMemory(staging_buffer, staging_memory, 0);
 
 		// Copy texture data into host local staging buffer
 
-		uint8_t *data = reinterpret_cast<uint8_t *>(get_device().get_handle().mapMemory(staging_memory, 0, memory_requirements.size));
+		uint8_t *data = reinterpret_cast<uint8_t *>(get_device()->get_handle().mapMemory(staging_memory, 0, memory_requirements.size));
 		memcpy(data, ktx_texture->pData, ktx_texture->dataSize);
-		get_device().get_handle().unmapMemory(staging_memory);
+		get_device()->get_handle().unmapMemory(staging_memory);
 
 		// Setup buffer copy regions for each mip level
 		std::vector<vk::BufferImageCopy> buffer_copy_regions(texture.mip_levels);
@@ -162,15 +164,15 @@ void HPPTextureLoading::load_texture()
 		image_create_info.initialLayout = vk::ImageLayout::eUndefined;
 		image_create_info.extent        = vk::Extent3D(texture.extent, 1);
 		image_create_info.usage         = vk::ImageUsageFlagBits::eTransferDst | vk::ImageUsageFlagBits::eSampled;
-		texture.image                   = get_device().get_handle().createImage(image_create_info);
+		texture.image                   = get_device()->get_handle().createImage(image_create_info);
 
-		memory_requirements   = get_device().get_handle().getImageMemoryRequirements(texture.image);
+		memory_requirements   = get_device()->get_handle().getImageMemoryRequirements(texture.image);
 		memory_allocate_info  = {memory_requirements.size,
-                                get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
-		texture.device_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
-		VK_CHECK(vkBindImageMemory(get_device().get_handle(), texture.image, texture.device_memory, 0));
+                                get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
+		texture.device_memory = get_device()->get_handle().allocateMemory(memory_allocate_info);
+		VK_CHECK(vkBindImageMemory(get_device()->get_handle(), texture.image, texture.device_memory, 0));
 
-		vk::CommandBuffer copy_command = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+		vk::CommandBuffer copy_command = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
 		// Image memory barriers for the texture image
 
@@ -218,11 +220,11 @@ void HPPTextureLoading::load_texture()
 		// Store current layout for later reuse
 		texture.image_layout = vk::ImageLayout::eShaderReadOnlyOptimal;
 
-		get_device().flush_command_buffer(copy_command, queue, true);
+		get_device()->flush_command_buffer(copy_command, queue, true);
 
 		// Clean up staging resources
-		get_device().get_handle().freeMemory(staging_memory);
-		get_device().get_handle().destroyBuffer(staging_buffer);
+		get_device()->get_handle().freeMemory(staging_memory);
+		get_device()->get_handle().destroyBuffer(staging_buffer);
 	}
 	else
 	{
@@ -240,23 +242,23 @@ void HPPTextureLoading::load_texture()
 		image_create_info.sharingMode   = vk::SharingMode::eExclusive;
 		image_create_info.initialLayout = vk::ImageLayout::ePreinitialized;
 		image_create_info.extent        = vk::Extent3D(texture.extent, 1);
-		vk::Image mappable_image        = get_device().get_handle().createImage(image_create_info);
+		vk::Image mappable_image        = get_device()->get_handle().createImage(image_create_info);
 
 		// Get memory requirements for this image like size and alignment
-		vk::MemoryRequirements memory_requirements = get_device().get_handle().getImageMemoryRequirements(mappable_image);
+		vk::MemoryRequirements memory_requirements = get_device()->get_handle().getImageMemoryRequirements(mappable_image);
 		// Set memory allocation size to required memory size
 		vk::MemoryAllocateInfo memory_allocate_info(
 		    memory_requirements.size,
 		    // Get memory type that can be mapped to host memory
-		    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-		vk::DeviceMemory mappable_memory = get_device().get_handle().allocateMemory(memory_allocate_info);
-		get_device().get_handle().bindImageMemory(mappable_image, mappable_memory, 0);
+		    get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+		vk::DeviceMemory mappable_memory = get_device()->get_handle().allocateMemory(memory_allocate_info);
+		get_device()->get_handle().bindImageMemory(mappable_image, mappable_memory, 0);
 
 		// Map image memory
-		void *data = get_device().get_handle().mapMemory(mappable_memory, 0, memory_requirements.size);
+		void *data = get_device()->get_handle().mapMemory(mappable_memory, 0, memory_requirements.size);
 		// Copy image data of the first mip level into memory
 		memcpy(data, ktx_texture->pData, ktxTexture_GetImageSize(ktx_texture, 0));
-		get_device().get_handle().unmapMemory(mappable_memory);
+		get_device()->get_handle().unmapMemory(mappable_memory);
 
 		// Linear tiled images don't need to be staged and can be directly used as textures
 		texture.image         = mappable_image;
@@ -264,7 +266,7 @@ void HPPTextureLoading::load_texture()
 		texture.image_layout  = vk::ImageLayout::eShaderReadOnlyOptimal;
 
 		// Setup image memory barrier transfer image to shader read layout
-		vk::CommandBuffer copy_command = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+		vk::CommandBuffer copy_command = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
 		// The sub resource range describes the regions of the image we will be transition
 		vk::ImageSubresourceRange subresource_range(vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1);
@@ -285,7 +287,7 @@ void HPPTextureLoading::load_texture()
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, image_memory_barrier);
 
-		get_device().flush_command_buffer(copy_command, queue, true);
+		get_device()->flush_command_buffer(copy_command, queue, true);
 	}
 
 	// Create a texture sampler
@@ -307,10 +309,10 @@ void HPPTextureLoading::load_texture()
 	sampler.maxAnisotropy = 1.0f;
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device()->get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
-		sampler.maxAnisotropy    = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
+		sampler.maxAnisotropy    = get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy;
 		sampler.anisotropyEnable = true;
 	}
 	else
@@ -320,7 +322,7 @@ void HPPTextureLoading::load_texture()
 		sampler.anisotropyEnable = false;
 	}
 	sampler.borderColor = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler     = get_device().get_handle().createSampler(sampler);
+	texture.sampler     = get_device()->get_handle().createSampler(sampler);
 
 	// Create image view
 	// Textures are not directly accessed by the shaders and
@@ -341,16 +343,16 @@ void HPPTextureLoading::load_texture()
 	view.subresourceRange.levelCount = (use_staging) ? texture.mip_levels : 1;
 	// The view will be based on the texture's image
 	view.image   = texture.image;
-	texture.view = get_device().get_handle().createImageView(view);
+	texture.view = get_device()->get_handle().createImageView(view);
 }
 
 // Free all Vulkan resources used by a texture object
 void HPPTextureLoading::destroy_texture(Texture texture)
 {
-	get_device().get_handle().destroyImageView(texture.view);
-	get_device().get_handle().destroyImage(texture.image);
-	get_device().get_handle().destroySampler(texture.sampler);
-	get_device().get_handle().freeMemory(texture.device_memory);
+	get_device()->get_handle().destroyImageView(texture.view);
+	get_device()->get_handle().destroyImage(texture.image);
+	get_device()->get_handle().destroySampler(texture.sampler);
+	get_device()->get_handle().freeMemory(texture.device_memory);
 }
 
 void HPPTextureLoading::build_command_buffers()
@@ -435,12 +437,12 @@ void HPPTextureLoading::generate_quad()
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
 	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    *get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	// Index buffer
 	index_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    *get_device(), index_buffer_size, vk::BufferUsageFlagBits::eTransferDst | vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -451,7 +453,7 @@ void HPPTextureLoading::setup_descriptor_pool()
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 
-	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
+	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 void HPPTextureLoading::setup_descriptor_set_layout()
@@ -462,7 +464,7 @@ void HPPTextureLoading::setup_descriptor_set_layout()
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout({}, set_layout_bindings);
 
-	descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout(descriptor_layout);
+	descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout);
 
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
@@ -470,14 +472,14 @@ void HPPTextureLoading::setup_descriptor_set_layout()
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layout);
 #endif
 
-	pipeline_layout = get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
+	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
 void HPPTextureLoading::setup_descriptor_set()
 {
 	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, 1, &descriptor_set_layout);
 
-	descriptor_set = get_device().get_handle().allocateDescriptorSets(alloc_info).front();
+	descriptor_set = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
 
 	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffer_vs->get_handle(), 0, VK_WHOLE_SIZE);
 
@@ -494,7 +496,7 @@ void HPPTextureLoading::setup_descriptor_set()
 	     //	Fragment shader: layout (binding = 1) uniform sampler2D samplerColor;
 	     {descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};
 
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPTextureLoading::prepare_pipeline()
@@ -556,14 +558,14 @@ void HPPTextureLoading::prepare_pipeline()
 	                                                    {},
 	                                                    -1);
 
-	pipeline = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	pipeline = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPTextureLoading::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }

@@ -30,32 +30,34 @@ HPPTerrainTessellation::HPPTerrainTessellation()
 
 HPPTerrainTessellation::~HPPTerrainTessellation()
 {
-	if (device)
+	if (get_device() && get_device()->get_handle())
 	{
+		vk::Device device = get_device()->get_handle();
+
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
-		get_device().get_handle().destroyPipeline(pipelines.skysphere);
-		get_device().get_handle().destroyPipeline(pipelines.terrain);
+		device.destroyPipeline(pipelines.skysphere);
+		device.destroyPipeline(pipelines.terrain);
 		if (pipelines.wireframe)
 		{
-			get_device().get_handle().destroyPipeline(pipelines.wireframe);
+			device.destroyPipeline(pipelines.wireframe);
 		}
 
-		get_device().get_handle().destroyPipelineLayout(pipeline_layouts.skysphere);
-		get_device().get_handle().destroyPipelineLayout(pipeline_layouts.terrain);
+		device.destroyPipelineLayout(pipeline_layouts.skysphere);
+		device.destroyPipelineLayout(pipeline_layouts.terrain);
 
-		get_device().get_handle().destroyDescriptorSetLayout(descriptor_set_layouts.skysphere);
-		get_device().get_handle().destroyDescriptorSetLayout(descriptor_set_layouts.terrain);
+		device.destroyDescriptorSetLayout(descriptor_set_layouts.skysphere);
+		device.destroyDescriptorSetLayout(descriptor_set_layouts.terrain);
 
-		get_device().get_handle().destroySampler(textures.heightmap.sampler);
-		get_device().get_handle().destroySampler(textures.skysphere.sampler);
-		get_device().get_handle().destroySampler(textures.terrain_array.sampler);
+		device.destroySampler(textures.heightmap.sampler);
+		device.destroySampler(textures.skysphere.sampler);
+		device.destroySampler(textures.terrain_array.sampler);
 
 		if (query_pool)
 		{
-			get_device().get_handle().destroyQueryPool(query_pool);
-			get_device().get_handle().destroyBuffer(query_result.buffer);
-			get_device().get_handle().freeMemory(query_result.memory);
+			device.destroyQueryPool(query_pool);
+			device.destroyBuffer(query_result.buffer);
+			device.freeMemory(query_result.memory);
 		}
 	}
 }
@@ -76,7 +78,7 @@ bool HPPTerrainTessellation::prepare(vkb::platform::HPPPlatform &platform)
 
 	load_assets();
 	generate_terrain();
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		setup_query_result_buffer();
 	}
@@ -123,7 +125,7 @@ void HPPTerrainTessellation::build_command_buffers()
 	{
 		draw_cmd_buffers[i].begin(command_buffer_begin_info);
 
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			draw_cmd_buffers[i].resetQueryPool(query_pool, 0, 2);
 		}
@@ -147,7 +149,7 @@ void HPPTerrainTessellation::build_command_buffers()
 		draw_model(skysphere, draw_cmd_buffers[i]);
 
 		// Terrain
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			// Begin pipeline statistics query
 			draw_cmd_buffers[i].beginQuery(query_pool, 0, {});
@@ -159,7 +161,7 @@ void HPPTerrainTessellation::build_command_buffers()
 		draw_cmd_buffers[i].bindVertexBuffers(0, terrain.vertices->get_handle(), offset);
 		draw_cmd_buffers[i].bindIndexBuffer(terrain.indices->get_handle(), 0, vk::IndexType::eUint32);
 		draw_cmd_buffers[i].drawIndexed(terrain.index_count, 1, 0, 0, 0);
-		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 		{
 			// End pipeline statistics query
 			draw_cmd_buffers[i].endQuery(query_pool, 0);
@@ -185,7 +187,7 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 		{
 			update_uniform_buffers();
 		}
-		if (get_device().get_gpu().get_features().fillModeNonSolid)
+		if (get_device()->get_gpu().get_features().fillModeNonSolid)
 		{
 			if (drawer.checkbox("Wireframe", &wireframe))
 			{
@@ -193,7 +195,7 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 			}
 		}
 	}
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		if (drawer.header("Pipeline statistics"))
 		{
@@ -225,11 +227,11 @@ void HPPTerrainTessellation::draw()
 	// Submit to queue
 	queue.submit(submit_info);
 
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		// Read query results for displaying in next frame
 		pipeline_stats =
-		    get_device().get_handle().getQueryPoolResult<std::array<uint64_t, 2>>(query_pool, 0, 1, sizeof(pipeline_stats), vk::QueryResultFlagBits::e64).value;
+		    get_device()->get_handle().getQueryPoolResult<std::array<uint64_t, 2>>(query_pool, 0, 1, sizeof(pipeline_stats), vk::QueryResultFlagBits::e64).value;
 	}
 
 	HPPApiVulkanSample::submit_frame();
@@ -318,17 +320,17 @@ void HPPTerrainTessellation::generate_terrain()
 
 	// Create staging buffers
 
-	std::tie(vertex_staging.buffer, vertex_staging.memory) = get_device().create_buffer(
+	std::tie(vertex_staging.buffer, vertex_staging.memory) = get_device()->create_buffer(
 	    vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, vertex_buffer_size, vertices.data());
 
-	std::tie(index_staging.buffer, index_staging.memory) = get_device().create_buffer(
+	std::tie(index_staging.buffer, index_staging.memory) = get_device()->create_buffer(
 	    vk::BufferUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent, index_buffer_size, indices.data());
 
 	terrain.vertices = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	    *get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	terrain.indices = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
+	    *get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy from staging buffers
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
@@ -339,10 +341,10 @@ void HPPTerrainTessellation::generate_terrain()
 
 	device->flush_command_buffer(copy_command, queue, true);
 
-	get_device().get_handle().destroyBuffer(vertex_staging.buffer);
-	get_device().get_handle().freeMemory(vertex_staging.memory);
-	get_device().get_handle().destroyBuffer(index_staging.buffer);
-	get_device().get_handle().freeMemory(index_staging.memory);
+	get_device()->get_handle().destroyBuffer(vertex_staging.buffer);
+	get_device()->get_handle().freeMemory(vertex_staging.memory);
+	get_device()->get_handle().destroyBuffer(index_staging.buffer);
+	get_device()->get_handle().freeMemory(index_staging.memory);
 }
 
 void HPPTerrainTessellation::load_assets()
@@ -369,21 +371,21 @@ void HPPTerrainTessellation::load_assets()
 	sampler_create_info.minLod        = 0.0f;
 	sampler_create_info.maxLod        = static_cast<float>(textures.heightmap.image->get_mipmaps().size());
 	sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-	get_device().get_handle().destroySampler(textures.heightmap.sampler);
-	textures.heightmap.sampler = get_device().get_handle().createSampler(sampler_create_info);
+	get_device()->get_handle().destroySampler(textures.heightmap.sampler);
+	textures.heightmap.sampler = get_device()->get_handle().createSampler(sampler_create_info);
 
 	// Setup a repeating sampler for the terrain texture layers
 	sampler_create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
 	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
 	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
 	sampler_create_info.maxLod       = static_cast<float>(textures.terrain_array.image->get_mipmaps().size());
-	if (get_device().get_gpu().get_features().samplerAnisotropy)
+	if (get_device()->get_gpu().get_features().samplerAnisotropy)
 	{
 		sampler_create_info.maxAnisotropy    = 4.0f;
 		sampler_create_info.anisotropyEnable = true;
 	}
-	get_device().get_handle().destroySampler(textures.terrain_array.sampler);
-	textures.terrain_array.sampler = get_device().get_handle().createSampler(sampler_create_info);
+	get_device()->get_handle().destroySampler(textures.terrain_array.sampler);
+	textures.terrain_array.sampler = get_device()->get_handle().createSampler(sampler_create_info);
 }
 
 void HPPTerrainTessellation::prepare_pipelines()
@@ -455,14 +457,14 @@ void HPPTerrainTessellation::prepare_pipelines()
 	                                                    -1);
 
 	vk::Result result;
-	std::tie(result, pipelines.terrain) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	std::tie(result, pipelines.terrain) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 
 	// Terrain wireframe pipeline
-	if (get_device().get_gpu().get_features().fillModeNonSolid)
+	if (get_device()->get_gpu().get_features().fillModeNonSolid)
 	{
 		rasterization_state.polygonMode       = vk::PolygonMode::eLine;
-		std::tie(result, pipelines.wireframe) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+		std::tie(result, pipelines.wireframe) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 		assert(result == vk::Result::eSuccess);
 	};
 
@@ -483,7 +485,7 @@ void HPPTerrainTessellation::prepare_pipelines()
 	                                                                             load_shader("terrain_tessellation/skysphere.frag", vk::ShaderStageFlagBits::eFragment)}};
 	pipeline_create_info.setStages(skysphere_shader_stages);
 
-	std::tie(result, pipelines.skysphere) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	std::tie(result, pipelines.skysphere) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 }
 
@@ -492,11 +494,11 @@ void HPPTerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
 	uniform_buffers.terrain_tessellation =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_tess), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_tess), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
 	uniform_buffers.skysphere_vertex =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -507,7 +509,7 @@ void HPPTerrainTessellation::setup_descriptor_pool()
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 
-	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
+	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 void HPPTerrainTessellation::setup_descriptor_set_layouts()
@@ -522,13 +524,13 @@ void HPPTerrainTessellation::setup_descriptor_set_layouts()
 	     {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::DescriptorSetLayoutCreateInfo terrain_descriptor_layout({}, terrain_layout_bindings);
-	descriptor_set_layouts.terrain = get_device().get_handle().createDescriptorSetLayout(terrain_descriptor_layout);
+	descriptor_set_layouts.terrain = get_device()->get_handle().createDescriptorSetLayout(terrain_descriptor_layout);
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo terrain_pipeline_layout_create_info({}, 1, &descriptor_set_layouts.terrain);
 #else
 	vk::PipelineLayoutCreateInfo  terrain_pipeline_layout_create_info({}, descriptor_set_layouts.terrain);
 #endif
-	pipeline_layouts.terrain = get_device().get_handle().createPipelineLayout(terrain_pipeline_layout_create_info);
+	pipeline_layouts.terrain = get_device()->get_handle().createPipelineLayout(terrain_pipeline_layout_create_info);
 
 	// Skysphere
 	std::array<vk::DescriptorSetLayoutBinding, 2> skysphere_layout_bindings = {
@@ -536,13 +538,13 @@ void HPPTerrainTessellation::setup_descriptor_set_layouts()
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout({}, skysphere_layout_bindings);
-	descriptor_set_layouts.skysphere = get_device().get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
+	descriptor_set_layouts.skysphere = get_device()->get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo skysphere_pipeline_layout_create_info({}, 1, &descriptor_set_layouts.skysphere);
 #else
 	vk::PipelineLayoutCreateInfo  skysphere_pipeline_layout_create_info({}, descriptor_set_layouts.skysphere);
 #endif
-	pipeline_layouts.skysphere = get_device().get_handle().createPipelineLayout(skysphere_pipeline_layout_create_info);
+	pipeline_layouts.skysphere = get_device()->get_handle().createPipelineLayout(skysphere_pipeline_layout_create_info);
 }
 
 void HPPTerrainTessellation::setup_descriptor_sets()
@@ -553,7 +555,7 @@ void HPPTerrainTessellation::setup_descriptor_sets()
 #else
 	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, descriptor_set_layouts.terrain);
 #endif
-	descriptor_sets.terrain = get_device().get_handle().allocateDescriptorSets(alloc_info).front();
+	descriptor_sets.terrain = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
 
 	vk::DescriptorBufferInfo terrain_buffer_descriptor(uniform_buffers.terrain_tessellation->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorImageInfo  heightmap_image_descriptor(
@@ -568,11 +570,11 @@ void HPPTerrainTessellation::setup_descriptor_sets()
 	    {{descriptor_sets.terrain, 0, {}, vk::DescriptorType::eUniformBuffer, {}, terrain_buffer_descriptor},
 	     {descriptor_sets.terrain, 1, {}, vk::DescriptorType::eCombinedImageSampler, heightmap_image_descriptor},
 	     {descriptor_sets.terrain, 2, {}, vk::DescriptorType::eCombinedImageSampler, terrainmap_image_descriptor}}};
-	get_device().get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
 
 	// Skysphere
 	alloc_info.setSetLayouts(descriptor_set_layouts.skysphere);
-	descriptor_sets.skysphere = get_device().get_handle().allocateDescriptorSets(alloc_info).front();
+	descriptor_sets.skysphere = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
 
 	vk::DescriptorBufferInfo skysphere_buffer_descriptor(uniform_buffers.skysphere_vertex->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorImageInfo  skysphere_image_descriptor(
@@ -582,7 +584,7 @@ void HPPTerrainTessellation::setup_descriptor_sets()
 	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {
 	    {{descriptor_sets.skysphere, 0, {}, vk::DescriptorType::eUniformBuffer, {}, skysphere_buffer_descriptor},
 	     {descriptor_sets.skysphere, 1, {}, vk::DescriptorType::eCombinedImageSampler, skysphere_image_descriptor}}};
-	get_device().get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
 }
 
 // Setup pool and buffer for storing pipeline statistics results
@@ -593,24 +595,24 @@ void HPPTerrainTessellation::setup_query_result_buffer()
 	vk::BufferCreateInfo buffer_create_info({}, buffer_size, vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst);
 
 	// Results are saved in a host visible buffer for easy access by the application
-	query_result.buffer                        = get_device().get_handle().createBuffer(buffer_create_info);
-	vk::MemoryRequirements memory_requirements = get_device().get_handle().getBufferMemoryRequirements(query_result.buffer);
+	query_result.buffer                        = get_device()->get_handle().createBuffer(buffer_create_info);
+	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getBufferMemoryRequirements(query_result.buffer);
 	vk::MemoryAllocateInfo memory_allocation(
 	    memory_requirements.size,
-	    get_device().get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
-	                                           vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-	query_result.memory = get_device().get_handle().allocateMemory(memory_allocation);
-	get_device().get_handle().bindBufferMemory(query_result.buffer, query_result.memory, 0);
+	    get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
+	                                            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
+	query_result.memory = get_device()->get_handle().allocateMemory(memory_allocation);
+	get_device()->get_handle().bindBufferMemory(query_result.buffer, query_result.memory, 0);
 
 	// Create query pool
-	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
 	{
 		vk::QueryPoolCreateInfo query_pool_info({},
 		                                        vk::QueryType::ePipelineStatistics,
 		                                        2,
 		                                        vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
 		                                            vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
-		query_pool = get_device().get_handle().createQueryPool(query_pool_info);
+		query_pool = get_device()->get_handle().createQueryPool(query_pool_info);
 	}
 }
 
