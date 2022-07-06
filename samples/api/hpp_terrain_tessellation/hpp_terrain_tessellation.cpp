@@ -347,7 +347,6 @@ void HPPTerrainTessellation::generate_terrain()
 
 void HPPTerrainTessellation::load_assets()
 {
-	// @todo: sascha
 	skysphere = load_model("scenes/geosphere.gltf");
 
 	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
