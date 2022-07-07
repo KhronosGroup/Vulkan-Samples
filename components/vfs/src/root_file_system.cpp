@@ -46,11 +46,11 @@ void FileSystem::make_directory_recursive(const std::string &path)
 {
 	auto parts = helpers::get_directory_parts(path);
 
-	for (auto &path : parts)
+	for (auto &sub_path : parts)
 	{
-		if (!folder_exists(path))
+		if (!folder_exists(sub_path))
 		{
-			make_directory(path);
+			make_directory(sub_path);
 		}
 	}
 }
@@ -217,7 +217,7 @@ StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_
 	for (auto &folder : folders)
 	{
 		std::vector<std::string> folder_files;
-		auto                     res = enumerate_files(folder, extension, &folder_files);
+		res = enumerate_files(folder, extension, &folder_files);
 		if (res != nullptr)
 		{
 			return res;
