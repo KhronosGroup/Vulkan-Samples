@@ -58,9 +58,8 @@ function(vkb__register_tests)
 
     add_test(
         NAME ${TARGET_NAME}
-        COMMAND ${TARGET_NAME}
-        BINARY_DIR ${CMAKE_BINARY_DIR}/tests
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        COMMAND ${TARGET_NAME})
 
     add_dependencies(vkb_tests ${TARGET_NAME})
 endfunction()

@@ -311,18 +311,18 @@ StackErrorPtr AstcCodec::encode(const Image &image, ImagePtr *o_image) const
 		return StackError::unique("image not valid", "images/astc.cpp", __LINE__);
 	}
 
-	BlockDim blockdim = detail::to_blockdim(image.format);
+	// BlockDim blockdim = detail::to_blockdim(image.format);
 
-	astcenc_config config;
-	astcenc_error  status;
-	status = astcenc_config_init(ASTCENC_PRF_LDR_SRGB, blockdim.x, blockdim.y, blockdim.z, ASTCENC_PRE_MEDIUM, 0, &config);
-	if (status != ASTCENC_SUCCESS)
-	{
-		return StackError::unique("ASTC Codec config init failed: " + std::string{astcenc_get_error_string(status)}, "images/astc.cpp", __LINE__);
-	}
+	// astcenc_config config;
+	// astcenc_error  status;
+	// status = astcenc_config_init(ASTCENC_PRF_LDR_SRGB, blockdim.x, blockdim.y, blockdim.z, ASTCENC_PRE_MEDIUM, 0, &config);
+	// if (status != ASTCENC_SUCCESS)
+	// {
+	// 	return StackError::unique("ASTC Codec config init failed: " + std::string{astcenc_get_error_string(status)}, "images/astc.cpp", __LINE__);
+	// }
 
-	auto &tracker = detail::ContextTracker::get();
-	auto *context = tracker.alloc_context(config);
+	// auto &tracker = detail::ContextTracker::get();
+	// auto *context = tracker.alloc_context(config);
 
 	return StackError::unique("not implemented", "images/astc.cpp", __LINE__);
 }
