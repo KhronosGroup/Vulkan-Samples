@@ -144,3 +144,17 @@ TEST_CASE("drain a channel", "[events]")
 	REQUIRE(last.value == 5);
 	REQUIRE(rec1->has_next() == false);
 }
+
+TEST_CASE("type index", "[events]")
+{
+	struct Event
+	{
+		uint32_t value;
+	};
+
+	std::type_index type_index = std::type_index{typeid(Event)};
+
+	ChannelPtr<Event> channel = Channel<Event>::create();
+
+	REQUIRE(type_index == channel->type_index());
+}

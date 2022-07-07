@@ -21,12 +21,12 @@
 #include <mutex>
 #include <queue>
 #include <set>
+#include <typeindex>
 
 namespace components
 {
 namespace events
 {
-
 template <typename Type>
 class Channel;
 template <typename Type>
@@ -42,9 +42,26 @@ class ChannelSender;
 template <typename Type>
 using ChannelSenderPtr = std::unique_ptr<ChannelSender<Type>>;
 
+class AbstractChannel
+{
+  public:
+	AbstractChannel(std::type_index &&type_index) :
+	    m_type_index{type_index}
+	{}
+	virtual ~AbstractChannel() = default;
+
+	inline const std::type_index &type_index() const
+	{
+		return m_type_index;
+	}
+
+  private:
+	std::type_index m_type_index;
+};
+
 // Acts as a context which links receivers and senders together
 template <typename Type>
-class Channel
+class Channel : public AbstractChannel
 {
 	friend ChannelReceiver<Type>;
 	friend ChannelSender<Type>;
@@ -132,6 +149,13 @@ class ChannelReceiver
 	 */
 	Type drain();
 
+	inline size_t size() const
+	{
+		std::lock_guard<std::mutex> lock{m_mut};
+
+		return m_queue.size();
+	};
+
   private:
 	ChannelReceiver(Channel<Type> &channel);
 
@@ -143,7 +167,7 @@ class ChannelReceiver
 	void push(const Type &item);
 
 	mutable std::mutex m_mut;
-	Channel<Type>     &m_channel;
+	Channel<Type> &    m_channel;
 	std::queue<Type>   m_queue;
 };
 
@@ -166,7 +190,7 @@ class ChannelSender
 	ChannelSender(Channel<Type> &channel);
 
 	mutable std::mutex m_mut;
-	Channel<Type>     &m_channel;
+	Channel<Type> &    m_channel;
 };
 }        // namespace events
 }        // namespace components
@@ -182,7 +206,8 @@ namespace components
 namespace events
 {
 template <typename Type>
-Channel<Type>::Channel()
+Channel<Type>::Channel() :
+    AbstractChannel{typeid(Type)}
 {}
 
 template <typename Type>
