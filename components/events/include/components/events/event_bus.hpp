@@ -41,11 +41,11 @@ class EventObserver
 
 /**
  * @brief EventBus acts as a collection of event channels and observers
- * 
+ *
  * 		  An observer is added to the event bus through attach(observer). Once attached, an observer can register event listeners (each<EventType>(), last<EventType>()) and request
  * 		  ChannelSender<EventTypes>. Each step of the EventBus calls update() on its observers. Which in turn allows an observer to submit events to the bus. After this, the bus then processes
  * 		  all event callbacks with a stream of events.
- * 
+ *
  * 		  The combination of these actions will allow for inter component communication without any hard links. This allows samples to create and organize components in anyway they deem fit.
  *
  * 		  TODO: Allow an observer to detach from the bus. This should also clear all its callbacks. May need to restructure the internal storage of the bus
@@ -58,7 +58,7 @@ class EventBus
 
 	/**
 	 * @brief Attach a new observer
-	 * 
+	 *
 	 * @param observer the observer to attach
 	 * @return EventBus& the event bus
 	 */
@@ -69,7 +69,7 @@ class EventBus
 
 	/**
 	 * @brief Attach an event callback for each event in a cycle
-	 * 
+	 *
 	 * @param cb the callback
 	 * @return EventBus& the event bus
 	 */
@@ -78,7 +78,7 @@ class EventBus
 
 	/**
 	 * @brief Attach an event callback for the last event in a cycle
-	 * 
+	 *
 	 * @param cb the callback
 	 * @return EventBus& the event bus
 	 */
@@ -87,7 +87,7 @@ class EventBus
 
 	/**
 	 * @brief Retrieve a ChannelSender for a given type
-	 * 
+	 *
 	 * @tparam Type the type of the required sender
 	 * @return ChannelSenderPtr<Type> the requested sender
 	 */
@@ -96,7 +96,7 @@ class EventBus
 
 	/**
 	 * @brief Process a cycle of events
-	 * 
+	 *
 	 */
 	void process();
 
