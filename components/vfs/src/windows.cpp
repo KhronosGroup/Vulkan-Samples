@@ -235,7 +235,7 @@ StackErrorPtr WindowsFileSystem::enumerate_folders(const std::string & /*file_pa
 	return StackError::unique("not implemented", "vfs/windows.cpp", __LINE__);
 }
 
-void WindowsFileSystem::make_directory(const std::string &path)
+void WindowsFileSystem::make_directory(const std::string & /* path */)
 {
 	assert(false && "not implemented");
 }
