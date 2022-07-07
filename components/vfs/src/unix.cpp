@@ -37,10 +37,14 @@ RootFileSystem &_default(void * /* context */)
 	static bool first_time = true;
 	if (first_time)
 	{
-		char buf[256];
-		getcwd(buf, 256);
+		char *c_cwd = getcwd(nullptr, 0);
 
-		std::string cwd{buf};
+		if (!c_cwd)
+		{
+			throw std::runtime_error{"failed to determine working directory"};
+		}
+
+		std::string cwd{c_cwd};
 		fs.mount("/", std::make_shared<vfs::UnixFileSystem>(cwd));
 		fs.mount("/scenes/", std::make_shared<vfs::UnixFileSystem>(cwd + "/assets/scenes"));
 		fs.mount("/textures/", std::make_shared<vfs::UnixFileSystem>(cwd + "/assets/textures"));
