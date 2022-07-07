@@ -23,12 +23,6 @@
 #include <thread>
 #include <unordered_map>
 
-#if defined(_WIN32) || defined(_WIN64)
-// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
-#	undef IGNORE
-#endif
-#include <astcenc.h>
-
 #include <components/common/hash.hpp>
 
 namespace components
@@ -310,17 +304,30 @@ class ContextTracker
 };        // namespace detail
 }        // namespace detail
 
-StackErrorPtr AstcCodec::encode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const
+StackErrorPtr AstcCodec::encode(const Image &image, ImagePtr *o_image) const
 {
 	if (!image.valid())
 	{
 		return StackError::unique("image not valid", "images/astc.cpp", __LINE__);
 	}
 
+	BlockDim blockdim = detail::to_blockdim(image.format);
+
+	astcenc_config config;
+	astcenc_error  status;
+	status = astcenc_config_init(ASTCENC_PRF_LDR_SRGB, blockdim.x, blockdim.y, blockdim.z, ASTCENC_PRE_MEDIUM, 0, &config);
+	if (status != ASTCENC_SUCCESS)
+	{
+		return StackError::unique("ASTC Codec config init failed: " + std::string{astcenc_get_error_string(status)}, "images/astc.cpp", __LINE__);
+	}
+
+	auto &tracker = detail::ContextTracker::get();
+	auto *context = tracker.alloc_context(config);
+
 	return StackError::unique("not implemented", "images/astc.cpp", __LINE__);
 }
 
-StackErrorPtr AstcCodec::decode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const
+StackErrorPtr AstcCodec::decode(const Image &image, ImagePtr *o_image) const
 {
 	if (!image.valid())
 	{

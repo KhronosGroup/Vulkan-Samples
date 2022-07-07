@@ -18,6 +18,7 @@
 
 #include "components/images/ktx.hpp"
 
+#include <algorithm>
 #include <cassert>
 
 #include <ktx.h>
@@ -27,6 +28,20 @@ namespace components
 {
 namespace images
 {
+namespace
+{
+bool sort_mips(Mipmap first, Mipmap second)
+{
+	return first.byte_length > second.byte_length;
+};
+}        // namespace
+
+struct CallbackData final
+{
+	ktxTexture *         texture;
+	std::vector<Mipmap> *mipmaps;
+};
+
 /// Row padding is different between KTX (pad to 4) and Vulkan (none).
 /// Also region->bufferOffset, i.e. the start of each image, has
 /// to be a multiple of 4 and also a multiple of the element size.
@@ -40,23 +55,25 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(
     void *       pixels,
     void *       user_data)
 {
-	// Get mipmaps
-	auto &mipmaps = *reinterpret_cast<std::vector<Mipmap> *>(user_data);
-	assert(static_cast<size_t>(mip_level) < mipmaps.size() && "Not enough space in the mipmap vector");
+	auto *callback_data = reinterpret_cast<CallbackData *>(user_data);
 
-	auto &mipmap         = mipmaps.at(mip_level);
+	// Get mipmaps
+	assert(static_cast<size_t>(mip_level) < callback_data->mipmaps->size() && "Not enough space in the mipmap vector");
+
+	ktx_size_t mipmap_offset = 0;
+	auto       result        = ktxTexture_GetImageOffset(callback_data->texture, mip_level, 0, face, &mipmap_offset);
+	if (result != KTX_SUCCESS)
+	{
+		return result;
+	}
+
+	auto &mipmap         = callback_data->mipmaps->at(mip_level);
 	mipmap.level         = mip_level;
+	mipmap.offset        = static_cast<uint32_t>(mipmap_offset);
 	mipmap.extent.width  = width;
 	mipmap.extent.height = height;
 	mipmap.extent.depth  = depth;
 	mipmap.byte_length   = static_cast<uint32_t>(face_lod_size);
-
-	// Set offset for the next mip level
-	auto next_mip_level = static_cast<size_t>(mip_level + 1);
-	if (next_mip_level < mipmaps.size())
-	{
-		mipmaps.at(next_mip_level).offset = mipmap.offset + static_cast<uint32_t>(face_lod_size);
-	}
 
 	return KTX_SUCCESS;
 }
@@ -94,7 +111,7 @@ StackErrorPtr KtxLoader::load_from_memory(const std::string &name, const std::ve
 		return StackError::unique("Error loading KTX texture: " + name, "images/ktx.cpp", __LINE__);
 	}
 
-	auto &image = *o_image = std::shared_ptr<images::Image>();
+	auto &image = *o_image = std::make_shared<images::Image>();
 
 	if (texture->pData)
 	{
@@ -111,8 +128,12 @@ StackErrorPtr KtxLoader::load_from_memory(const std::string &name, const std::ve
 		}
 	}
 
+	CallbackData callback_data{};
+	callback_data.texture = texture;
+	callback_data.mipmaps = &image->mips;
+
 	image->mips.resize(texture->numLevels);
-	auto result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &image->mips);
+	auto result = ktxTexture_IterateLevels(texture, optimal_tiling_callback, &callback_data);
 	if (result != KTX_SUCCESS)
 	{
 		return StackError::unique("Error loading KTX texture: " + name, "images/ktx.cpp", __LINE__);
@@ -123,8 +144,11 @@ StackErrorPtr KtxLoader::load_from_memory(const std::string &name, const std::ve
 		image->mips[0].extent = {texture->baseWidth, texture->baseHeight, texture->baseDepth};
 	}
 
+	image->name   = name;
 	image->layers = texture->numLayers == 1 && texture->numFaces == 6 ? 6 : texture->numLayers;
 	image->format = ktxTexture_GetVkFormat(texture);
+
+	std::sort(image->mips.begin(), image->mips.end(), sort_mips);
 
 	ktxTexture_Destroy(texture);
 

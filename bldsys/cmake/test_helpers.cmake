@@ -49,9 +49,17 @@ function(vkb__register_tests)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+    )
+
     add_test(
         NAME ${TARGET_NAME}
         COMMAND ${TARGET_NAME}
+        BINARY_DIR ${CMAKE_BINARY_DIR}/tests
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     add_dependencies(vkb_tests ${TARGET_NAME})

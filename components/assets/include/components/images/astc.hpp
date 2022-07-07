@@ -17,6 +17,12 @@
 
 #pragma once
 
+#if defined(_WIN32) || defined(_WIN64)
+// Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
+#	undef IGNORE
+#endif
+#include <astcenc.h>
+
 #include "components/images/image.hpp"
 
 namespace components
@@ -28,14 +34,27 @@ namespace detail
 bool is_astc(const VkFormat format);
 }
 
+enum class AstcSearchPreset
+{
+	ASTCENC_PRE_FASTEST,
+	ASTCENC_PRE_FAST,
+	ASTCENC_PRE_MEDIUM,
+	ASTCENC_PRE_THOROUGH,
+	ASTCENC_PRE_EXHAUSTIVE,
+};
+
+struct AstcConfig final
+{
+};
+
 class AstcCodec final : public ImageCodec
 {
   public:
 	AstcCodec()          = default;
 	virtual ~AstcCodec() = default;
 
-	virtual StackErrorPtr encode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const override;
-	virtual StackErrorPtr decode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const override;
+	virtual StackErrorPtr encode(const Image &image, ImagePtr *o_image) const override;
+	virtual StackErrorPtr decode(const Image &image, ImagePtr *o_image) const override;
 };
 }        // namespace images
 }        // namespace components

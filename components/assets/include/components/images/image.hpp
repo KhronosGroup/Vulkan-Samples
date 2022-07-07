@@ -47,6 +47,26 @@ struct Image
 	{
 		return format != VK_FORMAT_UNDEFINED && layers > 0 && !mips.empty() && !data.empty();
 	}
+
+	inline uint32_t width() const
+	{
+		if (mips.size() == 0)
+		{
+			return 0;
+		}
+
+		return mips[0].extent.width;
+	}
+
+	inline uint32_t height() const
+	{
+		if (mips.size() == 0)
+		{
+			return 0;
+		}
+
+		return mips[0].extent.height;
+	}
 };
 
 class ImageLoader
@@ -84,7 +104,7 @@ class ImageEncoder
 	ImageEncoder()          = default;
 	virtual ~ImageEncoder() = default;
 
-	virtual StackErrorPtr encode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const
+	virtual StackErrorPtr encode(const Image &image, ImagePtr *o_image) const
 	{
 		return StackError::unique("not implemented");
 	}
@@ -96,7 +116,7 @@ class ImageDecoder
 	ImageDecoder()          = default;
 	virtual ~ImageDecoder() = default;
 
-	virtual StackErrorPtr decode(const Image &image, const std::vector<VkFormat> &format_preference, ImagePtr *o_image) const
+	virtual StackErrorPtr decode(const Image &image, ImagePtr *o_image) const
 	{
 		return StackError::unique("not implemented");
 	}

@@ -199,12 +199,16 @@ StackErrorPtr StbLoader::load_from_memory(const std::string &name, const std::ve
 		return StackError::unique("failed to read image data: " + name, "images/stb.cpp", __LINE__);
 	}
 
-	auto &image = *o_image = std::shared_ptr<images::Image>();
+	auto &image = *o_image = std::make_shared<images::Image>();
 
-	image->data = std::vector<uint8_t>{raw_data, raw_data + width * height * req_comp};
+	std::vector<uint8_t> image_data{raw_data, raw_data + width * height * req_comp};
+
+	image->data = std::move(image_data);
 	stbi_image_free(raw_data);
 
+	image->name   = name;
 	image->format = VK_FORMAT_R8G8B8A8_UNORM;
+	image->layers = 1;
 
 	image->mips.push_back(Mipmap{
 	    0,

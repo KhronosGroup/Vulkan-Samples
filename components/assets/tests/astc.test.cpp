@@ -20,6 +20,7 @@
 #include <string>
 #include <vector>
 
+#include <components/images/astc.hpp>
 #include <components/images/stb.hpp>
 #include <components/vfs/filesystem.hpp>
 
@@ -28,9 +29,9 @@ using namespace components;
 namespace
 {
 const char *TEST_IMAGE = "/tests/assets/BoxTextured/CesiumLogoFlat.png";
-}
+}        // namespace
 
-TEST_CASE("load png with stb", "[assets]")
+TEST_CASE("encode decode png to astc", "[assets]")
 {
 	auto &fs = vfs::_default();
 
@@ -50,14 +51,7 @@ TEST_CASE("load png with stb", "[assets]")
 
 	INFO((err != nullptr ? err->what() : ""));
 	CHECK(err == nullptr);
-
 	CHECK(image->valid());
-	CHECK(image->name == "image_name");
-	CHECK(image->format == VK_FORMAT_R8G8B8A8_UNORM);
-	CHECK(image->width() == 256);
-	CHECK(image->height() == 256);
-	CHECK(image->mips.size() == 1);
-	CHECK(image->mips[0].offset == 0);
-	CHECK(image->mips[0].level == 0);
-	CHECK(image->mips[0].byte_length == 256 * 256 * 4);
+
+	images::AstcCodec codex;
 }

@@ -56,6 +56,7 @@ vkb__register_tests(
   NAME "image_loader_tests"
   SRC
     tests/stb.test.cpp
+    tests/ktx.test.cpp
   LIBS
     components__images
     components__vfs
