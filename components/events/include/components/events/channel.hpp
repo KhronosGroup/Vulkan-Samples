@@ -42,6 +42,7 @@ class ChannelSender;
 template <typename Type>
 using ChannelSenderPtr = std::unique_ptr<ChannelSender<Type>>;
 
+// Acts as a base for storing multiple channels in a container
 class AbstractChannel
 {
   public:
