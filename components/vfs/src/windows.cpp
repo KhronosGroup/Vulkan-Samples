@@ -21,6 +21,7 @@
 #include <Windows.h>
 #include <direct.h>
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <limits>
