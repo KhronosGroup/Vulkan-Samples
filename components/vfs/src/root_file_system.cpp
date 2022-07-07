@@ -42,7 +42,7 @@ const void *StdBlob::data() const
 	return static_cast<const void *>(&buffer.at(0));
 }
 
-void FileSystem::make_folder_recursive(const std::string &path)
+void FileSystem::make_directory_recursive(const std::string &path)
 {
 	auto parts = helpers::get_directory_parts(path);
 
@@ -50,7 +50,7 @@ void FileSystem::make_folder_recursive(const std::string &path)
 	{
 		if (!folder_exists(path))
 		{
-			make_folder(path);
+			make_directory(path);
 		}
 	}
 }
@@ -128,7 +128,7 @@ StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const voi
 		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
 	}
 
-	fs->make_folder_recursive(adjusted_path);
+	fs->make_directory_recursive(adjusted_path);
 
 	return fs->write_file(adjusted_path, data, size);
 }
@@ -209,7 +209,7 @@ StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_
 	auto                     res = enumerate_folders_recursive(file_path, &folders);
 	if (res != nullptr)
 	{
-		return std::move(res);
+		return res;
 	}
 
 	std::vector<std::string> all_files;
@@ -220,7 +220,7 @@ StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_
 		auto                     res = enumerate_files(folder, extension, &folder_files);
 		if (res != nullptr)
 		{
-			return std::move(res);
+			return res;
 		}
 
 		all_files.reserve(folder_files.size());
@@ -253,7 +253,7 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fil
 		auto res = enumerate_folders(front, &dirs);
 		if (res != nullptr)
 		{
-			return std::move(res);
+			return res;
 		}
 
 		for (std::string &dir : dirs)
@@ -271,6 +271,18 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fil
 	*folders = std::vector<std::string>{all_dirs.begin(), all_dirs.end()};
 
 	return nullptr;
+}
+
+void RootFileSystem::make_directory(const std::string &file_path)
+{
+	std::string adjusted_path;
+	auto        fs = find_file_system(file_path, &adjusted_path);
+	if (!fs)
+	{
+		return;
+	}
+
+	fs->make_directory(file_path);
 }
 
 void RootFileSystem::mount(const std::string &file_path, std::shared_ptr<FileSystem> file_system)

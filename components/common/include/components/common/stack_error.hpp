@@ -55,7 +55,7 @@ class StackError : std::exception
 			combined->push(err);
 		}
 
-		return std::move(combined);
+		return combined;
 	}
 
 	void push(const std::string &reason, const char *file = nullptr, int line = 0)

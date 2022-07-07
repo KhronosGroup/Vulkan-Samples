@@ -30,7 +30,7 @@ namespace vfs
 {
 // Android reuses the Unix filesystem. This stops a redefinition of the instance function
 #ifndef ANDROID
-RootFileSystem &_default(void *context)
+RootFileSystem &_default(void * /* context */)
 {
 	static vfs::RootFileSystem fs;
 
@@ -155,7 +155,7 @@ StackErrorPtr UnixFileSystem::read_chunk(const std::string &file_path, const siz
 	std::streamsize size = stream.gcount();
 	stream.clear();
 
-	if (offset + count > size)
+	if (offset + count > static_cast<size_t>(size))
 	{
 		return StackError::unique("file chunk out of bounds", "vfs/unix.cpp", __LINE__);
 	}
@@ -313,7 +313,7 @@ StackErrorPtr UnixFileSystem::enumerate_folders(const std::string &file_path, st
 	return nullptr;
 }
 
-void UnixFileSystem::make_folder(const std::string &path)
+void UnixFileSystem::make_directory(const std::string &path)
 {
 	auto full_path = m_base_path + path;
 

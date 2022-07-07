@@ -44,19 +44,25 @@ else()
     list(APPEND PROJECT_FILES ${UNIX_FILES})
 endif()
 
-add_library(components__vfs STATIC ${PROJECT_FILES})
-target_include_directories(components__vfs PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
-target_link_libraries(components__vfs PUBLIC re2::re2 components__common)
+
+vkb__register_component(
+  NAME vfs
+  SRC ${PROJECT_FILES}
+  INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+  LINK_LIBS
+    re2
+    vkb__common
+)
 
 if (ANDROID)
-    target_link_libraries(components__vfs PRIVATE log android native_app_glue)
+    target_link_libraries(vkb__vfs PRIVATE log android native_app_glue)
 endif()
 
 if(${VKB_BUNDLE_ASSETS})
-    target_compile_definitions(components__vfs PUBLIC VKB_BUNDLE_ASSETS)
+    target_compile_definitions(vkb__vfs PUBLIC VKB_BUNDLE_ASSETS)
 endif()
 
-add_library(Components::VFS ALIAS components__vfs)
+
 
 ### virtual_file_system_tests - should work on desktop platforms as they require no specific configuration from a context
 
@@ -66,5 +72,5 @@ vkb__register_tests(
         tests/basic.test.cpp
         tests/helpers.test.cpp
     LIBS
-        components__vfs
+        vkb__vfs
 )
