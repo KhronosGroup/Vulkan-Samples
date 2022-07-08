@@ -15,30 +15,26 @@
  * limitations under the License.
  */
 
-#include <components/platform/platform.hpp>
-
 #include <stdexcept>
+
+#include <components/platform/dl.hpp>
+#include <components/platform/platform.hpp>
+#include <components/platform/sample.hpp>
 
 using namespace components;
 
 CUSTOM_MAIN(context)
 {
-	if (context == nullptr)
+	Sample sample;
+
+	if (!load_sample(dl::os_library_name("vkb__platform__dummy_sample"), &sample))
 	{
-		throw std::runtime_error{"context should not be null"};
+		throw std::runtime_error{"failed to load sample"};
 	}
 
-#if defined(_WIN32)
-	if (dynamic_cast<WindowsContext *>(context) == nullptr)
-#elif defined(__ANDROID__)
-	if (dynamic_cast<AndroidContext *>(context) == nullptr)
-#elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
-#elif defined(__linux__)
-	if (dynamic_cast<UnixContext *>(context) == nullptr)
-#endif
+	if (!(*sample.sample_main)(context))
 	{
-		throw std::runtime_error{"incorrect context provided for this platform"};
+		throw std::runtime_error{"failed to call sample_main()"};
 	}
 
 	return EXIT_SUCCESS;

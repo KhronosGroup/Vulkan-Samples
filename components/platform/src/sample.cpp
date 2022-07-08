@@ -15,31 +15,29 @@
  * limitations under the License.
  */
 
-#include <components/platform/platform.hpp>
+#include "components/platform/sample.hpp"
 
-#include <stdexcept>
+#include "components/platform/dl.hpp"
 
 using namespace components;
 
-CUSTOM_MAIN(context)
+bool load_sample(const std::string &library_name, Sample *o_sample)
 {
-	if (context == nullptr)
+	void *lib_handle = dl::open_library(library_name.c_str());
+	if (!lib_handle)
 	{
-		throw std::runtime_error{"context should not be null"};
+		return false;
 	}
 
-#if defined(_WIN32)
-	if (dynamic_cast<WindowsContext *>(context) == nullptr)
-#elif defined(__ANDROID__)
-	if (dynamic_cast<AndroidContext *>(context) == nullptr)
-#elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
-#elif defined(__linux__)
-	if (dynamic_cast<UnixContext *>(context) == nullptr)
-#endif
+	Sample sample;
+
+	sample.sample_main = dl::load_function<PFN_SampleMain>(lib_handle, "sample_main");
+	if (!sample.sample_main)
 	{
-		throw std::runtime_error{"incorrect context provided for this platform"};
+		return false;
 	}
 
-	return EXIT_SUCCESS;
+	*o_sample = sample;
+
+	return true;
 }
