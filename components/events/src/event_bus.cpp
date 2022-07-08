@@ -70,14 +70,38 @@ void EventBus::process()
 		++it;
 	}
 
-	for (auto &it : m_each_callbacks)
-	{
-		it.second->process_each();
-	}
+	flush_callbacks();
+}
 
-	for (auto &it : m_last_callbacks)
+EventObserverGroup &EventObserverGroup::attach(std::shared_ptr<EventObserver> &observer)
+{
+	m_observers.emplace(observer);
+	return *this;
+}
+
+EventObserverGroup &EventObserverGroup::remove(std::shared_ptr<EventObserver> &observer)
+{
+	auto it = m_observers.find(observer);
+	if (it != m_observers.end())
 	{
-		it.second->process_last();
+		m_observers.erase(it);
+	}
+	return *this;
+}
+
+void EventObserverGroup::update()
+{
+	for (auto &it : m_observers)
+	{
+		it->update();
+	}
+}
+
+void EventObserverGroup::attach(EventBus &bus)
+{
+	for (auto &it : m_observers)
+	{
+		it->attach(bus);
 	}
 }
 }        // namespace events

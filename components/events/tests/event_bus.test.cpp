@@ -86,17 +86,17 @@ class TestEventBus final : public EventBus
 	}
 };
 
-class Observer final : public EventObserver
+class TestObserver final : public EventObserver
 {
   public:
-	Observer(std::function<void()> update = nullptr, std::function<void(EventBus &)> attach = nullptr) :
+	TestObserver(std::function<void()> update = nullptr, std::function<void(EventBus &)> attach = nullptr) :
 	    EventObserver{},
 	    m_update{update},
 	    m_attach{attach}
 	{
 	}
 
-	virtual ~Observer() = default;
+	virtual ~TestObserver() = default;
 
 	virtual void update() override
 	{
@@ -123,7 +123,7 @@ TEST_CASE("register observer", "[events]")
 {
 	TestEventBus bus{};
 
-	std::shared_ptr<EventObserver> observer = std::make_shared<Observer>();
+	std::shared_ptr<EventObserver> observer = std::make_shared<TestObserver>();
 
 	REQUIRE(bus.observer_count() == 0);
 
@@ -136,9 +136,9 @@ TEST_CASE("register multiple observers of the different instances", "[events]")
 {
 	TestEventBus bus{};
 
-	std::shared_ptr<EventObserver> observer_1 = std::make_shared<Observer>();
-	std::shared_ptr<EventObserver> observer_2 = std::make_shared<Observer>();
-	std::shared_ptr<EventObserver> observer_3 = std::make_shared<Observer>();
+	std::shared_ptr<EventObserver> observer_1 = std::make_shared<TestObserver>();
+	std::shared_ptr<EventObserver> observer_2 = std::make_shared<TestObserver>();
+	std::shared_ptr<EventObserver> observer_3 = std::make_shared<TestObserver>();
 
 	REQUIRE(bus.observer_count() == 0);
 
@@ -276,7 +276,7 @@ TEST_CASE("process observer", "[events]")
 	auto sender = bus.request_sender<EventType>();
 	REQUIRE(sender != nullptr);
 
-	auto observer = std::make_shared<Observer>(
+	auto observer = std::make_shared<TestObserver>(
 	    [&]() {        // update()
 		    sender->push(EventType{true, 5});
 	    },
