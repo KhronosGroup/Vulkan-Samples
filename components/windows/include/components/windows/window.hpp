@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#include <string_view>
+
 #include <components/events/event_bus.hpp>
 
 namespace components
@@ -58,10 +60,7 @@ struct FocusChangedEvent
 class Window : public events::EventObserver
 {
   public:
-	Window(const std::string &title) :
-	    m_title{title}
-	{}
-
+	Window()          = default;
 	virtual ~Window() = default;
 
 	virtual void   set_extent(const Extent &extent) = 0;
@@ -72,18 +71,8 @@ class Window : public events::EventObserver
 
 	virtual float dpi_factor() const = 0;
 
-	inline void set_title(const std::string &title)
-	{
-		m_title = title;
-	}
-
-	inline const std::string &title() const
-	{
-		return m_title;
-	}
-
-  private:
-	std::string m_title;
+	virtual void             set_title(const std::string &title) = 0;
+	virtual std::string_view title() const                       = 0;
 };
 }        // namespace windows
 }        // namespace components

@@ -83,7 +83,6 @@ void window_close_callback(GLFWwindow *handle)
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(handle)))
 	{
 		auto &sender = helper->should_close_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(ShouldCloseEvent{});
@@ -96,7 +95,6 @@ void window_size_callback(GLFWwindow *handle, int width, int height)
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(handle)))
 	{
 		auto &sender = helper->content_rect_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(ContentRectChangedEvent{static_cast<uint32_t>(width), static_cast<uint32_t>(height)});
@@ -109,7 +107,6 @@ void window_focus_callback(GLFWwindow *handle, int focused)
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(handle)))
 	{
 		auto &sender = helper->focus_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(FocusChangedEvent{focused == GLFW_FOCUSED});
@@ -261,7 +258,6 @@ void key_callback(GLFWwindow *window, int key, int /*scancode*/, int action, int
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(window)))
 	{
 		auto &sender = helper->key_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(events::KeyEvent{key_code, key_action});
@@ -306,7 +302,6 @@ void cursor_position_callback(GLFWwindow *window, double xpos, double ypos)
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(window)))
 	{
 		auto &sender = helper->cursor_position_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(events::CursorPositionEvent{static_cast<float>(xpos), static_cast<float>(ypos)});
@@ -322,7 +317,6 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 	if (auto *helper = reinterpret_cast<GLFWCallbackHelper *>(glfwGetWindowUserPointer(window)))
 	{
 		auto &sender = helper->key_sender();
-		assert(sender);
 		if (sender)
 		{
 			sender->push(events::KeyEvent{key_code, mouse_action});
@@ -331,7 +325,8 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 }
 
 GLFWWindow::GLFWWindow(const std::string &title, const Extent &initial_extent) :
-    Window{title},
+    Window{},
+    m_title{title},
     m_callback_helper{std::make_unique<GLFWCallbackHelper>(*this)}
 {
 	// TODO: GLFW_X11_XCB_VULKAN_SURFACE
@@ -346,7 +341,7 @@ GLFWWindow::GLFWWindow(const std::string &title, const Extent &initial_extent) :
 
 	// TODO: do we want to support fullscreen and fullscreen borderless still?
 
-	m_handle = glfwCreateWindow(initial_extent.width, initial_extent.height, title.c_str(), NULL, NULL);
+	m_handle = glfwCreateWindow(static_cast<int>(initial_extent.width), static_cast<int>(initial_extent.height), m_title.c_str(), NULL, NULL);
 	if (!m_handle)
 	{
 		throw std::runtime_error("Couldn't create glfw window.");
@@ -372,7 +367,10 @@ GLFWWindow::~GLFWWindow()
 void GLFWWindow::set_extent(const Extent &extent)
 {
 	glfwSetWindowSize(m_handle, static_cast<int>(extent.width), static_cast<int>(extent.height));
-	m_content_rect_sender->push(ContentRectChangedEvent{extent});
+	if (m_content_rect_sender)
+	{
+		m_content_rect_sender->push(ContentRectChangedEvent{extent});
+	}
 }
 
 Extent GLFWWindow::extent() const
@@ -386,7 +384,10 @@ Extent GLFWWindow::extent() const
 void GLFWWindow::set_position(const Position &position)
 {
 	glfwSetWindowPos(m_handle, static_cast<int>(position.x), static_cast<int>(position.y));
-	m_position_sender->push(PositionChangedEvent{position});
+	if (m_position_sender)
+	{
+		m_position_sender->push(PositionChangedEvent{position});
+	}
 }
 
 Position GLFWWindow::position() const
@@ -412,6 +413,17 @@ float GLFWWindow::dpi_factor() const
 	auto dpi        = static_cast<uint32_t>(vidmode->width / (width_mm / inch_to_mm));
 	auto dpi_factor = dpi / win_base_density;
 	return dpi_factor;
+}
+
+void GLFWWindow::set_title(const std::string &title)
+{
+	glfwSetWindowTitle(m_handle, title.c_str());
+	m_title = title;
+}
+
+std::string_view GLFWWindow::title() const
+{
+	return m_title;
 }
 
 void GLFWWindow::update()
