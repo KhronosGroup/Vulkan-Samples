@@ -34,15 +34,19 @@ TEST_CASE("glfw window extent correct", "[windows]")
 	GLFWWindow   window{"", expected_initial_extent};
 	REQUIRE(window.title() == "");
 
-	auto window_extent = window.extent();
-	REQUIRE(window_extent.width == expected_initial_extent.width);
-	REQUIRE(window_extent.height == expected_initial_extent.height);
+	{
+		auto window_extent = window.extent();
+		REQUIRE(window_extent.width == expected_initial_extent.width);
+		REQUIRE(window_extent.height == expected_initial_extent.height);
+	}
 
-	const Extent expected_extent{100, 120};
-	window.set_extent(expected_extent);
-	window_extent = window.extent();
-	REQUIRE(window_extent.width == expected_extent.width);
-	REQUIRE(window_extent.height == expected_extent.height);
+	{
+		const Extent expected_extent{100, 120};
+		window.set_extent(expected_extent);
+		auto window_extent = window.extent();
+		REQUIRE(window_extent.width == expected_extent.width);
+		REQUIRE(window_extent.height == expected_extent.height);
+	}
 }
 
 TEST_CASE("glfw window position correct", "[windows]")
@@ -50,13 +54,8 @@ TEST_CASE("glfw window position correct", "[windows]")
 	const Position expected_position{270, 130};
 	GLFWWindow     window{};
 
-	auto window_position = window.position();
-
-	REQUIRE(window_position.x == 0);
-	REQUIRE(window_position.y == 0);
-
 	window.set_position(expected_position);
-	window_position = window.position();
+	auto window_position = window.position();
 
 	REQUIRE(window_position.x == expected_position.x);
 	REQUIRE(window_position.y == expected_position.y);

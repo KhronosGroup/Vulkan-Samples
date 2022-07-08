@@ -327,6 +327,7 @@ void mouse_button_callback(GLFWwindow *window, int button, int action, int /*mod
 GLFWWindow::GLFWWindow(const std::string &title, const Extent &initial_extent) :
     Window{},
     m_title{title},
+    m_extent{initial_extent},
     m_callback_helper{std::make_unique<GLFWCallbackHelper>(*this)}
 {
 	// TODO: GLFW_X11_XCB_VULKAN_SURFACE
@@ -357,6 +358,10 @@ GLFWWindow::GLFWWindow(const std::string &title, const Extent &initial_extent) :
 
 	glfwSetInputMode(m_handle, GLFW_STICKY_KEYS, 1);
 	glfwSetInputMode(m_handle, GLFW_STICKY_MOUSE_BUTTONS, 1);
+
+	int x, y;
+	glfwGetWindowPos(m_handle, &x, &y);
+	m_position = Position{static_cast<uint32_t>(x), static_cast<uint32_t>(y)};
 }
 
 GLFWWindow::~GLFWWindow()
@@ -366,7 +371,8 @@ GLFWWindow::~GLFWWindow()
 
 void GLFWWindow::set_extent(const Extent &extent)
 {
-	glfwSetWindowSize(m_handle, static_cast<int>(extent.width), static_cast<int>(extent.height));
+	glfwSetWindowSize(m_handle, (int) extent.width, (int) extent.height);
+	m_extent = extent;
 	if (m_content_rect_sender)
 	{
 		m_content_rect_sender->push(ContentRectChangedEvent{extent});
@@ -375,15 +381,13 @@ void GLFWWindow::set_extent(const Extent &extent)
 
 Extent GLFWWindow::extent() const
 {
-	int width;
-	int height;
-	glfwGetWindowSize(m_handle, &width, &height);
-	return Extent{static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+	return m_extent;
 }
 
 void GLFWWindow::set_position(const Position &position)
 {
-	glfwSetWindowPos(m_handle, static_cast<int>(position.x), static_cast<int>(position.y));
+	glfwSetWindowPos(m_handle, (int) position.x, (int) position.y);
+	m_position = position;
 	if (m_position_sender)
 	{
 		m_position_sender->push(PositionChangedEvent{position});
@@ -392,10 +396,7 @@ void GLFWWindow::set_position(const Position &position)
 
 Position GLFWWindow::position() const
 {
-	int x;
-	int y;
-	glfwGetWindowPos(m_handle, &x, &y);
-	return Position{static_cast<uint32_t>(x), static_cast<uint32_t>(y)};
+	return m_position;
 }
 
 float GLFWWindow::dpi_factor() const

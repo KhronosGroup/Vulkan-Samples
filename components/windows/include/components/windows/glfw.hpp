@@ -47,6 +47,8 @@ class GLFWWindow : public Window
 
   protected:
 	std::string m_title;
+	Extent      m_extent;
+	Position    m_position;
 
 	GLFWwindow *                                      m_handle{nullptr};
 	std::unique_ptr<GLFWCallbackHelper>               m_callback_helper{nullptr};
