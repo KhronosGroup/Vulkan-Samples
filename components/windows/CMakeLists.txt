@@ -15,9 +15,28 @@
 # limitations under the License.
 #
 
-# order matters
-add_subdirectory(common)
-add_subdirectory(platform)
-add_subdirectory(events)
-add_subdirectory(windows)
-add_subdirectory(vfs)
+vkb__register_component(
+  NAME window_headers
+  LINK_LIBS
+    vkb__events
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+## headless window
+
+vkb__register_component(
+  NAME headless_window
+  SRC
+    src/headless.cpp
+  LINK_LIBS
+    vkb__window_headers
+)
+
+vkb__register_tests(
+  NAME headless_window_tests
+  SRC
+    tests/headless.test.cpp
+  LIBS
+    vkb__headless_window
+)
