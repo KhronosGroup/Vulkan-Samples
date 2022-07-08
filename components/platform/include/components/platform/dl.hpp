@@ -36,12 +36,39 @@ namespace components
 {
 namespace dl
 {
+/**
+ * @brief Convert a library name to an OS specific library name
+ * 
+ * @param name library name
+ * @return std::string OS library name
+ */
 std::string os_library_name(const std::string &name);
 
+/**
+ * @brief Open a dynamic library
+ * 
+ * @param library_path library path
+ * @return void* library handle
+ */
 void *open_library(const char *library_path);
 
+/**
+ * @brief Load a function ptr from a library
+ * 
+ * @param library library handle
+ * @param function_name function name
+ * @return void* function ptr
+ */
 void *load_function(void *library, const char *function_name);
 
+/**
+ * @brief Load a function ptr from a library and cast to a specific type
+ * 
+ * @tparam PFN type to cast too
+ * @param library library handle
+ * @param function_name function name
+ * @return PFN function pointer
+ */
 template <typename PFN>
 PFN load_function(void *library, const char *function_name)
 {

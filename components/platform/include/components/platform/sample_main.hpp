@@ -20,4 +20,10 @@
 #include "components/platform/dl.hpp"
 #include "components/platform/platform.hpp"
 
+/**
+ * @brief Sample Main, can be called to run a Dynamic Sample
+ * 
+ * @param context a platform context
+ * @return status code
+ */
 EXPORT_CLIB int sample_main(components::PlatformContext *context);
