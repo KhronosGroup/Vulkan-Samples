@@ -15,10 +15,16 @@
 # limitations under the License.
 #
 
-# order matters
-add_subdirectory(common)
-add_subdirectory(encoding)
-add_subdirectory(platform)
-add_subdirectory(events)
-add_subdirectory(windows)
-add_subdirectory(vfs)
+vkb__register_component(
+  NAME platform
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+vkb__register_tests_no_catch2(
+  NAME "platform_tests"
+  SRC
+    tests/platform.test.cpp
+  LIBS
+    vkb__platform
+)

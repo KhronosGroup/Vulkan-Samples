@@ -64,3 +64,34 @@ function(vkb__register_tests)
 
     add_dependencies(vkb_tests ${TARGET_NAME})
 endfunction()
+
+function(vkb__register_tests_no_catch2)
+    set(options)  
+    set(oneValueArgs NAME)
+    set(multiValueArgs SRC LIBS)
+
+    if(NOT ((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
+        return() # testing not enabled
+    endif()
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}) 
+
+    if (TARGET_NAME STREQUAL "")
+        message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
+    endif()
+
+    if (NOT TARGET_SRC)
+        message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
+    endif()
+
+    add_executable(${TARGET_NAME} ${TARGET_SRC})
+
+    if (TARGET_LIBS)
+        target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
+    endif()
+
+    add_test(NAME ${TARGET_NAME}
+             COMMAND ${TARGET_NAME})
+
+    add_dependencies(vkb_tests ${TARGET_NAME})
+endfunction()
