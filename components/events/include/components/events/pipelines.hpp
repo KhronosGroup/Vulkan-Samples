@@ -56,12 +56,14 @@ class TypedPipelineStage : public PipelineStage
 	}
 };
 
-template <typename Event, typename Func>
+template <typename Event>
 class TypedPipelineStageWithFunc : public TypedPipelineStage<Event>
 {
   public:
-	TypedPipelineStageWithFunc(Func &&func = []() -> Event { return Event{}; }) :
-	    m_func{std::move(func)}
+	typedef Event (*Func)();
+
+	TypedPipelineStageWithFunc(Func &&func) :
+	    m_func{func}
 	{}
 
 	virtual ~TypedPipelineStageWithFunc() = default;

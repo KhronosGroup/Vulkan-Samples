@@ -284,3 +284,30 @@ TEST_CASE("event observers are executed in the correct order", "[events]")
 	REQUIRE(two_execution_count == 4);
 	REQUIRE(three_execution_count == 4);
 }
+
+TEST_CASE("stages with custom fields", "[events]")
+{
+	struct Update
+	{
+		float delta_time{0.0f};
+	};
+
+	TestPipeline pipeline{};
+
+	pipeline
+	    .then(std::make_unique<TypedPipelineStageWithFunc<Update>>(
+	        []() -> Update {
+		        // in practice we would track delta time here
+		        return Update{0.0167f};
+	        }));
+
+	pipeline
+	    .each<Update>([&](const Update &event) {
+		    REQUIRE(event.delta_time == 0.0167f);
+	    });
+
+	pipeline.process();
+	pipeline.process();
+	pipeline.process();
+	pipeline.process();
+}
