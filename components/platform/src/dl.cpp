@@ -53,7 +53,7 @@ void *open_library(const char *library_name)
 		return nullptr;
 	}
 
-	return reinterpret_cast<void *>(HMODULE);
+	return reinterpret_cast<void *>(module);
 #elif defined(__APPLE__)
 	return dlopen(library_name, RTLD_NOW | RTLD_LOCAL);
 #else
