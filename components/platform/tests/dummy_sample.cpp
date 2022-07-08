@@ -15,31 +15,23 @@
  * limitations under the License.
  */
 
-#include <components/platform/platform.hpp>
+#include "components/platform/sample_main.hpp"
 
-#include <stdexcept>
-
-using namespace components;
-
-CUSTOM_MAIN(context)
+int sample_main(components::PlatformContext *context)
 {
-	if (context == nullptr)
-	{
-		throw std::runtime_error{"context should not be null"};
-	}
-
 #if defined(_WIN32)
-	if (dynamic_cast<WindowsContext *>(context) == nullptr)
+	if (dynamic_cast<components::WindowsContext *>(context) == nullptr)
 #elif defined(__ANDROID__)
-	if (dynamic_cast<AndroidContext *>(context) == nullptr)
+	if (dynamic_cast<components::AndroidContext *>(context) == nullptr)
 #elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
+	if (dynamic_cast<components::MacOSXContext *>(context) == nullptr)
 #elif defined(__linux__)
-	if (dynamic_cast<UnixContext *>(context) == nullptr)
+	if (dynamic_cast<components::UnixContext *>(context) == nullptr)
 #endif
 	{
-		throw std::runtime_error{"incorrect context provided for this platform"};
+		return false;
 	}
 
-	return EXIT_SUCCESS;
+	// sample was loaded correctly with the correct context
+	return true;
 }

@@ -15,31 +15,37 @@
  * limitations under the License.
  */
 
-#include <components/platform/platform.hpp>
+#pragma once
 
-#include <stdexcept>
+#include <string>
 
-using namespace components;
-
-CUSTOM_MAIN(context)
-{
-	if (context == nullptr)
-	{
-		throw std::runtime_error{"context should not be null"};
-	}
+#define EXPORT
+#define IMPORT
 
 #if defined(_WIN32)
-	if (dynamic_cast<WindowsContext *>(context) == nullptr)
-#elif defined(__ANDROID__)
-	if (dynamic_cast<AndroidContext *>(context) == nullptr)
-#elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
-#elif defined(__linux__)
-	if (dynamic_cast<UnixContext *>(context) == nullptr)
+#	undef EXPORT
+#	undef IMPORT
+#	define EXPORT __declspec(dllexport)
+#	define IMPORT __declspec(dllimport)
 #endif
-	{
-		throw std::runtime_error{"incorrect context provided for this platform"};
-	}
 
-	return EXIT_SUCCESS;
+#define EXPORT_CLIB extern "C" EXPORT
+#define IMPORT_CLIB extern "C" IMPORT
+
+namespace components
+{
+namespace dl
+{
+std::string os_library_name(const std::string &name);
+
+void *open_library(const char *library_path);
+
+void *load_function(void *library, const char *function_name);
+
+template <typename PFN>
+PFN load_function(void *library, const char *function_name)
+{
+	return reinterpret_cast<PFN>(load_function(library, function_name));
 }
+}        // namespace dl
+}        // namespace components

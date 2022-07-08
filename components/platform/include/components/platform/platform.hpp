@@ -20,31 +20,20 @@
 #include <string>
 #include <vector>
 
-#define EXPORT
-#define IMPORT
-
-#if defined(_WIN32)
-#	undef EXPORT
-#	undef IMPORT
-#	define EXPORT __declspec(dllexport)
-#	define IMPORT __declspec(dllimport)
-#endif
-
-#define EXPORT_CLIB extern "C" EXPORT
-#define IMPORT_CLIB extern "C" IMPORT
-
-namespace components
+extern "C"
 {
-/**
+	namespace components
+	{
+	/**
  * @brief A base context used for platform detection. Components or functions that consume this context can use it to create platform specific functionality.
  */
-struct PlatformContext
-{
-	virtual void _(){};        // < requires a function to be polymorphic (dynamic_cast)
-};
-}        // namespace components
+	struct PlatformContext
+	{
+		virtual void _(){};        // < requires a function to be polymorphic (dynamic_cast)
+	};
+	}        // namespace components
 
-/**
+	/**
  * @brief Forward declare platform_main so that it can be defined elsewhere. CUSTOM_MAIN must only be used once in an executable
  * 
  *  Example Usage:
@@ -62,22 +51,22 @@ struct PlatformContext
  * 
  * @return int status code
  */
-int platform_main(components::PlatformContext *);
+	int platform_main(components::PlatformContext *);
 
 #if defined(_WIN32)
 
-namespace components
-{
+	namespace components
+	{
 #	include <Windows.h>
-struct WindowsContext : virtual PlatformContext
-{
-	HINSTANCE                hInstance;
-	HINSTANCE                hPrevInstance;
-	PSTR                     lpCmdLine;
-	INT                      nCmdShow;
-	std::vector<std::string> arguments;
-};
-}        // namespace components
+	struct WindowsContext : virtual PlatformContext
+	{
+		HINSTANCE                hInstance;
+		HINSTANCE                hPrevInstance;
+		PSTR                     lpCmdLine;
+		INT                      nCmdShow;
+		std::vector<std::string> arguments;
+	};
+	}        // namespace components
 
 // TODO: get arguments from handles
 #	define CUSTOM_MAIN(context_name)                                                                    \
@@ -98,14 +87,14 @@ struct WindowsContext : virtual PlatformContext
 
 #	include <android_native_app_glue.h>
 
-namespace components
-{
-struct AndroidContext : virtual PlatformContext
-{
-	android_app *            android_app;
-	std::vector<std::string> arguments;
-};
-}        // namespace components
+	namespace components
+	{
+	struct AndroidContext : virtual PlatformContext
+	{
+		android_app *            android_app;
+		std::vector<std::string> arguments;
+	};
+	}        // namespace components
 
 // TODO: get arguments from bundle
 #	define CUSTOM_MAIN(context_name)               \
@@ -121,13 +110,13 @@ struct AndroidContext : virtual PlatformContext
 
 #elif defined(__APPLE__) || defined(__MACH__)
 
-namespace components
-{
-struct MacOSXContext : virtual PlatformContext
-{
-	std::vector<std::string> arguments;
-};
-}        // namespace components
+	namespace components
+	{
+	struct MacOSXContext : virtual PlatformContext
+	{
+		std::vector<std::string> arguments;
+	};
+	}        // namespace components
 
 #	define CUSTOM_MAIN(context_name)                                            \
 		int main(int argc, char *argv[])                                         \
@@ -142,13 +131,13 @@ struct MacOSXContext : virtual PlatformContext
 
 #elif defined(__linux__)
 
-namespace components
-{
-struct UnixContext : virtual PlatformContext
-{
-	std::vector<std::string> arguments;
-};
-}        // namespace components
+	namespace components
+	{
+	struct UnixContext : virtual PlatformContext
+	{
+		std::vector<std::string> arguments;
+	};
+	}        // namespace components
 
 #	define CUSTOM_MAIN(context_name)                                            \
 		int main(int argc, char *argv[])                                         \
@@ -162,3 +151,4 @@ struct UnixContext : virtual PlatformContext
 		int platform_main(components::PlatformContext *context_name)
 
 #endif
+}

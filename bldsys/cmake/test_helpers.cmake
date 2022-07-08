@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,17 +31,17 @@ function(vkb__register_tests)
     set(oneValueArgs NAME)
     set(multiValueArgs SRC LIBS)
 
-    if(NOT ((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
+    if(NOT((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
         return() # testing not enabled
     endif()
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (TARGET_NAME STREQUAL "")
+    if(TARGET_NAME STREQUAL "")
         message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
     endif()
 
-    if (NOT TARGET_SRC)
+    if(NOT TARGET_SRC)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
@@ -52,7 +52,14 @@ function(vkb__register_tests)
 
     set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "tests")
 
-    if (TARGET_LIBS)
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+    )
+
+    if(TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
@@ -64,21 +71,21 @@ function(vkb__register_tests)
 endfunction()
 
 function(vkb__register_tests_no_catch2)
-    set(options)  
+    set(options)
     set(oneValueArgs NAME)
     set(multiValueArgs SRC LIBS)
 
-    if(NOT ((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
+    if(NOT((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
         return() # testing not enabled
     endif()
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}) 
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    if (TARGET_NAME STREQUAL "")
+    if(TARGET_NAME STREQUAL "")
         message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
     endif()
 
-    if (NOT TARGET_SRC)
+    if(NOT TARGET_SRC)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
@@ -88,7 +95,14 @@ function(vkb__register_tests_no_catch2)
         add_executable(${TARGET_NAME} ${TARGET_SRC})
     endif()
 
-    if (TARGET_LIBS)
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+    )
+
+    if(TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
