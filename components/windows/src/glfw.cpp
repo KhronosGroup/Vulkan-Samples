@@ -383,12 +383,8 @@ GLFWWindow::~GLFWWindow()
 
 void GLFWWindow::set_extent(const Extent &extent)
 {
-<<<<<<< HEAD
 	glfwSetWindowSize(m_handle, (int) extent.width, (int) extent.height);
 	m_extent = extent;
-	== == == =
-	             glfwSetWindowSize(m_handle, static_cast<int>(extent.width), static_cast<int>(extent.height));
->>>>>>> add VKB_TEST_GLFW
 	if (m_content_rect_sender)
 	{
 		m_content_rect_sender->push(ContentRectChangedEvent{extent});
@@ -402,12 +398,8 @@ Extent GLFWWindow::extent() const
 
 void GLFWWindow::set_position(const Position &position)
 {
-<<<<<<< HEAD
 	glfwSetWindowPos(m_handle, (int) position.x, (int) position.y);
 	m_position = position;
-	== == == =
-	             glfwSetWindowPos(m_handle, static_cast<int>(position.x), static_cast<int>(position.y));
->>>>>>> add VKB_TEST_GLFW
 	if (m_position_sender)
 	{
 		m_position_sender->push(PositionChangedEvent{position});

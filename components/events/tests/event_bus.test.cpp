@@ -132,25 +132,6 @@ TEST_CASE("register observer", "[events]")
 	REQUIRE(bus.observer_count() == 1);
 }
 
-<<<<<<< HEAD
-=======
-TEST_CASE("register multiple observers of the same instance", "[events]")
-{
-	TestEventBus bus{};
-
-	std::shared_ptr<EventObserver> observer = std::make_shared<TestObserver>();
-
-	REQUIRE(bus.observer_count() == 0);
-
-	bus
-	    .attach(observer)
-	    .attach(observer)
-	    .attach(observer);
-
-	REQUIRE(bus.observer_count() == 1);
-}
-
->>>>>>> a89ff02... add pipelines
 TEST_CASE("register multiple observers of the different instances", "[events]")
 {
 	TestEventBus bus{};
