@@ -25,5 +25,19 @@ CUSTOM_MAIN(context)
 	{
 		throw "context should not be null";
 	}
+
+#if defined(_WIN32)
+	if (dynamic_cast<WindowsContext *>(context) == nullptr)
+#elif defined(__ANDROID__)
+	if (dynamic_cast<AndroidContext *>(context) == nullptr)
+#elif defined(__APPLE__) || defined(__MACH__)
+	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
+#elif defined(__linux__)
+	if (dynamic_cast<UnixContext *>(context) == nullptr)
+#endif
+	{
+		throw "incorrect context provided for this platform";
+	}
+
 	return EXIT_SUCCESS;
 }
