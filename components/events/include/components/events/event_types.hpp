@@ -152,8 +152,8 @@ struct KeyEvent
 
 struct CursorPositionEvent
 {
-	uint32_t pos_x;
-	uint32_t pos_y;
+	float x;
+	float y;
 };
 
 enum class TouchAction
@@ -169,8 +169,8 @@ struct TouchEvent
 {
 	TouchAction action;
 	uint32_t    pointer_id;
-	uint32_t    pos_x;
-	uint32_t    pos_y;
+	float       x;
+	float       y;
 };
 }        // namespace events
 }        // namespace components

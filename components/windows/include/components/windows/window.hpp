@@ -37,14 +37,22 @@ struct Position
 	uint32_t y;
 };
 
+struct ShouldCloseEvent
+{};
+
 struct ContentRectChangedEvent
 {
-	Extent extent;
+	Extent extent{0, 0};
 };
 
 struct PositionChangedEvent
 {
-	Position position;
+	Position position{0, 0};
+};
+
+struct FocusChangedEvent
+{
+	bool is_focused{false};
 };
 
 class Window : public events::EventObserver

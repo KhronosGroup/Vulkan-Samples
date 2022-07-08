@@ -44,13 +44,13 @@ void InputManager::process(ChannelReceiverPtr<CursorPositionEvent> &events)
 
 	auto &next_known_position = *optional_next_known_position;
 
-	if (next_known_position.pos_x != m_last_cursor_position.x || next_known_position.pos_y != m_last_cursor_position.y)
+	if (next_known_position.x != m_last_cursor_position.x || next_known_position.y != m_last_cursor_position.y)
 	{
-		m_cursor_position_delta.x = next_known_position.pos_x - m_last_cursor_position.x;
-		m_cursor_position_delta.y = next_known_position.pos_y - m_last_cursor_position.y;
+		m_cursor_position_delta.x = next_known_position.x - m_last_cursor_position.x;
+		m_cursor_position_delta.y = next_known_position.y - m_last_cursor_position.y;
 	}
 
-	m_last_cursor_position = CursorPosition{next_known_position.pos_x, next_known_position.pos_y};
+	m_last_cursor_position = CursorPosition{next_known_position.x, next_known_position.y};
 }
 
 void InputManager::process(ChannelReceiverPtr<TouchEvent> &events)
@@ -66,18 +66,18 @@ void InputManager::process(ChannelReceiverPtr<TouchEvent> &events)
 			assert(res.second);
 			it = res.first;
 
-			it->second.position = CursorPosition{event.pos_x, event.pos_y};
+			it->second.position = CursorPosition{event.x, event.y};
 		}
 
 		auto &touch = it->second;
 
-		if (event.pos_x != touch.position.x || event.pos_y != touch.position.y)
+		if (event.x != touch.position.x || event.y != touch.position.y)
 		{
-			touch.position.x = event.pos_x - touch.position.x;
-			touch.position.y = event.pos_y - touch.position.y;
+			touch.position.x = event.x - touch.position.x;
+			touch.position.y = event.y - touch.position.y;
 		}
 
-		touch.position = CursorPosition{event.pos_x, event.pos_y};
+		touch.position = CursorPosition{event.x, event.y};
 	}
 }
 

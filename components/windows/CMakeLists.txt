@@ -40,3 +40,14 @@ vkb__register_tests(
   LIBS
     vkb__headless_window
 )
+
+## glfw window
+
+vkb__register_component(
+  NAME glfw_window
+  SRC
+    src/glfw.cpp
+  LINK_LIBS
+    vkb__window_headers
+    glfw
+)
