@@ -21,7 +21,7 @@
 #include <sstream>
 
 #ifdef _WIN32
-#	include <libloaderapi.h>
+#	include <windows.h>
 #else
 #	include <dlfcn.h>
 #endif
