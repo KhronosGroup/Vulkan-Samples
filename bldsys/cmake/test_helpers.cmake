@@ -84,7 +84,11 @@ function(vkb__register_tests_no_catch2)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
-    add_executable(${TARGET_NAME} ${TARGET_SRC})
+    if(WIN32)
+        add_executable(${TARGET_NAME} WIN32 ${TARGET_SRC})
+    else()
+        add_executable(${TARGET_NAME} ${TARGET_SRC})
+    endif()
 
     if (TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
