@@ -26,17 +26,14 @@ vkb__register_component(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-
-
 vkb__register_tests_no_catch2(
-  NAME "platform_test"
+  NAME "platform_tests"
   SRC
     tests/platform.test.cpp
   LIBS
     vkb__platform
     vkb__platform__dummy_sample
 )
-
 
 # Dummy Sample
 
@@ -59,4 +56,3 @@ vkb__register_tests_no_catch2(
     vkb__platform
     vkb__platform__dummy_sample
 )
-
