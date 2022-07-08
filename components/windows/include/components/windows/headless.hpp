@@ -28,15 +28,19 @@ class HeadlessWindow : public Window
   public:
 	HeadlessWindow(const std::string &title = "New Window", const Extent &initial_extent = {600, 600});
 	virtual ~HeadlessWindow() = default;
-	virtual void     set_extent(const Extent &extent) override;
-	virtual Extent   extent() const override;
-	virtual void     set_position(const Position &position) override;
-	virtual Position position() const override;
-	virtual float    dpi_factor() const override;
-	virtual void     update() override;
-	virtual void     attach(events::EventBus &bus) override;
+	virtual void             set_extent(const Extent &extent) override;
+	virtual Extent           extent() const override;
+	virtual void             set_position(const Position &position) override;
+	virtual Position         position() const override;
+	virtual float            dpi_factor() const override;
+	virtual void             set_title(const std::string &title) override;
+	virtual std::string_view title() const override;
+	virtual void             update() override;
+	virtual void             attach(events::EventBus &bus) override;
 
   private:
+	std::string m_title;
+
 	bool   m_extent_changed{false};
 	Extent m_extent{};
 

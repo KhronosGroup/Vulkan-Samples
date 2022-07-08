@@ -22,7 +22,8 @@ namespace components
 namespace windows
 {
 HeadlessWindow::HeadlessWindow(const std::string &title, const Extent &initial_extent) :
-    Window{title},
+    Window{},
+    m_title{title},
     m_extent{initial_extent}
 {
 }
@@ -52,6 +53,16 @@ Position HeadlessWindow::position() const
 float HeadlessWindow::dpi_factor() const
 {
 	return m_dpi_factor;
+}
+
+void HeadlessWindow::set_title(const std::string &title)
+{
+	m_title = title;
+}
+
+std::string_view HeadlessWindow::title() const
+{
+	return m_title;
 }
 
 void HeadlessWindow::update()

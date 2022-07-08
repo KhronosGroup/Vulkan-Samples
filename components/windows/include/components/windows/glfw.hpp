@@ -35,15 +35,19 @@ class GLFWWindow : public Window
   public:
 	GLFWWindow(const std::string &title = "New Window", const Extent &initial_extent = {600, 600});
 	virtual ~GLFWWindow();
-	virtual void     set_extent(const Extent &extent) override;
-	virtual Extent   extent() const override;
-	virtual void     set_position(const Position &position) override;
-	virtual Position position() const override;
-	virtual float    dpi_factor() const override;
-	virtual void     update() override;
-	virtual void     attach(events::EventBus &bus) override;
+	virtual void             set_extent(const Extent &extent) override;
+	virtual Extent           extent() const override;
+	virtual void             set_position(const Position &position) override;
+	virtual Position         position() const override;
+	virtual float            dpi_factor() const override;
+	virtual void             set_title(const std::string &title) override;
+	virtual std::string_view title() const override;
+	virtual void             update() override;
+	virtual void             attach(events::EventBus &bus) override;
 
   protected:
+	std::string m_title;
+
 	GLFWwindow *                                      m_handle{nullptr};
 	std::unique_ptr<GLFWCallbackHelper>               m_callback_helper{nullptr};
 	events::ChannelSenderPtr<PositionChangedEvent>    m_position_sender{nullptr};

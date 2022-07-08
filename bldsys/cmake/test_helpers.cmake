@@ -45,6 +45,8 @@ function(vkb__register_tests)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
+    message("TEST: ${TARGET_NAME}")
+
     add_executable(${TARGET_NAME} ${TARGET_SRC})
     target_link_libraries(${TARGET_NAME} PUBLIC Catch2::Catch2WithMain)
 
