@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "components/events/pipelines.hpp"
+#include "components/events/event_pipeline.hpp"
 
 #include <cassert>
 
@@ -23,19 +23,19 @@ namespace components
 {
 namespace events
 {
-Pipeline &Pipeline::once(std::unique_ptr<PipelineStage> &&stage)
+EventPipeline &EventPipeline::once(std::unique_ptr<EventPipelineStage> &&stage)
 {
 	m_once_stages.emplace_back(std::move(stage));
 	return *this;
 }
 
-Pipeline &Pipeline::then(std::unique_ptr<PipelineStage> &&stage)
+EventPipeline &EventPipeline::then(std::unique_ptr<EventPipelineStage> &&stage)
 {
 	m_stages.emplace_back(std::move(stage));
 	return *this;
 }
 
-void Pipeline::process()
+void EventPipeline::process()
 {
 	if (!running)
 	{

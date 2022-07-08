@@ -25,24 +25,24 @@ namespace components
 {
 namespace events
 {
-class PipelineStage
+class EventPipelineStage
 {
   public:
-	PipelineStage()          = default;
-	virtual ~PipelineStage() = default;
+	EventPipelineStage()          = default;
+	virtual ~EventPipelineStage() = default;
 
 	virtual const char *name() const        = 0;
 	virtual void        emit(EventBus &bus) = 0;
 };
 
 template <typename Event>
-class TypedPipelineStage : public PipelineStage
+class TypedEventPipelineStage : public EventPipelineStage
 {
   public:
-	TypedPipelineStage()
+	TypedEventPipelineStage()
 	{}
 
-	virtual ~TypedPipelineStage() = default;
+	virtual ~TypedEventPipelineStage() = default;
 
 	virtual const char *name() const override
 	{
@@ -57,16 +57,16 @@ class TypedPipelineStage : public PipelineStage
 };
 
 template <typename Event>
-class TypedPipelineStageWithFunc : public TypedPipelineStage<Event>
+class TypedEventPipelineStageWithFunc : public TypedEventPipelineStage<Event>
 {
   public:
 	typedef Event (*Func)();
 
-	TypedPipelineStageWithFunc(Func &&func) :
+	TypedEventPipelineStageWithFunc(Func &&func) :
 	    m_func{func}
 	{}
 
-	virtual ~TypedPipelineStageWithFunc() = default;
+	virtual ~TypedEventPipelineStageWithFunc() = default;
 
 	virtual void emit(EventBus &bus) override
 	{
@@ -78,23 +78,23 @@ class TypedPipelineStageWithFunc : public TypedPipelineStage<Event>
 	Func m_func;
 };
 
-class Pipeline : public EventBus
+class EventPipeline : public EventBus
 {
   public:
-	Pipeline()          = default;
-	virtual ~Pipeline() = default;
+	EventPipeline()          = default;
+	virtual ~EventPipeline() = default;
 
-	Pipeline &once(std::unique_ptr<PipelineStage> &&stage);
+	EventPipeline &once(std::unique_ptr<EventPipelineStage> &&stage);
 
-	Pipeline &then(std::unique_ptr<PipelineStage> &&stage);
+	EventPipeline &then(std::unique_ptr<EventPipelineStage> &&stage);
 
 	virtual void process() override;
 
   protected:
 	bool running{false};
 
-	std::vector<std::unique_ptr<PipelineStage>> m_once_stages;
-	std::vector<std::unique_ptr<PipelineStage>> m_stages;
+	std::vector<std::unique_ptr<EventPipelineStage>> m_once_stages;
+	std::vector<std::unique_ptr<EventPipelineStage>> m_stages;
 };
 }        // namespace events
 }        // namespace components
