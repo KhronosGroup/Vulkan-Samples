@@ -36,7 +36,7 @@ std::string os_library_name(const std::string &name)
 #ifdef _WIN32
 	lib_name << name << ".dll";
 #elif defined(__APPLE__)
-	lib_name << name << ".dylib";
+	lib_name << "lib" << name << ".dylib";
 #else
 	lib_name << "lib" << name << ".so";
 #endif
