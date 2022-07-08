@@ -14,9 +14,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(components__common INTERFACE)
-target_include_directories(components__common INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
-add_library(Components::Common ALIAS components__common)
+vkb__register_component(
+    NAME common
+    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
 vkb__register_tests(
     NAME "common_tests"
@@ -24,5 +25,5 @@ vkb__register_tests(
         tests/stack_error.test.cpp
         tests/strings.test.cpp
     LIBS
-        components__common
+        vkb__common
 )

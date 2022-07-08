@@ -41,7 +41,7 @@ class UnixFileSystem : public FileSystem
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size) override;
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
-	virtual void          make_folder(const std::string &path) override;
+	virtual void          make_directory(const std::string &path) override;
 
   private:
 	std::string m_base_path;

@@ -205,5 +205,10 @@ StackErrorPtr AndroidAAssetManager::enumerate_folders(const std::string &file_pa
 {
 	return StackError::unique("not implemented", "vfs/android_aasset_manager.cpp", __LINE__);
 }
+
+void AndroidAAssetManager::make_directory(const std::string &path)
+{
+}
+
 }        // namespace vfs
 }        // namespace components

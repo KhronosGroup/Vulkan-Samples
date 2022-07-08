@@ -21,6 +21,7 @@
 #include <Windows.h>
 #include <direct.h>
 
+#include <cassert>
 #include <fstream>
 #include <iostream>
 #include <limits>
@@ -32,7 +33,7 @@ namespace components
 {
 namespace vfs
 {
-RootFileSystem &_default(void *context)
+RootFileSystem &_default(void * /* context */)
 {
 	static vfs::RootFileSystem fs;
 
@@ -224,14 +225,19 @@ StackErrorPtr WindowsFileSystem::write_file(const std::string &file_path, const 
 	return nullptr;
 }
 
-StackErrorPtr WindowsFileSystem::enumerate_files(const std::string &file_path, std::vector<std::string> *files)
+StackErrorPtr WindowsFileSystem::enumerate_files(const std::string & /*file_path*/, std::vector<std::string> * /*files*/)
 {
 	return StackError::unique("not implemented", "vfs/windows.cpp", __LINE__);
 }
 
-StackErrorPtr WindowsFileSystem::enumerate_folders(const std::string &file_path, std::vector<std::string> *folders)
+StackErrorPtr WindowsFileSystem::enumerate_folders(const std::string & /*file_path*/, std::vector<std::string> * /*folders*/)
 {
 	return StackError::unique("not implemented", "vfs/windows.cpp", __LINE__);
+}
+
+void WindowsFileSystem::make_directory(const std::string & /* path */)
+{
+	assert(false && "not implemented");
 }
 
 }        // namespace vfs

@@ -112,7 +112,7 @@ class FileSystem
 	FileSystem()          = default;
 	virtual ~FileSystem() = default;
 
-	void make_folder_recursive(const std::string &path);
+	void make_directory_recursive(const std::string &path);
 
 	virtual bool          folder_exists(const std::string &file_path)                                                                    = 0;
 	virtual bool          file_exists(const std::string &file_path)                                                                      = 0;
@@ -120,7 +120,7 @@ class FileSystem
 	virtual StackErrorPtr read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) = 0;
 	virtual size_t        file_size(const std::string &file_path)                                                                        = 0;
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size)                                        = 0;
-	virtual void          make_folder(const std::string &path){};
+	virtual void          make_directory(const std::string &path)                                                                        = 0;
 
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files)     = 0;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) = 0;
@@ -146,6 +146,7 @@ class RootFileSystem : public FileSystem
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size) override;
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
+	virtual void          make_directory(const std::string &path) override;
 
 	StackErrorPtr enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
 	StackErrorPtr enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);

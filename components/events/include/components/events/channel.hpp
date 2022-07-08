@@ -279,7 +279,7 @@ Type ChannelReceiver<Type>::drain()
 		return {};
 	}
 
-	Type front;
+	Type front{};
 	while (!m_queue.empty())
 	{
 		front = m_queue.front();

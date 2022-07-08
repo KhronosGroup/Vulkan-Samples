@@ -29,6 +29,7 @@ include(global_config)
 include(sample_helper)
 include(check_atomic)
 include(test_helpers)
+include(component_helpers)
 
 # options
 option(VKB_WARNINGS_AS_ERRORS "Enable Warnings as Errors" ON)

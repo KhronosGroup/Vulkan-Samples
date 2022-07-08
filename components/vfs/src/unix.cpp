@@ -30,17 +30,21 @@ namespace vfs
 {
 // Android reuses the Unix filesystem. This stops a redefinition of the instance function
 #ifndef ANDROID
-RootFileSystem &_default(void *context)
+RootFileSystem &_default(void * /* context */)
 {
 	static vfs::RootFileSystem fs;
 
 	static bool first_time = true;
 	if (first_time)
 	{
-		char buf[256];
-		getcwd(buf, 256);
+		char *c_cwd = getcwd(nullptr, 0);
 
-		std::string cwd{buf};
+		if (!c_cwd)
+		{
+			throw std::runtime_error{"failed to determine working directory"};
+		}
+
+		std::string cwd{c_cwd};
 		fs.mount("/", std::make_shared<vfs::UnixFileSystem>(cwd));
 		fs.mount("/scenes/", std::make_shared<vfs::UnixFileSystem>(cwd + "/assets/scenes"));
 		fs.mount("/textures/", std::make_shared<vfs::UnixFileSystem>(cwd + "/assets/textures"));
@@ -155,7 +159,7 @@ StackErrorPtr UnixFileSystem::read_chunk(const std::string &file_path, const siz
 	std::streamsize size = stream.gcount();
 	stream.clear();
 
-	if (offset + count > size)
+	if (offset + count > static_cast<size_t>(size))
 	{
 		return StackError::unique("file chunk out of bounds", "vfs/unix.cpp", __LINE__);
 	}
@@ -313,7 +317,7 @@ StackErrorPtr UnixFileSystem::enumerate_folders(const std::string &file_path, st
 	return nullptr;
 }
 
-void UnixFileSystem::make_folder(const std::string &path)
+void UnixFileSystem::make_directory(const std::string &path)
 {
 	auto full_path = m_base_path + path;
 
