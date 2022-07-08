@@ -40,6 +40,7 @@ namespace components
  */
 struct PlatformContext
 {
+	virtual void _(){};        // < requires a function to be polymorphic (dynamic_cast)
 };
 }        // namespace components
 
@@ -68,7 +69,7 @@ int platform_main(components::PlatformContext *);
 namespace components
 {
 #	include <Windows.h>
-struct WindowsContext : PlatformContext
+struct WindowsContext : virtual PlatformContext
 {
 	HINSTANCE                hInstance;
 	HINSTANCE                hPrevInstance;
@@ -99,7 +100,7 @@ struct WindowsContext : PlatformContext
 
 namespace components
 {
-struct AndroidContext : PlatformContext
+struct AndroidContext : virtual PlatformContext
 {
 	android_app *            android_app;
 	std::vector<std::string> arguments;
@@ -122,7 +123,7 @@ struct AndroidContext : PlatformContext
 
 namespace components
 {
-struct MacOSXContext
+struct MacOSXContext : virtual PlatformContext
 {
 	std::vector<std::string> arguments;
 };
@@ -143,7 +144,7 @@ struct MacOSXContext
 
 namespace components
 {
-struct UnixContext : PlatformContext
+struct UnixContext : virtual PlatformContext
 {
 	std::vector<std::string> arguments;
 };
