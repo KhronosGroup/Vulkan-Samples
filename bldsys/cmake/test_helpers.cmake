@@ -59,12 +59,8 @@ function(vkb__register_tests)
     endif()
 
     add_test(NAME ${TARGET_NAME}
-<<<<<<< HEAD
-        COMMAND ${TARGET_NAME})
-=======
              COMMAND ${TARGET_NAME}
              WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
->>>>>>> 6d26384 (STD Filesystem VFS (#495))
 
     add_dependencies(vkb_tests ${TARGET_NAME})
 endfunction()

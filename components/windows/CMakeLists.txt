@@ -41,7 +41,8 @@ vkb__register_tests(
     vkb__headless_window
 )
 
-# glfw window
+## glfw window
+
 vkb__register_component(
   NAME glfw_window
   SRC
