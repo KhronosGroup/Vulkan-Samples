@@ -48,5 +48,8 @@ vkb__enable_testing()
 # component libraries
 add_subdirectory(components)
 
+# register samples
+add_subdirectory(samples)
+
 # executables
 add_subdirectory(cmd)

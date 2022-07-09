@@ -15,3 +15,4 @@
 # limitations under the License.
 
 add_subdirectory(hello_sample)
+add_subdirectory(hello_triangle)

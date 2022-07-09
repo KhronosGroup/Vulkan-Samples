@@ -15,14 +15,9 @@
 # limitations under the License.
 #
 
-set(SRC
-    src/main.cpp
-    src/config.cpp
-)
-
-add_library(samples_launcher STATIC ${SRC})
-target_link_libraries(samples_launcher PUBLIC vkb__platform vkb__encoding)
-target_include_directories(samples_launcher PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_library(samples_launcher_lib STATIC src/config.cpp)
+target_link_libraries(samples_launcher_lib PUBLIC vkb__platform vkb__encoding)
+target_include_directories(samples_launcher_lib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 vkb__register_tests(
     NAME samples_launcher_test
@@ -30,5 +25,23 @@ vkb__register_tests(
         tests/config.test.cpp
         tests/config_marshaler.test.cpp
     LIBS
-        samples_launcher
+        samples_launcher_lib
+)
+
+# samples launcher executable
+add_executable(samples_launcher src/main.cpp)
+target_link_libraries(samples_launcher PUBLIC samples_launcher_lib)
+
+# compile sample information
+get_property(DESCRIPTORS GLOBAL PROPERTY SAMPLE_DESCRIPTORS)
+list(JOIN DESCRIPTORS "," JSON_ARRAY)
+FILE(WRITE "${CMAKE_CURRENT_BINARY_DIR}/samples.json" "{\"samples\": [${JSON_ARRAY}]}")
+
+# copy samples json to binary output dir
+add_custom_command(
+    TARGET samples_launcher
+    POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy
+        "${CMAKE_CURRENT_BINARY_DIR}/samples.json"
+        "$<TARGET_FILE_DIR:samples_launcher>/samples.json"
 )

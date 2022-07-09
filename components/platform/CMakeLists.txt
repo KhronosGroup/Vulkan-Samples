@@ -16,14 +16,19 @@
 #
 
 vkb__register_component(
+  NAME platform_headers
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+vkb__register_component(
   NAME platform
   SRC
     src/dl.cpp
     src/sample.cpp
   LINK_LIBS
     ${CMAKE_DL_LIBS}
-  INCLUDE_DIRS
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    vkb__platform_headers
 )
 
 vkb__register_tests_no_catch2(

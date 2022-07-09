@@ -17,159 +17,66 @@
 
  ]]
 
-set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
+ set_property(GLOBAL PROPERTY SAMPLE_DESCRIPTORS "")
 
-function(add_sample)
+function(vkb__register_sample_descriptor)
     set(options)  
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL)
+    set(oneValueArgs NAME DESCRIPTION LIB)
+    set(multiValueArgs)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
 
-    add_sample_with_tags(
-        TYPE "Sample"
-        ID ${TARGET_ID}
-        CATEGORY ${TARGET_CATEGORY}
-        AUTHOR ${TARGET_AUTHOR}
-        NAME ${TARGET_NAME}
-        DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
-            "any"
-        FILES
-            ${SRC_FILES}
-        LIBS
-            ${TARGET_LIBS}
-        SHADER_FILES_GLSL
-            ${TARGET_SHADER_FILES_GLSL})
+    get_property(DESCRIPTORS GLOBAL PROPERTY SAMPLE_DESCRIPTORS)
+    list(APPEND DESCRIPTORS "{\"name\":\"${TARGET_NAME}\", \"description\": \"${TARGET_DESCRIPTION}\", \"library_name\": \"${TARGET_LIB}\"}")
+    set_property(GLOBAL PROPERTY SAMPLE_DESCRIPTORS ${DESCRIPTORS})
 endfunction()
 
-function(add_sample_with_tags)
+add_custom_target(vkb__samples)
+
+function(vkb__register_sample)
     set(options)
-    set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL)
+    set(oneValueArgs NAME)
+    set(multiValueArgs SRC LINK_LIBS INCLUDE_DIRS)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
-    list(APPEND TARGET_TAGS "any")
+    if(TARGET_NAME STREQUAL "")
+        message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
+    endif()
 
-    set(SRC_FILES
-        ${TARGET_ID}.h
-        ${TARGET_ID}.cpp
+    if(TARGET_SRC) ## Create static library
+        message("ADDING SAMPLE: sample__${TARGET_NAME}")
+
+        add_library("sample__${TARGET_NAME}" SHARED ${TARGET_SRC})
+
+        target_link_libraries("sample__${TARGET_NAME}" PUBLIC vkb__platform_headers) # sample_main
+
+        if(TARGET_LINK_LIBS)
+            target_link_libraries("sample__${TARGET_NAME}" PUBLIC ${TARGET_LINK_LIBS})
+        endif()
+
+        if(TARGET_INCLUDE_DIRS)
+            target_include_directories("sample__${TARGET_NAME}" PUBLIC ${TARGET_INCLUDE_DIRS})
+        endif()
+        
+        if(MSVC)
+            target_compile_options("sample__${TARGET_NAME}" PRIVATE /W4 /WX)
+        else()
+            target_compile_options("sample__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
+        endif()
+    else()
+        message(FATAL_ERROR "a sample must contain one or more source files")
+    endif()
+
+    # copy lib to samples_launcher executable
+    add_custom_command(
+        TARGET "sample__${TARGET_NAME}"
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+            "$<TARGET_FILE:sample__${TARGET_NAME}>"
+            "$<TARGET_FILE_DIR:samples_launcher>/$<TARGET_FILE_NAME:sample__${TARGET_NAME}>"
     )
 
-    # Append extra files if present
-    if (TARGET_FILES)
-        list(APPEND SRC_FILES ${TARGET_FILES})
-    endif()
-
-    # Add GLSL shader files for this sample
-    if (TARGET_SHADER_FILES_GLSL)    
-        list(APPEND SHADER_FILES_GLSL ${TARGET_SHADER_FILES_GLSL})
-        foreach(SHADER_FILE_GLSL ${SHADER_FILES_GLSL})
-            list(APPEND SHADERS_GLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_GLSL}")
-        endforeach()        
-    endif()
-
-    add_project(
-        TYPE "Sample"
-        ID ${TARGET_ID}
-        CATEGORY ${TARGET_CATEGORY}
-        AUTHOR ${TARGET_AUTHOR}
-        NAME ${TARGET_NAME}
-        DESCRIPTION ${TARGET_DESCRIPTION}
-        TAGS 
-            ${TARGET_TAGS}
-        FILES
-            ${SRC_FILES}
-        LIBS
-            ${TARGET_LIBS}
-        SHADERS_GLSL
-            ${SHADERS_GLSL})
-
-endfunction()
-
-function(vkb_add_test)
-    set(options)
-    set(oneValueArgs ID)
-    set(multiValueArgs)
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    add_project(
-        TYPE "Test"
-        ID ${TARGET_ID}
-        CATEGORY "Tests"
-        AUTHOR " "
-        NAME ${TARGET_ID}
-        DESCRIPTION " "
-        VENDOR_TAG " "
-        LIBS test_framework
-        FILES
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp)
-endfunction()
-
-function(add_project)
-    set(options)  
-    set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
-
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
-
-    if(${TARGET_TYPE} STREQUAL "Sample")
-        set("VKB_${TARGET_ID}" ON CACHE BOOL "Build sample ${TARGET_ID}")
-    endif()
-
-    if(NOT ${VKB_${TARGET_ID}})
-        message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - DISABLED")
-        return()
-    endif()
-
-    message(STATUS "${TARGET_TYPE} `${TARGET_ID}` - BUILD")
-
-    # create project (object target - reused by app target)
-    project(${TARGET_ID} LANGUAGES C CXX)
-
-    source_group("\\" FILES ${TARGET_FILES})
-
-    # Add shaders to project group
-    if (SHADERS_GLSL)
-        source_group("\\Shaders" FILES ${SHADERS_GLSL})
-    endif()
-
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
-    
-    # inherit compile definitions from framework target
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
-
-    # # inherit include directories from framework target
-    target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
-    target_link_libraries(${PROJECT_NAME} PRIVATE framework)
-
-    # Link against extra project specific libraries
-    if(TARGET_LIBS)
-        target_link_libraries(${PROJECT_NAME} PUBLIC ${TARGET_LIBS})
-    endif()
-
-    # capitalise the first letter of the category  (performance -> Performance) 
-    string(SUBSTRING ${TARGET_CATEGORY} 0 1 FIRST_LETTER)
-    string(TOUPPER ${FIRST_LETTER} FIRST_LETTER)
-    string(REGEX REPLACE "^.(.*)" "${FIRST_LETTER}\\1" CATEGORY "${TARGET_CATEGORY}")
-
-    if(${TARGET_TYPE} STREQUAL "Sample")
-        # set sample properties
-        set_target_properties(${PROJECT_NAME}
-            PROPERTIES 
-                SAMPLE_CATEGORY ${TARGET_CATEGORY}
-                SAMPLE_AUTHOR ${TARGET_AUTHOR}
-                SAMPLE_NAME ${TARGET_NAME}
-                SAMPLE_DESCRIPTION ${TARGET_DESCRIPTION}
-                SAMPLE_TAGS "${TARGET_TAGS}")
-
-        # add sample project to a folder
-        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Samples//${CATEGORY}")
-    elseif(${TARGET_TYPE} STREQUAL "Test")
-        # add test project to a folder
-        set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
-    endif()
+    add_dependencies("sample__${TARGET_NAME}" samples_launcher) # automatically build the samples_launcher if a sample is set to compile
+    add_dependencies(vkb__samples "sample__${TARGET_NAME}")
 endfunction()
