@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <components/common/stack_error.hpp>
 
 #include <vector>

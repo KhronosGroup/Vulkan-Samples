@@ -113,16 +113,20 @@ TEST_CASE("marshal bool", "[encoding][json]")
 	auto err = marshal_json<bool>(value, &data);
 	CHECK_ERROR(err);
 
-	std::stringstream expected_outcome;
-	expected_outcome << "{\"" << typeid(bool).name() << "\":true}";
-	REQUIRE(std::string{data.begin(), data.end()} == expected_outcome.str());
+	{
+		std::stringstream expected_outcome;
+		expected_outcome << "{\"" << typeid(bool).name() << "\":true}";
+		REQUIRE(std::string{data.begin(), data.end()} == expected_outcome.str());
+	}
 
 	data.clear();
-
 	value = false;
 	err   = marshal_json<bool>(value, &data);
 	CHECK_ERROR(err);
-	expected_outcome.clear();
-	expected_outcome << "{\"" << typeid(bool).name() << "\":false}";
-	REQUIRE(std::string{data.begin(), data.end()} == expected_outcome.str());
+
+	{
+		std::stringstream expected_outcome;
+		expected_outcome << "{\"" << typeid(bool).name() << "\":false}";
+		REQUIRE(std::string{data.begin(), data.end()} == expected_outcome.str());
+	}
 }
