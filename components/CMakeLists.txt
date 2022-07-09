@@ -18,6 +18,7 @@
 # order matters
 add_subdirectory(common)
 add_subdirectory(encoding)
+add_subdirectory(platform)
 add_subdirectory(events)
 add_subdirectory(windows)
 add_subdirectory(vfs)
