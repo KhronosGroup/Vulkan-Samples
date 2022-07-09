@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+# http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -31,6 +31,7 @@ target_compile_definitions(glm INTERFACE
     GLM_FORCE_CTOR_INIT
     GLM_ENABLE_EXPERIMENTAL
 )
+
 if(NOT CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
     target_compile_definitions(glm INTERFACE GLM_FORCE_CXX14)
 endif()
@@ -49,41 +50,44 @@ target_include_directories(vulkan INTERFACE ${VULKAN_INCLUDE_DIR})
 
 target_compile_definitions(vulkan INTERFACE VK_NO_PROTOTYPES)
 
-
 if(ANDROID)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_ANDROID_KHR)
 elseif(WIN32)
     target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WIN32_KHR)
 elseif(APPLE)
-	target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
+    target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_METAL_EXT)
 elseif(UNIX)
     # Choose WSI based on VKB_WSI_SELECTION
-    if (VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
+    if(VKB_WSI_SELECTION STREQUAL XCB OR VKB_WSI_SELECTION STREQUAL XLIB OR VKB_WSI_SELECTION STREQUAL WAYLAND)
         find_package(PkgConfig REQUIRED)
     endif()
-    if (VKB_WSI_SELECTION STREQUAL XCB)
+
+    if(VKB_WSI_SELECTION STREQUAL XCB)
         pkg_check_modules(XCB xcb REQUIRED)
-        if (XCB_FOUND)
+
+        if(XCB_FOUND)
             target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XCB_KHR)
         endif()
-    elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+    elseif(VKB_WSI_SELECTION STREQUAL XLIB)
         pkg_check_modules(X11 x11 REQUIRED)
-        if (X11_FOUND)
+
+        if(X11_FOUND)
             target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_XLIB_KHR)
         endif()
-    elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+    elseif(VKB_WSI_SELECTION STREQUAL WAYLAND)
         pkg_check_modules(WAYLAND wayland-client REQUIRED)
-        if (WAYLAND_FOUND)
+
+        if(WAYLAND_FOUND)
             target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_WAYLAND_KHR)
         endif()
-    elseif (VKB_WSI_SELECTION STREQUAL D2D)
+    elseif(VKB_WSI_SELECTION STREQUAL D2D)
         set(DIRECT_TO_DISPLAY TRUE)
         set(DIRECT_TO_DISPLAY TRUE PARENT_SCOPE)
         target_compile_definitions(vulkan INTERFACE VK_USE_PLATFORM_DISPLAY_KHR)
     else()
         message(FATAL_ERROR "Unknown WSI")
     endif()
-endif() 
+endif()
 
 # vma
 add_library(vma INTERFACE)
@@ -95,7 +99,7 @@ target_link_libraries(vma INTERFACE vulkan)
 # libktx
 set(KTX_DIR ${CMAKE_CURRENT_SOURCE_DIR}/ktx)
 
-set(KTX_SOURCES  
+set(KTX_SOURCES
     ${KTX_DIR}/lib/checkheader.c
     ${KTX_DIR}/lib/dfdutils/createdfd.c
     ${KTX_DIR}/lib/dfdutils/colourspaces.c
@@ -136,7 +140,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/basisu/transcoder/basisu_transcoder.h
     ${KTX_DIR}/lib/basisu/transcoder/basisu.h
     ${KTX_DIR}/lib/basisu/zstd/zstd.c
-   
+
     # KT1
     ${KTX_DIR}/lib/texture1.c
     ${KTX_DIR}/lib/texture1.h
@@ -152,7 +156,7 @@ set(KTX_SOURCES
     ${KTX_DIR}/lib/vkformat_str.c
     ${KTX_DIR}/lib/vk_funcs.c
     ${KTX_DIR}/lib/vk_funcs.h
-    ${KTX_DIR}/lib/vkloader.c    
+    ${KTX_DIR}/lib/vkloader.c
 )
 
 set(KTX_INCLUDE_DIRS
@@ -166,9 +170,11 @@ set(KTX_INCLUDE_DIRS
 add_library(ktx ${KTX_SOURCES})
 
 target_compile_definitions(ktx PUBLIC LIBKTX)
-if (WIN32)
-target_compile_definitions(ktx PUBLIC "KTX_API=__declspec(dllexport)")
+
+if(WIN32)
+    target_compile_definitions(ktx PUBLIC "KTX_API=__declspec(dllexport)")
 endif()
+
 target_compile_definitions(ktx PUBLIC KTX_FEATURE_WRITE=0)
 target_compile_definitions(ktx PUBLIC BASISD_SUPPORT_KTX2_ZSTD=0)
 target_compile_definitions(ktx PUBLIC BASISU_NO_ITERATOR_DEBUG_LEVEL)
@@ -190,11 +196,12 @@ add_library(volk STATIC ${VOLK_FILES})
 target_link_libraries(volk PUBLIC vulkan)
 
 target_include_directories(volk PUBLIC ${VOLK_DIR})
-if (VKB_WSI_SELECTION STREQUAL XCB)
+
+if(VKB_WSI_SELECTION STREQUAL XCB)
     target_include_directories(volk PUBLIC ${XCB_INCLUDE_DIRS})
-elseif (VKB_WSI_SELECTION STREQUAL XLIB)
+elseif(VKB_WSI_SELECTION STREQUAL XLIB)
     target_include_directories(volk PUBLIC ${X11_INCLUDE_DIRS})
-elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
+elseif(VKB_WSI_SELECTION STREQUAL WAYLAND)
     target_include_directories(volk PUBLIC ${WAYLAND_INCLUDE_DIRS})
 endif()
 
@@ -230,9 +237,8 @@ option(BUILD_EXTERNAL OFF)
 
 add_subdirectory(glslang)
 
-if (NOT TARGET glslang-default-resource-limits)
-    add_library(glslang-default-resource-limits
-                glslang/StandAlone/ResourceLimits.cpp)
+if(NOT TARGET glslang-default-resource-limits)
+    add_library(glslang-default-resource-limits glslang/StandAlone/ResourceLimits.cpp)
 
     set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "third_party")
     
@@ -322,21 +328,22 @@ if(ANDROID)
     set(NATIVE_APP_GLUE_DIR "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
 
     file(GLOB NATIVE_APP_GLUE_FILES "${NATIVE_APP_GLUE_DIR}/*.c" "${NATIVE_APP_GLUE_DIR}/*.h")
-    
+
     add_library(native_app_glue STATIC ${NATIVE_APP_GLUE_FILES})
-        
+
     target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
     
     set_property(TARGET native_app_glue PROPERTY FOLDER "third_party")
 else()
-    if (NOT DIRECT_TO_DISPLAY)
+    if(NOT DIRECT_TO_DISPLAY)
         # GLFW
         option(GLFW_BUILD_DOCS OFF)
         option(GLFW_BUILD_TESTS OFF)
         option(GLFW_BUILD_EXAMPLES OFF)
         option(GLFW_BUILD_TESTS OFF)
         option(GLFW_INSTALL OFF)
-        if (VKB_WSI_SELECTION STREQUAL WAYLAND)
+
+        if(VKB_WSI_SELECTION STREQUAL WAYLAND)
             set(GLFW_USE_WAYLAND ON)
         endif()
 
@@ -385,5 +392,8 @@ set_property(TARGET Catch2WithMain PROPERTY FOLDER "third_party")
 # RE2
 set(RE2_BUILD_TESTING OFF)
 add_subdirectory(re)
+set_property(TARGET re2 PROPERTY POSITION_INDEPENDENT_CODE ON) # PIC required for shared lib linking
 
 set_property(TARGET re2 PROPERTY FOLDER "third_party")
+
+add_subdirectory(json)

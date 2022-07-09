@@ -30,7 +30,7 @@ namespace components
 {
 namespace dl
 {
-inline const char *os_library_prefix()
+const char *os_library_prefix()
 {
 #ifdef _WIN32
 	return "";
@@ -42,7 +42,7 @@ inline const char *os_library_prefix()
 	return "";
 }
 
-inline const char *os_library_postfix()
+const char *os_library_postfix()
 {
 #ifdef _WIN32
 	return ".dll";

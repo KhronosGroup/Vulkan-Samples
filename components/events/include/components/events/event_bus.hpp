@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+#pragma once
+
 #include <cassert>
 #include <functional>
 #include <memory>
@@ -56,13 +58,19 @@ class EventBus
 	EventBus()          = default;
 	virtual ~EventBus() = default;
 
+	template <class Observer>
+	inline EventBus &attach(const std::shared_ptr<Observer> &observer)
+	{
+		return attach(std::weak_ptr<EventObserver>{observer});
+	}
+
 	/**
 	 * @brief Attach a new observer
 	 *
 	 * @param observer the observer to attach
 	 * @return EventBus& the event bus
 	 */
-	EventBus &attach(std::weak_ptr<EventObserver> &&observer);
+	EventBus &attach(const std::weak_ptr<EventObserver> &observer);
 
 	template <typename Type>
 	using EventCallback = std::function<void(const Type &)>;
@@ -101,7 +109,7 @@ class EventBus
 	virtual void process();
 
   protected:
-  	// Allow each and last callbacks to process all events held in channels
+	// Allow each and last callbacks to process all events held in channels
 	inline void flush_callbacks()
 	{
 		for (auto &it : m_each_callbacks)
@@ -122,10 +130,13 @@ class EventBus
 		ChannelCallbacks()          = default;
 		virtual ~ChannelCallbacks() = default;
 
-		virtual void   process_each()         = 0;
-		virtual void   process_last()         = 0;
+		virtual void process_each() = 0;
+		virtual void process_last() = 0;
+
+#ifdef VKB_BUILD_TESTS
 		virtual size_t queue_size() const     = 0;
 		virtual size_t callback_count() const = 0;
+#endif
 	};
 
 	template <typename Type>

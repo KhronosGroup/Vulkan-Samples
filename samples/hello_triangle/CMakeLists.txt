@@ -18,6 +18,21 @@ vkb__register_sample(
     NAME hello_triangle
     SRC
         src/main.cpp
+        src/context.cpp
+        src/instance.cpp
+        src/device.cpp
+        src/swapchain.cpp
+        src/graphics_pipeline.cpp
+    LINK_LIBS
+        vkb__glfw_window
+        vkb__vfs
+        vkb__common
+        volk
+        glslang
+        glslang-default-resource-limits
+        SPIRV
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 vkb__register_sample_descriptor(

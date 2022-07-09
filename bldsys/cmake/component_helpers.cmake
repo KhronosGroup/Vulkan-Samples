@@ -46,6 +46,8 @@ function(vkb__register_component)
 
         add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC} ${TARGET_HEADERS})
 
+        set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY POSITION_INDEPENDENT_CODE ON) # PIC required for shared lib linking
+
         if(TARGET_LINK_LIBS)
             target_link_libraries("vkb__${TARGET_NAME}" PUBLIC ${TARGET_LINK_LIBS})
         endif()

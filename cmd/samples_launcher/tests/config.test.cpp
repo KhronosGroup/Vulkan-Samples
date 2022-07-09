@@ -57,9 +57,8 @@ TEST_CASE("load config", "[sample_launcher]")
 	auto err = marshal_json(sample_list, &data);
 	CHECK_ERROR(err);
 
-	std::stringstream json;
-	json << "{ \"samples\": [" << std::string{data.begin(), data.end()} << "]}";
-	auto json_string = json.str();
+	std::string json_string{data.begin(), data.end()};
+	INFO(json_string);
 
 	config::Config some_config;
 

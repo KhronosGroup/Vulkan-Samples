@@ -23,21 +23,13 @@ namespace components
 {
 namespace events
 {
-<<<<<<< HEAD:components/events/src/event_pipeline.cpp
 EventPipeline &EventPipeline::add_once(std::unique_ptr<EventPipelineStage> &&stage)
-=======
-EventPipeline &EventPipeline::once(std::unique_ptr<EventPipelineStage> &&stage)
->>>>>>> 9591042... Pipeline -> EventPipeline:components/events/src/pipelines.cpp
 {
 	m_once_stages.emplace_back(std::move(stage));
 	return *this;
 }
 
-<<<<<<< HEAD:components/events/src/event_pipeline.cpp
 EventPipeline &EventPipeline::add_always(std::unique_ptr<EventPipelineStage> &&stage)
-=======
-EventPipeline &EventPipeline::then(std::unique_ptr<EventPipelineStage> &&stage)
->>>>>>> 9591042... Pipeline -> EventPipeline:components/events/src/pipelines.cpp
 {
 	m_stages.emplace_back(std::move(stage));
 	return *this;
