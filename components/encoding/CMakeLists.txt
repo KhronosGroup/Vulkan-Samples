@@ -15,8 +15,19 @@
 # limitations under the License.
 #
 
-add_subdirectory(common)
-add_subdirectory(encoding)
-add_subdirectory(events)
-add_subdirectory(windows)
-add_subdirectory(vfs)
+vkb__register_component(
+    NAME encoding
+    LINK_LIBS
+        nlohmann_json
+        vkb__common
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+vkb__register_tests(
+    NAME encoding_tests
+    SRC
+        tests/json.test.cpp
+    LIBS
+        vkb__encoding
+)
