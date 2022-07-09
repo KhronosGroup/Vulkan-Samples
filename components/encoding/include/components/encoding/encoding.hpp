@@ -37,7 +37,7 @@ class Marshaler
 	Marshaler()          = default;
 	virtual ~Marshaler() = default;
 
-	StackErrorPtr marshal(const Type &type, std::vector<uint8_t> *data) const = 0;
+	virtual StackErrorPtr marshal(const Type &type, std::vector<uint8_t> *data) const = 0;
 };
 
 /**
@@ -68,7 +68,7 @@ class UnMarshaler
 	UnMarshaler()          = default;
 	virtual ~UnMarshaler() = default;
 
-	StackErrorPtr unmarshal(const std::vector<uint8_t> &data, Type *type) const = 0;
+	virtual StackErrorPtr unmarshal(const std::vector<uint8_t> &data, Type *type) const = 0;
 };
 
 /**

@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Arm Limited and Contributors
+# Copyright (c) 2020-2022, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -13,22 +13,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
-set(SRC
-    src/main.cpp
-    src/config.cpp
-)
-
-add_library(samples_launcher STATIC ${SRC})
-target_link_libraries(samples_launcher PUBLIC vkb__platform vkb__encoding)
-target_include_directories(samples_launcher PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-
-vkb__register_tests(
-    NAME samples_launcher_test
-    SRC
-        tests/config.test.cpp
-        tests/config_marshaler.test.cpp
-    LIBS
-        samples_launcher
-)
+add_subdirectory(hello_sample)

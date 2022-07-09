@@ -24,11 +24,25 @@
 
 #include <nlohmann/json.hpp>
 
+#include "components/encoding/encoding.hpp"
+
 using json = nlohmann::json;
 
 /*
  * WARNING: serializing floats using nlohmann JSON does not work as expected. USE DOUBLES!
  */
+
+#define HANDLE_JSON_ERROR_START() \
+	try                           \
+	{
+#define HANDLE_JSON_ERROR_END()                                              \
+	}                                                                        \
+	catch (std::exception & e)                                               \
+	{                                                                        \
+		std::stringstream msg{};                                             \
+		msg << "json error: " << e.what();                                   \
+		return StackError::unique(msg.str(), "encoding/json.hpp", __LINE__); \
+	}
 
 namespace components
 {
@@ -40,29 +54,24 @@ namespace encoding
  * @tparam Type The type to be serialized
  */
 template <typename Type>
-class JsonMarshaler
+class JsonMarshaler : public Marshaler<Type>
 {
   public:
 	JsonMarshaler()          = default;
 	virtual ~JsonMarshaler() = default;
 
-	StackErrorPtr marshal(const Type &type, std::vector<uint8_t> *data) const
+	virtual StackErrorPtr marshal(const Type &type, std::vector<uint8_t> *data) const override
 	{
-		try
-		{
-			// this is an awkward edge case mechanism. It is unlikely that this will be used in practice
-			// used for testing
-			json j;
-			j[typeid(Type).name()] = type;
-			std::string j_str      = j.dump();
-			*data                  = std::vector<uint8_t>{j_str.begin(), j_str.end()};
-		}
-		catch (std::exception &e)
-		{
-			std::stringstream msg{};
-			msg << "type not supported for serialization: " << e.what();
-			return StackError::unique(msg.str(), "encoding/json.hpp", __LINE__);
-		}
+		HANDLE_JSON_ERROR_START()
+
+		// this is an awkward edge case mechanism. It is unlikely that this will be used in practice
+		// used for testing
+		json j;
+		j[typeid(Type).name()] = type;
+		std::string j_str      = j.dump();
+		*data                  = std::vector<uint8_t>{j_str.begin(), j_str.end()};
+
+		HANDLE_JSON_ERROR_END()
 
 		return nullptr;
 	}
@@ -71,7 +80,13 @@ class JsonMarshaler
 template <typename Type>
 StackErrorPtr marshal_json(const Type &type, std::vector<uint8_t> *data)
 {
+	HANDLE_JSON_ERROR_START()
+
 	return marshal<JsonMarshaler, Type>(type, data);
+
+	HANDLE_JSON_ERROR_END()
+
+	return nullptr;
 }
 
 /**
@@ -80,26 +95,21 @@ StackErrorPtr marshal_json(const Type &type, std::vector<uint8_t> *data)
  * @tparam Type The type to be deserialized
  */
 template <typename Type>
-class JsonUnMarshaler
+class JsonUnMarshaler : public UnMarshaler<Type>
 {
   public:
 	JsonUnMarshaler()          = default;
 	virtual ~JsonUnMarshaler() = default;
 
-	StackErrorPtr unmarshal(const std::vector<uint8_t> &data, Type *type) const
+	virtual StackErrorPtr unmarshal(const std::vector<uint8_t> &data, Type *type) const override
 	{
-		try
-		{
-			std::string json_string{data.begin(), data.end()};
-			json        J = json::parse(json_string);
-			*type         = J.get<Type>();
-		}
-		catch (std::exception &e)
-		{
-			std::stringstream msg{};
-			msg << "type not supported for deserialization: " << e.what();
-			return StackError::unique(msg.str(), "encoding/json.hpp", __LINE__);
-		}
+		HANDLE_JSON_ERROR_START()
+
+		std::string json_string{data.begin(), data.end()};
+		json        J = json::parse(json_string);
+		*type         = J.get<Type>();
+
+		HANDLE_JSON_ERROR_END()
 
 		return nullptr;
 	}
@@ -108,7 +118,13 @@ class JsonUnMarshaler
 template <typename Type>
 StackErrorPtr unmarshal_json(const std::vector<uint8_t> &data, Type *type)
 {
+	HANDLE_JSON_ERROR_START()
+
 	return unmarshal<JsonUnMarshaler, Type>(data, type);
+
+	HANDLE_JSON_ERROR_END()
+
+	return nullptr;
 }
 }        // namespace encoding
 }        // namespace components
