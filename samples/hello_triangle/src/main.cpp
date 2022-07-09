@@ -17,17 +17,20 @@
 
 #include <components/platform/sample_main.hpp>
 
+#include <chrono>
 #include <iostream>
+#include <thread>
+
+using namespace std::chrono_literals;
 
 #include <components/events/event_pipeline.hpp>
 #include <components/vfs/filesystem.hpp>
 #include <components/windows/glfw.hpp>
 
 #include "device.hpp"
+#include "graphics_pipeline.hpp"
 #include "instance.hpp"
 #include "swapchain.hpp"
-
-#include "graphics_pipeline.hpp"
 
 using namespace components;
 
@@ -71,12 +74,12 @@ EXPORT_CLIB int sample_main(PlatformContext *platform_context)
 
 	// handle window closed externally
 	bool should_close = false;
-	event_bus.each<windows::ShouldCloseEvent>([&](const windows::ShouldCloseEvent &) {
+	event_bus.last<windows::ShouldCloseEvent>([&](const windows::ShouldCloseEvent &) {
 		should_close = true;
 	});
 
-	// handle window context rect changed
-	event_bus.each<windows::ContentRectChangedEvent>([&](const windows::ContentRectChangedEvent &event) {
+	// handle window context rect changed - we only care about the last resize event each frame
+	event_bus.last<windows::ContentRectChangedEvent>([&](const windows::ContentRectChangedEvent &event) {
 		resize(context, event.extent.width, event.extent.height);
 	});
 
@@ -224,6 +227,9 @@ EXPORT_CLIB int sample_main(PlatformContext *platform_context)
 		{
 			LOGE("Failed to present swapchain image.");
 		}
+
+		// sleep to not drain system resources
+		std::this_thread::sleep_for(10ms);
 	}
 
 	// Don't release anything until the GPU is completely idle.
