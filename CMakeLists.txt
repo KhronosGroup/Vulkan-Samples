@@ -19,7 +19,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(vulkan_samples)
 
-# Add path for local cmake scripts
+# add path for local cmake scripts
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake/module)
@@ -40,9 +40,13 @@ option(VKB_BUILD_SAMPLES "Enable generation and building of Vulkan best practice
 option(VKB_BUILD_TESTS "Enable generation and building of Vulkan best practice tests." OFF)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 
-# Add third party libraries
+# add third party libraries
 add_subdirectory(third_party)
 
 vkb__enable_testing()
 
+# component libraries
 add_subdirectory(components)
+
+# executables
+add_subdirectory(cmd)
