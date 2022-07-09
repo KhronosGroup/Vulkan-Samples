@@ -21,6 +21,7 @@ vkb__register_sample(
 )
 
 vkb__register_sample_descriptor(
+    ID "hello_triangle"
     NAME "Hello Triangle"
     DESCRIPTION "Vulkan Hello Triangle"
     LIB sample__hello_triangle

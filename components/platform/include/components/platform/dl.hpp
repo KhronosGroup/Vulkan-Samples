@@ -36,6 +36,9 @@ namespace components
 {
 namespace dl
 {
+inline const char *os_library_prefix();
+inline const char *os_library_postfix();
+
 /**
  * @brief Convert a library name to an OS specific library name
  * 

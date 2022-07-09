@@ -30,17 +30,34 @@ namespace components
 {
 namespace dl
 {
+inline const char *os_library_prefix()
+{
+#ifdef _WIN32
+	return "";
+#elif defined(__APPLE__)
+	return "lib";
+#else
+	return "lib";
+#endif
+	return "";
+}
+
+inline const char *os_library_postfix()
+{
+#ifdef _WIN32
+	return ".dll";
+#elif defined(__APPLE__)
+	return ".dylib";
+#else
+	return ".so";
+#endif
+	return "";
+}
+
 std::string os_library_name(const std::string &name)
 {
 	std::stringstream lib_name;
-#ifdef _WIN32
-	lib_name << name << ".dll";
-#elif defined(__APPLE__)
-	lib_name << "lib" << name << ".dylib";
-#else
-	lib_name << "lib" << name << ".so";
-#endif
-
+	lib_name << os_library_prefix() << name << os_library_postfix();
 	return lib_name.str();
 }
 

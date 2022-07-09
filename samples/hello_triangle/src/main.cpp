@@ -23,7 +23,7 @@ using namespace components;
 
 EXPORT_CLIB int sample_main(PlatformContext * /* context */)
 {
-	std::cout << "Hello Sample!\n";
+	std::cout << "Hello Triangle!\n";
 
 	return EXIT_SUCCESS;
 }

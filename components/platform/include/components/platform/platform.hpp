@@ -29,7 +29,7 @@ extern "C"
  */
 	struct PlatformContext
 	{
-		virtual void _(){};        // < requires a function to be polymorphic (dynamic_cast)
+		virtual std::vector<std::string> arguments() const = 0;
 	};
 	}        // namespace components
 
@@ -64,7 +64,12 @@ extern "C"
 		HINSTANCE                hPrevInstance;
 		PSTR                     lpCmdLine;
 		INT                      nCmdShow;
-		std::vector<std::string> arguments;
+		std::vector<std::string> _arguments;
+
+		virtual std::vector<std::string> arguments() const override
+		{
+			return _arguments;
+		};
 	};
 	}        // namespace components
 
@@ -92,7 +97,12 @@ extern "C"
 	struct AndroidContext : virtual PlatformContext
 	{
 		android_app *            android_app;
-		std::vector<std::string> arguments;
+		std::vector<std::string> _arguments;
+
+		virtual std::vector<std::string> arguments() const override
+		{
+			return _arguments;
+		};
 	};
 	}        // namespace components
 
@@ -114,19 +124,24 @@ extern "C"
 	{
 	struct MacOSXContext : virtual PlatformContext
 	{
-		std::vector<std::string> arguments;
+		std::vector<std::string> _arguments;
+
+		virtual std::vector<std::string> arguments() const override
+		{
+			return _arguments;
+		};
 	};
 	}        // namespace components
 
-#	define CUSTOM_MAIN(context_name)                                            \
-		int main(int argc, char *argv[])                                         \
-		{                                                                        \
-			components::MacOSXContext context{};                                 \
-			context.arguments = std::vector<std::string>{argv + 1, argv + argc}; \
-                                                                                 \
-			return platform_main(&context);                                      \
-		}                                                                        \
-                                                                                 \
+#	define CUSTOM_MAIN(context_name)                                             \
+		int main(int argc, char *argv[])                                          \
+		{                                                                         \
+			components::MacOSXContext context{};                                  \
+			context._arguments = std::vector<std::string>{argv + 1, argv + argc}; \
+                                                                                  \
+			return platform_main(&context);                                       \
+		}                                                                         \
+                                                                                  \
 		int platform_main(components::PlatformContext *context_name)
 
 #elif defined(__linux__)
@@ -135,19 +150,24 @@ extern "C"
 	{
 	struct UnixContext : virtual PlatformContext
 	{
-		std::vector<std::string> arguments;
+		std::vector<std::string> _arguments;
+
+		virtual std::vector<std::string> arguments() const override
+		{
+			return _arguments;
+		};
 	};
 	}        // namespace components
 
-#	define CUSTOM_MAIN(context_name)                                            \
-		int main(int argc, char *argv[])                                         \
-		{                                                                        \
-			components::UnixContext context{};                                   \
-			context.arguments = std::vector<std::string>{argv + 1, argv + argc}; \
-                                                                                 \
-			return platform_main(&context);                                      \
-		}                                                                        \
-                                                                                 \
+#	define CUSTOM_MAIN(context_name)                                             \
+		int main(int argc, char *argv[])                                          \
+		{                                                                         \
+			components::UnixContext context{};                                    \
+			context._arguments = std::vector<std::string>{argv + 1, argv + argc}; \
+                                                                                  \
+			return platform_main(&context);                                       \
+		}                                                                         \
+                                                                                  \
 		int platform_main(components::PlatformContext *context_name)
 
 #endif

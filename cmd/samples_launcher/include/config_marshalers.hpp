@@ -28,6 +28,7 @@ namespace encoding
 inline config::Sample from(const json &j)
 {
 	config::Sample sample;
+	sample.id           = j["id"];
 	sample.name         = j["name"];
 	sample.description  = j["description"];
 	sample.library_name = j["library_name"];
@@ -37,6 +38,7 @@ inline config::Sample from(const json &j)
 inline json to(const config::Sample &sample)
 {
 	json j;
+	j["id"]           = sample.id;
 	j["name"]         = sample.name;
 	j["description"]  = sample.description;
 	j["library_name"] = sample.library_name;

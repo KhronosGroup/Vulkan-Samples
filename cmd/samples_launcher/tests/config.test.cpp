@@ -17,6 +17,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <sstream>
 #include <vector>
 
 #include <config_marshalers.hpp>
@@ -32,27 +33,37 @@ using namespace components::encoding;
 
 TEST_CASE("load config", "[sample_launcher]")
 {
-	std::string json_string = "{\"samples\":[{\"description\":\"this is a fake\",\"library_name\":\"lib1\",\"name\":\"fake_sample_one\"},{\"description\":\"this is a fake\",\"library_name\":\"lib2\",\"name\":\"fake_sample_two\"},{\"description\":\"this is a fake\",\"library_name\":\"lib3\",\"name\":\"fake_sample_three\"}]}";
-
 	std::vector<config::Sample>
 	    sample_list = {
 	        config::Sample{
+	            "fake_sample_one",
 	            "fake_sample_one",
 	            "this is a fake",
 	            "lib1"},
 	        config::Sample{
 	            "fake_sample_two",
+	            "fake_sample_two",
 	            "this is a fake",
 	            "lib2"},
 	        config::Sample{
+	            "fake_sample_three",
 	            "fake_sample_three",
 	            "this is a fake",
 	            "lib3"},
 	    };
 
+	std::vector<uint8_t> data;
+
+	auto err = marshal_json(sample_list, &data);
+	CHECK_ERROR(err);
+
+	std::stringstream json;
+	json << "{ \"samples\": [" << std::string{data.begin(), data.end()} << "]}";
+	auto json_string = json.str();
+
 	config::Config some_config;
 
-	auto err = config::load_config_from_json({json_string.begin(), json_string.end()}, &some_config);
+	err = config::load_config_from_json({json_string.begin(), json_string.end()}, &some_config);
 	CHECK_ERROR(err);
 
 	for (size_t i = 0; i < sample_list.size(); i++)

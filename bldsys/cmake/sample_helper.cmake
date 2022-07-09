@@ -21,13 +21,13 @@
 
 function(vkb__register_sample_descriptor)
     set(options)  
-    set(oneValueArgs NAME DESCRIPTION LIB)
+    set(oneValueArgs ID NAME DESCRIPTION LIB)
     set(multiValueArgs)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
 
     get_property(DESCRIPTORS GLOBAL PROPERTY SAMPLE_DESCRIPTORS)
-    list(APPEND DESCRIPTORS "{\"name\":\"${TARGET_NAME}\", \"description\": \"${TARGET_DESCRIPTION}\", \"library_name\": \"${TARGET_LIB}\"}")
+    list(APPEND DESCRIPTORS "{\"id\":\"${TARGET_ID}\",\"name\":\"${TARGET_NAME}\", \"description\": \"${TARGET_DESCRIPTION}\", \"library_name\": \"${TARGET_LIB}\"}")
     set_property(GLOBAL PROPERTY SAMPLE_DESCRIPTORS ${DESCRIPTORS})
 endfunction()
 
@@ -67,15 +67,6 @@ function(vkb__register_sample)
     else()
         message(FATAL_ERROR "a sample must contain one or more source files")
     endif()
-
-    # copy lib to samples_launcher executable
-    add_custom_command(
-        TARGET "sample__${TARGET_NAME}"
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-            "$<TARGET_FILE:sample__${TARGET_NAME}>"
-            "$<TARGET_FILE_DIR:samples_launcher>/$<TARGET_FILE_NAME:sample__${TARGET_NAME}>"
-    )
 
     add_dependencies("sample__${TARGET_NAME}" samples_launcher) # automatically build the samples_launcher if a sample is set to compile
     add_dependencies(vkb__samples "sample__${TARGET_NAME}")

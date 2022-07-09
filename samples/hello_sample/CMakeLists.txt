@@ -21,6 +21,7 @@ vkb__register_sample(
 )
 
 vkb__register_sample_descriptor(
+    ID "hello_sample"
     NAME "Hello Sample"
     DESCRIPTION "This is an example sample"
     LIB sample__hello_sample

@@ -26,6 +26,7 @@ namespace config
 {
 struct Sample
 {
+	std::string id;
 	std::string name;
 	std::string description;
 	std::string library_name;

@@ -33,6 +33,7 @@ using namespace components::encoding;
 TEST_CASE("un/marshal Sample config", "[sample_launcher]")
 {
 	config::Sample sample;
+	sample.id           = "fake_sample";
 	sample.name         = "fake_sample";
 	sample.description  = "this is a fake";
 	sample.library_name = "lib1";
@@ -55,14 +56,17 @@ TEST_CASE("un/marshal Sample config list", "[sample_launcher]")
 {
 	std::vector<config::Sample> sample_list = {
 	    config::Sample{
+			"fake_sample_one"
 	        "fake_sample_one",
 	        "this is a fake",
 	        "lib1"},
 	    config::Sample{
+			"fake_sample_two"
 	        "fake_sample_two",
 	        "this is a fake",
 	        "lib2"},
 	    config::Sample{
+			"fake_sample_three"
 	        "fake_sample_three",
 	        "this is a fake",
 	        "lib3"},
