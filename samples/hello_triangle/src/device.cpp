@@ -51,15 +51,15 @@ void init_device(Context &context, const std::vector<const char *> &required_dev
 		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
 
-		for (uint32_t i = 0; i < queue_family_count; i++)
+		for (uint32_t j = 0; j < queue_family_count; j++)
 		{
 			VkBool32 supports_present;
-			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
+			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, j, context.surface, &supports_present);
 
 			// Find a queue family which supports graphics and presentation.
-			if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+			if ((queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
 			{
-				context.graphics_queue_index = i;
+				context.graphics_queue_index = j;
 				break;
 			}
 		}

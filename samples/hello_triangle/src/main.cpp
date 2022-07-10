@@ -103,13 +103,13 @@ EXPORT_CLIB int sample_main(PlatformContext *platform_context)
 	std::shared_ptr<vfs::Blob> vertex_blob;
 	if (auto err = fs.read_file("/shaders/triangle.vert", &vertex_blob))
 	{
-		throw;
+		return EXIT_FAILURE;
 	}
 
 	std::shared_ptr<vfs::Blob> fragment_blob;
 	if (auto err = fs.read_file("/shaders/triangle.frag", &fragment_blob))
 	{
-		throw;
+		return EXIT_FAILURE;
 	}
 
 	init_pipeline(context, vertex_blob->binary(), fragment_blob->binary());

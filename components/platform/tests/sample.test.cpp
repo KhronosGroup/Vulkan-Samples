@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include <stdexcept>
+#include <iostream>
 
 #include <components/platform/dl.hpp>
 #include <components/platform/platform.hpp>
@@ -27,14 +27,19 @@ CUSTOM_MAIN(context)
 {
 	Sample sample;
 
-	if (!load_sample(dl::os_library_name("vkb__platform__dummy_sample"), &sample))
+	auto library_name = dl::os_library_name("vkb__platform__dummy_sample");
+	std::cout << "loading: " << library_name << "\n";
+
+	if (!load_sample(library_name, &sample))
 	{
-		throw std::runtime_error{"failed to load sample"};
+		std::cout << "failed to load sample\n";
+		return EXIT_FAILURE;
 	}
 
 	if (!(*sample.sample_main)(context))
 	{
-		throw std::runtime_error{"failed to call sample_main()"};
+		std::cout << "failed to call sample_main()\n";
+		return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;

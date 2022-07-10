@@ -86,7 +86,7 @@ void init_swapchain(Context &context)
 	std::vector<VkSurfaceFormatKHR> formats(format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, formats.data());
 
-	VkSurfaceFormatKHR format;
+	VkSurfaceFormatKHR format{};
 	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
 	{
 		// There is no preferred format, so pick a default one

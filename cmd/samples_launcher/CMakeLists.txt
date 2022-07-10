@@ -33,7 +33,11 @@ vkb__register_tests(
 )
 
 # samples launcher executable
-add_executable(samples_launcher src/main.cpp)
+if(WIN32)
+    add_executable(samples_launcher WIN32 src/main.cpp)
+else()
+    add_executable(samples_launcher src/main.cpp)
+endif()
 target_link_libraries(samples_launcher PUBLIC samples_launcher_lib)
 
 # compile sample information

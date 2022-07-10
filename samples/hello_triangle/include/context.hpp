@@ -19,7 +19,11 @@
 
 #include <vector>
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 #define VK_CHECK(body) body
 #define LOGI(...)
@@ -102,9 +106,9 @@ struct Context
 	VkPipeline pipeline = VK_NULL_HANDLE;
 
 	/**
-		 * The pipeline layout for resources.
-		 * Not used in this sample, but we still need to provide a dummy one.
-		 */
+	 * The pipeline layout for resources.
+	 * Not used in this sample, but we still need to provide a dummy one.
+	 */
 	VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
 	/// The debug report callback.

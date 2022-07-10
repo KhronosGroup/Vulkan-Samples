@@ -25,8 +25,8 @@ extern "C"
 	namespace components
 	{
 	/**
- * @brief A base context used for platform detection. Components or functions that consume this context can use it to create platform specific functionality.
- */
+	 * @brief A base context used for platform detection. Components or functions that consume this context can use it to create platform specific functionality.
+	 */
 	struct PlatformContext
 	{
 		virtual std::vector<std::string> arguments() const = 0;
@@ -34,23 +34,23 @@ extern "C"
 	}        // namespace components
 
 	/**
- * @brief Forward declare platform_main so that it can be defined elsewhere. CUSTOM_MAIN must only be used once in an executable
- * 
- *  Example Usage:
- * 
- *  CUSTOM_MAIN(context) {
- *      auto* windows = dynamic_cast<WindowsContext>(context);
- *      if (windows) {
- *           ... windows stuff
- *      }
- *
- *      ... other code
- *
- *      return EXIT_SUCCESS;
- *  }
- * 
- * @return int status code
- */
+	 * @brief Forward declare platform_main so that it can be defined elsewhere. CUSTOM_MAIN must only be used once in an executable
+	 *
+	 *  Example Usage:
+	 *
+	 *  CUSTOM_MAIN(context) {
+	 *      auto* windows = dynamic_cast<WindowsContext>(context);
+	 *      if (windows) {
+	 *           ... windows stuff
+	 *      }
+	 *
+	 *      ... other code
+	 *
+	 *      return EXIT_SUCCESS;
+	 *  }
+	 *
+	 * @return int status code
+	 */
 	int platform_main(components::PlatformContext *);
 
 #if defined(_WIN32)
@@ -96,7 +96,7 @@ extern "C"
 	{
 	struct AndroidContext : virtual PlatformContext
 	{
-		android_app *            android_app;
+		android_app             *android_app;
 		std::vector<std::string> _arguments;
 
 		virtual std::vector<std::string> arguments() const override

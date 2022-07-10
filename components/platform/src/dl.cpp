@@ -39,7 +39,6 @@ const char *os_library_prefix()
 #else
 	return "lib";
 #endif
-	return "";
 }
 
 const char *os_library_postfix()
@@ -51,7 +50,6 @@ const char *os_library_postfix()
 #else
 	return ".so";
 #endif
-	return "";
 }
 
 std::string os_library_name(const std::string &name)
