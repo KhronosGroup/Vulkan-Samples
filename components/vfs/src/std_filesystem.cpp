@@ -89,19 +89,21 @@ StackErrorPtr StdFSFileSystem::read_chunk(const std::string &file_path, const si
 		return StackError::unique("file does not exist: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
 	}
 
-	size_t size = file_size(file_path);
-
-	if (offset + count > static_cast<size_t>(size))
-	{
-		return StackError::unique("chunk out of file bounds: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
-	}
-
 	std::fstream stream;
 	stream.open(full_path, std::ios::in | std::ios::binary);
 
 	if (!stream.good())
 	{
 		return StackError::unique("failed to open file: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+	}
+
+	stream.ignore(std::numeric_limits<std::streamsize>::max());
+	std::streamsize size = stream.gcount();
+	stream.clear();
+
+	if (offset + count > static_cast<size_t>(size))
+	{
+		return StackError::unique("chunk out of file bounds: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
 	}
 
 	stream.seekg(offset, std::ios_base::beg);
