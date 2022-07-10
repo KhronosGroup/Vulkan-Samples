@@ -23,6 +23,8 @@
 
 #include <components/events/event_bus.hpp>
 
+#include <volk.h>
+
 namespace components
 {
 namespace windows
@@ -73,6 +75,25 @@ class Window : public events::EventObserver
 
 	virtual void             set_title(const std::string &title) = 0;
 	virtual std::string_view title() const                       = 0;
+
+	// supported vulkan surface create infos
+	// compile errors indicate that a platform supports a surface but we do not have an implementation for it
+
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+	virtual VkResult populate_surface_create_info(VkAndroidSurfaceCreateInfoKHR * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+	virtual VkResult populate_surface_create_info(VkWin32SurfaceCreateInfoKHR * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+	virtual VkResult populate_surface_create_info(VkMetalSurfaceCreateInfoEXT * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+	virtual VkResult populate_surface_create_info(VkXlibSurfaceCreateInfoKHR * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+	virtual VkResult populate_surface_create_info(VkXcbSurfaceCreateInfoKHR * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	virtual VkResult populate_surface_create_info(VkWaylandSurfaceCreateInfoKHR * /* info */) const = 0;
+#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
+	virtual VkResult populate_surface_create_info(VkDisplaySurfaceCreateInfoKHR * /* info */) const = 0;
+#endif
 };
 }        // namespace windows
 }        // namespace components

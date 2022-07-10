@@ -19,6 +19,16 @@
 
 #include <GLFW/glfw3.h>
 
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+#	define GLFW_EXPOSE_NATIVE_WIN32
+#endif
+
+#ifdef VK_USE_PLATFORM_XLIB_KHR
+#	define GLFW_EXPOSE_NATIVE_X11
+#endif
+
+#include <GLFW/glfw3native.h>
+
 namespace components
 {
 namespace windows
@@ -451,7 +461,44 @@ void GLFWWindow::attach(events::EventBus &bus)
 		glfwGetWindowPos(m_handle, &x, &y);
 		m_position_sender->push(PositionChangedEvent{Position{static_cast<uint32_t>(x), static_cast<uint32_t>(y)}});
 	}
+
+	m_focus_sender           = bus.request_sender<FocusChangedEvent>();
+	m_should_close_sender    = bus.request_sender<ShouldCloseEvent>();
+	m_key_sender             = bus.request_sender<events::KeyEvent>();
+	m_cursor_position_sender = bus.request_sender<events::CursorPositionEvent>();
+	m_touch_sender           = bus.request_sender<events::TouchEvent>();
 }
+
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+VkResult GLFWWindow::populate_surface_create_info(VkWin32SurfaceCreateInfoKHR *o_info) const
+{
+	assert(o_info);
+
+	VkWin32SurfaceCreateInfoKHR info{};
+	info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+	info.hwnd  = glfwGetWin32Window(m_handle);
+
+	*o_info = info;
+
+	return VK_SUCCESS;
+}
+#endif
+
+#ifdef VK_USE_PLATFORM_XLIB_KHR
+VkResult GLFWWindow::populate_surface_create_info(VkXlibSurfaceCreateInfoKHR *o_info) const
+{
+	assert(o_info);
+
+	VkXlibSurfaceCreateInfoKHR info{};
+	info.sType  = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+	info.window = glfwGetX11Window(m_handle);
+	info.dpy    = glfwGetX11Display();
+
+	*o_info = info;
+
+	return VK_SUCCESS;
+}
+#endif
 
 }        // namespace windows
 }        // namespace components
