@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-# http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,36 +18,37 @@
 vkb__register_component(
   NAME window_headers
   LINK_LIBS
-  vkb__events
+    vkb__events
+    volk
   INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# # headless window
+# headless window
 vkb__register_component(
   NAME headless_window
   SRC
-  src/headless.cpp
+    src/headless.cpp
   LINK_LIBS
-  vkb__window_headers
+    vkb__window_headers
 )
 
 vkb__register_tests(
   NAME headless_window_tests
   SRC
-  tests/headless.test.cpp
+    tests/headless.test.cpp
   LIBS
-  vkb__headless_window
+    vkb__headless_window
 )
 
-# # glfw window
+# glfw window
 vkb__register_component(
   NAME glfw_window
   SRC
-  src/glfw.cpp
+    src/glfw.cpp
   LINK_LIBS
-  vkb__window_headers
-  glfw
+    vkb__window_headers
+    glfw
 )
 
 option(VKB_TEST_GLFW "Enable GLFW Tests" OFF)

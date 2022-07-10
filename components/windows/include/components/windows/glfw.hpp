@@ -45,12 +45,43 @@ class GLFWWindow : public Window
 	virtual void             update() override;
 	virtual void             attach(events::EventBus &bus) override;
 
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+	virtual VkResult populate_surface_create_info(VkAndroidSurfaceCreateInfoKHR * /* info */) const override
+	{
+		return VK_INCOMPLETE;
+	}
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+	virtual VkResult populate_surface_create_info(VkWin32SurfaceCreateInfoKHR * /* info */) const override;
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+	virtual VkResult populate_surface_create_info(VkMetalSurfaceCreateInfoEXT * /* info */) const override
+	{
+		return VK_INCOMPLETE;
+	}
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+	virtual VkResult populate_surface_create_info(VkXlibSurfaceCreateInfoKHR * /* info */) const override;
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+	virtual VkResult populate_surface_create_info(VkXcbSurfaceCreateInfoKHR * /* info */) const override
+	{
+		return VK_INCOMPLETE;
+	}
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+	virtual VkResult populate_surface_create_info(VkWaylandSurfaceCreateInfoKHR * /* info */) const override
+	{
+		return VK_INCOMPLETE;
+	}
+#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
+	virtual VkResult populate_surface_create_info(VkDisplaySurfaceCreateInfoKHR * /* info */) const override
+	{
+		return VK_INCOMPLETE;
+	}
+#endif
+
   protected:
 	std::string m_title;
 	Extent      m_extent;
 	Position    m_position;
 
-	GLFWwindow *                                      m_handle{nullptr};
+	GLFWwindow	                                   *m_handle{nullptr};
 	std::unique_ptr<GLFWCallbackHelper>               m_callback_helper{nullptr};
 	events::ChannelSenderPtr<PositionChangedEvent>    m_position_sender{nullptr};
 	events::ChannelSenderPtr<ContentRectChangedEvent> m_content_rect_sender{nullptr};
