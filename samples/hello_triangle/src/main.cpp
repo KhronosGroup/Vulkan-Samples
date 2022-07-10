@@ -86,7 +86,7 @@ EXPORT_CLIB int sample_main(PlatformContext *platform_context)
 	// prepare
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	init_surface(context, *window);
+	init_surface(platform_context, context, *window);
 
 	context.swapchain_dimensions.width  = 600;
 	context.swapchain_dimensions.height = 600;
@@ -204,7 +204,7 @@ EXPORT_CLIB int sample_main(PlatformContext *platform_context)
 
 		VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
 
-		VkSubmitInfo info;
+		VkSubmitInfo info{};
 		info.sType                = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 		info.commandBufferCount   = 1;
 		info.pCommandBuffers      = &cmd;

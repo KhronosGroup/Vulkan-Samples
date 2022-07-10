@@ -19,15 +19,16 @@
 
 #include "context.hpp"
 
+#include <components/platform/platform.hpp>
 #include <components/windows/window.hpp>
 
 /**
  * @brief Create a platform specific Vulkan Surface
- * 
+ *
  * @param context A Vulkan context with the render pass already set up.
  * @param window the window
  */
-void init_surface(Context &context, components::windows::Window &window);
+void init_surface(components::PlatformContext *platform, Context &context, components::windows::Window &window);
 
 /**
  * @brief Initializes per frame data.

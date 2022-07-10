@@ -19,7 +19,7 @@
 
 #include <stdexcept>
 
-void init_surface(Context &context, components::windows::Window &window)
+void init_surface(components::PlatformContext *platform, Context &context, components::windows::Window &window)
 {
 	VkSurfaceKHR handle{VK_NULL_HANDLE};
 

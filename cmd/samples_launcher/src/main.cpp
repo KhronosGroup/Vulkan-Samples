@@ -40,7 +40,7 @@ CUSTOM_MAIN(context)
 	std::cout << "loading sample configs\n";
 
 	std::vector<std::string> files;
-	if (auto err = fs.enumerate_files_recursive("/", "samples.json", &files))
+	if (auto err = fs.enumerate_files_recursive("/build", "samples.json", &files))
 	{
 		std::cout << err->what() << std::endl;
 		return EXIT_FAILURE;
@@ -86,7 +86,7 @@ CUSTOM_MAIN(context)
 
 	// consider that all samples are appended with an os shared library postfix
 	std::vector<std::string> sample_files;
-	if (auto err = fs.enumerate_files_recursive("/", dl::os_library_postfix(), &sample_files))
+	if (auto err = fs.enumerate_files_recursive("/build", dl::os_library_postfix(), &sample_files))
 	{
 		std::cout << err->what();
 		return EXIT_FAILURE;
@@ -166,6 +166,8 @@ CUSTOM_MAIN(context)
 			}
 		}
 	}
+
+	std::cin.get();
 
 	return EXIT_SUCCESS;
 }

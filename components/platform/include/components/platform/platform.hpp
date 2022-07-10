@@ -54,10 +54,9 @@ extern "C"
 	int platform_main(components::PlatformContext *);
 
 #if defined(_WIN32)
-
+#	include <Windows.h>
 	namespace components
 	{
-#	include <Windows.h>
 	struct WindowsContext : virtual PlatformContext
 	{
 		HINSTANCE                hInstance;
@@ -77,11 +76,34 @@ extern "C"
 #	define CUSTOM_MAIN(context_name)                                                                    \
 		int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) \
 		{                                                                                                \
+			if (!AllocConsole())                                                                         \
+			{                                                                                            \
+				return EXIT_FAILURE;                                                                     \
+			}                                                                                            \
+                                                                                                         \
+			FILE *fp;                                                                                    \
+			freopen_s(&fp, "conin$", "r", stdin);                                                        \
+			freopen_s(&fp, "conout$", "w", stdout);                                                      \
+			freopen_s(&fp, "conout$", "w", stderr);                                                      \
+                                                                                                         \
 			components::WindowsContext context{};                                                        \
 			context.hInstance     = hInstance;                                                           \
 			context.hPrevInstance = hPrevInstance;                                                       \
 			context.lpCmdLine     = lpCmdLine;                                                           \
 			context.nCmdShow      = nCmdShow;                                                            \
+                                                                                                         \
+			LPWSTR *argv;                                                                                \
+			int     argc;                                                                                \
+                                                                                                         \
+			argv = CommandLineToArgvW(GetCommandLineW(), &argc);                                         \
+                                                                                                         \
+			/* Ignore the first argument containing the application full path */                         \
+			std::vector<std::wstring> arg_strings(argv + 1, argv + argc);                                \
+                                                                                                         \
+			for (auto &arg : arg_strings)                                                                \
+			{                                                                                            \
+				context._arguments.push_back(std::string{arg.begin(), arg.end()});                       \
+			}                                                                                            \
                                                                                                          \
 			return platform_main(&context);                                                              \
 		}                                                                                                \
