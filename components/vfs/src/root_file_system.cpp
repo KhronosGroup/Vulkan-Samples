@@ -276,6 +276,8 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fol
 
 		dirs_to_visit.insert(dirs_to_visit.end(), dirs.begin(), dirs.end());
 		all_dirs.insert(all_dirs.end(), dirs.begin(), dirs.end());
+
+		all_dirs.insert(dirs.begin(), dirs.end());
 	}
 
 	std::vector<std::string> all_folders{all_dirs.begin(), all_dirs.end()};
