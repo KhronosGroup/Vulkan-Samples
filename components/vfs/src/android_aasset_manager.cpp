@@ -103,35 +103,6 @@ bool AndroidAAssetManager::file_exists(const std::string &file_path)
 	return true;
 }
 
-StackErrorPtr AndroidAAssetManager::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
-{
-	if (!asset_manager)
-	{
-		return StackError::unique("AAsset Manager not initialized", "vfs/android_aasset_manager.cpp", __LINE__);
-	}
-
-	std::string real_path = get_path(file_path);
-
-	AAsset *asset = AAssetManager_open(asset_manager, real_path.c_str(), AASSET_MODE_STREAMING);
-
-	if (!asset)
-	{
-		return StackError::unique("failed to find file: " + file_path, "vfs/android_aasset_manager.cpp", __LINE__);
-	}
-
-	size_t size = AAsset_getLength(asset);
-
-	auto a_blob = std::make_shared<StdBlob>();
-	a_blob->buffer.resize(size, 0);
-
-	AAsset_read(asset, const_cast<void *>(reinterpret_cast<const void *>(a_blob->buffer.data())), size);
-	AAsset_close(asset);
-
-	*blob = a_blob;
-
-	return nullptr;
-}
-
 StackErrorPtr AndroidAAssetManager::read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob)
 {
 	if (!asset_manager)
@@ -208,6 +179,13 @@ StackErrorPtr AndroidAAssetManager::enumerate_folders(const std::string &file_pa
 
 void AndroidAAssetManager::make_directory(const std::string &path)
 {
+	assert(false && "not implemented");
+}
+
+bool AndroidAAssetManager::remove(const std::string &path)
+{
+	assert(false && "not implemented");
+	return false;
 }
 
 }        // namespace vfs

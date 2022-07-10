@@ -46,6 +46,34 @@ TEST_CASE("vfs::helpers::get_directory_parts", "[vfs]")
 	}
 }
 
+TEST_CASE("vfs::helpers::tokenize_path", "[vfs]")
+{
+	{
+		std::vector<std::string> expected = {"this", "is", "a", "dir"};
+
+		auto parts = vfs::helpers::tokenize_path("/this/is/a/dir/file.txt");
+
+		REQUIRE(parts.size() == expected.size());
+
+		for (size_t i = 0; i < parts.size(); i++)
+		{
+			REQUIRE(parts[i] == expected[i]);
+		}
+	}
+
+	{
+		std::vector<std::string> expected{};
+		auto                     parts = vfs::helpers::tokenize_path("/");
+		REQUIRE(parts.size() == expected.size());
+	}
+
+	{
+		std::vector<std::string> expected{};
+		auto                     parts = vfs::helpers::tokenize_path("");
+		REQUIRE(parts.size() == expected.size());
+	}
+}
+
 TEST_CASE("vfs::helpers::get_file_name", "[vfs]")
 {
 	REQUIRE(vfs::helpers::get_file_name("/this/is/a/dir/file.txt") == "file.txt");

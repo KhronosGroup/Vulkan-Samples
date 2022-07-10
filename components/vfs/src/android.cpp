@@ -23,37 +23,6 @@ namespace components
 {
 namespace vfs
 {
-RootFileSystem &_default(void *context)
-{
-	static vfs::RootFileSystem fs;
-
-	static bool first_time = true;
-	if (first_time)
-	{
-		auto *app = reinterpret_cast<android_app *>(context);
-
-		fs.mount("/temp/", std::make_shared<vfs::AndroidTempFileSystem>(app));
-
-#ifdef VKB_BUNDLE_ASSETS
-		fs.mount("/", std::make_shared<vfs::AndroidAAssetManager>(app));
-		fs.mount("/scenes/", std::make_shared<vfs::AndroidAAssetManager>(app, "scenes"));
-		fs.mount("/textures/", std::make_shared<vfs::AndroidAAssetManager>(app, "textures"));
-		fs.mount("/fonts/", std::make_shared<vfs::AndroidAAssetManager>(app, "fonts"));
-		fs.mount("/shaders/", std::make_shared<vfs::AndroidAAssetManager>(app, ""));
-#else
-		fs.mount("/", std::make_shared<vfs::AndroidExternalFileSystem>(app));
-		fs.mount("/scenes/", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/scenes"));
-		fs.mount("/textures/", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/textures"));
-		fs.mount("/fonts/", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/assets/fonts"));
-		fs.mount("/shaders/", std::make_shared<vfs::AndroidExternalFileSystem>(app, "/shaders"));
-#endif
-
-		first_time = false;
-	}
-
-	return fs;
-}
-
 std::string get_external_file_dir(android_app *app)
 {
 	std::string path = "/";
