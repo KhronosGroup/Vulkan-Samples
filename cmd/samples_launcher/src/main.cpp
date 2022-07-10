@@ -42,13 +42,13 @@ CUSTOM_MAIN(context)
 	std::vector<std::string> files;
 	if (auto err = fs.enumerate_files_recursive("/", "samples.json", &files))
 	{
-		std::cout << err->what();
+		std::cout << err->what() << std::endl;
 		return EXIT_FAILURE;
 	}
 
 	if (files.size() == 0)
 	{
-		std::cout << "no samples configs found\n";
+		std::cout << "no samples configs found" << std::endl;
 		return EXIT_SUCCESS;
 	}
 
