@@ -27,7 +27,12 @@ EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 {
 	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
 	{
-		assert(!same_ptr(*it, observer) && "attempting to attach an existing observer");
+		auto exists = same_ptr(*it, observer);
+		assert(!exists && "attempting to attach an existing observer");
+		if (exists)
+		{
+			return *this;
+		}
 	}
 
 	if (auto shared_observer = observer.lock())
