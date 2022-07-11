@@ -27,10 +27,7 @@ EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 {
 	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
 	{
-		if (same_ptr(*it, observer))
-		{
-			return *this;
-		}
+		assert(!same_ptr(*it, observer) && "attempting to attach an existing observer");
 	}
 
 	if (auto shared_observer = observer.lock())
@@ -48,8 +45,7 @@ void EventBus::process()
 	{
 		if ((*it).expired())
 		{
-			m_observers.erase(it);
-			it++;
+			it = m_observers.erase(it);
 			continue;
 		}
 

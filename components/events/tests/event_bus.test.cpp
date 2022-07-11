@@ -132,22 +132,6 @@ TEST_CASE("register observer", "[events]")
 	REQUIRE(bus.observer_count() == 1);
 }
 
-TEST_CASE("register multiple observers of the same instance", "[events]")
-{
-	TestEventBus bus{};
-
-	std::shared_ptr<EventObserver> observer = std::make_shared<Observer>();
-
-	REQUIRE(bus.observer_count() == 0);
-
-	bus
-	    .attach(observer)
-	    .attach(observer)
-	    .attach(observer);
-
-	REQUIRE(bus.observer_count() == 1);
-}
-
 TEST_CASE("register multiple observers of the different instances", "[events]")
 {
 	TestEventBus bus{};
@@ -332,4 +316,34 @@ TEST_CASE("process observer", "[events]")
 	bus.process();
 
 	REQUIRE(bus.unobserved_last_event_count() == 0);
+}
+
+TEST_CASE("expire an observer before process", "[events]")
+{
+	struct EventType
+	{
+		uint32_t value;
+	};
+
+	TestEventBus bus{};
+
+	std::shared_ptr<EventObserver> observer = std::make_shared<Observer>();
+	bus.attach(observer);
+
+	auto sender = bus.request_sender<EventType>();
+	REQUIRE(sender != nullptr);
+
+	bus.each<EventType>([&](const EventType &event) {
+		REQUIRE(event.value == 12);
+	});
+
+	REQUIRE(bus.each_callback_count() == 1);
+
+	sender->push(EventType{12});
+
+	REQUIRE(bus.unobserved_each_event_count() == 1);
+
+	bus.process();
+
+	REQUIRE(bus.unobserved_each_event_count() == 0);
 }
