@@ -21,6 +21,8 @@
 
 void init_surface(components::PlatformContext *platform, Context &context, components::windows::Window &window)
 {
+	static_cast<void>(platform); // fixed unused param warnings
+
 	VkSurfaceKHR handle{VK_NULL_HANDLE};
 
 	window.create_surface(context.instance, &handle);
