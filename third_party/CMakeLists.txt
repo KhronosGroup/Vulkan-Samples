@@ -346,6 +346,8 @@ endif()
 # spdlog
 add_subdirectory(spdlog)
 
+set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
+
 # ctpl
 add_library(ctpl INTERFACE)
 set(CTPL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/CTPL)
@@ -374,5 +376,11 @@ target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 # Catch2
 add_subdirectory(catch2)
 
+set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
+set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
+
 # RE2
+set(RE2_BUILD_TESTING OFF)
 add_subdirectory(re)
+
+set_property(TARGET re2 PROPERTY FOLDER "ThirdParty")

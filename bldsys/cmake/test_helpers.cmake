@@ -46,6 +46,8 @@ function(vkb__register_tests)
     target_link_libraries(${TARGET_NAME} PUBLIC Catch2::Catch2WithMain)
 
     target_compile_definitions(${TARGET_NAME} PUBLIC VKB_BUILD_TESTS)
+    
+    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "tests")
 
     if (TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
