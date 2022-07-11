@@ -25,9 +25,9 @@ namespace events
 {
 void InputManager::process(ChannelReceiverPtr<KeyEvent> &events)
 {
-	while (events->has_next())
+	while (auto optional_event = events->next())
 	{
-		KeyEvent event = events->next();
+		KeyEvent event = *optional_event;
 
 		m_key_state[event.code] = event.action;
 	}
@@ -35,7 +35,14 @@ void InputManager::process(ChannelReceiverPtr<KeyEvent> &events)
 
 void InputManager::process(ChannelReceiverPtr<CursorPositionEvent> &events)
 {
-	auto next_known_position = events->drain();
+	auto optional_next_known_position = events->drain();
+
+	if (!optional_next_known_position)
+	{
+		return;
+	}
+
+	auto &next_known_position = *optional_next_known_position;
 
 	if (next_known_position.pos_x != m_last_cursor_position.x || next_known_position.pos_y != m_last_cursor_position.y)
 	{
@@ -48,9 +55,9 @@ void InputManager::process(ChannelReceiverPtr<CursorPositionEvent> &events)
 
 void InputManager::process(ChannelReceiverPtr<TouchEvent> &events)
 {
-	while (events->has_next())
+	while (auto optional_event = events->next())
 	{
-		auto event = events->next();
+		auto &event = *optional_event;
 
 		auto it = m_touch_state.find(event.pointer_id);
 		if (it == m_touch_state.end())

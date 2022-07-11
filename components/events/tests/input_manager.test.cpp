@@ -26,9 +26,9 @@ using namespace components::events;
 TEST_CASE("key_down", "[events]")
 {
 	auto channel  = Channel<KeyEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(KeyEvent{KeyCode::A, KeyAction::Down});
 
 	InputManager manager;
@@ -48,9 +48,9 @@ TEST_CASE("key_down", "[events]")
 TEST_CASE("key_down multiple events", "[events]")
 {
 	auto channel  = Channel<KeyEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(KeyEvent{KeyCode::A, KeyAction::Down});
 	sender->push(KeyEvent{KeyCode::A, KeyAction::Up});
 	sender->push(KeyEvent{KeyCode::A, KeyAction::Repeat});
@@ -74,9 +74,9 @@ TEST_CASE("key_down multiple events", "[events]")
 TEST_CASE("key_up", "[events]")
 {
 	auto channel  = Channel<KeyEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(KeyEvent{KeyCode::A, KeyAction::Up});
 
 	InputManager manager;
@@ -90,9 +90,9 @@ TEST_CASE("key_up", "[events]")
 TEST_CASE("current_cursor_position", "[events]")
 {
 	auto channel  = Channel<CursorPositionEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(CursorPositionEvent{10, 25});
 
 	InputManager manager;
@@ -114,9 +114,9 @@ TEST_CASE("cursor_position_movement default", "[events]")
 TEST_CASE("cursor_position_movement", "[events]")
 {
 	auto channel  = Channel<CursorPositionEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(CursorPositionEvent{10, 25});
 
 	InputManager manager;
@@ -133,9 +133,9 @@ TEST_CASE("cursor_position_movement", "[events]")
 TEST_CASE("cursor_position_movement after flush", "[events]")
 {
 	auto channel  = Channel<CursorPositionEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(CursorPositionEvent{10, 25});
 
 	InputManager manager;
@@ -153,9 +153,9 @@ TEST_CASE("cursor_position_movement after flush", "[events]")
 TEST_CASE("get touch state", "[events]")
 {
 	auto channel  = Channel<TouchEvent>::create();
-	auto receiver = channel->receiver();
+	auto receiver = channel->create_receiver();
 
-	auto sender = channel->sender();
+	auto sender = channel->create_sender();
 	sender->push(TouchEvent{TouchAction::PointerDown, 0, 10, 10});
 
 	InputManager manager;

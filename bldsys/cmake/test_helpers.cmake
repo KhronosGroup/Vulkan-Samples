@@ -45,6 +45,8 @@ function(vkb__register_tests)
     add_executable(${TARGET_NAME} ${TARGET_SRC})
     target_link_libraries(${TARGET_NAME} PUBLIC Catch2::Catch2WithMain)
 
+    target_compile_definitions(${TARGET_NAME} PUBLIC VKB_BUILD_TESTS)
+
     if (TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
