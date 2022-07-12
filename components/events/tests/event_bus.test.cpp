@@ -327,23 +327,22 @@ TEST_CASE("expire an observer before process", "[events]")
 
 	TestEventBus bus{};
 
-	std::shared_ptr<EventObserver> observer = std::make_shared<Observer>();
-	bus.attach(observer);
+	std::shared_ptr<EventObserver> observer_1 = std::make_shared<Observer>();
+	std::shared_ptr<EventObserver> observer_2 = std::make_shared<Observer>();
 
-	auto sender = bus.request_sender<EventType>();
-	REQUIRE(sender != nullptr);
+	bus.attach(observer_1).attach(observer_2);
 
-	bus.each<EventType>([&](const EventType &event) {
-		REQUIRE(event.value == 12);
-	});
+	REQUIRE(bus.observer_count() == 2);
 
-	REQUIRE(bus.each_callback_count() == 1);
-
-	sender->push(EventType{12});
-
-	REQUIRE(bus.unobserved_each_event_count() == 1);
+	observer_1.reset();
 
 	bus.process();
 
-	REQUIRE(bus.unobserved_each_event_count() == 0);
+	REQUIRE(bus.observer_count() == 1);
+
+	observer_2.reset();
+
+	bus.process();
+
+	REQUIRE(bus.observer_count() == 0);
 }
