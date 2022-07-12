@@ -26,6 +26,7 @@ namespace events
 EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	assert((std::find_if(m_observers.begin(), m_observers.end(), [this, observer](const auto &obs) { return same_ptr(obs, observer); }) == m_observers.end()) && "attempting to attach an existing observer");
 =======
 	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
@@ -38,6 +39,9 @@ EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 		}
 	}
 >>>>>>> 5b8557a (add assert)
+=======
+	assert((std::find_if(m_observers.begin(), m_observers.end(), [this, observer](const auto &obs) { return same_ptr(obs, observer); }) == m_observers.end()) && "attempting to attach an existing observer");
+>>>>>>> d687e4c (added observer expiration test)
 
 	if (auto shared_observer = observer.lock())
 	{
