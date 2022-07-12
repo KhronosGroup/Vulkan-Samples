@@ -159,14 +159,14 @@ class TestEventPipeline final : public EventPipeline
 		return m_once_stages.size();
 	}
 
-	inline size_t then_count() const
+	inline size_t always_count() const
 	{
 		return m_stages.size();
 	}
 
 	inline size_t total_stage_count() const
 	{
-		return once_count() + then_count();
+		return once_count() + always_count();
 	}
 };
 
@@ -176,7 +176,7 @@ TEST_CASE("register once stage", "[events]")
 
 	REQUIRE(pipeline.once_count() == 0);
 
-	pipeline.once(std::make_unique<TypedEventPipelineStage<TestEvent>>());
+	pipeline.add_once(std::make_unique<TypedEventPipelineStage<TestEvent>>());
 
 	REQUIRE(pipeline.once_count() == 1);
 }
@@ -185,28 +185,28 @@ TEST_CASE("register then stage", "[events]")
 {
 	TestEventPipeline pipeline{};
 
-	REQUIRE(pipeline.then_count() == 0);
+	REQUIRE(pipeline.always_count() == 0);
 
-	pipeline.then(std::make_unique<TypedEventPipelineStage<TestEvent>>());
+	pipeline.add_always(std::make_unique<TypedEventPipelineStage<TestEvent>>());
 
-	REQUIRE(pipeline.then_count() == 1);
+	REQUIRE(pipeline.always_count() == 1);
 }
 
 TEST_CASE("register multiple stages", "[events]")
 {
 	TestEventPipeline pipeline{};
 
-	REQUIRE(pipeline.then_count() == 0);
+	REQUIRE(pipeline.always_count() == 0);
 	REQUIRE(pipeline.once_count() == 0);
 
 	pipeline
-	    .once(std::make_unique<TypedEventPipelineStage<TestEvent>>())
-	    .once(std::make_unique<TypedEventPipelineStage<TestEvent>>())
-	    .then(std::make_unique<TypedEventPipelineStage<TestEvent>>())
-	    .then(std::make_unique<TypedEventPipelineStage<TestEvent>>())
-	    .then(std::make_unique<TypedEventPipelineStage<TestEvent>>());
+	    .add_once(std::make_unique<TypedEventPipelineStage<TestEvent>>())
+	    .add_once(std::make_unique<TypedEventPipelineStage<TestEvent>>())
+	    .add_always(std::make_unique<TypedEventPipelineStage<TestEvent>>())
+	    .add_always(std::make_unique<TypedEventPipelineStage<TestEvent>>())
+	    .add_always(std::make_unique<TypedEventPipelineStage<TestEvent>>());
 
-	REQUIRE(pipeline.then_count() == 3);
+	REQUIRE(pipeline.always_count() == 3);
 	REQUIRE(pipeline.once_count() == 2);
 	REQUIRE(pipeline.total_stage_count() == 5);
 }
@@ -218,11 +218,11 @@ TEST_CASE("stages are executed in the correct order", "[events]")
 	uint32_t execution_index{0};
 
 	pipeline
-	    .once(std::make_unique<TestStage>(execution_index, 0))
-	    .once(std::make_unique<TestStage>(execution_index, 1))
-	    .then(std::make_unique<TestStage>(execution_index, 2))
-	    .then(std::make_unique<TestStage>(execution_index, 3))
-	    .then(std::make_unique<TestStage>(execution_index, 4));
+	    .add_once(std::make_unique<TestStage>(execution_index, 0))
+	    .add_once(std::make_unique<TestStage>(execution_index, 1))
+	    .add_always(std::make_unique<TestStage>(execution_index, 2))
+	    .add_always(std::make_unique<TestStage>(execution_index, 3))
+	    .add_always(std::make_unique<TestStage>(execution_index, 4));
 
 	// assertions inside TestStage
 	pipeline.process();
@@ -253,9 +253,9 @@ TEST_CASE("event observers are executed in the correct order", "[events]")
 	TestEventPipeline pipeline{};
 
 	pipeline
-	    .once(std::make_unique<TypedEventPipelineStage<EventOne>>())
-	    .then(std::make_unique<TypedEventPipelineStage<EventTwo>>())
-	    .then(std::make_unique<TypedEventPipelineStage<EventThree>>());
+	    .add_once(std::make_unique<TypedEventPipelineStage<EventOne>>())
+	    .add_always(std::make_unique<TypedEventPipelineStage<EventTwo>>())
+	    .add_always(std::make_unique<TypedEventPipelineStage<EventThree>>());
 
 	uint32_t one_execution_count{0};
 	uint32_t two_execution_count{0};
@@ -295,7 +295,7 @@ TEST_CASE("stages with custom fields", "[events]")
 	TestEventPipeline pipeline{};
 
 	pipeline
-	    .then(std::make_unique<TypedEventPipelineStageWithFunc<Update>>(
+	    .add_always(std::make_unique<TypedEventPipelineStageWithFunc<Update>>(
 	        []() -> Update {
 		        // in practice we would track delta time here
 		        return Update{0.0167f};

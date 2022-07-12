@@ -84,9 +84,21 @@ class EventPipeline : public EventBus
 	EventPipeline()          = default;
 	virtual ~EventPipeline() = default;
 
-	EventPipeline &once(std::unique_ptr<EventPipelineStage> &&stage);
+	/**
+	 * @brief Stage is ran once at the start of the pipeline
+	 * 
+	 * @param stage the stage to be run
+	 * @return EventPipeline& self
+	 */
+	EventPipeline &add_once(std::unique_ptr<EventPipelineStage> &&stage);
 
-	EventPipeline &then(std::unique_ptr<EventPipelineStage> &&stage);
+	/**
+	 * @brief Stage is ran each time process is executed. Stages are ran in order of addition
+	 * 
+	 * @param stage the stage to be run
+	 * @return EventPipeline& self
+	 */
+	EventPipeline &add_always(std::unique_ptr<EventPipelineStage> &&stage);
 
 	virtual void process() override;
 

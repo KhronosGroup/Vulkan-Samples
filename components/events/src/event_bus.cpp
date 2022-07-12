@@ -25,23 +25,7 @@ namespace events
 {
 EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 {
-<<<<<<< HEAD
-<<<<<<< HEAD
 	assert((std::find_if(m_observers.begin(), m_observers.end(), [this, observer](const auto &obs) { return same_ptr(obs, observer); }) == m_observers.end()) && "attempting to attach an existing observer");
-=======
-	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
-	{
-		auto exists = same_ptr(*it, observer);
-		assert(!exists && "attempting to attach an existing observer");
-		if (exists)
-		{
-			return *this;
-		}
-	}
->>>>>>> 5b8557a (add assert)
-=======
-	assert((std::find_if(m_observers.begin(), m_observers.end(), [this, observer](const auto &obs) { return same_ptr(obs, observer); }) == m_observers.end()) && "attempting to attach an existing observer");
->>>>>>> d687e4c (added observer expiration test)
 
 	if (auto shared_observer = observer.lock())
 	{
@@ -70,38 +54,14 @@ void EventBus::process()
 		++it;
 	}
 
-	flush_callbacks();
-}
-
-EventObserverGroup &EventObserverGroup::attach(std::shared_ptr<EventObserver> &observer)
-{
-	m_observers.emplace(observer);
-	return *this;
-}
-
-EventObserverGroup &EventObserverGroup::remove(std::shared_ptr<EventObserver> &observer)
-{
-	auto it = m_observers.find(observer);
-	if (it != m_observers.end())
+	for (auto &it : m_each_callbacks)
 	{
-		m_observers.erase(it);
+		it.second->process_each();
 	}
-	return *this;
-}
 
-void EventObserverGroup::update()
-{
-	for (auto &it : m_observers)
+	for (auto &it : m_last_callbacks)
 	{
-		it->update();
-	}
-}
-
-void EventObserverGroup::attach(EventBus &bus)
-{
-	for (auto &it : m_observers)
-	{
-		it->attach(bus);
+		it.second->process_last();
 	}
 }
 }        // namespace events

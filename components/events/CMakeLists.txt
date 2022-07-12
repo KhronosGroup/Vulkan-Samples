@@ -23,7 +23,7 @@ vkb__register_headers(
         event_types.hpp
         input_manager.hpp
         event_bus.hpp
-        event_pipelines.hpp
+        event_pipeline.hpp
     OUTPUT
       EVENTS_HEADERS
 )
@@ -33,7 +33,7 @@ vkb__register_component(
   SRC
     src/input_manager.cpp
     src/event_bus.cpp
-    src/event_pipelines.cpp
+    src/event_pipeline.cpp
   HEADERS
     ${EVENTS_HEADERS}
   INCLUDE_DIRS
@@ -46,7 +46,7 @@ vkb__register_tests(
     tests/channel.test.cpp
     tests/event_bus.test.cpp
     tests/input_manager.test.cpp
-    tests/pipeline.test.cpp
+    tests/event_pipeline.test.cpp
   LIBS
     vkb__events
 )

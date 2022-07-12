@@ -327,8 +327,8 @@ TEST_CASE("expire an observer before process", "[events]")
 
 	TestEventBus bus{};
 
-	std::shared_ptr<EventObserver> observer_1 = std::make_shared<Observer>();
-	std::shared_ptr<EventObserver> observer_2 = std::make_shared<Observer>();
+	std::shared_ptr<EventObserver> observer_1 = std::make_shared<TestObserver>();
+	std::shared_ptr<EventObserver> observer_2 = std::make_shared<TestObserver>();
 
 	bus.attach(observer_1).attach(observer_2);
 
