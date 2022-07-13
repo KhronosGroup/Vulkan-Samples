@@ -39,7 +39,7 @@ class HPPWindow : private vkb::Window
 
 	vk::SurfaceKHR create_surface(vkb::core::HPPInstance &instance)
 	{
-		return static_cast<vk::SurfaceKHR>(create_surface(instance.get_handle(), instance.get_first_gpu().get_handle()));
+		return static_cast<vk::SurfaceKHR>(create_surface(reinterpret_cast<vkb::Instance &>(instance)));
 	}
 
 	vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device)
