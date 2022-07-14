@@ -22,7 +22,7 @@
 extern "C"
 {
 	// Sample Main
-	typedef int (*PFN_SampleMain)(components::PlatformContext *context);
+	typedef int (*PFN_SampleMain)(const components::PlatformContext *context);
 }
 
 struct Sample

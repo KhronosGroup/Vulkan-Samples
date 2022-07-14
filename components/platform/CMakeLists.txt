@@ -26,8 +26,6 @@ vkb__register_component(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-
-
 vkb__register_tests_no_catch2(
   NAME "platform_test"
   SRC
@@ -43,13 +41,6 @@ vkb__register_tests_no_catch2(
 add_library(vkb__platform__dummy_sample SHARED tests/dummy_sample.cpp)
 target_link_libraries(vkb__platform__dummy_sample PUBLIC vkb__platform)
 add_dependencies(vkb_tests vkb__platform__dummy_sample)
-
-set_target_properties(vkb__platform__dummy_sample
-  PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
-)
 
 vkb__register_tests_no_catch2(
   NAME "sample_test"

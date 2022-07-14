@@ -26,4 +26,4 @@
  * @param context a platform context
  * @return status code
  */
-EXPORT_CLIB int sample_main(components::PlatformContext *context);
+EXPORT_CLIB int sample_main(const components::PlatformContext *context);

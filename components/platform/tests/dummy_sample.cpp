@@ -17,18 +17,14 @@
 
 #include "components/platform/sample_main.hpp"
 
-int sample_main(components::PlatformContext *context)
+#include <iostream>
+
+int sample_main(const components::PlatformContext *context)
 {
-#if defined(_WIN32)
-	if (dynamic_cast<components::WindowsContext *>(context) == nullptr)
-#elif defined(__ANDROID__)
-	if (dynamic_cast<components::AndroidContext *>(context) == nullptr)
-#elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<components::MacOSXContext *>(context) == nullptr)
-#elif defined(__linux__)
-	if (dynamic_cast<components::UnixContext *>(context) == nullptr)
-#endif
+	auto *platform_specific_context = context->cast();
+	if (platform_specific_context == nullptr)
 	{
+		std::cout << "incorrect context provided for this platform\n";
 		return false;
 	}
 

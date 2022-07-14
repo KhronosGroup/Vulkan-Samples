@@ -30,7 +30,7 @@ namespace components
 {
 namespace dl
 {
-std::string os_library_name(const std::string &name)
+std::string os_library_name(const std::string_view &name)
 {
 	std::stringstream lib_name;
 #ifdef _WIN32
@@ -44,10 +44,10 @@ std::string os_library_name(const std::string &name)
 	return lib_name.str();
 }
 
-void *open_library(const char *library_name)
+void *open_library(const std::string_view &library_name)
 {
 #if defined(_WIN32)
-	HMODULE module = LoadLibraryA(library_name);
+	HMODULE module = LoadLibraryA(library_name.data());
 	if (!module)
 	{
 		return nullptr;
@@ -55,23 +55,23 @@ void *open_library(const char *library_name)
 
 	return reinterpret_cast<void *>(module);
 #elif defined(__APPLE__)
-	return dlopen(library_name, RTLD_NOW | RTLD_LOCAL);
+	return dlopen(library_name.data(), RTLD_NOW | RTLD_LOCAL);
 #else
-	return dlopen(library_name, RTLD_NOW | RTLD_LOCAL);
+	return dlopen(library_name.data(), RTLD_NOW | RTLD_LOCAL);
 #endif
 }
 
-void *load_function(void *library, const char *function_name)
+void *load_function(void *library, const std::string_view &function_name)
 {
 	assert(library && "library must be a pointer to a dl handle. see open_library()");
 
 #if defined(_WIN32)
 	HMODULE module = static_cast<HMODULE>(library);
-	return reinterpret_cast<void *>(GetProcAddress(module, function_name));
+	return reinterpret_cast<void *>(GetProcAddress(module, function_name.data()));
 #elif defined(__APPLE__)
-	return dlsym(library, function_name);
+	return dlsym(library, function_name.data());
 #else
-	return dlsym(library, function_name);
+	return dlsym(library, function_name.data());
 #endif
 }
 }        // namespace dl

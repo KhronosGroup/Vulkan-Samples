@@ -21,6 +21,7 @@
 #include <cassert>
 #include <deque>
 #include <set>
+#include <stdexcept>
 
 #include "components/vfs/helpers.hpp"
 

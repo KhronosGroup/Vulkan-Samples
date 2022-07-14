@@ -17,7 +17,7 @@
 
 #include <components/platform/platform.hpp>
 
-#include <stdexcept>
+#include <iostream>
 
 using namespace components;
 
@@ -25,20 +25,15 @@ CUSTOM_MAIN(context)
 {
 	if (context == nullptr)
 	{
-		throw std::runtime_error{"context should not be null"};
+		std::cout << "context should not be null\n";
+		return EXIT_FAILURE;
 	}
 
-#if defined(_WIN32)
-	if (dynamic_cast<WindowsContext *>(context) == nullptr)
-#elif defined(__ANDROID__)
-	if (dynamic_cast<AndroidContext *>(context) == nullptr)
-#elif defined(__APPLE__) || defined(__MACH__)
-	if (dynamic_cast<MacOSXContext *>(context) == nullptr)
-#elif defined(__linux__)
-	if (dynamic_cast<UnixContext *>(context) == nullptr)
-#endif
+	auto *platform_specific_context = context->cast();
+	if (platform_specific_context == nullptr)
 	{
-		throw std::runtime_error{"incorrect context provided for this platform"};
+		std::cout << "incorrect context provided for this platform\n";
+		return EXIT_FAILURE;
 	}
 
 	return EXIT_SUCCESS;

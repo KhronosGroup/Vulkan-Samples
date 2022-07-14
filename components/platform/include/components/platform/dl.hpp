@@ -17,7 +17,7 @@
 
 #pragma once
 
-#include <string>
+#include <string_view>
 
 #define EXPORT
 #define IMPORT
@@ -42,7 +42,7 @@ namespace dl
  * @param name library name
  * @return std::string OS library name
  */
-std::string os_library_name(const std::string &name);
+std::string os_library_name(const std::string_view &name);
 
 /**
  * @brief Open a dynamic library
@@ -50,7 +50,7 @@ std::string os_library_name(const std::string &name);
  * @param library_path library path
  * @return void* library handle
  */
-void *open_library(const char *library_path);
+void *open_library(const std::string_view &library_path);
 
 /**
  * @brief Load a function ptr from a library
@@ -59,7 +59,7 @@ void *open_library(const char *library_path);
  * @param function_name function name
  * @return void* function ptr
  */
-void *load_function(void *library, const char *function_name);
+void *load_function(void *library, const std::string_view &function_name);
 
 /**
  * @brief Load a function ptr from a library and cast to a specific type
@@ -70,7 +70,7 @@ void *load_function(void *library, const char *function_name);
  * @return PFN function pointer
  */
 template <typename PFN>
-PFN load_function(void *library, const char *function_name)
+PFN load_function(void *library, const std::string_view &function_name)
 {
 	return reinterpret_cast<PFN>(load_function(library, function_name));
 }
