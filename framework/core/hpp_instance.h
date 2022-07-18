@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <common/hpp_error.h>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
 

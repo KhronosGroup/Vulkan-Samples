@@ -132,6 +132,9 @@ A transcoded version of the API sample [Hello Triangle](#hello_triangle) that il
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP Terrain Tessellation](./api/hpp_terrain_tessellation)<br/>
+A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
