@@ -19,6 +19,7 @@ vkb__register_component(
   NAME events
   SRC
     src/input_manager.cpp
+    src/event_bus.cpp
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
@@ -27,6 +28,7 @@ vkb__register_tests(
   NAME "events_tests"
   SRC
     tests/channel.test.cpp
+    tests/event_bus.test.cpp
     tests/input_manager.test.cpp
   LIBS
     vkb__events

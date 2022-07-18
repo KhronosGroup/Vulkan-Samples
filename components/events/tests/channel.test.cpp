@@ -32,19 +32,20 @@ TEST_CASE("send single event", "[events]")
 
 	ChannelPtr<Event> channel = Channel<Event>::create();
 
-	auto send = channel->sender();
+	auto send = channel->create_sender();
 
-	auto rec1 = channel->receiver();
-	auto rec2 = channel->receiver();
+	auto rec1 = channel->create_receiver();
+	auto rec2 = channel->create_receiver();
 
 	send->push(Event{42});
-	REQUIRE((rec1->has_next() && rec2->has_next()));
 
 	auto val1 = rec1->next();
-	REQUIRE(val1.value == 42);
+	REQUIRE(val1.has_value());
+	REQUIRE((*val1).value == 42);
 
 	auto val2 = rec2->next();
-	REQUIRE(val2.value == 42);
+	REQUIRE(val2.has_value());
+	REQUIRE((*val2).value == 42);
 }
 
 TEST_CASE("send multiple events", "[events]")
@@ -56,10 +57,10 @@ TEST_CASE("send multiple events", "[events]")
 
 	ChannelPtr<Event> channel = Channel<Event>::create();
 
-	auto send1 = channel->sender();
-	auto send2 = channel->sender();
+	auto send1 = channel->create_sender();
+	auto send2 = channel->create_sender();
 
-	auto rec1 = channel->receiver();
+	auto rec1 = channel->create_receiver();
 
 	send1->push({1});
 	send2->push({2});
@@ -77,8 +78,9 @@ TEST_CASE("send multiple events", "[events]")
 
 	for (auto val : expected_values)
 	{
-		REQUIRE(rec1->has_next());
-		REQUIRE(rec1->next().value == val);
+		auto received_value = rec1->next();
+		REQUIRE(received_value.has_value());
+		REQUIRE((*received_value).value == val);
 	}
 }
 
@@ -91,15 +93,15 @@ TEST_CASE("create receiver whilst sending events", "[events]")
 
 	ChannelPtr<Event> channel = Channel<Event>::create();
 
-	auto send1 = channel->sender();
+	auto send1 = channel->create_sender();
 
-	auto rec1 = channel->receiver();
+	auto rec1 = channel->create_receiver();
 
 	send1->push({1});
 	send1->push({2});
 	send1->push({3});
 
-	auto rec2 = channel->receiver();
+	auto rec2 = channel->create_receiver();
 
 	send1->push({4});
 	send1->push({5});
@@ -108,16 +110,18 @@ TEST_CASE("create receiver whilst sending events", "[events]")
 
 	for (auto val : expected_values_1)
 	{
-		REQUIRE(rec1->has_next());
-		REQUIRE(rec1->next().value == val);
+		auto received_value = rec1->next();
+		REQUIRE(received_value.has_value());
+		REQUIRE((*received_value).value == val);
 	}
 
 	std::vector<uint32_t> expected_values_2 = {4, 5};
 
 	for (auto val : expected_values_2)
 	{
-		REQUIRE(rec2->has_next());
-		REQUIRE(rec2->next().value == val);
+		auto received_value = rec2->next();
+		REQUIRE(received_value.has_value());
+		REQUIRE((*received_value).value == val);
 	}
 }
 
@@ -130,9 +134,9 @@ TEST_CASE("drain a channel", "[events]")
 
 	ChannelPtr<Event> channel = Channel<Event>::create();
 
-	auto send1 = channel->sender();
+	auto send1 = channel->create_sender();
 
-	auto rec1 = channel->receiver();
+	auto rec1 = channel->create_receiver();
 
 	send1->push({1});
 	send1->push({2});
@@ -141,6 +145,20 @@ TEST_CASE("drain a channel", "[events]")
 	send1->push({5});
 
 	auto last = rec1->drain();
-	REQUIRE(last.value == 5);
-	REQUIRE(rec1->has_next() == false);
+	REQUIRE(last.has_value());
+	REQUIRE((*last).value == 5);
+}
+
+TEST_CASE("type index", "[events]")
+{
+	struct Event
+	{
+		uint32_t value;
+	};
+
+	std::type_index type_index = std::type_index{typeid(Event)};
+
+	ChannelPtr<Event> channel = Channel<Event>::create();
+
+	REQUIRE(type_index == channel->type_index());
 }

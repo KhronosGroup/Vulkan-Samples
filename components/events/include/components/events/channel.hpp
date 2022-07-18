@@ -19,14 +19,15 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <set>
+#include <typeindex>
 
 namespace components
 {
 namespace events
 {
-
 template <typename Type>
 class Channel;
 template <typename Type>
@@ -42,9 +43,27 @@ class ChannelSender;
 template <typename Type>
 using ChannelSenderPtr = std::unique_ptr<ChannelSender<Type>>;
 
+// Acts as a base for storing multiple channels in a container
+class AbstractChannel
+{
+  public:
+	AbstractChannel(std::type_index &&type_index) :
+	    m_type_index{type_index}
+	{}
+	virtual ~AbstractChannel() = default;
+
+	inline const std::type_index &type_index() const
+	{
+		return m_type_index;
+	}
+
+  private:
+	std::type_index m_type_index;
+};
+
 // Acts as a context which links receivers and senders together
 template <typename Type>
-class Channel
+class Channel : public AbstractChannel
 {
 	friend ChannelReceiver<Type>;
 	friend ChannelSender<Type>;
@@ -67,14 +86,14 @@ class Channel
 	 *
 	 * @return ChannelReceiverPtr<Type> A receiver
 	 */
-	ChannelReceiverPtr<Type> receiver();
+	ChannelReceiverPtr<Type> create_receiver();
 
 	/**
 	 * @brief Create a new sender
 	 *
 	 * @return ChannelSenderPtr<Type> A sender
 	 */
-	ChannelSenderPtr<Type> sender();
+	ChannelSenderPtr<Type> create_sender();
 
   protected:
 	Channel();
@@ -114,25 +133,27 @@ class ChannelReceiver
 	~ChannelReceiver();
 
 	/**
-	 * @brief Checks if there is a next item in the channel
-	 */
-	bool has_next() const;
-
-	/**
 	 * @brief retrieves the next item in the channel
 	 *
 	 * @return Type the next item
 	 */
-	Type next();
+	std::optional<Type> next();
 
 	/**
 	 * @brief empties the channel returning the last item
 	 *
 	 * @return Type the last item
 	 */
-	Type drain();
+	std::optional<Type> drain();
 
-  private:
+#ifdef VKB_BUILD_TESTS
+	inline size_t size() const
+	{
+		return m_queue.size();
+	}
+#endif
+
+  protected:
 	ChannelReceiver(Channel<Type> &channel);
 
 	/**
@@ -143,7 +164,7 @@ class ChannelReceiver
 	void push(const Type &item);
 
 	mutable std::mutex m_mut;
-	Channel<Type>     &m_channel;
+	Channel<Type> &    m_channel;
 	std::queue<Type>   m_queue;
 };
 
@@ -166,7 +187,7 @@ class ChannelSender
 	ChannelSender(Channel<Type> &channel);
 
 	mutable std::mutex m_mut;
-	Channel<Type>     &m_channel;
+	Channel<Type> &    m_channel;
 };
 }        // namespace events
 }        // namespace components
@@ -182,7 +203,8 @@ namespace components
 namespace events
 {
 template <typename Type>
-Channel<Type>::Channel()
+Channel<Type>::Channel() :
+    AbstractChannel{typeid(Type)}
 {}
 
 template <typename Type>
@@ -190,13 +212,13 @@ Channel<Type>::~Channel()
 {}
 
 template <typename Type>
-ChannelReceiverPtr<Type> Channel<Type>::receiver()
+ChannelReceiverPtr<Type> Channel<Type>::create_receiver()
 {
 	return std::unique_ptr<ChannelReceiver<Type>>(new ChannelReceiver<Type>(*this));
 }
 
 template <typename Type>
-ChannelSenderPtr<Type> Channel<Type>::sender()
+ChannelSenderPtr<Type> Channel<Type>::create_sender()
 {
 	return std::unique_ptr<ChannelSender<Type>>(new ChannelSender<Type>(*this));
 }
@@ -246,15 +268,7 @@ ChannelReceiver<Type>::~ChannelReceiver()
 }
 
 template <typename Type>
-bool ChannelReceiver<Type>::has_next() const
-{
-	std::lock_guard<std::mutex> lock{m_mut};
-
-	return !m_queue.empty();
-}
-
-template <typename Type>
-Type ChannelReceiver<Type>::next()
+std::optional<Type> ChannelReceiver<Type>::next()
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
@@ -270,7 +284,7 @@ Type ChannelReceiver<Type>::next()
 }
 
 template <typename Type>
-Type ChannelReceiver<Type>::drain()
+std::optional<Type> ChannelReceiver<Type>::drain()
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
