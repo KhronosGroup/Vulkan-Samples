@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2021-2022, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -348,7 +348,7 @@ std::unique_ptr<vkb::sg::Image> TextureCompressionComparison::create_image(ktxTe
 	image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
 	vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 1, &image_memory_barrier);
-	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_TRANSFER_BIT, 0).get_handle(), true);
+	device->flush_command_buffer(command_buffer, get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0).get_handle(), true);
 
 	return image_out;
 }
