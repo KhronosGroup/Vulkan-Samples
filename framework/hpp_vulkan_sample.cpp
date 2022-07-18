@@ -151,7 +151,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	device = std::make_unique<vkb::core::HPPDevice>(gpu, surface, std::move(debug_utils), get_device_extensions());
 
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device()->get_handle());
 
 	create_render_context(platform);
 	prepare_render_context();
@@ -427,9 +427,9 @@ vkb::core::HPPInstance const &HPPVulkanSample::get_instance() const
 	return *instance;
 }
 
-vkb::core::HPPDevice const &HPPVulkanSample::get_device() const
+std::unique_ptr<vkb::core::HPPDevice> const &HPPVulkanSample::get_device() const
 {
-	return *device;
+	return device;
 }
 
 Configuration const &HPPVulkanSample::get_configuration() const
