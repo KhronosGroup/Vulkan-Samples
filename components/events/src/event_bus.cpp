@@ -25,13 +25,7 @@ namespace events
 {
 EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 {
-	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
-	{
-		if (same_ptr(*it, observer))
-		{
-			return *this;
-		}
-	}
+	assert((std::find_if(m_observers.begin(), m_observers.end(), [this, observer](const auto &obs) { return same_ptr(obs, observer); }) == m_observers.end()) && "attempting to attach an existing observer");
 
 	if (auto shared_observer = observer.lock())
 	{
@@ -44,12 +38,11 @@ EventBus &EventBus::attach(std::weak_ptr<EventObserver> &&observer)
 
 void EventBus::process()
 {
-	for (auto it = m_observers.begin(); it != m_observers.end(); it++)
+	for (auto it = m_observers.begin(); it != m_observers.end();)
 	{
-		if ((*it).expired())
+		if (it->expired())
 		{
-			m_observers.erase(it);
-			it++;
+			it = m_observers.erase(it);
 			continue;
 		}
 
@@ -57,6 +50,8 @@ void EventBus::process()
 		{
 			shared->update();
 		}
+
+		++it;
 	}
 
 	for (auto &it : m_each_callbacks)

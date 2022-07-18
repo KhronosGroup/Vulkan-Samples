@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <mutex>
+#include <optional>
 #include <queue>
 #include <set>
 #include <typeindex>
@@ -85,14 +86,14 @@ class Channel : public AbstractChannel
 	 *
 	 * @return ChannelReceiverPtr<Type> A receiver
 	 */
-	ChannelReceiverPtr<Type> receiver();
+	ChannelReceiverPtr<Type> create_receiver();
 
 	/**
 	 * @brief Create a new sender
 	 *
 	 * @return ChannelSenderPtr<Type> A sender
 	 */
-	ChannelSenderPtr<Type> sender();
+	ChannelSenderPtr<Type> create_sender();
 
   protected:
 	Channel();
@@ -132,32 +133,27 @@ class ChannelReceiver
 	~ChannelReceiver();
 
 	/**
-	 * @brief Checks if there is a next item in the channel
-	 */
-	bool has_next() const;
-
-	/**
 	 * @brief retrieves the next item in the channel
 	 *
 	 * @return Type the next item
 	 */
-	Type next();
+	std::optional<Type> next();
 
 	/**
 	 * @brief empties the channel returning the last item
 	 *
 	 * @return Type the last item
 	 */
-	Type drain();
+	std::optional<Type> drain();
 
+#ifdef VKB_BUILD_TESTS
 	inline size_t size() const
 	{
-		std::lock_guard<std::mutex> lock{m_mut};
-
 		return m_queue.size();
-	};
+	}
+#endif
 
-  private:
+  protected:
 	ChannelReceiver(Channel<Type> &channel);
 
 	/**
@@ -216,13 +212,13 @@ Channel<Type>::~Channel()
 {}
 
 template <typename Type>
-ChannelReceiverPtr<Type> Channel<Type>::receiver()
+ChannelReceiverPtr<Type> Channel<Type>::create_receiver()
 {
 	return std::unique_ptr<ChannelReceiver<Type>>(new ChannelReceiver<Type>(*this));
 }
 
 template <typename Type>
-ChannelSenderPtr<Type> Channel<Type>::sender()
+ChannelSenderPtr<Type> Channel<Type>::create_sender()
 {
 	return std::unique_ptr<ChannelSender<Type>>(new ChannelSender<Type>(*this));
 }
@@ -272,15 +268,7 @@ ChannelReceiver<Type>::~ChannelReceiver()
 }
 
 template <typename Type>
-bool ChannelReceiver<Type>::has_next() const
-{
-	std::lock_guard<std::mutex> lock{m_mut};
-
-	return !m_queue.empty();
-}
-
-template <typename Type>
-Type ChannelReceiver<Type>::next()
+std::optional<Type> ChannelReceiver<Type>::next()
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 
@@ -296,7 +284,7 @@ Type ChannelReceiver<Type>::next()
 }
 
 template <typename Type>
-Type ChannelReceiver<Type>::drain()
+std::optional<Type> ChannelReceiver<Type>::drain()
 {
 	std::lock_guard<std::mutex> lock{m_mut};
 

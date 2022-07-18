@@ -41,11 +41,11 @@ class EventObserver
 
 /**
  * @brief EventBus acts as a collection of event channels and observers
- * 
+ *
  * 		  An observer is added to the event bus through attach(observer). Once attached, an observer can register event listeners (each<EventType>(), last<EventType>()) and request
  * 		  ChannelSender<EventTypes>. Each step of the EventBus calls update() on its observers. Which in turn allows an observer to submit events to the bus. After this, the bus then processes
  * 		  all event callbacks with a stream of events.
- * 
+ *
  * 		  The combination of these actions will allow for inter component communication without any hard links. This allows samples to create and organize components in anyway they deem fit.
  *
  * 		  TODO: Allow an observer to detach from the bus. This should also clear all its callbacks. May need to restructure the internal storage of the bus
@@ -58,7 +58,7 @@ class EventBus
 
 	/**
 	 * @brief Attach a new observer
-	 * 
+	 *
 	 * @param observer the observer to attach
 	 * @return EventBus& the event bus
 	 */
@@ -69,7 +69,7 @@ class EventBus
 
 	/**
 	 * @brief Attach an event callback for each event in a cycle
-	 * 
+	 *
 	 * @param cb the callback
 	 * @return EventBus& the event bus
 	 */
@@ -78,7 +78,7 @@ class EventBus
 
 	/**
 	 * @brief Attach an event callback for the last event in a cycle
-	 * 
+	 *
 	 * @param cb the callback
 	 * @return EventBus& the event bus
 	 */
@@ -87,7 +87,7 @@ class EventBus
 
 	/**
 	 * @brief Retrieve a ChannelSender for a given type
-	 * 
+	 *
 	 * @tparam Type the type of the required sender
 	 * @return ChannelSenderPtr<Type> the requested sender
 	 */
@@ -96,7 +96,7 @@ class EventBus
 
 	/**
 	 * @brief Process a cycle of events
-	 * 
+	 *
 	 */
 	void process();
 
@@ -123,11 +123,15 @@ class EventBus
 
 		virtual ~TypedChannelCallbacks() = default;
 
-		virtual void   process_each() override;
-		virtual void   process_last() override;
+		virtual void process_each() override;
+		virtual void process_last() override;
+
+#ifdef VKB_BUILD_TESTS
 		virtual size_t queue_size() const override;
 		virtual size_t callback_count() const override;
-		void           append(EventCallback<Type> func);
+#endif
+
+		void append(EventCallback<Type> func);
 
 	  private:
 		ChannelReceiverPtr<Type>         m_receiver;
@@ -161,7 +165,7 @@ class EventBus
 		{
 			auto *channel = find_or_create_channel<Type>();
 
-			auto result = container.emplace(typeid(Type), std::make_unique<TypedChannelCallbacks<Type>>(channel->receiver()));
+			auto result = container.emplace(typeid(Type), std::make_unique<TypedChannelCallbacks<Type>>(channel->create_receiver()));
 			assert(result.second);
 			it = result.first;
 		}
@@ -220,19 +224,17 @@ template <typename Type>
 ChannelSenderPtr<Type> EventBus::request_sender()
 {
 	auto *channel = find_or_create_channel<Type>();
-	return channel->sender();
+	return channel->create_sender();
 }
 
 template <typename Type>
 void EventBus::TypedChannelCallbacks<Type>::process_each()
 {
-	while (m_receiver->has_next())
+	while (auto optional_element = m_receiver->next())
 	{
-		Type element = m_receiver->next();
-
 		for (auto func : m_callbacks)
 		{
-			func(element);
+			func(*optional_element);
 		}
 	}
 }
@@ -240,17 +242,20 @@ void EventBus::TypedChannelCallbacks<Type>::process_each()
 template <typename Type>
 void EventBus::TypedChannelCallbacks<Type>::process_last()
 {
-	if (m_receiver->has_next())
-	{
-		Type last_element = m_receiver->drain();
+	auto optional_last_element = m_receiver->drain();
 
-		for (auto func : m_callbacks)
-		{
-			func(last_element);
-		}
+	if (!optional_last_element)
+	{
+		return;
+	}
+
+	for (auto func : m_callbacks)
+	{
+		func(*optional_last_element);
 	}
 }
 
+#ifdef VKB_BUILD_TESTS
 template <typename Type>
 size_t EventBus::TypedChannelCallbacks<Type>::queue_size() const
 {
@@ -262,6 +267,7 @@ size_t EventBus::TypedChannelCallbacks<Type>::callback_count() const
 {
 	return m_callbacks.size();
 }
+#endif
 
 template <typename Type>
 void EventBus::TypedChannelCallbacks<Type>::append(EventCallback<Type> func)
