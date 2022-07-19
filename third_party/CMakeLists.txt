@@ -177,7 +177,7 @@ target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
 
 target_link_libraries(ktx PUBLIC vulkan)
 
-set_property(TARGET ktx PROPERTY FOLDER "ThirdParty")
+set_property(TARGET ktx PROPERTY FOLDER "third_party")
 
 # volk
 set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
@@ -198,7 +198,7 @@ elseif (VKB_WSI_SELECTION STREQUAL WAYLAND)
     target_include_directories(volk PUBLIC ${WAYLAND_INCLUDE_DIRS})
 endif()
 
-set_property(TARGET volk PROPERTY FOLDER "ThirdParty")
+set_property(TARGET volk PROPERTY FOLDER "third_party")
 
 # imgui
 set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/imgui")
@@ -218,7 +218,7 @@ add_library(imgui STATIC ${IMGUI_FILES})
 
 target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
-set_property(TARGET imgui PROPERTY FOLDER "ThirdParty")
+set_property(TARGET imgui PROPERTY FOLDER "third_party")
 
 # glslang
 option(ENABLE_SPVREMAPPER OFF)
@@ -234,7 +234,7 @@ if (NOT TARGET glslang-default-resource-limits)
     add_library(glslang-default-resource-limits
                 glslang/StandAlone/ResourceLimits.cpp)
 
-    set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "ThirdParty")
+    set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "third_party")
     
     target_include_directories(glslang-default-resource-limits
                                 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
@@ -250,27 +250,30 @@ if(NOT MSVC)
         "-Wno-unused-parameter")
 endif()
 
-set_property(TARGET glslang PROPERTY FOLDER "ThirdParty")
-set_property(TARGET OGLCompiler PROPERTY FOLDER "ThirdParty")
-set_property(TARGET OSDependent PROPERTY FOLDER "ThirdParty")
-set_property(TARGET SPIRV PROPERTY FOLDER "ThirdParty")
+set_property(TARGET glslang PROPERTY FOLDER "third_party")
+set_property(TARGET OGLCompiler PROPERTY FOLDER "third_party")
+set_property(TARGET OSDependent PROPERTY FOLDER "third_party")
+set_property(TARGET SPIRV PROPERTY FOLDER "third_party")
+set_property(TARGET HLSL PROPERTY FOLDER "third_party")
+set_property(TARGET GenericCodeGen PROPERTY FOLDER "third_party")
+set_property(TARGET MachineIndependent PROPERTY FOLDER "third_party")
 
 # spirv-cross
 add_subdirectory(spirv-cross)
 
-set_property(TARGET spirv-cross PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-core PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-msl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-util PROPERTY FOLDER "ThirdParty")
+set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
 
 # hwcpipe
 add_subdirectory(hwcpipe)
 
-set_property(TARGET hwcpipe PROPERTY FOLDER "ThirdParty")
+set_property(TARGET hwcpipe PROPERTY FOLDER "third_party")
 
 # stb
 add_library(stb INTERFACE)
@@ -312,7 +315,7 @@ set(ASTC_SOURCES
 add_library(astc ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
-set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
+set_property(TARGET astc PROPERTY FOLDER "third_party")
 
 if(ANDROID)
     # native_app_glue
@@ -324,7 +327,7 @@ if(ANDROID)
         
     target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
     
-    set_property(TARGET native_app_glue PROPERTY FOLDER "ThirdParty")
+    set_property(TARGET native_app_glue PROPERTY FOLDER "third_party")
 else()
     if (NOT DIRECT_TO_DISPLAY)
         # GLFW
@@ -339,14 +342,14 @@ else()
 
         add_subdirectory(glfw)
 
-        set_property(TARGET glfw PROPERTY FOLDER "ThirdParty")
+        set_property(TARGET glfw PROPERTY FOLDER "third_party")
     endif()
 endif()
 
 # spdlog
 add_subdirectory(spdlog)
 
-set_property(TARGET spdlog PROPERTY FOLDER "ThirdParty")
+set_property(TARGET spdlog PROPERTY FOLDER "third_party")
 
 # ctpl
 add_library(ctpl INTERFACE)
@@ -376,11 +379,11 @@ target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 # Catch2
 add_subdirectory(catch2)
 
-set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
-set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
+set_property(TARGET Catch2 PROPERTY FOLDER "third_party")
+set_property(TARGET Catch2WithMain PROPERTY FOLDER "third_party")
 
 # RE2
 set(RE2_BUILD_TESTING OFF)
 add_subdirectory(re)
 
-set_property(TARGET re2 PROPERTY FOLDER "ThirdParty")
+set_property(TARGET re2 PROPERTY FOLDER "third_party")

@@ -16,6 +16,8 @@
 
 add_custom_target(vkb_components)
 
+set_property(TARGET vkb_components PROPERTY FOLDER "components")
+
 function(vkb__register_headers)
     set(options)
     set(oneValueArgs FOLDER OUTPUT)
@@ -57,12 +59,10 @@ function(vkb__register_component)
         else()
             target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()
-
-        set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components/${TARGET_NAME}")
     else() # Create interface library
         message("ADDING INTERFACE: vkb__${TARGET_NAME}")
 
-        add_library("vkb__${TARGET_NAME}" INTERFACE)
+        add_library("vkb__${TARGET_NAME}" INTERFACE ${TARGET_HEADERS})
 
         if(TARGET_LINK_LIBS)
             target_link_libraries("vkb__${TARGET_NAME}" INTERFACE ${TARGET_LINK_LIBS})
@@ -72,6 +72,8 @@ function(vkb__register_component)
             target_include_directories("vkb__${TARGET_NAME}" INTERFACE ${TARGET_INCLUDE_DIRS})
         endif()
     endif()
+
+    set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components/${TARGET_NAME}")
 
     add_dependencies(vkb_components "vkb__${TARGET_NAME}")
 endfunction()
