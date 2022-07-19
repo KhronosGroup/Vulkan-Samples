@@ -69,7 +69,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	vkb::core::HPPInstance const &get_instance() const;
 
-	vkb::core::HPPDevice const &get_device() const;
+	std::unique_ptr<vkb::core::HPPDevice> const &get_device() const;
 
 	vkb::rendering::HPPRenderContext &get_render_context();
 

@@ -20,6 +20,7 @@
 #include <hpp_vulkan_sample.h>
 
 #include <camera.h>
+#include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <platform/hpp_platform.h>
 #include <scene_graph/components/hpp_image.h>
@@ -325,7 +326,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
   public:
 	bool         prepared = false;
-	vk::Extent2D extent;
+	vk::Extent2D extent{1280, 720};
 
 	/** @brief Example settings that can be changed e.g. by command line arguments */
 	struct

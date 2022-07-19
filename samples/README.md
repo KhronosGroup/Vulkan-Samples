@@ -117,6 +117,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [HPP Compute shader N-Body simulation](./api/hpp_compute_nbody)<br/>
+A transcoded version of the API sample [Compute N-Body](#compute_nbody) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Dynamic Uniform Buffers](./api/hpp_dynamic_uniform_buffers)<br/>
 A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
@@ -128,6 +131,9 @@ A transcoded version of the API sample [Hello Triangle](#hello_triangle) that il
 
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Terrain Tessellation](./api/hpp_terrain_tessellation)<br/>
+A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
@@ -234,6 +240,14 @@ include those implementations in the device query.  An example of a non-conforma
 MoltenVk: [MoltenVk](https://github.com/KhronosGroup/MoltenVK).  Also demonstrate use of beta extension which allows 
 for querying which features of the full Vulkan spec are not currently supported by the non-conformant Vulkan 
 implementation.
+
+### [Graphics pipeline library](./extensions/graphics_pipeline_library)<br/>
+**Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
+Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts such as vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
+
+### [Conditional rendering](./extensions/conditional_rendering)
+**Extension**: [```VK_EXT_conditional_rendering```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) <br/>
+Demonstrate how to do conditional rendering, dynamically discarding rendering commands without having to update command buffers. This is done by sourcing conditional rendering blocks from a dedicated buffer that can be updated without having to touch command buffers.
 
 ## Tooling Samples
 
