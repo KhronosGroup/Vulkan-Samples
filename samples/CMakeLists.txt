@@ -106,6 +106,7 @@ set(ORDER_LIST
 	"hpp_instancing"
 	"hpp_hdr"
     "hpp_hello_triangle"
+	"hpp_hlsl_shaders"
 	"hpp_texture_loading")
 
 # Orders the sample ids by the order list above
