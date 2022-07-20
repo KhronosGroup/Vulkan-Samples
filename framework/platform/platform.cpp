@@ -26,9 +26,9 @@
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #ifdef __ANDROID__
-#include <spdlog/sinks/android_sink.h>
+#	include <spdlog/sinks/android_sink.h>
 #else
-#include <spdlog/sinks/stdout_color_sinks.h>
+#	include <spdlog/sinks/stdout_color_sinks.h>
 #endif
 #include <spdlog/spdlog.h>
 
