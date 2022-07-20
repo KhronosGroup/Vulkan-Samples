@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2021, Arm Limited and Contributors
+ Copyright (c) 2019-2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -52,3 +52,5 @@ add_definitions(-DROOT_PATH_SIZE=${ROOT_PATH_SIZE})
 
 set(CMAKE_C_FLAGS_DEBUG   "-DDEBUG=0 ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG=0 ${CMAKE_CXX_FLAGS_DEBUG}")
+
+add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)

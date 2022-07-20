@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include <cstddef>
 
-#include "common/error.h"
 #include "common/logging.h"
 #include "core/device.h"
 
