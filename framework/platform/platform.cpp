@@ -25,7 +25,11 @@
 #include <spdlog/async_logger.h>
 #include <spdlog/details/thread_pool.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#ifdef __ANDROID__
+#include <spdlog/sinks/android_sink.h>
+#else
 #include <spdlog/sinks/stdout_color_sinks.h>
+#endif
 #include <spdlog/spdlog.h>
 
 #include "common/logging.h"
@@ -337,7 +341,11 @@ void Platform::set_temp_directory(const std::string &dir)
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()
 {
 	std::vector<spdlog::sink_ptr> sinks;
+#ifdef __ANDROID__
+	sinks.push_back(std::make_shared<spdlog::sinks::android_sink_mt>());
+#else
 	sinks.push_back(std::make_shared<spdlog::sinks::stdout_color_sink_mt>());
+#endif
 	return sinks;
 }
 
