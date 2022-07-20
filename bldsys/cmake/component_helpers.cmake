@@ -73,7 +73,7 @@ function(vkb__register_component)
         endif()
     endif()
 
-    set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components/${TARGET_NAME}")
+    set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components")
 
     add_dependencies(vkb_components "vkb__${TARGET_NAME}")
 endfunction()
