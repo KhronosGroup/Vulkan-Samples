@@ -15,11 +15,25 @@
 # limitations under the License.
 #
 
+vkb__register_headers(
+    FOLDER
+        events
+    HEADERS
+        channel.hpp
+        event_types.hpp
+        input_manager.hpp
+        event_bus.hpp
+    OUTPUT
+      EVENTS_HEADERS
+)
+
 vkb__register_component(
   NAME events
   SRC
     src/input_manager.cpp
     src/event_bus.cpp
+  HEADERS
+    ${EVENTS_HEADERS}
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )

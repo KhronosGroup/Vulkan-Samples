@@ -14,8 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+vkb__register_headers(
+    FOLDER
+        common
+    HEADERS
+        stack_error.hpp
+        strings.hpp
+    OUTPUT
+      COMMON_HEADERS
+)
+
 vkb__register_component(
     NAME common
+    HEADERS ${COMMON_HEADERS}
     INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
