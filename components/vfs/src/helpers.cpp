@@ -88,11 +88,8 @@ std::vector<std::string> tokenize_path(const std::string &path)
 	{
 		if (c == '/' && accum.size() > 0)
 		{
-			if (accum.size() > 0)
-			{
-				dirs.emplace_back(accum);
-				accum.clear();
-			}
+			dirs.emplace_back(accum);
+			accum.clear();
 		}
 
 		if (c != '/')
