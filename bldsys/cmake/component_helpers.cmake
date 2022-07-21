@@ -16,10 +16,24 @@
 
 add_custom_target(vkb_components)
 
+set_property(TARGET vkb_components PROPERTY FOLDER "components")
+
+function(vkb__register_headers)
+    set(options)
+    set(oneValueArgs FOLDER OUTPUT)
+    set(multiValueArgs HEADERS)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    set(TEMP ${TARGET_HEADERS})
+    list(TRANSFORM TEMP PREPEND "${CMAKE_CURRENT_SOURCE_DIR}/include/components/${TARGET_FOLDER}/")
+    set(${TARGET_OUTPUT} ${TEMP} PARENT_SCOPE)
+endfunction()
+
 function(vkb__register_component)
     set(options)
     set(oneValueArgs NAME)
-    set(multiValueArgs SRC LINK_LIBS INCLUDE_DIRS)
+    set(multiValueArgs SRC HEADERS LINK_LIBS INCLUDE_DIRS)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -27,10 +41,10 @@ function(vkb__register_component)
         message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
     endif()
 
-    if(TARGET_SRC) ## Create static library
+    if(TARGET_SRC) # Create static library
         message("ADDING STATIC: vkb__${TARGET_NAME}")
 
-        add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC})
+        add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC} ${TARGET_HEADERS})
 
         if(TARGET_LINK_LIBS)
             target_link_libraries("vkb__${TARGET_NAME}" PUBLIC ${TARGET_LINK_LIBS})
@@ -39,16 +53,16 @@ function(vkb__register_component)
         if(TARGET_INCLUDE_DIRS)
             target_include_directories("vkb__${TARGET_NAME}" PUBLIC ${TARGET_INCLUDE_DIRS})
         endif()
-        
+
         if(MSVC)
             target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W4 /WX)
         else()
             target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()
-    else() ## Create interface library
+    else() # Create interface library
         message("ADDING INTERFACE: vkb__${TARGET_NAME}")
 
-        add_library("vkb__${TARGET_NAME}" INTERFACE)
+        add_library("vkb__${TARGET_NAME}" INTERFACE ${TARGET_HEADERS})
 
         if(TARGET_LINK_LIBS)
             target_link_libraries("vkb__${TARGET_NAME}" INTERFACE ${TARGET_LINK_LIBS})
@@ -59,6 +73,7 @@ function(vkb__register_component)
         endif()
     endif()
 
+    set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components")
 
     add_dependencies(vkb_components "vkb__${TARGET_NAME}")
 endfunction()

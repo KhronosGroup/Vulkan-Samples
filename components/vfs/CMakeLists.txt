@@ -44,10 +44,23 @@ else()
     list(APPEND PROJECT_FILES ${UNIX_FILES})
 endif()
 
+vkb__register_headers(
+    FOLDER
+        vfs
+    HEADERS
+        android.hpp
+        filesystem.hpp
+        helpers.hpp
+        unix.hpp
+        windows.hpp
+    OUTPUT
+      VFS_HEADERS
+)
 
 vkb__register_component(
   NAME vfs
   SRC ${PROJECT_FILES}
+  HEADERS ${VFS_HEADERS}
   INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
   LINK_LIBS
     re2
