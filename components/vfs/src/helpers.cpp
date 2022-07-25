@@ -86,15 +86,14 @@ std::vector<std::string> tokenize_path(const std::string &path)
 
 	for (char c : dir_path)
 	{
-		if (c == '/' && accum.size() > 0)
-		{
-			dirs.emplace_back(accum);
-			accum.clear();
-		}
-
 		if (c != '/')
 		{
 			accum += c;
+		}
+		else if (accum.size() > 0)
+		{
+			dirs.emplace_back(accum);
+			accum.clear();
 		}
 	}
 

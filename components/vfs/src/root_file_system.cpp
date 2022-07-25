@@ -19,7 +19,7 @@
 
 #include <algorithm>
 #include <cassert>
-#include <queue>
+#include <deque>
 #include <set>
 
 #include "components/vfs/helpers.hpp"
@@ -256,15 +256,15 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fol
 {
 	assert(folders);
 
-	std::set<std::string> all_dirs;
+	std::vector<std::string> all_dirs;
 
-	std::queue<std::string> dirs_to_visit;
-	dirs_to_visit.emplace(folder_path);
+	std::deque<std::string> dirs_to_visit;
+	dirs_to_visit.push_back(folder_path);
 
 	while (!dirs_to_visit.empty())
 	{
 		std::string front = dirs_to_visit.front();
-		dirs_to_visit.pop();
+		dirs_to_visit.pop_front();
 
 		std::vector<std::string> dirs;
 
@@ -274,12 +274,8 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fol
 			return res;
 		}
 
-		for (auto &dir : dirs)
-		{
-			dirs_to_visit.push(dir);
-		}
-
-		all_dirs.insert(dirs.begin(), dirs.end());
+		dirs_to_visit.insert(dirs_to_visit.end(), dirs.begin(), dirs.end());
+		all_dirs.insert(all_dirs.end(), dirs.begin(), dirs.end());
 	}
 
 	std::vector<std::string> all_folders{all_dirs.begin(), all_dirs.end()};
