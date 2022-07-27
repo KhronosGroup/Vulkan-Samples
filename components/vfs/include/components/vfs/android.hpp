@@ -58,15 +58,15 @@ class AndroidAAssetManager : public FileSystem
 	AndroidAAssetManager(android_app *app, const std::string &sub_path = "");
 	virtual ~AndroidAAssetManager() = default;
 
-	virtual bool          folder_exists(const std::string &file_path) override;
-	virtual bool          file_exists(const std::string &file_path) override;
-	virtual StackErrorPtr read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) override;
-	virtual size_t        file_size(const std::string &file_path) override;
-	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size) override;
-	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
-	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
-	virtual void          make_directory(const std::string &path) override;
-	virtual bool          remove(const std::string &path) override;
+	virtual bool                     folder_exists(const std::string &folder_path) const override;
+	virtual bool                     file_exists(const std::string &file_path) const override;
+	virtual std::vector<uint8_t>     read_chunk(const std::string &file_path, size_t offset, size_t count) const override;
+	virtual size_t                   file_size(const std::string &file_path) const override;
+	virtual void                     write_file(const std::string &file_path, const void *data, size_t size) override;
+	virtual std::vector<std::string> enumerate_files(const std::string &folder_path) const override;
+	virtual std::vector<std::string> enumerate_folders(const std::string &folderPath) const override;
+	virtual void                     make_directory(const std::string &path) override;
+	virtual bool                     remove(const std::string &path) override;
 
   private:
 	std::string get_path(const std::string &path);

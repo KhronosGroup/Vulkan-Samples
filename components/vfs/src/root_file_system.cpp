@@ -28,24 +28,9 @@ namespace components
 {
 namespace vfs
 {
-size_t StdBlob::size() const
+std::vector<uint8_t> FileSystem::read_file(const std::string &file_path) const
 {
-	return buffer.size();
-}
-
-const void *StdBlob::data() const
-{
-	if (buffer.empty())
-	{
-		return nullptr;
-	}
-
-	return static_cast<const void *>(&buffer.at(0));
-}
-
-StackErrorPtr FileSystem::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
-{
-	return read_chunk(file_path, 0, file_size(file_path), blob);
+	return read_chunk(file_path, 0, file_size(file_path));
 }
 
 void FileSystem::make_directory_recursive(const std::string &path)
@@ -61,15 +46,75 @@ void FileSystem::make_directory_recursive(const std::string &path)
 	}
 }
 
+std::vector<std::string> FileSystem::enumerate_files(const std::string &folder_path, const std::string &extension) const
+{
+	std::vector<std::string> all_files = enumerate_files(folder_path);
+
+	if (extension.empty())
+	{
+		return all_files;
+	}
+
+	std::vector<std::string> files_with_extension;
+	files_with_extension.reserve(all_files.size());
+
+	for (auto const &file : all_files)
+	{
+		if (helpers::get_file_extension(file) == extension)
+		{
+			files_with_extension.push_back(file);
+		}
+	}
+
+	return files_with_extension;
+}
+
+std::vector<std::string> FileSystem::enumerate_files_recursive(const std::string &folder_path, const std::string &extension) const
+{
+	std::vector<std::string> folders = enumerate_folders_recursive(folder_path);
+
+	std::vector<std::string> all_files;
+
+	for (auto const &folder : folders)
+	{
+		std::vector<std::string> folder_files = enumerate_files(folder, extension);
+
+		all_files.reserve(all_files.size() + folder_files.size());
+		all_files.insert(all_files.end(), folder_files.begin(), folder_files.end());
+	}
+	return all_files;
+}
+
+std::vector<std::string> FileSystem::enumerate_folders_recursive(const std::string &folder_path) const
+{
+	std::vector<std::string> all_folders;
+
+	std::deque<std::string> folders_to_visit;
+	folders_to_visit.push_back(folder_path);
+
+	while (!folders_to_visit.empty())
+	{
+		std::string folder = folders_to_visit.front();
+		folders_to_visit.pop_front();
+
+		std::vector<std::string> folders = enumerate_folders(folder);
+
+		folders_to_visit.insert(folders_to_visit.end(), folders.begin(), folders.end());
+		all_folders.insert(all_folders.end(), folders.begin(), folders.end());
+	}
+
+	return all_folders;
+}
+
 RootFileSystem::RootFileSystem(const std::string &base_path) :
     FileSystem{}, m_root_path{base_path}
 {
 }
 
-bool RootFileSystem::folder_exists(const std::string &file_path)
+bool RootFileSystem::folder_exists(const std::string &folder_path) const
 {
 	std::string adjusted_path;
-	auto        fs = find_file_system(file_path, &adjusted_path);
+	auto        fs = find_file_system(folder_path, &adjusted_path);
 	if (!fs)
 	{
 		return false;
@@ -78,7 +123,7 @@ bool RootFileSystem::folder_exists(const std::string &file_path)
 	return fs->folder_exists(adjusted_path);
 }
 
-bool RootFileSystem::file_exists(const std::string &file_path)
+bool RootFileSystem::file_exists(const std::string &file_path) const
 {
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
@@ -89,35 +134,19 @@ bool RootFileSystem::file_exists(const std::string &file_path)
 	return fs->file_exists(adjusted_path);
 }
 
-StackErrorPtr RootFileSystem::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
+std::vector<uint8_t> RootFileSystem::read_chunk(const std::string &file_path, size_t offset, size_t count) const
 {
-	assert(blob);
-
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
 	{
-		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
+		throw std::runtime_error("vfs/root_file_system.cpp line" + std::to_string(__LINE__) + ": failed to select appropriate file system for path: " + file_path);
 	}
 
-	return fs->read_file(adjusted_path, blob);
+	return fs->read_chunk(adjusted_path, offset, count);
 }
 
-StackErrorPtr RootFileSystem::read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob)
-{
-	assert(blob);
-
-	std::string adjusted_path;
-	auto        fs = find_file_system(file_path, &adjusted_path);
-	if (!fs)
-	{
-		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
-	}
-
-	return fs->read_chunk(adjusted_path, offset, count, blob);
-}
-
-size_t RootFileSystem::file_size(const std::string &file_path)
+size_t RootFileSystem::file_size(const std::string &file_path) const
 {
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
@@ -129,7 +158,7 @@ size_t RootFileSystem::file_size(const std::string &file_path)
 	return fs->file_size(adjusted_path);
 }
 
-StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
+void RootFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
 {
 	assert(data);
 
@@ -137,7 +166,7 @@ StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const voi
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
 	{
-		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
+		throw std::runtime_error("vfs/root_file_system.cpp line" + std::to_string(__LINE__) + ": failed to select appropriate file system for path: " + file_path);
 	}
 
 	fs->make_directory_recursive(adjusted_path);
@@ -145,145 +174,28 @@ StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const voi
 	return fs->write_file(adjusted_path, data, size);
 }
 
-StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, std::vector<std::string> *files)
+std::vector<std::string> RootFileSystem::enumerate_files(const std::string &folder_path) const
 {
-	assert(files);
-
 	std::string adjusted_path;
-	auto        fs = find_file_system(file_path, &adjusted_path);
+	auto        fs = find_file_system(folder_path, &adjusted_path);
 	if (!fs)
 	{
-		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
+		throw std::runtime_error("vfs/root_file_system.cpp line" + std::to_string(__LINE__) + ": failed to select appropriate file system for path: " + folder_path);
 	}
 
-	if (!files)
-	{
-		return nullptr;
-	}
-
-	return fs->enumerate_files(adjusted_path, files);
+	return fs->enumerate_files(adjusted_path);
 }
 
-StackErrorPtr RootFileSystem::enumerate_folders(const std::string &file_path, std::vector<std::string> *folders)
+std::vector<std::string> RootFileSystem::enumerate_folders(const std::string &folder_path) const
 {
-	assert(folders);
-
 	std::string adjusted_path;
-	auto        fs = find_file_system(file_path, &adjusted_path);
+	auto        fs = find_file_system(folder_path, &adjusted_path);
 	if (!fs)
 	{
-		return StackError::unique("failed to select appropriate file system for path: " + file_path, "vfs/root_file_system.cpp", __LINE__);
+		throw std::runtime_error("vfs/root_file_system.cpp line" + std::to_string(__LINE__) + ": failed to select appropriate file system for path: " + folder_path);
 	}
 
-	if (!folders)
-	{
-		return nullptr;
-	}
-
-	return fs->enumerate_folders(adjusted_path, folders);
-}
-
-StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files)
-{
-	assert(files);
-
-	std::vector<std::string> all_files;
-
-	auto res = enumerate_files(file_path, &all_files);
-	if (res != nullptr)
-	{
-		return res;
-	}
-
-	std::vector<std::string> files_with_extension;
-	files_with_extension.reserve(all_files.size());
-
-	if (extension.empty())
-	{
-		*files = all_files;
-		return nullptr;
-	}
-
-	for (auto file : all_files)
-	{
-		if (file.size() >= extension.size())
-		{
-			if (file.substr(file.size() - extension.size(), extension.size()) == extension)
-			{
-				// match
-				files_with_extension.push_back(file);
-			}
-		}
-	}
-
-	*files = std::move(files_with_extension);
-
-	return nullptr;
-}
-
-StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files)
-{
-	assert(files);
-
-	std::vector<std::string> folders;
-	auto                     res = enumerate_folders_recursive(file_path, &folders);
-	if (res != nullptr)
-	{
-		return res;
-	}
-
-	std::vector<std::string> all_files;
-
-	for (auto &folder : folders)
-	{
-		std::vector<std::string> folder_files;
-		res = enumerate_files(folder, extension, &folder_files);
-		if (res != nullptr)
-		{
-			return res;
-		}
-
-		all_files.reserve(all_files.size() + folder_files.size());
-		all_files.insert(all_files.end(), folder_files.begin(), folder_files.end());
-	}
-
-	*files = std::move(all_files);
-
-	return nullptr;
-}
-
-StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &folder_path, std::vector<std::string> *folders)
-{
-	assert(folders);
-
-	std::vector<std::string> all_dirs;
-
-	std::deque<std::string> dirs_to_visit;
-	dirs_to_visit.push_back(folder_path);
-
-	while (!dirs_to_visit.empty())
-	{
-		std::string front = dirs_to_visit.front();
-		dirs_to_visit.pop_front();
-
-		std::vector<std::string> dirs;
-
-		auto res = enumerate_folders(front, &dirs);
-		if (res != nullptr)
-		{
-			return res;
-		}
-
-		dirs_to_visit.insert(dirs_to_visit.end(), dirs.begin(), dirs.end());
-		all_dirs.insert(all_dirs.end(), dirs.begin(), dirs.end());
-
-		all_dirs.insert(dirs.begin(), dirs.end());
-	}
-
-	std::vector<std::string> all_folders{all_dirs.begin(), all_dirs.end()};
-	*folders = std::move(all_folders);
-
-	return nullptr;
+	return fs->enumerate_folders(adjusted_path);
 }
 
 void RootFileSystem::make_directory(const std::string &file_path)
@@ -338,15 +250,15 @@ void RootFileSystem::unmount(const std::string &file_path)
 	}
 }
 
-std::shared_ptr<FileSystem> RootFileSystem::find_file_system(const std::string &file_path, std::string *trimmed_path)
+std::shared_ptr<FileSystem> RootFileSystem::find_file_system(const std::string &file_path, std::string *trimmed_path) const
 {
 	if (file_path.empty())
 	{
 		return nullptr;
 	}
 
-	size_t                                               best_score = 0;
-	std::pair<std::string, std::shared_ptr<FileSystem>> *pair{nullptr};
+	size_t                                                     best_score = 0;
+	std::pair<std::string, std::shared_ptr<FileSystem>> const *pair{nullptr};
 
 	for (auto &mount : m_mounts)
 	{
