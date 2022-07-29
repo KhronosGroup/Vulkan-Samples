@@ -42,7 +42,8 @@ std::string get_file_extension(const std::string &uri)
 
 std::string get_directory(const std::string &path)
 {
-	return path.substr(0, path.rfind("/"));
+	auto sanitized_path = sanitize(path);
+	return sanitized_path.substr(0, sanitized_path.rfind("/"));
 }
 
 std::vector<std::string> get_directory_parts(const std::string &path)
@@ -53,7 +54,6 @@ std::vector<std::string> get_directory_parts(const std::string &path)
 	accum.reserve(dir_path.size());
 
 	std::vector<std::string> dirs;
-	dirs.reserve(dir_path.size());
 
 	size_t max_length = 0;
 	for (char c : dir_path)
@@ -68,6 +68,36 @@ std::vector<std::string> get_directory_parts(const std::string &path)
 	}
 
 	if (max_length != accum.size())
+	{
+		dirs.emplace_back(accum);
+	}
+
+	return dirs;
+}
+
+std::vector<std::string> tokenize_path(const std::string &path)
+{
+	auto dir_path = get_directory(path);
+
+	std::string accum;
+	accum.reserve(dir_path.size());
+
+	std::vector<std::string> dirs;
+
+	for (char c : dir_path)
+	{
+		if (c != '/')
+		{
+			accum += c;
+		}
+		else if (accum.size() > 0)
+		{
+			dirs.emplace_back(accum);
+			accum.clear();
+		}
+	}
+
+	if (accum.size() > 0)
 	{
 		dirs.emplace_back(accum);
 	}

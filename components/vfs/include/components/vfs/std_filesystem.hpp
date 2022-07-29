@@ -17,6 +17,8 @@
 
 #pragma once
 
+#include <filesystem>
+
 #include "components/vfs/filesystem.hpp"
 
 namespace components
@@ -24,38 +26,38 @@ namespace components
 namespace vfs
 {
 /**
- * @brief Unix File System Impl
- * 
+ * @brief Windows File System Impl
+ *
  */
-class UnixFileSystem : public FileSystem
+class StdFSFileSystem : public FileSystem
 {
   public:
-	UnixFileSystem(const std::string &base_path = "");
-	virtual ~UnixFileSystem() = default;
+	StdFSFileSystem(const std::filesystem::path &base_path = "");
+	virtual ~StdFSFileSystem() = default;
 
 	virtual bool          folder_exists(const std::string &file_path) override;
 	virtual bool          file_exists(const std::string &file_path) override;
-	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob) override;
 	virtual StackErrorPtr read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) override;
 	virtual size_t        file_size(const std::string &file_path) override;
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size) override;
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
 	virtual void          make_directory(const std::string &path) override;
+	virtual bool          remove(const std::string &path) override;
 
-  private:
-	std::string m_base_path;
+  protected:
+	std::filesystem::path m_base_path;
 };
 
 /**
- * @brief Unix File System Impl from the default Unix temp directory
- * 
+ * @brief Windows File System Impl from the default Windows temp directory
+ *
  */
-class UnixTempFileSystem final : public UnixFileSystem
+class StdFSTempFileSystem final : public StdFSFileSystem
 {
   public:
-	UnixTempFileSystem();
-	virtual ~UnixTempFileSystem() = default;
+	StdFSTempFileSystem();
+	virtual ~StdFSTempFileSystem() = default;
 };
 }        // namespace vfs
 }        // namespace components

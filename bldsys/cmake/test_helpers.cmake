@@ -57,7 +57,8 @@ function(vkb__register_tests)
     endif()
 
     add_test(NAME ${TARGET_NAME}
-             COMMAND ${TARGET_NAME})
+             COMMAND ${TARGET_NAME}
+             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
     add_dependencies(vkb_tests ${TARGET_NAME})
 endfunction()
