@@ -34,6 +34,11 @@ std::vector<uint8_t> FileSystem::read_file(const std::string &file_path) const
 	return read_chunk(file_path, 0, file_size(file_path));
 }
 
+StackErrorPtr FileSystem::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
+{
+	return read_chunk(file_path, 0, file_size(file_path), blob);
+}
+
 void FileSystem::make_directory_recursive(const std::string &path)
 {
 	auto parts = helpers::get_directory_parts(path);
@@ -118,6 +123,8 @@ RootFileSystem::RootFileSystem(const std::string &base_path) :
 
 bool RootFileSystem::folder_exists(const std::string &folder_path) const
 {
+	assert(blob);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(folder_path, &adjusted_path);
 	if (!fs)
@@ -141,6 +148,8 @@ bool RootFileSystem::file_exists(const std::string &file_path) const
 
 std::vector<uint8_t> RootFileSystem::read_chunk(const std::string &file_path, size_t offset, size_t count) const
 {
+	assert(data);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -153,6 +162,8 @@ std::vector<uint8_t> RootFileSystem::read_chunk(const std::string &file_path, si
 
 size_t RootFileSystem::file_size(const std::string &file_path) const
 {
+	assert(files);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -165,7 +176,10 @@ size_t RootFileSystem::file_size(const std::string &file_path) const
 
 void RootFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
 {
-	assert(data);
+	if (!data)
+	{
+		return;
+	}
 
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
@@ -213,6 +227,18 @@ void RootFileSystem::make_directory(const std::string &file_path)
 	}
 
 	fs->make_directory(file_path);
+}
+
+bool RootFileSystem::remove(const std::string &path)
+{
+	std::string adjusted_path;
+	auto        fs = find_file_system(path, &adjusted_path);
+	if (!fs)
+	{
+		return false;
+	}
+
+	return fs->remove(adjusted_path);
 }
 
 bool RootFileSystem::remove(const std::string &path)
