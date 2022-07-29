@@ -38,14 +38,14 @@ class Blob
 
 	/**
 	 * @brief Query size of blob
-	 * 
+	 *
 	 * @return size_t size of blob in bytes
 	 */
 	virtual size_t size() const = 0;
 
 	/**
 	 * @brief Ptr to blob data
-	 * 
+	 *
 	 * @return const void* ptr to the start of the blob data
 	 */
 	virtual const void *data() const = 0;
@@ -60,7 +60,7 @@ class Blob
 
 	/**
 	 * @brief Convert blob to std vector of uint8_t
-	 * 
+	 *
 	 * @return std::vector<uint8_t> std vector of data
 	 */
 	inline std::vector<uint8_t> binary() const
@@ -76,7 +76,7 @@ class Blob
 
 	/**
 	 * @brief Convert blob to ascii string
-	 * 
+	 *
 	 * @return std::string ascii string
 	 */
 	inline std::string ascii() const
@@ -88,7 +88,7 @@ class Blob
 
 /**
  * @brief Blob implementation using std::vector<uint8_t>
- * 
+ *
  */
 class StdBlob final : public Blob
 {
@@ -104,7 +104,7 @@ class StdBlob final : public Blob
 
 /**
  * @brief FileSystem interface
- * 
+ *
  */
 class FileSystem
 {
@@ -116,11 +116,13 @@ class FileSystem
 
 	virtual bool          folder_exists(const std::string &file_path)                                                                    = 0;
 	virtual bool          file_exists(const std::string &file_path)                                                                      = 0;
-	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)                                           = 0;
 	virtual StackErrorPtr read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) = 0;
 	virtual size_t        file_size(const std::string &file_path)                                                                        = 0;
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size)                                        = 0;
 	virtual void          make_directory(const std::string &path)                                                                        = 0;
+	virtual bool          remove(const std::string &path)                                                                                = 0;
+
+	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob);
 
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files)     = 0;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) = 0;
@@ -128,7 +130,7 @@ class FileSystem
 
 /**
  * @brief Root File System
- * 
+ *
  * 		  A file system consists of a RootFileSystem with a combination of mounted virtual file systems.
  *        Different OS and runtime configurations can determine how the RootFS is initialised.
  */
@@ -140,17 +142,19 @@ class RootFileSystem : public FileSystem
 
 	virtual bool          folder_exists(const std::string &file_path) override;
 	virtual bool          file_exists(const std::string &file_path) override;
-	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob) override;
 	virtual StackErrorPtr read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob) override;
 	virtual size_t        file_size(const std::string &file_path) override;
 	virtual StackErrorPtr write_file(const std::string &file_path, const void *data, size_t size) override;
 	virtual StackErrorPtr enumerate_files(const std::string &file_path, std::vector<std::string> *files) override;
 	virtual StackErrorPtr enumerate_folders(const std::string &file_path, std::vector<std::string> *folders) override;
 	virtual void          make_directory(const std::string &path) override;
+	virtual bool          remove(const std::string &path) override;
+
+	virtual StackErrorPtr read_file(const std::string &file_path, std::shared_ptr<Blob> *blob) override;
 
 	StackErrorPtr enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
 	StackErrorPtr enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files);
-	StackErrorPtr enumerate_folders_recursive(const std::string &file_path, std::vector<std::string> *folders);
+	StackErrorPtr enumerate_folders_recursive(const std::string &folder_path, std::vector<std::string> *folders);
 
 	void mount(const std::string &file_path, std::shared_ptr<FileSystem> file_system);
 	void unmount(const std::string &file_path);
@@ -164,9 +168,9 @@ class RootFileSystem : public FileSystem
 
 /**
  * @brief Create a default RootFileSystem singleton taking into account the OS or compile time flags
- * 
+ *
  *        If an OS relies on a context then instance should be called with a context only once and before the filesystem is used for any useful task.
- * 
+ *
  * @param context An OS specific context ptr
  * @return RootFileSystem& A root file system reference
  */

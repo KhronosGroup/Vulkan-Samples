@@ -18,7 +18,8 @@
 #include "components/vfs/filesystem.hpp"
 
 #include <algorithm>
-#include <queue>
+#include <cassert>
+#include <deque>
 #include <set>
 
 #include "components/vfs/helpers.hpp"
@@ -40,6 +41,11 @@ const void *StdBlob::data() const
 	}
 
 	return static_cast<const void *>(&buffer.at(0));
+}
+
+StackErrorPtr FileSystem::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
+{
+	return read_chunk(file_path, 0, file_size(file_path), blob);
 }
 
 void FileSystem::make_directory_recursive(const std::string &path)
@@ -85,6 +91,8 @@ bool RootFileSystem::file_exists(const std::string &file_path)
 
 StackErrorPtr RootFileSystem::read_file(const std::string &file_path, std::shared_ptr<Blob> *blob)
 {
+	assert(blob);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -97,6 +105,8 @@ StackErrorPtr RootFileSystem::read_file(const std::string &file_path, std::share
 
 StackErrorPtr RootFileSystem::read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob)
 {
+	assert(blob);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -121,6 +131,8 @@ size_t RootFileSystem::file_size(const std::string &file_path)
 
 StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
 {
+	assert(data);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -135,6 +147,8 @@ StackErrorPtr RootFileSystem::write_file(const std::string &file_path, const voi
 
 StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, std::vector<std::string> *files)
 {
+	assert(files);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -152,6 +166,8 @@ StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, std:
 
 StackErrorPtr RootFileSystem::enumerate_folders(const std::string &file_path, std::vector<std::string> *folders)
 {
+	assert(folders);
+
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
 	if (!fs)
@@ -169,6 +185,8 @@ StackErrorPtr RootFileSystem::enumerate_folders(const std::string &file_path, st
 
 StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, const std::string &extension, std::vector<std::string> *files)
 {
+	assert(files);
+
 	std::vector<std::string> all_files;
 
 	auto res = enumerate_files(file_path, &all_files);
@@ -198,13 +216,15 @@ StackErrorPtr RootFileSystem::enumerate_files(const std::string &file_path, cons
 		}
 	}
 
-	*files = files_with_extension;
+	*files = std::move(files_with_extension);
 
 	return nullptr;
 }
 
 StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_path, const std::string &extension, std::vector<std::string> *files)
 {
+	assert(files);
+
 	std::vector<std::string> folders;
 	auto                     res = enumerate_folders_recursive(file_path, &folders);
 	if (res != nullptr)
@@ -223,30 +243,28 @@ StackErrorPtr RootFileSystem::enumerate_files_recursive(const std::string &file_
 			return res;
 		}
 
-		all_files.reserve(folder_files.size());
-		for (auto &file : folder_files)
-		{
-			all_files.push_back(folder + file);
-		}
+		all_files.reserve(all_files.size() + folder_files.size());
+		all_files.insert(all_files.end(), folder_files.begin(), folder_files.end());
 	}
 
-	*files = all_files;
+	*files = std::move(all_files);
 
 	return nullptr;
 }
 
-StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &file_path, std::vector<std::string> *folders)
+StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &folder_path, std::vector<std::string> *folders)
 {
-	std::set<std::string> all_dirs;
-	all_dirs.emplace(file_path);
+	assert(folders);
 
-	std::queue<std::string> dirs_to_visit;
-	dirs_to_visit.emplace(file_path);
+	std::vector<std::string> all_dirs;
+
+	std::deque<std::string> dirs_to_visit;
+	dirs_to_visit.push_back(folder_path);
 
 	while (!dirs_to_visit.empty())
 	{
 		std::string front = dirs_to_visit.front();
-		dirs_to_visit.pop();
+		dirs_to_visit.pop_front();
 
 		std::vector<std::string> dirs;
 
@@ -256,19 +274,12 @@ StackErrorPtr RootFileSystem::enumerate_folders_recursive(const std::string &fil
 			return res;
 		}
 
-		for (std::string &dir : dirs)
-		{
-			std::string full_path = front + dir;
-			auto        it        = all_dirs.find(full_path);
-			if (it == all_dirs.end())
-			{
-				all_dirs.emplace(full_path);
-				dirs_to_visit.emplace(full_path);
-			}
-		}
+		dirs_to_visit.insert(dirs_to_visit.end(), dirs.begin(), dirs.end());
+		all_dirs.insert(all_dirs.end(), dirs.begin(), dirs.end());
 	}
 
-	*folders = std::vector<std::string>{all_dirs.begin(), all_dirs.end()};
+	std::vector<std::string> all_folders{all_dirs.begin(), all_dirs.end()};
+	*folders = std::move(all_folders);
 
 	return nullptr;
 }
@@ -283,6 +294,18 @@ void RootFileSystem::make_directory(const std::string &file_path)
 	}
 
 	fs->make_directory(file_path);
+}
+
+bool RootFileSystem::remove(const std::string &path)
+{
+	std::string adjusted_path;
+	auto        fs = find_file_system(path, &adjusted_path);
+	if (!fs)
+	{
+		return false;
+	}
+
+	return fs->remove(adjusted_path);
 }
 
 void RootFileSystem::mount(const std::string &file_path, std::shared_ptr<FileSystem> file_system)
