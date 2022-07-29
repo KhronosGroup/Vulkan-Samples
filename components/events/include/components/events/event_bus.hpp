@@ -98,7 +98,22 @@ class EventBus
 	 * @brief Process a cycle of events
 	 *
 	 */
-	void process();
+	virtual void process();
+
+  protected:
+  	// Allow each and last callbacks to process all events held in channels
+	inline void flush_callbacks()
+	{
+		for (auto &it : m_each_callbacks)
+		{
+			it.second->process_each();
+		}
+
+		for (auto &it : m_last_callbacks)
+		{
+			it.second->process_last();
+		}
+	}
 
   private:
 	class ChannelCallbacks
@@ -187,6 +202,22 @@ class EventBus
 	std::unordered_map<std::type_index, std::shared_ptr<AbstractChannel>>  m_channels;
 	std::unordered_map<std::type_index, std::unique_ptr<ChannelCallbacks>> m_each_callbacks;
 	std::unordered_map<std::type_index, std::unique_ptr<ChannelCallbacks>> m_last_callbacks;
+};
+
+// Allows for EventObservers to be grouped into a single container
+class EventObserverGroup : public EventObserver
+{
+  public:
+	EventObserverGroup()          = default;
+	virtual ~EventObserverGroup() = default;
+
+	EventObserverGroup &attach(std::shared_ptr<EventObserver> &observer);
+	EventObserverGroup &remove(std::shared_ptr<EventObserver> &observer);
+	virtual void        update() override;
+	virtual void        attach(EventBus &bus) override;
+
+  private:
+	std::set<std::shared_ptr<EventObserver>> m_observers;
 };
 }        // namespace events
 }        // namespace components
