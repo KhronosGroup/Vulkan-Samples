@@ -27,7 +27,7 @@ set_property(TARGET vkb_tests PROPERTY FOLDER "tests")
 
 
 function(vkb__register_tests)
-    set(options)  
+    set(options)
     set(oneValueArgs NAME)
     set(multiValueArgs SRC LIBS)
 
@@ -35,7 +35,7 @@ function(vkb__register_tests)
         return() # testing not enabled
     endif()
 
-    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN}) 
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
     if (TARGET_NAME STREQUAL "")
         message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
