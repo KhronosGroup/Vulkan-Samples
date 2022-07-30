@@ -43,12 +43,13 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	} ubo_vs;
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
-
+	
 	struct
 	{
 		VkPipeline vertex_input_interface{VK_NULL_HANDLE};
 		VkPipeline pre_rasterization_shaders{VK_NULL_HANDLE};
 		VkPipeline fragment_output_interface{VK_NULL_HANDLE};
+		std::vector<VkPipeline> fragment_shaders;
 	} pipeline_library;
 
 	// Will be dynamically created at runtime from pipeline library
