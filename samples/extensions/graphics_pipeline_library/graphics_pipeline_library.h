@@ -43,7 +43,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 	} ubo_vs;
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
-	
+
 	struct
 	{
 		VkPipeline vertex_input_interface{VK_NULL_HANDLE};
