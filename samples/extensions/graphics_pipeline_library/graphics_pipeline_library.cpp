@@ -77,7 +77,7 @@ GraphicsPipelineLibrary::~GraphicsPipelineLibrary()
 		for (auto pipeline : pipeline_library.fragment_shaders)
 		{
 			vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
-		}		
+		}
 		vkDestroyPipelineCache(get_device().get_handle(), thread_pipeline_cache, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_library.vertex_input_interface, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_library.pre_rasterization_shaders, nullptr);
