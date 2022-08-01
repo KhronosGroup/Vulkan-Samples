@@ -280,7 +280,8 @@ set(CORE_FILES
     core/vulkan_resource.cpp
     core/hpp_device.cpp
     core/hpp_instance.cpp
-	core/hpp_physical_device.cpp
+    core/hpp_physical_device.cpp
+    core/hpp_queue.cpp
     core/hpp_vulkan_resource.cpp
 )
 

@@ -510,7 +510,7 @@ void HPPApiVulkanSample::submit_frame()
 	// DO NOT USE
 	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
 	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	get_device()->get_queue_by_present(0).wait_idle();
+	get_device()->get_queue_by_present(0).get_handle().waitIdle();
 }
 
 HPPApiVulkanSample::~HPPApiVulkanSample()
