@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
