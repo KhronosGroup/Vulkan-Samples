@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,6 @@
 #include <sys/stat.h>
 
 #include "camera.h"
-#include "common/error.h"
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"
 #include "core/buffer.h"
