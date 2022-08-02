@@ -61,14 +61,14 @@ std::string AndroidAAssetManager::get_path(const std::string &path)
 	return real_path;
 }
 
-bool AndroidAAssetManager::folder_exists(const std::string &file_path)
+bool AndroidAAssetManager::folder_exists(const std::string &folder_path) const
 {
 	if (!asset_manager)
 	{
-		return false;
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "AAsset Manager not initialized");
 	}
 
-	std::string real_path = get_path(file_path);
+	std::string real_path = get_path(folder_path);
 
 	AAssetDir *dir = AAssetManager_openDir(asset_manager, real_path.c_str());
 
@@ -82,11 +82,11 @@ bool AndroidAAssetManager::folder_exists(const std::string &file_path)
 	return true;
 }
 
-bool AndroidAAssetManager::file_exists(const std::string &file_path)
+bool AndroidAAssetManager::file_exists(const std::string &file_path) const
 {
 	if (!asset_manager)
 	{
-		return false;
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "AAsset Manager not initialized");
 	}
 
 	std::string real_path = get_path(file_path);
@@ -103,11 +103,11 @@ bool AndroidAAssetManager::file_exists(const std::string &file_path)
 	return true;
 }
 
-StackErrorPtr AndroidAAssetManager::read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob)
+std::vector<uint8_t> AndroidAAssetManager::read_chunk(const std::string &file_path, size_t offset, size_t count) const
 {
 	if (!asset_manager)
 	{
-		return StackError::unique("AAsset Manager not initialized", "vfs/android_aasset_manager.cpp", __LINE__);
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "AAsset Manager not initialized");
 	}
 
 	std::string real_path = get_path(file_path);
@@ -116,34 +116,31 @@ StackErrorPtr AndroidAAssetManager::read_chunk(const std::string &file_path, con
 
 	if (!asset)
 	{
-		return StackError::unique("failed to find file: " + file_path, "vfs/android_aasset_manager.cpp", __LINE__);
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "failed to find file: " + file_path);
 	}
 
 	size_t size = AAsset_getLength(asset);
 
 	if (offset + count > size)
 	{
-		return StackError::unique("requested chunk out of range", "vfs/android_aasset_manager.cpp", __LINE__);
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "requested chunk out of range");
 	}
 
-	auto a_blob = std::make_shared<StdBlob>();
-	a_blob->buffer.resize(size, 0);
+	std::vector<uint8_t> blob(size, 0);
 
 	AAsset_seek(asset, offset, 0);
-	AAsset_read(asset, const_cast<void *>(reinterpret_cast<const void *>(a_blob->buffer.data())), size);
+	AAsset_read(asset, const_cast<void *>(reinterpret_cast<const void *>(blob.data())), size);
 
 	AAsset_close(asset);
 
-	*blob = a_blob;
-
-	return nullptr;
+	return blob;
 }
 
-size_t AndroidAAssetManager::file_size(const std::string &file_path)
+size_t AndroidAAssetManager::file_size(const std::string &file_path) const
 {
 	if (!asset_manager)
 	{
-		return 0;
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "AAsset Manager not initialized");
 	}
 
 	std::string real_path = get_path(file_path);
@@ -152,7 +149,7 @@ size_t AndroidAAssetManager::file_size(const std::string &file_path)
 
 	if (!asset)
 	{
-		return status::FileNotFound;
+		throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "failed to find file: " + file_path);
 	}
 
 	size_t size = AAsset_getLength(asset);
@@ -164,27 +161,27 @@ size_t AndroidAAssetManager::file_size(const std::string &file_path)
 
 StackErrorPtr AndroidAAssetManager::write_file(const std::string &file_path, const void *data, size_t size)
 {
-	return StackError::unique("not implemented", "vfs/android_aasset_manager.cpp", __LINE__);
+	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "write_file not implemented");
 }
 
-StackErrorPtr AndroidAAssetManager::enumerate_files(const std::string &file_path, std::vector<std::string> *files)
+std::vector<std::string> AndroidAAssetManager::enumerate_files(const std::string &folder_path) const
 {
-	return StackError::unique("not implemented", "vfs/android_aasset_manager.cpp", __LINE__);
+	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "enumerate_files not implemented");
 }
 
-StackErrorPtr AndroidAAssetManager::enumerate_folders(const std::string &file_path, std::vector<std::string> *folders)
+std::vector<std::string> AndroidAAssetManager::enumerate_folders(const std::string &folderPath) const
 {
-	return StackError::unique("not implemented", "vfs/android_aasset_manager.cpp", __LINE__);
+	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "enumerate_folders not implemented");
 }
 
 void AndroidAAssetManager::make_directory(const std::string &path)
 {
-	assert(false && "not implemented");
+	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "make_directory not implemented");
 }
 
 bool AndroidAAssetManager::remove(const std::string &path)
 {
-	assert(false && "not implemented");
+	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "remove not implemented");
 	return false;
 }
 

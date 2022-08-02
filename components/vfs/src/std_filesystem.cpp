@@ -65,35 +65,30 @@ StdFSTempFileSystem::StdFSTempFileSystem() :
 	}
 }
 
-bool StdFSFileSystem::folder_exists(const std::string &file_path)
+bool StdFSFileSystem::folder_exists(const std::string &folder_path) const
 {
-	return std::filesystem::is_directory(m_base_path += file_path);
+	return std::filesystem::is_directory(m_base_path / folder_path);
 }
 
-bool StdFSFileSystem::file_exists(const std::string &file_path)
+bool StdFSFileSystem::file_exists(const std::string &file_path) const
 {
-	return std::filesystem::is_regular_file(m_base_path += file_path);
+	return std::filesystem::is_regular_file(m_base_path / file_path);
 }
 
-StackErrorPtr StdFSFileSystem::read_chunk(const std::string &file_path, const size_t offset, const size_t count, std::shared_ptr<Blob> *blob)
+std::vector<uint8_t> StdFSFileSystem::read_chunk(const std::string &file_path, size_t offset, size_t count) const
 {
-	if (!blob)
-	{
-		return nullptr;
-	}
-
 	std::filesystem::path full_path = get_full_path(m_base_path, file_path);
 
 	if (!std::filesystem::exists(full_path))
 	{
-		return StackError::unique("file does not exist: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + ": file does not exist: " + full_path.string());
 	}
 
 	size_t size = file_size(file_path);
 
 	if (offset + count > static_cast<size_t>(size))
 	{
-		return StackError::unique("chunk out of file bounds: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "chunk out of file bounds: " + full_path.string());
 	}
 
 	std::fstream stream;
@@ -101,25 +96,22 @@ StackErrorPtr StdFSFileSystem::read_chunk(const std::string &file_path, const si
 
 	if (!stream.good())
 	{
-		return StackError::unique("failed to open file: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "failed to open file: " + full_path.string());
 	}
 
 	stream.seekg(offset, std::ios_base::beg);
 
-	auto w_blob = std::make_shared<StdBlob>();
-	w_blob->buffer.resize(static_cast<size_t>(count), 0);
+	std::vector<uint8_t> blob(count, 0);
 
-	if (!stream.read(reinterpret_cast<char *>(w_blob->buffer.data()), count))
+	if (!stream.read(reinterpret_cast<char *>(blob.data()), count))
 	{
-		return StackError::unique("failed to read chunk from file: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "failed to read chunk from file: " + full_path.string());
 	}
 
-	*blob = std::move(w_blob);
-
-	return nullptr;
+	return blob;
 }
 
-size_t StdFSFileSystem::file_size(const std::string &file_path)
+size_t StdFSFileSystem::file_size(const std::string &file_path) const
 {
 	std::filesystem::path full_path = get_full_path(m_base_path, file_path);
 
@@ -131,11 +123,11 @@ size_t StdFSFileSystem::file_size(const std::string &file_path)
 	return static_cast<size_t>(std::filesystem::file_size(full_path));
 }
 
-StackErrorPtr StdFSFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
+void StdFSFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
 {
 	if (!data)
 	{
-		return nullptr;
+		return;
 	}
 
 	auto full_path = get_full_path(m_base_path, file_path);
@@ -144,36 +136,31 @@ StackErrorPtr StdFSFileSystem::write_file(const std::string &file_path, const vo
 	stream.open(full_path, std::ios::out | std::ios::binary);
 	if (!stream.good())
 	{
-		return StackError::unique("failed to open file: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "failed to open file: " + full_path.string());
 	}
 
-	if (!stream.write(reinterpret_cast<const char *>(data), size))
+	stream.write(reinterpret_cast<const char *>(data), size);
+	if (!stream.good())
 	{
-		return StackError::unique("failed to write to file: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "failed to write to file: " + full_path.string());
 	}
-	return nullptr;
 }
 
-StackErrorPtr StdFSFileSystem::enumerate_files(const std::string &dir, std::vector<std::string> *files)
+std::vector<std::string> StdFSFileSystem::enumerate_files(const std::string &dir) const
 {
-	if (!files)
-	{
-		return nullptr;
-	}
-
 	auto full_path = get_full_path(m_base_path, dir);
 
 	if (!std::filesystem::exists(full_path))
 	{
-		return StackError::unique("path does not exist: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "path does not exist: " + full_path.string());
 	}
 
 	if (!std::filesystem::is_directory(full_path))
 	{
-		return StackError::unique("path is not a directory: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "path is not a directory: " + full_path.string());
 	}
 
-	std::vector<std::string> temp_files{};
+	std::vector<std::string> files;
 
 	auto base_path_size = m_base_path.string().size();
 
@@ -183,35 +170,28 @@ StackErrorPtr StdFSFileSystem::enumerate_files(const std::string &dir, std::vect
 		{
 			// TODO: switching between std::path and std::string is inefficient
 			auto file = entry.path().string().substr(base_path_size);
-			temp_files.push_back(helpers::sanitize(file));
+			files.push_back(helpers::sanitize(file));
 		}
 	}
 
-	*files = std::move(temp_files);
-
-	return nullptr;
+	return files;
 }
 
-StackErrorPtr StdFSFileSystem::enumerate_folders(const std::string &dir, std::vector<std::string> *folders)
+std::vector<std::string> StdFSFileSystem::enumerate_folders(const std::string &dir) const
 {
-	if (!folders)
-	{
-		return nullptr;
-	}
-
 	auto full_path = get_full_path(m_base_path, dir);
 
 	if (!std::filesystem::exists(full_path))
 	{
-		return StackError::unique("path does not exist: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "path does not exist: " + full_path.string());
 	}
 
 	if (!std::filesystem::is_directory(full_path))
 	{
-		return StackError::unique("path is not a directory: " + full_path.string(), "vfs/std_filesystem.cpp", __LINE__);
+		throw std::runtime_error("vfs/std_filesystem.cpp line " + std::to_string(__LINE__) + "path is not a directory: " + full_path.string());
 	}
 
-	std::vector<std::string> temp_folders{};
+	std::vector<std::string> folders;
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
@@ -220,13 +200,10 @@ StackErrorPtr StdFSFileSystem::enumerate_folders(const std::string &dir, std::ve
 			// TODO: switching between std::path and std::string is inefficient
 			auto directory = entry.path().string();
 			directory      = directory.substr(m_base_path.string().size());
-			temp_folders.push_back(helpers::sanitize(directory));
+			folders.push_back(helpers::sanitize(directory));
 		}
 	}
-
-	*folders = std::move(temp_folders);
-
-	return nullptr;
+	return folders;
 }
 
 void StdFSFileSystem::make_directory(const std::string &path)
