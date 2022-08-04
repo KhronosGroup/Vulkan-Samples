@@ -17,4 +17,4 @@
 -
 -->
 ### Terrain Tessellation<br/>
-A transcoded version of the API sample [Terrain Tessellation](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/terrain_tesselation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+A transcoded version of the API sample [Terrain Tessellation](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
