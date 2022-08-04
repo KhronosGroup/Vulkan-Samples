@@ -294,6 +294,8 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
 			context.instance.destroySurfaceKHR(context.surface);
 		}
 		context.surface = platform.get_window().create_surface(context.instance, context.gpu);
+		if (!context.surface)
+			throw std::runtime_error("Failed to create window surface.");
 
 		for (uint32_t j = 0; j < vkb::to_u32(queue_family_properties.size()); j++)
 		{

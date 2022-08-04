@@ -244,6 +244,123 @@ VkSurfaceKHR DirectWindow::create_surface(Instance &instance)
 	return create_surface(instance.get_handle(), instance.get_first_gpu().get_handle());
 }
 
+// Local structure for holding display candidate information
+struct Candidate
+{
+	VkDisplayKHR                  display;
+	VkDisplayPropertiesKHR        display_props;
+	VkDisplayModePropertiesKHR    mode;
+	VkDisplayPlaneCapabilitiesKHR caps;
+	uint32_t                      plane_index;
+	uint32_t                      stack_index;
+};
+
+// Helper template to get a vector of properties using the Vulkan idiom of
+// querying size, then querying data
+template <typename T, typename F, typename... Targs>
+static std::vector<T> get_props(F func, Targs... args)
+{
+	std::vector<T> result;
+	uint32_t       count;
+
+	VK_CHECK(func(args..., &count, nullptr));
+	if (count > 0)
+	{
+		result.resize(count);
+		VK_CHECK(func(args..., &count, result.data()));
+	}
+	return result;
+}
+
+// Find all valid display candidates in the system
+static std::vector<Candidate> find_display_candidates(VkPhysicalDevice phys_dev, Window::Mode window_mode)
+{
+	// Possible display config candidates
+	std::vector<Candidate> candidates;
+
+	// Find all the displays connected to this platform
+	auto display_properties = get_props<VkDisplayPropertiesKHR>(vkGetPhysicalDeviceDisplayPropertiesKHR, phys_dev);
+
+	// Find all the display planes
+	auto plane_properties = get_props<VkDisplayPlanePropertiesKHR>(vkGetPhysicalDeviceDisplayPlanePropertiesKHR, phys_dev);
+
+	// Build a list of candidates
+	for (uint32_t plane_index = 0; plane_index < plane_properties.size(); plane_index++)
+	{
+		const VkDisplayPlanePropertiesKHR &plane_props = plane_properties[plane_index];
+
+		// Find the list of displays compatible with the plane
+		auto supported_displays = get_props<VkDisplayKHR>(vkGetDisplayPlaneSupportedDisplaysKHR, phys_dev, plane_index);
+
+		for (const auto &display : supported_displays)
+		{
+			auto props = std::find_if(display_properties.cbegin(), display_properties.cend(),
+			                          [display](const VkDisplayPropertiesKHR &p) { return p.display == display; });
+			if (props == display_properties.end())
+			{
+				continue;
+			}
+
+			// Cannot use if already on another display
+			if (plane_props.currentDisplay != VK_NULL_HANDLE && plane_props.currentDisplay != display)
+			{
+				continue;
+			}
+
+			// Cannot use if identity transform is unsupported
+			if ((props->supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR) == 0)
+			{
+				continue;
+			}
+
+			// Find all the display modes for the display
+			auto modes = get_props<VkDisplayModePropertiesKHR>(vkGetDisplayModePropertiesKHR, phys_dev, display);
+
+			for (auto mode : modes)
+			{
+				// Query capabilities of this mode/plane combination
+				VkDisplayPlaneCapabilitiesKHR caps;
+				VK_CHECK(vkGetDisplayPlaneCapabilitiesKHR(phys_dev, mode.displayMode, plane_index, &caps));
+
+				// Check for opaque alpha support
+				if ((caps.supportedAlpha & VK_DISPLAY_PLANE_ALPHA_OPAQUE_BIT_KHR) == 0)
+				{
+					continue;
+				}
+
+				// Eliminate modes that don't fit the plane capabilities
+				if (mode.parameters.visibleRegion.width > caps.maxDstExtent.width ||
+				    mode.parameters.visibleRegion.height > caps.maxDstExtent.height ||
+				    mode.parameters.visibleRegion.width < caps.minDstExtent.width ||
+				    mode.parameters.visibleRegion.height < caps.minDstExtent.height)
+				{
+					continue;
+				}
+
+				if (window_mode == Window::Mode::Fullscreen ||
+				    window_mode == Window::Mode::FullscreenBorderless)
+				{
+					// For full-screen modes (where the src image is the same size as the
+					// display) we must also check the src extents are valid.
+					if (mode.parameters.visibleRegion.width > caps.maxSrcExtent.width ||
+					    mode.parameters.visibleRegion.height > caps.maxSrcExtent.height ||
+					    mode.parameters.visibleRegion.width < caps.minSrcExtent.width ||
+					    mode.parameters.visibleRegion.height < caps.minSrcExtent.height)
+					{
+						continue;
+					}
+				}
+
+				// Add to list of candidates
+				candidates.push_back(Candidate{display, *props, mode, caps, plane_index,
+				                               plane_properties[plane_index].currentStackIndex});
+			}
+		}
+	}
+
+	return candidates;
+}
+
 VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice phys_dev)
 {
 	if (instance == VK_NULL_HANDLE || phys_dev == VK_NULL_HANDLE)
@@ -251,69 +368,69 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 		return VK_NULL_HANDLE;
 	}
 
-	// Query the display properties
-	uint32_t num_displays;
-	VK_CHECK(vkGetPhysicalDeviceDisplayPropertiesKHR(phys_dev, &num_displays, nullptr));
-
-	if (num_displays == 0)
+	// Find possible display config candidates
+	std::vector<Candidate> candidates = find_display_candidates(phys_dev, properties.mode);
+	if (candidates.empty())
 	{
-		LOGE("Direct-to-display: No displays found");
+		LOGE("Direct-to-display: No compatible display candidates found");
 		return VK_NULL_HANDLE;
 	}
 
-	VkDisplayPropertiesKHR display_properties;
-	num_displays = 1;
-	VK_CHECK(vkGetPhysicalDeviceDisplayPropertiesKHR(phys_dev, &num_displays, &display_properties));
+	// 'candidates' contains valid potential display configs. Find the best one.
+	// Look for the candidate with the closest resolution to our requested width & height.
+	uint32_t best_candidate = 0;
+	uint32_t wanted_area    = properties.extent.width * properties.extent.height;
+	uint32_t best_diff      = ~0;
 
-	VkDisplayKHR display = display_properties.display;
-
-	// Calculate the display DPI
-	dpi = 25.4f * display_properties.physicalResolution.width / display_properties.physicalDimensions.width;
-
-	// Query display mode properties
-	uint32_t num_modes;
-	VK_CHECK(vkGetDisplayModePropertiesKHR(phys_dev, display, &num_modes, nullptr));
-
-	if (num_modes == 0)
+	for (size_t c = 0; c < candidates.size(); c++)
 	{
-		LOGE("Direct-to-display: No display modes found");
-		return VK_NULL_HANDLE;
+		const Candidate &cand = candidates[c];
+
+		uint32_t area = cand.display_props.physicalResolution.width *
+		                cand.display_props.physicalResolution.height;
+
+		uint32_t diff = abs(static_cast<int32_t>(area) - static_cast<int32_t>(wanted_area));
+
+		if (diff < best_diff)
+		{
+			best_diff      = diff;
+			best_candidate = c;
+		}
 	}
 
-	VkDisplayModePropertiesKHR mode_props;
-	num_modes = 1;
-	VK_CHECK(vkGetDisplayModePropertiesKHR(phys_dev, display, &num_modes, &mode_props));
+	const Candidate &best = candidates[best_candidate];
 
-	// Get the list of planes
-	uint32_t num_planes;
-	VK_CHECK(vkGetPhysicalDeviceDisplayPlanePropertiesKHR(phys_dev, &num_planes, nullptr));
-
-	if (num_planes == 0)
-	{
-		LOGE("Direct-to-display: No display planes found");
-		return VK_NULL_HANDLE;
-	}
-
-	std::vector<VkDisplayPlanePropertiesKHR> plane_properties(num_planes);
-
-	VK_CHECK(vkGetPhysicalDeviceDisplayPlanePropertiesKHR(phys_dev, &num_planes, plane_properties.data()));
-
-	// Find a compatible plane index
-	uint32_t plane_index = find_compatible_plane(phys_dev, display, plane_properties);
-	if (plane_index == ~0U)
-	{
-		return VK_NULL_HANDLE;
-	}
+	// Get the full display mode extent
+	full_extent.width  = best.mode.parameters.visibleRegion.width;
+	full_extent.height = best.mode.parameters.visibleRegion.height;
 
 	VkExtent2D image_extent;
-	image_extent.width  = mode_props.parameters.visibleRegion.width;
-	image_extent.height = mode_props.parameters.visibleRegion.height;
+	if (properties.mode == Window::Mode::Fullscreen ||
+	    properties.mode == Window::Mode::FullscreenBorderless)
+	{
+		// Fullscreen & Borderless options create a surface that matches the display size
+		image_extent.width  = full_extent.width;
+		image_extent.height = full_extent.height;
+	}
+	else
+	{
+		// Normal and stretch options create a surface at the requested width & height
+		// clamped to the plane capabilities in play
+		image_extent.width  = std::min(best.caps.maxSrcExtent.width,
+                                      std::max(properties.extent.width, best.caps.minSrcExtent.width));
+		image_extent.height = std::min(best.caps.maxSrcExtent.height,
+		                               std::max(properties.extent.height, best.caps.minSrcExtent.height));
+	}
 
+	// Calculate the display DPI
+	dpi = 25.4f * best.display_props.physicalResolution.width / best.display_props.physicalDimensions.width;
+
+	// Create the surface
 	VkDisplaySurfaceCreateInfoKHR surface_create_info{};
 	surface_create_info.sType           = VK_STRUCTURE_TYPE_DISPLAY_SURFACE_CREATE_INFO_KHR;
-	surface_create_info.displayMode     = mode_props.displayMode;
-	surface_create_info.planeIndex      = plane_index;
-	surface_create_info.planeStackIndex = plane_properties[plane_index].currentStackIndex;
+	surface_create_info.displayMode     = best.mode.displayMode;
+	surface_create_info.planeIndex      = best.plane_index;
+	surface_create_info.planeStackIndex = best.stack_index;
 	surface_create_info.transform       = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
 	surface_create_info.alphaMode       = VK_DISPLAY_PLANE_ALPHA_OPAQUE_BIT_KHR;
 	surface_create_info.imageExtent     = image_extent;
@@ -322,43 +439,6 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 	VK_CHECK(vkCreateDisplayPlaneSurfaceKHR(instance, &surface_create_info, nullptr, &surface));
 
 	return surface;
-}
-
-uint32_t DirectWindow::find_compatible_plane(VkPhysicalDevice phys_dev, VkDisplayKHR display,
-                                             const std::vector<VkDisplayPlanePropertiesKHR> &plane_properties)
-{
-	// Find a plane compatible with the display
-	for (uint32_t pi = 0; pi < plane_properties.size(); ++pi)
-	{
-		if ((plane_properties[pi].currentDisplay != VK_NULL_HANDLE) &&
-		    (plane_properties[pi].currentDisplay != display))
-		{
-			continue;
-		}
-
-		uint32_t num_supported;
-		VK_CHECK(vkGetDisplayPlaneSupportedDisplaysKHR(phys_dev, pi, &num_supported, nullptr));
-
-		if (num_supported == 0)
-		{
-			continue;
-		}
-
-		std::vector<VkDisplayKHR> supported_displays(num_supported);
-
-		VK_CHECK(vkGetDisplayPlaneSupportedDisplaysKHR(phys_dev, pi, &num_supported, supported_displays.data()));
-
-		for (uint32_t i = 0; i < num_supported; ++i)
-		{
-			if (supported_displays[i] == display)
-			{
-				return pi;
-			}
-		}
-	}
-
-	LOGE("Direct-to-display: No plane found compatible with the display");
-	return ~0U;
 }
 
 void DirectWindow::process_events()
@@ -409,4 +489,21 @@ float DirectWindow::get_dpi_factor() const
 	const float win_base_density = 96.0f;
 	return dpi / win_base_density;
 }
+
+bool DirectWindow::get_display_present_info(VkDisplayPresentInfoKHR *info,
+                                            uint32_t src_width, uint32_t src_height) const
+{
+	// Only stretch mode needs to supply a VkDisplayPresentInfoKHR
+	if (properties.mode != Window::Mode::FullscreenStretch || !info)
+		return false;
+
+	info->sType      = VK_STRUCTURE_TYPE_DISPLAY_PRESENT_INFO_KHR;
+	info->pNext      = nullptr;
+	info->srcRect    = {0, 0, src_width, src_height};
+	info->dstRect    = {0, 0, full_extent.width, full_extent.height};
+	info->persistent = false;
+
+	return true;
+}
+
 }        // namespace vkb

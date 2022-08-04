@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -1091,6 +1091,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
+
+	if (!context.surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	init_device(context, {"VK_KHR_swapchain"});
 
