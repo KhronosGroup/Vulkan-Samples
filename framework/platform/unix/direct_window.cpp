@@ -424,6 +424,7 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 
 	// Calculate the display DPI
 	constexpr float mm_per_inch = 25.4f;
+
 	dpi = mm_per_inch * best.display_props.physicalResolution.width / best.display_props.physicalDimensions.width;
 
 	// Create the surface
