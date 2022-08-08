@@ -46,6 +46,11 @@ class HPPWindow : private vkb::Window
 	{
 		return static_cast<vk::SurfaceKHR>(create_surface(static_cast<VkInstance>(instance), static_cast<VkPhysicalDevice>(physical_device)));
 	}
+
+	bool get_display_present_info(vk::DisplayPresentInfoKHR *info, uint32_t src_width, uint32_t src_height) const
+	{
+		return vkb::Window::get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(info), src_width, src_height);
+	}
 };
 }        // namespace platform
 }        // namespace vkb

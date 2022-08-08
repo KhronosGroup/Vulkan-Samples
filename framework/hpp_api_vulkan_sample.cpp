@@ -485,10 +485,9 @@ void HPPApiVulkanSample::submit_frame()
 			present_info.setWaitSemaphores(semaphores.render_complete);
 		}
 
-		vk::DisplayPresentInfoKHR disp_present_info{};
+		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    platform->get_window().get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info),
-		                                                    extent.width, extent.height))
+		    get_platform().get_window().get_display_present_info(&disp_present_info, extent.width, extent.height))
 		{
 			// Add display present info if supported and wanted
 			present_info.setPNext(&disp_present_info);
