@@ -510,3 +510,5 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
     endif()
 endif()
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE <vulkan/vulkan.hpp>)

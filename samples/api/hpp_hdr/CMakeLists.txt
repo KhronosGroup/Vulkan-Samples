@@ -32,3 +32,5 @@ add_sample_with_tags(
         "hdr/bloom.frag"
         "hdr/gbuffer.vert"
         "hdr/gbuffer.frag")
+
+target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
