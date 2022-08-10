@@ -23,7 +23,7 @@ add_sample_with_tags(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Sascha Willems"
-    NAME "Using HLSL shaders in Vulkan with glslang"
+    NAME "HPP Using HLSL shaders in Vulkan with glslang"
     DESCRIPTION "Shows how to generate SPIR-V from HLSL shaders that can be used in Vulkan, using vulkan.hpp"
     SHADER_FILES_GLSL
         "hlsl_shaders/hlsl_shader.vert"
