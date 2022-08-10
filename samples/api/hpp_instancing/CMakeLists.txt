@@ -32,3 +32,5 @@ add_sample_with_tags(
         "instancing/planet.frag"
         "instancing/starfield.vert"
         "instancing/starfield.frag")
+
+target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
