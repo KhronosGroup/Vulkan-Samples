@@ -203,6 +203,11 @@ Instance::Instance(const std::string &                           application_nam
 	}
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	enable_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
+	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
+#endif
+
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
 	bool validation_features = false;
 	{

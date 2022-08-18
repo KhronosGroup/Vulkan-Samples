@@ -34,12 +34,12 @@ endif()
 if(APPLE)
     # attempt to use Find_Vulkan at least of version 1.3 or greater.  If this is found, then enable the required portability extension so instance.cpp can get created correctly.
     # prior to 1.3 Find_Vulkan should not return a Vulkan_FOUND variable, so should not set an extension that doesn't exist in legacy Vulkan.
-    # Note that this is only required for moltenVK implementations.
-    find_package(Vulkan 1.3)
+    # Note that this is only required for moltenVK implementations.  NB: this does create a warning in CMake that the range isn't supported in FindVulkan.
+    find_package(Vulkan 1.3...<2.0)
     if(Vulkan_FOUND)
-        set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be set if running MoltenVK and Vulkan 1.3+")
+        set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be set if running MoltenVK and Vulkan 1.3+" FORCE)
     else()
-        set(VKB_ENABLE_PORTABILITY OFF CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be off if running Vulkan less than 1.3")
+        set(VKB_ENABLE_PORTABILITY OFF CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be off if running Vulkan less than 1.3" FORCE)
     endif()
 endif()
 
