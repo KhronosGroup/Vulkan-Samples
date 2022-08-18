@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2021, Bradley Austin Davis
- * Copyright (c) 2020-2021, Arm Limited
+/* Copyright (c) 2020-2022, Bradley Austin Davis
+ * Copyright (c) 2020-2022, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -773,22 +773,25 @@ void OpenGLInterop::build_command_buffers()
 
 OpenGLInterop::~OpenGLInterop()
 {
-	glFinish();
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glDeleteFramebuffers(1, &gl_data->fbo);
-	glDeleteTextures(1, &gl_data->color);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
-	glDeleteVertexArrays(1, &gl_data->vao);
-	glDeleteProgram(gl_data->program);
-	glFlush();
-	glFinish();
+	if(gl_context != nullptr)
+	{
+		glFinish();
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glDeleteFramebuffers(1, &gl_data->fbo);
+		glDeleteTextures(1, &gl_data->color);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
+		glDeleteVertexArrays(1, &gl_data->vao);
+		glDeleteProgram(gl_data->program);
+		glFlush();
+		glFinish();
 
-	// Destroy OpenGl Context
-	delete gl_context;
-	delete gl_data;
+		// Destroy OpenGl Context
+		delete gl_context;
+		delete gl_data;
+	}
 
 	vertex_buffer.reset();
 	index_buffer.reset();
