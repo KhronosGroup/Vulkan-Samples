@@ -224,7 +224,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits,
-                                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		                                                                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
@@ -246,8 +246,8 @@ void OpenGLInterop::prepare_shared_resources()
 		samplerCreateInfo.minFilter  = VK_FILTER_LINEAR;
 		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 		samplerCreateInfo.maxLod     = (float) 1;
-		//samplerCreateInfo.maxAnisotropy = context.deviceFeatures.samplerAnisotropy ? context.deviceProperties.limits.maxSamplerAnisotropy : 1.0f;
-		//samplerCreateInfo.anisotropyEnable = context.deviceFeatures.samplerAnisotropy;
+		// samplerCreateInfo.maxAnisotropy = context.deviceFeatures.samplerAnisotropy ? context.deviceProperties.limits.maxSamplerAnisotropy : 1.0f;
+		// samplerCreateInfo.anisotropyEnable = context.deviceFeatures.samplerAnisotropy;
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 		vkCreateSampler(deviceHandle, &samplerCreateInfo, nullptr, &sharedTexture.sampler);
 
@@ -486,7 +486,7 @@ void OpenGLInterop::prepare_pipelines()
 	vertex_input_state.vertexBindingDescriptionCount        = vkb::to_u32(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
 	vertex_input_state.vertexAttributeDescriptionCount      = vkb::to_u32(
-        vertex_input_attributes.size());
+	         vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions = vertex_input_attributes.data();
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
@@ -526,7 +526,7 @@ void OpenGLInterop::update_uniform_buffers()
 {
 	// Vertex shader
 	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height,
-                                         0.001f, 256.0f);
+	                                         0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
@@ -773,7 +773,7 @@ void OpenGLInterop::build_command_buffers()
 
 OpenGLInterop::~OpenGLInterop()
 {
-	if(gl_context != nullptr)
+	if (gl_context != nullptr)
 	{
 		glFinish();
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
