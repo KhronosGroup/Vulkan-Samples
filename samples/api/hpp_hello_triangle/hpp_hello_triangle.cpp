@@ -193,6 +193,11 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -247,6 +252,10 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info(vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning, debug_callback);
 
 	instance_info.pNext = &debug_report_create_info;
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
 #endif
 
 	// Create the Vulkan instance
