@@ -261,9 +261,9 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 
 For all dependencies set the following environment variables.
 
-- CMake v3.10+
+- CMake v3.16+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
-- Android NDK r18+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
+- Android NDK r23+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
 - Gradle 5+ `GRADLE_HOME=<WORK_DIR>/gradle`
 - [CMake Options](#cmake-options)
