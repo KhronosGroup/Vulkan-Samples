@@ -129,6 +129,9 @@ A transcoded version of the API sample [High dynamic range](#hdr)that illustrate
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
 A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP HLSL shaders](./api/hpp_hlsl_shaders)<br/>
+A transcoded version of the API sample [HLSL Shaders](#hlsl_shaders) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
