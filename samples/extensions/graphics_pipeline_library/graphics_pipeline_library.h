@@ -49,6 +49,7 @@ class GraphicsPipelineLibrary : public ApiVulkanSample
 		VkPipeline vertex_input_interface{VK_NULL_HANDLE};
 		VkPipeline pre_rasterization_shaders{VK_NULL_HANDLE};
 		VkPipeline fragment_output_interface{VK_NULL_HANDLE};
+		std::vector<VkPipeline> fragment_shaders;
 	} pipeline_library;
 
 	// Will be dynamically created at runtime from pipeline library
