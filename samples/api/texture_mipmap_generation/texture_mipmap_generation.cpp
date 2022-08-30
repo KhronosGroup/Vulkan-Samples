@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,7 +59,8 @@ void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_name)
 {
-	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
+	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
 	ktxTexture *   ktx_texture;
 	KTX_error_code result;

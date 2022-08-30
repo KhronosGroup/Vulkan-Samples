@@ -167,9 +167,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 void HPPVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear}};
+	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }

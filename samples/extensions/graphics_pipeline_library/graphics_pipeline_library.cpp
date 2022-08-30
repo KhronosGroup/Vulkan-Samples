@@ -92,7 +92,7 @@ void GraphicsPipelineLibrary::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.03f, 0.0f}};
 	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, NVIDIA CORPORATION.  All rights reserved.
+ * Copyright (c) 2021-2022, NVIDIA CORPORATION.  All rights reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * SPDX-FileCopyrightText: Copyright (c) 2014-2021 NVIDIA CORPORATION
+ * SPDX-FileCopyrightText: Copyright (c) 2014-2022 NVIDIA CORPORATION
  * SPDX-License-Identifier: Apache-2.0
  */
 
@@ -908,7 +908,7 @@ void RaytracingReflection::build_command_buffers()
 			Start a new render pass to draw the UI overlay on top of the ray traced image
 		*/
 		VkClearValue clear_values[2];
-		clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+		clear_values[0].color        = {{0.0f, 0.0f, 0.03f, 0.0f}};
 		clear_values[1].depthStencil = {0.0f, 0};
 
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();

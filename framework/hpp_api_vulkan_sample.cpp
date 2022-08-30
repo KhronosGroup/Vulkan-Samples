@@ -158,9 +158,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
-	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
@@ -839,11 +837,11 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture;
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device());
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
@@ -920,11 +918,11 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device(), vk::ImageViewType::e2DArray);
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
@@ -1004,11 +1002,11 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device(), vk::ImageViewType::eCube, vk::ImageCreateFlagBits::eCubeCompatible);
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -318,6 +318,18 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 }
+
+static inline bool texture_needs_srgb_colorspace(const std::string &name)
+{
+	// The gltf spec states that the base and emissive textures MUST be encoded with the sRGB
+	// transfer function. All other texture types are linear.
+	if (name == "baseColorTexture" || name == "emissiveTexture")
+		return true;
+
+	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
+	return false;
+}
+
 }        // namespace
 
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
@@ -583,7 +595,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -593,7 +610,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -1257,7 +1279,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		// Load image from uri
 		auto image_uri = model_path + "/" + gltf_image.uri;
-		image          = sg::Image::load(gltf_image.name, image_uri);
+		image          = sg::Image::load(gltf_image.name, image_uri, vkb::sg::Image::Unknown);
 	}
 
 	// Check whether the format is supported by the GPU

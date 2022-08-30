@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,8 +72,8 @@ void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void ComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void ComputeNBody::build_command_buffers()

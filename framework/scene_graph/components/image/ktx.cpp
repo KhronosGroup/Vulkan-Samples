@@ -67,7 +67,7 @@ static ktx_error_code_e KTX_APIENTRY optimal_tiling_callback(int          mip_le
 	return KTX_SUCCESS;
 }
 
-Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
+Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type) :
     Image{name}
 {
 	auto data_buffer = reinterpret_cast<const ktx_uint8_t *>(data.data());
@@ -116,7 +116,16 @@ Ktx::Ktx(const std::string &name, const std::vector<uint8_t> &data) :
 	}
 
 	auto updated_format = ktxTexture_GetVkFormat(texture);
+
 	set_format(updated_format);
+
+	if (texture->classId == ktxTexture1_c && content_type == Color)
+	{
+		// KTX-1 files don't contain color space information. Color data is normally
+		// in sRGB, but the format we get back won't report that, so this will adjust it
+		// if necessary.
+		coerce_format_to_srgb();
+	}
 
 	auto &mipmap_levels = get_mut_mipmaps();
 	mipmap_levels.resize(texture->numLevels);

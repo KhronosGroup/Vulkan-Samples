@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,9 +171,9 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
@@ -959,11 +959,11 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1057,11 +1057,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_array(const std::string &file)
+Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1158,11 +1158,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
+Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);

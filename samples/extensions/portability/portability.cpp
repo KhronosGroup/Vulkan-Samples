@@ -318,8 +318,7 @@ void Portability::prepare_offscreen_buffer()
 		offscreen.width  = static_cast<int32_t>(width);
 		offscreen.height = static_cast<int32_t>(height);
 
-		// Color attachments
-
+		// Color attachments (in linear colorspace)
 		create_attachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
 		create_attachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
@@ -520,7 +519,7 @@ void Portability::prepare_offscreen_buffer()
 void Portability::load_assets()
 {
 	models.skysphere   = load_model("scenes/geosphere.gltf");
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
+	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 	models.scene       = load_model("scenes/geosphere.gltf");
 }
 
