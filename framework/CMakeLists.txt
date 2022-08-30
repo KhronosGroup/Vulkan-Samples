@@ -428,8 +428,13 @@ else()
     endif()
 endif()
 
+# mask out the min/max macros from minwindef.h
+if(MSVC)
+    add_definitions(-DNOMINMAX)
+endif()
+
 # Pre compiled headers
-vulkan_samples_pch(PROJECT_FILES pch.cpp)
+# vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
