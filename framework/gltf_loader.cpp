@@ -327,6 +327,7 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 		return true;
 
 	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
+	assert(name == "metallicRoughnessTexture" || name == "normalTexture" || name == "occlusionTexture");
 	return false;
 }
 

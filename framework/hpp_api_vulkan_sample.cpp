@@ -158,6 +158,8 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
