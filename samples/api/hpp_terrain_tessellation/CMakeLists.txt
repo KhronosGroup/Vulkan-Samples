@@ -33,4 +33,4 @@ add_sample_with_tags(
         "terrain_tessellation/skysphere.vert"
         "terrain_tessellation/skysphere.frag")
 
-target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
+target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

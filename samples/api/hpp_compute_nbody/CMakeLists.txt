@@ -31,4 +31,4 @@ add_sample_with_tags(
         "compute_nbody/particle_calculate.comp"
         "compute_nbody/particle_integrate.comp")
 
-target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
+target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

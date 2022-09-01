@@ -29,4 +29,4 @@ add_sample_with_tags(
         "dynamic_uniform_buffers/base.vert"
         "dynamic_uniform_buffers/base.frag")
 
-target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
+target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

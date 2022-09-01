@@ -29,4 +29,4 @@ add_sample_with_tags(
         "texture_loading/texture.vert"
         "texture_loading/texture.frag")
 
-target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)
+target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)
