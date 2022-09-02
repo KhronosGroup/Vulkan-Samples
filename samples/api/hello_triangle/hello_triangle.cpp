@@ -888,7 +888,7 @@ void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 
 	// Set clear color values.
 	VkClearValue clear_value;
-	clear_value.color = {{0.004f, 0.004f, 0.008f, 1.0f}};
+	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	// Begin the render pass.
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};

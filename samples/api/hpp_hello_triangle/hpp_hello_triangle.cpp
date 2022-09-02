@@ -830,7 +830,7 @@ void HPPHelloTriangle::render_triangle(Context &context, uint32_t swapchain_inde
 
 	// Set clear color values.
 	vk::ClearValue clear_value;
-	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.004f, 0.004f, 0.008f, 1.0f}}));
+	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.01f, 0.01f, 0.033f, 1.0f}}));
 
 	// Begin the render pass.
 	vk::RenderPassBeginInfo rp_begin(context.render_pass, framebuffer, {{0, 0}, {context.swapchain_dimensions.width, context.swapchain_dimensions.height}},

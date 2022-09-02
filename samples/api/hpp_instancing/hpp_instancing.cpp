@@ -77,7 +77,7 @@ void HPPInstancing::build_command_buffers()
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	std::array<vk::ClearValue, 2> clear_values =
-	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.008f, 0.0f}})),
+	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.033f, 0.0f}})),
 	      vk::ClearDepthStencilValue(0.0f, 0)}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);

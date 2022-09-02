@@ -36,8 +36,8 @@ vec3 sampleTerrainLayer()
 	layers[1] = vec2(5.0, 45.0);
 	layers[2] = vec2(45.0, 80.0);
 	layers[3] = vec2(75.0, 100.0);
-	layers[4] = vec2(95.0, 140.0);
-	layers[5] = vec2(140.0, 190.0);
+	layers[4] = vec2(95.0, 150.0);
+	layers[5] = vec2(140.0, 290.0);
 
 	vec3 color = vec3(0.0);
 	

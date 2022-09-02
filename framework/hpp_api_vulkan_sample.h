@@ -340,7 +340,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 		bool vsync = false;
 	} settings;
 
-	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.004f, 0.004f, 0.004f, 1.0f}});
+	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.002f, 0.002f, 0.002f, 1.0f}});
 
 	float zoom = 0;
 

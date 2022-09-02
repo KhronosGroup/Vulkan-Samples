@@ -369,7 +369,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 		bool vsync = false;
 	} settings;
 
-	VkClearColorValue default_clear_color = {{0.004f, 0.004f, 0.004f, 1.0f}};
+	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
 
 	float zoom = 0;
 
