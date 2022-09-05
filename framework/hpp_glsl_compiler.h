@@ -23,9 +23,9 @@
 namespace vkb
 {
 /**
- * @brief facade class around vkb::GLTFLoader, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::GLSLCompiler, providing a vulkan.hpp-based interface
  *
- * See vkb::GLTFLoader for documentation
+ * See vkb::GLSLCompiler for documentation
  */
 class HPPGLSLCompiler : private vkb::GLSLCompiler
 {
