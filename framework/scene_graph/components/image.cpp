@@ -68,6 +68,11 @@ bool is_astc(const VkFormat format)
 	        format == VK_FORMAT_ASTC_12x12_SRGB_BLOCK);
 }
 
+// When the color-space of a loaded image is unknown (from KTX1 for example) we
+// may want to assume that the loaded data is in sRGB format (since it usually is).
+// In those cases, this helper will get called which will force an existing unorm
+// format to become an srgb format where one exists. If none exist, the format will
+// remain unmodified.
 static VkFormat maybe_coerce_to_srgb(VkFormat fmt)
 {
 	switch (fmt)
