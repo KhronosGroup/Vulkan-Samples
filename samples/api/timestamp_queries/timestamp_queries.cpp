@@ -108,7 +108,7 @@ void TimestampQueries::build_command_buffers()
 				First pass: Render scene to offscreen framebuffer
 			*/
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, 0);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 0);
 
 			std::array<VkClearValue, 3> clear_values;
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
@@ -150,7 +150,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, 1);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, 1);
 		}
 
 		/*
@@ -171,7 +171,7 @@ void TimestampQueries::build_command_buffers()
 			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
 			render_pass_begin_info.pClearValues             = clear_values;
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, 2);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 2);
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -188,7 +188,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, 3);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, 3);
 		}
 
 		/*
@@ -212,7 +212,7 @@ void TimestampQueries::build_command_buffers()
 			render_pass_begin_info.renderArea.extent.height = height;
 			render_pass_begin_info.pClearValues             = clear_values;
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, bloom ? 4 : 2);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, bloom ? 4 : 2);
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -239,7 +239,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, query_pool_timestamps, bloom ? 5 : 3);
+			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, bloom ? 5 : 3);
 		}
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
@@ -862,7 +862,7 @@ void TimestampQueries::prepare_time_stamp_queries()
 	// Create the query pool object used to get the GPU time tamps
 	VkQueryPoolCreateInfo query_pool_info{};
 	query_pool_info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-	// We need to specify the query for this pool, which in our case is for time stamps
+	// We need to specify the query type for this pool, which in our case is for time stamps
 	query_pool_info.queryType = VK_QUERY_TYPE_TIMESTAMP;
 	// Set the no. of queries in this pool
 	query_pool_info.queryCount = static_cast<uint32_t>(time_stamps.size());
@@ -873,7 +873,7 @@ void TimestampQueries::get_time_stamp_results()
 {
 	// The number of timestamps changes if the bloom pass is disabled
 	uint32_t count = bloom ? time_stamps.size() : time_stamps.size() - 2;
-	
+
 	// Fetch the time stamp results written in the command buffer submissions
 	// A note on the flags used:
 	//	VK_QUERY_RESULT_64_BIT: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
@@ -910,7 +910,7 @@ void TimestampQueries::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
 
-	// @todo: comment
+	// Read back the time stamp query results after the frame is finished
 	get_time_stamp_results();
 }
 
@@ -921,9 +921,9 @@ bool TimestampQueries::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// @todo: comment
-	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
-	if (timestamp_period == 0)
+	// Check if the selected device supports timestamps. A value of zero means no support.
+	VkPhysicalDeviceLimits device_limits = device->get_gpu().get_properties().limits;
+	if (device_limits.timestampPeriod == 0)
 	{
 		throw std::runtime_error{"The selected device does not support timestamp queries!"};
 	}
@@ -985,11 +985,11 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
 		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
 
-		drawer.text("Render pass 1: %.3f ms", float(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Render pass 2: %.3f ms", float(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 2: %s %.3f ms", float(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f, (bloom ? "First bloom pass" : "Scene display"));
 		if (bloom)
 		{
-			drawer.text("Renderpass 3: %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
+			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
 		}
 	}
 }
