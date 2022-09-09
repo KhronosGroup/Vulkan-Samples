@@ -928,6 +928,17 @@ bool TimestampQueries::prepare(vkb::Platform &platform)
 		throw std::runtime_error{"The selected device does not support timestamp queries!"};
 	}
 
+	// Check if all queues support timestamp queries, if not we need to check on a per-queue basis
+	if (!device_limits.timestampComputeAndGraphics)
+	{
+		// Check if the graphics queue used in this sample supports time stamps
+		VkQueueFamilyProperties graphics_queue_family_properties = device->get_suitable_graphics_queue().get_properties();
+		if (graphics_queue_family_properties.timestampValidBits == 0)
+		{
+			throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};
+		}
+	}
+
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
@@ -986,7 +997,7 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
 
 		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", float(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f, (bloom ? "First bloom pass" : "Scene display"));
+		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), float(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
 		if (bloom)
 		{
 			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
