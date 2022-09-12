@@ -46,6 +46,7 @@ class Window
 		Headless,
 		Fullscreen,
 		FullscreenBorderless,
+		FullscreenStretch,
 		Default
 	};
 
@@ -123,12 +124,24 @@ class Window
 	virtual float get_content_scale_factor() const;
 
 	/**
-	 * @brief Attempt to resize the window - not gauranteed to change
+	 * @brief Attempt to resize the window - not guaranteed to change
 	 * 
 	 * @param extent The preferred window extent
 	 * @return Extent The new window extent
 	 */
 	Extent resize(const Extent &extent);
+
+	/**
+	 * @brief Get the display present info for the window if needed
+	 *
+	 * @param info Filled in when the method returns true
+	 * @param src_width The width of the surface being presented
+	 * @param src_height The height of the surface being presented
+	 * @return true if the present info was filled in and should be used
+	 * @return false if the extra present info should not be used. info is left untouched.
+	 */
+	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info,
+	                                      uint32_t src_width, uint32_t src_height) const;
 
 	const Extent &get_extent() const;
 

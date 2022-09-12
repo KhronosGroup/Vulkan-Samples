@@ -1101,6 +1101,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
 
+	if (!context.surface)
+		throw std::runtime_error("Failed to create window surface.");
+
 	init_device(context, {"VK_KHR_swapchain"});
 
 	init_swapchain(context);

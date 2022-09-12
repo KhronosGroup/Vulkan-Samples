@@ -500,6 +500,15 @@ void ApiVulkanSample::submit_frame()
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
 		present_info.pImageIndices    = &current_buffer;
+
+		VkDisplayPresentInfoKHR disp_present_info{};
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    platform->get_window().get_display_present_info(&disp_present_info, width, height))
+		{
+			// Add display present info if supported and wanted
+			present_info.pNext = &disp_present_info;
+		}
+
 		// Check if a wait semaphore has been specified to wait for before presenting the image
 		if (semaphores.render_complete != VK_NULL_HANDLE)
 		{
