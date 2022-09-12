@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Sascha Willems
+/* Copyright (c) 2020-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -498,9 +498,9 @@ void FragmentShadingRate::build_command_buffers()
 void FragmentShadingRate::load_assets()
 {
 	models.skysphere   = load_model("scenes/geosphere.gltf");
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
+	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 	models.scene       = load_model("scenes/textured_unit_cube.gltf");
-	textures.scene     = load_texture("textures/metalplate01_rgba.ktx");
+	textures.scene     = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void FragmentShadingRate::setup_descriptor_pool()

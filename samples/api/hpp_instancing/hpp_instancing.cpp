@@ -77,7 +77,7 @@ void HPPInstancing::build_command_buffers()
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	std::array<vk::ClearValue, 2> clear_values =
-	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.2f, 0.0f}})),
+	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.033f, 0.0f}})),
 	      vk::ClearDepthStencilValue(0.0f, 0)}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
@@ -136,8 +136,8 @@ void HPPInstancing::load_assets()
 	models.rock   = load_model("scenes/rock.gltf");
 	models.planet = load_model("scenes/planet.gltf");
 
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HPPInstancing::setup_descriptor_pool()

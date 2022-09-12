@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -347,7 +347,7 @@ void TextureCompressionBasisu::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 1.0f}};
+	clear_values[0].color        = {{0.05f, 0.05f, 0.05f, 1.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();

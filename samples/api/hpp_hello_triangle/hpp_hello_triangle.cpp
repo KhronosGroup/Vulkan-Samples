@@ -433,9 +433,9 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 	vk::SurfaceFormatKHR format;
 	if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
 	{
-		// There is no preferred format, so pick a default one
+		// Always prefer sRGB for display
 		format        = formats[0];
-		format.format = vk::Format::eB8G8R8A8Unorm;
+		format.format = vk::Format::eB8G8R8A8Srgb;
 	}
 	else
 	{
@@ -449,9 +449,9 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 		{
 			switch (candidate.format)
 			{
-				case vk::Format::eR8G8B8A8Unorm:
-				case vk::Format::eB8G8R8A8Unorm:
-				case vk::Format::eA8B8G8R8UnormPack32:
+				case vk::Format::eR8G8B8A8Srgb:
+				case vk::Format::eB8G8R8A8Srgb:
+				case vk::Format::eA8B8G8R8SrgbPack32:
 					format = candidate;
 					break;
 
@@ -830,7 +830,7 @@ void HPPHelloTriangle::render_triangle(Context &context, uint32_t swapchain_inde
 
 	// Set clear color values.
 	vk::ClearValue clear_value;
-	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.1f, 0.1f, 0.2f, 1.0f}}));
+	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.01f, 0.01f, 0.033f, 1.0f}}));
 
 	// Begin the render pass.
 	vk::RenderPassBeginInfo rp_begin(context.render_pass, framebuffer, {{0, 0}, {context.swapchain_dimensions.width, context.swapchain_dimensions.height}},

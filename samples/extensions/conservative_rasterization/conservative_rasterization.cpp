@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -257,7 +257,7 @@ void ConservativeRasterization::build_command_buffers()
 		// First render pass: Render a low res triangle to an offscreen framebuffer to use for visualization in second pass
 		{
 			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.0f}};
+			clear_values[0].color        = {{0.05f, 0.05f, 0.05f, 0.0f}};
 			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -293,7 +293,7 @@ void ConservativeRasterization::build_command_buffers()
 		// Second render pass: Render scene with conservative rasterization
 		{
 			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.25f, 0.25f, 0.25f, 0.25f}};
+			clear_values[0].color        = {{0.05f, 0.05f, 0.05f, 0.25f}};
 			clear_values[1].depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();

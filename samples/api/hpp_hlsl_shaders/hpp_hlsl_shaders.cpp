@@ -192,7 +192,7 @@ void HPPHlslShaders::build_command_buffers()
 
 void HPPHlslShaders::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx");
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HPPHlslShaders::draw()

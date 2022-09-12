@@ -443,9 +443,9 @@ void HelloTriangle::init_swapchain(Context &context)
 	VkSurfaceFormatKHR format;
 	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
 	{
-		// There is no preferred format, so pick a default one
+		// Always prefer sRGB for display
 		format        = formats[0];
-		format.format = VK_FORMAT_B8G8R8A8_UNORM;
+		format.format = VK_FORMAT_B8G8R8A8_SRGB;
 	}
 	else
 	{
@@ -459,9 +459,9 @@ void HelloTriangle::init_swapchain(Context &context)
 		{
 			switch (candidate.format)
 			{
-				case VK_FORMAT_R8G8B8A8_UNORM:
-				case VK_FORMAT_B8G8R8A8_UNORM:
-				case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+				case VK_FORMAT_R8G8B8A8_SRGB:
+				case VK_FORMAT_B8G8R8A8_SRGB:
+				case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
 					format = candidate;
 					break;
 
@@ -888,7 +888,7 @@ void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 
 	// Set clear color values.
 	VkClearValue clear_value;
-	clear_value.color = {{0.1f, 0.1f, 0.2f, 1.0f}};
+	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	// Begin the render pass.
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};

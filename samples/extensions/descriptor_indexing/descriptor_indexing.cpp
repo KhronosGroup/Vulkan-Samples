@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,9 +84,9 @@ void DescriptorIndexing::render(float delta_time)
 	render_pass_begin.renderArea.extent.height = height;
 	render_pass_begin.clearValueCount          = 2;
 	VkClearValue clears[2]                     = {};
-	clears[0].color.float32[0]                 = 0.2f;
-	clears[0].color.float32[1]                 = 0.3f;
-	clears[0].color.float32[2]                 = 0.4f;
+	clears[0].color.float32[0]                 = 0.033f;
+	clears[0].color.float32[1]                 = 0.073f;
+	clears[0].color.float32[2]                 = 0.133f;
 	render_pass_begin.pClearValues             = clears;
 	render_pass_begin.framebuffer              = framebuffers[current_buffer];
 
@@ -316,6 +316,8 @@ void DescriptorIndexing::create_pipelines()
 DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3], unsigned image_seed)
 {
 	// Fairly basic setup, generate some random textures so we can visualize that we are sampling many different textures.
+	// Note: since we're creating the texture data ourselves, it will already be in linear colorspace so we set the format
+	// as unorm, not sRGB.
 	DescriptorIndexing::TestImage test_image;
 
 	VkImageCreateInfo image_info = vkb::initializers::image_create_info();

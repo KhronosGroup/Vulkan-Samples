@@ -75,8 +75,8 @@ void HPPComputeNBody::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 
 void HPPComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HPPComputeNBody::build_command_buffers()

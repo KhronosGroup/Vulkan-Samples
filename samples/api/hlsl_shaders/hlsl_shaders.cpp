@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -208,7 +208,7 @@ void HlslShaders::build_command_buffers()
 
 void HlslShaders::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx");
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HlslShaders::draw()
