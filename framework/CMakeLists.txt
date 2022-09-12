@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(framework LANGUAGES C CXX)
 
@@ -429,8 +429,13 @@ else()
     endif()
 endif()
 
+# mask out the min/max macros from minwindef.h
+if(MSVC)
+    add_definitions(-DNOMINMAX)
+endif()
+
 # Pre compiled headers
-vulkan_samples_pch(PROJECT_FILES pch.cpp)
+# vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
@@ -511,3 +516,5 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
     endif()
 endif()
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE <vulkan/vulkan.hpp>)
