@@ -40,6 +40,7 @@ set(FRAMEWORK_FILES
     camera.h
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
+    hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_cache.h
