@@ -485,6 +485,14 @@ void HPPApiVulkanSample::submit_frame()
 			present_info.setWaitSemaphores(semaphores.render_complete);
 		}
 
+		vk::DisplayPresentInfoKHR disp_present_info;
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    get_platform().get_window().get_display_present_info(&disp_present_info, extent.width, extent.height))
+		{
+			// Add display present info if supported and wanted
+			present_info.setPNext(&disp_present_info);
+		}
+
 		// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
 		vk::Result present_result;
 		try

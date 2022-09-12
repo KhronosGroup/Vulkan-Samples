@@ -37,6 +37,8 @@
 
 namespace vkb
 {
+class Window;
+
 /**
  * @brief RenderContext acts as a frame manager for the sample, with a lifetime that is the
  * same as that of the Application itself. It acts as a container for RenderFrame objects,
@@ -62,10 +64,9 @@ class RenderContext
 	 * @brief Constructor
 	 * @param device A valid device
 	 * @param surface A surface, VK_NULL_HANDLE if in headless mode
-	 * @param window_width The width of the window where the surface was created
-	 * @param window_height The height of the window where the surface was created
+	 * @param window The window where the surface was created
 	 */
-	RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height);
+	RenderContext(Device &device, VkSurfaceKHR surface, const Window &window);
 
 	RenderContext(const RenderContext &) = delete;
 
@@ -239,6 +240,8 @@ class RenderContext
 
   private:
 	Device &device;
+
+	const Window &window;
 
 	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
 	const Queue &queue;
