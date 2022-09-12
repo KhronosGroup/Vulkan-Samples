@@ -192,20 +192,23 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/**
 	 * @brief Loads in a ktx 2D texture
 	 * @param file The filename of the texture to load
+	 * @param content_type The type of content in the image file
 	 */
-	Texture load_texture(const std::string &file);
+	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
 	 * @brief Laods in a ktx 2D texture array
 	 * @param file The filename of the texture to load
+	 * @param content_type The type of content in the image file
 	 */
-	Texture load_texture_array(const std::string &file);
+	Texture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
 	 * @brief Loads in a ktx 2D texture cubemap
 	 * @param file The filename of the texture to load
+	 * @param content_type The type of content in the image file
 	 */
-	Texture load_texture_cubemap(const std::string &file);
+	Texture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
 	 * @brief Loads in a single model from a GLTF file
@@ -366,7 +369,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 		bool vsync = false;
 	} settings;
 
-	VkClearColorValue default_clear_color = {{0.025f, 0.025f, 0.025f, 1.0f}};
+	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
 
 	float zoom = 0;
 

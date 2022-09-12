@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,7 +73,7 @@ void Instancing::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -143,8 +143,8 @@ void Instancing::load_assets()
 	//models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
 	//models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
 
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 
 	//textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
 	//textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);

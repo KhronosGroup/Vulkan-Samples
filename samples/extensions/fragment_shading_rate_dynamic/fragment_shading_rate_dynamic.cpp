@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2021-2022, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -620,9 +620,9 @@ void FragmentShadingRateDynamic::build_command_buffers()
 void FragmentShadingRateDynamic::load_assets()
 {
 	models.skysphere   = load_model("scenes/geosphere.gltf");
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
+	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 	models.scene       = load_model("scenes/textured_unit_cube.gltf");
-	textures.scene     = load_texture("textures/vulkan_logo_full.ktx");
+	textures.scene     = load_texture("textures/vulkan_logo_full.ktx", vkb::sg::Image::Color);
 }
 
 void FragmentShadingRateDynamic::setup_descriptor_pool()

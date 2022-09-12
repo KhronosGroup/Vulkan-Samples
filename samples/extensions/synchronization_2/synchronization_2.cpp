@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,8 +78,8 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void Synchronization2::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void Synchronization2::build_command_buffers()
