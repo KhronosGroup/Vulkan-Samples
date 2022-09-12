@@ -91,13 +91,13 @@ The sample also shows how to enable 16-bit storage for SSBOs and push constants.
 ### [Async compute](./performance/async_compute)
 This sample demonstrates using multiple Vulkan queues to get better hardware utilization with compute post-processing workloads.
 
-## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
+### [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
 This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
 
-## [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
+### [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
-## [Texture compression comparison](./performance/texture_compression_comparison)
+### [Texture compression comparison](./performance/texture_compression_comparison)
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
 the timing benefits of each.
 
