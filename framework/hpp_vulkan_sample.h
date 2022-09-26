@@ -25,6 +25,7 @@
 #include <rendering/hpp_render_pipeline.h>
 #include <rendering/hpp_render_target.h>
 #include <stats/hpp_stats.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {

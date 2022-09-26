@@ -418,7 +418,9 @@ void HPPComputeNBody::prepare_pipelines()
 	                                                    {},
 	                                                    -1);
 
-	graphics.pipeline = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	vk::Result result;
+	std::tie(result, graphics.pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
 }
 
 void HPPComputeNBody::prepare_graphics()

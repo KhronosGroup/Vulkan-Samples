@@ -558,7 +558,9 @@ void HPPTextureLoading::prepare_pipeline()
 	                                                    {},
 	                                                    -1);
 
-	pipeline = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	vk::Result result;
+	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
