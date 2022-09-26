@@ -279,6 +279,7 @@ set(CORE_FILES
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
     core/vulkan_resource.cpp
+    core/hpp_command_pool.cpp
     core/hpp_device.cpp
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp
