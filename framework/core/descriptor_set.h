@@ -76,6 +76,11 @@ class DescriptorSet
 	 */
 	void update(const std::vector<uint32_t> &bindings_to_update = {});
 
+	/**
+	 * @brief Appies pending write operations without updating the state
+	 */
+	void apply_writes() const;
+
 	const DescriptorSetLayout &get_layout() const;
 
 	VkDescriptorSet get_handle() const;

@@ -214,6 +214,15 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	}
 }
 
+void DescriptorSet::apply_writes() const
+{
+	vkUpdateDescriptorSets(device.get_handle(),
+	                       to_u32(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(),
+	                       0,
+	                       nullptr);
+}
+
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :
     device{other.device},
     descriptor_set_layout{other.descriptor_set_layout},

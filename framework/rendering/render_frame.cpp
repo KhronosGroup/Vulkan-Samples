@@ -86,6 +86,11 @@ void RenderFrame::reset()
 	}
 
 	semaphore_pool.reset();
+
+	if (descriptor_management_strategy == vkb::DescriptorManagementStrategy::CreateDirectly)
+	{
+		clear_descriptors();
+	}
 }
 
 std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const Queue &queue, CommandBuffer::ResetMode reset_mode)
@@ -180,8 +185,15 @@ DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descript
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
-	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
+	auto &descriptor_pool = request_descriptor_pool(descriptor_set_layout, thread_index);
 	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+}
+
+DescriptorPool &RenderFrame::request_descriptor_pool(DescriptorSetLayout &descriptor_set_layout, size_t thread_index)
+{
+	assert(thread_index < thread_count && "Thread index is out of bounds");
+
+	return request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
 }
 
 void RenderFrame::update_descriptor_sets(size_t thread_index)
@@ -212,6 +224,16 @@ void RenderFrame::clear_descriptors()
 void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy)
 {
 	buffer_allocation_strategy = new_strategy;
+}
+
+void RenderFrame::set_descriptor_management_strategy(DescriptorManagementStrategy new_strategy)
+{
+	descriptor_management_strategy = new_strategy;
+}
+
+DescriptorManagementStrategy RenderFrame::get_descriptor_management_strategy() const
+{
+	return descriptor_management_strategy;
 }
 
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)

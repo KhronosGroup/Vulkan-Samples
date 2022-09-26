@@ -83,11 +83,11 @@ void DescriptorManagement::update(float delta_time)
 
 	render_context.get_active_frame().set_buffer_allocation_strategy(buffer_alloc_strategy);
 
-	if (descriptor_caching.value == 0)
-	{
-		// Clear descriptor pools for the current frame
-		render_context.get_active_frame().clear_descriptors();
-	}
+	auto descriptor_management_strategy = (descriptor_caching.value == 0) ?
+                                               vkb::DescriptorManagementStrategy::CreateDirectly :
+                                               vkb::DescriptorManagementStrategy::StoreInCache;
+
+	render_context.get_active_frame().set_descriptor_management_strategy(descriptor_management_strategy);
 
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 	stats->begin_sampling(command_buffer);

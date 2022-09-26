@@ -712,11 +712,23 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				}
 			}
 
-			// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
-			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
-			descriptor_set.update(bindings_to_update);
+			VkDescriptorSet descriptor_set_handle;
+			if (command_pool.get_render_frame()->get_descriptor_management_strategy() == DescriptorManagementStrategy::StoreInCache)
+			{
+				// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
+				auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
+				descriptor_set.update(bindings_to_update);
+				descriptor_set_handle = descriptor_set.get_handle();
+			}
+			else
+			{
+				// Request a descriptor pool, allocate a descriptor set, write buffer and image data to it
+				auto &descriptor_pool = command_pool.get_render_frame()->request_descriptor_pool(descriptor_set_layout, command_pool.get_thread_index());
+				DescriptorSet descriptor_set{command_pool.get_render_frame()->get_device(), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos};
+				descriptor_set.apply_writes();
+				descriptor_set_handle = descriptor_set.get_handle();
+			}
 
-			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
 
 			// Bind descriptor set
 			vkCmdBindDescriptorSets(get_handle(),

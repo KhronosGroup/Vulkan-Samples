@@ -40,6 +40,12 @@ enum BufferAllocationStrategy
 	MultipleAllocationsPerBuffer
 };
 
+enum DescriptorManagementStrategy
+{
+	StoreInCache,
+	CreateDirectly
+};
+
 /**
  * @brief RenderFrame is a container for per-frame data, including BufferPool objects,
  * synchronization primitives (semaphores, fences) and the swapchain RenderTarget.
@@ -122,6 +128,9 @@ class RenderFrame
 	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
 	                                      size_t                                    thread_index = 0);
 
+	DescriptorPool &request_descriptor_pool(DescriptorSetLayout &                     descriptor_set_layout,
+	                                        size_t                                    thread_index = 0);
+
 	void clear_descriptors();
 
 	/**
@@ -129,6 +138,17 @@ class RenderFrame
 	 * @param new_strategy The new buffer allocation strategy
 	 */
 	void set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy);
+
+	/**
+	 * @brief Sets a new descriptor set management strategy
+	 * @param new_strategy The new descriptor set management strategy
+	 */
+	void set_descriptor_management_strategy(DescriptorManagementStrategy new_strategy);
+
+	/**
+	 * @brief Gets descriptor set management strategy
+	 */
+	DescriptorManagementStrategy get_descriptor_management_strategy() const;
 
 	/**
 	 * @param usage Usage of the buffer
@@ -173,6 +193,7 @@ class RenderFrame
 	std::unique_ptr<RenderTarget> swapchain_render_target;
 
 	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
+	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
 	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
 };
