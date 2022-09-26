@@ -135,6 +135,9 @@ A transcoded version of the API sample [HLSL Shaders](#hlsl_shaders) that illust
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP Separate image sampler](./api/hpp_separate_image_sampler)<br/>
+A transcoded version of the API sample [Separate image sampler](#separate_image_sampler) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Terrain Tessellation](./api/hpp_terrain_tessellation)<br/>
 A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 

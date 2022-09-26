@@ -720,7 +720,9 @@ void HPPHelloTriangle::init_pipeline(Context &context)
 	pipe.renderPass = context.render_pass;
 	pipe.layout     = context.pipeline_layout;
 
-	context.pipeline = context.device.createGraphicsPipeline(nullptr, pipe).value;
+	vk::Result result;
+	std::tie(result, context.pipeline) = context.device.createGraphicsPipeline(nullptr, pipe);
+	assert(result == vk::Result::eSuccess);
 
 	// Pipeline is baked, we can delete the shader modules now.
 	context.device.destroyShaderModule(shader_stages[0].module);
