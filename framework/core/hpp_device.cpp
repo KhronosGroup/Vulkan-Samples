@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-#include <common/hpp_error.h>
 #include <core/hpp_device.h>
+
+#include <common/hpp_error.h>
+#include <core/hpp_command_pool.h>
 
 namespace vkb
 {
@@ -498,7 +500,7 @@ vkb::HPPFencePool const &HPPDevice::get_fence_pool() const
 	return *fence_pool;
 }
 
-vkb::HPPResourceCache const &HPPDevice::get_resource_cache() const
+vkb::HPPResourceCache &HPPDevice::get_resource_cache()
 {
 	return resource_cache;
 }

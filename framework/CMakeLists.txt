@@ -120,7 +120,9 @@ set(RENDERING_FILES
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp)
+    rendering/subpass.cpp
+    rendering/hpp_render_context.cpp
+    rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files

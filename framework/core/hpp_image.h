@@ -19,6 +19,8 @@
 
 #include <core/image.h>
 
+#include <core/hpp_device.h>
+
 namespace vkb
 {
 namespace core
@@ -32,6 +34,46 @@ class HPPImage : private Image
 {
   public:
 	using Image::get_array_layer_count;
+
+	HPPImage(HPPDevice const &       device,
+	         vk::Image               handle,
+	         const vk::Extent3D &    extent,
+	         vk::Format              format,
+	         vk::ImageUsageFlags     image_usage,
+	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1) :
+	    Image(reinterpret_cast<vkb::Device const &>(device),
+	          handle,
+	          static_cast<VkExtent3D const &>(extent),
+	          static_cast<VkFormat>(format),
+	          static_cast<VkImageUsageFlags>(image_usage),
+	          static_cast<VkSampleCountFlagBits>(sample_count))
+	{}
+
+	HPPImage(HPPDevice const &       device,
+	         const vk::Extent3D &    extent,
+	         vk::Format              format,
+	         vk::ImageUsageFlags     image_usage,
+	         VmaMemoryUsage          memory_usage,
+	         vk::SampleCountFlagBits sample_count       = vk::SampleCountFlagBits::e1,
+	         uint32_t                mip_levels         = 1,
+	         uint32_t                array_layers       = 1,
+	         vk::ImageTiling         tiling             = vk::ImageTiling::eOptimal,
+	         vk::ImageCreateFlags    flags              = {},
+	         uint32_t                num_queue_families = 0,
+	         const uint32_t *        queue_families     = nullptr) :
+	    Image(reinterpret_cast<vkb::Device const &>(device),
+	          static_cast<VkExtent3D>(extent),
+	          static_cast<VkFormat>(format),
+	          static_cast<VkImageUsageFlags>(image_usage),
+	          memory_usage,
+	          static_cast<VkSampleCountFlagBits>(sample_count),
+	          mip_levels,
+	          array_layers,
+	          static_cast<VkImageTiling>(tiling),
+	          static_cast<VkImageCreateFlags>(flags),
+	          num_queue_families,
+	          queue_families)
+	{}
 
 	vk::Image get_handle() const
 	{
