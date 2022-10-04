@@ -47,21 +47,17 @@ class vertex_dynamic_state : public ApiVulkanSample
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
-	void create_image_view();
 	void create_pipeline();
 
-	void create_graphics_pipeline();
 	void load_assets();
 	void create_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void create_descriptor_sets();
 	void request_gpu_features(vkb::PhysicalDevice &gpu);
-	void view_changed() override;
-	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void create_render_pass_non_dynamic();
-	void vertex_buffer_settup();
-	void draw_cube(VkCommandBuffer commandBuffer);
+	void model_data_creation();
+	void draw_created_model(VkCommandBuffer commandBuffer);
 	void calc_triangle_normal(triangle* tris);
+	void init_dynamic_vertex_structures();
 	void change_vertex_input_data(uint32_t variant);
 
 	std::unique_ptr<vkb::sg::SubMesh> model;

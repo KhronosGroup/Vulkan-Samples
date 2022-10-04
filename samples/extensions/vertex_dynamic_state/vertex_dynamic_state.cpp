@@ -30,7 +30,7 @@ vertex_dynamic_state::vertex_dynamic_state()
 	title = "Vertex Dynamic State";
 
 	// Need to enable buffer device address extension.
-	set_api_version(VK_API_VERSION_1_2); /* MK: check if neccessary!!! */
+	//set_api_version(VK_API_VERSION_1_2); /* MK: check if neccessary!!! */
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME);
 }
@@ -53,6 +53,53 @@ vertex_dynamic_state::~vertex_dynamic_state()
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	}
+}
+
+bool vertex_dynamic_state::prepare(vkb::Platform &platform)
+{
+	if (!ApiVulkanSample::prepare(platform))
+	{
+		return false;
+	}
+
+#if VK_NO_PROTOTYPES
+	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
+	assert(!!instance);
+	vkCmdSetVertexInputEXT = (PFN_vkCmdSetVertexInputEXT) vkGetInstanceProcAddr(instance, "vkCmdSetVertexInputEXT");
+	if (!vkCmdSetVertexInputEXT)
+	{
+		throw std::runtime_error("Unable to dynamically load vkCmdSetVertexInputEXT");
+	}
+#endif
+
+	vertex_input_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT;
+	VkPhysicalDeviceFeatures2 device_features{};
+	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	device_features.pNext = &vertex_input_features;
+	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
+
+	// graphics_pipeline_library.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT;
+	// device_features.pNext = &vertex_input_features;
+	// vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
+
+	camera.type = vkb::CameraType::LookAt;
+	camera.set_position({0.f, 0.f, -4.0f});
+	camera.set_rotation({0.f, 0.f, 0.f});
+	camera.set_perspective(60.f, (float) width / (float) height, 256.f, 0.1f);
+
+	load_assets();
+	prepare_uniform_buffers();
+	model_data_creation();
+	create_descriptor_pool();
+	setup_descriptor_set_layout();
+	create_descriptor_sets();
+	setup_framebuffer();
+	create_pipeline();
+	init_dynamic_vertex_structures();
+	build_command_buffers();
+	prepared = true;
+
+	return true;
 }
 
 void vertex_dynamic_state::load_assets()
@@ -98,45 +145,6 @@ void vertex_dynamic_state::update_uniform_buffers()
 	ubo->convert_and_update(ubo_vs);
 }
 
-void vertex_dynamic_state::create_image_view()
-{
-	auto              offscreen = get_render_context().get_surface_extent();
-	auto              format    = get_render_context().get_format();
-	VkImageCreateInfo imageinfo = vkb::initializers::image_create_info();
-	imageinfo.imageType         = VK_IMAGE_TYPE_2D;
-	imageinfo.format            = format;        // to be hardcoded possibly
-	imageinfo.extent.width      = offscreen.width;
-	imageinfo.extent.height     = offscreen.height;
-	imageinfo.extent.depth      = 1;
-	imageinfo.mipLevels         = 1;
-	imageinfo.arrayLayers       = 1;
-	imageinfo.samples           = VK_SAMPLE_COUNT_1_BIT;
-	imageinfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	imageinfo.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	VkMemoryRequirements memory_requirements;
-
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &imageinfo, nullptr, &image));
-	vkGetImageMemoryRequirements(get_device().get_handle(), image, &memory_requirements);
-	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &mem));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), image, mem, 0));
-
-	VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
-	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.format                          = format;
-	image_view_create_info.subresourceRange                = {};
-	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	image_view_create_info.subresourceRange.baseMipLevel   = 0;
-	image_view_create_info.subresourceRange.levelCount     = 1;
-	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount     = 1;
-	image_view_create_info.image                           = image;
-
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &imageView));
-}
 
 void vertex_dynamic_state::create_pipeline()
 {
@@ -283,7 +291,7 @@ void vertex_dynamic_state::build_command_buffers()
 
 			change_vertex_input_data(2);
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
-			draw_cube(draw_cmd_buffer);
+			draw_created_model(draw_cmd_buffer);
 
 			// UI
 			draw_ui(draw_cmd_buffer);
@@ -308,7 +316,6 @@ void vertex_dynamic_state::build_command_buffers()
 		render_pass_begin_info.pClearValues             = clear_values.data();
 
 		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-		//vkCmdSetVertexInputEXT()
 
 		draw_scene();
 
@@ -368,54 +375,7 @@ void vertex_dynamic_state::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-bool vertex_dynamic_state::prepare(vkb::Platform &platform)
-{
-	if (!ApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
 
-#if VK_NO_PROTOTYPES
-	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
-	assert(!!instance);
-	vkCmdSetVertexInputEXT = (PFN_vkCmdSetVertexInputEXT) vkGetInstanceProcAddr(instance, "vkCmdSetVertexInputEXT");
-	if (!vkCmdSetVertexInputEXT)
-	{
-		throw std::runtime_error("Unable to dynamically load vkCmdSetVertexInputEXT");
-	}
-#endif
-
-	vertex_input_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT;
-	VkPhysicalDeviceFeatures2 device_features{};
-	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
-	device_features.pNext = &vertex_input_features;
-	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
-
-	// graphics_pipeline_library.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT;
-	// device_features.pNext = &vertex_input_features;
-	// vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
-
-	camera.type = vkb::CameraType::LookAt;
-	camera.set_position({0.f, 0.f, -4.0f});
-	camera.set_rotation({0.f, 0.f, 0.f});
-	camera.set_perspective(60.f, (float) width / (float) height, 256.f, 0.1f);
-
-	load_assets();
-	prepare_uniform_buffers();
-	vertex_buffer_settup();
-	create_descriptor_pool();
-	setup_descriptor_set_layout();
-	create_descriptor_sets();
-	create_render_pass_non_dynamic();
-	create_image_view();
-	setup_framebuffer();
-	create_pipeline();
-
-	build_command_buffers();
-	prepared = true;
-
-	return true;
-}
 
 void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
@@ -424,8 +384,6 @@ void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 	auto &requested_vertex_input_features                   = gpu.request_extension_features<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT);
 	requested_vertex_input_features.vertexInputDynamicState = VK_TRUE;
 
-	//auto &requested_graphics_pipeline_library = gpu.request_extension_features<VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT);
-	//requested_graphics_pipeline_library.graphicsPipelineLibrary = VK_TRUE;
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -433,19 +391,7 @@ void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void vertex_dynamic_state::view_changed()
-{
-}
-
-void vertex_dynamic_state::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-}
-
-void vertex_dynamic_state::create_render_pass_non_dynamic()
-{
-}
-
-void vertex_dynamic_state::draw_cube(VkCommandBuffer commandBuffer)
+void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[1] = {0};
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, cube.vertices->get(), offsets);
@@ -464,13 +410,12 @@ void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 	tris->Normal = glm::normalize(normal_before_normalize);
 }
 
-void vertex_dynamic_state::vertex_buffer_settup()
+void vertex_dynamic_state::model_data_creation()
 {
 	const uint32_t vertex_count   = 8;
 	const uint32_t triangle_count = 12;
 	SampleVertex * vertices       = new SampleVertex[vertex_count];
 	triangle *     triangles      = new triangle[triangle_count];
-	//triangle * triangles = new triangle[triangle_count];
 
 	vertices[0].pos = {0.0f, 0.0f, 0.0f};
 	vertices[1].pos = {1.0f, 0.0f, 0.0f};
@@ -549,54 +494,6 @@ void vertex_dynamic_state::vertex_buffer_settup()
 		}
 	}
 
-	// indices[0] = 0;
-	// indices[1] = 1;
-	// indices[2] = 2;
-
-	// indices[3] = 2;
-	// indices[4] = 3;
-	// indices[5] = 0;
-
-	// indices[6] = 6;
-	// indices[7] = 5;
-	// indices[8] = 4;
-
-	// indices[9] = 4;
-	// indices[10] = 7;
-	// indices[11] = 6;
-
-	// indices[12] = 5;
-	// indices[13] = 1;
-	// indices[14] = 0;
-
-	// indices[15] = 0;
-	// indices[16] = 4;
-	// indices[17] = 5;
-
-	// indices[18] = 6;
-	// indices[19] = 2;
-	// indices[20] = 1;
-
-	// indices[21] = 1;
-	// indices[22] = 5;
-	// indices[23] = 6;
-
-	// indices[24] = 7;
-	// indices[25] = 3;
-	// indices[26] = 2;
-
-	// indices[27] = 2;
-	// indices[28] = 6;
-	// indices[29] = 7;
-
-	// indices[30] = 3;
-	// indices[31] = 7;
-	// indices[32] = 4;
-
-	// indices[33] = 4;
-	// indices[34] = 0;
-	// indices[35] = 3;
-
 	struct
 	{
 		VkBuffer       buffer;
@@ -658,48 +555,45 @@ void vertex_dynamic_state::vertex_buffer_settup()
 	delete[] vertices;
 	delete[] triangles;
 	delete[] indices;
+
+}
+void vertex_dynamic_state::init_dynamic_vertex_structures()
+{
+	vertex_input_bindings_ext[0].sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
+	vertex_input_bindings_ext[0].binding   = 0;
+	vertex_input_bindings_ext[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+	vertex_input_bindings_ext[0].divisor   = 1;
+
+	vertex_attribute_description_ext[0].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
+	vertex_attribute_description_ext[0].location = 0;
+	vertex_attribute_description_ext[0].binding  = 0;
+
+	vertex_attribute_description_ext[1].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
+	vertex_attribute_description_ext[1].location = 1;
+	vertex_attribute_description_ext[1].binding  = 0;
 }
 
 void vertex_dynamic_state::change_vertex_input_data(uint32_t variant)
 {
 	if (variant == 1)
 	{
-		vertex_input_bindings_ext[0].sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
-		vertex_input_bindings_ext[0].binding   = 0;
-		vertex_input_bindings_ext[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 		vertex_input_bindings_ext[0].stride    = sizeof(Vertex);
-		vertex_input_bindings_ext[0].divisor   = 1;
 
-		vertex_attribute_description_ext[0].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-		vertex_attribute_description_ext[0].location = 0;
-		vertex_attribute_description_ext[0].binding  = 0;
 		vertex_attribute_description_ext[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
 		vertex_attribute_description_ext[0].offset   = 0;
 
-		vertex_attribute_description_ext[1].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-		vertex_attribute_description_ext[1].location = 1;
-		vertex_attribute_description_ext[1].binding  = 0;
 		vertex_attribute_description_ext[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
 		vertex_attribute_description_ext[1].offset   = sizeof(float) * 3;
 	}
 	else if (variant == 2)
 	{
 		/* MK: binding information for second vertex input data architecture) */
-		vertex_input_bindings_ext[0].sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
-		vertex_input_bindings_ext[0].binding   = 0;
-		vertex_input_bindings_ext[0].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-		vertex_input_bindings_ext[0].stride    = sizeof(SampleVertex);
-		vertex_input_bindings_ext[0].divisor   = 1;
 
-		vertex_attribute_description_ext[0].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-		vertex_attribute_description_ext[0].location = 0;
-		vertex_attribute_description_ext[0].binding  = 0;
+		vertex_input_bindings_ext[0].stride    = sizeof(SampleVertex);
+
 		vertex_attribute_description_ext[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
 		vertex_attribute_description_ext[0].offset   = 0;
 
-		vertex_attribute_description_ext[1].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-		vertex_attribute_description_ext[1].location = 1;
-		vertex_attribute_description_ext[1].binding  = 0;
 		vertex_attribute_description_ext[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
 		vertex_attribute_description_ext[1].offset   = 2 * (sizeof(float) * 3);
 	}
