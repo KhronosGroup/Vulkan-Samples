@@ -59,7 +59,7 @@ void vertex_dynamic_state::load_assets()
 {
 	// Models
 	skybox = load_model("scenes/cube.gltf");
-	object = load_model("scenes/geosphere.gltf");
+	object = load_model("scenes/cube.gltf");
 
 	// Load HDR cube map
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
@@ -259,7 +259,6 @@ void vertex_dynamic_state::build_command_buffers()
 		i++;
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
-		
 
 		auto draw_scene = [&] {
 			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
@@ -458,10 +457,10 @@ void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 {
 	glm::vec3 edge1, edge2, normal_before_normalize;
 
-	edge1        = tris->B - tris->A;
-	edge2        = tris->C - tris->A;
+	edge1                   = tris->B - tris->A;
+	edge2                   = tris->C - tris->A;
 	normal_before_normalize = glm::cross(edge1, edge2);
-	normal_before_normalize *= -1;
+	//normal_before_normalize *= -1;
 	tris->Normal = glm::normalize(normal_before_normalize);
 }
 
@@ -474,31 +473,38 @@ void vertex_dynamic_state::vertex_buffer_settup()
 	//triangle * triangles = new triangle[triangle_count];
 
 	vertices[0].pos = {0.0f, 0.0f, 0.0f};
-	vertices[1].pos = {5.0f, 0.0f, 0.0f};
-	vertices[2].pos = {5.0f, 5.0f, 0.0f};
-	vertices[3].pos = {0.0f, 5.0f, 0.0f};
-	vertices[4].pos = {0.0f, 0.0f, 5.0f};
-	vertices[5].pos = {5.0f, 0.0f, 5.0f};
-	vertices[6].pos = {5.0f, 5.0f, 5.0f};
-	vertices[7].pos = {0.0f, 5.0f, 5.0f};
+	vertices[1].pos = {1.0f, 0.0f, 0.0f};
+	vertices[2].pos = {1.0f, 1.0f, 0.0f};
+	vertices[3].pos = {0.0f, 1.0f, 0.0f};
+	vertices[4].pos = {0.0f, 0.0f, 1.0f};
+	vertices[5].pos = {1.0f, 0.0f, 1.0f};
+	vertices[6].pos = {1.0f, 1.0f, 1.0f};
+	vertices[7].pos = {0.0f, 1.0f, 1.0f};
+
+	for (uint8_t i = 0; i < vertex_count; i++)
+	{
+		vertices[i].pos *= (glm::vec3){25.0f, 25.0f, 25.0f};
+		vertices[i].pos -= (glm::vec3){12.5f, 40.0f, 12.5f};
+		LOGI("Vertices possition: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
+	}
 
 	triangles[0] = {vertices[0].pos, vertices[1].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 2}};
-	triangles[1] = {vertices[2].pos, vertices[3].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 3, 2}};
+	triangles[1] = {vertices[2].pos, vertices[3].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 3, 0}};
 
-	triangles[2] = {vertices[6].pos, vertices[5].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 5, 6}};
+	triangles[2] = {vertices[6].pos, vertices[5].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 5, 4}};
 	triangles[3] = {vertices[4].pos, vertices[7].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 7, 6}};
 
-	triangles[4] = {vertices[5].pos, vertices[1].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 5}};
+	triangles[4] = {vertices[5].pos, vertices[1].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {5, 1, 0}};
 	triangles[5] = {vertices[0].pos, vertices[4].pos, vertices[5].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 4, 5}};
 
-	triangles[6] = {vertices[6].pos, vertices[2].pos, vertices[1].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {1, 2, 6}};
+	triangles[6] = {vertices[6].pos, vertices[2].pos, vertices[1].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 2, 1}};
 	triangles[7] = {vertices[1].pos, vertices[5].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {1, 5, 6}};
 
-	triangles[8] = {vertices[7].pos, vertices[3].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 3, 7}};
+	triangles[8] = {vertices[7].pos, vertices[3].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {7, 3, 2}};
 	triangles[9] = {vertices[2].pos, vertices[6].pos, vertices[7].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 6, 7}};
 
 	triangles[10] = {vertices[3].pos, vertices[7].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {3, 7, 4}};
-	triangles[11] = {vertices[4].pos, vertices[0].pos, vertices[3].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {3, 0, 4}};
+	triangles[11] = {vertices[4].pos, vertices[0].pos, vertices[3].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 0, 3}};
 
 	for (uint8_t i = 0; i < triangle_count; i++)
 	{
@@ -517,7 +523,7 @@ void vertex_dynamic_state::vertex_buffer_settup()
 			{
 				temp_normal += triangles[j].Normal;
 			}
-			if(i == 1)
+			if (i == 1)
 			{
 				LOGI("Triangles normal: X{}, Y{}, Z{}.", triangles[j].Normal.x, triangles[j].Normal.y, triangles[j].Normal.z);
 			}
@@ -527,30 +533,69 @@ void vertex_dynamic_state::vertex_buffer_settup()
 		LOGI("Vertices normal: X{}, Y{}, Z{}.", vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
 	}
 
-	uint32_t  index_count        = 12;
+	uint32_t  index_count        = triangle_count * 3;
 	uint32_t *indices            = new uint32_t[index_count];
 	uint32_t  vertex_buffer_size = vertex_count * sizeof(SampleVertex);
 	uint32_t  index_buffer_size  = index_count * sizeof(uint32_t);
 	cube.index_count             = index_count;
 
-	// for (auto i = 0; i < index_count; i++)
-	// {
-	// 	indices[i] = i;
-	// }
+	uint32_t index_counter = 0;
+	for (uint8_t i = 0; i < triangle_count; i++)
+	{
+		for(uint8_t j = 0 ; j < 3 ; j++)
+		{
+			indices[index_counter] = triangles[i].vertices[j];
+			index_counter++;
+		}
+	}
 
-	indices[0] = 0;
-	indices[1] = 1;
-	indices[2] = 2;
-	indices[3] = 3;
-	indices[4] = 4;
-	indices[5] = 5;
-	indices[6] = 6;
-	indices[7] = 7;
-	indices[8] = 7;
-	indices[9] = 4;
-	indices[10] = 6;
-	indices[11] = 7;
+	// indices[0] = 0;
+	// indices[1] = 1;
+	// indices[2] = 2;
 
+	// indices[3] = 2;
+	// indices[4] = 3;
+	// indices[5] = 0;
+
+	// indices[6] = 6;
+	// indices[7] = 5;
+	// indices[8] = 4;
+
+	// indices[9] = 4;
+	// indices[10] = 7;
+	// indices[11] = 6;
+
+	// indices[12] = 5;
+	// indices[13] = 1;
+	// indices[14] = 0;
+
+	// indices[15] = 0;
+	// indices[16] = 4;
+	// indices[17] = 5;
+
+	// indices[18] = 6;
+	// indices[19] = 2;
+	// indices[20] = 1;
+
+	// indices[21] = 1;
+	// indices[22] = 5;
+	// indices[23] = 6;
+
+	// indices[24] = 7;
+	// indices[25] = 3;
+	// indices[26] = 2;
+
+	// indices[27] = 2;
+	// indices[28] = 6;
+	// indices[29] = 7;
+
+	// indices[30] = 3;
+	// indices[31] = 7;
+	// indices[32] = 4;
+
+	// indices[33] = 4;
+	// indices[34] = 0;
+	// indices[35] = 3;
 
 	struct
 	{
@@ -656,7 +701,7 @@ void vertex_dynamic_state::change_vertex_input_data(uint32_t variant)
 		vertex_attribute_description_ext[1].location = 1;
 		vertex_attribute_description_ext[1].binding  = 0;
 		vertex_attribute_description_ext[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset   = sizeof(float) * 3;
+		vertex_attribute_description_ext[1].offset   = 2 * (sizeof(float) * 3);
 	}
 }
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()

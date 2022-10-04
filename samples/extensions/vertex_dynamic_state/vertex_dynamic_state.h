@@ -102,7 +102,7 @@ class vertex_dynamic_state : public ApiVulkanSample
 	struct SampleVertex
 	{
 		glm::vec3 pos;
-		//glm::vec3 shaderUnusableData;
+		glm::vec3 shaderUnusableData;
 		glm::vec3 normal;
 	};
 
