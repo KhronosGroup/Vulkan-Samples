@@ -16,6 +16,7 @@
 #
 
 cmake_minimum_required(VERSION 3.16)
+set(VKB_VALIDATION_LAYERS ON)
 
 project(vulkan_samples)
 
@@ -62,3 +63,5 @@ endif()
 
 # Add vulkan app (runs all samples)
 add_subdirectory(app)
+
+
