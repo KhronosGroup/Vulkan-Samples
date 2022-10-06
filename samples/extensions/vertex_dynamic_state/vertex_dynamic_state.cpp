@@ -44,8 +44,6 @@ vertex_dynamic_state::~vertex_dynamic_state()
 		ubo.reset();
 
 		vkDestroyPipeline(get_device().get_handle(), model_pipeline, VK_NULL_HANDLE);
-		vkDestroyImage(get_device().get_handle(), image, VK_NULL_HANDLE);
-		vkDestroyImageView(get_device().get_handle(), imageView, VK_NULL_HANDLE);
 		vkDestroyPipeline(get_device().get_handle(), skybox_pipeline, VK_NULL_HANDLE);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
@@ -95,17 +93,24 @@ bool vertex_dynamic_state::prepare(vkb::Platform &platform)
 
 	return true;
 }
-
+/**
+ * 	@fn void vertex_dynamic_state::load_assets()
+ *	@brief Loading extra models, textures from assets 
+ */
 void vertex_dynamic_state::load_assets()
 {
-	// Models
+	/* Models */
 	skybox = load_model("scenes/cube.gltf");
 	object = load_model("scenes/cube.gltf");
 
-	// Load HDR cube map
+	/* Load HDR cube map */
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::draw()
+ *  @brief Preparing frame and submitting it to the present queue
+ */
 void vertex_dynamic_state::draw()
 {
 	ApiVulkanSample::prepare_frame();
@@ -124,6 +129,10 @@ void vertex_dynamic_state::render(float delta_time)
 		update_uniform_buffers();
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::prepare_uniform_buffers()
+ * 	@brief Preparing uniform buffer (setting bits) and updating UB data
+ */
 void vertex_dynamic_state::prepare_uniform_buffers()
 {
 	ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -131,6 +140,10 @@ void vertex_dynamic_state::prepare_uniform_buffers()
 	update_uniform_buffers();
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::update_uniform_buffers()
+ * 	@brief Updating data from application to GPU uniform buffer
+ */
 void vertex_dynamic_state::update_uniform_buffers()
 {
 	ubo_vs.projection       = camera.matrices.perspective;
@@ -139,6 +152,27 @@ void vertex_dynamic_state::update_uniform_buffers()
 	ubo->convert_and_update(ubo_vs);
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::create_pipeline()
+ * 	@brief Creating graphical pipeline
+ * 	@details Preparing pipeline structures:
+ * 			 - VkPipelineInputAssemblyStateCreateInfo
+ * 			 - VkPipelineRasterizationStateCreateInfo
+ * 			 - VkPipelineColorBlendAttachmentState
+ * 			 - VkPipelineColorBlendStateCreateInfo
+ * 			 - VkPipelineDepthStencilStateCreateInfo
+ * 			 - VkPipelineViewportStateCreateInfo
+ * 			 - VkPipelineMultisampleStateCreateInfo
+ * 			 - VkPipelineDynamicStateCreateInfo
+ * 			 - VkPipelineShaderStageCreateInfo
+ * 			 - VkPipelineRenderingCreateInfoKHR
+ * 			 - VkGraphicsPipelineCreateInfo
+ * 
+ * 	@note Specific settings that were used to implement Vertex Input Dynamic State extension in this sample:
+ * 			 - In VkPipelineDynamicStateCreateInfo use "VK_DYNAMIC_STATE_VERTEX_INPUT_EXT" enumeration in config vector.
+ * 			 - In VkGraphicsPipelineCreateInfo "pVertexInputState" element is not require to declare (when using vertex input dynamic state)
+ * 
+ */
 void vertex_dynamic_state::create_pipeline()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -168,7 +202,7 @@ void vertex_dynamic_state::create_pipeline()
 	color_blend_state.attachmentCount = 1;
 	color_blend_state.pAttachments    = &color_attachment_state;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
@@ -197,10 +231,10 @@ void vertex_dynamic_state::create_pipeline()
 	shader_stages[0] = load_shader("vertex_dynamic_state/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("vertex_dynamic_state/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// Create graphics pipeline for dynamic rendering
+	/* Create graphics pipeline for dynamic rendering */
 	VkFormat color_rendering_format = render_context->get_format();
 
-	// Provide information for dynamic rendering
+	/* Provide information for dynamic rendering */
 	VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
 	pipeline_create.pNext                   = VK_NULL_HANDLE;
 	pipeline_create.colorAttachmentCount    = 1;
@@ -208,7 +242,7 @@ void vertex_dynamic_state::create_pipeline()
 	pipeline_create.depthAttachmentFormat   = depth_format;
 	pipeline_create.stencilAttachmentFormat = depth_format;
 
-	// Use the pNext to point to the rendering create struct
+	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;
 	graphics_create.renderPass          = VK_NULL_HANDLE;
@@ -224,7 +258,7 @@ void vertex_dynamic_state::create_pipeline()
 	graphics_create.pStages             = shader_stages.data();
 	graphics_create.layout              = pipeline_layout;
 
-	// Skybox pipeline (background cube)
+	/* Skybox pipeline (background cube) */
 	VkSpecializationInfo                    specialization_info;
 	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -237,17 +271,30 @@ void vertex_dynamic_state::create_pipeline()
 	graphics_create.renderPass = render_pass;
 
 	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &skybox_pipeline);
-	// Object rendering pipeline
+	/* Object rendering pipeline */
 	shadertype = 1;
 
-	// Enable depth test and write
+	/* Enable depth test and write */
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
-	// Flip cull mode
+	/* Flip cull mode */
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
 	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &model_pipeline);
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::build_command_buffers()
+ * 	@brief Creating command buffers and drawing particular elements on window.
+ * 	@details Drawing object list:
+ * 			 - Skybox - cube that have background texture attached (easy way to generate background to scene).
+ * 			 - Object - cube that was placed in the middle with some reflection shader effect.
+ * 			 - Created model - cube that was created on runtime.
+ * 			 - UI - some statistic tab
+ * 
+ * 	@note In case of Vertex Input Dynamic State feature sample need to create model in runtime because of requirement to have different data structure.
+ * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure in framework files).
+ * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is call for dynamically change Vertex Input data.
+ */
 void vertex_dynamic_state::build_command_buffers()
 {
 	std::array<VkClearValue, 2> clear_values{};
@@ -268,25 +315,26 @@ void vertex_dynamic_state::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 			vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
-			// One descriptor set is used, and the draw type is toggled by a specialization constant
+			/* One descriptor set is used, and the draw type is toggled by a specialization constant */
 			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-			// skybox
+			/* skybox */
 			change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT);
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
 			draw_model(skybox, draw_cmd_buffer);
 
-			// object
+			/* object */
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
 
+			/* Change vertex input architecture from framework "Vertex" to sample "SampleVertex" */
 			change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT);
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
 			draw_created_model(draw_cmd_buffer);
 
-			// UI
+			/* UI */
 			draw_ui(draw_cmd_buffer);
 		};
 
@@ -370,8 +418,8 @@ void vertex_dynamic_state::create_descriptor_sets()
 
 void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Enable extension features required by this sample
-	// These are passed to device creation via a pNext structure chain
+	/* Enable extension features required by this sample
+	   These are passed to device creation via a pNext structure chain */
 	auto &requested_vertex_input_features                   = gpu.request_extension_features<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT);
 	requested_vertex_input_features.vertexInputDynamicState = VK_TRUE;
 
@@ -381,6 +429,10 @@ void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
+ * 	@brief Drawing created model using indexing buffer
+ */
 void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[1] = {0};
@@ -389,6 +441,11 @@ void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
 	vkCmdDrawIndexed(commandBuffer, cube.index_count, 1, 0, 0, 0);
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
+ * 	@brief Calculating normal vector from triangle
+ * 	@param tris - pointer to struct triangle
+ */
 void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 {
 	glm::vec3 edge1, edge2, normal_before_normalize;
@@ -400,6 +457,10 @@ void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 	tris->Normal = glm::normalize(normal_before_normalize);
 }
 
+/**
+ *  @fn void vertex_dynamic_state::model_data_creation()
+ *  @brief Generate vertex input data for simple cube (position and normal vectors)
+ */ 
 void vertex_dynamic_state::model_data_creation()
 {
 	const uint32_t vertex_count   = 8;
@@ -418,9 +479,11 @@ void vertex_dynamic_state::model_data_creation()
 
 	for (uint8_t i = 0; i < vertex_count; i++)
 	{
-		vertices[i].pos *= (glm::vec3){25.0f, 25.0f, 25.0f};
-		vertices[i].pos -= (glm::vec3){12.5f, 40.0f, 12.5f};
-		LOGI("Vertices possition: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
+		vertices[i].pos *= (glm::vec3){10.0f, 10.0f, 10.0f};
+		vertices[i].pos -= (glm::vec3){5.0f, 20.0f, 5.0f};
+		#if(TEST == 1)
+		LOGI("Vertices position: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
+		#endif
 	}
 
 	triangles[0]  = {vertices[0].pos, vertices[1].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 2}};
@@ -487,7 +550,7 @@ void vertex_dynamic_state::model_data_creation()
 	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                   VMA_MEMORY_USAGE_GPU_ONLY);
 
-	// Copy from staging buffers
+	/* Copy from staging buffers */
 	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_region = {};
@@ -519,6 +582,10 @@ void vertex_dynamic_state::model_data_creation()
 	delete[] triangles;
 	delete[] indices;
 }
+/**
+ * 	@fn void vertex_dynamic_state::init_dynamic_vertex_structures()
+ * 	@brief Initialize specific structures related to Vertex Input Dynamic State extension
+ */
 void vertex_dynamic_state::init_dynamic_vertex_structures()
 {
 	vertex_input_bindings_ext[0].sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
@@ -535,6 +602,10 @@ void vertex_dynamic_state::init_dynamic_vertex_structures()
 	vertex_attribute_description_ext[1].binding  = 0;
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
+ * 	@brief Change Vertex Input data structure dynamically in runtime.
+ */
 void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
 {
 	if (variant == VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT)

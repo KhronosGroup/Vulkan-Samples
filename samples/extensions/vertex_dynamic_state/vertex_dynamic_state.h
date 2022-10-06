@@ -65,11 +65,7 @@ class vertex_dynamic_state : public ApiVulkanSample
 	void init_dynamic_vertex_structures();
 	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
 
-	std::unique_ptr<vkb::sg::SubMesh> model;
 
-	VkImageView                                        imageView;
-	VkImage                                            image;
-	VkDeviceMemory                                     mem;
 	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
 	VkPipeline                                         model_pipeline{VK_NULL_HANDLE};
 	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
@@ -103,7 +99,7 @@ class vertex_dynamic_state : public ApiVulkanSample
 	struct SampleVertex
 	{
 		glm::vec3 pos;
-		glm::vec3 shaderUnusableData;
+		glm::vec3 shaderUnusableData; /* Placeholder for generate offset between position and normal data */
 		glm::vec3 normal;
 	};
 
