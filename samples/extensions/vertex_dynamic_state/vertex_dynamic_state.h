@@ -33,8 +33,13 @@ class vertex_dynamic_state : public ApiVulkanSample
 		glm::vec3 B;
 		glm::vec3 C;
 		glm::vec3 Normal;
-		uint8_t   vertices[3];
+		uint32_t   vertices[3];
 	};
+
+	typedef enum {
+		VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT,
+		VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT
+	}vertexDynamicStateVertexStruct_t;
 
   public:
 	vertex_dynamic_state();
@@ -58,7 +63,7 @@ class vertex_dynamic_state : public ApiVulkanSample
 	void draw_created_model(VkCommandBuffer commandBuffer);
 	void calc_triangle_normal(triangle* tris);
 	void init_dynamic_vertex_structures();
-	void change_vertex_input_data(uint32_t variant);
+	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
 
 	std::unique_ptr<vkb::sg::SubMesh> model;
 
@@ -108,6 +113,8 @@ class vertex_dynamic_state : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> indices;
 		uint32_t                           index_count;
 	} cube;
+
+
 
 
 

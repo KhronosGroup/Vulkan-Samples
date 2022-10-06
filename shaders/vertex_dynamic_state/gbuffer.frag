@@ -97,6 +97,8 @@ void main()
 	const float exposure = 1.f;
 	outColor0.rgb = vec3(1.0) - exp(-color.rgb * exposure);
 
+	
+
 	// Bright parts for bloom into attachment 1
 	float l = dot(outColor0.rgb, vec3(0.2126, 0.7152, 0.0722));
 	float threshold = 0.75;

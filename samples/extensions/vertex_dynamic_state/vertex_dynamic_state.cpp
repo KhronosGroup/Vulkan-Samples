@@ -29,8 +29,6 @@ vertex_dynamic_state::vertex_dynamic_state()
 {
 	title = "Vertex Dynamic State";
 
-	// Need to enable buffer device address extension.
-	//set_api_version(VK_API_VERSION_1_2); /* MK: check if neccessary!!! */
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME);
 }
@@ -77,10 +75,6 @@ bool vertex_dynamic_state::prepare(vkb::Platform &platform)
 	device_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
 	device_features.pNext = &vertex_input_features;
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
-
-	// graphics_pipeline_library.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT;
-	// device_features.pNext = &vertex_input_features;
-	// vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.f, 0.f, -4.0f});
@@ -144,7 +138,6 @@ void vertex_dynamic_state::update_uniform_buffers()
 	ubo_vs.skybox_modelview = camera.matrices.view;
 	ubo->convert_and_update(ubo_vs);
 }
-
 
 void vertex_dynamic_state::create_pipeline()
 {
@@ -226,7 +219,7 @@ void vertex_dynamic_state::create_pipeline()
 	graphics_create.pViewportState      = &viewport_state;
 	graphics_create.pDepthStencilState  = &depth_stencil_state;
 	graphics_create.pDynamicState       = &dynamic_state;
-	graphics_create.pVertexInputState   = VK_NULL_HANDLE;        //&vertex_input_state;
+	graphics_create.pVertexInputState   = VK_NULL_HANDLE;
 	graphics_create.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages             = shader_stages.data();
 	graphics_create.layout              = pipeline_layout;
@@ -279,7 +272,7 @@ void vertex_dynamic_state::build_command_buffers()
 			vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 			// skybox
-			change_vertex_input_data(1);
+			change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT);
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
 			draw_model(skybox, draw_cmd_buffer);
@@ -289,7 +282,7 @@ void vertex_dynamic_state::build_command_buffers()
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
 
-			change_vertex_input_data(2);
+			change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT);
 			vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, vertex_input_bindings_ext, 2, vertex_attribute_description_ext);
 			draw_created_model(draw_cmd_buffer);
 
@@ -375,15 +368,12 @@ void vertex_dynamic_state::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-
-
 void vertex_dynamic_state::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
 	auto &requested_vertex_input_features                   = gpu.request_extension_features<VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VERTEX_INPUT_DYNAMIC_STATE_FEATURES_EXT);
 	requested_vertex_input_features.vertexInputDynamicState = VK_TRUE;
-
 
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -406,7 +396,7 @@ void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 	edge1                   = tris->B - tris->A;
 	edge2                   = tris->C - tris->A;
 	normal_before_normalize = glm::cross(edge1, edge2);
-	//normal_before_normalize *= -1;
+	normal_before_normalize *= -1;
 	tris->Normal = glm::normalize(normal_before_normalize);
 }
 
@@ -433,49 +423,22 @@ void vertex_dynamic_state::model_data_creation()
 		LOGI("Vertices possition: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
 	}
 
-	triangles[0] = {vertices[0].pos, vertices[1].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 2}};
-	triangles[1] = {vertices[2].pos, vertices[3].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 3, 0}};
-
-	triangles[2] = {vertices[6].pos, vertices[5].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 5, 4}};
-	triangles[3] = {vertices[4].pos, vertices[7].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 7, 6}};
-
-	triangles[4] = {vertices[5].pos, vertices[1].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {5, 1, 0}};
-	triangles[5] = {vertices[0].pos, vertices[4].pos, vertices[5].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 4, 5}};
-
-	triangles[6] = {vertices[6].pos, vertices[2].pos, vertices[1].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 2, 1}};
-	triangles[7] = {vertices[1].pos, vertices[5].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {1, 5, 6}};
-
-	triangles[8] = {vertices[7].pos, vertices[3].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {7, 3, 2}};
-	triangles[9] = {vertices[2].pos, vertices[6].pos, vertices[7].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 6, 7}};
-
+	triangles[0]  = {vertices[0].pos, vertices[1].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 2}};
+	triangles[1]  = {vertices[2].pos, vertices[3].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 3, 0}};
+	triangles[2]  = {vertices[6].pos, vertices[5].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 5, 4}};
+	triangles[3]  = {vertices[4].pos, vertices[7].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 7, 6}};
+	triangles[4]  = {vertices[5].pos, vertices[1].pos, vertices[0].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {5, 1, 0}};
+	triangles[5]  = {vertices[0].pos, vertices[4].pos, vertices[5].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 4, 5}};
+	triangles[6]  = {vertices[6].pos, vertices[2].pos, vertices[1].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {6, 2, 1}};
+	triangles[7]  = {vertices[1].pos, vertices[5].pos, vertices[6].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {1, 5, 6}};
+	triangles[8]  = {vertices[7].pos, vertices[3].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {7, 3, 2}};
+	triangles[9]  = {vertices[2].pos, vertices[6].pos, vertices[7].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {2, 6, 7}};
 	triangles[10] = {vertices[3].pos, vertices[7].pos, vertices[4].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {3, 7, 4}};
 	triangles[11] = {vertices[4].pos, vertices[0].pos, vertices[3].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {4, 0, 3}};
 
-	for (uint8_t i = 0; i < triangle_count; i++)
+	for (uint32_t i = 0; i < vertex_count; i++)
 	{
-		calc_triangle_normal(&triangles[i]);
-	}
-
-	for (uint8_t i = 0; i < vertex_count; i++)
-	{
-		glm::vec3 temp_normal{};
-
-		for (uint8_t j = 0; j < triangle_count; j++)
-		{
-			if (triangles[j].vertices[0] == i ||
-			    triangles[j].vertices[1] == i ||
-			    triangles[j].vertices[2] == i)
-			{
-				temp_normal += triangles[j].Normal;
-			}
-			if (i == 1)
-			{
-				LOGI("Triangles normal: X{}, Y{}, Z{}.", triangles[j].Normal.x, triangles[j].Normal.y, triangles[j].Normal.z);
-			}
-		}
-		//temp_normal *= -1;
-		vertices[i].normal = glm::normalize(temp_normal);
-		LOGI("Vertices normal: X{}, Y{}, Z{}.", vertices[i].normal.x, vertices[i].normal.y, vertices[i].normal.z);
+		vertices[i].normal = {0.0, 0.0, 0.0};
 	}
 
 	uint32_t  index_count        = triangle_count * 3;
@@ -487,7 +450,7 @@ void vertex_dynamic_state::model_data_creation()
 	uint32_t index_counter = 0;
 	for (uint8_t i = 0; i < triangle_count; i++)
 	{
-		for(uint8_t j = 0 ; j < 3 ; j++)
+		for (uint8_t j = 0; j < 3; j++)
 		{
 			indices[index_counter] = triangles[i].vertices[j];
 			index_counter++;
@@ -555,7 +518,6 @@ void vertex_dynamic_state::model_data_creation()
 	delete[] vertices;
 	delete[] triangles;
 	delete[] indices;
-
 }
 void vertex_dynamic_state::init_dynamic_vertex_structures()
 {
@@ -573,29 +535,29 @@ void vertex_dynamic_state::init_dynamic_vertex_structures()
 	vertex_attribute_description_ext[1].binding  = 0;
 }
 
-void vertex_dynamic_state::change_vertex_input_data(uint32_t variant)
+void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
 {
-	if (variant == 1)
+	if (variant == VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT)
 	{
-		vertex_input_bindings_ext[0].stride    = sizeof(Vertex);
+		vertex_input_bindings_ext[0].stride = sizeof(Vertex);
 
-		vertex_attribute_description_ext[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset   = 0;
+		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_attribute_description_ext[0].offset = 0;
 
-		vertex_attribute_description_ext[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset   = sizeof(float) * 3;
+		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_attribute_description_ext[1].offset = sizeof(float) * 3;
 	}
-	else if (variant == 2)
+	else if (variant == VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT)
 	{
 		/* MK: binding information for second vertex input data architecture) */
 
-		vertex_input_bindings_ext[0].stride    = sizeof(SampleVertex);
+		vertex_input_bindings_ext[0].stride = sizeof(SampleVertex);
 
-		vertex_attribute_description_ext[0].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset   = 0;
+		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_attribute_description_ext[0].offset = 0;
 
-		vertex_attribute_description_ext[1].format   = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset   = 2 * (sizeof(float) * 3);
+		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+		vertex_attribute_description_ext[1].offset = 2 * (sizeof(float) * 3);
 	}
 }
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()
