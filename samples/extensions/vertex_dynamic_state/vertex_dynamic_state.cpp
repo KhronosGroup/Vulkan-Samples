@@ -460,7 +460,7 @@ void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
 /**
  *  @fn void vertex_dynamic_state::model_data_creation()
  *  @brief Generate vertex input data for simple cube (position and normal vectors)
- */ 
+ */
 void vertex_dynamic_state::model_data_creation()
 {
 	const uint32_t vertex_count   = 8;
@@ -481,9 +481,9 @@ void vertex_dynamic_state::model_data_creation()
 	{
 		vertices[i].pos *= (glm::vec3){10.0f, 10.0f, 10.0f};
 		vertices[i].pos -= (glm::vec3){5.0f, 20.0f, 5.0f};
-		#if(TEST == 1)
+#if (DEBUG_SAMPLE == 1) /* Macro from cmake to print vertices positions */
 		LOGI("Vertices position: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
-		#endif
+#endif
 	}
 
 	triangles[0]  = {vertices[0].pos, vertices[1].pos, vertices[2].pos, (glm::vec3){0.0f, 0.0f, 0.0f}, {0, 1, 2}};
