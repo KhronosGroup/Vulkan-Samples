@@ -80,6 +80,7 @@ void main()
 			color = texture(samplerEnvMap, reflect(-wViewVec, wNormal));
 
 			color = vec4(color.rgb * NdotL * (k + spec * (1.0 - k)), 1.0);
+			//outColor0.rgb = inNormal;
 		}
 		break;
 

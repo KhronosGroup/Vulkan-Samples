@@ -463,22 +463,6 @@ void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
 }
 
 /**
- * 	@fn void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
- * 	@brief Calculating normal vector from triangle
- * 	@param tris - pointer to struct triangle
- */
-void vertex_dynamic_state::calc_triangle_normal(triangle *tris)
-{
-	glm::vec3 edge1, edge2, normal_before_normalize;
-
-	edge1                   = tris->B - tris->A;
-	edge2                   = tris->C - tris->A;
-	normal_before_normalize = glm::cross(edge1, edge2);
-	normal_before_normalize *= -1;
-	tris->Normal = glm::normalize(normal_before_normalize);
-}
-
-/**
  *  @fn void vertex_dynamic_state::model_data_creation()
  *  @brief Generate vertex input data for simple cube (position and normal vectors)
  */
@@ -487,7 +471,6 @@ void vertex_dynamic_state::model_data_creation()
 	const uint32_t vertex_count   = 8;
 	const uint32_t triangle_count = 12;
 	SampleVertex * vertices       = new SampleVertex[vertex_count];
-	triangle *     triangles      = new triangle[triangle_count];
 
 	vertices[0].pos = {0.0f, 0.0f, 0.0f};
 	vertices[1].pos = {1.0f, 0.0f, 0.0f};
@@ -498,6 +481,25 @@ void vertex_dynamic_state::model_data_creation()
 	vertices[6].pos = {1.0f, 1.0f, 1.0f};
 	vertices[7].pos = {0.0f, 1.0f, 1.0f};
 
+	/* Normalized normal vectors for each face of cube */
+	glm::vec3 Xp = {1.0, 0.0, 0.0};
+	glm::vec3 Xm = {-1.0, 0.0, 0.0};
+	glm::vec3 Yp = {0.0, 1.0, 0.0};
+	glm::vec3 Ym = {0.0, -1.0, 0.0};
+	glm::vec3 Zp = {0.0, 0.0, 1.0};
+	glm::vec3 Zm = {0.0, 0.0, -1.0};
+
+	/* Normalized normal vectors for each vertex (created by sum of corresponding faces) */
+	vertices[0].normal = glm::normalize(Xm + Ym + Zm);
+	vertices[1].normal = glm::normalize(Xp + Ym + Zm);
+	vertices[2].normal = glm::normalize(Xp + Yp + Zm);
+	vertices[3].normal = glm::normalize(Xm + Yp + Zm);
+	vertices[4].normal = glm::normalize(Xm + Ym + Zp);
+	vertices[5].normal = glm::normalize(Xp + Ym + Zp);
+	vertices[6].normal = glm::normalize(Xp + Yp + Zp);
+	vertices[7].normal = glm::normalize(Xm + Yp + Zp);
+
+	/* Scaling and position transform */
 	for (uint8_t i = 0; i < vertex_count; i++)
 	{
 		vertices[i].pos *= glm::vec3(10.0f, 10.0f, 10.0f);
@@ -507,39 +509,24 @@ void vertex_dynamic_state::model_data_creation()
 #endif
 	}
 
-	triangles[0]  = {vertices[0].pos, vertices[1].pos, vertices[2].pos, glm::vec3(0.0f, 0.0f, 0.0f), {0, 1, 2}};
-	triangles[1]  = {vertices[2].pos, vertices[3].pos, vertices[0].pos, glm::vec3(0.0f, 0.0f, 0.0f), {2, 3, 0}};
-	triangles[2]  = {vertices[6].pos, vertices[5].pos, vertices[4].pos, glm::vec3(0.0f, 0.0f, 0.0f), {6, 5, 4}};
-	triangles[3]  = {vertices[4].pos, vertices[7].pos, vertices[6].pos, glm::vec3(0.0f, 0.0f, 0.0f), {4, 7, 6}};
-	triangles[4]  = {vertices[5].pos, vertices[1].pos, vertices[0].pos, glm::vec3(0.0f, 0.0f, 0.0f), {5, 1, 0}};
-	triangles[5]  = {vertices[0].pos, vertices[4].pos, vertices[5].pos, glm::vec3(0.0f, 0.0f, 0.0f), {0, 4, 5}};
-	triangles[6]  = {vertices[6].pos, vertices[2].pos, vertices[1].pos, glm::vec3(0.0f, 0.0f, 0.0f), {6, 2, 1}};
-	triangles[7]  = {vertices[1].pos, vertices[5].pos, vertices[6].pos, glm::vec3(0.0f, 0.0f, 0.0f), {1, 5, 6}};
-	triangles[8]  = {vertices[7].pos, vertices[3].pos, vertices[2].pos, glm::vec3(0.0f, 0.0f, 0.0f), {7, 3, 2}};
-	triangles[9]  = {vertices[2].pos, vertices[6].pos, vertices[7].pos, glm::vec3(0.0f, 0.0f, 0.0f), {2, 6, 7}};
-	triangles[10] = {vertices[3].pos, vertices[7].pos, vertices[4].pos, glm::vec3(0.0f, 0.0f, 0.0f), {3, 7, 4}};
-	triangles[11] = {vertices[4].pos, vertices[0].pos, vertices[3].pos, glm::vec3(0.0f, 0.0f, 0.0f), {4, 0, 3}};
+	uint32_t index_count        = triangle_count * 3;
+	uint32_t vertex_buffer_size = vertex_count * sizeof(SampleVertex);
+	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
+	cube.index_count            = index_count;
 
-	for (uint32_t i = 0; i < vertex_count; i++)
-	{
-		vertices[i].normal = {0.0, 0.0, 0.0};
-	}
-
-	uint32_t  index_count        = triangle_count * 3;
-	uint32_t *indices            = new uint32_t[index_count];
-	uint32_t  vertex_buffer_size = vertex_count * sizeof(SampleVertex);
-	uint32_t  index_buffer_size  = index_count * sizeof(uint32_t);
-	cube.index_count             = index_count;
-
-	uint32_t index_counter = 0;
-	for (uint8_t i = 0; i < triangle_count; i++)
-	{
-		for (uint8_t j = 0; j < 3; j++)
-		{
-			indices[index_counter] = triangles[i].vertices[j];
-			index_counter++;
-		}
-	}
+	/* Array with vertices indexes for corresponding triangles */
+	uint32_t indices[index_count] = {0, 4, 3,
+	                                 4, 7, 3,
+	                                 0, 3, 2,
+	                                 0, 2, 1,
+	                                 1, 2, 6,
+	                                 6, 5, 1,
+	                                 5, 6, 7,
+	                                 7, 4, 5,
+	                                 0, 1, 5,
+	                                 5, 4, 0,
+	                                 3, 7, 6,
+	                                 6, 2, 3};
 
 	struct
 	{
@@ -559,7 +546,7 @@ void vertex_dynamic_state::model_data_creation()
 	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 	    index_buffer_size,
 	    &index_staging.memory,
-	    indices);
+	    &indices);
 
 	cube.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
@@ -600,27 +587,6 @@ void vertex_dynamic_state::model_data_creation()
 	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
 
 	delete[] vertices;
-	delete[] triangles;
-	delete[] indices;
-}
-/**
- * 	@fn void vertex_dynamic_state::init_dynamic_vertex_structures()
- * 	@brief Initialize specific structures related to Vertex Input Dynamic State extension
- */
-void vertex_dynamic_state::init_dynamic_vertex_structures()
-{
-	vertex_bindings_description_ext.sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
-	vertex_bindings_description_ext.binding   = 0;
-	vertex_bindings_description_ext.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-	vertex_bindings_description_ext.divisor   = 1;
-
-	vertex_attribute_description_ext[0].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-	vertex_attribute_description_ext[0].location = 0;
-	vertex_attribute_description_ext[0].binding  = 0;
-
-	vertex_attribute_description_ext[1].sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
-	vertex_attribute_description_ext[1].location = 1;
-	vertex_attribute_description_ext[1].binding  = 0;
 }
 
 /**

@@ -56,7 +56,7 @@ void main()
 			gl_Position = ubo.projection * ubo.modelview * vec4(inPos.xyz * ubo.modelscale, 1.0);
 			break;
 	}
-	outNormal = mat3(ubo.modelview) * inNormal;
+	outNormal = mat3(ubo.modelview) *  inNormal;
 
 	outInvModelView = inverse(ubo.skybox_modelview);
 

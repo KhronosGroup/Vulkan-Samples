@@ -167,7 +167,7 @@ The vertex input dynamic state api is provided in Vulkan 1.0 and the appropriate
 In addition, since vertex input dynamic state is provided as an extension and may have varying levels of support, the developer must query availability for each device used.
 
 The device extension is provided by `VK_EXT_VERTEX_INPUT_DYNAMIC_STATE_EXTENSION_NAME`. It also requires 
-`VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extesion to be enabled:
+`VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extension to be enabled:
 
 ```C++
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);

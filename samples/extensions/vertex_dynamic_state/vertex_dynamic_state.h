@@ -27,64 +27,7 @@
 
 class vertex_dynamic_state : public ApiVulkanSample
 {
-	/* Test structures for normals calculation */
-
-	struct triangle
-	{
-		glm::vec3 A;
-		glm::vec3 B;
-		glm::vec3 C;
-		glm::vec3 Normal;
-		uint32_t   vertices[3];
-	};
-
-	typedef enum {
-		VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT,
-		VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT
-	}vertexDynamicStateVertexStruct_t;
-
   public:
-	vertex_dynamic_state();
-	~vertex_dynamic_state();
-
-	void         draw();
-	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
-	virtual bool prepare(vkb::Platform &platform) override;
-
-	void prepare_uniform_buffers();
-	void update_uniform_buffers();
-	void create_pipeline();
-
-	void load_assets();
-	void create_descriptor_pool();
-	void setup_descriptor_set_layout();
-	void create_descriptor_sets();
-	void request_gpu_features(vkb::PhysicalDevice &gpu);
-	void model_data_creation();
-	void draw_created_model(VkCommandBuffer commandBuffer);
-	void calc_triangle_normal(triangle* tris);
-	void init_dynamic_vertex_structures();
-	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
-
-
-	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
-	VkPipeline                                         model_pipeline{VK_NULL_HANDLE};
-	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
-	VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT vertex_input_features{};
-	VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphics_pipeline_library{};
-	VkVertexInputBindingDescription2EXT                vertex_bindings_description_ext{};
-	VkVertexInputAttributeDescription2EXT              vertex_attribute_description_ext[2]{};
-
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
-	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
-	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
-
-	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  object;
-	std::unique_ptr<vkb::core::Buffer> ubo;
-
-	
 	struct
 	{
 		Texture envmap;
@@ -112,9 +55,48 @@ class vertex_dynamic_state : public ApiVulkanSample
 		uint32_t                           index_count;
 	} cube;
 
+	typedef enum
+	{
+		VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT,
+		VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT
+	} vertexDynamicStateVertexStruct_t;
 
+	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline                                         model_pipeline{VK_NULL_HANDLE};
+	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
+	VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT vertex_input_features{};
+	VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphics_pipeline_library{};
+	VkVertexInputBindingDescription2EXT                vertex_bindings_description_ext{};
+	VkVertexInputAttributeDescription2EXT              vertex_attribute_description_ext[2]{};
 
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
+	std::unique_ptr<vkb::sg::SubMesh>  skybox;
+	std::unique_ptr<vkb::sg::SubMesh>  object;
+	std::unique_ptr<vkb::core::Buffer> ubo;
+
+	vertex_dynamic_state();
+	~vertex_dynamic_state();
+
+	void         draw();
+	virtual void render(float delta_time) override;
+	virtual void build_command_buffers() override;
+	virtual bool prepare(vkb::Platform &platform) override;
+
+	void prepare_uniform_buffers();
+	void update_uniform_buffers();
+	void create_pipeline();
+
+	void load_assets();
+	void create_descriptor_pool();
+	void setup_descriptor_set_layout();
+	void create_descriptor_sets();
+	void request_gpu_features(vkb::PhysicalDevice &gpu);
+	void model_data_creation();
+	void draw_created_model(VkCommandBuffer commandBuffer);
+	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
 
 #if VK_NO_PROTOTYPES
 	PFN_vkCmdSetVertexInputEXT vkCmdSetVertexInputEXT{VK_NULL_HANDLE};
