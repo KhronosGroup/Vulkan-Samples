@@ -73,7 +73,7 @@ class vertex_dynamic_state : public ApiVulkanSample
 	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
 	VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT vertex_input_features{};
 	VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphics_pipeline_library{};
-	VkVertexInputBindingDescription2EXT                vertex_input_bindings_ext[1]{};
+	VkVertexInputBindingDescription2EXT                vertex_bindings_description_ext{};
 	VkVertexInputAttributeDescription2EXT              vertex_attribute_description_ext[2]{};
 
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
