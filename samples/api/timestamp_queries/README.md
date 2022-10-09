@@ -31,7 +31,7 @@ This provides your application with a mechanism to time the execution of command
 
 ## A few important notes on timestamp queries
 
-It's important to know that timestamp queries differ greatly from how timing can be done on the CPU with e.g. the high performance counter. This is mostly due to how a GPU's dispatches, overlaps and finishes work across different stages of the pipeline. So while in theory you can specify any pipeline stage at which the timestamp should be written, a lot of stage combinations and orderings won't give meaningful result. This also means that you you can't compare timestamps taken on different queues.
+It's important to know that timestamp queries differ greatly from how timing can be done on the CPU with e.g. the high performance counter. This is mostly due to how a GPU's dispatches, overlaps and finishes work across different stages of the pipeline. So while technically you can specify any pipeline stage at which the timestamp should be written, a lot of stage combinations and orderings won't give meaningful result. This also means that you you can't compare timestamps taken on different queues.
 
 So while it may may sound reasonable to write timestamps for the vertex and fragment shader stage directly one after another, that will usually not return meaningful results due to how the GPU works.
 
@@ -111,7 +111,7 @@ Unlike getting CPU side timing information that can be queried immediately, with
 
 This is done inside the command buffer with `vkCmdWriteTimestamp`. This function will request a timestamp to be written from the GPU for a certain pipeline stage and write that value to memory.
 
-The most interesting part of calling this function is the `pipelineStage` argument. As noted earlier, it's theoretically possible to use any pipeline stage in here, not all pipeline stages will net proper results due to how GPUs overlap work. It's also important to note that not all implementations are able to latch timers at all pipeline stages (e.g. if they don't have hardware that maps to a given stage) and may return timers at a later pipeline stage instead.
+The most interesting part of calling this function is the `pipelineStage` argument. As noted earlier, it's technically possible to use any pipeline stage in here, not all pipeline stages will yield proper results due to how GPUs overlap work. It's also important to note that not all implementations are able to latch timers at all pipeline stages (e.g. if they don't have hardware that maps to a given stage) and may return timers at a later pipeline stage instead.
  
 Calling this function also defines an execution dependency similar to a barrier on all commands that were submitted before it.
 
