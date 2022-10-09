@@ -112,8 +112,6 @@ vulkan_samples batch --category performance --duration 10
 
 # Run Swapchain Images sample on an Android device
 adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
-
-adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -es "cmd" "sample swapchain_images"
 ```
 
 ## Tests
