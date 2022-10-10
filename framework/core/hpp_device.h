@@ -19,7 +19,6 @@
 
 #include <core/hpp_buffer.h>
 #include <core/hpp_command_buffer.h>
-#include <core/hpp_command_pool.h>
 #include <core/hpp_debug.h>
 #include <core/hpp_physical_device.h>
 #include <core/hpp_queue.h>
@@ -32,6 +31,8 @@ namespace vkb
 {
 namespace core
 {
+class HPPCommandPool;
+
 class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 {
   public:
@@ -124,7 +125,7 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	vkb::HPPFencePool const &get_fence_pool() const;
 
-	vkb::HPPResourceCache const &get_resource_cache() const;
+	vkb::HPPResourceCache &get_resource_cache();
 
   private:
 	vkb::core::HPPPhysicalDevice const &gpu;
