@@ -84,8 +84,8 @@ void DescriptorManagement::update(float delta_time)
 	render_context.get_active_frame().set_buffer_allocation_strategy(buffer_alloc_strategy);
 
 	auto descriptor_management_strategy = (descriptor_caching.value == 0) ?
-                                               vkb::DescriptorManagementStrategy::CreateDirectly :
-                                               vkb::DescriptorManagementStrategy::StoreInCache;
+	                                          vkb::DescriptorManagementStrategy::CreateDirectly :
+	                                          vkb::DescriptorManagementStrategy::StoreInCache;
 
 	render_context.get_active_frame().set_descriptor_management_strategy(descriptor_management_strategy);
 

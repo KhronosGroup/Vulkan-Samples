@@ -723,12 +723,11 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 			else
 			{
 				// Request a descriptor pool, allocate a descriptor set, write buffer and image data to it
-				auto &descriptor_pool = command_pool.get_render_frame()->request_descriptor_pool(descriptor_set_layout, command_pool.get_thread_index());
+				auto &        descriptor_pool = command_pool.get_render_frame()->request_descriptor_pool(descriptor_set_layout, command_pool.get_thread_index());
 				DescriptorSet descriptor_set{command_pool.get_render_frame()->get_device(), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos};
 				descriptor_set.apply_writes();
 				descriptor_set_handle = descriptor_set.get_handle();
 			}
-
 
 			// Bind descriptor set
 			vkCmdBindDescriptorSets(get_handle(),

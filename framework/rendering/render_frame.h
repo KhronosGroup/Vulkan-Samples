@@ -128,8 +128,8 @@ class RenderFrame
 	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
 	                                      size_t                                    thread_index = 0);
 
-	DescriptorPool &request_descriptor_pool(DescriptorSetLayout &                     descriptor_set_layout,
-	                                        size_t                                    thread_index = 0);
+	DescriptorPool &request_descriptor_pool(DescriptorSetLayout &descriptor_set_layout,
+	                                        size_t               thread_index = 0);
 
 	void clear_descriptors();
 
@@ -192,7 +192,7 @@ class RenderFrame
 
 	std::unique_ptr<RenderTarget> swapchain_render_target;
 
-	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
+	BufferAllocationStrategy     buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
 	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
 	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
