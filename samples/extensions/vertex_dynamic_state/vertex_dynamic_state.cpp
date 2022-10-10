@@ -87,7 +87,6 @@ bool vertex_dynamic_state::prepare(vkb::Platform &platform)
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
-	setup_framebuffer();
 	create_pipeline();
 	build_command_buffers();
 	prepared = true;

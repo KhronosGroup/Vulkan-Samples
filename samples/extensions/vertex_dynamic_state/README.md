@@ -23,9 +23,9 @@
 
 This sample demonstrates how to use the `VK_EXT_vertex_input_dynamic_state` extension, which eliminates the need to create multiple pipelines in case of different binding and/or attribute descriptions.
 
-This extension changes how attributes and bindigs are managed. Instead of static decsription during pipeline creation, this extension allows developer to change attributes and bindings using a function before every draw.
+This extension changes how attributes and bindings are managed. Instead of static description during pipeline creation, this extension allows developer to change attributes and bindings using a function before every draw.
 
-Below is a comparsion of common Vulkan vertex input description and dynamic one.
+Below is a comparison of common Vulkan vertex input description and dynamic one.
 
 | Vertex input static state                                              | Vertex input dynamic state                                                                                                                     |
 | ---------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- |
