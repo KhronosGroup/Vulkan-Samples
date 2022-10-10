@@ -255,6 +255,10 @@ Uses the graphics pipeline library extensions to improve run-time pipeline creat
 **Extension**: [```VK_EXT_conditional_rendering```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) <br/>
 Demonstrate how to do conditional rendering, dynamically discarding rendering commands without having to update command buffers. This is done by sourcing conditional rendering blocks from a dedicated buffer that can be updated without having to touch command buffers.
 
+### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
+**Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
+Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce numbers of pipelines objects that is need to create.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
