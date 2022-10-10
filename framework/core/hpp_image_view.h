@@ -23,6 +23,8 @@ namespace vkb
 {
 namespace core
 {
+class HPPImage;
+
 /**
  * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
  *
@@ -39,6 +41,11 @@ class HPPImageView : private vkb::core::ImageView
 	vk::ImageView get_handle() const
 	{
 		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
+	}
+
+	const HPPImage &get_image() const
+	{
+		return reinterpret_cast<HPPImage const &>(ImageView::get_image());
 	}
 };
 }        // namespace core

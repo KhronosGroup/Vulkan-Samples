@@ -15,31 +15,15 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <resource_cache.h>
+#include "rendering/hpp_render_target.h"
 
 namespace vkb
 {
-namespace core
+namespace rendering
 {
-class HPPDevice;
-}
-
-/**
- * @brief facade class around vkb::ResourceCache, providing a vulkan.hpp-based interface
- *
- * See vkb::ResourceCache for documentation
- */
-class HPPResourceCache : private vkb::ResourceCache
-{
-  public:
-	using vkb::ResourceCache::clear;
-	using vkb::ResourceCache::clear_framebuffers;
-
-	HPPResourceCache(vkb::core::HPPDevice &device) :
-	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))
-	{}
+const HPPRenderTarget::CreateFunc HPPRenderTarget::DEFAULT_CREATE_FUNC = [](vkb::core::HPPImage &&swapchain_image) -> std::unique_ptr<HPPRenderTarget> {
+	return std::unique_ptr<HPPRenderTarget>(
+	    reinterpret_cast<HPPRenderTarget *>(vkb::RenderTarget::DEFAULT_CREATE_FUNC(reinterpret_cast<vkb::core::Image &&>(swapchain_image)).release()));
 };
-
+}
 }        // namespace vkb
