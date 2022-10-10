@@ -34,7 +34,7 @@ Below is a comparison of common Vulkan vertex input description and dynamic one.
 | dynamic_state = {}                                                     | dynamic_state = {VK_DYNAMIC_STATE_VERTEX_INPUT_EXT}                                                                                            |
 | pVertexInputState = &vertex_input_state                                | pVertexInputState = VK_NULL_HANDLE                                                                                                   |
 | vkCreateGraphicsPipelines(model1)<br>vkCreateGraphicsPipelines(model2) | vkCreateGraphicsPipelines(model)                                                                                                               |
-| draw(model1, pipeline1)<br> draw(model2, pipeline2)                    | vkCmdSetVertexInputEXT(&vertex_input_state1)<br>draw(model, pipeline)<br>vkCmdSetVertexInputEXT(&vertex_input_state2)<br>draw(model, pipeline) |
+| draw(model1, pipeline1)<br> draw(model2, pipeline2)                    | change_vertex_input_data(FIRST_VERTEX_ARCHITECTURE)<br>vkCmdSetVertexInputEXT(&vertex_input_state1)<br>draw(model, pipeline)<br>change_vertex_input_data(SECOND_VERTEX_ARCHITECTURE)<br>vkCmdSetVertexInputEXT(&vertex_input_state2)<br>draw(model, pipeline) |
 
 More details are provided in the sections that follow.
 
@@ -108,7 +108,7 @@ bindings and attribute descriptions on runtime by calling `vkCmdSetVertexInputEX
 Extension extends 2 structures: 
 "VkVertexInputBindingDescription" to "VkVertexInputBindingDescription2EXT" 
 "VkVertexInputAttributeDescription" to "VkVertexInputAttributeDescription2EXT"
-For example of 2 sets of different vertex input data architectures "change_vertex_input_data" function was presented below. First model is loaded from assets (load_model function from framework), second model was created directly in code (have different vertex input data architecture)
+For example of 2 sets of different vertex input data architectures "change_vertex_input_data" function was presented below. First model is loaded from assets (load_model function from framework), second model was created directly in code (have different vertex input data architecture).
 
 ```C++
   VkVertexInputBindingDescription2EXT   vertex_bindings_description_ext = {
