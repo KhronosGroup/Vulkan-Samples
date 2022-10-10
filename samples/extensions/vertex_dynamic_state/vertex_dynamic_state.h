@@ -20,10 +20,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "core/hpp_instance.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/camera.h"
-#include <array>
 
 class vertex_dynamic_state : public ApiVulkanSample
 {

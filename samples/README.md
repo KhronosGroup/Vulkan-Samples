@@ -257,7 +257,7 @@ Demonstrate how to do conditional rendering, dynamically discarding rendering co
 
 ### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
 **Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
-Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce numbers of pipelines objects that is need to create.
+Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce numbers of pipelines objects that are need to create.
 
 ## Tooling Samples
 

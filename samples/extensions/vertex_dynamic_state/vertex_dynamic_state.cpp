@@ -19,14 +19,6 @@
 
 #include "vertex_dynamic_state.h"
 
-#include "common/vk_common.h"
-#include "gltf_loader.h"
-#include "gui.h"
-#include "platform/filesystem.h"
-#include "platform/platform.h"
-#include "rendering/subpasses/forward_subpass.h"
-#include "stats/stats.h"
-
 vertex_dynamic_state::vertex_dynamic_state()
 {
 	title = "Vertex Dynamic State";
@@ -53,6 +45,10 @@ vertex_dynamic_state::~vertex_dynamic_state()
 	}
 }
 
+/**
+ * 	@fn bool vertex_dynamic_state::prepare(vkb::Platform &platform)
+ * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc. 
+*/
 bool vertex_dynamic_state::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
@@ -120,6 +116,10 @@ void vertex_dynamic_state::draw()
 	ApiVulkanSample::submit_frame();
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::render(float delta_time)
+ * 	@brief Drawing frames and/or updating uniform buffers when camera position/rotation was changed
+*/
 void vertex_dynamic_state::render(float delta_time)
 {
 	if (!prepared)
@@ -386,6 +386,10 @@ void vertex_dynamic_state::build_command_buffers()
 	}
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::create_descriptor_pool()
+ * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
+*/
 void vertex_dynamic_state::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -397,6 +401,10 @@ void vertex_dynamic_state::create_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::setup_descriptor_set_layout()
+ * 	@brief Creating layout for descriptor sets
+*/
 void vertex_dynamic_state::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
@@ -417,6 +425,12 @@ void vertex_dynamic_state::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
+/**
+ * 	@fn void vertex_dynamic_state::create_descriptor_sets()
+ * 	@brief Creating both descriptor set:
+ * 		   1. Uniform buffer
+ * 		   2. Image sampler
+*/
 void vertex_dynamic_state::create_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
