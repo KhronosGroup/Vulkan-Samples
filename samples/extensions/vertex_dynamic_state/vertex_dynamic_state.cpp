@@ -260,7 +260,7 @@ void vertex_dynamic_state::create_pipeline()
 	    0,
 	    1,
 	    VK_FORMAT_R32G32B32_SFLOAT,
-	    sizeof(float) * 3);
+	    2 * (sizeof(float) * 3));
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
