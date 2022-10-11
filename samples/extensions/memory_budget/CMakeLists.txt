@@ -24,7 +24,7 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip Corporation"
         NAME "Memory Budget"
-        DESCRIPTION "This is built based on work of Instancing by Sascha Willems. Where, it instances mesh rendering, uses a separate vertex buffer for instanced data. In addition, density of the instanced meshes can be adjusted, and hardware memory availability/consumption rate is displayed per (instance) density change"
+        DESCRIPTION "This is built based on work of Instancing by Sascha Willems. Changes were made by Holochip Corporation. Density of the instanced meshes can be adjusted, and physical device memory usage/budget are displayed using memory budget extension features."
         SHADER_FILES_GLSL
         "instancing/instancing.vert"
         "instancing/instancing.frag"
