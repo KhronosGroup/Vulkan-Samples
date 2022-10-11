@@ -31,10 +31,6 @@ FragmentShadingRate::FragmentShadingRate()
 	add_device_extension(VK_KHR_MULTIVIEW_EXTENSION_NAME);
 	add_device_extension(VK_KHR_MAINTENANCE2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_FRAGMENT_SHADING_RATE_EXTENSION_NAME);
-
-	//MOD
-	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-
 }
 
 FragmentShadingRate::~FragmentShadingRate()
@@ -247,29 +243,10 @@ void FragmentShadingRate::setup_render_pass()
 {
 	// Query the fragment shading rate properties of the current implementation, we will need them later on
 	physical_device_fragment_shading_rate_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_PROPERTIES_KHR;
-
-
-	//==== MOD ====
-
-	VkPhysicalDeviceMemoryBudgetPropertiesEXT pMemoryTest{};
-	pMemoryTest.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
-	pMemoryTest.pNext = NULL;
-
-	// Assigning pMemoryTest to the pNext of the current pNext;
-	physical_device_fragment_shading_rate_properties.pNext = &pMemoryTest;
-
 	VkPhysicalDeviceProperties2KHR device_properties{};
 	device_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties.pNext = &physical_device_fragment_shading_rate_properties;
-
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
-
-	std::cout << "Memory Heap Count: " << get_device().get_gpu().get_memory_properties().memoryHeapCount << "\n";
-	int pMemorySize =static_cast<int>(sizeof(pMemoryTest.heapBudget) / sizeof(pMemoryTest.heapBudget[0]));
-	for (int i = 0; i < pMemorySize; i++)
-		printf("Heap Index: %d | Heap Usage: %llu | Heap Budget: %llu | Heap Array Size: %d\n", i, pMemoryTest.heapUsage[i], pMemoryTest.heapBudget[i], pMemorySize);
-
-	//==== End of MOD ====
 
 	std::array<VkAttachmentDescription2KHR, 3> attachments = {};
 	// Color attachment
