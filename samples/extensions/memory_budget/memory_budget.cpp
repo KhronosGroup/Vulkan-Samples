@@ -28,36 +28,16 @@
 #include "memory_budget.h"
 #include "benchmark_mode/benchmark_mode.h"
 
-//==== Memory Budget Modification ====
-void MemoryBudget::Initialize()
-{
-	// Instance and Device Extension
-
-	// API version 1.1 required:
-	set_api_version(VK_API_VERSION_1_0);
-	// Enable Vk Physical Device Properties 2 Instance Extension:
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	// Enable Memory Budget Device Extension:
-	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
-
-	// Initialize Vulkan Memory Variables
-
-	// pMemory Initialization:
-	pMemory.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
-	pMemory.pNext = NULL;
-	// pProperties Initialization:
-	pProperties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	pProperties.pNext = &pMemory;
-}
-
 MemoryBudget::MemoryBudget()
 {
 	title = "Memory Budget on Instanced Mesh Renderer";
 
-	//==== Memory Budget Modification ====
+	// Enable instance and device extensions required to use VK_EXT_memory_budget
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 
-	// Initialize the Constructor Variables
-	MemoryBudget::Initialize();
+	// Initialize physical device memory properties variables
+	MemoryBudget::initialize_device_memory_properties();
 }
 
 MemoryBudget::~MemoryBudget()
@@ -165,6 +145,58 @@ void MemoryBudget::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
+}
+
+void MemoryBudget::initialize_device_memory_properties()
+{
+	// Initialize physical device memory budget properties structures variables
+	physical_device_memory_budget_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+	physical_device_memory_budget_properties.pNext = NULL;
+	// Initialize physical device memory properties structure variables
+	device_memory_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+	device_memory_properties.pNext = &physical_device_memory_budget_properties;
+}
+
+void MemoryBudget::update_device_memory_properties()
+{
+	physical_device_memory_budget_properties.heapBudget[0] = 0;
+
+	physical_device_memory_budget_properties.heapUsage[0] = 0;
+
+	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
+	device_memory_heap_count = device_memory_properties.memoryProperties.memoryHeapCount;
+
+	device_memory_total_usage = 0;
+	device_memory_total_budget = 0;
+
+	for (uint32_t i = 0; i < device_memory_heap_count; i++)
+	{
+		device_memory_total_usage += physical_device_memory_budget_properties.heapUsage[i];
+		device_memory_total_budget += physical_device_memory_budget_properties.heapBudget[i];
+	}
+}
+
+void MemoryBudget::debug_device_memory_properties()
+{
+	printf("==== Debug Memory Status ====\n");
+
+	// Compare Device Name from Device Class and pMemoryProperties:
+	printf("Device Name: %s\n",get_device().get_gpu().get_properties().deviceName);
+
+	// Verify Memory Heap Count:
+	printf("VK Memory Heap Count: %lu\n", get_device().get_gpu().get_memory_properties().memoryHeapCount); // Non-extension memory properties
+
+	// Verify Heap Memory Size:
+	for (uint32_t i = 0; i < get_device().get_gpu().get_memory_properties().memoryHeapCount; i++)
+		printf("Memory Heap-size Index %lu: %llu Bytes\n", i, get_device().get_gpu().get_memory_properties().memoryHeaps[i].size);
+
+	// Print out heap usage and budget array size:
+	int memorySize =static_cast<int>(sizeof(physical_device_memory_budget_properties.heapBudget) / sizeof(physical_device_memory_budget_properties.heapBudget[0]));
+	printf("Heap Usage and Budget Array Size: %d\n", memorySize);
+
+	// Print out heap usage and budget:
+	for (int i = 0; i < memorySize; i++)
+		printf("Heap Index: %d: | Heap Usage: %llu Bytes | Heap Budget: %llu Bytes\n", i, physical_device_memory_budget_properties.heapUsage[i], physical_device_memory_budget_properties.heapBudget[i]);
 }
 
 void MemoryBudget::load_assets()
@@ -517,16 +549,25 @@ void MemoryBudget::draw()
 
 	ApiVulkanSample::submit_frame();
 
-	//==== Memory Budget Modification ====
+	if (runtime_memory_status)
+		update_device_memory_properties();
+	else
+	{
+		if (update_memory_status_once)
+		{
+			update_device_memory_properties();
+			update_memory_status_once = 0;
 
-	// Get Vulkan Memory Properties:
-	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &pProperties);
-	// Sync-up Memory Status:
-	memory_usage  = pMemory.heapUsage[0];
-	memory_budget = pMemory.heapBudget[0];
+			printf("Memory Properties Updated!\n");
+		}
+	}
 
-	if (debug)
-		MemoryBudget::Debug();
+	if (debug_memory_status_once)
+	{
+		update_device_memory_properties();
+		debug_device_memory_properties();
+		debug_memory_status_once = 0;
+	}
 }
 
 bool MemoryBudget::prepare(vkb::Platform &platform)
@@ -569,51 +610,34 @@ void MemoryBudget::render(float delta_time)
 
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	//==== Memory Budget Modification ====
+	drawer.checkbox("Update Runtime Memory Properties", &runtime_memory_status);
 
-	// Debug Status:
-	drawer.checkbox("Memory Status Debug", &debug);
+	if (!runtime_memory_status)
+	{
+		update_memory_status_once = drawer.button("Update Memory Properties");
+	}
 
-	// UI Overlay Memory Budget Display:
-	drawer.text("Memory Usage: %llu MB", memory_usage / 1000000);
-	drawer.text("Memory Budget: %llu MB", memory_budget / 1000000);
+	drawer.text("Total Memory Usage: %llu MB", device_memory_total_usage / 1000000);
+	drawer.text("Total Memory Budget: %llu MB", device_memory_total_budget / 1000000);
 
-	// UI Overlay Mesh Instance Control:
+	if (drawer.header("Memory Heap Details:"))
+	{
+		for (uint32_t i = 0; i < device_memory_heap_count; i++)
+		{
+			drawer.text("Memory Heap %lu: Usage: %llu MB | Budget: %llu MB", i, physical_device_memory_budget_properties.heapUsage[i] / 1000000, physical_device_memory_budget_properties.heapBudget[i] / 1000000);
+		}
+	}
+
 	if (drawer.header("Mesh Density Control"))
 		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
+
+	debug_memory_status_once = drawer.button("Print Memory Status Debug Log");
 }
 
 void MemoryBudget::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	build_command_buffers();
-}
-void MemoryBudget::Debug()
-{
-	std::cout << "==== Debug Memory Status ====\n";
-
-	// Verify VK Physical Handle:
-	std::cout << "VK Physical Device Handle Ptr: " << get_device().get_gpu().get_handle() << "\n";
-
-	// Verify Memory Heap Count:
-	printf("VK Memory Heap Count: %lu\n", get_device().get_gpu().get_memory_properties().memoryHeapCount);
-
-	// Verify Heap Memory:
-	for (int i = 0; i < get_device().get_gpu().get_memory_properties().memoryHeapCount; i++)
-		printf("Memory Heap-size, Index %d: %llu MB\n", i, get_device().get_gpu().get_memory_properties().memoryHeaps[i].size / 1000000);
-
-	// Compare Device Name from Device Class and pProperties:
-	std::cout << "Device Name from Device-Class: " << get_device().get_gpu().get_properties().deviceName << "\n";
-	std::cout << "Device Name from pProperties: " << pProperties.properties.deviceName << "\n"; // so it does get filled!
-
-	// Compare pMemory Ptr Address:
-	std::cout << "pProperties pNext Ptr: " << pProperties.pNext << "\n";
-	std::cout << "pMemory Ptr: " << &pMemory << "\n";
-
-	// Print out Heap Usage and Budget:
-	int memorySize =static_cast<int>(sizeof(pMemory.heapBudget) / sizeof(pMemory.heapBudget[0]));
-	for (int i = 0; i < memorySize; i++)
-		printf("Heap Index: %d: | Heap Usage: %llu | Heap Budget: %llu | Heap Array size: %d\n", i, pMemory.heapUsage[i], pMemory.heapBudget[i], memorySize);
 }
 
 std::unique_ptr<vkb::Application> create_memory_budget()

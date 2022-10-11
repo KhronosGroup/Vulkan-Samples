@@ -91,10 +91,27 @@ class MemoryBudget : public ApiVulkanSample
 		VkDescriptorSet planet;
 	} descriptor_sets;
 
+	// Memory budget extension related variables
+	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
+	VkPhysicalDeviceMemoryProperties2 device_memory_properties{};
+
+	int mesh_density = 8000;
+
+	uint32_t     device_memory_heap_count   = 0;
+	VkDeviceSize device_memory_total_usage  = 0;
+	VkDeviceSize device_memory_total_budget = 0;
+
+	bool runtime_memory_status = 1;
+	bool update_memory_status_once = 0;
+	bool debug_memory_status_once = 0;
+
 	MemoryBudget();
 	~MemoryBudget();
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
+	void 		 initialize_device_memory_properties(); // memory budget extension related function
+	void         update_device_memory_properties();     // memory budget extension related function
+	void         debug_device_memory_properties();      // memory budget extension related function
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -108,27 +125,6 @@ class MemoryBudget : public ApiVulkanSample
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual void resize(const uint32_t width, const uint32_t height) override;
-
-
-	//==== Memory Budget Modification ====
-
-	// Mesh Instance Density Control Variable:
-	int mesh_density = 8000;
-
-	// memory Budget Vulkan Variables:
-	VkPhysicalDeviceMemoryBudgetPropertiesEXT pMemory{}; // pNext Level
-	VkPhysicalDeviceProperties2KHR pProperties{}; // Primary level
-
-	// Memory Budget Variables:
-	VkDeviceSize  memory_usage;
-	VkDeviceSize  memory_budget;
-
-	// Debug Text:
-	bool debug = 1;
-
-	// Adding Initialization and Debug:
-	void Initialize();
-	void Debug();
 };
 
 std::unique_ptr<vkb::Application> create_memory_budget();
