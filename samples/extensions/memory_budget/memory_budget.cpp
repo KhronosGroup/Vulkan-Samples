@@ -159,10 +159,6 @@ void MemoryBudget::initialize_device_memory_properties()
 
 void MemoryBudget::update_device_memory_properties()
 {
-	physical_device_memory_budget_properties.heapBudget[0] = 0;
-
-	physical_device_memory_budget_properties.heapUsage[0] = 0;
-
 	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
 	device_memory_heap_count = device_memory_properties.memoryProperties.memoryHeapCount;
 
