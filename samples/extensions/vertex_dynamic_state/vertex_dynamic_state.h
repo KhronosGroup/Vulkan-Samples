@@ -76,20 +76,21 @@ class vertex_dynamic_state : public ApiVulkanSample
 	vertex_dynamic_state();
 	~vertex_dynamic_state();
 
-	void         draw();
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
 	virtual bool prepare(vkb::Platform &platform) override;
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void create_pipeline();
+	void draw();
 
 	void load_assets();
 	void create_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void create_descriptor_sets();
-	void request_gpu_features(vkb::PhysicalDevice &gpu);
+
 	void model_data_creation();
 	void draw_created_model(VkCommandBuffer commandBuffer);
 	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
