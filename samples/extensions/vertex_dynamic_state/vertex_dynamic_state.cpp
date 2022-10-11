@@ -481,9 +481,8 @@ void vertex_dynamic_state::draw_created_model(VkCommandBuffer commandBuffer)
  */
 void vertex_dynamic_state::model_data_creation()
 {
-	const uint32_t vertex_count   = 8;
-	const uint32_t triangle_count = 12;
-	SampleVertex * vertices       = new SampleVertex[vertex_count];
+	constexpr uint32_t vertex_count = 8;
+	SampleVertex * vertices     = new SampleVertex[vertex_count];
 
 	vertices[0].pos = {0.0f, 0.0f, 0.0f};
 	vertices[1].pos = {1.0f, 0.0f, 0.0f};
@@ -522,10 +521,10 @@ void vertex_dynamic_state::model_data_creation()
 #endif
 	}
 
-	uint32_t index_count        = triangle_count * 3;
-	uint32_t vertex_buffer_size = vertex_count * sizeof(SampleVertex);
-	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
-	cube.index_count            = index_count;
+	constexpr uint32_t index_count        = 36;
+	uint32_t       vertex_buffer_size = vertex_count * sizeof(SampleVertex);
+	uint32_t       index_buffer_size  = index_count * sizeof(uint32_t);
+	cube.index_count                  = index_count;
 
 	/* Array with vertices indexes for corresponding triangles */
 	uint32_t indices[index_count] = {0, 4, 3,

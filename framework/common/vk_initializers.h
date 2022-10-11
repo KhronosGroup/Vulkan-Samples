@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -440,7 +440,7 @@ inline VkVertexInputAttributeDescription2EXT vertex_input_attribute_description2
     uint32_t offset)
 {
 	VkVertexInputAttributeDescription2EXT vertex_input_attribute_description2ext{};
-	vertex_input_attribute_description2ext.sType = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
+	vertex_input_attribute_description2ext.sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
 	vertex_input_attribute_description2ext.location = location;
 	vertex_input_attribute_description2ext.binding  = binding;
 	vertex_input_attribute_description2ext.format   = format;

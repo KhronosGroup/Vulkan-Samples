@@ -1,5 +1,5 @@
-#version 450
-/* Copyright (c) 2021-2022, Holochip
+/* Copyright (c) 2022, Mateusz Kowalewski
+ * Copyright (c) 2022, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +15,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
 layout(binding = 1) uniform samplerCube samplerEnvMap;
 
