@@ -50,7 +50,7 @@ void HPPRenderContext::request_present_mode(const vk::PresentModeKHR present_mod
 {
 	if (swapchain)
 	{
-		swapchain->get_properties().present_mode = present_mode;
+		swapchain->set_present_mode(present_mode);
 	}
 }
 
@@ -58,7 +58,7 @@ void HPPRenderContext::request_image_format(const vk::Format format)
 {
 	if (swapchain)
 	{
-		swapchain->get_properties().surface_format.format = format;
+		swapchain->set_format(format);
 	}
 }
 
@@ -322,7 +322,7 @@ void HPPRenderContext::begin_frame()
 		vk::Result result;
 		try
 		{
-			result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, nullptr);
+			std::tie(result, active_frame_index) = swapchain->acquire_next_image(acquired_semaphore);
 		}
 		catch (vk::OutOfDateKHRError & /*err*/)
 		{
@@ -335,7 +335,7 @@ void HPPRenderContext::begin_frame()
 
 			if (swapchain_updated)
 			{
-				result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, nullptr);
+				std::tie(result, active_frame_index) = swapchain->acquire_next_image(acquired_semaphore);
 			}
 		}
 
