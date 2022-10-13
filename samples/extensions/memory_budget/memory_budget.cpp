@@ -473,6 +473,9 @@ void MemoryBudget::prepare_instance_data()
 	// Destroy staging resources
 	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
 	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
+
+	// Update the device memory properties and calculate the total heap memory usage and budget
+	update_device_memory_properties();
 }
 
 void MemoryBudget::prepare_uniform_buffers()
@@ -511,17 +514,6 @@ void MemoryBudget::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 
 	ApiVulkanSample::submit_frame();
-
-	if (runtime_memory_status)
-		update_device_memory_properties();
-	else
-	{
-		if (update_memory_status_once)
-		{
-			update_device_memory_properties();
-			update_memory_status_once = false;
-		}
-	}
 }
 
 bool MemoryBudget::prepare(vkb::Platform &platform)
@@ -564,13 +556,6 @@ void MemoryBudget::render(float delta_time)
 
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.checkbox("Update Runtime Memory Properties", &runtime_memory_status);
-
-	if (!runtime_memory_status)
-	{
-		update_memory_status_once = drawer.button("Update Memory Properties");
-	}
-
 	drawer.text("Total Memory Usage: %llu MB", device_memory_total_usage / 1000000);
 	drawer.text("Total Memory Budget: %llu MB", device_memory_total_budget / 1000000);
 

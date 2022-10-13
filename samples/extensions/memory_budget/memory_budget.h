@@ -97,9 +97,6 @@ class MemoryBudget : public ApiVulkanSample
 	VkDeviceSize device_memory_total_usage  = 0;
 	VkDeviceSize device_memory_total_budget = 0;
 
-	bool runtime_memory_status = true;
-	bool update_memory_status_once = false;
-
 	MemoryBudget();
 	~MemoryBudget() override;
 	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
