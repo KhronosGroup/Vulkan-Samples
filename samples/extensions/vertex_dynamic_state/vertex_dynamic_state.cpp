@@ -612,10 +612,10 @@ void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStru
 		vertex_bindings_description_ext.stride = sizeof(Vertex);
 
 		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset = offsetof(Vertex, Vertex::pos);
+		vertex_attribute_description_ext[0].offset = 0;
 
 		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset = offsetof(Vertex, Vertex::normal);
+		vertex_attribute_description_ext[1].offset = sizeof(float) * 3;
 	}
 	else if (variant == VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT)
 	{
@@ -624,10 +624,10 @@ void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStru
 		vertex_bindings_description_ext.stride = sizeof(SampleVertex);
 
 		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset = offsetof(SampleVertex, SampleVertex::pos);
+		vertex_attribute_description_ext[0].offset = 0;
 
 		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset = offsetof(SampleVertex, SampleVertex::normal);
+		vertex_attribute_description_ext[1].offset = 2 * (sizeof(float) * 3);
 	}
 }
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()
