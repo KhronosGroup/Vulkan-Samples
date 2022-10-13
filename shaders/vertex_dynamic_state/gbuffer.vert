@@ -1,5 +1,4 @@
-/* Copyright (c) 2022, Mateusz Kowalewski
- * Copyright (c) 2022, Mobica Limited
+/* Copyright (c) 2022, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *

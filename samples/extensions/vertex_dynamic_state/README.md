@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+- Copyright (c) 2022, Mobica Limited
 -
 - SPDX-License-Identifier: Apache-2.0
 -
