@@ -31,6 +31,7 @@ namespace stats
 class HPPStats : private vkb::Stats
 {
   public:
+	using vkb::Stats::request_stats;
 	using vkb::Stats::resize;
 	using vkb::Stats::update;
 
