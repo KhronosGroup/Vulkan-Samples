@@ -25,6 +25,12 @@
 
 #include "api_vulkan_sample.h"
 
+#if defined(__ANDROID__)
+#	define INSTANCE_COUNT 4096
+#else
+#	define INSTANCE_COUNT 8192
+#endif
+
 class MemoryBudget : public ApiVulkanSample
 {
   public:
