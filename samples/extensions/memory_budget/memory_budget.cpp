@@ -158,7 +158,7 @@ void MemoryBudget::update_device_memory_properties()
 	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
 	device_memory_heap_count = device_memory_properties.memoryProperties.memoryHeapCount;
 
-	device_memory_total_usage = 0;
+	device_memory_total_usage  = 0;
 	device_memory_total_budget = 0;
 
 	for (uint32_t i = 0; i < device_memory_heap_count; i++)
@@ -423,7 +423,6 @@ void MemoryBudget::prepare_instance_data()
 		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
 		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].texIndex = rnd_texture_index(rnd_generator);
 		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale *= 0.75f;
-
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);
@@ -574,7 +573,7 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
 }
 
-void MemoryBudget::resize( uint32_t width, uint32_t height)
+void MemoryBudget::resize(uint32_t width, uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	build_command_buffers();
