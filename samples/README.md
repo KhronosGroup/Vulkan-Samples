@@ -185,6 +185,11 @@ Push descriptors apply the push constants concept to descriptor sets. Instead of
 **Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
 Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
 
+### [Memory Budget](./extensions/memory_budget)<br/>
+**Extension**: [```VK_EXT_memory_budget``](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.
+html#VK_EXT_memory_budget)<br/>
+Uses the memory budget extension to monitor the allocated memory in the GPU and demonstrates how to use it.
+
 ### [Basic ray queries](./extensions/ray_queries)<br/>
 **Extensions**: [```VK_KHR_ray_query```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>
 Render a sponza scene using the ray query extension. Shows how to set up all data structures required for ray queries, including the bottom and top level acceleration structures for the geometry and a standard vertex/fragment shader pipeline. Shadows are cast dynamically by ray queries being cast by the fragment shader.<br/>
