@@ -573,10 +573,11 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
 }
 
-void MemoryBudget::resize(uint32_t width, uint32_t height)
+bool MemoryBudget::resize(uint32_t width, uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	build_command_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_memory_budget()
