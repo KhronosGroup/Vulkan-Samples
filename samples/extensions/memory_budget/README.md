@@ -72,7 +72,7 @@ And all memory properties were converted and displayed in units of Megabytes (MB
 
 Application UI overlay:
 
-![Sample](./images/memory_budget_UI_overlay.PNG)
+![Sample](./images/memory_budget_UI_overlay.png)
 
 In addition, total number of instanced meshes can be adjusted under UI overlay. Under ```Mesh Density Control``` tab. By
 pressing down the arrow next to the text, ```Mesh Density``` slider feature will be displayed. The ```int```
