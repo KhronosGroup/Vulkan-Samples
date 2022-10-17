@@ -28,7 +28,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
-    NAME "vertex_dynamic_state"
+    NAME "Vertex Dynamic State"
     DESCRIPTION "Demonstrates the Vertex Input Dynamic State extension which can reduce number of pipelines by dynamically change vertex input bindings and attribute descriptions"
     SHADER_FILES_GLSL
     "vertex_dynamic_state/gbuffer.vert"
