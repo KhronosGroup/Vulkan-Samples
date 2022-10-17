@@ -105,9 +105,9 @@ Previously, developers had to create multiple pipeline's for models with differe
 
 However, with dynamic vertex input state multiple pipelines can be reduce in amount because of possibility to change vertex
 bindings and attribute descriptions on runtime by calling `vkCmdSetVertexInputEXT` before `draw_model`.
-Extension extends 2 structures: 
+Extension extends 2 structures:<br> 
 `VkVertexInputBindingDescription` to `VkVertexInputBindingDescription2EXT`<br>
-`VkVertexInputAttributeDescription` to `VkVertexInputAttributeDescription2EXT`
+`VkVertexInputAttributeDescription` to `VkVertexInputAttributeDescription2EXT`<br>
 For example of 2 sets of different vertex input data architectures "change_vertex_input_data" function was presented below. First model is loaded from assets (load_model function from framework), second model was created directly in code (have different vertex input data architecture).
 
 ```C++
