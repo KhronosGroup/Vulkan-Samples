@@ -181,7 +181,7 @@ CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBu
 	return (*command_pool_it)->request_command_buffer(level);
 }
 
-DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, size_t thread_index)
+DescriptorSet &RenderFrame::request_descriptor_set(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
@@ -189,7 +189,7 @@ DescriptorSet &RenderFrame::request_descriptor_set(DescriptorSetLayout &descript
 	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
-DescriptorPool &RenderFrame::request_descriptor_pool(DescriptorSetLayout &descriptor_set_layout, size_t thread_index)
+DescriptorPool &RenderFrame::request_descriptor_pool(const DescriptorSetLayout &descriptor_set_layout, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 

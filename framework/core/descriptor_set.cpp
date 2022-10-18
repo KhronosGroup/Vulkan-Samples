@@ -26,7 +26,7 @@
 namespace vkb
 {
 DescriptorSet::DescriptorSet(Device &                                  device,
-                             DescriptorSetLayout &                     descriptor_set_layout,
+                             const DescriptorSetLayout &               descriptor_set_layout,
                              DescriptorPool &                          descriptor_pool,
                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
                              const BindingMap<VkDescriptorImageInfo> & image_infos) :

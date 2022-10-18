@@ -45,7 +45,7 @@ class DescriptorSet
 	 * @param image_infos The descriptors that describe image data
 	 */
 	DescriptorSet(Device &                                  device,
-	              DescriptorSetLayout &                     descriptor_set_layout,
+	              const DescriptorSetLayout &               descriptor_set_layout,
 	              DescriptorPool &                          descriptor_pool,
 	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {},
 	              const BindingMap<VkDescriptorImageInfo> & image_infos  = {});
@@ -99,7 +99,7 @@ class DescriptorSet
   private:
 	Device &device;
 
-	DescriptorSetLayout &descriptor_set_layout;
+	const DescriptorSetLayout &descriptor_set_layout;
 
 	DescriptorPool &descriptor_pool;
 

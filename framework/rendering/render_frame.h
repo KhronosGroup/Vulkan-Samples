@@ -123,13 +123,13 @@ class RenderFrame
 	                                      VkCommandBufferLevel     level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 	                                      size_t                   thread_index = 0);
 
-	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
+	DescriptorSet &request_descriptor_set(const DescriptorSetLayout &               descriptor_set_layout,
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
 	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
 	                                      size_t                                    thread_index = 0);
 
-	DescriptorPool &request_descriptor_pool(DescriptorSetLayout &descriptor_set_layout,
-	                                        size_t               thread_index = 0);
+	DescriptorPool &request_descriptor_pool(const DescriptorSetLayout &descriptor_set_layout,
+	                                        size_t                     thread_index = 0);
 
 	void clear_descriptors();
 
