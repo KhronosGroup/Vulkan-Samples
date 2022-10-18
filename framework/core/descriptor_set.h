@@ -62,7 +62,7 @@ class DescriptorSet
 	DescriptorSet &operator=(DescriptorSet &&) = delete;
 
 	/**
-	 * @brief Resets the DescriptorSet state 
+	 * @brief Resets the DescriptorSet state
 	 *        Optionally prepares a new set of buffer infos and/or image infos
 	 * @param new_buffer_infos A map of buffer descriptors and their respective bindings
 	 * @param new_image_infos A map of image descriptors and their respective bindings
@@ -77,7 +77,7 @@ class DescriptorSet
 	void update(const std::vector<uint32_t> &bindings_to_update = {});
 
 	/**
-	 * @brief Appies pending write operations without updating the state
+	 * @brief Applies pending write operations without updating the state
 	 */
 	void apply_writes() const;
 
