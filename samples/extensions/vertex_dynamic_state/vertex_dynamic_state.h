@@ -19,7 +19,7 @@
 
 #include "api_vulkan_sample.h"
 
-class vertex_dynamic_state : public ApiVulkanSample
+class VertexDynamicState : public ApiVulkanSample
 {
   public:
 	struct
@@ -71,8 +71,8 @@ class vertex_dynamic_state : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh>  object;
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
-	vertex_dynamic_state();
-	~vertex_dynamic_state();
+	VertexDynamicState();
+	~VertexDynamicState();
 
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
