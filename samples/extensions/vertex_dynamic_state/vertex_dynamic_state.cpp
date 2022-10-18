@@ -311,7 +311,7 @@ void vertex_dynamic_state::create_pipeline()
  * 
  * 	@note In case of Vertex Input Dynamic State feature sample need to create model in runtime because of requirement to have different data structure.
  * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure in framework files).
- * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is call for dynamically change Vertex Input data.
+ * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is called for dynamically change Vertex Input data.
  */
 void vertex_dynamic_state::build_command_buffers()
 {
