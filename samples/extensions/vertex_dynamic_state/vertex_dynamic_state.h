@@ -49,19 +49,11 @@ class VertexDynamicState : public ApiVulkanSample
 		uint32_t                           index_count;
 	} cube;
 
-	typedef enum
-	{
-		VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT,
-		VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT
-	} vertexDynamicStateVertexStruct_t;
-
-	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
-	VkPipeline                                         model_pipeline{VK_NULL_HANDLE};
-	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
-	VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT vertex_input_features{};
-	VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT graphics_pipeline_library{};
-	VkVertexInputBindingDescription2EXT                vertex_bindings_description_ext{};
-	VkVertexInputAttributeDescription2EXT              vertex_attribute_description_ext[2]{};
+	VkPipelineLayout                      pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline                            model_pipeline{VK_NULL_HANDLE};
+	VkPipeline                            skybox_pipeline{VK_NULL_HANDLE};
+	std::vector<VkVertexInputBindingDescription2EXT>   vertex_bindings_description_ext{1};
+	std::vector<VkVertexInputAttributeDescription2EXT> vertex_attribute_description_ext{2};
 
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
@@ -91,7 +83,6 @@ class VertexDynamicState : public ApiVulkanSample
 
 	void model_data_creation();
 	void draw_created_model(VkCommandBuffer commandBuffer);
-	void change_vertex_input_data(vertexDynamicStateVertexStruct_t variant);
 
 #if VK_NO_PROTOTYPES
 	PFN_vkCmdSetVertexInputEXT vkCmdSetVertexInputEXT{VK_NULL_HANDLE};

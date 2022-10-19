@@ -236,7 +236,7 @@ void VertexDynamicState::create_pipeline()
 
 	/* Initialize vertex input binding and attributes structures  */
 
-	vertex_bindings_description_ext = vkb::initializers::vertex_input_binding_description2ext(
+	vertex_bindings_description_ext[0] = vkb::initializers::vertex_input_binding_description2ext(
 	    0,
 	    sizeof(Vertex),
 	    VK_VERTEX_INPUT_RATE_VERTEX,
@@ -335,7 +335,7 @@ void VertexDynamicState::build_command_buffers()
 		render_pass_begin_info.framebuffer              = framebuffers[i];
 		render_pass_begin_info.renderArea.extent.width  = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount          = clear_values.size();
+		render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
 		render_pass_begin_info.pClearValues             = clear_values.data();
 
 		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -350,19 +350,37 @@ void VertexDynamicState::build_command_buffers()
 		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
 		/* skybox */
-		change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, &vertex_bindings_description_ext, 2, vertex_attribute_description_ext);
+		/* First set of vertex input dynamic data (Vertex structure) */
+		vertex_bindings_description_ext[0].stride  = sizeof(Vertex);
+		vertex_attribute_description_ext[1].offset = sizeof(float) * 3;
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
+
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox_pipeline);
 		draw_model(skybox, draw_cmd_buffer);
 
 		/* object */
-		vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, &vertex_bindings_description_ext, 2, vertex_attribute_description_ext);
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
+
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 		draw_model(object, draw_cmd_buffer);
 
-		/* Change vertex input architecture from framework "Vertex" to sample "SampleVertex" */
-		change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT);
-		vkCmdSetVertexInputEXT(draw_cmd_buffer, 1, &vertex_bindings_description_ext, 2, vertex_attribute_description_ext);
+		/* Second set of vertex input dynamic data (SampleVertex structure) */
+		vertex_bindings_description_ext[0].stride  = sizeof(SampleVertex);
+		vertex_attribute_description_ext[1].offset = 2 * (sizeof(float) * 3);
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
+
 		draw_created_model(draw_cmd_buffer);
 
 		/* UI */
@@ -471,7 +489,6 @@ void VertexDynamicState::model_data_creation()
 {
 	constexpr uint32_t                     vertex_count = 8;
 	std::array<SampleVertex, vertex_count> vertices;
-	//SampleVertex *     vertices     = new SampleVertex[vertex_count];
 
 	vertices[0].pos = {0.0f, 0.0f, 0.0f};
 	vertices[1].pos = {1.0f, 0.0f, 0.0f};
@@ -505,9 +522,6 @@ void VertexDynamicState::model_data_creation()
 	{
 		vertices[i].pos *= glm::vec3(10.0f, 10.0f, 10.0f);
 		vertices[i].pos -= glm::vec3(5.0f, 20.0f, 5.0f);
-#if (DEBUG_SAMPLE == 1) /* Macro from cmake to print vertices positions */
-		LOGI("Vertices position: X{}, Y{}, Z{}.", vertices[i].pos.x, vertices[i].pos.y, vertices[i].pos.z);
-#endif
 	}
 
 	constexpr uint32_t index_count        = 36;
@@ -540,14 +554,14 @@ void VertexDynamicState::model_data_creation()
 	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 	    vertex_buffer_size,
 	    &vertex_staging.memory,
-	    &vertices);
+	    vertices.data());
 
 	index_staging.buffer = get_device().create_buffer(
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 	    index_buffer_size,
 	    &index_staging.memory,
-	    &indices);
+	    indices.data());
 
 	cube.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
@@ -588,35 +602,6 @@ void VertexDynamicState::model_data_creation()
 	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
 }
 
-/**
- * 	@fn void VertexDynamicState::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
- * 	@brief Change Vertex Input data structure dynamically in runtime.
- */
-void VertexDynamicState::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
-{
-	if (variant == VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT)
-	{
-		vertex_bindings_description_ext.stride = sizeof(Vertex);
-
-		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset = 0;
-
-		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset = sizeof(float) * 3;
-	}
-	else if (variant == VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT)
-	{
-		/* MK: binding information for second vertex input data architecture) */
-
-		vertex_bindings_description_ext.stride = sizeof(SampleVertex);
-
-		vertex_attribute_description_ext[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[0].offset = 0;
-
-		vertex_attribute_description_ext[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-		vertex_attribute_description_ext[1].offset = 2 * (sizeof(float) * 3);
-	}
-}
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state()
 {
 	return std::make_unique<VertexDynamicState>();
