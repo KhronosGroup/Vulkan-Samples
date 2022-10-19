@@ -181,19 +181,25 @@ CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBu
 	return (*command_pool_it)->request_command_buffer(level);
 }
 
-DescriptorSet &RenderFrame::request_descriptor_set(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, size_t thread_index)
+VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, const std::vector<uint32_t> &bindings_to_update, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
-	auto &descriptor_pool = request_descriptor_pool(descriptor_set_layout, thread_index);
-	return request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
-}
-
-DescriptorPool &RenderFrame::request_descriptor_pool(const DescriptorSetLayout &descriptor_set_layout, size_t thread_index)
-{
-	assert(thread_index < thread_count && "Thread index is out of bounds");
-
-	return request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
+	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
+	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)
+	{
+		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
+		auto &descriptor_set = request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+		descriptor_set.update(bindings_to_update);
+		return descriptor_set.get_handle();
+	}
+	else
+	{
+		// Request a descriptor pool, allocate a descriptor set, write buffer and image data to it
+		DescriptorSet descriptor_set{device, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos};
+		descriptor_set.apply_writes();
+		return descriptor_set.get_handle();
+	}
 }
 
 void RenderFrame::update_descriptor_sets(size_t thread_index)
@@ -229,11 +235,6 @@ void RenderFrame::set_buffer_allocation_strategy(BufferAllocationStrategy new_st
 void RenderFrame::set_descriptor_management_strategy(DescriptorManagementStrategy new_strategy)
 {
 	descriptor_management_strategy = new_strategy;
-}
-
-DescriptorManagementStrategy RenderFrame::get_descriptor_management_strategy() const
-{
-	return descriptor_management_strategy;
 }
 
 BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, const VkDeviceSize size, size_t thread_index)
