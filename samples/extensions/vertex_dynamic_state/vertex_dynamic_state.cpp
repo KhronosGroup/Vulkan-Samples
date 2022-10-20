@@ -246,13 +246,13 @@ void VertexDynamicState::create_pipeline()
 	    0,
 	    0,
 	    VK_FORMAT_R32G32B32_SFLOAT,
-	    0);
+	    offsetof(Vertex, pos));
 
 	vertex_attribute_description_ext[1] = vkb::initializers::vertex_input_attribute_description2ext(
 	    0,
 	    1,
 	    VK_FORMAT_R32G32B32_SFLOAT,
-	    2 * (sizeof(float) * 3));
+	    offsetof(Vertex, normal));
 
 	/* Use the pNext to point to the rendering create struct */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -352,7 +352,7 @@ void VertexDynamicState::build_command_buffers()
 		/* skybox */
 		/* First set of vertex input dynamic data (Vertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(Vertex);
-		vertex_attribute_description_ext[1].offset = sizeof(float) * 3;
+		vertex_attribute_description_ext[1].offset = offsetof(Vertex, normal);
 		vkCmdSetVertexInputEXT(draw_cmd_buffer,
 		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
 		                       vertex_bindings_description_ext.data(),
@@ -363,18 +363,12 @@ void VertexDynamicState::build_command_buffers()
 		draw_model(skybox, draw_cmd_buffer);
 
 		/* object */
-		vkCmdSetVertexInputEXT(draw_cmd_buffer,
-		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
-		                       vertex_bindings_description_ext.data(),
-		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
-		                       vertex_attribute_description_ext.data());
-
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 		draw_model(object, draw_cmd_buffer);
 
 		/* Second set of vertex input dynamic data (SampleVertex structure) */
 		vertex_bindings_description_ext[0].stride  = sizeof(SampleVertex);
-		vertex_attribute_description_ext[1].offset = 2 * (sizeof(float) * 3);
+		vertex_attribute_description_ext[1].offset = offsetof(SampleVertex, normal);
 		vkCmdSetVertexInputEXT(draw_cmd_buffer,
 		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
 		                       vertex_bindings_description_ext.data(),

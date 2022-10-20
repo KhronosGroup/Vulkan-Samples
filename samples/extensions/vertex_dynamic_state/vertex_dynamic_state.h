@@ -49,9 +49,9 @@ class VertexDynamicState : public ApiVulkanSample
 		uint32_t                           index_count;
 	} cube;
 
-	VkPipelineLayout                      pipeline_layout{VK_NULL_HANDLE};
-	VkPipeline                            model_pipeline{VK_NULL_HANDLE};
-	VkPipeline                            skybox_pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout                                   pipeline_layout{VK_NULL_HANDLE};
+	VkPipeline                                         model_pipeline{VK_NULL_HANDLE};
+	VkPipeline                                         skybox_pipeline{VK_NULL_HANDLE};
 	std::vector<VkVertexInputBindingDescription2EXT>   vertex_bindings_description_ext{1};
 	std::vector<VkVertexInputAttributeDescription2EXT> vertex_attribute_description_ext{2};
 
