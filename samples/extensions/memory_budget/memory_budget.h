@@ -91,7 +91,14 @@ class MemoryBudget : public ApiVulkanSample
 	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
 	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
 
-	int mesh_density = 8000;
+	struct ConvertedMemory
+	{
+		uint64_t    data  = 0;
+		std::string units = "Null";
+	} converted_memory{};
+
+	const int      mesh_density             = 2048;
+	const uint64_t data_convert_coefficient = 1024;
 
 	uint32_t     device_memory_heap_count   = 0;
 	VkDeviceSize device_memory_total_usage  = 0;
@@ -99,23 +106,24 @@ class MemoryBudget : public ApiVulkanSample
 
 	MemoryBudget();
 	~MemoryBudget() override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void build_command_buffers() override;
-	void initialize_device_memory_properties();        // memory budget extension related function
-	void update_device_memory_properties();            // memory budget extension related function
-	void load_assets();
-	void setup_descriptor_pool();
-	void setup_descriptor_set_layout();
-	void setup_descriptor_set();
-	void prepare_pipelines();
-	void prepare_instance_data();
-	void prepare_uniform_buffers();
-	void update_uniform_buffer(float delta_time);
-	void draw();
-	bool prepare(vkb::Platform &platform) override;
-	void render(float delta_time) override;
-	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void resize(uint32_t width, uint32_t height) override;
+	void                          request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void                          build_command_buffers() override;
+	void                          initialize_device_memory_properties();                 // memory budget extension related function
+	MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);        // memory budget extension related function
+	void                          update_device_memory_properties();                     // memory budget extension related function
+	void                          load_assets();
+	void                          setup_descriptor_pool();
+	void                          setup_descriptor_set_layout();
+	void                          setup_descriptor_set();
+	void                          prepare_pipelines();
+	void                          prepare_instance_data();
+	void                          prepare_uniform_buffers();
+	void                          update_uniform_buffer(float delta_time);
+	void                          draw();
+	bool                          prepare(vkb::Platform &platform) override;
+	void                          render(float delta_time) override;
+	void                          on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void                          resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_memory_budget();

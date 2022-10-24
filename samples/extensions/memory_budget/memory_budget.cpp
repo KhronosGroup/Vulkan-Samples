@@ -153,6 +153,33 @@ void MemoryBudget::initialize_device_memory_properties()
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
 }
 
+MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory)
+{
+	MemoryBudget::ConvertedMemory returnMe{};
+
+	if (input_memory >= data_convert_coefficient && input_memory <= (data_convert_coefficient * data_convert_coefficient))
+	{
+		returnMe.data  = (input_memory / data_convert_coefficient);
+		returnMe.units = "KB";
+	}
+	else if (input_memory >= (data_convert_coefficient * data_convert_coefficient) && input_memory <= (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient))
+	{
+		returnMe.data  = (input_memory / (data_convert_coefficient * data_convert_coefficient));
+		returnMe.units = "MB";
+	}
+	else if (input_memory >= (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient))
+	{
+		returnMe.data  = input_memory / (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient);
+		returnMe.units = "GB";
+	}
+	else
+	{
+		returnMe.data  = input_memory;
+		returnMe.units = "B";
+	}
+	return returnMe;
+}
+
 void MemoryBudget::update_device_memory_properties()
 {
 	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
@@ -472,12 +499,6 @@ void MemoryBudget::prepare_instance_data()
 	// Destroy staging resources
 	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
 	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
-
-	// Update the device memory properties and calculate the total heap memory usage and budget:
-	// If no changes happen to the total number of instanced meshes, then device should now have allocated total memory expected to be used.
-	// While the memory_budget_ext is performant enough to be called every frame, this sample only has one allocation happen if all preparation remain the same.
-	// Thus, no update to the memory totals beyond the first allocation is necessary.
-	update_device_memory_properties();
 }
 
 void MemoryBudget::prepare_uniform_buffers()
@@ -539,6 +560,13 @@ bool MemoryBudget::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
+
+	// Update the device memory properties and calculate the total heap memory usage and budget:
+	// If no changes happen to the total number of instanced meshes, then device should now have allocated total memory expected to be used.
+	// While the memory_budget_ext is performant enough to be called every frame, this sample only has one allocation happen if all preparation remain the same.
+	// Thus, no update to the memory totals beyond the first allocation is necessary.
+	update_device_memory_properties();
+
 	prepared = true;
 	return true;
 }
@@ -558,19 +586,22 @@ void MemoryBudget::render(float delta_time)
 
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.text("Total Memory Usage: %llu MB", device_memory_total_usage / 1000000);
-	drawer.text("Total Memory Budget: %llu MB", device_memory_total_budget / 1000000);
+	converted_memory = update_converted_memory(device_memory_total_usage);
+	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	converted_memory = update_converted_memory(device_memory_total_budget);
+	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
 
 	if (drawer.header("Memory Heap Details:"))
 	{
 		for (uint32_t i = 0; i < device_memory_heap_count; i++)
 		{
-			drawer.text("Memory Heap %lu: Usage: %llu MB | Budget: %llu MB", i, physical_device_memory_budget_properties.heapUsage[i] / 1000000, physical_device_memory_budget_properties.heapBudget[i] / 1000000);
+			converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
+			drawer.text("Memory Heap %lu: Usage: %llu %s", i, converted_memory.data, converted_memory.units.c_str());
+
+			converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
+			drawer.text("Memory Heap %lu: Budget: %llu %s", i, converted_memory.data, converted_memory.units.c_str());
 		}
 	}
-
-	if (drawer.header("Mesh Density Control"))
-		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
 }
 
 void MemoryBudget::resize(uint32_t width, uint32_t height)
