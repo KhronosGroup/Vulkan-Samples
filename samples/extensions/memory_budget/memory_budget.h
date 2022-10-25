@@ -93,12 +93,15 @@ class MemoryBudget : public ApiVulkanSample
 
 	struct ConvertedMemory
 	{
-		uint64_t    data  = 0;
-		std::string units = "Null";
+		uint64_t    data;
+		std::string units;
 	} converted_memory{};
 
-	const int      mesh_density             = 2048;
-	const uint64_t data_convert_coefficient = 1024;
+	const int mesh_density = 2048;
+
+	const uint64_t kilobyte_coefficient = 1024;
+	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
+	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
 
 	uint32_t     device_memory_heap_count   = 0;
 	VkDeviceSize device_memory_total_usage  = 0;

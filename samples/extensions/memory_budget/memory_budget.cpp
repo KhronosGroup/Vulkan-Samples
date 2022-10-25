@@ -157,26 +157,27 @@ MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t inp
 {
 	MemoryBudget::ConvertedMemory returnMe{};
 
-	if (input_memory >= data_convert_coefficient && input_memory <= (data_convert_coefficient * data_convert_coefficient))
-	{
-		returnMe.data  = (input_memory / data_convert_coefficient);
-		returnMe.units = "KB";
-	}
-	else if (input_memory >= (data_convert_coefficient * data_convert_coefficient) && input_memory <= (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient))
-	{
-		returnMe.data  = (input_memory / (data_convert_coefficient * data_convert_coefficient));
-		returnMe.units = "MB";
-	}
-	else if (input_memory >= (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient))
-	{
-		returnMe.data  = input_memory / (data_convert_coefficient * data_convert_coefficient * data_convert_coefficient);
-		returnMe.units = "GB";
-	}
-	else
+	if ( input_memory < kilobyte_coefficient )
 	{
 		returnMe.data  = input_memory;
 		returnMe.units = "B";
 	}
+	else if ( input_memory>= kilobyte_coefficient && input_memory < megabyte_coefficient)
+	{
+		returnMe.data  = input_memory / kilobyte_coefficient;
+		returnMe.units = "KB";
+	}
+	else if ( input_memory >= megabyte_coefficient && input_memory < gigabyte_coefficient )
+	{
+		returnMe.data  = input_memory / megabyte_coefficient;
+		returnMe.units = "MB";
+	}
+	else
+	{
+		returnMe.data  = input_memory / gigabyte_coefficient;
+		returnMe.units = "GB";
+	}
+
 	return returnMe;
 }
 
