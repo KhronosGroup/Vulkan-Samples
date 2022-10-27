@@ -16,9 +16,9 @@
  */
 
 /*
-* Basic example for VK_EXT_mesh there is only a mesh shader and a fragment shader.
-* The mesh shader creates the vertices for a single triangle.
-*/
+ * Basic example for VK_EXT_mesh there is only a mesh shader and a fragment shader.
+ * The mesh shader creates the vertices for a single triangle.
+ */
 
 #pragma once
 
@@ -28,15 +28,15 @@
 class MeshShading : public ApiVulkanSample
 {
   public:
-	VkPipeline                   pipeline;
-	VkPipelineLayout             pipeline_layout;
-	VkDescriptorSet              descriptor_set;
-	VkDescriptorSetLayout        descriptor_set_layout;
+	VkPipeline            pipeline;
+	VkPipelineLayout      pipeline_layout;
+	VkDescriptorSet       descriptor_set;
+	VkDescriptorSetLayout descriptor_set_layout;
 
 	MeshShading();
 	~MeshShading() override;
 
-	void                 request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
 	void prepare_pipelines();
 	void build_command_buffers() override;

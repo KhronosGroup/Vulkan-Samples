@@ -131,7 +131,7 @@ void MeshShading::draw()
 void MeshShading::prepare_pipelines()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
@@ -140,7 +140,7 @@ void MeshShading::prepare_pipelines()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings;
-	VkDescriptorSetLayoutCreateInfo descriptor_layout =
+	VkDescriptorSetLayoutCreateInfo           descriptor_layout =
 	    vkb::initializers::descriptor_set_layout_create_info(
 	        set_layout_bindings.data(),
 	        static_cast<uint32_t>(set_layout_bindings.size()));
@@ -243,4 +243,3 @@ std::unique_ptr<vkb::VulkanSample> create_mesh_shading()
 {
 	return std::make_unique<MeshShading>();
 }
-
