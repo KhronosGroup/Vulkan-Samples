@@ -118,6 +118,14 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	{
 		return VK_SHADER_STAGE_CALLABLE_BIT_KHR;
 	}
+	else if (ext == "mesh")
+	{
+		return VK_SHADER_STAGE_MESH_BIT_EXT;
+	}
+	else if (ext == "task")
+	{
+		return VK_SHADER_STAGE_TASK_BIT_EXT;
+	}
 
 	throw std::runtime_error("File extension `" + ext + "` does not have a vulkan shader stage.");
 }
