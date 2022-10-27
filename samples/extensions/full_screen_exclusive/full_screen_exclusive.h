@@ -20,37 +20,32 @@
  */
 
 #pragma once
-
 #include "api_vulkan_sample.h"
 
 class FullScreenExclusive : public ApiVulkanSample
 {
   public:
-	struct
-	{
-		Texture skybox_map;
-	} textures;
+	Texture skybox_map;
 
 	struct Models
 	{
-		std::unique_ptr<vkb::sg::SubMesh>              skybox;
-		std::vector<std::unique_ptr<vkb::sg::SubMesh>> objects;
-		std::vector<glm::mat4>                         transforms;
-		int32_t                                        object_index = 0;
-	} models;
+		std::unique_ptr<vkb::sg::SubMesh> skybox;
+		std::unique_ptr<vkb::sg::SubMesh> object;
+		glm::mat4                         transform;
+	} models{};
 
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> matrices;
 		std::unique_ptr<vkb::core::Buffer> params;
-	} uniform_buffers;
+	} uniform_buffers{};
 
 	struct UBOVS
 	{
-		glm::mat4 projection;
-		glm::mat4 modelview;
-		glm::mat4 skybox_modelview;
-		float     modelscale = 0.05f;
+		glm::mat4 projection{};
+		glm::mat4 model_view{};
+		glm::mat4 skybox_model_view{};
+		float     model_scale = 0.05f;
 	} ubo_vs;
 
 	// It is the binding 2 from gBuffer.frag, and defined using the same structure,
@@ -70,36 +65,34 @@ class FullScreenExclusive : public ApiVulkanSample
 		VkPipeline skybox;
 		VkPipeline reflect;
 		VkPipeline composition;
-	} pipelines;
+	} pipelines{};
 
 	struct PipelineLayouts
 	{
 		VkPipelineLayout models;
 		VkPipelineLayout composition;
-	} pipeline_layouts;
+	} pipeline_layouts{};
 
 	struct DescriptorSets
 	{
-		VkDescriptorSet object;
-		// Add models here:
-		VkDescriptorSet object2;
 		VkDescriptorSet skybox;
+		VkDescriptorSet object;
 		VkDescriptorSet composition;
-	} descriptor_sets;
+	} descriptor_sets{};
 
 	struct DescriptorSetLayouts
 	{
 		VkDescriptorSetLayout models;
 		VkDescriptorSetLayout composition;
-	} descriptor_set_layouts;
+	} descriptor_set_layouts{};
 
 	// Framebuffer for offscreen rendering
 	struct FrameBufferAttachment
 	{
-		VkImage        image;
-		VkDeviceMemory mem;
-		VkImageView    view;
-		VkFormat       format;
+		VkImage        image{};
+		VkDeviceMemory mem{};
+		VkImageView    view{};
+		VkFormat       format{};
 		void           destroy(VkDevice device)
 		{
 			vkDestroyImageView(device, view, nullptr);
@@ -116,23 +109,25 @@ class FullScreenExclusive : public ApiVulkanSample
 		FrameBufferAttachment depth;
 		VkRenderPass          render_pass;
 		VkSampler             sampler;
-	} offscreen;
+	} offscreen{};
 
-	struct
+	struct FilterPass
 	{
 		int32_t               width, height;
 		VkFramebuffer         framebuffer;
 		FrameBufferAttachment color[1];
 		VkRenderPass          render_pass;
 		VkSampler             sampler;
-	} filter_pass;
+	} filter_pass{};
 
 	// ui overlay sample
-	float input_box_sample = 1.0f;
-	bool  checkbox_sample  = true;
+	int                      combo_box_index = 0;
+	std::vector<std::string> combo_box_selections{};
+	bool                     checkbox_sample = true;
 
 	FullScreenExclusive();
 	~FullScreenExclusive();
+	void initialize();
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
 	void create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);

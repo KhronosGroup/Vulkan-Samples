@@ -16,14 +16,21 @@
  */
 
 #include "full_screen_exclusive.h"
-
 #include "scene_graph/components/sub_mesh.h"
 
 FullScreenExclusive::FullScreenExclusive()
 {
 	title = "Full Screen Exclusive Extension";
 
-	// Add extension here:
+	// Enable instance and device extensions required to use VK_EXT_full_screen_exclusive
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_SURFACE_EXTENSION_NAME);
+	add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+	add_device_extension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+
+	// Initialize
+	FullScreenExclusive::initialize();
 }
 
 FullScreenExclusive::~FullScreenExclusive()
@@ -60,8 +67,16 @@ FullScreenExclusive::~FullScreenExclusive()
 
 		filter_pass.color[0].destroy(get_device().get_handle());
 
-		vkDestroySampler(get_device().get_handle(), textures.skybox_map.sampler, nullptr);
+		vkDestroySampler(get_device().get_handle(), skybox_map.sampler, nullptr);
 	}
+}
+
+void FullScreenExclusive::initialize()
+{
+	combo_box_selections.push_back("Selection 1");
+	combo_box_selections.push_back("Selection 2");
+	combo_box_selections.push_back("Selection 3");
+	combo_box_selections.push_back("Selection 4");
 }
 
 void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -116,24 +131,14 @@ void FullScreenExclusive::build_command_buffers()
 			VkDeviceSize offsets[1] = {0};
 
 			// Skybox
-
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
 			draw_model(models.skybox, draw_cmd_buffers[i]);
 
-			// 3D object
+			// Teapot
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, NULL);
-
-			// draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
-
-			draw_model(models.objects[0], draw_cmd_buffers[i]);
-
-			// Add model object2
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object2, 0, NULL);
-
-			draw_model(models.objects[2], draw_cmd_buffers[i]);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
+			draw_model(models.object, draw_cmd_buffers[i]);
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
@@ -160,7 +165,7 @@ void FullScreenExclusive::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
 
 			// Scene
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
@@ -190,7 +195,7 @@ void FullScreenExclusive::create_attachment(VkFormat format, VkImageUsageFlagBit
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
 		aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT..VK_FORMAT_D32_SFLOAT_S8_UINT
+
 		if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
 		{
 			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -235,23 +240,20 @@ void FullScreenExclusive::create_attachment(VkFormat format, VkImageUsageFlagBit
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
 }
 
-// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void FullScreenExclusive::prepare_offscreen_buffer()
 {
+	// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 	{
 		offscreen.width  = width;
 		offscreen.height = height;
 
 		// Color attachments
-
-		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
 
 		// Init attachment properties
@@ -293,7 +295,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		subpass.colorAttachmentCount    = 2;
 		subpass.pDepthStencilAttachment = &depth_reference;
 
-		// Use subpass dependencies for attachment layout transitions
+		// Use sub-pass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies;
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -330,7 +332,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = offscreen.render_pass;
 		framebuffer_create_info.pAttachments            = attachments.data();
 		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
@@ -365,7 +367,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		// Two floating point color buffers
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
 
 		// Init attachment properties
@@ -386,7 +388,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		subpass.pColorAttachments    = color_references.data();
 		subpass.colorAttachmentCount = 1;
 
-		// Use subpass dependencies for attachment layput transitions
+		// Use sub-pass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies;
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -421,7 +423,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = filter_pass.render_pass;
 		framebuffer_create_info.pAttachments            = attachments.data();
 		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
@@ -450,26 +452,17 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 void FullScreenExclusive::load_assets()
 {
 	// Models
-	models.skybox                      = load_model("scenes/cube.gltf");
-	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
-	for (auto file : filenames)
-	{
-		auto object = load_model("scenes/" + file);
-		models.objects.emplace_back(std::move(object));
-	}
+	models.skybox = load_model("scenes/cube.gltf");
+	models.object = load_model("scenes/teapot.gltf");
 
-	// Transforms
-	auto geosphere_matrix = glm::mat4(1.0f);
-	auto teapot_matrix    = glm::mat4(1.0f);
-	teapot_matrix         = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	teapot_matrix         = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	auto torus_matrix     = glm::mat4(1.0f);
-	models.transforms.push_back(geosphere_matrix);
-	models.transforms.push_back(teapot_matrix);
-	models.transforms.push_back(torus_matrix);
+	// Transform
+	auto teapot_matrix = glm::mat4(1.0f);
+	teapot_matrix      = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
+	teapot_matrix      = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	models.transform   = teapot_matrix;
 
 	// Load skybox cube map
-	textures.skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
+	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
 }
 
 void FullScreenExclusive::setup_descriptor_pool()
@@ -477,7 +470,7 @@ void FullScreenExclusive::setup_descriptor_pool()
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
-	uint32_t                   num_descriptor_sets = 5;
+	uint32_t                   num_descriptor_sets = 4;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
@@ -489,7 +482,6 @@ void FullScreenExclusive::setup_descriptor_set_layout()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
-	    // add bindings here
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -521,45 +513,31 @@ void FullScreenExclusive::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
-	// 3D object descriptor set
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
-
-	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.skybox_map);
-	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
-
-	// Adding descriptor for another object
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object2));
-
-	// This is the binding number corresponding to the .frag binding layer
-	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	environment_image_descriptor = create_descriptor(textures.skybox_map);
-	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_sets.object2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
-
 	// Sky box descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
 
-	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	environment_image_descriptor = create_descriptor(textures.skybox_map);
-	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	write_descriptor_sets        = {
+	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
+	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(skybox_map);
+	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
+	// Teapot descriptor set
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
+
+	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
+	environment_image_descriptor = create_descriptor(skybox_map);
+	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
+	write_descriptor_sets        = {
+        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
+    };
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
 	// Composition descriptor set
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
@@ -574,7 +552,7 @@ void FullScreenExclusive::setup_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void FullScreenExclusive::prepare_pipelines()
@@ -667,8 +645,8 @@ void FullScreenExclusive::prepare_pipelines()
 
 	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
-	uint32_t shadertype                  = 0;
-	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
+	uint32_t shader_type                  = 0;
+	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shader_type), &shader_type);
 	shader_stages[0].pSpecializationInfo = &specialization_info;
 	shader_stages[1].pSpecializationInfo = &specialization_info;
 
@@ -678,7 +656,7 @@ void FullScreenExclusive::prepare_pipelines()
 	// skybox and models are all addressed inside gbuffer, which different pass actually
 	// 1 for skybox
 	// 2 for reflection form an object
-	shadertype = 1;
+	shader_type = 1;
 
 	// Enable depth test and write
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
@@ -703,10 +681,9 @@ void FullScreenExclusive::prepare_uniform_buffers()
 void FullScreenExclusive::update_uniform_buffers()
 {
 	ubo_vs.projection = camera.matrices.perspective;
+	ubo_vs.model_view = camera.matrices.view * models.transform;
+	ubo_vs.skybox_model_view = camera.matrices.view;
 
-	ubo_vs.modelview = camera.matrices.view * models.transforms[0];
-
-	ubo_vs.skybox_modelview = camera.matrices.view;
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
@@ -734,8 +711,6 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
@@ -765,9 +740,9 @@ void FullScreenExclusive::render(float delta_time)
 
 void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.input_float("Sample Input Box", &input_box_sample, 0.005f, 1);
+	drawer.combo_box("Sample Combo Box", &combo_box_index, combo_box_selections);
 	drawer.checkbox("Sample Check Box", &checkbox_sample);
-	drawer.text("Sample Text Message");
+	drawer.text("Sample Text: Message");
 }
 
 void FullScreenExclusive::resize(const uint32_t width, const uint32_t height)
