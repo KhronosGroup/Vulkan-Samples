@@ -126,7 +126,7 @@ class RenderFrame
 	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout &               descriptor_set_layout,
 	                                       const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
 	                                       const BindingMap<VkDescriptorImageInfo> & image_infos,
-	                                       const std::vector<uint32_t> &             bindings_to_update,
+	                                       bool                                      update_after_bind,
 	                                       size_t                                    thread_index = 0);
 
 	void clear_descriptors();
@@ -189,5 +189,7 @@ class RenderFrame
 	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
 	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
+
+	static std::vector<uint32_t> collect_bindings_to_update(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos);
 };
 }        // namespace vkb

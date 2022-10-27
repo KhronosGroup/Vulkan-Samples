@@ -130,6 +130,28 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 	return command_pool_it->second;
 }
 
+std::vector<uint32_t> RenderFrame::collect_bindings_to_update(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
+{
+	std::vector<uint32_t> bindings_to_update;
+
+	bindings_to_update.reserve(buffer_infos.size() + image_infos.size());
+	auto aggregate_binding_to_update = [&bindings_to_update, &descriptor_set_layout](const auto &infos_map) {
+		for (const auto &pair : infos_map)
+		{
+			uint32_t binding_index = pair.first;
+			if (!(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT) &&
+			    std::find(bindings_to_update.begin(), bindings_to_update.end(), binding_index) == bindings_to_update.end())
+			{
+				bindings_to_update.push_back(binding_index);
+			}
+		}
+	};
+	aggregate_binding_to_update(buffer_infos);
+	aggregate_binding_to_update(image_infos);
+
+	return bindings_to_update;
+}
+
 const FencePool &RenderFrame::get_fence_pool() const
 {
 	return fence_pool;
@@ -181,13 +203,21 @@ CommandBuffer &RenderFrame::request_command_buffer(const Queue &queue, CommandBu
 	return (*command_pool_it)->request_command_buffer(level);
 }
 
-VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, const std::vector<uint32_t> &bindings_to_update, size_t thread_index)
+VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos, bool update_after_bind, size_t thread_index)
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
 	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)
 	{
+		// The bindings we want to update before binding, if empty we update all bindings
+		std::vector<uint32_t> bindings_to_update;
+		// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
+		if (update_after_bind)
+		{
+			bindings_to_update = collect_bindings_to_update(descriptor_set_layout, buffer_infos, image_infos);
+		}
+
 		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
 		auto &descriptor_set = request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 		descriptor_set.update(bindings_to_update);

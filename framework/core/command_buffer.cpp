@@ -623,9 +623,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 			std::vector<uint32_t> dynamic_offsets;
 
-			// The bindings we want to update before binding, if empty we update all bindings
-			std::vector<uint32_t> bindings_to_update;
-
 			// Iterate over all resource bindings
 			for (auto &binding_it : resource_set.get_resource_bindings())
 			{
@@ -635,12 +632,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				// Check if binding exists in the pipeline layout
 				if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
 				{
-					// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
-					if (update_after_bind && !(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT))
-					{
-						bindings_to_update.push_back(binding_index);
-					}
-
 					// Iterate over all binding resources
 					for (auto &element_it : binding_resources)
 					{
@@ -716,7 +707,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 			    command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout,
 			                                                            buffer_infos,
 			                                                            image_infos,
-			                                                            bindings_to_update,
+			                                                            update_after_bind,
 			                                                            command_pool.get_thread_index());
 
 			// Bind descriptor set
