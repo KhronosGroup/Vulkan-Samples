@@ -23,13 +23,11 @@ layout(triangles, max_vertices = 64, max_primitives = 124) out;
 
 void main()
 {
-  uint vertexCount = 4;
-  uint triangleCount = 2;
+  uint vertexCount = 3;
+  uint triangleCount = 1;
   SetMeshOutputsEXT(vertexCount, triangleCount);
-  gl_MeshVerticesEXT[0].gl_Position = vec4(-1,-1, 0, 1);
-  gl_MeshVerticesEXT[1].gl_Position = vec4(-1, 1, 0, 1);
-  gl_MeshVerticesEXT[2].gl_Position = vec4(1, 1, 0, 1);
-  gl_MeshVerticesEXT[3].gl_Position = vec4(1, -1, 0, 1);
+  gl_MeshVerticesEXT[0].gl_Position = vec4(0.5,-0.5, 0, 1);
+  gl_MeshVerticesEXT[1].gl_Position = vec4(0.5, 0.5, 0, 1);
+  gl_MeshVerticesEXT[2].gl_Position = vec4(-0.5, 0.5, 0, 1);
   gl_PrimitiveTriangleIndicesEXT[0] =  uvec3(0, 1, 2);
-  gl_PrimitiveTriangleIndicesEXT[1] = uvec3(2, 3, 0);
 }
