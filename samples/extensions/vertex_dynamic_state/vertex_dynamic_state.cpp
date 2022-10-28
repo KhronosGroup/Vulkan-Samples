@@ -54,16 +54,6 @@ bool VertexDynamicState::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-#if VK_NO_PROTOTYPES
-	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
-	assert(!!instance);
-	vkCmdSetVertexInputEXT = (PFN_vkCmdSetVertexInputEXT) vkGetInstanceProcAddr(instance, "vkCmdSetVertexInputEXT");
-	if (!vkCmdSetVertexInputEXT)
-	{
-		throw std::runtime_error("Unable to dynamically load vkCmdSetVertexInputEXT");
-	}
-#endif
-
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.f, 1.0f, -6.0f});
 	camera.set_rotation({0.f, 0.f, 0.f});

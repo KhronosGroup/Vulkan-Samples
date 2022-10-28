@@ -34,7 +34,7 @@ Below is a comparison of common Vulkan vertex input description and dynamic one.
 | dynamic_state = {}                                                     | dynamic_state = {VK_DYNAMIC_STATE_VERTEX_INPUT_EXT}                                                                                            |
 | pVertexInputState = &vertex_input_state                                | pVertexInputState = VK_NULL_HANDLE                                                                                                   |
 | vkCreateGraphicsPipelines(model1)<br>vkCreateGraphicsPipelines(model2) | vkCreateGraphicsPipelines(model)                                                                                                               |
-| draw(model1, pipeline1)<br> draw(model2, pipeline2)                    | change_vertex_input_data(FIRST_VERTEX_ARCHITECTURE)<br>vkCmdSetVertexInputEXT(&vertex_input_state1)<br>draw(model, pipeline)<br>change_vertex_input_data(SECOND_VERTEX_ARCHITECTURE)<br>vkCmdSetVertexInputEXT(&vertex_input_state2)<br>draw(model, pipeline) |
+| draw(model1, pipeline1)<br> draw(model2, pipeline2)                    | vertex_bindings_description.stride  = sizeof(Vertex1);<br>vertex_attribute_description.offset = offsetof(Vertex1, param);<br>vkCmdSetVertexInputEXT(&vertex1_params)<br>draw(model1, pipeline)<br>vertex_bindings_description.stride  = sizeof(Vertex2);<br>vertex_attribute_description.offset = offsetof(Vertex2, param);<br>vkCmdSetVertexInputEXT(&vertex2_params)<br>draw(model2, pipeline) |
 
 More details are provided in the sections that follow.
 
@@ -48,7 +48,7 @@ Previously, developers had to create multiple pipeline's for models with differe
   // Binding description
   std::vector<VkVertexInputBindingDescription> vertex_input_bindings_1 = {
       vkb::initializers::vertex_input_binding_description(
-          0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+          0, sizeof(Vertex1), VK_VERTEX_INPUT_RATE_VERTEX),
   };
 
   // Attribute descriptions
@@ -56,7 +56,7 @@ Previously, developers had to create multiple pipeline's for models with differe
     vkb::initializers::vertex_input_attribute_description(
         0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                  // Position
     vkb::initializers::vertex_input_attribute_description(
-        0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),  // Normal
+        0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex1, normal)),  // Normal
 
     VkPipelineVertexInputStateCreateInfo vertex_input_state_1 =
       vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -75,7 +75,7 @@ Previously, developers had to create multiple pipeline's for models with differe
   // Binding description
   std::vector<VkVertexInputBindingDescription> vertex_input_bindings_2 = {
       vkb::initializers::vertex_input_binding_description(
-          0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+          0, sizeof(Vertex2), VK_VERTEX_INPUT_RATE_VERTEX),
   };
 
   // Attribute descriptions
@@ -83,7 +83,7 @@ Previously, developers had to create multiple pipeline's for models with differe
     vkb::initializers::vertex_input_attribute_description(
         0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                  // Position
     vkb::initializers::vertex_input_attribute_description(
-        0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 6),  // Normal (different offset than in vertex_input_attributes_1)
+        0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex2, normal)),  // Normal (different offset than in vertex_input_attributes_1)
 
     VkPipelineVertexInputStateCreateInfo vertex_input_state_2 =
       vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -108,7 +108,7 @@ bindings and attribute descriptions on runtime by calling `vkCmdSetVertexInputEX
 This extension extends 2 structures:<br> 
 `VkVertexInputBindingDescription` to `VkVertexInputBindingDescription2EXT`<br>
 `VkVertexInputAttributeDescription` to `VkVertexInputAttributeDescription2EXT`<br>
-An example of 2 sets of different vertex input data architectures "change_vertex_input_data" function is presented below. First model is loaded from assets (load_model function from framework), second model was created directly in code (have different vertex input data architecture).
+An example of 2 sets of different vertex input data architectures `Vertex` and `SampleVertex`. First model is loaded from assets (load_model function from framework), second model was created directly in code (have different vertex input data architecture).
 
 ```C++
   VkVertexInputBindingDescription2EXT   vertex_bindings_description_ext = {
@@ -123,38 +123,12 @@ An example of 2 sets of different vertex input data architectures "change_vertex
 	    0,
 	    0,
 	    VK_FORMAT_R32G32B32_SFLOAT,
-	    0),
+	    offsetof(Vertex, pos)),
   vkb::initializers::vertex_input_attribute_description2ext(
 	    0,
 	    1,
 	    VK_FORMAT_R32G32B32_SFLOAT,
-	    2 * (sizeof(float) * 3));
-  }
-
-  void vertex_dynamic_state::change_vertex_input_data(vertexDynamicStateVertexStruct_t variant)
-  {
-    if (variant == VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT)
-    {
-      vertex_input_binding.stride = sizeof(Vertex);
-
-      vertex_input_attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-      vertex_input_attributes[0].offset = 0;
-
-      vertex_input_attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-      vertex_input_attributes[1].offset = sizeof(float) * 3;
-    }
-    else if (variant == VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT)
-    {
-      /* MK: binding information for second vertex input data architecture) */
-
-      vertex_input_binding.stride = sizeof(SampleVertex);
-
-      vertex_input_attributes[0].format = VK_FORMAT_R32G32B32_SFLOAT;
-      vertex_input_attributes[0].offset = 0;
-
-      vertex_input_attributes[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-      vertex_input_attributes[1].offset = 2 * (sizeof(float) * 3);
-    }
+	    offsetof(Vertex, normal);
   }
 
     graphics_create_info.pVertexInputState = nullptr;
@@ -162,11 +136,24 @@ An example of 2 sets of different vertex input data architectures "change_vertex
     vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1,
                               &graphics_create_info, VK_NULL_HANDLE, &pipeline);
 
-    change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_FRAMEWORK_VERTEX_STRUCT);
-    vkCmdSetVertexInputEXT(vertex_input_state1);
+/* First set of vertex input dynamic data (Vertex structure) */
+		vertex_bindings_description_ext[0].stride  = sizeof(Vertex);
+		vertex_attribute_description_ext[1].offset = offsetof(Vertex, normal);
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
     draw_model(model1, pipeline);
-    change_vertex_input_data(VERTEX_DYNAMIC_STATE_USE_EXT_VERTEX_STRUCT);
-    vkCmdSetVertexInputEXT(vertex_input_state2);
+
+/* Second set of vertex input dynamic data (SampleVertex structure) */
+		vertex_bindings_description_ext[0].stride  = sizeof(SampleVertex);
+		vertex_attribute_description_ext[1].offset = offsetof(SampleVertex, normal);
+		vkCmdSetVertexInputEXT(draw_cmd_buffer,
+		                       static_cast<uint32_t>(vertex_bindings_description_ext.size()),
+		                       vertex_bindings_description_ext.data(),
+		                       static_cast<uint32_t>(vertex_attribute_description_ext.size()),
+		                       vertex_attribute_description_ext.data());
     draw_model(model2, pipeline);
 ```
 
@@ -192,18 +179,4 @@ typedef struct VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT {
     void*              pNext;
     VkBool32           vertexInputDynamicState;
 } VkPhysicalDeviceVertexInputDynamicStateFeaturesEXT;
-```
-
-In addition to enabling the extension, developers may need to dynamically query the function pointer for `vkCmdSetVertexInputEXT` if the preprocessor macro `VK_NO_PROTOTYPES` is enabled. This can be achieved through `vkGetInstanceProcAddr`:
-
-```C++
-#if VK_NO_PROTOTYPES
-	VkInstance instance = get_device().get_gpu().get_instance().get_handle();
-	assert(!!instance);
-	vkCmdSetVertexInputEXT = (PFN_vkCmdSetVertexInputEXT) vkGetInstanceProcAddr(instance, "vkCmdSetVertexInputEXT");
-	if (!vkCmdSetVertexInputEXT)
-	{
-		throw std::runtime_error("Unable to dynamically load vkCmdSetVertexInputEXT");
-	}
-#endif
 ```
