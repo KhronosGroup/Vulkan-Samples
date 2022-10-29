@@ -16,7 +16,7 @@
  */
 
 /*
- * Basic example for VK_EXT_mesh there is only a mesh shader and a fragment shader.
+ * Basic example for VK_EXT_mesh_shader there is only a mesh shader and a fragment shader.
  * The mesh shader creates the vertices for a single triangle.
  */
 

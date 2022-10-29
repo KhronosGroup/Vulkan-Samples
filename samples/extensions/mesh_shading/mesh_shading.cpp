@@ -16,7 +16,7 @@
  */
 
 /*
- * Basic example for VK_EXT_mesh there is only a mesh shader and a fragment shader.
+ * Basic example for VK_EXT_mesh_shader there is only a mesh shader and a fragment shader.
  * The mesh shader creates the vertices for a single triangle.
  */
 
@@ -92,7 +92,7 @@ void MeshShading::build_command_buffers()
 		// Mesh shaders need the vkCmdDrawMeshTasksExt
 		uint32_t num_workgroups_x = 1;
 		uint32_t num_workgroups_y = 1;
-		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, 0);
+		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, 1);
 
 		draw_ui(draw_cmd_buffers[i]);
 

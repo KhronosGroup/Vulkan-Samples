@@ -24,4 +24,8 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip Corporation"
     NAME "Mesh shader sample"
-    DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline.")
+    DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline."
+    SHADER_FILES_GLSL
+        "mesh_shading/ms.mesh"
+        "mesh_shading/ps.frag"
+)
