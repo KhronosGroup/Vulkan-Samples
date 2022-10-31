@@ -83,7 +83,6 @@ class VertexDynamicState : public ApiVulkanSample
 
 	void model_data_creation();
 	void draw_created_model(VkCommandBuffer commandBuffer);
-
 };
 
 std::unique_ptr<vkb::VulkanSample> create_vertex_dynamic_state();
