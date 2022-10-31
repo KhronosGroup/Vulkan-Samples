@@ -133,7 +133,7 @@ void MemoryBudget::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer, offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 		// Render instances
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, mesh_density, 0, 0, 0);
+		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, MESH_DENSITY, 0, 0, 0);
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -157,17 +157,17 @@ MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t inp
 {
 	MemoryBudget::ConvertedMemory returnMe{};
 
-	if ( input_memory < kilobyte_coefficient )
+	if (input_memory < kilobyte_coefficient)
 	{
 		returnMe.data  = input_memory;
 		returnMe.units = "B";
 	}
-	else if ( input_memory>= kilobyte_coefficient && input_memory < megabyte_coefficient)
+	else if (input_memory >= kilobyte_coefficient && input_memory < megabyte_coefficient)
 	{
 		returnMe.data  = input_memory / kilobyte_coefficient;
 		returnMe.units = "KB";
 	}
-	else if ( input_memory >= megabyte_coefficient && input_memory < gigabyte_coefficient )
+	else if (input_memory >= megabyte_coefficient && input_memory < gigabyte_coefficient)
 	{
 		returnMe.data  = input_memory / megabyte_coefficient;
 		returnMe.units = "MB";
@@ -420,14 +420,14 @@ void MemoryBudget::prepare_pipelines()
 void MemoryBudget::prepare_instance_data()
 {
 	std::vector<InstanceData> instance_data;
-	instance_data.resize(mesh_density);
+	instance_data.resize(MESH_DENSITY);
 
 	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
 	// Distribute rocks randomly on two different rings
-	for (auto i = 0; i < mesh_density / 2; i++)
+	for (auto i = 0; i < MESH_DENSITY / 2; i++)
 	{
 		glm::vec2 ring0{7.0f, 11.0f};
 		glm::vec2 ring1{14.0f, 18.0f};
@@ -446,11 +446,11 @@ void MemoryBudget::prepare_instance_data()
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
 		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale *= 0.75f;
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].scale *= 0.75f;
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);

@@ -25,8 +25,29 @@
 
 #include "api_vulkan_sample.h"
 
+#define MESH_DENSITY 2048
+
 class MemoryBudget : public ApiVulkanSample
 {
+  private:
+	// Memory budget extension related variables
+	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
+	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
+
+	struct ConvertedMemory
+	{
+		uint64_t    data;
+		std::string units;
+	} converted_memory{};
+
+	const uint64_t kilobyte_coefficient = 1024;
+	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
+	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
+
+	uint32_t     device_memory_heap_count   = 0;
+	VkDeviceSize device_memory_total_usage  = 0;
+	VkDeviceSize device_memory_total_budget = 0;
+
   public:
 	struct Textures
 	{
@@ -87,26 +108,7 @@ class MemoryBudget : public ApiVulkanSample
 		VkDescriptorSet planet{};
 	} descriptor_sets;
 
-	// Memory budget extension related variables
-	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
-	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
-
-	struct ConvertedMemory
-	{
-		uint64_t    data;
-		std::string units;
-	} converted_memory{};
-
-	const int mesh_density = 2048;
-
-	const uint64_t kilobyte_coefficient = 1024;
-	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
-	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
-
-	uint32_t     device_memory_heap_count   = 0;
-	VkDeviceSize device_memory_total_usage  = 0;
-	VkDeviceSize device_memory_total_budget = 0;
-
+  public:
 	MemoryBudget();
 	~MemoryBudget() override;
 	void                          request_gpu_features(vkb::PhysicalDevice &gpu) override;
