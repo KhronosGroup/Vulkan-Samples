@@ -659,7 +659,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = std::move(buffer_info);
+							buffer_infos[binding_index][array_element] = buffer_info;
 						}
 
 						// Get image info
@@ -697,9 +697,13 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								}
 							}
 
-							image_infos[binding_index][array_element] = std::move(image_info);
+							image_infos[binding_index][array_element] = image_info;
 						}
 					}
+
+					assert((!update_after_bind ||
+					        (buffer_infos.count(binding_index) > 0 || (image_infos.count(binding_index) > 0))) &&
+					       "binding index with no buffer or image infos can't be checked for adding to bindings_to_update");
 				}
 			}
 
