@@ -663,7 +663,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 						}
 
 						// Get image info
-						else if (image_view != nullptr || sampler != VK_NULL_HANDLE)
+						else if (image_view != nullptr || sampler != nullptr)
 						{
 							// Can be null for input attachments
 							VkDescriptorImageInfo image_info{};
