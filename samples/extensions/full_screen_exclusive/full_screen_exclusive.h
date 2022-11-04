@@ -120,14 +120,26 @@ class FullScreenExclusive : public ApiVulkanSample
 		VkSampler             sampler;
 	} filter_pass{};
 
+  private:
+	// Full screen exclusive related variables;
+	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
 	// ui overlay sample
-	int                      combo_box_index = 0;
-	std::vector<std::string> combo_box_selections{};
-	bool                     checkbox_sample = true;
+	int                            full_screen_selection_index = 0;
+	const std::vector<std::string> full_screen_selection_options{
+	    "Default",
+	    "Windowed",
+	    "Borderless Window",
+	    "Exclusive Fullscreen"};
+	std::string VK_results_message = "default.";
 
+  public:
 	FullScreenExclusive();
 	~FullScreenExclusive();
+	// MOD:
 	void initialize();
+	void on_update_full_screen_selection();
+	void on_swapchain_create_info();
+
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
 	void create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);

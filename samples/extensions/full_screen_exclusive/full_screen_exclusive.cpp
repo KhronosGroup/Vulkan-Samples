@@ -73,10 +73,70 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize()
 {
-	combo_box_selections.push_back("Selection 1");
-	combo_box_selections.push_back("Selection 2");
-	combo_box_selections.push_back("Selection 3");
-	combo_box_selections.push_back("Selection 4");
+	// Initialize full screen exclusive variables
+	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
+	surface_full_screen_exclusive_info_EXT.pNext = nullptr;
+	// FullScreenExclusive set to be Default by initialization
+	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+}
+
+void FullScreenExclusive::on_update_full_screen_selection()
+{
+	if (full_screen_selection_index < 4)
+	{
+		switch (full_screen_selection_index)
+		{
+			case 1:
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+				break;
+			case 2:
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+				break;
+			case 3:
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+				break;
+			default:
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+				break;
+		}
+	}
+	else
+	{
+		surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+		printf("Error full_screen_selection_index!\n fullScreenExclusive sets to default!\n");
+	}
+}
+
+void FullScreenExclusive::on_swapchain_create_info()
+{
+	// Create a new swapchain info EXT which enables full screen exclusive extension features
+	VkSwapchainCreateInfoKHR fullScreenExclusive_create_info{};
+
+	// Initializes its sType and pNext
+	fullScreenExclusive_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+	fullScreenExclusive_create_info.pNext = &surface_full_screen_exclusive_info_EXT;
+
+	// Update its information from the current section:
+	fullScreenExclusive_create_info.minImageCount    = get_render_context().get_swapchain().get_properties().image_count;
+	fullScreenExclusive_create_info.imageExtent      = get_render_context().get_swapchain().get_properties().extent;
+	fullScreenExclusive_create_info.presentMode      = get_render_context().get_swapchain().get_properties().present_mode;
+	fullScreenExclusive_create_info.imageFormat      = get_render_context().get_swapchain().get_properties().surface_format.format;
+	fullScreenExclusive_create_info.imageColorSpace  = get_render_context().get_swapchain().get_properties().surface_format.colorSpace;
+	fullScreenExclusive_create_info.imageArrayLayers = get_render_context().get_swapchain().get_properties().array_layers;
+	fullScreenExclusive_create_info.imageUsage       = get_render_context().get_swapchain().get_properties().image_usage;
+	fullScreenExclusive_create_info.preTransform     = get_render_context().get_swapchain().get_properties().pre_transform;
+	fullScreenExclusive_create_info.compositeAlpha   = get_render_context().get_swapchain().get_properties().composite_alpha;
+	fullScreenExclusive_create_info.oldSwapchain     = get_render_context().get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
+	fullScreenExclusive_create_info.surface          = get_render_context().get_swapchain().get_surface();
+
+	// Create the new swapchain based on the swapchain info EXT defined above
+	VkSwapchainKHR fullScreenExclusive_swapchain        = get_render_context().get_swapchain().get_handle();        // nestles the r-value to a new swapchain
+	VkResult       fullScreenExclusive_swapchain_result = vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain);
+
+	if (fullScreenExclusive_swapchain_result != VK_SUCCESS)
+	{
+		printf("%d, %s\n", fullScreenExclusive_swapchain_result, "Cannot create Swapchain");
+	}
 }
 
 void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -645,7 +705,7 @@ void FullScreenExclusive::prepare_pipelines()
 
 	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
-	uint32_t shader_type                  = 0;
+	uint32_t shader_type                 = 0;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shader_type), &shader_type);
 	shader_stages[0].pSpecializationInfo = &specialization_info;
 	shader_stages[1].pSpecializationInfo = &specialization_info;
@@ -680,8 +740,8 @@ void FullScreenExclusive::prepare_uniform_buffers()
 
 void FullScreenExclusive::update_uniform_buffers()
 {
-	ubo_vs.projection = camera.matrices.perspective;
-	ubo_vs.model_view = camera.matrices.view * models.transform;
+	ubo_vs.projection        = camera.matrices.perspective;
+	ubo_vs.model_view        = camera.matrices.view * models.transform;
 	ubo_vs.skybox_model_view = camera.matrices.view;
 
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
@@ -740,11 +800,26 @@ void FullScreenExclusive::render(float delta_time)
 
 void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.combo_box("Sample Combo Box", &combo_box_index, combo_box_selections);
-	drawer.checkbox("Sample Check Box", &checkbox_sample);
-	drawer.text("Sample Text: Message");
+	if (drawer.combo_box("Display Mode", &full_screen_selection_index, full_screen_selection_options))
+	{
+		printf("%s\n", full_screen_selection_options[full_screen_selection_index].c_str());
+		on_update_full_screen_selection();
+
+		// TODO: @JEREMY, add advanced full screen exclusive function calls here:
+	}
+
+	// TODO: @JEREMY, remove this button when finalized!
+	if (drawer.button("Test VK Results"))
+	{
+		printf("Test VK Results button pressed!\n");
+		VK_results_message = "Pressed!";
+	}
+
+	// TODO: @JEREMY, fine-tune the VK results when finalized!
+	drawer.text("Test VK Results: %s", VK_results_message.c_str());
 }
 
+// TODO: @JEREMY, resize needs to be completely redefined!
 void FullScreenExclusive::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
