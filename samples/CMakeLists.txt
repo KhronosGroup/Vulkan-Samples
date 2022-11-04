@@ -60,6 +60,7 @@ set(ORDER_LIST
         #Extension Samples
         "conservative_rasterization"
         "fragment_shading_rate"
+        "full_screen_exclusive"
         "memory_budget"
         "push_descriptors"
         "ray_queries"
