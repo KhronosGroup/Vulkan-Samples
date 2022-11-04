@@ -87,21 +87,22 @@ void FullScreenExclusive::on_update_full_screen_selection()
 		switch (full_screen_selection_index)
 		{
 			case 1:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT; // default
 				break;
 			case 2:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT; // windowed
 				break;
 			case 3:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT; // borderless window
 				break;
 			default:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT; // exclusive fullscreen
 				break;
 		}
 	}
 	else
 	{
+		// Set fullScreenExclusive back to "DEFAULT" and print-out an error message
 		surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
 		printf("Error full_screen_selection_index!\n fullScreenExclusive sets to default!\n");
 	}
@@ -133,6 +134,7 @@ void FullScreenExclusive::on_swapchain_create_info()
 	VkSwapchainKHR fullScreenExclusive_swapchain        = get_render_context().get_swapchain().get_handle();        // nestles the r-value to a new swapchain
 	VkResult       fullScreenExclusive_swapchain_result = vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain);
 
+	// Print-out error log if it wouldn't create a new swapchain
 	if (fullScreenExclusive_swapchain_result != VK_SUCCESS)
 	{
 		printf("%d, %s\n", fullScreenExclusive_swapchain_result, "Cannot create Swapchain");
