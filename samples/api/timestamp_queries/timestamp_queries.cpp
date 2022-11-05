@@ -541,7 +541,7 @@ void TimestampQueries::load_assets()
 	models.transforms.push_back(torus_matrix);
 
 	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
+	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
 void TimestampQueries::setup_descriptor_pool()
@@ -872,7 +872,7 @@ void TimestampQueries::prepare_time_stamp_queries()
 void TimestampQueries::get_time_stamp_results()
 {
 	// The number of timestamps changes if the bloom pass is disabled
-	uint32_t count = bloom ? time_stamps.size() : time_stamps.size() - 2;
+	uint32_t count = static_cast<uint32_t>(bloom ? time_stamps.size() : time_stamps.size() - 2);
 
 	// Fetch the time stamp results written in the command buffer submissions
 	// A note on the flags used:
