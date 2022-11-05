@@ -35,7 +35,7 @@ It's important to know that timestamp queries differ greatly from how timing can
 
 So while it may may sound reasonable to write timestamps for the vertex and fragment shader stage directly one after another, that will usually not return meaningful results due to how the GPU works.
 
-And so for this example, we take the same approach as some popular CPU/GPU profilers by only using the top and bottom stages of the pipeline. This combination is known to give proper timing results on most GPUs.
+And so for this example, we take the same approach as some popular CPU/GPU profilers by only using the top and bottom stages of the pipeline. This combination is known to give proper approximate timing results on most GPUs.
 
 ## Checking for support
 
@@ -124,9 +124,9 @@ for (int i = 0; i < draw_call_count; i++) {
 vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, 1);
 ```
 
-To measure GPU times for the draw calls(s) we first tell the GPU to write a timestamp at the `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` pipeline stage. This is not a real pipeline stage (as in e.g. the vertex or fragment stages) but a special constant that tells the GPU to wait for all commands currently in flight to finish. This ensures, that we get a timestamp right before starting on the draw calls we want to measure. This timestamp will then be the base for calculating a delta time.
+To measure GPU times for the draw calls(s) we first tell the GPU to write a timestamp at the `VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT` pipeline stage. This is not a real pipeline stage (as in e.g. the vertex or fragment stages) but a special constant that tells the GPU to write the timestamp when all previous commands have been processed by the GPU's command processor. This ensures that we get a timestamp right before starting on the draw calls we want to measure, which will be the base for calculating our delta time.
 
-The second timestamp is written at the `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT` pipeline stage. Once again this is not a real pipeline stage, but it tells the GPU to wait for all work to be finished. 
+The second timestamp is written at the `VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT` pipeline stage. Once again this is not a real pipeline stage, but it again tells the GPU to write the timestamp after all work has been finished. 
 
 ## Getting the results
 
