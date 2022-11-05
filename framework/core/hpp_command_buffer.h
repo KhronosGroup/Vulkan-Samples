@@ -26,6 +26,8 @@ namespace vkb
 {
 namespace core
 {
+class HPPCommandPool;
+
 /**
  * @brief facade class around vkb::CommandBuffer, providing a vulkan.hpp-based interface
  *
@@ -43,6 +45,10 @@ class HPPCommandBuffer : private vkb::CommandBuffer
 		AlwaysAllocate,
 	};
 
+	HPPCommandBuffer(HPPCommandPool &command_pool, vk::CommandBufferLevel level) :
+	    vkb::CommandBuffer(reinterpret_cast<vkb::CommandPool &>(command_pool), static_cast<VkCommandBufferLevel>(level))
+	{}
+
 	vk::CommandBuffer get_handle() const
 	{
 		return static_cast<vk::CommandBuffer>(vkb::CommandBuffer::get_handle());
@@ -52,6 +58,15 @@ class HPPCommandBuffer : private vkb::CommandBuffer
 	{
 		vkb::CommandBuffer::image_memory_barrier(reinterpret_cast<vkb::core::ImageView const &>(image_view),
 		                                         reinterpret_cast<vkb::ImageMemoryBarrier const &>(memory_barrier));
+	}
+
+	void reset(ResetMode reset_mode)
+	{
+		VkResult result = vkb::CommandBuffer::reset(static_cast<CommandBuffer::ResetMode>(reset_mode));
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("vkCommandBufferReset failed with errorCode " + vk::to_string(static_cast<vk::Result>(result)));
+		}
 	}
 };
 }        // namespace core

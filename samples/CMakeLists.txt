@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 # Creates a list of the subdirectories within this folder
 scan_dirs(
@@ -103,10 +103,14 @@ set(ORDER_LIST
     #HPP API Samples
     "hpp_compute_nbody"
 	"hpp_dynamic_uniform_buffers"
-	"hpp_instancing"
 	"hpp_hdr"
     "hpp_hello_triangle"
-	"hpp_texture_loading")
+	"hpp_hlsl_shaders"
+	"hpp_instancing"
+	"hpp_separate_image_sampler"
+	"hpp_terrain_tessellation"
+	"hpp_texture_loading"
+	"hpp_texture_mipmap_generation")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

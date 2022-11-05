@@ -41,9 +41,9 @@ class HPPImage : private vkb::sg::Image
 	using vkb::sg::Image::get_mipmaps;
 	using vkb::sg::Image::get_offsets;
 
-	static std::unique_ptr<HPPImage> load(std::string const &name, std::string const &uri)
+	static std::unique_ptr<HPPImage> load(std::string const &name, std::string const &uri, vkb::sg::Image::ContentType content_type)
 	{
-		return std::unique_ptr<HPPImage>(reinterpret_cast<HPPImage *>(vkb::sg::Image::load(name, uri).release()));
+		return std::unique_ptr<HPPImage>(reinterpret_cast<HPPImage *>(vkb::sg::Image::load(name, uri, content_type).release()));
 	}
 
 	void create_vk_image(vkb::core::HPPDevice const &device, vk::ImageViewType image_view_type = vk::ImageViewType::e2D, vk::ImageCreateFlags flags = {})

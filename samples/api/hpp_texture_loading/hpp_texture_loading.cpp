@@ -81,8 +81,8 @@ void HPPTextureLoading::load_texture()
 {
 	// We use the Khronos texture format (https://www.khronos.org/opengles/sdk/tools/KTX/file_format_spec/)
 	std::string filename = vkb::fs::path::get(vkb::fs::path::Assets, "textures/metalplate01_rgba.ktx");
-	// Texture data contains 4 channels (RGBA) with unnormalized 8-bit values, this is the most commonly supported format
-	vk::Format format = vk::Format::eR8G8B8A8Unorm;
+	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
+	vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
 	ktxTexture *   ktx_texture;
 	KTX_error_code result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
@@ -558,7 +558,9 @@ void HPPTextureLoading::prepare_pipeline()
 	                                                    {},
 	                                                    -1);
 
-	pipeline = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	vk::Result result;
+	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

@@ -103,6 +103,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
+	if (!surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -120,6 +122,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	if (!headless || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 	}
 
 #ifdef VKB_VULKAN_DEBUG
@@ -167,9 +172,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 void HPPVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear}};
+	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }

@@ -91,13 +91,13 @@ The sample also shows how to enable 16-bit storage for SSBOs and push constants.
 ### [Async compute](./performance/async_compute)
 This sample demonstrates using multiple Vulkan queues to get better hardware utilization with compute post-processing workloads.
 
-## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
+### [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
 This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
 
-## [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
+### [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
-## [Texture compression comparison](./performance/texture_compression_comparison)
+### [Texture compression comparison](./performance/texture_compression_comparison)
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
 the timing benefits of each.
 
@@ -129,14 +129,23 @@ A transcoded version of the API sample [High dynamic range](#hdr)that illustrate
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
 A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP HLSL shaders](./api/hpp_hlsl_shaders)<br/>
+A transcoded version of the API sample [HLSL Shaders](#hlsl_shaders) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Separate image sampler](./api/hpp_separate_image_sampler)<br/>
+A transcoded version of the API sample [Separate image sampler](#separate_image_sampler) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [HPP Terrain Tessellation](./api/hpp_terrain_tessellation)<br/>
 A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Texture tun-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
+A transcoded version of the API sample [Texture run-time mip-map generation](#texture_mipmap_generation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.

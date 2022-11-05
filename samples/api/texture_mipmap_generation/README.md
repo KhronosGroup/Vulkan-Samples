@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Sascha Willems
+- Copyright (c) 2019-2022, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -50,7 +50,7 @@ Using mip mapping with an anisotropic filter:
 <a href="./images/mip_mapping_anisotropic.jpg"><img src="./images/mip_mapping_anisotropic.jpg" width="512px"></a>
 
 ## Requirements
-To downsample from one mip level to the next, we will be using [```vkCmdBlitImage```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBlitImage.html). This requires the format used to support the ```BLIT_SRC_BIT``` and the  ```BLIT_DST_BIT``` flags. If these are not supported, the image format can't be used to blit and you'd either have to choose a different format or use a custom shader to generate mip levels. The example uses the ```VK_FORMAT_R8G8B8A8_UNORM``` that should support these flags on most implementations.
+To downsample from one mip level to the next, we will be using [```vkCmdBlitImage```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBlitImage.html). This requires the format used to support the ```BLIT_SRC_BIT``` and the  ```BLIT_DST_BIT``` flags. If these are not supported, the image format can't be used to blit and you'd either have to choose a different format or use a custom shader to generate mip levels. The example uses the ```VK_FORMAT_R8G8B8A8_SRGB``` that should support these flags on most implementations.
 
 ***Note:*** Use [```vkGetPhysicalDeviceFormatProperties```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkGetPhysicalDeviceFormatProperties.html) to check if the format supports the blit flags first. 
 

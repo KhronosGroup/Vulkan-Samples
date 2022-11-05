@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(framework LANGUAGES C CXX)
 
@@ -40,6 +40,7 @@ set(FRAMEWORK_FILES
     camera.h
     hpp_api_vulkan_sample.h
     hpp_fence_pool.h
+    hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_cache.h
@@ -119,7 +120,9 @@ set(RENDERING_FILES
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp)
+    rendering/subpass.cpp
+    rendering/hpp_render_context.cpp
+    rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
@@ -278,6 +281,7 @@ set(CORE_FILES
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
     core/vulkan_resource.cpp
+    core/hpp_command_pool.cpp
     core/hpp_device.cpp
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp
@@ -428,8 +432,13 @@ else()
     endif()
 endif()
 
+# mask out the min/max macros from minwindef.h
+if(MSVC)
+    add_definitions(-DNOMINMAX)
+endif()
+
 # Pre compiled headers
-vulkan_samples_pch(PROJECT_FILES pch.cpp)
+# vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
@@ -510,3 +519,5 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
     endif()
 endif()
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE <vulkan/vulkan.hpp>)

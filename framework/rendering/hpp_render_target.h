@@ -19,6 +19,8 @@
 
 #include <rendering/render_target.h>
 
+#include <core/hpp_image.h>
+
 namespace vkb
 {
 namespace rendering
@@ -31,6 +33,10 @@ namespace rendering
 class HPPRenderTarget : private vkb::RenderTarget
 {
   public:
+	using CreateFunc = std::function<std::unique_ptr<HPPRenderTarget>(vkb::core::HPPImage &&)>;
+
+	static const CreateFunc DEFAULT_CREATE_FUNC;
+
 	const vk::Extent2D &get_extent() const
 	{
 		return reinterpret_cast<vk::Extent2D const &>(vkb::RenderTarget::get_extent());
