@@ -158,7 +158,47 @@ Most arguments are straightforward, e.g. where the data will be copied to (the `
 
 `VK_QUERY_RESULT_64_BIT` will tell the api that we want to get the results as 64 bit values. Without this flag, we would only get 32 bit values. And since timestamp queries can operate in nanoseconds, only using 32 bits could result into an overflow. E.g. if your device has a `timestampPeriod` of 1, so that one increment in the result maps to exactly one nanosecond, with 32 bit precision you'd run into such an overflow after only about 0.43 seconds.
 
-The `VK_QUERY_RESULT_WAIT_BIT` bit then tells the api to wait for all results to be available. So when using this flag the values written to our `time_stamps` vector is guaranteed to be available after calling `vkGetQueryPoolResults`. This is fine for our use-case where we want to immediately access the results, but may introduce unnecessary stalls in other scenarios. An alternative is using the `VK_QUERY_RESULT_WITH_AVAILABILITY_BIT`, which will let you poll the availability of the results and defer writing new timestamps until the results are available.
+The `VK_QUERY_RESULT_WAIT_BIT` bit then tells the api to wait for all results to be available. So when using this flag the values written to our `time_stamps` vector is guaranteed to be available after calling `vkGetQueryPoolResults`. This is fine for our use-case where we want to immediately access the results, but may introduce unnecessary stalls in other scenarios.
+
+Alternatively you can use the `VK_QUERY_RESULT_WITH_AVAILABILITY_BIT` flag, which will let you poll the availability of the results and defer writing new timestamps until the results are available. This should be the preferred way of fetching the results in a real-world application. Using this flag an additional availability value is inserted after each query value. If that value becomes non-zero, the result is available. You then check availability before writing the timestamp again.
+
+Here is a basic example of how this could look like for a single timestamp value:
+
+```cpp
+// time_stamp_with_availibility[current_frame * 2] contains the queried timestamp
+// time_stamp_with_availibility[current_frame * 2 + 1] contains availability of the timestamp
+std::array<uint64_t, max_frames_in_flight * 2> time_stamp_with_availibility{};
+
+void drawFrame()
+{
+	vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info);
+
+	// Only write new timestamp if previous result is available
+	if (time_stamp_with_availibility[current_frame * 2 + 1] != 0) {
+		vkCmdWriteTimestamp(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 0);
+	}
+
+	// Issue draw commands
+
+	vkEndCommandBuffer(command_buffer);
+
+	// Get deferred time stamp query for the current frame
+	vkGetQueryPoolResults(
+		device,
+		query_pool_timestamps,
+		0,
+		1,
+		sizeof(uint64_t),
+		&time_stamp_with_availibility[Current_frame * max_frames_in_flight],
+		sizeof(uint64_t),
+		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);		
+
+	// Display time stamp for the current frame if available
+	if (time_stamp_with_availibility[current_frame * 2] != 0) {
+		std::cout << "Timestamp = " << time_stamp_with_availibility[current_frame * 2] << "\n";
+	}
+}
+```
 
 ## Interpreting the results
 
