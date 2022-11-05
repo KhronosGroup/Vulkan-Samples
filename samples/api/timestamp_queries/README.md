@@ -21,7 +21,7 @@
 
 This tutorial, along with the accompanying example code, shows how to use timestamp queries to measure timings on the GPU.
 
-The sample, based on the HDR one, does multiple render passes and will use timestamp queries to get GPU timings for the different render passes. This is done by writing GPU timestamps at certain points within a command buffer. These can then be read on the host and used for light profiling and to e.g. improve performance where needed.
+The sample, based on the HDR one, does multiple render passes and will use timestamp queries to get GPU timings for the different render passes. This is done by writing GPU timestamps at certain points within a command buffer. These can then be read on the host and used for approximate profiling and to e.g. improve performance where needed.
 
 ## Introduction
 
