@@ -168,6 +168,9 @@ Generates a complete mip-chain for a texture at runtime instead of loading it fr
 ### [HLSL shaders](./api/hlsl_shaders)<br/>
 Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
 
+### [Timestamp queries](./api/timestamp_queries/)<br/>
+Using timestamp queries for profiling GPU workloads.
+
 ## Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
