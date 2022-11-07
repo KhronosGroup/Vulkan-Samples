@@ -47,6 +47,9 @@ The Vulkan API exposes a few different ways in which we can send uniform data in
 ### [Descriptor management](./performance/descriptor_management)<br/>
 An application using Vulkan will have to implement a system to manage descriptor pools and sets. The most straightforward and flexible approach is to re-create them for each frame, but doing so might be very inefficient, especially on mobile platforms. The problem of descriptor management is intertwined with that of buffer management, that is choosing how to pack data in `VkBuffer` objects. This sample will explore a few options to improve both descriptor and buffer management.
 
+### [HPP Swapchain images](./performance/hpp_swapchain_images)<br/>
+A transcoded version of the Performance sample [Swapchain images](#swapchain_images) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [Layout transitions](./performance/layout_transitions)<br/>
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins. This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass. If the rendering pipeline is complex, transitioning each image to its correct layout is not trivial, as it requires some sort of state tracking. If previous image contents are not needed, there is an easy way out, that is setting `oldLayout`/`initialLayout` to `VK_IMAGE_LAYOUT_UNDEFINED`. While this is functionally correct, it can have performance implications as it may prevent the GPU from performing some optimizations. This sample will cover an example of such optimizations and how to avoid the performance overhead from using sub-optimal layouts.
 

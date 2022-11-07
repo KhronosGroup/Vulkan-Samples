@@ -110,7 +110,10 @@ set(ORDER_LIST
 	"hpp_separate_image_sampler"
 	"hpp_terrain_tessellation"
 	"hpp_texture_loading"
-	"hpp_texture_mipmap_generation")
+	"hpp_texture_mipmap_generation"
+	
+    #HPP Performance Samples
+    "hpp_swapchain_images")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

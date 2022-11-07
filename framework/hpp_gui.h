@@ -49,16 +49,17 @@ class HPPGui : private vkb::Gui
 	using vkb::Gui::is_debug_view_active;
 	using vkb::Gui::new_frame;
 	using vkb::Gui::resize;
+	using vkb::Gui::show_options_window;
 	using vkb::Gui::show_simple_window;
 	using vkb::Gui::show_top_window;
 	using vkb::Gui::update;
 
 	HPPGui(vkb::HPPVulkanSample &          sample,
 	       const vkb::platform::HPPWindow &window,
-	       const Stats *                   stats           = nullptr,
+	       const vkb::stats::HPPStats *    stats           = nullptr,
 	       const float                     font_size       = 21.0f,
 	       bool                            explicit_update = false) :
-	    Gui(reinterpret_cast<vkb::VulkanSample &>(sample), reinterpret_cast<vkb::Window const &>(window), stats, font_size, explicit_update)
+	    Gui(reinterpret_cast<vkb::VulkanSample &>(sample), reinterpret_cast<vkb::Window const &>(window), reinterpret_cast<vkb::Stats const *>(stats), font_size, explicit_update)
 	{}
 
 	void draw(vk::CommandBuffer command_buffer)
