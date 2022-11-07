@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -404,6 +404,21 @@ inline VkVertexInputBindingDescription vertex_input_binding_description(
 	return vertex_input_binding_description;
 }
 
+inline VkVertexInputBindingDescription2EXT vertex_input_binding_description2ext(
+    uint32_t          binding,
+    uint32_t          stride,
+    VkVertexInputRate input_rate,
+    uint32_t          divisor)
+{
+	VkVertexInputBindingDescription2EXT vertex_input_binding_description2ext{};
+	vertex_input_binding_description2ext.sType     = VK_STRUCTURE_TYPE_VERTEX_INPUT_BINDING_DESCRIPTION_2_EXT;
+	vertex_input_binding_description2ext.binding   = binding;
+	vertex_input_binding_description2ext.stride    = stride;
+	vertex_input_binding_description2ext.inputRate = input_rate;
+	vertex_input_binding_description2ext.divisor   = divisor;
+	return vertex_input_binding_description2ext;
+}
+
 inline VkVertexInputAttributeDescription vertex_input_attribute_description(
     uint32_t binding,
     uint32_t location,
@@ -416,6 +431,21 @@ inline VkVertexInputAttributeDescription vertex_input_attribute_description(
 	vertex_input_attribute_description.format   = format;
 	vertex_input_attribute_description.offset   = offset;
 	return vertex_input_attribute_description;
+}
+
+inline VkVertexInputAttributeDescription2EXT vertex_input_attribute_description2ext(
+    uint32_t binding,
+    uint32_t location,
+    VkFormat format,
+    uint32_t offset)
+{
+	VkVertexInputAttributeDescription2EXT vertex_input_attribute_description2ext{};
+	vertex_input_attribute_description2ext.sType    = VK_STRUCTURE_TYPE_VERTEX_INPUT_ATTRIBUTE_DESCRIPTION_2_EXT;
+	vertex_input_attribute_description2ext.location = location;
+	vertex_input_attribute_description2ext.binding  = binding;
+	vertex_input_attribute_description2ext.format   = format;
+	vertex_input_attribute_description2ext.offset   = offset;
+	return vertex_input_attribute_description2ext;
 }
 
 inline VkPipelineVertexInputStateCreateInfo pipeline_vertex_input_state_create_info()

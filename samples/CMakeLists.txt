@@ -74,6 +74,7 @@ set(ORDER_LIST
     "buffer_device_address"
     "descriptor_indexing"
     "portability"
+    "vertex_dynamic_state"
 
     #Performance Samples
     "swapchain_images"
