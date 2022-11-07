@@ -287,6 +287,7 @@ set(CORE_FILES
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp
     core/hpp_queue.cpp
+    core/hpp_swapchain.cpp
     core/hpp_vulkan_resource.cpp
 )
 
