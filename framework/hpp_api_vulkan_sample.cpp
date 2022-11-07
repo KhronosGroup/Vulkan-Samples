@@ -448,19 +448,13 @@ void HPPApiVulkanSample::prepare_frame()
 		vk::Result result;
 		try
 		{
-			result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready);
+			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
-		catch (const vk::SystemError &e)
+		catch (vk::OutOfDateKHRError & /*err*/)
 		{
-			if (e.code() == vk::Result::eErrorOutOfDateKHR)
-			{
-				result = vk::Result::eErrorOutOfDateKHR;
-			}
-			else
-			{
-				throw;
-			}
+			result = vk::Result::eErrorOutOfDateKHR;
 		}
+
 		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
 		// presentation (eSuboptimalKHR)
 		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
