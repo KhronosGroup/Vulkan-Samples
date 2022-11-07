@@ -378,9 +378,10 @@ void HPPTextureMipMapGeneration::prepare_pipelines()
 	shader_stages[0] = load_shader("texture_mipmap_generation/texture.vert", vk::ShaderStageFlagBits::eVertex);
 	shader_stages[1] = load_shader("texture_mipmap_generation/texture.frag", vk::ShaderStageFlagBits::eFragment);
 
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                          // Position
-	                                                                               {1, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6},             // UV
-	                                                                               {2, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 8}}};        // Color
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{
+	    {0, 0, vk::Format::eR32G32B32Sfloat, 0},                     // Position
+	    {1, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6},        // UV
+	}};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
