@@ -28,14 +28,19 @@ namespace vkb
 {
 namespace common
 {
-void screenshot(vkb::rendering::HPPRenderContext &render_context, const std::string &filename)
+inline sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, vk::Extent2D const &extent)
+{
+	return vkb::add_free_camera(scene, node_name, static_cast<VkExtent2D>(extent));
+}
+
+inline void screenshot(vkb::rendering::HPPRenderContext &render_context, const std::string &filename)
 {
 	vkb::screenshot(reinterpret_cast<vkb::RenderContext &>(render_context), filename);
 }
 
 namespace graphs
 {
-bool generate_all(vkb::rendering::HPPRenderContext &context, sg::Scene &scene)
+inline bool generate_all(vkb::rendering::HPPRenderContext &context, sg::Scene &scene)
 {
 	return vkb::graphs::generate_all(reinterpret_cast<vkb::RenderContext &>(context), scene);
 }

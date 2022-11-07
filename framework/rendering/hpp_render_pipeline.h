@@ -31,6 +31,8 @@ namespace rendering
 class HPPRenderPipeline : private vkb::RenderPipeline
 {
   public:
+	using vkb::RenderPipeline::add_subpass;
+
 	void draw(vkb::core::HPPCommandBuffer &    command_buffer,
 	          vkb::rendering::HPPRenderTarget &render_target,
 	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
