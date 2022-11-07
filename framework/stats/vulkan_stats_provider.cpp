@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2022, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "common/error.h"
 #include "core/device.h"
 
 #include "core/command_buffer.h"

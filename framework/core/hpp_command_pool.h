@@ -17,46 +17,53 @@
 
 #pragma once
 
-#include <core/command_pool.h>
+#include <core/hpp_command_buffer.h>
+#include <rendering/hpp_render_frame.h>
 
 namespace vkb
 {
-namespace rendering
-{
-class HPPRenderFrame;
-}
-
 namespace core
 {
-/**
- * @brief facade class around vkb::CommandPool, providing a vulkan.hpp-based interface
- *
- * See vkb::CommandPool for documentation
- */
-class HPPCommandPool : private vkb::CommandPool
+class HPPDevice;
+
+class HPPCommandPool
 {
   public:
-	HPPCommandPool(vkb::core::HPPDevice &                 device,
-	               uint32_t                               queue_family_index,
-	               vkb::rendering::HPPRenderFrame *       render_frame = nullptr,
-	               size_t                                 thread_index = 0,
-	               vkb::core::HPPCommandBuffer::ResetMode reset_mode   = vkb::core::HPPCommandBuffer::ResetMode::ResetPool) :
-	    vkb::CommandPool(reinterpret_cast<vkb::Device &>(device),
-	                     queue_family_index,
-	                     reinterpret_cast<vkb::RenderFrame *>(render_frame),
-	                     thread_index,
-	                     static_cast<vkb::CommandBuffer::ResetMode>(reset_mode))
-	{}
+	HPPCommandPool(HPPDevice const &                     device,
+	               uint32_t                              queue_family_index,
+	               vkb::rendering::HPPRenderFrame const *render_frame = nullptr,
+	               size_t                                thread_index = 0,
+	               HPPCommandBuffer::ResetMode           reset_mode   = HPPCommandBuffer::ResetMode::ResetPool);
+	HPPCommandPool(const HPPCommandPool &) = delete;
+	HPPCommandPool(HPPCommandPool &&other);
+	~HPPCommandPool();
 
-	vk::CommandPool get_handle() const
-	{
-		return static_cast<vk::CommandPool>(vkb::CommandPool::get_handle());
-	}
+	HPPCommandPool &operator=(const HPPCommandPool &) = delete;
+	HPPCommandPool &operator=(HPPCommandPool &&) = delete;
 
-	vkb::core::HPPCommandBuffer &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
-	{
-		return reinterpret_cast<vkb::core::HPPCommandBuffer &>(vkb::CommandPool::request_command_buffer(static_cast<VkCommandBufferLevel>(level)));
-	}
+	HPPDevice const &                     get_device() const;
+	vk::CommandPool                       get_handle() const;
+	uint32_t                              get_queue_family_index() const;
+	vkb::rendering::HPPRenderFrame const *get_render_frame() const;
+	HPPCommandBuffer::ResetMode           get_reset_mode() const;
+	size_t                                get_thread_index() const;
+	HPPCommandBuffer const &              request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+	void                                  reset_pool();
+
+  private:
+	void reset_command_buffers();
+
+  private:
+	HPPDevice const &                              device;
+	vk::CommandPool                                handle             = nullptr;
+	vkb::rendering::HPPRenderFrame const *         render_frame       = nullptr;
+	size_t                                         thread_index       = 0;
+	uint32_t                                       queue_family_index = 0;
+	std::vector<std::unique_ptr<HPPCommandBuffer>> primary_command_buffers;
+	uint32_t                                       active_primary_command_buffer_count = 0;
+	std::vector<std::unique_ptr<HPPCommandBuffer>> secondary_command_buffers;
+	uint32_t                                       active_secondary_command_buffer_count = 0;
+	HPPCommandBuffer::ResetMode                    reset_mode                            = HPPCommandBuffer::ResetMode::ResetPool;
 };
 }        // namespace core
 }        // namespace vkb

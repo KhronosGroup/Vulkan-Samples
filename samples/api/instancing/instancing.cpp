@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,7 +73,7 @@ void Instancing::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -143,8 +143,8 @@ void Instancing::load_assets()
 	//models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
 	//models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
 
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 
 	//textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
 	//textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
@@ -321,13 +321,12 @@ void Instancing::prepare_pipelines()
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
 	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 2: Texture coordinates
-	    vkb::initializers::vertex_input_attribute_description(0, 3, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 8),        // Location 3: Color
 	    // Per-Instance attributes
 	    // These are fetched for each instance rendered
-	    vkb::initializers::vertex_input_attribute_description(1, 4, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 4: Position
-	    vkb::initializers::vertex_input_attribute_description(1, 5, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 5: Rotation
-	    vkb::initializers::vertex_input_attribute_description(1, 6, VK_FORMAT_R32_SFLOAT, sizeof(float) * 6),              // Location 6: Scale
-	    vkb::initializers::vertex_input_attribute_description(1, 7, VK_FORMAT_R32_SINT, sizeof(float) * 7),                // Location 7: Texture array layer index
+	    vkb::initializers::vertex_input_attribute_description(1, 3, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 3: Position
+	    vkb::initializers::vertex_input_attribute_description(1, 4, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 4: Rotation
+	    vkb::initializers::vertex_input_attribute_description(1, 5, VK_FORMAT_R32_SFLOAT, sizeof(float) * 6),              // Location 5: Scale
+	    vkb::initializers::vertex_input_attribute_description(1, 6, VK_FORMAT_R32_SINT, sizeof(float) * 7),                // Location 6: Texture array layer index
 	};
 	input_state.pVertexBindingDescriptions   = binding_descriptions.data();
 	input_state.pVertexAttributeDescriptions = attribute_descriptions.data();
@@ -347,7 +346,7 @@ void Instancing::prepare_pipelines()
 	shader_stages[1] = load_shader("instancing/planet.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Only use the non-instanced input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 4;
+	input_state.vertexAttributeDescriptionCount = 3;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.planet));
 
 	// Star field pipeline

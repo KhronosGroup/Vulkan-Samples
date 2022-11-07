@@ -26,6 +26,8 @@ namespace vkb
 {
 namespace core
 {
+class HPPCommandPool;
+
 /**
  * @brief facade class around vkb::CommandBuffer, providing a vulkan.hpp-based interface
  *
@@ -34,6 +36,7 @@ namespace core
 class HPPCommandBuffer : private vkb::CommandBuffer
 {
   public:
+	using vkb::CommandBuffer::end;
 	using vkb::CommandBuffer::end_render_pass;
 
 	enum class ResetMode
@@ -42,6 +45,15 @@ class HPPCommandBuffer : private vkb::CommandBuffer
 		ResetIndividually,
 		AlwaysAllocate,
 	};
+
+	HPPCommandBuffer(HPPCommandPool &command_pool, vk::CommandBufferLevel level) :
+	    vkb::CommandBuffer(reinterpret_cast<vkb::CommandPool &>(command_pool), static_cast<VkCommandBufferLevel>(level))
+	{}
+
+	vk::Result begin(vk::CommandBufferUsageFlags flags, HPPCommandBuffer *primary_cmd_buf = nullptr)
+	{
+		return static_cast<vk::Result>(vkb::CommandBuffer::begin(static_cast<VkCommandBufferUsageFlags>(flags), reinterpret_cast<CommandBuffer *>(primary_cmd_buf)));
+	}
 
 	vk::CommandBuffer get_handle() const
 	{
@@ -52,6 +64,15 @@ class HPPCommandBuffer : private vkb::CommandBuffer
 	{
 		vkb::CommandBuffer::image_memory_barrier(reinterpret_cast<vkb::core::ImageView const &>(image_view),
 		                                         reinterpret_cast<vkb::ImageMemoryBarrier const &>(memory_barrier));
+	}
+
+	void reset(ResetMode reset_mode)
+	{
+		VkResult result = vkb::CommandBuffer::reset(static_cast<CommandBuffer::ResetMode>(reset_mode));
+		if (result != VK_SUCCESS)
+		{
+			throw std::runtime_error("vkCommandBufferReset failed with errorCode " + vk::to_string(static_cast<vk::Result>(result)));
+		}
 	}
 };
 }        // namespace core

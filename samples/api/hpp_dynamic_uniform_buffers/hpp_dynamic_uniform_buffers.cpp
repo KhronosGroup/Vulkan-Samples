@@ -39,19 +39,21 @@ HPPDynamicUniformBuffers::HPPDynamicUniformBuffers()
 
 HPPDynamicUniformBuffers ::~HPPDynamicUniformBuffers()
 {
-	if (get_device().get_handle())
+	if (get_device() && get_device()->get_handle())
 	{
 		if (ubo_data_dynamic.model)
 		{
 			aligned_free(ubo_data_dynamic.model);
 		}
 
+		vk::Device device = get_device()->get_handle();
+
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
-		get_device().get_handle().destroyPipeline(pipeline);
+		device.destroyPipeline(pipeline);
 
-		get_device().get_handle().destroyPipelineLayout(pipeline_layout);
-		get_device().get_handle().destroyDescriptorSetLayout(descriptor_set_layout);
+		device.destroyPipelineLayout(pipeline_layout);
+		device.destroyDescriptorSetLayout(descriptor_set_layout);
 	}
 }
 
@@ -199,10 +201,10 @@ void HPPDynamicUniformBuffers::generate_cube()
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
 	vertex_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
@@ -214,7 +216,7 @@ void HPPDynamicUniformBuffers::setup_descriptor_pool()
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 
-	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
+	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 void HPPDynamicUniformBuffers::setup_descriptor_set_layout()
@@ -226,7 +228,7 @@ void HPPDynamicUniformBuffers::setup_descriptor_set_layout()
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout({}, set_layout_bindings);
 
-	descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout(descriptor_layout);
+	descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout);
 
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
@@ -234,14 +236,14 @@ void HPPDynamicUniformBuffers::setup_descriptor_set_layout()
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layout);
 #endif
 
-	pipeline_layout = get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
+	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
 void HPPDynamicUniformBuffers::setup_descriptor_set()
 {
 	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, 1, &descriptor_set_layout);
 
-	descriptor_set = get_device().get_handle().allocateDescriptorSets(alloc_info).front();
+	descriptor_set = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
 
 	vk::DescriptorBufferInfo view_buffer_descriptor(uniform_buffers.view->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorBufferInfo dynamic_buffer_descriptor(uniform_buffers.dynamic->get_handle(), 0, dynamic_alignment);
@@ -252,7 +254,7 @@ void HPPDynamicUniformBuffers::setup_descriptor_set()
 	     // Binding 1 : Instance matrix as dynamic uniform buffer
 	     {descriptor_set, 1, {}, vk::DescriptorType::eUniformBufferDynamic, {}, dynamic_buffer_descriptor}}};
 
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPDynamicUniformBuffers::prepare_pipelines()
@@ -315,7 +317,9 @@ void HPPDynamicUniformBuffers::prepare_pipelines()
 	                                                    {},
 	                                                    -1);
 
-	pipeline = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	vk::Result result;
+	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -325,7 +329,7 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 	// We allocate this manually as the alignment of the offset differs between GPUs
 
 	// Calculate required alignment based on minimum device offset alignment
-	vk::DeviceSize min_ubo_alignment = get_device().get_gpu().get_handle().getProperties().limits.minUniformBufferOffsetAlignment;
+	vk::DeviceSize min_ubo_alignment = get_device()->get_gpu().get_handle().getProperties().limits.minUniformBufferOffsetAlignment;
 	dynamic_alignment                = sizeof(glm::mat4);
 	if (min_ubo_alignment > 0)
 	{
@@ -344,10 +348,10 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 
 	// Static shared uniform buffer object with projection and view matrix
 	uniform_buffers.view =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	uniform_buffers.dynamic =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
 	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));

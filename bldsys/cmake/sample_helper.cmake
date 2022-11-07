@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2021, Arm Limited and Contributors
+ Copyright (c) 2019-2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -141,6 +141,9 @@ function(add_project)
     
     # inherit compile definitions from framework target
     target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
+
+    # add VKB_DEBUG for the debug build
+    target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:DEBUG>:VKB_DEBUG>)
 
     # # inherit include directories from framework target
     target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})

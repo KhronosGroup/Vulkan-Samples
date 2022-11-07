@@ -15,8 +15,10 @@
  * limitations under the License.
  */
 
-#include <common/hpp_error.h>
 #include <core/hpp_device.h>
+
+#include <common/hpp_error.h>
+#include <core/hpp_command_pool.h>
 
 namespace vkb
 {
@@ -169,7 +171,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice &              gpu,
 	{
 		vk::QueueFamilyProperties const &queue_family_property = queue_family_properties[queue_family_index];
 
-		vk::Bool32 present_supported = gpu.is_present_supported(surface, queue_family_index);
+		vk::Bool32 present_supported = gpu.get_handle().getSurfaceSupportKHR(queue_family_index, surface);
 
 		for (uint32_t queue_index = 0U; queue_index < queue_family_property.queueCount; ++queue_index)
 		{
@@ -498,7 +500,7 @@ vkb::HPPFencePool const &HPPDevice::get_fence_pool() const
 	return *fence_pool;
 }
 
-vkb::HPPResourceCache const &HPPDevice::get_resource_cache() const
+vkb::HPPResourceCache &HPPDevice::get_resource_cache()
 {
 	return resource_cache;
 }

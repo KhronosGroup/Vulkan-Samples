@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,7 +45,7 @@ class DescriptorSet
 	 * @param image_infos The descriptors that describe image data
 	 */
 	DescriptorSet(Device &                                  device,
-	              DescriptorSetLayout &                     descriptor_set_layout,
+	              const DescriptorSetLayout &               descriptor_set_layout,
 	              DescriptorPool &                          descriptor_pool,
 	              const BindingMap<VkDescriptorBufferInfo> &buffer_infos = {},
 	              const BindingMap<VkDescriptorImageInfo> & image_infos  = {});
@@ -62,7 +62,7 @@ class DescriptorSet
 	DescriptorSet &operator=(DescriptorSet &&) = delete;
 
 	/**
-	 * @brief Resets the DescriptorSet state 
+	 * @brief Resets the DescriptorSet state
 	 *        Optionally prepares a new set of buffer infos and/or image infos
 	 * @param new_buffer_infos A map of buffer descriptors and their respective bindings
 	 * @param new_image_infos A map of image descriptors and their respective bindings
@@ -75,6 +75,11 @@ class DescriptorSet
 	 * @param bindings_to_update If empty. we update all bindings. Otherwise, only write the specified bindings if they haven't already been written
 	 */
 	void update(const std::vector<uint32_t> &bindings_to_update = {});
+
+	/**
+	 * @brief Applies pending write operations without updating the state
+	 */
+	void apply_writes() const;
 
 	const DescriptorSetLayout &get_layout() const;
 
@@ -94,7 +99,7 @@ class DescriptorSet
   private:
 	Device &device;
 
-	DescriptorSetLayout &descriptor_set_layout;
+	const DescriptorSetLayout &descriptor_set_layout;
 
 	DescriptorPool &descriptor_pool;
 

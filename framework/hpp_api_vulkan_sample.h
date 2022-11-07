@@ -20,6 +20,7 @@
 #include <hpp_vulkan_sample.h>
 
 #include <camera.h>
+#include <common/hpp_error.h>
 #include <hpp_gui.h>
 #include <platform/hpp_platform.h>
 #include <scene_graph/components/hpp_image.h>
@@ -164,20 +165,23 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	/**
    * @brief Loads in a ktx 2D texture
    * @param file The filename of the texture to load
+   * @param content_type The type of content in the image file
    */
-	HPPTexture load_texture(const std::string &file);
+	HPPTexture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
    * @brief Laods in a ktx 2D texture array
    * @param file The filename of the texture to load
+   * @param content_type The type of content in the image file
    */
-	HPPTexture load_texture_array(const std::string &file);
+	HPPTexture load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
    * @brief Loads in a ktx 2D texture cubemap
    * @param file The filename of the texture to load
+   * @param content_type The type of content in the image file
    */
-	HPPTexture load_texture_cubemap(const std::string &file);
+	HPPTexture load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
    * @brief Loads in a single model from a GLTF file
@@ -325,7 +329,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
   public:
 	bool         prepared = false;
-	vk::Extent2D extent;
+	vk::Extent2D extent{1280, 720};
 
 	/** @brief Example settings that can be changed e.g. by command line arguments */
 	struct
@@ -336,7 +340,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 		bool vsync = false;
 	} settings;
 
-	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.025f, 0.025f, 0.025f, 1.0f}});
+	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.002f, 0.002f, 0.002f, 1.0f}});
 
 	float zoom = 0;
 

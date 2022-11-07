@@ -47,6 +47,9 @@ The Vulkan API exposes a few different ways in which we can send uniform data in
 ### [Descriptor management](./performance/descriptor_management)<br/>
 An application using Vulkan will have to implement a system to manage descriptor pools and sets. The most straightforward and flexible approach is to re-create them for each frame, but doing so might be very inefficient, especially on mobile platforms. The problem of descriptor management is intertwined with that of buffer management, that is choosing how to pack data in `VkBuffer` objects. This sample will explore a few options to improve both descriptor and buffer management.
 
+### [HPP Swapchain images](./performance/hpp_swapchain_images)<br/>
+A transcoded version of the Performance sample [Swapchain images](#swapchain_images) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [Layout transitions](./performance/layout_transitions)<br/>
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins. This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass. If the rendering pipeline is complex, transitioning each image to its correct layout is not trivial, as it requires some sort of state tracking. If previous image contents are not needed, there is an easy way out, that is setting `oldLayout`/`initialLayout` to `VK_IMAGE_LAYOUT_UNDEFINED`. While this is functionally correct, it can have performance implications as it may prevent the GPU from performing some optimizations. This sample will cover an example of such optimizations and how to avoid the performance overhead from using sub-optimal layouts.
 
@@ -91,13 +94,13 @@ The sample also shows how to enable 16-bit storage for SSBOs and push constants.
 ### [Async compute](./performance/async_compute)
 This sample demonstrates using multiple Vulkan queues to get better hardware utilization with compute post-processing workloads.
 
-## [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
+### [Basis Universal supercompressed GPU textures](./performance/texture_compression_basisu)
 This sample demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
 
-## [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
+### [GPU Rendering and Multi-Draw Indirect](./performance/multi_draw_indirect) <br/>
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
-## [Texture compression comparison](./performance/texture_compression_comparison)
+### [Texture compression comparison](./performance/texture_compression_comparison)
 This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
 the timing benefits of each.
 
@@ -117,6 +120,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [HPP Compute shader N-Body simulation](./api/hpp_compute_nbody)<br/>
+A transcoded version of the API sample [Compute N-Body](#compute_nbody) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Dynamic Uniform Buffers](./api/hpp_dynamic_uniform_buffers)<br/>
 A transcoded version of the API sample [Dynamic Uniform buffers](#dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
@@ -126,11 +132,23 @@ A transcoded version of the API sample [High dynamic range](#hdr)that illustrate
 ### [HPP Hello Triangle](./api/hpp_hello_triangle)<br/>
 A transcoded version of the API sample [Hello Triangle](#hello_triangle) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP HLSL shaders](./api/hpp_hlsl_shaders)<br/>
+A transcoded version of the API sample [HLSL Shaders](#hlsl_shaders) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Instancing](./api/hpp_instancing)<br/>
 A transcoded version of the API sample [Instancing](#instancing) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
+### [HPP Separate image sampler](./api/hpp_separate_image_sampler)<br/>
+A transcoded version of the API sample [Separate image sampler](#separate_image_sampler) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Terrain Tessellation](./api/hpp_terrain_tessellation)<br/>
+A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Texture tun-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
+A transcoded version of the API sample [Texture run-time mip-map generation](#texture_mipmap_generation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
@@ -149,6 +167,9 @@ Generates a complete mip-chain for a texture at runtime instead of loading it fr
 
 ### [HLSL shaders](./api/hlsl_shaders)<br/>
 Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
+
+### [Timestamp queries](./api/timestamp_queries/)<br/>
+Using timestamp queries for profiling GPU workloads.
 
 ## Extension Samples
 
@@ -234,6 +255,18 @@ include those implementations in the device query.  An example of a non-conforma
 MoltenVk: [MoltenVk](https://github.com/KhronosGroup/MoltenVK).  Also demonstrate use of beta extension which allows 
 for querying which features of the full Vulkan spec are not currently supported by the non-conformant Vulkan 
 implementation.
+
+### [Graphics pipeline library](./extensions/graphics_pipeline_library)<br/>
+**Extension**: [```VK_EXT_graphics_pipeline_library```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_graphics_pipeline_library.html) <br/>
+Uses the graphics pipeline library extensions to improve run-time pipeline creation. Instead of creating the whole pipeline at once, this sample makes use of that extension to pre-build shared pipeline parts such as vertex input state and fragment output state. These building blocks are then used to create pipelines at runtime, improving build times compared to traditional pipeline creation.
+
+### [Conditional rendering](./extensions/conditional_rendering)
+**Extension**: [```VK_EXT_conditional_rendering```](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_EXT_conditional_rendering.html) <br/>
+Demonstrate how to do conditional rendering, dynamically discarding rendering commands without having to update command buffers. This is done by sourcing conditional rendering blocks from a dedicated buffer that can be updated without having to touch command buffers.
+
+### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
+**Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
+Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are need to be created.
 
 ## Tooling Samples
 

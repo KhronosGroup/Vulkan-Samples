@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -179,6 +179,11 @@ void HelloTriangle::init_instance(Context &                        context,
 	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -247,6 +252,10 @@ void HelloTriangle::init_instance(Context &                        context,
 	debug_report_create_info.pfnCallback                        = debug_callback;
 
 	instance_info.pNext = &debug_report_create_info;
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
 	// Create the Vulkan instance
@@ -434,9 +443,9 @@ void HelloTriangle::init_swapchain(Context &context)
 	VkSurfaceFormatKHR format;
 	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
 	{
-		// There is no preferred format, so pick a default one
+		// Always prefer sRGB for display
 		format        = formats[0];
-		format.format = VK_FORMAT_B8G8R8A8_UNORM;
+		format.format = VK_FORMAT_B8G8R8A8_SRGB;
 	}
 	else
 	{
@@ -450,9 +459,9 @@ void HelloTriangle::init_swapchain(Context &context)
 		{
 			switch (candidate.format)
 			{
-				case VK_FORMAT_R8G8B8A8_UNORM:
-				case VK_FORMAT_B8G8R8A8_UNORM:
-				case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
+				case VK_FORMAT_R8G8B8A8_SRGB:
+				case VK_FORMAT_B8G8R8A8_SRGB:
+				case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
 					format = candidate;
 					break;
 
@@ -879,7 +888,7 @@ void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 
 	// Set clear color values.
 	VkClearValue clear_value;
-	clear_value.color = {{0.1f, 0.1f, 0.2f, 1.0f}};
+	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	// Begin the render pass.
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
@@ -1091,6 +1100,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
+
+	if (!context.surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	init_device(context, {"VK_KHR_swapchain"});
 

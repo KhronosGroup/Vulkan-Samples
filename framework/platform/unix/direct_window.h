@@ -46,13 +46,13 @@ class DirectWindow : public Window
 
 	virtual void close() override;
 
+	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info,
+	                                      uint32_t src_width, uint32_t src_height) const override;
+
 	float get_dpi_factor() const override;
 
   private:
 	void poll_terminal();
-
-	uint32_t find_compatible_plane(VkPhysicalDevice phys_dev, VkDisplayKHR display,
-	                               const std::vector<VkDisplayPlanePropertiesKHR> &plane_properties);
 
   private:
 	mutable bool   keep_running = true;
@@ -62,5 +62,6 @@ class DirectWindow : public Window
 	struct termios termio;
 	struct termios termio_prev;
 	KeyCode        key_down = KeyCode::Unknown;
+	Extent         full_extent{};
 };
 }        // namespace vkb

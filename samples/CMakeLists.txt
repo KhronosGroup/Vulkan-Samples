@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 # Creates a list of the subdirectories within this folder
 scan_dirs(
@@ -63,6 +63,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
+    "graphics_pipeline_library"
     "push_descriptors"
     "ray_queries"
     "raytracing_basic"
@@ -73,6 +74,7 @@ set(ORDER_LIST
     "buffer_device_address"
     "descriptor_indexing"
     "portability"
+    "vertex_dynamic_state"
 
     #Performance Samples
     "swapchain_images"
@@ -100,11 +102,19 @@ set(ORDER_LIST
     "profiles"
 
     #HPP API Samples
-    "hpp_hello_triangle"
+    "hpp_compute_nbody"
 	"hpp_dynamic_uniform_buffers"
-	"hpp_texture_loading"
 	"hpp_hdr"
-	"hpp_instancing")
+    "hpp_hello_triangle"
+	"hpp_hlsl_shaders"
+	"hpp_instancing"
+	"hpp_separate_image_sampler"
+	"hpp_terrain_tessellation"
+	"hpp_texture_loading"
+	"hpp_texture_mipmap_generation"
+	
+    #HPP Performance Samples
+    "hpp_swapchain_images")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

@@ -261,9 +261,9 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 
 For all dependencies set the following environment variables.
 
-- CMake v3.10+
+- CMake v3.16+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
-- Android NDK r18+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
+- Android NDK r23+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
 - Gradle 5+ `GRADLE_HOME=<WORK_DIR>/gradle`
 - [CMake Options](#cmake-options)
@@ -318,12 +318,12 @@ You can now install the apk on a connected device using the Android Debug Bridge
 For a release build:
 
 ```
-adb install build/outputs/apk/release/vulkan_samples-release.apk
+adb install app/build/outputs/apk/release/vulkan_samples-release.apk
 ```
 For a debug build:
 
 ```
-adb install build/outputs/apk/debug/vulkan_samples-debug.apk
+adb install app/build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
 ## Build with Android Studio

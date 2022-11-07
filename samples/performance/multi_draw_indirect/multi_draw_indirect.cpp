@@ -314,7 +314,7 @@ void MultiDrawIndirect::load_scene()
 		const size_t texture_index = textures.size();
 		const auto & short_name    = mesh->get_name();
 		auto         image_name    = scene_path + short_name + ".ktx";
-		auto         image         = vkb::sg::Image::load(image_name, image_name);
+		auto         image         = vkb::sg::Image::load(image_name, image_name, vkb::sg::Image::Color);
 
 		image->create_vk_image(*device);
 		Texture texture;
