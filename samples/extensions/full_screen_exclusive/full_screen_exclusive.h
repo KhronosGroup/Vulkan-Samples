@@ -157,6 +157,11 @@ class FullScreenExclusive : public ApiVulkanSample
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void resize(const uint32_t width, const uint32_t height) override;
+
+  private:
+	void prepare_render_context() override; // This has to be overridden in order to introduce the full screen extension
+
+
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();

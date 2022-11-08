@@ -139,6 +139,19 @@ void FullScreenExclusive::on_swapchain_create_info()
 	{
 		printf("%d, %s\n", fullScreenExclusive_swapchain_result, "Cannot create Swapchain");
 	}
+
+	//TODO: @Steve: not sure if I need to check the image available size and then resize the images.
+	/*
+	// Need to resize the available images and then sync up
+	uint32_t image_available{0u};
+
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_available, nullptr));
+
+	auto images = get_render_context().get_swapchain().get_images(); // get_image only returns r-value
+	images.resize(image_available);
+
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_available, images.data()));
+	 */
 }
 
 void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -821,12 +834,21 @@ void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 	drawer.text("Test VK Results: %s", VK_results_message.c_str());
 }
 
-// TODO: @JEREMY, resize needs to be completely redefined!
 void FullScreenExclusive::resize(const uint32_t width, const uint32_t height)
 {
+
 	ApiVulkanSample::resize(width, height);
+	// TODO: @JEREMY, resize needs to be completely redefined!
+
 	update_uniform_buffers();
 }
+
+void FullScreenExclusive::prepare_render_context()
+{
+	VulkanSample::prepare_render_context(); // This is to create a renderer context without extension swapchain
+	on_swapchain_create_info(); // Now create the new swapchain with extension
+}
+
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive()
 {
