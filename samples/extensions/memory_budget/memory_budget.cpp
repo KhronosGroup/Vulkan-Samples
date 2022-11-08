@@ -153,7 +153,7 @@ void MemoryBudget::initialize_device_memory_properties()
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
 }
 
-MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory)
+const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory)
 {
 	MemoryBudget::ConvertedMemory returnMe{};
 
@@ -162,12 +162,12 @@ MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t inp
 		returnMe.data  = input_memory;
 		returnMe.units = "B";
 	}
-	else if (input_memory >= kilobyte_coefficient && input_memory < megabyte_coefficient)
+	else if (input_memory < megabyte_coefficient)
 	{
 		returnMe.data  = input_memory / kilobyte_coefficient;
 		returnMe.units = "KB";
 	}
-	else if (input_memory >= megabyte_coefficient && input_memory < gigabyte_coefficient)
+	else if (input_memory < gigabyte_coefficient)
 	{
 		returnMe.data  = input_memory / megabyte_coefficient;
 		returnMe.units = "MB";
@@ -427,7 +427,7 @@ void MemoryBudget::prepare_instance_data()
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
 	// Distribute rocks randomly on two different rings
-	for (auto i = 0; i < MESH_DENSITY / 2; i++)
+	for (auto i = 0; i < MESH_DENSITY_HALF; i++)
 	{
 		glm::vec2 ring0{7.0f, 11.0f};
 		glm::vec2 ring1{14.0f, 18.0f};
@@ -446,11 +446,11 @@ void MemoryBudget::prepare_instance_data()
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
 		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + MESH_DENSITY / 2)].scale *= 0.75f;
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].scale *= 0.75f;
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);

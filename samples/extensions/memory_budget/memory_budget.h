@@ -26,6 +26,7 @@
 #include "api_vulkan_sample.h"
 
 #define MESH_DENSITY 2048
+#define MESH_DENSITY_HALF 1024
 
 class MemoryBudget : public ApiVulkanSample
 {
@@ -114,7 +115,7 @@ class MemoryBudget : public ApiVulkanSample
 	void                          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void                          build_command_buffers() override;
 	void                          initialize_device_memory_properties();                 // memory budget extension related function
-	MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);        // memory budget extension related function
+	const MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);        // memory budget extension related function
 	void                          update_device_memory_properties();                     // memory budget extension related function
 	void                          load_assets();
 	void                          setup_descriptor_pool();
