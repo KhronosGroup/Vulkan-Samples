@@ -1,5 +1,5 @@
 /* Copyright (c) 2019-2021, Sascha Willems
- * Modifications Copyright (c) 2022, Holochip Corporation
+ * Changes made by 2022, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -474,10 +474,7 @@ void MemoryBudget::prepare_instance_data()
 	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
 	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
 
-	// Update the device memory properties and calculate the total heap memory usage and budget:
-	// If no changes happen to the total number of instanced meshes, then device should now have allocated total memory expected to be used.
-	// While the memory_budget_ext is performant enough to be called every frame, this sample only has one allocation happen if all preparation remain the same.
-	// Thus, no update to the memory totals beyond the first allocation is necessary.
+	// Update the device memory properties and calculate the total heap memory usage and budget
 	update_device_memory_properties();
 }
 
