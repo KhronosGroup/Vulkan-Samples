@@ -1,5 +1,4 @@
 # Copyright (c) 2019-2021, Sascha Willems
-# Changes made by 2022, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
