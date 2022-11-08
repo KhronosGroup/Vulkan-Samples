@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 namespace vkb
 {
 DescriptorSet::DescriptorSet(Device &                                  device,
-                             DescriptorSetLayout &                     descriptor_set_layout,
+                             const DescriptorSetLayout &               descriptor_set_layout,
                              DescriptorPool &                          descriptor_pool,
                              const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
                              const BindingMap<VkDescriptorImageInfo> & image_infos) :
@@ -212,6 +212,15 @@ void DescriptorSet::update(const std::vector<uint32_t> &bindings_to_update)
 	{
 		updated_bindings[write_operations[i].dstBinding] = write_operation_hashes[i];
 	}
+}
+
+void DescriptorSet::apply_writes() const
+{
+	vkUpdateDescriptorSets(device.get_handle(),
+	                       to_u32(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(),
+	                       0,
+	                       nullptr);
 }
 
 DescriptorSet::DescriptorSet(DescriptorSet &&other) :

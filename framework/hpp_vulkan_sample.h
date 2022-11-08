@@ -25,6 +25,7 @@
 #include <rendering/hpp_render_pipeline.h>
 #include <rendering/hpp_render_target.h>
 #include <stats/hpp_stats.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -69,7 +70,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	vkb::core::HPPInstance const &get_instance() const;
 
-	vkb::core::HPPDevice const &get_device() const;
+	std::unique_ptr<vkb::core::HPPDevice> const &get_device() const;
 
 	vkb::rendering::HPPRenderContext &get_render_context();
 
@@ -77,7 +78,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	vkb::rendering::HPPRenderPipeline const &get_render_pipeline() const;
 
-	Configuration const &get_configuration() const;
+	Configuration &get_configuration();
 
 	sg::Scene const &get_scene() const;
 
@@ -216,7 +217,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 	/**
 	 * @brief Samples should override this function to draw their interface
 	 */
-	virtual void draw_gui() const;
+	virtual void draw_gui();
 
 	/**
 	 * @brief Updates the debug window, samples can override this to insert their own data elements

@@ -35,6 +35,7 @@ class HPPResourceCache : private vkb::ResourceCache
 {
   public:
 	using vkb::ResourceCache::clear;
+	using vkb::ResourceCache::clear_framebuffers;
 
 	HPPResourceCache(vkb::core::HPPDevice &device) :
 	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))

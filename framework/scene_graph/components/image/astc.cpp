@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -180,7 +180,17 @@ Astc::Astc(const Image &image) :
     Image{image.get_name()}
 {
 	init();
-	decode(to_blockdim(image.get_format()), image.get_extent(), image.get_data().data());
+
+	// Locate mip #0 in the KTX. This is the first one in the data array for KTX1s, but the last one in KTX2s!
+	auto mip_it = std::find_if(image.get_mipmaps().begin(), image.get_mipmaps().end(),
+	                           [](auto &mip) { return mip.level == 0; });
+	assert(mip_it != image.get_mipmaps().end() && "Mip #0 not found");
+
+	// When decoding ASTC on CPU (as it is the case in here), we don't decode all mips in the mip chain.
+	// Instead, we just decode mip #0 and re-generate the other LODs later (via image->generate_mipmaps()).
+	const auto     blockdim = to_blockdim(image.get_format());
+	const uint8_t *data_ptr = image.get_data().data() + mip_it->offset;
+	decode(blockdim, mip_it->extent, data_ptr);
 }
 
 Astc::Astc(const std::string &name, const std::vector<uint8_t> &data) :

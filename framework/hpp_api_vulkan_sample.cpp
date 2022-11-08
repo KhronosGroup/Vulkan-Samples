@@ -31,15 +31,15 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		return false;
 	}
 
-	depth_format = vkb::common::get_suitable_depth_format(get_device().get_gpu().get_handle());
+	depth_format = vkb::common::get_suitable_depth_format(get_device()->get_gpu().get_handle());
 
 	// Create synchronization objects
 	// Create a semaphore used to synchronize image presentation
 	// Ensures that the current swapchain render target has completed presentation and has been released by the presentation engine, ready for rendering
-	semaphores.acquired_image_ready = get_device().get_handle().createSemaphore({});
+	semaphores.acquired_image_ready = get_device()->get_handle().createSemaphore({});
 	// Create a semaphore used to synchronize command submission
 	// Ensures that the image is not presented until all commands have been sumbitted and executed
-	semaphores.render_complete = get_device().get_handle().createSemaphore({});
+	semaphores.render_complete = get_device()->get_handle().createSemaphore({});
 
 	// Set up submit info structure
 	// Semaphores will stay the same during application lifetime
@@ -53,7 +53,7 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		submit_info.setSignalSemaphores(semaphores.render_complete);
 	}
 
-	queue = get_device().get_suitable_graphics_queue().get_handle();
+	queue = get_device()->get_suitable_graphics_queue().get_handle();
 
 	create_swapchain_buffers();
 	create_command_pool();
@@ -115,18 +115,18 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	prepared = false;
 
 	// Ensure all operations on the device have been finished before destroying resources
-	get_device().get_handle().waitIdle();
+	get_device()->get_handle().waitIdle();
 
 	create_swapchain_buffers();
 
 	// Recreate the frame buffers
-	get_device().get_handle().destroyImageView(depth_stencil.view);
-	get_device().get_handle().destroyImage(depth_stencil.image);
-	get_device().get_handle().freeMemory(depth_stencil.mem);
+	get_device()->get_handle().destroyImageView(depth_stencil.view);
+	get_device()->get_handle().destroyImage(depth_stencil.image);
+	get_device()->get_handle().freeMemory(depth_stencil.mem);
 	setup_depth_stencil();
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
-		get_device().get_handle().destroyFramebuffer(framebuffers[i]);
+		get_device()->get_handle().destroyFramebuffer(framebuffers[i]);
 		framebuffers[i] = nullptr;
 	}
 	setup_framebuffer();
@@ -142,7 +142,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	create_command_buffers();
 	build_command_buffers();
 
-	get_device().get_handle().waitIdle();
+	get_device()->get_handle().waitIdle();
 
 	if (extent.width && extent.height)
 	{
@@ -158,9 +158,9 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
-	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
+	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
@@ -391,22 +391,22 @@ void HPPApiVulkanSample::create_command_buffers()
 	vk::CommandBufferAllocateInfo allocate_info(
 	    cmd_pool, vk::CommandBufferLevel::ePrimary, static_cast<uint32_t>(get_render_context().get_render_frames().size()));
 
-	draw_cmd_buffers = get_device().get_handle().allocateCommandBuffers(allocate_info);
+	draw_cmd_buffers = get_device()->get_handle().allocateCommandBuffers(allocate_info);
 }
 
 void HPPApiVulkanSample::destroy_command_buffers()
 {
-	get_device().get_handle().freeCommandBuffers(cmd_pool, draw_cmd_buffers);
+	get_device()->get_handle().freeCommandBuffers(cmd_pool, draw_cmd_buffers);
 }
 
 void HPPApiVulkanSample::create_pipeline_cache()
 {
-	pipeline_cache = get_device().get_handle().createPipelineCache({});
+	pipeline_cache = get_device()->get_handle().createPipelineCache({});
 }
 
 vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device().get_handle(), stage));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
@@ -448,19 +448,13 @@ void HPPApiVulkanSample::prepare_frame()
 		vk::Result result;
 		try
 		{
-			result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready);
+			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
-		catch (const vk::SystemError &e)
+		catch (vk::OutOfDateKHRError & /*err*/)
 		{
-			if (e.code() == vk::Result::eErrorOutOfDateKHR)
-			{
-				result = vk::Result::eErrorOutOfDateKHR;
-			}
-			else
-			{
-				throw;
-			}
+			result = vk::Result::eErrorOutOfDateKHR;
 		}
+
 		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
 		// presentation (eSuboptimalKHR)
 		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
@@ -474,7 +468,7 @@ void HPPApiVulkanSample::submit_frame()
 {
 	if (get_render_context().has_swapchain())
 	{
-		const auto &queue = get_device().get_queue_by_present(0);
+		const auto &queue = get_device()->get_queue_by_present(0);
 
 		vk::SwapchainKHR swapchain = get_render_context().get_swapchain().get_handle();
 
@@ -483,6 +477,14 @@ void HPPApiVulkanSample::submit_frame()
 		if (semaphores.render_complete)
 		{
 			present_info.setWaitSemaphores(semaphores.render_complete);
+		}
+
+		vk::DisplayPresentInfoKHR disp_present_info;
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    get_platform().get_window().get_display_present_info(&disp_present_info, extent.width, extent.height))
+		{
+			// Add display present info if supported and wanted
+			present_info.setPNext(&disp_present_info);
 		}
 
 		// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
@@ -510,46 +512,48 @@ void HPPApiVulkanSample::submit_frame()
 	// DO NOT USE
 	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
 	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	get_device().get_queue_by_present(0).wait_idle();
+	get_device()->get_queue_by_present(0).get_handle().waitIdle();
 }
 
 HPPApiVulkanSample::~HPPApiVulkanSample()
 {
-	if (get_device().get_handle())
+	if (get_device() && get_device()->get_handle())
 	{
-		get_device().get_handle().waitIdle();
+		vk::Device device = get_device()->get_handle();
+
+		device.waitIdle();
 
 		// Clean up Vulkan resources
-		get_device().get_handle().destroyDescriptorPool(descriptor_pool);
+		device.destroyDescriptorPool(descriptor_pool);
 		destroy_command_buffers();
-		get_device().get_handle().destroyRenderPass(render_pass);
+		device.destroyRenderPass(render_pass);
 		for (auto &framebuffer : framebuffers)
 		{
-			get_device().get_handle().destroyFramebuffer(framebuffer);
+			device.destroyFramebuffer(framebuffer);
 		}
 
 		for (auto &swapchain_buffer : swapchain_buffers)
 		{
-			get_device().get_handle().destroyImageView(swapchain_buffer.view);
+			device.destroyImageView(swapchain_buffer.view);
 		}
 
 		for (auto &shader_module : shader_modules)
 		{
-			get_device().get_handle().destroyShaderModule(shader_module);
+			device.destroyShaderModule(shader_module);
 		}
-		get_device().get_handle().destroyImageView(depth_stencil.view);
-		get_device().get_handle().destroyImage(depth_stencil.image);
-		get_device().get_handle().freeMemory(depth_stencil.mem);
+		device.destroyImageView(depth_stencil.view);
+		device.destroyImage(depth_stencil.image);
+		device.freeMemory(depth_stencil.mem);
 
-		get_device().get_handle().destroyPipelineCache(pipeline_cache);
+		device.destroyPipelineCache(pipeline_cache);
 
-		get_device().get_handle().destroyCommandPool(cmd_pool);
+		device.destroyCommandPool(cmd_pool);
 
-		get_device().get_handle().destroySemaphore(semaphores.acquired_image_ready);
-		get_device().get_handle().destroySemaphore(semaphores.render_complete);
+		device.destroySemaphore(semaphores.acquired_image_ready);
+		device.destroySemaphore(semaphores.render_complete);
 		for (auto &fence : wait_fences)
 		{
-			get_device().get_handle().destroyFence(fence);
+			device.destroyFence(fence);
 		}
 	}
 
@@ -569,15 +573,15 @@ void HPPApiVulkanSample::create_synchronization_primitives()
 	wait_fences.resize(draw_cmd_buffers.size());
 	for (auto &fence : wait_fences)
 	{
-		fence = get_device().get_handle().createFence(fence_create_info);
+		fence = get_device()->get_handle().createFence(fence_create_info);
 	}
 }
 
 void HPPApiVulkanSample::create_command_pool()
 {
-	uint32_t                  queue_family_index = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
+	uint32_t                  queue_family_index = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
 	vk::CommandPoolCreateInfo command_pool_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queue_family_index);
-	cmd_pool = get_device().get_handle().createCommandPool(command_pool_info);
+	cmd_pool = get_device()->get_handle().createCommandPool(command_pool_info);
 }
 
 void HPPApiVulkanSample::setup_depth_stencil()
@@ -592,12 +596,12 @@ void HPPApiVulkanSample::setup_depth_stencil()
 	image_create_info.tiling      = vk::ImageTiling::eOptimal;
 	image_create_info.usage       = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc;
 
-	depth_stencil.image            = get_device().get_handle().createImage(image_create_info);
-	vk::MemoryRequirements memReqs = get_device().get_handle().getImageMemoryRequirements(depth_stencil.image);
+	depth_stencil.image            = get_device()->get_handle().createImage(image_create_info);
+	vk::MemoryRequirements memReqs = get_device()->get_handle().getImageMemoryRequirements(depth_stencil.image);
 
-	vk::MemoryAllocateInfo memory_allocation(memReqs.size, get_device().get_gpu().get_memory_type(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
-	depth_stencil.mem = get_device().get_handle().allocateMemory(memory_allocation);
-	get_device().get_handle().bindImageMemory(depth_stencil.image, depth_stencil.mem, 0);
+	vk::MemoryAllocateInfo memory_allocation(memReqs.size, get_device()->get_gpu().get_memory_type(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+	depth_stencil.mem = get_device()->get_handle().allocateMemory(memory_allocation);
+	get_device()->get_handle().bindImageMemory(depth_stencil.image, depth_stencil.mem, 0);
 
 	vk::ImageViewCreateInfo image_view_create_info;
 	image_view_create_info.viewType                        = vk::ImageViewType::e2D;
@@ -613,7 +617,7 @@ void HPPApiVulkanSample::setup_depth_stencil()
 	{
 		image_view_create_info.subresourceRange.aspectMask |= vk::ImageAspectFlagBits::eStencil;
 	}
-	depth_stencil.view = get_device().get_handle().createImageView(image_view_create_info);
+	depth_stencil.view = get_device()->get_handle().createImageView(image_view_create_info);
 }
 
 void HPPApiVulkanSample::setup_framebuffer()
@@ -629,7 +633,7 @@ void HPPApiVulkanSample::setup_framebuffer()
 	// Delete existing frame buffers
 	for (auto &framebuffer : framebuffers)
 	{
-		get_device().get_handle().destroyFramebuffer(framebuffer);
+		get_device()->get_handle().destroyFramebuffer(framebuffer);
 	}
 	framebuffers.clear();
 
@@ -638,7 +642,7 @@ void HPPApiVulkanSample::setup_framebuffer()
 	for (auto &buffer : swapchain_buffers)
 	{
 		attachments[0] = buffer.view;
-		framebuffers.push_back(get_device().get_handle().createFramebuffer(framebuffer_create_info));
+		framebuffers.push_back(get_device()->get_handle().createFramebuffer(framebuffer_create_info));
 	}
 }
 
@@ -691,12 +695,12 @@ void HPPApiVulkanSample::setup_render_pass()
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachments, subpass_description, dependencies);
 
-	render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
+	render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
 void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 {
-	get_device().get_handle().destroyRenderPass(render_pass);
+	get_device()->get_handle().destroyRenderPass(render_pass);
 
 	vk::AttachmentLoadOp color_attachment_load_op      = vk::AttachmentLoadOp::eClear;
 	vk::ImageLayout      color_attachment_image_layout = vk::ImageLayout::eUndefined;
@@ -755,7 +759,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachments, subpass_description, dependencies);
 
-	render_pass = get_device().get_handle().createRenderPass(render_pass_create_info);
+	render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
 void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
@@ -770,7 +774,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 		// Get the swap chain buffers containing the image and imageview
 		for (auto &swapchain_buffer : swapchain_buffers)
 		{
-			get_device().get_handle().destroyImageView(swapchain_buffer.view);
+			get_device()->get_handle().destroyImageView(swapchain_buffer.view);
 		}
 		swapchain_buffers.clear();
 		swapchain_buffers.reserve(images.size());
@@ -787,7 +791,7 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 			color_attachment_view.subresourceRange.baseArrayLayer = 0;
 			color_attachment_view.subresourceRange.layerCount     = 1;
 
-			swapchain_buffers.push_back({image, get_device().get_handle().createImageView(color_attachment_view)});
+			swapchain_buffers.push_back({image, get_device()->get_handle().createImageView(color_attachment_view)});
 		}
 	}
 	else
@@ -815,7 +819,7 @@ void HPPApiVulkanSample::update_swapchain_image_usage_flags(std::set<vk::ImageUs
 void HPPApiVulkanSample::handle_surface_changes()
 {
 	vk::SurfaceCapabilitiesKHR surface_properties =
-	    get_device().get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().get_surface());
+	    get_device()->get_gpu().get_handle().getSurfaceCapabilitiesKHR(get_render_context().get_swapchain().get_surface());
 
 	if (surface_properties.currentExtent != get_render_context().get_surface_extent())
 	{
@@ -837,18 +841,18 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture;
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
-	texture.image->create_vk_image(get_device());
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
+	texture.image->create_vk_image(*get_device());
 
-	const auto &queue = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
+	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
 
-	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
+	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
 
 	stage_buffer.update(texture.image->get_data());
 
@@ -890,7 +894,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
 	                              vk::ImageLayout::eShaderReadOnlyOptimal,
 	                              subresource_range);
 
-	get_device().flush_command_buffer(command_buffer, queue.get_handle());
+	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	vk::SamplerCreateInfo sampler_create_info;
@@ -910,26 +914,26 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
 	sampler_create_info.maxAnisotropy =
-	    get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device().get_handle().createSampler(sampler_create_info);
+	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
 
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
-	texture.image->create_vk_image(get_device(), vk::ImageViewType::e2DArray);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
+	texture.image->create_vk_image(*get_device(), vk::ImageViewType::e2DArray);
 
-	const auto &queue = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
+	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
 
-	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
+	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
 
 	stage_buffer.update(texture.image->get_data());
 
@@ -977,7 +981,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
 	                              vk::ImageLayout::eShaderReadOnlyOptimal,
 	                              subresource_range);
 
-	get_device().flush_command_buffer(command_buffer, queue.get_handle());
+	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	vk::SamplerCreateInfo sampler_create_info;
@@ -994,26 +998,26 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
 	sampler_create_info.maxAnisotropy =
-	    get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device().get_handle().createSampler(sampler_create_info);
+	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
 
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
-	texture.image->create_vk_image(get_device(), vk::ImageViewType::eCube, vk::ImageCreateFlagBits::eCubeCompatible);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
+	texture.image->create_vk_image(*get_device(), vk::ImageViewType::eCube, vk::ImageCreateFlagBits::eCubeCompatible);
 
-	const auto &queue = get_device().get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
+	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
 
-	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
-	vkb::core::HPPBuffer stage_buffer{get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
+	vkb::core::HPPBuffer stage_buffer{*get_device(), texture.image->get_data().size(), vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY};
 
 	stage_buffer.update(texture.image->get_data());
 
@@ -1061,7 +1065,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file)
 	                              vk::ImageLayout::eShaderReadOnlyOptimal,
 	                              subresource_range);
 
-	get_device().flush_command_buffer(command_buffer, queue.get_handle());
+	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
 	// Create a defaultsampler
 	vk::SamplerCreateInfo sampler_create_info;
@@ -1078,17 +1082,17 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file)
 	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
 	// Only enable anisotropic filtering if enabled on the devicec
 	sampler_create_info.maxAnisotropy =
-	    get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device().get_handle().createSampler(sampler_create_info);
+	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
 
 	return texture;
 }
 
 std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> HPPApiVulkanSample::load_model(const std::string &file, uint32_t index)
 {
-	vkb::HPPGLTFLoader loader{get_device()};
+	vkb::HPPGLTFLoader loader{*get_device()};
 
 	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> model = loader.read_model_from_file(file, index);
 
@@ -1115,7 +1119,7 @@ void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components
 
 void HPPApiVulkanSample::with_command_buffer(const std::function<void(vk::CommandBuffer command_buffer)> &f, vk::Semaphore signalSemaphore)
 {
-	vk::CommandBuffer command_buffer = get_device().create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
+	vk::CommandBuffer command_buffer = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 	f(command_buffer);
-	get_device().flush_command_buffer(command_buffer, queue, true, signalSemaphore);
+	get_device()->flush_command_buffer(command_buffer, queue, true, signalSemaphore);
 }

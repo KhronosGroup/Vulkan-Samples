@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Holochip Corporation
+ * Copyright (c) 2021-2022, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -110,7 +110,7 @@ void DynamicRendering::load_assets()
 	object = load_model("scenes/geosphere.gltf");
 
 	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
+	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
 void DynamicRendering::prepare_uniform_buffers()

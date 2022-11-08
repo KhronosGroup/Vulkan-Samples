@@ -31,17 +31,19 @@ HPPInstancing::HPPInstancing()
 
 HPPInstancing::~HPPInstancing()
 {
-	if (device)
+	if (get_device() && get_device()->get_handle())
 	{
-		get_device().get_handle().destroyPipeline(pipelines.instanced_rocks);
-		get_device().get_handle().destroyPipeline(pipelines.planet);
-		get_device().get_handle().destroyPipeline(pipelines.starfield);
-		get_device().get_handle().destroyPipelineLayout(pipeline_layout);
-		get_device().get_handle().destroyDescriptorSetLayout(descriptor_set_layout);
-		get_device().get_handle().destroyBuffer(instance_buffer.buffer);
-		get_device().get_handle().freeMemory(instance_buffer.memory);
-		get_device().get_handle().destroySampler(textures.rocks.sampler);
-		get_device().get_handle().destroySampler(textures.planet.sampler);
+		vk::Device device = get_device()->get_handle();
+
+		device.destroyPipeline(pipelines.instanced_rocks);
+		device.destroyPipeline(pipelines.planet);
+		device.destroyPipeline(pipelines.starfield);
+		device.destroyPipelineLayout(pipeline_layout);
+		device.destroyDescriptorSetLayout(descriptor_set_layout);
+		device.destroyBuffer(instance_buffer.buffer);
+		device.freeMemory(instance_buffer.memory);
+		device.destroySampler(textures.rocks.sampler);
+		device.destroySampler(textures.planet.sampler);
 	}
 }
 
@@ -75,7 +77,7 @@ void HPPInstancing::build_command_buffers()
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	std::array<vk::ClearValue, 2> clear_values =
-	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.2f, 0.0f}})),
+	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.033f, 0.0f}})),
 	      vk::ClearDepthStencilValue(0.0f, 0)}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
@@ -134,8 +136,8 @@ void HPPInstancing::load_assets()
 	models.rock   = load_model("scenes/rock.gltf");
 	models.planet = load_model("scenes/planet.gltf");
 
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HPPInstancing::setup_descriptor_pool()
@@ -144,7 +146,7 @@ void HPPInstancing::setup_descriptor_pool()
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
-	descriptor_pool = get_device().get_handle().createDescriptorPool(descriptor_pool_create_info);
+	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 void HPPInstancing::setup_descriptor_set_layout()
@@ -155,7 +157,7 @@ void HPPInstancing::setup_descriptor_set_layout()
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings);
 
-	descriptor_set_layout = get_device().get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
 
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
@@ -163,7 +165,7 @@ void HPPInstancing::setup_descriptor_set_layout()
 	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
 #endif
 
-	pipeline_layout = get_device().get_handle().createPipelineLayout(pipeline_layout_create_info);
+	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
 void HPPInstancing::setup_descriptor_set()
@@ -175,7 +177,7 @@ void HPPInstancing::setup_descriptor_set()
 #endif
 
 	// Instanced rocks
-	descriptor_sets.instanced_rocks = get_device().get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
+	descriptor_sets.instanced_rocks = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
 	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorImageInfo  image_descriptor(
         textures.rocks.sampler,
@@ -184,17 +186,17 @@ void HPPInstancing::setup_descriptor_set()
 	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
 	    {{descriptor_sets.instanced_rocks, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
 	     {descriptor_sets.instanced_rocks, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 
 	// Planet
-	descriptor_sets.planet = get_device().get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
+	descriptor_sets.planet = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
 	image_descriptor       = {textures.planet.sampler,
                         textures.planet.image->get_vk_image_view().get_handle(),
                         descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.planet.image->get_vk_image_view().get_format())};
 	write_descriptor_sets  = {
         {{descriptor_sets.planet, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
          {descriptor_sets.planet, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
-	get_device().get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPInstancing::prepare_pipelines()
@@ -218,19 +220,18 @@ void HPPInstancing::prepare_pipelines()
 	//	layout (location = 0) in vec3 inPos;		Per-Vertex
 	//	...
 	//	layout (location = 4) in vec3 instancePos;	Per-Instance
-	std::array<vk::VertexInputAttributeDescription, 8> attribute_descriptions = {
+	std::array<vk::VertexInputAttributeDescription, 7> attribute_descriptions = {
 	    {                                                                // Per-vertex attributees
 	                                                                     // These are advanced for each vertex fetched by the vertex shader
 	     {0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Location 0: Position
 	     {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 1: Normal
 	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)},           // Location 2: Texture coordinates
-	     {3, 0, vk::Format::eR32G32B32Sfloat, 8 * sizeof(float)},        // Location 3: Color
 	                                                                     // Per-Instance attributes
 	                                                                     // These are fetched for each instance rendered
-	     {4, 1, vk::Format::eR32G32B32Sfloat, 0},                        // Location 4: Position
-	     {5, 1, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 5: Rotation
-	     {6, 1, vk::Format::eR32Sfloat, 6 * sizeof(float)},              // Location 6: Scale
-	     {7, 1, vk::Format::eR32Sint, 7 * sizeof(float)}}};              // Location 7: Texture array layer index
+	     {3, 1, vk::Format::eR32G32B32Sfloat, 0},                        // Location 3: Position
+	     {4, 1, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 4: Rotation
+	     {5, 1, vk::Format::eR32Sfloat, 6 * sizeof(float)},              // Location 5: Scale
+	     {6, 1, vk::Format::eR32Sint, 7 * sizeof(float)}}};              // Location 6: Texture array layer index
 
 	// Use all input bindings and attribute descriptions
 	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_descriptions, attribute_descriptions);
@@ -283,7 +284,7 @@ void HPPInstancing::prepare_pipelines()
 	                                                    -1);
 
 	vk::Result result;
-	std::tie(result, pipelines.instanced_rocks) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	std::tie(result, pipelines.instanced_rocks) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 
 	// Planet rendering pipeline
@@ -291,9 +292,9 @@ void HPPInstancing::prepare_pipelines()
 	                 load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
 	// Only use the non-instanced input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 4;
+	input_state.vertexAttributeDescriptionCount = 3;
 
-	std::tie(result, pipelines.planet) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	std::tie(result, pipelines.planet) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 
 	// Star field pipeline
@@ -307,7 +308,7 @@ void HPPInstancing::prepare_pipelines()
 	input_state.vertexBindingDescriptionCount   = 0;
 	input_state.vertexAttributeDescriptionCount = 0;
 
-	std::tie(result, pipelines.starfield) = get_device().get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	std::tie(result, pipelines.starfield) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 }
 
@@ -361,15 +362,15 @@ void HPPInstancing::prepare_instance_data()
 	} staging_buffer;
 
 	std::tie(staging_buffer.buffer, staging_buffer.memory) =
-	    get_device().create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
-	                               vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-	                               instance_buffer.size,
-	                               instance_data.data());
+	    get_device()->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
+	                                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+	                                instance_buffer.size,
+	                                instance_data.data());
 
 	std::tie(instance_buffer.buffer, instance_buffer.memory) =
-	    get_device().create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-	                               vk::MemoryPropertyFlagBits::eDeviceLocal,
-	                               instance_buffer.size);
+	    get_device()->create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+	                                vk::MemoryPropertyFlagBits::eDeviceLocal,
+	                                instance_buffer.size);
 
 	// Copy to staging buffer
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
@@ -384,14 +385,14 @@ void HPPInstancing::prepare_instance_data()
 	instance_buffer.descriptor.offset = 0;
 
 	// Destroy staging resources
-	get_device().get_handle().destroyBuffer(staging_buffer.buffer);
-	get_device().get_handle().freeMemory(staging_buffer.memory);
+	get_device()->get_handle().destroyBuffer(staging_buffer.buffer);
+	get_device()->get_handle().freeMemory(staging_buffer.memory);
 }
 
 void HPPInstancing::prepare_uniform_buffers()
 {
 	uniform_buffers.scene =
-	    std::make_unique<vkb::core::HPPBuffer>(get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffer(0.0f);
 }

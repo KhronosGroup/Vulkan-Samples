@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,9 +17,8 @@
 
 #pragma once
 
-#include <core/physical_device.h>
-
 #include <core/hpp_instance.h>
+#include <map>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -36,147 +35,157 @@ struct DriverVersion
 };
 
 /**
- * @brief facade class around vkb::PhysicalDevice, providing a vulkan.hpp-based interface
+ * @brief A wrapper class for vk::PhysicalDevice
  *
- * See vkb::PhysicalDevice for documentation
+ * This class is responsible for handling gpu features, properties, and queue families for the device creation.
  */
-class HPPPhysicalDevice : private vkb::PhysicalDevice
+class HPPPhysicalDevice
 {
   public:
-	using vkb::PhysicalDevice::get_extension_feature_chain;
-	using vkb::PhysicalDevice::has_high_priority_graphics_queue;
-	using vkb::PhysicalDevice::set_high_priority_graphics_queue_enable;
+	HPPPhysicalDevice(HPPInstance &instance, vk::PhysicalDevice physical_device);
+
+	HPPPhysicalDevice(const HPPPhysicalDevice &) = delete;
+
+	HPPPhysicalDevice(HPPPhysicalDevice &&) = delete;
+
+	HPPPhysicalDevice &operator=(const HPPPhysicalDevice &) = delete;
+
+	HPPPhysicalDevice &operator=(HPPPhysicalDevice &&) = delete;
 
 	/**
-   * @return The version of the driver
-   */
-	DriverVersion get_driver_version() const
-	{
-		DriverVersion version;
-
-		vk::PhysicalDeviceProperties const &properties = get_properties();
-		switch (properties.vendorID)
-		{
-			case 0x10DE:
-				// Nvidia
-				version.major = (properties.driverVersion >> 22) & 0x3ff;
-				version.minor = (properties.driverVersion >> 14) & 0x0ff;
-				version.patch = (properties.driverVersion >> 6) & 0x0ff;
-				// Ignoring optional tertiary info in lower 6 bits
-				break;
-			case 0x8086:
-				version.major = (properties.driverVersion >> 14) & 0x3ffff;
-				version.minor = properties.driverVersion & 0x3ffff;
-				break;
-			default:
-				version.major = VK_VERSION_MAJOR(properties.driverVersion);
-				version.minor = VK_VERSION_MINOR(properties.driverVersion);
-				version.patch = VK_VERSION_PATCH(properties.driverVersion);
-				break;
-		}
-
-		return version;
-	}
-
-	vk::PhysicalDeviceFeatures const &get_features() const
-	{
-		return *reinterpret_cast<vk::PhysicalDeviceFeatures const *>(&vkb::PhysicalDevice::get_features());
-	}
-
-	vk::PhysicalDevice get_handle() const
-	{
-		return vkb::PhysicalDevice::get_handle();
-	}
-
-	vkb::core::HPPInstance &get_instance() const
-	{
-		return reinterpret_cast<vkb::core::HPPInstance &>(vkb::PhysicalDevice::get_instance());
-	}
-
-	vk::PhysicalDeviceMemoryProperties const &get_memory_properties() const
-	{
-		return reinterpret_cast<vk::PhysicalDeviceMemoryProperties const &>(vkb::PhysicalDevice::get_memory_properties());
-	}
+     * @return The version of the driver
+     */
+	DriverVersion get_driver_version() const;
 
 	/**
-   * @brief Checks that a given memory type is supported by the GPU
-   * @param bits The memory requirement type bits
-   * @param properties The memory property to search for
-   * @param memory_type_found True if found, false if not found
-   * @returns The memory type index of the found memory type
-   */
-	uint32_t get_memory_type(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const
-	{
-		vk::PhysicalDeviceMemoryProperties const &memory_properties = get_memory_properties();
-		for (uint32_t i = 0; i < memory_properties.memoryTypeCount; i++)
-		{
-			if ((bits & 1) == 1)
-			{
-				if ((memory_properties.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					if (memory_type_found)
-					{
-						*memory_type_found = true;
-					}
-					return i;
-				}
-			}
-			bits >>= 1;
-		}
+	 * @brief Used at logical device creation to pass the extensions feature chain to vkCreateDevice
+	 * @returns A void pointer to the start of the extension linked list
+	 */
+	void *get_extension_feature_chain() const;
 
-		if (memory_type_found)
-		{
-			*memory_type_found = false;
-			return ~0;
-		}
-		else
-		{
-			throw std::runtime_error("Could not find a matching memory type");
-		}
-	}
+	const vk::PhysicalDeviceFeatures &get_features() const;
 
-	vk::PhysicalDeviceFeatures &get_mutable_requested_features()
-	{
-		return reinterpret_cast<vk::PhysicalDeviceFeatures &>(vkb::PhysicalDevice::get_mutable_requested_features());
-	}
+	vk::PhysicalDevice get_handle() const;
 
-	vk::PhysicalDeviceProperties const &get_properties() const
-	{
-		return reinterpret_cast<vk::PhysicalDeviceProperties const &>(vkb::PhysicalDevice::get_properties());
-	}
+	vkb::core::HPPInstance &get_instance() const;
 
-	std::vector<vk::QueueFamilyProperties> const &get_queue_family_properties() const
-	{
-		return reinterpret_cast<std::vector<vk::QueueFamilyProperties> const &>(vkb::PhysicalDevice::get_queue_family_properties());
-	}
+	const vk::PhysicalDeviceMemoryProperties &get_memory_properties() const;
 
 	/**
-   * @return Whether an image format is supported by the GPU
-   */
-	bool is_image_format_supported(vk::Format format) const
-	{
-		try
-		{
-			get_handle().getImageFormatProperties(format, vk::ImageType::e2D, vk::ImageTiling::eOptimal, vk::ImageUsageFlagBits::eSampled);
-		}
-		catch (vk::SystemError &err)
-		{
-			return err.code() != vk::make_error_code(vk::Result::eErrorFormatNotSupported);
-		}
-		return true;
-	}
+     * @brief Checks that a given memory type is supported by the GPU
+     * @param bits The memory requirement type bits
+     * @param properties The memory property to search for
+     * @param memory_type_found True if found, false if not found
+     * @returns The memory type index of the found memory type
+     */
+	uint32_t get_memory_type(uint32_t bits, vk::MemoryPropertyFlags properties, vk::Bool32 *memory_type_found = nullptr) const;
 
-	vk::Bool32 is_present_supported(vk::SurfaceKHR surface, uint32_t queue_family_index) const
-	{
-		return static_cast<vk::Bool32>(vkb::PhysicalDevice::is_present_supported(static_cast<VkSurfaceKHR>(surface), queue_family_index));
-	}
+	const vk::PhysicalDeviceProperties &get_properties() const;
 
+	const std::vector<vk::QueueFamilyProperties> &get_queue_family_properties() const;
+
+	const vk::PhysicalDeviceFeatures get_requested_features() const;
+
+	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
+
+	/**
+	 * @brief Requests a third party extension to be used by the framework
+	 *
+	 *        To have the features enabled, this function must be called before the logical device
+	 *        is created. To do this request sample specific features inside
+	 *        VulkanSample::request_gpu_features(vkb::HPPPhysicalDevice &gpu).
+	 *
+	 *        If the feature extension requires you to ask for certain features to be enabled, you can
+	 *        modify the struct returned by this function, it will propegate the changes to the logical
+	 *        device.
+	 * @returns The extension feature struct
+	 */
 	template <typename HPPStructureType>
 	HPPStructureType &request_extension_features()
 	{
-		return reinterpret_cast<HPPStructureType &>(vkb::PhysicalDevice::request_extension_features<typename HPPStructureType::NativeType>(
-		    static_cast<VkStructureType>(HPPStructureType::structureType)));
+		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
+		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
+		{
+			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) + " isn't enabled!");
+		}
+
+		// If the type already exists in the map, return a casted pointer to get the extension feature struct
+		vk::StructureType structureType         = HPPStructureType::structureType;        // need to instantiate this value to be usable in find()!
+		auto              extension_features_it = extension_features.find(structureType);
+		if (extension_features_it != extension_features.end())
+		{
+			return *static_cast<HPPStructureType *>(extension_features_it->second.get());
+		}
+
+		// Get the extension feature
+		vk::StructureChain<vk::PhysicalDeviceFeatures2KHR, HPPStructureType> featureChain = handle.getFeatures2KHR<vk::PhysicalDeviceFeatures2KHR, HPPStructureType>();
+
+		// Insert the extension feature into the extension feature map so its ownership is held
+		extension_features.insert({structureType, std::make_shared<HPPStructureType>(featureChain.template get<HPPStructureType>())});
+
+		// Pull out the dereferenced void pointer, we can assume its type based on the template
+		auto *extension_ptr = static_cast<HPPStructureType *>(extension_features.find(structureType)->second.get());
+
+		// If an extension feature has already been requested, we shift the linked list down by one
+		// Making this current extension the new base pointer
+		if (last_requested_extension_feature)
+		{
+			extension_ptr->pNext = last_requested_extension_feature;
+		}
+		last_requested_extension_feature = extension_ptr;
+
+		return *extension_ptr;
 	}
+
+	/**
+	 * @brief Sets whether or not the first graphics queue should have higher priority than other queues.
+	 * Very specific feature which is used by async compute samples.
+	 * @param enable If true, present queue will have prio 1.0 and other queues have prio 0.5.
+	 * Default state is false, where all queues have 0.5 priority.
+	 */
+	void set_high_priority_graphics_queue_enable(bool enable)
+	{
+		high_priority_graphics_queue = enable;
+	}
+
+	/**
+	 * @brief Returns high priority graphics queue state.
+	 * @return High priority state.
+	 */
+	bool has_high_priority_graphics_queue() const
+	{
+		return high_priority_graphics_queue;
+	}
+
+  private:
+	// Handle to the Vulkan instance
+	HPPInstance &instance;
+
+	// Handle to the Vulkan physical device
+	vk::PhysicalDevice handle{nullptr};
+
+	// The features that this GPU supports
+	vk::PhysicalDeviceFeatures features;
+
+	// The GPU properties
+	vk::PhysicalDeviceProperties properties;
+
+	// The GPU memory properties
+	vk::PhysicalDeviceMemoryProperties memory_properties;
+
+	// The GPU queue family properties
+	std::vector<vk::QueueFamilyProperties> queue_family_properties;
+
+	// The features that will be requested to be enabled in the logical device
+	vk::PhysicalDeviceFeatures requested_features;
+
+	// The extension feature pointer
+	void *last_requested_extension_feature{nullptr};
+
+	// Holds the extension feature structures, we use a map to retain an order of requested structures
+	std::map<vk::StructureType, std::shared_ptr<void>> extension_features;
+
+	bool high_priority_graphics_queue{false};
 };
 }        // namespace core
 }        // namespace vkb

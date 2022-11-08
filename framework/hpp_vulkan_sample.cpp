@@ -101,10 +101,10 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	instance = std::make_unique<vkb::core::HPPInstance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_instance().get_handle());
-
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
+	if (!surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -122,6 +122,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	if (!headless || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 	}
 
 #ifdef VKB_VULKAN_DEBUG
@@ -153,7 +156,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	device = std::make_unique<vkb::core::HPPDevice>(gpu, surface, std::move(debug_utils), get_device_extensions());
 
-	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device().get_handle());
+	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device()->get_handle());
 
 	create_render_context(platform);
 	prepare_render_context();
@@ -169,9 +172,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 void HPPVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear}};
+	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
@@ -258,13 +259,13 @@ void HPPVulkanSample::update(float delta_time)
 	// Collect the performance data for the sample graphs
 	update_stats(delta_time);
 
-	command_buffer.get_handle().begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+	command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	stats->begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
 	stats->end_sampling(command_buffer);
-	command_buffer.get_handle().end();
+	command_buffer.end();
 
 	render_context->submit(command_buffer);
 
@@ -429,17 +430,17 @@ vkb::core::HPPInstance const &HPPVulkanSample::get_instance() const
 	return *instance;
 }
 
-vkb::core::HPPDevice const &HPPVulkanSample::get_device() const
+std::unique_ptr<vkb::core::HPPDevice> const &HPPVulkanSample::get_device() const
 {
-	return *device;
+	return device;
 }
 
-Configuration const &HPPVulkanSample::get_configuration() const
+Configuration &HPPVulkanSample::get_configuration()
 {
 	return configuration;
 }
 
-void HPPVulkanSample::draw_gui() const
+void HPPVulkanSample::draw_gui()
 {
 }
 
@@ -474,7 +475,7 @@ void HPPVulkanSample::update_debug_window()
 
 void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent)
 {
-	command_buffer.get_handle().setViewport(0, {0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
+	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
 }
 

@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,6 @@ layout (set = 0, binding = 0) uniform UBO
 } ubo;
 
 layout (location = 0) out vec2 outUV;
-layout (location = 3) out vec3 outNormal;
 
 void main() 
 {
