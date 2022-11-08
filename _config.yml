@@ -1,2 +1,2 @@
 theme: jekyll-theme-slate
-exclude: third_party
+exclude: [third_party]
