@@ -25,7 +25,7 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip Corporation"
         NAME "Memory Budget"
-        DESCRIPTION "Changes were made by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features, and density of the instanced meshes can be adjusted."
+        DESCRIPTION "This is built based on work of Instancing by Sascha Willems. Changes were made by Holochip Corporation. Density of the instanced meshes can be adjusted, and physical device memory usage/budget are displayed using memory budget extension features."
         SHADER_FILES_GLSL
         "instancing/instancing.vert"
         "instancing/instancing.frag"
