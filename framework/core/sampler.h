@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -29,7 +30,7 @@ namespace core
 /**
  * @brief Represents a Vulkan Sampler
  */
-class Sampler
+class Sampler : public VulkanResource<VkSampler, VK_OBJECT_TYPE_SAMPLER, const Device>
 {
   public:
 	/**
@@ -37,7 +38,7 @@ class Sampler
 	 * @param d The device to use
 	 * @param info Creation details
 	 */
-	Sampler(Device &d, const VkSamplerCreateInfo &info);
+	Sampler(Device const &d, const VkSamplerCreateInfo &info);
 
 	Sampler(const Sampler &) = delete;
 
@@ -48,16 +49,6 @@ class Sampler
 	Sampler &operator=(const Sampler &) = delete;
 
 	Sampler &operator=(Sampler &&) = delete;
-
-	/**
-	 * @return The vulkan sampler handle
-	 */
-	VkSampler get_handle() const;
-
-  private:
-	Device &device;
-
-	VkSampler handle{VK_NULL_HANDLE};
 };
 }        // namespace core
 }        // namespace vkb

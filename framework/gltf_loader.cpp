@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -318,12 +318,25 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 }
+
+static inline bool texture_needs_srgb_colorspace(const std::string &name)
+{
+	// The gltf spec states that the base and emissive textures MUST be encoded with the sRGB
+	// transfer function. All other texture types are linear.
+	if (name == "baseColorTexture" || name == "emissiveTexture")
+		return true;
+
+	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
+	assert(name == "metallicRoughnessTexture" || name == "normalTexture" || name == "occlusionTexture");
+	return false;
+}
+
 }        // namespace
 
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
     {KHR_LIGHTS_PUNCTUAL_EXTENSION, false}};
 
-GLTFLoader::GLTFLoader(Device &device) :
+GLTFLoader::GLTFLoader(Device const &device) :
     device{device}
 {
 }
@@ -583,7 +596,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -593,7 +611,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -609,9 +632,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	{
 		auto mesh = parse_mesh(gltf_mesh);
 
-		for (auto &gltf_primitive : gltf_mesh.primitives)
+		for (size_t i_primitive = 0; i_primitive < gltf_mesh.primitives.size(); i_primitive++)
 		{
-			auto submesh = std::make_unique<sg::SubMesh>();
+			const auto &gltf_primitive = gltf_mesh.primitives[i_primitive];
+
+			auto submesh_name = fmt::format("'{}' mesh, primitive #{}", gltf_mesh.name, i_primitive);
+			auto submesh      = std::make_unique<sg::SubMesh>(std::move(submesh_name));
 
 			for (auto &attribute : gltf_primitive.attributes)
 			{
@@ -630,6 +656,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
 				buffer.update(vertex_data);
+				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
+				                                  gltf_mesh.name, i_primitive, attrib_name));
 
 				submesh->vertex_buffers.insert(std::make_pair(attrib_name, std::move(buffer)));
 
@@ -646,7 +674,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 				auto format = get_attribute_format(&model, gltf_primitive.indices);
 
-				auto index_data  = get_attribute_data(&model, gltf_primitive.indices);
+				auto index_data = get_attribute_data(&model, gltf_primitive.indices);
 
 				switch (format)
 				{
@@ -670,6 +698,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				                                                       index_data.size(),
 				                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 				                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+				submesh->index_buffer->set_debug_name(fmt::format("'{}' mesh, primitive #{}: index buffer",
+				                                                  gltf_mesh.name, i_primitive));
 
 				submesh->index_buffer->update(index_data);
 			}
@@ -1250,7 +1280,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		// Load image from uri
 		auto image_uri = model_path + "/" + gltf_image.uri;
-		image          = sg::Image::load(gltf_image.name, image_uri);
+		image          = sg::Image::load(gltf_image.name, image_uri, vkb::sg::Image::Unknown);
 	}
 
 	// Check whether the format is supported by the GPU
@@ -1294,6 +1324,7 @@ std::unique_ptr<sg::Sampler> GLTFLoader::parse_sampler(const tinygltf::Sampler &
 	sampler_info.maxLod       = std::numeric_limits<float>::max();
 
 	core::Sampler vk_sampler{device, sampler_info};
+	vk_sampler.set_debug_name(gltf_sampler.name);
 
 	return std::make_unique<sg::Sampler>(name, std::move(vk_sampler));
 }

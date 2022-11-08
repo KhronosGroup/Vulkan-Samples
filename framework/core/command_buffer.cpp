@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,11 +23,16 @@
 #include "rendering/render_frame.h"
 #include "rendering/subpass.h"
 
+VKBP_DISABLE_WARNINGS()
+#include <glm/gtc/type_ptr.hpp>
+VKBP_ENABLE_WARNINGS()
+
 namespace vkb
 {
 CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel level) :
+    VulkanResource{VK_NULL_HANDLE, &command_pool.get_device()},
     command_pool{command_pool},
-    max_push_constants_size{command_pool.get_device().get_gpu().get_properties().limits.maxPushConstantsSize},
+    max_push_constants_size{device->get_gpu().get_properties().limits.maxPushConstantsSize},
     level{level}
 {
 	VkCommandBufferAllocateInfo allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
@@ -36,7 +41,7 @@ CommandBuffer::CommandBuffer(CommandPool &command_pool, VkCommandBufferLevel lev
 	allocate_info.commandBufferCount = 1;
 	allocate_info.level              = level;
 
-	VkResult result = vkAllocateCommandBuffers(command_pool.get_device().get_handle(), &allocate_info, &handle);
+	VkResult result = vkAllocateCommandBuffers(device->get_handle(), &allocate_info, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -54,24 +59,13 @@ CommandBuffer::~CommandBuffer()
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) :
+    VulkanResource{std::move(other)},
     command_pool{other.command_pool},
     level{other.level},
-    handle{other.handle},
     state{other.state},
     update_after_bind{other.update_after_bind}
 {
-	other.handle = VK_NULL_HANDLE;
-	other.state  = State::Invalid;
-}
-
-Device &CommandBuffer::get_device()
-{
-	return command_pool.get_device();
-}
-
-const VkCommandBuffer &CommandBuffer::get_handle() const
-{
-	return handle;
+	other.state = State::Invalid;
 }
 
 bool CommandBuffer::is_recording() const
@@ -461,7 +455,7 @@ void CommandBuffer::copy_image_to_buffer(const core::Image &image, VkImageLayout
 	                       buffer.get_handle(), to_u32(regions.size()), regions.data());
 }
 
-void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier)
+void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, const ImageMemoryBarrier &memory_barrier) const
 {
 	// Adjust barrier's subresource range for depth images
 	auto subresource_range = image_view.get_subresource_range();
@@ -629,9 +623,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 			std::vector<uint32_t> dynamic_offsets;
 
-			// The bindings we want to update before binding, if empty we update all bindings
-			std::vector<uint32_t> bindings_to_update;
-
 			// Iterate over all resource bindings
 			for (auto &binding_it : resource_set.get_resource_bindings())
 			{
@@ -641,12 +632,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				// Check if binding exists in the pipeline layout
 				if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
 				{
-					// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
-					if (update_after_bind && !(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT))
-					{
-						bindings_to_update.push_back(binding_index);
-					}
-
 					// Iterate over all binding resources
 					for (auto &element_it : binding_resources)
 					{
@@ -674,11 +659,11 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = std::move(buffer_info);
+							buffer_infos[binding_index][array_element] = buffer_info;
 						}
 
 						// Get image info
-						else if (image_view != nullptr || sampler != VK_NULL_HANDLE)
+						else if (image_view != nullptr || sampler != nullptr)
 						{
 							// Can be null for input attachments
 							VkDescriptorImageInfo image_info{};
@@ -712,17 +697,22 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								}
 							}
 
-							image_infos[binding_index][array_element] = std::move(image_info);
+							image_infos[binding_index][array_element] = image_info;
 						}
 					}
+
+					assert((!update_after_bind ||
+					        (buffer_infos.count(binding_index) > 0 || (image_infos.count(binding_index) > 0))) &&
+					       "binding index with no buffer or image infos can't be checked for adding to bindings_to_update");
 				}
 			}
 
-			// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
-			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
-			descriptor_set.update(bindings_to_update);
-
-			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
+			VkDescriptorSet descriptor_set_handle =
+			    command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout,
+			                                                            buffer_infos,
+			                                                            image_infos,
+			                                                            update_after_bind,
+			                                                            command_pool.get_thread_index());
 
 			// Bind descriptor set
 			vkCmdBindDescriptorSets(get_handle(),
@@ -840,6 +830,7 @@ RenderPass &CommandBuffer::get_render_pass(const vkb::RenderTarget &render_targe
 		subpass_info_it->disable_depth_stencil_attachment = subpass->get_disable_depth_stencil_attachment();
 		subpass_info_it->depth_stencil_resolve_mode       = subpass->get_depth_stencil_resolve_mode();
 		subpass_info_it->depth_stencil_resolve_attachment = subpass->get_depth_stencil_resolve_attachment();
+		subpass_info_it->debug_name                       = subpass->get_debug_name();
 
 		++subpass_info_it;
 	}

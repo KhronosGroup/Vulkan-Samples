@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2019-2020, Arm Limited and Contributors
+# Copyright (c) 2019-2022, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -26,7 +26,7 @@ else
 fi
 
 cmake -DPROJECT_NAME="vulkan_samples" \
-	  -DANDROID_API=24 \
+	  -DANDROID_API=30 \
 	  -DARCH_ABI="arm64-v8a;armeabi-v7a" \
 	  -DANDROID_MANIFEST=$ROOT_DIR/app/android/AndroidManifest.xml \
 	  -DJAVA_DIRS=$ROOT_DIR/app/android/java \

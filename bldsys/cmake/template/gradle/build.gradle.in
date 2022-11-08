@@ -1,70 +1,8 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        google()
-    }
-
-    dependencies {
-        classpath 'com.android.tools.build:gradle:7.0.2'
-    }
+plugins {
+	id 'com.android.application' version '7.1.3' apply false
+	id 'com.android.library' version '7.1.3' apply false
 }
 
-allprojects {
-    repositories {
-        google()
-    }
-}
-
-apply plugin: 'com.android.application'
-
-android {
-    compileSdk 31
-
-    defaultConfig {
-        @MIN_SDK_VERSION@
-        targetSdk 31
-
-        externalNativeBuild {
-            @CMAKE_ARGUMENTS@
-        }
-    }
-
-    buildTypes {
-        debug {
-            debuggable true
-            jniDebuggable true
-        }
-
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt')
-            signingConfig debug.signingConfig
-        }
-    }
-
-    sourceSets {
-        main {
-            @ASSETS_SRC_DIRS@
-            @RES_SRC_DIRS@
-            @JAVA_SRC_DIRS@
-            @JNI_LIBS_SRC_DIRS@
-            @MANIFEST_FILE@
-
-            jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
-        }
-    }
-
-    externalNativeBuild {
-        @CMAKE_PATH@
-    }
-
-    lintOptions {
-        checkReleaseBuilds false
-        abortOnError false
-    }
-}
-
-dependencies {
-    implementation 'androidx.appcompat:appcompat:1.3.1'
-    implementation 'com.google.android.material:material:1.4.0'
+task clean(type: Delete) {
+	delete rootProject.buildDir
 }

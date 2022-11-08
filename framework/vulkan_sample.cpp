@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -89,12 +89,50 @@ bool VulkanSample::prepare(Platform &platform)
 
 	bool headless = platform.get_window().get_window_mode() == Window::Mode::Headless;
 
+	VkResult result = volkInitialize();
+	if (result)
+	{
+		throw VulkanException(result, "Failed to initialize volk.");
+	}
+
+	std::unique_ptr<DebugUtils> debug_utils{};
+
 	// Creating the vulkan instance
 	add_instance_extension(platform.get_surface_extension());
-	instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+
+#ifdef VKB_VULKAN_DEBUG
+	{
+		uint32_t instance_extension_count;
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+
+		std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+		VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+		for (const auto &it : available_instance_extensions)
+		{
+			if (strcmp(it.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+			{
+				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+
+				debug_utils = std::make_unique<DebugUtilsExtDebugUtils>();
+				add_instance_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+				break;
+			}
+		}
+	}
+#endif
+
+	create_instance();
+
+	if (!instance)
+	{
+		instance = std::make_unique<Instance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
+	}
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
+	if (!surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -112,9 +150,50 @@ bool VulkanSample::prepare(Platform &platform)
 	if (!headless || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 	}
 
-	device = std::make_unique<vkb::Device>(gpu, surface, get_device_extensions());
+#ifdef VKB_VULKAN_DEBUG
+	if (!debug_utils)
+	{
+		uint32_t device_extension_count;
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, nullptr));
+
+		std::vector<VkExtensionProperties> available_device_extensions(device_extension_count);
+		VK_CHECK(vkEnumerateDeviceExtensionProperties(gpu.get_handle(), nullptr, &device_extension_count, available_device_extensions.data()));
+
+		for (const auto &it : available_device_extensions)
+		{
+			if (strcmp(it.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0)
+			{
+				LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+
+				debug_utils = std::make_unique<DebugMarkerExtDebugUtils>();
+				add_device_extension(VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
+				break;
+			}
+		}
+	}
+
+	if (!debug_utils)
+	{
+		LOGW("Vulkan debug utils were requested, but no extension that provides them was found");
+	}
+#endif
+
+	if (!debug_utils)
+	{
+		debug_utils = std::make_unique<DummyDebugUtils>();
+	}
+
+	create_device();        // create_custom_device? better way than override?
+
+	if (!device)
+	{
+		device = std::make_unique<vkb::Device>(gpu, surface, std::move(debug_utils), get_device_extensions());
+	}
 
 	create_render_context(platform);
 	prepare_render_context();
@@ -127,12 +206,18 @@ bool VulkanSample::prepare(Platform &platform)
 	return true;
 }
 
+void VulkanSample::create_device()
+{
+}
+
+void VulkanSample::create_instance()
+{
+}
+
 void VulkanSample::create_render_context(Platform &platform)
 {
 	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
+	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
@@ -303,7 +388,7 @@ void VulkanSample::render(CommandBuffer &command_buffer)
 	}
 }
 
-void VulkanSample::resize(uint32_t width, uint32_t height)
+bool VulkanSample::resize(uint32_t width, uint32_t height)
 {
 	Application::resize(width, height);
 
@@ -326,6 +411,7 @@ void VulkanSample::resize(uint32_t width, uint32_t height)
 	{
 		stats->resize(width);
 	}
+	return true;
 }
 
 void VulkanSample::input_event(const InputEvent &input_event)
@@ -363,7 +449,7 @@ void VulkanSample::input_event(const InputEvent &input_event)
 
 		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
 		{
-			if (!graphs::generate_all(get_render_context(), *scene.get()))
+			if (!graphs::generate_all(get_render_context(), *scene))
 			{
 				LOGE("Failed to save Graphs");
 			}
@@ -408,21 +494,26 @@ void VulkanSample::update_debug_window()
 	                                                    to_string(render_context->get_swapchain().get_format()) + " (" +
 	                                                        to_string(get_bits_per_pixel(render_context->get_swapchain().get_format())) + "bpp)");
 
-	get_debug_info().insert<field::Static, uint32_t>("mesh_count", to_u32(scene->get_components<sg::SubMesh>().size()));
-
-	get_debug_info().insert<field::Static, uint32_t>("texture_count", to_u32(scene->get_components<sg::Texture>().size()));
-
-	if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
+	if (scene != nullptr)
 	{
-		if (auto camera_node = camera->get_node())
+		get_debug_info().insert<field::Static, uint32_t>("mesh_count",
+		                                                 to_u32(scene->get_components<sg::SubMesh>().size()));
+
+		get_debug_info().insert<field::Static, uint32_t>("texture_count",
+		                                                 to_u32(scene->get_components<sg::Texture>().size()));
+
+		if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
 		{
-			const glm::vec3 &pos = camera_node->get_transform().get_translation();
-			get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
+			if (auto camera_node = camera->get_node())
+			{
+				const glm::vec3 &pos = camera_node->get_transform().get_translation();
+				get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);
+			}
 		}
 	}
 }
 
-void VulkanSample::set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent) const
+void VulkanSample::set_viewport_and_scissor(vkb::CommandBuffer &command_buffer, const VkExtent2D &extent)
 {
 	VkViewport viewport{};
 	viewport.width    = static_cast<float>(extent.width);
@@ -492,13 +583,18 @@ void VulkanSample::set_api_version(uint32_t requested_api_version)
 
 void VulkanSample::request_gpu_features(PhysicalDevice &gpu)
 {
-	// To be overriden by sample
+	// To be overridden by sample
 }
 
 sg::Scene &VulkanSample::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	return *scene;
+}
+
+bool VulkanSample::has_scene()
+{
+	return scene != nullptr;
 }
 
 }        // namespace vkb

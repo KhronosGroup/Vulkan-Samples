@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,6 @@
 
 #include <queue>
 
-#include "common/error.h"
 #include "component.h"
 #include "components/sub_mesh.h"
 #include "node.h"

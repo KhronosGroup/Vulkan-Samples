@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Sascha Willems
+/* Copyright (c) 2020-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -228,6 +228,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 */
 void FragmentShadingRate::invalidate_shading_rate_attachment()
 {
+	device->wait_idle();
 	vkDestroyImageView(device->get_handle(), shading_rate_image.view, nullptr);
 	vkDestroyImage(device->get_handle(), shading_rate_image.image, nullptr);
 	vkFreeMemory(device->get_handle(), shading_rate_image.memory, nullptr);
@@ -325,17 +326,17 @@ void FragmentShadingRate::setup_render_pass()
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	dependencies[1].sType           = VK_STRUCTURE_TYPE_SUBPASS_DEPENDENCY_2;
 	dependencies[1].srcSubpass      = 0;
 	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -376,6 +377,18 @@ void FragmentShadingRate::setup_framebuffer()
 	framebuffer_create_info.width                   = get_render_context().get_surface_extent().width;
 	framebuffer_create_info.height                  = get_render_context().get_surface_extent().height;
 	framebuffer_create_info.layers                  = 1;
+
+	// Delete existing frame buffers
+	if (!framebuffers.empty())
+	{
+		for (auto &framebuffer : framebuffers)
+		{
+			if (framebuffer != VK_NULL_HANDLE)
+			{
+				vkDestroyFramebuffer(device->get_handle(), framebuffer, nullptr);
+			}
+		}
+	}
 
 	// Create frame buffers for every swap chain image
 	framebuffers.resize(render_context->get_render_frames().size());
@@ -485,9 +498,9 @@ void FragmentShadingRate::build_command_buffers()
 void FragmentShadingRate::load_assets()
 {
 	models.skysphere   = load_model("scenes/geosphere.gltf");
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
+	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 	models.scene       = load_model("scenes/textured_unit_cube.gltf");
-	textures.scene     = load_texture("textures/metalplate01_rgba.ktx");
+	textures.scene     = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void FragmentShadingRate::setup_descriptor_pool()
@@ -732,11 +745,16 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-void FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
+bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 {
 	invalidate_shading_rate_attachment();
-	ApiVulkanSample::resize(width, height);
+	if (!ApiVulkanSample::resize(width, height))
+	{
+		setup_framebuffer();
+	}
 	update_uniform_buffers();
+	build_command_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shading_rate()

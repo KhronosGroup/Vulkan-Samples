@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
- * Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,6 +106,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	ImGuiStyle &style = ImGui::GetStyle();
 
 	// Color scheme
+	style.Colors[ImGuiCol_WindowBg]         = ImVec4(0.005f, 0.005f, 0.005f, 0.94f);
 	style.Colors[ImGuiCol_TitleBg]          = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
 	style.Colors[ImGuiCol_TitleBgActive]    = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 	style.Colors[ImGuiCol_MenuBarBg]        = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
@@ -162,10 +163,14 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 
 	// Create target image for copy
 	VkExtent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
-	font_image      = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
-                                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                                               VMA_MEMORY_USAGE_GPU_ONLY);
+
+	font_image = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
+	                                           VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	                                           VMA_MEMORY_USAGE_GPU_ONLY);
+	font_image->set_debug_name("GUI font image");
+
 	font_image_view = std::make_unique<core::ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
+	font_image_view->set_debug_name("View on GUI font image");
 
 	// Upload font data into the vulkan image memory
 	{
@@ -205,7 +210,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 			ImageMemoryBarrier memory_barrier{};
 			memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 			memory_barrier.new_layout      = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			memory_barrier.src_access_mask = 0;
+			memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 			memory_barrier.dst_access_mask = VK_ACCESS_SHADER_READ_BIT;
 			memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
@@ -247,11 +252,15 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
+	sampler->set_debug_name("GUI sampler");
 
 	if (explicit_update)
 	{
 		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer  = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer->set_debug_name("GUI vertex buffer");
+
+		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer->set_debug_name("GUI index buffer");
 	}
 }
 
@@ -401,6 +410,7 @@ bool Gui::update_buffers()
 		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
 		                                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer->set_debug_name("GUI vertex buffer");
 	}
 
 	if ((index_buffer->get_handle() == VK_NULL_HANDLE) || (index_buffer_size != last_index_buffer_size))
@@ -412,6 +422,7 @@ bool Gui::update_buffers()
 		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), index_buffer_size,
 		                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                              VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer->set_debug_name("GUI index buffer");
 	}
 
 	// Upload data
@@ -479,6 +490,8 @@ void Gui::draw(CommandBuffer &command_buffer)
 	{
 		return;
 	}
+
+	ScopedDebugLabel debug_label{command_buffer, "GUI"};
 
 	// Vertex input state
 	VkVertexInputBindingDescription vertex_input_binding{};
@@ -864,24 +877,27 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	static Timer       timer;
 	static const char *message;
 
-	if (ImGui::Button("Save Debug Graphs"))
+	if (sample.has_scene())
 	{
-		if (graphs::generate_all(sample.get_render_context(), sample.get_scene()))
+		if (ImGui::Button("Save Debug Graphs"))
 		{
-			message = "Graphs Saved!";
-		}
-		else
-		{
-			message = "Error outputting graphs!";
-		}
+			if (graphs::generate_all(sample.get_render_context(), sample.get_scene()))
+			{
+				message = "Graphs Saved!";
+			}
+			else
+			{
+				message = "Error outputting graphs!";
+			}
 
-		if (timer.is_running())
-		{
-			timer.lap();
-		}
-		else
-		{
-			timer.start();
+			if (timer.is_running())
+			{
+				timer.lap();
+			}
+			else
+			{
+				timer.start();
+			}
 		}
 	}
 

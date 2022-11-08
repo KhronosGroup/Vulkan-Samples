@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
 *
 * SPDX-License-Identifier: Apache-2.0
 *
@@ -158,8 +158,8 @@ void PushDescriptors::build_command_buffers()
 void PushDescriptors::load_assets()
 {
 	models.cube      = load_model("scenes/textured_unit_cube.gltf");
-	cubes[0].texture = load_texture("textures/crate01_color_height_rgba.ktx");
-	cubes[1].texture = load_texture("textures/crate02_color_height_rgba.ktx");
+	cubes[0].texture = load_texture("textures/crate01_color_height_rgba.ktx", vkb::sg::Image::Color);
+	cubes[1].texture = load_texture("textures/crate02_color_height_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void PushDescriptors::setup_descriptor_set_layout()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@ namespace sg
 class Stb : public Image
 {
   public:
-	Stb(const std::string &name, const std::vector<uint8_t> &data);
+	Stb(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type);
 
 	virtual ~Stb() = default;
 };

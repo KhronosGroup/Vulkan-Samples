@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,31 +23,24 @@ namespace vkb
 {
 namespace core
 {
-Sampler::Sampler(Device &d, const VkSamplerCreateInfo &info) :
-    device{d}
+Sampler::Sampler(Device const &d, const VkSamplerCreateInfo &info) :
+    VulkanResource{VK_NULL_HANDLE, &d}
 {
-	VK_CHECK(vkCreateSampler(device.get_handle(), &info, nullptr, &handle));
+	VK_CHECK(vkCreateSampler(device->get_handle(), &info, nullptr, &handle));
 }
 
 Sampler::Sampler(Sampler &&other) :
-    device{other.device},
-    handle{other.handle}
+    VulkanResource{std::move(other)}
 {
-	other.handle = VK_NULL_HANDLE;
 }
 
 Sampler::~Sampler()
 {
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroySampler(device.get_handle(), handle, nullptr);
+		vkDestroySampler(device->get_handle(), handle, nullptr);
 	}
 }
 
-VkSampler Sampler::get_handle() const
-{
-	assert(handle != VK_NULL_HANDLE && "Sampler handle is invalid");
-	return handle;
-}
 }        // namespace core
 }        // namespace vkb

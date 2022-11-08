@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,8 +26,11 @@
  * offset used to pass data from the single uniform buffer to the connected shader binding point.
  */
 
-#include <benchmark_mode/benchmark_mode.h>
 #include <hpp_dynamic_uniform_buffers.h>
+
+#include <benchmark_mode/benchmark_mode.h>
+#include <iostream>
+#include <random>
 
 HPPDynamicUniformBuffers::HPPDynamicUniformBuffers()
 {
@@ -36,19 +39,21 @@ HPPDynamicUniformBuffers::HPPDynamicUniformBuffers()
 
 HPPDynamicUniformBuffers ::~HPPDynamicUniformBuffers()
 {
-	if (get_device())
+	if (get_device() && get_device()->get_handle())
 	{
 		if (ubo_data_dynamic.model)
 		{
 			aligned_free(ubo_data_dynamic.model);
 		}
 
+		vk::Device device = get_device()->get_handle();
+
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
-		get_device().destroyPipeline(pipeline);
+		device.destroyPipeline(pipeline);
 
-		get_device().destroyPipelineLayout(pipeline_layout);
-		get_device().destroyDescriptorSetLayout(descriptor_set_layout);
+		device.destroyPipelineLayout(pipeline_layout);
+		device.destroyDescriptorSetLayout(descriptor_set_layout);
 	}
 }
 
@@ -79,32 +84,30 @@ void HPPDynamicUniformBuffers::aligned_free(void *data)
 void HPPDynamicUniformBuffers::build_command_buffers()
 {
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
-	vk::Viewport               viewport(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-	vk::Rect2D                 scissor({0, 0}, {width, height});
+	vk::Viewport               viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
+	vk::Rect2D                 scissor({0, 0}, extent);
 	vk::DeviceSize             offset = 0;
 
-	std::array<vk::ClearValue, 2> clear_values = {get_default_clear_color(), vk::ClearDepthStencilValue(0.0f, 0)};
+	std::array<vk::ClearValue, 2> clear_values = {default_clear_color, vk::ClearDepthStencilValue(0.0f, 0)};
 
-	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, {width, height}}, clear_values);
+	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
 
-	size_t command_buffers_count = get_command_buffers_count();
-	for (size_t i = 0; i < command_buffers_count; ++i)
+	for (size_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		render_pass_begin_info.framebuffer = get_framebuffer(i);
-		vk::CommandBuffer command_buffer   = get_command_buffer(i);
+		render_pass_begin_info.framebuffer = framebuffers[i];
 
-		command_buffer.begin(command_buffer_begin_info);
+		draw_cmd_buffers[i].begin(command_buffer_begin_info);
 
-		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+		draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
-		command_buffer.setViewport(0, viewport);
+		draw_cmd_buffers[i].setViewport(0, viewport);
 
-		command_buffer.setScissor(0, scissor);
+		draw_cmd_buffers[i].setScissor(0, scissor);
 
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
+		draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipeline);
 
-		command_buffer.bindVertexBuffers(0, static_cast<vk::Buffer>(vertex_buffer->get_handle()), offset);
-		command_buffer.bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
+		draw_cmd_buffers[i].bindVertexBuffers(0, static_cast<vk::Buffer>(vertex_buffer->get_handle()), offset);
+		draw_cmd_buffers[i].bindIndexBuffer(index_buffer->get_handle(), 0, vk::IndexType::eUint32);
 
 		// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
 		for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
@@ -112,17 +115,16 @@ void HPPDynamicUniformBuffers::build_command_buffers()
 			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 			uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
 			// Bind the descriptor set for rendering a mesh using the dynamic offset
-			command_buffer.bindDescriptorSets(
-			    vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_set, dynamic_offset);
+			draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_set, dynamic_offset);
 
-			command_buffer.drawIndexed(index_count, 1, 0, 0, 0);
+			draw_cmd_buffers[i].drawIndexed(index_count, 1, 0, 0, 0);
 		}
 
-		draw_ui(command_buffer);
+		draw_ui(draw_cmd_buffers[i]);
 
-		command_buffer.endRenderPass();
+		draw_cmd_buffers[i].endRenderPass();
 
-		command_buffer.end();
+		draw_cmd_buffers[i].end();
 	}
 }
 
@@ -131,7 +133,8 @@ void HPPDynamicUniformBuffers::draw()
 	HPPApiVulkanSample::prepare_frame();
 
 	// Submit to queue
-	get_queue().submit(set_submit_info(get_command_buffer(current_buffer)));
+	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
+	queue.submit(submit_info);
 
 	HPPApiVulkanSample::submit_frame();
 }
@@ -197,25 +200,23 @@ void HPPDynamicUniformBuffers::generate_cube()
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device_wrapper(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	vertex_buffer =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device_wrapper(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
 void HPPDynamicUniformBuffers::setup_descriptor_pool()
 {
 	// Example uses one ubo and one image sampler
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
-	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
-	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
+	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eUniformBufferDynamic, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}}};
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
 
-	descriptor_pool = get_device().createDescriptorPool(descriptor_pool_create_info);
+	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
 void HPPDynamicUniformBuffers::setup_descriptor_set_layout()
@@ -227,26 +228,22 @@ void HPPDynamicUniformBuffers::setup_descriptor_set_layout()
 
 	vk::DescriptorSetLayoutCreateInfo descriptor_layout({}, set_layout_bindings);
 
-	descriptor_set_layout = get_device().createDescriptorSetLayout(descriptor_layout);
+	descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout);
 
 #if defined(ANDROID)
 	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
 #else
-	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, descriptor_set_layout);
 #endif
 
-	pipeline_layout = get_device().createPipelineLayout(pipeline_layout_create_info);
+	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
 }
 
 void HPPDynamicUniformBuffers::setup_descriptor_set()
 {
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo alloc_info(get_descriptor_pool(), 1, &descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo alloc_info(get_descriptor_pool(), descriptor_set_layout);
-#endif
+	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, 1, &descriptor_set_layout);
 
-	descriptor_set = get_device().allocateDescriptorSets(alloc_info).front();
+	descriptor_set = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
 
 	vk::DescriptorBufferInfo view_buffer_descriptor(uniform_buffers.view->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorBufferInfo dynamic_buffer_descriptor(uniform_buffers.dynamic->get_handle(), 0, dynamic_alignment);
@@ -257,7 +254,7 @@ void HPPDynamicUniformBuffers::setup_descriptor_set()
 	     // Binding 1 : Instance matrix as dynamic uniform buffer
 	     {descriptor_set, 1, {}, vk::DescriptorType::eUniformBufferDynamic, {}, dynamic_buffer_descriptor}}};
 
-	get_device().updateDescriptorSets(write_descriptor_sets, {});
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPDynamicUniformBuffers::prepare_pipelines()
@@ -271,8 +268,8 @@ void HPPDynamicUniformBuffers::prepare_pipelines()
 	rasterization_state.lineWidth   = 1.0f;
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask = vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                        vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
 	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
 
@@ -288,14 +285,13 @@ void HPPDynamicUniformBuffers::prepare_pipelines()
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
 
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {{vk::DynamicState::eViewport,
-                                                              vk::DynamicState::eScissor}};
+	std::array<vk::DynamicState, 2>    dynamic_state_enables = {{vk::DynamicState::eViewport, vk::DynamicState::eScissor}};
 	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
 
 	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {
-	    {load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	     load_shader("dynamic_uniform_buffers/base.frag", vk::ShaderStageFlagBits::eFragment)}};
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                   load_shader("dynamic_uniform_buffers/base.frag",
+	                                                                               vk::ShaderStageFlagBits::eFragment)}};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
@@ -321,7 +317,9 @@ void HPPDynamicUniformBuffers::prepare_pipelines()
 	                                                    {},
 	                                                    -1);
 
-	pipeline = get_device().createGraphicsPipeline(pipeline_cache, pipeline_create_info).value;
+	vk::Result result;
+	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -331,7 +329,7 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 	// We allocate this manually as the alignment of the offset differs between GPUs
 
 	// Calculate required alignment based on minimum device offset alignment
-	vk::DeviceSize min_ubo_alignment = get_physical_device().getProperties().limits.minUniformBufferOffsetAlignment;
+	vk::DeviceSize min_ubo_alignment = get_device()->get_gpu().get_handle().getProperties().limits.minUniformBufferOffsetAlignment;
 	dynamic_alignment                = sizeof(glm::mat4);
 	if (min_ubo_alignment > 0)
 	{
@@ -349,20 +347,18 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 	// Vertex shader uniform buffer block
 
 	// Static shared uniform buffer object with projection and view matrix
-	uniform_buffers.view = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device_wrapper(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.view =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	uniform_buffers.dynamic = std::make_unique<vkb::core::HPPBuffer>(
-	    get_device_wrapper(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.dynamic =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
-	std::default_random_engine rnd_engine(
-	    platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
-		rotations[i] =
-		    glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * glm::pi<float>();
+		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * glm::pi<float>();
 		rotation_speeds[i] = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine));
 	}
 
@@ -430,7 +426,7 @@ void HPPDynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, b
 	uniform_buffers.dynamic->flush();
 }
 
-bool HPPDynamicUniformBuffers::prepare(vkb::Platform &platform)
+bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 {
 	if (!HPPApiVulkanSample::prepare(platform))
 	{
@@ -442,7 +438,7 @@ bool HPPDynamicUniformBuffers::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
 
 	generate_cube();
 	prepare_uniform_buffers();
@@ -455,10 +451,11 @@ bool HPPDynamicUniformBuffers::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
+bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 {
 	HPPApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+	return true;
 }
 
 void HPPDynamicUniformBuffers::render(float delta_time)

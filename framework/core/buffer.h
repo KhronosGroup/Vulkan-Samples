@@ -19,6 +19,7 @@
 
 #include "common/helpers.h"
 #include "common/vk_common.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
@@ -26,7 +27,7 @@ class Device;
 
 namespace core
 {
-class Buffer
+class Buffer : public VulkanResource<VkBuffer, VK_OBJECT_TYPE_BUFFER, const Device>
 {
   public:
 	/**
@@ -36,12 +37,14 @@ class Buffer
 	 * @param buffer_usage The usage flags for the VkBuffer
 	 * @param memory_usage The memory usage of the buffer
 	 * @param flags The allocation create flags
+	 * @param queue_family_indices optional queue family indices
 	 */
-	Buffer(Device &                 device,
-	       VkDeviceSize             size,
-	       VkBufferUsageFlags       buffer_usage,
-	       VmaMemoryUsage           memory_usage,
-	       VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	Buffer(Device const &               device,
+	       VkDeviceSize                 size,
+	       VkBufferUsageFlags           buffer_usage,
+	       VmaMemoryUsage               memory_usage,
+	       VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	       const std::vector<uint32_t> &queue_family_indices = {});
 
 	Buffer(const Buffer &) = delete;
 
@@ -78,10 +81,6 @@ class Buffer
 		}
 		return out;
 	}
-
-	const Device &get_device() const;
-
-	VkBuffer get_handle() const;
 
 	const VkBuffer *get() const;
 
@@ -155,10 +154,6 @@ class Buffer
 	uint64_t get_device_address();
 
   private:
-	Device &device;
-
-	VkBuffer handle{VK_NULL_HANDLE};
-
 	VmaAllocation allocation{VK_NULL_HANDLE};
 
 	VkDeviceMemory memory{VK_NULL_HANDLE};

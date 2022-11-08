@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ namespace vkb
 {
 /**
  * @brief Pre-compiles project shader files to include header code
- * @param filename The shader file
+ * @param source The shader file
  * @returns A byte array of the final shader
  */
 inline std::vector<std::string> precompile_shader(const std::string &source)
@@ -82,6 +82,9 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
     stage{stage},
     entry_point{entry_point}
 {
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
+	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
+
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
 	{
@@ -128,6 +131,7 @@ ShaderModule::ShaderModule(ShaderModule &&other) :
     id{other.id},
     stage{other.stage},
     entry_point{other.entry_point},
+    debug_name{other.debug_name},
     spirv{other.spirv},
     resources{other.resources},
     info_log{other.info_log}
