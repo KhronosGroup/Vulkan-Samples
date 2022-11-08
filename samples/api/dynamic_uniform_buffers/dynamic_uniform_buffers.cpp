@@ -509,10 +509,11 @@ bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void DynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
+bool DynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+	return true;
 }
 
 void DynamicUniformBuffers::render(float delta_time)

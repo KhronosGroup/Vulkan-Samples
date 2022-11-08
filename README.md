@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2022, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -92,20 +92,26 @@ Follow build instructions for your platform below.
 The following shows some example command line usage on how to configure and run the Vulkan Samples.
 
 ```
+# For the entire usage use
+vulkan_samples --help
+
+# For subcommand usage use
+vulkan_samples <sub_command> --help
+
 # Run Swapchain Images sample
-vulkan_samples swapchain_images
+vulkan_samples sample swapchain_images
 
 # Run AFBC sample in benchmark mode for 5000 frames
-vulkan_samples sample afbc --benchmark 5000
+vulkan_samples sample afbc --benchmark --stop-after-frame 5000
 
 # Run bonza test offscreen
 vulkan_samples test bonza --headless
 
-# Run all the performance samples
-vulkan_samples batch performance
+# Run all the performance samples for 10 seconds in each configuration
+vulkan_samples batch --category performance --duration 10
 
 # Run Swapchain Images sample on an Android device
-adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -es "cmd" "sample swapchain_images"
+adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
 ```
 
 ## Tests
@@ -127,7 +133,6 @@ This project has some third-party dependencies, each of which may have independe
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator
 - [dear imgui](https://github.com/ocornut/imgui): Immediate Mode Graphical User Interface
-  - [dear imgui shaders](https://github.com/SaschaWillems/Vulkan/tree/master/data/shaders/imgui): GLSL shaders for dear imgui
 - [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
 - [KTX-Software](https://github.com/KhronosGroup/KTX-Software): Khronos Texture Library and Tools
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
@@ -153,5 +158,5 @@ Also see [CONTRIBUTING](CONTRIBUTING.md) for contribution guidelines.
 
 ## Related resources
 
-- [Mali GPU Best Practices](https://developer.arm.com/solutions/graphics/developer-guides/advanced-guides/mali-gpu-best-practices): A document with recommendations for efficient API usage
+- [Mali GPU Best Practices](https://developer.arm.com/documentation/101897/latest/): A document with recommendations for efficient API usage
 - [PerfDoc](https://github.com/ARM-software/perfdoc): A Vulkan layer which aims to validate applications against Mali GPU Best Practices

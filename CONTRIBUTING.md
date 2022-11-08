@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2020, Arm Limited and Contributors
+- Copyright (c) 2019-2021, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -52,7 +52,7 @@ This new sample will be based on the framework of wrapper classes that provide a
 - Sample folder and description:
   - Each sample must be placed in a separate sub-folder within `/samples/api/`, `/samples/performance/` or `/samples/extensions/`.
   - Each sample should use a short folder name, using snake_case, that best describes the sample.
-  - Each sample must be well-documented and ideally include a tutorial file in the root of the sample's folder with a detailed explanation of the sample and a 'best-practice' summary if applicable.
+  - Each sample must be well-documented, include a README.md file and ideally include a tutorial file in the root of the sample's folder with a detailed explanation of the sample and a 'best-practice' summary if applicable.
     Any images used in the tutorial should be stored in an images/ sub-folder in the sample folder.
 
 - Vendor samples:

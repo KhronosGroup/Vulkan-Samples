@@ -22,6 +22,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <core/acceleration_structure.h>
 
 namespace vkb
 {
@@ -65,13 +66,6 @@ class RayQueries : public ApiVulkanSample
 		std::vector<std::array<uint32_t, 3>> indices;
 	} model;
 
-	struct AccelerationStructure
-	{
-		VkAccelerationStructureKHR         handle         = VK_NULL_HANDLE;
-		uint64_t                           device_address = 0;
-		std::unique_ptr<vkb::core::Buffer> buffer         = nullptr;
-	};
-
 	std::chrono::high_resolution_clock::time_point start_time{std::chrono::high_resolution_clock::now()};
 
 	// Buffers
@@ -80,12 +74,12 @@ class RayQueries : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{nullptr};
 
 	// Ray tracing structures
-	VkPhysicalDeviceAccelerationStructureFeaturesKHR acceleration_structure_features{};
-	AccelerationStructure                            top_level_acceleration_structure{};
-	AccelerationStructure                            bottom_level_acceleration_structure{};
-	uint64_t                                         get_buffer_device_address(VkBuffer buffer);
-	void                                             create_top_level_acceleration_structure();
-	void                                             create_bottom_level_acceleration_structure();
+	VkPhysicalDeviceAccelerationStructureFeaturesKHR  acceleration_structure_features{};
+	std::unique_ptr<vkb::core::AccelerationStructure> top_level_acceleration_structure    = nullptr;
+	std::unique_ptr<vkb::core::AccelerationStructure> bottom_level_acceleration_structure = nullptr;
+	uint64_t                                          get_buffer_device_address(VkBuffer buffer);
+	void                                              create_top_level_acceleration_structure();
+	void                                              create_bottom_level_acceleration_structure();
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};

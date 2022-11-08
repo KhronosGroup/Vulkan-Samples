@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,8 @@
 
 #include "postprocessing_pipeline.h"
 
+#include "common/utils.h"
+
 namespace vkb
 {
 PostProcessingPipeline::PostProcessingPipeline(RenderContext &render_context, ShaderSource triangle_vs) :
@@ -30,14 +32,24 @@ void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &d
 	{
 		auto &pass = *passes[current_pass_index];
 
+		if (pass.debug_name.empty())
+		{
+			pass.debug_name = fmt::format("PPP pass #{}", current_pass_index);
+		}
+		ScopedDebugLabel marker{command_buffer, pass.debug_name.c_str()};
+
 		if (!pass.prepared)
 		{
+			ScopedDebugLabel marker{command_buffer, "Prepare"};
+
 			pass.prepare(command_buffer, default_render_target);
 			pass.prepared = true;
 		}
 
 		if (pass.pre_draw)
 		{
+			ScopedDebugLabel marker{command_buffer, "Pre-draw"};
+
 			pass.pre_draw();
 		}
 
@@ -45,6 +57,8 @@ void PostProcessingPipeline::draw(CommandBuffer &command_buffer, RenderTarget &d
 
 		if (pass.post_draw)
 		{
+			ScopedDebugLabel marker{command_buffer, "Post-draw"};
+
 			pass.post_draw();
 		}
 	}

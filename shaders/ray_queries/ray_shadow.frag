@@ -1,7 +1,7 @@
 #version 460
 #extension GL_EXT_ray_query : enable
 
-/* Copyright (c) 2021 Holochip Corporation
+/* Copyright (c) 2021-2022 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,7 +66,7 @@ float calculate_ambient_occlusion(vec3 object_point, vec3 object_normal)
 			float dist = max_dist;
 			if (rayQueryGetIntersectionTypeEXT(query, true) != gl_RayQueryCommittedIntersectionNoneEXT)
 			{
-				dist = rayQueryGetIntersectionTEXT(query, false);
+				dist = rayQueryGetIntersectionTEXT(query, true);
 			}
 			float ao = min(dist, max_dist);
 			float factor = 0.2 + 0.8 * z * z;
@@ -87,14 +87,13 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 {
 	const float tmin = 0.01, tmax = 1000;
 	const vec3  direction = light_origin - pos;
-	const float distance  = sqrt(dot(direction, direction));
 
 	rayQueryEXT query;
 
 	// The following runs the actual ray query
 	// For performance, use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
 	// whether an intersection exists, and not necessarily any particular intersection
-	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, distance);
+	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, 1.0);
 	// The following is the canonical way of using ray Queries from the fragment shader when
 	// there's more than one bounce or hit to traverse:
 	// while (rayQueryProceedEXT(query)) { }

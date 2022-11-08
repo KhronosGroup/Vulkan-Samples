@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,8 +78,8 @@ void Synchronization2::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void Synchronization2::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void Synchronization2::build_command_buffers()
@@ -854,10 +854,11 @@ void Synchronization2::render(float delta_time)
 	}
 }
 
-void Synchronization2::resize(const uint32_t width, const uint32_t height)
+bool Synchronization2::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_graphics_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_synchronization_2()

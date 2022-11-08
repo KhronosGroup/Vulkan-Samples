@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2021, Arm Limited and Contributors
+ Copyright (c) 2019-2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -31,9 +31,23 @@ else()
     set(TARGET_ARCH ${CMAKE_SYSTEM_PROCESSOR})
 endif()
 
+if(APPLE)
+    # attempt to use Find_Vulkan at least of version 1.3 or greater.  If this is found, then enable the required portability extension so instance.cpp can get created correctly.
+    # prior to 1.3 Find_Vulkan should not return a Vulkan_FOUND variable, so should not set an extension that doesn't exist in legacy Vulkan.
+    # Note that this is only required for moltenVK implementations.  NB: this does create a warning in CMake that the range isn't supported in FindVulkan.
+    cmake_minimum_required(VERSION 3.19)
+    find_package(Vulkan 1.3...<2.0)
+    if(Vulkan_FOUND)
+        set(VKB_ENABLE_PORTABILITY ON CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be set if running MoltenVK and Vulkan 1.3+" FORCE)
+    else()
+        set(VKB_ENABLE_PORTABILITY OFF CACHE BOOL "Enable portability extension enumeration in the framework.  This is required to be off if running Vulkan less than 1.3" FORCE)
+    endif()
+endif()
+
 set(VKB_WARNINGS_AS_ERRORS ON CACHE BOOL "Enable Warnings as Errors")
 set(VKB_VALIDATION_LAYERS OFF CACHE BOOL "Enable validation layers for every application.")
 set(VKB_VALIDATION_LAYERS_GPU_ASSISTED OFF CACHE BOOL "Enable GPU assisted validation layers for every application.")
+set(VKB_VULKAN_DEBUG ON CACHE BOOL "Enable VK_EXT_debug_utils or VK_EXT_debug_marker if supported.")
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")

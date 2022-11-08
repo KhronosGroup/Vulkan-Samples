@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,10 +22,7 @@ layout (location = 0) in vec2 inUV;
 
 layout (location = 0) out vec4 outFragColor;
 
-void main() 
+void main()
 {
-	vec4 color = texture(samplerColor, inUV);
-	// All images are stored in SRGB color space, the sample uses a linear color space, so we need to apply a gamma correction
-	outFragColor.rgb = pow(color.rgb, vec3(1.0/2.2));
-	outFragColor.a = color.a;
+	outFragColor = texture(samplerColor, inUV);
 }

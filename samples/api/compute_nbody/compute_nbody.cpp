@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -72,8 +72,8 @@ void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void ComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void ComputeNBody::build_command_buffers()
@@ -198,7 +198,7 @@ void ComputeNBody::build_compute_command_buffer()
 
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -253,7 +253,7 @@ void ComputeNBody::build_compute_command_buffer()
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &buffer_barrier,
@@ -715,7 +715,7 @@ void ComputeNBody::prepare_compute()
 		        compute.storage_buffer->get_size()};
 		vkCmdPipelineBarrier(
 		    transfer_command,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -736,7 +736,7 @@ void ComputeNBody::prepare_compute()
 		vkCmdPipelineBarrier(
 		    transfer_command,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &release_buffer_barrier,
@@ -873,10 +873,11 @@ void ComputeNBody::render(float delta_time)
 	}
 }
 
-void ComputeNBody::resize(const uint32_t width, const uint32_t height)
+bool ComputeNBody::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_graphics_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_compute_nbody()

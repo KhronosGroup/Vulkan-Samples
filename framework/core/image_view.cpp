@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +27,7 @@ namespace core
 ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
                      uint32_t mip_level, uint32_t array_layer,
                      uint32_t n_mip_levels, uint32_t n_array_layers) :
-    device{img.get_device()},
+    VulkanResource{VK_NULL_HANDLE, &img.get_device()},
     image{&img},
     format{format}
 {
@@ -56,7 +56,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 	view_info.format           = format;
 	view_info.subresourceRange = subresource_range;
 
-	auto result = vkCreateImageView(device.get_handle(), &view_info, nullptr, &handle);
+	auto result = vkCreateImageView(device->get_handle(), &view_info, nullptr, &handle);
 
 	if (result != VK_SUCCESS)
 	{
@@ -69,9 +69,8 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 }
 
 ImageView::ImageView(ImageView &&other) :
-    device{other.device},
+    VulkanResource{std::move(other)},
     image{other.image},
-    handle{other.handle},
     format{other.format},
     subresource_range{other.subresource_range}
 {
@@ -87,7 +86,7 @@ ImageView::~ImageView()
 {
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroyImageView(device.get_handle(), handle, nullptr);
+		vkDestroyImageView(device->get_handle(), handle, nullptr);
 	}
 }
 
@@ -100,11 +99,6 @@ const Image &ImageView::get_image() const
 void ImageView::set_image(Image &img)
 {
 	image = &img;
-}
-
-VkImageView ImageView::get_handle() const
-{
-	return handle;
 }
 
 VkFormat ImageView::get_format() const

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,4 +55,12 @@ Window::Mode Window::get_window_mode() const
 {
 	return properties.mode;
 }
+
+bool Window::get_display_present_info(VkDisplayPresentInfoKHR *info,
+                                      uint32_t src_width, uint32_t src_height) const
+{
+	// Default is to not use the extra present info
+	return false;
+}
+
 }        // namespace vkb

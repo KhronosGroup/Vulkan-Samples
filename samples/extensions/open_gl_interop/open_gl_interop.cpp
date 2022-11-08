@@ -1,5 +1,5 @@
-/* Copyright (c) 2020, Bradley Austin Davis
- * Copyright (c) 2020, Arm Limited
+/* Copyright (c) 2020-2022, Bradley Austin Davis
+ * Copyright (c) 2020-2022, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -199,7 +199,10 @@ void OpenGLInterop::prepare_shared_resources()
 	}
 
 	{
+		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
 		VkImageCreateInfo imageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
+		imageCreateInfo.pNext         = &external_memory_image_create_info;
 		imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
 		imageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
 		imageCreateInfo.mipLevels     = 1;
@@ -770,22 +773,25 @@ void OpenGLInterop::build_command_buffers()
 
 OpenGLInterop::~OpenGLInterop()
 {
-	glFinish();
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-	glBindVertexArray(0);
-	glUseProgram(0);
-	glDeleteFramebuffers(1, &gl_data->fbo);
-	glDeleteTextures(1, &gl_data->color);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
-	glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
-	glDeleteVertexArrays(1, &gl_data->vao);
-	glDeleteProgram(gl_data->program);
-	glFlush();
-	glFinish();
+	if (gl_context != nullptr)
+	{
+		glFinish();
+		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+		glBindVertexArray(0);
+		glUseProgram(0);
+		glDeleteFramebuffers(1, &gl_data->fbo);
+		glDeleteTextures(1, &gl_data->color);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_ready);
+		glDeleteSemaphoresEXT(1, &gl_data->gl_complete);
+		glDeleteVertexArrays(1, &gl_data->vao);
+		glDeleteProgram(gl_data->program);
+		glFlush();
+		glFinish();
 
-	// Destroy OpenGl Context
-	delete gl_context;
-	delete gl_data;
+		// Destroy OpenGl Context
+		delete gl_context;
+		delete gl_data;
+	}
 
 	vertex_buffer.reset();
 	index_buffer.reset();

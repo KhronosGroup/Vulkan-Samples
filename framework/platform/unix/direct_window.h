@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ class DirectWindow : public Window
 
 	virtual VkSurfaceKHR create_surface(Instance &instance) override;
 
-	virtual vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device) override;
+	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 
 	virtual bool should_close() override;
 
@@ -46,16 +46,13 @@ class DirectWindow : public Window
 
 	virtual void close() override;
 
+	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info,
+	                                      uint32_t src_width, uint32_t src_height) const override;
+
 	float get_dpi_factor() const override;
 
   private:
 	void poll_terminal();
-
-	uint32_t find_compatible_plane(VkPhysicalDevice phys_dev, VkDisplayKHR display,
-	                               const std::vector<VkDisplayPlanePropertiesKHR> &plane_properties);
-
-	uint32_t find_compatible_plane(vk::PhysicalDevice phys_dev, vk::DisplayKHR display,
-	                               const std::vector<vk::DisplayPlanePropertiesKHR> &plane_properties) const;
 
   private:
 	mutable bool   keep_running = true;
@@ -65,5 +62,6 @@ class DirectWindow : public Window
 	struct termios termio;
 	struct termios termio_prev;
 	KeyCode        key_down = KeyCode::Unknown;
+	Extent         full_extent{};
 };
 }        // namespace vkb

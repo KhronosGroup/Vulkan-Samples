@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,7 +59,8 @@ void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
 */
 void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_name)
 {
-	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
+	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
 	ktxTexture *   ktx_texture;
 	KTX_error_code result;
@@ -545,7 +546,6 @@ void TextureMipMapGeneration::prepare_pipelines()
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 1: UV
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 8),        // Location 2: Color
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());

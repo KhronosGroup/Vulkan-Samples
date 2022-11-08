@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -29,7 +29,7 @@ find_program(ADB_EXECUTABLE
     NAMES
         ${ADB_FILE}
     PATH_SUFFIXES
-        bin
+        platform-tools
     PATHS
         $ENV{ANDROID_HOME})
 

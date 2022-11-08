@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,6 +70,7 @@ bool BufferDeviceAddress::prepare(vkb::Platform &platform)
 	index_buffer = create_index_buffer();
 	create_pipelines();
 
+	prepared = true;
 	return true;
 }
 
@@ -388,9 +389,9 @@ void BufferDeviceAddress::render(float delta_time)
 	render_pass_begin.renderArea.extent.height = height;
 	render_pass_begin.clearValueCount          = 2;
 	VkClearValue clears[2]                     = {};
-	clears[0].color.float32[0]                 = 0.2f;
-	clears[0].color.float32[1]                 = 0.3f;
-	clears[0].color.float32[2]                 = 0.4f;
+	clears[0].color.float32[0]                 = 0.033f;
+	clears[0].color.float32[1]                 = 0.073f;
+	clears[0].color.float32[2]                 = 0.133f;
 	render_pass_begin.pClearValues             = clears;
 	render_pass_begin.framebuffer              = framebuffers[current_buffer];
 

@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,10 +24,10 @@ layout (location = 1) in vec3 inNormal;
 layout (location = 2) in vec2 inUV;
 
 // Instanced attributes
-layout (location = 4) in vec3 instancePos;
-layout (location = 5) in vec3 instanceRot;
-layout (location = 6) in float instanceScale;
-layout (location = 7) in int instanceTexIndex;
+layout (location = 3) in vec3 instancePos;
+layout (location = 4) in vec3 instanceRot;
+layout (location = 5) in float instanceScale;
+layout (location = 6) in int instanceTexIndex;
 
 layout (binding = 0) uniform UBO 
 {

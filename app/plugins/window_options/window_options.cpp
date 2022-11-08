@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,6 +73,10 @@ void WindowOptions::init(const vkb::CommandParser &parser)
 	else if (parser.contains(&borderless_flag))
 	{
 		properties.mode = vkb::Window::Mode::FullscreenBorderless;
+	}
+	else if (parser.contains(&stretch_flag))
+	{
+		properties.mode = vkb::Window::Mode::FullscreenStretch;
 	}
 
 	if (parser.contains(&vsync_flag))
