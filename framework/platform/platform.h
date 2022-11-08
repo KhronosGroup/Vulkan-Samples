@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,7 +106,7 @@ class Platform
 
 	virtual void input_event(const InputEvent &input_event);
 
-	Window &get_window() const;
+	Window &get_window();
 
 	Application &get_app() const;
 
@@ -175,7 +175,7 @@ class Platform
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
 	float              simulation_frame_time = 0.016f; /* A fabricated delta time */
 	bool               process_input_events{true};     /* App should continue processing input events */
-	bool               focused;                        /* App is currently in focus at an operating system level */
+	bool               focused{true};                  /* App is currently in focus at an operating system level */
 	bool               close_requested{false};         /* Close requested */
 
   private:

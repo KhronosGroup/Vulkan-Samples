@@ -223,7 +223,7 @@ set_property(TARGET imgui PROPERTY FOLDER "ThirdParty")
 # glslang
 option(ENABLE_SPVREMAPPER OFF)
 option(ENABLE_GLSLANG_BINARIES OFF)
-option(ENABLE_HLSL OFF)
+set(ENABLE_HLSL ON)
 option(ENABLE_OPT OFF)
 option(BUILD_TESTING OFF)
 option(BUILD_EXTERNAL OFF)
@@ -365,3 +365,9 @@ set(CLI11_FORCE_LIBCXX OFF)
 set(CLI11_CUDA_TESTS OFF)
 set(CLI11_CLANG_TIDY OFF)
 add_subdirectory(cli11)
+
+# OpenCL
+add_library(opencl INTERFACE)
+set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)
+target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
+target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})

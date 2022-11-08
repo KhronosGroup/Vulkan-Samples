@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,7 +129,7 @@ class ConstantData : public vkb::VulkanSample
 		/**
 		 * @brief Updates the MVP uniform member variable to then be pushed into the shader
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index = 0) override;
+		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Overridden to intentionally disable any dynamic shader module updates
@@ -161,7 +161,7 @@ class ConstantData : public vkb::VulkanSample
 		/**
 		 * @brief Creates a buffer filled with the mvp data and binds it
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index = 0) override;
+		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Dynamically retrieves the correct pipeline layout depending on the method of UBO
@@ -195,7 +195,7 @@ class ConstantData : public vkb::VulkanSample
 		/**
 		 * @brief No-op, uniform data is sent upfront before the draw call
 		 */
-		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index = 0) override;
+		virtual void update_uniform(vkb::CommandBuffer &command_buffer, vkb::sg::Node &node, size_t thread_index) override;
 
 		/**
 		 * @brief Returns a default pipeline layout

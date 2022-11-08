@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -78,7 +78,8 @@ void main()
 				fresnel *= (1.0 - F0);
 				fresnel += F0;
 		
-				float spec = (fresnel * geoAtt) / (NdotV * NdotL * 3.14);
+				// Note: clamp to zero to mitigate any divide by zero
+				float spec = max((fresnel * geoAtt) / (NdotV * NdotL * 3.14), 0.0);
  
 				color = texture(samplerEnvMap, reflect(-wViewVec, wNormal));	 	
 

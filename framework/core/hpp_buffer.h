@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,65 +25,40 @@ namespace vkb
 {
 namespace core
 {
+class HPPDevice;
+
 /**
- * @brief wrapper class for use with vulkan.hpp in the samples of this framework
+ * @brief facade class around vkb::core::Buffer, providing a vulkan.hpp-based interface
  *
- * See vkb::VulkanSample for documentation
+ * See vkb::core::Buffer for documentation
  */
-class HPPBuffer : protected vkb::core::Buffer
+class HPPBuffer : private vkb::core::Buffer
 {
   public:
-	/**
-	 * @brief Creates a buffer using VMA
-	 * @param device A valid Vulkan device
-	 * @param size The size in bytes of the buffer
-	 * @param buffer_usage The usage flags for the VkBuffer
-	 * @param memory_usage The memory usage of the buffer
-	 * @param flags The allocation create flags
-	 */
-	HPPBuffer(vkb::core::HPPDevice &   device,
-	          vk::DeviceSize           size,
-	          vk::BufferUsageFlags     buffer_usage,
-	          VmaMemoryUsage           memory_usage,
-	          VmaAllocationCreateFlags flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	using vkb::core::Buffer::convert_and_update;
+	using vkb::core::Buffer::flush;
+	using vkb::core::Buffer::update;
 
-	/**
-	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
-	 */
-	void flush() const;
+	HPPBuffer(vkb::core::HPPDevice const &device,
+	          vk::DeviceSize              size,
+	          vk::BufferUsageFlags        buffer_usage,
+	          VmaMemoryUsage              memory_usage,
+	          VmaAllocationCreateFlags    flags = VMA_ALLOCATION_CREATE_MAPPED_BIT) :
+	    vkb::core::Buffer(reinterpret_cast<vkb::Device const &>(device),
+	                      static_cast<VkDeviceSize>(size),
+	                      static_cast<VkBufferUsageFlags>(buffer_usage),
+	                      memory_usage,
+	                      flags)
+	{}
 
-	vk::Buffer get_handle() const;
-
-	/**
-	 * @return The size of the buffer
-	 */
-	vk::DeviceSize get_size() const;
-
-	/**
-	 * @brief Copies byte data into the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(uint8_t const *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Converts any non byte data into bytes and then updates the buffer
-	 * @param data The data to copy from
-	 * @param size The amount of bytes to copy
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	void update(void *data, size_t size, size_t offset = 0);
-
-	/**
-	 * @brief Copies an object as byte data into the buffer
-	 * @param object The object to convert into byte data
-	 * @param offset The offset to start the copying into the mapped data
-	 */
-	template <class T>
-	void convert_and_update(const T &object, size_t offset = 0)
+	vk::Buffer get_handle() const
 	{
-		update(reinterpret_cast<const uint8_t *>(&object), sizeof(T), offset);
+		return static_cast<vk::Buffer>(vkb::core::Buffer::get_handle());
+	}
+
+	vk::DeviceSize get_size() const
+	{
+		return static_cast<vk::DeviceSize>(vkb::core::Buffer::get_size());
 	}
 };
 }        // namespace core

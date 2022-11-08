@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/error.h"
 #include "scene_graph/components/image.h"
 
 namespace vkb
@@ -27,7 +26,7 @@ namespace sg
 class Ktx : public Image
 {
   public:
-	Ktx(const std::string &name, const std::vector<uint8_t> &data);
+	Ktx(const std::string &name, const std::vector<uint8_t> &data, ContentType content_type);
 
 	virtual ~Ktx() = default;
 };

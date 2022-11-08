@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2018-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,6 +24,10 @@ namespace vkb
 {
 namespace sg
 {
+SubMesh::SubMesh(const std::string &name) :
+    Component{name}
+{}
+
 std::type_index SubMesh::get_type()
 {
 	return typeid(SubMesh);

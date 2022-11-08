@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Sascha Willems
+/* Copyright (c) 2020-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -152,7 +152,7 @@ class DebugUtils : public ApiVulkanSample
 	bool                            prepare(vkb::Platform &platform) override;
 	virtual void                    render(float delta_time) override;
 	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void                    resize(const uint32_t width, const uint32_t height) override;
+	virtual bool                    resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_debug_utils();

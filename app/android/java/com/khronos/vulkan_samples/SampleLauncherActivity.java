@@ -21,9 +21,14 @@ import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
+import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.os.Environment;
+import android.provider.Settings;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
@@ -92,6 +97,18 @@ public class SampleLauncherActivity extends AppCompatActivity {
         } else {
             // Chain request permissions
             requestNextPermission();
+        }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
+            if (!Environment.isExternalStorageManager())
+            {
+                // Prompt the user to "Allow access to all files"
+                Intent intent = new Intent();
+                                    intent.setAction(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION);
+                                    Uri uri = Uri.fromParts("package", this.getPackageName(), null);
+                                    intent.setData(uri);
+                startActivity(intent);
+            }
         }
     }
 

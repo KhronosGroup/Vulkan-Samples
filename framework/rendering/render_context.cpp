@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,17 @@
 
 #include "render_context.h"
 
+#include "platform/window.h"
+
 namespace vkb
 {
 VkFormat RenderContext::DEFAULT_VK_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
 
-RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height) :
+RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, const Window &window) :
     device{device},
+    window{window},
     queue{device.get_suitable_graphics_queue()},
-    surface_extent{window_width, window_height}
+    surface_extent{window.get_extent().width, window.get_extent().height}
 {
 	if (surface != VK_NULL_HANDLE)
 	{
@@ -119,7 +122,7 @@ void RenderContext::set_surface_format_priority(const std::vector<VkSurfaceForma
 	surface_format_priority_list = new_surface_format_priority_list;
 }
 
-VkFormat RenderContext::get_format()
+VkFormat RenderContext::get_format() const
 {
 	VkFormat format = DEFAULT_VK_FORMAT;
 
@@ -238,12 +241,12 @@ void RenderContext::recreate()
 	device.get_resource_cache().clear_framebuffers();
 }
 
-void RenderContext::handle_surface_changes()
+bool RenderContext::handle_surface_changes(bool force_update)
 {
 	if (!swapchain)
 	{
 		LOGW("Can't handle surface changes in headless mode, skipping.");
-		return;
+		return false;
 	}
 
 	VkSurfaceCapabilitiesKHR surface_properties;
@@ -253,14 +256,15 @@ void RenderContext::handle_surface_changes()
 
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 	{
-		return;
+		return false;
 	}
 
 	// Only recreate the swapchain if the dimensions have changed;
 	// handle_surface_changes() is called on VK_SUBOPTIMAL_KHR,
 	// which might not be due to a surface resize
 	if (surface_properties.currentExtent.width != surface_extent.width ||
-	    surface_properties.currentExtent.height != surface_extent.height)
+	    surface_properties.currentExtent.height != surface_extent.height ||
+	    force_update)
 	{
 		// Recreate swapchain
 		device.wait_idle();
@@ -268,7 +272,11 @@ void RenderContext::handle_surface_changes()
 		update_swapchain(surface_properties.currentExtent, pre_transform);
 
 		surface_extent = surface_properties.currentExtent;
+
+		return true;
 	}
+
+	return false;
 }
 
 CommandBuffer &RenderContext::begin(CommandBuffer::ResetMode reset_mode)
@@ -335,9 +343,12 @@ void RenderContext::begin_frame()
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
-			handle_surface_changes();
+			bool swapchain_updated = handle_surface_changes(result == VK_ERROR_OUT_OF_DATE_KHR);
 
-			result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
+			if (swapchain_updated)
+			{
+				result = swapchain->acquire_next_image(active_frame_index, acquired_semaphore, VK_NULL_HANDLE);
+			}
 		}
 
 		if (result != VK_SUCCESS)
@@ -423,6 +434,14 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 		present_info.swapchainCount     = 1;
 		present_info.pSwapchains        = &vk_swapchain;
 		present_info.pImageIndices      = &active_frame_index;
+
+		VkDisplayPresentInfoKHR disp_present_info{};
+		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    window.get_display_present_info(&disp_present_info, surface_extent.width, surface_extent.height))
+		{
+			// Add display present info if supported and wanted
+			present_info.pNext = &disp_present_info;
+		}
 
 		VkResult result = queue.present(present_info);
 
@@ -519,13 +538,13 @@ bool RenderContext::has_swapchain()
 	return swapchain != nullptr;
 }
 
-Swapchain &RenderContext::get_swapchain()
+Swapchain const &RenderContext::get_swapchain() const
 {
 	assert(swapchain && "Swapchain is not valid");
 	return *swapchain;
 }
 
-VkExtent2D RenderContext::get_surface_extent() const
+VkExtent2D const &RenderContext::get_surface_extent() const
 {
 	return surface_extent;
 }

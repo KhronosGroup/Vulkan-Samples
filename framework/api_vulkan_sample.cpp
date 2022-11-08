@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,11 +99,11 @@ void ApiVulkanSample::update(float delta_time)
 	platform->on_post_draw(get_render_context());
 }
 
-void ApiVulkanSample::resize(const uint32_t, const uint32_t)
+bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 {
 	if (!prepared)
 	{
-		return;
+		return false;
 	}
 
 	get_render_context().handle_surface_changes();
@@ -111,7 +111,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	// Don't recreate the swapchain if the dimensions haven't changed
 	if (width == get_render_context().get_surface_extent().width && height == get_render_context().get_surface_extent().height)
 	{
-		return;
+		return false;
 	}
 
 	width  = get_render_context().get_surface_extent().width;
@@ -161,6 +161,7 @@ void ApiVulkanSample::resize(const uint32_t, const uint32_t)
 	view_changed();
 
 	prepared = true;
+	return true;
 }
 
 vkb::Device &ApiVulkanSample::get_device()
@@ -170,9 +171,9 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
@@ -499,6 +500,15 @@ void ApiVulkanSample::submit_frame()
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
 		present_info.pImageIndices    = &current_buffer;
+
+		VkDisplayPresentInfoKHR disp_present_info{};
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    platform->get_window().get_display_present_info(&disp_present_info, width, height))
+		{
+			// Add display present info if supported and wanted
+			present_info.pNext = &disp_present_info;
+		}
+
 		// Check if a wait semaphore has been specified to wait for before presenting the image
 		if (semaphores.render_complete != VK_NULL_HANDLE)
 		{
@@ -728,16 +738,16 @@ void ApiVulkanSample::setup_render_pass()
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	dependencies[1].srcSubpass      = 0;
 	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 	dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
@@ -958,11 +968,11 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1056,11 +1066,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_array(const std::string &file)
+Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1157,11 +1167,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
+Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);

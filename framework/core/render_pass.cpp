@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,11 +24,6 @@
 
 namespace vkb
 {
-VkRenderPass RenderPass::get_handle() const
-{
-	return handle;
-}
-
 namespace
 {
 inline void set_structure_type(VkAttachmentDescription &attachment)
@@ -295,9 +290,21 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	std::vector<std::vector<T_AttachmentReference>> color_resolve_attachments{subpass_count};
 	std::vector<std::vector<T_AttachmentReference>> depth_resolve_attachments{subpass_count};
 
+	std::string new_debug_name{};
+	const bool  needs_debug_name = get_debug_name().empty();
+	if (needs_debug_name)
+	{
+		new_debug_name = fmt::format("RP with {} subpasses:\n", subpasses.size());
+	}
+
 	for (size_t i = 0; i < subpasses.size(); ++i)
 	{
 		auto &subpass = subpasses[i];
+
+		if (needs_debug_name)
+		{
+			new_debug_name += fmt::format("\t[{}]: {}\n", i, subpass.debug_name);
+		}
 
 		// Fill color attachments references
 		for (auto o_attachment : subpass.output_attachments)
@@ -441,16 +448,21 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 	create_info.dependencyCount = to_u32(subpass_dependencies.size());
 	create_info.pDependencies   = subpass_dependencies.data();
 
-	auto result = create_vk_renderpass(device.get_handle(), create_info, &handle);
+	auto result = create_vk_renderpass(device->get_handle(), create_info, &handle);
 
 	if (result != VK_SUCCESS)
 	{
 		throw VulkanException{result, "Cannot create RenderPass"};
 	}
+
+	if (needs_debug_name)
+	{
+		set_debug_name(new_debug_name);
+	}
 }
 
 RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses) :
-    device{device},
+    VulkanResource{VK_NULL_HANDLE, &device},
     subpass_count{std::max<size_t>(1, subpasses.size())},        // At least 1 subpass
     color_output_count{}
 {
@@ -465,8 +477,7 @@ RenderPass::RenderPass(Device &device, const std::vector<Attachment> &attachment
 }
 
 RenderPass::RenderPass(RenderPass &&other) :
-    device{other.device},
-    handle{other.handle},
+    VulkanResource{std::move(other)},
     subpass_count{other.subpass_count},
     color_output_count{other.color_output_count}
 {
@@ -478,7 +489,7 @@ RenderPass::~RenderPass()
 	// Destroy render pass
 	if (handle != VK_NULL_HANDLE)
 	{
-		vkDestroyRenderPass(device.get_handle(), handle, nullptr);
+		vkDestroyRenderPass(device->get_handle(), handle, nullptr);
 	}
 }
 
@@ -490,7 +501,7 @@ const uint32_t RenderPass::get_color_output_count(uint32_t subpass_index) const
 const VkExtent2D RenderPass::get_render_area_granularity() const
 {
 	VkExtent2D render_area_granularity = {};
-	vkGetRenderAreaGranularity(device.get_handle(), get_handle(), &render_area_granularity);
+	vkGetRenderAreaGranularity(device->get_handle(), get_handle(), &render_area_granularity);
 
 	return render_area_granularity;
 }

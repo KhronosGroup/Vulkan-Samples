@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -93,16 +93,20 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 	get_sorted_nodes(opaque_nodes, transparent_nodes);
 
 	// Draw opaque objects in front-to-back order
-	for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
 	{
-		update_uniform(command_buffer, *node_it->second.first, thread_index);
+		ScopedDebugLabel opaque_debug_label{command_buffer, "Opaque objects"};
 
-		// Invert the front face if the mesh was flipped
-		const auto &scale      = node_it->second.first->get_transform().get_scale();
-		bool        flipped    = scale.x * scale.y * scale.z < 0;
-		VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+		for (auto node_it = opaque_nodes.begin(); node_it != opaque_nodes.end(); node_it++)
+		{
+			update_uniform(command_buffer, *node_it->second.first, thread_index);
 
-		draw_submesh(command_buffer, *node_it->second.second, front_face);
+			// Invert the front face if the mesh was flipped
+			const auto &scale      = node_it->second.first->get_transform().get_scale();
+			bool        flipped    = scale.x * scale.y * scale.z < 0;
+			VkFrontFace front_face = flipped ? VK_FRONT_FACE_CLOCKWISE : VK_FRONT_FACE_COUNTER_CLOCKWISE;
+
+			draw_submesh(command_buffer, *node_it->second.second, front_face);
+		}
 	}
 
 	// Enable alpha blending
@@ -122,12 +126,16 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
 
-	// Draw transparent objects in back-to-front order
-	for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
+	// Draw transparesnt objects in back-to-front order
 	{
-		update_uniform(command_buffer, *node_it->second.first, thread_index);
+		ScopedDebugLabel transparent_debug_label{command_buffer, "Transparent objects"};
 
-		draw_submesh(command_buffer, *node_it->second.second);
+		for (auto node_it = transparent_nodes.rbegin(); node_it != transparent_nodes.rend(); node_it++)
+		{
+			update_uniform(command_buffer, *node_it->second.first, thread_index);
+
+			draw_submesh(command_buffer, *node_it->second.second);
+		}
 	}
 }
 
@@ -155,6 +163,8 @@ void GeometrySubpass::update_uniform(CommandBuffer &command_buffer, sg::Node &no
 void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &sub_mesh, VkFrontFace front_face)
 {
 	auto &device = command_buffer.get_device();
+
+	ScopedDebugLabel submesh_debug_label{command_buffer, sub_mesh.get_name().c_str()};
 
 	prepare_pipeline_state(command_buffer, front_face, sub_mesh.get_material()->double_sided);
 
@@ -239,7 +249,7 @@ void GeometrySubpass::draw_submesh(CommandBuffer &command_buffer, sg::SubMesh &s
 void GeometrySubpass::prepare_pipeline_state(CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
 {
 	RasterizationState rasterization_state = base_rasterization_state;
-	rasterization_state.front_face = front_face;
+	rasterization_state.front_face         = front_face;
 
 	if (double_sided_material)
 	{

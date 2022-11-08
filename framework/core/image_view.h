@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,12 +20,13 @@
 #include "common/helpers.h"
 #include "common/vk_common.h"
 #include "core/image.h"
+#include "core/vulkan_resource.h"
 
 namespace vkb
 {
 namespace core
 {
-class ImageView
+class ImageView : public VulkanResource<VkImageView, VK_OBJECT_TYPE_IMAGE_VIEW, const Device>
 {
   public:
 	ImageView(Image &image, VkImageViewType view_type, VkFormat format = VK_FORMAT_UNDEFINED,
@@ -36,7 +37,7 @@ class ImageView
 
 	ImageView(ImageView &&other);
 
-	~ImageView();
+	~ImageView() override;
 
 	ImageView &operator=(const ImageView &) = delete;
 
@@ -50,8 +51,6 @@ class ImageView
 	 */
 	void set_image(Image &image);
 
-	VkImageView get_handle() const;
-
 	VkFormat get_format() const;
 
 	VkImageSubresourceRange get_subresource_range() const;
@@ -59,11 +58,7 @@ class ImageView
 	VkImageSubresourceLayers get_subresource_layers() const;
 
   private:
-	Device &device;
-
 	Image *image{};
-
-	VkImageView handle{VK_NULL_HANDLE};
 
 	VkFormat format{};
 
