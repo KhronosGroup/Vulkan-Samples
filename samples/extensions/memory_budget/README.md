@@ -61,7 +61,7 @@ Application UI overlay:
 
 ![Sample](./images/memory_budget_UI_overlay.PNG)
 
-In addition, total number of instanced meshes can be adjusted under UI overlay. Under ```Mesh Density Control``` tab. By pressing down the arrow next to the text, ```Mesh Density``` slider feature will be displayed. The ```int``` variable ```mesh_density``` controls the total number of instanced meshes in the scene, ranged from ```50``` to ```8192```, where:
+In addition, total number of instanced meshes can be adjusted under UI overlay. Under ```Mesh Density Control``` tab. By pressing down the arrow next to the text, ```Mesh Density``` slider feature will be displayed. the ```int``` variable ```mesh_density``` controls the total number of instanced meshes in the scene, ranged from ```50``` to ```8192```, where:
 
 ````cpp
 if (drawer.header(“Mesh Density Control”))
