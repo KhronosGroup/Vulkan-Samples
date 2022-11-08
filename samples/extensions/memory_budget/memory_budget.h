@@ -1,5 +1,4 @@
-/* Copyright (c) 2020-2021, Sascha Willems
- * Changes made by 2022, Holochip Corporation
+/* Copyright (c) 2019-2020, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,9 +20,14 @@
  * Adjust density of instanced meshes, displays hardware memory availability/consumption.
  */
 
+//
+// Created and Modified by Jeremy Gong 2 on 10/4/2022.
+//
+
 #pragma once
 
 #include "api_vulkan_sample.h"
+
 
 class MemoryBudget : public ApiVulkanSample
 {
@@ -55,7 +59,7 @@ class MemoryBudget : public ApiVulkanSample
 		VkBuffer               buffer = VK_NULL_HANDLE;
 		VkDeviceMemory         memory = VK_NULL_HANDLE;
 		size_t                 size   = 0;
-		VkDescriptorBufferInfo descriptor{};
+		VkDescriptorBufferInfo descriptor;
 	} instance_buffer;
 
 	struct UBOVS
@@ -72,19 +76,19 @@ class MemoryBudget : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> scene;
 	} uniform_buffers;
 
-	VkPipelineLayout pipeline_layout{};
+	VkPipelineLayout pipeline_layout;
 	struct Pipelines
 	{
-		VkPipeline instanced_rocks{};
-		VkPipeline planet{};
-		VkPipeline starfield{};
+		VkPipeline instanced_rocks;
+		VkPipeline planet;
+		VkPipeline starfield;
 	} pipelines;
 
-	VkDescriptorSetLayout descriptor_set_layout{};
+	VkDescriptorSetLayout descriptor_set_layout;
 	struct DescriptorSets
 	{
-		VkDescriptorSet instanced_rocks{};
-		VkDescriptorSet planet{};
+		VkDescriptorSet instanced_rocks;
+		VkDescriptorSet planet;
 	} descriptor_sets;
 
 	// Memory budget extension related variables
@@ -97,15 +101,17 @@ class MemoryBudget : public ApiVulkanSample
 	VkDeviceSize device_memory_total_usage  = 0;
 	VkDeviceSize device_memory_total_budget = 0;
 
-	bool runtime_memory_status = true;
-	bool update_memory_status_once = false;
+	bool runtime_memory_status = 1;
+	bool update_memory_status_once = 0;
+	bool debug_memory_status_once = 0;
 
 	MemoryBudget();
-	~MemoryBudget() override;
-	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	~MemoryBudget();
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void 		 initialize_device_memory_properties(); // memory budget extension related function
 	void         update_device_memory_properties();     // memory budget extension related function
+	void         debug_device_memory_properties();      // memory budget extension related function
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -116,9 +122,9 @@ class MemoryBudget : public ApiVulkanSample
 	void         update_uniform_buffer(float delta_time);
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	void         render(float delta_time) override;
-	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void         resize(uint32_t width, uint32_t height) override;
+	virtual void render(float delta_time) override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	virtual void resize(const uint32_t width, const uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_memory_budget();

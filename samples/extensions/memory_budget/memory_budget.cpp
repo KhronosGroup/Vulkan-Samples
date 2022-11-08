@@ -1,5 +1,4 @@
-/* Copyright (c) 2020-2021, Sascha Willems
- * Changes made by 2022, Holochip Corporation
+/* Copyright (c) 2019-2021, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +19,11 @@
  * Instanced mesh rendering, uses a separate vertex buffer for instanced data.
  * Adjust density of instanced meshes, displays hardware memory availability/consumption.
  */
+
+//
+// Created by Jeremy Gong on 10/4/2022.
+// Modified by Jeremy Gong on 10/7/2022.
+//
 
 #include "memory_budget.h"
 #include "benchmark_mode/benchmark_mode.h"
@@ -74,7 +78,7 @@ void MemoryBudget::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		requested_features.textureCompressionETC2 = VK_TRUE;
 	}
-}
+};
 
 void MemoryBudget::build_command_buffers()
 {
@@ -103,20 +107,20 @@ void MemoryBudget::build_command_buffers()
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		VkDeviceSize offsets[1] = {0};
 
 		// Star field
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.starfield);
 		vkCmdDraw(draw_cmd_buffers[i], 4, 1, 0, 0);
 
 		// Planet
 		auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
 		auto &planet_index_buffer  = models.planet->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, NULL);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.planet);
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, planet_vertex_buffer.get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], planet_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -125,7 +129,7 @@ void MemoryBudget::build_command_buffers()
 		// Instanced rocks
 		auto &rock_vertex_buffer = models.rock->vertex_buffers.at("vertex_buffer");
 		auto &rock_index_buffer  = models.rock->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, nullptr);
+		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, NULL);
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.instanced_rocks);
 		// Binding point 0 : Mesh vertex buffer
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, rock_vertex_buffer.get(), offsets);
@@ -147,7 +151,7 @@ void MemoryBudget::initialize_device_memory_properties()
 {
 	// Initialize physical device memory budget properties structures variables
 	physical_device_memory_budget_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
-	physical_device_memory_budget_properties.pNext = nullptr;
+	physical_device_memory_budget_properties.pNext = NULL;
 	// Initialize physical device memory properties structure variables
 	device_memory_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
@@ -168,13 +172,42 @@ void MemoryBudget::update_device_memory_properties()
 	}
 }
 
+void MemoryBudget::debug_device_memory_properties()
+{
+	printf("==== Debug Memory Status ====\n");
+
+	// Compare Device Name from Device Class and pMemoryProperties:
+	printf("Device Name: %s\n",get_device().get_gpu().get_properties().deviceName);
+
+	// Verify Memory Heap Count:
+	printf("VK Memory Heap Count: %lu\n", get_device().get_gpu().get_memory_properties().memoryHeapCount); // Non-extension memory properties
+
+	// Verify Heap Memory Size:
+	for (uint32_t i = 0; i < get_device().get_gpu().get_memory_properties().memoryHeapCount; i++)
+		printf("Memory Heap-size Index %lu: %llu Bytes\n", i, get_device().get_gpu().get_memory_properties().memoryHeaps[i].size);
+
+	// Print out heap usage and budget array size:
+	int memorySize =static_cast<int>(sizeof(physical_device_memory_budget_properties.heapBudget) / sizeof(physical_device_memory_budget_properties.heapBudget[0]));
+	printf("Heap Usage and Budget Array Size: %d\n", memorySize);
+
+	// Print out heap usage and budget:
+	for (int i = 0; i < memorySize; i++)
+		printf("Heap Index: %d: | Heap Usage: %llu Bytes | Heap Budget: %llu Bytes\n", i, physical_device_memory_budget_properties.heapUsage[i], physical_device_memory_budget_properties.heapBudget[i]);
+}
+
 void MemoryBudget::load_assets()
 {
 	models.rock   = load_model("scenes/rock.gltf");
 	models.planet = load_model("scenes/planet.gltf");
 
+	//models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
+	//models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
+
 	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
 	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+
+	//textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
+	//textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
 }
 
 void MemoryBudget::setup_descriptor_pool()
@@ -241,7 +274,7 @@ void MemoryBudget::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 
 	// Planet
 	buffer_descriptor = create_descriptor(*uniform_buffers.scene);
@@ -251,7 +284,7 @@ void MemoryBudget::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
 void MemoryBudget::prepare_pipelines()
@@ -305,7 +338,7 @@ void MemoryBudget::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
@@ -343,7 +376,7 @@ void MemoryBudget::prepare_pipelines()
 	//	...
 	//	layout (location = 4) in vec3 instancePos;	Per-Instance
 	attribute_descriptions = {
-	    // Per-vertex attributes
+	    // Per-vertex attributees
 	    // These are advanced for each vertex fetched by the vertex shader
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
@@ -418,11 +451,11 @@ void MemoryBudget::prepare_instance_data()
 		// Outer ring
 		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
 		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + mesh_density / 2)].scale *= 0.75f;
+		instance_data[static_cast<size_t>(i + mesh_density / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[static_cast<size_t>(i + mesh_density / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[static_cast<size_t>(i + mesh_density / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[static_cast<size_t>(i + mesh_density / 2)].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[static_cast<size_t>(i + mesh_density / 2)].scale *= 0.75f;
 
 	}
 
@@ -437,7 +470,7 @@ void MemoryBudget::prepare_instance_data()
 	{
 		VkDeviceMemory memory;
 		VkBuffer       buffer;
-	} staging_buffer{};
+	} staging_buffer;
 
 	staging_buffer.buffer = get_device().create_buffer(
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
@@ -519,8 +552,17 @@ void MemoryBudget::draw()
 		if (update_memory_status_once)
 		{
 			update_device_memory_properties();
-			update_memory_status_once = false;
+			update_memory_status_once = 0;
+
+			printf("Memory Properties Updated!\n");
 		}
+	}
+
+	if (debug_memory_status_once)
+	{
+		update_device_memory_properties();
+		debug_device_memory_properties();
+		debug_memory_status_once = 0;
 	}
 }
 
@@ -531,7 +573,7 @@ bool MemoryBudget::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
@@ -584,9 +626,11 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	if (drawer.header("Mesh Density Control"))
 		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
+
+	debug_memory_status_once = drawer.button("Print Memory Status Debug Log");
 }
 
-void MemoryBudget::resize( uint32_t width, uint32_t height)
+void MemoryBudget::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	build_command_buffers();
