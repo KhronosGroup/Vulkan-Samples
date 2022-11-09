@@ -47,6 +47,11 @@ class HPPImageView : private vkb::core::ImageView
 	{
 		return reinterpret_cast<HPPImage const &>(ImageView::get_image());
 	}
+
+	void set_image(HPPImage &image)
+	{
+		vkb::core::ImageView::set_image(reinterpret_cast<vkb::core::Image &>(image));
+	}
 };
 }        // namespace core
 }        // namespace vkb
