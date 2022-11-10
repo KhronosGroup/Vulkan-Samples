@@ -73,6 +73,8 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize()
 {
+	//TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
+
 	// Initialize full screen exclusive variables
 	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
 	surface_full_screen_exclusive_info_EXT.pNext = nullptr;
@@ -82,8 +84,6 @@ void FullScreenExclusive::initialize()
 
 void FullScreenExclusive::on_update_full_screen_selection()
 {
-	if (full_screen_selection_index < 4)
-	{
 		switch (full_screen_selection_index)
 		{
 			case 1:
@@ -99,13 +99,6 @@ void FullScreenExclusive::on_update_full_screen_selection()
 				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT; // default
 				break;
 		}
-	}
-	else
-	{
-		// Set fullScreenExclusive back to "DEFAULT" and print-out an error message
-		surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
-		printf("Error full_screen_selection_index!\n fullScreenExclusive sets to default!\n");
-	}
 }
 
 void FullScreenExclusive::on_swapchain_create_info()
@@ -140,8 +133,6 @@ void FullScreenExclusive::on_swapchain_create_info()
 		printf("%d, %s\n", fullScreenExclusive_swapchain_result, "Cannot create Swapchain");
 	}
 
-	//TODO: @Steve: not sure if I need to check the image available size and then resize the images.
-	/*
 	// Need to resize the available images and then sync up
 	uint32_t image_available{0u};
 
@@ -151,7 +142,6 @@ void FullScreenExclusive::on_swapchain_create_info()
 	images.resize(image_available);
 
 	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_available, images.data()));
-	 */
 }
 
 void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -168,7 +158,7 @@ void FullScreenExclusive::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
@@ -834,7 +824,7 @@ void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 	drawer.text("Test VK Results: %s", VK_results_message.c_str());
 }
 
-void FullScreenExclusive::resize(const uint32_t width, const uint32_t height)
+void FullScreenExclusive::resize(uint32_t width, uint32_t height)
 {
 
 	ApiVulkanSample::resize(width, height);
@@ -846,7 +836,7 @@ void FullScreenExclusive::resize(const uint32_t width, const uint32_t height)
 void FullScreenExclusive::prepare_render_context()
 {
 	VulkanSample::prepare_render_context(); // This is to create a renderer context without extension swapchain
-	on_swapchain_create_info(); // Now create the new swapchain with extension
+	//on_swapchain_create_info(); // Now create the new swapchain with extension
 }
 
 

@@ -25,19 +25,19 @@
 class FullScreenExclusive : public ApiVulkanSample
 {
   public:
-	Texture skybox_map;
+	Texture skybox_map{};
 
 	struct Models
 	{
-		std::unique_ptr<vkb::sg::SubMesh> skybox;
-		std::unique_ptr<vkb::sg::SubMesh> object;
-		glm::mat4                         transform;
+		std::unique_ptr<vkb::sg::SubMesh> skybox = nullptr;
+		std::unique_ptr<vkb::sg::SubMesh> object = nullptr;
+		glm::mat4                         transform{};
 	} models{};
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices;
-		std::unique_ptr<vkb::core::Buffer> params;
+		std::unique_ptr<vkb::core::Buffer> matrices = nullptr;
+		std::unique_ptr<vkb::core::Buffer> params = nullptr;
 	} uniform_buffers{};
 
 	struct UBOVS
@@ -46,7 +46,7 @@ class FullScreenExclusive : public ApiVulkanSample
 		glm::mat4 model_view{};
 		glm::mat4 skybox_model_view{};
 		float     model_scale = 0.05f;
-	} ubo_vs;
+	} ubo_vs{};
 
 	// It is the binding 2 from gBuffer.frag, and defined using the same structure,
 	// I will most likely change everything back to base.vert/.frag
@@ -58,32 +58,32 @@ class FullScreenExclusive : public ApiVulkanSample
 	const struct UBOParams
 	{
 		float exposure = 1.0f;
-	} ubo_params;
+	} ubo_params{};
 
 	struct Pipelines
 	{
-		VkPipeline skybox;
-		VkPipeline reflect;
-		VkPipeline composition;
+		VkPipeline skybox = VK_NULL_HANDLE;
+		VkPipeline reflect = VK_NULL_HANDLE;
+		VkPipeline composition = VK_NULL_HANDLE;
 	} pipelines{};
 
 	struct PipelineLayouts
 	{
-		VkPipelineLayout models;
-		VkPipelineLayout composition;
+		VkPipelineLayout models = VK_NULL_HANDLE;
+		VkPipelineLayout composition = VK_NULL_HANDLE;
 	} pipeline_layouts{};
 
 	struct DescriptorSets
 	{
-		VkDescriptorSet skybox;
-		VkDescriptorSet object;
-		VkDescriptorSet composition;
+		VkDescriptorSet skybox = VK_NULL_HANDLE;
+		VkDescriptorSet object = VK_NULL_HANDLE;
+		VkDescriptorSet composition = VK_NULL_HANDLE;
 	} descriptor_sets{};
 
 	struct DescriptorSetLayouts
 	{
-		VkDescriptorSetLayout models;
-		VkDescriptorSetLayout composition;
+		VkDescriptorSetLayout models = VK_NULL_HANDLE;
+		VkDescriptorSetLayout composition = VK_NULL_HANDLE;
 	} descriptor_set_layouts{};
 
 	// Framebuffer for offscreen rendering
@@ -93,7 +93,7 @@ class FullScreenExclusive : public ApiVulkanSample
 		VkDeviceMemory mem{};
 		VkImageView    view{};
 		VkFormat       format{};
-		void           destroy(VkDevice device)
+		const void           destroy(VkDevice device)
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
@@ -103,25 +103,30 @@ class FullScreenExclusive : public ApiVulkanSample
 
 	struct FrameBuffer
 	{
-		int32_t               width, height;
-		VkFramebuffer         framebuffer;
+		int32_t               width{};
+		int32_t               height{};
+		VkFramebuffer         framebuffer{};
 		FrameBufferAttachment color[2];
-		FrameBufferAttachment depth;
-		VkRenderPass          render_pass;
-		VkSampler             sampler;
+		FrameBufferAttachment depth{};
+		VkRenderPass          render_pass{};
+		VkSampler             sampler{};
 	} offscreen{};
 
 	struct FilterPass
 	{
-		int32_t               width, height;
-		VkFramebuffer         framebuffer;
-		FrameBufferAttachment color[1];
-		VkRenderPass          render_pass;
-		VkSampler             sampler;
+		int32_t               width{};
+		int32_t               height{};
+		VkFramebuffer         framebuffer{};
+		FrameBufferAttachment color[1]{};
+		VkRenderPass          render_pass{};
+		VkSampler             sampler{};
 	} filter_pass{};
 
   private:
 	// Full screen exclusive related variables;
+
+	//TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
+
 	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
 	// ui overlay sample
 	int                            full_screen_selection_index = 0;
@@ -134,7 +139,7 @@ class FullScreenExclusive : public ApiVulkanSample
 
   public:
 	FullScreenExclusive();
-	~FullScreenExclusive();
+	~FullScreenExclusive() override;
 	// MOD:
 	void initialize();
 	void on_update_full_screen_selection();
@@ -156,7 +161,7 @@ class FullScreenExclusive : public ApiVulkanSample
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void resize(const uint32_t width, const uint32_t height) override;
+	void resize(uint32_t width, uint32_t height) override;
 
   private:
 	void prepare_render_context() override; // This has to be overridden in order to introduce the full screen extension
