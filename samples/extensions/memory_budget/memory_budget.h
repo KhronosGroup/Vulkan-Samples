@@ -129,7 +129,7 @@ class MemoryBudget : public ApiVulkanSample
 	bool                                prepare(vkb::Platform &platform) override;
 	void                                render(float delta_time) override;
 	void                                on_update_ui_overlay(vkb::Drawer &drawer) override;
-	void                                resize(uint32_t width, uint32_t height) override;
+	bool                                resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::Application> create_memory_budget();
