@@ -17,6 +17,8 @@
 
 #include <components/windows/headless.hpp>
 
+#include <vulkan/vulkan.h>
+
 namespace components
 {
 namespace windows
@@ -84,6 +86,11 @@ void HeadlessWindow::attach(events::EventBus &bus)
 {
 	m_content_rect_sender = bus.request_sender<ContentRectChangedEvent>();
 	m_position_sender     = bus.request_sender<PositionChangedEvent>();
+}
+
+VkResult HeadlessWindow::create_surface(VkInstance /* instance */, VkSurfaceKHR * /* surface */)
+{
+	return VK_ERROR_INCOMPATIBLE_DISPLAY_KHR;
 }
 
 }        // namespace windows

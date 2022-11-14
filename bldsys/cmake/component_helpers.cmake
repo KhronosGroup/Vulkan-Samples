@@ -44,7 +44,7 @@ function(vkb__register_component)
     if(TARGET_SRC) # Create static library
         message("ADDING STATIC: vkb__${TARGET_NAME}")
 
-        add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC} ${TARGET_HEADERS})
+        add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC})
 
         if(TARGET_LINK_LIBS)
             target_link_libraries("vkb__${TARGET_NAME}" PUBLIC ${TARGET_LINK_LIBS})
