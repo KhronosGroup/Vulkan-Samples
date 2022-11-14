@@ -111,15 +111,18 @@ void FullScreenExclusive::on_swapchain_create_info()
 	fullScreenExclusive_create_info.pNext = &surface_full_screen_exclusive_info_EXT;
 
 	// Update its information from the current section:
-	fullScreenExclusive_create_info.minImageCount    = get_render_context().get_swapchain().get_properties().image_count;
-	fullScreenExclusive_create_info.imageExtent      = get_render_context().get_swapchain().get_properties().extent;
-	fullScreenExclusive_create_info.presentMode      = get_render_context().get_swapchain().get_properties().present_mode;
-	fullScreenExclusive_create_info.imageFormat      = get_render_context().get_swapchain().get_properties().surface_format.format;
-	fullScreenExclusive_create_info.imageColorSpace  = get_render_context().get_swapchain().get_properties().surface_format.colorSpace;
-	fullScreenExclusive_create_info.imageArrayLayers = get_render_context().get_swapchain().get_properties().array_layers;
-	fullScreenExclusive_create_info.imageUsage       = get_render_context().get_swapchain().get_properties().image_usage;
-	fullScreenExclusive_create_info.preTransform     = get_render_context().get_swapchain().get_properties().pre_transform;
-	fullScreenExclusive_create_info.compositeAlpha   = get_render_context().get_swapchain().get_properties().composite_alpha;
+
+	auto oldSwapchainProperties = get_render_context().get_swapchain().get_properties();
+
+	fullScreenExclusive_create_info.minImageCount    = oldSwapchainProperties.image_count;
+	fullScreenExclusive_create_info.imageExtent      = oldSwapchainProperties.extent;
+	fullScreenExclusive_create_info.presentMode      = oldSwapchainProperties.present_mode;
+	fullScreenExclusive_create_info.imageFormat      = oldSwapchainProperties.surface_format.format;
+	fullScreenExclusive_create_info.imageColorSpace  = oldSwapchainProperties.surface_format.colorSpace;
+	fullScreenExclusive_create_info.imageArrayLayers = oldSwapchainProperties.array_layers;
+	fullScreenExclusive_create_info.imageUsage       = oldSwapchainProperties.image_usage;
+	fullScreenExclusive_create_info.preTransform     = oldSwapchainProperties.pre_transform;
+	fullScreenExclusive_create_info.compositeAlpha   = oldSwapchainProperties.composite_alpha;
 	fullScreenExclusive_create_info.oldSwapchain     = get_render_context().get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
 	fullScreenExclusive_create_info.surface          = get_render_context().get_swapchain().get_surface();
 
@@ -527,7 +530,7 @@ void FullScreenExclusive::load_assets()
 	models.transform   = teapot_matrix;
 
 	// Load skybox cube map
-	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
+	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
 void FullScreenExclusive::setup_descriptor_pool()
@@ -824,13 +827,13 @@ void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 	drawer.text("Test VK Results: %s", VK_results_message.c_str());
 }
 
-void FullScreenExclusive::resize(uint32_t width, uint32_t height)
+bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 {
 
-	ApiVulkanSample::resize(width, height);
-	// TODO: @JEREMY, resize needs to be completely redefined!
-
+	bool resizeResults = ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
+
+	return resizeResults;
 }
 
 void FullScreenExclusive::prepare_render_context()
