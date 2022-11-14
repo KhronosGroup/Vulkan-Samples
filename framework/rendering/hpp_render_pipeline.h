@@ -19,6 +19,8 @@
 
 #include <rendering/render_pipeline.h>
 
+#include <rendering/subpasses/hpp_forward_subpass.h>
+
 namespace vkb
 {
 namespace rendering
@@ -31,7 +33,10 @@ namespace rendering
 class HPPRenderPipeline : private vkb::RenderPipeline
 {
   public:
-	using vkb::RenderPipeline::add_subpass;
+	void add_subpass(std::unique_ptr<vkb::rendering::subpasses::HPPForwardSubpass> &&subpass)
+	{
+		vkb::RenderPipeline::add_subpass(std::move(subpass));
+	}
 
 	void draw(vkb::core::HPPCommandBuffer &    command_buffer,
 	          vkb::rendering::HPPRenderTarget &render_target,

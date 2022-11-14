@@ -36,10 +36,18 @@ class HPPResourceCache : private vkb::ResourceCache
   public:
 	using vkb::ResourceCache::clear;
 	using vkb::ResourceCache::clear_framebuffers;
+	using vkb::ResourceCache::clear_pipelines;
+	using vkb::ResourceCache::serialize;
+	using vkb::ResourceCache::warmup;
 
 	HPPResourceCache(vkb::core::HPPDevice &device) :
 	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))
 	{}
+
+	void set_pipeline_cache(vk::PipelineCache pipeline_cache)
+	{
+		vkb::ResourceCache::set_pipeline_cache(static_cast<VkPipelineCache>(pipeline_cache));
+	}
 };
 
 }        // namespace vkb
