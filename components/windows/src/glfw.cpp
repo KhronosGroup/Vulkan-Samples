@@ -17,6 +17,8 @@
 
 #include <components/windows/glfw.hpp>
 
+#include <vulkan/vulkan.h>
+
 #include <GLFW/glfw3.h>
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
@@ -469,36 +471,9 @@ void GLFWWindow::attach(events::EventBus &bus)
 	m_touch_sender           = bus.request_sender<events::TouchEvent>();
 }
 
-#ifdef VK_USE_PLATFORM_WIN32_KHR
-VkResult GLFWWindow::populate_surface_create_info(VkWin32SurfaceCreateInfoKHR *o_info) const
+VkResult GLFWWindow::create_surface(VkInstance instance, VkSurfaceKHR *surface)
 {
-	assert(o_info);
-
-	VkWin32SurfaceCreateInfoKHR info{};
-	info.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
-	info.hwnd  = glfwGetWin32Window(m_handle);
-
-	*o_info = info;
-
-	return VK_SUCCESS;
+	return glfwCreateWindowSurface(instance, m_handle, nullptr, surface);
 }
-#endif
-
-#ifdef VK_USE_PLATFORM_XLIB_KHR
-VkResult GLFWWindow::populate_surface_create_info(VkXlibSurfaceCreateInfoKHR *o_info) const
-{
-	assert(o_info);
-
-	VkXlibSurfaceCreateInfoKHR info{};
-	info.sType  = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-	info.window = glfwGetX11Window(m_handle);
-	info.dpy    = glfwGetX11Display();
-
-	*o_info = info;
-
-	return VK_SUCCESS;
-}
-#endif
-
 }        // namespace windows
 }        // namespace components

@@ -259,16 +259,16 @@ set_property(TARGET GenericCodeGen PROPERTY FOLDER "third_party")
 set_property(TARGET MachineIndependent PROPERTY FOLDER "third_party")
 
 # spirv-cross
-add_subdirectory(spirv-cross)
+# add_subdirectory(spirv-cross)
 
-set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-core PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-msl PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "ThirdParty")
+# set_property(TARGET spirv-cross-util PROPERTY FOLDER "ThirdParty")
 
 # hwcpipe
 add_subdirectory(hwcpipe)

@@ -27,53 +27,18 @@ class HeadlessWindow : public Window
 {
   public:
 	HeadlessWindow(const std::string &title = "New Window", const Extent &initial_extent = {600, 600});
-	virtual ~HeadlessWindow() = default;
-	virtual void             set_extent(const Extent &extent) override;
-	virtual Extent           extent() const override;
-	virtual void             set_position(const Position &position) override;
-	virtual Position         position() const override;
-	virtual float            dpi_factor() const override;
-	virtual void             set_title(const std::string &title) override;
-	virtual std::string_view title() const override;
-	virtual void             update() override;
-	virtual void             attach(events::EventBus &bus) override;
+	~HeadlessWindow() = default;
+	void             set_extent(const Extent &extent) override;
+	Extent           extent() const override;
+	void             set_position(const Position &position) override;
+	Position         position() const override;
+	float            dpi_factor() const override;
+	void             set_title(const std::string &title) override;
+	std::string_view title() const override;
+	void             update() override;
+	void             attach(events::EventBus &bus) override;
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	virtual VkResult populate_surface_create_info(VkAndroidSurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
-	virtual VkResult populate_surface_create_info(VkWin32SurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_METAL_EXT)
-	virtual VkResult populate_surface_create_info(VkMetalSurfaceCreateInfoEXT * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-	virtual VkResult populate_surface_create_info(VkXlibSurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-	virtual VkResult populate_surface_create_info(VkXcbSurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-	virtual VkResult populate_surface_create_info(VkWaylandSurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
-	virtual VkResult populate_surface_create_info(VkDisplaySurfaceCreateInfoKHR * /* info */) const override
-	{
-		return VK_INCOMPLETE;
-	}
-#endif
+	VkResult create_surface(VkInstance instance, VkSurfaceKHR* surface) override;
 
   private:
 	std::string m_title;
