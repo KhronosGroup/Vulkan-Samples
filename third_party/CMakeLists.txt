@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -314,18 +314,7 @@ target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
 
-if(ANDROID)
-    # native_app_glue
-    set(NATIVE_APP_GLUE_DIR "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
-
-    file(GLOB NATIVE_APP_GLUE_FILES "${NATIVE_APP_GLUE_DIR}/*.c" "${NATIVE_APP_GLUE_DIR}/*.h")
-    
-    add_library(native_app_glue STATIC ${NATIVE_APP_GLUE_FILES})
-        
-    target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
-    
-    set_property(TARGET native_app_glue PROPERTY FOLDER "ThirdParty")
-else()
+if(NOT ANDROID)
     if (NOT DIRECT_TO_DISPLAY)
         # GLFW
         option(GLFW_BUILD_DOCS OFF)
