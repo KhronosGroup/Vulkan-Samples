@@ -21,6 +21,8 @@
 
 #pragma once
 #include "api_vulkan_sample.h"
+#include "core/image.h"
+#include "rendering/render_frame.h"
 
 class FullScreenExclusive : public ApiVulkanSample
 {
@@ -37,7 +39,7 @@ class FullScreenExclusive : public ApiVulkanSample
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> matrices = nullptr;
-		std::unique_ptr<vkb::core::Buffer> params = nullptr;
+		std::unique_ptr<vkb::core::Buffer> params   = nullptr;
 	} uniform_buffers{};
 
 	struct UBOVS
@@ -62,27 +64,27 @@ class FullScreenExclusive : public ApiVulkanSample
 
 	struct Pipelines
 	{
-		VkPipeline skybox = VK_NULL_HANDLE;
-		VkPipeline reflect = VK_NULL_HANDLE;
+		VkPipeline skybox      = VK_NULL_HANDLE;
+		VkPipeline reflect     = VK_NULL_HANDLE;
 		VkPipeline composition = VK_NULL_HANDLE;
 	} pipelines{};
 
 	struct PipelineLayouts
 	{
-		VkPipelineLayout models = VK_NULL_HANDLE;
+		VkPipelineLayout models      = VK_NULL_HANDLE;
 		VkPipelineLayout composition = VK_NULL_HANDLE;
 	} pipeline_layouts{};
 
 	struct DescriptorSets
 	{
-		VkDescriptorSet skybox = VK_NULL_HANDLE;
-		VkDescriptorSet object = VK_NULL_HANDLE;
+		VkDescriptorSet skybox      = VK_NULL_HANDLE;
+		VkDescriptorSet object      = VK_NULL_HANDLE;
 		VkDescriptorSet composition = VK_NULL_HANDLE;
 	} descriptor_sets{};
 
 	struct DescriptorSetLayouts
 	{
-		VkDescriptorSetLayout models = VK_NULL_HANDLE;
+		VkDescriptorSetLayout models      = VK_NULL_HANDLE;
 		VkDescriptorSetLayout composition = VK_NULL_HANDLE;
 	} descriptor_set_layouts{};
 
@@ -93,7 +95,7 @@ class FullScreenExclusive : public ApiVulkanSample
 		VkDeviceMemory mem{};
 		VkImageView    view{};
 		VkFormat       format{};
-		const void           destroy(VkDevice device)
+		const void     destroy(VkDevice device)
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
@@ -125,7 +127,7 @@ class FullScreenExclusive : public ApiVulkanSample
   private:
 	// Full screen exclusive related variables;
 
-	//TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
+	// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
 
 	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
 	// ui overlay sample
@@ -143,7 +145,9 @@ class FullScreenExclusive : public ApiVulkanSample
 	// MOD:
 	void initialize();
 	void on_update_full_screen_selection();
-	void on_swapchain_create_info();
+	void on_swapchain_recreate_info();
+
+	void on_image_view_recreate_info();
 
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
@@ -164,9 +168,7 @@ class FullScreenExclusive : public ApiVulkanSample
 	bool resize(uint32_t width, uint32_t height) override;
 
   private:
-	void prepare_render_context() override; // This has to be overridden in order to introduce the full screen extension
-
-
+	void prepare_render_context() override;        // This has to be overridden in order to introduce the full screen extension
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();

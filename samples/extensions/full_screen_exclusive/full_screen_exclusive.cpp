@@ -73,7 +73,7 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize()
 {
-	//TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
+	// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
 
 	// Initialize full screen exclusive variables
 	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
@@ -84,24 +84,24 @@ void FullScreenExclusive::initialize()
 
 void FullScreenExclusive::on_update_full_screen_selection()
 {
-		switch (full_screen_selection_index)
-		{
-			case 1:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT; // windowed
-				break;
-			case 2:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT; // borderless window
-				break;
-			case 3:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT; // exclusive fullscreen
-				break;
-			default:
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT; // default
-				break;
-		}
+	switch (full_screen_selection_index)
+	{
+		case 1:
+			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;        // windowed
+			break;
+		case 2:
+			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;        // borderless window
+			break;
+		case 3:
+			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;        // exclusive fullscreen
+			break;
+		default:
+			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // default
+			break;
+	}
 }
 
-void FullScreenExclusive::on_swapchain_create_info()
+void FullScreenExclusive::on_swapchain_recreate_info()
 {
 	// Create a new swapchain info EXT which enables full screen exclusive extension features
 	VkSwapchainCreateInfoKHR fullScreenExclusive_create_info{};
@@ -112,7 +112,7 @@ void FullScreenExclusive::on_swapchain_create_info()
 
 	// Update its information from the current section:
 
-	auto oldSwapchainProperties = get_render_context().get_swapchain().get_properties();
+	auto oldSwapchainProperties = render_context->get_swapchain().get_properties();
 
 	fullScreenExclusive_create_info.minImageCount    = oldSwapchainProperties.image_count;
 	fullScreenExclusive_create_info.imageExtent      = oldSwapchainProperties.extent;
@@ -123,28 +123,70 @@ void FullScreenExclusive::on_swapchain_create_info()
 	fullScreenExclusive_create_info.imageUsage       = oldSwapchainProperties.image_usage;
 	fullScreenExclusive_create_info.preTransform     = oldSwapchainProperties.pre_transform;
 	fullScreenExclusive_create_info.compositeAlpha   = oldSwapchainProperties.composite_alpha;
-	fullScreenExclusive_create_info.oldSwapchain     = get_render_context().get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
-	fullScreenExclusive_create_info.surface          = get_render_context().get_swapchain().get_surface();
+	fullScreenExclusive_create_info.oldSwapchain     = render_context->get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
+	fullScreenExclusive_create_info.surface          = render_context->get_swapchain().get_surface();
 
 	// Create the new swapchain based on the swapchain info EXT defined above
-	VkSwapchainKHR fullScreenExclusive_swapchain        = get_render_context().get_swapchain().get_handle();        // nestles the r-value to a new swapchain
-	VkResult       fullScreenExclusive_swapchain_result = vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain);
+	VkSwapchainKHR fullScreenExclusive_swapchain = render_context->get_swapchain().get_handle();                                            // nestles the r-value to a new swapchain
 
-	// Print-out error log if it wouldn't create a new swapchain
-	if (fullScreenExclusive_swapchain_result != VK_SUCCESS)
-	{
-		printf("%d, %s\n", fullScreenExclusive_swapchain_result, "Cannot create Swapchain");
-	}
+	std::vector<VkImage> temp_images = render_context->get_swapchain().get_images(); // making a deep copy of the swapchain images
+
+	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));        // use the standard VkResults check format
 
 	// Need to resize the available images and then sync up
-	uint32_t image_available{0u};
+	uint32_t image_count{};
 
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_available, nullptr));
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, nullptr));
 
-	auto images = get_render_context().get_swapchain().get_images(); // get_image only returns r-value
-	images.resize(image_available);
+	auto images = render_context->get_swapchain().get_images();
 
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_available, images.data()));
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
+
+	images.insert(images.begin(),temp_images.begin(), temp_images.end()); // passing copy data to this vector
+
+	// The above only finished creating the swapchain and also recreated its image vector
+	// now we have to create another function to recreate/define the
+	// follow it up with swapchain buffer (image view) recreation
+}
+
+void FullScreenExclusive::on_image_view_recreate_info()
+{
+	auto &images = render_context->get_swapchain().get_images();        // render_context is a protected unique pointer from its base class
+
+	// swapchain_buffers is a protected vector in its base class
+	for (auto &swapchain_buffer : swapchain_buffers)
+	{
+		vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
+	}
+
+	swapchain_buffers.clear();        // swapchain_buffers need to be cleared before resize
+	swapchain_buffers.resize(images.size());
+
+	for (uint32_t i = 0; i < images.size(); i++)
+	{
+		VkImageViewCreateInfo color_attachment_view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+		color_attachment_view.format = render_context->get_swapchain().get_format();
+		color_attachment_view.components =
+		    {
+		        VK_COMPONENT_SWIZZLE_R,
+		        VK_COMPONENT_SWIZZLE_G,
+		        VK_COMPONENT_SWIZZLE_B,
+		        VK_COMPONENT_SWIZZLE_A
+		    };
+		color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+		color_attachment_view.subresourceRange.baseMipLevel   = 0;
+		color_attachment_view.subresourceRange.levelCount     = 1;
+		color_attachment_view.subresourceRange.baseArrayLayer = 0;
+		color_attachment_view.subresourceRange.layerCount     = 1;
+		color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+		color_attachment_view.flags                           = 0;
+
+		swapchain_buffers[i].image = images[i];
+
+		color_attachment_view.image = swapchain_buffers[i].image;
+
+		VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
+	}
 }
 
 void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -829,7 +871,6 @@ void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 
 bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 {
-
 	bool resizeResults = ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 
@@ -838,10 +879,9 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 
 void FullScreenExclusive::prepare_render_context()
 {
-	VulkanSample::prepare_render_context(); // This is to create a renderer context without extension swapchain
-	//on_swapchain_create_info(); // Now create the new swapchain with extension
+	VulkanSample::prepare_render_context();        // This is to create a renderer context without extension swapchain
+	                                               // on_swapchain_create_info(); // Now create the new swapchain with extension
 }
-
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive()
 {
