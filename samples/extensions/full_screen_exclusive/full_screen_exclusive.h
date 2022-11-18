@@ -24,6 +24,8 @@
 #include "core/image.h"
 #include "rendering/render_frame.h"
 
+// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
+
 class FullScreenExclusive : public ApiVulkanSample
 {
   public:
@@ -126,9 +128,7 @@ class FullScreenExclusive : public ApiVulkanSample
 
   private:
 	// Full screen exclusive related variables;
-
-	// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
-
+	
 	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
 	// ui overlay sample
 	int                            full_screen_selection_index = 0;
@@ -138,6 +138,7 @@ class FullScreenExclusive : public ApiVulkanSample
 	    "Borderless Window",
 	    "Exclusive Fullscreen"};
 	std::string VK_results_message = "default.";
+	bool isWindows = false;
 
   public:
 	FullScreenExclusive();
@@ -146,7 +147,6 @@ class FullScreenExclusive : public ApiVulkanSample
 	void initialize();
 	void on_update_full_screen_selection();
 	void on_swapchain_recreate_info();
-
 	void on_image_view_recreate_info();
 
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;

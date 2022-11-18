@@ -73,8 +73,6 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize()
 {
-	// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
-
 	// Initialize full screen exclusive variables
 	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
 	surface_full_screen_exclusive_info_EXT.pNext = nullptr;
@@ -127,22 +125,26 @@ void FullScreenExclusive::on_swapchain_recreate_info()
 	fullScreenExclusive_create_info.surface          = render_context->get_swapchain().get_surface();
 
 	// Create the new swapchain based on the swapchain info EXT defined above
-	VkSwapchainKHR fullScreenExclusive_swapchain = render_context->get_swapchain().get_handle();                                            // nestles the r-value to a new swapchain
-
+	VkSwapchainKHR fullScreenExclusive_swapchain = render_context->get_swapchain().get_handle();        // nestles the r-value to a new swapchain
+	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));
+	/*
 	std::vector<VkImage> temp_images = render_context->get_swapchain().get_images(); // making a deep copy of the swapchain images
 
 	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));        // use the standard VkResults check format
-
-	// Need to resize the available images and then sync up
 	uint32_t image_count{};
-
 	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, nullptr));
+	auto images = render_context->get_swapchain().get_images();
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
+	images.insert(images.begin(),temp_images.begin(), temp_images.end()); // passing copy data to this vector
+	*/
+
+	// Trying to directly assign the images from where it was, and forced them into the new swapchain
 
 	auto images = render_context->get_swapchain().get_images();
 
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
+	uint32_t image_count = images.size();
 
-	images.insert(images.begin(),temp_images.begin(), temp_images.end()); // passing copy data to this vector
+	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
 
 	// The above only finished creating the swapchain and also recreated its image vector
 	// now we have to create another function to recreate/define the
@@ -171,8 +173,7 @@ void FullScreenExclusive::on_image_view_recreate_info()
 		        VK_COMPONENT_SWIZZLE_R,
 		        VK_COMPONENT_SWIZZLE_G,
 		        VK_COMPONENT_SWIZZLE_B,
-		        VK_COMPONENT_SWIZZLE_A
-		    };
+		        VK_COMPONENT_SWIZZLE_A};
 		color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 		color_attachment_view.subresourceRange.baseMipLevel   = 0;
 		color_attachment_view.subresourceRange.levelCount     = 1;
@@ -181,7 +182,7 @@ void FullScreenExclusive::on_image_view_recreate_info()
 		color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 		color_attachment_view.flags                           = 0;
 
-		swapchain_buffers[i].image = images[i];
+		swapchain_buffers[i].image = images[i];        // This is basically an "image view"
 
 		color_attachment_view.image = swapchain_buffers[i].image;
 
@@ -850,28 +851,38 @@ void FullScreenExclusive::render(float delta_time)
 
 void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.combo_box("Display Mode", &full_screen_selection_index, full_screen_selection_options))
+	if (isWindows)
 	{
-		printf("%s\n", full_screen_selection_options[full_screen_selection_index].c_str());
-		on_update_full_screen_selection();
+		if (drawer.combo_box("Display Mode", &full_screen_selection_index, full_screen_selection_options))
+		{
+			printf("%s\n", full_screen_selection_options[full_screen_selection_index].c_str());
+			on_update_full_screen_selection();
 
-		// TODO: @JEREMY, add advanced full screen exclusive function calls here:
+			on_swapchain_recreate_info();
+			on_image_view_recreate_info();
+		}
+
+		// TODO: @JEREMY, remove this button when finalized!
+		if (drawer.button("Test VK Results"))
+		{
+			printf("Test VK Results button pressed!\n");
+			VK_results_message = "Pressed!";
+		}
+		drawer.text("Test VK Results: %s", VK_results_message.c_str());
 	}
-
-	// TODO: @JEREMY, remove this button when finalized!
-	if (drawer.button("Test VK Results"))
-	{
-		printf("Test VK Results button pressed!\n");
-		VK_results_message = "Pressed!";
-	}
-
-	// TODO: @JEREMY, fine-tune the VK results when finalized!
-	drawer.text("Test VK Results: %s", VK_results_message.c_str());
 }
 
 bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 {
 	bool resizeResults = ApiVulkanSample::resize(width, height);
+
+	// Introducing the recreation swapchain
+	if (isWindows)
+	{
+		on_swapchain_recreate_info();
+		on_image_view_recreate_info();
+	}
+
 	update_uniform_buffers();
 
 	return resizeResults;
@@ -880,7 +891,12 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 void FullScreenExclusive::prepare_render_context()
 {
 	VulkanSample::prepare_render_context();        // This is to create a renderer context without extension swapchain
-	                                               // on_swapchain_create_info(); // Now create the new swapchain with extension
+	if (isWindows)
+	{
+		initialize();
+		on_swapchain_recreate_info();
+		on_image_view_recreate_info();
+	}        // on_swapchain_create_info(); // Now create the new swapchain with extension
 }
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive()
