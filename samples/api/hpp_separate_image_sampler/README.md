@@ -34,7 +34,7 @@ From the application's point of view, images and samplers are always created sep
 The difference between separating and combining them starts at the descriptor level, which defines how the shader accesses the samplers and images.
 
 A separate setup uses a descriptor of type `vk::DescriptorType::eSampledImage` for the sampled image, and a `vk::DescriptorType::eSampler` for the sampler, separating the image and sampler object:
-
+<!-- {% raw %} -->
 ```cpp
 // Image info only references the image
 vk::DescriptorImageInfo image_info({}, texture.image->get_vk_image_view().get_handle(), vk::ImageLayout::eShaderReadOnlyOptimal);
@@ -49,7 +49,7 @@ std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {{
 }};
 get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 ```
-
+<!-- {% endraw %} -->
 For this sample, we then create two samplers with different filtering options:
 
 ```cpp
