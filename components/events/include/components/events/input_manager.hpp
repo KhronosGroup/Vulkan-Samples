@@ -29,8 +29,8 @@ namespace events
 {
 struct CursorPosition
 {
-	uint32_t x;
-	uint32_t y;
+	float x;
+	float y;
 };
 
 struct Touch

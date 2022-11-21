@@ -19,4 +19,5 @@
 add_subdirectory(common)
 add_subdirectory(platform)
 add_subdirectory(events)
+add_subdirectory(windows)
 add_subdirectory(vfs)

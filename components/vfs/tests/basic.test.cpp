@@ -9,13 +9,6 @@
 
 using namespace components;
 
-#define CHECK_ERROR(err)         \
-	if (err != nullptr)          \
-	{                            \
-		INFO(err->what());       \
-		REQUIRE(err == nullptr); \
-	}
-
 #define CATCH_ERROR()            \
 	catch (std::exception & err) \
 	{                            \

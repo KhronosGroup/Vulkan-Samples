@@ -182,7 +182,6 @@ void AndroidAAssetManager::make_directory(const std::string &path)
 bool AndroidAAssetManager::remove(const std::string &path)
 {
 	throw std::runtime_error("vfs/android_aasset_manager.cpp line" + std::to_string(__LINE__) + "remove not implemented");
-	return false;
 }
 
 }        // namespace vfs

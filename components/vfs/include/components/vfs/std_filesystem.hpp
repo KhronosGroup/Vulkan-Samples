@@ -33,17 +33,18 @@ class StdFSFileSystem : public FileSystem
 {
   public:
 	StdFSFileSystem(const std::filesystem::path &base_path = "");
-	virtual ~StdFSFileSystem() = default;
+	~StdFSFileSystem() override = default;
 
-	virtual bool                     folder_exists(const std::string &folder_path) const override;
-	virtual bool                     file_exists(const std::string &file_path) const override;
-	virtual std::vector<uint8_t>     read_chunk(const std::string &file_path, size_t offset, size_t count) const override;
-	virtual size_t                   file_size(const std::string &file_path) const override;
-	virtual void                     write_file(const std::string &file_path, const void *data, size_t size) override;
-	virtual std::vector<std::string> enumerate_files(const std::string &folder_path) const override;
-	virtual std::vector<std::string> enumerate_folders(const std::string &folderPath) const override;
-	virtual void                     make_directory(const std::string &path) override;
-	virtual bool                     remove(const std::string &path) override;
+	bool                 folder_exists(const std::string &folder_path) const override;
+	bool                 file_exists(const std::string &file_path) const override;
+	std::vector<uint8_t> read_chunk(const std::string &file_path, size_t offset, size_t count) const override;
+	size_t               file_size(const std::string &file_path) const override;
+	void                 write_file(const std::string &file_path, const void *data, size_t size) override;
+	void                 make_directory(const std::string &path) override;
+	bool                 remove(const std::string &path) override;
+
+	std::vector<std::string> enumerate_files(const std::string &folder_path) const override;
+	std::vector<std::string> enumerate_folders(const std::string &folderPath) const override;
 
   protected:
 	std::filesystem::path m_base_path;
@@ -57,7 +58,7 @@ class StdFSTempFileSystem final : public StdFSFileSystem
 {
   public:
 	StdFSTempFileSystem();
-	virtual ~StdFSTempFileSystem() = default;
+	~StdFSTempFileSystem() override = default;
 };
 }        // namespace vfs
 }        // namespace components

@@ -34,6 +34,7 @@ std::vector<uint8_t> FileSystem::read_file(const std::string &file_path) const
 	return read_chunk(file_path, 0, file_size(file_path));
 }
 
+
 void FileSystem::make_directory_recursive(const std::string &path)
 {
 	auto parts = helpers::get_directory_parts(path);
@@ -165,7 +166,10 @@ size_t RootFileSystem::file_size(const std::string &file_path) const
 
 void RootFileSystem::write_file(const std::string &file_path, const void *data, size_t size)
 {
-	assert(data);
+	if (!data)
+	{
+		return;
+	}
 
 	std::string adjusted_path;
 	auto        fs = find_file_system(file_path, &adjusted_path);
