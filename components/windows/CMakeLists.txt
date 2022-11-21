@@ -41,7 +41,12 @@ vkb__register_tests(
   vkb__headless_window
 )
 
-# # glfw window
+if(DIRECT_TO_DISPLAY)
+  # Direct to display can only use specific windows. windows past this point are not compatible
+  return()
+endif()
+
+# glfw window
 vkb__register_component(
   NAME glfw_window
   SRC
