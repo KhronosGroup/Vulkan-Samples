@@ -53,6 +53,7 @@ vkb__register_component(
   LINK_LIBS
     re2
     vkb__common
+    vkb__platform
 )
 
 if(ANDROID)

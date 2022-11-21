@@ -21,7 +21,7 @@
 #include <string>
 #include <vector>
 
-#include <components/common/stack_error.hpp>
+#include <components/platform/platform.hpp>
 
 namespace components
 {
@@ -96,6 +96,6 @@ class RootFileSystem : public FileSystem
  * @param context An OS specific context ptr
  * @return RootFileSystem& A root file system reference
  */
-extern RootFileSystem &_default(void *context = nullptr);
+extern RootFileSystem &_default(const PlatformContext *context = nullptr);
 }        // namespace vfs
 }        // namespace components

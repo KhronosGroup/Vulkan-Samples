@@ -15,6 +15,8 @@
 # limitations under the License.
 #
 
+# order matters
 add_subdirectory(common)
+add_subdirectory(platform)
 add_subdirectory(events)
 add_subdirectory(vfs)

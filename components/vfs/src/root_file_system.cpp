@@ -21,6 +21,7 @@
 #include <cassert>
 #include <deque>
 #include <set>
+#include <stdexcept>
 
 #include "components/vfs/helpers.hpp"
 
@@ -61,6 +62,10 @@ std::vector<std::string> FileSystem::enumerate_files(const std::string &folder_p
 	for (auto const &file : all_files)
 	{
 		if (helpers::get_file_extension(file) == extension)
+		{
+			files_with_extension.push_back(file);
+		}
+		else if (file.size() >= extension.size() && file.substr(file.size() - extension.size()) == extension)
 		{
 			files_with_extension.push_back(file);
 		}
@@ -274,12 +279,7 @@ std::shared_ptr<FileSystem> RootFileSystem::find_file_system(const std::string &
 		return nullptr;
 	}
 
-	auto trimmed = file_path.substr(best_score, file_path.size() - best_score);
-
-	if (trimmed[0] != '/')
-	{
-		trimmed = "/" + trimmed;
-	}
+	auto trimmed = helpers::sanitize(file_path.substr(best_score, file_path.size() - best_score));
 
 	*trimmed_path = trimmed;
 

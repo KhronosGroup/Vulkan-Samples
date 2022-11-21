@@ -22,7 +22,7 @@ namespace components
 {
 namespace vfs
 {
-RootFileSystem &_default(void *context)
+RootFileSystem &_default(const PlatformContext *context)
 {
 	static vfs::RootFileSystem fs;
 
@@ -63,7 +63,7 @@ namespace components
 {
 namespace vfs
 {
-RootFileSystem &_default(void * /* context */)
+RootFileSystem &_default(const PlatformContext * /* context */)
 {
 	static vfs::RootFileSystem fs;
 
