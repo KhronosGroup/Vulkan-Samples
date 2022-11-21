@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -153,6 +153,7 @@ Image::Image(Image &&other) :
     usage{other.usage},
     tiling{other.tiling},
     subresource{other.subresource},
+    views(std::exchange(other.views, {})),
     mapped_data{other.mapped_data},
     mapped{other.mapped}
 {
