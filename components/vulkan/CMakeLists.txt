@@ -6,7 +6,7 @@
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
 #
-#     http://www.apache.org/licenses/LICENSE-2.0
+#   http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,18 @@
 # limitations under the License.
 #
 
-# order matters
-add_subdirectory(common)
-add_subdirectory(platform)
-add_subdirectory(events)
-add_subdirectory(windows)
-add_subdirectory(vfs)
+vkb__register_component(
+  NAME vulkan
+  LINK_LIBS
+    volk
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
 
-add_subdirectory(vulkan)
+# vkb__register_tests(
+#   NAME headless_window_tests
+#   SRC
+#   tests/headless.test.cpp
+#   LIBS
+#   vkb__headless_window
+# )
