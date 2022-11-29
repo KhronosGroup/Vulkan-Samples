@@ -85,7 +85,7 @@ BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFla
 {
 }
 
-BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
+BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size, bool minimal)
 {
 	// Find the first block in the range of the inactive blocks
 	// which can fit the minimum size
@@ -101,8 +101,10 @@ BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size)
 
 	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
 
+	VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
+
 	// Create a new block, store and return it
-	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, std::max(block_size, minimum_size), usage, memory_usage));
+	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, new_block_size, usage, memory_usage));
 
 	auto &block = buffer_blocks[active_buffer_block_count++];
 

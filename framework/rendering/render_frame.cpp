@@ -290,11 +290,13 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	auto &buffer_pool  = buffer_pool_it->second.at(thread_index).first;
 	auto &buffer_block = buffer_pool_it->second.at(thread_index).second;
 
-	if (buffer_allocation_strategy == BufferAllocationStrategy::OneAllocationPerBuffer || !buffer_block)
+	bool want_minimal_block = buffer_allocation_strategy == BufferAllocationStrategy::OneAllocationPerBuffer;
+
+	if (want_minimal_block || !buffer_block)
 	{
 		// If there is no block associated with the pool or we are creating a buffer for each allocation,
 		// request a new buffer block
-		buffer_block = &buffer_pool.request_buffer_block(to_u32(size));
+		buffer_block = &buffer_pool.request_buffer_block(to_u32(size), want_minimal_block);
 	}
 
 	auto data = buffer_block->allocate(to_u32(size));
@@ -302,7 +304,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	// Check if the buffer block can allocate the requested size
 	if (data.empty())
 	{
-		buffer_block = &buffer_pool.request_buffer_block(to_u32(size));
+		buffer_block = &buffer_pool.request_buffer_block(to_u32(size), want_minimal_block);
 
 		data = buffer_block->allocate(to_u32(size));
 	}
