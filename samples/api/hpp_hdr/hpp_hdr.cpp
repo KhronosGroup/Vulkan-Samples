@@ -241,6 +241,28 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 // Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void HPPHDR::prepare_offscreen_buffer()
 {
+	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
+	vk::Format color_format{vk::Format::eUndefined};
+
+	const std::vector<vk::Format> float_format_priority_list = {
+	    vk::Format::eR32G32B32A32Sfloat,
+	    vk::Format::eR16G16B16A16Sfloat};
+
+	for (auto &format : float_format_priority_list)
+	{
+		const vk::FormatProperties properties = get_device()->get_gpu().get_format_properties(format);
+		if (properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+		{
+			color_format = format;
+			break;
+		}
+	}
+
+	if (color_format == vk::Format::eUndefined)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
+
 	{
 		offscreen.extent = extent;
 

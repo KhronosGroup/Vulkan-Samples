@@ -138,5 +138,10 @@ vk::PhysicalDeviceFeatures &HPPPhysicalDevice::get_mutable_requested_features()
 	return requested_features;
 }
 
+const vk::FormatProperties HPPPhysicalDevice::get_format_properties(vk::Format format) const
+{
+	return handle.getFormatProperties(format);
+}
+
 }        // namespace core
 }        // namespace vkb
