@@ -250,7 +250,7 @@ void HPPHDR::prepare_offscreen_buffer()
 
 	for (auto &format : float_format_priority_list)
 	{
-		const vk::FormatProperties properties = get_device()->get_gpu().get_format_properties(format);
+		const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
 		if (properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
 		{
 			color_format = format;

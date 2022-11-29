@@ -88,8 +88,6 @@ class HPPPhysicalDevice
 
 	vk::PhysicalDeviceFeatures &get_mutable_requested_features();
 
-	const vk::FormatProperties get_format_properties(vk::Format format) const;
-
 	/**
 	 * @brief Requests a third party extension to be used by the framework
 	 *
