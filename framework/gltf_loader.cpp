@@ -501,10 +501,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;
-	for (auto &fut : image_component_futures)
-	{
-		image_components.push_back(fut.get());
-	}
 
 	// Upload images to GPU. We do this in batches of 64MB of data to avoid needing
 	// double the amount of memory (all the images and all the corresponding buffers).
@@ -523,6 +519,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		// Deal with 64MB of image data at a time to keep memory footprint low
 		while (image_index < image_count && batch_size < 64 * 1024 * 1024)
 		{
+			// Wait for this image to complete loading, then stage for upload
+			image_components.push_back(image_component_futures.at(image_index).get());
+
 			auto &image = image_components.at(image_index);
 
 			core::Buffer stage_buffer{device,
