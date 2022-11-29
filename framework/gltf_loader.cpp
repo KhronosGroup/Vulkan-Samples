@@ -506,41 +506,55 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 		image_components.push_back(fut.get());
 	}
 
-	// Upload images to GPU
-	std::vector<core::Buffer> transient_buffers;
-
-	auto &command_buffer = device.request_command_buffer();
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
-
-	for (size_t image_index = 0; image_index < image_count; image_index++)
+	// Upload images to GPU. We do this in batches of 64MB of data to avoid needing
+	// double the amount of memory (all the images and all the corresponding buffers).
+	// This helps keep memory footprint lower which is helpful on smaller devices.
+	size_t image_index = 0;
+	while (image_index < image_count)
 	{
-		auto &image = image_components.at(image_index);
+		std::vector<core::Buffer> transient_buffers;
 
-		core::Buffer stage_buffer{device,
-		                          image->get_data().size(),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
+		auto &command_buffer = device.request_command_buffer();
 
-		stage_buffer.update(image->get_data());
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
 
-		upload_image_to_gpu(command_buffer, stage_buffer, *image);
+		size_t batch_size = 0;
 
-		transient_buffers.push_back(std::move(stage_buffer));
+		// Deal with 64MB of image data at a time to keep memory footprint low
+		while (image_index < image_count && batch_size < 64 * 1024 * 1024)
+		{
+			auto &image = image_components.at(image_index);
+
+			core::Buffer stage_buffer{device,
+			                          image->get_data().size(),
+			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			                          VMA_MEMORY_USAGE_CPU_ONLY};
+
+			batch_size += image->get_data().size();
+
+			stage_buffer.update(image->get_data());
+
+			upload_image_to_gpu(command_buffer, stage_buffer, *image);
+
+			transient_buffers.push_back(std::move(stage_buffer));
+
+			image_index++;
+		}
+
+		command_buffer.end();
+
+		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+
+		queue.submit(command_buffer, device.request_fence());
+
+		device.get_fence_pool().wait();
+		device.get_fence_pool().reset();
+		device.get_command_pool().reset_pool();
+		device.wait_idle();
+
+		// Remove the staging buffers for the batch we just processed
+		transient_buffers.clear();
 	}
-
-	command_buffer.end();
-
-	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-
-	queue.submit(command_buffer, device.request_fence());
-
-	device.get_fence_pool().wait();
-	device.get_fence_pool().reset();
-	device.get_command_pool().reset_pool();
-	device.wait_idle();
-
-	transient_buffers.clear();
 
 	scene.set_components(std::move(image_components));
 
@@ -728,8 +742,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
 	device.get_command_pool().reset_pool();
-
-	transient_buffers.clear();
 
 	scene.add_component(std::move(default_material));
 
