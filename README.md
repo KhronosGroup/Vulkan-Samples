@@ -70,6 +70,8 @@ Additionally you may find the following links useful:
 
 ## Setup
 
+Prerequisites: [git](https://git-scm.com/downloads) with [git large file storage (git-lfs)](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
+
 Clone the repo with submodules using the following command:
 
 ```
