@@ -270,8 +270,8 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
 		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		offscreen.color[0] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
-		offscreen.color[1] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
+		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		// Depth attachment
 		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
@@ -361,8 +361,8 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		// Color attachments
 
-		// Two floating point color buffers
-		filter_pass.color[0] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		// Floating point color attachment
+		filter_pass.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
 		// Set up separate renderpass with references to the colorand depth attachments
 		vk::AttachmentDescription attachment_description;
