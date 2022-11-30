@@ -65,11 +65,11 @@ bool HPPPipelineCache::prepare(vkb::platform::HPPPlatform &platform)
 	}
 
 	/* Add initial pipeline cache data from the cached file */
-	// Note: unfortunately, no compiler can detect the correct data type from the "natural" constructor here:
-	//	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data);
-	// This is due to the templatized second argument. You could help the compiler by a cast
-	//	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, vk::ArrayProxyNoTemporaries<const uint8_t>(pipeline_data));
-	// But, obviously, this looks a bit awkward. Instead, you can use the simple two-argument approach with size and pointer:
+	/* Note: unfortunately, no compiler can detect the correct data type from the "natural" constructor here:                   */
+	/*	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data);                                              */
+	/* This is due to the templatized second argument. You could help the compiler by a cast                                    */
+	/*	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, vk::ArrayProxyNoTemporaries<const uint8_t>(pipeline_data));  */
+	/* But, obviously, this looks a bit awkward. Instead, you can use the simple two-argument approach with size and pointer:   */
 	vk::PipelineCacheCreateInfo pipeline_cache_create_info({}, pipeline_data.size(), pipeline_data.data());
 
 	/* Create Vulkan pipeline cache */
@@ -77,7 +77,7 @@ bool HPPPipelineCache::prepare(vkb::platform::HPPPlatform &platform)
 
 	vkb::HPPResourceCache &resource_cache = device->get_resource_cache();
 
-	// Use pipeline cache to store pipelines
+	/* Use pipeline cache to store pipelines */
 	resource_cache.set_pipeline_cache(pipeline_cache);
 
 	std::vector<uint8_t> data_cache;
@@ -90,7 +90,7 @@ bool HPPPipelineCache::prepare(vkb::platform::HPPPlatform &platform)
 		LOGW("No data cache found. {}", ex.what());
 	}
 
-	// Build all pipelines from a previous run
+	/* Build all pipelines from a previous run */
 	resource_cache.warmup(data_cache);
 
 	stats->request_stats({vkb::StatIndex::frame_times});
