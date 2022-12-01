@@ -26,7 +26,5 @@ add_sample(
         NAME "Full Screen Exclusive"
         DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
         SHADER_FILES_GLSL
-        "hdr/composition.vert"
-        "hdr/composition.frag"
-        "hdr/gbuffer.vert"
-        "hdr/gbuffer.frag")
+        "triangle.vert"
+        "triangle.frag")

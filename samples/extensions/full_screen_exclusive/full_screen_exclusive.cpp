@@ -1,905 +1,1104 @@
 /* Copyright (c) 2022, Holochip Corporation
- *
- * SPDX-License-Identifier: Apache-2.0
- *
- * Licensed under the Apache License, Version 2.0 the "License";
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+*
+* SPDX-License-Identifier: Apache-2.0
+*
+* Licensed under the Apache License, Version 2.0 the "License";
+* you may not use this file except in compliance with the License.
+* You may obtain a copy of the License at
+*
+*     http://www.apache.org/licenses/LICENSE-2.0
+*
+* Unless required by applicable law or agreed to in writing, software
+* distributed under the License is distributed on an "AS IS" BASIS,
+* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+* See the License for the specific language governing permissions and
+* limitations under the License.
+*/
 
 #include "full_screen_exclusive.h"
-#include "scene_graph/components/sub_mesh.h"
+
+#include "common/logging.h"
+#include "common/vk_common.h"
+#include "glsl_compiler.h"
+#include "platform/filesystem.h"
+#include "platform/platform.h"
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type, uint64_t object, size_t location, int32_t message_code, const char *layer_prefix, const char *message, void *user_data)
+{
+   if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+   {
+       LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+   }
+   else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+   {
+       LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
+   }
+   else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+   {
+       LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
+   }
+   else
+   {
+       LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+   }
+   return VK_FALSE;
+}
+#endif
+
+bool FullScreenExclusive::validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available)
+{
+   for (auto extension : required)
+   {
+       bool found = false;
+
+       for (auto &available_extension : available)
+       {
+           if (strcmp(available_extension.extensionName, extension) == 0)
+           {
+               found = true;
+               break;
+           }
+       }
+
+       if (!found)
+           return false;
+   }
+
+   return true;
+}
+
+bool FullScreenExclusive::validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available)
+{
+   for (auto extension : required)
+   {
+       bool found = false;
+
+       for (auto &available_extension : available)
+       {
+           if (strcmp(available_extension.layerName, extension) == 0)
+           {
+               found = true;
+               break;
+           }
+       }
+
+       if (!found)
+       {
+           return false;
+       }
+   }
+
+   return true;
+}
+
+VkShaderStageFlagBits FullScreenExclusive::find_shader_stage(const std::string &ext)
+{
+   if (ext == "vert")
+   {
+       return VK_SHADER_STAGE_VERTEX_BIT;
+   }
+   else if (ext == "frag")
+   {
+       return VK_SHADER_STAGE_FRAGMENT_BIT;
+   }
+   else if (ext == "comp")
+   {
+       return VK_SHADER_STAGE_COMPUTE_BIT;
+   }
+   else if (ext == "geom")
+   {
+       return VK_SHADER_STAGE_GEOMETRY_BIT;
+   }
+   else if (ext == "tesc")
+   {
+       return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+   }
+   else if (ext == "tese")
+   {
+       return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
+   }
+
+   throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
+};
+
+void FullScreenExclusive::init_instance(Context &context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
+{
+   LOGI("Initializing vulkan instance.");
+
+   if (volkInitialize())
+   {
+       throw std::runtime_error("Failed to initialize volk.");
+   }
+
+   uint32_t instance_extension_count;
+   VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+
+   std::vector<VkExtensionProperties> instance_extensions(instance_extension_count);
+   VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, instance_extensions.data()));
+
+   std::vector<const char *> active_instance_extensions(required_instance_extensions);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+   active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+   active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+   active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
+#endif
+
+#if defined(VK_USE_PLATFORM_ANDROID_KHR)
+   active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
+   active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_METAL_EXT)
+   active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XCB_KHR)
+   active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_XLIB_KHR)
+   active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
+   active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
+#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
+   active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
+#else
+#  pragma error Platform not supported
+#endif
+
+   //TODO: Add Windows platform check @Jeremy
+
+   // Add Instance extensions for full screen exclusive
+   active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+   active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+   active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+
+   if (!validate_extensions(active_instance_extensions, instance_extensions))
+   {
+       throw std::runtime_error("Required instance extensions are missing.");
+   }
+
+   uint32_t instance_layer_count;
+   VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
+
+   std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
+   VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+
+   std::vector<const char *> requested_validation_layers(required_validation_layers);
+
+#ifdef VKB_VALIDATION_LAYERS
+   // Determine the optimal validation layers to enable that are necessary for useful debugging
+   std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
+   requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
+#endif
+
+   if (validate_layers(requested_validation_layers, supported_validation_layers))
+   {
+       LOGI("Enabled Validation Layers:")
+       for (const auto &layer : requested_validation_layers)
+       {
+           LOGI(" \t{}", layer);
+       }
+   }
+   else
+   {
+       throw std::runtime_error("Required validation layers are missing.");
+   }
+
+   VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
+   app.pApplicationName = "Hello Triangle";
+   app.pEngineName      = "Vulkan Samples";
+   app.apiVersion       = VK_MAKE_VERSION(1, 0, 0);
+
+   VkInstanceCreateInfo instance_info{VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
+   instance_info.pApplicationInfo        = &app;
+   instance_info.enabledExtensionCount   = vkb::to_u32(active_instance_extensions.size());
+   instance_info.ppEnabledExtensionNames = active_instance_extensions.data();
+   instance_info.enabledLayerCount       = vkb::to_u32(requested_validation_layers.size());
+   instance_info.ppEnabledLayerNames     = requested_validation_layers.data();
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+   VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
+   debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
+   debug_report_create_info.pfnCallback                        = debug_callback;
+
+   instance_info.pNext = &debug_report_create_info;
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+   instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
+   VK_CHECK(vkCreateInstance(&instance_info, nullptr, &context.instance));
+
+   volkLoadInstance(context.instance);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+   VK_CHECK(vkCreateDebugReportCallbackEXT(context.instance, &debug_report_create_info, nullptr, &context.debug_callback));
+#endif
+}
+
+void FullScreenExclusive::init_device(Context &context, const std::vector<const char *> &required_device_extensions)
+{
+   LOGI("Initializing vulkan device.");
+
+   uint32_t gpu_count = 0;
+   VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, nullptr));
+
+   if (gpu_count < 1)
+   {
+       throw std::runtime_error("No physical device found.");
+   }
+
+   std::vector<VkPhysicalDevice> gpus(gpu_count);
+   VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
+
+   for (size_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
+   {
+       context.gpu = gpus[i];
+
+       uint32_t queue_family_count;
+       vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, nullptr);
+
+       if (queue_family_count < 1)
+       {
+           throw std::runtime_error("No queue family found.");
+       }
+
+       std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
+       vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
+
+       for (uint32_t i = 0; i < queue_family_count; i++)
+       {
+           VkBool32 supports_present;
+           vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
+
+           // Find a queue family which supports graphics and presentation.
+           if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+           {
+               context.graphics_queue_index = i;
+               break;
+           }
+       }
+   }
+
+   if (context.graphics_queue_index < 0)
+   {
+       LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
+   }
+
+   uint32_t device_extension_count;
+   VK_CHECK(vkEnumerateDeviceExtensionProperties(context.gpu, nullptr, &device_extension_count, nullptr));
+   std::vector<VkExtensionProperties> device_extensions(device_extension_count);
+   VK_CHECK(vkEnumerateDeviceExtensionProperties(context.gpu, nullptr, &device_extension_count, device_extensions.data()));
+
+   if (!validate_extensions(required_device_extensions, device_extensions))
+   {
+       throw std::runtime_error("Required device extensions are missing, will try without.");
+   }
+
+
+   std::vector<const char* > active_device_extensions = required_device_extensions;
+
+   //TODO: add Windows platform check @Jeremy:
+   //active_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME); // this must be already included
+   active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+
+
+   float queue_priority = 1.0f;
+
+   VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
+   queue_info.queueFamilyIndex = context.graphics_queue_index;
+   queue_info.queueCount       = 1;
+   queue_info.pQueuePriorities = &queue_priority;
+
+   VkDeviceCreateInfo device_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
+   device_info.queueCreateInfoCount    = 1;
+   device_info.pQueueCreateInfos       = &queue_info;
+
+   //device_info.enabledExtensionCount   = vkb::to_u32(required_device_extensions.size());
+   //device_info.ppEnabledExtensionNames = required_device_extensions.data();
+
+   /// This is to change the carrier for the extensions vectors:
+   device_info.enabledExtensionCount   = vkb::to_u32(active_device_extensions.size());
+   device_info.ppEnabledExtensionNames = active_device_extensions.data();
+
+   VK_CHECK(vkCreateDevice(context.gpu, &device_info, nullptr, &context.device));
+   volkLoadDevice(context.device);
+
+   vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
+}
+
+void FullScreenExclusive::init_per_frame(Context &context, PerFrame &per_frame)
+{
+   VkFenceCreateInfo info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
+   info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+   VK_CHECK(vkCreateFence(context.device, &info, nullptr, &per_frame.queue_submit_fence));
+
+   VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
+   cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
+   cmd_pool_info.queueFamilyIndex = context.graphics_queue_index;
+   VK_CHECK(vkCreateCommandPool(context.device, &cmd_pool_info, nullptr, &per_frame.primary_command_pool));
+
+   VkCommandBufferAllocateInfo cmd_buf_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
+   cmd_buf_info.commandPool        = per_frame.primary_command_pool;
+   cmd_buf_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+   cmd_buf_info.commandBufferCount = 1;
+   VK_CHECK(vkAllocateCommandBuffers(context.device, &cmd_buf_info, &per_frame.primary_command_buffer));
+
+   per_frame.device      = context.device;
+   per_frame.queue_index = context.graphics_queue_index;
+}
+
+void FullScreenExclusive::teardown_per_frame(Context &context, PerFrame &per_frame)
+{
+   if (per_frame.queue_submit_fence != VK_NULL_HANDLE)
+   {
+       vkDestroyFence(context.device, per_frame.queue_submit_fence, nullptr);
+
+       per_frame.queue_submit_fence = VK_NULL_HANDLE;
+   }
+
+   if (per_frame.primary_command_buffer != VK_NULL_HANDLE)
+   {
+       vkFreeCommandBuffers(context.device, per_frame.primary_command_pool, 1, &per_frame.primary_command_buffer);
+
+       per_frame.primary_command_buffer = VK_NULL_HANDLE;
+   }
+
+   if (per_frame.primary_command_pool != VK_NULL_HANDLE)
+   {
+       vkDestroyCommandPool(context.device, per_frame.primary_command_pool, nullptr);
+
+       per_frame.primary_command_pool = VK_NULL_HANDLE;
+   }
+
+   if (per_frame.swapchain_acquire_semaphore != VK_NULL_HANDLE)
+   {
+       vkDestroySemaphore(context.device, per_frame.swapchain_acquire_semaphore, nullptr);
+
+       per_frame.swapchain_acquire_semaphore = VK_NULL_HANDLE;
+   }
+
+   if (per_frame.swapchain_release_semaphore != VK_NULL_HANDLE)
+   {
+       vkDestroySemaphore(context.device, per_frame.swapchain_release_semaphore, nullptr);
+
+       per_frame.swapchain_release_semaphore = VK_NULL_HANDLE;
+   }
+
+   per_frame.device      = VK_NULL_HANDLE;
+   per_frame.queue_index = -1;
+}
+
+void FullScreenExclusive::init_swapchain(Context &context)
+{
+   VkSurfaceCapabilitiesKHR surface_properties;
+   VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
+
+   uint32_t format_count;
+   vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, nullptr);
+   std::vector<VkSurfaceFormatKHR> formats(format_count);
+   vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, formats.data());
+
+   VkSurfaceFormatKHR format;
+   if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
+   {
+       // Always prefer sRGB for display
+       format        = formats[0];
+       format.format = VK_FORMAT_B8G8R8A8_SRGB;
+   }
+   else
+   {
+       if (format_count == 0)
+       {
+           throw std::runtime_error("Surface has no formats.");
+       }
+
+       format.format = VK_FORMAT_UNDEFINED;
+       for (auto &candidate : formats)
+       {
+           switch (candidate.format)
+           {
+               case VK_FORMAT_R8G8B8A8_SRGB:
+               case VK_FORMAT_B8G8R8A8_SRGB:
+               case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+                   format = candidate;
+                   break;
+
+               default:
+                   break;
+           }
+
+           if (format.format != VK_FORMAT_UNDEFINED)
+           {
+               break;
+           }
+       }
+
+       if (format.format == VK_FORMAT_UNDEFINED)
+       {
+           format = formats[0];
+       }
+   }
+
+   VkExtent2D swapchain_size;
+   if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+   {
+       swapchain_size.width  = context.swapchain_dimensions.width;
+       swapchain_size.height = context.swapchain_dimensions.height;
+   }
+   else
+   {
+       swapchain_size = surface_properties.currentExtent;
+   }
+
+   // FIFO must be supported by all implementations.
+   VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
+
+   // Determine the number of VkImage's to use in the swapchain.
+   // Ideally, we desire to own 1 image at a time, the rest of the images can
+   // either be rendered to and/or being queued up for display.
+   uint32_t desired_swapchain_images = surface_properties.minImageCount + 1;
+   if ((surface_properties.maxImageCount > 0) && (desired_swapchain_images > surface_properties.maxImageCount))
+   {
+       // Application must settle for fewer images than desired.
+       desired_swapchain_images = surface_properties.maxImageCount;
+   }
+
+   // Figure out a suitable surface transform.
+   VkSurfaceTransformFlagBitsKHR pre_transform;
+   if (surface_properties.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
+   {
+       pre_transform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
+   }
+   else
+   {
+       pre_transform = surface_properties.currentTransform;
+   }
+
+   VkSwapchainKHR old_swapchain = context.swapchain;
+
+   // Find a supported composite type.
+   VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+   if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
+   {
+       composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+   }
+   else if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR)
+   {
+       composite = VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR;
+   }
+   else if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR)
+   {
+       composite = VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR;
+   }
+   else if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR)
+   {
+       composite = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
+   }
+
+   //TODO: Add full screen exclusive related variable here! @Jeremy
+   //trying to make this in scope
+   VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
+
+   surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+
+   //surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+   //surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+   //surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+
+   VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};
+   info.pNext = &surface_full_screen_exclusive_info_EXT;
+   info.surface            = context.surface;
+   info.minImageCount      = desired_swapchain_images;
+   info.imageFormat        = format.format;
+   info.imageColorSpace    = format.colorSpace;
+   info.imageExtent.width  = swapchain_size.width;
+   info.imageExtent.height = swapchain_size.height;
+   info.imageArrayLayers   = 1;
+   info.imageUsage         = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+   info.imageSharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+   info.preTransform       = pre_transform;
+   info.compositeAlpha     = composite;
+   info.presentMode        = swapchain_present_mode;
+   info.clipped            = true;
+   info.oldSwapchain       = old_swapchain;
+
+   VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
+
+   if (old_swapchain != VK_NULL_HANDLE)
+   {
+       for (VkImageView image_view : context.swapchain_image_views)
+       {
+           vkDestroyImageView(context.device, image_view, nullptr);
+       }
+
+       uint32_t image_count;
+       VK_CHECK(vkGetSwapchainImagesKHR(context.device, old_swapchain, &image_count, nullptr));
+
+       for (size_t i = 0; i < image_count; i++)
+       {
+           teardown_per_frame(context, context.per_frame[i]);
+       }
+
+       context.swapchain_image_views.clear();
+
+       vkDestroySwapchainKHR(context.device, old_swapchain, nullptr);
+   }
+
+   context.swapchain_dimensions = {swapchain_size.width, swapchain_size.height, format.format};
+
+   uint32_t image_count;
+   VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, nullptr));
+
+   /// The swapchain images.
+   std::vector<VkImage> swapchain_images(image_count);
+   VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, swapchain_images.data()));
+
+   // Initialize per-frame resources.
+   // Every swapchain image has its own command pool and fence manager.
+   // This makes it very easy to keep track of when we can reset command buffers and such.
+   context.per_frame.clear();
+   context.per_frame.resize(image_count);
+
+   for (size_t i = 0; i < image_count; i++)
+   {
+       init_per_frame(context, context.per_frame[i]);
+   }
+
+   for (size_t i = 0; i < image_count; i++)
+   {
+       // Create an image view which we can render into.
+       VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
+       view_info.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
+       view_info.format                      = context.swapchain_dimensions.format;
+       view_info.image                       = swapchain_images[i];
+       view_info.subresourceRange.levelCount = 1;
+       view_info.subresourceRange.layerCount = 1;
+       view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+       view_info.components.r                = VK_COMPONENT_SWIZZLE_R;
+       view_info.components.g                = VK_COMPONENT_SWIZZLE_G;
+       view_info.components.b                = VK_COMPONENT_SWIZZLE_B;
+       view_info.components.a                = VK_COMPONENT_SWIZZLE_A;
+
+       VkImageView image_view;
+       VK_CHECK(vkCreateImageView(context.device, &view_info, nullptr, &image_view));
+
+       context.swapchain_image_views.push_back(image_view);
+   }
+}
+
+void FullScreenExclusive::init_render_pass(Context &context)
+{
+   VkAttachmentDescription attachment = {0};
+   attachment.format = context.swapchain_dimensions.format;
+   attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+   attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+   attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+   attachment.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+   attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+   // The image layout will be undefined when the render pass begins.
+   attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+   // After the render pass is complete, we will transition to PRESENT_SRC_KHR layout.
+   attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+   // We have one subpass. This subpass has one color attachment.
+   // While executing this subpass, the attachment will be in attachment optimal layout.
+   VkAttachmentReference color_ref = {0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL};
+
+   // We will end up with two transitions.
+   // The first one happens right before we start subpass #0, where
+   // UNDEFINED is transitioned into COLOR_ATTACHMENT_OPTIMAL.
+   // The final layout in the render pass attachment states PRESENT_SRC_KHR, so we
+   // will get a final transition from COLOR_ATTACHMENT_OPTIMAL to PRESENT_SRC_KHR.
+   VkSubpassDescription subpass = {0};
+   subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
+   subpass.colorAttachmentCount = 1;
+   subpass.pColorAttachments    = &color_ref;
+
+   // Create a dependency to external events.
+   // We need to wait for the WSI semaphore to signal.
+   // Only pipeline stages which depend on COLOR_ATTACHMENT_OUTPUT_BIT will
+   // actually wait for the semaphore, so we must also wait for that pipeline stage.
+   VkSubpassDependency dependency = {0};
+   dependency.srcSubpass          = VK_SUBPASS_EXTERNAL;
+   dependency.dstSubpass          = 0;
+   dependency.srcStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+   dependency.dstStageMask        = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+   // Since we changed the image layout, we need to make the memory visible to
+   // color attachment to modify.
+   dependency.srcAccessMask = 0;
+   dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+   // Finally, create the renderpass.
+   VkRenderPassCreateInfo rp_info = {VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO};
+   rp_info.attachmentCount        = 1;
+   rp_info.pAttachments           = &attachment;
+   rp_info.subpassCount           = 1;
+   rp_info.pSubpasses             = &subpass;
+   rp_info.dependencyCount        = 1;
+   rp_info.pDependencies          = &dependency;
+
+   VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
+}
+
+VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const char *path)
+{
+   vkb::GLSLCompiler glsl_compiler;
+
+   auto buffer = vkb::fs::read_shader_binary(path);
+
+   std::string file_ext = path;
+
+   // Extract extension name from the glsl shader file
+   file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+
+   std::vector<uint32_t> spirv;
+   std::string           info_log;
+
+   // Compile the GLSL source
+   if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+   {
+       LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+       return VK_NULL_HANDLE;
+   }
+
+   VkShaderModuleCreateInfo module_info{VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO};
+   module_info.codeSize = spirv.size() * sizeof(uint32_t);
+   module_info.pCode    = spirv.data();
+
+   VkShaderModule shader_module;
+   VK_CHECK(vkCreateShaderModule(context.device, &module_info, nullptr, &shader_module));
+
+   return shader_module;
+}
+
+void FullScreenExclusive::init_pipeline(Context &context)
+{
+   // Create a blank pipeline layout.
+   // We are not binding any resources to the pipeline in this first sample.
+   VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
+   VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
+
+   VkPipelineVertexInputStateCreateInfo vertex_input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
+
+   // Specify we will use triangle lists to draw geometry.
+   VkPipelineInputAssemblyStateCreateInfo input_assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
+   input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+
+   // Specify rasterization state.
+   VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
+   raster.cullMode  = VK_CULL_MODE_BACK_BIT;
+   raster.frontFace = VK_FRONT_FACE_CLOCKWISE;
+   raster.lineWidth = 1.0f;
+
+   // Our attachment will write to all color channels, but no blending is enabled.
+   VkPipelineColorBlendAttachmentState blend_attachment{};
+   blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+   VkPipelineColorBlendStateCreateInfo blend{VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO};
+   blend.attachmentCount = 1;
+   blend.pAttachments    = &blend_attachment;
+
+   // We will have one viewport and scissor box.
+   VkPipelineViewportStateCreateInfo viewport{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
+   viewport.viewportCount = 1;
+   viewport.scissorCount  = 1;
+
+   // Disable all depth testing.
+   VkPipelineDepthStencilStateCreateInfo depth_stencil{VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
+
+   // No multisampling.
+   VkPipelineMultisampleStateCreateInfo multisample{VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
+   multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+   // Specify that these states will be dynamic, i.e. not part of pipeline state object.
+   std::array<VkDynamicState, 2> dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+   VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
+   dynamic.pDynamicStates    = dynamics.data();
+   dynamic.dynamicStateCount = vkb::to_u32(dynamics.size());
+
+   // Load our SPIR-V shaders.
+   std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+
+   // Vertex stage of the pipeline
+   shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+   shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
+   shader_stages[0].module = load_shader_module(context, "triangle.vert");
+   shader_stages[0].pName  = "main";
+
+   // Fragment stage of the pipeline
+   shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+   shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+   shader_stages[1].module = load_shader_module(context, "triangle.frag");
+   shader_stages[1].pName  = "main";
+
+   VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+   pipe.stageCount          = vkb::to_u32(shader_stages.size());
+   pipe.pStages             = shader_stages.data();
+   pipe.pVertexInputState   = &vertex_input;
+   pipe.pInputAssemblyState = &input_assembly;
+   pipe.pRasterizationState = &raster;
+   pipe.pColorBlendState    = &blend;
+   pipe.pMultisampleState   = &multisample;
+   pipe.pViewportState      = &viewport;
+   pipe.pDepthStencilState  = &depth_stencil;
+   pipe.pDynamicState       = &dynamic;
+
+   // We need to specify the pipeline layout and the render pass description up front as well.
+   pipe.renderPass = context.render_pass;
+   pipe.layout     = context.pipeline_layout;
+
+   VK_CHECK(vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1, &pipe, nullptr, &context.pipeline));
+
+   // Pipeline is baked, we can delete the shader modules now.
+   vkDestroyShaderModule(context.device, shader_stages[0].module, nullptr);
+   vkDestroyShaderModule(context.device, shader_stages[1].module, nullptr);
+}
+
+VkResult FullScreenExclusive::acquire_next_image(Context &context, uint32_t *image)
+{
+   VkSemaphore acquire_semaphore;
+   if (context.recycled_semaphores.empty())
+   {
+       VkSemaphoreCreateInfo info = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+       VK_CHECK(vkCreateSemaphore(context.device, &info, nullptr, &acquire_semaphore));
+   }
+   else
+   {
+       acquire_semaphore = context.recycled_semaphores.back();
+       context.recycled_semaphores.pop_back();
+   }
+
+   VkResult res = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
+
+   if (res != VK_SUCCESS)
+   {
+       context.recycled_semaphores.push_back(acquire_semaphore);
+       return res;
+   }
+
+   // If we have outstanding fences for this swapchain image, wait for them to complete first.
+   // After begin frame returns, it is safe to reuse or delete resources which
+   // were used previously.
+   //
+   // We wait for fences which completes N frames earlier, so we do not stall,
+   // waiting for all GPU work to complete before this returns.
+   // Normally, this doesn't really block at all,
+   // since we're waiting for old frames to have been completed, but just in case.
+   if (context.per_frame[*image].queue_submit_fence != VK_NULL_HANDLE)
+   {
+       vkWaitForFences(context.device, 1, &context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
+       vkResetFences(context.device, 1, &context.per_frame[*image].queue_submit_fence);
+   }
+
+   if (context.per_frame[*image].primary_command_pool != VK_NULL_HANDLE)
+   {
+       vkResetCommandPool(context.device, context.per_frame[*image].primary_command_pool, 0);
+   }
+
+   // Recycle the old semaphore back into the semaphore manager.
+   VkSemaphore old_semaphore = context.per_frame[*image].swapchain_acquire_semaphore;
+
+   if (old_semaphore != VK_NULL_HANDLE)
+   {
+       context.recycled_semaphores.push_back(old_semaphore);
+   }
+
+   context.per_frame[*image].swapchain_acquire_semaphore = acquire_semaphore;
+
+   return VK_SUCCESS;
+}
+
+void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_index)
+{
+   // Render to this framebuffer.
+   VkFramebuffer framebuffer = context.swapchain_frame_buffers[swapchain_index];
+
+   // Allocate or re-use a primary command buffer.
+   VkCommandBuffer cmd = context.per_frame[swapchain_index].primary_command_buffer;
+
+   // We will only submit this once before it's recycled.
+   VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
+   begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+   // Begin command recording
+   vkBeginCommandBuffer(cmd, &begin_info);
+
+   // Set clear color values.
+   VkClearValue clear_value;
+   clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
+
+   // Begin the render pass.
+   VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
+   rp_begin.renderPass               = context.render_pass;
+   rp_begin.framebuffer              = framebuffer;
+   rp_begin.renderArea.extent.width  = context.swapchain_dimensions.width;
+   rp_begin.renderArea.extent.height = context.swapchain_dimensions.height;
+   rp_begin.clearValueCount          = 1;
+   rp_begin.pClearValues             = &clear_value;
+   // We will add draw commands in the same command buffer.
+   vkCmdBeginRenderPass(cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
+
+   // Bind the graphics pipeline.
+   vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
+
+   VkViewport vp{};
+   vp.width    = static_cast<float>(context.swapchain_dimensions.width);
+   vp.height   = static_cast<float>(context.swapchain_dimensions.height);
+   vp.minDepth = 0.0f;
+   vp.maxDepth = 1.0f;
+   // Set viewport dynamically
+   vkCmdSetViewport(cmd, 0, 1, &vp);
+
+   VkRect2D scissor{};
+   scissor.extent.width  = context.swapchain_dimensions.width;
+   scissor.extent.height = context.swapchain_dimensions.height;
+   // Set scissor dynamically
+   vkCmdSetScissor(cmd, 0, 1, &scissor);
+
+   // Draw three vertices with one instance.
+   vkCmdDraw(cmd, 3, 1, 0, 0);
+
+   // Complete render pass.
+   vkCmdEndRenderPass(cmd);
+
+   // Complete the command buffer.
+   VK_CHECK(vkEndCommandBuffer(cmd));
+
+   // Submit it to the queue with a release semaphore.
+   if (context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
+   {
+       VkSemaphoreCreateInfo semaphore_info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
+       VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr,
+                                  &context.per_frame[swapchain_index].swapchain_release_semaphore));
+   }
+
+   VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+
+   VkSubmitInfo info{VK_STRUCTURE_TYPE_SUBMIT_INFO};
+   info.commandBufferCount   = 1;
+   info.pCommandBuffers      = &cmd;
+   info.waitSemaphoreCount   = 1;
+   info.pWaitSemaphores      = &context.per_frame[swapchain_index].swapchain_acquire_semaphore;
+   info.pWaitDstStageMask    = &wait_stage;
+   info.signalSemaphoreCount = 1;
+   info.pSignalSemaphores    = &context.per_frame[swapchain_index].swapchain_release_semaphore;
+   // Submit command buffer to graphics queue
+   VK_CHECK(vkQueueSubmit(context.queue, 1, &info, context.per_frame[swapchain_index].queue_submit_fence));
+}
+
+VkResult FullScreenExclusive::present_image(Context &context, uint32_t index)
+{
+   VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
+   present.swapchainCount     = 1;
+   present.pSwapchains        = &context.swapchain;
+   present.pImageIndices      = &index;
+   present.waitSemaphoreCount = 1;
+   present.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore;
+   // Present swapchain image
+   return vkQueuePresentKHR(context.queue, &present);
+}
+
+void FullScreenExclusive::init_frame_buffers(Context &context)
+{
+   VkDevice device = context.device;
+
+   // Create framebuffer for each swapchain image view
+   for (auto &image_view : context.swapchain_image_views)
+   {
+       // Build the framebuffer.
+       VkFramebufferCreateInfo fb_info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
+       fb_info.renderPass      = context.render_pass;
+       fb_info.attachmentCount = 1;
+       fb_info.pAttachments    = &image_view;
+       fb_info.width           = context.swapchain_dimensions.width;
+       fb_info.height          = context.swapchain_dimensions.height;
+       fb_info.layers          = 1;
+
+       VkFramebuffer framebuffer;
+       VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffer));
+
+       context.swapchain_frame_buffers.push_back(framebuffer);
+   }
+}
+
+void FullScreenExclusive::teardown_frame_buffers(Context &context)
+{
+   // Wait until device is idle before teardown.
+   vkQueueWaitIdle(context.queue);
+
+   for (auto &framebuffer : context.swapchain_frame_buffers)
+   {
+       vkDestroyFramebuffer(context.device, framebuffer, nullptr);
+   }
+
+   context.swapchain_frame_buffers.clear();
+}
+
+void FullScreenExclusive::teardown(Context &context)
+{
+   // Don't release anything until the GPU is completely idle.
+   vkDeviceWaitIdle(context.device);
+
+   teardown_frame_buffers(context);
+
+   for (auto &per_frame : context.per_frame)
+   {
+       teardown_per_frame(context, per_frame);
+   }
+
+   context.per_frame.clear();
+
+   for (auto semaphore : context.recycled_semaphores)
+   {
+       vkDestroySemaphore(context.device, semaphore, nullptr);
+   }
+
+   if (context.pipeline != VK_NULL_HANDLE)
+   {
+       vkDestroyPipeline(context.device, context.pipeline, nullptr);
+   }
+
+   if (context.pipeline_layout != VK_NULL_HANDLE)
+   {
+       vkDestroyPipelineLayout(context.device, context.pipeline_layout, nullptr);
+   }
+
+   if (context.render_pass != VK_NULL_HANDLE)
+   {
+       vkDestroyRenderPass(context.device, context.render_pass, nullptr);
+   }
+
+   for (VkImageView image_view : context.swapchain_image_views)
+   {
+       vkDestroyImageView(context.device, image_view, nullptr);
+   }
+
+   if (context.swapchain != VK_NULL_HANDLE)
+   {
+       vkDestroySwapchainKHR(context.device, context.swapchain, nullptr);
+       context.swapchain = VK_NULL_HANDLE;
+   }
+
+   if (context.surface != VK_NULL_HANDLE)
+   {
+       vkDestroySurfaceKHR(context.instance, context.surface, nullptr);
+       context.surface = VK_NULL_HANDLE;
+   }
+
+   if (context.device != VK_NULL_HANDLE)
+   {
+       vkDestroyDevice(context.device, nullptr);
+       context.device = VK_NULL_HANDLE;
+   }
+
+   if (context.debug_callback != VK_NULL_HANDLE)
+   {
+       vkDestroyDebugReportCallbackEXT(context.instance, context.debug_callback, nullptr);
+       context.debug_callback = VK_NULL_HANDLE;
+   }
+
+   vk_instance.reset();
+}
 
 FullScreenExclusive::FullScreenExclusive()
 {
-	title = "Full Screen Exclusive Extension";
-
-	// Enable instance and device extensions required to use VK_EXT_full_screen_exclusive
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_SURFACE_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-	add_device_extension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
-
-	// Initialize
-	FullScreenExclusive::initialize();
 }
 
 FullScreenExclusive::~FullScreenExclusive()
 {
-	if (device)
-	{
-		// Delete pipelines:
-		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
-
-		// Delete pipeline layouts:
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.models, nullptr);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.composition, nullptr);
-
-		// Delete descriptor layouts:
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.models, nullptr);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.composition, nullptr);
-
-		// Delete render pass:
-		vkDestroyRenderPass(get_device().get_handle(), offscreen.render_pass, nullptr);
-		vkDestroyRenderPass(get_device().get_handle(), filter_pass.render_pass, nullptr);
-
-		// Delete framebuffer:
-		vkDestroyFramebuffer(get_device().get_handle(), offscreen.framebuffer, nullptr);
-		vkDestroyFramebuffer(get_device().get_handle(), filter_pass.framebuffer, nullptr);
-
-		vkDestroySampler(get_device().get_handle(), offscreen.sampler, nullptr);
-		vkDestroySampler(get_device().get_handle(), filter_pass.sampler, nullptr);
-
-		offscreen.depth.destroy(get_device().get_handle());
-		offscreen.color[0].destroy(get_device().get_handle());
-		offscreen.color[1].destroy(get_device().get_handle());
-
-		filter_pass.color[0].destroy(get_device().get_handle());
-
-		vkDestroySampler(get_device().get_handle(), skybox_map.sampler, nullptr);
-	}
-}
-
-void FullScreenExclusive::initialize()
-{
-	// Initialize full screen exclusive variables
-	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
-	surface_full_screen_exclusive_info_EXT.pNext = nullptr;
-	// FullScreenExclusive set to be Default by initialization
-	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
-}
-
-void FullScreenExclusive::on_update_full_screen_selection()
-{
-	switch (full_screen_selection_index)
-	{
-		case 1:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;        // windowed
-			break;
-		case 2:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;        // borderless window
-			break;
-		case 3:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;        // exclusive fullscreen
-			break;
-		default:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // default
-			break;
-	}
-}
-
-void FullScreenExclusive::on_swapchain_recreate_info()
-{
-	// Create a new swapchain info EXT which enables full screen exclusive extension features
-	VkSwapchainCreateInfoKHR fullScreenExclusive_create_info{};
-
-	// Initializes its sType and pNext
-	fullScreenExclusive_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	fullScreenExclusive_create_info.pNext = &surface_full_screen_exclusive_info_EXT;
-
-	// Update its information from the current section:
-
-	auto oldSwapchainProperties = render_context->get_swapchain().get_properties();
-
-	fullScreenExclusive_create_info.minImageCount    = oldSwapchainProperties.image_count;
-	fullScreenExclusive_create_info.imageExtent      = oldSwapchainProperties.extent;
-	fullScreenExclusive_create_info.presentMode      = oldSwapchainProperties.present_mode;
-	fullScreenExclusive_create_info.imageFormat      = oldSwapchainProperties.surface_format.format;
-	fullScreenExclusive_create_info.imageColorSpace  = oldSwapchainProperties.surface_format.colorSpace;
-	fullScreenExclusive_create_info.imageArrayLayers = oldSwapchainProperties.array_layers;
-	fullScreenExclusive_create_info.imageUsage       = oldSwapchainProperties.image_usage;
-	fullScreenExclusive_create_info.preTransform     = oldSwapchainProperties.pre_transform;
-	fullScreenExclusive_create_info.compositeAlpha   = oldSwapchainProperties.composite_alpha;
-	fullScreenExclusive_create_info.oldSwapchain     = render_context->get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
-	fullScreenExclusive_create_info.surface          = render_context->get_swapchain().get_surface();
-
-	// Create the new swapchain based on the swapchain info EXT defined above
-	VkSwapchainKHR fullScreenExclusive_swapchain = render_context->get_swapchain().get_handle();        // nestles the r-value to a new swapchain
-	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));
-	/*
-	std::vector<VkImage> temp_images = render_context->get_swapchain().get_images(); // making a deep copy of the swapchain images
-
-	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));        // use the standard VkResults check format
-	uint32_t image_count{};
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, nullptr));
-	auto images = render_context->get_swapchain().get_images();
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
-	images.insert(images.begin(),temp_images.begin(), temp_images.end()); // passing copy data to this vector
-	*/
-
-	// Trying to directly assign the images from where it was, and forced them into the new swapchain
-
-	auto images = render_context->get_swapchain().get_images();
-
-	uint32_t image_count = images.size();
-
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
-
-	// The above only finished creating the swapchain and also recreated its image vector
-	// now we have to create another function to recreate/define the
-	// follow it up with swapchain buffer (image view) recreation
-}
-
-void FullScreenExclusive::on_image_view_recreate_info()
-{
-	auto &images = render_context->get_swapchain().get_images();        // render_context is a protected unique pointer from its base class
-
-	// swapchain_buffers is a protected vector in its base class
-	for (auto &swapchain_buffer : swapchain_buffers)
-	{
-		vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
-	}
-
-	swapchain_buffers.clear();        // swapchain_buffers need to be cleared before resize
-	swapchain_buffers.resize(images.size());
-
-	for (uint32_t i = 0; i < images.size(); i++)
-	{
-		VkImageViewCreateInfo color_attachment_view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-		color_attachment_view.format = render_context->get_swapchain().get_format();
-		color_attachment_view.components =
-		    {
-		        VK_COMPONENT_SWIZZLE_R,
-		        VK_COMPONENT_SWIZZLE_G,
-		        VK_COMPONENT_SWIZZLE_B,
-		        VK_COMPONENT_SWIZZLE_A};
-		color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		color_attachment_view.subresourceRange.baseMipLevel   = 0;
-		color_attachment_view.subresourceRange.levelCount     = 1;
-		color_attachment_view.subresourceRange.baseArrayLayer = 0;
-		color_attachment_view.subresourceRange.layerCount     = 1;
-		color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-		color_attachment_view.flags                           = 0;
-
-		swapchain_buffers[i].image = images[i];        // This is basically an "image view"
-
-		color_attachment_view.image = swapchain_buffers[i].image;
-
-		VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
-	}
-}
-
-void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
-{
-	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	}
-}
-
-void FullScreenExclusive::build_command_buffers()
-{
-	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
-
-	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_values[1].depthStencil = {0.0f, 0};
-
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass            = render_pass;
-	render_pass_begin_info.renderArea.offset.x   = 0;
-	render_pass_begin_info.renderArea.offset.y   = 0;
-	render_pass_begin_info.clearValueCount       = 2;
-	render_pass_begin_info.pClearValues          = clear_values;
-
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
-	{
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-		{
-			std::array<VkClearValue, 3> clear_values;
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[2].depthStencil = {0.0f, 0};
-
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.renderPass               = offscreen.render_pass;
-			render_pass_begin_info.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info.clearValueCount          = 3;
-			render_pass_begin_info.pClearValues             = clear_values.data();
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-			VkDeviceSize offsets[1] = {0};
-
-			// Skybox
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
-			draw_model(models.skybox, draw_cmd_buffers[i]);
-
-			// Teapot
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
-			draw_model(models.object, draw_cmd_buffers[i]);
-
-			vkCmdEndRenderPass(draw_cmd_buffers[i]);
-		}
-
-		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
-
-			// Final composition
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = 2;
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.pClearValues             = clear_values;
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
-
-			// Scene
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
-			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
-
-			draw_ui(draw_cmd_buffers[i]);
-
-			vkCmdEndRenderPass(draw_cmd_buffers[i]);
-		}
-
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
-	}
-}
-
-void FullScreenExclusive::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
-{
-	VkImageAspectFlags aspect_mask = 0;
-	VkImageLayout      image_layout;
-
-	attachment->format = format;
-
-	if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
-	{
-		aspect_mask  = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	}
-	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
-	{
-		aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
-		if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
-		{
-			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
-		}
-		image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-	}
-
-	assert(aspect_mask > 0);
-
-	VkImageCreateInfo image = vkb::initializers::image_create_info();
-	image.imageType         = VK_IMAGE_TYPE_2D;
-	image.format            = format;
-	image.extent.width      = offscreen.width;
-	image.extent.height     = offscreen.height;
-	image.extent.depth      = 1;
-	image.mipLevels         = 1;
-	image.arrayLayers       = 1;
-	image.samples           = VK_SAMPLE_COUNT_1_BIT;
-	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image.usage             = usage | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-	VkMemoryRequirements memory_requirements;
-
-	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
-	vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
-	memory_allocate_info.allocationSize  = memory_requirements.size;
-	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->mem));
-	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->mem, 0));
-
-	VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
-	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	image_view_create_info.format                          = format;
-	image_view_create_info.subresourceRange                = {};
-	image_view_create_info.subresourceRange.aspectMask     = aspect_mask;
-	image_view_create_info.subresourceRange.baseMipLevel   = 0;
-	image_view_create_info.subresourceRange.levelCount     = 1;
-	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount     = 1;
-	image_view_create_info.image                           = attachment->image;
-	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
-}
-
-void FullScreenExclusive::prepare_offscreen_buffer()
-{
-	// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
-	{
-		offscreen.width  = width;
-		offscreen.height = height;
-
-		// Color attachments
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
-		// Depth attachment
-		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
-
-		// Set up separate render-pass with references to the color and depth attachments
-		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
-
-		// Init attachment properties
-		for (uint32_t i = 0; i < 3; ++i)
-		{
-			attachment_descriptions[i].samples        = VK_SAMPLE_COUNT_1_BIT;
-			attachment_descriptions[i].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-			attachment_descriptions[i].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-			attachment_descriptions[i].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-			attachment_descriptions[i].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-			if (i == 2)
-			{
-				attachment_descriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				attachment_descriptions[i].finalLayout   = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-			}
-			else
-			{
-				attachment_descriptions[i].initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-				attachment_descriptions[i].finalLayout   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			}
-		}
-
-		// Formats
-		attachment_descriptions[0].format = offscreen.color[0].format;
-		attachment_descriptions[1].format = offscreen.color[1].format;
-		attachment_descriptions[2].format = offscreen.depth.format;
-
-		std::vector<VkAttachmentReference> color_references;
-		color_references.push_back({0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
-		color_references.push_back({1, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
-
-		VkAttachmentReference depth_reference = {};
-		depth_reference.attachment            = 2;
-		depth_reference.layout                = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-
-		VkSubpassDescription subpass    = {};
-		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.pColorAttachments       = color_references.data();
-		subpass.colorAttachmentCount    = 2;
-		subpass.pDepthStencilAttachment = &depth_reference;
-
-		// Use sub-pass dependencies for attachment layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass      = 0;
-		dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[1].srcSubpass      = 0;
-		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		VkRenderPassCreateInfo render_pass_create_info = {};
-		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_create_info.pAttachments           = attachment_descriptions.data();
-		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
-		render_pass_create_info.subpassCount           = 1;
-		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
-		render_pass_create_info.pDependencies          = dependencies.data();
-
-		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
-
-		std::array<VkImageView, 3> attachments;
-		attachments[0] = offscreen.color[0].view;
-		attachments[1] = offscreen.color[1].view;
-		attachments[2] = offscreen.depth.view;
-
-		VkFramebufferCreateInfo framebuffer_create_info = {};
-		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = nullptr;
-		framebuffer_create_info.renderPass              = offscreen.render_pass;
-		framebuffer_create_info.pAttachments            = attachments.data();
-		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
-		framebuffer_create_info.width                   = offscreen.width;
-		framebuffer_create_info.height                  = offscreen.height;
-		framebuffer_create_info.layers                  = 1;
-		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
-
-		// Create sampler to sample from the color attachments
-		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		sampler.addressModeV        = sampler.addressModeU;
-		sampler.addressModeW        = sampler.addressModeU;
-		sampler.mipLodBias          = 0.0f;
-		sampler.maxAnisotropy       = 1.0f;
-		sampler.minLod              = 0.0f;
-		sampler.maxLod              = 1.0f;
-		sampler.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &offscreen.sampler));
-	}
-
-	// Second separable filter pass
-	{
-		filter_pass.width  = width;
-		filter_pass.height = height;
-
-		// Color attachments
-
-		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
-
-		// Set up separate render-pass with references to the color and depth attachments
-		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
-
-		// Init attachment properties
-		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
-		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		attachment_descriptions[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachment_descriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment_descriptions[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachment_descriptions[0].finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		attachment_descriptions[0].format         = filter_pass.color[0].format;
-
-		std::vector<VkAttachmentReference> color_references;
-		color_references.push_back({0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
-
-		VkSubpassDescription subpass = {};
-		subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.pColorAttachments    = color_references.data();
-		subpass.colorAttachmentCount = 1;
-
-		// Use sub-pass dependencies for attachment layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass      = 0;
-		dependencies[0].srcStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[0].dstStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[0].srcAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[0].dstAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		dependencies[1].srcSubpass      = 0;
-		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
-		dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-		dependencies[1].dstAccessMask   = VK_ACCESS_MEMORY_READ_BIT;
-		dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
-
-		VkRenderPassCreateInfo render_pass_create_info = {};
-		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_create_info.pAttachments           = attachment_descriptions.data();
-		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
-		render_pass_create_info.subpassCount           = 1;
-		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
-		render_pass_create_info.pDependencies          = dependencies.data();
-
-		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &filter_pass.render_pass));
-
-		std::array<VkImageView, 1> attachments;
-		attachments[0] = filter_pass.color[0].view;
-
-		VkFramebufferCreateInfo framebuffer_create_info = {};
-		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = nullptr;
-		framebuffer_create_info.renderPass              = filter_pass.render_pass;
-		framebuffer_create_info.pAttachments            = attachments.data();
-		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
-		framebuffer_create_info.width                   = filter_pass.width;
-		framebuffer_create_info.height                  = filter_pass.height;
-		framebuffer_create_info.layers                  = 1;
-		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
-
-		// Create sampler to sample from the color attachments
-		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
-		sampler.magFilter           = VK_FILTER_NEAREST;
-		sampler.minFilter           = VK_FILTER_NEAREST;
-		sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
-		sampler.addressModeV        = sampler.addressModeU;
-		sampler.addressModeW        = sampler.addressModeU;
-		sampler.mipLodBias          = 0.0f;
-		sampler.maxAnisotropy       = 1.0f;
-		sampler.minLod              = 0.0f;
-		sampler.maxLod              = 1.0f;
-		sampler.borderColor         = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
-		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &filter_pass.sampler));
-	}
-}
-
-void FullScreenExclusive::load_assets()
-{
-	// Models
-	models.skybox = load_model("scenes/cube.gltf");
-	models.object = load_model("scenes/teapot.gltf");
-
-	// Transform
-	auto teapot_matrix = glm::mat4(1.0f);
-	teapot_matrix      = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	teapot_matrix      = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	models.transform   = teapot_matrix;
-
-	// Load skybox cube map
-	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
-}
-
-void FullScreenExclusive::setup_descriptor_pool()
-{
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6)};
-	uint32_t                   num_descriptor_sets = 4;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
-}
-
-void FullScreenExclusive::setup_descriptor_set_layout()
-{
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
-	};
-
-	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
-
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.models));
-
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layouts.models,
-	        1);
-
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
-
-	// G-Buffer composition
-	set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	};
-
-	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.composition));
-
-	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.composition, 1);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.composition));
-}
-
-void FullScreenExclusive::setup_descriptor_sets()
-{
-	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
-
-	// Sky box descriptor set
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
-
-	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(skybox_map);
-	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// Teapot descriptor set
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
-
-	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	environment_image_descriptor = create_descriptor(skybox_map);
-	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// Composition descriptor set
-	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.composition));
-
-	std::vector<VkDescriptorImageInfo> color_descriptors = {
-	    vkb::initializers::descriptor_image_info(offscreen.sampler, offscreen.color[0].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
-	    vkb::initializers::descriptor_image_info(offscreen.sampler, filter_pass.color[0].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
-	};
-
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-}
-
-void FullScreenExclusive::prepare_pipelines()
-{
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	VkPipelineRasterizationStateCreateInfo rasterization_state  = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
-
-	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
-
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
-
-	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-
-	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
-
-	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
-
-	VkGraphicsPipelineCreateInfo                     pipeline_create_info    = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	};
-
-	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
-	pipeline_create_info.pRasterizationState = &rasterization_state;
-	pipeline_create_info.pColorBlendState    = &color_blend_state;
-	pipeline_create_info.pMultisampleState   = &multisample_state;
-	pipeline_create_info.pViewportState      = &viewport_state;
-	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
-	pipeline_create_info.pDynamicState       = &dynamic_state;
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
-	pipeline_create_info.pStages    = shader_stages.data();
-
-	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries;
-
-	// Full screen pipelines
-
-	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	pipeline_create_info.pVertexInputState                 = &empty_input_state;
-
-	// Final fullscreen composition pass pipeline
-	shader_stages[0]                  = load_shader("hdr/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                  = load_shader("hdr/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	pipeline_create_info.layout       = pipeline_layouts.composition;
-	pipeline_create_info.renderPass   = render_pass;
-	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
-	color_blend_state.attachmentCount = 1;
-	color_blend_state.pAttachments    = blend_attachment_states.data();
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
-
-	// Object rendering pipelines
-	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
-
-	// Vertex bindings an attributes for model rendering
-	// Binding description
-	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
-	};
-
-	// Attribute descriptions
-	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // UV
-	};
-
-	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
-
-	pipeline_create_info.pVertexInputState = &vertex_input_state;
-
-	// Skybox pipeline (background cube)
-	blend_attachment_state.blendEnable = VK_FALSE;
-	pipeline_create_info.layout        = pipeline_layouts.models;
-	pipeline_create_info.renderPass    = offscreen.render_pass;
-	color_blend_state.attachmentCount  = 2;
-	color_blend_state.pAttachments     = blend_attachment_states.data();
-
-	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("hdr/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	// Set constant parameters via specialization constants
-	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
-	uint32_t shader_type                 = 0;
-	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shader_type), &shader_type);
-	shader_stages[0].pSpecializationInfo = &specialization_info;
-	shader_stages[1].pSpecializationInfo = &specialization_info;
-
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skybox));
-
-	// Object rendering pipeline
-	// skybox and models are all addressed inside gbuffer, which different pass actually
-	// 1 for skybox
-	// 2 for reflection form an object
-	shader_type = 1;
-
-	// Enable depth test and write
-	depth_stencil_state.depthWriteEnable = VK_TRUE;
-	depth_stencil_state.depthTestEnable  = VK_TRUE;
-	// Flip cull mode
-	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
-}
-
-void FullScreenExclusive::prepare_uniform_buffers()
-{
-	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
-	update_params();
-}
-
-void FullScreenExclusive::update_uniform_buffers()
-{
-	ubo_vs.projection        = camera.matrices.perspective;
-	ubo_vs.model_view        = camera.matrices.view * models.transform;
-	ubo_vs.skybox_model_view = camera.matrices.view;
-
-	uniform_buffers.matrices->convert_and_update(ubo_vs);
-}
-
-void FullScreenExclusive::update_params()
-{
-	uniform_buffers.params->convert_and_update(ubo_params);
-}
-
-void FullScreenExclusive::draw()
-{
-	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	ApiVulkanSample::submit_frame();
+   teardown(context);
 }
 
 bool FullScreenExclusive::prepare(vkb::Platform &platform)
 {
-	if (!ApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
+   init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
-	camera.type = vkb::CameraType::LookAt;
-	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
-	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+   vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
-	load_assets();
-	prepare_uniform_buffers();
-	prepare_offscreen_buffer();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_sets();
-	build_command_buffers();
+   context.surface                     = platform.get_window().create_surface(*vk_instance);
+   auto &extent                        = platform.get_window().get_extent();
+   context.swapchain_dimensions.width  = extent.width;
+   context.swapchain_dimensions.height = extent.height;
 
-	// Add extension related calls here:
+   if (!context.surface)
+       throw std::runtime_error("Failed to create window surface.");
 
-	prepared = true;
+   init_device(context, {"VK_KHR_swapchain"});
 
-	return true;
+   init_swapchain(context);
+
+   // Create the necessary objects for rendering.
+   init_render_pass(context);
+   init_pipeline(context);
+   init_frame_buffers(context);
+
+   return true;
 }
 
-void FullScreenExclusive::render(float delta_time)
+void FullScreenExclusive::update(float delta_time)
 {
-	if (!prepared)
-		return;
-	draw();
-	if (camera.updated)
-		update_uniform_buffers();
-}
+   uint32_t index;
 
-void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-	if (isWindows)
-	{
-		if (drawer.combo_box("Display Mode", &full_screen_selection_index, full_screen_selection_options))
-		{
-			printf("%s\n", full_screen_selection_options[full_screen_selection_index].c_str());
-			on_update_full_screen_selection();
+   auto res = acquire_next_image(context, &index);
 
-			on_swapchain_recreate_info();
-			on_image_view_recreate_info();
-		}
+   // Handle outdated error in acquire.
+   if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
+   {
+       resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
+       res = acquire_next_image(context, &index);
+   }
 
-		// TODO: @JEREMY, remove this button when finalized!
-		if (drawer.button("Test VK Results"))
-		{
-			printf("Test VK Results button pressed!\n");
-			VK_results_message = "Pressed!";
-		}
-		drawer.text("Test VK Results: %s", VK_results_message.c_str());
-	}
+   if (res != VK_SUCCESS)
+   {
+       vkQueueWaitIdle(context.queue);
+       return;
+   }
+
+   render_triangle(context, index);
+   res = present_image(context, index);
+
+   // Handle Outdated error in present.
+   if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
+   {
+       resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
+   }
+   else if (res != VK_SUCCESS)
+   {
+       LOGE("Failed to present swapchain image.");
+   }
 }
 
 bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 {
-	bool resizeResults = ApiVulkanSample::resize(width, height);
+   if (context.device == VK_NULL_HANDLE)
+   {
+       return false;
+   }
 
-	// Introducing the recreation swapchain
-	if (isWindows)
-	{
-		on_swapchain_recreate_info();
-		on_image_view_recreate_info();
-	}
+   VkSurfaceCapabilitiesKHR surface_properties;
+   VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	update_uniform_buffers();
+   // Only rebuild the swapchain if the dimensions have changed
+   if (surface_properties.currentExtent.width == context.swapchain_dimensions.width &&
+       surface_properties.currentExtent.height == context.swapchain_dimensions.height)
+   {
+       return false;
+   }
 
-	return resizeResults;
-}
+   vkDeviceWaitIdle(context.device);
+   teardown_frame_buffers(context);
 
-void FullScreenExclusive::prepare_render_context()
-{
-	VulkanSample::prepare_render_context();        // This is to create a renderer context without extension swapchain
-	if (isWindows)
-	{
-		initialize();
-		on_swapchain_recreate_info();
-		on_image_view_recreate_info();
-	}        // on_swapchain_create_info(); // Now create the new swapchain with extension
+   init_swapchain(context);
+   init_frame_buffers(context);
+   return true;
 }
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive()
 {
-	return std::make_unique<FullScreenExclusive>();
+   return std::make_unique<FullScreenExclusive>();
 }
