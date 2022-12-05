@@ -33,6 +33,12 @@ class HPPImage;
 class HPPImageView : private vkb::core::ImageView
 {
   public:
+	HPPImageView(HPPImage &image, vk::ImageViewType view_type, vk::Format format = vk::Format::eUndefined,
+	             uint32_t base_mip_level = 0, uint32_t base_array_layer = 0,
+	             uint32_t n_mip_levels = 0, uint32_t n_array_layers = 0) :
+	    vkb::core::ImageView(reinterpret_cast<vkb::core::Image &>(image), static_cast<VkImageViewType>(view_type), static_cast<VkFormat>(format), base_mip_level, base_array_layer, n_mip_levels, n_array_layers)
+	{}
+
 	vk::Format get_format() const
 	{
 		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
@@ -46,6 +52,16 @@ class HPPImageView : private vkb::core::ImageView
 	const HPPImage &get_image() const
 	{
 		return reinterpret_cast<HPPImage const &>(ImageView::get_image());
+	}
+
+	vk::ImageSubresourceRange get_subresource_range() const
+	{
+		return static_cast<vk::ImageSubresourceRange>(vkb::core::ImageView::get_subresource_range());
+	}
+
+	void set_image(HPPImage &image)
+	{
+		vkb::core::ImageView::set_image(reinterpret_cast<vkb::core::Image &>(image));
 	}
 };
 }        // namespace core
