@@ -152,6 +152,12 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
 	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
+	// Add Instance extensions for full screen exclusive
+	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
+	// Turn Windows platform boolean to be true for related functions, so to save for the macros
+	isWin32 = true;
 #elif defined(VK_USE_PLATFORM_METAL_EXT)
 	active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
@@ -165,13 +171,6 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 #else
 #	pragma error Platform not supported
 #endif
-
-	// TODO: Add Windows platform check @Jeremy
-
-	// Add Instance extensions for full screen exclusive
-	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
-	active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 
 	if (!validate_extensions(active_instance_extensions, instance_extensions))
 	{
@@ -299,10 +298,12 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 
 	std::vector<const char *> active_device_extensions = required_device_extensions;
 
-	// TODO: add Windows platform check @Jeremy:
-	// active_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME); // this must be already included
-	active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
-
+	// if Windows platform application:
+	if (isWin32)
+	{
+		// active_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME); // this must be already included
+		active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+	}
 	float queue_priority = 1.0f;
 
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
@@ -496,31 +497,34 @@ void FullScreenExclusive::init_swapchain(Context &context)
 		composite = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
 	}
 
-	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};        // initialize the swapchain create info variable locally
+	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};        // initialize the swapchain create info without adding pNext info
 
-	// TODO: add a Window check here:
-	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
-
-	// this is to execute the full screen related variables based on its chosen status
-	switch (full_screen_status)
+	// if Windows platform application:
+	if (isWin32)
 	{
-		case 0:        // default
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
-			break;
-		case 1:        // disallowed
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
-			break;
-		case 2:        // allowed
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
-			break;
-		case 3:        // full screen exclusive combo with acquire and release
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
-			break;
-		default:        // this case won't usually happen but just to set everything to be default just in case
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
-			break;
+		VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
+
+		// this is to execute the full screen related variables based on its chosen status
+		switch (full_screen_status)
+		{
+			case 0:        // default
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+				break;
+			case 1:        // disallowed
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+				break;
+			case 2:        // allowed
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+				break;
+			case 3:        // full screen exclusive combo with acquire and release
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+				break;
+			default:        // this case won't usually happen but just to set everything to be default just in case
+				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+				break;
+		}
+		info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
 	}
-	info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
 
 	info.surface            = context.surface;
 	info.minImageCount      = desired_swapchain_images;
@@ -1110,65 +1114,64 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 	return true;
 }
 
-// TODO: Add input events @Jeremy
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 {
-	if (input_event.get_source() == vkb::EventSource::Keyboard)
+	// if Windows platform application:
+	if (isWin32)
 	{
-		const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
-		if (key_button.get_action() == vkb::KeyAction::Down)
+		if (input_event.get_source() == vkb::EventSource::Keyboard)
 		{
-			bool isRecreate = false;
-
-			switch (key_button.get_code())
+			const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
+			if (key_button.get_action() == vkb::KeyAction::Down)
 			{
-				case vkb::KeyCode::F1:        // Default
-					if (full_screen_status != 0)
-					{
-						full_screen_status    = 0;
-						isRecreate            = true;
-						isFullScreenExclusive = false;
-					}
-					break;
-				case vkb::KeyCode::F2:        // Disallowed
-					if (full_screen_status != 1)
-					{
-						full_screen_status    = 1;
-						isRecreate            = true;
-						isFullScreenExclusive = false;
-					}
-					break;
-				case vkb::KeyCode::F3:        // Allowed
-					if (full_screen_status != 2)
-					{
-						full_screen_status    = 2;
-						isRecreate            = true;
-						isFullScreenExclusive = false;
-					}
-					break;
-					// App decided full screen exclusive
-				case vkb::KeyCode::F4:
-					if (full_screen_status != 3)
-					{
-						full_screen_status    = 3;
-						isRecreate            = true;
-						isFullScreenExclusive = true;
-					}
-					break;
-				default:
-					break;
+				bool isRecreate = false;
+
+				switch (key_button.get_code())
+				{
+					case vkb::KeyCode::F1:        // Default
+						if (full_screen_status != 0)
+						{
+							full_screen_status    = 0;
+							isRecreate            = true;
+							isFullScreenExclusive = false;
+						}
+						break;
+					case vkb::KeyCode::F2:        // Disallowed
+						if (full_screen_status != 1)
+						{
+							full_screen_status    = 1;
+							isRecreate            = true;
+							isFullScreenExclusive = false;
+						}
+						break;
+					case vkb::KeyCode::F3:        // Allowed
+						if (full_screen_status != 2)
+						{
+							full_screen_status    = 2;
+							isRecreate            = true;
+							isFullScreenExclusive = false;
+						}
+						break;
+						// App decided full screen exclusive
+					case vkb::KeyCode::F4:
+						if (full_screen_status != 3)
+						{
+							full_screen_status    = 3;
+							isRecreate            = true;
+							isFullScreenExclusive = true;
+						}
+						break;
+					default:
+						break;
+				}
+				// now if to recreate the swapchain and everything related:
+				if (isRecreate)
+				{
+					FullScreenExclusive::recreate();
+				}
+				// This indicates that F1 has been pressed and a boolean status must be checked
+				isFullScreenExclusive = !isFullScreenExclusive;        // this is to flip the boolean status
 			}
-
-			// now if to recreate the swapchain and everything related:
-			if (isRecreate)
-			{
-				FullScreenExclusive::recreate();
-			}
-
-			// This indicates that F1 has been pressed and a boolean status must be checked
-			isFullScreenExclusive = !isFullScreenExclusive;        // this is to flip the boolean status
-
-			// TODO: a reconstruction function is now needed!
 		}
 	}
 }
@@ -1180,7 +1183,6 @@ void FullScreenExclusive::recreate()
 	if (context.device != VK_NULL_HANDLE)
 	{
 		vkDeviceWaitIdle(context.device);        // pause the renderer
-
 		teardown_frame_buffers(context);        // basically destroy everything swapchain related
 
 		init_swapchain(context);            // recreate swapchain

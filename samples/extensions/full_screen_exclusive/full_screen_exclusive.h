@@ -71,6 +71,7 @@ class FullScreenExclusive : public vkb::Application
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
 	// Full Screen Exclusive related variables
+	bool isWin32               = false;        // this is to detect if it is a Windows application
 	bool isFullScreenExclusive = false;        // this is to tell if the screen is in full screen exclusive or not
 	int  full_screen_status    = 0;            // 0 means default, 1 means disallowed, 2 means allowed, 3 means full screen exclusive
 
@@ -78,12 +79,10 @@ class FullScreenExclusive : public vkb::Application
 	FullScreenExclusive();
 	virtual ~FullScreenExclusive() override;
 	virtual bool prepare(vkb::Platform &platform) override;
-	virtual void update(float delta_time) override;                       // add gui
-	virtual bool resize(uint32_t width, uint32_t height) override;        // add gui
-
+	virtual void update(float delta_time) override;                               // add gui
+	virtual bool resize(uint32_t width, uint32_t height) override;                // add gui
 	virtual void input_event(const vkb::InputEvent &input_event) override;        // this is to introduce a customized input events
-
-	void recreate();
+	void         recreate();
 
 	bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
 	bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
