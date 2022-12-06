@@ -40,7 +40,7 @@ set(ARCH_ABI "arm64-v8a;armeabi-v7a" CACHE STRING "")
 set(ASSET_DIRS "assets" CACHE STRING "")
 set(RES_DIRS "res" CACHE STRING "")
 set(JAVA_DIRS "java" CACHE STRING "")
-set(JNI_LIBS_DIRS "jni" CACHE STRING "")
+#set(JNI_LIBS_DIRS "jni" CACHE STRING "")
 set(NATIVE_SCRIPT "CMakeLists.txt" CACHE STRING "")
 set(NATIVE_ARGUMENTS "ANDROID_TOOLCHAIN=clang;ANDROID_STL=c++_static;VKB_VALIDATION_LAYERS=OFF" CACHE STRING "")
 set(OUTPUT_DIR "${ROOT_DIR}/build/android_gradle" CACHE PATH "")
@@ -146,26 +146,26 @@ if(NOT ${JAVA_LIST})
 endif()
 
 # jniLibs.srcDirs
-set(JNI_LIBS_DIR_LIST)
+#set(JNI_LIBS_DIR_LIST)
 
-foreach(JNI_LIBS_DIR ${JNI_LIBS_DIRS})
-	if(NOT IS_ABSOLUTE ${JNI_LIBS_DIR})
-		set(JNI_LIBS_DIR ${CMAKE_SOURCE_DIR}/${JNI_LIBS_DIR})
-	endif()
+#foreach(JNI_LIBS_DIR ${JNI_LIBS_DIRS})
+#	if(NOT IS_ABSOLUTE ${JNI_LIBS_DIR})
+#		set(JNI_LIBS_DIR ${CMAKE_SOURCE_DIR}/${JNI_LIBS_DIR})
+#	endif()
+#
+#	if(IS_DIRECTORY ${JNI_LIBS_DIR})
+#		file(RELATIVE_PATH JNI_LIBS_DIR ${OUTPUT_DIR}/app ${JNI_LIBS_DIR})
+#		list(APPEND JNI_LIBS_DIR_LIST ${JNI_LIBS_DIR})
+#	else()
+#		message(STATUS "JNI lib dir not exists at `${JNI_LIBS_DIR}`")
+#	endif()
+#endforeach()
 
-	if(IS_DIRECTORY ${JNI_LIBS_DIR})
-		file(RELATIVE_PATH JNI_LIBS_DIR ${OUTPUT_DIR}/app ${JNI_LIBS_DIR})
-		list(APPEND JNI_LIBS_DIR_LIST ${JNI_LIBS_DIR})
-	else()
-		message(STATUS "JNI lib dir not exists at `${JNI_LIBS_DIR}`")
-	endif()
-endforeach()
-
-list(JOIN JNI_LIBS_DIR_LIST "', '" JNI_LIBS_DIR_LIST)
-
-if(NOT ${JNI_LIBS_DIR_LIST})
-	set(JNI_LIBS_SRC_DIRS "jniLibs.srcDirs += [ '${JNI_LIBS_DIR_LIST}' ]")
-endif()
+#list(JOIN JNI_LIBS_DIR_LIST "', '" JNI_LIBS_DIR_LIST)
+#
+#if(NOT ${JNI_LIBS_DIR_LIST})
+#	set(JNI_LIBS_SRC_DIRS "jniLibs.srcDirs += [ '${JNI_LIBS_DIR_LIST}' ]")
+#endif()
 
 # cmake.path
 if(NOT IS_ABSOLUTE ${NATIVE_SCRIPT})
