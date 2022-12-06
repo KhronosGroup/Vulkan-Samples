@@ -3,6 +3,7 @@ name: Quality Checks
 on:
   pull_request:
     branches: [master]
+  workflow_dispatch:
 
 env:
   TARGET_BRANCH: master
