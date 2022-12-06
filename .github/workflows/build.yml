@@ -61,7 +61,7 @@ jobs:
         with:
           submodules: "recursive"
       - name: "use sdk manager to install cmake"
-        run: /usr/local/android-sdk/cmdline-tools/tools/bin/sdkmanager  --install "cmake:3.22.1"
+        run: /usr/local/android-sdk/cmdline-tools/tools/bin/sdkmanager  --install "cmake;3.22.1"
       - name: "install ndk"
         run: /usr/local/android-sdk/cmdline-tools/tools/bin/sdkmanager  --install "ndk;25.1.8937393"
       - name: "Update the path"
