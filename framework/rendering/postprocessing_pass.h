@@ -166,7 +166,9 @@ class PostProcessingPass : public PostProcessingPassBase
 	}
 
 	/**
-	* @copydoc get_render_target()
+	* @brief Render target to output to.
+	*        If set, this pass will output to the given render target instead of the one passed to draw().
+	* @param new_render_target the new render target to output too
 	*/
 	inline Self &set_render_target(RenderTarget *new_render_target)
 	{
