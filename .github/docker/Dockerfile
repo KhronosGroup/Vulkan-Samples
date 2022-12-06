@@ -73,22 +73,11 @@ RUN wget -q https://services.gradle.org/distributions/gradle-$GRADLE_VERSION-bin
     && mv /usr/local/gradle-* $GRADLE_HOME
 
 # Configure Android env variables
-ENV ANDROID_SDK=/usr/local/android-sdk \
-    ANDROID_NDK=/usr/local/android-ndk
-ENV ANDROID_SDK_ROOT=$ANDROID_SDK \
-    ANDROID_HOME=$ANDROID_SDK \
-    ANDROID_SDK_TOOLS=$ANDROID_SDK/cmdline-tools \
-    ANDROID_NDK_ROOT=$ANDROID_NDK \
-    ANDROID_NDK_ARM=$ANDROID_NDK/toolchains/arm-linux-androideabi-4.9/prebuilt/linux-x86_64
-ENV PATH="$PATH:$ANDROID_HOME/platform-tools:${ANDROID_SDK_TOOLS}/tools/bin:$ANDROID_HOME/emulator:$ANDROID_HOME/bin:$GRADLE_HOME/bin:/usr/local/doxygen/bin"
+ENV ANDROID_SDK=/usr/local/android-sdk
+ENV ANDROID_HOME=$ANDROID_SDK \
+    ANDROID_SDK_TOOLS=$ANDROID_SDK/cmdline-tools
+ENV PATH="$PATH:$GRADLE_HOME/bin:/usr/local/doxygen/bin"
 RUN mkdir -p $ANDROID_HOME
-
-# Configure Android NDK
-ENV NDK_VERSION=r25b
-
-RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux.zip -O /tmp/android-ndk.zip \
-    && unzip -qq /tmp/android-ndk.zip -d /usr/local \
-    && mv /usr/local/android-ndk-* $ANDROID_NDK
 
 # Confugre SDK Tools
 ENV SDK_TOOLS_VERSION=6514223
