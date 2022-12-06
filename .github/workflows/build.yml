@@ -60,16 +60,14 @@ jobs:
       - uses: actions/checkout@v2
         with:
           submodules: "recursive"
+      - name: "use sdk manager to install cmake"
+        run: /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager  --install "cmake:3.22.1"
+      - name: "install ndk"
+        run: /usr/local/android-sdk/cmdline-tools/latest/bin/sdkmanager  --install "ndk;25.1.8937393"
+      - name: "Update the path"
+        run: echo "/usr/local/android-sdk/cmake/3.22.1/bin" >> $GITHUB_PATH
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
-      - name: "Explicitly setup SDK path with local.properties."
-        run: |
-          echo "sdk.dir=/usr/local/android-sdk" > build/android_gradle/local.properties
-          echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
-      - name: "Ensure Ninja is installed."
-        run: |
-          apt-get update
-          apt install ninja-build
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: ./gradlew app:assembleRelease
