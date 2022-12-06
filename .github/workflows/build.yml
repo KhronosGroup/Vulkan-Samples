@@ -62,8 +62,8 @@ jobs:
           submodules: "recursive"
       - name: "Update the path"
         run: echo "/usr/local/android-sdk/cmake/3.22.1/bin" >> $GITHUB_PATH
-      - name: "create build/android_gradle dir"
-        run: mkdir -p build/android_gradle
+      - name: "Run generate script"
+        run: ./bldsys/scripts/generate_android_gradle.sh
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: ./gradlew assembleRelease
