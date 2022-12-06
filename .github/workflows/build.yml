@@ -51,7 +51,7 @@ jobs:
 
   build_android:
     name: "Build Android in ${{ matrix.build_type }}"
-    container: ghcr.io/khronosgroup/vulkan-samples
+    container: ghcr.io/gpx1000/vulkan-samples
     runs-on: ubuntu-latest
     strategy:
       matrix:
