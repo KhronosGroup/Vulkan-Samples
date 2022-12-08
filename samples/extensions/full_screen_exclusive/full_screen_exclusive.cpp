@@ -1183,7 +1183,7 @@ void FullScreenExclusive::recreate()
 	if (context.device != VK_NULL_HANDLE)
 	{
 		vkDeviceWaitIdle(context.device);        // pause the renderer
-		teardown_frame_buffers(context);        // basically destroy everything swapchain related
+		teardown_frame_buffers(context);         // basically destroy everything swapchain related
 
 		init_swapchain(context);            // recreate swapchain
 		init_frame_buffers(context);        // sync the recreated swapchain to the frame buffer
