@@ -60,7 +60,6 @@ bool FullScreenExclusive::validate_extensions(const std::vector<const char *> &r
 				break;
 			}
 		}
-
 		if (!found)
 			return false;
 	}
@@ -298,10 +297,9 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 
 	std::vector<const char *> active_device_extensions = required_device_extensions;
 
-	// if Windows platform application:
+	// if application is running on a Windows platform :
 	if (isWin32)
 	{
-		// active_device_extensions.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME); // this must be already included
 		active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 	}
 	float queue_priority = 1.0f;
@@ -315,10 +313,6 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 	device_info.queueCreateInfoCount = 1;
 	device_info.pQueueCreateInfos    = &queue_info;
 
-	// device_info.enabledExtensionCount   = vkb::to_u32(required_device_extensions.size());
-	// device_info.ppEnabledExtensionNames = required_device_extensions.data();
-
-	/// This is to change the carrier for the extensions vectors:
 	device_info.enabledExtensionCount   = vkb::to_u32(active_device_extensions.size());
 	device_info.ppEnabledExtensionNames = active_device_extensions.data();
 
@@ -452,20 +446,14 @@ void FullScreenExclusive::init_swapchain(Context &context)
 		swapchain_size = surface_properties.currentExtent;
 	}
 
-	// FIFO must be supported by all implementations.
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
-	// Determine the number of VkImage's to use in the swapchain.
-	// Ideally, we desire to own 1 image at a time, the rest of the images can
-	// either be rendered to and/or being queued up for display.
 	uint32_t desired_swapchain_images = surface_properties.minImageCount + 1;
 	if ((surface_properties.maxImageCount > 0) && (desired_swapchain_images > surface_properties.maxImageCount))
 	{
-		// Application must settle for fewer images than desired.
 		desired_swapchain_images = surface_properties.maxImageCount;
 	}
 
-	// Figure out a suitable surface transform.
 	VkSurfaceTransformFlagBitsKHR pre_transform;
 	if (surface_properties.supportedTransforms & VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR)
 	{
@@ -478,7 +466,6 @@ void FullScreenExclusive::init_swapchain(Context &context)
 
 	VkSwapchainKHR old_swapchain = context.swapchain;
 
-	// Find a supported composite type.
 	VkCompositeAlphaFlagBitsKHR composite = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	if (surface_properties.supportedCompositeAlpha & VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR)
 	{
@@ -499,7 +486,7 @@ void FullScreenExclusive::init_swapchain(Context &context)
 
 	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};        // initialize the swapchain create info without adding pNext info
 
-	// if Windows platform application:
+	// if application is running on a Windows platform:
 	if (isWin32)
 	{
 		VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
@@ -568,13 +555,9 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	uint32_t image_count;
 	VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, nullptr));
 
-	/// The swapchain images.
 	std::vector<VkImage> swapchain_images(image_count);
 	VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, swapchain_images.data()));
 
-	// Initialize per-frame resources.
-	// Every swapchain image has its own command pool and fence manager.
-	// This makes it very easy to keep track of when we can reset command buffers and such.
 	context.per_frame.clear();
 	context.per_frame.resize(image_count);
 
@@ -669,13 +652,11 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const c
 
 	std::string file_ext = path;
 
-	// Extract extension name from the glsl shader file
 	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
 
 	std::vector<uint32_t> spirv;
 	std::string           info_log;
 
-	// Compile the GLSL source
 	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
@@ -694,24 +675,19 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const c
 
 void FullScreenExclusive::init_pipeline(Context &context)
 {
-	// Create a blank pipeline layout.
-	// We are not binding any resources to the pipeline in this first sample.
 	VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
 
 	VkPipelineVertexInputStateCreateInfo vertex_input{VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO};
 
-	// Specify we will use triangle lists to draw geometry.
 	VkPipelineInputAssemblyStateCreateInfo input_assembly{VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO};
 	input_assembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 
-	// Specify rasterization state.
 	VkPipelineRasterizationStateCreateInfo raster{VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO};
 	raster.cullMode  = VK_CULL_MODE_BACK_BIT;
 	raster.frontFace = VK_FRONT_FACE_CLOCKWISE;
 	raster.lineWidth = 1.0f;
 
-	// Our attachment will write to all color channels, but no blending is enabled.
 	VkPipelineColorBlendAttachmentState blend_attachment{};
 	blend_attachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 
@@ -719,35 +695,28 @@ void FullScreenExclusive::init_pipeline(Context &context)
 	blend.attachmentCount = 1;
 	blend.pAttachments    = &blend_attachment;
 
-	// We will have one viewport and scissor box.
 	VkPipelineViewportStateCreateInfo viewport{VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO};
 	viewport.viewportCount = 1;
 	viewport.scissorCount  = 1;
 
-	// Disable all depth testing.
 	VkPipelineDepthStencilStateCreateInfo depth_stencil{VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO};
 
-	// No multisampling.
 	VkPipelineMultisampleStateCreateInfo multisample{VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO};
 	multisample.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
-	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
 	std::array<VkDynamicState, 2> dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
 	VkPipelineDynamicStateCreateInfo dynamic{VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO};
 	dynamic.pDynamicStates    = dynamics.data();
 	dynamic.dynamicStateCount = vkb::to_u32(dynamics.size());
 
-	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	// Vertex stage of the pipeline
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
 	shader_stages[0].module = load_shader_module(context, "triangle.vert");
 	shader_stages[0].pName  = "main";
 
-	// Fragment stage of the pipeline
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
 	shader_stages[1].module = load_shader_module(context, "triangle.frag");
@@ -765,13 +734,11 @@ void FullScreenExclusive::init_pipeline(Context &context)
 	pipe.pDepthStencilState  = &depth_stencil;
 	pipe.pDynamicState       = &dynamic;
 
-	// We need to specify the pipeline layout and the render pass description up front as well.
 	pipe.renderPass = context.render_pass;
 	pipe.layout     = context.pipeline_layout;
 
 	VK_CHECK(vkCreateGraphicsPipelines(context.device, VK_NULL_HANDLE, 1, &pipe, nullptr, &context.pipeline));
 
-	// Pipeline is baked, we can delete the shader modules now.
 	vkDestroyShaderModule(context.device, shader_stages[0].module, nullptr);
 	vkDestroyShaderModule(context.device, shader_stages[1].module, nullptr);
 }
@@ -798,14 +765,6 @@ VkResult FullScreenExclusive::acquire_next_image(Context &context, uint32_t *ima
 		return res;
 	}
 
-	// If we have outstanding fences for this swapchain image, wait for them to complete first.
-	// After begin frame returns, it is safe to reuse or delete resources which
-	// were used previously.
-	//
-	// We wait for fences which completes N frames earlier, so we do not stall,
-	// waiting for all GPU work to complete before this returns.
-	// Normally, this doesn't really block at all,
-	// since we're waiting for old frames to have been completed, but just in case.
 	if (context.per_frame[*image].queue_submit_fence != VK_NULL_HANDLE)
 	{
 		vkWaitForFences(context.device, 1, &context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
@@ -817,7 +776,6 @@ VkResult FullScreenExclusive::acquire_next_image(Context &context, uint32_t *ima
 		vkResetCommandPool(context.device, context.per_frame[*image].primary_command_pool, 0);
 	}
 
-	// Recycle the old semaphore back into the semaphore manager.
 	VkSemaphore old_semaphore = context.per_frame[*image].swapchain_acquire_semaphore;
 
 	if (old_semaphore != VK_NULL_HANDLE)
@@ -832,23 +790,17 @@ VkResult FullScreenExclusive::acquire_next_image(Context &context, uint32_t *ima
 
 void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_index)
 {
-	// Render to this framebuffer.
 	VkFramebuffer framebuffer = context.swapchain_frame_buffers[swapchain_index];
 
-	// Allocate or re-use a primary command buffer.
 	VkCommandBuffer cmd = context.per_frame[swapchain_index].primary_command_buffer;
 
-	// We will only submit this once before it's recycled.
 	VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-	// Begin command recording
 	vkBeginCommandBuffer(cmd, &begin_info);
 
-	// Set clear color values.
 	VkClearValue clear_value;
 	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
-	// Begin the render pass.
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
 	rp_begin.renderPass               = context.render_pass;
 	rp_begin.framebuffer              = framebuffer;
@@ -856,10 +808,9 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 	rp_begin.renderArea.extent.height = context.swapchain_dimensions.height;
 	rp_begin.clearValueCount          = 1;
 	rp_begin.pClearValues             = &clear_value;
-	// We will add draw commands in the same command buffer.
+
 	vkCmdBeginRenderPass(cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
-	// Bind the graphics pipeline.
 	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
 
 	VkViewport vp{};
@@ -867,25 +818,19 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 	vp.height   = static_cast<float>(context.swapchain_dimensions.height);
 	vp.minDepth = 0.0f;
 	vp.maxDepth = 1.0f;
-	// Set viewport dynamically
 	vkCmdSetViewport(cmd, 0, 1, &vp);
 
 	VkRect2D scissor{};
 	scissor.extent.width  = context.swapchain_dimensions.width;
 	scissor.extent.height = context.swapchain_dimensions.height;
-	// Set scissor dynamically
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
-	// Draw three vertices with one instance.
 	vkCmdDraw(cmd, 3, 1, 0, 0);
 
-	// Complete render pass.
 	vkCmdEndRenderPass(cmd);
 
-	// Complete the command buffer.
 	VK_CHECK(vkEndCommandBuffer(cmd));
 
-	// Submit it to the queue with a release semaphore.
 	if (context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
 	{
 		VkSemaphoreCreateInfo semaphore_info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
@@ -903,7 +848,7 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 	info.pWaitDstStageMask    = &wait_stage;
 	info.signalSemaphoreCount = 1;
 	info.pSignalSemaphores    = &context.per_frame[swapchain_index].swapchain_release_semaphore;
-	// Submit command buffer to graphics queue
+
 	VK_CHECK(vkQueueSubmit(context.queue, 1, &info, context.per_frame[swapchain_index].queue_submit_fence));
 }
 
@@ -915,7 +860,6 @@ VkResult FullScreenExclusive::present_image(Context &context, uint32_t index)
 	present.pImageIndices      = &index;
 	present.waitSemaphoreCount = 1;
 	present.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore;
-	// Present swapchain image
 	return vkQueuePresentKHR(context.queue, &present);
 }
 
@@ -923,10 +867,8 @@ void FullScreenExclusive::init_frame_buffers(Context &context)
 {
 	VkDevice device = context.device;
 
-	// Create framebuffer for each swapchain image view
 	for (auto &image_view : context.swapchain_image_views)
 	{
-		// Build the framebuffer.
 		VkFramebufferCreateInfo fb_info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
 		fb_info.renderPass      = context.render_pass;
 		fb_info.attachmentCount = 1;
@@ -957,7 +899,6 @@ void FullScreenExclusive::teardown_frame_buffers(Context &context)
 
 void FullScreenExclusive::teardown(Context &context)
 {
-	// Don't release anything until the GPU is completely idle.
 	vkDeviceWaitIdle(context.device);
 
 	teardown_frame_buffers(context);
@@ -1022,8 +963,7 @@ void FullScreenExclusive::teardown(Context &context)
 }
 
 FullScreenExclusive::FullScreenExclusive()
-{
-}
+{}
 
 FullScreenExclusive::~FullScreenExclusive()
 {
@@ -1045,10 +985,8 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 		throw std::runtime_error("Failed to create window surface.");
 
 	init_device(context, {"VK_KHR_swapchain"});
-
 	init_swapchain(context);
 
-	// Create the necessary objects for rendering.
 	init_render_pass(context);
 	init_pipeline(context);
 	init_frame_buffers(context);
@@ -1062,7 +1000,6 @@ void FullScreenExclusive::update(float delta_time)
 
 	auto res = acquire_next_image(context, &index);
 
-	// Handle outdated error in acquire.
 	if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
@@ -1078,7 +1015,6 @@ void FullScreenExclusive::update(float delta_time)
 	render_triangle(context, index);
 	res = present_image(context, index);
 
-	// Handle Outdated error in present.
 	if (res == VK_SUBOPTIMAL_KHR || res == VK_ERROR_OUT_OF_DATE_KHR)
 	{
 		resize(context.swapchain_dimensions.width, context.swapchain_dimensions.height);
@@ -1099,7 +1035,6 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	// Only rebuild the swapchain if the dimensions have changed
 	if (surface_properties.currentExtent.width == context.swapchain_dimensions.width &&
 	    surface_properties.currentExtent.height == context.swapchain_dimensions.height)
 	{
@@ -1116,7 +1051,7 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 {
-	// if Windows platform application:
+	// if application is running on a Windows platform:
 	if (isWin32)
 	{
 		if (input_event.get_source() == vkb::EventSource::Keyboard)
@@ -1176,7 +1111,6 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 	}
 }
 
-// this is to recreate the swapchain and sync it to the frame buffer by creating it
 void FullScreenExclusive::recreate()
 {
 	// Check if there IS a device, if not don't do anything
