@@ -19,41 +19,43 @@
 
 #include <volk.h>
 
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT /* message_type */,
-                                                                     const VkDebugUtilsMessengerCallbackDataEXT * /* callback_data */,
+#include <components/common/logging.hpp>
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT      message_severity, VkDebugUtilsMessageTypeFlagsEXT /* message_type */,
+                                                                     const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                                      void * /* user_data */)
 {
 	// Log debug messge
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		// LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		// LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	return VK_FALSE;
 }
 
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT /*type*/,
                                                      uint64_t /*object*/, size_t /*location*/, int32_t /*message_code*/,
-                                                     const char * /* layer_prefix */, const char * /* message */, void * /*user_data*/)
+                                                     const char *layer_prefix, const char *message, void * /*user_data*/)
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		// LOGE("{}: {}", layer_prefix, message);
+		LOGE("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		// LOGW("{}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		// LOGW("{}: {}", layer_prefix, message);
+		LOGW("{}: {}", layer_prefix, message);
 	}
 	else
 	{
-		// LOGI("{}: {}", layer_prefix, message);
+		LOGI("{}: {}", layer_prefix, message);
 	}
 	return VK_FALSE;
 }
