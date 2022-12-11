@@ -34,6 +34,8 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    lastUsedFeature = None
+
     def beginFile(self, genOpts):
         super().beginFile(genOpts)
 
@@ -54,26 +56,53 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
 
     def endFile(self):
 
-        self.outFile.write('}        // namespace vulkan\n' +
-                           '}        // namespace components\n')
+        self.outFile.write(
+            '#endif' +  # end last feature
+            '}        // namespace vulkan\n' +
+            '}        // namespace components\n')
 
         super().endFile()
 
     def enterStruct(self, name: str, info: StructMembers, is_alias: bool) -> str:
         members = info.get_members()
 
+        if is_alias:
+            return None
+
+        # A new feature is either the first feature of a set...
+        is_first_feature = self.lastUsedFeature == None
+        is_new_feature = is_first_feature
+        nextFeatureName = self.featureName
+
+        # ... Or the first change between feature sets
+        if self.featureName is not self.lastUsedFeature:
+            is_new_feature = True
+
         for member in members:
             if member.name == "sType":
                 structureName = member.elem.get("values")
 
+                section = ""
+
+                # end previous feature
+                if is_new_feature:
+                    if not is_first_feature:
+                        # first endif isn't required
+                        section += f'#endif\n\n'
+
+                    section += f'#ifdef {nextFeatureName}\n'
+
+                    # Crucial: do not remove
+                    self.lastUsedFeature = self.featureName
+
                 if structureName:
-                    section = 'template <>\n' + \
+                    section += 'template <>\n' + \
                         f'VkStructureType get_structure_type_name<{name}>()\n' + \
                         '{\n' + \
                         f'	return {structureName};\n' + \
                         '}\n'
 
-                    return section
+                return section
 
         return None
 
@@ -108,9 +137,9 @@ if __name__ == '__main__':
         directory=str(args.output.parent),
         apiname='vulkan',
         # generate for the entire API
-        # versions='VK_VERSION_1_0',
-        # addExtensions='VK_KHR_swapchain',
-        # emitExtensions='VK_KHR_swapchain',
+        versions='.*',
+        addExtensions='.*',
+        emitExtensions='.*',
     )
 
     registry = reg.Registry(StructureTypeNameGenerator(), options)
