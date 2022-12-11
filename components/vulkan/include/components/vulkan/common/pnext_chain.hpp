@@ -31,11 +31,21 @@ namespace components
 {
 namespace vulkan
 {
+/**
+	 * @brief Allows for the creation of extension chains
+	 */
 class pNextChain
 {
   public:
-	pNextChain()  = default;
-	~pNextChain() = default;
+	pNextChain() = default;
+
+	~pNextChain()
+	{
+		for (VkBaseInStructure *header : _chain)
+		{
+			delete header;
+		}
+	}
 
 	template <typename Type>
 	using AppendFunc = std::function<void(Type &)>;
@@ -43,21 +53,29 @@ class pNextChain
 	template <typename Type>
 	inline pNextChain &append(AppendFunc<Type> &&func)
 	{
-		std::unique_ptr<Type> target = std::make_unique<Type>(init_default<Type>());
-		func(target);
-		_chain.push_back(reinterpret_cast<Header *>(target.get()));
+		Type *target = new Type();
+
+		// infer the structure type
+		target->sType = get_structure_type_name<Type>();
+
+		// forward to the caller for configuration
+		func(*target);
+
+		_chain.push_back(reinterpret_cast<VkBaseInStructure *>(target));
+
+		return *this;
 	}
 
-	inline void *build() const
+	inline void *build()
 	{
 		void *p_next = nullptr;
 
 		// reverse order so that the chain is constructed in the appended order
 		std::reverse(_chain.begin(), _chain.end());
 
-		for (Header *header : _chain)
+		for (VkBaseInStructure *header : _chain)
 		{
-			header->pNext = p_next;
+			header->pNext = static_cast<VkBaseInStructure *>(p_next);
 			p_next        = header;
 		}
 
@@ -65,14 +83,7 @@ class pNextChain
 	}
 
   private:
-	struct Header
-	{
-		VkStructureType sType{VK_STRUCTURE_TYPE_MAX_ENUM};
-		const void     *pNext{nullptr};
-	};
-
-	std::vector<std::unique_ptr<std::any>> _memory;
-	std::vector<Header *>                  _chain;
+	std::vector<VkBaseInStructure *> _chain;
 };
 }        // namespace vulkan
 }        // namespace components
