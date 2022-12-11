@@ -1,6 +1,19 @@
-#!/usr/bin/env python3
+# Copyright (c) 2022, Arm Limited and Contributors
+#
+# SPDX-License-Identifier: Apache-2.0
+#
+# Licensed under the Apache License, Version 2.0 the "License";
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 
-import argparse
 import math
 import re
 import sys
@@ -9,10 +22,8 @@ import traceback
 from dataclasses import dataclass
 from lxml import etree
 
-try:
-    import reg
-    from vkconventions import VulkanConventions
-except ModuleNotFoundError:
+
+def print_vulkan_helper():
     print(traceback.format_exc())
     print(
         'Unable to import the Vulkan registry script. Please make sure you have'
@@ -24,8 +35,39 @@ except ModuleNotFoundError:
     print(' $ export PYTHONPATH=Vulkan-Docs/scripts')
     sys.exit(1)
 
+
+try:
+    import reg
+except ModuleNotFoundError:
+    print_vulkan_helper()
+
+
+def gen_hpp_header() -> str:
+    return '/* Copyright (c) 2022, Arm Limited and Contributors\n' + \
+        '*\n' + \
+        '* SPDX-License-Identifier: Apache-2.0\n' + \
+        '*\n' + \
+        '* Licensed under the Apache License, Version 2.0 the "License";\n' + \
+        '* you may not use this file except in compliance with the License.\n' + \
+        '* You may obtain a copy of the License at\n' + \
+        '*\n' + \
+        '*     http://www.apache.org/licenses/LICENSE-2.0\n' + \
+        '*\n' + \
+        '* Unless required by applicable law or agreed to in writing, software\n' + \
+        '* distributed under the License is distributed on an "AS IS" BASIS,\n' + \
+        '* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n' + \
+        '* See the License for the specific language governing permissions and\n' + \
+        '* limitations under the License.\n' + \
+        '*/\n' + \
+        '\n' + \
+        '#pragma once\n' + \
+        '\n' + \
+        '// DO NOT EDIT, THIS IS A GENERATED FILE!\n' + \
+        '\n'
+
+
 @dataclass
-class VarInfo:
+class MemberInfo:
     elem: etree.Element
     name: str
     type: str
@@ -96,7 +138,8 @@ class VarInfo:
 
         # Some versions of the registry contain broken length fields
         if length and length.startswith("latexmath"):
-            temp = length.replace("{", "REMOVE_THIS").replace("}", "REMOVE_THIS").split("REMOVE_THIS")
+            temp = length.replace("{", "REMOVE_THIS").replace(
+                "}", "REMOVE_THIS").split("REMOVE_THIS")
             # Deepest nested bracket contains the actual name of the length variable
             length = temp[math.floor(len(temp)/2)]
 
@@ -123,17 +166,17 @@ class VarInfo:
             if text == 'const':
                 type_key = 'const ' + type_key
 
-        return VarInfo(elem, name, type, type_key, length, _force_fixed_array)
+        return MemberInfo(elem, name, type, type_key, length, _force_fixed_array)
 
 
-class StructInfo:
-    def __init__(self, type_info):
+class StructMembers:
+    def __init__(self, type_info: reg.TypeInfo):
         self.type_info = type_info
         self.members = []
         for member in self.type_info.getMembers():
-            self.members.append(VarInfo.from_elem(member))
+            self.members.append(MemberInfo.from_elem(member))
 
-    def get_members(self):
+    def get_members(self) -> list[MemberInfo]:
         for member in self.members:
             yield member
 
@@ -150,85 +193,13 @@ class StructInfo:
                 and second.name == 'pNext' and second.type == 'void')
 
 
-class HelperOutputGenerator(reg.OutputGenerator):
-    """Generates C-language API interfaces."""
+class CommandMembers:
+    def __init__(self, command_info: reg.CmdInfo):
+        self.command_info = command_info
+        self.members = []
+        for member in self.command_info.getParams():
+            self.members.append(MemberInfo.from_elem(member))
 
-    # This is an ordered list of sections in the header file.
-    SECTIONS = ['basetype', 'handle', 'enum', 'group', 'bitmask',
-                'funcpointer', 'struct', 'command']
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Internal state - accumulators for different inner block text
-        self.sections = {section: [] for section in self.SECTIONS}
-        self.feature_not_empty = False
-
-    def beginFile(self, genOpts):
-        super().beginFile(genOpts)
-
-    def endFile(self):
-        super().endFile()
-
-    def beginFeature(self, interface, emit):
-        super().beginFeature(interface, emit)
-
-        self.sections = {section: [] for section in self.SECTIONS}
-        self.feature_not_empty = False
-
-    def endFeature(self):
-        "Actually write the interface to the output file."
-        if self.emit:
-            if self.feature_not_empty:
-                for section in self.SECTIONS:
-                    contents = self.sections[section]
-                    self.outFile.writelines(contents)
-                    self.newline()
-                self.newline()
-
-        super().endFeature()
-
-    def appendSection(self, section, text):
-        "Append a definition to the specified section"
-        self.sections[section].append(text)
-        self.feature_not_empty = True
-
-
-    def genCmd(self, cmd_info, cmd_name, alias):
-        """Generate command (vulkan function) encoders."""
-        super().genCmd(cmd_info, cmd_name, alias)
-        # self.appendSection('command', body)
-
-if __name__ == '__main__':
-    import pathlib
-    import sys
-
-    parser = argparse.ArgumentParser(
-        description='Generate helper code from Khronos Vulkan registry (vk.xml)',
-    )
-
-    parser.add_argument('--output',
-                        metavar='FILE',
-                        default='vulkan_header.h',
-                        type=pathlib.Path,
-                        help='The path to a file to write the output to.')
-    parser.add_argument('--vk-xml',
-                        metavar='XML_FILE',
-                        default='vk.xml',
-                        type=pathlib.Path,
-                        help='The location of Khronos Vulkan Registry vk.xml file.')
-
-    args = parser.parse_args()
-
-    options = reg.GeneratorOptions(
-        conventions=VulkanConventions(),
-        filename=args.output.name,
-        directory=str(args.output.parent),
-        apiname='vulkan',
-        versions='VK_VERSION_1_0', # For now only generate Vulkan 1.0
-        addExtensions='VK_KHR_swapchain',
-        emitExtensions='VK_KHR_swapchain',
-    )
-
-    registry = reg.Registry(HelperOutputGenerator(), options)
-    registry.loadElementTree(etree.parse(str(args.vk_xml)))
-    registry.apiGen()
+    def get_params(self) -> list[MemberInfo]:
+        for member in self.members:
+            yield member
