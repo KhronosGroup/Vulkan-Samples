@@ -22,6 +22,8 @@ int main(int /* argc */, char ** /* argv */)
 {
 	logging::init_default_logger();
 
+	// Currently no testing in place
+	// The logging_tests executable can be used to experiment with different logging formats
 	LOGT("trace log");
 	LOGI("info log");
 	LOGW("warning log");
