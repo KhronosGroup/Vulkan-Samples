@@ -87,7 +87,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--output',
                         metavar='FILE',
-                        default='vulkan_header.h',
+                        default='struct_initializers.hpp',
                         type=pathlib.Path,
                         help='The path to a file to write the output to.')
 
@@ -107,9 +107,10 @@ if __name__ == '__main__':
         filename=args.output.name,
         directory=str(args.output.parent),
         apiname='vulkan',
-        versions='VK_VERSION_1_0',  # For now only generate Vulkan 1.0
-        addExtensions='VK_KHR_swapchain',
-        emitExtensions='VK_KHR_swapchain',
+        # generate for the entire API
+        # versions='VK_VERSION_1_0',
+        # addExtensions='VK_KHR_swapchain',
+        # emitExtensions='VK_KHR_swapchain',
     )
 
     registry = reg.Registry(StructureTypeNameGenerator(), options)
