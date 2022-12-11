@@ -80,29 +80,21 @@ class InstanceBuilder final
 		return *this;
 	}
 
-	inline Self &optional_extension(std::string_view layer_name, std::string_view extension_name, EnabledCallback callback = nullptr)
-	{
-		_optional_extensions.push_back(extension);
-		return *this;
-	}
+	/**
+	 * @brief A function used to indicate if a feature was enabled or disabled
+	 * 
+	 */
+	using Callback = std::function<void(bool)>;
 
-	inline Self &required_extension(std::string_view layer_name, std::string_view extension_name, EnabledCallback callback = nullptr)
-	{
-		_required_extensions.push_back(extension);
-		return *this;
-	}
+	Self &optional_extension(std::string_view extension_name, Callback callback = nullptr);
+	Self &optional_extension(std::string_view layer_name, std::string_view extension_name, Callback callback = nullptr);
 
-	inline Self &optional_layer(std::string_view layer, EnabledCallback callback = nullptr)
-	{
-		_optional_layers.push_back(layer);
-		return *this;
-	}
+	Self &required_extension(std::string_view extension_name, Callback callback = nullptr);
+	Self &required_extension(std::string_view layer_name, std::string_view extension_name, Callback callback = nullptr);
 
-	inline Self &required_layer(std::string_view layer, EnabledCallback callback = nullptr)
-	{
-		_required_layers.push_back({layer, callback});
-		return *this;
-	}
+	Self &optional_layer(std::string_view layer, Callback callback = nullptr);
+
+	Self &required_layer(std::string_view layer, Callback callback = nullptr);
 
 	template <typename Type>
 	using ExtensionFunc = std::function<void(Type &extension)>;
@@ -116,6 +108,14 @@ class InstanceBuilder final
 
   private:
 	VkInstance Build();
+
+	std::vector<std::string_view> _available_layers;
+
+	bool layer_available(std::string_view name);
+
+	std::unordered_map<std::string_view, std::vector<std::string_view>> _available_extension_layers;
+
+	bool extension_available(std::string_view layer, std::string_view name);
 
 	VkApplicationInfo             _application_info;
 	std::vector<std::string_view> _optional_extensions;

@@ -130,6 +130,102 @@ InstanceBuilder &InstanceBuilder::enable_validation_layers(const std::vector<std
 	return *this;
 }
 
+InstanceBuilder::InstanceBuilder()
+{
+	std::vector<std::string_view> emabled_layers;
+	uint32_t                      instance_layer_count;
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
+	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
+	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
+}
+
+InstanceBuilder &InstanceBuilder::optional_extension(std::string_view extension_name, Callback callback)
+{
+	if (extension_available("", extension_name))
+	{
+		_optional_extensions.push_back(extension_name);
+		callback(true);
+	}
+	else
+	{
+		callback(false);
+	}
+
+	return *this;
+}
+
+InstanceBuilder &InstanceBuilder::optional_extension(std::string_view layer_name, std::string_view extension_name, Callback callback)
+{
+	if (extension_available(layer_name, extension_name))
+	{
+		_optional_extensions.push_back(extension_name);
+		callback(true);
+	}
+	else
+	{
+		callback(false);
+	}
+
+	return *this;
+}
+
+InstanceBuilder &InstanceBuilder::required_extension(std::string_view extension_name)
+{
+	if (extension_available("", extension_name))
+	{
+		_required_extensions.push_back(extension_name);
+	}
+	else
+	{
+		throw "required extension is not available";        // TODO: replace this with better error handling
+	}
+
+	return *this;
+}
+
+InstanceBuilder &InstanceBuilder::required_extension(std::string_view layer_name, std::string_view extension_name)
+{
+	if (extension_available(layer_name, extension_name))
+	{
+		_required_extensions.push_back(extension_name);
+	}
+	else
+	{
+		throw "required extension is not available";        // TODO: replace this with better error handling
+	}
+
+	return *this;
+}
+
+InstanceBuilder &InstanceBuilder::optional_layer(std::string_view layer, Callback callback)
+{
+	if (layer_available(layer))
+	{
+		_optional_layers.push_back(layer);
+		callback(true);
+	}
+	else
+	{
+		callback(false);
+	}
+
+	return *this;
+}
+
+InstanceBuilder &InstanceBuilder::required_layer(std::string_view layer)
+{
+	if (layer_available(layer))
+	{
+		_required_layers.push_back(layer);
+	}
+	else
+	{
+		throw "required layer is not available";        // TODO: replace this with better error handling
+	}
+
+	return *this;
+}
+
 std::vector<std::string_view> InstanceBuilder::collect_enabled_extensions(VkInstanceCreateInfo &info) const
 {
 	std::vector<std::string_view> enabled_extensions;
@@ -203,23 +299,6 @@ std::vector<std::string_view> InstanceBuilder::collect_enabled_extensions(VkInst
 	}
 
 	return enabled_extensions;
-}
-
-std::vector<std::string_view> InstanceBuilder::collect_enabled_layers(VkInstanceCreateInfo &info) const
-{
-	std::vector<std::string_view> emabled_layers;
-
-	uint32_t instance_layer_count;
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, nullptr));
-
-	std::vector<VkLayerProperties> supported_validation_layers(instance_layer_count);
-	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
-
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
-
-	// TODO: process layers
-
-	return enabled_layers;
 }
 
 InstanceBuilder::Instance InstanceBuilder::Build()
