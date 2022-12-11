@@ -9,6 +9,7 @@ tests/system_test/tmp
 output/*
 .mypy_cache
 __pycache__
+*.pyc
 
 # ignore any generated code
 */generated
