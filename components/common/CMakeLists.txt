@@ -18,6 +18,7 @@ vkb__register_headers(
     FOLDER
         common
     HEADERS
+        logging.hpp
         stack_error.hpp
         strings.hpp
     OUTPUT
@@ -26,8 +27,21 @@ vkb__register_headers(
 
 vkb__register_component(
     NAME common
-    HEADERS ${COMMON_HEADERS}
-    INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+    HEADERS
+        ${COMMON_HEADERS}
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    LINK_LIBS
+        spdlog
+
+)
+
+vkb__register_tests(
+    NAME "logging_tests"
+    SRC
+        tests/logging.test.cpp
+    LIBS
+        vkb__common
 )
 
 vkb__register_tests(
