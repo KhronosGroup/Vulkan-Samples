@@ -19,7 +19,7 @@
 
 #include <volk.h>
 
-#include "queue_manager.hpp"
+#include "components/vulkan/context/queue_manager.hpp"
 
 /**
  * @brief A Vulkan Context containing the core Vulkan handles needed for a Sample
@@ -40,8 +40,35 @@ class Context
 	{}
 	~Context() = default;
 
-	VkInstance       instance;
-	VkPhysicalDevice gpu;
-	VkDevice         device;
-	QueueManager     queues;
+	~Context()
+	{
+		if (device != VK_NULL_HANDLE)
+		{
+			vkDestroyDevice(device, nullptr);
+		}
+
+		if (debugger_info.debug_utils_messenger != VK_NULL_HANDLE)
+		{
+			vkDestroyDebugUtilsMessengerEXT(instance, debugger_info.debug_utils_messenger, nullptr);
+		}
+		if (debugger_info.debug_report_callback != VK_NULL_HANDLE)
+		{
+			vkDestroyDebugReportCallbackEXT(instance, debugger_info.debug_report_callback, nullptr);
+		}
+
+		if (instance != VK_NULL_HANDLE)
+		{
+			vkDestroyInstance(instance, nullptr);
+		}
+	}
+
+	VkInstance       instance{VK_NULL_HANDLE};
+	VkPhysicalDevice gpu{VK_NULL_HANDLE};
+	VkDevice         device{VK_NULL_HANDLE};
+	QueueManager     queues{};
+
+  private:
+	DebuggerInfo debugger_info{};
 };
+}        // namespace vulkan
+}        // namespace components

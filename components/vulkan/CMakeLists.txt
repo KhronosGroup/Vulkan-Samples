@@ -21,12 +21,15 @@ vkb__register_component(
     volk
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+  SRC
+    src/instance_builder.cpp
+    src/context_builder_funcs.cpp
 )
 
-# vkb__register_tests(
-#   NAME headless_window_tests
-#   SRC
-#   tests/headless.test.cpp
-#   LIBS
-#   vkb__headless_window
-# )
+vkb__register_tests(
+  NAME pchain_next_test
+  SRC
+    tests/pnext_chain.test.cpp
+  LIBS
+    vkb__vulkan
+)

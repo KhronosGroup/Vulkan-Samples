@@ -17,24 +17,18 @@
 
 #pragma once
 
-#include <volk/volk.h>
+// DO NOT EDIT, THIS IS A GENERATED FILE!
 
-struct ContextData
+#include <volk.h>
+
+namespace components
 {
-	VkInstance       instance;
-	VkPhysicalDevice device;
-	VkDevice         device;
-};
-
-class Context
+namespace vulkan
 {
-  public:
-	Context(const ContextData &data) :
-	    data{data}
-	{}
-	~Context() = default;
-
-	ContextData data;
-
-  private:
-};
+template <typename Type>
+Type init_default()
+{
+	throw "funciton not implemented";
+}
+}        // namespace vulkan
+}        // namespace components

@@ -24,6 +24,8 @@
 #include "context.hpp"
 #include "queue_manager.hpp"
 
+#include "components/vulkan/common/pnext_chain.hpp"
+
 namespace components
 {
 namespace vulkan
@@ -78,27 +80,37 @@ class InstanceBuilder final
 		return *this;
 	}
 
-	inline Self &optional_extension(std::string_view extension)
+	inline Self &optional_extension(std::string_view layer_name, std::string_view extension_name, EnabledCallback callback = nullptr)
 	{
 		_optional_extensions.push_back(extension);
 		return *this;
 	}
 
-	inline Self &required_extension(std::string_view extension)
+	inline Self &required_extension(std::string_view layer_name, std::string_view extension_name, EnabledCallback callback = nullptr)
 	{
 		_required_extensions.push_back(extension);
 		return *this;
 	}
 
-	inline Self &optional_layer(std::string_view layer)
+	inline Self &optional_layer(std::string_view layer, EnabledCallback callback = nullptr)
 	{
 		_optional_layers.push_back(layer);
 		return *this;
 	}
 
-	inline Self &required_layer(std::string_view layer)
+	inline Self &required_layer(std::string_view layer, EnabledCallback callback = nullptr)
 	{
-		_required_layers.push_back(layer);
+		_required_layers.push_back({layer, callback});
+		return *this;
+	}
+
+	template <typename Type>
+	using ExtensionFunc = std::function<void(Type &extension)>;
+
+	template <typename Type>
+	inline Self &configure_extension_struct(ExtensionFunc<Type> &&func)
+	{
+		_chain.append(func);
 		return *this;
 	}
 
@@ -159,7 +171,10 @@ class DeviceBuilder final
 
   public:
   private:
-	VkDevice Build(VkPhysicalDevice gpu);
+	inline VkDevice build(VkPhysicalDevice /* gpu */)
+	{
+		return VK_NULL_HANDLE;
+	}
 };
 
 /**
@@ -173,7 +188,10 @@ class QueueBuilder final
 
   public:
   private:
-	QueueManager Build(VkDevice device);
+	inline QueueManager build(VkDevice /* device */)
+	{
+		return {};
+	}
 };
 
 /**
