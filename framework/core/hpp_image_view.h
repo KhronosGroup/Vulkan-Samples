@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,52 +17,42 @@
 
 #pragma once
 
-#include <core/image_view.h>
+#include "core/hpp_image.h"
+#include "core/hpp_vulkan_resource.h"
 
 namespace vkb
 {
 namespace core
 {
-class HPPImage;
-
-/**
- * @brief facade class around vkb::core::ImageView, providing a vulkan.hpp-based interface
- *
- * See vkb::core::ImageView for documentation
- */
-class HPPImageView : private vkb::core::ImageView
+class HPPImageView : public vkb::core::HPPVulkanResource<vk::ImageView>
 {
   public:
-	HPPImageView(HPPImage &image, vk::ImageViewType view_type, vk::Format format = vk::Format::eUndefined,
-	             uint32_t base_mip_level = 0, uint32_t base_array_layer = 0,
-	             uint32_t n_mip_levels = 0, uint32_t n_array_layers = 0) :
-	    vkb::core::ImageView(reinterpret_cast<vkb::core::Image &>(image), static_cast<VkImageViewType>(view_type), static_cast<VkFormat>(format), base_mip_level, base_array_layer, n_mip_levels, n_array_layers)
-	{}
+	HPPImageView(vkb::core::HPPImage &image,
+	             vk::ImageViewType    view_type,
+	             vk::Format           format           = vk::Format::eUndefined,
+	             uint32_t             base_mip_level   = 0,
+	             uint32_t             base_array_layer = 0,
+	             uint32_t             n_mip_levels     = 0,
+	             uint32_t             n_array_layers   = 0);
 
-	vk::Format get_format() const
-	{
-		return static_cast<vk::Format>(vkb::core::ImageView::get_format());
-	}
+	HPPImageView(HPPImageView &) = delete;
+	HPPImageView(HPPImageView &&other);
 
-	vk::ImageView get_handle() const
-	{
-		return static_cast<vk::ImageView>(vkb::core::ImageView::get_handle());
-	}
+	~HPPImageView() override;
 
-	const HPPImage &get_image() const
-	{
-		return reinterpret_cast<HPPImage const &>(ImageView::get_image());
-	}
+	HPPImageView &operator=(const HPPImageView &) = delete;
+	HPPImageView &operator=(HPPImageView &&)      = delete;
 
-	vk::ImageSubresourceRange get_subresource_range() const
-	{
-		return static_cast<vk::ImageSubresourceRange>(vkb::core::ImageView::get_subresource_range());
-	}
+	vk::Format                 get_format() const;
+	vkb::core::HPPImage const &get_image() const;
+	void                       set_image(vkb::core::HPPImage &image);
+	vk::ImageSubresourceLayers get_subresource_layers() const;
+	vk::ImageSubresourceRange  get_subresource_range() const;
 
-	void set_image(HPPImage &image)
-	{
-		vkb::core::ImageView::set_image(reinterpret_cast<vkb::core::Image &>(image));
-	}
+  private:
+	vkb::core::HPPImage      *image = nullptr;
+	vk::Format                format;
+	vk::ImageSubresourceRange subresource_range;
 };
 }        // namespace core
 }        // namespace vkb

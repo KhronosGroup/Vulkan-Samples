@@ -92,7 +92,6 @@ class HPPVulkanResource
 
 	inline void set_handle(HPPHandle hdl)
 	{
-		assert(!handle && hdl);
 		handle = hdl;
 	}
 
