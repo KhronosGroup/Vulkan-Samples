@@ -24,7 +24,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+      with:
+        ref: master
+    - uses: actions/checkout@v3
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
