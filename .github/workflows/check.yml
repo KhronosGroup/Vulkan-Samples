@@ -27,6 +27,8 @@ jobs:
       with:
         ref: master
     - uses: actions/checkout@v3
+    - run: pwd
+    - run: ls
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
