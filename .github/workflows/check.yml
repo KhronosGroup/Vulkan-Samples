@@ -48,7 +48,7 @@ jobs:
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - name: Run Clang Format diff
       id: clang-diff
-      run: echo "changes=$(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include)" >> $GITHUB_OUTPUT
+      run: echo "changes=$(echo $(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include))" >> $GITHUB_OUTPUT
     - name: Count Diff Lines
       continue-on-error: true
       id: count-diff
