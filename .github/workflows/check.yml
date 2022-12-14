@@ -20,15 +20,10 @@ jobs:
 
   copyright_headers:
     name: Copyright Headers Check
-    container: ghcr.io/khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroupactions/copyright-check:latest
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-      with:
-        ref: master
-    - uses: actions/checkout@v3
-    - run: pwd
-    - run: ls
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
