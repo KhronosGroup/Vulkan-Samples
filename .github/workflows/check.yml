@@ -54,7 +54,7 @@ jobs:
       id: count-diff
       run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
     - name: Assert
-      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo ${{ steps.count-diff.outputs.line-count }}; exit 1; fi 
+      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi 
 
 
   clang_tidy:
