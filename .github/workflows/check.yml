@@ -24,10 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-      with:
-        ref: master
-    - uses: actions/checkout@v3
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   # snake_case_check:
