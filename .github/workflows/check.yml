@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
-    - run: git status
+    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   # snake_case_check:
