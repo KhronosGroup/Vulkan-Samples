@@ -35,7 +35,7 @@ jobs:
     continue-on-error: true
     steps:
     - uses: actions/checkout@v3
-    - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
+    - run: python3 /usr/local/bin/snake_case_check.py $TARGET_BRANCH > snake-report.txt
     - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
   # clang_format:
