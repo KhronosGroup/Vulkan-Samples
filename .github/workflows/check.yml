@@ -24,6 +24,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: git --version
+    - run: ls -la
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
   snake_case_check:
