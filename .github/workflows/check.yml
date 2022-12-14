@@ -52,7 +52,7 @@ jobs:
     - name: Count Diff Lines
       continue-on-error: true
       id: count-diff
-      run: echo "line-count$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
+      run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
     - name: Assert
       run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo ${{ steps.count-diff.outputs.line-count }}; exit 1; fi 
 
