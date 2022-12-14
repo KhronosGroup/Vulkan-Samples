@@ -28,15 +28,15 @@ jobs:
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
-  # snake_case_check:
-  #   name: Snake Case Check
-  #   container: ghcr.io/khronosgroup/vulkan-samples
-  #   runs-on: ubuntu-latest
-  #   continue-on-error: true
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
-  #   - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
+  snake_case_check:
+    name: Snake Case Check
+    container: ghcr.io/khronosgroupactions/snake-case-check:latest
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    steps:
+    - uses: actions/checkout@v3
+    - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
+    - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
   # clang_format:
   #   name: Clang Format Check
