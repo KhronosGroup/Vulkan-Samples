@@ -44,6 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
+    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/share/clang/clang-format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
     - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
@@ -56,5 +57,6 @@ jobs:
     - uses: actions/checkout@v3
       with:
         submodules: "recursive"
+    - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
     - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
     - run: /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
