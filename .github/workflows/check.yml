@@ -48,8 +48,8 @@ jobs:
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-includes > clang-format-report.txt
     - run: cat  clang-format-report.txt
-    - run: grep -c 'clang-format did not modify any files' clang-format-report.txt
-    - run: grep -c 'no modified files to format' clang-format-report.txt
+    - run: $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0
+    - run: $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0
     - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
 
   clang_tidy:
