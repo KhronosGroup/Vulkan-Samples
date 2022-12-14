@@ -47,7 +47,7 @@ jobs:
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-includes > clang-format-report.txt
-    - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt || 1) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt || 1) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
+    - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt 2>/dev/null) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt 2>/dev/null) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
 
   clang_tidy:
     name: Clang Tidy Check
