@@ -10,7 +10,7 @@ env:
 jobs:
   doxygen:
     name: Doxygen Syntax Check
-    container: ghcr.io/khronosgroup/vulkan-samples
+    container: ghcr.io/khronosgroupactions/doxygen:1.9.5
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v3
