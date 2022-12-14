@@ -47,7 +47,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
             'namespace vulkan\n' + \
             '{\n' + \
             'template <typename Type>\n' + \
-            'VkStructureType get_structure_type_name()\n' + \
+            'VkStructureType get_structure_type()\n' + \
             '{\n' + \
             '	throw "function not implemented";\n' + \
             '}\n'
@@ -80,7 +80,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
 
         for member in members:
             if member.name == "sType":
-                structureName = member.elem.get("values")
+                sTypeValue = member.elem.get("values")
 
                 section = ""
 
@@ -95,11 +95,11 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
                     # Crucial: do not remove
                     self.lastUsedFeature = self.featureName
 
-                if structureName:
+                if sTypeValue:
                     section += 'template <>\n' + \
-                        f'VkStructureType get_structure_type_name<{name}>()\n' + \
+                        f'VkStructureType get_structure_type<{name}>()\n' + \
                         '{\n' + \
-                        f'	return {structureName};\n' + \
+                        f'	return {sTypeValue};\n' + \
                         '}\n'
 
                 return section
@@ -116,7 +116,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--output',
                         metavar='FILE',
-                        default='struct_initializers.hpp',
+                        default='structure_type_helpers.hpp',
                         type=pathlib.Path,
                         help='The path to a file to write the output to.')
 
