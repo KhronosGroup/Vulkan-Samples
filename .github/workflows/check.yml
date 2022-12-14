@@ -38,24 +38,23 @@ jobs:
     - run: python3 /usr/local/bin/snake_case_check.py $TARGET_BRANCH > snake-report.txt
     - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
-  # clang_format:
-  #   name: Clang Format Check
-  #   container: ghcr.io/khronosgroup/vulkan-samples
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #   - run: git config clangFormat.binary "clang-format-10"
-  #   - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
-  #   - run: python3 /usr/local/bin/clang_format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
-  #   - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
+  clang_format:
+    name: Clang Format Check
+    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
+    - run: python3 /usr/share/clang/clang-format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
+    - run: if [ $(grep -c 'clang-format did not modify any files' clang-format-report.txt) -eq 0  ] && [ $(grep -c 'no modified files to format' clang-format-report.txt) -eq 0  ]; then cat clang-format-report.txt; exit 1; fi
 
-  # clang_tidy:
-  #   name: Clang Tidy Check
-  #   container: ghcr.io/khronosgroup/vulkan-samples
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #   - uses: actions/checkout@v3
-  #     with:
-  #       submodules: "recursive"
-  #   - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-  #   - run: python3 /usr/local/bin/run-clang-tidy.py -j $(($(nproc)/2+1)) -p build/clang -clang-tidy-binary=clang-tidy-10 -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
+  clang_tidy:
+    name: Clang Tidy Check
+    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+      with:
+        submodules: "recursive"
+    - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
+    - run: /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,vulkan_samples -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* vulkan_samples/* tests/*
