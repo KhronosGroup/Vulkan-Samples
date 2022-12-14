@@ -13,7 +13,7 @@ jobs:
     container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: mkdir -p doxygen
     - run: doxygen docs/doxygen/doxyfile
     - run: if [ $(stat -c%s doxygen/warnings.txt) -gt 0 ]; then cat doxygen/warnings.txt; exit 1; fi
@@ -23,7 +23,7 @@ jobs:
     container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/check_copyright_headers.py $TARGET_BRANCH
 
@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     continue-on-error: true
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: python3 /usr/local/bin/snake_case.py $TARGET_BRANCH > snake-report.txt
     - run: if [ $(grep -c '@@' snake-report.txt) -gt 0 ]; then cat snake-report.txt; exit 1; fi
 
@@ -42,7 +42,7 @@ jobs:
     container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
     - run: git config clangFormat.binary "clang-format-10"
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: python3 /usr/local/bin/clang_format.py -v --diff $TARGET_BRANCH > clang-format-report.txt
@@ -53,7 +53,7 @@ jobs:
     container: ghcr.io/khronosgroup/vulkan-samples
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v3
       with:
         submodules: "recursive"
     - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
