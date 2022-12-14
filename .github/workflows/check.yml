@@ -46,7 +46,16 @@ jobs:
     - uses: actions/checkout@v3
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
     - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
-    - run: git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include
+    - name: Run Clang Format diff
+      id: clang-diff
+      run: echo "changes=$(git diff -U0 --no-color $TARGET_BRANCH | python3 /usr/share/clang/clang-format-diff.py -p1 -v -sort-include)" >> $GITHUB_OUTPUT
+    - name: Count Diff Lines
+      continue-on-error: true
+      id: count-diff
+      run: echo "line-count$(echo ${{ steps.clang-diff.outputs.changes }} | grep -c +++)" >> $GITHUB_OUTPUT
+    - name: Assert
+      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo ${{ steps.count-diff.outputs.line-count }}; exit 1; fi 
+
 
   clang_tidy:
     name: Clang Tidy Check
