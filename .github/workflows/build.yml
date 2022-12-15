@@ -55,7 +55,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build_type: [Release]
+        build_type: [Debug]
 
     steps:
       - uses: actions/checkout@v2
@@ -64,11 +64,6 @@ jobs:
 
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
-
-      - name: "Explicitly setup SDK path with local.properties."
-        run: |
-          echo "sdk.dir=/usr/local/android-sdk" > build/android_gradle/local.properties
-          echo "ndk.dir=/usr/local/android-ndk" >> build/android_gradle/local.properties
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
