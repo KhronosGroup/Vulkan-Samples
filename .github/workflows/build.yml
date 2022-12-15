@@ -63,7 +63,9 @@ jobs:
           submodules: "recursive"
 
       - name: "Run generate script"
-        run: bldsys/scripts/generate_android_gradle.sh
+        run: |
+          git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+          ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "Explicitly setup SDK path with local.properties."
         run: |
