@@ -1,8 +1,8 @@
 name: Quality Checks
 
-# on:
-  # pull_request:
-  #   branches: [master]
+on:
+  pull_request:
+    branches: [master]
 
 env:
   TARGET_BRANCH: master
@@ -60,6 +60,7 @@ jobs:
     name: Clang Tidy Check
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
     runs-on: ubuntu-latest
+    continue-on-error: true # we currently dont track clang-tidy warnings as errors. in the future this will change 
     steps:
     - uses: actions/checkout@v3
       with:
