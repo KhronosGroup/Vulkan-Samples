@@ -56,13 +56,14 @@ jobs:
     strategy:
       matrix:
         build_type: [Release]
+
     steps:
       - uses: actions/checkout@v3
         with:
           submodules: "recursive"
 
       - name: "Run generate script"
-        run: ./bldsys/scripts/generate_android_gradle.sh
+        run: bldsys/scripts/generate_android_gradle.sh
 
       - name: "Explicitly setup SDK path with local.properties."
         run: |
@@ -71,4 +72,4 @@ jobs:
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew app:assembleRelease
+        run: gradlew app:assemble${{ matrix.build_type }}
