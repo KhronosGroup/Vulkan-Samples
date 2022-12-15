@@ -64,6 +64,11 @@ jobs:
 
       - name: "Run generate script"
         run: |
+          ls
+          cd bldsys
+          ls
+          cd scripts
+          ls
           $(pwd)/bldsys/scripts/generate_android_gradle.sh
 
       - name: "Explicitly setup SDK path with local.properties."
