@@ -64,7 +64,7 @@ jobs:
 
       - name: "Run generate script"
         run: |
-          git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+          pwd
           ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "Explicitly setup SDK path with local.properties."
