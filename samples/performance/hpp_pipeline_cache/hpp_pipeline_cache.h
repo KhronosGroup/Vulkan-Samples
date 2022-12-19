@@ -19,15 +19,17 @@
 
 #include <hpp_vulkan_sample.h>
 
-#include <scene_graph/components/camera.h>
+#include "imgui.h"
+#include "scene_graph/components/camera.h"
 
 /**
- * @brief Using triple buffering over double buffering, using Vulkan-Hpp
+ * @brief Pipeline creation and caching
  */
-class HPPSwapchainImages : public vkb::HPPVulkanSample
+class HPPPipelineCache : public vkb::HPPVulkanSample
 {
   public:
-	HPPSwapchainImages();
+	HPPPipelineCache();
+	virtual ~HPPPipelineCache();
 
   private:
 	// from vkb::HPPVulkanSample
@@ -36,9 +38,12 @@ class HPPSwapchainImages : public vkb::HPPVulkanSample
 	virtual void update(float delta_time) override;
 
   private:
-	vkb::sg::Camera *camera{nullptr};
-	int              swapchain_image_count{3};
-	int              last_swapchain_image_count{3};
+	ImVec2            button_size           = ImVec2(150, 30);
+	vkb::sg::Camera * camera                = nullptr;
+	bool              enable_pipeline_cache = true;
+	vk::PipelineCache pipeline_cache;
+	float             rebuild_pipelines_frame_time_ms = 0.0f;
+	bool              record_frame_time_next_frame    = false;
 };
 
-std::unique_ptr<vkb::Application> create_hpp_swapchain_images();
+std::unique_ptr<vkb::HPPVulkanSample> create_hpp_pipeline_cache();
