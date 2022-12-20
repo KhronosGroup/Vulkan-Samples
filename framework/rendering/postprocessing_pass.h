@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,8 +27,8 @@ namespace vkb
 class PostProcessingPipeline;
 
 /**
-* @brief The base of all types of passes in a vkb::PostProcessingPipeline.
-*/
+ * @brief The base of all types of passes in a vkb::PostProcessingPipeline.
+ */
 class PostProcessingPassBase
 {
 	friend class PostProcessingPipeline;
@@ -36,10 +36,10 @@ class PostProcessingPassBase
   public:
 	PostProcessingPassBase(PostProcessingPipeline *parent);
 
-	PostProcessingPassBase(const PostProcessingPassBase &to_copy) = delete;
+	PostProcessingPassBase(const PostProcessingPassBase &to_copy)            = delete;
 	PostProcessingPassBase &operator=(const PostProcessingPassBase &to_copy) = delete;
 
-	PostProcessingPassBase(PostProcessingPassBase &&to_move) = default;
+	PostProcessingPassBase(PostProcessingPassBase &&to_move)            = default;
 	PostProcessingPassBase &operator=(PostProcessingPassBase &&to_move) = default;
 
 	virtual ~PostProcessingPassBase() = default;
@@ -75,7 +75,7 @@ class PostProcessingPassBase
 
 	std::string debug_name{};
 
-	RenderTarget *                 render_target{nullptr};
+	RenderTarget                  *render_target{nullptr};
 	std::shared_ptr<core::Sampler> default_sampler{};
 
 	HookFunc pre_draw{};
@@ -87,8 +87,8 @@ class PostProcessingPassBase
 	RenderContext &get_render_context() const;
 
 	/**
-	* @brief Returns the parent's fullscreen triangle vertex shader source.
-	*/
+	 * @brief Returns the parent's fullscreen triangle vertex shader source.
+	 */
 	ShaderSource &get_triangle_vs() const;
 
 	struct BarrierInfo
@@ -99,15 +99,15 @@ class PostProcessingPassBase
 	};
 
 	/**
-	* @brief Returns information that can be used to setup memory barriers of images
-	*        that are produced (e.g. image stores, color attachment output) by this pass.
-	*/
+	 * @brief Returns information that can be used to setup memory barriers of images
+	 *        that are produced (e.g. image stores, color attachment output) by this pass.
+	 */
 	virtual BarrierInfo get_src_barrier_info() const = 0;
 
 	/**
-	* @brief Returns information that can be used to setup memory barriers of images
-	*        that are consumed (e.g. image loads, texture sampling) by this pass.
-	*/
+	 * @brief Returns information that can be used to setup memory barriers of images
+	 *        that are consumed (e.g. image loads, texture sampling) by this pass.
+	 */
 	virtual BarrierInfo get_dst_barrier_info() const = 0;
 
 	/**
@@ -118,18 +118,18 @@ class PostProcessingPassBase
 };
 
 /**
-* @brief CRTP base of all types of passes in a vkb::PostProcessingPipeline.
-*/
+ * @brief CRTP base of all types of passes in a vkb::PostProcessingPipeline.
+ */
 template <typename Self>
 class PostProcessingPass : public PostProcessingPassBase
 {
   public:
 	using PostProcessingPassBase::PostProcessingPassBase;
 
-	PostProcessingPass(const PostProcessingPass &to_copy) = delete;
+	PostProcessingPass(const PostProcessingPass &to_copy)            = delete;
 	PostProcessingPass &operator=(const PostProcessingPass &to_copy) = delete;
 
-	PostProcessingPass(PostProcessingPass &&to_move) = default;
+	PostProcessingPass(PostProcessingPass &&to_move)            = default;
 	PostProcessingPass &operator=(PostProcessingPass &&to_move) = default;
 
 	virtual ~PostProcessingPass() = default;
@@ -157,17 +157,19 @@ class PostProcessingPass : public PostProcessingPassBase
 	}
 
 	/**
-	* @brief Render target to output to.
-	*        If set, this pass will output to the given render target instead of the one passed to draw().
-	*/
+	 * @brief Render target to output to.
+	 *        If set, this pass will output to the given render target instead of the one passed to draw().
+	 */
 	inline RenderTarget *get_render_target() const
 	{
 		return render_target;
 	}
 
 	/**
-	* @copydoc get_render_target()
-	*/
+	 * @brief Render target to output to.
+	 *        If set, this pass will output to the given render target instead of the one passed to draw().
+	 * @param new_render_target the new render target to output too
+	 */
 	inline Self &set_render_target(RenderTarget *new_render_target)
 	{
 		render_target = new_render_target;
@@ -176,16 +178,16 @@ class PostProcessingPass : public PostProcessingPassBase
 	}
 
 	/**
-	* @brief Returns the the debug name of this pass.
-	*/
+	 * @brief Returns the the debug name of this pass.
+	 */
 	inline const std::string &get_debug_name() const
 	{
 		return debug_name;
 	}
 
 	/**
-	* @brief Sets the debug name of this pass.
-	*/
+	 * @brief Sets the debug name of this pass.
+	 */
 	inline Self &set_debug_name(const std::string &new_debug_name)
 	{
 		debug_name = new_debug_name;
@@ -194,8 +196,8 @@ class PostProcessingPass : public PostProcessingPassBase
 	}
 
 	/**
-	* @brief Returns the vkb::PostProcessingPipeline that is the parent of this pass.
-	*/
+	 * @brief Returns the vkb::PostProcessingPipeline that is the parent of this pass.
+	 */
 	inline PostProcessingPipeline &get_parent() const
 	{
 		return *parent;
