@@ -4,6 +4,7 @@ plugins {
 
 android {
 	compileSdk 32
+	ndkVersion "25.1.8937393"
 
 	defaultConfig {
 		applicationId "com.khronos.vulkan_samples"
@@ -53,7 +54,10 @@ android {
 	}
 
 	externalNativeBuild {
-		@CMAKE_PATH@
+		cmake {
+			version "3.22.1"
+			@CMAKE_PATH@
+		}
 	}
 
 	lintOptions {

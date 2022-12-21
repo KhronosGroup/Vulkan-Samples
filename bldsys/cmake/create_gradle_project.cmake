@@ -175,7 +175,7 @@ endif()
 if(EXISTS ${NATIVE_SCRIPT})
 	file(RELATIVE_PATH NATIVE_SCRIPT_TMP ${OUTPUT_DIR}/app ${NATIVE_SCRIPT})
 
-	set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t} ")
+	set(CMAKE_PATH "path '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'")
 endif()
 
 # cmake.arguments
