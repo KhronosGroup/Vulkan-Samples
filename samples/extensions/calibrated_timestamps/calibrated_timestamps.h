@@ -16,7 +16,7 @@
  */
 
 /*
- * Demonstrates and showcases full_screen_exclusive related functionalities
+ * Demonstrates and showcase calibrated timestamps extension related functionalities
  */
 
 #pragma once
@@ -24,10 +24,19 @@
 #include "core/image.h"
 #include "rendering/render_frame.h"
 
-// TODO: @Jeremy: use macro to detect windows devices and only declare them in windows
-
-class FullScreenExclusive : public ApiVulkanSample
+class CalibratedTimestamps : public ApiVulkanSample
 {
+  private:
+	// Introduce Timestamps related variables:
+	VkCalibratedTimestampInfoEXT timestampsInfo_device{};
+	VkCalibratedTimestampInfoEXT timestampsInfo_queryPerformanceCount{};
+
+	struct TimeInfo
+	{
+		uint64_t timestamp = 0;
+		uint64_t deviation = 0;
+	};
+
   public:
 	Texture skybox_map{};
 
@@ -38,7 +47,7 @@ class FullScreenExclusive : public ApiVulkanSample
 		glm::mat4                         transform{};
 	} models{};
 
-	struct
+	struct UniformBuffers
 	{
 		std::unique_ptr<vkb::core::Buffer> matrices = nullptr;
 		std::unique_ptr<vkb::core::Buffer> params   = nullptr;
@@ -52,13 +61,6 @@ class FullScreenExclusive : public ApiVulkanSample
 		float     model_scale = 0.05f;
 	} ubo_vs{};
 
-	// It is the binding 2 from gBuffer.frag, and defined using the same structure,
-	// I will most likely change everything back to base.vert/.frag
-	// However, the reflection looks real nice
-	// probably I will come up with my own shaders.vert and .frag to set exposure as a const
-	// so this uniform buffer param and this entire binding 2 will be no longer needed
-	// But right now, to just save me a ton of time, I have to make everything look exactly the same
-	// corresponding to the gBuffer.frag bindings
 	const struct UBOParams
 	{
 		float exposure = 1.0f;
@@ -90,7 +92,6 @@ class FullScreenExclusive : public ApiVulkanSample
 		VkDescriptorSetLayout composition = VK_NULL_HANDLE;
 	} descriptor_set_layouts{};
 
-	// Framebuffer for offscreen rendering
 	struct FrameBufferAttachment
 	{
 		VkImage        image{};
@@ -110,7 +111,7 @@ class FullScreenExclusive : public ApiVulkanSample
 		int32_t               width{};
 		int32_t               height{};
 		VkFramebuffer         framebuffer{};
-		FrameBufferAttachment color[2];
+		FrameBufferAttachment color[2]{};
 		FrameBufferAttachment depth{};
 		VkRenderPass          render_pass{};
 		VkSampler             sampler{};
@@ -127,27 +128,15 @@ class FullScreenExclusive : public ApiVulkanSample
 	} filter_pass{};
 
   private:
-	// Full screen exclusive related variables;
-	
-	VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
-	// ui overlay sample
-	int                            full_screen_selection_index = 0;
-	const std::vector<std::string> full_screen_selection_options{
-	    "Default",
-	    "Windowed",
-	    "Borderless Window",
-	    "Exclusive Fullscreen"};
-	std::string VK_results_message = "default.";
-	bool isWindows = false;
+	// TODO: @JEREMY: (*) may want to add a timestamp "translate" function based on the runtime test results
+	TimeInfo get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount = 1);        // This is to get then sync the timestamp and the screen max deviation
 
   public:
-	FullScreenExclusive();
-	~FullScreenExclusive() override;
+	CalibratedTimestamps();
+	~CalibratedTimestamps() override;
+
 	// MOD:
-	void initialize();
-	void on_update_full_screen_selection();
-	void on_swapchain_recreate_info();
-	void on_image_view_recreate_info();
+	void initialize();        // this is to initialize all VkCalibratedTimestampInfoEXT related variables
 
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
@@ -157,18 +146,21 @@ class FullScreenExclusive : public ApiVulkanSample
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_sets();
+
+	// TODO: @JEREMY: (1) introduce timestamps return value here:
 	void prepare_pipelines();
+
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void update_params();
 	void draw();
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
-	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	bool resize(uint32_t width, uint32_t height) override;
 
-  private:
-	void prepare_render_context() override;        // This has to be overridden in order to introduce the full screen extension
+	// TODO: @JEREMY: (2) update timestamp information when finalizing the runtime test:
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+
+	bool resize(uint32_t width, uint32_t height) override;
 };
 
-std::unique_ptr<vkb::Application> create_full_screen_exclusive();
+std::unique_ptr<vkb::Application> create_calibrated_timestamps();

@@ -23,8 +23,8 @@ add_sample(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip Corporation"
-        NAME "Full Screen Exclusive"
-        DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
+        NAME "Calibrated Timestamps"
+        DESCRIPTION "Demonstrates and showcases calibrated timestamps related functionalities."
         SHADER_FILES_GLSL
         "hdr/composition.vert"
         "hdr/composition.frag"

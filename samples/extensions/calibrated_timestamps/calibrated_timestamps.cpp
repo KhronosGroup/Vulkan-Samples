@@ -15,25 +15,22 @@
  * limitations under the License.
  */
 
-#include "full_screen_exclusive.h"
+#include "calibrated_timestamps.h"
 #include "scene_graph/components/sub_mesh.h"
 
-FullScreenExclusive::FullScreenExclusive()
+CalibratedTimestamps::CalibratedTimestamps()
 {
-	title = "Full Screen Exclusive Extension";
+	title = "Calibrated Timestamps";
 
-	// Enable instance and device extensions required to use VK_EXT_full_screen_exclusive
+	// Enable instance and device extensions
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_SURFACE_EXTENSION_NAME);
-	add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
-	add_device_extension(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+	add_instance_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 
 	// Initialize
-	FullScreenExclusive::initialize();
+	CalibratedTimestamps::initialize();
 }
 
-FullScreenExclusive::~FullScreenExclusive()
+CalibratedTimestamps::~CalibratedTimestamps()
 {
 	if (device)
 	{
@@ -71,126 +68,47 @@ FullScreenExclusive::~FullScreenExclusive()
 	}
 }
 
-void FullScreenExclusive::initialize()
+void CalibratedTimestamps::initialize()
 {
-	// Initialize full screen exclusive variables
-	surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
-	surface_full_screen_exclusive_info_EXT.pNext = nullptr;
-	// FullScreenExclusive set to be Default by initialization
-	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+	// Initialize the time domain related variables:
+	timestampsInfo_device.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
+	timestampsInfo_device.pNext      = nullptr;
+	timestampsInfo_device.timeDomain = VK_TIME_DOMAIN_DEVICE_EXT;
+
+	timestampsInfo_queryPerformanceCount.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
+	timestampsInfo_queryPerformanceCount.pNext      = nullptr;
+	timestampsInfo_queryPerformanceCount.timeDomain = VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT;
 }
 
-void FullScreenExclusive::on_update_full_screen_selection()
+CalibratedTimestamps::TimeInfo CalibratedTimestamps::get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount)
 {
-	switch (full_screen_selection_index)
+	uint64_t local_timestamp = 0;
+	uint64_t local_deviation = 0;
+
+	if (inputTimestampsCount >= 0)
 	{
-		case 1:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;        // windowed
-			break;
-		case 2:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;        // borderless window
-			break;
-		case 3:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;        // exclusive fullscreen
-			break;
-		default:
-			surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // default
-			break;
+		VkResult result = (vkGetCalibratedTimestampsEXT(get_device().get_handle(), inputTimestampsCount, &inputTimeStampsInfo, &local_timestamp, &local_deviation));
+
+		if (result == VK_SUCCESS)
+		{
+			CalibratedTimestamps::TimeInfo returnMe{};
+
+			returnMe.timestamp = local_timestamp;
+			returnMe.deviation = local_deviation;
+			return returnMe;
+		}
+		else
+		{
+			return {};
+		}
+	}
+	else
+	{
+		return {};
 	}
 }
 
-void FullScreenExclusive::on_swapchain_recreate_info()
-{
-	// Create a new swapchain info EXT which enables full screen exclusive extension features
-	VkSwapchainCreateInfoKHR fullScreenExclusive_create_info{};
-
-	// Initializes its sType and pNext
-	fullScreenExclusive_create_info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	fullScreenExclusive_create_info.pNext = &surface_full_screen_exclusive_info_EXT;
-
-	// Update its information from the current section:
-
-	auto oldSwapchainProperties = render_context->get_swapchain().get_properties();
-
-	fullScreenExclusive_create_info.minImageCount    = oldSwapchainProperties.image_count;
-	fullScreenExclusive_create_info.imageExtent      = oldSwapchainProperties.extent;
-	fullScreenExclusive_create_info.presentMode      = oldSwapchainProperties.present_mode;
-	fullScreenExclusive_create_info.imageFormat      = oldSwapchainProperties.surface_format.format;
-	fullScreenExclusive_create_info.imageColorSpace  = oldSwapchainProperties.surface_format.colorSpace;
-	fullScreenExclusive_create_info.imageArrayLayers = oldSwapchainProperties.array_layers;
-	fullScreenExclusive_create_info.imageUsage       = oldSwapchainProperties.image_usage;
-	fullScreenExclusive_create_info.preTransform     = oldSwapchainProperties.pre_transform;
-	fullScreenExclusive_create_info.compositeAlpha   = oldSwapchainProperties.composite_alpha;
-	fullScreenExclusive_create_info.oldSwapchain     = render_context->get_swapchain().get_handle();        // beware that the old_swapchain has to be specified very clearly!
-	fullScreenExclusive_create_info.surface          = render_context->get_swapchain().get_surface();
-
-	// Create the new swapchain based on the swapchain info EXT defined above
-	VkSwapchainKHR fullScreenExclusive_swapchain = render_context->get_swapchain().get_handle();        // nestles the r-value to a new swapchain
-	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));
-	/*
-	std::vector<VkImage> temp_images = render_context->get_swapchain().get_images(); // making a deep copy of the swapchain images
-
-	VK_CHECK(vkCreateSwapchainKHR(device->get_handle(), &fullScreenExclusive_create_info, nullptr, &fullScreenExclusive_swapchain));        // use the standard VkResults check format
-	uint32_t image_count{};
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, nullptr));
-	auto images = render_context->get_swapchain().get_images();
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
-	images.insert(images.begin(),temp_images.begin(), temp_images.end()); // passing copy data to this vector
-	*/
-
-	// Trying to directly assign the images from where it was, and forced them into the new swapchain
-
-	auto images = render_context->get_swapchain().get_images();
-
-	uint32_t image_count = images.size();
-
-	VK_CHECK(vkGetSwapchainImagesKHR(device->get_handle(), fullScreenExclusive_swapchain, &image_count, images.data()));
-
-	// The above only finished creating the swapchain and also recreated its image vector
-	// now we have to create another function to recreate/define the
-	// follow it up with swapchain buffer (image view) recreation
-}
-
-void FullScreenExclusive::on_image_view_recreate_info()
-{
-	auto &images = render_context->get_swapchain().get_images();        // render_context is a protected unique pointer from its base class
-
-	// swapchain_buffers is a protected vector in its base class
-	for (auto &swapchain_buffer : swapchain_buffers)
-	{
-		vkDestroyImageView(device->get_handle(), swapchain_buffer.view, nullptr);
-	}
-
-	swapchain_buffers.clear();        // swapchain_buffers need to be cleared before resize
-	swapchain_buffers.resize(images.size());
-
-	for (uint32_t i = 0; i < images.size(); i++)
-	{
-		VkImageViewCreateInfo color_attachment_view{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
-		color_attachment_view.format = render_context->get_swapchain().get_format();
-		color_attachment_view.components =
-		    {
-		        VK_COMPONENT_SWIZZLE_R,
-		        VK_COMPONENT_SWIZZLE_G,
-		        VK_COMPONENT_SWIZZLE_B,
-		        VK_COMPONENT_SWIZZLE_A};
-		color_attachment_view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		color_attachment_view.subresourceRange.baseMipLevel   = 0;
-		color_attachment_view.subresourceRange.levelCount     = 1;
-		color_attachment_view.subresourceRange.baseArrayLayer = 0;
-		color_attachment_view.subresourceRange.layerCount     = 1;
-		color_attachment_view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-		color_attachment_view.flags                           = 0;
-
-		swapchain_buffers[i].image = images[i];        // This is basically an "image view"
-
-		color_attachment_view.image = swapchain_buffers[i].image;
-
-		VK_CHECK(vkCreateImageView(device->get_handle(), &color_attachment_view, nullptr, &swapchain_buffers[i].view));
-	}
-}
-
-void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
+void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -199,39 +117,28 @@ void FullScreenExclusive::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void FullScreenExclusive::build_command_buffers()
+void CalibratedTimestamps::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
-
-	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
-	clear_values[1].depthStencil = {0.0f, 0};
-
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass            = render_pass;
-	render_pass_begin_info.renderArea.offset.x   = 0;
-	render_pass_begin_info.renderArea.offset.y   = 0;
-	render_pass_begin_info.clearValueCount       = 2;
-	render_pass_begin_info.pClearValues          = clear_values;
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		{
-			std::array<VkClearValue, 3> clear_values;
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[2].depthStencil = {0.0f, 0};
+			std::array<VkClearValue, 3> clear_values_0{};
+			clear_values_0[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values_0[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values_0[2].depthStencil = {0.0f, 0};
 
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.renderPass               = offscreen.render_pass;
-			render_pass_begin_info.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info.clearValueCount          = 3;
-			render_pass_begin_info.pClearValues             = clear_values.data();
+			VkRenderPassBeginInfo render_pass_begin_info_0    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info_0.renderPass               = offscreen.render_pass;
+			render_pass_begin_info_0.framebuffer              = offscreen.framebuffer;
+			render_pass_begin_info_0.renderArea.extent.width  = offscreen.width;
+			render_pass_begin_info_0.renderArea.extent.height = offscreen.height;
+			render_pass_begin_info_0.clearValueCount          = 3;
+			render_pass_begin_info_0.pClearValues             = clear_values_0.data();
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_0, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
@@ -255,25 +162,25 @@ void FullScreenExclusive::build_command_buffers()
 		}
 
 		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			std::array<VkClearValue, 2> clear_values_1{};
+			clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values_1[1].depthStencil = {0.0f, 0};
 
 			// Final composition
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = 2;
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.pClearValues             = clear_values;
+			VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info_1.framebuffer              = framebuffers[i];
+			render_pass_begin_info_1.renderPass               = render_pass;
+			render_pass_begin_info_1.clearValueCount          = 2;
+			render_pass_begin_info_1.renderArea.extent.width  = width;
+			render_pass_begin_info_1.renderArea.extent.height = height;
+			render_pass_begin_info_1.pClearValues             = clear_values_1.data();
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
@@ -291,10 +198,10 @@ void FullScreenExclusive::build_command_buffers()
 	}
 }
 
-void FullScreenExclusive::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
+void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
 {
 	VkImageAspectFlags aspect_mask = 0;
-	VkImageLayout      image_layout;
+	VkImageLayout      image_layout{};
 
 	attachment->format = format;
 
@@ -351,12 +258,12 @@ void FullScreenExclusive::create_attachment(VkFormat format, VkImageUsageFlagBit
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
 }
 
-void FullScreenExclusive::prepare_offscreen_buffer()
+void CalibratedTimestamps::prepare_offscreen_buffer()
 {
 	// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 	{
-		offscreen.width  = width;
-		offscreen.height = height;
+		offscreen.width  = static_cast<int>(width);
+		offscreen.height = static_cast<int>(height);
 
 		// Color attachments
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
@@ -407,7 +314,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		subpass.pDepthStencilAttachment = &depth_reference;
 
 		// Use sub-pass dependencies for attachment layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -436,7 +343,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
 
-		std::array<VkImageView, 3> attachments;
+		std::array<VkImageView, 3> attachments{};
 		attachments[0] = offscreen.color[0].view;
 		attachments[1] = offscreen.color[1].view;
 		attachments[2] = offscreen.depth.view;
@@ -470,18 +377,13 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 
 	// Second separable filter pass
 	{
-		filter_pass.width  = width;
-		filter_pass.height = height;
+		filter_pass.width  = static_cast<int>(width);
+		filter_pass.height = static_cast<int>(height);
 
-		// Color attachments
-
-		// Two floating point color buffers
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
 
-		// Init attachment properties
 		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -499,8 +401,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		subpass.pColorAttachments    = color_references.data();
 		subpass.colorAttachmentCount = 1;
 
-		// Use sub-pass dependencies for attachment layout transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -529,7 +430,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &filter_pass.render_pass));
 
-		std::array<VkImageView, 1> attachments;
+		std::array<VkImageView, 1> attachments{};
 		attachments[0] = filter_pass.color[0].view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
@@ -543,7 +444,6 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
-		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -560,7 +460,7 @@ void FullScreenExclusive::prepare_offscreen_buffer()
 	}
 }
 
-void FullScreenExclusive::load_assets()
+void CalibratedTimestamps::load_assets()
 {
 	// Models
 	models.skybox = load_model("scenes/cube.gltf");
@@ -576,7 +476,7 @@ void FullScreenExclusive::load_assets()
 	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
-void FullScreenExclusive::setup_descriptor_pool()
+void CalibratedTimestamps::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
@@ -587,7 +487,7 @@ void FullScreenExclusive::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void FullScreenExclusive::setup_descriptor_set_layout()
+void CalibratedTimestamps::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -620,7 +520,7 @@ void FullScreenExclusive::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.composition));
 }
 
-void FullScreenExclusive::setup_descriptor_sets()
+void CalibratedTimestamps::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
@@ -666,7 +566,7 @@ void FullScreenExclusive::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void FullScreenExclusive::prepare_pipelines()
+void CalibratedTimestamps::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 	VkPipelineRasterizationStateCreateInfo rasterization_state  = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
@@ -697,12 +597,12 @@ void FullScreenExclusive::prepare_pipelines()
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
 	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries;
+	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 
 	// Full screen pipelines
 
@@ -777,7 +677,7 @@ void FullScreenExclusive::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
 }
 
-void FullScreenExclusive::prepare_uniform_buffers()
+void CalibratedTimestamps::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
 	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -789,7 +689,7 @@ void FullScreenExclusive::prepare_uniform_buffers()
 	update_params();
 }
 
-void FullScreenExclusive::update_uniform_buffers()
+void CalibratedTimestamps::update_uniform_buffers()
 {
 	ubo_vs.projection        = camera.matrices.perspective;
 	ubo_vs.model_view        = camera.matrices.view * models.transform;
@@ -798,12 +698,12 @@ void FullScreenExclusive::update_uniform_buffers()
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
-void FullScreenExclusive::update_params()
+void CalibratedTimestamps::update_params()
 {
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
-void FullScreenExclusive::draw()
+void CalibratedTimestamps::draw()
 {
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
@@ -812,7 +712,7 @@ void FullScreenExclusive::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool FullScreenExclusive::prepare(vkb::Platform &platform)
+bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -840,7 +740,7 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void FullScreenExclusive::render(float delta_time)
+void CalibratedTimestamps::render(float delta_time)
 {
 	if (!prepared)
 		return;
@@ -849,57 +749,21 @@ void FullScreenExclusive::render(float delta_time)
 		update_uniform_buffers();
 }
 
-void FullScreenExclusive::on_update_ui_overlay(vkb::Drawer &drawer)
+void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (isWindows)
-	{
-		if (drawer.combo_box("Display Mode", &full_screen_selection_index, full_screen_selection_options))
-		{
-			printf("%s\n", full_screen_selection_options[full_screen_selection_index].c_str());
-			on_update_full_screen_selection();
-
-			on_swapchain_recreate_info();
-			on_image_view_recreate_info();
-		}
-
-		// TODO: @JEREMY, remove this button when finalized!
-		if (drawer.button("Test VK Results"))
-		{
-			printf("Test VK Results button pressed!\n");
-			VK_results_message = "Pressed!";
-		}
-		drawer.text("Test VK Results: %s", VK_results_message.c_str());
-	}
+	// TODO: @JEREMY: add timestamps info display here:
 }
 
-bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
+bool CalibratedTimestamps::resize(uint32_t width, uint32_t height)
 {
 	bool resizeResults = ApiVulkanSample::resize(width, height);
-
-	// Introducing the recreation swapchain
-	if (isWindows)
-	{
-		on_swapchain_recreate_info();
-		on_image_view_recreate_info();
-	}
 
 	update_uniform_buffers();
 
 	return resizeResults;
 }
 
-void FullScreenExclusive::prepare_render_context()
+std::unique_ptr<vkb::Application> create_calibrated_timestamps()
 {
-	VulkanSample::prepare_render_context();        // This is to create a renderer context without extension swapchain
-	if (isWindows)
-	{
-		initialize();
-		on_swapchain_recreate_info();
-		on_image_view_recreate_info();
-	}        // on_swapchain_create_info(); // Now create the new swapchain with extension
-}
-
-std::unique_ptr<vkb::Application> create_full_screen_exclusive()
-{
-	return std::make_unique<FullScreenExclusive>();
+	return std::make_unique<CalibratedTimestamps>();
 }
