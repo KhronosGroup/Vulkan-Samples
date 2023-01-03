@@ -21,9 +21,6 @@
 #include "core/hpp_device.h"
 #include <vulkan/vulkan_format_traits.hpp>
 
-//#include "core/image.h"
-//#include "device.h"
-
 namespace vkb
 {
 namespace core
