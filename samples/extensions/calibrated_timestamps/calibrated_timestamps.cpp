@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Holochip Corporation
+/* Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,6 +26,7 @@ CalibratedTimestamps::CalibratedTimestamps()
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_instance_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 
+	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
 	// Initialize
 	CalibratedTimestamps::initialize();
 }
@@ -68,6 +69,7 @@ CalibratedTimestamps::~CalibratedTimestamps()
 	}
 }
 
+// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
 void CalibratedTimestamps::initialize()
 {
 	// Initialize the time domain related variables:
@@ -80,6 +82,80 @@ void CalibratedTimestamps::initialize()
 	timestampsInfo_queryPerformanceCount.timeDomain = VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT;
 }
 
+std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDomain)
+{
+	switch (inputTimeDomain)
+	{
+		case VK_TIME_DOMAIN_DEVICE_EXT:
+			return "device time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
+			return "clock monotonic time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
+			return "clock monotonic raw time domain";
+		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
+			return "query performance time domain";
+		default:
+			return "unknown time domain";
+	}
+}
+
+void CalibratedTimestamps::update_time_domains()
+{
+	// Initialize time domain count:
+	time_domain_count = 0;
+	// Update time domain count:
+	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
+
+	if (result == VK_SUCCESS)
+	{
+		// Initialize time domain vector
+		time_domains.clear();
+		// Resize time domains vector:
+		time_domains.resize(static_cast<int>(time_domain_count));        // this needs static cast to int
+		// Update time_domain vector:
+		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
+
+		// Time domain is successfully updated:
+		isTimeDomainUpdated = (result == VK_SUCCESS);
+	}
+}
+
+void CalibratedTimestamps::update_timestamps()
+{
+	// Ensures that time domain exists
+	if (isTimeDomainUpdated)
+	{
+		// Create LOCAL calibrate time stamps info:
+		std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};
+
+		for (VkTimeDomainEXT time_domain : time_domains)
+		{
+			// Initialize in-scope time stamp info variable:
+			VkCalibratedTimestampInfoEXT timestamp_info{};
+
+			// Configure timestamp info variable:
+			timestamp_info.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
+			timestamp_info.pNext      = nullptr;
+			timestamp_info.timeDomain = time_domain;
+
+			// Push-back timestamp info to timestamps info vector:
+			timestamps_info.push_back(timestamp_info);
+		}
+
+		// Resize time stamps vector
+		timestamps.resize(static_cast<int>(time_domain_count));
+		// Resize max deviations vector
+		max_deviations.resize(static_cast<int>(time_domain_count));
+
+		// Get calibrated timestamps:
+		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domain_count, timestamps_info.data(), timestamps.data(), max_deviations.data());
+
+		// Timestamps is successfully updated:
+		isTimestampUpdated = (result == VK_SUCCESS);
+	}
+}
+
+// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
 CalibratedTimestamps::TimeInfo CalibratedTimestamps::get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount)
 {
 	uint64_t local_timestamp = 0;
@@ -87,7 +163,7 @@ CalibratedTimestamps::TimeInfo CalibratedTimestamps::get_timestamp(VkCalibratedT
 
 	if (inputTimestampsCount >= 0)
 	{
-		VkResult result = (vkGetCalibratedTimestampsEXT(get_device().get_handle(), inputTimestampsCount, &inputTimeStampsInfo, &local_timestamp, &local_deviation));
+		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), inputTimestampsCount, &inputTimeStampsInfo, &local_timestamp, &local_deviation);
 
 		if (result == VK_SUCCESS)
 		{
@@ -97,14 +173,6 @@ CalibratedTimestamps::TimeInfo CalibratedTimestamps::get_timestamp(VkCalibratedT
 			returnMe.deviation = local_deviation;
 			return returnMe;
 		}
-		else
-		{
-			return {};
-		}
-	}
-	else
-	{
-		return {};
 	}
 }
 
@@ -751,7 +819,8 @@ void CalibratedTimestamps::render(float delta_time)
 
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	// TODO: @JEREMY: add timestamps info display here:
+	// TODO: @JEREMY: 1) add update timestamps button and function here:
+	//                2) add timestamps info display here:
 }
 
 bool CalibratedTimestamps::resize(uint32_t width, uint32_t height)

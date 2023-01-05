@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Holochip Corporation
+/* Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,17 +26,6 @@
 
 class CalibratedTimestamps : public ApiVulkanSample
 {
-  private:
-	// Introduce Timestamps related variables:
-	VkCalibratedTimestampInfoEXT timestampsInfo_device{};
-	VkCalibratedTimestampInfoEXT timestampsInfo_queryPerformanceCount{};
-
-	struct TimeInfo
-	{
-		uint64_t timestamp = 0;
-		uint64_t deviation = 0;
-	};
-
   public:
 	Texture skybox_map{};
 
@@ -127,16 +116,47 @@ class CalibratedTimestamps : public ApiVulkanSample
 		VkSampler             sampler{};
 	} filter_pass{};
 
+	// TODO: @JEREMY *) Move it back to the top when finalized:
   private:
-	// TODO: @JEREMY: (*) may want to add a timestamp "translate" function based on the runtime test results
-	TimeInfo get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount = 1);        // This is to get then sync the timestamp and the screen max deviation
+	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
+	VkCalibratedTimestampInfoEXT timestampsInfo_device{};
+	VkCalibratedTimestampInfoEXT timestampsInfo_queryPerformanceCount{};
+	struct TimeInfo
+	{
+		uint64_t timestamp = 0;
+		uint64_t deviation = 0;
+	};
+
+	//MODs:
+	uint32_t time_domain_count{};
+	// this can be done locally, or by figuring out the size of time_domain vector, but since it will be calibrated anyways, therefore why not make it a clas variable
+	std::vector<VkTimeDomainEXT> time_domains{};
+	// this vector is initialized as empty, but it holds all time domains extracted from the current Instance
+	std::vector<uint64_t> timestamps{};                       // timestamps vector
+	std::vector<uint64_t> max_deviations{};                   // max deviations vector
+	bool                  isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
+	bool                  isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+
+  private:
+	// MODs:
+	std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);
+	// this returns a human-readable information for what time domain corresponds to what
+	void update_time_domains();
+	// this extracts total number of time domain the (physical) device has, and then sync the time domain EXT data to its vector
+	void update_timestamps();
+	// creates local timestamps information vector, update timestamps vector and deviation vector
+
+	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
+	TimeInfo get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount = 1);
+	// This is to get then sync the timestamp and the screen max deviation
 
   public:
 	CalibratedTimestamps();
 	~CalibratedTimestamps() override;
 
-	// MOD:
-	void initialize();        // this is to initialize all VkCalibratedTimestampInfoEXT related variables
+	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
+	void initialize();
+	// this is to initialize all VkCalibratedTimestampInfoEXT related variables
 
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
@@ -146,10 +166,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_sets();
-
-	// TODO: @JEREMY: (1) introduce timestamps return value here:
 	void prepare_pipelines();
-
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void update_params();
@@ -157,7 +174,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 
-	// TODO: @JEREMY: (2) update timestamp information when finalizing the runtime test:
+	// TODO: @JEREMY: 4-1) get a update timestamps button;
+	//                4-2) display: a) time domain, b) timestamps, c) deviation
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
 	bool resize(uint32_t width, uint32_t height) override;
