@@ -817,7 +817,7 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneN
 
 	for (int i = 0; i < scene_nodes_cnt; i++)
 	{
-		if (scene_node->at(SCENE_ALL_OBJ_INDEX).at(i).name == "Suzanne")
+		if (scene_node->at(SCENE_ALL_OBJ_INDEX).at(i).name == "Geosphere")
 		{
 			scene_elements_tess.push_back(scene_node->at(SCENE_ALL_OBJ_INDEX).at(i));
 		}
