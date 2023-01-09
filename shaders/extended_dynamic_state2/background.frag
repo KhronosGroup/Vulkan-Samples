@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Mobica Limited
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,11 +20,7 @@ layout(binding = 1) uniform samplerCube samplerEnvMap;
 
 layout(location = 0) in vec3 inUVW;
 
-
 layout(location = 0) out vec4 outColor0;
-
-#define PI 3.1415926
-#define TwoPI (2.0 * PI)
 
 void main()
 {
@@ -33,7 +29,5 @@ void main()
 	vec3 normal = normalize(inUVW);
 	color       = texture(samplerEnvMap, normal);
 
-	const float exposure = 1.f;
-	outColor0.rgb        = vec3(1.0) - exp(-color.rgb * exposure);
-
+	outColor0 = vec4(color.rgb, 1.0);
 }

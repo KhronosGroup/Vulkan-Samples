@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -85,6 +85,8 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	} ubo_background;
 
+	VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
+
 	struct
 	{
 		VkDescriptorSetLayout baseline{VK_NULL_HANDLE};
@@ -137,7 +139,6 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		std::string       name;
 		vkb::sg::Node *   node;
 		vkb::sg::SubMesh *sub_mesh;
-		int               offset = 0;
 	};
 	std::vector<std::vector<SceneNode>> scene_nodes;
 	typedef enum
@@ -148,8 +149,6 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	} sceneObjType_t;
 
 	std::unique_ptr<vkb::sg::SubMesh> background_model;
-
-	VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
 
 	struct Cube
 	{

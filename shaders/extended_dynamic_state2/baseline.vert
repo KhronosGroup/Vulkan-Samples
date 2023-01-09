@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Mobica Limited
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,18 +21,21 @@ layout(location = 1) in vec3 inNormal;
 
 layout(binding = 0) uniform UBO
 {
-    mat4 projection;
-    mat4 view;
-    vec4 ambientLightColor;
-    vec4 lightPosition;
-    vec4 lightColor;
-    float lightIntensity;
-}ubo;
+	mat4  projection;
+	mat4  view;
+	vec4  ambientLightColor;
+	vec4  lightPosition;
+	vec4  lightColor;
+	float lightIntensity;
+}
+ubo;
 
-layout(push_constant) uniform Push_Constants {
+layout(push_constant) uniform Push_Constants
+{
 	mat4 model;
 	vec4 color;
-} push_constants;
+}
+push_constants;
 
 layout(location = 0) out vec3 outPos;
 layout(location = 1) out vec3 outNormal;
@@ -50,16 +53,14 @@ out gl_PerVertex
 
 void main()
 {
-
-    fragColor = push_constants.color;
-    vec4 localPos = ubo.view * push_constants.model * vec4(inPos, 1.0);
-    gl_Position = ubo.projection * localPos;
-    outNormal = mat3(ubo.view * push_constants.model) * inNormal;
-    vec4 positionWorld =   push_constants.model *  vec4(inPos, 1.0);
-    outLightVec = ubo.lightPosition.xyz - positionWorld.xyz;
-    outLightColor[0] = ubo.lightColor.xyz * ubo.lightColor.w;
-    outLightColor[1] = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
-    outViewVec = -localPos.xyz;
-    outLightIntensity = ubo.lightIntensity;
-   
+	fragColor          = push_constants.color;
+	vec4 localPos      = ubo.view * push_constants.model * vec4(inPos, 1.0);
+	gl_Position        = ubo.projection * localPos;
+	outNormal          = mat3(ubo.view * push_constants.model) * inNormal;
+	vec4 positionWorld = push_constants.model * vec4(inPos, 1.0);
+	outLightVec        = ubo.lightPosition.xyz - positionWorld.xyz;
+	outLightColor[0]   = ubo.lightColor.xyz * ubo.lightColor.w;
+	outLightColor[1]   = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
+	outViewVec         = -localPos.xyz;
+	outLightIntensity  = ubo.lightIntensity;
 }

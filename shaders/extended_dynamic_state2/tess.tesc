@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,6 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
 layout(set = 0, binding = 0) uniform UBO
 {
@@ -32,7 +32,6 @@ layout(location = 1) in vec3 inNormal[];
 
 layout(location = 0) out vec3 outPos[3];
 layout(location = 1) out vec3 outNormal[3];
-
 
 void main()
 {
@@ -56,10 +55,9 @@ void main()
 			gl_TessLevelOuter[2] = 1;
 			gl_TessLevelOuter[3] = 1;
 		}
-		
 	}
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 	outNormal[gl_InvocationID]          = inNormal[gl_InvocationID];
-	outPos[gl_InvocationID] = inPos[gl_InvocationID];
+	outPos[gl_InvocationID]             = inPos[gl_InvocationID];
 }

@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,31 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inNormal;
+layout(location = 0) in vec3 inPos;
+layout(location = 1) in vec3 inNormal;
 
-layout (location = 0) out vec3 outPos;
-layout (location = 1) out vec3 outNormal;
+layout(location = 0) out vec3 outPos;
+layout(location = 1) out vec3 outNormal;
 
-layout (set = 0, binding = 0) uniform UBO 
+layout(set = 0, binding = 0) uniform UBO
 {
-	mat4 projection;
-	mat4 modelview;
-	vec4 lightPos;
+	mat4  projection;
+	mat4  modelview;
+	vec4  lightPos;
 	float tessellationFactor;
-
-} ubo; 
-
-
+}
+ubo;
 
 void main(void)
 {
-	gl_Position =  vec4(inPos, 1.0);
-	outNormal = mat3(ubo.modelview) * inNormal;
-	outPos = inPos;
-	
-	
-	
-	
+	gl_Position = vec4(inPos, 1.0);
+	outNormal   = mat3(ubo.modelview) * inNormal;
+	outPos      = inPos;
 }

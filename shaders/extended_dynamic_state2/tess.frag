@@ -1,5 +1,4 @@
-#version 450
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,17 +14,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-layout (location = 0) in vec3 inNormal;
-layout (location = 1) in vec3 inViewVec;
-layout (location = 2) in vec3 inLightVec;
-layout (location = 3) in vec3 inEyePos;
-layout (location = 4) in vec3 inWorldPos;
+layout(location = 0) in vec3 inNormal;
+layout(location = 1) in vec3 inViewVec;
+layout(location = 2) in vec3 inLightVec;
+layout(location = 3) in vec3 inEyePos;
+layout(location = 4) in vec3 inWorldPos;
 
-layout (location = 0) out vec4 outFragColor;
-
+layout(location = 0) out vec4 outFragColor;
 
 void main()
 {
-	outFragColor  = vec4(0.6667, 0.1176, 0.1176, 1.0);
+	outFragColor = vec4(0.6667, 0.1176, 0.1176, 1.0);
 }

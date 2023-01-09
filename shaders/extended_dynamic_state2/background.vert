@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Mobica Limited
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,15 +19,14 @@
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 
-
 layout(binding = 0) uniform UBO
 {
-	mat4  projection;
-	mat4  background_modelview;
-}ubo;
+	mat4 projection;
+	mat4 background_modelview;
+}
+ubo;
 
 layout(location = 0) out vec3 outUVW;
-
 
 out gl_PerVertex
 {
@@ -36,6 +35,6 @@ out gl_PerVertex
 
 void main()
 {
-	outUVW = inPos;
-	gl_Position = ubo.projection * vec4(mat3(ubo.background_modelview) * inPos, 1.0);
+	outUVW      = inPos;
+	gl_Position = ubo.projection * vec4(mat3(ubo.background_modelview) * (inPos * 10), 1.0);
 }

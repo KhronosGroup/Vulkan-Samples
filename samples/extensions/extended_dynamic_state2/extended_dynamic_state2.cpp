@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,8 +65,8 @@ bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_position({2.0f, 4.0f, -10.0f});
-	camera.set_rotation({-15.0f, 100.0f, 180.0f});
+	camera.set_position({2.0f, -4.0f, -10.0f});
+	camera.set_rotation({-15.0f, 180.0f, 0.0f});
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	load_assets();
@@ -205,6 +205,7 @@ void ExtendedDynamicState2::update_uniform_buffers()
  */
 void ExtendedDynamicState2::create_pipeline()
 {
+	/* Setup for first pipeline */
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -336,12 +337,15 @@ void ExtendedDynamicState2::create_pipeline()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.baseline));
 
+	/* Setup for second pipeline */
 	graphics_create.layout = pipeline_layouts.background;
 
 	std::vector<VkDynamicState> dynamic_state_enables_background = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
 	    VK_DYNAMIC_STATE_SCISSOR,
 	};
+	dynamic_state.pDynamicStates    = dynamic_state_enables_background.data();
+	dynamic_state.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables_background.size());
 
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings_background = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
@@ -360,13 +364,12 @@ void ExtendedDynamicState2::create_pipeline()
 
 	rasterization_state.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
-	dynamic_state.pDynamicStates    = dynamic_state_enables_background.data();
-	dynamic_state.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables_background.size());
-	shader_stages[0]                = load_shader("extended_dynamic_state2/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("extended_dynamic_state2/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("extended_dynamic_state2/background.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("extended_dynamic_state2/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.background));
 
+	/* Setup for third pipeline */
 	graphics_create.pTessellationState = &tessellation_state;
 	graphics_create.layout             = pipeline_layouts.tesselation;
 	input_assembly_state.topology      = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST;
