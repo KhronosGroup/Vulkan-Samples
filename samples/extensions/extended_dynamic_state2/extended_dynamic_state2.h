@@ -53,7 +53,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		int                            logic_op_index{};
 		VkLogicOp                      logicOp = VK_LOGIC_OP_CLEAR;
 		float                          patch_control_points_float{3.0f};
-		uint32_t                       patch_control_points{3};
+		int                            patch_control_points{3};
 		std::vector<ModelDynamicParam> objects;
 		int                            selected_obj     = 0;
 		bool                           selection_active = true;
