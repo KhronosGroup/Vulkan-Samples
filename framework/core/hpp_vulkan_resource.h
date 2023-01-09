@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -92,7 +92,6 @@ class HPPVulkanResource
 
 	inline void set_handle(HPPHandle hdl)
 	{
-		assert(!handle && hdl);
 		handle = hdl;
 	}
 
