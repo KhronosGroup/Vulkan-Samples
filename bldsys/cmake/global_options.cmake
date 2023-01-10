@@ -51,6 +51,8 @@ set(VKB_VULKAN_DEBUG ON CACHE BOOL "Enable VK_EXT_debug_utils or VK_EXT_debug_ma
 set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan best practice samples.")
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
+set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
+set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,vulkan_samples;-checks=-*,google-*,-google-runtime-references;-fix" CACHE STRING "Clang Tidy Parameters")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
@@ -65,3 +67,8 @@ add_definitions(-DROOT_PATH_SIZE=${ROOT_PATH_SIZE})
 
 set(CMAKE_C_FLAGS_DEBUG   "-DDEBUG=0 ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG=0 ${CMAKE_CXX_FLAGS_DEBUG}")
+
+if (VKB_CLANG_TIDY)
+    find_program(CLANG_TIDY "clang-tidy", "clang-tidy-15" REQUIRED)
+    set(VKB_DO_CLANG_TIDY ${CLANG_TIDY} ${VKB_CLANG_TIDY_EXTRAS})
+endif()

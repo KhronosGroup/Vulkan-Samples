@@ -175,4 +175,8 @@ function(add_project)
         # add test project to a folder
         set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
     endif()
+
+    if(VKB_DO_CLANG_TIDY)
+        set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+    endif()
 endfunction()
