@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2021, Sascha Willems
- * Modifications Copyright (c) 2022, Holochip Corporation
+/* Copyright (c) 2019-2023, Sascha Willems
+ * Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 
 MemoryBudget::MemoryBudget()
 {
-	title = "Memory Budget on Instanced Mesh Renderer";
+	title = "Memory Budget";
 
 	// Enable instance and device extensions required to use VK_EXT_memory_budget
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
@@ -179,6 +179,20 @@ const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64
 	}
 
 	return returnMe;
+}
+
+const std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryHeapFlag)
+{
+	switch (inputVkMemoryHeapFlag)
+	{
+		case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
+			return "Device Local Bit";
+		case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT:        // NOTICE THAT: enum value also represents "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR"
+			return "Multiple Instance Bit";
+		default:
+			// In case that it does NOT correspond to device local memory
+			return "Non-local Heap Memory";
+	}
 }
 
 void MemoryBudget::update_device_memory_properties()
@@ -591,15 +605,21 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 	converted_memory = update_converted_memory(device_memory_total_budget);
 	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
 
-	if (drawer.header("Memory Heap Details:"))
+	if (drawer.header("Memory Heap Details"))
 	{
-		for (uint32_t i = 0; i < device_memory_heap_count; i++)
+		for (int i = 0; i < static_cast<int>(device_memory_heap_count); i++)
 		{
-			converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
-			drawer.text("Memory Heap %lu: Usage: %llu %s", i, converted_memory.data, converted_memory.units.c_str());
+			std::string header = "Memory Heap Index: " + std::to_string(i);
+			if (drawer.header(header.c_str()))
+			{
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
+				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
 
-			converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
-			drawer.text("Memory Heap %lu: Budget: %llu %s", i, converted_memory.data, converted_memory.units.c_str());
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
+				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+
+				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
+			}
 		}
 	}
 }

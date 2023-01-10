@@ -1,5 +1,5 @@
-# Copyright (c) 2019-2021, Sascha Willems
-# Modifications Copyright (c) 2022, Holochip Corporation
+# Copyright (c) 2019-2023, Sascha Willems
+# Copyright (c) 2023, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -25,7 +25,7 @@ add_sample_with_tags(
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip Corporation"
         NAME "Memory Budget"
-        DESCRIPTION "Modifications were created by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features, and density of the instanced meshes can be adjusted."
+        DESCRIPTION "Modifications were created by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features."
         SHADER_FILES_GLSL
         "instancing/instancing.vert"
         "instancing/instancing.frag"
