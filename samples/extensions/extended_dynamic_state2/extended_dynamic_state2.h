@@ -23,22 +23,6 @@
 class ExtendedDynamicState2 : public ApiVulkanSample
 {
   public:
-	std::vector<std::string> logic_op_object_names{"CLEAR",
-	                                               "AND",
-	                                               "AND_REVERSE",
-	                                               "COPY",
-	                                               "AND_INVERTED",
-	                                               "NO_OP",
-	                                               "XOR",
-	                                               "OR",
-	                                               "NOR",
-	                                               "EQUIVALENT",
-	                                               "INVERT",
-	                                               "OR_REVERSE",
-	                                               "COPY_INVERTED",
-	                                               "OR_INVERTED",
-	                                               "NAND",
-	                                               "SET"};
 
 	typedef struct
 	{
@@ -50,8 +34,6 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	{
 		bool                           tessellation = false;
 		float                          tess_factor  = 1.0;
-		int                            logic_op_index{};
-		VkLogicOp                      logicOp = VK_LOGIC_OP_CLEAR;
 		float                          patch_control_points_float{3.0f};
 		int                            patch_control_points{3};
 		std::vector<ModelDynamicParam> objects;
@@ -173,17 +155,17 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	void create_pipeline();
 	void draw();
 
-	void     load_assets();
-	void     create_descriptor_pool();
-	void     setup_descriptor_set_layout();
-	void     create_descriptor_sets();
-	uint32_t get_node_index(std::string name, std::vector<SceneNode> *scene_node);
-	void     selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat);
-	void     scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node);
-	void     draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index);
-	void     draw_created_model(VkCommandBuffer commandBuffer);
-	void     model_data_creation();
-	void     cube_animation(float delta_time);
+	void load_assets();
+	void create_descriptor_pool();
+	void setup_descriptor_set_layout();
+	void create_descriptor_sets();
+	int  get_node_index(std::string name, std::vector<SceneNode> *scene_node);
+	void selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat);
+	void scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node);
+	void draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index);
+	void draw_created_model(VkCommandBuffer commandBuffer);
+	void model_data_creation();
+	void cube_animation(float delta_time);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state2();

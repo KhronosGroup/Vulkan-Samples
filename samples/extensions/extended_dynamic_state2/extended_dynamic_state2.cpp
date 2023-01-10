@@ -580,9 +580,7 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 
 /**
  * 	@fn void ExtendedDynamicState2::create_descriptor_sets()
- * 	@brief Creating both descriptor set:
- * 		   1. Uniform buffer
- * 		   2. Image sampler
+ * 	@brief Creating descriptor sets for 3 separate pipelines.
 */
 void ExtendedDynamicState2::create_descriptor_sets()
 {
@@ -653,6 +651,10 @@ void ExtendedDynamicState2::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
+/**
+ * @fn void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
+ * @brief Enabling features related to Vulkan extensions
+*/
 void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	/* Enable extension features required by this sample
@@ -687,6 +689,10 @@ void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
+/**
+ * @fn void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
+ * @brief Projecting GUI and transferring data between GUI and app
+*/
 void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
@@ -707,12 +713,6 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 				gui_settings.patch_control_points_float = 1;
 			}
 			gui_settings.patch_control_points = static_cast<int>(roundf(gui_settings.patch_control_points_float));
-		}
-		if (drawer.combo_box("Logic type", &gui_settings.logic_op_index, logic_op_object_names))
-		{
-			gui_settings.logicOp = static_cast<VkLogicOp>(gui_settings.logic_op_index);
-			update_uniform_buffers();
-			build_command_buffers();
 		}
 	}
 	if (drawer.header("Models"))
@@ -741,15 +741,24 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
+/**
+ * @fn void ExtendedDynamicState2::update(float delta_time)
+ * @brief Function which was called in every frame.
+ * @details For presenting z-fighting, a small animation was implemented (cube_animation)
+*/
 void ExtendedDynamicState2::update(float delta_time)
 {
 	cube_animation(delta_time);
 	ApiVulkanSample::update(delta_time);
 }
 
-uint32_t ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
+/**
+ * @fn int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
+ * @brief Extracting index value based on provided name (string)
+*/
+int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
 {
-	uint32_t i = 0;
+	int i = 0;
 	for (i = 0; i < scene_node->size(); i++)
 	{
 		if (scene_node->at(i).node->get_name() == name)
@@ -760,6 +769,10 @@ uint32_t ExtendedDynamicState2::get_node_index(std::string name, std::vector<Sce
 	return i;
 }
 
+/**
+ * @fn void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat)
+ * @brief Changing alpha value to create blinking effect on selected model
+*/
 void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat)
 {
 	static bool                        rise              = false;
@@ -808,6 +821,12 @@ void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *orig
 	}
 }
 
+/**
+ * @fn void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node)
+ * @brief Spliting main scene into two separate.
+ * @details This operation is required to use same "draw_from_scene" function to draw models that are using different
+ * 			pipelines (baseline and tessellation)
+*/
 void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node)
 {
 	int scene_nodes_cnt = scene_node->at(SCENE_ALL_OBJ_INDEX).size();
@@ -831,6 +850,10 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneN
 	scene_node->push_back(scene_elements_tess);
 }
 
+/**
+ * @fn void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
+ * @brief Drawing all objects included to scene that is passed as argument of this function
+*/
 void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
 {
 	auto &node               = scene_node->at(scene_index);
@@ -873,6 +896,10 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 	}
 }
 
+/**
+ * @fn void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
+ * @brief Drawing model created in function "model_data_creation"
+*/
 void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[1] = {0};
@@ -884,6 +911,10 @@ void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
 	vkCmdDrawIndexed(commandBuffer, cube.index_count, 1, 0, 0, 0);
 }
 
+/**
+ * @fn void ExtendedDynamicState2::model_data_creation()
+ * @brief Creating model (basic cube) vertex data
+*/
 void ExtendedDynamicState2::model_data_creation()
 {
 	constexpr uint32_t vertex_count = 8;
@@ -1023,6 +1054,10 @@ void ExtendedDynamicState2::model_data_creation()
 	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
 }
 
+/**
+ * @fn void ExtendedDynamicState2::cube_animation(float delta_time)
+ * @brief Changing position of one z-fighting cube (visualize negative phenomenon z-fighting)
+*/
 void ExtendedDynamicState2::cube_animation(float delta_time)
 {
 	constexpr float tick_limit = 0.05;
