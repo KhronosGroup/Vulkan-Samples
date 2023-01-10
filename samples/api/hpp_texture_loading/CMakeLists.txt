@@ -28,5 +28,3 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "texture_loading/texture.vert"
         "texture_loading/texture.frag")
-
-target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

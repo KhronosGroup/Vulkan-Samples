@@ -28,5 +28,3 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "separate_image_sampler/separate_image_sampler.vert"
         "separate_image_sampler/separate_image_sampler.frag")
-
-target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)
