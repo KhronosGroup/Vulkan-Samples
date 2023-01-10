@@ -54,9 +54,7 @@ class HelperOutputGenerator(reg.OutputGenerator):
                 for section in self.SECTIONS:
                     contents = self.sections[section]
                     self.outFile.writelines(contents)
-                    self.newline()
-                self.newline()
-
+                    
         super().endFeature()
 
     def appendSection(self, section, text):

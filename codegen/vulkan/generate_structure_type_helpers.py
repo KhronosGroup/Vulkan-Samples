@@ -57,7 +57,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
     def endFile(self):
 
         self.outFile.write(
-            '#endif' +  # end last feature
+            '#endif\n' +  # end last feature
             '}        // namespace vulkan\n' +
             '}        // namespace components\n')
 
@@ -88,7 +88,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
                 if is_new_feature:
                     if not is_first_feature:
                         # first endif isn't required
-                        section += f'#endif\n\n'
+                        section += f'#endif\n'
 
                     section += f'#ifdef {nextFeatureName}\n'
 
