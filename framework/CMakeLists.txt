@@ -446,9 +446,6 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
-# Pre compiled headers
-# vulkan_samples_pch(PROJECT_FILES pch.cpp)
-
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
 # compiler flags based on compiler type
