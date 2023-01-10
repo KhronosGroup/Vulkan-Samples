@@ -348,7 +348,7 @@ void TimelineSemaphore::async_compute_loop()
 		}
 		else
 		{
-			auto elapsed = float(timer.elapsed());
+			auto elapsed = static_cast<float>(timer.elapsed());
 
 			// Either we iterate the game every second, or we mutate it by changing colors gradually
 			// to make something more aesthetically interesting.
@@ -432,7 +432,7 @@ void TimelineSemaphore::prepare_queue()
 	// If we cannot find that queue family, at least try to find a queue which is not the "main" queue.
 	// If we have different queues we can safely use out of order signal and wait which is a core part of this sample.
 
-	auto &   device       = get_device();
+	auto    &device       = get_device();
 	uint32_t family_index = device.get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 	uint32_t num_queues   = device.get_num_queues_for_queue_family(family_index);
 
@@ -628,7 +628,7 @@ void TimelineSemaphore::render(float delta_time)
 	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
 	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
 
-	VkViewport viewport = {0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f};
+	VkViewport viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
 
 	// Simple fix for 1:1 pixel aspect ratio.

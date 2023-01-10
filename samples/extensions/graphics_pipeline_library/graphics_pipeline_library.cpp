@@ -118,8 +118,8 @@ void GraphicsPipelineLibrary::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, nullptr);
 
-		float w = (float) width / (float) split_x;
-		float h = (float) height / (float) split_y;
+		float w = static_cast<float>(width) / static_cast<float>(split_x);
+		float h = static_cast<float>(height) / static_cast<float>(split_y);
 
 		uint32_t idx = 0;
 		for (uint32_t y = 0; y < split_y; y++)
@@ -127,8 +127,8 @@ void GraphicsPipelineLibrary::build_command_buffers()
 			for (uint32_t x = 0; x < split_x; x++)
 			{
 				VkViewport viewport{};
-				viewport.x        = w * (float) x;
-				viewport.y        = h * (float) y;
+				viewport.x        = w * static_cast<float>(x);
+				viewport.y        = h * static_cast<float>(y);
 				viewport.width    = w;
 				viewport.height   = h;
 				viewport.minDepth = 0.0f;
@@ -136,10 +136,10 @@ void GraphicsPipelineLibrary::build_command_buffers()
 				vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 				VkRect2D scissor{};
-				scissor.extent.width  = (uint32_t) w;
-				scissor.extent.height = (uint32_t) h;
-				scissor.offset.x      = (uint32_t) w * x;
-				scissor.offset.y      = (uint32_t) h * y;
+				scissor.extent.width  = static_cast<uint32_t>(w);
+				scissor.extent.height = static_cast<uint32_t>(h);
+				scissor.offset.x      = static_cast<uint32_t>(w) * x;
+				scissor.offset.y      = static_cast<uint32_t>(h) * y;
 				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 				if (pipelines.size() > idx)
@@ -366,8 +366,8 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	shader_Stage_create_info.pName = "main";
 
 	// Select lighting model using a specialization constant
-	srand((unsigned int) time(NULL));
-	uint32_t lighting_model = (int) (rand() % 3);
+	srand(static_cast<unsigned int>(time(NULL)));
+	uint32_t lighting_model = (rand() % 3);
 
 	// Each shader constant of a shader stage corresponds to one map entry
 	VkSpecializationMapEntry specialization_map_entry{};
@@ -444,7 +444,7 @@ void GraphicsPipelineLibrary::prepare_uniform_buffers()
 
 void GraphicsPipelineLibrary::update_uniform_buffers()
 {
-	camera.set_perspective(45.0f, ((float) width / (float) split_x) / ((float) height / (float) split_y), 0.1f, 256.0f);
+	camera.set_perspective(45.0f, (static_cast<float>(width) / static_cast<float>(split_x)) / (static_cast<float>(height) / static_cast<float>(split_y)), 0.1f, 256.0f);
 
 	ubo_vs.projection = camera.matrices.perspective;
 	ubo_vs.modelview  = camera.matrices.view * glm::rotate(glm::mat4(1.0f), glm::radians(accumulated_time * 360.0f), glm::vec3(0.0f, 1.0f, 0.0f));
@@ -508,7 +508,9 @@ bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
 void GraphicsPipelineLibrary::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	if (new_pipeline_created)
 	{
 		new_pipeline_created = false;

@@ -324,7 +324,9 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 	// The gltf spec states that the base and emissive textures MUST be encoded with the sRGB
 	// transfer function. All other texture types are linear.
 	if (name == "baseColorTexture" || name == "emissiveTexture")
+	{
 		return true;
+	}
 
 	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
 	assert(name == "metallicRoughnessTexture" || name == "normalTexture" || name == "occlusionTexture");
@@ -612,7 +614,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
 
 				if (texture_needs_srgb_colorspace(gltf_value.first))
+				{
 					tex->get_image()->coerce_format_to_srgb();
+				}
 
 				material->textures[tex_name] = tex;
 			}
@@ -627,7 +631,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
 
 				if (texture_needs_srgb_colorspace(gltf_value.first))
+				{
 					tex->get_image()->coerce_format_to_srgb();
+				}
 
 				material->textures[tex_name] = tex;
 			}
@@ -1009,16 +1015,16 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 	std::vector<Vertex> vertex_data;
 
-	const float *   pos     = nullptr;
-	const float *   normals = nullptr;
-	const float *   uvs     = nullptr;
+	const float    *pos     = nullptr;
+	const float    *normals = nullptr;
+	const float    *uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
-	const float *   weights = nullptr;
+	const float    *weights = nullptr;
 
 	// Position attribute is required
-	auto & accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
+	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
 	size_t vertex_count = accessor.count;
-	auto & buffer_view  = model.bufferViews[accessor.bufferView];
+	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
@@ -1110,7 +1116,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 			}
 		}
 
-		//Always do uint32
+		// Always do uint32
 		submesh->index_type = VK_INDEX_TYPE_UINT32;
 
 		core::Buffer stage_buffer{device,

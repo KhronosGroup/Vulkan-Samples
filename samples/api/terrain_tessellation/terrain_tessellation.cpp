@@ -226,7 +226,7 @@ void TerrainTessellation::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -273,7 +273,7 @@ void TerrainTessellation::generate_terrain()
 	const uint32_t patch_size   = 64;
 	const float    uv_scale     = 1.0f;
 	const uint32_t vertex_count = patch_size * patch_size;
-	Vertex *       vertices     = new Vertex[vertex_count];
+	Vertex        *vertices     = new Vertex[vertex_count];
 
 	const float wx = 2.0f;
 	const float wy = 2.0f;
@@ -283,10 +283,10 @@ void TerrainTessellation::generate_terrain()
 		for (auto y = 0; y < patch_size; y++)
 		{
 			uint32_t index         = (x + y * patch_size);
-			vertices[index].pos[0] = x * wx + wx / 2.0f - (float) patch_size * wx / 2.0f;
+			vertices[index].pos[0] = x * wx + wx / 2.0f - static_cast<float>(patch_size) * wx / 2.0f;
 			vertices[index].pos[1] = 0.0f;
-			vertices[index].pos[2] = y * wy + wy / 2.0f - (float) patch_size * wy / 2.0f;
-			vertices[index].uv     = glm::vec2((float) x / patch_size, (float) y / patch_size) * uv_scale;
+			vertices[index].pos[2] = y * wy + wy / 2.0f - static_cast<float>(patch_size) * wy / 2.0f;
+			vertices[index].uv     = glm::vec2(static_cast<float>(x) / patch_size, static_cast<float>(y) / patch_size) * uv_scale;
 		}
 	}
 
@@ -323,7 +323,7 @@ void TerrainTessellation::generate_terrain()
 	// Indices
 	const uint32_t w           = (patch_size - 1);
 	const uint32_t index_count = w * w * 4;
-	uint32_t *     indices     = new uint32_t[index_count];
+	uint32_t      *indices     = new uint32_t[index_count];
 	for (auto x = 0; x < w; x++)
 	{
 		for (auto y = 0; y < w; y++)
@@ -682,7 +682,7 @@ void TerrainTessellation::update_uniform_buffers()
 	ubo_tess.projection   = camera.matrices.perspective;
 	ubo_tess.modelview    = camera.matrices.view * glm::mat4(1.0f);
 	ubo_tess.light_pos.y  = -0.5f - ubo_tess.displacement_factor;        // todo: Not uesed yet
-	ubo_tess.viewport_dim = glm::vec2((float) width, (float) height);
+	ubo_tess.viewport_dim = glm::vec2(static_cast<float>(width), static_cast<float>(height));
 
 	frustum.update(ubo_tess.projection * ubo_tess.modelview);
 	memcpy(ubo_tess.frustum_planes, frustum.get_planes().data(), sizeof(glm::vec4) * 6);
@@ -735,7 +735,7 @@ bool TerrainTessellation::prepare(vkb::Platform &platform)
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-12.0f, 159.0f, 0.0f));
 	camera.set_translation(glm::vec3(18.0f, 22.5f, 57.5f));
 	camera.translation_speed = 7.5f;
@@ -759,7 +759,9 @@ bool TerrainTessellation::prepare(vkb::Platform &platform)
 void TerrainTessellation::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 

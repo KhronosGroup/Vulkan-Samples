@@ -154,7 +154,7 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 
 	if ((width > 0.0f) && (height > 0.0f))
 	{
-		camera.update_aspect_ratio((float) width / (float) height);
+		camera.update_aspect_ratio(static_cast<float>(width) / static_cast<float>(height));
 	}
 
 	// Notify derived class
@@ -273,8 +273,8 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					int32_t eventX = static_cast<int32_t>(touch_event.get_pos_x());
 					int32_t eventY = static_cast<int32_t>(touch_event.get_pos_y());
 
-					float deltaX = (float) (touch_pos.y - eventY) * rotation_speed * 0.5f;
-					float deltaY = (float) (touch_pos.x - eventX) * rotation_speed * 0.5f;
+					float deltaX = static_cast<float>(touch_pos.y - eventY) * rotation_speed * 0.5f;
+					float deltaY = static_cast<float>(touch_pos.x - eventX) * rotation_speed * 0.5f;
 
 					camera.rotate(glm::vec3(deltaX, 0.0f, 0.0f));
 					camera.rotate(glm::vec3(0.0f, -deltaY, 0.0f));
@@ -342,8 +342,8 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 
 void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 {
-	int32_t dx = (int32_t) mouse_pos.x - x;
-	int32_t dy = (int32_t) mouse_pos.y - y;
+	int32_t dx = static_cast<int32_t>(mouse_pos.x) - x;
+	int32_t dy = static_cast<int32_t>(mouse_pos.y) - y;
 
 	bool handled = false;
 
@@ -352,11 +352,11 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		ImGuiIO &io = ImGui::GetIO();
 		handled     = io.WantCaptureMouse;
 	}
-	mouse_moved((float) x, (float) y, handled);
+	mouse_moved(static_cast<float>(x), static_cast<float>(y), handled);
 
 	if (handled)
 	{
-		mouse_pos = glm::vec2((float) x, (float) y);
+		mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 		return;
 	}
 
@@ -380,7 +380,7 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
 		view_updated = true;
 	}
-	mouse_pos = glm::vec2((float) x, (float) y);
+	mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 }
 
 void ApiVulkanSample::mouse_moved(double x, double y, bool &handled)
@@ -1087,7 +1087,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1188,7 +1188,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1288,7 +1288,7 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	VkDeviceSize offsets[1] = {0};
 
 	const auto &vertex_buffer = model->vertex_buffers.at("vertex_buffer");
-	auto &      index_buffer  = model->index_buffer;
+	auto       &index_buffer  = model->index_buffer;
 
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);

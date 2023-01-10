@@ -64,8 +64,8 @@ void FragmentShadingRate::request_gpu_features(vkb::PhysicalDevice &gpu)
 }
 
 /*
-* Create an image that contains the values used to determine the shading rates to apply during scene rendering
-*/
+ * Create an image that contains the values used to determine the shading rates to apply during scene rendering
+ */
 void FragmentShadingRate::create_shading_rate_attachment()
 {
 	// Check if the requested format for the shading rate attachment supports the required flag
@@ -80,8 +80,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	// Shading rate image size depends on shading rate texel size
 	// For each texel in the target image, there is a corresponding shading texel size width x height block in the shading rate image
 	VkExtent3D image_extent{};
-	image_extent.width  = static_cast<uint32_t>(ceil(width / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
-	image_extent.height = static_cast<uint32_t>(ceil(height / (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
+	image_extent.width  = static_cast<uint32_t>(ceil(width / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width)));
+	image_extent.height = static_cast<uint32_t>(ceil(height / static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height)));
 	image_extent.depth  = 1;
 
 	VkImageCreateInfo image_create_info{};
@@ -162,8 +162,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	{
 		for (uint32_t x = 0; x < image_extent.width; x++)
 		{
-			const float deltaX = ((float) image_extent.width / 2.0f - (float) x) / image_extent.width * 100.0f;
-			const float deltaY = ((float) image_extent.height / 2.0f - (float) y) / image_extent.height * 100.0f;
+			const float deltaX = (static_cast<float>(image_extent.width) / 2.0f - static_cast<float>(x)) / image_extent.width * 100.0f;
+			const float deltaY = (static_cast<float>(image_extent.height) / 2.0f - static_cast<float>(y)) / image_extent.height * 100.0f;
 			const float dist   = std::sqrt(deltaX * deltaX + deltaY * deltaY);
 			for (auto pattern : pattern_lookup)
 			{
@@ -224,8 +224,8 @@ void FragmentShadingRate::create_shading_rate_attachment()
 }
 
 /*
-* The shading rate image needs to be invalidated and recreated when the frame buffer is resized
-*/
+ * The shading rate image needs to be invalidated and recreated when the frame buffer is resized
+ */
 void FragmentShadingRate::invalidate_shading_rate_attachment()
 {
 	device->wait_idle();
@@ -238,8 +238,8 @@ void FragmentShadingRate::invalidate_shading_rate_attachment()
 }
 
 /*
-* This sample uses a custom render pass setup, as the shading rate image needs to be passed to the sample's render / sub pass
-*/
+ * This sample uses a custom render pass setup, as the shading rate image needs to be passed to the sample's render / sub pass
+ */
 void FragmentShadingRate::setup_render_pass()
 {
 	// Query the fragment shading rate properties of the current implementation, we will need them later on
@@ -353,8 +353,8 @@ void FragmentShadingRate::setup_render_pass()
 }
 
 /*
-* This sample uses a custom frame buffer setup, that includes the fragment shading rate image attachment
-*/
+ * This sample uses a custom frame buffer setup, that includes the fragment shading rate image attachment
+ */
 void FragmentShadingRate::setup_framebuffer()
 {
 	// Create ths shading rate image attachment if not defined (first run and resize)
@@ -435,7 +435,7 @@ void FragmentShadingRate::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -704,7 +704,7 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -720,10 +720,14 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 void FragmentShadingRate::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)

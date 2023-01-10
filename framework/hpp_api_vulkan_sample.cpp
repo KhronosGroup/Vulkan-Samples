@@ -146,7 +146,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 	if (extent.width && extent.height)
 	{
-		camera.update_aspect_ratio((float) extent.width / (float) extent.height);
+		camera.update_aspect_ratio(static_cast<float>(extent.width) / static_cast<float>(extent.height));
 	}
 
 	// Notify derived class
@@ -260,8 +260,8 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					int32_t eventX = static_cast<int32_t>(touch_event.get_pos_x());
 					int32_t eventY = static_cast<int32_t>(touch_event.get_pos_y());
 
-					float deltaX = (float) (touch_pos.y - eventY) * rotation_speed * 0.5f;
-					float deltaY = (float) (touch_pos.x - eventX) * rotation_speed * 0.5f;
+					float deltaX = static_cast<float>(touch_pos.y - eventY) * rotation_speed * 0.5f;
+					float deltaY = static_cast<float>(touch_pos.x - eventX) * rotation_speed * 0.5f;
 
 					camera.rotate(glm::vec3(deltaX, 0.0f, 0.0f));
 					camera.rotate(glm::vec3(0.0f, -deltaY, 0.0f));
@@ -329,8 +329,8 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 
 void HPPApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 {
-	int32_t dx = (int32_t) mouse_pos.x - x;
-	int32_t dy = (int32_t) mouse_pos.y - y;
+	int32_t dx = static_cast<int32_t>(mouse_pos.x) - x;
+	int32_t dy = static_cast<int32_t>(mouse_pos.y) - y;
 
 	bool handled = false;
 
@@ -339,11 +339,11 @@ void HPPApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		ImGuiIO &io = ImGui::GetIO();
 		handled     = io.WantCaptureMouse;
 	}
-	mouse_moved((float) x, (float) y, handled);
+	mouse_moved(static_cast<float>(x), static_cast<float>(y), handled);
 
 	if (handled)
 	{
-		mouse_pos = glm::vec2((float) x, (float) y);
+		mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 		return;
 	}
 
@@ -367,7 +367,7 @@ void HPPApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
 		view_updated = true;
 	}
-	mouse_pos = glm::vec2((float) x, (float) y);
+	mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 }
 
 void HPPApiVulkanSample::mouse_moved(double x, double y, bool &handled)
@@ -940,7 +940,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1024,7 +1024,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1110,7 +1110,7 @@ void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components
 	vk::DeviceSize offset = 0;
 
 	const auto &vertex_buffer = model->get_vertex_buffer("vertex_buffer");
-	auto &      index_buffer  = model->get_index_buffer();
+	auto       &index_buffer  = model->get_index_buffer();
 
 	command_buffer.bindVertexBuffers(0, vertex_buffer.get_handle(), offset);
 	command_buffer.bindIndexBuffer(index_buffer.get_handle(), 0, model->get_index_type());

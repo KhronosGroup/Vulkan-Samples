@@ -268,7 +268,7 @@ void ConservativeRasterization::build_command_buffers()
 			render_pass_begin_info.clearValueCount          = 2;
 			render_pass_begin_info.pClearValues             = clear_values;
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen_pass.width, (float) offscreen_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen_pass.width), static_cast<float>(offscreen_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen_pass.width, offscreen_pass.height, 0, 0);
@@ -307,7 +307,7 @@ void ConservativeRasterization::build_command_buffers()
 			render_pass_begin_info.pClearValues             = clear_values;
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -518,7 +518,7 @@ void ConservativeRasterization::prepare_pipelines()
 	pipeline_create_info.layout            = pipeline_layouts.scene;
 
 	// Original triangle outline
-	// TODO: Check support for lines
+	// TODO(tomatkinson): Check support for lines
 	rasterization_state.lineWidth   = 2.0f;
 	rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 	shader_stages[0]                = load_shader("conservative_rasterization/triangle.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -583,7 +583,7 @@ bool ConservativeRasterization::prepare(vkb::Platform &platform)
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.0f));
 
@@ -602,10 +602,14 @@ bool ConservativeRasterization::prepare(vkb::Platform &platform)
 void ConservativeRasterization::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers_scene();
+	}
 }
 
 void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)

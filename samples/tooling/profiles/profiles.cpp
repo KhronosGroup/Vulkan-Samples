@@ -63,7 +63,7 @@ void Profiles::create_device()
 
 	// Simplified queue setup (only graphics)
 	uint32_t                selected_queue_family   = 0;
-	const auto &            queue_family_properties = gpu.get_queue_family_properties();
+	const auto             &queue_family_properties = gpu.get_queue_family_properties();
 	const float             default_queue_priority{0.0f};
 	VkDeviceQueueCreateInfo queue_create_info{};
 	queue_create_info.sType            = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -220,7 +220,7 @@ void Profiles::generate_textures()
 		std::default_random_engine           rnd_engine(rnd_device());
 		std::uniform_int_distribution<short> rnd_dist(0, 255);
 		const size_t                         buffer_size = dim * dim * 4;
-		uint8_t *                            buffer      = staging_buffer->map();
+		uint8_t                             *buffer      = staging_buffer->map();
 		for (size_t i = 0; i < dim * dim; i++)
 		{
 			buffer[i * 4]     = static_cast<uint8_t>(rnd_dist(rnd_engine));
@@ -390,7 +390,7 @@ void Profiles::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -674,7 +674,7 @@ bool Profiles::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f));
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	generate_textures();
 	generate_cubes();
@@ -691,7 +691,9 @@ bool Profiles::prepare(vkb::Platform &platform)
 void Profiles::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 

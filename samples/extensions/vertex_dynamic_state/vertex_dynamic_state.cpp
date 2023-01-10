@@ -45,8 +45,8 @@ VertexDynamicState::~VertexDynamicState()
 
 /**
  * 	@fn bool VertexDynamicState::prepare(vkb::Platform &platform)
- * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc. 
-*/
+ * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
+ */
 bool VertexDynamicState::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
@@ -57,7 +57,7 @@ bool VertexDynamicState::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.f, 1.0f, -6.0f});
 	camera.set_rotation({0.f, 0.f, 0.f});
-	camera.set_perspective(60.f, (float) width / (float) height, 256.f, 0.1f);
+	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -73,7 +73,7 @@ bool VertexDynamicState::prepare(vkb::Platform &platform)
 }
 /**
  * 	@fn void VertexDynamicState::load_assets()
- *	@brief Loading extra models, textures from assets 
+ *	@brief Loading extra models, textures from assets
  */
 void VertexDynamicState::load_assets()
 {
@@ -101,14 +101,18 @@ void VertexDynamicState::draw()
 /**
  * 	@fn void VertexDynamicState::render(float delta_time)
  * 	@brief Drawing frames and/or updating uniform buffers when camera position/rotation was changed
-*/
+ */
 void VertexDynamicState::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 /**
@@ -149,11 +153,11 @@ void VertexDynamicState::update_uniform_buffers()
  * 			 - VkPipelineShaderStageCreateInfo
  * 			 - VkPipelineRenderingCreateInfoKHR
  * 			 - VkGraphicsPipelineCreateInfo
- * 
+ *
  * 	@note Specific settings that were used to implement Vertex Input Dynamic State extension in this sample:
  * 			 - In VkPipelineDynamicStateCreateInfo use "VK_DYNAMIC_STATE_VERTEX_INPUT_EXT" enumeration in config vector.
  * 			 - In VkGraphicsPipelineCreateInfo "pVertexInputState" element is not require to declare (when using vertex input dynamic state)
- * 
+ *
  */
 void VertexDynamicState::create_pipeline()
 {
@@ -292,7 +296,7 @@ void VertexDynamicState::create_pipeline()
  * 			 - Object - cube that was placed in the middle with some reflection shader effect.
  * 			 - Created model - cube that was created on runtime.
  * 			 - UI - some statistic tab
- * 
+ *
  * 	@note In case of Vertex Input Dynamic State feature sample need to create model in runtime because of requirement to have different data structure.
  * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure in framework files).
  * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is called for dynamically change Vertex Input data.
@@ -330,7 +334,7 @@ void VertexDynamicState::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
@@ -379,7 +383,7 @@ void VertexDynamicState::build_command_buffers()
 /**
  * 	@fn void VertexDynamicState::create_descriptor_pool()
  * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
-*/
+ */
 void VertexDynamicState::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -394,7 +398,7 @@ void VertexDynamicState::create_descriptor_pool()
 /**
  * 	@fn void VertexDynamicState::setup_descriptor_set_layout()
  * 	@brief Creating layout for descriptor sets
-*/
+ */
 void VertexDynamicState::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
@@ -420,7 +424,7 @@ void VertexDynamicState::setup_descriptor_set_layout()
  * 	@brief Creating both descriptor set:
  * 		   1. Uniform buffer
  * 		   2. Image sampler
-*/
+ */
 void VertexDynamicState::create_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info =

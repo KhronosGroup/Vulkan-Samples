@@ -59,8 +59,8 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	{
 		VkInstance instance = get_device().get_gpu().get_instance().get_handle();
 		assert(!!instance);
-		vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
-		vkCmdEndRenderingKHR   = (PFN_vkCmdEndRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
+		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR"));
+		vkCmdEndRenderingKHR   = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR"));
 		if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
 		{
 			throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
@@ -71,7 +71,7 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.f, 0.f, -4.f});
 	camera.set_rotation({0.f, 180.f, 0.f});
-	camera.set_perspective(60.f, (float) width / (float) height, 256.f, 0.1f);
+	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -335,7 +335,7 @@ void DynamicRendering::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
 		auto draw_scene = [&] {
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
@@ -446,10 +446,14 @@ void DynamicRendering::build_command_buffers()
 void DynamicRendering::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void DynamicRendering::view_changed()

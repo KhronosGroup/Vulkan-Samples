@@ -750,7 +750,9 @@ void MSAASample::draw_gui()
 			    {
 				    bool is_selected = (gui_sample_count == supported_sample_count_list[n]);
 				    if (ImGui::Selectable(to_string(supported_sample_count_list[n]).c_str(), is_selected))
+				    {
 					    gui_sample_count = supported_sample_count_list[n];
+				    }
 				    if (is_selected)
 				    {
 					    ImGui::SetItemDefaultFocus();
@@ -794,7 +796,9 @@ void MSAASample::draw_gui()
 					    {
 						    bool is_selected = (gui_depth_resolve_mode == supported_depth_resolve_mode_list[n]);
 						    if (ImGui::Selectable(to_string(supported_depth_resolve_mode_list[n]).c_str(), is_selected))
+						    {
 							    gui_depth_resolve_mode = supported_depth_resolve_mode_list[n];
+						    }
 						    if (is_selected)
 						    {
 							    ImGui::SetItemDefaultFocus();

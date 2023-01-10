@@ -67,7 +67,9 @@ void *HPPDynamicUniformBuffers::aligned_alloc(size_t size, size_t alignment)
 #else
 	int res = posix_memalign(&data, alignment, size);
 	if (res != 0)
+	{
 		data = nullptr;
+	}
 #endif
 	return data;
 }
@@ -338,7 +340,7 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 
 	size_t buffer_size = OBJECT_INSTANCES * dynamic_alignment;
 
-	ubo_data_dynamic.model = (glm::mat4 *) aligned_alloc(buffer_size, dynamic_alignment);
+	ubo_data_dynamic.model = static_cast<glm::mat4 *>(aligned_alloc(buffer_size, dynamic_alignment));
 	assert(ubo_data_dynamic.model);
 
 	std::cout << "minUniformBufferOffsetAlignment = " << min_ubo_alignment << std::endl;
@@ -354,7 +356,7 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
@@ -438,7 +440,7 @@ bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 	camera.set_rotation(glm::vec3(0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 
 	generate_cube();
 	prepare_uniform_buffers();

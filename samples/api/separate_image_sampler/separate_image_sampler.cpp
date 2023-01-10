@@ -85,7 +85,7 @@ void SeparateImageSampler::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -122,7 +122,7 @@ void SeparateImageSampler::setup_samplers()
 	samplerCI.mipLodBias          = 0.0f;
 	samplerCI.compareOp           = VK_COMPARE_OP_NEVER;
 	samplerCI.minLod              = 0.0f;
-	samplerCI.maxLod              = (float) texture.image->get_mipmaps().size();
+	samplerCI.maxLod              = static_cast<float>(texture.image->get_mipmaps().size());
 	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
@@ -430,7 +430,7 @@ void SeparateImageSampler::prepare_uniform_buffers()
 void SeparateImageSampler::update_uniform_buffers()
 {
 	// Vertex shader
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), static_cast<float>(width) / static_cast<float>(height), 0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
@@ -465,7 +465,9 @@ bool SeparateImageSampler::prepare(vkb::Platform &platform)
 void SeparateImageSampler::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 

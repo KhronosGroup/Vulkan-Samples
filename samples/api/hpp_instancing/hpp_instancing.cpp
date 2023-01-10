@@ -49,7 +49,7 @@ HPPInstancing::~HPPInstancing()
 
 void HPPInstancing::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
-	auto &      requested_features = gpu.get_mutable_requested_features();
+	auto       &requested_features = gpu.get_mutable_requested_features();
 	auto const &features           = gpu.get_features();
 
 	// Enable anisotropic filtering if supported
@@ -191,11 +191,11 @@ void HPPInstancing::setup_descriptor_set()
 	// Planet
 	descriptor_sets.planet = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
 	image_descriptor       = {textures.planet.sampler,
-                        textures.planet.image->get_vk_image_view().get_handle(),
-                        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.planet.image->get_vk_image_view().get_format())};
+	                          textures.planet.image->get_vk_image_view().get_handle(),
+	                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.planet.image->get_vk_image_view().get_format())};
 	write_descriptor_sets  = {
         {{descriptor_sets.planet, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
-         {descriptor_sets.planet, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
+	      {descriptor_sets.planet, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
 	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
@@ -317,7 +317,7 @@ void HPPInstancing::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(INSTANCE_COUNT);
 
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -433,7 +433,7 @@ bool HPPInstancing::prepare(vkb::platform::HPPPlatform &platform)
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
 	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
 

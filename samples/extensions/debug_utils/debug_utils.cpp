@@ -66,7 +66,7 @@ DebugUtils::~DebugUtils()
 	}
 }
 
-/* 
+/*
  * Checks if the required extension is supported at instance level
  */
 void DebugUtils::debug_check_extension()
@@ -305,7 +305,7 @@ void DebugUtils::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 
 			cmd_begin_label(draw_cmd_buffers[i], "Offscreen pass", {1.0f, 0.78f, 0.05f, 1.0f});
@@ -325,7 +325,7 @@ void DebugUtils::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
@@ -374,7 +374,7 @@ void DebugUtils::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -397,7 +397,7 @@ void DebugUtils::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
@@ -414,11 +414,11 @@ void DebugUtils::build_command_buffers()
 		}
 
 		/*
-			Note: Synchronization between render passes is handled via sub pass dependencies.
+		    Note: Synchronization between render passes is handled via sub pass dependencies.
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			cmd_begin_label(draw_cmd_buffers[i], "Horizontal bloom pass and composition", {0.4f, 0.61f, 0.27f, 1.0f});
@@ -438,7 +438,7 @@ void DebugUtils::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -1067,7 +1067,7 @@ bool DebugUtils::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	debug_check_extension();
 	load_assets();
@@ -1086,10 +1086,14 @@ bool DebugUtils::prepare(vkb::Platform &platform)
 void DebugUtils::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)

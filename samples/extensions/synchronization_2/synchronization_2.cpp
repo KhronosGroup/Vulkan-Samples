@@ -28,7 +28,7 @@ Synchronization2::Synchronization2()
 	camera.type = vkb::CameraType::LookAt;
 
 	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -135,7 +135,7 @@ void Synchronization2::build_command_buffers()
 
 		// Draw the particle system using the update vertex buffer
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -265,7 +265,7 @@ void Synchronization2::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine(platform->get_window().get_window_mode() == vkb::Window::Mode::Headless ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->get_window().get_window_mode() == vkb::Window::Mode::Headless ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -297,7 +297,7 @@ void Synchronization2::prepare_storage_buffers()
 			}
 
 			// Color gradient offset
-			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+			particle.vel.w = static_cast<float>(i) * 1.0f / static_cast<uint32_t>(attractors.size());
 		}
 	}
 
@@ -757,7 +757,7 @@ void Synchronization2::update_graphics_uniform_buffers()
 {
 	graphics.ubo.projection = camera.matrices.perspective;
 	graphics.ubo.view       = camera.matrices.view;
-	graphics.ubo.screenDim  = glm::vec2((float) width, (float) height);
+	graphics.ubo.screenDim  = glm::vec2(static_cast<float>(width), static_cast<float>(height));
 	graphics.uniform_buffer->convert_and_update(graphics.ubo);
 }
 
@@ -829,9 +829,9 @@ bool Synchronization2::prepare(vkb::Platform &platform)
 	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
-	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
+	work_group_size = std::min(static_cast<uint32_t>(256), get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
-	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	shared_data_size = std::min(static_cast<uint32_t>(1024), static_cast<uint32_t>(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	load_assets();
 	setup_descriptor_pool();
@@ -845,7 +845,9 @@ bool Synchronization2::prepare(vkb::Platform &platform)
 void Synchronization2::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	update_compute_uniform_buffers(delta_time);
 	if (camera.updated)

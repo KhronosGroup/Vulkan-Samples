@@ -71,12 +71,16 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 				case StatType::Cpu:
 					enabled_cpu_counters.insert(res->second.cpu_counter);
 					if (res->second.divisor_cpu_counter != hwcpipe::CpuCounter::MaxValue)
+					{
 						enabled_cpu_counters.insert(res->second.divisor_cpu_counter);
+					}
 					break;
 				case StatType::Gpu:
 					enabled_gpu_counters.insert(res->second.gpu_counter);
 					if (res->second.divisor_gpu_counter != hwcpipe::GpuCounter::MaxValue)
+					{
 						enabled_gpu_counters.insert(res->second.divisor_gpu_counter);
+					}
 					break;
 			}
 		}
@@ -90,15 +94,18 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	{
 		switch (iter->second.type)
 		{
-			case StatType::Cpu:
-			{
+			case StatType::Cpu: {
 				if (hwcpipe->cpu_profiler())
 				{
 					const auto &cpu_supp = hwcpipe->cpu_profiler()->supported_counters();
 					if (cpu_supp.find(iter->second.cpu_counter) == cpu_supp.end())
+					{
 						iter = stat_data.erase(iter);
+					}
 					else
+					{
 						++iter;
+					}
 				}
 				else
 				{
@@ -106,15 +113,18 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 				}
 				break;
 			}
-			case StatType::Gpu:
-			{
+			case StatType::Gpu: {
 				if (hwcpipe->gpu_profiler())
 				{
 					const auto &gpu_supp = hwcpipe->gpu_profiler()->supported_counters();
 					if (gpu_supp.find(iter->second.gpu_counter) == gpu_supp.end())
+					{
 						iter = stat_data.erase(iter);
+					}
 					else
+					{
 						++iter;
+					}
 				}
 				else
 				{
@@ -144,12 +154,14 @@ const StatGraphData &HWCPipeStatsProvider::get_graph_data(StatIndex index) const
 {
 	assert(is_available(index) && "HWCPipeStatsProvider::get_graph_data() called with invalid StatIndex");
 
-	static StatGraphData vertex_compute_cycles{"Vertex Compute Cycles", "{:4.1f} M/s", float(1e-6)};
+	static StatGraphData vertex_compute_cycles{"Vertex Compute Cycles", "{:4.1f} M/s", static_cast<float>(1e-6)};
 
 	// HWCPipe reports combined vertex/compute cycles (which is Arm specific)
 	// Ensure we report graph with the correct name when asked for vertex cycles
 	if (index == StatIndex::gpu_vertex_cycles)
+	{
 		return vertex_compute_cycles;
+	}
 
 	return default_graph_map[index];
 }
@@ -158,7 +170,9 @@ static double get_cpu_counter_value(const hwcpipe::CpuMeasurements *cpu, hwcpipe
 {
 	auto hwcpipe_ctr = cpu->find(counter);
 	if (hwcpipe_ctr != cpu->end())
+	{
 		return hwcpipe_ctr->second.get<double>();
+	}
 	return 0.0;
 }
 
@@ -166,7 +180,9 @@ static double get_gpu_counter_value(const hwcpipe::GpuMeasurements *gpu, hwcpipe
 {
 	auto hwcpipe_ctr = gpu->find(counter);
 	if (hwcpipe_ctr != gpu->end())
+	{
 		return hwcpipe_ctr->second.get<double>();
+	}
 	return 0.0;
 }
 
@@ -194,9 +210,13 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 			{
 				double divisor = get_cpu_counter_value(m.cpu, data.divisor_cpu_counter);
 				if (divisor != 0.0)
+				{
 					d /= divisor;
+				}
 				else
+				{
 					d = 0.0;
+				}
 			}
 		}
 		else if (data.type == StatType::Gpu)
@@ -211,9 +231,13 @@ StatsProvider::Counters HWCPipeStatsProvider::sample(float delta_time)
 			{
 				double divisor = get_gpu_counter_value(m.gpu, data.divisor_gpu_counter);
 				if (divisor != 0.0)
+				{
 					d /= divisor;
+				}
 				else
+				{
 					d = 0.0;
+				}
 			}
 		}
 		res[index].result = d;

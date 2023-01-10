@@ -84,8 +84,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 	compute_buffers.resize(draw_cmd_buffers.size());
 
 	subpass_extent = VkExtent2D{
-	    static_cast<uint32_t>(ceil(static_cast<float>(width) / (float) subpass_extent_ratio)),
-	    static_cast<uint32_t>(ceil(static_cast<float>(height) / (float) subpass_extent_ratio))};
+	    static_cast<uint32_t>(ceil(static_cast<float>(width) / static_cast<float>(subpass_extent_ratio))),
+	    static_cast<uint32_t>(ceil(static_cast<float>(height) / static_cast<float>(subpass_extent_ratio)))};
 
 	for (auto &&compute_buffer : compute_buffers)
 	{
@@ -109,9 +109,9 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		const uint32_t frame_width = width, frame_height = height;
 		VkExtent3D     image_extent{};
 		image_extent.width  = static_cast<uint32_t>(ceil(static_cast<float>(frame_width) /
-                                                        (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width));
+		                                                 static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.width)));
 		image_extent.height = static_cast<uint32_t>(ceil(static_cast<float>(frame_height) /
-		                                                 (float) physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height));
+		                                                 static_cast<float>(physical_device_fragment_shading_rate_properties.maxFragmentShadingRateAttachmentTexelSize.height)));
 		image_extent.depth  = 1;
 
 		auto create_shading_rate = [&](VkImageUsageFlags image_usage, VkFormat format) {
@@ -124,8 +124,8 @@ void FragmentShadingRateDynamic::create_shading_rate_attachment()
 		};
 
 		shading_rate_image         = create_shading_rate(VK_IMAGE_USAGE_FRAGMENT_SHADING_RATE_ATTACHMENT_BIT_KHR |
-                                                     static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
-                                                 VK_FORMAT_R8_UINT);
+		                                                     static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_DST_BIT),
+		                                                 VK_FORMAT_R8_UINT);
 		shading_rate_image_compute = create_shading_rate(
 		    VK_IMAGE_USAGE_STORAGE_BIT | static_cast<VkImageUsageFlags>(VK_BUFFER_USAGE_TRANSFER_SRC_BIT),
 		    VK_FORMAT_R8_UINT);
@@ -525,7 +525,7 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		vkCmdBeginRenderPass(render_target._command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 		const uint32_t _width = render_target.image_extent.width, _height = render_target.image_extent.height;
-		VkViewport     viewport = vkb::initializers::viewport((float) _width, (float) _height, 0.0f, 1.0f);
+		VkViewport     viewport = vkb::initializers::viewport(static_cast<float>(_width), static_cast<float>(_height), 0.0f, 1.0f);
 		vkCmdSetViewport(render_target._command_buffer, 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(_width), static_cast<int32_t>(_height), 0, 0);
@@ -698,7 +698,7 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 	for (size_t i = 0; i < render_descriptor_sets.size(); ++i)
 	{
 		const size_t prev_frame     = (i + compute_buffers.size() - 1) % compute_buffers.size();
-		auto &       descriptor_set = render_descriptor_sets[i];
+		auto        &descriptor_set = render_descriptor_sets[i];
 		if (!descriptor_set)
 		{
 			VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
@@ -713,8 +713,8 @@ void FragmentShadingRateDynamic::setup_descriptor_sets()
 		                                                                                      compute_buffers[prev_frame].frequency_content_image_view->get_handle(),
 		                                                                                      VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorImageInfo shading_image        = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-                                                                                       compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(),
-                                                                                       VK_IMAGE_LAYOUT_GENERAL);
+		                                                                                      compute_buffers[prev_frame].shading_rate_image_compute_view->get_handle(),
+		                                                                                      VK_IMAGE_LAYOUT_GENERAL);
 
 		std::vector<VkWriteDescriptorSet>
 		    write_descriptor_sets = {
@@ -817,7 +817,7 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 	               compute_buffers[0].shading_rate_image->get_extent().height),
 	    glm::uvec2(max_rate_x, max_rate_y),
 	    static_cast<uint32_t>(fragment_shading_rates.size()),
-	    uint32_t(0)};
+	    static_cast<uint32_t>(0)};
 
 	// Transfer frequency information to buffer
 	const uint32_t buffer_size =
@@ -841,11 +841,11 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		auto &shading_rate_image_compute_view = compute_buffer.shading_rate_image_compute_view;
 
 		VkDescriptorImageInfo               frequency_image       = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-                                                                                         frequency_content_image_view->get_handle(),
-                                                                                         VK_IMAGE_LAYOUT_GENERAL);
+		                                                                                                     frequency_content_image_view->get_handle(),
+		                                                                                                     VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorImageInfo               shading_image         = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE,
-                                                                                       shading_rate_image_compute_view->get_handle(),
-                                                                                       VK_IMAGE_LAYOUT_GENERAL);
+		                                                                                                     shading_rate_image_compute_view->get_handle(),
+		                                                                                                     VK_IMAGE_LAYOUT_GENERAL);
 		VkDescriptorBufferInfo              buffer_info           = create_descriptor(*frequency_information_params);
 		std::array<VkWriteDescriptorSet, 3> write_descriptor_sets = {
 		    vkb::initializers::write_descriptor_set(compute_buffer.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -865,8 +865,8 @@ void FragmentShadingRateDynamic::update_compute_pipeline()
 		VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin));
 
 		const auto     fragment_extent = compute_buffer.shading_rate_image->get_extent();
-		const uint32_t fragment_width = std::max(uint32_t(1), fragment_extent.width), fragment_height = std::max(
-		                                                                                  uint32_t(1), fragment_extent.height);
+		const uint32_t fragment_width = std::max(static_cast<uint32_t>(1), fragment_extent.width), fragment_height = std::max(
+		                                                                                               static_cast<uint32_t>(1), fragment_extent.height);
 
 		vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline);
 		vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipeline_layout, 0, 1,
@@ -1151,7 +1151,7 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 
 	// Note: Using Revered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	// VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
 	auto command_pool_create  = vkb::initializers::command_pool_create_info();
@@ -1174,7 +1174,9 @@ bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
 void FragmentShadingRateDynamic::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
 	{
@@ -1193,8 +1195,8 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		static const std::vector<std::string> frequency_decimation_rates = {"1", "2", "4", "8", "16"};
 
-		int32_t selection = std::min(int32_t(frequency_decimation_rates.size()) - 1,
-		                             int32_t(log2f(static_cast<float>(subpass_extent_ratio))));
+		int32_t selection = std::min(static_cast<int32_t>(frequency_decimation_rates.size()) - 1,
+		                             static_cast<int32_t>(log2f(static_cast<float>(subpass_extent_ratio))));
 		if (drawer.combo_box("Subpass size reduction", &selection, frequency_decimation_rates))
 		{
 			subpass_extent_ratio = (1 << selection);

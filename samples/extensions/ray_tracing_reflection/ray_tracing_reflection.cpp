@@ -19,7 +19,7 @@
 
 /*
  * More complex example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
-  */
+ */
 
 #define TINYOBJLOADER_IMPLEMENTATION
 
@@ -128,8 +128,8 @@ RaytracingReflection::~RaytracingReflection()
 }
 
 /*
-	Enable extension features required by this sample
-	These are passed to device creation via a pNext structure chain
+    Enable extension features required by this sample
+    These are passed to device creation via a pNext structure chain
 */
 void RaytracingReflection::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
@@ -294,7 +294,7 @@ void RaytracingReflection::create_bottom_level_acceleration_structure(ObjModelGp
 	                                    acceleration_build_structure_range_infos.data());
 	get_device().flush_command_buffer(command_buffer, queue);
 
-	//delete_scratch_buffer(scratch_buffer);
+	// delete_scratch_buffer(scratch_buffer);
 	sc_buffer.reset();
 
 	// Store the blas to be re-used as instance
@@ -387,7 +387,7 @@ void RaytracingReflection::create_top_level_acceleration_structure(std::vector<V
 	    acceleration_build_structure_range_infos.data());
 	get_device().flush_command_buffer(command_buffer, queue);
 
-	//delete_scratch_buffer(scratch_buffer);
+	// delete_scratch_buffer(scratch_buffer);
 	sc_buffer.reset();
 }
 
@@ -414,7 +414,9 @@ void RaytracingReflection::create_model(ObjModelCpu &obj, const std::vector<ObjM
 	auto                 max_index = static_cast<int32_t>(materials.size() - 1);
 	std::vector<int32_t> mat_index(obj.mat_index.size());
 	for (auto i = 0; i < obj.mat_index.size(); i++)
+	{
 		mat_index[i] = std::min(max_index, obj.mat_index[i]);
+	}
 
 	// Note that the buffer usage flags for buffers consumed by the bottom level acceleration structure require special flags
 	VkBufferUsageFlags buffer_usage_flags = VK_BUFFER_USAGE_ACCELERATION_STRUCTURE_BUILD_INPUT_READ_ONLY_BIT_KHR | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
@@ -462,7 +464,7 @@ auto RaytracingReflection::create_blas_instance(uint32_t blas_id, glm::mat4 &mat
 }
 
 /*
-	Create a buffer holding the address of model buffers (buffer reference)
+    Create a buffer holding the address of model buffers (buffer reference)
 */
 void RaytracingReflection::create_buffer_references()
 {
@@ -700,9 +702,9 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 
 	/*
-        Setup ray tracing shader groups
-        Each shader group points at the corresponding shader in the pipeline
-    */
+	    Setup ray tracing shader groups
+	    Each shader group points at the corresponding shader in the pipeline
+	*/
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
 	// Ray generation group
@@ -754,8 +756,8 @@ void RaytracingReflection::create_ray_tracing_pipeline()
 	}
 
 	/*
-        Create the ray tracing pipeline
-    */
+	    Create the ray tracing pipeline
+	*/
 	VkRayTracingPipelineCreateInfoKHR raytracing_pipeline_create_info{VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR};
 	raytracing_pipeline_create_info.stageCount                   = static_cast<uint32_t>(shader_stages.size());
 	raytracing_pipeline_create_info.pStages                      = shader_stages.data();
@@ -823,8 +825,8 @@ void RaytracingReflection::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		/*
-            Setup the strided device address regions pointing at the shader identifiers in the shader binding table
-        */
+		    Setup the strided device address regions pointing at the shader identifiers in the shader binding table
+		*/
 
 		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
 
@@ -846,8 +848,8 @@ void RaytracingReflection::build_command_buffers()
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
 		/*
-            Dispatch the ray tracing commands
-        */
+		    Dispatch the ray tracing commands
+		*/
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
 
@@ -862,8 +864,8 @@ void RaytracingReflection::build_command_buffers()
 		    1);
 
 		/*
-            Copy ray tracing output to swap chain image
-        */
+		    Copy ray tracing output to swap chain image
+		*/
 
 		// Prepare current swap chain image as transfer destination
 		vkb::set_image_layout(
@@ -905,7 +907,7 @@ void RaytracingReflection::build_command_buffers()
 		                      subresource_range);
 
 		/*
-			Start a new render pass to draw the UI overlay on top of the ray traced image
+		    Start a new render pass to draw the UI overlay on top of the ray traced image
 		*/
 		VkClearValue clear_values[2];
 		clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
@@ -962,7 +964,7 @@ bool RaytracingReflection::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
 
@@ -989,10 +991,14 @@ void RaytracingReflection::draw()
 void RaytracingReflection::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_reflection()

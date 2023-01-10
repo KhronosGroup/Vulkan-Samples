@@ -53,7 +53,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -156,7 +156,7 @@ void RayQueries::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -192,7 +192,7 @@ bool RayQueries::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 1.5f, 0.f));
 
@@ -329,9 +329,9 @@ void RayQueries::load_scene()
 					memcpy(&tempBuffer[0], ptr, sz);
 					for (size_t i = 0; i < nTriangles; ++i)
 					{
-						model.indices[triangle_start_index + i] = {vertex_start_index + uint32_t(tempBuffer[3 * i]),
-						                                           vertex_start_index + uint32_t(tempBuffer[3 * i + 1]),
-						                                           vertex_start_index + uint32_t(tempBuffer[3 * i + 2])};
+						model.indices[triangle_start_index + i] = {vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i]),
+						                                           vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i + 1]),
+						                                           vertex_start_index + static_cast<uint32_t>(tempBuffer[3 * i + 2])};
 					}
 				}
 			}

@@ -112,7 +112,7 @@ void Portability::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 			std::array<VkClearValue, 3> clear_values{};
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
@@ -129,7 +129,7 @@ void Portability::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
@@ -171,7 +171,7 @@ void Portability::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -190,7 +190,7 @@ void Portability::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
@@ -205,11 +205,11 @@ void Portability::build_command_buffers()
 		}
 
 		/*
-			Note: Synchronization between render passes is handled via sub pass dependencies.
+		    Note: Synchronization between render passes is handled via sub pass dependencies.
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			VkClearValue clear_values[2];
@@ -847,7 +847,7 @@ bool Portability::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 #ifdef VK_ENABLE_BETA_EXTENSIONS
 	portability_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PORTABILITY_SUBSET_FEATURES_KHR;
@@ -872,10 +872,14 @@ bool Portability::prepare(vkb::Platform &platform)
 void Portability::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void Portability::on_update_ui_overlay(vkb::Drawer &drawer)

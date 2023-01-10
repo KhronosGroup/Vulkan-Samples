@@ -72,7 +72,7 @@ void ConditionalRendering::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -86,7 +86,7 @@ void ConditionalRendering::build_command_buffers()
 		{
 			const auto &vertex_buffer_pos    = node.sub_mesh->vertex_buffers.at("position");
 			const auto &vertex_buffer_normal = node.sub_mesh->vertex_buffers.at("normal");
-			auto &      index_buffer         = node.sub_mesh->index_buffer;
+			auto       &index_buffer         = node.sub_mesh->index_buffer;
 
 			// Start a conditional rendering block, commands in this block are only executed if the buffer at the current position is 1 at command buffer submission time
 			VkConditionalRenderingBeginInfoEXT conditional_rendering_info{};
@@ -351,7 +351,7 @@ bool ConditionalRendering::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(-11.25f, -38.0f, 0.0f));
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	load_assets();
 	prepare_uniform_buffers();
 	preprare_visibility_buffer();
@@ -367,10 +367,14 @@ bool ConditionalRendering::prepare(vkb::Platform &platform)
 void ConditionalRendering::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void ConditionalRendering::on_update_ui_overlay(vkb::Drawer &drawer)

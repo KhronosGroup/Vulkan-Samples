@@ -95,7 +95,7 @@ void HDR::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 
 			std::array<VkClearValue, 3> clear_values;
@@ -113,7 +113,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
@@ -140,7 +140,7 @@ void HDR::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -159,7 +159,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
@@ -174,11 +174,11 @@ void HDR::build_command_buffers()
 		}
 
 		/*
-			Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			VkClearValue clear_values[2];
@@ -196,7 +196,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -886,7 +886,7 @@ bool HDR::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -903,10 +903,14 @@ bool HDR::prepare(vkb::Platform &platform)
 void HDR::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void HDR::on_update_ui_overlay(vkb::Drawer &drawer)

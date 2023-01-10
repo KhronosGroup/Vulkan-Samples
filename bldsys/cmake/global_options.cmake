@@ -52,7 +52,7 @@ set(VKB_BUILD_SAMPLES ON CACHE BOOL "Enable generation and building of Vulkan be
 set(VKB_BUILD_TESTS OFF CACHE BOOL "Enable generation and building of Vulkan best practice tests.")
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 set(VKB_CLANG_TIDY OFF CACHE STRING "Use CMake Clang Tidy integration")
-set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,vulkan_samples;-checks=-*,google-*,-google-runtime-references;-fix" CACHE STRING "Clang Tidy Parameters")
+set(VKB_CLANG_TIDY_EXTRAS "-header-filter=framework,samples,app;-checks=-*,google-*,-google-runtime-references;--fix;--fix-errors" CACHE STRING "Clang Tidy Parameters")
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib/${CMAKE_BUILD_TYPE}/${TARGET_ARCH}")
