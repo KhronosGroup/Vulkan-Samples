@@ -59,6 +59,9 @@ function(vkb__register_component)
         else()
             target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
         endif()
+
+        target_compile_features("vkb__${TARGET_NAME}" PUBLIC cxx_std_17)
+
     else() # Create interface library
         message("ADDING INTERFACE: vkb__${TARGET_NAME}")
 
@@ -71,9 +74,11 @@ function(vkb__register_component)
         if(TARGET_INCLUDE_DIRS)
             target_include_directories("vkb__${TARGET_NAME}" INTERFACE ${TARGET_INCLUDE_DIRS})
         endif()
+
+        target_compile_features("vkb__${TARGET_NAME}" INTERFACE cxx_std_17)
     endif()
 
-    set_property(TARGET vkb__${TARGET_NAME} PROPERTY FOLDER "components")
+    set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY FOLDER "components")
 
     add_dependencies(vkb_components "vkb__${TARGET_NAME}")
 endfunction()
