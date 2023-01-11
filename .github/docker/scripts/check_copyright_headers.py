@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# Copyright (c) 2022, Arm Limited and Contributors
+# Copyright (c) 2021, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,7 +22,7 @@ import re
 import sys
 import datetime
 import io
-from shutil import which
+from distutils.spawn import find_executable
 
 from subprocess import check_output
 
@@ -88,7 +88,7 @@ def check_files(check_files):
             most_recent_year = int(
                 copyright_years[-1]) if copyright_years else 0
 
-            if most_recent_year != current_year:
+            if (most_recent_year != current_year):
                 if not outdated[filename]:
                     outdated[filename] = []
                 outdated[filename].append(token)
@@ -144,7 +144,7 @@ if __name__ == "__main__":
 
     files = None
 
-    if not which("git"):
+    if not find_executable("git"):
         print(terminal_colors.ERROR + "Missing git" + terminal_colors.END)
         sys.exit(1)
 
