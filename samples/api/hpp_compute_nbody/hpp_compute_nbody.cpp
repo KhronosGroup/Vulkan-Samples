@@ -162,7 +162,7 @@ void HPPComputeNBody::build_compute_command_buffer()
 		                                       compute.storage_buffer->get_size());
 
 		compute.command_buffer.pipelineBarrier(
-		    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
+		    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, buffer_barrier, nullptr);
 	}
 
 	// First pass: Calculate particle movement
@@ -200,7 +200,7 @@ void HPPComputeNBody::build_compute_command_buffer()
 		                                       compute.storage_buffer->get_size());
 
 		compute.command_buffer.pipelineBarrier(
-		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eVertexInput, {}, nullptr, buffer_barrier, nullptr);
+		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, buffer_barrier, nullptr);
 	}
 
 	compute.command_buffer.end();
@@ -552,7 +552,7 @@ void HPPComputeNBody::prepare_compute()
 		                                               0,
 		                                               compute.storage_buffer->get_size());
 		transfer_command.pipelineBarrier(
-		    vk::PipelineStageFlagBits::eVertexInput, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, acquire_buffer_barrier, nullptr);
+		    vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eComputeShader, {}, nullptr, acquire_buffer_barrier, nullptr);
 
 		vk::BufferMemoryBarrier release_buffer_barrier(vk::AccessFlagBits::eShaderWrite,
 		                                               {},
@@ -562,7 +562,7 @@ void HPPComputeNBody::prepare_compute()
 		                                               0,
 		                                               compute.storage_buffer->get_size());
 		transfer_command.pipelineBarrier(
-		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eVertexInput, {}, nullptr, release_buffer_barrier, nullptr);
+		    vk::PipelineStageFlagBits::eComputeShader, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, release_buffer_barrier, nullptr);
 
 		// Copied from Device::flush_command_buffer, which we can't use because it would be
 		// working with the wrong command pool

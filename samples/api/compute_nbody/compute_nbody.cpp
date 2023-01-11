@@ -198,7 +198,7 @@ void ComputeNBody::build_compute_command_buffer()
 
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -253,7 +253,7 @@ void ComputeNBody::build_compute_command_buffer()
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &buffer_barrier,
@@ -715,7 +715,7 @@ void ComputeNBody::prepare_compute()
 		        compute.storage_buffer->get_size()};
 		vkCmdPipelineBarrier(
 		    transfer_command,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -736,7 +736,7 @@ void ComputeNBody::prepare_compute()
 		vkCmdPipelineBarrier(
 		    transfer_command,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &release_buffer_barrier,

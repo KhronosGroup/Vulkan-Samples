@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, Holochip Corporation
+- Copyright (c) 2023, Holochip Corporation
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -19,7 +19,9 @@
 
 # Memory Budget: Extended features
 
-This sample demonstrates how to incorporate Vulkan memory budget extension.
+This sample demonstrates how to incorporate Vulkan memory budget extension. Memory budget extension helps users to
+sample the memory budget consumption on each heap of from the ```physical device```, and is able to tell
+the ```property flag``` for each heap. Which is a proper debug tool to visualize the memory consumption in run-time.
 
 ## Memory budget extension
 
@@ -68,23 +70,36 @@ function ```initialize_device_memory_properties()```.
 
 In application’s UI overlay, total memory usage and total memory budget will be displayed. In addition, by pressing down
 the arrow next to the “Memory Heap Details” tab, it expands a list of all memory usages and budgets from the heap count.
-And all memory properties were converted and displayed in units of Megabytes (MB).
-
-Application UI overlay:
-
-![Sample](./images/memory_budget_UI_overlay.png)
-
-In addition, total number of instanced meshes can be adjusted under UI overlay. Under ```Mesh Density Control``` tab. By
-pressing down the arrow next to the text, ```Mesh Density``` slider feature will be displayed. The ```int```
-variable ```mesh_density``` controls the total number of instanced meshes in the scene, ranged from ```50```
-to ```8192```, where:
+Where all memory properties were converted and displayed in proper units (e.g.,```kilobytes```, ```megabytes```, etc.,).
+Where:
 
 ````cpp
-if (drawer.header(“Mesh Density Control”))
-drawer.slider_int(“Mesh Density”, &mesh_density, 50, 8192);
-````
+void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	converted_memory = update_converted_memory(device_memory_total_usage);
+	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	converted_memory = update_converted_memory(device_memory_total_budget);
+	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
 
-The application mesh density is set to default at 8000.
+	if (drawer.header("Memory Heap Details"))
+	{
+		for (int i = 0; i < static_cast<int>(device_memory_heap_count); i++)
+		{
+			std::string header = "Memory Heap Index: " + std::to_string(i);
+			if (drawer.header(header.c_str()))
+			{
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
+				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
+				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+
+				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
+			}
+		}
+	}
+}
+````
 
 The function ```update_device_memory_properties()``` measures and updates all memory properties related variables, by
 calling the ```vkGetPhysicalDeviceMemoryProperties2()``` and evaluating the ```device_memory_total_usage```
@@ -95,10 +110,8 @@ void MemoryBudget::update_device_memory_properties()
 {
 	vkGetPhysicalDeviceMemoryProperties2(get_device().get_gpu().get_handle(), &device_memory_properties);
 	device_memory_heap_count = device_memory_properties.memoryProperties.memoryHeapCount;
-
 	device_memory_total_usage = 0;
 	device_memory_total_budget = 0;
-
 	for (uint32_t i = 0; i < device_memory_heap_count; i++)
 	{
 		device_memory_total_usage += physical_device_memory_budget_properties.heapUsage[i];
@@ -107,6 +120,6 @@ void MemoryBudget::update_device_memory_properties()
 }
 ````
 
-And the function ```update_device_memory_properties()``` is assigned to the ```prepare_instance_data()```. Which, it
-will be called after the  ```mesh_density``` was either changed, or assigned to prepare the total number of the
-instanced meshes.
+And the function ```update_device_memory_properties()``` is assigned to the ```prepare_instance_data()```. Which, in
+this sample it will only need to be called once after everything was ready in the ```prepare_instance_data()```, and
+before it returns ```true```.

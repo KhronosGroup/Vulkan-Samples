@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Sascha Willems
- * Modifications Copyright (c) 2022, Holochip Corporation
+/* Copyright (c) 2019-2023, Sascha Willems
+ * Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@
 
 MemoryBudget::MemoryBudget()
 {
-	title = "Memory Budget on Instanced Mesh Renderer";
+	title = "Memory Budget";
 
 	// Enable instance and device extensions required to use VK_EXT_memory_budget
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
@@ -133,7 +133,7 @@ void MemoryBudget::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer, offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 		// Render instances
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
+		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, MESH_DENSITY, 0, 0, 0);
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -151,6 +151,48 @@ void MemoryBudget::initialize_device_memory_properties()
 	// Initialize physical device memory properties structure variables
 	device_memory_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
+}
+
+const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory)
+{
+	MemoryBudget::ConvertedMemory returnMe{};
+
+	if (input_memory < kilobyte_coefficient)
+	{
+		returnMe.data  = input_memory;
+		returnMe.units = "B";
+	}
+	else if (input_memory < megabyte_coefficient)
+	{
+		returnMe.data  = input_memory / kilobyte_coefficient;
+		returnMe.units = "KB";
+	}
+	else if (input_memory < gigabyte_coefficient)
+	{
+		returnMe.data  = input_memory / megabyte_coefficient;
+		returnMe.units = "MB";
+	}
+	else
+	{
+		returnMe.data  = input_memory / gigabyte_coefficient;
+		returnMe.units = "GB";
+	}
+
+	return returnMe;
+}
+
+const std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryHeapFlag)
+{
+	switch (inputVkMemoryHeapFlag)
+	{
+		case VK_MEMORY_HEAP_DEVICE_LOCAL_BIT:
+			return "Device Local Bit";
+		case VK_MEMORY_HEAP_MULTI_INSTANCE_BIT:        // NOTICE THAT: enum value also represents "VK_MEMORY_HEAP_MULTI_INSTANCE_BIT_KHR"
+			return "Multiple Instance Bit";
+		default:
+			// In case that it does NOT correspond to device local memory
+			return "Non-local Heap Memory";
+	}
 }
 
 void MemoryBudget::update_device_memory_properties()
@@ -348,13 +390,12 @@ void MemoryBudget::prepare_pipelines()
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
 	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 2: Texture coordinates
-	    vkb::initializers::vertex_input_attribute_description(0, 3, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 8),        // Location 3: Color
 	    // Per-Instance attributes
 	    // These are fetched for each instance rendered
-	    vkb::initializers::vertex_input_attribute_description(1, 4, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 4: Position
-	    vkb::initializers::vertex_input_attribute_description(1, 5, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 5: Rotation
-	    vkb::initializers::vertex_input_attribute_description(1, 6, VK_FORMAT_R32_SFLOAT, sizeof(float) * 6),              // Location 6: Scale
-	    vkb::initializers::vertex_input_attribute_description(1, 7, VK_FORMAT_R32_SINT, sizeof(float) * 7),                // Location 7: Texture array layer index
+	    vkb::initializers::vertex_input_attribute_description(1, 3, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 3: Position
+	    vkb::initializers::vertex_input_attribute_description(1, 4, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 4: Rotation
+	    vkb::initializers::vertex_input_attribute_description(1, 5, VK_FORMAT_R32_SFLOAT, sizeof(float) * 6),              // Location 5: Scale
+	    vkb::initializers::vertex_input_attribute_description(1, 6, VK_FORMAT_R32_SINT, sizeof(float) * 7),                // Location 6: Texture array layer index
 	};
 	input_state.pVertexBindingDescriptions   = binding_descriptions.data();
 	input_state.pVertexAttributeDescriptions = attribute_descriptions.data();
@@ -374,7 +415,7 @@ void MemoryBudget::prepare_pipelines()
 	shader_stages[1] = load_shader("instancing/planet.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	// Only use the non-instanced input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 4;
+	input_state.vertexAttributeDescriptionCount = 3;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.planet));
 
 	// Star field pipeline
@@ -392,14 +433,14 @@ void MemoryBudget::prepare_pipelines()
 void MemoryBudget::prepare_instance_data()
 {
 	std::vector<InstanceData> instance_data;
-	instance_data.resize(INSTANCE_COUNT);
+	instance_data.resize(MESH_DENSITY);
 
 	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
 	// Distribute rocks randomly on two different rings
-	for (auto i = 0; i < INSTANCE_COUNT / 2; i++)
+	for (auto i = 0; i < MESH_DENSITY_HALF; i++)
 	{
 		glm::vec2 ring0{7.0f, 11.0f};
 		glm::vec2 ring1{14.0f, 18.0f};
@@ -416,13 +457,13 @@ void MemoryBudget::prepare_instance_data()
 		instance_data[i].scale *= 0.75f;
 
 		// Outer ring
-		rho                                                                   = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                                 = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].scale *= 0.75f;
+		rho                                                                  = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
+		theta                                                                = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[static_cast<uint32_t>(i + MESH_DENSITY_HALF)].scale *= 0.75f;
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);
@@ -472,12 +513,6 @@ void MemoryBudget::prepare_instance_data()
 	// Destroy staging resources
 	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
 	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
-
-	// Update the device memory properties and calculate the total heap memory usage and budget:
-	// If no changes happen to the total number of instanced meshes, then device should now have allocated total memory expected to be used.
-	// While the memory_budget_ext is performant enough to be called every frame, this sample only has one allocation happen if all preparation remain the same.
-	// Thus, no update to the memory totals beyond the first allocation is necessary.
-	update_device_memory_properties();
 }
 
 void MemoryBudget::prepare_uniform_buffers()
@@ -539,6 +574,13 @@ bool MemoryBudget::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
+
+	// Update the device memory properties and calculate the total heap memory usage and budget:
+	// If no changes happen to the total number of instanced meshes, then device should now have allocated total memory expected to be used.
+	// While the memory_budget_ext is performant enough to be called every frame, this sample only has one allocation happen if all preparation remain the same.
+	// Thus, no update to the memory totals beyond the first allocation is necessary.
+	update_device_memory_properties();
+
 	prepared = true;
 	return true;
 }
@@ -558,26 +600,35 @@ void MemoryBudget::render(float delta_time)
 
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.text("Total Memory Usage: %llu MB", device_memory_total_usage / 1000000);
-	drawer.text("Total Memory Budget: %llu MB", device_memory_total_budget / 1000000);
+	converted_memory = update_converted_memory(device_memory_total_usage);
+	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	converted_memory = update_converted_memory(device_memory_total_budget);
+	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
 
-	if (drawer.header("Memory Heap Details:"))
+	if (drawer.header("Memory Heap Details"))
 	{
-		for (uint32_t i = 0; i < device_memory_heap_count; i++)
+		for (int i = 0; i < static_cast<int>(device_memory_heap_count); i++)
 		{
-			drawer.text("Memory Heap %lu: Usage: %llu MB | Budget: %llu MB", i, physical_device_memory_budget_properties.heapUsage[i] / 1000000, physical_device_memory_budget_properties.heapBudget[i] / 1000000);
+			std::string header = "Memory Heap Index: " + std::to_string(i);
+			if (drawer.header(header.c_str()))
+			{
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
+				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+
+				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
+				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+
+				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
+			}
 		}
 	}
-
-	if (drawer.header("Mesh Density Control"))
-		drawer.slider_int("Mesh Density", &mesh_density, 50, 8192);
 }
 
 bool MemoryBudget::resize(uint32_t width, uint32_t height)
 {
-	ApiVulkanSample::resize(width, height);
+	bool resizeResults = ApiVulkanSample::resize(width, height);
 	build_command_buffers();
-	return true;
+	return resizeResults;
 }
 
 std::unique_ptr<vkb::Application> create_memory_budget()

@@ -36,6 +36,7 @@ class HPPCommandPool;
 class HPPCommandBuffer : private vkb::CommandBuffer
 {
   public:
+	using vkb::CommandBuffer::end;
 	using vkb::CommandBuffer::end_render_pass;
 
 	enum class ResetMode
@@ -48,6 +49,11 @@ class HPPCommandBuffer : private vkb::CommandBuffer
 	HPPCommandBuffer(HPPCommandPool &command_pool, vk::CommandBufferLevel level) :
 	    vkb::CommandBuffer(reinterpret_cast<vkb::CommandPool &>(command_pool), static_cast<VkCommandBufferLevel>(level))
 	{}
+
+	vk::Result begin(vk::CommandBufferUsageFlags flags, HPPCommandBuffer *primary_cmd_buf = nullptr)
+	{
+		return static_cast<vk::Result>(vkb::CommandBuffer::begin(static_cast<VkCommandBufferUsageFlags>(flags), reinterpret_cast<CommandBuffer *>(primary_cmd_buf)));
+	}
 
 	vk::CommandBuffer get_handle() const
 	{

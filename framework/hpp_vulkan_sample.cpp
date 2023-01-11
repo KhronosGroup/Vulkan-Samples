@@ -259,13 +259,13 @@ void HPPVulkanSample::update(float delta_time)
 	// Collect the performance data for the sample graphs
 	update_stats(delta_time);
 
-	command_buffer.get_handle().begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+	command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	stats->begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
 	stats->end_sampling(command_buffer);
-	command_buffer.get_handle().end();
+	command_buffer.end();
 
 	render_context->submit(command_buffer);
 
@@ -435,12 +435,12 @@ std::unique_ptr<vkb::core::HPPDevice> const &HPPVulkanSample::get_device() const
 	return device;
 }
 
-Configuration const &HPPVulkanSample::get_configuration() const
+Configuration &HPPVulkanSample::get_configuration()
 {
 	return configuration;
 }
 
-void HPPVulkanSample::draw_gui() const
+void HPPVulkanSample::draw_gui()
 {
 }
 
@@ -475,7 +475,7 @@ void HPPVulkanSample::update_debug_window()
 
 void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent)
 {
-	command_buffer.get_handle().setViewport(0, {0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
+	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
 }
 

@@ -78,7 +78,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	vkb::rendering::HPPRenderPipeline const &get_render_pipeline() const;
 
-	Configuration const &get_configuration() const;
+	Configuration &get_configuration();
 
 	sg::Scene const &get_scene() const;
 
@@ -217,7 +217,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 	/**
 	 * @brief Samples should override this function to draw their interface
 	 */
-	virtual void draw_gui() const;
+	virtual void draw_gui();
 
 	/**
 	 * @brief Updates the debug window, samples can override this to insert their own data elements

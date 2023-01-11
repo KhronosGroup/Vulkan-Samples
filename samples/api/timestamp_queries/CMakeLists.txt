@@ -1,5 +1,4 @@
-# Copyright (c) 2019-2023, Sascha Willems
-# Copyright (c) 2023, Holochip Corporation
+# Copyright (c) 2022, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -21,15 +20,15 @@ get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_with_tags(
-        ID ${FOLDER_NAME}
-        CATEGORY ${CATEGORY_NAME}
-        AUTHOR "Holochip Corporation"
-        NAME "Memory Budget"
-        DESCRIPTION "Modifications were created by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features."
-        SHADER_FILES_GLSL
-        "instancing/instancing.vert"
-        "instancing/instancing.frag"
-        "instancing/planet.vert"
-        "instancing/planet.frag"
-        "instancing/starfield.vert"
-        "instancing/starfield.frag")
+    ID ${FOLDER_NAME}
+    CATEGORY ${CATEGORY_NAME}
+    AUTHOR "Sascha Willems"
+    NAME "Timestamp queries"
+    DESCRIPTION "Using timestamp queries to fetch timing information from the GPU"
+    SHADER_FILES_GLSL
+        "hdr/composition.vert"
+        "hdr/composition.frag"
+        "hdr/bloom.vert"
+        "hdr/bloom.frag"
+        "hdr/gbuffer.vert"
+        "hdr/gbuffer.frag")

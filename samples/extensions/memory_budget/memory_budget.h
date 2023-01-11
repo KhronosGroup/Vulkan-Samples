@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Sascha Willems
- * Modifications Copyright (c) 2022, Holochip Corporation
+/* Copyright (c) 2019-2023, Sascha Willems
+ * Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,14 +25,30 @@
 
 #include "api_vulkan_sample.h"
 
-#if defined(__ANDROID__)
-#	define INSTANCE_COUNT 4096
-#else
-#	define INSTANCE_COUNT 8192
-#endif
+#define MESH_DENSITY 2048
+#define MESH_DENSITY_HALF 1024
 
 class MemoryBudget : public ApiVulkanSample
 {
+  private:
+	// Memory budget extension related variables
+	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
+	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
+
+	struct ConvertedMemory
+	{
+		uint64_t    data;
+		std::string units;
+	} converted_memory{};
+
+	const uint64_t kilobyte_coefficient = 1024;
+	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
+	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
+
+	uint32_t     device_memory_heap_count   = 0;
+	VkDeviceSize device_memory_total_usage  = 0;
+	VkDeviceSize device_memory_total_budget = 0;
+
   public:
 	struct Textures
 	{
@@ -93,22 +109,19 @@ class MemoryBudget : public ApiVulkanSample
 		VkDescriptorSet planet{};
 	} descriptor_sets;
 
-	// Memory budget extension related variables
-	VkPhysicalDeviceMemoryBudgetPropertiesEXT physical_device_memory_budget_properties{};
-	VkPhysicalDeviceMemoryProperties2         device_memory_properties{};
+  private:
+	// memory budget extension related function
+	void                                initialize_device_memory_properties();
+	const MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);
+	const std::string                   read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryFlag);
+	void                                update_device_memory_properties();
 
-	int mesh_density = 8000;
-
-	uint32_t     device_memory_heap_count   = 0;
-	VkDeviceSize device_memory_total_usage  = 0;
-	VkDeviceSize device_memory_total_budget = 0;
-
+  public:
 	MemoryBudget();
 	~MemoryBudget() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
-	void initialize_device_memory_properties();        // memory budget extension related function
-	void update_device_memory_properties();            // memory budget extension related function
+
 	void load_assets();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
