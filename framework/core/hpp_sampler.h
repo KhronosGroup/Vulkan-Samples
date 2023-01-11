@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,35 +17,32 @@
 
 #pragma once
 
-#include <fence_pool.h>
-#include <vulkan/vulkan.hpp>
+#include "core/sampler.h"
 
 namespace vkb
 {
 namespace core
 {
-class HPPDevice;
-}
-
 /**
- * @brief facade class around vkb::FencePool, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::core::Sampler, providing a vulkan.hpp-based interface
  *
- * See vkb::FencePool for documentation
+ * See vkb::core::Sampler for documentation
  */
-class HPPFencePool : private vkb::FencePool
+class HPPSampler : private vkb::core::Sampler
 {
   public:
-	using vkb::FencePool::reset;
-	using vkb::FencePool::wait;
+	using vkb::core::Sampler::set_debug_name;
 
-	HPPFencePool(vkb::core::HPPDevice &device) :
-	    vkb::FencePool(reinterpret_cast<vkb::Device &>(device))
+  public:
+	HPPSampler(vkb::core::HPPDevice const &device, const vk::SamplerCreateInfo &info) :
+	    vkb::core::Sampler(reinterpret_cast<vkb::Device const &>(device), reinterpret_cast<VkSamplerCreateInfo const &>(info))
 	{}
 
-	vk::Fence request_fence()
+  public:
+	vk::Sampler const &get_handle() const
 	{
-		return static_cast<vk::Fence>(vkb::FencePool::request_fence());
+		return reinterpret_cast<vk::Sampler const &>(vkb::core::Sampler::get_handle());
 	}
 };
-
+}        // namespace core
 }        // namespace vkb
