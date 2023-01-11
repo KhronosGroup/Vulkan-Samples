@@ -189,24 +189,7 @@ void ExtendedDynamicState2::update_uniform_buffers()
 
 /**
  * 	@fn void ExtendedDynamicState2::create_pipeline()
- * 	@brief Creating graphical pipeline
- * 	@details Preparing pipeline structures:
- * 			 - VkPipelineInputAssemblyStateCreateInfo
- * 			 - VkPipelineRasterizationStateCreateInfo
- * 			 - VkPipelineColorBlendAttachmentState
- * 			 - VkPipelineColorBlendStateCreateInfo
- * 			 - VkPipelineDepthStencilStateCreateInfo
- * 			 - VkPipelineViewportStateCreateInfo
- * 			 - VkPipelineMultisampleStateCreateInfo
- * 			 - VkPipelineDynamicStateCreateInfo
- * 			 - VkPipelineShaderStageCreateInfo
- * 			 - VkPipelineRenderingCreateInfoKHR
- * 			 - VkGraphicsPipelineCreateInfo
- * 
- * 	@note Specific settings that were used to implement Vertex Input Dynamic State extension in this sample:
- * 			 - In VkPipelineDynamicStateCreateInfo use "VK_DYNAMIC_STATE_VERTEX_INPUT_EXT" enumeration in config vector.
- * 			 - In VkGraphicsPipelineCreateInfo "pVertexInputState" element is not require to declare (when using vertex input dynamic state)
- * 
+ * 	@brief Creating graphical pipelines: baseline, background, tessellation.
  */
 void ExtendedDynamicState2::create_pipeline()
 {

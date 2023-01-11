@@ -23,8 +23,7 @@
 class ExtendedDynamicState2 : public ApiVulkanSample
 {
   public:
-
-	typedef struct
+	typedef struct ModelDynamicParam
 	{
 		bool depth_bias         = false;
 		bool rasterizer_discard = false;
