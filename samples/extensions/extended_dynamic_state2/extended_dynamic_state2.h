@@ -55,7 +55,6 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
-		glm::vec4 light_pos           = glm::vec4(-48.0f, -40.0f, 46.0f, 0.0f);
 		float     tessellation_factor = 1.0f;
 	} ubo_tess;
 
@@ -118,7 +117,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	struct SceneNode
 	{
 		std::string       name;
-		vkb::sg::Node *   node;
+		vkb::sg::Node    *node;
 		vkb::sg::SubMesh *sub_mesh;
 	};
 	std::vector<std::vector<SceneNode>> scene_nodes;

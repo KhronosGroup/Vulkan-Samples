@@ -20,7 +20,6 @@ layout(set = 0, binding = 0) uniform UBO
 {
 	mat4  projection;
 	mat4  modelview;
-	vec4  lightPos;
 	float tessellationFactor;
 }
 ubo;
@@ -36,12 +35,6 @@ layout(triangles, equal_spacing, cw) in;
 
 layout(location = 0) in vec3 inPos[];
 layout(location = 1) in vec3 inNormal[];
-
-layout(location = 0) out vec3 outNormal;
-layout(location = 1) out vec3 outViewVec;
-layout(location = 2) out vec3 outLightVec;
-layout(location = 3) out vec3 outEyePos;
-layout(location = 4) out vec3 outWorldPos;
 
 vec2 interpolate3D(vec2 v0, vec2 v1, vec2 v2)
 {
@@ -60,14 +53,7 @@ vec4 interpolate3D(vec4 v0, vec4 v1, vec4 v2)
 
 void main()
 {
-	outNormal = interpolate3D(inNormal[0], inNormal[1], inNormal[2]);
-
 	vec4 pos = interpolate3D(gl_in[0].gl_Position, gl_in[1].gl_Position, gl_in[2].gl_Position);
 
 	gl_Position = ubo.projection * ubo.modelview * push_constants.model * pos;
-
-	outViewVec  = -pos.xyz;
-	outLightVec = normalize(ubo.lightPos.xyz + outViewVec);
-	outWorldPos = pos.xyz;
-	outEyePos   = vec3(ubo.modelview * pos);
 }

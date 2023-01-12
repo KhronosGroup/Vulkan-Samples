@@ -56,7 +56,7 @@ ExtendedDynamicState2::~ExtendedDynamicState2()
 /**
  * 	@fn bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc. 
-*/
+ */
 bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
@@ -131,7 +131,7 @@ void ExtendedDynamicState2::draw()
 /**
  * 	@fn void ExtendedDynamicState2::render(float delta_time)
  * 	@brief Drawing frames and/or updating uniform buffers when camera position/rotation was changed
-*/
+ */
 void ExtendedDynamicState2::render(float delta_time)
 {
 	if (!prepared)
@@ -375,14 +375,10 @@ void ExtendedDynamicState2::create_pipeline()
  * 	@fn void ExtendedDynamicState2::build_command_buffers()
  * 	@brief Creating command buffers and drawing particular elements on window.
  * 	@details Drawing object list:
- * 			 - Skybox - cube that have background texture attached (easy way to generate background to scene).
- * 			 - Object - cube that was placed in the middle with some reflection shader effect.
- * 			 - Created model - cube that was created on runtime.
- * 			 - UI - some statistic tab
- * 
- * 	@note In case of Vertex Input Dynamic State feature sample need to create model in runtime because of requirement to have different data structure.
- * 		  By default function "load_model" from framework is parsing data from .gltf files and build it every time in declared structure (see Vertex structure in framework files).
- * 		  Before drawing different models (in case of vertex input data structure) "change_vertex_input_data" fuction is call for dynamically change Vertex Input data.
+ * 			 - models from baseline scene
+ * 			 - model from tessellation scene
+ * 			 - background model
+ * 			 - primitive restart model
  */
 void ExtendedDynamicState2::build_command_buffers()
 {
@@ -474,7 +470,7 @@ void ExtendedDynamicState2::build_command_buffers()
 /**
  * 	@fn void ExtendedDynamicState2::create_descriptor_pool()
  * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
-*/
+ */
 void ExtendedDynamicState2::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -494,7 +490,7 @@ void ExtendedDynamicState2::create_descriptor_pool()
 /**
  * 	@fn void ExtendedDynamicState2::setup_descriptor_set_layout()
  * 	@brief Creating layout for descriptor sets
-*/
+ */
 void ExtendedDynamicState2::setup_descriptor_set_layout()
 {
 	/* First descriptor set */
@@ -564,7 +560,7 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 /**
  * 	@fn void ExtendedDynamicState2::create_descriptor_sets()
  * 	@brief Creating descriptor sets for 3 separate pipelines.
-*/
+ */
 void ExtendedDynamicState2::create_descriptor_sets()
 {
 	/* First descriptor set */
@@ -637,14 +633,13 @@ void ExtendedDynamicState2::create_descriptor_sets()
 /**
  * @fn void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
  * @brief Enabling features related to Vulkan extensions
-*/
+ */
 void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
 	auto &requested_extended_dynamic_state2_features                                   = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
 	requested_extended_dynamic_state2_features.extendedDynamicState2                   = VK_TRUE;
-	requested_extended_dynamic_state2_features.extendedDynamicState2LogicOp            = VK_TRUE;
 	requested_extended_dynamic_state2_features.extendedDynamicState2PatchControlPoints = VK_TRUE;
 
 	auto &requested_extended_dynamic_state_feature                = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
@@ -675,7 +670,7 @@ void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 /**
  * @fn void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
  * @brief Projecting GUI and transferring data between GUI and app
-*/
+ */
 void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
@@ -728,7 +723,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
  * @fn void ExtendedDynamicState2::update(float delta_time)
  * @brief Function which was called in every frame.
  * @details For presenting z-fighting, a small animation was implemented (cube_animation)
-*/
+ */
 void ExtendedDynamicState2::update(float delta_time)
 {
 	cube_animation(delta_time);
@@ -738,7 +733,7 @@ void ExtendedDynamicState2::update(float delta_time)
 /**
  * @fn int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
  * @brief Extracting index value based on provided name (string)
-*/
+ */
 int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
 {
 	int i = 0;
@@ -755,7 +750,7 @@ int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNod
 /**
  * @fn void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat)
  * @brief Changing alpha value to create blinking effect on selected model
-*/
+ */
 void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat)
 {
 	static bool                        rise              = false;
@@ -769,6 +764,7 @@ void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *orig
 	new_mat->base_color_factor = original_mat->base_color_factor;
 	new_mat->alpha_mode        = vkb::sg::AlphaMode::Blend;
 
+	/* Change alpha value */
 	if (rise == true)
 	{
 		if (gui_settings.time_tick == true)
@@ -788,12 +784,14 @@ void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *orig
 		new_mat->base_color_factor.w += accumulated_diff;
 	}
 
+	/* Detecting change of selected object */
 	if (previous_obj_id != gui_settings.selected_obj)
 	{
 		accumulated_diff = 0.0;
 		previous_obj_id  = gui_settings.selected_obj;
 	}
 
+	/* Determine if alpha need to increase or decrease */
 	if (new_mat->base_color_factor.w < alpha_min)
 	{
 		rise = true;
@@ -809,7 +807,7 @@ void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *orig
  * @brief Spliting main scene into two separate.
  * @details This operation is required to use same "draw_from_scene" function to draw models that are using different
  * 			pipelines (baseline and tessellation)
-*/
+ */
 void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node)
 {
 	int scene_nodes_cnt = scene_node->at(SCENE_ALL_OBJ_INDEX).size();
@@ -817,6 +815,7 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneN
 	std::vector<SceneNode> scene_elements_baseline;
 	std::vector<SceneNode> scene_elements_tess;
 
+	/* Divide main scene to two (baseline and tessellation) */
 	for (int i = 0; i < scene_nodes_cnt; i++)
 	{
 		if (scene_node->at(SCENE_ALL_OBJ_INDEX).at(i).name == "Geosphere")
@@ -836,7 +835,7 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<std::vector<SceneN
 /**
  * @fn void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
  * @brief Drawing all objects included to scene that is passed as argument of this function
-*/
+ */
 void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
 {
 	auto &node               = scene_node->at(scene_index);
@@ -846,7 +845,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 	{
 		const auto &vertex_buffer_pos    = node[i].sub_mesh->vertex_buffers.at("position");
 		const auto &vertex_buffer_normal = node[i].sub_mesh->vertex_buffers.at("normal");
-		auto &      index_buffer         = node[i].sub_mesh->index_buffer;
+		auto       &index_buffer         = node[i].sub_mesh->index_buffer;
 
 		if (scene_index == SCENE_BASELINE_OBJ_INDEX)
 		{
@@ -854,7 +853,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 			vkCmdSetRasterizerDiscardEnableEXT(command_buffer, gui_settings.objects[i].rasterizer_discard);
 		}
 
-		// Pass data for the current node via push commands
+		/* Pass data for the current node via push commands */
 		auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node[i].sub_mesh->get_material());
 		push_const_block.model_matrix = node[i].node->get_transform().get_world_matrix();
 		if (i != gui_settings.selected_obj ||
@@ -882,7 +881,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 /**
  * @fn void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
  * @brief Drawing model created in function "model_data_creation"
-*/
+ */
 void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[1] = {0};
@@ -897,7 +896,7 @@ void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
 /**
  * @fn void ExtendedDynamicState2::model_data_creation()
  * @brief Creating model (basic cube) vertex data
-*/
+ */
 void ExtendedDynamicState2::model_data_creation()
 {
 	constexpr uint32_t vertex_count = 8;
@@ -1040,7 +1039,7 @@ void ExtendedDynamicState2::model_data_creation()
 /**
  * @fn void ExtendedDynamicState2::cube_animation(float delta_time)
  * @brief Changing position of one z-fighting cube (visualize negative phenomenon z-fighting)
-*/
+ */
 void ExtendedDynamicState2::cube_animation(float delta_time)
 {
 	constexpr float tick_limit = 0.05;
@@ -1052,8 +1051,10 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	static float     difference  = 0;
 	static bool      rising      = true;
 
+	/* Checking if tick time passed away */
 	if (time_pass > tick_limit)
 	{
+		/* Determine direction of x axis */
 		if (difference < -delta)
 		{
 			rising = true;
@@ -1063,6 +1064,7 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 			rising = false;
 		}
 
+		/* Move object by step value */
 		if (rising == true)
 		{
 			translation.x += move_step;
@@ -1074,6 +1076,8 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 			difference -= move_step;
 		}
 		time_pass = 0;
+
+		/* Write new position to object */
 		for (uint32_t i = 0; i < scene_nodes[SCENE_BASELINE_OBJ_INDEX].size(); i++)
 		{
 			if (scene_nodes[SCENE_BASELINE_OBJ_INDEX].at(i).node->get_name() == "Cube_1")
