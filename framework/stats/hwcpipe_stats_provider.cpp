@@ -94,7 +94,8 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 	{
 		switch (iter->second.type)
 		{
-			case StatType::Cpu: {
+			case StatType::Cpu:
+			{
 				if (hwcpipe->cpu_profiler())
 				{
 					const auto &cpu_supp = hwcpipe->cpu_profiler()->supported_counters();
@@ -113,7 +114,8 @@ HWCPipeStatsProvider::HWCPipeStatsProvider(std::set<StatIndex> &requested_stats)
 				}
 				break;
 			}
-			case StatType::Gpu: {
+			case StatType::Gpu:
+			{
 				if (hwcpipe->gpu_profiler())
 				{
 					const auto &gpu_supp = hwcpipe->gpu_profiler()->supported_counters();

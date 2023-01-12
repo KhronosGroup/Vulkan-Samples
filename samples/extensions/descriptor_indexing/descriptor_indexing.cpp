@@ -389,25 +389,29 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 			uint32_t pattern;
 			switch (image_seed & 3u)
 			{
-				default: {
+				default:
+				{
 					// Checkerboard
 					pattern = ((x >> 2u) ^ (y >> 2u)) & 1u;
 					break;
 				}
 
-				case 1: {
+				case 1:
+				{
 					// Horizontal stripes
 					pattern = (x >> 2u) & 1u;
 					break;
 				}
 
-				case 2: {
+				case 2:
+				{
 					// Vertical stripes
 					pattern = (y >> 2u) & 1u;
 					break;
 				}
 
-				case 3: {
+				case 3:
+				{
 					// Diagonal stripes
 					pattern = ((x + y) >> 2u) & 1u;
 					break;

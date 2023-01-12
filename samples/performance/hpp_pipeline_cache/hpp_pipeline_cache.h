@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,7 +39,7 @@ class HPPPipelineCache : public vkb::HPPVulkanSample
 
   private:
 	ImVec2            button_size           = ImVec2(150, 30);
-	vkb::sg::Camera * camera                = nullptr;
+	vkb::sg::Camera  *camera                = nullptr;
 	bool              enable_pipeline_cache = true;
 	vk::PipelineCache pipeline_cache;
 	float             rebuild_pipelines_frame_time_ms = 0.0f;

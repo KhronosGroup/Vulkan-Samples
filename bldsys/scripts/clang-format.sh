@@ -16,10 +16,13 @@
 # limitations under the License.
 #
 
+# Usage: ./bldsys/scripts/clang-format HEAD
+# Usage: ./bldsys/scripts/clang-format master
+# Usage: ./bldsys/scripts/clang-format <branch>
 
 set -ux
 
-for file in `git diff-index --name-only HEAD | grep -iE '\.(cpp|cc|h|hpp)$' ` ; do
+for file in `git diff-index --name-only $1 | grep -iE '\.(cpp|cc|h|hpp)$' ` ; do
     if [ -f $file ]; then
         clang-format -i $file
     fi
