@@ -41,20 +41,20 @@ class HPPCommandPool
 	HPPCommandPool &operator=(const HPPCommandPool &) = delete;
 	HPPCommandPool &operator=(HPPCommandPool &&)      = delete;
 
-	HPPDevice const	                  &get_device() const;
+	HPPDevice const                      &get_device() const;
 	vk::CommandPool                       get_handle() const;
 	uint32_t                              get_queue_family_index() const;
 	vkb::rendering::HPPRenderFrame const *get_render_frame() const;
 	HPPCommandBuffer::ResetMode           get_reset_mode() const;
 	size_t                                get_thread_index() const;
-	HPPCommandBuffer	                 &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+	HPPCommandBuffer                     &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
 	void                                  reset_pool();
 
   private:
 	void reset_command_buffers();
 
   private:
-	HPPDevice const	                           &device;
+	HPPDevice const                               &device;
 	vk::CommandPool                                handle             = nullptr;
 	vkb::rendering::HPPRenderFrame const          *render_frame       = nullptr;
 	size_t                                         thread_index       = 0;
