@@ -664,9 +664,9 @@ void HPPComputeNBody::update_graphics_descriptor_set()
 {
 	vk::DescriptorBufferInfo buffer_descriptor(graphics.uniform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
 	vk::DescriptorImageInfo  particle_image_descriptor(
-	     textures.particle.sampler,
-	     textures.particle.image->get_vk_image_view().get_handle(),
-	     descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.particle.image->get_vk_image_view().get_format()));
+        textures.particle.sampler,
+        textures.particle.image->get_vk_image_view().get_handle(),
+        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.particle.image->get_vk_image_view().get_format()));
 	vk::DescriptorImageInfo gradient_image_descriptor(
 	    textures.gradient.sampler,
 	    textures.gradient.image->get_vk_image_view().get_handle(),
