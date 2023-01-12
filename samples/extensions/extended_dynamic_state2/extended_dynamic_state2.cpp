@@ -55,7 +55,7 @@ ExtendedDynamicState2::~ExtendedDynamicState2()
 
 /**
  * 	@fn bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
- * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc. 
+ * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
 bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
 {
@@ -83,7 +83,7 @@ bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
 }
 /**
  * 	@fn void ExtendedDynamicState2::load_assets()
- *	@brief Loading extra models, textures from assets 
+ *	@brief Loading extra models, textures from assets
  */
 void ExtendedDynamicState2::load_assets()
 {
@@ -430,10 +430,7 @@ void ExtendedDynamicState2::build_command_buffers()
 		/* Drawing objects from baseline scene (with rasterizer discard and depth bias functionality) */
 		draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_BASELINE_OBJ_INDEX);
 
-		/* Disabling depth bias and rasterizer discard;
-		   Changing topology to triangle strip with using primitive restart feature */
-		vkCmdSetDepthBiasEnableEXT(draw_cmd_buffers[i], VK_FALSE);
-		vkCmdSetRasterizerDiscardEnableEXT(draw_cmd_buffers[i], VK_FALSE);
+		/* Changing topology to triangle strip with using primitive restart feature */
 		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
 		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_TRUE);
 
@@ -696,7 +693,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Models"))
 	{
 		const char *col_names = {"Name"};
-		if (drawer.checkbox("Selection active", &gui_settings.selection_active))
+		if (drawer.checkbox("Selection effect active", &gui_settings.selection_active))
 		{
 		}
 		ImGui::Columns(2, "Name");
@@ -876,6 +873,8 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 
 		vkCmdDrawIndexed(command_buffer, node[i].sub_mesh->vertex_indices, 1, 0, 0, 0);
 	}
+	vkCmdSetDepthBiasEnableEXT(command_buffer, VK_FALSE);
+	vkCmdSetRasterizerDiscardEnableEXT(command_buffer, VK_FALSE);
 }
 
 /**
