@@ -22,7 +22,7 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Khronos"
+    AUTHOR "Mobica"
     NAME "Extended Dynamic State 2"
     DESCRIPTION "Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are need to be created."
     SHADER_FILES_GLSL
