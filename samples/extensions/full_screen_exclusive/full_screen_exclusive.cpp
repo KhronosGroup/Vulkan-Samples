@@ -23,6 +23,10 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 
+//#include <GLFW/glfw3.h>
+//#include <GLFW/glfw3native.h>
+
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type, uint64_t object, size_t location, int32_t message_code, const char *layer_prefix, const char *message, void *user_data)
 {
@@ -204,7 +208,7 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 	}
 
 	VkApplicationInfo app{VK_STRUCTURE_TYPE_APPLICATION_INFO};
-	app.pApplicationName = "Hello Triangle";
+	app.pApplicationName = "Full Screen Exclusive";
 	app.pEngineName      = "Vulkan Samples";
 	app.apiVersion       = VK_MAKE_VERSION(1, 0, 0);
 
@@ -394,6 +398,8 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	std::vector<VkSurfaceFormatKHR> formats(format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, formats.data());
 
+
+
 	VkSurfaceFormatKHR format;
 	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
 	{
@@ -435,15 +441,28 @@ void FullScreenExclusive::init_swapchain(Context &context)
 		}
 	}
 
-	VkExtent2D swapchain_size;
-	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	VkExtent2D swapchain_size {};
+
+	//TODO: @JEREMY: so here is the case when to acquire the entire full screen dimension.
+
+	if (isFullScreenExclusive)
 	{
-		swapchain_size.width  = context.swapchain_dimensions.width;
-		swapchain_size.height = context.swapchain_dimensions.height;
+		swapchain_size = update_current_maxImageExtent();
+
+		printf("max resolution success!\n");
+
 	}
 	else
 	{
-		swapchain_size = surface_properties.currentExtent;
+		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+		{
+			swapchain_size.width  = context.swapchain_dimensions.width;
+			swapchain_size.height = context.swapchain_dimensions.height;
+		}
+		else
+		{
+			swapchain_size = surface_properties.currentExtent;
+		}
 	}
 
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
@@ -484,33 +503,58 @@ void FullScreenExclusive::init_swapchain(Context &context)
 		composite = VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR;
 	}
 
-	VkSwapchainCreateInfoKHR info{VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR};        // initialize the swapchain create info without adding pNext info
-
+	VkSwapchainCreateInfoKHR info {};        // initialize the swapchain create info without adding pNext info
+	info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 	// if application is running on a Windows platform:
 	if (isWin32)
 	{
-		VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT};
+		VkSurfaceFullScreenExclusiveInfoEXT surface_full_screen_exclusive_info_EXT{};
+
+		//TODO: @Jeremy Check this switch out.
+
+		VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT {};
+
+		surface_full_screen_exclusive_Win32_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
+		surface_full_screen_exclusive_Win32_info_EXT.pNext = nullptr;
+		surface_full_screen_exclusive_Win32_info_EXT.hmonitor = MonitorFromWindow(GetActiveWindow(), MONITOR_DEFAULTTONEAREST);
+
+		surface_full_screen_exclusive_info_EXT.sType = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
+		//surface_full_screen_exclusive_info_EXT.pNext = nullptr;
+		surface_full_screen_exclusive_info_EXT.pNext = &surface_full_screen_exclusive_Win32_info_EXT;
+		surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+
 
 		// this is to execute the full screen related variables based on its chosen status
+
+		//TODO: debug try to get that surface ready
+
 		switch (full_screen_status)
 		{
 			case 0:        // default
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
+				printf("0\n");
+				//surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
 				break;
 			case 1:        // disallowed
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+				printf("1");
+				//surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
 				break;
 			case 2:        // allowed
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+				printf("2");
+				//surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
 				break;
 			case 3:        // full screen exclusive combo with acquire and release
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+				printf("3\n");
+				//surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
 				break;
-			default:        // this case won't usually happen but just to set everything to be default just in case
-				surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
-				break;
+			//default:
+				//surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;
 		}
+
 		info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
+	}
+	else
+	{
+		info.pNext = nullptr;
 	}
 
 	info.surface            = context.surface;
@@ -529,6 +573,8 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	info.oldSwapchain       = old_swapchain;
 
 	VK_CHECK(vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain));
+
+	printf("pass creating swapchain!\n");
 
 	if (old_swapchain != VK_NULL_HANDLE)
 	{
@@ -976,10 +1022,15 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
+	//TODO: Change Surface Here
 	context.surface                     = platform.get_window().create_surface(*vk_instance);
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
+
+	//TODO: This is to sync up with the platform assigned! So now you have access to the application platform!
+	this->platform = &platform;
+
 
 	if (!context.surface)
 		throw std::runtime_error("Failed to create window surface.");
@@ -1041,12 +1092,35 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 		return false;
 	}
 
+
+
+
 	vkDeviceWaitIdle(context.device);
 	teardown_frame_buffers(context);
 
 	init_swapchain(context);
 	init_frame_buffers(context);
 	return true;
+}
+
+VkExtent2D FullScreenExclusive::update_current_maxImageExtent()
+{
+	VkExtent2D returnMe {};
+
+	if (context.device != VK_NULL_HANDLE)
+	{
+		VkSurfaceCapabilitiesKHR surface_properties {};
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
+
+		//TODO: max extension debug:
+
+		returnMe = surface_properties.maxImageExtent;
+/*		returnMe.width = 1000;
+		returnMe.height = 2000;*/
+
+	}
+
+	return returnMe;
 }
 
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
@@ -1077,6 +1151,10 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 							full_screen_status    = 1;
 							isRecreate            = true;
 							isFullScreenExclusive = false;
+
+
+							// Yup that resize is useless
+							//resize(720, 720);
 						}
 						break;
 					case vkb::KeyCode::F3:        // Allowed
@@ -1111,21 +1189,120 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 	}
 }
 
+//TODO: @JEREMY fix this macro, bring them to class variables
+BOOL IsWindowMode = TRUE;
+WINDOWPLACEMENT wpc;
+LONG HWNDStyle = 0;
+LONG HWNDStyleEx = 0;
+
+
 void FullScreenExclusive::recreate()
 {
 	// Check if there IS a device, if not don't do anything
 	if (context.device != VK_NULL_HANDLE)
 	{
+		//TODO: now to resize the Application WINDOW before resize the swapchain:
+
+		HWND HWNDWindow = GetActiveWindow(); // HWND active window
+		//MoveWindow(win, 0, 0, 2000, 1000, TRUE);
+
+		//ShowWindow(HWNDWindow, SW_MAXIMIZE);
+		
+		if (IsWindowMode)
+		{
+			IsWindowMode = FALSE;
+			GetWindowPlacement(HWNDWindow, &wpc);
+			if (HWNDStyle == 0)
+				HWNDStyle = GetWindowLong(HWNDWindow, GWL_STYLE);
+			if (HWNDStyleEx == 0)
+				HWNDStyleEx = GetWindowLong(HWNDWindow, GWL_EXSTYLE);
+
+			LONG NewHWNDStyle = HWNDStyle;
+			NewHWNDStyle &= ~WS_BORDER;
+			NewHWNDStyle &= ~WS_DLGFRAME;
+			NewHWNDStyle &= ~WS_THICKFRAME;
+
+			LONG NewHWNDStyleEx = HWNDStyleEx;
+			NewHWNDStyleEx &= ~WS_EX_WINDOWEDGE;
+
+			SetWindowLong(HWNDWindow, GWL_STYLE, NewHWNDStyle | WS_POPUP);
+			SetWindowLong(HWNDWindow, GWL_EXSTYLE, NewHWNDStyleEx | WS_EX_TOPMOST);
+			ShowWindow(HWNDWindow, SW_SHOWMAXIMIZED);
+		}
+		else
+		{
+			IsWindowMode = TRUE;
+			SetWindowLong( HWNDWindow, GWL_STYLE, HWNDStyle );
+			SetWindowLong( HWNDWindow, GWL_EXSTYLE, HWNDStyleEx );
+			ShowWindow( HWNDWindow, SW_SHOWNORMAL );
+			SetWindowPlacement( HWNDWindow, &wpc );
+		}
+
+		/*
+
+		IsWindowMode = TRUE;
+		SetWindowLong( HWNDWindow, GWL_STYLE, HWNDStyle );
+		SetWindowLong( HWNDWindow, GWL_EXSTYLE, HWNDStyleEx );
+		ShowWindow( HWNDWindow, SW_SHOWNORMAL );
+		SetWindowPlacement( HWNDWindow, &wpc );
+
+		 */
+
+
+
+		int a = static_cast<int>(platform->get_window().get_extent().width);
+		int b = static_cast<int>(platform->get_window().get_extent().height);
+
+		printf("test w: %d, test h: %d\n", a, b);
+
+
+
+
+		//TODO: resize the swapchain:
 		vkDeviceWaitIdle(context.device);        // pause the renderer
 		teardown_frame_buffers(context);         // basically destroy everything swapchain related
 
+		//platform->get_window().resize({2000, 1000});
+/*		//context.surface                     = platform->get_window().create_surface(*vk_instance);
+		auto &extent                        = platform->get_window().get_extent();
+		context.swapchain_dimensions.width  = extent.width;
+		context.swapchain_dimensions.height = extent.height;*/
+
+		// TODO:@Jeremy just change the context swapchain size?
 		init_swapchain(context);            // recreate swapchain
-		init_frame_buffers(context);        // sync the recreated swapchain to the frame buffer
 
 		if (isFullScreenExclusive)
 		{
-			VK_CHECK(vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain));
+			//VK_CHECK(vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain));
 		}
+
+		init_frame_buffers(context);        // sync the recreated swapchain to the frame buffer
+
+
+		//TODO: Extension Debug
+		VkSurfaceCapabilitiesKHR surface_properties {};
+		VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
+
+		int width = static_cast<int>(surface_properties.currentExtent.width);
+		int height = static_cast<int>(surface_properties.currentExtent.height);
+
+		printf("width: %d, height %d\n", width, height);
+
+		VkExtent2D maxExtend = update_current_maxImageExtent();
+
+		width = static_cast<int>(maxExtend.width);
+		height = static_cast<int>(maxExtend.height);
+
+		printf("max width: %d, max height %d\n", width, height);
+
+
+		width = static_cast<int>(context.swapchain_dimensions.width);
+		height = static_cast<int>(context.swapchain_dimensions.height);
+
+		printf("SWC width: %d, SWC height %d\n", width, height);
+
+
+
 	}
 }
 

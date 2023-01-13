@@ -25,6 +25,8 @@
 #include "core/instance.h"
 #include "platform/application.h"
 
+
+
 class FullScreenExclusive : public vkb::Application
 {
   private:
@@ -73,14 +75,19 @@ class FullScreenExclusive : public vkb::Application
 	bool                           isFullScreenExclusive = false;        // this is to tell if the screen is in full screen exclusive or not
 	int                            full_screen_status    = 0;            // 0 means default, 1 means disallowed, 2 means allowed, 3 means full screen exclusive
 
+
+  private:
+	VkExtent2D   update_current_maxImageExtent();
+	virtual void input_event(const vkb::InputEvent &input_event) override;        // this is to introduce a customized input events
+	void         recreate();                                                      // to recreate the swapchain and related per switch of display mode
+
   public:
 	FullScreenExclusive();
 	virtual ~FullScreenExclusive() override;
-	virtual bool          prepare(vkb::Platform &platform) override;
-	virtual void          update(float delta_time) override;
-	virtual bool          resize(uint32_t width, uint32_t height) override;
-	virtual void          input_event(const vkb::InputEvent &input_event) override;        // this is to introduce a customized input events
-	void                  recreate();                                                      // to recreate the swapchain and related per switch of display mode
+	virtual bool prepare(vkb::Platform &platform) override;
+	virtual void update(float delta_time) override;
+	virtual bool resize(uint32_t width, uint32_t height) override;
+
 	bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
 	bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
 	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
@@ -88,16 +95,18 @@ class FullScreenExclusive : public vkb::Application
 	void                  init_device(Context &context, const std::vector<const char *> &required_device_extensions);
 	void                  init_per_frame(Context &context, PerFrame &per_frame);
 	void                  teardown_per_frame(Context &context, PerFrame &per_frame);
-	void                  init_swapchain(Context &context);
-	void                  init_render_pass(Context &context);
-	VkShaderModule        load_shader_module(Context &context, const char *path);
-	void                  init_pipeline(Context &context);
-	VkResult              acquire_next_image(Context &context, uint32_t *image);
-	void                  render_triangle(Context &context, uint32_t swapchain_index);
-	VkResult              present_image(Context &context, uint32_t index);
-	void                  init_frame_buffers(Context &context);
-	void                  teardown_frame_buffers(Context &context);
-	void                  teardown(Context &context);
+
+	void init_swapchain(Context &context);
+
+	void           init_render_pass(Context &context);
+	VkShaderModule load_shader_module(Context &context, const char *path);
+	void           init_pipeline(Context &context);
+	VkResult       acquire_next_image(Context &context, uint32_t *image);
+	void           render_triangle(Context &context, uint32_t swapchain_index);
+	VkResult       present_image(Context &context, uint32_t index);
+	void           init_frame_buffers(Context &context);
+	void           teardown_frame_buffers(Context &context);
+	void           teardown(Context &context);
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();
