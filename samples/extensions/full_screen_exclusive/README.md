@@ -27,10 +27,10 @@ extension variables and related methods are applicable on ```Windows``` platform
 
 ## Introduction
 
-This sample provides a detailed procedure, which approaches to activate the full screen exclusive feature on Windows
+This sample provides a detailed procedure, which approaches to activate the full screen exclusive feature on ```Windows```
 platform. Furthermore, users may switch between ```windowed```, ```borderless fullscreen```,
 and ```exclusive fullscreen``` modes using ```keyboard input events```. As ```full screen exclusive``` extension works
-specifically for ```Windows``` platform, thus the mentions feature only applies to this sample running on
+specifically for ```Windows``` platform, thus the mentioned feature only applies to this sample running on
 the ```Windows``` platform. On other platforms, this sample simply renders a triangle (e.g., ```hello_triangle```
 sample).
 
@@ -47,7 +47,7 @@ that, the correct approach to activate the ```full screen feature``` is as follo
 
 1) recreate the ```swapchain``` using ```full screen exclusive``` related features.
 2) recreate the ```frame buffers``` with the ```swapchain``` created in the previous procedure.
-3) configure the ```application window mode``` by either using ```Windows``` or ```GLSL``` commands.
+3) configure the ```application window``` to ```fullscreen mode``` by either using ```Windows``` or ```GLFW``` commands.
 4) execute the ```acquire full screen exclusive EXT``` call.
 
 ## Full screen exclusive extension
@@ -118,7 +118,7 @@ One shall notice that, the ```sType``` of ```surface_full_screen_exclusive_Win32
 is ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT```
 and its ```pNext``` is attached to a ```nullptr```. Meantime, the ```hmonitor``` must be attached to the hmonitor
 variable representing the monitor is currently operation at, and in this sample, one may simply get it from using the
-following ```Windows command```:
+following ```Windows``` command:
 
 ```cpp
 MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
@@ -137,7 +137,7 @@ And it can be easily get by using the following ```Windows``` command while init
 HWND_applicationWindow = GetActiveWindow();
 ```
 
-The variable ```surface_full_screen_exclusive_info_EXT``` has its sType
+The variable ```surface_full_screen_exclusive_info_EXT``` has its ```sType```
 as ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT```; and its ```pNext``` is attached to
 the ```surface_full_screen_exclusive_Win32_info_EXT```. Based on the ```full screen exclusive``` mode selection,
 following ```Enums``` can be chosen per selection of the display mode, Where,
@@ -175,7 +175,7 @@ This is an optional section.
 This section introduces how to manually configure the ```application window``` modes, using ```Windows``` commands.
 Generally, ```GLFW``` works better in such case (e.g., ```GLFWsetWindow```). In this sample, a private
 function ```update_application_window()``` is introduced, which, it configures the ```application window``` modes
-from ```windowed``` to ```fullscreen```, Where:
+from ```windowed``` to ```fullscreen```, vice versa, Where:
 
 ```cpp
 void FullScreenExclusive::update_application_window()
@@ -248,7 +248,7 @@ void FullScreenExclusive::recreate()
 	// Check if there IS a device, if not don't do anything
 	if (context.device != VK_NULL_HANDLE)
 	{
-		// Step: 0) Idle the device, destroy/teardown the current swapchain and frame buffers.
+		// Step: 0) idles the device, destroy/teardown the current swapchain and frame buffers.
 		vkDeviceWaitIdle(context.device);        // pause the renderer
 		teardown_frame_buffers(context);         // basically destroy everything swapchain related
 
@@ -269,10 +269,6 @@ void FullScreenExclusive::recreate()
 			{
 				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!");
 			}
-            else
-            {
-                LOGI("vkAcquireFullScreenExclusiveModeEXT: Failed!");    
-            }
 		}
 	}
 }
