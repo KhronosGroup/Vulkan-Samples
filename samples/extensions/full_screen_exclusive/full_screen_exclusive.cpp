@@ -433,6 +433,7 @@ void FullScreenExclusive::init_swapchain(Context &context)
 
 	VkExtent2D swapchain_size{};
 
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	if (isFullScreenExclusive)
 	{
 		swapchain_size = update_current_maxImageExtent();
@@ -450,6 +451,18 @@ void FullScreenExclusive::init_swapchain(Context &context)
 			swapchain_size = surface_properties.currentExtent;
 		}
 	}
+#else
+	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
+	{
+		swapchain_size.width  = context.swapchain_dimensions.width;
+		swapchain_size.height = context.swapchain_dimensions.height;
+	}
+	else
+	{
+		swapchain_size = surface_properties.currentExtent;
+	}
+#endif
+
 
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
