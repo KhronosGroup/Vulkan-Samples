@@ -1162,6 +1162,7 @@ void FullScreenExclusive::update_application_window()
 
 void FullScreenExclusive::recreate()
 {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// Check if there IS a device, if not don't do anything
 	if (context.device != VK_NULL_HANDLE)
 	{
@@ -1192,6 +1193,7 @@ void FullScreenExclusive::recreate()
 			}
 		}
 	}
+#endif
 }
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive()
