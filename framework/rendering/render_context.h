@@ -216,7 +216,7 @@ class RenderContext
 	 */
 	VkFormat get_format() const;
 
-	Swapchain &get_swapchain();
+	Swapchain const &get_swapchain() const;
 
 	VkExtent2D const &get_surface_extent() const;
 
