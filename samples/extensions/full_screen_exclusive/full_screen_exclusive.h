@@ -85,7 +85,6 @@ class FullScreenExclusive : public vkb::Application
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
 #if defined(VK_USE_PLATFORM_WIN32_KHR)                                                                           // To slightly optimize the following variables, if a Windows platform is detected, then they shall be defined, otherwise not.
-	bool                                     isWin32 = false;                                                    // this is to detect if it is a Windows application
 	HWND                                     HWND_applicationWindow{};                                           // sync the application HWND handle
 	bool                                     isWindowed = true;                                                  // this is to tell if the application window is already set in the desired mode
 	WINDOWPLACEMENT                          wpc{};                                                              // window placement information

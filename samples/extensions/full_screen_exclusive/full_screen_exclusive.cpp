@@ -159,7 +159,6 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 	active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	HWND_applicationWindow = GetActiveWindow();        // Get the HWND application window handle and stores it in the class variable
 	initialize_windows();                              // Initialize full screen exclusive related variables since the application is now running on a windows platform
-	isWin32 = true;                                    // Turn Windows platform boolean to be true for related functions, so to save for the macros
 #elif defined(VK_USE_PLATFORM_METAL_EXT)
 	active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_XCB_KHR)
@@ -296,10 +295,10 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 	std::vector<const char *> active_device_extensions = required_device_extensions;
 
 	// If application is running on a Windows platform, then the following device extension is also needed:
-	if (isWin32)
-	{
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 		active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
-	}
+#endif
+
 	float queue_priority = 1.0f;
 
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
@@ -494,14 +493,11 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
 	// if this application is running on a Windows platform, then apply the full screen exclusive EXT, otherwise, nullptr.
-	if (isWin32)
-	{
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 		info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
-	}
-	else
-	{
+#else
 		info.pNext = nullptr;
-	}
+#endif
 
 	info.surface            = context.surface;
 	info.minImageCount      = desired_swapchain_images;
@@ -943,6 +939,7 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize_windows()
 {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// The following variable has to be attached to the pNext of surface_full_screen_exclusive_info_EXT:
 	surface_full_screen_exclusive_Win32_info_EXT.sType    = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
 	surface_full_screen_exclusive_Win32_info_EXT.pNext    = nullptr;
@@ -951,6 +948,7 @@ void FullScreenExclusive::initialize_windows()
 	surface_full_screen_exclusive_info_EXT.sType               = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
 	surface_full_screen_exclusive_info_EXT.pNext               = &surface_full_screen_exclusive_Win32_info_EXT;
 	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // Set the fullScreenExclusive stage to default when initializing
+#endif
 }
 
 bool FullScreenExclusive::prepare(vkb::Platform &platform)
@@ -1053,63 +1051,62 @@ VkExtent2D FullScreenExclusive::update_current_maxImageExtent() const
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 {
 	// if application is running on a Windows platform:
-	if (isWin32)
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+	if (input_event.get_source() == vkb::EventSource::Keyboard)
 	{
-		if (input_event.get_source() == vkb::EventSource::Keyboard)
+		const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
+		if (key_button.get_action() == vkb::KeyAction::Down)
 		{
-			const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
-			if (key_button.get_action() == vkb::KeyAction::Down)
-			{
-				bool isRecreate = false;
+			bool isRecreate = false;
 
-				switch (key_button.get_code())
-				{
-					case vkb::KeyCode::F1:        // FullscreenExclusiveEXT = Disallowed
-						if (full_screen_status != SwapchainMode::Windowed)
-						{
+			switch (key_button.get_code())
+			{
+				case vkb::KeyCode::F1:        // FullscreenExclusiveEXT = Disallowed
+					if (full_screen_status != SwapchainMode::Windowed)
+					{
 							full_screen_status                                         = SwapchainMode::Windowed;
 							application_window_status                                  = ApplicationWindowMode::Windowed;
 							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
 							isRecreate                                                 = true;
 							isFullScreenExclusive                                      = false;
 							LOGI("Windowed Mode Detected!");
-						}
-						break;
-					case vkb::KeyCode::F2:        // FullscreenExclusiveEXT = Allowed
-						if (full_screen_status != SwapchainMode::BorderlessFullscreen)
-						{
+					}
+					break;
+				case vkb::KeyCode::F2:        // FullscreenExclusiveEXT = Allowed
+					if (full_screen_status != SwapchainMode::BorderlessFullscreen)
+					{
 							full_screen_status                                         = SwapchainMode::BorderlessFullscreen;
 							application_window_status                                  = ApplicationWindowMode::Fullscreen;
 							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
 							isRecreate                                                 = true;
 							isFullScreenExclusive                                      = false;
 							LOGI("Borderless Fullscreen Mode Detected!");
-						}
-						break;
-					case vkb::KeyCode::F3:        // FullscreenExclusiveEXT = Application Controlled
-						if (full_screen_status != SwapchainMode::ExclusiveFullscreen)
-						{
+					}
+					break;
+				case vkb::KeyCode::F3:        // FullscreenExclusiveEXT = Application Controlled
+					if (full_screen_status != SwapchainMode::ExclusiveFullscreen)
+					{
 							full_screen_status                                         = SwapchainMode::ExclusiveFullscreen;
 							application_window_status                                  = ApplicationWindowMode::Fullscreen;
 							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
 							isRecreate                                                 = true;
 							isFullScreenExclusive                                      = true;
 							LOGI("Exclusive Fullscreen Mode Detected!");
-						}
-						break;
-					default:        // FullscreenExclusiveEXT = Default
-						isRecreate = false;
-						break;
-				}
+					}
+					break;
+				default:        // FullscreenExclusiveEXT = Default
+					isRecreate = false;
+					break;
+			}
 
 				// now if to recreate the swapchain and everything related:
-				if (isRecreate)
-				{
-					FullScreenExclusive::recreate();
-				}
+			if (isRecreate)
+			{
+				FullScreenExclusive::recreate();
 			}
 		}
 	}
+#endif
 }
 
 
