@@ -66,7 +66,7 @@ active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 If application is running on a ```Windows``` platform, it can be detected by using:
 
 ```cpp 
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)defined(VK_USE_PLATFORM_WIN32_KHR)
+#elif defined(VK_USE_PLATFORM_WIN32_KHR)
 ```
 
 Meantime, due to the introduction of a series of full screen exclusive related functions, a Boolean is introduced as
@@ -117,14 +117,14 @@ void FullScreenExclusive::initialize_windows()
 One shall notice that, the ```sType``` of ```surface_full_screen_exclusive_Win32_info_EXT```
 is ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT```
 and its ```pNext``` is attached to a ```nullptr```. Meantime, the ```hmonitor``` must be attached to the hmonitor
-variable representing the monitor is currently operation at, and in this sample, one may simply get it from using the
+variable representing the monitor is currently operating at, and in this sample, one may simply get it from using the
 following ```Windows``` command:
 
 ```cpp
 MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
 ```
 
-Where, ```HWND_applicationWindow``` is a ```hwnd``` represent the application windows ```handle```. Such handle is
+Where, ```HWND_applicationWindow``` is a ```hwnd``` represents the application windows ```handle```. Such handle is
 declared as a private class variable as well:
 
 ```cpp
@@ -140,7 +140,7 @@ HWND_applicationWindow = GetActiveWindow();
 The variable ```surface_full_screen_exclusive_info_EXT``` has its ```sType```
 as ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT```; and its ```pNext``` is attached to
 the ```surface_full_screen_exclusive_Win32_info_EXT```. Based on the ```full screen exclusive``` mode selection,
-following ```Enums``` can be chosen per selection of the display mode, Where,
+following ```Enums``` can be chosen per selection of the display mode, Where:
 
 1. ```VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT```
 2. ```VK_FULL_SCREEN_EXCLUSIVE_DESALLOWED_EXT```
@@ -149,7 +149,7 @@ following ```Enums``` can be chosen per selection of the display mode, Where,
 
 While initializing the swapchain chain creation information in format of ```VkSwapchainCreateInforKHR```, reference
 of ```surface_full_screen_exclusive_info_EXT``` must be passed to the ```pNext``` of the swapchain creation information.
-Where, in case of application running on a detected ```Window``` platform, the following codes are introduced:
+Where, in case of application running on a detected ```Windows``` platform, the following codes are introduced:
 
 ```cpp
 VkSwapchainCreateInfoKHR info{};
