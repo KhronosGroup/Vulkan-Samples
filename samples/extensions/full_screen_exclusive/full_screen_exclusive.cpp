@@ -1112,8 +1112,10 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 	}
 }
 
+
 void FullScreenExclusive::update_application_window()
 {
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	if (application_window_status == ApplicationWindowMode::Fullscreen && isWindowed)        // check if it is already in fullscreen, if is, then do nothing
 	{
 		isWindowed = false;
@@ -1145,6 +1147,7 @@ void FullScreenExclusive::update_application_window()
 		ShowWindow(HWND_applicationWindow, SW_SHOWNORMAL);
 		SetWindowPlacement(HWND_applicationWindow, &wpc);
 	}
+#endif
 }
 
 void FullScreenExclusive::recreate()
