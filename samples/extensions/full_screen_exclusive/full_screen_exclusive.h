@@ -28,6 +28,7 @@
 class FullScreenExclusive : public vkb::Application
 {
   private:
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	enum class SwapchainMode        // This enum class represents all for stages from full screen exclusive EXT selections
 	{
 		Default,
@@ -41,6 +42,7 @@ class FullScreenExclusive : public vkb::Application
 		Windowed,
 		Fullscreen
 	};
+#endif
 
 	struct SwapchainDimensions
 	{
@@ -98,35 +100,35 @@ class FullScreenExclusive : public vkb::Application
 #endif
 
   private:
-	VkExtent2D   update_current_maxImageExtent() const;                           // This detects the maximum surface resolution and return them in vkExtent2D format
-	virtual void input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
-	void         update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
-	void         recreate();                                                      // to recreate the swapchain and related per switch of display mode
+	VkExtent2D update_current_maxImageExtent() const;                           // This detects the maximum surface resolution and return them in vkExtent2D format
+	void       input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
+	void       update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
+	void       recreate();                                                      // to recreate the swapchain and related per switch of display mode
 
   public:
-	FullScreenExclusive();
-	virtual ~FullScreenExclusive() override;
-	void                  initialize_windows();                             // This only calls when a Windows platform is detected, and it initializes the full screen exclusive related variables
-	virtual bool          prepare(vkb::Platform &platform) override;        // This syncs all required extensions and booleans is a Windows platform is detected
-	virtual void          update(float delta_time) override;
-	virtual bool          resize(uint32_t width, uint32_t height) override;
-	bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
-	bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
-	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-	void                  init_instance(Context &context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
-	void                  init_device(Context &context, const std::vector<const char *> &required_device_extensions);
-	void                  init_per_frame(Context &context, PerFrame &per_frame);
-	void                  teardown_per_frame(Context &context, PerFrame &per_frame);
-	void                  init_swapchain(Context &context);
-	void                  init_render_pass(Context &context);
-	VkShaderModule        load_shader_module(Context &context, const char *path);
-	void                  init_pipeline(Context &context);
-	VkResult              acquire_next_image(Context &context, uint32_t *image);
-	void                  render_triangle(Context &context, uint32_t swapchain_index);
-	VkResult              present_image(Context &context, uint32_t index);
-	void                  init_frame_buffers(Context &context);
-	void                  teardown_frame_buffers(Context &context);
-	void                  teardown(Context &context);
+	FullScreenExclusive() = default;
+	~FullScreenExclusive() override;
+	void                         initialize_windows();                             // This only calls when a Windows platform is detected, and it initializes the full screen exclusive related variables
+	bool                         prepare(vkb::Platform &platform) override;        // This syncs all required extensions and booleans is a Windows platform is detected
+	void                         update(float delta_time) override;
+	bool                         resize(uint32_t width, uint32_t height) override;
+	static bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
+	static bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
+	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
+	void                         init_instance(Context &input_context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
+	void                         init_device(Context &input_context, const std::vector<const char *> &required_device_extensions);
+	static void                  init_per_frame(Context &input_context, PerFrame &per_frame);
+	static void                  teardown_per_frame(Context &input_context, PerFrame &per_frame);
+	void                         init_swapchain(Context &input_context);
+	static void                  init_render_pass(Context &input_context);
+	VkShaderModule               load_shader_module(Context &input_context, const char *path);
+	void                         init_pipeline(Context &input_context);
+	static VkResult              acquire_next_image(Context &input_context, uint32_t *image);
+	static void                  render_triangle(Context &input_context, uint32_t swapchain_index);
+	static VkResult              present_image(Context &input_context, uint32_t index);
+	static void                  init_frame_buffers(Context &input_context);
+	static void                  teardown_frame_buffers(Context &input_context);
+	void                         teardown(Context &input_context);
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();

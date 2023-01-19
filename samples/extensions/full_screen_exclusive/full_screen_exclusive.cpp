@@ -17,8 +17,6 @@
 
 #include "full_screen_exclusive.h"
 
-#include "common/logging.h"
-#include "common/vk_common.h"
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
 #include "platform/platform.h"
@@ -28,19 +26,19 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 {
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message)
 	}
 	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
+		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message)
 	}
 	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
+		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message)
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message)
 	}
 	return VK_FALSE;
 }
@@ -120,11 +118,11 @@ VkShaderStageFlagBits FullScreenExclusive::find_shader_stage(const std::string &
 	}
 
 	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
-};
+}
 
-void FullScreenExclusive::init_instance(Context &context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
+void FullScreenExclusive::init_instance(Context &input_context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
 {
-	LOGI("Initializing vulkan instance.");
+	LOGI("Initializing vulkan instance.")
 
 	if (volkInitialize())
 	{
@@ -151,7 +149,7 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
 #elif defined(VK_USE_PLATFORM_WIN32_KHR)
-	LOGI("Windows Platform Detected, isWin32 set to be: true");
+	LOGI("Windows Platform Detected, isWin32 set to be: true")
 	// Add Instance extensions for full screen exclusive
 	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
@@ -194,7 +192,7 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 		LOGI("Enabled Validation Layers:")
 		for (const auto &layer : requested_validation_layers)
 		{
-			LOGI(" \t{}", layer);
+			LOGI(" \t{}", layer)
 		}
 	}
 	else
@@ -234,9 +232,9 @@ void FullScreenExclusive::init_instance(Context &context, const std::vector<cons
 #endif
 }
 
-void FullScreenExclusive::init_device(Context &context, const std::vector<const char *> &required_device_extensions)
+void FullScreenExclusive::init_device(Context &input_context, const std::vector<const char *> &required_device_extensions)
 {
-	LOGI("Initializing vulkan device.");
+	LOGI("Initializing vulkan device.")
 
 	uint32_t gpu_count = 0;
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, nullptr));
@@ -264,14 +262,14 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
 
-		for (uint32_t i = 0; i < queue_family_count; i++)
+		for (int32_t j = 0; j < queue_family_count; j++)
 		{
 			VkBool32 supports_present;
-			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, i, context.surface, &supports_present);
+			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, j, context.surface, &supports_present);
 
-			if ((queue_family_properties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
+			if ((queue_family_properties[j].queueFlags & VK_QUEUE_GRAPHICS_BIT) && supports_present)
 			{
-				context.graphics_queue_index = i;
+				context.graphics_queue_index = j;
 				break;
 			}
 		}
@@ -279,7 +277,7 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 
 	if (context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.");
+		LOGE("Did not find suitable queue which supports graphics, compute and presentation.")
 	}
 
 	uint32_t device_extension_count;
@@ -296,7 +294,7 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 
 	// If application is running on a Windows platform, then the following device extension is also needed:
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-		active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+	active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 #endif
 
 	float queue_priority = 1.0f;
@@ -319,60 +317,60 @@ void FullScreenExclusive::init_device(Context &context, const std::vector<const 
 	vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
 }
 
-void FullScreenExclusive::init_per_frame(Context &context, PerFrame &per_frame)
+void FullScreenExclusive::init_per_frame(Context &input_context, PerFrame &per_frame)
 {
 	VkFenceCreateInfo info{VK_STRUCTURE_TYPE_FENCE_CREATE_INFO};
 	info.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-	VK_CHECK(vkCreateFence(context.device, &info, nullptr, &per_frame.queue_submit_fence));
+	VK_CHECK(vkCreateFence(input_context.device, &info, nullptr, &per_frame.queue_submit_fence));
 
 	VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
 	cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
-	cmd_pool_info.queueFamilyIndex = context.graphics_queue_index;
-	VK_CHECK(vkCreateCommandPool(context.device, &cmd_pool_info, nullptr, &per_frame.primary_command_pool));
+	cmd_pool_info.queueFamilyIndex = input_context.graphics_queue_index;
+	VK_CHECK(vkCreateCommandPool(input_context.device, &cmd_pool_info, nullptr, &per_frame.primary_command_pool));
 
 	VkCommandBufferAllocateInfo cmd_buf_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO};
 	cmd_buf_info.commandPool        = per_frame.primary_command_pool;
 	cmd_buf_info.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	cmd_buf_info.commandBufferCount = 1;
-	VK_CHECK(vkAllocateCommandBuffers(context.device, &cmd_buf_info, &per_frame.primary_command_buffer));
+	VK_CHECK(vkAllocateCommandBuffers(input_context.device, &cmd_buf_info, &per_frame.primary_command_buffer));
 
-	per_frame.device      = context.device;
-	per_frame.queue_index = context.graphics_queue_index;
+	per_frame.device      = input_context.device;
+	per_frame.queue_index = input_context.graphics_queue_index;
 }
 
-void FullScreenExclusive::teardown_per_frame(Context &context, PerFrame &per_frame)
+void FullScreenExclusive::teardown_per_frame(Context &input_context, PerFrame &per_frame)
 {
 	if (per_frame.queue_submit_fence != VK_NULL_HANDLE)
 	{
-		vkDestroyFence(context.device, per_frame.queue_submit_fence, nullptr);
+		vkDestroyFence(input_context.device, per_frame.queue_submit_fence, nullptr);
 
 		per_frame.queue_submit_fence = VK_NULL_HANDLE;
 	}
 
 	if (per_frame.primary_command_buffer != VK_NULL_HANDLE)
 	{
-		vkFreeCommandBuffers(context.device, per_frame.primary_command_pool, 1, &per_frame.primary_command_buffer);
+		vkFreeCommandBuffers(input_context.device, per_frame.primary_command_pool, 1, &per_frame.primary_command_buffer);
 
 		per_frame.primary_command_buffer = VK_NULL_HANDLE;
 	}
 
 	if (per_frame.primary_command_pool != VK_NULL_HANDLE)
 	{
-		vkDestroyCommandPool(context.device, per_frame.primary_command_pool, nullptr);
+		vkDestroyCommandPool(input_context.device, per_frame.primary_command_pool, nullptr);
 
 		per_frame.primary_command_pool = VK_NULL_HANDLE;
 	}
 
 	if (per_frame.swapchain_acquire_semaphore != VK_NULL_HANDLE)
 	{
-		vkDestroySemaphore(context.device, per_frame.swapchain_acquire_semaphore, nullptr);
+		vkDestroySemaphore(input_context.device, per_frame.swapchain_acquire_semaphore, nullptr);
 
 		per_frame.swapchain_acquire_semaphore = VK_NULL_HANDLE;
 	}
 
 	if (per_frame.swapchain_release_semaphore != VK_NULL_HANDLE)
 	{
-		vkDestroySemaphore(context.device, per_frame.swapchain_release_semaphore, nullptr);
+		vkDestroySemaphore(input_context.device, per_frame.swapchain_release_semaphore, nullptr);
 
 		per_frame.swapchain_release_semaphore = VK_NULL_HANDLE;
 	}
@@ -381,7 +379,7 @@ void FullScreenExclusive::teardown_per_frame(Context &context, PerFrame &per_fra
 	per_frame.queue_index = -1;
 }
 
-void FullScreenExclusive::init_swapchain(Context &context)
+void FullScreenExclusive::init_swapchain(Context &input_context)
 {
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
@@ -437,7 +435,6 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	if (isFullScreenExclusive)
 	{
 		swapchain_size = update_current_maxImageExtent();
-		LOGI("Fullscreen Exclusive Acquisition Detected; Swapchain Images: Maximum resolution success!");
 	}
 	else
 	{
@@ -462,7 +459,6 @@ void FullScreenExclusive::init_swapchain(Context &context)
 		swapchain_size = surface_properties.currentExtent;
 	}
 #endif
-
 
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
@@ -507,9 +503,9 @@ void FullScreenExclusive::init_swapchain(Context &context)
 
 	// if this application is running on a Windows platform, then apply the full screen exclusive EXT, otherwise, nullptr.
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
-		info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
+	info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
 #else
-		info.pNext = nullptr;
+	info.pNext = nullptr;
 #endif
 
 	info.surface            = context.surface;
@@ -586,10 +582,10 @@ void FullScreenExclusive::init_swapchain(Context &context)
 	}
 }
 
-void FullScreenExclusive::init_render_pass(Context &context)
+void FullScreenExclusive::init_render_pass(Context &input_context)
 {
 	VkAttachmentDescription attachment = {0};
-	attachment.format                  = context.swapchain_dimensions.format;
+	attachment.format                  = input_context.swapchain_dimensions.format;
 	attachment.samples                 = VK_SAMPLE_COUNT_1_BIT;
 	attachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
@@ -622,10 +618,10 @@ void FullScreenExclusive::init_render_pass(Context &context)
 	rp_info.dependencyCount        = 1;
 	rp_info.pDependencies          = &dependency;
 
-	VK_CHECK(vkCreateRenderPass(context.device, &rp_info, nullptr, &context.render_pass));
+	VK_CHECK(vkCreateRenderPass(input_context.device, &rp_info, nullptr, &input_context.render_pass));
 }
 
-VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const char *path)
+VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, const char *path)
 {
 	vkb::GLSLCompiler glsl_compiler;
 
@@ -633,14 +629,14 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const c
 
 	std::string file_ext = path;
 
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+	file_ext = file_ext.substr(file_ext.find_last_of('.') + 1);
 
 	std::vector<uint32_t> spirv;
 	std::string           info_log;
 
 	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
 		return VK_NULL_HANDLE;
 	}
 
@@ -654,7 +650,7 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &context, const c
 	return shader_module;
 }
 
-void FullScreenExclusive::init_pipeline(Context &context)
+void FullScreenExclusive::init_pipeline(Context &input_context)
 {
 	VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
@@ -724,56 +720,56 @@ void FullScreenExclusive::init_pipeline(Context &context)
 	vkDestroyShaderModule(context.device, shader_stages[1].module, nullptr);
 }
 
-VkResult FullScreenExclusive::acquire_next_image(Context &context, uint32_t *image)
+VkResult FullScreenExclusive::acquire_next_image(Context &input_context, uint32_t *image)
 {
 	VkSemaphore acquire_semaphore;
-	if (context.recycled_semaphores.empty())
+	if (input_context.recycled_semaphores.empty())
 	{
 		VkSemaphoreCreateInfo info = {VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-		VK_CHECK(vkCreateSemaphore(context.device, &info, nullptr, &acquire_semaphore));
+		VK_CHECK(vkCreateSemaphore(input_context.device, &info, nullptr, &acquire_semaphore));
 	}
 	else
 	{
-		acquire_semaphore = context.recycled_semaphores.back();
-		context.recycled_semaphores.pop_back();
+		acquire_semaphore = input_context.recycled_semaphores.back();
+		input_context.recycled_semaphores.pop_back();
 	}
 
-	VkResult res = vkAcquireNextImageKHR(context.device, context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
+	VkResult res = vkAcquireNextImageKHR(input_context.device, input_context.swapchain, UINT64_MAX, acquire_semaphore, VK_NULL_HANDLE, image);
 
 	if (res != VK_SUCCESS)
 	{
-		context.recycled_semaphores.push_back(acquire_semaphore);
+		input_context.recycled_semaphores.push_back(acquire_semaphore);
 		return res;
 	}
 
-	if (context.per_frame[*image].queue_submit_fence != VK_NULL_HANDLE)
+	if (input_context.per_frame[*image].queue_submit_fence != VK_NULL_HANDLE)
 	{
-		vkWaitForFences(context.device, 1, &context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
-		vkResetFences(context.device, 1, &context.per_frame[*image].queue_submit_fence);
+		vkWaitForFences(input_context.device, 1, &input_context.per_frame[*image].queue_submit_fence, true, UINT64_MAX);
+		vkResetFences(input_context.device, 1, &input_context.per_frame[*image].queue_submit_fence);
 	}
 
-	if (context.per_frame[*image].primary_command_pool != VK_NULL_HANDLE)
+	if (input_context.per_frame[*image].primary_command_pool != VK_NULL_HANDLE)
 	{
-		vkResetCommandPool(context.device, context.per_frame[*image].primary_command_pool, 0);
+		vkResetCommandPool(input_context.device, input_context.per_frame[*image].primary_command_pool, 0);
 	}
 
-	VkSemaphore old_semaphore = context.per_frame[*image].swapchain_acquire_semaphore;
+	VkSemaphore old_semaphore = input_context.per_frame[*image].swapchain_acquire_semaphore;
 
 	if (old_semaphore != VK_NULL_HANDLE)
 	{
-		context.recycled_semaphores.push_back(old_semaphore);
+		input_context.recycled_semaphores.push_back(old_semaphore);
 	}
 
-	context.per_frame[*image].swapchain_acquire_semaphore = acquire_semaphore;
+	input_context.per_frame[*image].swapchain_acquire_semaphore = acquire_semaphore;
 
 	return VK_SUCCESS;
 }
 
-void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_index)
+void FullScreenExclusive::render_triangle(Context &input_context, uint32_t swapchain_index)
 {
-	VkFramebuffer framebuffer = context.swapchain_frame_buffers[swapchain_index];
+	VkFramebuffer framebuffer = input_context.swapchain_frame_buffers[swapchain_index];
 
-	VkCommandBuffer cmd = context.per_frame[swapchain_index].primary_command_buffer;
+	VkCommandBuffer cmd = input_context.per_frame[swapchain_index].primary_command_buffer;
 
 	VkCommandBufferBeginInfo begin_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO};
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
@@ -783,27 +779,27 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
-	rp_begin.renderPass               = context.render_pass;
+	rp_begin.renderPass               = input_context.render_pass;
 	rp_begin.framebuffer              = framebuffer;
-	rp_begin.renderArea.extent.width  = context.swapchain_dimensions.width;
-	rp_begin.renderArea.extent.height = context.swapchain_dimensions.height;
+	rp_begin.renderArea.extent.width  = input_context.swapchain_dimensions.width;
+	rp_begin.renderArea.extent.height = input_context.swapchain_dimensions.height;
 	rp_begin.clearValueCount          = 1;
 	rp_begin.pClearValues             = &clear_value;
 
 	vkCmdBeginRenderPass(cmd, &rp_begin, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, context.pipeline);
+	vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, input_context.pipeline);
 
 	VkViewport vp{};
-	vp.width    = static_cast<float>(context.swapchain_dimensions.width);
-	vp.height   = static_cast<float>(context.swapchain_dimensions.height);
+	vp.width    = static_cast<float>(input_context.swapchain_dimensions.width);
+	vp.height   = static_cast<float>(input_context.swapchain_dimensions.height);
 	vp.minDepth = 0.0f;
 	vp.maxDepth = 1.0f;
 	vkCmdSetViewport(cmd, 0, 1, &vp);
 
 	VkRect2D scissor{};
-	scissor.extent.width  = context.swapchain_dimensions.width;
-	scissor.extent.height = context.swapchain_dimensions.height;
+	scissor.extent.width  = input_context.swapchain_dimensions.width;
+	scissor.extent.height = input_context.swapchain_dimensions.height;
 	vkCmdSetScissor(cmd, 0, 1, &scissor);
 
 	vkCmdDraw(cmd, 3, 1, 0, 0);
@@ -812,11 +808,11 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 
 	VK_CHECK(vkEndCommandBuffer(cmd));
 
-	if (context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
+	if (input_context.per_frame[swapchain_index].swapchain_release_semaphore == VK_NULL_HANDLE)
 	{
 		VkSemaphoreCreateInfo semaphore_info{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO};
-		VK_CHECK(vkCreateSemaphore(context.device, &semaphore_info, nullptr,
-		                           &context.per_frame[swapchain_index].swapchain_release_semaphore));
+		VK_CHECK(vkCreateSemaphore(input_context.device, &semaphore_info, nullptr,
+		                           &input_context.per_frame[swapchain_index].swapchain_release_semaphore));
 	}
 
 	VkPipelineStageFlags wait_stage{VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
@@ -825,59 +821,59 @@ void FullScreenExclusive::render_triangle(Context &context, uint32_t swapchain_i
 	info.commandBufferCount   = 1;
 	info.pCommandBuffers      = &cmd;
 	info.waitSemaphoreCount   = 1;
-	info.pWaitSemaphores      = &context.per_frame[swapchain_index].swapchain_acquire_semaphore;
+	info.pWaitSemaphores      = &input_context.per_frame[swapchain_index].swapchain_acquire_semaphore;
 	info.pWaitDstStageMask    = &wait_stage;
 	info.signalSemaphoreCount = 1;
-	info.pSignalSemaphores    = &context.per_frame[swapchain_index].swapchain_release_semaphore;
+	info.pSignalSemaphores    = &input_context.per_frame[swapchain_index].swapchain_release_semaphore;
 
-	VK_CHECK(vkQueueSubmit(context.queue, 1, &info, context.per_frame[swapchain_index].queue_submit_fence));
+	VK_CHECK(vkQueueSubmit(input_context.queue, 1, &info, input_context.per_frame[swapchain_index].queue_submit_fence));
 }
 
-VkResult FullScreenExclusive::present_image(Context &context, uint32_t index)
+VkResult FullScreenExclusive::present_image(Context &input_context, uint32_t index)
 {
 	VkPresentInfoKHR present{VK_STRUCTURE_TYPE_PRESENT_INFO_KHR};
 	present.swapchainCount     = 1;
-	present.pSwapchains        = &context.swapchain;
+	present.pSwapchains        = &input_context.swapchain;
 	present.pImageIndices      = &index;
 	present.waitSemaphoreCount = 1;
-	present.pWaitSemaphores    = &context.per_frame[index].swapchain_release_semaphore;
-	return vkQueuePresentKHR(context.queue, &present);
+	present.pWaitSemaphores    = &input_context.per_frame[index].swapchain_release_semaphore;
+	return vkQueuePresentKHR(input_context.queue, &present);
 }
 
-void FullScreenExclusive::init_frame_buffers(Context &context)
+void FullScreenExclusive::init_frame_buffers(Context &input_context)
 {
-	VkDevice device = context.device;
+	VkDevice device = input_context.device;
 
-	for (auto &image_view : context.swapchain_image_views)
+	for (auto &image_view : input_context.swapchain_image_views)
 	{
 		VkFramebufferCreateInfo fb_info{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
-		fb_info.renderPass      = context.render_pass;
+		fb_info.renderPass      = input_context.render_pass;
 		fb_info.attachmentCount = 1;
 		fb_info.pAttachments    = &image_view;
-		fb_info.width           = context.swapchain_dimensions.width;
-		fb_info.height          = context.swapchain_dimensions.height;
+		fb_info.width           = input_context.swapchain_dimensions.width;
+		fb_info.height          = input_context.swapchain_dimensions.height;
 		fb_info.layers          = 1;
 
 		VkFramebuffer framebuffer;
 		VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffer));
 
-		context.swapchain_frame_buffers.push_back(framebuffer);
+		input_context.swapchain_frame_buffers.push_back(framebuffer);
 	}
 }
 
-void FullScreenExclusive::teardown_frame_buffers(Context &context)
+void FullScreenExclusive::teardown_frame_buffers(Context &input_context)
 {
-	vkQueueWaitIdle(context.queue);
+	vkQueueWaitIdle(input_context.queue);
 
-	for (auto &framebuffer : context.swapchain_frame_buffers)
+	for (auto &framebuffer : input_context.swapchain_frame_buffers)
 	{
-		vkDestroyFramebuffer(context.device, framebuffer, nullptr);
+		vkDestroyFramebuffer(input_context.device, framebuffer, nullptr);
 	}
 
-	context.swapchain_frame_buffers.clear();
+	input_context.swapchain_frame_buffers.clear();
 }
 
-void FullScreenExclusive::teardown(Context &context)
+void FullScreenExclusive::teardown(Context &input_context)
 {
 	vkDeviceWaitIdle(context.device);
 
@@ -941,9 +937,6 @@ void FullScreenExclusive::teardown(Context &context)
 
 	vk_instance.reset();
 }
-
-FullScreenExclusive::FullScreenExclusive()
-{}
 
 FullScreenExclusive::~FullScreenExclusive()
 {
@@ -1018,7 +1011,7 @@ void FullScreenExclusive::update(float delta_time)
 	}
 	else if (res != VK_SUCCESS)
 	{
-		LOGE("Failed to present swapchain image.");
+		LOGE("Failed to present swapchain image.")
 	}
 }
 
@@ -1077,34 +1070,34 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 				case vkb::KeyCode::F1:        // FullscreenExclusiveEXT = Disallowed
 					if (full_screen_status != SwapchainMode::Windowed)
 					{
-							full_screen_status                                         = SwapchainMode::Windowed;
-							application_window_status                                  = ApplicationWindowMode::Windowed;
-							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
-							isRecreate                                                 = true;
-							isFullScreenExclusive                                      = false;
-							LOGI("Windowed Mode Detected!");
+						full_screen_status                                         = SwapchainMode::Windowed;
+						application_window_status                                  = ApplicationWindowMode::Windowed;
+						surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
+						isRecreate                                                 = true;
+						isFullScreenExclusive                                      = false;
+						LOGI("Windowed Mode Detected!")
 					}
 					break;
 				case vkb::KeyCode::F2:        // FullscreenExclusiveEXT = Allowed
 					if (full_screen_status != SwapchainMode::BorderlessFullscreen)
 					{
-							full_screen_status                                         = SwapchainMode::BorderlessFullscreen;
-							application_window_status                                  = ApplicationWindowMode::Fullscreen;
-							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
-							isRecreate                                                 = true;
-							isFullScreenExclusive                                      = false;
-							LOGI("Borderless Fullscreen Mode Detected!");
+						full_screen_status                                         = SwapchainMode::BorderlessFullscreen;
+						application_window_status                                  = ApplicationWindowMode::Fullscreen;
+						surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
+						isRecreate                                                 = true;
+						isFullScreenExclusive                                      = false;
+						LOGI("Borderless Fullscreen Mode Detected!")
 					}
 					break;
 				case vkb::KeyCode::F3:        // FullscreenExclusiveEXT = Application Controlled
 					if (full_screen_status != SwapchainMode::ExclusiveFullscreen)
 					{
-							full_screen_status                                         = SwapchainMode::ExclusiveFullscreen;
-							application_window_status                                  = ApplicationWindowMode::Fullscreen;
-							surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
-							isRecreate                                                 = true;
-							isFullScreenExclusive                                      = true;
-							LOGI("Exclusive Fullscreen Mode Detected!");
+						full_screen_status                                         = SwapchainMode::ExclusiveFullscreen;
+						application_window_status                                  = ApplicationWindowMode::Fullscreen;
+						surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
+						isRecreate                                                 = true;
+						isFullScreenExclusive                                      = true;
+						LOGI("Exclusive Fullscreen Mode Detected!")
 					}
 					break;
 				default:        // FullscreenExclusiveEXT = Default
@@ -1112,7 +1105,7 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 					break;
 			}
 
-				// now if to recreate the swapchain and everything related:
+			// now if to recreate the swapchain and everything related:
 			if (isRecreate)
 			{
 				FullScreenExclusive::recreate();
@@ -1121,7 +1114,6 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 	}
 #endif
 }
-
 
 void FullScreenExclusive::update_application_window()
 {
@@ -1185,11 +1177,11 @@ void FullScreenExclusive::recreate()
 			VkResult result = vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain);
 			if (result == VK_SUCCESS)
 			{
-				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!");
+				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!")
 			}
 			else
 			{
-				LOGI("vkAcquireFullScreenExclusiveModeEXT: Failed!");
+				LOGI("vkAcquireFullScreenExclusiveModeEXT: Failed!")
 			}
 		}
 	}
