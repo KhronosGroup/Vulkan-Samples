@@ -259,7 +259,7 @@ void ExtendedDynamicState2::create_pipeline()
 	        static_cast<uint32_t>(dynamic_state_enables.size()),
 	        0);
 
-	/* Vertex bindings an attributes for model rendering */
+	/* Vertex bindings and attributes for model rendering */
 	/* Binding description */
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),

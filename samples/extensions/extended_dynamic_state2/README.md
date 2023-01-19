@@ -23,9 +23,9 @@
 
 ## Overview
 
-This sample demostrates hot to use `VK_EXT_extended_dynamic_state2` extension, which eliminates the need to create multiple pipeline in case of specific different parameters.
+This sample demonstrates how to use `VK_EXT_extended_dynamic_state2` extension, which eliminates the need to create multiple pipelines in case of specific different parameters.
 
-This extension changes how `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` are managed. Instead of static description during pipeline creation, this extension allows developers to change those parameters by using function before every draw.
+This extension changes how `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` are managed. Instead of static description during pipeline creation, this extension allows developers to change those parameters by using a function before every draw.
 
 Below is a comparison of common Vulkan static and dynamic implementation of those extensions with additional usage of `vkCmdSetPrimitiveTopologyEXT` extension from dynamic state . 
   
@@ -42,336 +42,336 @@ Previously developers had to create multiple pipelines for different parameters 
 
 ```C++
 ...
-	// First pipeline Creation
-    VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+// First pipeline Creation
+VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	vkb::initializers::pipeline_input_assembly_state_create_info(
+	    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	    0,
+	    VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+VkPipelineRasterizationStateCreateInfo rasterization_state =
+	vkb::initializers::pipeline_rasterization_state_create_info(
+	    VK_POLYGON_MODE_FILL,
+	    VK_CULL_MODE_BACK_BIT,
+	    VK_FRONT_FACE_CLOCKWISE,
+	    0);
 
-	rasterization_state.depthBiasConstantFactor = 1.0f;
-	rasterization_state.depthBiasSlopeFactor    = 1.0f;
-	rasterization_state.depthBiasClamp          = 0.0f;
+rasterization_state.depthBiasConstantFactor = 1.0f;
+rasterization_state.depthBiasSlopeFactor    = 1.0f;
+rasterization_state.depthBiasClamp          = 0.0f;
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+VkPipelineColorBlendAttachmentState blend_attachment_state =
+	vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+	    VK_TRUE);
 
-	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
-	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
-	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
+blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
+blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+VkPipelineColorBlendStateCreateInfo color_blend_state =
+	vkb::initializers::pipeline_color_blend_state_create_info(
+	    1,
+	    &blend_attachment_state);
 
-	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE, /* changed */
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
+VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	vkb::initializers::pipeline_depth_stencil_state_create_info(
+	    VK_TRUE, /* changed */
+	    VK_TRUE,
+	    VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+VkPipelineViewportStateCreateInfo viewport_state =
+	vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+VkPipelineMultisampleStateCreateInfo multisample_state =
+	vkb::initializers::pipeline_multisample_state_create_info(
+	    VK_SAMPLE_COUNT_1_BIT,
+	    0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	};
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+std::vector<VkDynamicState> dynamic_state_enables = {
+	VK_DYNAMIC_STATE_VIEWPORT,
+	VK_DYNAMIC_STATE_SCISSOR,
+};
+VkPipelineDynamicStateCreateInfo dynamic_state =
+	vkb::initializers::pipeline_dynamic_state_create_info(
+	    dynamic_state_enables.data(),
+	    static_cast<uint32_t>(dynamic_state_enables.size()),
+	    0);
 
-	// Vertex bindings an attributes for model rendering
-	// Binding description
-	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
-	    vkb::initializers::vertex_input_binding_description(1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
-	};
+// Vertex bindings an attributes for model rendering
+// Binding description
+std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+	vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
+	vkb::initializers::vertex_input_binding_description(1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
+};
 
-	// Attribute descriptions
-	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Position
-	    vkb::initializers::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Normal
-	};
+// Attribute descriptions
+std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+	vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Position
+	vkb::initializers::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Normal
+};
 
-	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
-	shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
+shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
+shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 ...
 
-	/* Use the pNext to point to the rendering create struct */
-	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-	graphics_create.pNext               = VK_NULL_HANDLE;
-	graphics_create.renderPass          = VK_NULL_HANDLE;
-	graphics_create.pInputAssemblyState = &input_assembly_state;
-	graphics_create.pRasterizationState = &rasterization_state;
-	graphics_create.pColorBlendState    = &color_blend_state;
-	graphics_create.pMultisampleState   = &multisample_state;
-	graphics_create.pViewportState      = &viewport_state;
-	graphics_create.pDepthStencilState  = &depth_stencil_state;
-	graphics_create.pDynamicState       = &dynamic_state;
-	graphics_create.pVertexInputState   = &vertex_input_state;
-	graphics_create.pTessellationState  = VK_NULL_HANDLE;
-	graphics_create.stageCount          = 2;
-	graphics_create.pStages             = shader_stages.data();
-	graphics_create.layout              = pipeline_layouts.baseline;
+/* Use the pNext to point to the rendering create struct */
+VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+graphics_create.pNext               = VK_NULL_HANDLE;
+graphics_create.renderPass          = VK_NULL_HANDLE;
+graphics_create.pInputAssemblyState = &input_assembly_state;
+graphics_create.pRasterizationState = &rasterization_state;
+graphics_create.pColorBlendState    = &color_blend_state;
+graphics_create.pMultisampleState   = &multisample_state;
+graphics_create.pViewportState      = &viewport_state;
+graphics_create.pDepthStencilState  = &depth_stencil_state;
+graphics_create.pDynamicState       = &dynamic_state;
+graphics_create.pVertexInputState   = &vertex_input_state;
+graphics_create.pTessellationState  = VK_NULL_HANDLE;
+graphics_create.stageCount          = 2;
+graphics_create.pStages             = shader_stages.data();
+graphics_create.layout              = pipeline_layouts.baseline;
 
-	graphics_create.pNext      = VK_NULL_HANDLE;
-	graphics_create.renderPass = render_pass;
+graphics_create.pNext      = VK_NULL_HANDLE;
+graphics_create.renderPass = render_pass;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline1));
+VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline1));
 
-    // Second pipeline creation
-    rasterization_state.rasterizerDiscardEnable = VK_TRUE
+// Second pipeline creation
+rasterization_state.rasterizerDiscardEnable = VK_TRUE
 
-    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline2));
+VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline2));
 
-    // Third pipeline creation
-    rasterization_state.rasterizerDiscardEnable = VK_FALSE
-    input_assembly_state.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
-    input_assembly_state.primitiveRestartEnable = VK_TRUE
+// Third pipeline creation
+rasterization_state.rasterizerDiscardEnable = VK_FALSE
+input_assembly_state.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST
+input_assembly_state.primitiveRestartEnable = VK_TRUE
 
-    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline3));
+VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline3));
 
-    // Fourth pipeline creation
-    VkPipelineTessellationStateCreateInfo tessellation_state =
-	    vkb::initializers::pipeline_tessellation_state_create_info(3);
-    graphics_create.layout = pipeline_layouts.tesselation;
-    graphics_create.pTessellationState  = &tessellation_state;
+// Fourth pipeline creation
+VkPipelineTessellationStateCreateInfo tessellation_state =
+	vkb::initializers::pipeline_tessellation_state_create_info(3);
+graphics_create.layout = pipeline_layouts.tesselation;
+graphics_create.pTessellationState  = &tessellation_state;
     
-    input_assembly_state.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
-    input_assembly_state.primitiveRestartEnable = VK_FALSE
-    rasterization_state.depthBiasEnable = VK_TRUE;
+input_assembly_state.topology = VK_PRIMITIVE_TOPOLOGY_PATCH_LIST
+input_assembly_state.primitiveRestartEnable = VK_FALSE
+rasterization_state.depthBiasEnable = VK_TRUE;
     
-    vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
+vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
+vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
+vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
+vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
-	if (get_device().get_gpu().get_features().fillModeNonSolid)
-	{
-		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;        //VK_POLYGON_MODE_LINE; /* Wireframe mode */
-	}
+if (get_device().get_gpu().get_features().fillModeNonSolid)
+{
+	rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;        //VK_POLYGON_MODE_LINE; /* Wireframe mode */
+}
 
-	shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
-	shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
-	graphics_create.stageCount = static_cast<uint32_t>(shader_stages.size());
-	graphics_create.pStages    = shader_stages.data();
-	/* Enable depth test and write */
-	depth_stencil_state.depthWriteEnable = VK_TRUE;
-	depth_stencil_state.depthTestEnable  = VK_TRUE;
+shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert", VK_SHADER_STAGE_VERTEX_BIT);
+shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+graphics_create.stageCount = static_cast<uint32_t>(shader_stages.size());
+graphics_create.pStages    = shader_stages.data();
+/* Enable depth test and write */
+depth_stencil_state.depthWriteEnable = VK_TRUE;
+depth_stencil_state.depthTestEnable  = VK_TRUE;
     
-    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline4));
+VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline4));
 ...
 ```
 
-In approach above, if we would want to change patch control points number, then for each different number we would need to create new pipeline.
+In approach above, if we would want to change the patch control points number, then for each different number we would need to create a new pipeline.
 
-However, with dynamic state 2 the number of pipelines can be reduced because of possibility to change parameters of `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` by calling `cmdSetDepthBiasEnableEXT`, `cmdSetPrimitiveRestartEnableEXT`, `cmdSetRasterizerDiscardEnableEXT` and `cmdSetPatchControlPointsEXT` before `draw_model`.
+However, with 'VK_EXT_extended_dynamic_state2' the number of pipelines can be reduced by the possibility to change parameters of `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` by calling `vkCmdSetDepthBiasEnableEXT`, `vkCmdSetPrimitiveRestartEnableEXT`, `vkCmdSetRasterizerDiscardEnableEXT` and `vkCmdSetPatchControlPointsEXT` respectively before calling `draw_model`.
 
-With usage of above functions we can reduce number of pipelines.
+With the usage of above functions we can reduce the number of pipelines.
 
 ```C+
 ...
-    VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	vkb::initializers::pipeline_input_assembly_state_create_info(
+	    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	    0,
+	    VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
+VkPipelineRasterizationStateCreateInfo rasterization_state =
+	vkb::initializers::pipeline_rasterization_state_create_info(
+	    VK_POLYGON_MODE_FILL,
+	    VK_CULL_MODE_BACK_BIT,
+	    VK_FRONT_FACE_CLOCKWISE,
+	    0);
 
-	rasterization_state.depthBiasConstantFactor = 1.0f;
-	rasterization_state.depthBiasSlopeFactor    = 1.0f;
-	rasterization_state.depthBiasClamp          = 0.0f;
+rasterization_state.depthBiasConstantFactor = 1.0f;
+rasterization_state.depthBiasSlopeFactor    = 1.0f;
+rasterization_state.depthBiasClamp          = 0.0f;
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
-	        VK_TRUE);
+VkPipelineColorBlendAttachmentState blend_attachment_state =
+	vkb::initializers::pipeline_color_blend_attachment_state(
+	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+	    VK_TRUE);
 
-	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
-	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
-	blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
-	blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
-	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
-	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
+blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
+blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+VkPipelineColorBlendStateCreateInfo color_blend_state =
+	vkb::initializers::pipeline_color_blend_state_create_info(
+	    1,
+	    &blend_attachment_state);
 
-	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE, /* changed */
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
+/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
+VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	vkb::initializers::pipeline_depth_stencil_state_create_info(
+	    VK_TRUE, /* changed */
+	    VK_TRUE,
+	    VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+VkPipelineViewportStateCreateInfo viewport_state =
+	vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+VkPipelineMultisampleStateCreateInfo multisample_state =
+	vkb::initializers::pipeline_multisample_state_create_info(
+	    VK_SAMPLE_COUNT_1_BIT,
+	    0);
 
-	VkPipelineTessellationStateCreateInfo tessellation_state =
-	    vkb::initializers::pipeline_tessellation_state_create_info(3);
+VkPipelineTessellationStateCreateInfo tessellation_state =
+	vkb::initializers::pipeline_tessellation_state_create_info(3);
 
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,
-	    VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT,
-	    VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,
-	    VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT,
-	};
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+std::vector<VkDynamicState> dynamic_state_enables = {
+	VK_DYNAMIC_STATE_VIEWPORT,
+	VK_DYNAMIC_STATE_SCISSOR,
+	VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,
+	VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT,
+	VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,
+	VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT,
+};
+VkPipelineDynamicStateCreateInfo dynamic_state =
+	vkb::initializers::pipeline_dynamic_state_create_info(
+	    dynamic_state_enables.data(),
+	    static_cast<uint32_t>(dynamic_state_enables.size()),
+	    0);
 
-	// Vertex bindings an attributes for model rendering
-	// Binding description
-	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
-	    vkb::initializers::vertex_input_binding_description(1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
-	};
+// Vertex bindings and attributes for model rendering
+// Binding description
+std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+	vkb::initializers::vertex_input_binding_description(0, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
+	vkb::initializers::vertex_input_binding_description(1, sizeof(glm::vec3), VK_VERTEX_INPUT_RATE_VERTEX),
+};
 
-	// Attribute descriptions
-	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Position
-	    vkb::initializers::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Normal
-	};
+// Attribute descriptions
+std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+	vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Position
+	vkb::initializers::vertex_input_attribute_description(1, 1, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Normal
+};
 
-	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
-	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
-	shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages{};
+shader_stages[0] = load_shader("extended_dynamic_state2/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
+shader_stages[1] = load_shader("extended_dynamic_state2/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	/* Create graphics pipeline for dynamic rendering */
-	VkFormat color_rendering_format = render_context->get_format();
+/* Create graphics pipeline for dynamic rendering */
+VkFormat color_rendering_format = render_context->get_format();
 
-	/* Provide information for dynamic rendering */
-	VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
-	pipeline_create.pNext                   = VK_NULL_HANDLE;
-	pipeline_create.colorAttachmentCount    = 1;
-	pipeline_create.pColorAttachmentFormats = &color_rendering_format;
-	pipeline_create.depthAttachmentFormat   = depth_format;
-	pipeline_create.stencilAttachmentFormat = depth_format;
+/* Provide information for dynamic rendering */
+VkPipelineRenderingCreateInfoKHR pipeline_create{VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR};
+pipeline_create.pNext                   = VK_NULL_HANDLE;
+pipeline_create.colorAttachmentCount    = 1;
+pipeline_create.pColorAttachmentFormats = &color_rendering_format;
+pipeline_create.depthAttachmentFormat   = depth_format;
+pipeline_create.stencilAttachmentFormat = depth_format;
 
-	/* Skybox pipeline (background cube) */
-	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
-	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
-	uint32_t shadertype                  = 0;
-	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
-	shader_stages[0].pSpecializationInfo = &specialization_info;
-	shader_stages[1].pSpecializationInfo = &specialization_info;
+/* Skybox pipeline (background cube) */
+VkSpecializationInfo                    specialization_info;
+std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
+specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
+uint32_t shadertype                  = 0;
+specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
+shader_stages[0].pSpecializationInfo = &specialization_info;
+shader_stages[1].pSpecializationInfo = &specialization_info;
 
-	/* Use the pNext to point to the rendering create struct */
-	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
-	graphics_create.pNext               = VK_NULL_HANDLE;
-	graphics_create.renderPass          = VK_NULL_HANDLE;
-	graphics_create.pInputAssemblyState = &input_assembly_state;
-	graphics_create.pRasterizationState = &rasterization_state;
-	graphics_create.pColorBlendState    = &color_blend_state;
-	graphics_create.pMultisampleState   = &multisample_state;
-	graphics_create.pViewportState      = &viewport_state;
-	graphics_create.pDepthStencilState  = &depth_stencil_state;
-	graphics_create.pDynamicState       = &dynamic_state;
-	graphics_create.pVertexInputState   = &vertex_input_state;
-	graphics_create.pTessellationState  = VK_NULL_HANDLE;
-	graphics_create.stageCount          = 2;
-	graphics_create.pStages             = shader_stages.data();
-	graphics_create.layout              = pipeline_layouts.baseline;
+/* Use the pNext to point to the rendering create struct */
+VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+graphics_create.pNext               = VK_NULL_HANDLE;
+graphics_create.renderPass          = VK_NULL_HANDLE;
+graphics_create.pInputAssemblyState = &input_assembly_state;
+graphics_create.pRasterizationState = &rasterization_state;
+graphics_create.pColorBlendState    = &color_blend_state;
+graphics_create.pMultisampleState   = &multisample_state;
+graphics_create.pViewportState      = &viewport_state;
+graphics_create.pDepthStencilState  = &depth_stencil_state;
+graphics_create.pDynamicState       = &dynamic_state;
+graphics_create.pVertexInputState   = &vertex_input_state;
+graphics_create.pTessellationState  = VK_NULL_HANDLE;
+graphics_create.stageCount          = 2;
+graphics_create.pStages             = shader_stages.data();
+graphics_create.layout              = pipeline_layouts.baseline;
 
 	
 
-	graphics_create.pNext      = VK_NULL_HANDLE;
-	graphics_create.renderPass = render_pass;
+graphics_create.pNext      = VK_NULL_HANDLE;
+graphics_create.renderPass = render_pass;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.baseline));
+VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.baseline));
 ...
 ```
 
-And now, thanks to dynamic state 2, we can change parameters before each corresponding draw call. 
+And now, thanks to `VK_EXT_extended_dynamic_state2`, we can change parameters before each corresponding draw call. 
 
 ```C++
 ...
-	vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.baseline, 0, 1, &descriptor_sets.baseline, 0, nullptr);
-	vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
+vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.baseline, 0, 1, &descriptor_sets.baseline, 0, nullptr);
+vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
 
-	vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-	vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_FALSE);
-	draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_BASELINE_OBJ_INDEX);
+vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_FALSE);
+draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_BASELINE_OBJ_INDEX);
 
-	vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-	vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_TRUE);
+vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_TRUE);
 
-	draw_created_model(draw_cmd_buffers[i]);
+draw_created_model(draw_cmd_buffers[i]);
 
-	vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.tesselation, 0, 1, &descriptor_sets.tesselation, 0, nullptr);
-	vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.tesselation);
+vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.tesselation, 0, 1, &descriptor_sets.tesselation, 0, nullptr);
+vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.tesselation);
 
-	vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-	vkCmdSetPatchControlPointsEXT(draw_cmd_buffers[i], gui_settings.patch_control_points);
+vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
+vkCmdSetPatchControlPointsEXT(draw_cmd_buffers[i], gui_settings.patch_control_points);
 
-	draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_TESSELLATION_OBJ_INDEX);
+draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_TESSELLATION_OBJ_INDEX);
 
-	vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.background, 0, 1, &descriptor_sets.background, 0, nullptr);
-	vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
+vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.background, 0, 1, &descriptor_sets.background, 0, nullptr);
+vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
-	draw_model(background_model, draw_cmd_buffers[i]);
+draw_model(background_model, draw_cmd_buffers[i]);
 ...
 
 ```
 
-The usage of depth bias dynamic state is implemented in `draw_from_scene` function which is described below.
+The usage of depth bias dynamic state is implemented in the `draw_from_scene` function which is described below.
 
 ```C++
 void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
@@ -419,10 +419,10 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 
 
 ## Enabling the Extension
-The extended dynamic state 2 api is provided in Vulkan 1.3 and the appropriate headers / SDK is required.
+The extended dynamic state 2 api requires Vulkan 1.0 and the appropriate headers / SDK is required. This extension has been [partially](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3) promoted to Vulkan 1.3.
 
 The device extension is provided by `VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME`. It also requires 
-`VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extension to be enabled
+`VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extension to be enabled.
 
 ```C++
 add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
