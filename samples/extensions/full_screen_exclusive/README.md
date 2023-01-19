@@ -172,8 +172,7 @@ info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 #endif
 ```
 
-Notice that, the ```sType``` of a ```VkSwapchainCreateInfoKHR``` variable is initialized
-as ```VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR```. Rest of the swapchain create information are configured normally.
+Rest of the ```swapchain create info``` are configured normally.
 
 ## *Application window modes
 
@@ -276,7 +275,7 @@ void FullScreenExclusive::recreate()
 			VkResult result = vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain);
 			if (result == VK_SUCCESS)
 			{
-				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!");
+				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!")
 			}
 		}
 	}
@@ -308,7 +307,7 @@ switch (key_button.get_code())
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
             isRecreate                                                 = true;
             isFullScreenExclusive                                      = false;
-            LOGI("Windowed Mode Detected!");
+            LOGI("Windowed Mode Detected!")
         }
         break;
     case vkb::KeyCode::F2:        // FullscreenExclusiveEXT = Allowed
@@ -319,7 +318,7 @@ switch (key_button.get_code())
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
             isRecreate                                                 = true;
             isFullScreenExclusive                                      = false;
-            LOGI("Borderless Fullscreen Mode Detected!");
+            LOGI("Borderless Fullscreen Mode Detected!")
         }
         break;
     case vkb::KeyCode::F3:        // FullscreenExclusiveEXT = Application Controlled
@@ -330,7 +329,7 @@ switch (key_button.get_code())
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
             isRecreate                                                 = true;
             isFullScreenExclusive                                      = true;
-            LOGI("Exclusive Fullscreen Mode Detected!");
+            LOGI("Exclusive Fullscreen Mode Detected!")
         }
         break;
     default:        // FullscreenExclusiveEXT = Default
