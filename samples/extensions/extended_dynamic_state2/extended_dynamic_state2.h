@@ -113,7 +113,6 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		glm::vec4 color;
 	} push_const_block;
 
-	std::unique_ptr<vkb::sg::Scene> scene;
 	struct SceneNode
 	{
 		std::string       name;

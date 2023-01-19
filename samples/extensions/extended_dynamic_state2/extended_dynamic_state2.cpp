@@ -87,9 +87,7 @@ bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
  */
 void ExtendedDynamicState2::load_assets()
 {
-	vkb::GLTFLoader loader{get_device()};
-	scene = loader.read_scene_from_file("scenes/primitives/primitives.gltf");
-	assert(scene);
+	load_scene("scenes/primitives/primitives.gltf");
 
 	std::vector<SceneNode> scene_elements;
 	// Store all scene nodes in a linear vector for easier access
