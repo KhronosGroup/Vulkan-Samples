@@ -87,9 +87,7 @@ bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
  */
 void ExtendedDynamicState2::load_assets()
 {
-	vkb::GLTFLoader loader{get_device()};
-	scene = loader.read_scene_from_file("scenes/primitives/primitives.gltf");
-	assert(scene);
+	load_scene("scenes/primitives/primitives.gltf");
 
 	std::vector<SceneNode> scene_elements;
 	// Store all scene nodes in a linear vector for easier access
@@ -230,7 +228,7 @@ void ExtendedDynamicState2::create_pipeline()
 	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE, /* changed */
+	        VK_TRUE,
 	        VK_TRUE,
 	        VK_COMPARE_OP_GREATER);
 
