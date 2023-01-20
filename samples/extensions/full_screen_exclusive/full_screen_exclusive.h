@@ -90,8 +90,8 @@ class FullScreenExclusive : public vkb::Application
 	HWND                                     HWND_applicationWindow{};                                           // sync the application HWND handle
 	bool                                     isWindowed = true;                                                  // this is to tell if the application window is already set in the desired mode
 	WINDOWPLACEMENT                          wpc{};                                                              // window placement information
-	long                                     HWND_style          = 0;                                            // current Hwnd style
-	long                                     HWND_style_previous = 0;                                            // previous Hwnd style
+	LONG                                     HWND_style          = 0;                                            // current Hwnd style
+	LONG                                     HWND_style_previous = 0;                                            // previous Hwnd style
 	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};                           // it can be created locally, however, it is a good reminder that they are declared here as a class variable
 	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};                     // if using DirectX, then this variable has to be created and attach to the pNext of a VkSurfaceFullScreenExclusiveInfoEXT value
 	bool                                     isFullScreenExclusive     = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
@@ -121,7 +121,7 @@ class FullScreenExclusive : public vkb::Application
 	static void                  teardown_per_frame(Context &input_context, PerFrame &per_frame);
 	void                         init_swapchain(Context &input_context);
 	static void                  init_render_pass(Context &input_context);
-	VkShaderModule               load_shader_module(Context &input_context, const char *path);
+	VkShaderModule               load_shader_module(Context &input_context, const char *path) const;
 	void                         init_pipeline(Context &input_context);
 	static VkResult              acquire_next_image(Context &input_context, uint32_t *image);
 	static void                  render_triangle(Context &input_context, uint32_t swapchain_index);

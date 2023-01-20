@@ -24,6 +24,12 @@
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type, uint64_t object, size_t location, int32_t message_code, const char *layer_prefix, const char *message, void *user_data)
 {
+	(void) type;
+	(void) object;
+	(void) location;
+	(void) message_code;
+	(void) user_data;
+
 	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
 	{
 		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message)
@@ -621,7 +627,7 @@ void FullScreenExclusive::init_render_pass(Context &input_context)
 	VK_CHECK(vkCreateRenderPass(input_context.device, &rp_info, nullptr, &input_context.render_pass));
 }
 
-VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, const char *path)
+VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, const char *path) const
 {
 	vkb::GLSLCompiler glsl_compiler;
 
@@ -1060,7 +1066,8 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
 	if (input_event.get_source() == vkb::EventSource::Keyboard)
 	{
-		const auto &key_button = static_cast<const vkb::KeyInputEvent &>(input_event);
+		const auto &key_button = reinterpret_cast<const vkb::KeyInputEvent &>(input_event);
+
 		if (key_button.get_action() == vkb::KeyAction::Down)
 		{
 			bool isRecreate = false;
@@ -1136,7 +1143,7 @@ void FullScreenExclusive::update_application_window()
 		long HWND_newStyle_previous = HWND_style_previous;
 		HWND_newStyle_previous &= ~WS_EX_WINDOWEDGE;
 
-		SetWindowLong(HWND_applicationWindow, GWL_STYLE, HWND_newStyle | WS_POPUP);
+		SetWindowLong(HWND_applicationWindow, GWL_STYLE, HWND_newStyle | static_cast<long>(WS_POPUP));
 		SetWindowLong(HWND_applicationWindow, GWL_EXSTYLE, HWND_newStyle_previous | WS_EX_TOPMOST);
 		ShowWindow(HWND_applicationWindow, SW_SHOWMAXIMIZED);
 	}
