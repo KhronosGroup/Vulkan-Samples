@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Sascha Willems
+/* Copyright (c) 2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -269,10 +269,7 @@ void DescriptorBufferBasic::prepare_pipelines()
 // This function creates the desctiptor bffers and puts the descriptors into those buffers, so they can be used during command buffer creation
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
-	// @todo: check support for combined image samplers
-	// if (!descriptor_buffer_properties.combinedImageSamplerDescriptorSingleArray)
-
-	// For sizing the desctiptor buffers, we need to know the size for the descriptor set layouts the pipeline is using
+	// For sizing the descriptor buffers, we need to know the size for the descriptor set layouts the pipeline is using
 	std::array<VkDeviceSize, 2> descriptorLayoutSizes{};
 	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_buffer, &descriptorLayoutSizes[0]);
 	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_image, &descriptorLayoutSizes[1]);
@@ -285,7 +282,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 
 	// Samplers and combined images need to be stored in a separate buffer due to different flags (VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT) (one image per cube)
 	image_descriptor_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                              static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[0],
+	                                                              static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[1],
 	                                                              VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -332,7 +329,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 		desc_info.type                       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		desc_info.data.pCombinedImageSampler = nullptr;
 		desc_info.data.pUniformBuffer        = &addr_info;
-		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
+		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr);
 		buf_ptr += alignment;
 	}
 }
@@ -418,6 +415,12 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	device_properties.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 	device_properties.pNext            = &descriptor_buffer_properties;
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
+
+	// This sample makes use of combined image samplers in a single array, which is an optional feeature
+	if (!descriptor_buffer_properties.combinedImageSamplerDescriptorSingleArray)
+	{
+		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
+	}
 
 	/*
 		End of extension specific functions
