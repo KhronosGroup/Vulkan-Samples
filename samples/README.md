@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2022, Arm Limited and Contributors
+- Copyright (c) 2020-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -267,6 +267,10 @@ Demonstrate how to do conditional rendering, dynamically discarding rendering co
 ### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
 **Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
 Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are need to be created.
+
+### [Basic descriptor buffer](./extensions/descriptor_buffer_basic/)
+**Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)
+Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
 
 ## Tooling Samples
 
