@@ -40,12 +40,29 @@ With the streamlined descriptor setup from `VK_EXT_descriptor_buffer`, the api n
 
 Other concepts of Vulkan's descriptor logic like descriptor set layouts and pipeline layouts are still used and not deprecated.
 
-@todo: now all backed by buffers
-@todo: buffer device address
 
 ## The new way
 
 The `VK_EXT_descriptor_buffer` replaces all of this with **resource descriptor buffer**. These store descriptors in a way that the GPU can directly read them from such a buffer. The application simply puts them into those buffers. That buffer is then bound at command buffer time similar to other buffer types.
+
+To make the following code easier to understand, let's take a look at the interfaces of our shaders:
+
+```glsl
+// Vertex shader
+layout (set = 0, binding = 0) uniform UBOScene {
+	mat4 projection;
+	mat4 view;
+} uboCamera;
+
+layout (set = 1, binding = 0) uniform UBOModel {
+	mat4 local;
+} uboModel;
+
+// Fragment shader
+layout (set = 2, binding = 0) uniform sampler2D samplerColorMap;
+```
+
+We use three descriptor sets, each with one binding.
 
 ### Creating the descriptor buffers
 
@@ -58,7 +75,7 @@ As is usual in Vulkan, implementations have different size and alignment require
 ```cpp
 std::array<VkDeviceSize, 2> descriptorLayoutSizes{};
 
-// Bufers 
+// Buffers 
 vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_buffer, &descriptorLayoutSizes[0]);
 
 // Combined image samplers
@@ -153,6 +170,8 @@ For combined image samplers (or samplers alone) we can't use buffer device addre
 
 ### Binding the buffers
 
+As noted earlier, we no longer bind descriptor sets using `vkCmdBindDescriptorSets` but instead use `vkCmdBindDescriptorBuffersEXT` the bind the (resource) descriptor buffers and then use `vkCmdSetDescriptorBufferOffsetsEXT` to index into that buffer for the next draw:
+
 ```cpp
 // Descriptor buffer bindings
 // Binding 0 = uniform buffer
@@ -189,6 +208,28 @@ for (uint32_t j = 0; j < static_cast<uint32_t>(cubes.size()); j++)
 }
 ```
 
-## Shaders?
+In detail and in reference to our shader interface:
 
-No change to the shader interface!
+Earlier on, we did put the device address for the global matrices uniform buffer at the beginning to the resource descriptor buffer. So we set it to point at `buffer_offset = 0` for set 0:
+
+```cpp
+vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &buffer_index_ubo, &buffer_offset);
+```
+
+We then loop through all cubes displayed in the example and let the descriptor buffer point at the next device address using the alignment of the implementation for set 1:
+
+```cpp
+vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
+```
+
+With an alignment of 16 (see `VkPhysicalDeviceDescriptorBufferPropertiesEXT`) the device address for the uniform buffer for the first cube would start at byte 16 in the resource descriptor buffer, the device address for the second cube's uniform buffer would start at byte 32. 
+
+The descriptor buffer containing the descriptors for our combined image samples is bound to set 2:
+
+```cpp
+vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
+```
+
+## What about the shaders?
+
+With descriptor set and pipeline layouts, Vulkan decouples the shader interfaces from the application. And since we don't change these but only the way how we provide descriptors to the GPU, **no changes to the shaders are required**.
