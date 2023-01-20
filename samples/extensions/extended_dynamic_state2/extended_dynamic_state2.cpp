@@ -391,16 +391,6 @@ void ExtendedDynamicState2::build_command_buffers()
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_begin));
 
-		VkImageSubresourceRange range{};
-		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel   = 0;
-		range.levelCount     = VK_REMAINING_MIP_LEVELS;
-		range.baseArrayLayer = 0;
-		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-		VkImageSubresourceRange depth_range{range};
-		depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass               = render_pass;
 		render_pass_begin_info.framebuffer              = framebuffers[i];
