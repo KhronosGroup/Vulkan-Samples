@@ -751,50 +751,31 @@ void ExtendedDynamicState2::selection_indicator(const vkb::sg::PBRMaterial *orig
 	static bool                        rise              = false;
 	static int                         previous_obj_id   = gui_settings.selected_obj;
 	static const vkb::sg::PBRMaterial *previous_material = original_mat;
-	static float                       accumulated_diff  = 0.0;
-	constexpr float                    alpha_step        = 0.075;
-	constexpr float                    alpha_max         = 0.98;
-	constexpr float                    alpha_min         = 0.3;
+	static float                       accumulated_diff  = 0.0f;
+	constexpr float                    alpha_step        = 0.075f;
+	constexpr float                    alpha_max         = 0.98f;
+	constexpr float                    alpha_min         = 0.3f;
 
 	new_mat->base_color_factor = original_mat->base_color_factor;
 	new_mat->alpha_mode        = vkb::sg::AlphaMode::Blend;
 
 	/* Change alpha value */
-	if (rise == true)
+	if (gui_settings.time_tick == true)
 	{
-		if (gui_settings.time_tick == true)
-		{
-			accumulated_diff += alpha_step;
-			gui_settings.time_tick = false;
-		}
-		new_mat->base_color_factor.w += accumulated_diff;
+		accumulated_diff += rise ? alpha_step : -alpha_step;
+		gui_settings.time_tick = false;
 	}
-	else
-	{
-		if (gui_settings.time_tick == true)
-		{
-			accumulated_diff -= alpha_step;
-			gui_settings.time_tick = false;
-		}
-		new_mat->base_color_factor.w += accumulated_diff;
-	}
+	new_mat->base_color_factor.w += accumulated_diff;
 
 	/* Detecting change of selected object */
 	if (previous_obj_id != gui_settings.selected_obj)
 	{
-		accumulated_diff = 0.0;
+		accumulated_diff = 0.0f;
 		previous_obj_id  = gui_settings.selected_obj;
 	}
 
 	/* Determine if alpha need to increase or decrease */
-	if (new_mat->base_color_factor.w < alpha_min)
-	{
-		rise = true;
-	}
-	else if (new_mat->base_color_factor.w > alpha_max)
-	{
-		rise = false;
-	}
+	rise = new_mat->base_color_factor.w < alpha_min ? true : false;
 }
 
 /**
