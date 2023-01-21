@@ -128,6 +128,7 @@ VkShaderStageFlagBits FullScreenExclusive::find_shader_stage(const std::string &
 
 void FullScreenExclusive::init_instance(Context &input_context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
 {
+	(void) input_context;
 	LOGI("Initializing vulkan instance.")
 
 	if (volkInitialize())
@@ -240,6 +241,7 @@ void FullScreenExclusive::init_instance(Context &input_context, const std::vecto
 
 void FullScreenExclusive::init_device(Context &input_context, const std::vector<const char *> &required_device_extensions)
 {
+	(void) input_context;
 	LOGI("Initializing vulkan device.")
 
 	uint32_t gpu_count = 0;
@@ -387,6 +389,7 @@ void FullScreenExclusive::teardown_per_frame(Context &input_context, PerFrame &p
 
 void FullScreenExclusive::init_swapchain(Context &input_context)
 {
+	(void) input_context;
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
@@ -629,6 +632,7 @@ void FullScreenExclusive::init_render_pass(Context &input_context)
 
 VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, const char *path) const
 {
+	(void) input_context;
 	vkb::GLSLCompiler glsl_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
@@ -658,6 +662,8 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, c
 
 void FullScreenExclusive::init_pipeline(Context &input_context)
 {
+	(void) input_context;
+
 	VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
 
@@ -881,6 +887,8 @@ void FullScreenExclusive::teardown_frame_buffers(Context &input_context)
 
 void FullScreenExclusive::teardown(Context &input_context)
 {
+	(void) input_context;
+
 	vkDeviceWaitIdle(context.device);
 
 	teardown_frame_buffers(context);
