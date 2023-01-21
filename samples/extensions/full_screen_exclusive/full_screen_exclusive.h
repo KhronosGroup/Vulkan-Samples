@@ -115,20 +115,20 @@ class FullScreenExclusive : public vkb::Application
 	static bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);
 	static bool                  validate_layers(const std::vector<const char *> &required, const std::vector<VkLayerProperties> &available);
 	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-	void                         init_instance(Context &input_context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
-	void                         init_device(Context &input_context, const std::vector<const char *> &required_device_extensions);
+	void                         init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
+	void                         init_device(const std::vector<const char *> &required_device_extensions);
 	static void                  init_per_frame(Context &input_context, PerFrame &per_frame);
 	static void                  teardown_per_frame(Context &input_context, PerFrame &per_frame);
-	void                         init_swapchain(Context &input_context);
+	void                         init_swapchain();
 	static void                  init_render_pass(Context &input_context);
-	VkShaderModule               load_shader_module(Context &input_context, const char *path) const;
-	void                         init_pipeline(Context &input_context);
+	VkShaderModule               load_shader_module(const char *path) const;
+	void                         init_pipeline();
 	static VkResult              acquire_next_image(Context &input_context, uint32_t *image);
 	static void                  render_triangle(Context &input_context, uint32_t swapchain_index);
 	static VkResult              present_image(Context &input_context, uint32_t index);
 	static void                  init_frame_buffers(Context &input_context);
 	static void                  teardown_frame_buffers(Context &input_context);
-	void                         teardown(Context &input_context);
+	void                         teardown();
 };
 
 std::unique_ptr<vkb::Application> create_full_screen_exclusive();

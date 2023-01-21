@@ -126,9 +126,8 @@ VkShaderStageFlagBits FullScreenExclusive::find_shader_stage(const std::string &
 	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
 }
 
-void FullScreenExclusive::init_instance(Context &input_context, const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
+void FullScreenExclusive::init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers)
 {
-	(void) input_context;
 	LOGI("Initializing vulkan instance.")
 
 	if (volkInitialize())
@@ -239,9 +238,8 @@ void FullScreenExclusive::init_instance(Context &input_context, const std::vecto
 #endif
 }
 
-void FullScreenExclusive::init_device(Context &input_context, const std::vector<const char *> &required_device_extensions)
+void FullScreenExclusive::init_device(const std::vector<const char *> &required_device_extensions)
 {
-	(void) input_context;
 	LOGI("Initializing vulkan device.")
 
 	uint32_t gpu_count = 0;
@@ -387,9 +385,8 @@ void FullScreenExclusive::teardown_per_frame(Context &input_context, PerFrame &p
 	per_frame.queue_index = -1;
 }
 
-void FullScreenExclusive::init_swapchain(Context &input_context)
+void FullScreenExclusive::init_swapchain()
 {
-	(void) input_context;
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
@@ -630,9 +627,8 @@ void FullScreenExclusive::init_render_pass(Context &input_context)
 	VK_CHECK(vkCreateRenderPass(input_context.device, &rp_info, nullptr, &input_context.render_pass));
 }
 
-VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, const char *path) const
+VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 {
-	(void) input_context;
 	vkb::GLSLCompiler glsl_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
@@ -660,10 +656,8 @@ VkShaderModule FullScreenExclusive::load_shader_module(Context &input_context, c
 	return shader_module;
 }
 
-void FullScreenExclusive::init_pipeline(Context &input_context)
+void FullScreenExclusive::init_pipeline()
 {
-	(void) input_context;
-
 	VkPipelineLayoutCreateInfo layout_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
 	VK_CHECK(vkCreatePipelineLayout(context.device, &layout_info, nullptr, &context.pipeline_layout));
 
@@ -703,12 +697,12 @@ void FullScreenExclusive::init_pipeline(Context &input_context)
 
 	shader_stages[0].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[0].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-	shader_stages[0].module = load_shader_module(context, "triangle.vert");
+	shader_stages[0].module = load_shader_module("triangle.vert");
 	shader_stages[0].pName  = "main";
 
 	shader_stages[1].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stages[1].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-	shader_stages[1].module = load_shader_module(context, "triangle.frag");
+	shader_stages[1].module = load_shader_module("triangle.frag");
 	shader_stages[1].pName  = "main";
 
 	VkGraphicsPipelineCreateInfo pipe{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -885,10 +879,8 @@ void FullScreenExclusive::teardown_frame_buffers(Context &input_context)
 	input_context.swapchain_frame_buffers.clear();
 }
 
-void FullScreenExclusive::teardown(Context &input_context)
+void FullScreenExclusive::teardown()
 {
-	(void) input_context;
-
 	vkDeviceWaitIdle(context.device);
 
 	teardown_frame_buffers(context);
@@ -954,7 +946,7 @@ void FullScreenExclusive::teardown(Context &input_context)
 
 FullScreenExclusive::~FullScreenExclusive()
 {
-	teardown(context);
+	teardown();
 }
 
 void FullScreenExclusive::initialize_windows()
@@ -973,7 +965,7 @@ void FullScreenExclusive::initialize_windows()
 
 bool FullScreenExclusive::prepare(vkb::Platform &platform)
 {
-	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
+	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
@@ -988,11 +980,11 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	if (!context.surface)
 		throw std::runtime_error("Failed to create window surface.");
 
-	init_device(context, {"VK_KHR_swapchain"});
-	init_swapchain(context);
+	init_device({"VK_KHR_swapchain"});
+	init_swapchain();
 
 	init_render_pass(context);
-	init_pipeline(context);
+	init_pipeline();
 	init_frame_buffers(context);
 
 	return true;
@@ -1048,7 +1040,7 @@ bool FullScreenExclusive::resize(uint32_t width, uint32_t height)
 	vkDeviceWaitIdle(context.device);
 	teardown_frame_buffers(context);
 
-	init_swapchain(context);
+	init_swapchain();
 	init_frame_buffers(context);
 	return true;
 }
@@ -1178,7 +1170,7 @@ void FullScreenExclusive::recreate()
 		teardown_frame_buffers(context);         // basically destroy everything swapchain related
 
 		// Step: 1) recreate the swapchain with its properly selected FullscreenExclusive enum value
-		init_swapchain(context);
+		init_swapchain();
 
 		// Step: 2) recreate the frame buffers using the newly created swapchain
 		init_frame_buffers(context);
