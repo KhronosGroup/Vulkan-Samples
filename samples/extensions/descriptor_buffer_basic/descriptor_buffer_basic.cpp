@@ -116,7 +116,7 @@ void DescriptorBufferBasic::build_command_buffers()
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		const auto &vertex_buffer = models.cube->vertex_buffers.at("vertex_buffer");
-		auto &      index_buffer  = models.cube->index_buffer;
+		auto       &index_buffer  = models.cube->index_buffer;
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer.get(), offsets);
@@ -157,7 +157,7 @@ void DescriptorBufferBasic::build_command_buffers()
 		}
 
 		// @todo: can't mix descriptor buffers and descriptors, so we disable the UI for now
-		//draw_ui(draw_cmd_buffers[i]);
+		// draw_ui(draw_cmd_buffers[i]);
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
@@ -407,7 +407,7 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	}
 
 	/*
-		Extension specific functions
+	    Extension specific functions
 	*/
 
 	VkPhysicalDeviceProperties2KHR device_properties{};
@@ -423,7 +423,7 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	}
 
 	/*
-		End of extension specific functions
+	    End of extension specific functions
 	*/
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
