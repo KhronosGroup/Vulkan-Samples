@@ -384,12 +384,12 @@ void ExtendedDynamicState2::build_command_buffers()
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	int i = -1;
+	int i = -1; /* Required for accessing element in framebuffers vector */
 	for (auto &draw_cmd_buffer : draw_cmd_buffers)
 	{
 		i++;
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
-		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_begin));
+		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass               = render_pass;
@@ -399,56 +399,56 @@ void ExtendedDynamicState2::build_command_buffers()
 		render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
 		render_pass_begin_info.pClearValues             = clear_values.data();
 
-		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+		vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
-		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+		vkCmdSetScissor(draw_cmd_buffer, 0, 1, &scissor);
 
 		/* Binding baseline pipeline and descriptor sets */
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.baseline, 0, 1, &descriptor_sets.baseline, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.baseline, 0, 1, &descriptor_sets.baseline, 0, nullptr);
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
 
 		/* Setting topology to triangle list and disabling primitive restart functionality */
-		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_FALSE);
+		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffer, VK_FALSE);
 
 		/* Drawing objects from baseline scene (with rasterizer discard and depth bias functionality) */
-		draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_BASELINE_OBJ_INDEX);
+		draw_from_scene(draw_cmd_buffer, &scene_nodes, SCENE_BASELINE_OBJ_INDEX);
 
 		/* Changing topology to triangle strip with using primitive restart feature */
-		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
-		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffers[i], VK_TRUE);
+		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP);
+		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffer, VK_TRUE);
 
 		/* Draw model with primitive restart functionality */
-		draw_created_model(draw_cmd_buffers[i]);
+		draw_created_model(draw_cmd_buffer);
 
 		/* Changing bindings to tessellation pipeline */
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.tesselation, 0, 1, &descriptor_sets.tesselation, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.tesselation);
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.tesselation, 0, 1, &descriptor_sets.tesselation, 0, nullptr);
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.tesselation);
 
 		/* Change topology to patch list and setting patch control points value */
-		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffers[i], VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-		vkCmdSetPatchControlPointsEXT(draw_cmd_buffers[i], gui_settings.patch_control_points);
+		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
+		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, gui_settings.patch_control_points);
 
 		/* Drawing scene with objects using tessellation feature */
-		draw_from_scene(draw_cmd_buffers[i], &scene_nodes, SCENE_TESSELLATION_OBJ_INDEX);
+		draw_from_scene(draw_cmd_buffer, &scene_nodes, SCENE_TESSELLATION_OBJ_INDEX);
 
 		/* Changing bindings to background pipeline */
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.background, 0, 1, &descriptor_sets.background, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
+		vkCmdBindDescriptorSets(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.background, 0, 1, &descriptor_sets.background, 0, nullptr);
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
 		/* Drawing background */
-		draw_model(background_model, draw_cmd_buffers[i]);
+		draw_model(background_model, draw_cmd_buffer);
 
 		/* UI */
-		draw_ui(draw_cmd_buffers[i]);
+		draw_ui(draw_cmd_buffer);
 
-		vkCmdEndRenderPass(draw_cmd_buffers[i]);
+		vkCmdEndRenderPass(draw_cmd_buffer);
 
-		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 	}
 }
 
