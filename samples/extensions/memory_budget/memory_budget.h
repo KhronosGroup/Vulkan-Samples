@@ -37,13 +37,13 @@ class MemoryBudget : public ApiVulkanSample
 
 	struct ConvertedMemory
 	{
-		uint64_t    data;
+		float       data;
 		std::string units;
 	} converted_memory{};
 
-	const uint64_t kilobyte_coefficient = 1024;
-	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
-	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
+	const float kilobyte_coefficient = 1024.0f;
+	const float megabyte_coefficient = kilobyte_coefficient * 1024.0f;
+	const float gigabyte_coefficient = megabyte_coefficient * 1024.0f;
 
 	uint32_t     device_memory_heap_count   = 0;
 	VkDeviceSize device_memory_total_usage  = 0;

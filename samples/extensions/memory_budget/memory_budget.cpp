@@ -157,24 +157,26 @@ const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64
 {
 	MemoryBudget::ConvertedMemory returnMe{};
 
-	if (input_memory < kilobyte_coefficient)
+	auto memory = static_cast<float>(input_memory);
+
+	if (memory < kilobyte_coefficient)
 	{
-		returnMe.data  = input_memory;
+		returnMe.data  = memory;
 		returnMe.units = "B";
 	}
-	else if (input_memory < megabyte_coefficient)
+	else if (memory < megabyte_coefficient)
 	{
-		returnMe.data  = input_memory / kilobyte_coefficient;
+		returnMe.data  = memory / kilobyte_coefficient;
 		returnMe.units = "KB";
 	}
-	else if (input_memory < gigabyte_coefficient)
+	else if (memory < gigabyte_coefficient)
 	{
-		returnMe.data  = input_memory / megabyte_coefficient;
+		returnMe.data  = memory / megabyte_coefficient;
 		returnMe.units = "MB";
 	}
 	else
 	{
-		returnMe.data  = input_memory / gigabyte_coefficient;
+		returnMe.data  = memory / gigabyte_coefficient;
 		returnMe.units = "GB";
 	}
 
@@ -191,7 +193,7 @@ const std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkM
 			return "Multiple Instance Bit";
 		default:
 			// In case that it does NOT correspond to device local memory
-			return "Non-local Heap Memory";
+			return "Host Local Heap Memory";
 	}
 }
 
@@ -601,9 +603,9 @@ void MemoryBudget::render(float delta_time)
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	converted_memory = update_converted_memory(device_memory_total_usage);
-	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 	converted_memory = update_converted_memory(device_memory_total_budget);
-	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 	if (drawer.header("Memory Heap Details"))
 	{
@@ -613,10 +615,10 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 			if (drawer.header(header.c_str()))
 			{
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
-				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
-				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
 			}

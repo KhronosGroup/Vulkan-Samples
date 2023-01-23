@@ -19,8 +19,8 @@
 
 # Memory Budget: Extended features
 
-This sample demonstrates how to incorporate Vulkan memory budget extension. Memory budget extension helps users to
-sample the memory budget consumption on each heap of from the ```physical device```, and is able to tell
+This sample demonstrates how to incorporate the Vulkan memory budget extension. Memory budget extension helps users to
+sample the memory budget consumption on each heap from the ```physical device```, and is able to tell
 the ```property flag``` for each heap. Which is a proper debug tool to visualize the memory consumption in run-time.
 
 ## Memory budget extension
@@ -33,7 +33,7 @@ add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 ````
 
-Memory properties related structure instances were defined and initialized in the header of ```MemoryBudget``` class,
+Memory properties related structure instances were defined and initialized in the header of the ```MemoryBudget``` class,
 listed as follows:
 
 ````cpp
@@ -67,6 +67,8 @@ Each of the mentioned extension structure instances were defined in the header a
 function ```initialize_device_memory_properties()```.
 
 ## UI Overlay: Memory properties
+
+![Sample](./images/memory_budget_ui_overlay.PNG)
 
 In application’s UI overlay, total memory usage and total memory budget will be displayed. In addition, by pressing down
 the arrow next to the “Memory Heap Details” tab, it expands a list of all memory usages and budgets from the heap count.
