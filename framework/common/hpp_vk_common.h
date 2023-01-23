@@ -17,8 +17,10 @@
 
 #pragma once
 
-#include <common/vk_common.h>
-#include <vulkan/vulkan.hpp>
+#include "common/vk_common.h"
+
+#include "common/logging.h"
+#include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
@@ -83,6 +85,50 @@ inline void set_image_layout(vk::CommandBuffer         command_buffer,
 	                      static_cast<VkImageSubresourceRange>(subresource_range),
 	                      static_cast<VkPipelineStageFlags>(src_mask),
 	                      static_cast<VkPipelineStageFlags>(dst_mask));
+}
+
+// helper functions not backed by vk_common.h
+inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
+{
+#if defined(ANDROID)
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, 1, &descriptor_set_layout);
+#else
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, descriptor_set_layout);
+#endif
+	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
+}
+
+inline vk::PipelineLayout create_pipeline_layout(vk::Device device, vk::DescriptorSetLayout descriptor_set_layout)
+{
+#if defined(ANDROID)
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
+#else
+	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
+#endif
+	return device.createPipelineLayout(pipeline_layout_create_info);
+}
+
+inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
+{
+	// Submit command_buffer
+	vk::SubmitInfo submit_info(nullptr, {}, command_buffers, semaphores);
+
+	// Create fence to ensure that command_buffer has finished executing
+	vk::Fence fence = device.createFence({});
+
+	// Submit to the queue
+	queue.submit(submit_info, fence);
+
+	// Wait for the fence to signal that command_buffer has finished executing
+	vk::Result result = device.waitForFences(fence, true, DEFAULT_FENCE_TIMEOUT);
+	if (result != vk::Result::eSuccess)
+	{
+		LOGE("Vulkan error on waitForFences: {}", vk::to_string(result));
+		abort();
+	}
+
+	// Destroy the fence
+	device.destroyFence(fence);
 }
 
 }        // namespace common
