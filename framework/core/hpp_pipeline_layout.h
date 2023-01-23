@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +15,26 @@
  * limitations under the License.
  */
 
-#include "debug_info.h"
+#pragma once
+
+#include "core/pipeline_layout.h"
 
 namespace vkb
 {
-const std::vector<std::unique_ptr<field::Base>> &DebugInfo::get_fields() const
+namespace core
 {
-	return fields;
-}
-
-float DebugInfo::get_longest_label() const
+/**
+ * @brief facade class around vkb::core::PipelineLayout, providing a vulkan.hpp-based interface
+ *
+ * See vkb::core::PipelineLayout for documentation
+ */
+class HPPPipelineLayout : private vkb::PipelineLayout
 {
-	float column_width = 0.0f;
-	for (auto &field : fields)
+  public:
+	vk::PipelineLayout get_handle() const
 	{
-		const std::string &label = field->label;
-
-		if (label.size() > column_width)
-		{
-			column_width = static_cast<float>(label.size());
-		}
+		return static_cast<vk::PipelineLayout>(vkb::PipelineLayout::get_handle());
 	}
-	return column_width;
-}
+};
+}        // namespace core
 }        // namespace vkb

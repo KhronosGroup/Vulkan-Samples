@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,7 +59,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	void finish() override;
 
-	/** 
+	/**
 	 * @brief Loads the scene
 	 *
 	 * @param path The path of the glTF file
@@ -80,7 +80,7 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 
 	Configuration &get_configuration();
 
-	sg::Scene const &get_scene() const;
+	sg::Scene &get_scene();
 
 	bool has_scene() const;
 
@@ -197,12 +197,12 @@ class HPPVulkanSample : public vkb::platform::HPPApplication
 	 */
 	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu);
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the render_context
 	 */
 	virtual void create_render_context(vkb::platform::HPPPlatform const &platform);
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
 	virtual void prepare_render_context();
