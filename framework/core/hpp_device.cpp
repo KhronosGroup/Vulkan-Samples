@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,7 @@ namespace vkb
 {
 namespace core
 {
-HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice &              gpu,
+HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
                      vk::SurfaceKHR                              surface,
                      std::unique_ptr<vkb::core::HPPDebugUtils> &&debug_utils,
                      std::unordered_map<const char *, bool>      requested_extensions) :
@@ -490,12 +490,12 @@ void HPPDevice::flush_command_buffer(vk::CommandBuffer command_buffer, vk::Queue
 	}
 }
 
-vkb::core::HPPCommandPool const &HPPDevice::get_command_pool() const
+vkb::core::HPPCommandPool &HPPDevice::get_command_pool()
 {
 	return *command_pool;
 }
 
-vkb::HPPFencePool const &HPPDevice::get_fence_pool() const
+vkb::HPPFencePool &HPPDevice::get_fence_pool()
 {
 	return *fence_pool;
 }

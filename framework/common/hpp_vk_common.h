@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,21 +29,14 @@ namespace common
  */
 struct HPPImageMemoryBarrier
 {
-	vk::PipelineStageFlags src_stage_mask{vk::PipelineStageFlagBits::eBottomOfPipe};
-
-	vk::PipelineStageFlags dst_stage_mask{vk::PipelineStageFlagBits::eTopOfPipe};
-
-	vk::AccessFlags src_access_mask{};
-
-	vk::AccessFlags dst_access_mask{};
-
-	vk::ImageLayout old_layout{vk::ImageLayout::eUndefined};
-
-	vk::ImageLayout new_layout{vk::ImageLayout::eUndefined};
-
-	uint32_t old_queue_family{VK_QUEUE_FAMILY_IGNORED};
-
-	uint32_t new_queue_family{VK_QUEUE_FAMILY_IGNORED};
+	vk::PipelineStageFlags src_stage_mask = vk::PipelineStageFlagBits::eBottomOfPipe;
+	vk::PipelineStageFlags dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
+	vk::AccessFlags        src_access_mask;
+	vk::AccessFlags        dst_access_mask;
+	vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
+	vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
+	uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
 };
 
 inline int32_t get_bits_per_pixel(vk::Format format)
