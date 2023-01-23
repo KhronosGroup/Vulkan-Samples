@@ -2,10 +2,10 @@ name: Quality Checks
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
 
 env:
-  TARGET_BRANCH: master
+  TARGET_BRANCH: main
 
 jobs:
   doxygen:
