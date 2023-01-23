@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2022, Arm Limited and Contributors
+- Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -23,6 +23,7 @@
 
 ## Contents <!-- omit in toc -->
 
+- [Renaming Default Branch](#renaming-default-branch)
 - [Introduction](#introduction)
   - [Goals](#goals)
 - [Samples](#samples)
@@ -36,6 +37,15 @@
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
 - [Related resources](#related-resources)
+
+## Renaming Default Branch
+
+We have recently transitioned the repository to use the `main` branch by default. All remote git usage is handled automatically. To update your local repository to use main please use the following commands
+
+> git branch -m master main
+> git fetch origin
+> git branch -u origin/main main
+> git remote set-head origin -a
 
 ## Introduction
 
