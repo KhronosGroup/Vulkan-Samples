@@ -152,17 +152,17 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	void create_pipeline();
 	void draw();
 
-	void load_assets();
-	void create_descriptor_pool();
-	void setup_descriptor_set_layout();
-	void create_descriptor_sets();
-	int  get_node_index(std::string name, std::vector<SceneNode> *scene_node);
-	void selection_indicator(const vkb::sg::PBRMaterial *original_mat, vkb::sg::PBRMaterial *new_mat);
-	void scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node);
-	void draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index);
-	void draw_created_model(VkCommandBuffer commandBuffer);
-	void model_data_creation();
-	void cube_animation(float delta_time);
+	void      load_assets();
+	void      create_descriptor_pool();
+	void      setup_descriptor_set_layout();
+	void      create_descriptor_sets();
+	int       get_node_index(std::string name, std::vector<SceneNode> *scene_node);
+	glm::vec4 get_changed_alpha(const vkb::sg::PBRMaterial *original_mat);
+	void      scene_pipeline_divide(std::vector<std::vector<SceneNode>> *scene_node);
+	void      draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index);
+	void      draw_created_model(VkCommandBuffer commandBuffer);
+	void      model_data_creation();
+	void      cube_animation(float delta_time);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_extended_dynamic_state2();

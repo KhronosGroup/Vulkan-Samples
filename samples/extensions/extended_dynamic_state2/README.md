@@ -401,9 +401,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 		}
 		else
 		{
-			vkb::sg::PBRMaterial temp_material{"Selected_Material"};
-			selection_indicator(node_material, &temp_material);
-			push_const_block.color = temp_material.base_color_factor;
+			push_const_block.color = get_changed_alpha(node_material);
 		}
 		vkCmdPushConstants(command_buffer, pipeline_layouts.baseline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
 
