@@ -16,43 +16,38 @@
  */
 
 #include "calibrated_timestamps.h"
-#include "scene_graph/components/sub_mesh.h"
 
-CalibratedTimestamps::CalibratedTimestamps()
+CalibratedTimestamps ::CalibratedTimestamps()
 {
 	title = "Calibrated Timestamps";
 
-	// Enable instance and device extensions
+	// Add instance extensions required for calibrated timestamps
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	add_instance_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
-
-	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-	// Initialize
-	CalibratedTimestamps::initialize();
+	// NOTICE THAT: calibrated is a DEVICE extension!
+	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 }
 
-CalibratedTimestamps::~CalibratedTimestamps()
+CalibratedTimestamps ::~CalibratedTimestamps()
 {
 	if (device)
 	{
-		// Delete pipelines:
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipelines.bloom[0], nullptr);
+		vkDestroyPipeline(get_device().get_handle(), pipelines.bloom[1], nullptr);
 
-		// Delete pipeline layouts:
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.models, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.composition, nullptr);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.bloom_filter, nullptr);
 
-		// Delete descriptor layouts:
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.models, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.composition, nullptr);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.bloom_filter, nullptr);
 
-		// Delete render pass:
 		vkDestroyRenderPass(get_device().get_handle(), offscreen.render_pass, nullptr);
 		vkDestroyRenderPass(get_device().get_handle(), filter_pass.render_pass, nullptr);
 
-		// Delete framebuffer:
 		vkDestroyFramebuffer(get_device().get_handle(), offscreen.framebuffer, nullptr);
 		vkDestroyFramebuffer(get_device().get_handle(), filter_pass.framebuffer, nullptr);
 
@@ -65,118 +60,11 @@ CalibratedTimestamps::~CalibratedTimestamps()
 
 		filter_pass.color[0].destroy(get_device().get_handle());
 
-		vkDestroySampler(get_device().get_handle(), skybox_map.sampler, nullptr);
+		vkDestroySampler(get_device().get_handle(), textures.environment_map.sampler, nullptr);
 	}
 }
 
-// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-void CalibratedTimestamps::initialize()
-{
-	// Initialize the time domain related variables:
-	timestampsInfo_device.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
-	timestampsInfo_device.pNext      = nullptr;
-	timestampsInfo_device.timeDomain = VK_TIME_DOMAIN_DEVICE_EXT;
-
-	timestampsInfo_queryPerformanceCount.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
-	timestampsInfo_queryPerformanceCount.pNext      = nullptr;
-	timestampsInfo_queryPerformanceCount.timeDomain = VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT;
-}
-
-std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDomain)
-{
-	switch (inputTimeDomain)
-	{
-		case VK_TIME_DOMAIN_DEVICE_EXT:
-			return "device time domain";
-		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
-			return "clock monotonic time domain";
-		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
-			return "clock monotonic raw time domain";
-		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
-			return "query performance time domain";
-		default:
-			return "unknown time domain";
-	}
-}
-
-void CalibratedTimestamps::update_time_domains()
-{
-	// Initialize time domain count:
-	time_domain_count = 0;
-	// Update time domain count:
-	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
-
-	if (result == VK_SUCCESS)
-	{
-		// Initialize time domain vector
-		time_domains.clear();
-		// Resize time domains vector:
-		time_domains.resize(static_cast<int>(time_domain_count));        // this needs static cast to int
-		// Update time_domain vector:
-		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
-
-		// Time domain is successfully updated:
-		isTimeDomainUpdated = (result == VK_SUCCESS);
-	}
-}
-
-void CalibratedTimestamps::update_timestamps()
-{
-	// Ensures that time domain exists
-	if (isTimeDomainUpdated)
-	{
-		// Create LOCAL calibrate time stamps info:
-		std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};
-
-		for (VkTimeDomainEXT time_domain : time_domains)
-		{
-			// Initialize in-scope time stamp info variable:
-			VkCalibratedTimestampInfoEXT timestamp_info{};
-
-			// Configure timestamp info variable:
-			timestamp_info.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
-			timestamp_info.pNext      = nullptr;
-			timestamp_info.timeDomain = time_domain;
-
-			// Push-back timestamp info to timestamps info vector:
-			timestamps_info.push_back(timestamp_info);
-		}
-
-		// Resize time stamps vector
-		timestamps.resize(static_cast<int>(time_domain_count));
-		// Resize max deviations vector
-		max_deviations.resize(static_cast<int>(time_domain_count));
-
-		// Get calibrated timestamps:
-		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domain_count, timestamps_info.data(), timestamps.data(), max_deviations.data());
-
-		// Timestamps is successfully updated:
-		isTimestampUpdated = (result == VK_SUCCESS);
-	}
-}
-
-// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-CalibratedTimestamps::TimeInfo CalibratedTimestamps::get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount)
-{
-	uint64_t local_timestamp = 0;
-	uint64_t local_deviation = 0;
-
-	if (inputTimestampsCount >= 0)
-	{
-		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), inputTimestampsCount, &inputTimeStampsInfo, &local_timestamp, &local_deviation);
-
-		if (result == VK_SUCCESS)
-		{
-			CalibratedTimestamps::TimeInfo returnMe{};
-
-			returnMe.timestamp = local_timestamp;
-			returnMe.deviation = local_deviation;
-			return returnMe;
-		}
-	}
-}
-
-void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
+void CalibratedTimestamps ::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
@@ -185,65 +73,125 @@ void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void CalibratedTimestamps::build_command_buffers()
+void CalibratedTimestamps ::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+
+	std::array<VkClearValue, 2> clear_values_0{};
+	clear_values_0[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+	clear_values_0[1].depthStencil = {0.0f, 0};
+
+	VkRenderPassBeginInfo render_pass_begin_info_0 = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info_0.renderPass            = render_pass;
+	render_pass_begin_info_0.renderArea.offset.x   = 0;
+	render_pass_begin_info_0.renderArea.offset.y   = 0;
+	render_pass_begin_info_0.clearValueCount       = 2;
+	render_pass_begin_info_0.pClearValues          = clear_values_0.data();
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+
 		{
-			std::array<VkClearValue, 3> clear_values_0{};
-			clear_values_0[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values_0[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values_0[2].depthStencil = {0.0f, 0};
+			/*
+			    First pass: Render scene to offscreen framebuffer
+			*/
 
-			VkRenderPassBeginInfo render_pass_begin_info_0    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info_0.renderPass               = offscreen.render_pass;
-			render_pass_begin_info_0.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info_0.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info_0.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info_0.clearValueCount          = 3;
-			render_pass_begin_info_0.pClearValues             = clear_values_0.data();
+			std::array<VkClearValue, 3> clear_values_1{};
+			clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values_1[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values_1[2].depthStencil = {0.0f, 0};
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_0, VK_SUBPASS_CONTENTS_INLINE);
+			VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info_1.renderPass               = offscreen.render_pass;
+			render_pass_begin_info_1.framebuffer              = offscreen.framebuffer;
+			render_pass_begin_info_1.renderArea.extent.width  = offscreen.width;
+			render_pass_begin_info_1.renderArea.extent.height = offscreen.height;
+			render_pass_begin_info_1.clearValueCount          = 3;
+			render_pass_begin_info_1.pClearValues             = clear_values_1.data();
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			VkDeviceSize offsets[1] = {0};
-
 			// Skybox
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
-			draw_model(models.skybox, draw_cmd_buffers[i]);
+			if (display_skybox)
+			{
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
+				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
 
-			// Teapot
+				draw_model(models.skybox, draw_cmd_buffers[i]);
+			}
+
+			// 3D object
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
-			draw_model(models.object, draw_cmd_buffers[i]);
+
+			draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
+		/*
+		    Second render pass: First bloom pass
+		*/
+		if (bloom)
 		{
-			std::array<VkClearValue, 2> clear_values_1{};
-			clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values_1[1].depthStencil = {0.0f, 0};
+			std::array<VkClearValue, 2> clear_values{};
+			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values[1].depthStencil = {0.0f, 0};
+
+			// Bloom filter
+			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
+			render_pass_begin_info.renderPass               = filter_pass.render_pass;
+			render_pass_begin_info.clearValueCount          = 1;
+			render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
+			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
+			render_pass_begin_info.pClearValues             = clear_values.data();
+
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+
+			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, nullptr);
+
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
+			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+
+			vkCmdEndRenderPass(draw_cmd_buffers[i]);
+		}
+
+		/*
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		*/
+
+		/*
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		*/
+		{
+			std::array<VkClearValue, 2> clear_values{};
+			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_values[1].depthStencil = {0.0f, 0};
 
 			// Final composition
-			VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info_1.framebuffer              = framebuffers[i];
-			render_pass_begin_info_1.renderPass               = render_pass;
-			render_pass_begin_info_1.clearValueCount          = 2;
-			render_pass_begin_info_1.renderArea.extent.width  = width;
-			render_pass_begin_info_1.renderArea.extent.height = height;
-			render_pass_begin_info_1.pClearValues             = clear_values_1.data();
+			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+			render_pass_begin_info.framebuffer              = framebuffers[i];
+			render_pass_begin_info.renderPass               = render_pass;
+			render_pass_begin_info.clearValueCount          = 2;
+			render_pass_begin_info.renderArea.extent.width  = width;
+			render_pass_begin_info.renderArea.extent.height = height;
+			render_pass_begin_info.pClearValues             = clear_values.data();
 
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
@@ -257,6 +205,13 @@ void CalibratedTimestamps::build_command_buffers()
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
+			// Bloom
+			if (bloom)
+			{
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[0]);
+				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+			}
+
 			draw_ui(draw_cmd_buffers[i]);
 
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
@@ -266,27 +221,24 @@ void CalibratedTimestamps::build_command_buffers()
 	}
 }
 
-void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
+void CalibratedTimestamps ::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
 {
 	VkImageAspectFlags aspect_mask = 0;
-	VkImageLayout      image_layout{};
 
 	attachment->format = format;
 
 	if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 	{
-		aspect_mask  = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT;
 	}
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
 		aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
+		// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT
 		if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
 		{
 			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
-		image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	assert(aspect_mask > 0);
@@ -326,14 +278,16 @@ void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBi
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
 }
 
-void CalibratedTimestamps::prepare_offscreen_buffer()
+void CalibratedTimestamps ::prepare_offscreen_buffer()
 {
-	// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 	{
 		offscreen.width  = static_cast<int>(width);
 		offscreen.height = static_cast<int>(height);
 
 		// Color attachments
+
+		// We are using two 128-Bit RGBA floating point color buffers for this sample
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
@@ -381,7 +335,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		subpass.colorAttachmentCount    = 2;
 		subpass.pDepthStencilAttachment = &depth_reference;
 
-		// Use sub-pass dependencies for attachment layout transitions
+		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -443,15 +397,20 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &offscreen.sampler));
 	}
 
-	// Second separable filter pass
+	// Bloom separable filter pass
 	{
 		filter_pass.width  = static_cast<int>(width);
 		filter_pass.height = static_cast<int>(height);
 
+		// Color attachments
+
+		// Two floating point color buffers
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
+		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
 
+		// Init attachment properties
 		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -469,6 +428,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		subpass.pColorAttachments    = color_references.data();
 		subpass.colorAttachmentCount = 1;
 
+		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -512,6 +472,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
+		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -528,23 +489,33 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 	}
 }
 
-void CalibratedTimestamps::load_assets()
+void CalibratedTimestamps ::load_assets()
 {
 	// Models
-	models.skybox = load_model("scenes/cube.gltf");
-	models.object = load_model("scenes/teapot.gltf");
+	models.skybox                      = load_model("scenes/cube.gltf");
+	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
+	object_names                       = {"Sphere", "Teapot", "Torusknot"};
+	for (const auto &file : filenames)
+	{
+		auto object = load_model("scenes/" + file);
+		models.objects.emplace_back(std::move(object));
+	}
 
-	// Transform
-	auto teapot_matrix = glm::mat4(1.0f);
-	teapot_matrix      = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
-	teapot_matrix      = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-	models.transform   = teapot_matrix;
+	// Transforms
+	auto geosphere_matrix = glm::mat4(1.0f);
+	auto teapot_matrix    = glm::mat4(1.0f);
+	teapot_matrix         = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
+	teapot_matrix         = glm::rotate(teapot_matrix, glm::radians(180.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+	auto torus_matrix     = glm::mat4(1.0f);
+	models.transforms.push_back(geosphere_matrix);
+	models.transforms.push_back(teapot_matrix);
+	models.transforms.push_back(torus_matrix);
 
-	// Load skybox cube map
-	skybox_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	// Load HDR cube map
+	textures.environment_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
-void CalibratedTimestamps::setup_descriptor_pool()
+void CalibratedTimestamps ::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
@@ -555,7 +526,7 @@ void CalibratedTimestamps::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void CalibratedTimestamps::setup_descriptor_set_layout()
+void CalibratedTimestamps ::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -575,6 +546,18 @@ void CalibratedTimestamps::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
 
+	// Bloom filter
+	set_layout_bindings = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	};
+
+	descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layouts.bloom_filter));
+
+	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.bloom_filter, 1);
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.bloom_filter));
+
 	// G-Buffer composition
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
@@ -588,41 +571,56 @@ void CalibratedTimestamps::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.composition));
 }
 
-void CalibratedTimestamps::setup_descriptor_sets()
+void CalibratedTimestamps ::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
-	// Sky box descriptor set
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
-
-	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(skybox_map);
-	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
-    };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// Teapot descriptor set
+	// 3D object descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
 
-	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	environment_image_descriptor = create_descriptor(skybox_map);
-	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
-	write_descriptor_sets        = {
+	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
+	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.environment_map);
+	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
+	// Sky box descriptor set
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
+
+	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
+	environment_image_descriptor = create_descriptor(textures.environment_map);
+	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
+	write_descriptor_sets        = {
+        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
+    };
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
+	// Bloom filter
+	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.bloom_filter, 1);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.bloom_filter));
+
+	std::vector<VkDescriptorImageInfo> color_descriptors = {
+	    vkb::initializers::descriptor_image_info(offscreen.sampler, offscreen.color[0].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
+	    vkb::initializers::descriptor_image_info(offscreen.sampler, offscreen.color[1].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
+	};
+
+	write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
+	};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
 	// Composition descriptor set
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.composition));
 
-	std::vector<VkDescriptorImageInfo> color_descriptors = {
+	color_descriptors = {
 	    vkb::initializers::descriptor_image_info(offscreen.sampler, offscreen.color[0].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
 	    vkb::initializers::descriptor_image_info(offscreen.sampler, filter_pass.color[0].view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL),
 	};
@@ -634,14 +632,17 @@ void CalibratedTimestamps::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void CalibratedTimestamps::prepare_pipelines()
+void CalibratedTimestamps ::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
-	VkPipelineRasterizationStateCreateInfo rasterization_state  = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+
+	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
 	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-	VkPipelineColorBlendStateCreateInfo color_blend_state      = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -651,7 +652,8 @@ void CalibratedTimestamps::prepare_pipelines()
 	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo                     pipeline_create_info    = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
+
 	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
@@ -688,6 +690,32 @@ void CalibratedTimestamps::prepare_pipelines()
 	color_blend_state.pAttachments    = blend_attachment_states.data();
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
+	// Bloom pass
+	shader_stages[0]                           = load_shader("hdr/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1]                           = load_shader("hdr/bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	color_blend_state.pAttachments             = &blend_attachment_state;
+	blend_attachment_state.colorWriteMask      = 0xF;
+	blend_attachment_state.blendEnable         = VK_TRUE;
+	blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
+	blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE;
+	blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
+	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
+
+	// Set constant parameters via specialization constants
+	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
+	uint32_t dir                         = 1;
+	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(dir), &dir);
+	shader_stages[1].pSpecializationInfo = &specialization_info;
+
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[0]));
+
+	// Second blur pass (into separate framebuffer)
+	pipeline_create_info.renderPass = filter_pass.render_pass;
+	dir                             = 0;
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[1]));
+
 	// Object rendering pipelines
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
@@ -699,9 +727,8 @@ void CalibratedTimestamps::prepare_pipelines()
 
 	// Attribute descriptions
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // UV
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                       // Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3)        // Normal
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -724,18 +751,15 @@ void CalibratedTimestamps::prepare_pipelines()
 
 	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
-	uint32_t shader_type                 = 0;
-	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shader_type), &shader_type);
+	uint32_t shadertype                  = 0;
+	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
 	shader_stages[0].pSpecializationInfo = &specialization_info;
 	shader_stages[1].pSpecializationInfo = &specialization_info;
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skybox));
 
 	// Object rendering pipeline
-	// skybox and models are all addressed inside gbuffer, which different pass actually
-	// 1 for skybox
-	// 2 for reflection form an object
-	shader_type = 1;
+	shadertype = 1;
 
 	// Enable depth test and write
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
@@ -745,33 +769,33 @@ void CalibratedTimestamps::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
 }
 
-void CalibratedTimestamps::prepare_uniform_buffers()
+void CalibratedTimestamps ::prepare_uniform_buffers()
 {
 	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                               sizeof(ubo_vs),
+	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.params = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                             sizeof(ubo_params),
+	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
-	update_params();
-}
-
-void CalibratedTimestamps::update_uniform_buffers()
-{
-	ubo_vs.projection        = camera.matrices.perspective;
-	ubo_vs.model_view        = camera.matrices.view * models.transform;
-	ubo_vs.skybox_model_view = camera.matrices.view;
-
-	uniform_buffers.matrices->convert_and_update(ubo_vs);
-}
-
-void CalibratedTimestamps::update_params()
-{
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
-void CalibratedTimestamps::draw()
+void CalibratedTimestamps ::update_uniform_buffers()
+{
+	ubo_vs.projection        = camera.matrices.perspective;
+	ubo_vs.model_view        = camera.matrices.view * models.transforms[models.object_index];
+	ubo_vs.skybox_model_view = camera.matrices.view;
+	uniform_buffers.matrices->convert_and_update(ubo_vs);
+}
+
+void CalibratedTimestamps ::draw()
 {
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
@@ -780,7 +804,7 @@ void CalibratedTimestamps::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool CalibratedTimestamps::prepare(vkb::Platform &platform)
+bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -790,7 +814,9 @@ bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+
+	// Note: Using Reserved depth-buffer for increased precision, so Z-near and Z-far are flipped
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -800,15 +826,11 @@ bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_sets();
 	build_command_buffers();
-
-	// Add extension related calls here:
-
 	prepared = true;
-
 	return true;
 }
 
-void CalibratedTimestamps::render(float delta_time)
+void CalibratedTimestamps ::render(float delta_time)
 {
 	if (!prepared)
 		return;
@@ -817,19 +839,113 @@ void CalibratedTimestamps::render(float delta_time)
 		update_uniform_buffers();
 }
 
-void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
+std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDomain)
 {
-	// TODO: @JEREMY: 1) add update timestamps button and function here:
-	//                2) add timestamps info display here:
+	switch (inputTimeDomain)
+	{
+		case VK_TIME_DOMAIN_DEVICE_EXT:
+			return "device time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
+			return "clock monotonic time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
+			return "clock monotonic raw time domain";
+		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
+			return "query performance time domain";
+		default:
+			// TODO: @JEREMY: figure out the exact enum return!
+
+			// Debug:
+			printf("%d", inputTimeDomain);
+			return "unknown time domain";
+	}
 }
 
-bool CalibratedTimestamps::resize(uint32_t width, uint32_t height)
+void CalibratedTimestamps::update_time_domains()
 {
-	bool resizeResults = ApiVulkanSample::resize(width, height);
+	// Initialize time domain count:
+	time_domain_count = 0;
+	// Update time domain count:
+	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
 
+	if (result == VK_SUCCESS)
+	{
+		// Initialize time domain vector
+		time_domains.clear();
+		// Resize time domains vector:
+		time_domains.resize(static_cast<int>(time_domain_count));        // this needs static cast to int
+		// Update time_domain vector:
+		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
+
+		// Time domain is successfully updated:
+		isTimeDomainUpdated = (result == VK_SUCCESS);
+	}
+}
+
+void CalibratedTimestamps::update_timestamps()
+{
+	// Ensures that time domain exists
+	if (isTimeDomainUpdated)
+	{
+		// Create LOCAL calibrate time stamps info:
+		std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};
+
+		for (VkTimeDomainEXT time_domain : time_domains)
+		{
+			// Initialize in-scope time stamp info variable:
+			VkCalibratedTimestampInfoEXT timestamp_info{};
+
+			// Configure timestamp info variable:
+			timestamp_info.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
+			timestamp_info.pNext      = nullptr;
+			timestamp_info.timeDomain = time_domain;
+
+			// Push-back timestamp info to timestamps info vector:
+			timestamps_info.push_back(timestamp_info);
+		}
+
+		// Resize time stamps vector
+		timestamps.resize(static_cast<int>(time_domain_count));
+		// Resize max deviations vector
+		max_deviations.resize(static_cast<int>(time_domain_count));
+
+		// Get calibrated timestamps:
+		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domain_count, timestamps_info.data(), timestamps.data(), max_deviations.data());
+
+		// Timestamps is successfully updated:
+		isTimestampUpdated = (result == VK_SUCCESS);
+	}
+}
+
+void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	// Adjustment Handles:
+	if (drawer.header("Settings"))
+	{
+		if (drawer.combo_box("Object type", &models.object_index, object_names))
+		{
+			update_uniform_buffers();
+			build_command_buffers();
+		}
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		{
+			uniform_buffers.params->convert_and_update(ubo_params);
+		}
+		if (drawer.checkbox("Bloom", &bloom))
+		{
+			build_command_buffers();
+		}
+		if (drawer.checkbox("Skybox", &display_skybox))
+		{
+			build_command_buffers();
+		}
+	}
+}
+
+bool CalibratedTimestamps ::resize(uint32_t width, uint32_t height)
+{
+	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
-
-	return resizeResults;
+	return true;
 }
 
 std::unique_ptr<vkb::Application> create_calibrated_timestamps()

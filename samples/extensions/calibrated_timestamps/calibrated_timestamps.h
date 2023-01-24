@@ -20,26 +20,47 @@
  */
 
 #pragma once
+
 #include "api_vulkan_sample.h"
-#include "core/image.h"
-#include "rendering/render_frame.h"
 
 class CalibratedTimestamps : public ApiVulkanSample
 {
+  private:
+	bool     isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
+	bool     isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+	uint32_t time_domain_count{};
+
+	struct TimeInfo
+	{
+		uint64_t timestamp = 0;
+		uint64_t deviation = 0;
+	};
+
+	std::vector<VkTimeDomainEXT> time_domains{};          // this holds all time domains extracted from the current Instance
+	std::vector<uint64_t>        timestamps{};            // timestamps vector
+	std::vector<uint64_t>        max_deviations{};        // max deviations vector
+
   public:
-	Texture skybox_map{};
+	bool bloom          = true;
+	bool display_skybox = true;
+
+	struct
+	{
+		Texture environment_map{};
+	} textures;
 
 	struct Models
 	{
-		std::unique_ptr<vkb::sg::SubMesh> skybox = nullptr;
-		std::unique_ptr<vkb::sg::SubMesh> object = nullptr;
-		glm::mat4                         transform{};
+		std::unique_ptr<vkb::sg::SubMesh>              skybox{};
+		std::vector<std::unique_ptr<vkb::sg::SubMesh>> objects{};
+		std::vector<glm::mat4>                         transforms{};
+		int32_t                                        object_index = 0;
 	} models{};
 
-	struct UniformBuffers
+	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> matrices = nullptr;
-		std::unique_ptr<vkb::core::Buffer> params   = nullptr;
+		std::unique_ptr<vkb::core::Buffer> matrices{};
+		std::unique_ptr<vkb::core::Buffer> params{};
 	} uniform_buffers{};
 
 	struct UBOVS
@@ -50,35 +71,39 @@ class CalibratedTimestamps : public ApiVulkanSample
 		float     model_scale = 0.05f;
 	} ubo_vs{};
 
-	const struct UBOParams
+	struct UBOParams
 	{
 		float exposure = 1.0f;
 	} ubo_params{};
 
-	struct Pipelines
+	struct
 	{
 		VkPipeline skybox      = VK_NULL_HANDLE;
 		VkPipeline reflect     = VK_NULL_HANDLE;
 		VkPipeline composition = VK_NULL_HANDLE;
+		VkPipeline bloom[2]{VK_NULL_HANDLE, VK_NULL_HANDLE};
 	} pipelines{};
 
-	struct PipelineLayouts
+	struct
 	{
-		VkPipelineLayout models      = VK_NULL_HANDLE;
-		VkPipelineLayout composition = VK_NULL_HANDLE;
+		VkPipelineLayout models       = VK_NULL_HANDLE;
+		VkPipelineLayout composition  = VK_NULL_HANDLE;
+		VkPipelineLayout bloom_filter = VK_NULL_HANDLE;
 	} pipeline_layouts{};
 
-	struct DescriptorSets
+	struct
 	{
-		VkDescriptorSet skybox      = VK_NULL_HANDLE;
-		VkDescriptorSet object      = VK_NULL_HANDLE;
-		VkDescriptorSet composition = VK_NULL_HANDLE;
+		VkDescriptorSet object       = VK_NULL_HANDLE;
+		VkDescriptorSet skybox       = VK_NULL_HANDLE;
+		VkDescriptorSet composition  = VK_NULL_HANDLE;
+		VkDescriptorSet bloom_filter = VK_NULL_HANDLE;
 	} descriptor_sets{};
 
-	struct DescriptorSetLayouts
+	struct
 	{
-		VkDescriptorSetLayout models      = VK_NULL_HANDLE;
-		VkDescriptorSetLayout composition = VK_NULL_HANDLE;
+		VkDescriptorSetLayout models       = VK_NULL_HANDLE;
+		VkDescriptorSetLayout composition  = VK_NULL_HANDLE;
+		VkDescriptorSetLayout bloom_filter = VK_NULL_HANDLE;
 	} descriptor_set_layouts{};
 
 	struct FrameBufferAttachment
@@ -87,14 +112,13 @@ class CalibratedTimestamps : public ApiVulkanSample
 		VkDeviceMemory mem{};
 		VkImageView    view{};
 		VkFormat       format{};
-		const void     destroy(VkDevice device)
+		void           destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
 			vkFreeMemory(device, mem, nullptr);
 		}
 	};
-
 	struct FrameBuffer
 	{
 		int32_t               width{};
@@ -106,7 +130,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		VkSampler             sampler{};
 	} offscreen{};
 
-	struct FilterPass
+	struct
 	{
 		int32_t               width{};
 		int32_t               height{};
@@ -116,48 +140,17 @@ class CalibratedTimestamps : public ApiVulkanSample
 		VkSampler             sampler{};
 	} filter_pass{};
 
-	// TODO: @JEREMY *) Move it back to the top when finalized:
-  private:
-	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-	VkCalibratedTimestampInfoEXT timestampsInfo_device{};
-	VkCalibratedTimestampInfoEXT timestampsInfo_queryPerformanceCount{};
-	struct TimeInfo
-	{
-		uint64_t timestamp = 0;
-		uint64_t deviation = 0;
-	};
-
-	//MODs:
-	uint32_t time_domain_count{};
-	// this can be done locally, or by figuring out the size of time_domain vector, but since it will be calibrated anyways, therefore why not make it a clas variable
-	std::vector<VkTimeDomainEXT> time_domains{};
-	// this vector is initialized as empty, but it holds all time domains extracted from the current Instance
-	std::vector<uint64_t> timestamps{};                       // timestamps vector
-	std::vector<uint64_t> max_deviations{};                   // max deviations vector
-	bool                  isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
-	bool                  isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+	std::vector<std::string> object_names{};
 
   private:
 	// MODs:
-	std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);
-	// this returns a human-readable information for what time domain corresponds to what
-	void update_time_domains();
-	// this extracts total number of time domain the (physical) device has, and then sync the time domain EXT data to its vector
-	void update_timestamps();
-	// creates local timestamps information vector, update timestamps vector and deviation vector
-
-	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-	TimeInfo get_timestamp(VkCalibratedTimestampInfoEXT &inputTimeStampsInfo, uint32_t inputTimestampsCount = 1);
-	// This is to get then sync the timestamp and the screen max deviation
+	static std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);        // this returns a human-readable info for what time domain corresponds to what
+	void               update_time_domains();                                    // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
+	void               update_timestamps();                                      // creates local timestamps information vector, update timestamps vector and deviation vector
 
   public:
 	CalibratedTimestamps();
 	~CalibratedTimestamps() override;
-
-	// TODO: @JEREMY Legacy, remove it when new functions passed the run-time:
-	void initialize();
-	// this is to initialize all VkCalibratedTimestampInfoEXT related variables
-
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
 	void create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment);
@@ -169,15 +162,10 @@ class CalibratedTimestamps : public ApiVulkanSample
 	void prepare_pipelines();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
-	void update_params();
 	void draw();
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
-
-	// TODO: @JEREMY: 4-1) get a update timestamps button;
-	//                4-2) display: a) time domain, b) timestamps, c) deviation
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
-
 	bool resize(uint32_t width, uint32_t height) override;
 };
 
