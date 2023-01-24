@@ -721,14 +721,6 @@ void ExtendedDynamicState2::update(float delta_time)
  */
 int ExtendedDynamicState2::get_node_index(std::string name, std::vector<SceneNode> *scene_node)
 {
-	int i = 0;
-	for (i = 0; i < scene_node->size(); i++)
-	{
-		if (scene_node->at(i).node->get_name() == name)
-		{
-			break;
-		}
-	}
 	return std::distance(scene_node->begin(),
 	                     std::find_if(scene_node->begin(), scene_node->end(), [&name](SceneNode const &node) { return node.node->get_name() == name; }));
 }
