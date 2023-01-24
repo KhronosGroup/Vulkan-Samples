@@ -26,16 +26,9 @@
 class CalibratedTimestamps : public ApiVulkanSample
 {
   private:
-	bool     isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
-	bool     isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
-	uint32_t time_domain_count{};
-
-	struct TimeInfo
-	{
-		uint64_t timestamp = 0;
-		uint64_t deviation = 0;
-	};
-
+	bool                         isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
+	bool                         isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+	uint32_t                     time_domain_count = 0;
 	std::vector<VkTimeDomainEXT> time_domains{};          // this holds all time domains extracted from the current Instance
 	std::vector<uint64_t>        timestamps{};            // timestamps vector
 	std::vector<uint64_t>        max_deviations{};        // max deviations vector

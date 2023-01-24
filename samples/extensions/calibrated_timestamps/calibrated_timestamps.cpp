@@ -852,10 +852,6 @@ std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDoma
 		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
 			return "query performance time domain";
 		default:
-			// TODO: @JEREMY: figure out the exact enum return!
-
-			// Debug:
-			printf("%d", inputTimeDomain);
 			return "unknown time domain";
 	}
 }
@@ -875,10 +871,10 @@ void CalibratedTimestamps::update_time_domains()
 		time_domains.resize(static_cast<int>(time_domain_count));        // this needs static cast to int
 		// Update time_domain vector:
 		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
-
-		// Time domain is successfully updated:
-		isTimeDomainUpdated = (result == VK_SUCCESS);
 	}
+	// Time domain is successfully updated:
+	isTimeDomainUpdated = (result == VK_SUCCESS);
+
 }
 
 void CalibratedTimestamps::update_timestamps()
@@ -937,6 +933,32 @@ void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
 		if (drawer.checkbox("Skybox", &display_skybox))
 		{
 			build_command_buffers();
+		}
+	}
+
+	if(drawer.button("Single TimeStamp"))
+	{
+		time_domain_count = 0;
+		time_domains.clear();
+		timestamps.clear();
+		max_deviations.clear();
+
+		isTimeDomainUpdated = false;
+		isTimestampUpdated = false;
+
+		update_time_domains();
+		update_timestamps();
+	}
+
+	drawer.text("timestamps period: %.3f ns", device->get_gpu().get_properties().limits.timestampPeriod);
+
+	if ( time_domain_count > 0 )
+	{
+		for (int i = 0; i < static_cast<int>(time_domain_count); i++)
+		{
+			drawer.text("time domain: %s", read_time_domain(time_domains[i]).c_str());
+			drawer.text("timestamps: %llu", (timestamps[i]));
+			drawer.text("max deviations: %llu", (max_deviations[i]));
 		}
 	}
 }
