@@ -153,7 +153,7 @@ void MemoryBudget::initialize_device_memory_properties()
 	device_memory_properties.pNext = &physical_device_memory_budget_properties;
 }
 
-const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory)
+MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64_t input_memory) const
 {
 	MemoryBudget::ConvertedMemory returnMe{};
 
@@ -183,7 +183,7 @@ const MemoryBudget::ConvertedMemory MemoryBudget::update_converted_memory(uint64
 	return returnMe;
 }
 
-const std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryHeapFlag)
+std::string MemoryBudget::read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryHeapFlag)
 {
 	switch (inputVkMemoryHeapFlag)
 	{
@@ -473,7 +473,7 @@ void MemoryBudget::prepare_instance_data()
 	// Staging
 	// Instanced data is static, copy to device local memory
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
-	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary and you could skip the staging
+	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary, and you could skip the staging
 
 	struct
 	{
@@ -562,7 +562,7 @@ bool MemoryBudget::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));

@@ -111,10 +111,10 @@ class MemoryBudget : public ApiVulkanSample
 
   private:
 	// memory budget extension related function
-	void                                initialize_device_memory_properties();
-	const MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);
-	const std::string                   read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryFlag);
-	void                                update_device_memory_properties();
+	void                          initialize_device_memory_properties();
+	MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory) const;
+	static std::string            read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryFlag);
+	void                          update_device_memory_properties();
 
   public:
 	MemoryBudget();
