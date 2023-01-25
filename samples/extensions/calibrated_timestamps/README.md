@@ -64,7 +64,7 @@ And this section helps to provide an overview of their concepts and applications
 
 One shall notice that, a ```timestamp``` **DOES NOT** return an actual time reading, on the contrary, a ```timestamp```
 indicates "how many units of ```timestamp periods``` have passed" with respect to a **fixed** reference point on the
-timeline. Where, the ```timestamp period``` is measured in realtime, and usually is in unit of ```nanoseconds```. On
+timeline. Where, the ```timestamp period``` is measured in realtime, and usually is in unit of ```nanoseconds```. One
 shall also notice that, such "fixed reference point" varies with ```time domain``` and ```host```, therefore, it is not
 very practical to consider such data in our concern. However, since that "reference point" is fixed, one may take
 advantage of that feature to measure the time elapsed between two different ```timestamps```. For instance:
