@@ -374,26 +374,23 @@ draw_model(background_model, draw_cmd_buffers[i]);
 The usage of depth bias dynamic state is implemented in the `draw_from_scene` function which is described below.
 
 ```C++
-void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<std::vector<SceneNode>> *scene_node, sceneObjType_t scene_index)
+void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<SceneNode> const &scene_node)
 {
-	auto &node               = scene_node->at(scene_index);
-	int   scene_elements_cnt = scene_node->at(scene_index).size();
-
-	for (int i = 0; i < scene_elements_cnt; i++)
+	for (int i = 0; i < scene_node.size(); i++)
 	{
-		const auto &vertex_buffer_pos    = node[i].sub_mesh->vertex_buffers.at("position");
-		const auto &vertex_buffer_normal = node[i].sub_mesh->vertex_buffers.at("normal");
-		auto &      index_buffer         = node[i].sub_mesh->index_buffer;
+		const auto &vertex_buffer_pos    = scene_node[i].sub_mesh->vertex_buffers.at("position");
+		const auto &vertex_buffer_normal = scene_node[i].sub_mesh->vertex_buffers.at("normal");
+		auto       &index_buffer         = scene_node[i].sub_mesh->index_buffer;
 
-		if (scene_index == SCENE_BASELINE_OBJ_INDEX)
+		if (scene_node[i].name != "Geosphere")
 		{
 			vkCmdSetDepthBiasEnableEXT(command_buffer, gui_settings.objects[i].depth_bias);
 			vkCmdSetRasterizerDiscardEnableEXT(command_buffer, gui_settings.objects[i].rasterizer_discard);
 		}
 
-		// Pass data for the current node via push commands
-		auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node[i].sub_mesh->get_material());
-		push_const_block.model_matrix = node[i].node->get_transform().get_world_matrix();
+		/* Pass data for the current node via push commands */
+		auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(scene_node[i].sub_mesh->get_material());
+		push_const_block.model_matrix = scene_node[i].node->get_transform().get_world_matrix();
 		if (i != gui_settings.selected_obj ||
 		    gui_settings.selection_active == false)
 		{
@@ -408,10 +405,12 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer_pos.get(), offsets);
 		vkCmdBindVertexBuffers(command_buffer, 1, 1, vertex_buffer_normal.get(), offsets);
-		vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, node[i].sub_mesh->index_type);
+		vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, scene_node[i].sub_mesh->index_type);
 
-		vkCmdDrawIndexed(command_buffer, node[i].sub_mesh->vertex_indices, 1, 0, 0, 0);
+		vkCmdDrawIndexed(command_buffer, scene_node[i].sub_mesh->vertex_indices, 1, 0, 0, 0);
 	}
+	vkCmdSetDepthBiasEnableEXT(command_buffer, VK_FALSE);
+	vkCmdSetRasterizerDiscardEnableEXT(command_buffer, VK_FALSE);
 }
 ```
 
