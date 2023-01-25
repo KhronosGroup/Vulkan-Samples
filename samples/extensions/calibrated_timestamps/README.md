@@ -55,7 +55,7 @@ activate or deactivate the ```bloom``` effects, and turn on or off the ```skybox
 ```command buffer``` building process, where, ```calibrated timestamps``` extension functions were introduced, thus, to
 help users to profile the processing time per configuration, in realtime.
 
-## *Time domain, timestamp, timestamp period, and max deviation
+## * Time domain, timestamp, timestamp period, and max deviation
 
 This is an optional section.
 
