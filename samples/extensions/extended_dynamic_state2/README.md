@@ -195,7 +195,7 @@ VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1,
 ...
 ```
 
-In approach above, if we would want to change the patch control points number, then for each different number we would need to create a new pipeline.
+In the above approach if we would like to change the patch control points number, then for each different number we would need to create a new pipeline.
 
 However, with 'VK_EXT_extended_dynamic_state2' the number of pipelines can be reduced by the possibility to change parameters of `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` by calling `vkCmdSetDepthBiasEnableEXT`, `vkCmdSetPrimitiveRestartEnableEXT`, `vkCmdSetRasterizerDiscardEnableEXT` and `vkCmdSetPatchControlPointsEXT` respectively before calling `draw_model`.
 
