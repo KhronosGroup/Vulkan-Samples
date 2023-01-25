@@ -538,7 +538,7 @@ bool RenderContext::has_swapchain()
 	return swapchain != nullptr;
 }
 
-Swapchain &RenderContext::get_swapchain()
+Swapchain const &RenderContext::get_swapchain() const
 {
 	assert(swapchain && "Swapchain is not valid");
 	return *swapchain;
