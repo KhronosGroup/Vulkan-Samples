@@ -68,7 +68,7 @@ function ```initialize_device_memory_properties()```.
 
 ## UI Overlay: Memory properties
 
-![Sample](./images/memory_budget_ui_overlay.PNG)
+![Sample](./images/memory_budget_ui_overlay.png)
 
 In application’s UI overlay, total memory usage and total memory budget will be displayed. In addition, by pressing down
 the arrow next to the “Memory Heap Details” tab, it expands a list of all memory usages and budgets from the heap count.
