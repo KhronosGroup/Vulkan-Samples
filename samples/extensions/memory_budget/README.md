@@ -79,9 +79,9 @@ Where:
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	converted_memory = update_converted_memory(device_memory_total_usage);
-	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 	converted_memory = update_converted_memory(device_memory_total_budget);
-	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 	if (drawer.header("Memory Heap Details"))
 	{
@@ -91,10 +91,10 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 			if (drawer.header(header.c_str()))
 			{
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
-				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
-				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
 			}
