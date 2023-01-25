@@ -17,17 +17,17 @@
 
 #include "calibrated_timestamps.h"
 
-CalibratedTimestamps ::CalibratedTimestamps()
+CalibratedTimestamps::CalibratedTimestamps()
 {
 	title = "Calibrated Timestamps";
 
 	// Add instance extensions required for calibrated timestamps
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-	// NOTICE THAT: calibrated is a DEVICE extension!
+	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
 	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
 }
 
-CalibratedTimestamps ::~CalibratedTimestamps()
+CalibratedTimestamps::~CalibratedTimestamps()
 {
 	if (device)
 	{
@@ -64,7 +64,7 @@ CalibratedTimestamps ::~CalibratedTimestamps()
 	}
 }
 
-void CalibratedTimestamps ::request_gpu_features(vkb::PhysicalDevice &gpu)
+void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	if (gpu.get_features().samplerAnisotropy)
 	{
@@ -72,7 +72,7 @@ void CalibratedTimestamps ::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void CalibratedTimestamps ::build_command_buffers()
+void CalibratedTimestamps::build_command_buffers()
 {
 	// Reset the delta timestamps vector
 	delta_timestamps.clear();
@@ -100,10 +100,6 @@ void CalibratedTimestamps ::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		{
-			/*
-			    First pass: Render scene to offscreen framebuffer
-			*/
-
 			std::array<VkClearValue, 3> clear_values_1{};
 			clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 			clear_values_1[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
@@ -214,7 +210,7 @@ void CalibratedTimestamps ::build_command_buffers()
 	toc("Draw Command Buffer");
 }
 
-void CalibratedTimestamps ::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
+void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
 {
 	VkImageAspectFlags aspect_mask = 0;
 
@@ -271,7 +267,7 @@ void CalibratedTimestamps ::create_attachment(VkFormat format, VkImageUsageFlagB
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
 }
 
-void CalibratedTimestamps ::prepare_offscreen_buffer()
+void CalibratedTimestamps::prepare_offscreen_buffer()
 {
 	{
 		offscreen.width  = static_cast<int>(width);
@@ -464,7 +460,7 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 	}
 }
 
-void CalibratedTimestamps ::load_assets()
+void CalibratedTimestamps::load_assets()
 {
 	models.skybox                      = load_model("scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
@@ -487,7 +483,7 @@ void CalibratedTimestamps ::load_assets()
 	textures.environment_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
-void CalibratedTimestamps ::setup_descriptor_pool()
+void CalibratedTimestamps::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
@@ -498,7 +494,7 @@ void CalibratedTimestamps ::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void CalibratedTimestamps ::setup_descriptor_set_layout()
+void CalibratedTimestamps::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -541,7 +537,7 @@ void CalibratedTimestamps ::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.composition));
 }
 
-void CalibratedTimestamps ::setup_descriptor_sets()
+void CalibratedTimestamps::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
@@ -598,7 +594,7 @@ void CalibratedTimestamps ::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void CalibratedTimestamps ::prepare_pipelines()
+void CalibratedTimestamps::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
@@ -717,7 +713,7 @@ void CalibratedTimestamps ::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
 }
 
-void CalibratedTimestamps ::prepare_uniform_buffers()
+void CalibratedTimestamps::prepare_uniform_buffers()
 {
 	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.params   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -726,7 +722,7 @@ void CalibratedTimestamps ::prepare_uniform_buffers()
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
-void CalibratedTimestamps ::update_uniform_buffers()
+void CalibratedTimestamps::update_uniform_buffers()
 {
 	ubo_vs.projection        = camera.matrices.perspective;
 	ubo_vs.model_view        = camera.matrices.view * models.transforms[models.object_index];
@@ -734,7 +730,7 @@ void CalibratedTimestamps ::update_uniform_buffers()
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
 }
 
-void CalibratedTimestamps ::draw()
+void CalibratedTimestamps::draw()
 {
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
@@ -743,7 +739,7 @@ void CalibratedTimestamps ::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
+bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -757,6 +753,8 @@ bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
 
 	// Get the optimal time domain as soon as possible
 	get_optimal_time_domain();
+
+	// Preparations
 	load_assets();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
@@ -770,7 +768,7 @@ bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void CalibratedTimestamps ::render(float delta_time)
+void CalibratedTimestamps::render(float delta_time)
 {
 	if (!prepared)
 		return;
@@ -927,8 +925,12 @@ void CalibratedTimestamps::toc(const std::string &input_tag)
 	delta_timestamps.back().get_delta();
 }
 
-void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
+void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
+	// Timestamps period extracted in runtime
+	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
+	drawer.text("Timestamps Period: %.1f ns", timestamp_period);
+
 	// Adjustment Handles:
 	if (drawer.header("Settings"))
 	{
@@ -949,19 +951,16 @@ void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	if (!delta_timestamps.empty())
 	{
-		float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
-
-		drawer.text("Optimal Time Domain Selected: %s", read_time_domain(optimal_time_domain.timeDomainEXT).c_str());
-		drawer.text("timestamps period: %.0f ns", timestamp_period);
+		drawer.text("Optimal Time Domain Selected:\n %s", read_time_domain(optimal_time_domain.timeDomainEXT).c_str());
 
 		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("%s: %.0f ns", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period);
+			drawer.text("%s: %.1f ns", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period);
 		}
 	}
 }
 
-bool CalibratedTimestamps ::resize(uint32_t width, uint32_t height)
+bool CalibratedTimestamps::resize(uint32_t width, uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();

@@ -162,7 +162,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 	// MODs:
 	static std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);        // this returns a human-readable info for what time domain corresponds to what
 	void               update_time_domains();                                    // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
-	void               update_timestamps();                                      // creates local timestamps information vector, update timestamps vector and deviation vector
+	void               update_timestamps();                                      // this creates local timestamps information vector, update timestamps vector and deviation vector
 	void               init_timeDomains_and_timestamps();                        // this initializes all time domain and timestamps related variables, vectors, and booleans
 	void               get_optimal_time_domain();                                // this gets the optimal time domain which has the minimal value on its max deviation.
 	void               tic(const std::string &input_tag = "Untagged");           // this marks the timestamp begin and partially updates the delta_timestamps
