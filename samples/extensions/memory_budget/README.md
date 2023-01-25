@@ -19,8 +19,8 @@
 
 # Memory Budget: Extended features
 
-This sample demonstrates how to incorporate Vulkan memory budget extension. Memory budget extension helps users to
-sample the memory budget consumption on each heap of from the ```physical device```, and is able to tell
+This sample demonstrates how to incorporate the Vulkan memory budget extension. Memory budget extension helps users to
+sample the memory budget consumption on each heap from the ```physical device```, and is able to tell
 the ```property flag``` for each heap. Which is a proper debug tool to visualize the memory consumption in run-time.
 
 ## Memory budget extension
@@ -33,7 +33,7 @@ add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 add_device_extension(VK_EXT_MEMORY_BUDGET_EXTENSION_NAME);
 ````
 
-Memory properties related structure instances were defined and initialized in the header of ```MemoryBudget``` class,
+Memory properties related structure instances were defined and initialized in the header of the ```MemoryBudget``` class,
 listed as follows:
 
 ````cpp
@@ -68,6 +68,8 @@ function ```initialize_device_memory_properties()```.
 
 ## UI Overlay: Memory properties
 
+![Sample](./images/memory_budget_ui_overlay.PNG)
+
 In application’s UI overlay, total memory usage and total memory budget will be displayed. In addition, by pressing down
 the arrow next to the “Memory Heap Details” tab, it expands a list of all memory usages and budgets from the heap count.
 Where all memory properties were converted and displayed in proper units (e.g.,```kilobytes```, ```megabytes```, etc.,).
@@ -77,9 +79,9 @@ Where:
 void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	converted_memory = update_converted_memory(device_memory_total_usage);
-	drawer.text("Total Memory Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 	converted_memory = update_converted_memory(device_memory_total_budget);
-	drawer.text("Total Memory Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+	drawer.text("Total Memory Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 	if (drawer.header("Memory Heap Details"))
 	{
@@ -89,10 +91,10 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 			if (drawer.header(header.c_str()))
 			{
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapUsage[i]);
-				drawer.text("Usage: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Usage: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				converted_memory = update_converted_memory(physical_device_memory_budget_properties.heapBudget[i]);
-				drawer.text("Budget: %llu %s", converted_memory.data, converted_memory.units.c_str());
+				drawer.text("Budget: %.2f %s", converted_memory.data, converted_memory.units.c_str());
 
 				drawer.text("Heap Flag: %s", read_memoryHeap_flags(device_memory_properties.memoryProperties.memoryHeaps[i].flags).c_str());
 			}

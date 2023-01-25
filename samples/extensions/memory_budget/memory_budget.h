@@ -37,13 +37,13 @@ class MemoryBudget : public ApiVulkanSample
 
 	struct ConvertedMemory
 	{
-		uint64_t    data;
+		float       data;
 		std::string units;
 	} converted_memory{};
 
-	const uint64_t kilobyte_coefficient = 1024;
-	const uint64_t megabyte_coefficient = kilobyte_coefficient * 1024;
-	const uint64_t gigabyte_coefficient = megabyte_coefficient * 1024;
+	const float kilobyte_coefficient = 1024.0f;
+	const float megabyte_coefficient = kilobyte_coefficient * 1024.0f;
+	const float gigabyte_coefficient = megabyte_coefficient * 1024.0f;
 
 	uint32_t     device_memory_heap_count   = 0;
 	VkDeviceSize device_memory_total_usage  = 0;
@@ -111,10 +111,10 @@ class MemoryBudget : public ApiVulkanSample
 
   private:
 	// memory budget extension related function
-	void                                initialize_device_memory_properties();
-	const MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory);
-	const std::string                   read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryFlag);
-	void                                update_device_memory_properties();
+	void                          initialize_device_memory_properties();
+	MemoryBudget::ConvertedMemory update_converted_memory(uint64_t input_memory) const;
+	static std::string            read_memoryHeap_flags(VkMemoryHeapFlags inputVkMemoryFlag);
+	void                          update_device_memory_properties();
 
   public:
 	MemoryBudget();
