@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,9 @@
 
 #include <rendering/render_frame.h>
 
+#include <core/hpp_command_buffer.h>
 #include <core/hpp_queue.h>
+#include <hpp_buffer_pool.h>
 #include <rendering/hpp_render_target.h>
 
 namespace vkb
@@ -42,6 +44,12 @@ class HPPRenderFrame : private vkb::RenderFrame
 	                thread_count)
 	{}
 
+	vkb::HPPBufferAllocation allocate_buffer(vk::BufferUsageFlags usage, vk::DeviceSize size, size_t thread_index = 0)
+	{
+		vkb::BufferAllocation allocation = vkb::RenderFrame::allocate_buffer(static_cast<VkBufferUsageFlags>(usage), static_cast<VkDeviceSize>(size), thread_index);
+		return std::move(*reinterpret_cast<vkb::HPPBufferAllocation *>(&allocation));
+	}
+
 	HPPRenderTarget &get_render_target()
 	{
 		return reinterpret_cast<HPPRenderTarget &>(vkb::RenderFrame::get_render_target());
@@ -52,7 +60,7 @@ class HPPRenderFrame : private vkb::RenderFrame
 		vkb::RenderFrame::release_owned_semaphore(static_cast<VkSemaphore>(semaphore));
 	}
 
-	vkb::core::HPPCommandBuffer &request_command_buffer(const vkb::core::HPPQueue &            queue,
+	vkb::core::HPPCommandBuffer &request_command_buffer(const vkb::core::HPPQueue             &queue,
 	                                                    vkb::core::HPPCommandBuffer::ResetMode reset_mode   = vkb::core::HPPCommandBuffer::ResetMode::ResetPool,
 	                                                    vk::CommandBufferLevel                 level        = vk::CommandBufferLevel::ePrimary,
 	                                                    size_t                                 thread_index = 0)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -115,7 +115,7 @@ class BufferPool
   public:
 	BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFlags usage, VmaMemoryUsage memory_usage = VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	BufferBlock &request_buffer_block(VkDeviceSize minimum_size);
+	BufferBlock &request_buffer_block(VkDeviceSize minimum_size, bool minimal = false);
 
 	void reset();
 

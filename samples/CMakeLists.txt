@@ -114,6 +114,7 @@ set(ORDER_LIST
 	"hpp_texture_mipmap_generation"
 	
     #HPP Performance Samples
+    "hpp_pipeline_cache"
     "hpp_swapchain_images")
 
 # Orders the sample ids by the order list above

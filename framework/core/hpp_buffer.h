@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -37,6 +37,9 @@ class HPPBuffer : private vkb::core::Buffer
   public:
 	using vkb::core::Buffer::convert_and_update;
 	using vkb::core::Buffer::flush;
+	using vkb::core::Buffer::map;
+	using vkb::core::Buffer::set_debug_name;
+	using vkb::core::Buffer::unmap;
 	using vkb::core::Buffer::update;
 
 	HPPBuffer(vkb::core::HPPDevice const &device,

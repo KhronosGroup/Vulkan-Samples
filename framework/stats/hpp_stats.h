@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,8 @@
 
 #include <stats/stats.h>
 
+#include <rendering/hpp_render_context.h>
+
 namespace vkb
 {
 namespace stats
@@ -31,6 +33,10 @@ namespace stats
 class HPPStats : private vkb::Stats
 {
   public:
+	using vkb::Stats::get_data;
+	using vkb::Stats::get_graph_data;
+	using vkb::Stats::get_requested_stats;
+	using vkb::Stats::is_available;
 	using vkb::Stats::request_stats;
 	using vkb::Stats::resize;
 	using vkb::Stats::update;
