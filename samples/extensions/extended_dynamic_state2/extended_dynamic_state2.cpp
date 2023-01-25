@@ -788,14 +788,13 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 		/* Pass data for the current node via push commands */
 		auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(scene_node[i].sub_mesh->get_material());
 		push_const_block.model_matrix = scene_node[i].node->get_transform().get_world_matrix();
-		if (i != gui_settings.selected_obj ||
-		    gui_settings.selection_active == false)
+		if (gui_settings.selection_active && i == gui_settings.selected_obj)
 		{
-			push_const_block.color = node_material->base_color_factor;
+			push_const_block.color = get_changed_alpha(node_material);
 		}
 		else
 		{
-			push_const_block.color = get_changed_alpha(node_material);
+			push_const_block.color = node_material->base_color_factor;
 		}
 		vkCmdPushConstants(command_buffer, pipeline_layouts.baseline, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
 
