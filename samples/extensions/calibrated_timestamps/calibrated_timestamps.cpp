@@ -66,7 +66,6 @@ CalibratedTimestamps ::~CalibratedTimestamps()
 
 void CalibratedTimestamps ::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
@@ -75,6 +74,11 @@ void CalibratedTimestamps ::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void CalibratedTimestamps ::build_command_buffers()
 {
+	// Reset the delta timestamps vector
+	delta_timestamps.clear();
+
+	tic("Creating Command Buffer");
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	std::array<VkClearValue, 2> clear_values_0{};
@@ -88,6 +92,9 @@ void CalibratedTimestamps ::build_command_buffers()
 	render_pass_begin_info_0.clearValueCount       = 2;
 	render_pass_begin_info_0.pClearValues          = clear_values_0.data();
 
+	toc("Creating Command Buffer");
+
+	tic("Draw Command Buffer");
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
@@ -118,7 +125,6 @@ void CalibratedTimestamps ::build_command_buffers()
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
 			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-			// Skybox
 			if (display_skybox)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
@@ -127,7 +133,6 @@ void CalibratedTimestamps ::build_command_buffers()
 				draw_model(models.skybox, draw_cmd_buffers[i]);
 			}
 
-			// 3D object
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
 
@@ -136,16 +141,12 @@ void CalibratedTimestamps ::build_command_buffers()
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
-		/*
-		    Second render pass: First bloom pass
-		*/
 		if (bloom)
 		{
 			std::array<VkClearValue, 2> clear_values{};
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 			clear_values[1].depthStencil = {0.0f, 0};
 
-			// Bloom filter
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
 			render_pass_begin_info.renderPass               = filter_pass.render_pass;
@@ -170,19 +171,11 @@ void CalibratedTimestamps ::build_command_buffers()
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
-		/*
-		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
-		*/
-
-		/*
-		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
-		*/
 		{
 			std::array<VkClearValue, 2> clear_values{};
 			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 			clear_values[1].depthStencil = {0.0f, 0};
 
-			// Final composition
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = framebuffers[i];
 			render_pass_begin_info.renderPass               = render_pass;
@@ -201,11 +194,9 @@ void CalibratedTimestamps ::build_command_buffers()
 
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
 
-			// Scene
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
-			// Bloom
 			if (bloom)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[0]);
@@ -219,6 +210,8 @@ void CalibratedTimestamps ::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
+
+	toc("Draw Command Buffer");
 }
 
 void CalibratedTimestamps ::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
@@ -234,7 +227,7 @@ void CalibratedTimestamps ::create_attachment(VkFormat format, VkImageUsageFlagB
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
 		aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT
+
 		if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
 		{
 			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
@@ -284,19 +277,12 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		offscreen.width  = static_cast<int>(width);
 		offscreen.height = static_cast<int>(height);
 
-		// Color attachments
-
-		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
-		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
-		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
 
-		// Init attachment properties
 		for (uint32_t i = 0; i < 3; ++i)
 		{
 			attachment_descriptions[i].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -316,7 +302,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 			}
 		}
 
-		// Formats
 		attachment_descriptions[0].format = offscreen.color[0].format;
 		attachment_descriptions[1].format = offscreen.color[1].format;
 		attachment_descriptions[2].format = offscreen.depth.format;
@@ -335,7 +320,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		subpass.colorAttachmentCount    = 2;
 		subpass.pDepthStencilAttachment = &depth_reference;
 
-		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -381,7 +365,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
 
-		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -397,20 +380,14 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &offscreen.sampler));
 	}
 
-	// Bloom separable filter pass
 	{
 		filter_pass.width  = static_cast<int>(width);
 		filter_pass.height = static_cast<int>(height);
 
-		// Color attachments
-
-		// Two floating point color buffers
 		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		// Set up separate render-pass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
 
-		// Init attachment properties
 		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
 		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -428,7 +405,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		subpass.pColorAttachments    = color_references.data();
 		subpass.colorAttachmentCount = 1;
 
-		// Use subpass dependencies for attachment layout transitions
 		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -472,7 +448,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
-		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -491,7 +466,6 @@ void CalibratedTimestamps ::prepare_offscreen_buffer()
 
 void CalibratedTimestamps ::load_assets()
 {
-	// Models
 	models.skybox                      = load_model("scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
@@ -501,7 +475,6 @@ void CalibratedTimestamps ::load_assets()
 		models.objects.emplace_back(std::move(object));
 	}
 
-	// Transforms
 	auto geosphere_matrix = glm::mat4(1.0f);
 	auto teapot_matrix    = glm::mat4(1.0f);
 	teapot_matrix         = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
@@ -511,7 +484,6 @@ void CalibratedTimestamps ::load_assets()
 	models.transforms.push_back(teapot_matrix);
 	models.transforms.push_back(torus_matrix);
 
-	// Load HDR cube map
 	textures.environment_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
@@ -546,7 +518,6 @@ void CalibratedTimestamps ::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
 
-	// Bloom filter
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
@@ -558,7 +529,6 @@ void CalibratedTimestamps ::setup_descriptor_set_layout()
 	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.bloom_filter, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.bloom_filter));
 
-	// G-Buffer composition
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
@@ -575,7 +545,6 @@ void CalibratedTimestamps ::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
-	// 3D object descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
 
 	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
@@ -588,7 +557,6 @@ void CalibratedTimestamps ::setup_descriptor_sets()
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Sky box descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
 
 	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
@@ -601,7 +569,6 @@ void CalibratedTimestamps ::setup_descriptor_sets()
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Bloom filter
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.bloom_filter, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.bloom_filter));
 
@@ -616,7 +583,6 @@ void CalibratedTimestamps ::setup_descriptor_sets()
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Composition descriptor set
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.composition));
 
@@ -642,7 +608,6 @@ void CalibratedTimestamps ::prepare_pipelines()
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
@@ -674,13 +639,9 @@ void CalibratedTimestamps ::prepare_pipelines()
 	VkSpecializationInfo                    specialization_info;
 	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 
-	// Full screen pipelines
-
-	// Empty vertex input state, full screen triangles are generated by the vertex shader
 	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
-	// Final fullscreen composition pass pipeline
 	shader_stages[0]                  = load_shader("hdr/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                  = load_shader("hdr/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
@@ -690,7 +651,6 @@ void CalibratedTimestamps ::prepare_pipelines()
 	color_blend_state.pAttachments    = blend_attachment_states.data();
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
-	// Bloom pass
 	shader_stages[0]                           = load_shader("hdr/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                           = load_shader("hdr/bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
@@ -703,7 +663,6 @@ void CalibratedTimestamps ::prepare_pipelines()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
 
-	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t dir                         = 1;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(dir), &dir);
@@ -711,25 +670,19 @@ void CalibratedTimestamps ::prepare_pipelines()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[0]));
 
-	// Second blur pass (into separate framebuffer)
 	pipeline_create_info.renderPass = filter_pass.render_pass;
 	dir                             = 0;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[1]));
 
-	// Object rendering pipelines
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
-	// Vertex bindings an attributes for model rendering
-	// Binding description
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 
-	// Attribute descriptions
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                       // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3)        // Normal
-	};
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3)};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
@@ -739,7 +692,6 @@ void CalibratedTimestamps ::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	// Skybox pipeline (background cube)
 	blend_attachment_state.blendEnable = VK_FALSE;
 	pipeline_create_info.layout        = pipeline_layouts.models;
 	pipeline_create_info.renderPass    = offscreen.render_pass;
@@ -749,7 +701,6 @@ void CalibratedTimestamps ::prepare_pipelines()
 	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("hdr/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t shadertype                  = 0;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
@@ -758,30 +709,18 @@ void CalibratedTimestamps ::prepare_pipelines()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skybox));
 
-	// Object rendering pipeline
 	shadertype = 1;
 
-	// Enable depth test and write
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
-	// Flip cull mode
-	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
+	rasterization_state.cullMode         = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
 }
 
 void CalibratedTimestamps ::prepare_uniform_buffers()
 {
-	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                               sizeof(ubo_vs),
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             sizeof(ubo_params),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.params   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 	uniform_buffers.params->convert_and_update(ubo_params);
@@ -814,10 +753,10 @@ bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-
-	// Note: Using Reserved depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
+	// Get the optimal time domain as soon as possible
+	get_optimal_time_domain();
 	load_assets();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
@@ -826,6 +765,7 @@ bool CalibratedTimestamps ::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_sets();
 	build_command_buffers();
+
 	prepared = true;
 	return true;
 }
@@ -874,7 +814,6 @@ void CalibratedTimestamps::update_time_domains()
 	}
 	// Time domain is successfully updated:
 	isTimeDomainUpdated = (result == VK_SUCCESS);
-
 }
 
 void CalibratedTimestamps::update_timestamps()
@@ -912,6 +851,82 @@ void CalibratedTimestamps::update_timestamps()
 	}
 }
 
+void CalibratedTimestamps::init_timeDomains_and_timestamps()
+{
+	isTimeDomainUpdated = false;
+	isTimestampUpdated  = false;
+
+	time_domain_count = 0;
+
+	time_domains.clear();
+	timestamps.clear();
+	max_deviations.clear();
+}
+
+void CalibratedTimestamps::get_optimal_time_domain()
+{
+	init_timeDomains_and_timestamps();
+	update_time_domains();
+	update_timestamps();
+
+	isOptimalTimeDomain = false;
+
+	if (isTimeDomainUpdated && isTimestampUpdated)
+	{
+		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
+
+		auto iterator_optimal = std::find(max_deviations.begin(), max_deviations.end(), optimal_maxDeviation);
+
+		if (iterator_optimal != max_deviations.end())
+		{
+			int optimal_index = static_cast<int>(iterator_optimal - max_deviations.begin());
+
+			optimal_time_domain.index         = optimal_index;
+			optimal_time_domain.timeDomainEXT = time_domains[optimal_index];
+
+			isOptimalTimeDomain = true;
+		}
+	}
+}
+
+void CalibratedTimestamps::tic(const std::string &input_tag)
+{
+	// Initialize, then update time domains and timestamps
+	init_timeDomains_and_timestamps();
+	update_time_domains();
+	update_timestamps();
+
+	// Create a local delta_timestamp to push back to the vector delta_timestamps
+	DeltaTimestamp delta_timestamp{};
+
+	// Naming the tic-toc tags and begin timestamp for this particular mark
+	if (!input_tag.empty())
+	{
+		delta_timestamp.tag = input_tag;
+	}
+	delta_timestamp.begin = timestamps[optimal_time_domain.index];
+
+	// Push back this partially filled element to the vector, which will be filled in its corresponding toc
+	delta_timestamps.push_back(delta_timestamp);
+}
+
+void CalibratedTimestamps::toc(const std::string &input_tag)
+{
+	if (delta_timestamps.empty() || (input_tag != delta_timestamps.back().tag))
+	{
+		LOGI("Tic-toc Fatal Error: toc is not tagged the same as its tic!\n")
+		return;        // exits the function here, further calculation is meaningless
+	}
+
+	// Initialize, then update time domains and timestamps
+	init_timeDomains_and_timestamps();
+	update_time_domains();
+	update_timestamps();
+
+	delta_timestamps.back().end = timestamps[optimal_time_domain.index];
+	delta_timestamps.back().get_delta();
+}
+
 void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	// Adjustment Handles:
@@ -921,10 +936,6 @@ void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			update_uniform_buffers();
 			build_command_buffers();
-		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
-		{
-			uniform_buffers.params->convert_and_update(ubo_params);
 		}
 		if (drawer.checkbox("Bloom", &bloom))
 		{
@@ -936,29 +947,16 @@ void CalibratedTimestamps ::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 	}
 
-	if(drawer.button("Single TimeStamp"))
+	if (!delta_timestamps.empty())
 	{
-		time_domain_count = 0;
-		time_domains.clear();
-		timestamps.clear();
-		max_deviations.clear();
+		float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
 
-		isTimeDomainUpdated = false;
-		isTimestampUpdated = false;
+		drawer.text("Optimal Time Domain Selected: %s", read_time_domain(optimal_time_domain.timeDomainEXT).c_str());
+		drawer.text("timestamps period: %.0f ns", timestamp_period);
 
-		update_time_domains();
-		update_timestamps();
-	}
-
-	drawer.text("timestamps period: %.3f ns", device->get_gpu().get_properties().limits.timestampPeriod);
-
-	if ( time_domain_count > 0 )
-	{
-		for (int i = 0; i < static_cast<int>(time_domain_count); i++)
+		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("time domain: %s", read_time_domain(time_domains[i]).c_str());
-			drawer.text("timestamps: %llu", (timestamps[i]));
-			drawer.text("max deviations: %llu", (max_deviations[i]));
+			drawer.text("%s: %.0f ns", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period);
 		}
 	}
 }

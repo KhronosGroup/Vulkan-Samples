@@ -28,10 +28,33 @@ class CalibratedTimestamps : public ApiVulkanSample
   private:
 	bool                         isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
 	bool                         isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
-	uint32_t                     time_domain_count = 0;
+	bool                         isOptimalTimeDomain = false;        // this tells if the optimal time domain is found
+	bool                         isDisplay           = false;
+	uint32_t                     time_domain_count   = 0;
 	std::vector<VkTimeDomainEXT> time_domains{};          // this holds all time domains extracted from the current Instance
 	std::vector<uint64_t>        timestamps{};            // timestamps vector
 	std::vector<uint64_t>        max_deviations{};        // max deviations vector
+
+	struct
+	{
+		int             index = 0;
+		VkTimeDomainEXT timeDomainEXT{};
+	} optimal_time_domain{};
+
+	struct DeltaTimestamp
+	{
+		uint64_t    begin = 0;
+		uint64_t    end   = 0;
+		uint64_t    delta = 0;
+		std::string tag   = "Untagged";
+
+		void get_delta()
+		{
+			this->delta = this->end - this->begin;
+		}
+	};
+
+	std::vector<DeltaTimestamp> delta_timestamps{};
 
   public:
 	bool bloom          = true;
@@ -40,7 +63,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 	struct
 	{
 		Texture environment_map{};
-	} textures;
+	} textures{};
 
 	struct Models
 	{
@@ -140,6 +163,10 @@ class CalibratedTimestamps : public ApiVulkanSample
 	static std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);        // this returns a human-readable info for what time domain corresponds to what
 	void               update_time_domains();                                    // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
 	void               update_timestamps();                                      // creates local timestamps information vector, update timestamps vector and deviation vector
+	void               init_timeDomains_and_timestamps();                        // this initializes all time domain and timestamps related variables, vectors, and booleans
+	void               get_optimal_time_domain();                                // this gets the optimal time domain which has the minimal value on its max deviation.
+	void               tic(const std::string &input_tag = "Untagged");           // this marks the timestamp begin and partially updates the delta_timestamps
+	void               toc(const std::string &input_tag = "Untagged");           // this marks the timestamp ends and updates the delta_timestamps
 
   public:
 	CalibratedTimestamps();
