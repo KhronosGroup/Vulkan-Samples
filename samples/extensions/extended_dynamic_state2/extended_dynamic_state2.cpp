@@ -677,9 +677,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Models"))
 	{
 		const char *col_names = {"Name"};
-		if (drawer.checkbox("Selection effect active", &gui_settings.selection_active))
-		{
-		}
+		drawer.checkbox("Selection effect active", &gui_settings.selection_active);
 		ImGui::Columns(2, "Name");
 		ImGui::SetColumnWidth(0, 150);
 		int                       obj_cnt = scene_nodes.at(SCENE_BASELINE_OBJ_INDEX).size();
@@ -691,12 +689,8 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		ImGui::ListBox("", &gui_settings.selected_obj, obj_names.data(), obj_cnt);
 		ImGui::NextColumn();
-		if (drawer.checkbox("Depth Bias Enable", &gui_settings.objects[gui_settings.selected_obj].depth_bias))
-		{
-		}
-		if (drawer.checkbox("Rasterizer Discard", &gui_settings.objects[gui_settings.selected_obj].rasterizer_discard))
-		{
-		}
+		drawer.checkbox("Depth Bias Enable", &gui_settings.objects[gui_settings.selected_obj].depth_bias);
+		drawer.checkbox("Rasterizer Discard", &gui_settings.objects[gui_settings.selected_obj].rasterizer_discard);
 	}
 }
 
