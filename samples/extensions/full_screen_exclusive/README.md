@@ -179,7 +179,7 @@ Rest of the ```swapchain create info``` are configured normally.
 This is an optional section.
 
 This section introduces how to manually configure the ```application window``` modes, using ```Windows``` commands. In
-this perticular sample, a private function ```update_application_window()``` is introduced, which, it configures
+this particular sample, a private function ```update_application_window()``` is introduced, which, it configures
 the ```application window``` modes from ```windowed``` to ```fullscreen```, vice versa, Where:
 
 ```cpp
