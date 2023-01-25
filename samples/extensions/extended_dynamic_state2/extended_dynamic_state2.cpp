@@ -163,12 +163,12 @@ void ExtendedDynamicState2::update_uniform_buffers()
 {
 	/* Baseline uniform buffer */
 	ubo_baseline.projection = camera.matrices.perspective;
-	ubo_baseline.view       = camera.matrices.view ;
+	ubo_baseline.view       = camera.matrices.view;
 	uniform_buffers.baseline->convert_and_update(ubo_baseline);
 
 	/* Tessellation uniform buffer */
 	ubo_tess.projection          = camera.matrices.perspective;
-	ubo_tess.modelview           = camera.matrices.view ;
+	ubo_tess.modelview           = camera.matrices.view;
 	ubo_tess.tessellation_factor = gui_settings.tess_factor;
 
 	if (!gui_settings.tessellation)
@@ -384,6 +384,9 @@ void ExtendedDynamicState2::build_command_buffers()
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
+	constexpr uint32_t patch_control_points_triangle = 3; /* Geosphere model is based on triangle patches */
+	constexpr uint32_t patch_control_points_quads    = 4; /* Plane is based on quads */
+
 	int i = -1; /* Required for accessing element in framebuffers vector */
 	for (auto &draw_cmd_buffer : draw_cmd_buffers)
 	{
@@ -431,7 +434,7 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Change topology to patch list and setting patch control points value */
 		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_PATCH_LIST);
-		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, gui_settings.patch_control_points);
+		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, patch_control_points_triangle);
 
 		/* Drawing scene with objects using tessellation feature */
 		draw_from_scene(draw_cmd_buffer, &scene_nodes, SCENE_TESSELLATION_OBJ_INDEX);
@@ -664,18 +667,11 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			update_uniform_buffers();
 		}
-		if (drawer.input_float("Tessellation Factor", &gui_settings.tess_factor, 1.0f, 1))
+
+		/* Maximum tessellation factor is set to 4.0 */
+		if (drawer.slider_float("Tessellation Factor", &gui_settings.tess_factor, 1.0f, 4.0f))
 		{
 			update_uniform_buffers();
-		}
-
-		if (drawer.input_float("Patch Control Points", &gui_settings.patch_control_points_float, 1.0f, 1))
-		{
-			if (gui_settings.patch_control_points_float < 1)
-			{
-				gui_settings.patch_control_points_float = 1;
-			}
-			gui_settings.patch_control_points = static_cast<int>(roundf(gui_settings.patch_control_points_float));
 		}
 	}
 	if (drawer.header("Models"))
@@ -689,7 +685,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 		int                       obj_cnt = scene_nodes.at(SCENE_BASELINE_OBJ_INDEX).size();
 		std::vector<const char *> obj_names;
 
-		for (int i = 0; i < obj_cnt; i++)
+		for (int i = 0; i < obj_cnt; ++i)
 		{
 			obj_names.push_back((scene_nodes.at(SCENE_BASELINE_OBJ_INDEX).at(i).name).c_str());
 		}
@@ -810,7 +806,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 	{
 		const auto &vertex_buffer_pos    = node[i].sub_mesh->vertex_buffers.at("position");
 		const auto &vertex_buffer_normal = node[i].sub_mesh->vertex_buffers.at("normal");
-		auto       &index_buffer         = node[i].sub_mesh->index_buffer;
+		auto &      index_buffer         = node[i].sub_mesh->index_buffer;
 
 		if (scene_index == SCENE_BASELINE_OBJ_INDEX)
 		{

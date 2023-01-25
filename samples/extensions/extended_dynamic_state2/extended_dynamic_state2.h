@@ -32,9 +32,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	struct
 	{
 		bool                           tessellation = false;
-		float                          tess_factor  = 1.0;
-		float                          patch_control_points_float{3.0f};
-		int                            patch_control_points{3};
+		float                          tess_factor  = 1.0f;
 		std::vector<ModelDynamicParam> objects;
 		int                            selected_obj     = 0;
 		bool                           selection_active = true;
