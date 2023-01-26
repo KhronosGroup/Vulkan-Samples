@@ -674,19 +674,15 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 	if (drawer.header("Models"))
 	{
-		const char *col_names = {"Name"};
 		drawer.checkbox("Selection effect active", &gui_settings.selection_active);
-		ImGui::Columns(2, "Name");
-		ImGui::SetColumnWidth(0, 150);
-		int                       obj_cnt = scene_elements_baseline.size();
-		std::vector<const char *> obj_names;
+		int                      obj_cnt = scene_elements_baseline.size();
+		std::vector<std::string> obj_names;
 
 		for (int i = 0; i < obj_cnt; ++i)
 		{
 			obj_names.push_back((scene_elements_baseline.at(i).name).c_str());
 		}
-		ImGui::ListBox("", &gui_settings.selected_obj, obj_names.data(), obj_cnt);
-		ImGui::NextColumn();
+		drawer.combo_box("Name", &gui_settings.selected_obj, obj_names);
 		drawer.checkbox("Depth Bias Enable", &gui_settings.objects[gui_settings.selected_obj].depth_bias);
 		drawer.checkbox("Rasterizer Discard", &gui_settings.objects[gui_settings.selected_obj].rasterizer_discard);
 	}
