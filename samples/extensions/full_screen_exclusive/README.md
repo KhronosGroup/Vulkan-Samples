@@ -81,6 +81,9 @@ If application is running on a ```Windows``` platform, it can be detected by usi
 #endif
 ```
 
+If the target application might run on platforms other than ```Windows```, be certain to check for ```Windows``` in the
+build to ensure those other platforms still compile.
+
 In addition, device extensions are added in addition to the required extensions in the function scope
 of ```init_device()```, where:
 
