@@ -869,7 +869,7 @@ void CalibratedTimestamps::get_optimal_time_domain()
 
 	isOptimalTimeDomain = false;
 
-	if (isTimeDomainUpdated && isTimestampUpdated)
+	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
 	{
 		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
 
