@@ -39,7 +39,7 @@ RUN apt-get update && apt-get install -y \
         flex \
         libglu1-mesa-dev \
         xorg-dev \
-        adb \..
+        adb \
         software-properties-common
 
 RUN pip3 --no-cache-dir install \
