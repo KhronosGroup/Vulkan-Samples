@@ -63,7 +63,7 @@ It is commonly confusing for new users attempt to understand the concepts of ```
 And this section helps to provide an overview of their concepts and applications in practise.
 
 One shall notice that, a ```timestamp``` **DOES NOT** return an actual time reading, on the contrary, a ```timestamp```
-indicates "how many units of ```timestamp periods``` have passed" with respect to a **fixed** reference point on the
+indicates "how many units of ```timestamp periods``` have passed" with respect to a **FIXED** reference point on the
 timeline. Where, the ```timestamp period``` is measured in realtime, and usually is in unit of ```nanoseconds```. One
 shall also notice that, such "fixed reference point" varies with ```time domain``` and ```host```, therefore, it is not
 very practical to consider such data in our concern. However, since that "reference point" is fixed, one may take
@@ -242,7 +242,7 @@ void CalibratedTimestamps::get_optimal_time_domain()
 
 	isOptimalTimeDomain = false;
 
-	if (isTimeDomainUpdated && isTimestampUpdated)
+	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
 	{
 		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
 
