@@ -63,7 +63,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
-        "full_screen_exclusive"
+    "full_screen_exclusive"
     "graphics_pipeline_library"
     "push_descriptors"
     "ray_queries"
