@@ -35,6 +35,8 @@ TimestampQueries::~TimestampQueries()
 {
 	if (device)
 	{
+		vkDestroyQueryPool(get_device().get_handle(), query_pool_timestamps, nullptr);
+
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);

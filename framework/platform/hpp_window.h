@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,9 @@ class HPPWindow : private vkb::Window
 {
   public:
 	using vkb::Window::create_surface;
+	using vkb::Window::get_content_scale_factor;
 	using vkb::Window::get_display_present_info;
+	using vkb::Window::get_dpi_factor;
 	using vkb::Window::get_extent;
 	using vkb::Window::get_window_mode;
 
