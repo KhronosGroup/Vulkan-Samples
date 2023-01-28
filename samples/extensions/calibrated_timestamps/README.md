@@ -55,7 +55,7 @@ activate or deactivate the ```bloom``` effects, and turn on or off the ```skybox
 ```command buffer``` building process, where, ```calibrated timestamps``` extension functions were introduced, thus, to
 help users to profile the processing time per configuration, in realtime.
 
-## * Time domain, timestamp, timestamp period, and max deviation
+##  * Time domain, timestamp, timestamp period, and max deviation
 
 This is an optional section.
 
@@ -224,7 +224,7 @@ std::vector<uint64_t>        max_deviations{};        // max deviations vector
 Meanwhile, a ```boolean``` variable ```isTimestampUpdated``` declared in the header will be updated to report its
 success.
 
-##     * Optimal time domain
+##      * Optimal time domain
 
 This is an optional section.
 
@@ -240,8 +240,6 @@ void CalibratedTimestamps::get_optimal_time_domain()
 	update_time_domains();
 	update_timestamps();
 
-	isOptimalTimeDomain = false;
-
 	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
 	{
 		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
@@ -254,8 +252,6 @@ void CalibratedTimestamps::get_optimal_time_domain()
 
 			optimal_time_domain.index         = optimal_index;
 			optimal_time_domain.timeDomainEXT = time_domains[optimal_index];
-
-			isOptimalTimeDomain = true;
 		}
 	}
 }
