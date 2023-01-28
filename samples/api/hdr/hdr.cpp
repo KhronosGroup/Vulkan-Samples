@@ -287,6 +287,28 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 // Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void HDR::prepare_offscreen_buffer()
 {
+	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
+	VkFormat color_format{VK_FORMAT_UNDEFINED};
+
+	const std::vector<VkFormat> float_format_priority_list = {
+	    VK_FORMAT_R32G32B32A32_SFLOAT,
+	    VK_FORMAT_R16G16B16A16_SFLOAT};
+
+	for (auto &format : float_format_priority_list)
+	{
+		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		{
+			color_format = format;
+			break;
+		}
+	}
+
+	if (color_format == VK_FORMAT_UNDEFINED)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
+
 	{
 		offscreen.width  = width;
 		offscreen.height = height;
@@ -295,8 +317,8 @@ void HDR::prepare_offscreen_buffer()
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
 		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
@@ -409,10 +431,8 @@ void HDR::prepare_offscreen_buffer()
 		filter_pass.width  = width;
 		filter_pass.height = height;
 
-		// Color attachments
-
-		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		// Floating point color attachment
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
 		// Set up separate renderpass with references to the colorand depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};

@@ -2,9 +2,9 @@ name: "External Project Check"
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   external_project:
@@ -14,7 +14,7 @@ jobs:
         platform: [windows, ubuntu, macos]
     runs-on: "${{ matrix.platform }}-latest"
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: "recursive"
 

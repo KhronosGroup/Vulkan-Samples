@@ -2,8 +2,12 @@ plugins {
 	id 'com.android.application'
 }
 
+ext.vvl_version='1.3.231.1'
+apply from: "./download_vvl.gradle"
+
 android {
 	compileSdk 32
+	ndkVersion "25.1.8937393"
 
 	defaultConfig {
 		applicationId "com.khronos.vulkan_samples"
@@ -49,13 +53,14 @@ android {
 			@JAVA_SRC_DIRS@
 			@JNI_LIBS_SRC_DIRS@
 			@MANIFEST_FILE@
-
-			jniLibs.srcDirs += ["$ndkDirectory/sources/third_party/vulkan/src/build-android/jniLibs"]
 		}
 	}
 
 	externalNativeBuild {
-		@CMAKE_PATH@
+		cmake {
+			version "3.22.1"
+			@CMAKE_PATH@
+		}
 	}
 
 	lintOptions {
@@ -73,3 +78,4 @@ dependencies {
 	implementation 'com.google.android.material:material:1.4.0'
 	implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
 }
+

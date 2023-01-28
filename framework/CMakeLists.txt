@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -39,6 +39,7 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
+    hpp_buffer_pool.h
     hpp_fence_pool.h
     hpp_glsl_compiler.h
     hpp_gltf_loader.h
@@ -63,6 +64,7 @@ set(FRAMEWORK_FILES
     api_vulkan_sample.cpp
     timer.cpp
     camera.cpp
+    hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
 	hpp_vulkan_sample.cpp)
 
@@ -106,6 +108,7 @@ set(RENDERING_FILES
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
+    rendering/hpp_pipeline_state.h
     rendering/hpp_render_context.h
     rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
@@ -249,7 +252,9 @@ set(CORE_FILES
     core/hpp_image_view.h
     core/hpp_instance.h
     core/hpp_physical_device.h
+    core/hpp_pipeline_layout.h
     core/hpp_queue.h
+    core/hpp_sampler.h
     core/hpp_swapchain.h
     core/hpp_vulkan_resource.h
     core/vulkan_resource.h
@@ -284,6 +289,8 @@ set(CORE_FILES
     core/vulkan_resource.cpp
     core/hpp_command_pool.cpp
     core/hpp_device.cpp
+    core/hpp_image.cpp
+    core/hpp_image_view.cpp
     core/hpp_instance.cpp
     core/hpp_physical_device.cpp
     core/hpp_queue.cpp
