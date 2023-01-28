@@ -867,8 +867,6 @@ void CalibratedTimestamps::get_optimal_time_domain()
 	update_time_domains();
 	update_timestamps();
 
-	isOptimalTimeDomain = false;
-
 	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
 	{
 		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
@@ -881,8 +879,6 @@ void CalibratedTimestamps::get_optimal_time_domain()
 
 			optimal_time_domain.index         = optimal_index;
 			optimal_time_domain.timeDomainEXT = time_domains[optimal_index];
-
-			isOptimalTimeDomain = true;
 		}
 	}
 }
