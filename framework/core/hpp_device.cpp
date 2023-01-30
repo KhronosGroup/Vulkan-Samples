@@ -18,6 +18,7 @@
 #include <core/hpp_device.h>
 
 #include <common/hpp_error.h>
+#include <core/hpp_buffer.h>
 #include <core/hpp_command_pool.h>
 
 namespace vkb
