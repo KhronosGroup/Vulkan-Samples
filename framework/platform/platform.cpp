@@ -184,10 +184,9 @@ void Platform::update()
 
 std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
 {
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain atleast one preffered surface format");
+	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
 
-	auto extent  = window->get_extent();
-	auto context = std::make_unique<RenderContext>(device, surface, extent.width, extent.height);
+	auto context = std::make_unique<RenderContext>(device, surface, *window);
 
 	context->set_surface_format_priority(surface_format_priority);
 
@@ -410,7 +409,7 @@ void Platform::input_event(const InputEvent &input_event)
 void Platform::resize(uint32_t width, uint32_t height)
 {
 	auto extent = Window::Extent{std::max<uint32_t>(width, MIN_WINDOW_WIDTH), std::max<uint32_t>(height, MIN_WINDOW_HEIGHT)};
-	if (window)
+	if ((window) && (width > 0) && (height > 0))
 	{
 		auto actual_extent = window->resize(extent);
 

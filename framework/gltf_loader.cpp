@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2019-2022, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -318,6 +318,19 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 }
+
+static inline bool texture_needs_srgb_colorspace(const std::string &name)
+{
+	// The gltf spec states that the base and emissive textures MUST be encoded with the sRGB
+	// transfer function. All other texture types are linear.
+	if (name == "baseColorTexture" || name == "emissiveTexture")
+		return true;
+
+	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
+	assert(name == "metallicRoughnessTexture" || name == "normalTexture" || name == "occlusionTexture");
+	return false;
+}
+
 }        // namespace
 
 std::unordered_map<std::string, bool> GLTFLoader::supported_extensions = {
@@ -488,46 +501,59 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	}
 
 	std::vector<std::unique_ptr<sg::Image>> image_components;
-	for (auto &fut : image_component_futures)
+
+	// Upload images to GPU. We do this in batches of 64MB of data to avoid needing
+	// double the amount of memory (all the images and all the corresponding buffers).
+	// This helps keep memory footprint lower which is helpful on smaller devices.
+	size_t image_index = 0;
+	while (image_index < image_count)
 	{
-		image_components.push_back(fut.get());
+		std::vector<core::Buffer> transient_buffers;
+
+		auto &command_buffer = device.request_command_buffer();
+
+		command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
+
+		size_t batch_size = 0;
+
+		// Deal with 64MB of image data at a time to keep memory footprint low
+		while (image_index < image_count && batch_size < 64 * 1024 * 1024)
+		{
+			// Wait for this image to complete loading, then stage for upload
+			image_components.push_back(image_component_futures.at(image_index).get());
+
+			auto &image = image_components.at(image_index);
+
+			core::Buffer stage_buffer{device,
+			                          image->get_data().size(),
+			                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+			                          VMA_MEMORY_USAGE_CPU_ONLY};
+
+			batch_size += image->get_data().size();
+
+			stage_buffer.update(image->get_data());
+
+			upload_image_to_gpu(command_buffer, stage_buffer, *image);
+
+			transient_buffers.push_back(std::move(stage_buffer));
+
+			image_index++;
+		}
+
+		command_buffer.end();
+
+		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+
+		queue.submit(command_buffer, device.request_fence());
+
+		device.get_fence_pool().wait();
+		device.get_fence_pool().reset();
+		device.get_command_pool().reset_pool();
+		device.wait_idle();
+
+		// Remove the staging buffers for the batch we just processed
+		transient_buffers.clear();
 	}
-
-	// Upload images to GPU
-	std::vector<core::Buffer> transient_buffers;
-
-	auto &command_buffer = device.request_command_buffer();
-
-	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT, 0);
-
-	for (size_t image_index = 0; image_index < image_count; image_index++)
-	{
-		auto &image = image_components.at(image_index);
-
-		core::Buffer stage_buffer{device,
-		                          image->get_data().size(),
-		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		                          VMA_MEMORY_USAGE_CPU_ONLY};
-
-		stage_buffer.update(image->get_data());
-
-		upload_image_to_gpu(command_buffer, stage_buffer, *image);
-
-		transient_buffers.push_back(std::move(stage_buffer));
-	}
-
-	command_buffer.end();
-
-	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-
-	queue.submit(command_buffer, device.request_fence());
-
-	device.get_fence_pool().wait();
-	device.get_fence_pool().reset();
-	device.get_command_pool().reset_pool();
-	device.wait_idle();
-
-	transient_buffers.clear();
 
 	scene.set_components(std::move(image_components));
 
@@ -583,7 +609,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -593,7 +624,12 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 			{
 				std::string tex_name = to_snake_case(gltf_value.first);
 
-				material->textures[tex_name] = textures.at(gltf_value.second.TextureIndex());
+				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
+
+				if (texture_needs_srgb_colorspace(gltf_value.first))
+					tex->get_image()->coerce_format_to_srgb();
+
+				material->textures[tex_name] = tex;
 			}
 		}
 
@@ -705,8 +741,6 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 	device.get_fence_pool().wait();
 	device.get_fence_pool().reset();
 	device.get_command_pool().reset_pool();
-
-	transient_buffers.clear();
 
 	scene.add_component(std::move(default_material));
 
@@ -1257,7 +1291,7 @@ std::unique_ptr<sg::Image> GLTFLoader::parse_image(tinygltf::Image &gltf_image) 
 	{
 		// Load image from uri
 		auto image_uri = model_path + "/" + gltf_image.uri;
-		image          = sg::Image::load(gltf_image.name, image_uri);
+		image          = sg::Image::load(gltf_image.name, image_uri, vkb::sg::Image::Unknown);
 	}
 
 	// Check whether the format is supported by the GPU

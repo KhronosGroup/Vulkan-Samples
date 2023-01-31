@@ -158,9 +158,9 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 
 void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
-	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
+	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
@@ -448,19 +448,13 @@ void HPPApiVulkanSample::prepare_frame()
 		vk::Result result;
 		try
 		{
-			result = get_render_context().get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready);
+			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
-		catch (const vk::SystemError &e)
+		catch (vk::OutOfDateKHRError & /*err*/)
 		{
-			if (e.code() == vk::Result::eErrorOutOfDateKHR)
-			{
-				result = vk::Result::eErrorOutOfDateKHR;
-			}
-			else
-			{
-				throw;
-			}
+			result = vk::Result::eErrorOutOfDateKHR;
 		}
+
 		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
 		// presentation (eSuboptimalKHR)
 		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
@@ -483,6 +477,14 @@ void HPPApiVulkanSample::submit_frame()
 		if (semaphores.render_complete)
 		{
 			present_info.setWaitSemaphores(semaphores.render_complete);
+		}
+
+		vk::DisplayPresentInfoKHR disp_present_info;
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    get_platform().get_window().get_display_present_info(&disp_present_info, extent.width, extent.height))
+		{
+			// Add display present info if supported and wanted
+			present_info.setPNext(&disp_present_info);
 		}
 
 		// Shows how to filter an error code from a vulkan function, which is mapped to an exception but should be handled here!
@@ -510,7 +512,7 @@ void HPPApiVulkanSample::submit_frame()
 	// DO NOT USE
 	// vkDeviceWaitIdle and vkQueueWaitIdle are extremely expensive functions, and are used here purely for demonstrating the vulkan API
 	// without having to concern ourselves with proper syncronization. These functions should NEVER be used inside the render loop like this (every frame).
-	get_device()->get_queue_by_present(0).wait_idle();
+	get_device()->get_queue_by_present(0).get_handle().waitIdle();
 }
 
 HPPApiVulkanSample::~HPPApiVulkanSample()
@@ -839,11 +841,11 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture;
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device());
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
@@ -920,11 +922,11 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file)
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device(), vk::ImageViewType::e2DArray);
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
@@ -1004,11 +1006,11 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file)
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file)
+HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	HPPTexture texture{};
 
-	texture.image = vkb::scene_graph::components::HPPImage::load(file, file);
+	texture.image = vkb::scene_graph::components::HPPImage::load(file, file, content_type);
 	texture.image->create_vk_image(*get_device(), vk::ImageViewType::eCube, vk::ImageCreateFlagBits::eCubeCompatible);
 
 	const auto &queue = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);

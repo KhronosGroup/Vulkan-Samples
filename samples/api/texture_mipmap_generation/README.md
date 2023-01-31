@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Sascha Willems
+- Copyright (c) 2019-2022, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -50,7 +50,7 @@ Using mip mapping with an anisotropic filter:
 <a href="./images/mip_mapping_anisotropic.jpg"><img src="./images/mip_mapping_anisotropic.jpg" width="512px"></a>
 
 ## Requirements
-To downsample from one mip level to the next, we will be using [```vkCmdBlitImage```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBlitImage.html). This requires the format used to support the ```BLIT_SRC_BIT``` and the  ```BLIT_DST_BIT``` flags. If these are not supported, the image format can't be used to blit and you'd either have to choose a different format or use a custom shader to generate mip levels. The example uses the ```VK_FORMAT_R8G8B8A8_UNORM``` that should support these flags on most implementations.
+To downsample from one mip level to the next, we will be using [```vkCmdBlitImage```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkCmdBlitImage.html). This requires the format used to support the ```BLIT_SRC_BIT``` and the  ```BLIT_DST_BIT``` flags. If these are not supported, the image format can't be used to blit and you'd either have to choose a different format or use a custom shader to generate mip levels. The example uses the ```VK_FORMAT_R8G8B8A8_SRGB``` that should support these flags on most implementations.
 
 ***Note:*** Use [```vkGetPhysicalDeviceFormatProperties```](https://www.khronos.org/registry/vulkan/specs/1.0/man/html/vkGetPhysicalDeviceFormatProperties.html) to check if the format supports the blit flags first. 
 
@@ -69,8 +69,7 @@ This is then passed to the image creat info:
 VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
 image_create_info.imageType         = VK_IMAGE_TYPE_2D;
 image_create_info.format            = format;
-image_create_info.mipLevels         = texture.mip_levels;;
-...
+image_create_info.mipLevels         = texture.mip_levels;
 ```
 
 Setting the number of desired mip levels is necessary as this is used for allocating the correct amount of memory required the image (```vkAllocateMemory```). 
@@ -115,6 +114,7 @@ There are two different ways of generating the mip-chain. The first one is to bl
 We simply loop over all remaining mip levels (level 0 was loaded from disk) and prepare a ```VkImageBlit``` structure for each blit from mip level i-1 to level i.
 
 First the source for our blit. This is the previous mip level. The dimensions of the blit source are specified by srcOffset:
+<!-- {% raw %} -->
 ```cpp
 for (int32_t i = 1; i < texture.mipLevels; i++)
 {
@@ -127,7 +127,9 @@ for (int32_t i = 1; i < texture.mipLevels; i++)
   image_blit.srcOffsets[1].x           = int32_t(texture.width >> (i - 1));
   image_blit.srcOffsets[1].y           = int32_t(texture.height >> (i - 1));
   image_blit.srcOffsets[1].z           = 1;
+}
 ```
+<!-- {% endraw %} -->
 Setup for the destination mip level (1), with the dimensions for the blit destination specified in dstOffsets[1]:
 ```cpp
 // Destination

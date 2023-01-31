@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(framework LANGUAGES C CXX)
 
@@ -39,7 +39,9 @@ set(FRAMEWORK_FILES
     timer.h
     camera.h
     hpp_api_vulkan_sample.h
+    hpp_buffer_pool.h
     hpp_fence_pool.h
+    hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_cache.h
@@ -62,6 +64,7 @@ set(FRAMEWORK_FILES
     api_vulkan_sample.cpp
     timer.cpp
     camera.cpp
+    hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
 	hpp_vulkan_sample.cpp)
 
@@ -105,6 +108,7 @@ set(RENDERING_FILES
     rendering/render_pipeline.h
     rendering/render_target.h
     rendering/subpass.h
+    rendering/hpp_pipeline_state.h
     rendering/hpp_render_context.h
     rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
@@ -119,13 +123,16 @@ set(RENDERING_FILES
     rendering/render_frame.cpp
     rendering/render_pipeline.cpp
     rendering/render_target.cpp
-    rendering/subpass.cpp)
+    rendering/subpass.cpp
+    rendering/hpp_render_context.cpp
+    rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
     # Header files
     rendering/subpasses/forward_subpass.h
     rendering/subpasses/lighting_subpass.h
     rendering/subpasses/geometry_subpass.h
+    rendering/subpasses/hpp_forward_subpass.h
     # Source files
     rendering/subpasses/forward_subpass.cpp
     rendering/subpasses/lighting_subpass.cpp
@@ -245,7 +252,9 @@ set(CORE_FILES
     core/hpp_image_view.h
     core/hpp_instance.h
     core/hpp_physical_device.h
+    core/hpp_pipeline_layout.h
     core/hpp_queue.h
+    core/hpp_sampler.h
     core/hpp_swapchain.h
     core/hpp_vulkan_resource.h
     core/vulkan_resource.h
@@ -278,9 +287,14 @@ set(CORE_FILES
     core/acceleration_structure.cpp
     core/shader_binding_table.cpp
     core/vulkan_resource.cpp
+    core/hpp_command_pool.cpp
     core/hpp_device.cpp
+    core/hpp_image.cpp
+    core/hpp_image_view.cpp
     core/hpp_instance.cpp
-	core/hpp_physical_device.cpp
+    core/hpp_physical_device.cpp
+    core/hpp_queue.cpp
+    core/hpp_swapchain.cpp
     core/hpp_vulkan_resource.cpp
 )
 
@@ -427,8 +441,13 @@ else()
     endif()
 endif()
 
+# mask out the min/max macros from minwindef.h
+if(MSVC)
+    add_definitions(-DNOMINMAX)
+endif()
+
 # Pre compiled headers
-vulkan_samples_pch(PROJECT_FILES pch.cpp)
+# vulkan_samples_pch(PROJECT_FILES pch.cpp)
 
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
@@ -456,6 +475,11 @@ endif()
 
 if(${VKB_VULKAN_DEBUG})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VULKAN_DEBUG)
+endif()
+
+if(${VKB_ENABLE_PORTABILITY})
+    message(STATUS "Vulkan Portability extension is enabled")
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_ENABLE_PORTABILITY)
 endif()
 
 if(${VKB_WARNINGS_AS_ERRORS})
@@ -504,3 +528,5 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
     endif()
 endif()
+
+target_precompile_headers(${PROJECT_NAME} PRIVATE <vulkan/vulkan.hpp>)

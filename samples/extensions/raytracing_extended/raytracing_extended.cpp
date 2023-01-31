@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Holochip Corporation
+/* Copyright (c) 2021-2022 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -217,7 +217,7 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 
 void RaytracingExtended::create_flame_model()
 {
-	flame_texture                   = load_texture("textures/generated_flame.ktx");
+	flame_texture                   = load_texture("textures/generated_flame.ktx", vkb::sg::Image::Color);
 	std::vector<glm::vec3> pts_     = {{0, 0, 0},
                                    {1, 0, 0},
                                    {1, 1, 0},

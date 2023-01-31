@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include <utility>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
@@ -38,7 +39,7 @@ template <typename HPPHandle, typename VKBDevice = vkb::core::HPPDevice>
 class HPPVulkanResource
 {
   public:
-	HPPVulkanResource(HPPHandle handle = nullptr, VKBDevice *device = nullptr) :
+	HPPVulkanResource(HPPHandle handle = nullptr, VKBDevice const *device = nullptr) :
 	    handle{handle}, device{device}
 	{
 	}
@@ -68,7 +69,7 @@ class HPPVulkanResource
 		return HPPHandle::NativeType;
 	}
 
-	inline VKBDevice &get_device() const
+	inline VKBDevice const &get_device() const
 	{
 		assert(device && "VKBDevice handle not set");
 		return *device;
@@ -79,19 +80,18 @@ class HPPVulkanResource
 		return handle;
 	}
 
-	inline const uint64_t get_handle_u64() const
+	inline uint64_t get_handle_u64() const
 	{
 		// See https://github.com/KhronosGroup/Vulkan-Docs/issues/368 .
 		// Dispatchable and non-dispatchable handle types are *not* necessarily binary-compatible!
 		// Non-dispatchable handles _might_ be only 32-bit long. This is because, on 32-bit machines, they might be a typedef to a 32-bit pointer.
 		using UintHandle = typename std::conditional<sizeof(HPPHandle) == sizeof(uint32_t), uint32_t, uint64_t>::type;
 
-		return static_cast<uint64_t>(reinterpret_cast<UintHandle>(handle));
+		return static_cast<uint64_t>(*reinterpret_cast<UintHandle const *>(&handle));
 	}
 
 	inline void set_handle(HPPHandle hdl)
 	{
-		assert(!handle && hdl);
 		handle = hdl;
 	}
 
@@ -103,13 +103,13 @@ class HPPVulkanResource
 	inline void set_debug_name(const std::string &name)
 	{
 		debug_name = name;
-		detail::set_debug_name(device, HPPHandle::NativeType, get_handle_u64(), debug_name.c_str());
+		detail::set_debug_name(device, HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
 	}
 
   private:
-	HPPHandle   handle;
-	VKBDevice * device;
-	std::string debug_name;
+	HPPHandle        handle;
+	VKBDevice const *device;
+	std::string      debug_name;
 };
 
 }        // namespace core

@@ -241,6 +241,28 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 // Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void HPPHDR::prepare_offscreen_buffer()
 {
+	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
+	vk::Format color_format{vk::Format::eUndefined};
+
+	const std::vector<vk::Format> float_format_priority_list = {
+	    vk::Format::eR32G32B32A32Sfloat,
+	    vk::Format::eR16G16B16A16Sfloat};
+
+	for (auto &format : float_format_priority_list)
+	{
+		const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
+		if (properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
+		{
+			color_format = format;
+			break;
+		}
+	}
+
+	if (color_format == vk::Format::eUndefined)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
+
 	{
 		offscreen.extent = extent;
 
@@ -248,8 +270,8 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
 		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		offscreen.color[0] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
-		offscreen.color[1] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
+		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		// Depth attachment
 		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
@@ -339,8 +361,8 @@ void HPPHDR::prepare_offscreen_buffer()
 
 		// Color attachments
 
-		// Two floating point color buffers
-		filter_pass.color[0] = create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment);
+		// Floating point color attachment
+		filter_pass.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
 		// Set up separate renderpass with references to the colorand depth attachments
 		vk::AttachmentDescription attachment_description;
@@ -428,7 +450,7 @@ void HPPHDR::load_assets()
 	models.transforms.push_back(torus_matrix);
 
 	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx");
+	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
 void HPPHDR::setup_descriptor_pool()

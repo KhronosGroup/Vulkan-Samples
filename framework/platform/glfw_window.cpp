@@ -297,6 +297,11 @@ GlfwWindow::GlfwWindow(Platform *platform, const Window::Properties &properties)
 			break;
 		}
 
+		case Window::Mode::FullscreenStretch: {
+			throw std::runtime_error("Cannot support stretch mode on this platform.");
+			break;
+		}
+
 		default:
 			handle = glfwCreateWindow(properties.extent.width, properties.extent.height, properties.title.c_str(), NULL, NULL);
 			break;

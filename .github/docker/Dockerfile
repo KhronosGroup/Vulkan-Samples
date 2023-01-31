@@ -84,7 +84,7 @@ ENV PATH="$PATH:$ANDROID_HOME/platform-tools:${ANDROID_SDK_TOOLS}/tools/bin:$AND
 RUN mkdir -p $ANDROID_HOME
 
 # Configure Android NDK
-ENV NDK_VERSION=r23
+ENV NDK_VERSION=r25b
 
 RUN set -x && wget -q https://dl.google.com/android/repository/android-ndk-$NDK_VERSION-linux.zip -O /tmp/android-ndk.zip \
     && unzip -qq /tmp/android-ndk.zip -d /usr/local \
@@ -104,7 +104,7 @@ RUN set -x && wget -q https://dl.google.com/android/repository/commandlinetools-
 # Install Doxygen
 ENV DOXYGEN_VERSION_MAJOR=1 \
     DOXYGEN_VERSION_MINOR=9 \
-    DOXYGEN_VERSION_PATCH=1
+    DOXYGEN_VERSION_PATCH=5
 
 ENV DOXYGEN_VERSION=$DOXYGEN_VERSION_MAJOR.$DOXYGEN_VERSION_MINOR.$DOXYGEN_VERSION_PATCH
 
@@ -114,8 +114,8 @@ RUN wget https://doxygen.nl/files/doxygen-$DOXYGEN_VERSION.linux.bin.tar.gz -O /
 
 # Install CMake
 ENV CMAKE_VERSION_MAJOR=3 \
-    CMAKE_VERSION_MINOR=17 \
-    CMAKE_VERSION_PATCH=3
+    CMAKE_VERSION_MINOR=22 \
+    CMAKE_VERSION_PATCH=1
 
 ENV CMAKE_VERSION=$CMAKE_VERSION_MAJOR.$CMAKE_VERSION_MINOR.$CMAKE_VERSION_PATCH
 

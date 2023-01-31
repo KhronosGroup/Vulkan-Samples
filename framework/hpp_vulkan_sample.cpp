@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,8 +87,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 		auto                                 debugExtensionIt              = std::find_if(available_instance_extensions.begin(),
-                                             available_instance_extensions.end(),
-                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		                                                                                  available_instance_extensions.end(),
+		                                                                                  [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -103,6 +103,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
+	if (!surface)
+		throw std::runtime_error("Failed to create window surface.");
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -120,6 +122,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	if (!headless || instance->is_enabled(VK_EXT_HEADLESS_SURFACE_EXTENSION_NAME))
 	{
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
+
+		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
 	}
 
 #ifdef VKB_VULKAN_DEBUG
@@ -127,8 +132,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
 		auto                                 debugExtensionIt            = std::find_if(available_device_extensions.begin(),
-                                             available_device_extensions.end(),
-                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		                                                                                available_device_extensions.end(),
+		                                                                                [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -167,9 +172,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 void HPPVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
 {
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eR8G8B8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                               {vk::Format::eB8G8R8A8Unorm, vk::ColorSpaceKHR::eSrgbNonlinear}};
+	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	render_context = platform.create_render_context(*device, surface, surface_priority_list);
 }
@@ -183,7 +186,7 @@ void HPPVulkanSample::update_scene(float delta_time)
 {
 	if (scene)
 	{
-		//Update scripts
+		// Update scripts
 		if (scene->has_component<sg::Script>())
 		{
 			auto scripts = scene->get_components<sg::Script>();
@@ -194,7 +197,7 @@ void HPPVulkanSample::update_scene(float delta_time)
 			}
 		}
 
-		//Update animations
+		// Update animations
 		if (scene->has_component<sg::Animation>())
 		{
 			auto animations = scene->get_components<sg::Animation>();
@@ -256,13 +259,13 @@ void HPPVulkanSample::update(float delta_time)
 	// Collect the performance data for the sample graphs
 	update_stats(delta_time);
 
-	command_buffer.get_handle().begin({vk::CommandBufferUsageFlagBits::eOneTimeSubmit});
+	command_buffer.begin(vk::CommandBufferUsageFlagBits::eOneTimeSubmit);
 	stats->begin_sampling(command_buffer);
 
 	draw(command_buffer, render_context->get_active_frame().get_render_target());
 
 	stats->end_sampling(command_buffer);
-	command_buffer.get_handle().end();
+	command_buffer.end();
 
 	render_context->submit(command_buffer);
 
@@ -432,12 +435,12 @@ std::unique_ptr<vkb::core::HPPDevice> const &HPPVulkanSample::get_device() const
 	return device;
 }
 
-Configuration const &HPPVulkanSample::get_configuration() const
+Configuration &HPPVulkanSample::get_configuration()
 {
 	return configuration;
 }
 
-void HPPVulkanSample::draw_gui() const
+void HPPVulkanSample::draw_gui()
 {
 }
 
@@ -472,7 +475,7 @@ void HPPVulkanSample::update_debug_window()
 
 void HPPVulkanSample::set_viewport_and_scissor(vkb::core::HPPCommandBuffer const &command_buffer, const vk::Extent2D &extent)
 {
-	command_buffer.get_handle().setViewport(0, {0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f});
+	command_buffer.get_handle().setViewport(0, {{0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f}});
 	command_buffer.get_handle().setScissor(0, vk::Rect2D({}, extent));
 }
 
@@ -536,7 +539,7 @@ void HPPVulkanSample::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 	// To be overridden by sample
 }
 
-sg::Scene const &HPPVulkanSample::get_scene() const
+sg::Scene &HPPVulkanSample::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	return *scene;

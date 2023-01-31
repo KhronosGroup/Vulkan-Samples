@@ -1,0 +1,77 @@
+apply plugin: 'com.android.application'
+
+/*
+ * Copyright (c) 2022, The Android Open Source Project.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ */
+
+/*
+ * Download validation layer binary release zip file from Khronos github repo
+ *    https://github.com/KhronosGroup/Vulkan-ValidationLayers/releases
+ *
+ * To use this script, add the following to your module's build.gradle:
+ *     ext.vvl_version='your-new-version'
+ *     apply from: "${PATH-TO-THIS}/download_vvl.gradle"
+ * To update to a new version:
+ *   - change the ext.vvl_version to a new version string.
+ *   - delete directory pointed by ${VVL_JNILIB_DIR}.
+ *   - sync gradle script in IDE and rebuild project.
+ *
+ * Note: binary release can also be manually downloaded and put it into
+ *       the default jniLibs directory at app/src/main/jniLibs.
+ */
+
+// get the validation layer version.
+def VVL_VER = "1.3.231.1"
+if (ext.has("vvl_version")) {
+    VVL_VER = ext.vvl_version
+}
+
+// declare local variables shared between downloading and unzipping.
+def VVL_SITE ="https://github.com/KhronosGroup/Vulkan-ValidationLayers"
+def VVL_LIB_ROOT= rootDir.absolutePath.toString() + "/layerLib"
+def VVL_JNILIB_DIR="${VVL_LIB_ROOT}/jniLibs"
+def VVL_SO_NAME = "libVkLayer_khronos_validation.so"
+
+// download the release zip file to ${VVL_LIB_ROOT}/
+task download {
+    def VVL_ZIP_NAME = "releases/download/sdk-${VVL_VER}/android-binaries-${VVL_VER}.zip"
+    mkdir "${VVL_LIB_ROOT}"
+    def f = new File("${VVL_LIB_ROOT}/android-binaries-${VVL_VER}.zip")
+    new URL("${VVL_SITE}/${VVL_ZIP_NAME}")
+        .withInputStream { i -> f.withOutputStream { it << i } }
+}
+
+// unzip the downloaded VVL zip archive to the ${VVL_JNILIB_DIR} for APK packaging.
+task unzip(dependsOn: download, type: Copy) {
+    from zipTree(file("${VVL_LIB_ROOT}/android-binaries-${VVL_VER}.zip"))
+    into file("${VVL_JNILIB_DIR}")
+}
+android.sourceSets.main.jniLibs {
+        srcDirs += ["${VVL_JNILIB_DIR}"]
+}
+
+// add vvl download as an application dependency.
+dependencies {
+    def ARM64_VVL_FILE = "${VVL_JNILIB_DIR}/arm64-v8a/${VVL_SO_NAME}"
+    if(!file("${ARM64_VVL_FILE}").exists()) {
+        implementation files("${ARM64_VVL_FILE}") {
+            builtBy 'unzip'
+        }
+    }
+}
+

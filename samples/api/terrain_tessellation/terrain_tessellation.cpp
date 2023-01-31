@@ -152,12 +152,12 @@ void TerrainTessellation::load_assets()
 {
 	skysphere = load_model("scenes/geosphere.gltf");
 
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx");
+	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height
-	textures.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx");
+	textures.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color);
 
 	// Height data is stored in a one-channel texture
-	textures.heightmap = load_texture("textures/terrain_heightmap_r16.ktx");
+	textures.heightmap = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other);
 
 	VkSamplerCreateInfo sampler_create_info = vkb::initializers::sampler_create_info();
 

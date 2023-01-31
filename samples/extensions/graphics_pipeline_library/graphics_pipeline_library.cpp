@@ -74,6 +74,11 @@ GraphicsPipelineLibrary::~GraphicsPipelineLibrary()
 		{
 			vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		}
+		for (auto pipeline : pipeline_library.fragment_shaders)
+		{
+			vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+		}
+		vkDestroyPipelineCache(get_device().get_handle(), thread_pipeline_cache, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_library.vertex_input_interface, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_library.pre_rasterization_shaders, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipeline_library.fragment_output_interface, nullptr);
@@ -87,7 +92,7 @@ void GraphicsPipelineLibrary::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
 	clear_values[1].depthStencil = {1.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
@@ -327,6 +332,7 @@ void GraphicsPipelineLibrary::prepare_pipeline_library()
 		pipeline_library_create_info.pNext             = &library_info;
 		pipeline_library_create_info.layout            = pipeline_layout;
 		pipeline_library_create_info.renderPass        = render_pass;
+		pipeline_library_create_info.flags             = VK_PIPELINE_CREATE_LIBRARY_BIT_KHR | VK_PIPELINE_CREATE_RETAIN_LINK_TIME_OPTIMIZATION_INFO_BIT_EXT;
 		pipeline_library_create_info.pColorBlendState  = &color_blend_state;
 		pipeline_library_create_info.pMultisampleState = &multisample_state;
 
@@ -419,6 +425,9 @@ void GraphicsPipelineLibrary::prepare_new_pipeline()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), thread_pipeline_cache, 1, &executable_pipeline_create_info, nullptr, &executable));
 
 	pipelines.push_back(executable);
+
+	// Add the fragment shader we created to a deletion list
+	pipeline_library.fragment_shaders.push_back(fragment_shader);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

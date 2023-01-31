@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,8 +49,9 @@ class WindowOptions : public WindowOptionsTags
 	vkb::FlagCommand fullscreen_flag = {vkb::FlagType::FlagOnly, "fullscreen", "", "Run in fullscreen mode"};
 	vkb::FlagCommand headless_flag   = {vkb::FlagType::FlagOnly, "headless", "", "Run in headless mode"};
 	vkb::FlagCommand borderless_flag = {vkb::FlagType::FlagOnly, "borderless", "", "Run in borderless mode"};
+	vkb::FlagCommand stretch_flag    = {vkb::FlagType::FlagOnly, "stretch", "", "Stretch window to fullscreen (direct-to-display only)"};
 	vkb::FlagCommand vsync_flag      = {vkb::FlagType::OneValue, "vsync", "", "Force vsync {ON | OFF}. If not set samples decide how vsync is set"};
 
-	vkb::CommandGroup window_options_group = {"Window Options", {&width_flag, &height_flag, &vsync_flag, &fullscreen_flag, &borderless_flag, &headless_flag}};
+	vkb::CommandGroup window_options_group = {"Window Options", {&width_flag, &height_flag, &vsync_flag, &fullscreen_flag, &borderless_flag, &stretch_flag, &headless_flag}};
 };
 }        // namespace plugins

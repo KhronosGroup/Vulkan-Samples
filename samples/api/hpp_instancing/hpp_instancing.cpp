@@ -77,7 +77,7 @@ void HPPInstancing::build_command_buffers()
 	vk::CommandBufferBeginInfo command_buffer_begin_info;
 
 	std::array<vk::ClearValue, 2> clear_values =
-	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.2f, 0.0f}})),
+	    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.033f, 0.0f}})),
 	      vk::ClearDepthStencilValue(0.0f, 0)}};
 
 	vk::RenderPassBeginInfo render_pass_begin_info(render_pass, {}, {{0, 0}, extent}, clear_values);
@@ -136,8 +136,8 @@ void HPPInstancing::load_assets()
 	models.rock   = load_model("scenes/rock.gltf");
 	models.planet = load_model("scenes/planet.gltf");
 
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx");
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx");
+	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void HPPInstancing::setup_descriptor_pool()
@@ -220,19 +220,18 @@ void HPPInstancing::prepare_pipelines()
 	//	layout (location = 0) in vec3 inPos;		Per-Vertex
 	//	...
 	//	layout (location = 4) in vec3 instancePos;	Per-Instance
-	std::array<vk::VertexInputAttributeDescription, 8> attribute_descriptions = {
+	std::array<vk::VertexInputAttributeDescription, 7> attribute_descriptions = {
 	    {                                                                // Per-vertex attributees
 	                                                                     // These are advanced for each vertex fetched by the vertex shader
 	     {0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Location 0: Position
 	     {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 1: Normal
 	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)},           // Location 2: Texture coordinates
-	     {3, 0, vk::Format::eR32G32B32Sfloat, 8 * sizeof(float)},        // Location 3: Color
 	                                                                     // Per-Instance attributes
 	                                                                     // These are fetched for each instance rendered
-	     {4, 1, vk::Format::eR32G32B32Sfloat, 0},                        // Location 4: Position
-	     {5, 1, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 5: Rotation
-	     {6, 1, vk::Format::eR32Sfloat, 6 * sizeof(float)},              // Location 6: Scale
-	     {7, 1, vk::Format::eR32Sint, 7 * sizeof(float)}}};              // Location 7: Texture array layer index
+	     {3, 1, vk::Format::eR32G32B32Sfloat, 0},                        // Location 3: Position
+	     {4, 1, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 4: Rotation
+	     {5, 1, vk::Format::eR32Sfloat, 6 * sizeof(float)},              // Location 5: Scale
+	     {6, 1, vk::Format::eR32Sint, 7 * sizeof(float)}}};              // Location 6: Texture array layer index
 
 	// Use all input bindings and attribute descriptions
 	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_descriptions, attribute_descriptions);
@@ -293,7 +292,7 @@ void HPPInstancing::prepare_pipelines()
 	                 load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
 	// Only use the non-instanced input bindings and attribute descriptions
 	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 4;
+	input_state.vertexAttributeDescriptionCount = 3;
 
 	std::tie(result, pipelines.planet) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);

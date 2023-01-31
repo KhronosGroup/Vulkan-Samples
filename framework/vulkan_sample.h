@@ -17,7 +17,6 @@
 
 #pragma once
 
-#include "common/error.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
