@@ -174,6 +174,9 @@ Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
 ### [Timestamp queries](./api/timestamp_queries/)<br/>
 Using timestamp queries for profiling GPU workloads.
 
+### [Swapchain recreation](./api/swapchain_recreation/)<br/>
+A sample that implements best practices in handling swapchain recreation, for example due to window resizing or present mode changes.
+
 ## Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
