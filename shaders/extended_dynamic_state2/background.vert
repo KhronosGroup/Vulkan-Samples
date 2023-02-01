@@ -22,7 +22,7 @@ layout(location = 1) in vec3 inNormal;
 layout(binding = 0) uniform UBO
 {
 	mat4 projection;
-	mat4 background_modelview;
+	mat4 view;
 }
 ubo;
 
@@ -36,5 +36,5 @@ out gl_PerVertex
 void main()
 {
 	outUVW      = inPos;
-	gl_Position = ubo.projection * vec4(mat3(ubo.background_modelview) * (inPos * 10), 1.0);
+	gl_Position = ubo.projection * vec4(mat3(ubo.view) * (inPos * 10), 1.0);
 }

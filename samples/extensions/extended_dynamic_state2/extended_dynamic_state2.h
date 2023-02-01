@@ -39,10 +39,15 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		bool                           time_tick        = false;
 	} gui_settings;
 
-	struct UBOBAS
+	/* Buffer used in all pipelines */
+	struct UBOCOMM
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
+	} ubo_common;
+
+	struct UBOBAS
+	{
 		glm::vec4 ambientLightColor = glm::vec4(1.f, 1.f, 1.f, 0.1f);
 		glm::vec4 lightPosition     = glm::vec4(-3.0f, -8.0f, 6.0f, -1.0f);
 		glm::vec4 lightColor        = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -51,17 +56,8 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	struct UBOTESS
 	{
-		glm::mat4 projection;
-		glm::mat4 modelview;
-		float     tessellation_factor = 1.0f;
+		float tessellation_factor = 1.0f;
 	} ubo_tess;
-
-	struct UBOBG
-	{
-		glm::mat4 projection;
-		glm::mat4 background_modelview;
-
-	} ubo_background;
 
 	VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
 
@@ -95,9 +91,9 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	struct
 	{
+		std::unique_ptr<vkb::core::Buffer> common;
 		std::unique_ptr<vkb::core::Buffer> baseline;
 		std::unique_ptr<vkb::core::Buffer> tesselation;
-		std::unique_ptr<vkb::core::Buffer> background;
 	} uniform_buffers;
 
 	struct

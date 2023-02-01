@@ -16,13 +16,11 @@
  */
 #version 450
 
-layout(set = 0, binding = 0) uniform UBO
+layout(binding = 1) uniform UBOTessellation
 {
-	mat4  projection;
-	mat4  modelview;
 	float tessellationFactor;
 }
-ubo;
+ubo_tessellation;
 
 layout(vertices = 3) out;
 
@@ -36,14 +34,14 @@ void main()
 {
 	if (gl_InvocationID == 0)
 	{
-		if (ubo.tessellationFactor > 0.0)
+		if (ubo_tessellation.tessellationFactor > 0.0)
 		{
-			gl_TessLevelInner[0] = ubo.tessellationFactor;
-			gl_TessLevelInner[1] = ubo.tessellationFactor;
-			gl_TessLevelOuter[0] = ubo.tessellationFactor;
-			gl_TessLevelOuter[1] = ubo.tessellationFactor;
-			gl_TessLevelOuter[2] = ubo.tessellationFactor;
-			gl_TessLevelOuter[3] = ubo.tessellationFactor;
+			gl_TessLevelInner[0] = ubo_tessellation.tessellationFactor;
+			gl_TessLevelInner[1] = ubo_tessellation.tessellationFactor;
+			gl_TessLevelOuter[0] = ubo_tessellation.tessellationFactor;
+			gl_TessLevelOuter[1] = ubo_tessellation.tessellationFactor;
+			gl_TessLevelOuter[2] = ubo_tessellation.tessellationFactor;
+			gl_TessLevelOuter[3] = ubo_tessellation.tessellationFactor;
 		}
 		else
 		{

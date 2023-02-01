@@ -34,9 +34,10 @@ ExtendedDynamicState2::~ExtendedDynamicState2()
 {
 	if (device)
 	{
+		uniform_buffers.common.reset();
 		uniform_buffers.baseline.reset();
 		uniform_buffers.tesselation.reset();
-		uniform_buffers.background.reset();
+
 		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
 		textures = {};
 
@@ -147,9 +148,9 @@ void ExtendedDynamicState2::render(float delta_time)
  */
 void ExtendedDynamicState2::prepare_uniform_buffers()
 {
+	uniform_buffers.common      = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_common), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.baseline    = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_baseline), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.tesselation = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_tess), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.background  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_background), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -159,14 +160,15 @@ void ExtendedDynamicState2::prepare_uniform_buffers()
  */
 void ExtendedDynamicState2::update_uniform_buffers()
 {
+	/* Common uniform buffer */
+	ubo_common.projection = camera.matrices.perspective;
+	ubo_common.view       = camera.matrices.view;
+	uniform_buffers.common->convert_and_update(ubo_common);
+
 	/* Baseline uniform buffer */
-	ubo_baseline.projection = camera.matrices.perspective;
-	ubo_baseline.view       = camera.matrices.view;
 	uniform_buffers.baseline->convert_and_update(ubo_baseline);
 
 	/* Tessellation uniform buffer */
-	ubo_tess.projection          = camera.matrices.perspective;
-	ubo_tess.modelview           = camera.matrices.view;
 	ubo_tess.tessellation_factor = gui_settings.tess_factor;
 
 	if (!gui_settings.tessellation)
@@ -175,12 +177,6 @@ void ExtendedDynamicState2::update_uniform_buffers()
 		ubo_tess.tessellation_factor = 0.0f;
 	}
 	uniform_buffers.tesselation->convert_and_update(ubo_tess);
-
-	/* Background uniform buffer */
-	ubo_background.projection           = camera.matrices.perspective;
-	ubo_background.background_modelview = camera.matrices.view;
-
-	uniform_buffers.background->convert_and_update(ubo_background);
 }
 
 /**
@@ -388,7 +384,7 @@ void ExtendedDynamicState2::build_command_buffers()
 	int i = -1; /* Required for accessing element in framebuffers vector */
 	for (auto &draw_cmd_buffer : draw_cmd_buffers)
 	{
-		i++;
+		++i;
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
@@ -481,9 +477,14 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 {
 	/* First descriptor set */
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	                                                     VK_SHADER_STAGE_VERTEX_BIT,
-	                                                     0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	        VK_SHADER_STAGE_VERTEX_BIT,
+	        0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	        VK_SHADER_STAGE_VERTEX_BIT,
+	        1),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -507,8 +508,12 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	        VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_VERTEX_BIT,
+	        VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_VERTEX_BIT,
 	        0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	        VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT,
+	        1),
 	};
 
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
@@ -558,6 +563,7 @@ void ExtendedDynamicState2::create_descriptor_sets()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.baseline));
 
+	VkDescriptorBufferInfo matrix_common_buffer_descriptor   = create_descriptor(*uniform_buffers.common);
 	VkDescriptorBufferInfo matrix_baseline_buffer_descriptor = create_descriptor(*uniform_buffers.baseline);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
@@ -565,9 +571,15 @@ void ExtendedDynamicState2::create_descriptor_sets()
 	        descriptor_sets.baseline,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
+	        &matrix_common_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets.baseline,
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	        1,
 	        &matrix_baseline_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 
 	/* Second descriptor set */
 	alloc_info =
@@ -585,9 +597,15 @@ void ExtendedDynamicState2::create_descriptor_sets()
 	        descriptor_sets.tesselation,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
+	        &matrix_common_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_sets.tesselation,
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	        1,
 	        &matrix_tess_buffer_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 
 	/* Third descriptor set */
 	alloc_info =
@@ -598,22 +616,22 @@ void ExtendedDynamicState2::create_descriptor_sets()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.background));
 
-	VkDescriptorBufferInfo matrix_background_buffer_descriptor = create_descriptor(*uniform_buffers.background);
-	VkDescriptorImageInfo  background_image_descriptor         = create_descriptor(textures.envmap);
+	VkDescriptorImageInfo background_image_descriptor = create_descriptor(textures.envmap);
 
 	write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(
 	        descriptor_sets.background,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
-	        &matrix_background_buffer_descriptor),
+	        &matrix_common_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(
 	        descriptor_sets.background,
 	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
 	        1,
 	        &background_image_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
+	                       write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
 /**
@@ -675,7 +693,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Models"))
 	{
 		drawer.checkbox("Selection effect active", &gui_settings.selection_active);
-		int                      obj_cnt = scene_elements_baseline.size();
+		const int                obj_cnt = static_cast<int>(scene_elements_baseline.size());
 		std::vector<std::string> obj_names;
 
 		for (int i = 0; i < obj_cnt; ++i)
@@ -750,7 +768,7 @@ glm::vec4 ExtendedDynamicState2::get_changed_alpha(const vkb::sg::PBRMaterial *o
 void ExtendedDynamicState2::scene_pipeline_divide(std::vector<SceneNode> const &scene_node)
 {
 	/* Divide main scene to two (baseline and tessellation) */
-	for (int i = 0; i < scene_node.size(); i++)
+	for (int i = 0; i < scene_node.size(); ++i)
 	{
 		if (scene_node.at(i).name == "Geosphere")
 		{
@@ -769,7 +787,7 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<SceneNode> const &
  */
 void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std::vector<SceneNode> const &scene_node)
 {
-	for (int i = 0; i < scene_node.size(); i++)
+	for (int i = 0; i < scene_node.size(); ++i)
 	{
 		const auto &vertex_buffer_pos    = scene_node[i].sub_mesh->vertex_buffers.at("position");
 		const auto &vertex_buffer_normal = scene_node[i].sub_mesh->vertex_buffers.at("normal");
@@ -859,7 +877,7 @@ void ExtendedDynamicState2::model_data_creation()
 	vertices_norm[7] = glm::normalize(Xm + Yp + Zp);
 
 	/* Scaling and position transform */
-	for (uint8_t i = 0; i < vertex_count; i++)
+	for (int i = 0; i < vertex_count; ++i)
 	{
 		vertices_pos[i] *= glm::vec3(4.0f, 4.0f, 4.0f);
 		vertices_pos[i] += glm::vec3(15.0f, 2.0f, 0.0f);
@@ -969,17 +987,17 @@ void ExtendedDynamicState2::model_data_creation()
  */
 void ExtendedDynamicState2::cube_animation(float delta_time)
 {
-	constexpr float tick_limit = 0.05;
-	constexpr float delta      = 0.05;
-	constexpr float move_step  = 0.0005;
-	static float    time_pass  = 0;
+	constexpr float tick_limit = 0.05f;
+	constexpr float delta      = 0.05f;
+	constexpr float move_step  = 0.0005f;
+	static float    time_pass  = 0.0f;
 	time_pass += delta_time;
 	static auto &transform = std::find_if(scene_elements_baseline.begin(),
 	                                      scene_elements_baseline.end(),
 	                                      [](SceneNode const &scene_node) { return scene_node.node->get_name() == "Cube_1"; })
 	                             ->node->get_transform();
 	static auto  translation = transform.get_translation();
-	static float difference  = 0;
+	static float difference  = 0.0f;
 	static bool  rising      = true;
 
 	/* Checking if tick time passed away */

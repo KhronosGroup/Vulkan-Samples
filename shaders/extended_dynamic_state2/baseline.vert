@@ -19,16 +19,23 @@
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 
+
 layout(binding = 0) uniform UBO
 {
 	mat4  projection;
 	mat4  view;
+}
+ubo;
+
+layout(binding = 1) uniform UBOBaseline
+{
 	vec4  ambientLightColor;
 	vec4  lightPosition;
 	vec4  lightColor;
 	float lightIntensity;
 }
-ubo;
+ubo_baseline;
+
 
 layout(push_constant) uniform Push_Constants
 {
@@ -58,9 +65,9 @@ void main()
 	gl_Position        = ubo.projection * localPos;
 	outNormal          = mat3(ubo.view * push_constants.model) * inNormal;
 	vec4 positionWorld = push_constants.model * vec4(inPos, 1.0);
-	outLightVec        = ubo.lightPosition.xyz - positionWorld.xyz;
-	outLightColor[0]   = ubo.lightColor.xyz * ubo.lightColor.w;
-	outLightColor[1]   = ubo.ambientLightColor.xyz * ubo.ambientLightColor.w;
+	outLightVec        = ubo_baseline.lightPosition.xyz - positionWorld.xyz;
+	outLightColor[0]   = ubo_baseline.lightColor.xyz * ubo_baseline.lightColor.w;
+	outLightColor[1]   = ubo_baseline.ambientLightColor.xyz * ubo_baseline.ambientLightColor.w;
 	outViewVec         = -localPos.xyz;
-	outLightIntensity  = ubo.lightIntensity;
+	outLightIntensity  = ubo_baseline.lightIntensity;
 }
