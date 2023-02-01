@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -231,7 +231,7 @@ void VulkanSample::update_scene(float delta_time)
 {
 	if (scene)
 	{
-		//Update scripts
+		// Update scripts
 		if (scene->has_component<sg::Script>())
 		{
 			auto scripts = scene->get_components<sg::Script>();
@@ -242,7 +242,7 @@ void VulkanSample::update_scene(float delta_time)
 			}
 		}
 
-		//Update animations
+		// Update animations
 		if (scene->has_component<sg::Animation>())
 		{
 			auto animations = scene->get_components<sg::Animation>();
@@ -320,6 +320,7 @@ void VulkanSample::update(float delta_time)
 void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_target)
 {
 	auto &views = render_target.get_views();
+	assert(1 < views.size());
 
 	{
 		// Image 0 is the swapchain
@@ -331,12 +332,12 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
-			command_buffer.image_memory_barrier(views.at(i), memory_barrier);
+			command_buffer.image_memory_barrier(views[i], memory_barrier);
 		}
 	}
 
@@ -349,7 +350,7 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views[1], memory_barrier);
 	}
 
 	draw_renderpass(command_buffer, render_target);
@@ -362,7 +363,7 @@ void VulkanSample::draw(CommandBuffer &command_buffer, RenderTarget &render_targ
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 }
 
@@ -502,9 +503,10 @@ void VulkanSample::update_debug_window()
 		get_debug_info().insert<field::Static, uint32_t>("texture_count",
 		                                                 to_u32(scene->get_components<sg::Texture>().size()));
 
-		if (auto camera = scene->get_components<vkb::sg::Camera>().at(0))
+		auto cameras = scene->get_components<vkb::sg::Camera>();
+		if (!cameras.empty())
 		{
-			if (auto camera_node = camera->get_node())
+			if (auto camera_node = cameras[0]->get_node())
 			{
 				const glm::vec3 &pos = camera_node->get_transform().get_translation();
 				get_debug_info().insert<field::Vector, float>("camera_pos", pos.x, pos.y, pos.z);

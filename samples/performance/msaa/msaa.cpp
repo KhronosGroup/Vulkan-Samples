@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -481,7 +481,8 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 
 		for (auto &i_color : color_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(i_color), memory_barrier);
+			assert(i_color < views.size());
+			command_buffer.image_memory_barrier(views[i_color], memory_barrier);
 			render_target.set_layout(i_color, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		}
 	}
@@ -497,7 +498,8 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 
 		for (auto &i_depth : depth_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(i_depth), memory_barrier);
+			assert(i_depth < views.size());
+			command_buffer.image_memory_barrier(views[i_depth], memory_barrier);
 			render_target.set_layout(i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		}
 	}
@@ -558,7 +560,8 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_swapchain), memory_barrier);
+		assert(i_swapchain < views.size());
+		command_buffer.image_memory_barrier(views[i_swapchain], memory_barrier);
 	}
 }
 
@@ -607,7 +610,8 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_color_ms), memory_barrier);
+		assert(i_color_ms < views.size());
+		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}
 
 	VkImageSubresourceLayers subresource = {0};
@@ -631,11 +635,12 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 
 		color_layout = color_new_layout;
 
-		command_buffer.image_memory_barrier(views.at(color_destination), memory_barrier);
+		assert(color_destination < views.size());
+		command_buffer.image_memory_barrier(views[color_destination], memory_barrier);
 	}
 
 	// Resolve multisampled attachment to destination, extremely expensive
-	command_buffer.resolve_image(views.at(i_color_ms).get_image(), views.at(color_destination).get_image(), {image_resolve});
+	command_buffer.resolve_image(views[i_color_ms].get_image(), views.at(color_destination).get_image(), {image_resolve});
 
 	// Transition attachments out of transfer stage
 	{
@@ -649,7 +654,7 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 
 		color_layout = color_new_layout;
 
-		command_buffer.image_memory_barrier(views.at(color_destination), memory_barrier);
+		command_buffer.image_memory_barrier(views[color_destination], memory_barrier);
 	}
 
 	{
@@ -659,7 +664,7 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_color_ms), memory_barrier);
+		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}
 }
 
