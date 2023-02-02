@@ -64,6 +64,7 @@ set(ORDER_LIST
         "fragment_shading_rate"
         "fragment_shading_rate_dynamic"
         "graphics_pipeline_library"
+        "mesh_shader"
         "push_descriptors"
         "ray_queries"
         "raytracing_basic"
