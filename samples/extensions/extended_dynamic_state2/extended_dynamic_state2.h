@@ -17,12 +17,16 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+#include <memory>
+
 #include "api_vulkan_sample.h"
 #include "scene_graph/components/pbr_material.h"
 
 class ExtendedDynamicState2 : public ApiVulkanSample
 {
-  public:
+ public:
 	typedef struct ModelDynamicParam
 	{
 		bool depth_bias         = false;
@@ -129,12 +133,12 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 	ExtendedDynamicState2();
 	~ExtendedDynamicState2();
 
-	virtual void render(float delta_time) override;
-	virtual void build_command_buffers() override;
-	virtual bool prepare(vkb::Platform &platform) override;
-	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual void update(float delta_time) override;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	bool prepare(vkb::Platform &platform) override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void update(float delta_time) override;
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
