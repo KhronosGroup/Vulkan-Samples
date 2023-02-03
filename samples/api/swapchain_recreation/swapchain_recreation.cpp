@@ -40,6 +40,45 @@ void SwapchainRecreation::get_queue()
 	}
 }
 
+void SwapchainRecreation::check_for_maintenance1()
+{
+	const char *use_maintenance1 = std::getenv("USE_MAINTENANCE1");
+	has_maintenance1             = use_maintenance1 == nullptr || strcmp(use_maintenance1, "no") != 0;
+
+	if (!has_maintenance1)
+	{
+		LOGI("Disabling usage of VK_EXT_surface_maintenance1 due to USE_MAINTENANCE1=no");
+		return;
+	}
+
+	// Check to see if VK_EXT_surface_maintenance1 is supported in the first place.
+	// Assume that VK_EXT_swapchain_maintenance1 is also supported in that case.
+	uint32_t instance_extension_count;
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
+
+	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
+	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
+
+	const bool has_ext = std::find_if(available_instance_extensions.begin(),
+	                                  available_instance_extensions.end(),
+	                                  [](auto const &ep) {
+		                                  return strcmp(ep.extensionName, VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME) == 0;
+	                                  }) != available_instance_extensions.end();
+
+	if (has_ext)
+	{
+		// It is indeed supported.
+		add_instance_extension(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+		add_instance_extension(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
+		add_device_extension(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
+		return;
+	}
+
+	// Extension is not supported by the driver or loader.
+	LOGI("Skipping unsupported VK_EXT_surface_maintenance1");
+	has_maintenance1 = false;
+}
+
 void SwapchainRecreation::query_surface_format()
 {
 	surface_format = vkb::select_surface_format(get_gpu_handle(), get_surface());
@@ -186,6 +225,13 @@ void SwapchainRecreation::init_swapchain()
 	// be used instead.  However, the application is required to handle preTransform elsewhere
 	// accordingly.
 
+	if (has_maintenance1)
+	{
+		// When VK_EXT_swapchain_maintenance1 is available, you can optionally amortize the
+		// cost of swapchain image allocations over multiple frames.
+		info.flags |= VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT;
+	}
+
 	VK_CHECK(vkCreateSwapchainKHR(get_device_handle(), &info, nullptr, &swapchain));
 
 	current_present_mode = desired_present_mode;
@@ -208,9 +254,14 @@ void SwapchainRecreation::init_swapchain()
 	swapchain_objects.framebuffers.resize(image_count, VK_NULL_HANDLE);
 	VK_CHECK(vkGetSwapchainImagesKHR(get_device_handle(), swapchain, &image_count, swapchain_objects.images.data()));
 
-	for (uint32_t index = 0; index < image_count; ++index)
+	if (!has_maintenance1)
 	{
-		init_swapchain_image(index);
+		// When VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT is used, image views
+		// cannot be created until the first time the image is acquired.
+		for (uint32_t index = 0; index < image_count; ++index)
+		{
+			init_swapchain_image(index);
+		}
 	}
 }
 
@@ -450,23 +501,41 @@ static VkResult ignore_suboptimal_due_to_rotation(VkResult result)
  */
 VkResult SwapchainRecreation::acquire_next_image(uint32_t *index)
 {
-	PerFrame &frame         = submit_history[submit_history_index];
-	VkFence   acquire_fence = get_fence();
+	PerFrame &frame = submit_history[submit_history_index];
+
+	// Use a fence to know when acquire is done.  Without VK_EXT_swapchain_maintenance1, this
+	// fence is used to infer when the _previous_ present to this image index has finished.
+	// There is no need for this with VK_EXT_swapchain_maintenance1.
+	VkFence acquire_fence = has_maintenance1 ? VK_NULL_HANDLE : get_fence();
 
 	VkResult result = vkAcquireNextImageKHR(get_device_handle(), swapchain, UINT64_MAX, frame.acquire_semaphore, acquire_fence, index);
 
-	if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+	if (has_maintenance1 && (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR))
 	{
-		// If failed, fence is untouched, recycle it.
-		//
-		// The semaphore is also untouched, but it may be used in the retry of
-		// vkAcquireNextImageKHR.  It is nevertheless cleaned up after cpu throttling
-		// automatically.
-		recycle_fence(acquire_fence);
-		return result;
+		// When VK_SWAPCHAIN_CREATE_DEFERRED_MEMORY_ALLOCATION_BIT_EXT is specified, image
+		// views must be created after the first time the image is acquired.
+		assert(*index < swapchain_objects.views.size());
+		if (swapchain_objects.views[*index] == VK_NULL_HANDLE)
+		{
+			init_swapchain_image(*index);
+		}
 	}
 
-	associate_fence_with_present_history(*index, acquire_fence);
+	if (!has_maintenance1)
+	{
+		if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+		{
+			// If failed, fence is untouched, recycle it.
+			//
+			// The semaphore is also untouched, but it may be used in the retry of
+			// vkAcquireNextImageKHR.  It is nevertheless cleaned up after cpu
+			// throttling automatically.
+			recycle_fence(acquire_fence);
+			return result;
+		}
+
+		associate_fence_with_present_history(*index, acquire_fence);
+	}
 
 	return ignore_suboptimal_due_to_rotation(result);
 }
@@ -487,15 +556,29 @@ VkResult SwapchainRecreation::present_image(uint32_t index)
 	present.waitSemaphoreCount = 1;
 	present.pWaitSemaphores    = &frame.present_semaphore;
 
+	// When VK_EXT_swapchain_maintenance1 is enabled, add a fence to the present operation,
+	// which is signaled when the resources associated with present operation can be freed.
+	VkFence                        present_fence = VK_NULL_HANDLE;
+	VkSwapchainPresentFenceInfoEXT fence_info{VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT};
+	if (has_maintenance1)
+	{
+		present_fence = get_fence();
+
+		fence_info.swapchainCount = 1;
+		fence_info.pFences        = &present_fence;
+
+		present.pNext = &fence_info;
+	}
+
 	VkResult result = vkQueuePresentKHR(queue->get_handle(), &present);
 
-	add_present_to_history(index);
+	add_present_to_history(index, present_fence);
 	cleanup_present_history();
 
 	return ignore_suboptimal_due_to_rotation(result);
 }
 
-void SwapchainRecreation::add_present_to_history(uint32_t index)
+void SwapchainRecreation::add_present_to_history(uint32_t index, VkFence present_fence)
 {
 	PerFrame &frame = submit_history[submit_history_index];
 
@@ -505,10 +588,18 @@ void SwapchainRecreation::add_present_to_history(uint32_t index)
 
 	frame.present_semaphore = VK_NULL_HANDLE;
 
-	// The fence needed to know when the semaphore can be recycled will be one that is passed to
-	// vkAcquireNextImageKHR that returns the same image index.  That is why the image index
-	// needs to be tracked in this case.
-	present_history.back().image_index = index;
+	if (has_maintenance1)
+	{
+		present_history.back().image_index   = INVALID_IMAGE_INDEX;
+		present_history.back().cleanup_fence = present_fence;
+	}
+	else
+	{
+		// The fence needed to know when the semaphore can be recycled will be one that is
+		// passed to vkAcquireNextImageKHR that returns the same image index.  That is why
+		// the image index needs to be tracked in this case.
+		present_history.back().image_index = index;
+	}
 }
 
 void SwapchainRecreation::cleanup_present_history()
@@ -826,9 +917,17 @@ bool SwapchainRecreation::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
+	check_for_maintenance1();
+
+	LOGI("------------------------------------");
 	LOGI("USAGE:");
 	LOGI(" - Press v to enable v-sync");
 	LOGI(" - Press n to disable v-sync");
+	if (has_maintenance1)
+	{
+		LOGI("Set environment variable USE_MAINTENANCE1=no to avoid VK_EXT_surface_maintenance1");
+	}
+	LOGI("------------------------------------");
 
 	return true;
 }

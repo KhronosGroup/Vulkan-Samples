@@ -114,6 +114,10 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 	/// Submission and present queue.
 	const vkb::Queue *queue = nullptr;
 
+	/// Whether the VK_EXT_surface_maintenance1 and VK_EXT_swapchain_maintenance1 extensions are
+	/// to be used.
+	bool has_maintenance1 = false;
+
 	/// Surface data.
 	VkSurfaceFormatKHR            surface_format    = {};
 	std::vector<VkPresentModeKHR> present_modes     = {};
@@ -160,6 +164,7 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 	uint32_t fps_last_logged_frame_number = 0;
 
 	void get_queue();
+	void check_for_maintenance1();
 	void query_surface_format();
 	void query_present_modes();
 	void adjust_desired_present_mode();
@@ -175,7 +180,7 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 
 	VkResult acquire_next_image(uint32_t *index);
 	VkResult present_image(uint32_t index);
-	void     add_present_to_history(uint32_t index);
+	void     add_present_to_history(uint32_t index, VkFence present_fence);
 	void     cleanup_present_history();
 	void     cleanup_present_info(PresentOperationInfo &present_info);
 	void     cleanup_old_swapchain(SwapchainCleanupData &old_swapchain);
