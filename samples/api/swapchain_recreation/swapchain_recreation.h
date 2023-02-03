@@ -121,6 +121,7 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 	/// Surface data.
 	VkSurfaceFormatKHR            surface_format    = {};
 	std::vector<VkPresentModeKHR> present_modes     = {};
+	std::vector<VkPresentModeKHR> compatible_modes  = {};
 	VkExtent2D                    swapchain_extents = {};
 
 	/// The swapchain.
@@ -163,12 +164,21 @@ class SwapchainRecreation : public vkb::VulkanSample<vkb::BindingType::C>
 	float    fps_timer                    = 0;
 	uint32_t fps_last_logged_frame_number = 0;
 
+	// Other statistics
+	uint32_t swapchain_creation_count = 0;
+
+	// User toggles.
+	bool recreate_swapchain_on_present_mode_change = false;
+
 	void get_queue();
 	void check_for_maintenance1();
 	void query_surface_format();
 	void query_present_modes();
+	void query_compatible_present_modes(VkPresentModeKHR present_mode);
 	void adjust_desired_present_mode();
 	void create_render_pass();
+
+	bool are_present_modes_compatible();
 
 	void init_swapchain();
 	void init_swapchain_image(uint32_t index);
