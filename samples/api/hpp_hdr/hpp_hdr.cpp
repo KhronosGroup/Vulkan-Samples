@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,7 +84,7 @@ void HPPHDR::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 
 			std::array<vk::ClearValue, 3> clear_values =
@@ -121,7 +121,7 @@ void HPPHDR::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -147,11 +147,11 @@ void HPPHDR::build_command_buffers()
 		}
 
 		/*
-			Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			std::array<vk::ClearValue, 2> clear_values =
@@ -745,7 +745,7 @@ bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -762,10 +762,14 @@ bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
 void HPPHDR::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)

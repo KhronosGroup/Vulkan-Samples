@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -28,5 +28,3 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "dynamic_uniform_buffers/base.vert"
         "dynamic_uniform_buffers/base.frag")
-
-target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

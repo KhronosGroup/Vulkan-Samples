@@ -44,7 +44,7 @@ class HPPVulkanResource
 	{
 	}
 
-	HPPVulkanResource(const HPPVulkanResource &) = delete;
+	HPPVulkanResource(const HPPVulkanResource &)            = delete;
 	HPPVulkanResource &operator=(const HPPVulkanResource &) = delete;
 
 	HPPVulkanResource(HPPVulkanResource &&other) :

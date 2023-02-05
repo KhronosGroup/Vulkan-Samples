@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Sascha Willems
+/* Copyright (c) 2022-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -107,7 +107,7 @@ void TimestampQueries::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 
 			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 0);
@@ -127,7 +127,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
@@ -156,7 +156,7 @@ void TimestampQueries::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -177,7 +177,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
@@ -194,11 +194,11 @@ void TimestampQueries::build_command_buffers()
 		}
 
 		/*
-			Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			VkClearValue clear_values[2];
@@ -218,7 +218,7 @@ void TimestampQueries::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -946,7 +946,7 @@ bool TimestampQueries::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -964,10 +964,14 @@ bool TimestampQueries::prepare(vkb::Platform &platform)
 void TimestampQueries::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -998,11 +1002,11 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
 		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
 
-		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", float(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), float(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
+		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
 		if (bloom)
 		{
-			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
+			drawer.text("Pass 3: Second bloom pass %.3f ms", static_cast<float>(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
 		}
 	}
 }
