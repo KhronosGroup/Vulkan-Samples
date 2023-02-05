@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,7 +57,7 @@ bool HPPTextureMipMapGeneration::prepare(vkb::platform::HPPPlatform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 0.1f, 1024.0f);
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 0.1f, 1024.0f);
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -12.5f));
 
 	load_assets();
@@ -122,7 +122,7 @@ void HPPTextureMipMapGeneration::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 	if (drawer.header("Settings"))
 	{
 		drawer.checkbox("Rotate", &rotate_scene);
-		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, (float) texture.mip_levels))
+		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, static_cast<float>(texture.mip_levels)))
 		{
 			update_uniform_buffers();
 		}
@@ -136,10 +136,14 @@ void HPPTextureMipMapGeneration::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 void HPPTextureMipMapGeneration::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (rotate_scene)
+	{
 		update_uniform_buffers(delta_time);
+	}
 }
 
 void HPPTextureMipMapGeneration::view_changed()
@@ -167,14 +171,14 @@ void HPPTextureMipMapGeneration::load_assets()
 }
 
 /*
-	Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
+    Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
 */
 void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_name)
 {
 	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
 	vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
-	ktxTexture *   ktx_texture;
+	ktxTexture    *ktx_texture;
 	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
 	// @todo: get format from libktx
 	if (ktx_texture == nullptr)
@@ -285,9 +289,9 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	for (uint32_t i = 1; i < texture.mip_levels; i++)
 	{
 		vk::ImageBlit image_blit({vk::ImageAspectFlagBits::eColor, i - 1, 0, 1},
-		                         {{{}, {int32_t(texture.extent.width >> (i - 1)), int32_t(texture.extent.height >> (i - 1)), int32_t(1)}}},
+		                         {{{}, {static_cast<int32_t>(texture.extent.width >> (i - 1)), static_cast<int32_t>(texture.extent.height >> (i - 1)), static_cast<int32_t>(1)}}},
 		                         {vk::ImageAspectFlagBits::eColor, i, 0, 1},
-		                         {{{}, {int32_t(texture.extent.width >> i), int32_t(texture.extent.height >> i), int32_t(1)}}});
+		                         {{{}, {static_cast<int32_t>(texture.extent.width >> i), static_cast<int32_t>(texture.extent.height >> i), static_cast<int32_t>(1)}}});
 
 		// Prepare current mip level as image blit destination
 		image_memory_barrier = vk::ImageMemoryBarrier({},

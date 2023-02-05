@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -132,7 +132,9 @@ bool VulkanSample::prepare(Platform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 	if (!surface)
+	{
 		throw std::runtime_error("Failed to create window surface.");
+	}
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -152,7 +154,9 @@ bool VulkanSample::prepare(Platform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
 		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+		{
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
+		}
 	}
 
 #ifdef VKB_VULKAN_DEBUG
@@ -231,7 +235,7 @@ void VulkanSample::update_scene(float delta_time)
 {
 	if (scene)
 	{
-		//Update scripts
+		// Update scripts
 		if (scene->has_component<sg::Script>())
 		{
 			auto scripts = scene->get_components<sg::Script>();
@@ -242,7 +246,7 @@ void VulkanSample::update_scene(float delta_time)
 			}
 		}
 
-		//Update animations
+		// Update animations
 		if (scene->has_component<sg::Animation>())
 		{
 			auto animations = scene->get_components<sg::Animation>();

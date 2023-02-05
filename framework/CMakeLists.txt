@@ -446,9 +446,6 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
-# Pre compiled headers
-# vulkan_samples_pch(PROJECT_FILES pch.cpp)
-
 add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
 
 # compiler flags based on compiler type
@@ -529,4 +526,6 @@ else()
     endif()
 endif()
 
-target_precompile_headers(${PROJECT_NAME} PRIVATE <vulkan/vulkan.hpp>)
+if(VKB_DO_CLANG_TIDY)
+    set_target_properties(framework PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+endif()

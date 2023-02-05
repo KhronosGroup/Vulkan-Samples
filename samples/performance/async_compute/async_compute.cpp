@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -295,7 +295,7 @@ bool AsyncComputeSample::prepare(vkb::Platform &platform)
 	auto &threshold_module = device->get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 	                                                                            vkb::ShaderSource("async_compute/threshold.comp"));
 	auto &blur_up_module   = device->get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
-                                                                              vkb::ShaderSource("async_compute/blur_up.comp"));
+	                                                                            vkb::ShaderSource("async_compute/blur_up.comp"));
 	auto &blur_down_module = device->get_resource_cache().request_shader_module(VK_SHADER_STAGE_COMPUTE_BIT,
 	                                                                            vkb::ShaderSource("async_compute/blur_down.comp"));
 	threshold_pipeline     = &device->get_resource_cache().request_pipeline_layout({&threshold_module});
@@ -563,10 +563,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		Push push{};
 		push.width            = dst_extent.width;
 		push.height           = dst_extent.height;
-		push.inv_width        = 1.0f / float(push.width);
-		push.inv_height       = 1.0f / float(push.height);
-		push.inv_input_width  = 1.0f / float(src_extent.width);
-		push.inv_input_height = 1.0f / float(src_extent.height);
+		push.inv_width        = 1.0f / static_cast<float>(push.width);
+		push.inv_height       = 1.0f / static_cast<float>(push.height);
+		push.inv_input_width  = 1.0f / static_cast<float>(src_extent.width);
+		push.inv_input_height = 1.0f / static_cast<float>(src_extent.height);
 
 		command_buffer.push_constants(push);
 		command_buffer.bind_image(src, *linear_sampler, 0, 0, 0);

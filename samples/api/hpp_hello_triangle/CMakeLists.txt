@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,4 +30,3 @@ add_sample(
         "triangle.frag")
 
 target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
-target_precompile_headers(${FOLDER_NAME} PRIVATE <vulkan/vulkan.hpp>)

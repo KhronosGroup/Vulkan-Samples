@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Sascha Willems
+/* Copyright (c) 2021-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -133,7 +133,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
 	ktxTexture2 *ktx_texture;
 	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, (ktxTexture **) &ktx_texture);
+	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, reinterpret_cast<ktxTexture **>(&ktx_texture));
 	if (result != KTX_SUCCESS)
 	{
 		throw std::runtime_error("Could not load the requested image file.");
@@ -157,7 +157,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	texture.mip_levels = ktx_texture->numLevels;
 
 	// Once transcoded, we can read the native Vulkan format from the ktx texture object and upload the transcoded GPU native data via staging
-	VkFormat format = (VkFormat) ktx_texture->vkFormat;
+	VkFormat format = static_cast<VkFormat>(ktx_texture->vkFormat);
 
 	VkBuffer       staging_buffer;
 	VkDeviceMemory staging_memory;
@@ -296,7 +296,7 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	sampler.mipLodBias          = 0.0f;
 	sampler.compareOp           = VK_COMPARE_OP_NEVER;
 	sampler.minLod              = 0.0f;
-	sampler.maxLod              = (float) texture.mip_levels;
+	sampler.maxLod              = static_cast<float>(texture.mip_levels);
 	if (get_device().get_gpu().get_features().samplerAnisotropy)
 	{
 		// Use max. level of anisotropy for this example
@@ -364,7 +364,7 @@ void TextureCompressionBasisu::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -614,7 +614,7 @@ void TextureCompressionBasisu::prepare_uniform_buffers()
 void TextureCompressionBasisu::update_uniform_buffers()
 {
 	// Vertex shader
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), static_cast<float>(width) / static_cast<float>(height), 0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
@@ -655,7 +655,9 @@ bool TextureCompressionBasisu::prepare(vkb::Platform &platform)
 void TextureCompressionBasisu::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 
