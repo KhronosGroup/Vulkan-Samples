@@ -278,7 +278,7 @@ void MeshShader::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages {};
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(
@@ -388,8 +388,8 @@ void MeshShader::prepare_instance_data()
 		instance_data[i].scale *= 0.75f;
 
 		// Outer ring
-		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		rho                                                                   = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
+		theta                                                                 = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
 		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
 		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
 		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
@@ -408,7 +408,7 @@ void MeshShader::prepare_instance_data()
 	{
 		VkDeviceMemory memory;
 		VkBuffer       buffer;
-	} staging_buffer {};
+	} staging_buffer{};
 
 	staging_buffer.buffer = get_device().create_buffer(
 	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
