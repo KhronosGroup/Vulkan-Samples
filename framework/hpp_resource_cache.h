@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,7 +24,9 @@ namespace vkb
 namespace core
 {
 class HPPDevice;
-}
+class HPPPipelineLayout;
+class HPPShaderModule;
+}        // namespace core
 
 /**
  * @brief facade class around vkb::ResourceCache, providing a vulkan.hpp-based interface
@@ -43,6 +45,18 @@ class HPPResourceCache : private vkb::ResourceCache
 	HPPResourceCache(vkb::core::HPPDevice &device) :
 	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))
 	{}
+
+	vkb::core::HPPPipelineLayout &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+	{
+		return reinterpret_cast<vkb::core::HPPPipelineLayout &>(
+		    vkb::ResourceCache::request_pipeline_layout(reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules)));
+	}
+
+	vkb::core::HPPShaderModule &request_shader_module(vk::ShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {})
+	{
+		return reinterpret_cast<vkb::core::HPPShaderModule &>(
+		    vkb::ResourceCache::request_shader_module(static_cast<VkShaderStageFlagBits>(stage), glsl_source, shader_variant));
+	}
 
 	void set_pipeline_cache(vk::PipelineCache pipeline_cache)
 	{
