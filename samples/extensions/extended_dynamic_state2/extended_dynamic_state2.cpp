@@ -94,17 +94,34 @@ void ExtendedDynamicState2::load_assets()
 {
 	load_scene("scenes/primitives/primitives.gltf");
 
-	std::vector<SceneNode> scene_elements;
-	// Store all scene nodes in a linear vector for easier access
-	for (auto &mesh : scene->get_components<vkb::sg::Mesh>())
+	std::vector<SceneNode>       scene_elements;
+	std::vector<vkb::sg::Node *> node_scene_list = { &(scene->get_root_node()) };
+	vkb::sg::Node *              node            = nullptr;
+
+	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
 	{
-		for (auto &node : mesh->get_nodes())
+		node = node_scene_list[list_it];
+
+		// Add node children to vector if they exist
+		if (!node->get_children().empty())
 		{
+			node_scene_list.insert(
+			                        node_scene_list.end(),
+			                        node->get_children().begin(),
+			                        node->get_children().end());
+		}
+
+		// If current node have mesh add it to scene_elements
+		if (node->has_component<vkb::sg::Mesh>())
+		{
+			vkb::sg::Mesh &mesh = node->get_component<vkb::sg::Mesh>();
+
 			ModelDynamicParam object_param{};
 			gui_settings.objects.push_back(object_param);
-			for (auto &sub_mesh : mesh->get_submeshes())
+
+			for (auto &sub_mesh : mesh.get_submeshes())
 			{
-				scene_elements.push_back({mesh->get_name(), node, sub_mesh});
+				scene_elements.push_back({mesh.get_name(), node, sub_mesh});
 			}
 		}
 	}
