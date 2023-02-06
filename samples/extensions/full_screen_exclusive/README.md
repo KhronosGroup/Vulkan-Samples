@@ -21,42 +21,39 @@
 
 ## Overview
 
-This code sample demonstrates how to incorporate Vulkan ```full screen exclusive``` extension. One shall notice that,
-this extension provides a solution for ```full screen exclusion``` issue on ```Windows``` platform, that
-the ```application window``` cannot correctly adapt a ture ```exclusive```mode. Therefore, all this extension variables
-and related methods are applicable on ```Windows``` platform only.
+This code sample demonstrates how to incorporate Vulkan ```VK_EXT_full_screen_exclusive ``` extension. One shall notice
+that, this extension provides a solution for full screen exclusion issue on Windows platform, which its application
+window cannot correctly adapt a ture exclusive mode. Notice that, ```VK_EXT_full_screen_exclusive ```
+is applicable on Windows platform alone.
 
 ## Introduction
 
-This sample provides a detailed procedure, which approaches to activate the full screen exclusive feature
-on ```Windows```
-platform. Furthermore, users may switch between ```windowed```, ```borderless fullscreen```,
-and ```exclusive fullscreen``` modes using ```keyboard input events```. As ```full screen exclusive``` extension works
-specifically for ```Windows``` platform, thus the mentioned feature only applies to this sample running on
-the ```Windows``` platform. On other platforms, this sample simply renders a triangle (e.g., ```hello_triangle```
-sample).
+This sample provides a detailed procedure, which activates full screen exclusive mode on Windows applications. Users may
+choose application display mode from: 1) windowed, 2) borderless fullscreen, and 3) exclusive fullscreen
+using ```keyboard input events```. As ```VK_EXT_full_screen_exclusive``` extension works specifically for Windows
+platform, the mentioned feature only applies to the Windows platform. On other platforms, this sample simply renders a
+triangle (e.g., ```hello_triangle```).
 
 ## *Reminder
 
 This is an optional section.
 
-It is commonly confusing when new users attempted to apply the ```full screen exclusive```
-extension the very first time. One must notice that, by configuring the ```swapchain create info```
-using ```full screen exclusive``` extension variables or functionalities **DOES NOT** automatically set
-the ```application window``` to full screen exclusive mode. In fact, it merely configures the ```swapchain``` to provide
-the specified feature for an ```application window``` which is already on full screen mode. Hence, it is important to
-notice that, the correct approach to activate the ```full screen feature``` is listed as follows:
+It is commonly confusing when new users attempted to apply the full screen exclusive extension the very first time. One
+must notice that, by configuring the ```swapchain create info```
+using full screen exclusive extension variables or functions **DOES NOT** automatically set the application window to
+full screen mode. In fact, it merely configures the ```swapchain``` to provide the correct ```swapchain images``` for
+its application window. Hence, it is important to follow the correct procedure to activate the full screen exclusive
+mode:
 
 1) recreate the ```swapchain``` using ```full screen exclusive``` related features.
-2) recreate the ```frame buffers``` with the ```swapchain``` created in the previous procedure.
-3) configure the ```application window``` to ```fullscreen mode``` by using windowing SDK (e.g., ```Windows```
+2) recreate the ```frame buffers``` with that ```swapchain``` created in the previous step.
+3) configure the application window to **fullscreen mode** by using windowing SDK (e.g., ```Windows```
    or ```GLFW``` commands, etc.)
 4) execute the ```acquire full screen exclusive EXT``` call.
 
 ## Full screen exclusive extension
 
-Enable the ```full screen exclusive``` extension, and doing so requires the following instance and device extensions
-listed as follows:
+To enable ```VK_EXT_full_screen_exclusive``` extension, the following instance and device extensions must be added:
 
 1. Instance extension:```VK_KHR_WIN32_SURFACE_EXTENSION_NAME```
 2. Instance extension:```VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME```
@@ -64,7 +61,7 @@ listed as follows:
 4. Instance extension:```VK_KHR_SURFACE_EXTENSION_NAME```
 5. Device extension: ```VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME```
 
-Where, inside the function scope of ```init_instance()```:
+Where, instance extensions are added in ```init_instance()```:
 
 ```cpp
 active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
@@ -73,7 +70,7 @@ active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION
 active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 ```
 
-If application is running on a ```Windows``` platform, it can be detected by using:
+If application is running on a Windows platform, it can be detected by using:
 
 ```cpp 
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -81,11 +78,10 @@ If application is running on a ```Windows``` platform, it can be detected by usi
 #endif
 ```
 
-If the target application might run on platforms other than ```Windows```, be certain to check for ```Windows``` in the
-build to ensure those other platforms still compile.
+If the target application might run on platforms other than Windows, be certain to check for Windows in the build to
+ensure those other platforms still compile.
 
-In addition, device extensions are added in addition to the required extensions in the function scope
-of ```init_device()```, where:
+Device extensions are added in ```init_device()```, where:
 
 ```cpp
 active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
@@ -93,17 +89,16 @@ active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
 
 ## Swapchain creation
 
-```full screen exclusive``` extension features are required to be enabled during the ```swapchain``` creation process.
-Where, an extension variable called ```surface_full_screen_exclusive_info_EXT``` is declared as a private class variable
-if ```Windows``` platform is detected. In addition, ```surface_full_screen_exclusive_Win32_info_EXT``` is declared as
-well, in order to support the ```full screen exclusive``` feature. Such that:
+Two variables are introduced during the ```swapchain``` creation process.
+Where,```surface_full_screen_exclusive_info_EXT``` and ```surface_full_screen_exclusive_Win32_info_EXT```
+are declared if a Windows platform is detected:
 
 ```cpp
 VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};
 VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};
 ```
 
-Both variables are initialized in the function scope of ```initialize_windows()```, where:
+Both variables are initialized using```initialize_windows()```:
 
 ```cpp
 void FullScreenExclusive::initialize_windows()
@@ -121,11 +116,10 @@ void FullScreenExclusive::initialize_windows()
 }
 ```
 
-One shall notice that, the ```sType``` of ```surface_full_screen_exclusive_Win32_info_EXT```
+```sType``` of ```surface_full_screen_exclusive_Win32_info_EXT```
 is ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT```
-and its ```pNext``` is attached to a ```nullptr```. Meantime, the ```hmonitor``` must be attached to the hmonitor
-variable representing the monitor is currently operating at, and in this sample, one may simply get it from using the
-following ```Windows``` command:
+and the ```pNext``` is attached to a ```nullptr```. Meantime, the ```hmonitor``` in this sample, one can get it using
+the following Windows command:
 
 ```cpp
 MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
@@ -134,14 +128,14 @@ MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
 More details can be found in the link:
 [MonitorFromWindow function (winuser.h)](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-monitorfromwindow)
 
-Where, ```HWND_applicationWindow``` is a ```hwnd``` represents the application windows ```handle```. Such handle is
-declared as a private class variable as well:
+```HWND_applicationWindow``` is a ```hwnd``` represents the application windows handle. Such handle is declared as a
+private variable, where:
 
 ```cpp
 HWND HWND_applicationWindow{}; 
 ```
 
-And it can be easily get by using the following ```Windows``` command while initializing the application:
+one can get it using the following Windows command:
 
 ```cpp
 HWND_applicationWindow = GetActiveWindow();
@@ -150,19 +144,19 @@ HWND_applicationWindow = GetActiveWindow();
 More details can be found in the link:
 [GetActiveWindow  function (winuser.h)](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getactivewindow)
 
-The variable ```surface_full_screen_exclusive_info_EXT``` has its ```sType```
-as ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT```; and its ```pNext``` is attached to
-the ```surface_full_screen_exclusive_Win32_info_EXT```. Based on the ```full screen exclusive``` mode selection,
-following ```Enums``` can be chosen per selection of the display mode, Where:
+```sType``` of ```surface_full_screen_exclusive_info_EXT``` is
+```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT```, and its ```pNext``` is connected to
+```surface_full_screen_exclusive_Win32_info_EXT```. To specify the display mode, the following ```Enums``` can be chosen
+from, Where:
 
 1. ```VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT```
-2. ```VK_FULL_SCREEN_EXCLUSIVE_DESALLOWED_EXT```
+2. ```VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT```
 3. ```VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT```
 4. ```VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT```
 
-The swapchain chain creation info in declared locally, in form of ```VkSwapchainCreateInfoKHR```, its ```sType``` is
-```VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR```, and in ```Windows``` platform, its ```pNext``` should be attached to
-the ```surface_full_screen_exclusive_info_EXT```, otherwise, its ```pNext``` is normally connected to a ```nullptr```.
+The swapchain chain creation info in declared locally, its ```sType``` is
+```VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR```, and in Windows platform, its ```pNext``` should be attached to
+the ```surface_full_screen_exclusive_info_EXT```, otherwise, its ```pNext``` is connected to a ```nullptr```.
 
 ```cpp
 VkSwapchainCreateInfoKHR info{};
@@ -181,9 +175,9 @@ Rest of the ```swapchain create info``` are configured normally.
 
 This is an optional section.
 
-This section introduces how to manually configure the ```application window``` modes, using ```Windows``` commands. In
-this particular sample, a private function ```update_application_window()``` is introduced, which, it configures
-the ```application window``` modes from ```windowed``` to ```fullscreen```, vice versa, Where:
+This section introduces how to configure application window modes using Windows commands. In this particular sample, a
+private function ```update_application_window()``` is introduced, which, it switches the application window mode between
+windowed and fullscreen:
 
 ```cpp
 void FullScreenExclusive::update_application_window()
@@ -235,7 +229,7 @@ long                  HWND_style_previous = 0;
 ApplicationWindowMode application_window_status = ApplicationWindowMode::Windowed; 
 ```
 
-In addition, an ```Enum class``` is introduced to detect the desired ```application window``` mode:
+In addition, an ```Enum class``` is created to flag the current application window mode:
 
 ```cpp
 enum class ApplicationWindowMode
@@ -247,10 +241,9 @@ enum class ApplicationWindowMode
 
 ## Recreation
 
-In case when a display mode is switched from one to another, the ```recreate()``` function will be called. As was
-introduced, this function simply idles the ```logic device```, then teardown the current ```frame buffers```, and then
-recreates the proper ```swapchain``` and its corresponding new ```frame buffers```. Most importantly,
-the ```application window``` mode has to be reconfigured based on the display mode, where:
+In case when a display mode is switched from one to another, ```recreate()``` will be called. This function idles
+the ```logic device```, tears down the current ```frame buffers```, then recreates the new ```swapchain```
+and ```frame buffers```, and reconfigures the application window mode:
 
 ```cpp
 void FullScreenExclusive::recreate()
@@ -288,16 +281,13 @@ void FullScreenExclusive::recreate()
 
 ## Input events
 
-The input event function is overridden in order to help to select the desired display mode. Where, display modes can be
-selected using keyboard input from F1 to F3, where:
+Display mode can be selected using keyboard input from F1 to F3, where:
 
-1. F1: ```Windowed``` with ```VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT``` and ```ApplicationWindowMode::Windowed```.
-2. F2: ```Borderless Fullscreen``` with ```VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT```
+1. F1: Windowed with ```VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT``` and ```ApplicationWindowMode::Windowed```.
+2. F2: Borderless Fullscreen with ```VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT```
    and ```ApplicationWindowMode::Fullscreen```.
-3. F3: ```Exclusive Fullscreen``` with ```VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT```
+3. F3: Exclusive Fullscreen with ```VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT```
    and ```ApplicationWindowMode::Fullscreen```.
-
-Its corresponding code for the ```keyboard input event``` is addressed as follows:
 
 ```cpp
 switch (key_button.get_code())
@@ -341,7 +331,7 @@ switch (key_button.get_code())
 }
 ```
 
-Where, a ```enum class``` is defined for the display mode:
+an ```Enum class``` is declared for the Swapchain mode, where:
 
 ```cpp
 enum class SwapchainMode
@@ -353,7 +343,7 @@ enum class SwapchainMode
 };
 ```
 
-Meantime, per proper input events, swapchain recreation will be triggered, where:
+And swapchain will be recreated if the display mode changes, where:
 
 ```cpp
 if (isRecreate)
