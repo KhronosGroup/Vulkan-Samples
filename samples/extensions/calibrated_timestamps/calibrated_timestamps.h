@@ -23,7 +23,7 @@
 
 #include "api_vulkan_sample.h"
 
-std::string time_domain_to_string(VkTimeDomainEXT input_time_domain);        // this returns a string the input time domain Enum value
+static std::string time_domain_to_string(VkTimeDomainEXT input_time_domain);        // this returns a string the input time domain Enum value
 
 class CalibratedTimestamps : public ApiVulkanSample
 {

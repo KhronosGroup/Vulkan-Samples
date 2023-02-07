@@ -19,22 +19,15 @@
 
 # Calibrated Timestamps
 
-This code sample demonstrates how to incorporate Vulkan ```calibrated timestamps``` extension. Different from
-the ```timestamps queries```, where the ```timestamps queries``` help to profiling an entire graphic queue, however,
-the ```calibrated timestamps``` allows users to mark their custom ```timestamps``` at specific whereabouts for a desired
-code blocks. Therefore, ```calibrated timestamps``` potentially offers a very powerful tool for code profiling.
+This sample demonstrates how to incorporate Vulkan ```VK_EXT_calibrated_timestamps``` extension. The calibrated
+timestamps is different from timestamp queries, and compares to the timestamp queries, it profiles any given portion of
+a code, unlike timestamp queries, which only profiles an entire graphic queue. Hence, calibrated timestamps provides
+more flexibilities, and offers more customizations.
 
 ## Overview
 
-To enable ```calibrated timestamps``` extension, ```VK_KHR_get_physical_device_properties2``` must be added as an
-```instance extension```, and ```VK_EXT_calibrated_timestamps``` must be added as a ```device extension```. Where,
-```VK_KHR_get_physical_device_properties2``` enables users to access the ```timestamps period``` data, which is one of
-the most important factors related to ```timestamps``` operations in general. ```VK_EXT_calibrated_timestamps```
-further introduces ```vkGetCalibratedTimestampsEXT``` and ```vkGetPhysicalDeviceCalibrateableTimeDomainsEXT```
-functions, which allow users to extract the ```time domain```, ```timestamps```, and the ```max deviation``` at any
-given point per function call.
-
-In this sample, all extension names were introduced in the constructor of the ```CalibratedTimestamps``` class, where:
+To enable the ```VK_EXT_calibrated_timestamps``` extension, ```VK_KHR_get_physical_device_properties2``` must be added
+as an instance extension, and ```VK_EXT_calibrated_timestamps``` added as a device extension. Where:
 
 ```cpp
 CalibratedTimestamps ::CalibratedTimestamps()
@@ -50,24 +43,18 @@ CalibratedTimestamps ::CalibratedTimestamps()
 
 ## Introduction
 
-This sample is built around the framework of the Vulkan Sample "HDR". Where users may choose the ```model``` staged,
-activate or deactivate the ```bloom``` effects, and turn on or off the ```skybox```. These changes will apply to the
-```command buffer``` building process, where, ```calibrated timestamps``` extension functions were introduced, thus, to
-help users to profile the processing time per configuration, in realtime.
+This sample is built upon the framework of the Vulkan Sample ```HDR```. Where, users can select object type, activate or
+deactivate skybox, and the bloom effect. And those changes will apply to ```build_command_buffers()```, which is
+profiled by calibrated timestamps.
 
-##  * Time domain, timestamp, timestamp period, and max deviation
+##                                     * Time domain, timestamp, timestamp period, and max deviation
 
 This is an optional section.
 
-It is commonly confusing for new users attempt to understand the concepts of ```timestamps``` and ```time domains```.
-And this section helps to provide an overview of their concepts and applications in practise.
-
-One shall notice that, a ```timestamp``` **DOES NOT** return an actual time reading, on the contrary, a ```timestamp```
-indicates "how many units of ```timestamp periods``` have passed" with respect to a **FIXED** reference point on the
-timeline. Where, the ```timestamp period``` is measured in realtime, and usually is in unit of ```nanoseconds```. One
-shall also notice that, such "fixed reference point" varies with ```time domain``` and ```host```, therefore, it is not
-very practical to consider such data in our concern. However, since that "reference point" is fixed, one may take
-advantage of that feature to measure the time elapsed between two different ```timestamps```. For instance:
+One shall notice that, a timestamp **DOES NOT** return an actual time reading. A timestamp only indicates "how many
+units of timestamp periods have passed referring to a **FIXED** point on its timeline". The timestamp period, however,
+is measured by real-time unit, and is commonly measured in nanoseconds. In general, one must take two timestamps in
+order to measure the time elapsed within a block of code. For instance:
 
 ```cpp
 uint64_t myFirstTimestamp = getMyTimestamps(); // marks the 1st timestamp
@@ -82,33 +69,26 @@ float timestamps_period = getMyTimestampsPeriod(); // gets the timestamps period
 float timeElapsed = static_cast<float>(mySecondTimestamp - myFirstTimestamp) * timestamps_period;
 ```
 
-And of course, the above example merely showcases the fundamental concept of how to apply a typical ```timestamps```,
-the actual case may vary.
+Furthermore, reference points of each time domains are different, and the measurement of their associated timestamp
+periods may vary. Additional helps to increase the precision of timestamps are provided by max deviations, and the
+uncertainty of its associated timestamps are described.
 
-On shall also notice that, ```timestamps``` come along with its uncertainty, where it was measured by the
-```max deviation```. And each different ```time domain``` has different ```max deviation```. Roughly speaking, one may
-think of a ```time domain``` like a stopwatch, and a low-end stopwatch may suffer more uncertainties than that of a
-high-end one. Hence, per precision concerns, one should always attend to use whichever ```time domain``` that minimizes
-its ```max deviation```. In addition, different ```time domains``` have different fixed reference points for their
-```timestamps```, however, as was mentioned before, that "reference point" is not of our practical concern.
+## Get time domain and timestamps
 
-## Update time domain
-
-All ```time domains``` can be extracted by using ```vkGetPhysicalDeviceCalibrateableTimeDomainsEXT``` call. Where, in
-the Vulkan, ```time domain``` data is in format of ```VkTimeDomainEXT```. And generally, there are four enum values,
-which are listed as follows:
+A list of time domains can be extracted by using ```vkGetPhysicalDeviceCalibrateableTimeDomainsEXT``` call. And the
+Vulkan time domain is defined by the enum class```VkTimeDomainEXT```, where:
 
 1. ```VK_TIME_DOMAIN_DEVICE_EXT```, enum value: 0
 2. ```VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT```, enum value: 1
 3. ```VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT```, enum value: 2
 4. ```VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT```, enum value: 3
 
-And to interoperate them, a ```read_time_domain()``` function is introduced in this sample, where:
+To interoperate it, a helper function ```time_domain_to_string()``` function is introduced, where:
 
 ```cpp
-std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDomain)
+std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 {
-    switch (inputTimeDomain)
+	switch (input_time_domain)
 	{
 		case VK_TIME_DOMAIN_DEVICE_EXT:
 			return "device time domain";
@@ -124,22 +104,13 @@ std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDoma
 }
 ```
 
-Furthermore, ```vkGetPhysicalDeviceCalibrateableTimeDomainsEXT``` returns all ```time domains``` being used in the
-application's runtime. Therefore, a vector is introduced to store the ```time domain``` data, and a ```uint32_t``` is
-declared to store the ```time domain``` count, where:
-
-```cpp
-uint32_t                     time_domain_count = 0;
-std::vector<VkTimeDomainEXT> time_domains{};          // this holds all time domains extracted from the current Instance
-```
-
-With the above preparation, the function ```update_time_domains()``` is declared and defined as follows:
+And the function ```get_time_domains()``` is created:
 
 ```cpp
 void CalibratedTimestamps::update_time_domains()
 {
 	// Initialize time domain count:
-	time_domain_count = 0;
+	uint32_t time_domain_count = 0;
 	// Update time domain count:
 	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
 
@@ -152,33 +123,9 @@ void CalibratedTimestamps::update_time_domains()
 		// Update time_domain vector:
 		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
 	}
-	// Time domain is successfully updated:
-	isTimeDomainUpdated = (result == VK_SUCCESS);
-}
-```
 
-Where, it syncs up all ```time domains``` in the application runtime, and marks
-the ```boolean``` ```isTimeDomainUpdated``` to report its success. This step of extracting all ```time domains``` is
-critical to execute the
-```vkGetCalibratedTimestampsEXT``` call, since the vector ```time_domains``` and the ```uint32_t```
-```time_domain_count``` are both required.
-
-## Update timestamps
-
-The function ```vkGetCalibratedTimestampsEXT``` extracts all ```timestamps``` and ```max deviations``` within all
-available ```time domains``` in application runtime. Therefore, one shall first apply ```update_time_domains()```
-before attempts to mark any ```timestamps```. In this sample, the function ```update_timestamps()``` is declared and
-defined as follows:
-
-```cpp
-void CalibratedTimestamps::update_timestamps()
-{
-	// Ensures that time domain exists
-	if (isTimeDomainUpdated)
+	if (time_domain_count > 0)
 	{
-		// Create LOCAL calibrate time stamps info:
-		std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};
-
 		for (VkTimeDomainEXT time_domain : time_domains)
 		{
 			// Initialize in-scope time stamp info variable:
@@ -197,76 +144,72 @@ void CalibratedTimestamps::update_timestamps()
 		timestamps.resize(static_cast<int>(time_domain_count));
 		// Resize max deviations vector
 		max_deviations.resize(static_cast<int>(time_domain_count));
+	}
 
+	// Time domain is successfully updated:
+	is_time_domain_updated = ((result == VK_SUCCESS) && (time_domain_count > 0));
+}
+```
+
+Notice that, a ```VkCalibratedTimestampInfoEXT``` variable ```timestamp_info``` must be created. Its ```sType```
+must be ```VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT```, its ```pNext``` is connected to a ```nullptr```, and
+its ```timeDomain``` must be connected to either the reference of a ```VkTimeDomainEXT``` variable, or the reference of
+a vector of ```VkTimeDomainEXT``` variables.
+
+```get_time_domain()``` registers all time domains, and flags its success using ```is_time_domain_updated```. The
+function ```get_timestamps()``` then extracts all associated timestamps and max deviations using  
+```vkGetCalibratedTimestampsEXT``` call, where:
+
+```cpp
+void CalibratedTimestamps::get_timestamps()
+{
+	// Ensures that time domain exists
+	if (is_time_domain_updated)
+	{
 		// Get calibrated timestamps:
-		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domain_count, timestamps_info.data(), timestamps.data(), max_deviations.data());
+		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domains.size(), timestamps_info.data(), timestamps.data(), max_deviations.data());
 
 		// Timestamps is successfully updated:
-		isTimestampUpdated = (result == VK_SUCCESS);
+		is_timestamp_updated = (result == VK_SUCCESS);
 	}
 }
 ```
 
-Before the ```vkGetCalibratedTimestampsEXT``` call, ```timestamp_info``` must be specified, using
-```VkCalibratedTimestampInfoEXT```. Where, its ```sType``` is ```VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT```, and
-its ```pNext``` is usually connected to a ```nullptr```. More importantly, its ```timeDomain``` must be pointed at the
-reference of a ```time_domain```, in format of ```VkTimeDomainEXT```. And in our case, it merely indicates each
-corresponding element of the vector ```time_domains```.
+The boolean ```is_timestamp_updated``` flags its success.
 
-Per execution of ```vkGetCalibratedTimestampsEXT```, it syncs all ```timestamps``` and ```max deviations``` for all
-```time domains```, where, two vectors were declared and initialized in from the ```CalibratedTimestamps``` header:
-
-```cpp
-std::vector<uint64_t>        timestamps{};            // timestamps vector
-std::vector<uint64_t>        max_deviations{};        // max deviations vector
-```
-
-Meanwhile, a ```boolean``` variable ```isTimestampUpdated``` declared in the header will be updated to report its
-success.
-
-##      * Optimal time domain
+##                            * Get device time domain
 
 This is an optional section.
 
-As was mentioned in the previous section, ```max deviations``` vary with ```time domains```. Since
-```calibrated timestamps``` extracts all ```time domains``` and their ```timestamps``` related data, it is a good
-practice to put such feature in use. Hence, the function ```get_optimal_time_domain()``` is introduced to select the
-optimal ```time domain``` which minimizes its ```max deviation```, where:
+Since calibrated timestamps extracts all time domains and timestamps, it is a good practice to put such feature in use.
+The function ```get_device_time_domain()``` is therefore, created to select the device time domain and its associated
+timestamps, where:
 
 ```cpp
-void CalibratedTimestamps::get_optimal_time_domain()
+void CalibratedTimestamps::get_device_time_domain()
 {
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	init_time_domains_and_timestamps();
+	get_time_domains();
 
-	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
+	if (is_time_domain_updated && (time_domains.size() > 1))
 	{
-		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
+		auto iterator_device = std::find(time_domains.begin(), time_domains.end(), VK_TIME_DOMAIN_DEVICE_EXT);
 
-		auto iterator_optimal = std::find(max_deviations.begin(), max_deviations.end(), optimal_maxDeviation);
+		int device_index = static_cast<int>(iterator_device - time_domains.begin());
 
-		if (iterator_optimal != max_deviations.end())
-		{
-			int optimal_index = static_cast<int>(iterator_optimal - max_deviations.begin());
-
-			optimal_time_domain.index         = optimal_index;
-			optimal_time_domain.timeDomainEXT = time_domains[optimal_index];
-		}
+		selected_time_domain.index         = device_index;
+		selected_time_domain.timeDomainEXT = time_domains[device_index];
 	}
 }
 ```
 
-In the above function, ```init_timeDomains_and_timestamps()``` is a simple ```initializer``` which resets all
-```calibrated timestamps``` extension related variables, such that:
+```init_time_domains_and_timestamps()``` simply resets time domain and timestamps, such that:
 
 ```cpp
-void CalibratedTimestamps::init_timeDomains_and_timestamps()
+void CalibratedTimestamps::init_time_domains_and_timestamps()
 {
-	isTimeDomainUpdated = false;
-	isTimestampUpdated  = false;
-
-	time_domain_count = 0;
+	is_time_domain_updated = false;
+	is_timestamp_updated   = false;
 
 	time_domains.clear();
 	timestamps.clear();
@@ -274,23 +217,21 @@ void CalibratedTimestamps::init_timeDomains_and_timestamps()
 }
 ```
 
-The function ```get_optimal_time_domain()``` extracts all ```time domains``` and iterates though the vector
-```max_deviations```, seeking the minimal ```max deviation```, then returns its corresponding ```time domain``` and
-index. Where, those data are stored in the structure ```optimal_time_domain``` declared in the header:
+And ```selected_time_domain``` is a structure created to restore the associated data:
 
 ```cpp
-struct
-{
-    int             index = 0;
-    VkTimeDomainEXT timeDomainEXT{};
-} optimal_time_domain{};
+	struct
+	{
+		int             index = 0;
+		VkTimeDomainEXT timeDomainEXT{};
+	} selected_time_domain{};
 ```
 
-## Tic-toc
+## Marking timestamps
 
-To further elaborate usage of ```calibarted timestamps``` extension, a ```tic()``` and a ```toc()``` function are
-introduced. In addition, a structure ```DeltaTimestamp``` is declared to store the beginning, end, and the difference of
-the ```timestamps``` marked by ```tic()``` and ```toc()```, where:
+To further elaborate the usage of calibrated timestamps, ```timestamps_begin()``` and ```timestamps_end()```
+are introduced. They mark the beginning and the end of a targeted code block, as their names indicate. Associated data
+is stored in the structure ```DeltaTimestamp```, defined as follows:
 
 ```cpp
 struct DeltaTimestamp
@@ -307,94 +248,98 @@ struct DeltaTimestamp
 };
 ```
 
-Furthermore, a function call ```get_delta()``` is defined locally inside the structure to easily evaluate the difference
-between the beginning and the end of pair of ```timestamps```.
-
-The ```tic()``` function marks the ```timestamp``` begin, and stores its ```timestamp``` tag in a structure
-```DeltaTimestamp``` declared in the header, where:
+```timestamps_begin()``` marks the first timestamp at the beginning of a code block, where:
 
 ```cpp
-void CalibratedTimestamps::tic(const std::string &input_tag)
+void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
 	// Initialize, then update time domains and timestamps
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	is_timestamp_updated = false;
+	timestamps.clear();
+	max_deviations.clear();
 
-	// Create a local delta_timestamp to push back to the vector delta_timestamps
-	DeltaTimestamp delta_timestamp{};
+	// Now to get timestamps
+	get_timestamps();
 
-	// Naming the tic-toc tags and begin timestamp for this particular mark
-	if (!input_tag.empty())
+	if (is_timestamp_updated)
 	{
-		delta_timestamp.tag = input_tag;
-	}
-	delta_timestamp.begin = timestamps[optimal_time_domain.index];
+		// Create a local delta_timestamp to push back to the vector delta_timestamps
+		DeltaTimestamp delta_timestamp{};
 
-	// Push back this partially filled element to the vector, which will be filled in its corresponding toc
-	delta_timestamps.push_back(delta_timestamp);
+		// Naming the tic-toc tags and begin timestamp for this particular mark
+		if (!input_tag.empty())
+		{
+			delta_timestamp.tag = input_tag;
+		}
+		delta_timestamp.begin = timestamps[selected_time_domain.index];
+
+		// Push back this partially filled element to the vector, which will be filled in its corresponding toc
+		delta_timestamps.push_back(delta_timestamp);
+	}
 }
 ```
 
-The ```toc()``` function marks the ```timestamp``` end, compares their ```timestamp``` tags, evaluates the
-```delta timestamp``` and store them in the same ```DeltaTimestamp``` structure, where:
+and ```timestamps_end()``` marks the second timestamp by the end of the same code block, where:
 
 ```cpp
-void CalibratedTimestamps::toc(const std::string &input_tag)
+void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 {
 	if (delta_timestamps.empty() || (input_tag != delta_timestamps.back().tag))
 	{
-		LOGI("Tic-toc Fatal Error: toc is not tagged the same as its tic!\n")
+		LOGI("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
 		return;        // exits the function here, further calculation is meaningless
 	}
 
 	// Initialize, then update time domains and timestamps
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	is_timestamp_updated = false;
+	timestamps.clear();
+	max_deviations.clear();
 
-	delta_timestamps.back().end = timestamps[optimal_time_domain.index];
-	delta_timestamps.back().get_delta();
+	// Now to get timestamps
+	get_timestamps();
+
+	if (is_timestamp_updated)
+	{
+		// Add this data to the last term of delta_timestamps vector
+		delta_timestamps.back().end = timestamps[selected_time_domain.index];
+		delta_timestamps.back().get_delta();
+	}
 }
 ```
 
 ## UI overlay
 
-The ```UI overlay``` in this sample showcases several options and information, listed as follows:
-
 ![Sample](./images/calibrated_timestamps_ui_overlay.png)
 
-Where, the ```models``` staged in the ```scene``` can be chosen from a ```sphere```, a ```teapot```, and a
-```torus knot```. The ```bloom``` and the ```skybox``` can be activated and deactivated. Since the optimal
-```time domain``` selected, therefore, its ```flag``` is displayed. In addition, the ```timestamp period``` is displayed
-in realtime, along with the processing time of the ```command buffer``` ```creation```, and ```draw```, where:
+From the UI overlay, the object type can be selected from 1) a sphere, 2) a teapot, and 3) a torus knot. Skybox and the
+bloom effect can be switched on and off. In addition, the selected time domain will be displayed, as well as the
+profiling information for the ```command buffers``` building process. ```timestampes_begin()```
+and ```timestamps_end()``` are used to profile the ```build_command_buffers()```, where:
 
 ```cpp
 void CalibratedTimestamps::build_command_buffers()
 {
     // Reset the delta timestamps vector
     delta_timestamps.clear();
+
+	timestamps_begin("Build Command Buffers");
     
-    tic("Creating Command Buffer");
-    {/* ... command buffer create info ... */}
-    toc("Creating Command Buffer");
+    {/* ... build command buffers ... */}
     
-    tic("Draw Command Buffer");
-    {/* ... command buffer draw ... */}
-    toc("Draw Command Buffer");
+    timestamps_end("Build Command Buffers");
 }
 ```
 
-Profiling information will be displayed whenever the vector ```delta_timestamps``` is not empty, where:
+and if ```delta_timestamps``` is not empty, the following code will be executed:
 
 ```cpp
 if (!delta_timestamps.empty())
 {
-    drawer.text("Optimal Time Domain Selected:\n %s", read_time_domain(optimal_time_domain.timeDomainEXT).c_str());
+    drawer.text("Time Domain Selected:\n %s", time_domain_to_string(selected_time_domain.timeDomainEXT).c_str());
 
     for (const auto &delta_timestamp : delta_timestamps)
     {
-        drawer.text("%s: %.1f ns", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period);
+        drawer.text("%s:\n %.1f Microseconds", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period * 0.001f);
     }
 }
 ```
