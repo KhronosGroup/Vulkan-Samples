@@ -17,16 +17,16 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "api_vulkan_sample.h"
 #include "scene_graph/components/pbr_material.h"
 
 class ExtendedDynamicState2 : public ApiVulkanSample
 {
- public:
+  public:
 	typedef struct ModelDynamicParam
 	{
 		bool depth_bias         = false;
