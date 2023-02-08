@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+#include <memory>
 #include <string>
 #include <vector>
-#include <memory>
 
 #include "extended_dynamic_state2.h"
 
@@ -95,8 +95,8 @@ void ExtendedDynamicState2::load_assets()
 	load_scene("scenes/primitives/primitives.gltf");
 
 	std::vector<SceneNode>       scene_elements;
-	std::vector<vkb::sg::Node *> node_scene_list = { &(scene->get_root_node()) };
-	vkb::sg::Node *              node            = nullptr;
+	std::vector<vkb::sg::Node *> node_scene_list = {&(scene->get_root_node())};
+	vkb::sg::Node               *node            = nullptr;
 
 	for (size_t list_it = 0; node_scene_list.size() > list_it; ++list_it)
 	{
@@ -106,9 +106,9 @@ void ExtendedDynamicState2::load_assets()
 		if (!node->get_children().empty())
 		{
 			node_scene_list.insert(
-			                        node_scene_list.end(),
-			                        node->get_children().begin(),
-			                        node->get_children().end());
+			    node_scene_list.end(),
+			    node->get_children().begin(),
+			    node->get_children().end());
 		}
 
 		// If current node have mesh add it to scene_elements
@@ -170,17 +170,17 @@ void ExtendedDynamicState2::render(float delta_time)
 void ExtendedDynamicState2::prepare_uniform_buffers()
 {
 	uniform_buffers.common      = std::make_unique<vkb::core::Buffer>(get_device(),
-									  sizeof(ubo_common),
-									  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-									  VMA_MEMORY_USAGE_CPU_TO_GPU);
+                                                                 sizeof(ubo_common),
+                                                                 VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.baseline    = std::make_unique<vkb::core::Buffer>(get_device(),
-									  sizeof(ubo_baseline),
-									  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-									  VMA_MEMORY_USAGE_CPU_TO_GPU);
+                                                                   sizeof(ubo_baseline),
+                                                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.tesselation = std::make_unique<vkb::core::Buffer>(get_device(),
-									  sizeof(ubo_tess),
-									  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-									  VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                                  sizeof(ubo_tess),
+	                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
@@ -325,11 +325,11 @@ void ExtendedDynamicState2::create_pipeline()
 	graphics_create.renderPass = render_pass;
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
-					   pipeline_cache,
-					   1,
-					   &graphics_create,
-					   VK_NULL_HANDLE,
-					   &pipeline.baseline));
+	                                   pipeline_cache,
+	                                   1,
+	                                   &graphics_create,
+	                                   VK_NULL_HANDLE,
+	                                   &pipeline.baseline));
 
 	/* Setup for second pipeline */
 	graphics_create.layout = pipeline_layouts.background;
@@ -349,13 +349,13 @@ void ExtendedDynamicState2::create_pipeline()
 	/* Attribute descriptions */
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes_background = {
 	    vkb::initializers::vertex_input_attribute_description(0,
-								  0,
-								  VK_FORMAT_R32G32B32_SFLOAT,
-								  0),                               // Position
+	                                                          0,
+	                                                          VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          0),        // Position
 	    vkb::initializers::vertex_input_attribute_description(0,
-								  1,
-								  VK_FORMAT_R32G32B32_SFLOAT,
-								  offsetof(Vertex, normal)),        // Normal
+	                                                          1,
+	                                                          VK_FORMAT_R32G32B32_SFLOAT,
+	                                                          offsetof(Vertex, normal)),        // Normal
 	};
 
 	vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings_background.size());
@@ -369,11 +369,11 @@ void ExtendedDynamicState2::create_pipeline()
 	shader_stages[1] = load_shader("extended_dynamic_state2/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
-					   pipeline_cache,
-					   1,
-					   &graphics_create,
-					   VK_NULL_HANDLE,
-					   &pipeline.background));
+	                                   pipeline_cache,
+	                                   1,
+	                                   &graphics_create,
+	                                   VK_NULL_HANDLE,
+	                                   &pipeline.background));
 
 	/* Setup for third pipeline */
 	graphics_create.pTessellationState = &tessellation_state;
@@ -396,13 +396,13 @@ void ExtendedDynamicState2::create_pipeline()
 	}
 
 	shader_stages[0]           = load_shader("extended_dynamic_state2/tess.vert",
-						 VK_SHADER_STAGE_VERTEX_BIT);
+	                                         VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]           = load_shader("extended_dynamic_state2/tess.frag",
-						 VK_SHADER_STAGE_FRAGMENT_BIT);
+	                                         VK_SHADER_STAGE_FRAGMENT_BIT);
 	shader_stages[2]           = load_shader("extended_dynamic_state2/tess.tesc",
-						 VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	                                         VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
 	shader_stages[3]           = load_shader("extended_dynamic_state2/tess.tese",
-						 VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+	                                         VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
 	graphics_create.stageCount = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages    = shader_stages.data();
 	/* Enable depth test and write */
@@ -411,11 +411,11 @@ void ExtendedDynamicState2::create_pipeline()
 	/* Flip cull mode */
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
-					   pipeline_cache,
-					   1,
-					   &graphics_create,
-					   VK_NULL_HANDLE,
-					   &pipeline.tesselation));
+	                                   pipeline_cache,
+	                                   1,
+	                                   &graphics_create,
+	                                   VK_NULL_HANDLE,
+	                                   &pipeline.tesselation));
 }
 
 /**
@@ -461,13 +461,13 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Binding baseline pipeline and descriptor sets */
 		vkCmdBindDescriptorSets(draw_cmd_buffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_layouts.baseline,
-					0,
-					1,
-					&descriptor_sets.baseline,
-					0,
-					nullptr);
+		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                        pipeline_layouts.baseline,
+		                        0,
+		                        1,
+		                        &descriptor_sets.baseline,
+		                        0,
+		                        nullptr);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.baseline);
 
 		/* Setting topology to triangle list and disabling primitive restart functionality */
@@ -486,13 +486,13 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Changing bindings to tessellation pipeline */
 		vkCmdBindDescriptorSets(draw_cmd_buffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_layouts.tesselation,
-					0,
-					1,
-					&descriptor_sets.tesselation,
-					0,
-					nullptr);
+		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                        pipeline_layouts.tesselation,
+		                        0,
+		                        1,
+		                        &descriptor_sets.tesselation,
+		                        0,
+		                        nullptr);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.tesselation);
 
 		/* Change topology to patch list and setting patch control points value */
@@ -504,13 +504,13 @@ void ExtendedDynamicState2::build_command_buffers()
 
 		/* Changing bindings to background pipeline */
 		vkCmdBindDescriptorSets(draw_cmd_buffer,
-					VK_PIPELINE_BIND_POINT_GRAPHICS,
-					pipeline_layouts.background,
-					0,
-					1,
-					&descriptor_sets.background,
-					0,
-					nullptr);
+		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
+		                        pipeline_layouts.background,
+		                        0,
+		                        1,
+		                        &descriptor_sets.background,
+		                        0,
+		                        nullptr);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
 		/* Drawing background */
@@ -565,12 +565,12 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(),
-								 static_cast<uint32_t>(set_layout_bindings.size()));
+	                                                         static_cast<uint32_t>(set_layout_bindings.size()));
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(),
-  					     &descriptor_layout_create_info,
-					     nullptr,
-					     &descriptor_set_layouts.baseline));
+	                                     &descriptor_layout_create_info,
+	                                     nullptr,
+	                                     &descriptor_set_layouts.baseline));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(
@@ -578,16 +578,16 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 	        1);
 
 	/* Pass scene node information via push constants */
-	VkPushConstantRange push_constant_range = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT,
-											 sizeof(push_const_block),
-											 0);
+	VkPushConstantRange push_constant_range            = vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT,
+	                                                                                            sizeof(push_const_block),
+	                                                                                            0);
 	pipeline_layout_create_info.pushConstantRangeCount = 1;
 	pipeline_layout_create_info.pPushConstantRanges    = &push_constant_range;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
-					&pipeline_layout_create_info,
-					nullptr,
-					&pipeline_layouts.baseline));
+	                                &pipeline_layout_create_info,
+	                                nullptr,
+	                                &pipeline_layouts.baseline));
 
 	/* Second descriptor set */
 	set_layout_bindings = {
@@ -604,17 +604,17 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(),
-					     &descriptor_layout_create_info,
-					     nullptr,
-					     &descriptor_set_layouts.tesselation));
+	                                     &descriptor_layout_create_info,
+	                                     nullptr,
+	                                     &descriptor_set_layouts.tesselation));
 
 	pipeline_layout_create_info.pSetLayouts    = &descriptor_set_layouts.tesselation;
 	pipeline_layout_create_info.setLayoutCount = 1;
 	push_constant_range.stageFlags             = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
-					&pipeline_layout_create_info,
-					nullptr,
-					&pipeline_layouts.tesselation));
+	                                &pipeline_layout_create_info,
+	                                nullptr,
+	                                &pipeline_layouts.tesselation));
 
 	/* Third descriptor set */
 	set_layout_bindings = {
@@ -631,18 +631,18 @@ void ExtendedDynamicState2::setup_descriptor_set_layout()
 	descriptor_layout_create_info.pBindings    = set_layout_bindings.data();
 	descriptor_layout_create_info.bindingCount = static_cast<uint32_t>(set_layout_bindings.size());
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(),
-					     &descriptor_layout_create_info,
-					     nullptr,
-					     &descriptor_set_layouts.background));
+	                                     &descriptor_layout_create_info,
+	                                     nullptr,
+	                                     &descriptor_set_layouts.background));
 
 	pipeline_layout_create_info.pSetLayouts            = &descriptor_set_layouts.background;
 	pipeline_layout_create_info.setLayoutCount         = 1;
 	pipeline_layout_create_info.pushConstantRangeCount = 0;
 	pipeline_layout_create_info.pPushConstantRanges    = VK_NULL_HANDLE;
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
-					&pipeline_layout_create_info,
-					nullptr,
-					&pipeline_layouts.background));
+	                                &pipeline_layout_create_info,
+	                                nullptr,
+	                                &pipeline_layouts.background));
 }
 
 /**
@@ -740,14 +740,12 @@ void ExtendedDynamicState2::request_gpu_features(vkb::PhysicalDevice &gpu)
 	/* Enable extension features required by this sample
 	   These are passed to device creation via a pNext structure chain */
 	auto &requested_extended_dynamic_state2_features =
-		gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>
-			(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
+	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState2FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT);
 	requested_extended_dynamic_state2_features.extendedDynamicState2                   = VK_TRUE;
 	requested_extended_dynamic_state2_features.extendedDynamicState2PatchControlPoints = VK_TRUE;
 
 	auto &requested_extended_dynamic_state_feature =
-		gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>
-			(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
+	    gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicStateFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT);
 	requested_extended_dynamic_state_feature.extendedDynamicState = VK_TRUE;
 
 	// Tessellation shader support is required for this example
@@ -912,11 +910,11 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 			push_const_block.color = node_material->base_color_factor;
 		}
 		vkCmdPushConstants(command_buffer,
-				   pipeline_layouts.baseline,
-				   VK_SHADER_STAGE_VERTEX_BIT,
-				   0,
-				   sizeof(push_const_block),
-				   &push_const_block);
+		                   pipeline_layouts.baseline,
+		                   VK_SHADER_STAGE_VERTEX_BIT,
+		                   0,
+		                   sizeof(push_const_block),
+		                   &push_const_block);
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer_pos.get(), offsets);
@@ -938,11 +936,11 @@ void ExtendedDynamicState2::draw_created_model(VkCommandBuffer commandBuffer)
 	VkDeviceSize offsets[1] = {0};
 	push_const_block.color  = glm::vec4{0.5f, 1.0f, 1.0f, 1.0f};
 	vkCmdPushConstants(commandBuffer,
-			   pipeline_layouts.baseline,
-			   VK_SHADER_STAGE_VERTEX_BIT,
-			   0,
-			   sizeof(push_const_block),
-			   &push_const_block);
+	                   pipeline_layouts.baseline,
+	                   VK_SHADER_STAGE_VERTEX_BIT,
+	                   0,
+	                   sizeof(push_const_block),
+	                   &push_const_block);
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, cube.vertices_pos->get(), offsets);
 	vkCmdBindVertexBuffers(commandBuffer, 1, 1, cube.vertices_norm->get(), offsets);
 	vkCmdBindIndexBuffer(commandBuffer, cube.indices->get_handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -1042,13 +1040,13 @@ void ExtendedDynamicState2::model_data_creation()
 	cube.vertices_pos = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        vertex_buffer_size,
 	                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-								VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                        VMA_MEMORY_USAGE_GPU_ONLY);
 
 	cube.vertices_norm = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                         vertex_buffer_size,
 	                                                         VK_BUFFER_USAGE_VERTEX_BUFFER_BIT |
-								 VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	                                                             VK_BUFFER_USAGE_TRANSFER_DST_BIT,
 	                                                         VMA_MEMORY_USAGE_GPU_ONLY);
 
 	cube.indices = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -1108,8 +1106,8 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 	static auto &transform = std::find_if(scene_elements_baseline.begin(),
 	                                      scene_elements_baseline.end(),
 	                                      [](SceneNode const &scene_node) {
-							return scene_node.node->get_name() == "Cube_1";
-					      })
+		                                      return scene_node.node->get_name() == "Cube_1";
+	                                      })
 	                             ->node->get_transform();
 	static auto  translation = transform.get_translation();
 	static float difference  = 0.0f;
