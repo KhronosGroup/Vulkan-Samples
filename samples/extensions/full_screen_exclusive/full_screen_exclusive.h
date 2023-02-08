@@ -87,20 +87,20 @@ class FullScreenExclusive : public vkb::Application
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
 #if defined(VK_USE_PLATFORM_WIN32_KHR)                                                                           // To slightly optimize the following variables, if a Windows platform is detected, then they shall be defined, otherwise not.
-	HWND                                     HWND_applicationWindow{};                                           // sync the application HWND handle
-	bool                                     isWindowed = true;                                                  // this is to tell if the application window is already set in the desired mode
+	HWND                                     HWND_application_window{};                                           // sync the application HWND handle
+	bool                                     is_windowed = true;                                                  // this is to tell if the application window is already set in the desired mode
 	WINDOWPLACEMENT                          wpc{};                                                              // window placement information
 	LONG                                     HWND_style          = 0;                                            // current Hwnd style
-	LONG                                     HWND_style_previous = 0;                                            // previous Hwnd style
+	LONG                                     HWND_extended_style = 0;                                            // previous Hwnd style
 	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};                           // it can be created locally, however, it is a good reminder that they are declared here as a class variable
 	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};                     // if using DirectX, then this variable has to be created and attach to the pNext of a VkSurfaceFullScreenExclusiveInfoEXT value
-	bool                                     isFullScreenExclusive     = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
+	bool                                     is_full_screen_exclusive     = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
 	ApplicationWindowMode                    application_window_status = ApplicationWindowMode::Windowed;        // declare and initialize the application window mode
 	SwapchainMode                            full_screen_status        = SwapchainMode::Default;                 // declare and initialize the swapchain mode
 #endif
 
   private:
-	VkExtent2D update_current_maxImageExtent() const;                           // This detects the maximum surface resolution and return them in vkExtent2D format
+	VkExtent2D get_current_max_image_extent() const;                           // This detects the maximum surface resolution and return them in vkExtent2D format
 	void       input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
 	void       update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
 	void       recreate();                                                      // to recreate the swapchain and related per switch of display mode
@@ -117,17 +117,17 @@ class FullScreenExclusive : public vkb::Application
 	static VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 	void                         init_instance(const std::vector<const char *> &required_instance_extensions, const std::vector<const char *> &required_validation_layers);
 	void                         init_device(const std::vector<const char *> &required_device_extensions);
-	static void                  init_per_frame(Context &input_context, PerFrame &per_frame);
-	static void                  teardown_per_frame(Context &input_context, PerFrame &per_frame);
+	void                         init_per_frame(PerFrame &per_frame) const;
+	void                         teardown_per_frame(PerFrame &per_frame) const;
 	void                         init_swapchain();
-	static void                  init_render_pass(Context &input_context);
+	void                         init_render_pass();
 	VkShaderModule               load_shader_module(const char *path) const;
 	void                         init_pipeline();
-	static VkResult              acquire_next_image(Context &input_context, uint32_t *image);
-	static void                  render_triangle(Context &input_context, uint32_t swapchain_index);
-	static VkResult              present_image(Context &input_context, uint32_t index);
-	static void                  init_frame_buffers(Context &input_context);
-	static void                  teardown_frame_buffers(Context &input_context);
+	VkResult                     acquire_next_image(uint32_t *image);
+	void                         render_triangle(uint32_t swapchain_index);
+	VkResult                     present_image(uint32_t index);
+	void                         init_framebuffers();
+	void                         teardown_framebuffers();
 	void                         teardown();
 };
 

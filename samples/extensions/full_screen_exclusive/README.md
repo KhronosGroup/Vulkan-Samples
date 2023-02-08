@@ -30,7 +30,8 @@ is applicable on Windows platform alone.
 
 This sample provides a detailed procedure to activate full screen exclusive mode on Windows applications. Users can
 switch display mode from: 1) windowed, 2) borderless fullscreen, and 3) exclusive fullscreen
-using ```keyboard input events```, while running this sample on the Windows platform.
+using ```keyboard input events```, while running this sample on the Windows platform. On other platforms, however, this
+sample simply renders a triangle.
 
 ## *Reminder
 
@@ -63,16 +64,22 @@ Where, instance extensions are added in ```init_instance()```:
 active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
-active_instance_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 ```
 
-Device extensions are added in ```init_device()```, where:
+Device extensions are added in ```perpare()``` using ```init_device()```, due to its built-in extension availability
+check, where:
 
 ```cpp
-active_device_extensions.push_back(VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME);
+#if defined(VK_USE_PLATFORM_WIN32_KHR)
+	// If application is running on a Windows platform, then the following TWO device extension is also needed:
+	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});
+#else
+	// If application is NOT running on a Windows platform, then only VK_KHR_swapchain is needed:
+	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME});
+#endif
 ```
 
-If application is running on a Windows platform, it can be detected by using:
+Where, a Windows platform can be detected by using:
 
 ```cpp 
 #if defined(VK_USE_PLATFORM_WIN32_KHR)
@@ -98,16 +105,17 @@ Both variables are initialized using```initialize_windows()```:
 ```cpp
 void FullScreenExclusive::initialize_windows()
 {
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// The following variable has to be attached to the pNext of surface_full_screen_exclusive_info_EXT:
 	surface_full_screen_exclusive_Win32_info_EXT.sType    = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
 	surface_full_screen_exclusive_Win32_info_EXT.pNext    = nullptr;
-	surface_full_screen_exclusive_Win32_info_EXT.hmonitor = MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
+	surface_full_screen_exclusive_Win32_info_EXT.hmonitor = MonitorFromWindow(HWND_application_window, MONITOR_DEFAULTTONEAREST);
 
 	surface_full_screen_exclusive_info_EXT.sType               = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT;
 	surface_full_screen_exclusive_info_EXT.pNext               = &surface_full_screen_exclusive_Win32_info_EXT;
 	surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DEFAULT_EXT;        // Set the fullScreenExclusive stage to default when initializing
-#endif
+
+	// Windows placement should only be registered ONCE:
+	GetWindowPlacement(HWND_application_window, &wpc);
 }
 ```
 
@@ -116,7 +124,7 @@ is ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT```
 and its ```pNext``` is connected to a ```nullptr```. One can get its ```hmonitor``` using the following Windows command:
 
 ```cpp
-MonitorFromWindow(HWND_applicationWindow, MONITOR_DEFAULTTONEAREST);
+MonitorFromWindow(HWND_application_window, MONITOR_DEFAULTTONEAREST);
 ```
 
 More details can be found in the link:
@@ -125,13 +133,13 @@ More details can be found in the link:
 ```HWND_applicationWindow``` is a ```hwnd``` windows handle, and is declared as follow:
 
 ```cpp
-HWND HWND_applicationWindow{}; 
+HWND HWND_application_window{}; 
 ```
 
 one can get it using the following Windows command:
 
 ```cpp
-HWND_applicationWindow = GetActiveWindow();
+HWND_application_window = GetActiveWindow();
 ```
 
 More details can be found in the link:
@@ -173,39 +181,32 @@ fullscreen mode, where:
 ```cpp
 void FullScreenExclusive::update_application_window()
 {
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-	if (application_window_status == ApplicationWindowMode::Fullscreen && isWindowed)
+	if (application_window_status == ApplicationWindowMode::Fullscreen && is_windowed)        // check if it is already in fullscreen, if is, then do nothing
 	{
-		isWindowed = false;
+		is_windowed = false;
 
-		GetWindowPlacement(HWND_applicationWindow, &wpc);
 		if (HWND_style == 0)
-			HWND_style = GetWindowLong(HWND_applicationWindow, GWL_STYLE);
-		if (HWND_style_previous == 0)
-			HWND_style_previous = GetWindowLong(HWND_applicationWindow, GWL_EXSTYLE);
+			HWND_style = GetWindowLong(HWND_application_window, GWL_STYLE);
+		if (HWND_extended_style == 0)
+			HWND_extended_style = GetWindowLong(HWND_application_window, GWL_EXSTYLE);
 
-		long HWND_newStyle = HWND_style;
-		HWND_newStyle &= ~WS_BORDER;
-		HWND_newStyle &= ~WS_DLGFRAME;
-		HWND_newStyle &= ~WS_THICKFRAME;
+		long HWND_newStyle          = HWND_style & (~WS_BORDER) & (~WS_DLGFRAME) & (~WS_THICKFRAME);
+		long HWND_extended_newStyle = HWND_extended_style & (~WS_EX_WINDOWEDGE);
 
-		long HWND_newStyle_previous = HWND_style_previous;
-		HWND_newStyle_previous &= ~WS_EX_WINDOWEDGE;
+		SetWindowLong(HWND_application_window, GWL_STYLE, HWND_newStyle | static_cast<long>(WS_POPUP));
+		SetWindowLong(HWND_application_window, GWL_EXSTYLE, HWND_extended_newStyle | WS_EX_TOPMOST);
 
-		SetWindowLong(HWND_applicationWindow, GWL_STYLE, HWND_newStyle | WS_POPUP);
-		SetWindowLong(HWND_applicationWindow, GWL_EXSTYLE, HWND_newStyle_previous | WS_EX_TOPMOST);
-		ShowWindow(HWND_applicationWindow, SW_SHOWMAXIMIZED);
+		ShowWindow(HWND_application_window, SW_SHOWMAXIMIZED);
 	}
-	else if (application_window_status == ApplicationWindowMode::Windowed && !isWindowed)
+	else if (application_window_status == ApplicationWindowMode::Windowed && !is_windowed)        // check if it is already "windowed", if is, then do nothing
 	{
-		isWindowed = true;
+		is_windowed = true;
 
-		SetWindowLong(HWND_applicationWindow, GWL_STYLE, HWND_style);
-		SetWindowLong(HWND_applicationWindow, GWL_EXSTYLE, HWND_style_previous);
-		ShowWindow(HWND_applicationWindow, SW_SHOWNORMAL);
-		SetWindowPlacement(HWND_applicationWindow, &wpc);
+		SetWindowLong(HWND_application_window, GWL_STYLE, HWND_style);
+		SetWindowLong(HWND_application_window, GWL_EXSTYLE, HWND_extended_style);
+		ShowWindow(HWND_application_window, SW_SHOWNORMAL);
+		SetWindowPlacement(HWND_application_window, &wpc);
 	}
-#endif
 }
 ```
 
@@ -218,34 +219,29 @@ based on the selected display mode:
 ```cpp
 void FullScreenExclusive::recreate()
 {
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// Check if there IS a device, if not don't do anything
 	if (context.device != VK_NULL_HANDLE)
 	{
-		// Step: 0) idles the device, destroy/teardown the current swapchain and frame buffers.
+		// Step: 0) Idle the device, destroy/teardown the current swapchain and frame buffers.
 		vkDeviceWaitIdle(context.device);        // pause the renderer
-		teardown_frame_buffers(context);         // basically destroy everything swapchain related
+		teardown_framebuffers();                 // basically destroy everything swapchain related
 
 		// Step: 1) recreate the swapchain with its properly selected FullscreenExclusive enum value
-		init_swapchain(context);
+		init_swapchain();
 
 		// Step: 2) recreate the frame buffers using the newly created swapchain
-		init_frame_buffers(context);
+		init_framebuffers();
 
 		// Step: 3-1) update the window mode, corresponding to the FullscreenExclusive enum value
 		update_application_window();
 
 		// Step: 3-2) remember: ALWAYS change the application window mode BEFORE acquire the full screen exclusive mode!
-		if (isFullScreenExclusive)
+		if (is_full_screen_exclusive)
 		{
 			VkResult result = vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain);
-			if (result == VK_SUCCESS)
-			{
-				LOGI("vkAcquireFullScreenExclusiveModeEXT result: VK_SUCCESS!")
-			}
+			LOGI("vkAcquireFullScreenExclusiveModeEXT: " + vkb::to_string(result))        // it would be necessary to learn the result on an unsuccessful attempt
 		}
 	}
-#endif
 }
 ```
 
@@ -268,8 +264,19 @@ switch (key_button.get_code())
             full_screen_status                                         = SwapchainMode::Windowed;
             application_window_status                                  = ApplicationWindowMode::Windowed;
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_DISALLOWED_EXT;
-            isRecreate                                                 = true;
-            isFullScreenExclusive                                      = false;
+            needs_recreate                                             = true;
+            
+            // If it is switched from the exclusive full screen mode, then release full screen first
+            if (is_full_screen_exclusive)
+            {
+                VkResult result = vkReleaseFullScreenExclusiveModeEXT(context.device, context.swapchain);
+                if (result != VK_SUCCESS)
+                {
+                    LOGI("vkReleaseFullScreenExclusiveModeEXT: " + vkb::to_string(result))
+                }
+            }
+            
+            is_full_screen_exclusive                                   = false;
             LOGI("Windowed Mode Detected!")
         }
         break;
@@ -279,8 +286,19 @@ switch (key_button.get_code())
             full_screen_status                                         = SwapchainMode::BorderlessFullscreen;
             application_window_status                                  = ApplicationWindowMode::Fullscreen;
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_ALLOWED_EXT;
-            isRecreate                                                 = true;
-            isFullScreenExclusive                                      = false;
+            needs_recreate                                             = true;
+
+            // If it is switched from the exclusive full screen mode, then release full screen first
+            if (is_full_screen_exclusive)
+            {
+                VkResult result = vkReleaseFullScreenExclusiveModeEXT(context.device, context.swapchain);
+                if (result != VK_SUCCESS)
+                {
+                    LOGI("vkReleaseFullScreenExclusiveModeEXT: " + vkb::to_string(result))
+                }
+            }
+
+            is_full_screen_exclusive                                   = false;
             LOGI("Borderless Fullscreen Mode Detected!")
         }
         break;
@@ -290,13 +308,13 @@ switch (key_button.get_code())
             full_screen_status                                         = SwapchainMode::ExclusiveFullscreen;
             application_window_status                                  = ApplicationWindowMode::Fullscreen;
             surface_full_screen_exclusive_info_EXT.fullScreenExclusive = VK_FULL_SCREEN_EXCLUSIVE_APPLICATION_CONTROLLED_EXT;
-            isRecreate                                                 = true;
-            isFullScreenExclusive                                      = true;
+            needs_recreate                                             = true;
+            is_full_screen_exclusive                                   = true;
             LOGI("Exclusive Fullscreen Mode Detected!")
         }
         break;
     default:        // FullscreenExclusiveEXT = Default
-        isRecreate = false;
+        needs_recreate = false;
         break;
 }
 ```
