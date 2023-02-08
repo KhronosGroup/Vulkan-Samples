@@ -1096,7 +1096,7 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 							}
 						}
 
-						is_full_screen_exclusive                                   = false;
+						is_full_screen_exclusive = false;
 						LOGI("Windowed Mode Detected!")
 					}
 					break;
@@ -1118,7 +1118,7 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 							}
 						}
 
-						is_full_screen_exclusive                                   = false;
+						is_full_screen_exclusive = false;
 						LOGI("Borderless Fullscreen Mode Detected!")
 					}
 					break;

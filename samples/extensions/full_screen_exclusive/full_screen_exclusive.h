@@ -87,20 +87,20 @@ class FullScreenExclusive : public vkb::Application
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
 #if defined(VK_USE_PLATFORM_WIN32_KHR)                                                                           // To slightly optimize the following variables, if a Windows platform is detected, then they shall be defined, otherwise not.
-	HWND                                     HWND_application_window{};                                           // sync the application HWND handle
-	bool                                     is_windowed = true;                                                  // this is to tell if the application window is already set in the desired mode
+	HWND                                     HWND_application_window{};                                          // sync the application HWND handle
+	bool                                     is_windowed = true;                                                 // this is to tell if the application window is already set in the desired mode
 	WINDOWPLACEMENT                          wpc{};                                                              // window placement information
 	LONG                                     HWND_style          = 0;                                            // current Hwnd style
 	LONG                                     HWND_extended_style = 0;                                            // previous Hwnd style
 	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};                           // it can be created locally, however, it is a good reminder that they are declared here as a class variable
 	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};                     // if using DirectX, then this variable has to be created and attach to the pNext of a VkSurfaceFullScreenExclusiveInfoEXT value
-	bool                                     is_full_screen_exclusive     = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
+	bool                                     is_full_screen_exclusive  = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
 	ApplicationWindowMode                    application_window_status = ApplicationWindowMode::Windowed;        // declare and initialize the application window mode
 	SwapchainMode                            full_screen_status        = SwapchainMode::Default;                 // declare and initialize the swapchain mode
 #endif
 
   private:
-	VkExtent2D get_current_max_image_extent() const;                           // This detects the maximum surface resolution and return them in vkExtent2D format
+	VkExtent2D get_current_max_image_extent() const;                            // This detects the maximum surface resolution and return them in vkExtent2D format
 	void       input_event(const vkb::InputEvent &input_event) override;        // This is to introduce a customized input events for switching application window and swapchain modes.
 	void       update_application_window();                                     // This switches application window modes corresponding to the selected swapchain modes
 	void       recreate();                                                      // to recreate the swapchain and related per switch of display mode
