@@ -65,21 +65,19 @@ layout(binding = 4) buffer DrawVisibility
 
 layout(binding = 5) uniform sampler2D depth_pyramid;
 
-
-
-
-
 void main()
 {
 	uint d_index = gl_GlobalInvocationID.x;
 
 	if (d_index >= cull_data.drawCount)
+	{
 		return;
+	}
 
 	if (!LATE && draw_visibility[d_index] == 0)
+	{
 		return;
-
-
+	}
 
 	uint mesh_index = draws[d_index].mesh_index;
 	Mesh mesh = meshes[mesh_index];
@@ -91,12 +89,8 @@ void main()
 
 	visible = visible && center.z * cull_data.frustum[1] - abs(center.x) * cull_data.frustum[0] > -radius;
 	visible = visible && center.z * cull_data.frustum[3] - abs(center.y) * cull_data.frustum[2] > -radius;
-
 	visible = visible && center.z + radius > cull_data.z_near && center.z - radius < cull_data.z_far;
-
 	visible = visible || cull_data.culling_enabled == 0;
-
-//////////
 
 	if (LATE && visible && cull_data.occlusion_enabled == 1)
 	{
@@ -155,5 +149,7 @@ void main()
 	}
 
 	if (LATE)
+	{
 		draw_visibility[di] = visible ? 1 : 0;
+	}
 }
