@@ -31,10 +31,12 @@ Below is a comparison of common Vulkan static and dynamic implementation of thos
   
 | Static/Non-dynamic | Dynamic State 2 |
 | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| dynamic_state = {} | dynamic_state = {VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT,<br>VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT} |
+| dynamic_state = {} | dynamic_state = {VK_DYNAMIC_STATE_VIEWPORT,<br>VK_DYNAMIC_STATE_SCISSOR,<br>VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,<br>VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT} |
 | vkCreateGraphicsPipelines(pipeline1)<br>vkCreateGraphicsPipelines(pipeline2)<br>vkCreateGraphicsPipelines(pipeline3)<br>vkCreateGraphicsPipelines(pipeline4) | vkCreateGraphicsPipelines(pipeline1)<br>vkCreateGraphicsPipelines(pipeline2) |
 | draw(model1, pipeline1)<br>draw(model2, pipeline2)<br>draw(model3, pipeline3)<br>draw(model4, pipeline4) | vkCmdSetPrimitiveRestartEnableEXT(model1, primitiveBoolParam)<br>vkCmdSetDepthBiasEnableEXT(model3, depthBiasBoolParam)<br>vkCmdSetRasterizerDiscardEnableEXT(model1,rasterizerBoolParam)<br>vkCmdSetPrimitiveTopologyEXT(model1, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)<br>draw(model1, pipeline1)<br>vkCmdSetPrimitiveTopologyEXT(model2, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP)<br>vkCmdSetPrimitiveRestartEnableEXT(model2, primitiveBoolParam)<br>draw(model2, pipeline1)<br>vkCmdSetDepthBiasEnableEXT(model3, depthBiasBoolParam)<br>vkCmdSetPrimitiveRestartEnableEXT(model3, primitiveBoolParam)<br>draw(model3, pipeline1)<br>vkCmdSetPatchControlPointsEXT(model4, patchControlPoints)<br>draw(model4, pipeline2) |
-
+	
+	
+	
 More details are provided in the sections that follow.
 
 ## Pipelines
@@ -264,6 +266,14 @@ std::vector<VkDynamicState> dynamic_state_enables = {
 	VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,
 	VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT,
 };
+...
+```
+
+VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY specifies that the topology state in VkPipelineInputAssemblyStateCreateInfo only specifies the topology class,
+and the specific topology order and adjacency must be set dynamically with vkCmdSetPrimitiveTopology before any drawing commands.
+
+```C++
+...
 VkPipelineDynamicStateCreateInfo dynamic_state =
 	vkb::initializers::pipeline_dynamic_state_create_info(
 	    dynamic_state_enables.data(),
