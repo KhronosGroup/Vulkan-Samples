@@ -31,4 +31,10 @@ add_sample_with_tags(
         "instancing/planet.vert"
         "instancing/planet.frag"
         "instancing/starfield.vert"
-        "instancing/starfield.frag")
+        "instancing/starfield.frag"
+        "mesh_shader/mesh_shader.frag.glsl"
+        "mesh_shader/mesh_shader.mesh.glsl"
+        "mesh_shader/mesh_shader.task.glsl"
+        "mesh_shader/mesh_shader_draw_cull.comp.glsl"
+        "mesh_shader/mesh_shader_task.comp.glsl"
+        "mesh_shader/mesh_shader_utils.h")
