@@ -25,7 +25,11 @@
 
 MeshShader::MeshShader()
 {
-	title = "Mesh shader ";
+	title = "Mesh shader";
+
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
+	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 }
 
 MeshShader::~MeshShader()
@@ -105,6 +109,8 @@ void MeshShader::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.star_field);
 		vkCmdDraw(draw_cmd_buffers[i], 4, 1, 0, 0);
 
+		// TODO: study it a little bit, where the mesh data buffers are different! @JEREMY
+
 		// Planet
 		auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
 		auto &planet_index_buffer  = models.planet->index_buffer;
@@ -126,6 +132,8 @@ void MeshShader::build_command_buffers()
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 		// Render instances
 		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
+
+		// TODO: Commander Buffer: add mesh shader pipelines @JEREMY
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -165,6 +173,8 @@ void MeshShader::setup_descriptor_pool()
 	        pool_sizes.data(),
 	        2);
 
+	// TODO: check if descriptor pool needs to be modified @JEREMY
+
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -196,6 +206,8 @@ void MeshShader::setup_descriptor_set_layout()
 	        &descriptor_set_layout,
 	        1);
 
+	// TODO: Add pipeline layouts for mesh shaders @JEREMY
+
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
@@ -225,6 +237,8 @@ void MeshShader::setup_descriptor_set()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+
+	// TODO: Add mesh shader descriptor set for mesh shader @JEREMY
 }
 
 void MeshShader::prepare_pipelines()
@@ -278,13 +292,12 @@ void MeshShader::prepare_pipelines()
 	        0);
 
 	// Load shaders
+
+	// TODO: need to add more shaders @JEREMY
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
+	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
@@ -359,6 +372,32 @@ void MeshShader::prepare_pipelines()
 	input_state.vertexBindingDescriptionCount   = 0;
 	input_state.vertexAttributeDescriptionCount = 0;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.star_field));
+
+	// TODO: started to push it in the new pipeline using pNext for the create info for mesh shader here @JEREMY:
+
+	rasterization_state           = vkb::initializers::pipeline_rasterization_state_create_info({}, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
+	rasterization_state.lineWidth = 1.0f;
+
+	blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+
+	blend_attachment_state.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+
+	color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+
+	depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
+
+	std::array<VkPipelineShaderStageCreateInfo, 3> shader_stages_meshlet{};
+
+	shader_stages_meshlet[0] = load_shader("mesh_shader/mesh_shader.task", VK_SHADER_STAGE_TASK_BIT_EXT);
+	shader_stages_meshlet[1] = load_shader("mesh_shader/mesh_shader.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
+	shader_stages_meshlet[2] = load_shader("mesh_shader/mesh_shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	pipeline_create_info.stageCount = vkb::to_u32(shader_stages_meshlet.size());
+	pipeline_create_info.pStages    = shader_stages_meshlet.data();
+
+	input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.meshlet));
 }
 
 void MeshShader::prepare_instance_data()

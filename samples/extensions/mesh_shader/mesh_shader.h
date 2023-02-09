@@ -83,6 +83,10 @@ class MeshShader : public ApiVulkanSample
 		VkPipeline instanced_rocks = VK_NULL_HANDLE;
 		VkPipeline planet          = VK_NULL_HANDLE;
 		VkPipeline star_field      = VK_NULL_HANDLE;
+
+		//TODO: mesh shader here:
+		VkPipeline meshlet     = VK_NULL_HANDLE;
+
 	} pipelines{};
 
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
@@ -91,6 +95,10 @@ class MeshShader : public ApiVulkanSample
 	{
 		VkDescriptorSet instanced_rocks = VK_NULL_HANDLE;
 		VkDescriptorSet planet          = VK_NULL_HANDLE;
+
+		//TODO: mesh shader here:
+		VkDescriptorSet meshlet     = VK_NULL_HANDLE;
+
 	} descriptor_sets{};
 
 	MeshShader();
