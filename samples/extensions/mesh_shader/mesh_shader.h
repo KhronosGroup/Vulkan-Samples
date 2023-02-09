@@ -29,6 +29,10 @@
 #	define INSTANCE_COUNT 8192
 #endif
 
+
+
+
+
 class MeshShader : public ApiVulkanSample
 {
   public:
@@ -76,6 +80,8 @@ class MeshShader : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> scene{};
 	} uniform_buffers{};
 
+
+	//TODO: 1-2) check out the pipeline layout here @JEREMY:
 	VkPipelineLayout pipeline_layout = VK_NULL_HANDLE;
 
 	struct Pipelines
@@ -84,11 +90,16 @@ class MeshShader : public ApiVulkanSample
 		VkPipeline planet          = VK_NULL_HANDLE;
 		VkPipeline star_field      = VK_NULL_HANDLE;
 
-		//TODO: mesh shader here:
+		//TODO: 1) mesh shader here @JEREMY:
 		VkPipeline meshlet     = VK_NULL_HANDLE;
+
+		VkPipeline draw_cull_comp     = VK_NULL_HANDLE;
+		VkPipeline task_comp     = VK_NULL_HANDLE;
+
 
 	} pipelines{};
 
+	//TODO: 2) mesh shader here @JEREMY:
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
 	struct DescriptorSets
@@ -96,10 +107,26 @@ class MeshShader : public ApiVulkanSample
 		VkDescriptorSet instanced_rocks = VK_NULL_HANDLE;
 		VkDescriptorSet planet          = VK_NULL_HANDLE;
 
-		//TODO: mesh shader here:
+		//TODO: 2) mesh shader here @JEREMY:
 		VkDescriptorSet meshlet     = VK_NULL_HANDLE;
+		VkDescriptorSet draw_cull_comp     = VK_NULL_HANDLE;
+		VkDescriptorSet task_comp     = VK_NULL_HANDLE;
+
 
 	} descriptor_sets{};
+
+  private:
+
+	//TODO: **) also Computer pipeline is NEEDED, write it as a helper function OUTSIDE this class! @JEREMY
+
+	VkPipeline create_compute_pipeline(const VkPipelineShaderStageCreateInfo& shader_stage_info, VkPipelineLayout layout);
+
+	//TODO: **-1) add a create Compute Program function
+
+	//TODO: **-2) add a create descriptor layout function for programs
+	// Ref: setup_descriptor_set_layout()
+
+  public:
 
 	MeshShader();
 	~MeshShader() override;
@@ -108,6 +135,8 @@ class MeshShader : public ApiVulkanSample
 	void load_assets();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
+	//TODO: I may want to set an overload to specify it 
+
 	void setup_descriptor_set();
 	void prepare_pipelines();
 	void prepare_instance_data();
