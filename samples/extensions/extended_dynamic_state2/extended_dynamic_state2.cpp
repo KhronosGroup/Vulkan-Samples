@@ -797,7 +797,7 @@ void ExtendedDynamicState2::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		for (int i = 0; i < obj_cnt; ++i)
 		{
-			obj_names.push_back((scene_elements_baseline.at(i).name).c_str());
+			obj_names.push_back((scene_elements_baseline[i].name).c_str());
 		}
 		drawer.combo_box("Name", &gui_settings.selected_obj, obj_names);
 		drawer.checkbox("Depth Bias Enable", &gui_settings.objects[gui_settings.selected_obj].depth_bias);
@@ -869,13 +869,13 @@ void ExtendedDynamicState2::scene_pipeline_divide(std::vector<SceneNode> const &
 	/* Divide main scene to two (baseline and tessellation) */
 	for (int i = 0; i < scene_node.size(); ++i)
 	{
-		if (scene_node.at(i).name == "Geosphere")
+		if (scene_node[i].name == "Geosphere")
 		{
-			scene_elements_tess.push_back(scene_node.at(i));
+			scene_elements_tess.push_back(scene_node[i]);
 		}
 		else
 		{
-			scene_elements_baseline.push_back(scene_node.at(i));
+			scene_elements_baseline.push_back(scene_node[i]);
 		}
 	}
 }
@@ -892,7 +892,7 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 		const auto &vertex_buffer_normal = scene_node[i].sub_mesh->vertex_buffers.at("normal");
 		auto       &index_buffer         = scene_node[i].sub_mesh->index_buffer;
 
-		if (scene_node.at(i).name != "Geosphere")
+		if (scene_node[i].name != "Geosphere")
 		{
 			vkCmdSetDepthBiasEnableEXT(command_buffer, gui_settings.objects[i].depth_bias);
 			vkCmdSetRasterizerDiscardEnableEXT(command_buffer, gui_settings.objects[i].rasterizer_discard);
