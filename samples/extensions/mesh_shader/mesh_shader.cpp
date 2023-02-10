@@ -20,75 +20,54 @@
  */
 
 #include "mesh_shader.h"
-
 #include "benchmark_mode/benchmark_mode.h"
+
+// Wrapper functions for aligned memory allocation
+// There is currently no standard for this in C++ that works across all platforms and vendors, so we abstract this
+void *aligned_alloc(size_t size, size_t alignment)
+{
+	void *data;
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	data = _aligned_malloc(size, alignment);
+#else
+	int res = posix_memalign(&data, alignment, size);
+	if (res != 0)
+		data = nullptr;
+#endif
+	return data;
+}
+
+void aligned_free(void *data)
+{
+#if defined(_MSC_VER) || defined(__MINGW32__)
+	_aligned_free(data);
+#else
+	free(data);
+#endif
+}
 
 MeshShader::MeshShader()
 {
 	title = "Mesh shader";
 
+	// Add instance and device extensions
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 }
 
-MeshShader::~MeshShader()
+MeshShader ::~MeshShader()
 {
 	if (device)
 	{
-		vkDestroyPipeline(get_device().get_handle(), pipelines.instanced_rocks, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.planet, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), pipelines.star_field, nullptr);
+		if (ubo_data_dynamic.model)
+		{
+			aligned_free(ubo_data_dynamic.model);
+		}
+
+		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
-		vkDestroyBuffer(get_device().get_handle(), instance_buffer.buffer, nullptr);
-		vkFreeMemory(get_device().get_handle(), instance_buffer.memory, nullptr);
-		vkDestroySampler(get_device().get_handle(), textures.rocks.sampler, nullptr);
-		vkDestroySampler(get_device().get_handle(), textures.planet.sampler, nullptr);
-	}
-}
-
-// TODO: **) also Computer pipeline is NEEDED, write it as a helper function OUTSIDE this class! @JEREMY
-
-VkPipeline MeshShader::create_compute_pipeline(const VkPipelineShaderStageCreateInfo &shader_stage_info, VkPipelineLayout layout)
-{
-	VkComputePipelineCreateInfo create_info = {VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO};
-
-	VkPipelineShaderStageCreateInfo stage = {VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO};
-	stage.stage                           = shader_stage_info.stage;
-	stage.module                          = shader_stage_info.module;
-	stage.pName                           = "main";
-
-	create_info.stage  = stage;
-	create_info.layout = layout;
-
-	VkPipeline return_me = 0;
-	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1, &create_info, 0, &return_me));
-
-	return return_me;
-}
-
-void MeshShader::request_gpu_features(vkb::PhysicalDevice &gpu)
-{
-	auto &requested_features = gpu.get_mutable_requested_features();
-
-	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		requested_features.samplerAnisotropy = VK_TRUE;
-	}
-	// Enable texture compression
-	if (gpu.get_features().textureCompressionBC)
-	{
-		requested_features.textureCompressionBC = VK_TRUE;
-	}
-	else if (gpu.get_features().textureCompressionASTC_LDR)
-	{
-		requested_features.textureCompressionASTC_LDR = VK_TRUE;
-	}
-	else if (gpu.get_features().textureCompressionETC2)
-	{
-		requested_features.textureCompressionETC2 = VK_TRUE;
 	}
 }
 
@@ -96,63 +75,49 @@ void MeshShader::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
+	std::array<VkClearValue, 2> clear_values{};
+	clear_values[0].color        = default_clear_color;
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 	render_pass_begin_info.renderPass               = render_pass;
+	render_pass_begin_info.renderArea.offset.x      = 0;
+	render_pass_begin_info.renderArea.offset.y      = 0;
 	render_pass_begin_info.renderArea.extent.width  = width;
 	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount          = 2;
-	render_pass_begin_info.pClearValues             = clear_values;
+	render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
+	render_pass_begin_info.pClearValues             = clear_values.data();
 
-	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	for (int32_t i = 0; i < static_cast<int32_t>(draw_cmd_buffers.size()); ++i)
 	{
-		// Set target frame buffer
 		render_pass_begin_info.framebuffer = framebuffers[i];
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
+		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
+		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
 		VkDeviceSize offsets[1] = {0};
+		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
+		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-		// Star field
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.star_field);
-		vkCmdDraw(draw_cmd_buffers[i], 4, 1, 0, 0);
+		// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
+		for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+		{
+			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
+			uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
+			// Bind the descriptor set for rendering a mesh using the dynamic offset
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
 
-		// TODO: study it a little bit, where the mesh data buffers are different! ref: createBuffer... @JEREMY
-		// Planet
-		auto &planet_vertex_buffer = models.planet->vertex_buffers.at("vertex_buffer");
-		auto &planet_index_buffer  = models.planet->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.planet, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.planet);
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, planet_vertex_buffer.get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], planet_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.planet->vertex_indices, 1, 0, 0, 0);
-
-		// Instanced rocks
-		auto &rock_vertex_buffer = models.rock->vertex_buffers.at("vertex_buffer");
-		auto &rock_index_buffer  = models.rock->index_buffer;
-		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_sets.instanced_rocks, 0, nullptr);
-		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.instanced_rocks);
-		// Binding point 0 : Mesh vertex buffer
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, rock_vertex_buffer.get(), offsets);
-		// Binding point 1 : Instance data buffer
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 1, 1, &instance_buffer.buffer, offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], rock_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-		// Render instances
-		vkCmdDrawIndexed(draw_cmd_buffers[i], models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
-
-		// TODO: 3) Commander Buffer: add mesh shader pipelines @JEREMY
+			vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+		}
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -160,387 +125,6 @@ void MeshShader::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
-}
-
-void MeshShader::load_assets()
-{
-	models.rock   = load_model("scenes/rock.gltf");
-	models.planet = load_model("scenes/planet.gltf");
-
-	// models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
-	// models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
-
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
-
-	// textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
-	// textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
-}
-
-void MeshShader::setup_descriptor_pool()
-{
-	// Example uses one ubo
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2),
-	    };
-
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        vkb::to_u32(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
-
-	// TODO: 2*) check if descriptor pool needs to be modified @JEREMY
-
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
-}
-
-void MeshShader::setup_descriptor_set_layout()
-{
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        // Binding 0 : Vertex shader uniform buffer
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-	            VK_SHADER_STAGE_VERTEX_BIT,
-	            0),
-	        // Binding 1 : Fragment shader combined sampler
-	        vkb::initializers::descriptor_set_layout_binding(
-	            VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-	            VK_SHADER_STAGE_FRAGMENT_BIT,
-	            1),
-	    };
-
-	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        vkb::to_u32(set_layout_bindings.size()));
-
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
-
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layout,
-	        1);
-
-	// TODO: 1*) Add descriptor layouts for mesh shaders @JEREMY
-
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
-}
-
-void MeshShader::setup_descriptor_set()
-{
-	VkDescriptorSetAllocateInfo       descriptor_set_alloc_info;
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets;
-
-	descriptor_set_alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
-
-	// Instanced rocks
-	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffers.scene);
-	VkDescriptorImageInfo  image_descriptor  = create_descriptor(textures.rocks);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.instanced_rocks));
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.instanced_rocks, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// Planet
-	buffer_descriptor = create_descriptor(*uniform_buffers.scene);
-	image_descriptor  = create_descriptor(textures.planet);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &descriptor_set_alloc_info, &descriptor_sets.planet));
-	write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &buffer_descriptor),              // Binding 0 : Vertex shader uniform buffer
-	    vkb::initializers::write_descriptor_set(descriptor_sets.planet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &image_descriptor)        // Binding 1 : Color map
-	};
-	vkUpdateDescriptorSets(get_device().get_handle(), vkb::to_u32(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
-
-	// TODO: 2) Add mesh shader descriptor set for mesh shader @JEREMY
-}
-
-void MeshShader::prepare_pipelines()
-{
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
-
-	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_CLOCKWISE,
-	        0);
-
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
-
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
-
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
-
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
-
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
-
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        vkb::to_u32(dynamic_state_enables.size()),
-	        0);
-
-	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
-
-	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
-	pipeline_create_info.pRasterizationState = &rasterization_state;
-	pipeline_create_info.pColorBlendState    = &color_blend_state;
-	pipeline_create_info.pMultisampleState   = &multisample_state;
-	pipeline_create_info.pViewportState      = &viewport_state;
-	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
-	pipeline_create_info.pDynamicState       = &dynamic_state;
-	pipeline_create_info.stageCount          = vkb::to_u32(shader_stages.size());
-	pipeline_create_info.pStages             = shader_stages.data();
-
-	// This example uses two different input states, one for the instanced part and one for non-instanced rendering
-	VkPipelineVertexInputStateCreateInfo           input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-	std::vector<VkVertexInputBindingDescription>   binding_descriptions;
-	std::vector<VkVertexInputAttributeDescription> attribute_descriptions;
-
-	// Vertex input bindings
-	// The instancing pipeline uses a vertex input state with two bindings
-	binding_descriptions = {
-	    // Binding point 0: Mesh vertex layout description at per-vertex rate
-	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
-	    // Binding point 1: Instanced data at per-instance rate
-	    vkb::initializers::vertex_input_binding_description(1, sizeof(InstanceData), VK_VERTEX_INPUT_RATE_INSTANCE)};
-
-	// Vertex attribute bindings
-	// Note that the shader declaration for per-vertex and per-instance attributes is the same, the different input rates are only stored in the bindings:
-	// instanced.vert:
-	//	layout (location = 0) in vec3 inPos;		Per-Vertex
-	//	...
-	//	layout (location = 4) in vec3 instancePos;	Per-Instance
-	attribute_descriptions = {
-	    // Per-vertex attributes
-	    // These are advanced for each vertex fetched by the vertex shader
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 2: Texture coordinates
-	    // Per-Instance attributes
-	    // These are fetched for each instance rendered
-	    vkb::initializers::vertex_input_attribute_description(1, 3, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 3: Position
-	    vkb::initializers::vertex_input_attribute_description(1, 4, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 4: Rotation
-	    vkb::initializers::vertex_input_attribute_description(1, 5, VK_FORMAT_R32_SFLOAT, sizeof(float) * 6),              // Location 5: Scale
-	    vkb::initializers::vertex_input_attribute_description(1, 6, VK_FORMAT_R32_SINT, sizeof(float) * 7),                // Location 6: Texture array layer index
-	};
-	input_state.pVertexBindingDescriptions   = binding_descriptions.data();
-	input_state.pVertexAttributeDescriptions = attribute_descriptions.data();
-
-	pipeline_create_info.pVertexInputState = &input_state;
-
-	// Instancing pipeline
-	shader_stages[0] = load_shader("instancing/instancing.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("instancing/instancing.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	// Use all input bindings and attribute descriptions
-	input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(binding_descriptions.size());
-	input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(attribute_descriptions.size());
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.instanced_rocks));
-
-	// Planet rendering pipeline
-	shader_stages[0] = load_shader("instancing/planet.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("instancing/planet.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	// Only use the non-instanced input bindings and attribute descriptions
-	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 3;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.planet));
-
-	// Star field pipeline
-	rasterization_state.cullMode         = VK_CULL_MODE_NONE;
-	depth_stencil_state.depthWriteEnable = VK_FALSE;
-	depth_stencil_state.depthTestEnable  = VK_FALSE;
-	shader_stages[0]                     = load_shader("instancing/starfield.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                     = load_shader("instancing/starfield.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	// Vertices are generated in the vertex shader
-	input_state.vertexBindingDescriptionCount   = 0;
-	input_state.vertexAttributeDescriptionCount = 0;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.star_field));
-
-	// TODO: 1) started to push it in the new pipeline using pNext for the create info for mesh shader here @JEREMY:
-	// TODO: Please have a look at if I have missed anything @STEVE:
-
-	rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info({}, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE, 0);
-
-	rasterization_state.lineWidth = 1.0f;
-
-	blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-
-	blend_attachment_state.colorWriteMask =
-	    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-
-	color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
-
-	depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
-
-	std::array<VkPipelineShaderStageCreateInfo, 3> shader_stages_meshlet{};
-
-	shader_stages_meshlet[0] = load_shader("mesh_shader/mesh_shader.task", VK_SHADER_STAGE_TASK_BIT_EXT);
-	shader_stages_meshlet[1] = load_shader("mesh_shader/mesh_shader.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	shader_stages_meshlet[2] = load_shader("mesh_shader/mesh_shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-
-	pipeline_create_info.stageCount = vkb::to_u32(shader_stages_meshlet.size());
-	pipeline_create_info.pStages    = shader_stages_meshlet.data();
-
-	input_state =
-	    vkb::initializers::pipeline_vertex_input_state_create_info();
-
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.meshlet));
-
-	// TODO: **) also Computer pipeline is NEEDED, write it as a helper function OUTSIDE this class! @JEREMY
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages_compute{};
-
-	shader_stages_compute[0] = load_shader("mesh_shader/mesh_shader_draw_cull.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-	shader_stages_compute[1] = load_shader("mesh_shader/mesh_shader_task.comp", VK_SHADER_STAGE_COMPUTE_BIT);
-
-
-}
-
-void MeshShader::prepare_instance_data()
-{
-	std::vector<InstanceData> instance_data;
-	instance_data.resize(INSTANCE_COUNT);
-
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
-	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
-	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
-
-	// Distribute rocks randomly on two different rings
-	for (auto i = 0; i < INSTANCE_COUNT / 2; i++)
-	{
-		glm::vec2 ring0{7.0f, 11.0f};
-		glm::vec2 ring1{14.0f, 18.0f};
-
-		float rho, theta;
-
-		// Inner ring
-		rho                       = sqrt((pow(ring0[1], 2.0f) - pow(ring0[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring0[0], 2.0f));
-		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[i].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[i].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[i].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[i].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[i].scale *= 0.75f;
-
-		// Outer ring
-		rho                                                                   = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                                 = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<uint32_t>(i + INSTANCE_COUNT / 2)].scale *= 0.75f;
-	}
-
-	instance_buffer.size = instance_data.size() * sizeof(InstanceData);
-
-	// Staging
-	// Instanced data is static, copy to device local memory
-	// On devices with separate memory types for host visible and device local memory this will result in better performance
-	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary, and you could skip the staging
-
-	struct
-	{
-		VkDeviceMemory memory;
-		VkBuffer       buffer;
-	} staging_buffer{};
-
-	staging_buffer.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    instance_buffer.size,
-	    &staging_buffer.memory,
-	    instance_data.data());
-
-	instance_buffer.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-	    VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-	    instance_buffer.size,
-	    &instance_buffer.memory);
-
-	// Copy to staging buffer
-	VkCommandBuffer copy_command = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-
-	VkBufferCopy copy_region = {};
-	copy_region.size         = instance_buffer.size;
-	vkCmdCopyBuffer(
-	    copy_command,
-	    staging_buffer.buffer,
-	    instance_buffer.buffer,
-	    1,
-	    &copy_region);
-
-	device->flush_command_buffer(copy_command, queue, true);
-
-	instance_buffer.descriptor.range  = instance_buffer.size;
-	instance_buffer.descriptor.buffer = instance_buffer.buffer;
-	instance_buffer.descriptor.offset = 0;
-
-	// Destroy staging resources
-	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
-}
-
-void MeshShader::prepare_uniform_buffers()
-{
-	uniform_buffers.scene = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                            sizeof(ubo_vs),
-	                                                            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffer(0.0f);
-}
-
-void MeshShader::update_uniform_buffer(float delta_time)
-{
-	ubo_vs.projection = camera.matrices.perspective;
-	ubo_vs.view       = camera.matrices.view;
-
-	if (!paused)
-	{
-		ubo_vs.local_speed += delta_time * 0.35f;
-		ubo_vs.global_speed += delta_time * 0.01f;
-	}
-
-	uniform_buffers.scene->convert_and_update(ubo_vs);
 }
 
 void MeshShader::draw()
@@ -557,6 +141,318 @@ void MeshShader::draw()
 	ApiVulkanSample::submit_frame();
 }
 
+void MeshShader::generate_cube()
+{
+	// Setup vertices indices for a colored cube
+	std::vector<Vertex> vertices = {
+	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
+	    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
+	    {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
+	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
+	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
+	};
+
+	std::vector<uint32_t> indices = {
+	    0,
+	    1,
+	    2,
+	    2,
+	    3,
+	    0,
+	    1,
+	    5,
+	    6,
+	    6,
+	    2,
+	    1,
+	    7,
+	    6,
+	    5,
+	    5,
+	    4,
+	    7,
+	    4,
+	    0,
+	    3,
+	    3,
+	    7,
+	    4,
+	    4,
+	    5,
+	    1,
+	    1,
+	    0,
+	    4,
+	    3,
+	    2,
+	    6,
+	    6,
+	    7,
+	    3,
+	};
+
+	index_count = static_cast<uint32_t>(indices.size());
+
+	auto vertex_buffer_size = vertices.size() * sizeof(Vertex);
+	auto index_buffer_size  = indices.size() * sizeof(uint32_t);
+
+	// Create buffers
+	// For the sake of simplicity we won't stage the vertex data to the gpu memory
+	// Vertex buffer
+	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                    vertex_buffer_size,
+	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+	vertex_buffer->update(vertices.data(), vertex_buffer_size);
+
+	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                   index_buffer_size,
+	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer->update(indices.data(), index_buffer_size);
+}
+
+void MeshShader::setup_descriptor_pool()
+{
+	// Example uses one ubo and one image sampler
+	std::vector<VkDescriptorPoolSize> pool_sizes =
+	    {
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(
+	        static_cast<uint32_t>(pool_sizes.size()),
+	        pool_sizes.data(),
+	        2);
+
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+}
+
+void MeshShader::setup_descriptor_set_layout()
+{
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
+	    {
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
+	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
+
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
+	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+}
+
+void MeshShader::setup_descriptor_set()
+{
+	VkDescriptorSetAllocateInfo alloc_info =
+	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+
+	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*uniform_buffers.view);
+
+	// Pass the  actual dynamic alignment as the descriptor's size
+	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
+	    {
+	        // Binding 0 : Projection/View matrix uniform buffer
+	        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
+	        // Binding 1 : Instance matrix as dynamic uniform buffer
+	        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
+	    };
+
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+}
+
+void MeshShader::prepare_pipelines()
+{
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+
+	VkPipelineColorBlendAttachmentState blend_attachment_state =
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
+
+	VkPipelineViewportStateCreateInfo viewport_state =
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+	VkPipelineMultisampleStateCreateInfo multisample_state =
+	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+
+	std::vector<VkDynamicState> dynamic_state_enables =
+	    {
+	        VK_DYNAMIC_STATE_VIEWPORT,
+	        VK_DYNAMIC_STATE_SCISSOR};
+	VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
+
+	// Load shaders
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+
+	shader_stages[0] = load_shader("mesh_shader/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("mesh_shader/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	// Vertex bindings and attributes
+	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings =
+	    {
+	        vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+	    };
+	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes =
+	    {
+	        vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),          // Location 0 : Position
+	        vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)),        // Location 1 : Color
+	    };
+
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+
+	vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
+	vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
+	vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
+
+	VkGraphicsPipelineCreateInfo pipeline_create_info =
+	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
+
+	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+	pipeline_create_info.pRasterizationState = &rasterization_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
+
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+}
+
+// Prepare and initialize uniform buffer containing shader uniforms
+void MeshShader::prepare_uniform_buffers()
+{
+	// Allocate data for the dynamic uniform buffer object
+	// We allocate this manually as the alignment of the offset differs between GPUs
+
+	// Calculate required alignment based on minimum device offset alignment
+	auto min_ubo_alignment = static_cast<size_t>(get_device().get_gpu().get_properties().limits.minUniformBufferOffsetAlignment);
+	dynamic_alignment      = sizeof(glm::mat4);
+	if (min_ubo_alignment > 0)
+	{
+		dynamic_alignment = (dynamic_alignment + min_ubo_alignment - 1) & ~(min_ubo_alignment - 1);
+	}
+
+	size_t buffer_size = OBJECT_INSTANCES * dynamic_alignment;
+
+	ubo_data_dynamic.model = (glm::mat4 *) aligned_alloc(buffer_size, dynamic_alignment);
+	assert(ubo_data_dynamic.model);
+
+	std::cout << "minUniformBufferOffsetAlignment = " << min_ubo_alignment << std::endl;
+	std::cout << "dynamicAlignment = " << dynamic_alignment << std::endl;
+
+	// Vertex shader uniform buffer block
+
+	// Static shared uniform buffer object with projection and view matrix
+	uniform_buffers.view =
+	    std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	uniform_buffers.dynamic =
+	    std::make_unique<vkb::core::Buffer>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	// Prepare per-object matrices with offsets and random rotations
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
+	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
+	{
+		rotations[i]       = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine)) * 2.0f * glm::pi<float>();
+		rotation_speeds[i] = glm::vec3(rnd_dist(rnd_engine), rnd_dist(rnd_engine), rnd_dist(rnd_engine));
+	}
+
+	update_uniform_buffers();
+	update_dynamic_uniform_buffer(0.0f, true);
+}
+
+void MeshShader::update_uniform_buffers()
+{
+	// Fixed ubo with projection and view matrices
+	ubo_vs.projection = camera.matrices.perspective;
+	ubo_vs.view       = camera.matrices.view;
+
+	uniform_buffers.view->convert_and_update(ubo_vs);
+}
+
+void MeshShader::update_dynamic_uniform_buffer(float delta_time, bool force)
+{
+	// Update at max. 60 fps
+	animation_timer += delta_time;
+
+	if ((animation_timer + 0.0025 < (1.0f / 60.0f)) && (!force))
+	{
+		return;
+	}
+
+	// Dynamic ubo with per-object model matrices indexed by offsets in the command buffer
+	auto      dim       = static_cast<uint32_t>(pow(OBJECT_INSTANCES, (1.0f / 3.0f)));
+	auto      float_dim = static_cast<float>(dim);
+	glm::vec3 offset(5.0f);
+
+	for (uint32_t x = 0; x < dim; x++)
+	{
+		auto fx = static_cast<float>(x);
+		for (uint32_t y = 0; y < dim; y++)
+		{
+			auto fy = static_cast<float>(y);
+			for (uint32_t z = 0; z < dim; z++)
+			{
+				auto fz    = static_cast<float>(z);
+				auto index = x * dim * dim + y * dim + z;
+
+				// Aligned offset
+				auto model_mat = (glm::mat4 *) (((uint64_t) ubo_data_dynamic.model + (index * dynamic_alignment)));
+
+				// Update rotations
+				rotations[index] += animation_timer * rotation_speeds[index];
+
+				// Update matrices
+				glm::vec3 pos(-((float_dim * offset.x) / 2.0f) + offset.x / 2.0f + fx * offset.x,
+				              -((float_dim * offset.y) / 2.0f) + offset.y / 2.0f + fy * offset.y,
+				              -((float_dim * offset.z) / 2.0f) + offset.z / 2.0f + fz * offset.z);
+
+				*model_mat = glm::translate(glm::mat4(1.0f), pos);
+				*model_mat = glm::rotate(*model_mat, rotations[index].x, glm::vec3(1.0f, 1.0f, 0.0f));
+				*model_mat = glm::rotate(*model_mat, rotations[index].y, glm::vec3(0.0f, 1.0f, 0.0f));
+				*model_mat = glm::rotate(*model_mat, rotations[index].z, glm::vec3(0.0f, 0.0f, 1.0f));
+			}
+		}
+	}
+
+	animation_timer = 0.0f;
+
+	uniform_buffers.dynamic->update(ubo_data_dynamic.model, static_cast<size_t>(uniform_buffers.dynamic->get_size()));
+
+	// Flush to make changes visible to the device
+	uniform_buffers.dynamic->flush();
+}
+
 bool MeshShader::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
@@ -564,14 +460,14 @@ bool MeshShader::prepare(vkb::Platform &platform)
 		return false;
 	}
 
-	// Note: Using Reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
-	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
-	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
+	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
+	camera.set_rotation(glm::vec3(0.0f));
 
-	load_assets();
-	prepare_instance_data();
+	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
+	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+
+	generate_cube();
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
@@ -582,6 +478,13 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	return true;
 }
 
+bool MeshShader::resize(uint32_t width, uint32_t height)
+{
+	ApiVulkanSample::resize(width, height);
+	update_uniform_buffers();
+	return true;
+}
+
 void MeshShader::render(float delta_time)
 {
 	if (!prepared)
@@ -589,25 +492,14 @@ void MeshShader::render(float delta_time)
 		return;
 	}
 	draw();
-	if (!paused || camera.updated)
+	if (!paused)
 	{
-		update_uniform_buffer(delta_time);
+		update_dynamic_uniform_buffer(delta_time);
 	}
-}
-
-void MeshShader::on_update_ui_overlay(vkb::Drawer &drawer)
-{
-	if (drawer.header("Statistics"))
+	if (camera.updated)
 	{
-		drawer.text("Instances: %d", INSTANCE_COUNT);
+		update_uniform_buffers();
 	}
-}
-
-bool MeshShader::resize(uint32_t width, uint32_t height)
-{
-	ApiVulkanSample::resize(width, height);
-	build_command_buffers();
-	return true;
 }
 
 std::unique_ptr<vkb::Application> create_mesh_shader()

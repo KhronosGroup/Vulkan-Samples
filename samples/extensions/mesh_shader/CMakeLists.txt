@@ -26,15 +26,8 @@ add_sample_with_tags(
         NAME "Mesh Shader"
         DESCRIPTION "Demonstrate and showcase a sample application using mesh shader rendering pipeline"
         SHADER_FILES_GLSL
-        "instancing/instancing.vert"
-        "instancing/instancing.frag"
-        "instancing/planet.vert"
-        "instancing/planet.frag"
-        "instancing/starfield.vert"
-        "instancing/starfield.frag"
-        "mesh_shader/mesh_shader.frag.glsl"
-        "mesh_shader/mesh_shader.mesh.glsl"
-        "mesh_shader/mesh_shader.task.glsl"
-        "mesh_shader/mesh_shader_draw_cull.comp.glsl"
-        "mesh_shader/mesh_shader_task.comp.glsl"
-        "mesh_shader/mesh_shader_utils.h")
+        "mesh_shader/mesh_shader_traditional.vert"
+        "mesh_shader/mesh_shader_traditional.frag"
+        "mesh_shader/mesh_shader_task_mesh.task"
+        "mesh_shader/mesh_shader_task_mesh.mesh"
+        "mesh_shader/mesh_shader_task_mesh.frag")
