@@ -54,6 +54,9 @@ MeshShader::MeshShader()
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+
+	// Initialize the cube
+	init_cube();
 }
 
 MeshShader ::~MeshShader()
@@ -141,63 +144,59 @@ void MeshShader::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void MeshShader::generate_cube()
+void MeshShader::init_cube()
 {
 	// Setup vertices indices for a colored cube
-	std::vector<Vertex> vertices = {
-	    {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},
-	    {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},
-	    {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},
-	    {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},
-	    {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},
-	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
-	};
+	cube_vertices =
+	    {
+	        {{-1.0f, -1.0f, 1.0f}, {1.0f, 0.0f, 0.0f}},         // vertex 0
+	        {{1.0f, -1.0f, 1.0f}, {0.0f, 1.0f, 0.0f}},          // vertex 1
+	        {{1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}},           // vertex 2
+	        {{-1.0f, 1.0f, 1.0f}, {0.0f, 0.0f, 0.0f}},          // vertex 3
+	        {{-1.0f, -1.0f, -1.0f}, {1.0f, 0.0f, 0.0f}},        // vertex 4
+	        {{1.0f, -1.0f, -1.0f}, {0.0f, 1.0f, 0.0f}},         // vertex 5
+	        {{1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 1.0f}},          // vertex 6
+	        {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}}          // vertex 7
+	    };
 
-	std::vector<uint32_t> indices = {
-	    0,
-	    1,
-	    2,
-	    2,
-	    3,
-	    0,
-	    1,
-	    5,
-	    6,
-	    6,
-	    2,
-	    1,
-	    7,
-	    6,
-	    5,
-	    5,
-	    4,
-	    7,
-	    4,
-	    0,
-	    3,
-	    3,
-	    7,
-	    4,
-	    4,
-	    5,
-	    1,
-	    1,
-	    0,
-	    4,
-	    3,
-	    2,
-	    6,
-	    6,
-	    7,
-	    3,
-	};
+	// A simple reference for the vertices and associated corresponding indices
 
-	index_count = static_cast<uint32_t>(indices.size());
+	//                 7----------------6
+	//                /|               /|
+	//               / |              / |
+	//              /  |             /  |
+	//             /   |            /   |
+	//            3----------------2    |
+	//            |    4-----------|----5
+	//            |   /            |   /
+	//            |  /             |  /
+	//            | /              | /
+	//            |/               |/
+	//            0----------------1
 
-	auto vertex_buffer_size = vertices.size() * sizeof(Vertex);
-	auto index_buffer_size  = indices.size() * sizeof(uint32_t);
+	cube_indices =
+	    {
+	        0, 1, 2,        // front button
+	        2, 3, 0,        // front top
+	        1, 5, 6,        // right button
+	        6, 2, 1,        // right top
+	        7, 6, 5,        // rear top
+	        5, 4, 7,        // rear button
+	        4, 0, 3,        // left button
+	        3, 7, 4,        // left top
+	        4, 5, 1,        // button right
+	        1, 0, 4,        // button left
+	        3, 2, 6,        // top right
+	        6, 7, 3         // top left
+	    };
+}
+
+void MeshShader::prepare_cube_buffers()
+{
+	index_count = static_cast<uint32_t>(cube_indices.size());
+
+	auto vertex_buffer_size = cube_vertices.size() * sizeof(Vertex);
+	auto index_buffer_size  = cube_indices.size() * sizeof(uint32_t);
 
 	// Create buffers
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
@@ -206,13 +205,13 @@ void MeshShader::generate_cube()
 	                                                    vertex_buffer_size,
 	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
-	vertex_buffer->update(vertices.data(), vertex_buffer_size);
+	vertex_buffer->update(cube_vertices.data(), vertex_buffer_size);
 
 	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                   index_buffer_size,
 	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
-	index_buffer->update(indices.data(), index_buffer_size);
+	index_buffer->update(cube_indices.data(), index_buffer_size);
 }
 
 void MeshShader::setup_descriptor_pool()
@@ -467,7 +466,7 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
-	generate_cube();
+	prepare_cube_buffers();
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();

@@ -75,13 +75,21 @@ class MeshShader : public ApiVulkanSample
 	float  animation_timer   = 0.0f;
 	size_t dynamic_alignment = 0;
 
+	// Cube vertices and indices
+	std::vector<Vertex>   cube_vertices{};
+	std::vector<uint32_t> cube_indices{};
+
+  private:
+	void init_cube();
+
+  public:
 	MeshShader();
 	~MeshShader() override;
 	void build_command_buffers() override;
-	void generate_cube();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
+	void prepare_cube_buffers();
 	void prepare_pipelines();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
