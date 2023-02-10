@@ -57,6 +57,8 @@ MeshShader::MeshShader()
 
 	// Initialize the cube
 	init_cube();
+	// Initialize the cube meshlet information
+	init_cube_meshlets();
 }
 
 MeshShader ::~MeshShader()
@@ -189,6 +191,223 @@ void MeshShader::init_cube()
 	        3, 2, 6,        // top right
 	        6, 7, 3         // top left
 	    };
+}
+
+void MeshShader::init_cube_meshlets()
+{
+	// Vertex and Indices Decomposition:
+
+	// In order to minimize the duplicated vertex indices, one could choose the following pass to de-composite the cube:
+
+	//                 7------------>---6
+	//                /|               /|
+	//               / |              / |
+	//              ^  |             /  |
+	//             /   |            /   |
+	//            3--<-------------2    |
+	//            |    4---<-------|----5
+	//            |   /            ^   /
+	//            |  /             |  /
+	//            | /              | /
+	//            |/               |/
+	//    (start) 0----------->----1
+
+	//  front surface: start from 0 -> 1 ->2 ->3;  vertices covered: {0, 1, 2, 3}; no duplications
+	//    top surface: start from 3 -> 7 ->6;      vertices covered: {2, 3, 7, 6}; no duplications
+	//   rear surface: start from 6 -> 5 ->4;      vertices covered: {7, 6, 5, 4}; no duplications
+	// button surface: start from 4 -> 0 ->1;      vertices covered: {5, 4, 0, 1}; vertices duplicated: {0, 1}
+	//  right surface: start from 1 -> 5 ->6 -> 2; vertices covered: {1, 5, 6, 2}; vertices duplicated: {5, 6, 2}
+	//   left surface: start from 3 -> 0 ->4 -> 7; vertices covered: {3, 0, 4, 7}; vertices duplicated: {3, 0, 4, 7}
+
+	// Hence, meshlet_vertex_indices can be defined as follows:
+	meshlet_vertex_indices =
+	    {
+	        0, 1,             // working group 1 only
+	        2, 3,             // shared by working group 1 and 2
+	        7, 6,             // shared by working group 2 and 3
+	        5, 4,             // shared by working group 3 and 4
+	        0,                // working group 4 only
+	        1,                // shared by working group 4 and 5
+	        5, 6, 2,          // working group 5 only
+	        3, 0, 4, 7        // working group 6 only
+	    };
+
+	// Working group 1: front surface
+
+	//              vertex indices		         local index
+	//				{0, 1, 2, 3}                 {0, 1, 2, 3}
+	//            7----------------6          3----------------2
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            0----------------1          0----------------1
+
+	//                              FRONT SURFACE
+	//                            (normal arrow out)
+
+	// cube vertex indices {0, 1, 2, 3}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {0,1,2, 2,3,0}
+
+	// Working group 2: top surface
+
+	//              vertex indices		         local index
+	//				{2, 3, 7, 6}                 {0, 1, 2, 3}
+	//            7----------------6          2----------------3
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            3----------------2          1----------------0
+
+	//                              TOP SURFACE
+	//                           (normal arrow out)
+
+	// cube vertex indices {2, 3, 7, 6}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {1,0,3, 3,2,1}
+
+	// Working group 3: rear surface
+
+	//              vertex indices		         local index
+	//				{7, 6, 5, 4}                 {0, 1, 2, 3}
+	//            6----------------7          1----------------0
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            5----------------4          2----------------3
+
+	//                             REAR SURFACE
+	//                          (normal arrow out)
+
+	// cube vertex indices {7, 6, 5, 4}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {2,3,0, 0,1,2}
+
+	// Working group 4: button surface
+
+	//              vertex indices		         local index
+	//				{5, 4, 0, 1}                 {0, 1, 2, 3}
+	//            5----------------4          0----------------1
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            1----------------0          3----------------2
+
+	//                            BUTTON SURFACE
+	//                          (normal arrow out)
+
+	// cube vertex indices {5, 4, 0, 1}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {3,2,1, 1,0,3}
+
+	// Working group 5: right surface
+
+	//              vertex indices		         local index
+	//				{1, 5, 6, 2}                 {0, 1, 2, 3}
+	//            2----------------6          3----------------2
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            1----------------5          0----------------1
+
+	//                            RIGHT SURFACE
+	//                          (normal arrow out)
+
+	// cube vertex indices {1, 5, 6, 2}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {0,1,2, 2,3,0}
+
+	// Working group 6: left surface
+
+	//              vertex indices		         local index
+	//				{3, 0, 4, 7}                 {0, 1, 2, 3}
+	//            7----------------3          3----------------0
+	//            |              . |          |              . |
+	//            |   t2      .    |          |   t2      .    |
+	//            |        .       |          |        .       |
+	//            |     .    t1    |          |     .    t1    |
+	//            |  .             |          |  .             |
+	//            4----------------0          2----------------1
+
+	//                             LEFT SURFACE
+	//                          (normal arrow out)
+
+	// cube vertex indices {3, 0, 4, 7}
+	// local primitive indices making the surface from triangle t1 to triangle t2: {2,1,0, 0,3,2}
+
+	// Hence, meshlet_primitive_indices can be defined as follows:
+	meshlet_primitive_indices =
+	    {
+	        0, 1, 2, 2, 3, 0,        // working group 1
+	        1, 0, 3, 3, 2, 1,        // working group 2
+	        2, 3, 0, 0, 1, 2,        // working group 3
+	        3, 2, 1, 1, 0, 3,        // working group 4
+	        0, 1, 2, 2, 3, 0,        // working group 5
+	        2, 1, 0, 0, 3, 2         // working group 6
+	    };
+
+	// By referring to the following list, one shall have easily figured out meshlet_info for each working groups
+	/*
+	meshlet_vertex_indices =
+	    {
+	        0, 1,             // working group 1 only
+	        2, 3,             // shared by working group 1 and 2
+	        7, 6,             // shared by working group 2 and 3
+	        5, 4,             // shared by working group 3 and 4
+	        0,                // working group 4 only
+	        1,                // shared by working group 4 and 5
+	        5, 6, 2,          // working group 5 only
+	        3, 0, 4, 7        // working group 6 only
+	    };
+	meshlet_primitive_indices =
+	    {
+	        0, 1, 2, 2, 3, 0,        // working group 1
+	        1, 0, 3, 3, 2, 1,        // working group 2
+	        2, 3, 0, 0, 1, 2,        // working group 3
+	        3, 2, 1, 1, 0, 3,        // working group 4
+	        0, 1, 2, 2, 3, 0,        // working group 5
+	        2, 1, 0, 0, 3, 2         // working group 6
+	    };
+	*/
+	// vertex_count for all working groups: 4
+	// primitive_count for all working groups: 4
+	// primitive_begin_index for each working group: 6 * working group index
+
+	// Hence, meshlet_info can be further initialized as follows:
+	MeshletInfo meshlet_info{};
+
+	meshlet_info.vertex_count    = 4;
+	meshlet_info.primitive_count = 4;
+
+	// Working group 1:
+	meshlet_info.vertex_begin_index    = 0;
+	meshlet_info.primitive_begin_index = 0;
+	meshlet_infos.push_back(meshlet_info);
+	// Working group 2:
+	meshlet_info.vertex_begin_index = 2;
+	meshlet_info.primitive_begin_index += 6;
+	meshlet_infos.push_back(meshlet_info);
+	// Working group 3:
+	meshlet_info.vertex_begin_index = 4;
+	meshlet_info.primitive_begin_index += 6;
+	meshlet_infos.push_back(meshlet_info);
+	// Working group 4:
+	meshlet_info.vertex_begin_index = 6;
+	meshlet_info.primitive_begin_index += 6;
+	meshlet_infos.push_back(meshlet_info);
+	// Working group 5:
+	meshlet_info.vertex_begin_index = 9;
+	meshlet_info.primitive_begin_index += 6;
+	meshlet_infos.push_back(meshlet_info);
+	// Working group 6:
+	meshlet_info.vertex_begin_index = 13;
+	meshlet_info.primitive_begin_index += 6;
+	meshlet_infos.push_back(meshlet_info);
 }
 
 void MeshShader::prepare_cube_buffers()

@@ -58,6 +58,20 @@ class MeshShader : public ApiVulkanSample
 		glm::mat4 *model = nullptr;
 	} ubo_data_dynamic{};
 
+	// Meshlet related structures
+	struct MeshletInfo
+	{
+		uint32_t vertex_count{};
+		uint32_t vertex_begin_index{};
+		uint32_t primitive_count{};
+		uint32_t primitive_begin_index{};
+	};
+
+	// Basic information passing to a mesh shader
+	std::vector<MeshletInfo> meshlet_infos{};
+	std::vector<uint8_t>     meshlet_primitive_indices{};
+	std::vector<uint32_t>    meshlet_vertex_indices{};
+
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
 	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
@@ -81,6 +95,7 @@ class MeshShader : public ApiVulkanSample
 
   private:
 	void init_cube();
+	void init_cube_meshlets();
 
   public:
 	MeshShader();
