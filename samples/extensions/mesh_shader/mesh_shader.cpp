@@ -245,7 +245,7 @@ void MeshShader::init_cube_meshlets()
 	//            0----------------1          0----------------1
 
 	//                              FRONT SURFACE
-	//                            (normal arrow out)
+	//                            (normal arrows out)
 
 	// cube vertex indices {0, 1, 2, 3}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {0,1,2, 2,3,0}
@@ -263,7 +263,7 @@ void MeshShader::init_cube_meshlets()
 	//            3----------------2          1----------------0
 
 	//                              TOP SURFACE
-	//                           (normal arrow out)
+	//                           (normal arrows out)
 
 	// cube vertex indices {2, 3, 7, 6}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {1,0,3, 3,2,1}
@@ -281,7 +281,7 @@ void MeshShader::init_cube_meshlets()
 	//            5----------------4          2----------------3
 
 	//                             REAR SURFACE
-	//                          (normal arrow out)
+	//                          (normal arrows out)
 
 	// cube vertex indices {7, 6, 5, 4}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {2,3,0, 0,1,2}
@@ -299,7 +299,7 @@ void MeshShader::init_cube_meshlets()
 	//            1----------------0          3----------------2
 
 	//                            BUTTON SURFACE
-	//                          (normal arrow out)
+	//                          (normal arrows out)
 
 	// cube vertex indices {5, 4, 0, 1}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {3,2,1, 1,0,3}
@@ -317,7 +317,7 @@ void MeshShader::init_cube_meshlets()
 	//            1----------------5          0----------------1
 
 	//                            RIGHT SURFACE
-	//                          (normal arrow out)
+	//                          (normal arrows out)
 
 	// cube vertex indices {1, 5, 6, 2}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {0,1,2, 2,3,0}
@@ -335,7 +335,7 @@ void MeshShader::init_cube_meshlets()
 	//            4----------------0          2----------------1
 
 	//                             LEFT SURFACE
-	//                          (normal arrow out)
+	//                          (normal arrows out)
 
 	// cube vertex indices {3, 0, 4, 7}
 	// local primitive indices making the surface from triangle t1 to triangle t2: {2,1,0, 0,3,2}
