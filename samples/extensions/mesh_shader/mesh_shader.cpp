@@ -565,10 +565,8 @@ void MeshShader::setup_descriptor_set()
 	if (is_mesh_shader)
 	{
 		VkDescriptorBufferInfo meshlet_info_object_buffer_descriptor = create_descriptor(*meshlet_info_object_buffer);
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, {}, &meshlet_info_object_buffer_descriptor));
-
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_info_object_buffer_descriptor));
 	}
-
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
