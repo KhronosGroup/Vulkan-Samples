@@ -58,6 +58,9 @@ class MeshShader : public ApiVulkanSample
 		glm::mat4 *model = nullptr;
 	} ubo_data_dynamic{};
 
+	// Mesh shader selection
+	bool is_mesh_shader = false;
+
 	// Meshlet related structures
 	struct MeshletInfo
 	{
@@ -67,20 +70,28 @@ class MeshShader : public ApiVulkanSample
 		uint32_t primitive_begin_index{};
 	};
 
-	// Basic information passing to a mesh shader
-	std::vector<MeshletInfo> meshlet_infos{};
-	std::vector<uint8_t>     meshlet_primitive_indices{};
-	std::vector<uint32_t>    meshlet_vertex_indices{};
-
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
 	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
+	// Cube vertices and indices
+	std::vector<Vertex>   cube_vertices{};
+	std::vector<uint32_t> cube_indices{};
+
 	// Vertex information
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer{};
 	std::unique_ptr<vkb::core::Buffer> index_buffer{};
 	uint32_t                           index_count = 0;
+
+	// Basic information passing to a mesh shader
+	std::vector<MeshletInfo> meshlet_infos{};
+	std::vector<uint8_t>     meshlet_primitive_indices{};
+	std::vector<uint32_t>    meshlet_vertex_indices{};
+
+	std::unique_ptr<vkb::core::Buffer> meshlet_info_object_buffer{};
+	std::unique_ptr<vkb::core::Buffer> meshlet_primitive_index_buffer{};
+	std::unique_ptr<vkb::core::Buffer> meshlet_vertex_index_buffer{};
 
 	// Store random per-object rotations
 	glm::vec3 rotations[OBJECT_INSTANCES]{};
@@ -89,9 +100,7 @@ class MeshShader : public ApiVulkanSample
 	float  animation_timer   = 0.0f;
 	size_t dynamic_alignment = 0;
 
-	// Cube vertices and indices
-	std::vector<Vertex>   cube_vertices{};
-	std::vector<uint32_t> cube_indices{};
+
 
   private:
 	void init_cube();
@@ -104,7 +113,10 @@ class MeshShader : public ApiVulkanSample
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
+
 	void prepare_cube_buffers();
+	void prepare_meshlet_buffers();
+
 	void prepare_pipelines();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();

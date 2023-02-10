@@ -113,15 +113,30 @@ void MeshShader::build_command_buffers()
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-		// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
-		for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+		// TODO: @Steve: 6) Please help me double check prepare the meshlet buffers:
+		if (is_mesh_shader)
 		{
-			// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
-			uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
-			// Bind the descriptor set for rendering a mesh using the dynamic offset
+			vkCmdBindIndexBuffer(draw_cmd_buffers[i], meshlet_primitive_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT8_EXT);
+			vkCmdBindIndexBuffer(draw_cmd_buffers[i], meshlet_vertex_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+
+			auto dynamic_offset = static_cast<uint32_t>(dynamic_alignment);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
 
-			vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], 2, 2, 2); // That 2 draws on all directions each
+
+		}
+		else
+		{
+			// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
+			for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
+			{
+				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
+				uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
+				// Bind the descriptor set for rendering a mesh using the dynamic offset
+				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
+
+				vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
+			}
 		}
 
 		draw_ui(draw_cmd_buffers[i]);
@@ -412,8 +427,6 @@ void MeshShader::init_cube_meshlets()
 
 void MeshShader::prepare_cube_buffers()
 {
-	index_count = static_cast<uint32_t>(cube_indices.size());
-
 	auto vertex_buffer_size = cube_vertices.size() * sizeof(Vertex);
 	auto index_buffer_size  = cube_indices.size() * sizeof(uint32_t);
 
@@ -426,38 +439,97 @@ void MeshShader::prepare_cube_buffers()
 	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
 	vertex_buffer->update(cube_vertices.data(), vertex_buffer_size);
 
+	// Index buffer
 	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                   index_buffer_size,
 	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
 	index_buffer->update(cube_indices.data(), index_buffer_size);
+
+	index_count = static_cast<uint32_t>(cube_indices.size());
+}
+
+void MeshShader::prepare_meshlet_buffers()
+{
+	// TODO: @Steve: 5) Please help me double check prepare the meshlet buffers:
+
+	auto meshlet_info_object_buffer_size            = meshlet_infos.size() * sizeof(MeshletInfo);
+	auto meshlet_primitive_index_buffer_size = meshlet_primitive_indices.size() * sizeof(uint8_t);
+	auto meshlet_vertex_index_buffer_size    = meshlet_vertex_indices.size() * sizeof(uint32_t);
+
+	// Meshlet information buffer:
+	meshlet_info_object_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                 meshlet_info_object_buffer_size,
+	                                                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                 VMA_MEMORY_USAGE_GPU_TO_CPU);
+	meshlet_info_object_buffer->update(meshlet_infos.data(), meshlet_info_object_buffer_size);
+
+	// Meshlet primitive index buffer:
+	meshlet_primitive_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                     meshlet_primitive_index_buffer_size,
+	                                                                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer->update(meshlet_primitive_indices.data(), meshlet_primitive_index_buffer_size);
+
+	// Meshlet vertex index buffer:
+	meshlet_vertex_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                  meshlet_vertex_index_buffer_size,
+	                                                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                                  VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer->update(meshlet_vertex_indices.data(), meshlet_vertex_index_buffer_size);
 }
 
 void MeshShader::setup_descriptor_pool()
 {
+	// TODO: @Steve: 1) Please help me double check the descriptor pool config:
+
 	// Example uses one ubo and one image sampler
-	std::vector<VkDescriptorPoolSize> pool_sizes =
-	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1),
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)};
+	std::vector<VkDescriptorPoolSize> pool_sizes{};
+
+	uint32_t descriptor_count = 1;
+	uint32_t pool_size       = 2;
+
+	if (is_mesh_shader)
+	{
+		descriptor_count = 6;
+		pool_size = 3;
+	}
+
+	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptor_count));
+	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptor_count));
+
+	if (is_mesh_shader)
+	{
+		pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, descriptor_count));
+	}
+
+	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptor_count));
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), pool_size);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void MeshShader::setup_descriptor_set_layout()
 {
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings =
-	    {
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1),
-	        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
+	// TODO: @Steve: 2) Please help me check out the descriptor layout config:
+
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
+
+	if (is_mesh_shader)
+	{
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 0));
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_TASK_BIT_EXT, 1));
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 2));
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3));
+	}
+	else
+	{
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1));
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2));
+	}
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -472,6 +544,8 @@ void MeshShader::setup_descriptor_set_layout()
 
 void MeshShader::setup_descriptor_set()
 {
+
+
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
@@ -482,27 +556,47 @@ void MeshShader::setup_descriptor_set()
 	// Pass the  actual dynamic alignment as the descriptor's size
 	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets =
-	    {
-	        // Binding 0 : Projection/View matrix uniform buffer
-	        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor),
-	        // Binding 1 : Instance matrix as dynamic uniform buffer
-	        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor),
-	    };
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets{};
+
+	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor));
+	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor));
+
+	// TODO: @Steve: 3) Please help me check out the descriptor set config:
+	if (is_mesh_shader)
+	{
+		VkDescriptorBufferInfo meshlet_info_object_buffer_descriptor = create_descriptor(*meshlet_info_object_buffer);
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, {}, &meshlet_info_object_buffer_descriptor));
+
+	}
+
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
 void MeshShader::prepare_pipelines()
 {
+	// TODO: @Steve: 4) Please help me check out the graphic pipeline (just "is_mesh_shader" related):
+
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
+	if (is_mesh_shader)
+	{
+		rasterization_state =
+		    vkb::initializers::pipeline_rasterization_state_create_info({}, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+	}
+
 	VkPipelineColorBlendAttachmentState blend_attachment_state =
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+
+	if (is_mesh_shader)
+	{
+		blend_attachment_state.colorWriteMask =
+		    VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+	}
 
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
@@ -525,10 +619,24 @@ void MeshShader::prepare_pipelines()
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("mesh_shader/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("mesh_shader/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};        // create an empty vector for staging shaders
+
+	if (is_mesh_shader)
+	{
+		shader_stages.clear();
+
+		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.task", VK_SHADER_STAGE_TASK_BIT_EXT));
+		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
+		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	}
+	else
+	{
+		shader_stages.clear();
+
+		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT));
+		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	}
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings =
@@ -548,6 +656,7 @@ void MeshShader::prepare_pipelines()
 	vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
 	vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
+	// Generate the graphic pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
@@ -559,8 +668,9 @@ void MeshShader::prepare_pipelines()
 	pipeline_create_info.pViewportState      = &viewport_state;
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
-	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
-	pipeline_create_info.pStages             = shader_stages.data();
+
+	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages    = shader_stages.data();
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
@@ -681,11 +791,16 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
-
 	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
 	prepare_cube_buffers();
+
+	if(is_mesh_shader)
+	{
+		prepare_meshlet_buffers();
+	}
+
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
