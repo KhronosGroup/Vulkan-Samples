@@ -89,6 +89,8 @@ class MeshShader : public ApiVulkanSample
 	std::vector<uint8_t>     meshlet_primitive_indices{};
 	std::vector<uint32_t>    meshlet_vertex_indices{};
 
+	//TODO @Jeremy: add a vertex related buffer, or so:
+
 	std::unique_ptr<vkb::core::Buffer> meshlet_info_object_buffer{};
 	std::unique_ptr<vkb::core::Buffer> meshlet_primitive_index_buffer{};
 	std::unique_ptr<vkb::core::Buffer> meshlet_vertex_index_buffer{};
@@ -99,7 +101,6 @@ class MeshShader : public ApiVulkanSample
 
 	float  animation_timer   = 0.0f;
 	size_t dynamic_alignment = 0;
-
 
 
   private:

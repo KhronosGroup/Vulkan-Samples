@@ -109,11 +109,13 @@ void MeshShader::build_command_buffers()
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
+		// TODO @Jeremy: no Vertex or Index needs to be bind to the cmd buffer for mesh shader
+
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-		// TODO: @Steve: 6) Please help me double check prepare the meshlet buffers:
+
 		if (is_mesh_shader)
 		{
 			vkCmdBindIndexBuffer(draw_cmd_buffers[i], meshlet_primitive_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT8_EXT);
@@ -451,11 +453,14 @@ void MeshShader::prepare_cube_buffers()
 
 void MeshShader::prepare_meshlet_buffers()
 {
-	// TODO: @Steve: 5) Please help me double check prepare the meshlet buffers:
-
 	auto meshlet_info_object_buffer_size            = meshlet_infos.size() * sizeof(MeshletInfo);
 	auto meshlet_primitive_index_buffer_size = meshlet_primitive_indices.size() * sizeof(uint8_t);
 	auto meshlet_vertex_index_buffer_size    = meshlet_vertex_indices.size() * sizeof(uint32_t);
+
+	//TODO @Jeremy:
+	// 1) add a vertex related storage buffer
+	// 2) revise all buffer formats to storage buffer
+	// 3) change the VMA memory flag
 
 	// Meshlet information buffer:
 	meshlet_info_object_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -472,6 +477,9 @@ void MeshShader::prepare_meshlet_buffers()
 	index_buffer->update(meshlet_primitive_indices.data(), meshlet_primitive_index_buffer_size);
 
 	// Meshlet vertex index buffer:
+
+	/// dont forget this is the right whereabouts to tell/decided/allocate the mem size.
+
 	meshlet_vertex_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                                  meshlet_vertex_index_buffer_size,
 	                                                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
@@ -481,13 +489,16 @@ void MeshShader::prepare_meshlet_buffers()
 
 void MeshShader::setup_descriptor_pool()
 {
-	// TODO: @Steve: 1) Please help me double check the descriptor pool config:
-
 	// Example uses one ubo and one image sampler
 	std::vector<VkDescriptorPoolSize> pool_sizes{};
 
 	uint32_t descriptor_count = 1;
 	uint32_t pool_size       = 2;
+
+	//TODO @Jeremy:
+	// 1) Set up the pool size and so
+	// 2) descriptor count
+	// 3) decided meshlet data-in formats
 
 	if (is_mesh_shader)
 	{
@@ -513,9 +524,13 @@ void MeshShader::setup_descriptor_pool()
 
 void MeshShader::setup_descriptor_set_layout()
 {
-	// TODO: @Steve: 2) Please help me check out the descriptor layout config:
+	// TODO @Jeremy:
+	//  1) checkout their bindings
+	//  2) check out their target shaders
 
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
+
+	/// this only creates bindings and their format to SHADERS
 
 	if (is_mesh_shader)
 	{
@@ -544,8 +559,6 @@ void MeshShader::setup_descriptor_set_layout()
 
 void MeshShader::setup_descriptor_set()
 {
-
-
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
 
@@ -558,10 +571,14 @@ void MeshShader::setup_descriptor_set()
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets{};
 
+
+	/// THIS IS PASSING the real descriptor information to the bindings, so they must be properly MAPPED! unless you dont have a texture but shader has a color!!!!
+
+	//TODO @ Jeremy: 1) this does with the actual binding information to Shader 2) decided what to bind to shaders 3) match layers binding index
+
 	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor));
 	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor));
 
-	// TODO: @Steve: 3) Please help me check out the descriptor set config:
 	if (is_mesh_shader)
 	{
 		VkDescriptorBufferInfo meshlet_info_object_buffer_descriptor = create_descriptor(*meshlet_info_object_buffer);
@@ -573,7 +590,6 @@ void MeshShader::setup_descriptor_set()
 
 void MeshShader::prepare_pipelines()
 {
-	// TODO: @Steve: 4) Please help me check out the graphic pipeline (just "is_mesh_shader" related):
 
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
@@ -617,7 +633,6 @@ void MeshShader::prepare_pipelines()
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
 	// Load shaders
-
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};        // create an empty vector for staging shaders
 
 	if (is_mesh_shader)
@@ -657,6 +672,10 @@ void MeshShader::prepare_pipelines()
 	// Generate the graphic pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
+
+	//TODO @Jeremy:
+	// 1) fallback pipeline needs Vertex and Index
+	// 2) Mesh shader doesn't but need to check the descriptor set
 
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
@@ -791,6 +810,11 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f));
 	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+
+
+	//TODO @Jeremy:
+	// 1) if is fallback loop, no mesh buffer prep
+	// 2) if is mesh shader, no vertex or index prep
 
 	prepare_cube_buffers();
 
