@@ -85,15 +85,15 @@ class MeshShader : public ApiVulkanSample
 	uint32_t                           index_count = 0;
 
 	// Basic information passing to a mesh shader
-	std::vector<MeshletInfo> meshlet_infos{};
-	std::vector<uint8_t>     meshlet_primitive_indices{};
-	std::vector<uint32_t>    meshlet_vertex_indices{};
+	std::vector<uint32_t>    meshlet_vertex_indices{};           // this provides information to mesh shader: how to select vertices from
+	std::vector<MeshletInfo> meshlet_infos{};                    // this provides information to mesh shader: how to determine and access each vertex-index group
+	std::vector<uint8_t>     meshlet_primitive_indices{};        // this provides information to mesh shader: how to form triangles from selected vertices
 
-	//TODO @Jeremy: add a vertex related buffer, or so:
+	std::unique_ptr<vkb::core::Buffer> meshlet_vertex_array_buffer{};        // this buffer stores total vertex information
+	std::unique_ptr<vkb::core::Buffer> meshlet_vertex_index_buffer{};        // this buffer stores information how to select vertex from total vertex information
 
-	std::unique_ptr<vkb::core::Buffer> meshlet_info_object_buffer{};
-	std::unique_ptr<vkb::core::Buffer> meshlet_primitive_index_buffer{};
-	std::unique_ptr<vkb::core::Buffer> meshlet_vertex_index_buffer{};
+	std::unique_ptr<vkb::core::Buffer> meshlet_info_buffer{};                   // this buffer stores information how to interpolate vertex index information
+	std::unique_ptr<vkb::core::Buffer> meshlet_primitive_index_buffer{};        // this buffer stores information how to create triangles
 
 	// Store random per-object rotations
 	glm::vec3 rotations[OBJECT_INSTANCES]{};
@@ -101,7 +101,6 @@ class MeshShader : public ApiVulkanSample
 
 	float  animation_timer   = 0.0f;
 	size_t dynamic_alignment = 0;
-
 
   private:
 	void init_cube();
@@ -114,10 +113,7 @@ class MeshShader : public ApiVulkanSample
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
-
-	void prepare_cube_buffers();
-	void prepare_meshlet_buffers();
-
+	void prepare_buffers();
 	void prepare_pipelines();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();

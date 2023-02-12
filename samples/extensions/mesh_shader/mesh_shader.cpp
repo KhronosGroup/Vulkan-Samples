@@ -109,32 +109,33 @@ void MeshShader::build_command_buffers()
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		// TODO @Jeremy: no Vertex or Index needs to be bind to the cmd buffer for mesh shader
-
-		VkDeviceSize offsets[1] = {0};
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
-
+		VkDeviceSize offsets[1] = {0}; // Just to ensure that offsets gets out of the scope
 
 		if (is_mesh_shader)
 		{
-			vkCmdBindIndexBuffer(draw_cmd_buffers[i], meshlet_primitive_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT8_EXT);
-			vkCmdBindIndexBuffer(draw_cmd_buffers[i], meshlet_vertex_index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+			// TODO @Jeremy: we may need a total descriptor set count as a CLASS VARIABLE:
 
-			auto dynamic_offset = static_cast<uint32_t>(dynamic_alignment);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
+			// The first set = 0, descriptor set count = 4... this means uniform buffer
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 4, &descriptor_set, 0, nullptr);
 
-			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], 2, 2, 2); // That 2 draws on all directions each
-
+			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], 2, 2, 2);        // That 2 draws on all directions each
 		}
 		else
 		{
+			// Binding Vertex and Index buffers
+			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
+			vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+
 			// Render multiple objects using different model matrices by dynamically offsetting into one uniform buffer
 			for (uint32_t j = 0; j < OBJECT_INSTANCES; j++)
 			{
 				// One dynamic offset per dynamic descriptor to offset into the ubo containing all model matrices
 				uint32_t dynamic_offset = j * static_cast<uint32_t>(dynamic_alignment);
 				// Bind the descriptor set for rendering a mesh using the dynamic offset
+
+				// The first set = 0, descriptor set count = 1... this means uniform buffer
+				// Dynamic offset is 1, and attached to the pointer to the dynamic offset data
+
 				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 1, &dynamic_offset);
 
 				vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
@@ -427,134 +428,139 @@ void MeshShader::init_cube_meshlets()
 	meshlet_infos.push_back(meshlet_info);
 }
 
-void MeshShader::prepare_cube_buffers()
+void MeshShader::prepare_buffers()
 {
-	auto vertex_buffer_size = cube_vertices.size() * sizeof(Vertex);
-	auto index_buffer_size  = cube_indices.size() * sizeof(uint32_t);
+	if (is_mesh_shader)
+	{
+		auto meshlet_vertex_array_buffer_size    = cube_vertices.size() * sizeof(Vertex);        // total number of vertices multiplies by the data size of a Vertex structure
+		auto meshlet_vertex_index_buffer_size    = meshlet_vertex_indices.size() * sizeof(uint32_t);
+		auto meshlet_info_object_buffer_size     = meshlet_infos.size() * sizeof(MeshletInfo);        // total number of meshlet info multiplies by the data size of a MeshletInfo structure
+		auto meshlet_primitive_index_buffer_size = meshlet_primitive_indices.size() * sizeof(uint8_t);
 
-	// Create buffers
-	// For the sake of simplicity we won't stage the vertex data to the gpu memory
-	// Vertex buffer
-	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                    vertex_buffer_size,
-	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
-	vertex_buffer->update(cube_vertices.data(), vertex_buffer_size);
+		// Updates: meshlet vertex array buffer
+		meshlet_vertex_array_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                                  meshlet_vertex_array_buffer_size,
+		                                                                  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,        // flag: storage buffer units
+		                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);              // memory flag: from CPU stores to GPU
+		meshlet_vertex_array_buffer->update(cube_vertices.data(), meshlet_vertex_index_buffer_size);                 // data source: cube_vertices vector
 
-	// Index buffer
-	index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                   index_buffer_size,
-	                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
-	index_buffer->update(cube_indices.data(), index_buffer_size);
+		// Update: meshlet vertex index buffer
+		meshlet_vertex_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                                  meshlet_vertex_index_buffer_size,
+		                                                                  VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,        // flag: storage buffer units
+		                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);              // memory flag: from CPU stores to GPU
+		meshlet_vertex_index_buffer->update(meshlet_vertex_indices.data(), meshlet_vertex_index_buffer_size);        // data source: meshlet_vertex_indices vector
 
-	index_count = static_cast<uint32_t>(cube_indices.size());
-}
+		// Update: meshlet info buffer
+		meshlet_info_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                          meshlet_info_object_buffer_size,
+		                                                          VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,        // flag: storage buffer units
+		                                                          VMA_MEMORY_USAGE_CPU_TO_GPU);              // memory flag: from CPU stores to GPU
+		meshlet_info_buffer->update(meshlet_infos.data(), meshlet_info_object_buffer_size);                  // data source: meshlet_infos vector
 
-void MeshShader::prepare_meshlet_buffers()
-{
-	auto meshlet_info_object_buffer_size            = meshlet_infos.size() * sizeof(MeshletInfo);
-	auto meshlet_primitive_index_buffer_size = meshlet_primitive_indices.size() * sizeof(uint8_t);
-	auto meshlet_vertex_index_buffer_size    = meshlet_vertex_indices.size() * sizeof(uint32_t);
+		// Updates: meshlet primitive index buffer
+		meshlet_primitive_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                                     meshlet_primitive_index_buffer_size,
+		                                                                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,              // flag: storage buffer units
+		                                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);                    // memory flag: from CPU stores to GPU
+		meshlet_primitive_index_buffer->update(meshlet_primitive_indices.data(), meshlet_primitive_index_buffer_size);        // data source: meshlet_primitive_indices vector
+	}
+	else
+	{
+		auto vertex_buffer_size = cube_vertices.size() * sizeof(Vertex);
+		auto index_buffer_size  = cube_indices.size() * sizeof(uint32_t);
 
-	//TODO @Jeremy:
-	// 1) add a vertex related storage buffer
-	// 2) revise all buffer formats to storage buffer
-	// 3) change the VMA memory flag
+		// Vertex buffer
+		vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                    vertex_buffer_size,
+		                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer->update(cube_vertices.data(), vertex_buffer_size);
 
-	// Meshlet information buffer:
-	meshlet_info_object_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                 meshlet_info_object_buffer_size,
-	                                                                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                                 VMA_MEMORY_USAGE_GPU_TO_CPU);
-	meshlet_info_object_buffer->update(meshlet_infos.data(), meshlet_info_object_buffer_size);
+		// Index buffer
+		index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+		                                                   index_buffer_size,
+		                                                   VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		                                                   VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer->update(cube_indices.data(), index_buffer_size);
 
-	// Meshlet primitive index buffer:
-	meshlet_primitive_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                     meshlet_primitive_index_buffer_size,
-	                                                                     VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                                     VMA_MEMORY_USAGE_GPU_TO_CPU);
-	index_buffer->update(meshlet_primitive_indices.data(), meshlet_primitive_index_buffer_size);
-
-	// Meshlet vertex index buffer:
-
-	/// dont forget this is the right whereabouts to tell/decided/allocate the mem size.
-
-	meshlet_vertex_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                  meshlet_vertex_index_buffer_size,
-	                                                                  VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                                  VMA_MEMORY_USAGE_GPU_TO_CPU);
-	index_buffer->update(meshlet_vertex_indices.data(), meshlet_vertex_index_buffer_size);
+		index_count = static_cast<uint32_t>(cube_indices.size());
+	}
 }
 
 void MeshShader::setup_descriptor_pool()
 {
-	// Example uses one ubo and one image sampler
 	std::vector<VkDescriptorPoolSize> pool_sizes{};
 
-	uint32_t descriptor_count = 1;
-	uint32_t pool_size       = 2;
-
-	//TODO @Jeremy:
-	// 1) Set up the pool size and so
-	// 2) descriptor count
-	// 3) decided meshlet data-in formats
+	// TODO @Jeremy: check this out, it might be good to set it as a class variable
+	uint32_t descriptor_max_sets = 2;
 
 	if (is_mesh_shader)
 	{
-		descriptor_count = 6;
-		pool_size = 3;
+		// Storage buffer needed: 4
+		pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4));
+		// Therefore, 4 descriptor sets needed
+		descriptor_max_sets = 4;
 	}
-
-	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, descriptor_count));
-	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, descriptor_count));
-
-	if (is_mesh_shader)
+	else
 	{
-		pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, descriptor_count));
+		// Uniform buffer needed: 1
+		pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1));
+		// Dynamic uniform buffer needed: 1
+		pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1));
+		// Therefore, 4 descriptor sets needed
+		// descriptor_max_sets = 2;        // this line is never needed, but its there as a reminder
 	}
 
-	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, descriptor_count));
+	// There always needed this one same image sampler
+	pool_sizes.push_back(vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1));
 
+	// Create descriptor pool
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), pool_size);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), descriptor_max_sets);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void MeshShader::setup_descriptor_set_layout()
 {
-	// TODO @Jeremy:
-	//  1) checkout their bindings
-	//  2) check out their target shaders
-
+	// Specifies the targeted shaders, and defines layer bindings for the specified shaders
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
-
-	/// this only creates bindings and their format to SHADERS
 
 	if (is_mesh_shader)
 	{
-		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 0));
-		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_TASK_BIT_EXT, 1));
+		// Task shader binding 0: vertex array buffer
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 0));
+		// Task shader binding 1: vertex index buffer
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 1));
+		// Task shader binding 2: meshlet information buffer
 		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 2));
-		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 3));
+		// Task shader binding 3: primitive index buffer
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_TASK_BIT_EXT, 3));
+		// Fragment shader binding 4: just a traditional binding for color output
+		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 4));
 	}
 	else
 	{
+		// Vertex shader binding 0: (static/traditional) uniform buffer
 		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0));
+		// Vertex shader binding 1: dynamic uniform buffer
 		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, VK_SHADER_STAGE_VERTEX_BIT, 1));
+		// Fragment shader binding 2: just a traditional binding for color output
 		set_layout_bindings.push_back(vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2));
 	}
 
+	// Creates descriptor set layout
 	VkDescriptorSetLayoutCreateInfo descriptor_layout =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));        // writes to descriptor_set_layout
 
+	// Creates pipeline layout based on the descriptor set layout information
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
-	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);        // e.g., layout = 0,  binding = 1, 2, 3, ...
 
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));        // writes to pipeline_layout
 }
 
 void MeshShader::setup_descriptor_set()
@@ -564,25 +570,31 @@ void MeshShader::setup_descriptor_set()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo view_buffer_descriptor = create_descriptor(*uniform_buffers.view);
-
-	// Pass the  actual dynamic alignment as the descriptor's size
-	VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);
-
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets{};
-
-
-	/// THIS IS PASSING the real descriptor information to the bindings, so they must be properly MAPPED! unless you dont have a texture but shader has a color!!!!
-
-	//TODO @ Jeremy: 1) this does with the actual binding information to Shader 2) decided what to bind to shaders 3) match layers binding index
-
-	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor));
-	write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor));
 
 	if (is_mesh_shader)
 	{
-		VkDescriptorBufferInfo meshlet_info_object_buffer_descriptor = create_descriptor(*meshlet_info_object_buffer);
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_info_object_buffer_descriptor));
+		// Create buffer descriptors:
+		VkDescriptorBufferInfo meshlet_vertex_array_buffer_descriptor    = create_descriptor(*meshlet_vertex_array_buffer);           // vertex array buffer
+		VkDescriptorBufferInfo meshlet_vertex_index_buffer_descriptor    = create_descriptor(*meshlet_vertex_index_buffer);           // vertex index buffer
+		VkDescriptorBufferInfo meshlet_info_buffer_descriptor            = create_descriptor(*meshlet_info_buffer);                   // meshlet information buffer
+		VkDescriptorBufferInfo meshlet_primitive_index_buffer_descriptor = create_descriptor(*meshlet_primitive_index_buffer);        // primitive index buffer
+
+		// Pushes back to the write_descriptor_sets vector:
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_vertex_array_buffer_descriptor));           // binding 0
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_vertex_index_buffer_descriptor));           // binding 1
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_info_buffer_descriptor));                   // binding 2
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_primitive_index_buffer_descriptor));        // binding 3
+	}
+	else
+	{
+		// Create buffer descriptors:
+		VkDescriptorBufferInfo view_buffer_descriptor    = create_descriptor(*uniform_buffers.view);                              // uniform buffer
+		VkDescriptorBufferInfo dynamic_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic, dynamic_alignment);        // dynamic uniform buffer: passes the  actual dynamic alignment as the descriptor's size
+
+		// Pushes back to the write_descriptor_sets vector:
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &view_buffer_descriptor));                   // binding: 0
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1, &dynamic_buffer_descriptor));        // binding: 1
 	}
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
@@ -590,13 +602,13 @@ void MeshShader::setup_descriptor_set()
 
 void MeshShader::prepare_pipelines()
 {
-
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
+	// TODO: check if its okay
 	if (is_mesh_shader)
 	{
 		rasterization_state =
@@ -606,6 +618,7 @@ void MeshShader::prepare_pipelines()
 	VkPipelineColorBlendAttachmentState blend_attachment_state =
 	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
+	// TODO: check if its okay
 	if (is_mesh_shader)
 	{
 		blend_attachment_state.colorWriteMask =
@@ -625,10 +638,8 @@ void MeshShader::prepare_pipelines()
 	VkPipelineMultisampleStateCreateInfo multisample_state =
 	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables =
-	    {
-	        VK_DYNAMIC_STATE_VIEWPORT,
-	        VK_DYNAMIC_STATE_SCISSOR};
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
@@ -637,47 +648,44 @@ void MeshShader::prepare_pipelines()
 
 	if (is_mesh_shader)
 	{
-		shader_stages.clear();
-
 		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.task", VK_SHADER_STAGE_TASK_BIT_EXT));
 		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
 		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 	}
 	else
 	{
-		shader_stages.clear();
-
 		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT));
 		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 	}
-
-	// Vertex bindings and attributes
-	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings =
-	    {
-	        vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
-	    };
-	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes =
-	    {
-	        vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),          // Location 0 : Position
-	        vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)),        // Location 1 : Color
-	    };
-
-	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-
-	vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
-	vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
-	vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
-	vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
 
 	// Generate the graphic pipeline
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
 
-	//TODO @Jeremy:
-	// 1) fallback pipeline needs Vertex and Index
-	// 2) Mesh shader doesn't but need to check the descriptor set
+	if (!is_mesh_shader)
+	{
+		// Vertex input to pipeline
+		VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 
-	pipeline_create_info.pVertexInputState   = &vertex_input_state;
+		// Vertex bindings and attributes
+		const std::vector<VkVertexInputBindingDescription> vertex_input_bindings =
+		    {
+		        vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+		    };
+		const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes =
+		    {
+		        vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),          // Location 0 : Position
+		        vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, color)),        // Location 1 : Color
+		    };
+
+		vertex_input_state.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
+		vertex_input_state.pVertexBindingDescriptions      = vertex_input_bindings.data();
+		vertex_input_state.vertexAttributeDescriptionCount = static_cast<uint32_t>(vertex_input_attributes.size());
+		vertex_input_state.pVertexAttributeDescriptions    = vertex_input_attributes.data();
+
+		pipeline_create_info.pVertexInputState = &vertex_input_state;
+	}
+
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
 	pipeline_create_info.pColorBlendState    = &color_blend_state;
@@ -692,7 +700,6 @@ void MeshShader::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-// Prepare and initialize uniform buffer containing shader uniforms
 void MeshShader::prepare_uniform_buffers()
 {
 	// Allocate data for the dynamic uniform buffer object
@@ -811,18 +818,7 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 
-
-	//TODO @Jeremy:
-	// 1) if is fallback loop, no mesh buffer prep
-	// 2) if is mesh shader, no vertex or index prep
-
-	prepare_cube_buffers();
-
-	if(is_mesh_shader)
-	{
-		prepare_meshlet_buffers();
-	}
-
+	prepare_buffers();
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
