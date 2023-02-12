@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, Sascha Willems
+- Copyright (c) 2022-2023, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -188,13 +188,13 @@ void drawFrame()
 		query_pool_timestamps,
 		0,
 		1,
-		sizeof(uint64_t),
+		2 * sizeof(uint64_t),
 		&time_stamp_with_availibility[Current_frame * max_frames_in_flight],
-		sizeof(uint64_t),
+		2 * sizeof(uint64_t),
 		VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WITH_AVAILABILITY_BIT);		
 
 	// Display time stamp for the current frame if available
-	if (time_stamp_with_availibility[current_frame * 2] != 0) {
+	if (time_stamp_with_availibility[current_frame * 2 + 1] != 0) {
 		std::cout << "Timestamp = " << time_stamp_with_availibility[current_frame * 2] << "\n";
 	}
 }

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -151,7 +151,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 	switch (accessor.componentType)
 	{
-		case TINYGLTF_COMPONENT_TYPE_BYTE: {
+		case TINYGLTF_COMPONENT_TYPE_BYTE:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
@@ -161,7 +162,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_UINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_UINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_UINT},
@@ -183,7 +185,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_SHORT: {
+		case TINYGLTF_COMPONENT_TYPE_SHORT:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R8_SINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R8G8_SINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R8G8B8_SINT},
@@ -193,7 +196,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R16_UINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R16G16_UINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R16G16B16_UINT},
@@ -215,7 +219,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_INT: {
+		case TINYGLTF_COMPONENT_TYPE_INT:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SINT},
@@ -225,7 +230,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+		case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_UINT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_UINT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_UINT},
@@ -235,7 +241,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		case TINYGLTF_COMPONENT_TYPE_FLOAT: {
+		case TINYGLTF_COMPONENT_TYPE_FLOAT:
+		{
 			static const std::map<int, VkFormat> mapped_format = {{TINYGLTF_TYPE_SCALAR, VK_FORMAT_R32_SFLOAT},
 			                                                      {TINYGLTF_TYPE_VEC2, VK_FORMAT_R32G32_SFLOAT},
 			                                                      {TINYGLTF_TYPE_VEC3, VK_FORMAT_R32G32B32_SFLOAT},
@@ -245,7 +252,8 @@ inline VkFormat get_attribute_format(const tinygltf::Model *model, uint32_t acce
 
 			break;
 		}
-		default: {
+		default:
+		{
 			format = VK_FORMAT_UNDEFINED;
 			break;
 		}
@@ -324,7 +332,9 @@ static inline bool texture_needs_srgb_colorspace(const std::string &name)
 	// The gltf spec states that the base and emissive textures MUST be encoded with the sRGB
 	// transfer function. All other texture types are linear.
 	if (name == "baseColorTexture" || name == "emissiveTexture")
+	{
 		return true;
+	}
 
 	// metallicRoughnessTexture, normalTexture & occlusionTexture must be linear
 	assert(name == "metallicRoughnessTexture" || name == "normalTexture" || name == "occlusionTexture");
@@ -612,7 +622,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
 
 				if (texture_needs_srgb_colorspace(gltf_value.first))
+				{
 					tex->get_image()->coerce_format_to_srgb();
+				}
 
 				material->textures[tex_name] = tex;
 			}
@@ -627,7 +639,9 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				vkb::sg::Texture *tex = textures.at(gltf_value.second.TextureIndex());
 
 				if (texture_needs_srgb_colorspace(gltf_value.first))
+				{
 					tex->get_image()->coerce_format_to_srgb();
+				}
 
 				material->textures[tex_name] = tex;
 			}
@@ -838,7 +852,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 			switch (output_accessor.type)
 			{
-				case TINYGLTF_TYPE_VEC3: {
+				case TINYGLTF_TYPE_VEC3:
+				{
 					const glm::vec3 *data = reinterpret_cast<const glm::vec3 *>(output_accessor_data.data());
 					for (size_t i = 0; i < output_accessor.count; ++i)
 					{
@@ -846,7 +861,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					}
 					break;
 				}
-				case TINYGLTF_TYPE_VEC4: {
+				case TINYGLTF_TYPE_VEC4:
+				{
 					const glm::vec4 *data = reinterpret_cast<const glm::vec4 *>(output_accessor_data.data());
 					for (size_t i = 0; i < output_accessor.count; ++i)
 					{
@@ -854,7 +870,8 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 					}
 					break;
 				}
-				default: {
+				default:
+				{
 					LOGW("Gltf animation sampler #{} has unknown output data type", sampler_index);
 					continue;
 				}
@@ -1009,16 +1026,16 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 	std::vector<Vertex> vertex_data;
 
-	const float *   pos     = nullptr;
-	const float *   normals = nullptr;
-	const float *   uvs     = nullptr;
+	const float    *pos     = nullptr;
+	const float    *normals = nullptr;
+	const float    *uvs     = nullptr;
 	const uint16_t *joints  = nullptr;
-	const float *   weights = nullptr;
+	const float    *weights = nullptr;
 
 	// Position attribute is required
-	auto & accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
+	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
 	size_t vertex_count = accessor.count;
-	auto & buffer_view  = model.bufferViews[accessor.bufferView];
+	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
 	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
 
 	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
@@ -1093,24 +1110,28 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 
 		switch (format)
 		{
-			case VK_FORMAT_R32_UINT: {
+			case VK_FORMAT_R32_UINT:
+			{
 				// Correct format
 				break;
 			}
-			case VK_FORMAT_R16_UINT: {
+			case VK_FORMAT_R16_UINT:
+			{
 				index_data = convert_underlying_data_stride(index_data, 2, 4);
 				break;
 			}
-			case VK_FORMAT_R8_UINT: {
+			case VK_FORMAT_R8_UINT:
+			{
 				index_data = convert_underlying_data_stride(index_data, 1, 4);
 				break;
 			}
-			default: {
+			default:
+			{
 				break;
 			}
 		}
 
-		//Always do uint32
+		// Always do uint32
 		submesh->index_type = VK_INDEX_TYPE_UINT32;
 
 		core::Buffer stage_buffer{device,

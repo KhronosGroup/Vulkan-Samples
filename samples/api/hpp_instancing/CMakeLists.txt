@@ -1,4 +1,4 @@
-# Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -32,5 +32,3 @@ add_sample_with_tags(
         "instancing/planet.frag"
         "instancing/starfield.vert"
         "instancing/starfield.frag")
-
-target_precompile_headers(${FOLDER_NAME} REUSE_FROM framework)

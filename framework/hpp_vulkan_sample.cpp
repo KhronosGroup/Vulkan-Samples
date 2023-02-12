@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -87,8 +87,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	{
 		std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 		auto                                 debugExtensionIt              = std::find_if(available_instance_extensions.begin(),
-                                             available_instance_extensions.end(),
-                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
+		                                                                                  available_instance_extensions.end(),
+		                                                                                  [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_instance_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
@@ -104,7 +104,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 	if (!surface)
+	{
 		throw std::runtime_error("Failed to create window surface.");
+	}
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -124,7 +126,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
 		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+		{
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
+		}
 	}
 
 #ifdef VKB_VULKAN_DEBUG
@@ -132,8 +136,8 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	{
 		std::vector<vk::ExtensionProperties> available_device_extensions = gpu.get_handle().enumerateDeviceExtensionProperties();
 		auto                                 debugExtensionIt            = std::find_if(available_device_extensions.begin(),
-                                             available_device_extensions.end(),
-                                             [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
+		                                                                                available_device_extensions.end(),
+		                                                                                [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_DEBUG_MARKER_EXTENSION_NAME) == 0; });
 		if (debugExtensionIt != available_device_extensions.end())
 		{
 			LOGI("Vulkan debug utils enabled ({})", VK_EXT_DEBUG_MARKER_EXTENSION_NAME);
@@ -186,7 +190,7 @@ void HPPVulkanSample::update_scene(float delta_time)
 {
 	if (scene)
 	{
-		//Update scripts
+		// Update scripts
 		if (scene->has_component<sg::Script>())
 		{
 			auto scripts = scene->get_components<sg::Script>();
@@ -197,7 +201,7 @@ void HPPVulkanSample::update_scene(float delta_time)
 			}
 		}
 
-		//Update animations
+		// Update animations
 		if (scene->has_component<sg::Animation>())
 		{
 			auto animations = scene->get_components<sg::Animation>();
@@ -539,7 +543,7 @@ void HPPVulkanSample::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 	// To be overridden by sample
 }
 
-sg::Scene const &HPPVulkanSample::get_scene() const
+sg::Scene &HPPVulkanSample::get_scene()
 {
 	assert(scene && "Scene not loaded");
 	return *scene;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -137,7 +137,9 @@ void HPPSeparateImageSampler::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 void HPPSeparateImageSampler::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 }
 
@@ -360,7 +362,7 @@ void HPPSeparateImageSampler::setup_samplers()
 	sampler_create_info.compareOp    = vk::CompareOp::eNever;
 	sampler_create_info.minLod       = 0.0f;
 	// Set max level-of-detail to mip level count of the texture
-	sampler_create_info.maxLod = (float) texture.image->get_mipmaps().size();
+	sampler_create_info.maxLod = static_cast<float>(texture.image->get_mipmaps().size());
 	// Enable anisotropic filtering
 	// This feature is optional, so we must check if it's supported on the device
 	if (get_device()->get_gpu().get_features().samplerAnisotropy)
@@ -389,7 +391,7 @@ void HPPSeparateImageSampler::setup_samplers()
 void HPPSeparateImageSampler::update_uniform_buffers()
 {
 	// Vertex shader
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) extent.width / (float) extent.height, 0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), static_cast<float>(extent.width) / static_cast<float>(extent.height), 0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);

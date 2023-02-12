@@ -147,8 +147,11 @@ A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellat
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
-### [HPP Texture tun-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
+### [HPP Texture run-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
 A transcoded version of the API sample [Texture run-time mip-map generation](#texture_mipmap_generation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Timestamp queries](./api/hpp_timestamp_queries/)<br/>
+A transcoded version of the API sample [Timestamp queries](#timestamp_queries) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
