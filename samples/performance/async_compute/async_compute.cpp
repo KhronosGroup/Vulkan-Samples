@@ -314,6 +314,7 @@ void AsyncComputeSample::render_shadow_pass()
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = shadow_render_target->get_views();
+	assert(!views.empty());
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
@@ -324,7 +325,7 @@ void AsyncComputeSample::render_shadow_pass()
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 
 	set_viewport_and_scissor(command_buffer, shadow_render_target->get_extent());
@@ -339,7 +340,7 @@ void AsyncComputeSample::render_shadow_pass()
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 
 	command_buffer.end();
@@ -360,6 +361,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
 
 	auto &views = get_current_forward_render_target().get_views();
+	assert(1 < views.size());
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
@@ -370,7 +372,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 
 	{
@@ -382,7 +384,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views[1], memory_barrier);
 	}
 
 	set_viewport_and_scissor(command_buffer, get_current_forward_render_target().get_extent());
@@ -410,7 +412,7 @@ VkSemaphore AsyncComputeSample::render_forward_offscreen_pass(VkSemaphore hdr_wa
 			memory_barrier.new_queue_family = post_compute_queue->get_family_index();
 		}
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 
 	command_buffer.end();
