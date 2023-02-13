@@ -134,7 +134,7 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 
 	auto          &render_target       = *parent->draw_render_target;
 	const auto    &target_views        = render_target.get_views();
-	const uint32_t n_input_attachments = uint32_t(get_input_attachments().size());
+	const uint32_t n_input_attachments = static_cast<uint32_t>(get_input_attachments().size());
 
 	if (parent->uniform_buffer_alloc != nullptr)
 	{
@@ -230,7 +230,7 @@ void PostProcessingRenderPass::update_load_stores(
 	// Update load/stores accordingly
 	load_stores.clear();
 
-	for (uint32_t j = 0; j < uint32_t(render_target.get_attachments().size()); j++)
+	for (uint32_t j = 0; j < static_cast<uint32_t>(render_target.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
 		const bool is_sampled = std::find_if(sampled_attachments.begin(), sampled_attachments.end(),
@@ -457,7 +457,9 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 
 				// pack sampled attachment
 				if (it.second.is_depth_resolve())
+				{
 					packed_sampled_attachment |= DEPTH_RESOLVE_BITMASK;
+				}
 
 				sampled_attachments.insert({image_rt, packed_sampled_attachment});
 			}

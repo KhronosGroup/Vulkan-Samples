@@ -104,7 +104,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	// Getting a valid vulkan surface from the platform
 	surface = platform.get_window().create_surface(*instance);
 	if (!surface)
+	{
 		throw std::runtime_error("Failed to create window surface.");
+	}
 
 	auto &gpu = instance->get_suitable_gpu(surface);
 	gpu.set_high_priority_graphics_queue_enable(high_priority_graphics_queue);
@@ -124,7 +126,9 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		add_device_extension(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
 
 		if (instance_extensions.find(VK_KHR_DISPLAY_EXTENSION_NAME) != instance_extensions.end())
+		{
 			add_device_extension(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME, /*optional=*/true);
+		}
 	}
 
 #ifdef VKB_VULKAN_DEBUG

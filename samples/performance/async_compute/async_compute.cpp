@@ -565,10 +565,10 @@ VkSemaphore AsyncComputeSample::render_compute_post(VkSemaphore wait_graphics_se
 		Push push{};
 		push.width            = dst_extent.width;
 		push.height           = dst_extent.height;
-		push.inv_width        = 1.0f / float(push.width);
-		push.inv_height       = 1.0f / float(push.height);
-		push.inv_input_width  = 1.0f / float(src_extent.width);
-		push.inv_input_height = 1.0f / float(src_extent.height);
+		push.inv_width        = 1.0f / static_cast<float>(push.width);
+		push.inv_height       = 1.0f / static_cast<float>(push.height);
+		push.inv_input_width  = 1.0f / static_cast<float>(src_extent.width);
+		push.inv_input_height = 1.0f / static_cast<float>(src_extent.height);
 
 		command_buffer.push_constants(push);
 		command_buffer.bind_image(src, *linear_sampler, 0, 0, 0);
