@@ -115,6 +115,8 @@ class MeshShader : public ApiVulkanSample
 	void setup_descriptor_set();
 	void prepare_buffers();
 	void prepare_pipelines();
+	//TODO @Jeremy: add request feature override:
+	
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void update_dynamic_uniform_buffer(float delta_time, bool force = false);
