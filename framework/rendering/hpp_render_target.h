@@ -19,6 +19,7 @@
 
 #include "core/hpp_image.h"
 #include <functional>
+#include <memory>
 
 namespace vkb
 {

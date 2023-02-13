@@ -27,10 +27,12 @@ MeshShading::MeshShading() :
 {
 	title = "Mesh shading";
 
-	// vk_mesh_ext requires Vulkan 1.3 and device properties 2.  SPIR-V must also be set to at least 1.4.
-	set_api_version(VK_API_VERSION_1_3);
+	// vk_mesh_ext requires Vulkan 1.1 and device properties 2.  SPIR-V must also be set to at least 1.4.
+	set_api_version(VK_API_VERSION_1_1);
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 
@@ -51,7 +53,6 @@ void MeshShading::request_gpu_features(vkb::PhysicalDevice &gpu)
 	auto &meshFeatures = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(
 	    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
 	meshFeatures.meshShader = VK_TRUE;
-	// NB: current validation layers will throw an error unless vk_mesh_nv is enabled along with vk_mesh_ext.
 }
 
 /*
