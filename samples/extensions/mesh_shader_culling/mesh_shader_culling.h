@@ -31,7 +31,7 @@
 void *aligned_alloc(size_t size, size_t alignment);
 void  aligned_free(void *data);
 
-class MeshShader : public ApiVulkanSample
+class MeshShaderCulling : public ApiVulkanSample
 {
   public:
 	struct Vertex
@@ -108,8 +108,8 @@ class MeshShader : public ApiVulkanSample
 	void init_cube_meshlets();
 
   public:
-	MeshShader();
-	~MeshShader() override;
+	MeshShaderCulling();
+	~MeshShaderCulling() override;
 	void build_command_buffers() override;
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
@@ -127,4 +127,4 @@ class MeshShader : public ApiVulkanSample
 	bool resize(uint32_t width, uint32_t height) override;
 };
 
-std::unique_ptr<vkb::Application> create_mesh_shader();
+std::unique_ptr<vkb::Application> create_mesh_shader_culling();

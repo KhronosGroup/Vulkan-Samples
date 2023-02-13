@@ -23,11 +23,11 @@ add_sample_with_tags(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
         AUTHOR "Holochip Corporation"
-        NAME "Mesh Shader"
-        DESCRIPTION "Demonstrate and showcase a sample application using mesh shader rendering pipeline"
+        NAME "Mesh Shader Culling"
+        DESCRIPTION "Demonstrate and showcase a sample application using mesh shader culling functionality"
         SHADER_FILES_GLSL
-        "mesh_shader/mesh_shader_traditional.vert"
-        "mesh_shader/mesh_shader_traditional.frag"
-        "mesh_shader/mesh_shader_task_mesh.task"
-        "mesh_shader/mesh_shader_task_mesh.mesh"
-        "mesh_shader/mesh_shader_task_mesh.frag")
+        "mesh_shader_culling/mesh_shader_traditional.vert"
+        "mesh_shader_culling/mesh_shader_traditional.frag"
+        "mesh_shader_culling/mesh_shader_task_mesh.task"
+        "mesh_shader_culling/mesh_shader_task_mesh.mesh"
+        "mesh_shader_culling/mesh_shader_task_mesh.frag")

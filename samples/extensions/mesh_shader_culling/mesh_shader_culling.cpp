@@ -19,8 +19,8 @@
  * Demonstrate and showcase a sample application using mesh shader rendering pipeline.
  */
 
-#include "mesh_shader.h"
 #include "benchmark_mode/benchmark_mode.h"
+#include "mesh_shader_culling.h"
 
 // Wrapper functions for aligned memory allocation
 // There is currently no standard for this in C++ that works across all platforms and vendors, so we abstract this
@@ -46,9 +46,9 @@ void aligned_free(void *data)
 #endif
 }
 
-MeshShader::MeshShader()
+MeshShaderCulling::MeshShaderCulling()
 {
-	title = "Mesh shader";
+	title = "Mesh shader culling";
 
 	// API version
 	set_api_version(VK_API_VERSION_1_3);
@@ -66,7 +66,7 @@ MeshShader::MeshShader()
 	init_cube_meshlets();
 }
 
-MeshShader ::~MeshShader()
+MeshShaderCulling ::~MeshShaderCulling()
 {
 	if (device)
 	{
@@ -81,7 +81,7 @@ MeshShader ::~MeshShader()
 	}
 }
 
-void MeshShader::build_command_buffers()
+void MeshShaderCulling::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -156,7 +156,7 @@ void MeshShader::build_command_buffers()
 
 }
 
-void MeshShader::draw()
+void MeshShaderCulling::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
@@ -170,7 +170,7 @@ void MeshShader::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void MeshShader::init_cube()
+void MeshShaderCulling::init_cube()
 {
 	// Setup vertices indices for a colored cube
 	cube_vertices =
@@ -217,7 +217,7 @@ void MeshShader::init_cube()
 	    };
 }
 
-void MeshShader::init_cube_meshlets()
+void MeshShaderCulling::init_cube_meshlets()
 {
 	// Vertex and Indices Decomposition:
 
@@ -434,7 +434,7 @@ void MeshShader::init_cube_meshlets()
 	meshlet_infos.push_back(meshlet_info);
 }
 
-void MeshShader::prepare_buffers()
+void MeshShaderCulling::prepare_buffers()
 {
 	if (is_mesh_shader)
 	{
@@ -494,7 +494,7 @@ void MeshShader::prepare_buffers()
 	}
 }
 
-void MeshShader::setup_descriptor_pool()
+void MeshShaderCulling::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes{};
 
@@ -528,7 +528,7 @@ void MeshShader::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void MeshShader::setup_descriptor_set_layout()
+void MeshShaderCulling::setup_descriptor_set_layout()
 {
 	// Specifies the targeted shaders, and defines layer bindings for the specified shaders
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{};
@@ -569,7 +569,7 @@ void MeshShader::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));        // writes to pipeline_layout
 }
 
-void MeshShader::setup_descriptor_set()
+void MeshShaderCulling::setup_descriptor_set()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
@@ -606,7 +606,7 @@ void MeshShader::setup_descriptor_set()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void MeshShader::prepare_pipelines()
+void MeshShaderCulling::prepare_pipelines()
 {
 	//TODO: check
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -656,14 +656,14 @@ void MeshShader::prepare_pipelines()
 
 	if (is_mesh_shader)
 	{
-		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_task_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+		shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.task", VK_SHADER_STAGE_TASK_BIT_EXT));
+		shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
+		shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 	}
 	else
 	{
-		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT));
-		shader_stages.push_back(load_shader("mesh_shader/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+		shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_traditional.vert", VK_SHADER_STAGE_VERTEX_BIT));
+		shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_traditional.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 	}
 
 	// Generate the graphic pipeline
@@ -713,7 +713,7 @@ void MeshShader::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-void MeshShader::prepare_uniform_buffers()
+void MeshShaderCulling::prepare_uniform_buffers()
 {
 	// Allocate data for the dynamic uniform buffer object
 	// We allocate this manually as the alignment of the offset differs between GPUs
@@ -756,7 +756,7 @@ void MeshShader::prepare_uniform_buffers()
 	update_dynamic_uniform_buffer(0.0f, true);
 }
 
-void MeshShader::update_uniform_buffers()
+void MeshShaderCulling::update_uniform_buffers()
 {
 	// Fixed ubo with projection and view matrices
 	ubo_vs.projection = camera.matrices.perspective;
@@ -765,7 +765,7 @@ void MeshShader::update_uniform_buffers()
 	uniform_buffers.view->convert_and_update(ubo_vs);
 }
 
-void MeshShader::update_dynamic_uniform_buffer(float delta_time, bool force)
+void MeshShaderCulling::update_dynamic_uniform_buffer(float delta_time, bool force)
 {
 	// Update at max. 60 fps
 	animation_timer += delta_time;
@@ -818,7 +818,7 @@ void MeshShader::update_dynamic_uniform_buffer(float delta_time, bool force)
 	uniform_buffers.dynamic->flush();
 }
 
-bool MeshShader::prepare(vkb::Platform &platform)
+bool MeshShaderCulling::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -842,14 +842,14 @@ bool MeshShader::prepare(vkb::Platform &platform)
 	return true;
 }
 
-bool MeshShader::resize(uint32_t width, uint32_t height)
+bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 	return true;
 }
 
-void MeshShader::render(float delta_time)
+void MeshShaderCulling::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -866,7 +866,7 @@ void MeshShader::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::Application> create_mesh_shader()
+std::unique_ptr<vkb::Application> create_mesh_shader_culling()
 {
-	return std::make_unique<MeshShader>();
+	return std::make_unique<MeshShaderCulling>();
 }
