@@ -82,7 +82,23 @@ void main()
     OUT.baseID = 1;
     OUT.deltaID = 1;
 
-	EmitMeshTasksEXT(6, 1, 1);
+	EmitMeshTasksEXT(1, 1, 1);
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+struct PrimitiveColor
+{
+    vec3 color_1;
+    vec3 color_2;
+};
+// "taskPayloadSharedEXT" let you share whichever data structure created here to the mesh shader
+taskPayloadSharedEXT PrimitiveColor colorOut;
+void main()
+{
+    colorOut.color_1 = vec3(1.0f, 0.0f, 0.0f);
+    colorOut.color_2 = vec3(1.0f, 1.0f, 0.0f);
+	EmitMeshTasksEXT(1, 1, 1);
+}
+
 
 
 /*

@@ -72,21 +72,34 @@ struct Task
   uint8_t   deltaID;
 };
 
-
 taskPayloadSharedEXT Task IN;
 
 //taskPayloadSharedEXT MeshTaskPayload payload;
 
 
+layout (location=0) out vec4 perVertex[];
+layout (location=1) perprimitiveEXT out vec4 perPrimitiveEXT[];
+layout (location=3) out vec3 outColor[];
 
-layout(location = 0) out vec4 color[];
+layout(location = 0) out vec3 color[];
 
-
-// if Subpixel Precision in, then: 1.0f / (2.0f^subpixel.precision_bits)
-const float subpixel_precision = 1.0f / 256.0f;
 
 void main()
 {
-    color = vec4(1.0);
+        SetMeshOutputsEXT(4, 2); // Means 4 vertices and 2 primitives (e.g., triangles in this case)
+        // Generating vertices
+        gl_MeshVerticesEXT[0].gl_Position = vec4(-0.25, -0.25, 0.0, 1.0);
+        gl_MeshVerticesEXT[1].gl_Position = vec4( 0.25, -0.25, 0.0, 1.0);
+        gl_MeshVerticesEXT[2].gl_Position = vec4(-0.25,  0.25, 0.0, 1.0);
+        gl_MeshVerticesEXT[3].gl_Position = vec4( 0.25,  0.25, 0.0, 1.0);
+        // Generating indices, so the actual index array reads {0, 1, 2, 2, 1, 3}...
+        gl_PrimitiveTriangleIndicesEXT[0] = uvec3(0, 1, 2);
+        gl_PrimitiveTriangleIndicesEXT[1] = uvec3(2, 1, 3);
+        // Assigning color to each vertex
+        outColor[0] = vec3(1.0);
+        outColor[1] = vec3(1.0);
+        outColor[2] = vec3(1.0);
+        outColor[3] = vec3(1.0);
 
+    color = vec4(1.0);
 }
