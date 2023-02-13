@@ -256,7 +256,7 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer
 
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
-	assert(mesh_end < nodes.size());
+	assert(mesh_end <= nodes.size());
 	for (uint32_t i = mesh_start; i < mesh_end; i++)
 	{
 		update_uniform(command_buffer, *nodes[i].first, thread_index);
