@@ -59,7 +59,7 @@ class MeshShader : public ApiVulkanSample
 	} ubo_data_dynamic{};
 
 	// Mesh shader selection
-	bool is_mesh_shader = false;
+	bool is_mesh_shader = true;
 
 	// Meshlet related structures
 	struct MeshletInfo

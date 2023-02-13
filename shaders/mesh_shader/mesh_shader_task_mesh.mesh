@@ -26,42 +26,65 @@
 #define DEBUG 0
 #define CULL 1
 
+#define TASK_WG_SIZE 64
+#define MESH_WG_SIZE 64
+
+// Definition of Data structures
+
+struct Vertex
+{
+    vec3 position;
+    vec3 color;
+};
+
+struct MeshletInfo
+{
+    uint32_t vertexCount;
+    uint32_t vertexBeginIndex;
+    uint32_t primitiveCount;
+    uint32_t primitiveBeginIndex;
+}
+
 layout(local_size_x = MESH_WG_SIZE, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 64, max_primitives = 64) out;
 
-layout(push_constant) uniform block
+layout(binding = 0) readonly buffer VertexArray
 {
-	Globals globals;
+	Vertex vertexArray[];
 };
 
-layout(binding = 1) readonly buffer Draws
+layout(binding = 1) readonly buffer VertexIndex
 {
-	MeshDraw draws[];
+	uint32_t vertexIndex[];
 };
 
-layout(binding = 2) readonly buffer Meshlets
+layout(binding = 2) readonly buffer MeshletData
 {
-	Meshlet meshlets[];
+	MeshletInfo meshletData[];
 };
 
-layout(binding = 3) readonly buffer MeshletData
+layout(binding = 3) readonly buffer PrimitiveIndex
 {
-	uint meshlet_data[];
+	uint8_t primitiveIndex[];
 };
 
-layout(binding = 3) readonly buffer MeshletData8
+struct Task
 {
-	uint8_t meshlet_data_8[];
+  uint      baseID;
+  uint8_t   deltaID;;
 };
 
-layout(binding = 4) readonly buffer Vertices
-{
-	Vertex vertices[];
-};
+
+taskPayloadSharedEXT Task IN;
+
+//taskPayloadSharedEXT MeshTaskPayload payload;
+
+
 
 layout(location = 0) out vec4 color[];
 
-taskPayloadSharedEXT MeshTaskPayload payload;
+/*
+
 
 uint hash(uint a)
 {
@@ -77,12 +100,19 @@ uint hash(uint a)
 #if CULL
 shared vec3 vertex_clip[64];
 #endif
+*/
 
 // if Subpixel Precision in, then: 1.0f / (2.0f^subpixel.precision_bits)
 const float subpixel_precision = 1.0f / 256.0f;
 
 void main()
 {
+
+    color = vec4(1.0);
+
+
+
+/*
 	uint t_index = gl_LocalInvocationIndex;
 	uint m_index = payload.meshletIndices[gl_WorkGroupID.x];
 
@@ -158,4 +188,7 @@ void main()
 		gl_MeshPrimitivesEXT[i].gl_CullPrimitiveEXT = culled;
 	#endif
 	}
+
+	*/
+
 }

@@ -27,46 +27,67 @@
 layout (constant_id = 0) const bool LATE = false;
 
 #define CULL 1
+#define TASK_WG_SIZE 64
+#define MESH_WG_SIZE 64
+
+struct Vertex
+{
+    vec3 position;
+    vec3 color;
+};
+
+struct MeshletInfo
+{
+    uint32_t vertexCount;
+    uint32_t vertexBeginIndex;
+    uint32_t primitiveCount;
+    uint32_t primitiveBeginIndex;
+}
+
 
 layout(local_size_x = TASK_WG_SIZE, local_size_y = 1, local_size_z = 1) in;
 
-layout(push_constant) uniform block
+layout(binding = 0) readonly buffer VertexArray
 {
-	Globals globals;
+	Vertex vertexArray[];
 };
 
-layout(binding = 0) readonly buffer TaskCommands
+layout(binding = 1) readonly buffer VertexIndex
 {
-	MeshTaskCommand task_commands[];
+	uint32_t vertexIndex[];
 };
 
-layout(binding = 1) readonly buffer Draws
+layout(binding = 2) readonly buffer MeshletData
 {
-	MeshDraw draws[];
+	MeshletInfo meshletData[];
 };
 
-layout(binding = 2) readonly buffer Meshlets
+layout(binding = 3) readonly buffer PrimitiveIndex
 {
-	Meshlet meshlets[];
+	uint8_t primitiveIndex[];
 };
 
-layout(binding = 5) buffer MeshletVisibility
+struct Task
 {
-	uint meshlet_visibility[];
+  uint      baseID;
+  uint8_t   deltaID;;
 };
 
-layout(binding = 6) uniform sampler2D depth_pyramid;
+taskPayloadSharedEXT Task OUT;
 
-taskPayloadSharedEXT MeshTaskPayload payload;
-
-#if CULL
-shared int shared_count;
-#endif
 
 const float cut_off_coefficient_inverse = 1.0f / 127.0f;
 
 void main()
 {
+
+    OUT.baseID = 1;
+    OUT.deltaID = 1;
+
+	EmitMeshTasksEXT(6, 1, 1);
+
+
+/*
 	MeshTaskCommand command = task_commands[gl_WorkGroupID.x * 64 + gl_WorkGroupID.y];
 	uint draw_id = command.draw_id;
 	MeshDraw mesh_draw = draws[draw_id];
@@ -161,4 +182,7 @@ void main()
 
 	EmitMeshTasksEXT(task_count, 1, 1);
 #endif
+
+*/
+
 }

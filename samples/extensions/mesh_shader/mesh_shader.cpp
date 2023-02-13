@@ -109,8 +109,6 @@ void MeshShader::build_command_buffers()
 
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-		VkDeviceSize offsets[1] = {0}; // Just to ensure that offsets gets out of the scope
-
 		if (is_mesh_shader)
 		{
 			// TODO @Jeremy: we may need a total descriptor set count as a CLASS VARIABLE:
@@ -118,10 +116,11 @@ void MeshShader::build_command_buffers()
 			// The first set = 0, descriptor set count = 4... this means uniform buffer
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 4, &descriptor_set, 0, nullptr);
 
-			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], 2, 2, 2);        // That 2 draws on all directions each
+			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], 6, 1, 1);        // That 2 draws on all directions each
 		}
 		else
 		{
+			VkDeviceSize offsets[1] = {0}; // Just to ensure that offsets gets out of the scope
 			// Binding Vertex and Index buffers
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 			vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
@@ -148,6 +147,8 @@ void MeshShader::build_command_buffers()
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
+
+
 }
 
 void MeshShader::draw()
@@ -581,10 +582,10 @@ void MeshShader::setup_descriptor_set()
 		VkDescriptorBufferInfo meshlet_primitive_index_buffer_descriptor = create_descriptor(*meshlet_primitive_index_buffer);        // primitive index buffer
 
 		// Pushes back to the write_descriptor_sets vector:
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_vertex_array_buffer_descriptor));           // binding 0
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_vertex_index_buffer_descriptor));           // binding 1
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0, &meshlet_vertex_array_buffer_descriptor));           // binding 0
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, &meshlet_vertex_index_buffer_descriptor));           // binding 1
 		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_info_buffer_descriptor));                   // binding 2
-		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2, &meshlet_primitive_index_buffer_descriptor));        // binding 3
+		write_descriptor_sets.push_back(vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &meshlet_primitive_index_buffer_descriptor));        // binding 3
 	}
 	else
 	{
@@ -602,13 +603,14 @@ void MeshShader::setup_descriptor_set()
 
 void MeshShader::prepare_pipelines()
 {
+	//TODO: check
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	// TODO: check if its okay
+	// TODO: check
 	if (is_mesh_shader)
 	{
 		rasterization_state =
@@ -635,6 +637,7 @@ void MeshShader::prepare_pipelines()
 	VkPipelineViewportStateCreateInfo viewport_state =
 	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
+	// TODO: check
 	VkPipelineMultisampleStateCreateInfo multisample_state =
 	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
@@ -692,10 +695,15 @@ void MeshShader::prepare_pipelines()
 	pipeline_create_info.pMultisampleState   = &multisample_state;
 	pipeline_create_info.pViewportState      = &viewport_state;
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+
+	// TODO: check
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
+
+	//TODO: ? not sure if VkPipelineRenderingCreateInfo is needed: however I do have the render pass...
+
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }

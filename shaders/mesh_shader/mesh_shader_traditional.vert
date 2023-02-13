@@ -41,6 +41,8 @@ void main()
 {
 	outColor = inColor;
 
+	//outColor = vec3(1.0f);
+
 	//TODO: move that matrix production inside the renderer
 	mat4 modelView = uboView.view * uboInstance.model;
 	vec3 worldPos = vec3(modelView * vec4(inPos, 1.0));
