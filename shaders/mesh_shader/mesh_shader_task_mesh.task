@@ -22,7 +22,6 @@
 #extension GL_EXT_mesh_shader: require
 #extension GL_GOOGLE_include_directive: require
 
-#include "mesh_shader_utils.h"
 
 layout (constant_id = 0) const bool LATE = false;
 
@@ -42,8 +41,7 @@ struct MeshletInfo
     uint32_t vertexBeginIndex;
     uint32_t primitiveCount;
     uint32_t primitiveBeginIndex;
-}
-
+};
 
 layout(local_size_x = TASK_WG_SIZE, local_size_y = 1, local_size_z = 1) in;
 
@@ -70,7 +68,7 @@ layout(binding = 3) readonly buffer PrimitiveIndex
 struct Task
 {
   uint      baseID;
-  uint8_t   deltaID;;
+  uint8_t   deltaID;
 };
 
 taskPayloadSharedEXT Task OUT;

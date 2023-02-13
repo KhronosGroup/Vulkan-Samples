@@ -22,6 +22,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include "glsl_compiler.h"
 
 #define OBJECT_INSTANCES 125
 
