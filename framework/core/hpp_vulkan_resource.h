@@ -80,6 +80,11 @@ class HPPVulkanResource
 		return handle;
 	}
 
+	inline HPPHandle &get_handle()
+	{
+		return handle;
+	}
+
 	inline uint64_t get_handle_u64() const
 	{
 		// See https://github.com/KhronosGroup/Vulkan-Docs/issues/368 .
