@@ -23,11 +23,12 @@
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
 
-const float cull_center_delta = 0.01f;
-
 class MeshShadingCulling : public ApiVulkanSample
 {
   private:
+	int32_t density_level = 0;
+
+  public:
 	struct UBO
 	{
 		float cull_center_x   = 0.0f;
@@ -38,7 +39,6 @@ class MeshShadingCulling : public ApiVulkanSample
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{};
 
-  public:
 	VkPipeline            pipeline              = VK_NULL_HANDLE;
 	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
 	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
@@ -62,9 +62,7 @@ class MeshShadingCulling : public ApiVulkanSample
 	void render(float delta_time) override;
 
 	// TODO: add on_update_ui_overlay()
-
-
-
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling();

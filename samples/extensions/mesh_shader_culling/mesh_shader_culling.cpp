@@ -299,8 +299,27 @@ void MeshShadingCulling::render(float delta_time)
 		printf("x: %f, y: %f, z: %f\n", camera.position.x, camera.position.y, camera.position.z);
 	}
 }
+void MeshShadingCulling::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("Configurations"))
+	{
+		if (drawer.slider_float("Cull Radius: ", &ubo_cull.cull_radius, 0.01f, 1.0f))
+		{
+			update_uniform_buffers();
 
+			//TODO: delete this:
+			printf("r: %f\n", ubo_cull.cull_radius);
+		}
+		if (drawer.combo_box("Meshlet Density Level: ", &density_level, {"low", "mid", "high", "ultra"}))
+		{
+			ubo_cull.meshlet_density = static_cast<float>(density_level);
+			update_uniform_buffers();
 
+			//TODO: delete this:
+			printf("rho: %f\n", ubo_cull.meshlet_density);
+		}
+	}
+}
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling()
 {
