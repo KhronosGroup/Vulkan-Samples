@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -45,7 +45,7 @@ VkFence FencePool::request_fence()
 	// Check if there is an available fence
 	if (active_fence_count < fences.size())
 	{
-		return fences.at(active_fence_count++);
+		return fences[active_fence_count++];
 	}
 
 	VkFence fence{VK_NULL_HANDLE};

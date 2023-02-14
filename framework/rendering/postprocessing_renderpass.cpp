@@ -150,7 +150,8 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	{
 		if (auto layout_binding = bindings.get_layout_binding(it.first))
 		{
-			command_buffer.bind_input(target_views.at(it.second), 0, layout_binding->binding, 0);
+			assert(it.second < target_views.size());
+			command_buffer.bind_input(target_views[it.second], 0, layout_binding->binding, 0);
 		}
 	}
 
@@ -348,7 +349,8 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(views.at(input), barrier);
+		assert(input < views.size());
+		command_buffer.image_memory_barrier(views[input], barrier);
 		render_target.set_layout(input, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
@@ -389,13 +391,15 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(sampled_rt->get_views().at(attachment), barrier);
+		assert(attachment < sampled_rt->get_views().size());
+		command_buffer.image_memory_barrier(sampled_rt->get_views()[attachment], barrier);
 		sampled_rt->set_layout(attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	for (uint32_t output : output_attachments)
 	{
-		const VkFormat      attachment_format = views.at(output).get_format();
+		assert(output < views.size());
+		const VkFormat      attachment_format = views[output].get_format();
 		const bool          is_depth_stencil  = vkb::is_depth_only_format(attachment_format) || vkb::is_depth_stencil_format(attachment_format);
 		const VkImageLayout output_layout     = is_depth_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		if (render_target.get_layout(output) == output_layout)
@@ -421,7 +425,7 @@ void PostProcessingRenderPass::transition_attachments(
 			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		}
 
-		command_buffer.image_memory_barrier(views.at(output), barrier);
+		command_buffer.image_memory_barrier(views[output], barrier);
 		render_target.set_layout(output, output_layout);
 	}
 

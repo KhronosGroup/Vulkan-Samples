@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ namespace
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                              void *                                      user_data)
+                                                              void                                       *user_data)
 {
 	// Log debug messge
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
@@ -68,7 +68,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 }
 #endif
 
-bool validate_layers(const std::vector<const char *> &     required,
+bool validate_layers(const std::vector<const char *>      &required,
                      const std::vector<VkLayerProperties> &available)
 {
 	for (auto layer : required)
@@ -132,9 +132,9 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLaye
 
 namespace
 {
-bool enable_extension(const char *                              required_ext_name,
+bool enable_extension(const char                               *required_ext_name,
                       const std::vector<VkExtensionProperties> &available_exts,
-                      std::vector<const char *> &               enabled_extensions)
+                      std::vector<const char *>                &enabled_extensions)
 {
 	for (auto &avail_ext_it : available_exts)
 	{
@@ -163,7 +163,7 @@ bool enable_extension(const char *                              required_ext_nam
 
 bool enable_all_extensions(const std::vector<const char *>           required_ext_names,
                            const std::vector<VkExtensionProperties> &available_exts,
-                           std::vector<const char *> &               enabled_extensions)
+                           std::vector<const char *>                &enabled_extensions)
 {
 	using std::placeholders::_1;
 
@@ -173,9 +173,9 @@ bool enable_all_extensions(const std::vector<const char *>           required_ex
 
 }        // namespace
 
-Instance::Instance(const std::string &                           application_name,
+Instance::Instance(const std::string                            &application_name,
                    const std::unordered_map<const char *, bool> &required_extensions,
-                   const std::vector<const char *> &             required_validation_layers,
+                   const std::vector<const char *>              &required_validation_layers,
                    bool                                          headless,
                    uint32_t                                      api_version)
 {
@@ -188,7 +188,7 @@ Instance::Instance(const std::string &                           application_nam
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
 	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
-                                                  available_instance_extensions, enabled_extensions);
+	                                               available_instance_extensions, enabled_extensions);
 	bool       has_debug_report = false;
 
 	if (!has_debug_utils)
@@ -458,7 +458,7 @@ PhysicalDevice &Instance::get_first_gpu()
 
 	// Otherwise just pick the first one
 	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus.at(0);
+	return *gpus[0];
 }
 
 PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
@@ -470,7 +470,7 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 	{
 		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
 		{
-			//See if it work with the surface
+			// See if it work with the surface
 			size_t queue_count = gpu->get_queue_family_properties().size();
 			for (uint32_t queue_idx = 0; static_cast<size_t>(queue_idx) < queue_count; queue_idx++)
 			{
@@ -484,7 +484,7 @@ PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 
 	// Otherwise just pick the first one
 	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus.at(0);
+	return *gpus[0];
 }
 
 bool Instance::is_enabled(const char *extension) const
