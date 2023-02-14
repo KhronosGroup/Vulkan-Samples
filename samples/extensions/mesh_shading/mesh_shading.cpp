@@ -132,20 +132,17 @@ void MeshShading::draw()
 
 void MeshShading::prepare_pipelines()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes;
 	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
+	        0,nullptr,
 	        2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings;
 	VkDescriptorSetLayoutCreateInfo           descriptor_layout =
 	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	        nullptr,
+	        0);
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
 

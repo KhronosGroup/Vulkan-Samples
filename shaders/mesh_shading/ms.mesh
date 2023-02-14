@@ -19,7 +19,7 @@
  */
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(triangles, max_vertices = 64, max_primitives = 124) out;
+layout(triangles, max_vertices = 3, max_primitives = 1) out;
 
 void main()
 {
