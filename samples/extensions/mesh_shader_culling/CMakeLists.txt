@@ -15,8 +15,8 @@
 # limitations under the License.
 #
 
-get_filename_component(FOLDER_NAME ../../../../../Desktop/mesh_shader_culling NAME)
-get_filename_component(PARENT_DIR ../../../../../Desktop/mesh_shader_culling PATH)
+get_filename_component(FOLDER_NAME ../../../../../extensions/mesh_shader_culling NAME)
+get_filename_component(PARENT_DIR ../../../../../extensions/mesh_shader_culling PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
 add_sample_with_tags(
@@ -26,8 +26,6 @@ add_sample_with_tags(
         NAME "Mesh Shader Culling"
         DESCRIPTION "Demonstrate and showcase a sample application using mesh shader culling functionality"
         SHADER_FILES_GLSL
-        "mesh_shader_culling/mesh_shader_traditional.vert"
-        "mesh_shader_culling/mesh_shader_traditional.frag"
-        "mesh_shader_culling/mesh_shader_task_mesh.task"
-        "mesh_shader_culling/mesh_shader_task_mesh.mesh"
-        "mesh_shader_culling/mesh_shader_task_mesh.frag")
+        "mesh_shader_culling/mesh_shader_culling.task"
+        "mesh_shader_culling/mesh_shader_culling.mesh"
+        "mesh_shader_culling/mesh_shader_culling.frag")

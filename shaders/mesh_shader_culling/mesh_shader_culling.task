@@ -16,11 +16,14 @@
  * limitations under the License.
  */
 
-layout(location = 0) out vec4 outColor;
+#extension GL_EXT_mesh_shader: require
 
-layout(location = 3) in vec3 color;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
 void main()
 {
-	outColor = vec4(color, 1.0f);
+    //colorOut.color_1 = vec3(1.0f, 0.0f, 0.0f);
+    //colorOut.color_2 = vec3(1.0f, 1.0f, 0.0f);
+
+	EmitMeshTasksEXT(1, 1, 1);
 }

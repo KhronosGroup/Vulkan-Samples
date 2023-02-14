@@ -215,9 +215,9 @@ void MeshShadingCulling::prepare_pipelines()
 	// Load our SPIR-V shaders.
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
 
-	//shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_task_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info =
 	    vkb::initializers::pipeline_create_info(

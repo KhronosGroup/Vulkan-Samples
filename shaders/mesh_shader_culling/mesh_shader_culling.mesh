@@ -16,35 +16,13 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inColor;
+#extension GL_EXT_mesh_shader: require
 
-layout (binding = 0) uniform UboView 
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 64, max_primitives = 124) out;
+
+
+void main()
 {
-	mat4 projection;
-	mat4 view;
-} uboView;
 
-layout (binding = 1) uniform UboInstance 
-{
-	mat4 model; 
-} uboInstance;
-
-layout (location = 0) out vec3 outColor;
-
-out gl_PerVertex 
-{
-	vec4 gl_Position;   
-};
-
-void main() 
-{
-	outColor = inColor;
-
-	//outColor = vec3(1.0f);
-
-	//TODO: move that matrix production inside the renderer
-	mat4 modelView = uboView.view * uboInstance.model;
-	vec3 worldPos = vec3(modelView * vec4(inPos, 1.0));
-	gl_Position = uboView.projection * modelView * vec4(inPos.xyz, 1.0);
 }
