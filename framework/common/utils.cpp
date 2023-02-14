@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,8 +50,9 @@ void screenshot(RenderContext &render_context, const std::string &filename)
 	       render_context.get_format() == VK_FORMAT_B8G8R8A8_SRGB);
 
 	// We want the last completed frame since we don't want to be reading from an incomplete framebuffer
-	auto &frame          = render_context.get_last_rendered_frame();
-	auto &src_image_view = frame.get_render_target().get_views().at(0);
+	auto &frame = render_context.get_last_rendered_frame();
+	assert(!frame.get_render_target().get_views().empty());
+	auto &src_image_view = frame.get_render_target().get_views()[0];
 
 	auto width    = render_context.get_surface_extent().width;
 	auto height   = render_context.get_surface_extent().height;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -167,6 +167,7 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 	//
 
 	auto &views = render_target.get_views();
+	assert(1 < views.size());
 
 	{
 		// Image 0 is the swapchain
@@ -195,13 +196,13 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 				break;
 		}
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
 			memory_barrier.old_layout = VK_IMAGE_LAYOUT_UNDEFINED;
-			command_buffer.image_memory_barrier(views.at(i), memory_barrier);
+			command_buffer.image_memory_barrier(views[i], memory_barrier);
 		}
 	}
 
@@ -230,7 +231,7 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 				break;
 		}
 
-		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views[1], memory_barrier);
 	}
 
 	set_viewport_and_scissor(command_buffer, render_target.get_extent());
@@ -251,7 +252,7 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 	//
 	for (size_t i = 1; i < render_target.get_views().size(); ++i)
 	{
-		auto &view = render_target.get_views().at(i);
+		auto &view = render_target.get_views()[i];
 
 		vkb::ImageMemoryBarrier barrier;
 
@@ -311,7 +312,7 @@ void PipelineBarriers::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarge
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 }
 
