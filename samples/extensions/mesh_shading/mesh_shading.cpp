@@ -132,14 +132,14 @@ void MeshShading::draw()
 
 void MeshShading::prepare_pipelines()
 {
-	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
-	        0,nullptr,
+	        0, nullptr,
 	        2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 
-	VkDescriptorSetLayoutCreateInfo           descriptor_layout =
+	VkDescriptorSetLayoutCreateInfo descriptor_layout =
 	    vkb::initializers::descriptor_set_layout_create_info(
 	        nullptr,
 	        0);
