@@ -20,21 +20,27 @@
 
 #include "mesh_shader_culling.h"
 
-MeshShadingCulling::MeshShadingCulling() :
-    pipeline(VK_NULL_HANDLE), pipeline_layout(VK_NULL_HANDLE), descriptor_set(VK_NULL_HANDLE), descriptor_set_layout(VK_NULL_HANDLE)
+MeshShadingCulling::MeshShadingCulling()
 {
 	title = "Mesh shader culling";
 
-	// vk_mesh_ext requires Vulkan 1.1 and device properties 2.  SPIR-V must also be set to at least 1.4.
+	// Configure application version
 	set_api_version(VK_API_VERSION_1_3);
 
+	// Adding instance extension
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
+	// Adding device extensions
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
-
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
+	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
+
+	// Initialization
+	ubo_cull.cull_center_x   = 0.0f;
+	ubo_cull.cull_center_y   = 0.0f;
+	ubo_cull.cull_radius     = 1.0f;
+	ubo_cull.meshlet_density = 1.0f;
 }
 
 MeshShadingCulling::~MeshShadingCulling()
@@ -56,7 +62,6 @@ void MeshShadingCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	meshFeatures.taskShader = VK_TRUE;
 	meshFeatures.meshShader = VK_TRUE;
-
 }
 
 /*
@@ -67,7 +72,7 @@ void MeshShadingCulling::build_command_buffers()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[2];
-	clear_values[0].color        = default_clear_color;
+	clear_values[0].color        = {{0.01f, 0.01f, 0.033f, 1.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -98,6 +103,7 @@ void MeshShadingCulling::build_command_buffers()
 		uint32_t num_workgroups_x = 1;
 		uint32_t num_workgroups_y = 1;
 		uint32_t num_workgroups_z = 1;
+
 		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, num_workgroups_z);
 
 		draw_ui(draw_cmd_buffers[i]);
@@ -108,18 +114,136 @@ void MeshShadingCulling::build_command_buffers()
 	}
 }
 
-bool MeshShadingCulling::prepare(vkb::Platform &platform)
+void MeshShadingCulling::setup_descriptor_pool()
 {
-	if (!ApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
+	// I still build the pool using a vector, since practically it cannot be just one descriptor pool size.
+	// And it is a good practice to showcase how to use its vector form
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
 
-	prepare_pipelines();
-	build_command_buffers();
+	uint32_t number_of_descriptor_sets = 1;
 
-	prepared = true;
-	return true;
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()),
+	                                                   pool_sizes.data(),
+	                                                   number_of_descriptor_sets);
+
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+}
+
+void MeshShadingCulling::setup_descriptor_set_layout()
+{
+	// I still build the layout binding using a vector, since practically it cannot be just one binding.
+	// And it is a good practice to showcase how to use its vector form
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                                     VK_SHADER_STAGE_TASK_BIT_EXT,
+	                                                     0)};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
+	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
+
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
+	    vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+}
+
+void MeshShadingCulling::setup_descriptor_sets()
+{
+	VkDescriptorSetAllocateInfo alloc_info =
+	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+
+	// Task shader descriptor set
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+
+	VkDescriptorBufferInfo uniform_buffer_descriptor = create_descriptor(*uniform_buffer);
+
+	// I still build the set using a vector, since practically it cannot be just one set.
+	// And it is a good practice to showcase how to use its vector form
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(descriptor_set,
+	                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+	                                            0,
+	                                            &uniform_buffer_descriptor)};
+
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
+}
+
+void MeshShadingCulling::prepare_pipelines()
+{
+	// Pipeline creation information
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
+
+	// Rasterization state
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL,
+	                                                                VK_CULL_MODE_NONE,
+	                                                                VK_FRONT_FACE_COUNTER_CLOCKWISE,
+	                                                                0);
+
+	// Color blend state
+	VkPipelineColorBlendAttachmentState blend_attachment =
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
+
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment);
+
+	// Multisample state
+	VkPipelineMultisampleStateCreateInfo multisample_state =
+	    vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+
+	// Viewport state
+	VkPipelineViewportStateCreateInfo viewport_state =
+	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+	// Depth stencil state
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_TRUE, VK_COMPARE_OP_GREATER);        // Depth test should be disabled;
+
+	// Dynamic state
+	std::vector<VkDynamicState> dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(),
+	                                                          static_cast<uint32_t>(dynamic_state_enables.size()),
+	                                                          0);
+
+	// Shader state
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
+
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
+	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
+
+	pipeline_create_info.pVertexInputState   = nullptr;
+	pipeline_create_info.pInputAssemblyState = nullptr;
+	pipeline_create_info.pRasterizationState = &rasterization_state;
+	pipeline_create_info.pColorBlendState    = &color_blend_state;
+	pipeline_create_info.pMultisampleState   = &multisample_state;
+	pipeline_create_info.pViewportState      = &viewport_state;
+	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+	pipeline_create_info.pDynamicState       = &dynamic_state;
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages             = shader_stages.data();
+
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+}
+
+void MeshShadingCulling::prepare_uniform_buffers()
+{
+	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                     sizeof(ubo_cull),
+	                                                     VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                     VMA_MEMORY_USAGE_CPU_TO_GPU);
+	update_uniform_buffers();
+}
+
+void MeshShadingCulling::update_uniform_buffers()
+{
+	uniform_buffer->convert_and_update(ubo_cull);
 }
 
 void MeshShadingCulling::draw()
@@ -134,117 +258,49 @@ void MeshShadingCulling::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-void MeshShadingCulling::prepare_pipelines()
+bool MeshShadingCulling::prepare(vkb::Platform &platform)
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes;
-	VkDescriptorPoolCreateInfo        descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(
-	        static_cast<uint32_t>(pool_sizes.size()),
-	        pool_sizes.data(),
-	        2);
+	if (!ApiVulkanSample::prepare(platform))
+	{
+		return false;
+	}
 
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+	camera.type = vkb::CameraType::FirstPerson;
+	camera.set_position(glm::vec3(0.0f, 0.0f, -0.1f));
+	camera.rotation_speed = 0.0f;
 
-	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings;
-	VkDescriptorSetLayoutCreateInfo           descriptor_layout =
-	    vkb::initializers::descriptor_set_layout_create_info(
-	        set_layout_bindings.data(),
-	        static_cast<uint32_t>(set_layout_bindings.size()));
+	prepare_uniform_buffers();
+	setup_descriptor_set_layout();
+	prepare_pipelines();
+	setup_descriptor_pool();
+	setup_descriptor_sets();
+	build_command_buffers();
 
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &descriptor_set_layout));
-
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layout,
-	        1);
-
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
-
-	// Create a blank pipeline layout.
-	// We are not binding any resources to the pipeline in this first sample.
-	VkPipelineLayoutCreateInfo layout_info = vkb::initializers::pipeline_layout_create_info(
-	    &descriptor_set_layout,
-	    1);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &pipeline_layout));
-
-	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_NONE,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
-
-	// Our attachment will write to all color channels, but no blending is enabled.
-	VkPipelineColorBlendAttachmentState blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(
-	    0xf,
-	    VK_FALSE);
-
-	VkPipelineColorBlendStateCreateInfo blend =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment);
-
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
-	        VK_TRUE,
-	        VK_COMPARE_OP_GREATER);
-
-	// We will have one viewport and scissor box.
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
-
-	// No multisampling.
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
-
-	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
-
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
-
-	// Load our SPIR-V shaders.
-	std::vector<VkPipelineShaderStageCreateInfo> shader_stages{};
-
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.task", VK_SHADER_STAGE_TASK_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.mesh", VK_SHADER_STAGE_MESH_BIT_EXT));
-	shader_stages.push_back(load_shader("mesh_shader_culling/mesh_shader_culling.frag", VK_SHADER_STAGE_FRAGMENT_BIT));
-
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layout,
-	        render_pass,
-	        0);
-
-	pipeline_create_info.pVertexInputState   = nullptr;
-	pipeline_create_info.pInputAssemblyState = nullptr;
-	pipeline_create_info.pRasterizationState = &rasterization_state;
-	pipeline_create_info.pColorBlendState    = &blend;
-	pipeline_create_info.pMultisampleState   = &multisample_state;
-	pipeline_create_info.pViewportState      = &viewport_state;
-	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
-	pipeline_create_info.pDynamicState       = &dynamic_state;
-	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
-	pipeline_create_info.pStages             = shader_stages.data();
-
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
+	prepared = true;
+	return true;
 }
 
 void MeshShadingCulling::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
+
 	draw();
+
+	if (camera.keys.left || camera.keys.right || camera.keys.up || camera.keys.down)
+	{
+		ubo_cull.cull_center_x = (-1.0f) * camera.position.x;
+		ubo_cull.cull_center_y = (-1.0f) * camera.position.z;
+		update_uniform_buffers();
+
+		//TODO: delete this:
+		printf("x: %f, y: %f, z: %f\n", camera.position.x, camera.position.y, camera.position.z);
+	}
 }
+
+
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling()
 {

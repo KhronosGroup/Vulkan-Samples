@@ -21,8 +21,36 @@
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 64, max_primitives = 124) out;
 
+struct PrimitiveColor
+{
+    vec3 color_1;
+    vec3 color_2;
+};
+
+taskPayloadSharedEXT vec4 deltaPosition;
+
+layout (location=0) out vec4 perVertex[];
+layout (location=1) perprimitiveEXT out vec4 perPrimitiveEXT[];
+layout (location=3) out vec3 outColor[];
 
 void main()
 {
+    SetMeshOutputsEXT(4, 2);
+
+    gl_MeshVerticesEXT[0].gl_Position = vec4(-0.25, -0.25, 0.0, 1.0) + deltaPosition;
+    gl_MeshVerticesEXT[1].gl_Position = vec4( 0.25, -0.25, 0.0, 1.0) + deltaPosition;
+    gl_MeshVerticesEXT[2].gl_Position = vec4(-0.25,  0.25, 0.0, 1.0) + deltaPosition;
+    gl_MeshVerticesEXT[3].gl_Position = vec4( 0.25,  0.25, 0.0, 1.0) + deltaPosition;
+
+    gl_PrimitiveTriangleIndicesEXT[0] = uvec3(0, 1, 2);
+    gl_PrimitiveTriangleIndicesEXT[1] = uvec3(2, 1, 3);
+
+    vec3 color_1 = vec3(1.0f, 0.0f, 0.0f);
+    vec3 color_2 = vec3(1.0f, 1.0f, 0.0f);
+
+    outColor[0] = color_2;
+    outColor[1] = color_1;
+    outColor[2] = color_1;
+    outColor[3] = color_1;
 
 }

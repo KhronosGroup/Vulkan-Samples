@@ -20,10 +20,25 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
+layout (binding = 0) uniform UBO
+{
+    float cull_center_x;
+    float cull_center_y;
+    float cull_radius;
+    float meshlet_density;
+} ubo;
+
+struct PrimitiveColor
+{
+    vec4 position;
+    vec3 color_2;
+};
+
+taskPayloadSharedEXT vec4 deltaPosition;
+
 void main()
 {
-    //colorOut.color_1 = vec3(1.0f, 0.0f, 0.0f);
-    //colorOut.color_2 = vec3(1.0f, 1.0f, 0.0f);
+    deltaPosition = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
 
 	EmitMeshTasksEXT(1, 1, 1);
 }
