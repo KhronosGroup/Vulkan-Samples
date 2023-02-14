@@ -183,7 +183,7 @@ void MeshShading::prepare_pipelines()
 
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_TRUE,
+	        VK_FALSE,
 	        VK_TRUE,
 	        VK_COMPARE_OP_GREATER);
 
