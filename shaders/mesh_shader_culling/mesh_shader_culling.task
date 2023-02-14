@@ -40,5 +40,5 @@ void main()
 {
     deltaPosition = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
 
-	EmitMeshTasksEXT(1, 1, 1);
+	EmitMeshTasksEXT(2, 1, 1);
 }

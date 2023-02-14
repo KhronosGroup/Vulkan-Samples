@@ -100,7 +100,7 @@ void MeshShadingCulling::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		// Mesh shaders need the vkCmdDrawMeshTasksExt
-		uint32_t num_workgroups_x = 1;
+		uint32_t num_workgroups_x = 2;
 		uint32_t num_workgroups_y = 1;
 		uint32_t num_workgroups_z = 1;
 
