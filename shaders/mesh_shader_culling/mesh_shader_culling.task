@@ -42,10 +42,6 @@ layout (binding = 0) uniform UBO
 
 taskPayloadSharedEXT vec4 deltaPosition;
 
-
-// Output
-layout(location = 0) out vec4 displacement[4];
-
 // Task Shader Functions
 
 
@@ -62,17 +58,7 @@ float subDimension = squareDimension / N * 0.5f;
 void main()
 {
     deltaPosition = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
-
-    // task calculation:
-    for ( int k = 0; k < meshletsNumber; k++)
-    {
-        float j = floor(k / N);
-        float i = k - j * N;
-
-        vec2 deltaPosition_xy = ( 2.0f * vec2(i, j) - N - 1.0f ) * subDimension;
-
-       // displacement[k] = vec4(deltaPosition_xy, 0.0f, 1.0f);
-    }
+    //outRadius = ubo.cull_radius;
 
 	EmitMeshTasksEXT(1, 1, 1);
 }

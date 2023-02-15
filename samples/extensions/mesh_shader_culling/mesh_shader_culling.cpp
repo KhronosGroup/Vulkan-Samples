@@ -64,9 +64,6 @@ void MeshShadingCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 	meshFeatures.meshShader = VK_TRUE;
 }
 
-/*
-    Command buffer generation
-*/
 void MeshShadingCulling::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -296,7 +293,7 @@ void MeshShadingCulling::render(float delta_time)
 		update_uniform_buffers();
 
 		//TODO: delete this:
-		printf("x: %f, y: %f, z: %f\n", camera.position.x, camera.position.y, camera.position.z);
+		printf("x: %f, y: %f\n", ubo_cull.cull_center_x, ubo_cull.cull_center_y);
 	}
 }
 void MeshShadingCulling::on_update_ui_overlay(vkb::Drawer &drawer)
