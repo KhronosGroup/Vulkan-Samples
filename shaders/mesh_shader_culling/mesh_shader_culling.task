@@ -18,7 +18,17 @@
 
 #extension GL_EXT_mesh_shader: require
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+// Structures
+
+struct PrimitiveColor
+{
+    vec4 position;
+    vec3 color_2;
+};
+
+// Input
 
 layout (binding = 0) uniform UBO
 {
@@ -28,17 +38,41 @@ layout (binding = 0) uniform UBO
     float meshlet_density;
 } ubo;
 
-struct PrimitiveColor
-{
-    vec4 position;
-    vec3 color_2;
-};
+// Shared Data to mesh:
 
 taskPayloadSharedEXT vec4 deltaPosition;
+
+
+// Output
+layout(location = 0) out vec4 displacement[4];
+
+// Task Shader Functions
+
+
+// Shader Constant
+
+const float squareDimension = 1.0f;
+
+int N = 2;
+int meshletsNumber = N * N;
+
+float subDimension = squareDimension / N * 0.5f;
+
 
 void main()
 {
     deltaPosition = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
 
-	EmitMeshTasksEXT(2, 1, 1);
+    // task calculation:
+    for ( int k = 0; k < meshletsNumber; k++)
+    {
+        float j = floor(k / N);
+        float i = k - j * N;
+
+        vec2 deltaPosition_xy = ( 2.0f * vec2(i, j) - N - 1.0f ) * subDimension;
+
+       // displacement[k] = vec4(deltaPosition_xy, 0.0f, 1.0f);
+    }
+
+	EmitMeshTasksEXT(1, 1, 1);
 }
