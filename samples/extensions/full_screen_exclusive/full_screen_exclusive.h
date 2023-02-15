@@ -28,7 +28,6 @@
 class FullScreenExclusive : public vkb::Application
 {
   private:
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	enum class SwapchainMode        // This enum class represents all for stages from full screen exclusive EXT selections
 	{
 		Default,
@@ -42,7 +41,6 @@ class FullScreenExclusive : public vkb::Application
 		Windowed,
 		Fullscreen
 	};
-#endif
 
 	struct SwapchainDimensions
 	{
@@ -86,7 +84,6 @@ class FullScreenExclusive : public vkb::Application
 	Context                        context{};
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
-#if defined(VK_USE_PLATFORM_WIN32_KHR)                                                                           // To slightly optimize the following variables, if a Windows platform is detected, then they shall be defined, otherwise not.
 	HWND                                     HWND_application_window{};                                          // sync the application HWND handle
 	bool                                     is_windowed = true;                                                 // this is to tell if the application window is already set in the desired mode
 	WINDOWPLACEMENT                          wpc{};                                                              // window placement information
@@ -97,7 +94,6 @@ class FullScreenExclusive : public vkb::Application
 	bool                                     is_full_screen_exclusive  = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
 	ApplicationWindowMode                    application_window_status = ApplicationWindowMode::Windowed;        // declare and initialize the application window mode
 	SwapchainMode                            full_screen_status        = SwapchainMode::Default;                 // declare and initialize the swapchain mode
-#endif
 
   private:
 	VkExtent2D get_current_max_image_extent() const;                            // This detects the maximum surface resolution and return them in vkExtent2D format

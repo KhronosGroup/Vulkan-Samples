@@ -19,12 +19,23 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
-        ID ${FOLDER_NAME}
-        CATEGORY ${CATEGORY_NAME}
-        AUTHOR "Holochip Corporation"
-        NAME "Full Screen Exclusive"
-        DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
-        SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+#Full Screen exclusive is a windows only supported extension.  We'll disable finding the sample on other platforms.
+if (WIN32)
+    # Windows 11 fixed the reason for using full screen exclusive.
+    # We'll test for that here and not list the sample unless it's a candidate version of windows.
+    if (CMAKE_SYSTEM_VERSION)
+        set(ver ${CMAKE_SYSTEM_VERSION})
+        string(REGEX MATCH "^([0-9]+)" verMajor ${ver})
+        if ("${verMajor}" LESS_EQUAL "10")
+            add_sample(
+                    ID ${FOLDER_NAME}
+                    CATEGORY ${CATEGORY_NAME}
+                    AUTHOR "Holochip Corporation"
+                    NAME "Full Screen Exclusive"
+                    DESCRIPTION "Demonstrates and showcases full_screen_exclusive related functionalities."
+                    SHADER_FILES_GLSL
+                    "triangle.vert"
+                    "triangle.frag")
+        endif ()
+    endif ()
+endif ()

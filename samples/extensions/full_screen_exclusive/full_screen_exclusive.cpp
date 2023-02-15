@@ -152,9 +152,6 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-	active_instance_extensions.push_back(VK_KHR_ANDROID_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_WIN32_KHR)
 	LOGI("Windows Platform Detected, isWin32 set to be: true")
 	// Add Instance extensions for full screen exclusive
 	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
@@ -164,19 +161,6 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	HWND_application_window = GetActiveWindow();
 	// Initialize full screen exclusive related variables since the application is now running on a windows platform
 	initialize_windows();        // this can be only called after GetActiveWindow(), or as long as HWND_application_window represent the correct handle!
-#elif defined(VK_USE_PLATFORM_METAL_EXT)
-	active_instance_extensions.push_back(VK_EXT_METAL_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_XCB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XCB_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-	active_instance_extensions.push_back(VK_KHR_XLIB_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-	active_instance_extensions.push_back(VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME);
-#elif defined(VK_USE_PLATFORM_DISPLAY_KHR)
-	active_instance_extensions.push_back(VK_KHR_DISPLAY_EXTENSION_NAME);
-#else
-#	pragma error Platform not supported
-#endif
 
 	if (!validate_extensions(active_instance_extensions, instance_extensions))
 	{
@@ -433,7 +417,6 @@ void FullScreenExclusive::init_swapchain()
 
 	VkExtent2D swapchain_size{};
 
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	if (is_full_screen_exclusive)
 	{
 		swapchain_size = get_current_max_image_extent();
@@ -450,17 +433,6 @@ void FullScreenExclusive::init_swapchain()
 			swapchain_size = surface_properties.currentExtent;
 		}
 	}
-#else
-	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
-	{
-		swapchain_size.width  = context.swapchain_dimensions.width;
-		swapchain_size.height = context.swapchain_dimensions.height;
-	}
-	else
-	{
-		swapchain_size = surface_properties.currentExtent;
-	}
-#endif
 
 	VkPresentModeKHR swapchain_present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
@@ -504,11 +476,7 @@ void FullScreenExclusive::init_swapchain()
 	info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
 	// if this application is running on a Windows platform, then apply the full screen exclusive EXT, otherwise, nullptr.
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
-#else
-	info.pNext = nullptr;
-#endif
 
 	info.surface            = context.surface;
 	info.minImageCount      = desired_swapchain_images;
@@ -977,13 +945,8 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	if (!context.surface)
 		throw std::runtime_error("Failed to create window surface.");
 
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	// If application is running on a Windows platform, then the following TWO device extension is also needed:
 	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});
-#else
-	// If application is NOT running on a Windows platform, then only VK_KHR_swapchain is needed:
-	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME});
-#endif
 
 	init_swapchain();
 
@@ -1067,7 +1030,6 @@ VkExtent2D FullScreenExclusive::get_current_max_image_extent() const
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 {
 	// if application is running on a Windows platform:
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
 	if (input_event.get_source() == vkb::EventSource::Keyboard)
 	{
 		const auto &key_button = reinterpret_cast<const vkb::KeyInputEvent &>(input_event);
@@ -1145,7 +1107,6 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 			}
 		}
 	}
-#endif
 }
 
 void FullScreenExclusive::update_application_window()
