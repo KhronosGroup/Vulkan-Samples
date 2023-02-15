@@ -237,16 +237,6 @@ option(BUILD_EXTERNAL OFF)
 
 add_subdirectory(glslang)
 
-if(NOT TARGET glslang-default-resource-limits)
-    add_library(glslang-default-resource-limits
-        glslang/StandAlone/ResourceLimits.cpp)
-
-    set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "third_party")
-    
-    target_include_directories(glslang-default-resource-limits
-        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
-endif()
-
 if(NOT MSVC)
     target_compile_options(glslang PRIVATE
         "-Wno-logical-op-parentheses"

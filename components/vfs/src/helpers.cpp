@@ -17,9 +17,13 @@
 
 #include "components/vfs/helpers.hpp"
 
-#include <cassert>
+#include <components/common/error.hpp>
 
+VKBP_DISABLE_WARNINGS()
 #include <re2/re2.h>
+VKBP_ENABLE_WARNINGS()
+
+#include <cassert>
 
 #include <components/common/strings.hpp>
 

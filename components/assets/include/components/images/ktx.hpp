@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2022, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *

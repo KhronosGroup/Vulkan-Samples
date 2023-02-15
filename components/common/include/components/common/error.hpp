@@ -17,8 +17,6 @@
 
 #pragma once
 
-#include <fmt/format.h>
-
 #if defined(__GNUC__) && !defined(__llvm__) && !defined(__INTEL_COMPILER)
 #	define __GCC__ __GNUC__
 #endif
@@ -51,6 +49,10 @@
 #	define VKBP_ENABLE_WARNINGS() \
 		__pragma(warning(pop))
 #endif
+
+VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
+VKBP_ENABLE_WARNINGS()
 
 #define ERROR(message)       \
 	throw std::runtime_error \

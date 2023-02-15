@@ -19,7 +19,11 @@
 
 // DO NOT EDIT, THIS IS A GENERATED FILE!
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace components
 {

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2022, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -135,7 +135,6 @@ bool config_is_same(const astcenc_config &first, const astcenc_config &second)
 	       first.a_scale_radius == second.a_scale_radius &&
 	       first.rgbm_m_scale == second.rgbm_m_scale &&
 	       first.tune_partition_count_limit == second.tune_partition_count_limit &&
-	       first.tune_partition_index_limit == second.tune_partition_index_limit &&
 	       first.tune_block_mode_limit == second.tune_block_mode_limit &&
 	       first.tune_refinement_limit == second.tune_refinement_limit &&
 	       first.tune_candidate_limit == second.tune_candidate_limit &&
@@ -144,8 +143,7 @@ bool config_is_same(const astcenc_config &first, const astcenc_config &second)
 	       first.tune_refinement_mse_overshoot == second.tune_refinement_mse_overshoot &&
 	       first.tune_2_partition_early_out_limit_factor == second.tune_2_partition_early_out_limit_factor &&
 	       first.tune_3_partition_early_out_limit_factor == second.tune_3_partition_early_out_limit_factor &&
-	       first.tune_2_plane_early_out_limit_correlation == second.tune_2_plane_early_out_limit_correlation &&
-	       first.tune_low_weight_count_limit == second.tune_low_weight_count_limit;
+	       first.tune_2_plane_early_out_limit_correlation == second.tune_2_plane_early_out_limit_correlation;
 }
 
 struct ConfigWrapper
@@ -181,7 +179,6 @@ struct hash<components::images::detail::ConfigWrapper>
 		components::common::hash_combine(seed, wrapper.config.a_scale_radius);
 		components::common::hash_combine(seed, wrapper.config.rgbm_m_scale);
 		components::common::hash_combine(seed, wrapper.config.tune_partition_count_limit);
-		components::common::hash_combine(seed, wrapper.config.tune_partition_index_limit);
 		components::common::hash_combine(seed, wrapper.config.tune_block_mode_limit);
 		components::common::hash_combine(seed, wrapper.config.tune_refinement_limit);
 		components::common::hash_combine(seed, wrapper.config.tune_candidate_limit);
@@ -191,7 +188,6 @@ struct hash<components::images::detail::ConfigWrapper>
 		components::common::hash_combine(seed, wrapper.config.tune_2_partition_early_out_limit_factor);
 		components::common::hash_combine(seed, wrapper.config.tune_3_partition_early_out_limit_factor);
 		components::common::hash_combine(seed, wrapper.config.tune_2_plane_early_out_limit_correlation);
-		components::common::hash_combine(seed, wrapper.config.tune_low_weight_count_limit);
 		return seed;
 	}
 };

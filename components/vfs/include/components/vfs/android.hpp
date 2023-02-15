@@ -17,7 +17,11 @@
 
 #pragma once
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <android_native_app_glue.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "components/vfs/filesystem.hpp"
 #include "components/vfs/std_filesystem.hpp"

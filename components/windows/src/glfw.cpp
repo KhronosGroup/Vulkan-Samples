@@ -17,6 +17,9 @@
 
 #include <components/windows/glfw.hpp>
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <vulkan/vulkan.h>
 
 #include <GLFW/glfw3.h>
@@ -30,6 +33,7 @@
 #endif
 
 #include <GLFW/glfw3native.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace components
 {

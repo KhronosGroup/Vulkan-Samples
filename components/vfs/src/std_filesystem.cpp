@@ -25,7 +25,7 @@
 #include <sstream>
 #include <string_view>
 
-#include "components/vfs/helpers.hpp"
+#include <components/vfs/helpers.hpp>
 
 namespace components
 {

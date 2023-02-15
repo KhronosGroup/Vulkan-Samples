@@ -29,10 +29,12 @@ vkb__register_component(
     NAME common
     HEADERS
         ${COMMON_HEADERS}
+    SRC
+        src/logging.cpp
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     LINK_LIBS
-        spdlog
+        spdlog::spdlog
         fmt
 )
 

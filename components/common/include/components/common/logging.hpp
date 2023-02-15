@@ -17,26 +17,21 @@
 
 #pragma once
 
-#include <spdlog/fmt/fmt.h>
-#include <spdlog/sinks/stdout_color_sinks.h>
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
+VKBP_ENABLE_WARNINGS()
 
 #define PROJECT_NAME "VulkanSamples"
 
-#define LOGT(...) spdlog::trace(__VA_ARGS__);
-#define LOGI(...) spdlog::info(__VA_ARGS__);
-#define LOGW(...) spdlog::warn(__VA_ARGS__);
-#define LOGE(...) spdlog::error(__VA_ARGS__);
-#define LOGD(...) spdlog::debug(__VA_ARGS__);
+#define LOGT(...) spdlog::trace(__VA_ARGS__)
+#define LOGI(...) spdlog::info(__VA_ARGS__)
+#define LOGW(...) spdlog::warn(__VA_ARGS__)
+#define LOGE(...) spdlog::error(__VA_ARGS__)
+#define LOGD(...) spdlog::debug(__VA_ARGS__)
 
 namespace logging
 {
-inline void init_default_logger()
-{
-	// TODO: Add android support
-	auto console = spdlog::stdout_color_mt("console");
-	spdlog::set_default_logger(console);
-	spdlog::set_level(spdlog::level::trace);
-	spdlog::set_pattern("[%^%l%$] %v");
-}
+void init_default_logger();
 }        // namespace logging
