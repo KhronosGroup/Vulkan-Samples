@@ -17,6 +17,23 @@
 
 #include "calibrated_timestamps.h"
 
+std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
+{
+	switch (input_time_domain)
+	{
+		case VK_TIME_DOMAIN_DEVICE_EXT:
+			return "device time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
+			return "clock monotonic time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
+			return "clock monotonic raw time domain";
+		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
+			return "query performance time domain";
+		default:
+			return "unknown time domain";
+	}
+}
+
 CalibratedTimestamps::CalibratedTimestamps()
 {
 	title = "Calibrated Timestamps";
@@ -77,7 +94,7 @@ void CalibratedTimestamps::build_command_buffers()
 	// Reset the delta timestamps vector
 	delta_timestamps.clear();
 
-	tic("Creating Command Buffer");
+	timestamps_begin("Build Command Buffers");
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -89,12 +106,9 @@ void CalibratedTimestamps::build_command_buffers()
 	render_pass_begin_info_0.renderPass            = render_pass;
 	render_pass_begin_info_0.renderArea.offset.x   = 0;
 	render_pass_begin_info_0.renderArea.offset.y   = 0;
-	render_pass_begin_info_0.clearValueCount       = 2;
+	render_pass_begin_info_0.clearValueCount       = static_cast<uint32_t>(clear_values_0.size());
 	render_pass_begin_info_0.pClearValues          = clear_values_0.data();
 
-	toc("Creating Command Buffer");
-
-	tic("Draw Command Buffer");
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
@@ -110,7 +124,7 @@ void CalibratedTimestamps::build_command_buffers()
 			render_pass_begin_info_1.framebuffer              = offscreen.framebuffer;
 			render_pass_begin_info_1.renderArea.extent.width  = offscreen.width;
 			render_pass_begin_info_1.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info_1.clearValueCount          = 3;
+			render_pass_begin_info_1.clearValueCount          = static_cast<uint32_t>(clear_values_1.size());
 			render_pass_begin_info_1.pClearValues             = clear_values_1.data();
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
@@ -139,9 +153,9 @@ void CalibratedTimestamps::build_command_buffers()
 
 		if (bloom)
 		{
-			std::array<VkClearValue, 2> clear_values{};
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			VkClearValue clear_value{};
+			clear_value.color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+			clear_value.depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
@@ -149,7 +163,7 @@ void CalibratedTimestamps::build_command_buffers()
 			render_pass_begin_info.clearValueCount          = 1;
 			render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
 			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
-			render_pass_begin_info.pClearValues             = clear_values.data();
+			render_pass_begin_info.pClearValues             = &clear_value;
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
@@ -175,7 +189,7 @@ void CalibratedTimestamps::build_command_buffers()
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = framebuffers[i];
 			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = 2;
+			render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
 			render_pass_begin_info.renderArea.extent.width  = width;
 			render_pass_begin_info.renderArea.extent.height = height;
 			render_pass_begin_info.pClearValues             = clear_values.data();
@@ -207,7 +221,7 @@ void CalibratedTimestamps::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 
-	toc("Draw Command Buffer");
+	timestamps_end("Build Command Buffers");
 }
 
 void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
@@ -269,12 +283,33 @@ void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBi
 
 void CalibratedTimestamps::prepare_offscreen_buffer()
 {
-	{
-		offscreen.width  = static_cast<int>(width);
-		offscreen.height = static_cast<int>(height);
+	VkFormat color_format{VK_FORMAT_UNDEFINED};
 
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
+	const std::vector<VkFormat> float_format_priority_list = {
+	    VK_FORMAT_R32G32B32A32_SFLOAT,
+	    VK_FORMAT_R16G16B16A16_SFLOAT};
+
+	for (auto &format : float_format_priority_list)
+	{
+		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		{
+			color_format = format;
+			break;
+		}
+	}
+
+	if (color_format == VK_FORMAT_UNDEFINED)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
+
+	{
+		offscreen.width  = static_cast<int32_t>(width);
+		offscreen.height = static_cast<int32_t>(height);
+
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
@@ -340,7 +375,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
 		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
+		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
@@ -377,21 +412,21 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 	}
 
 	{
-		filter_pass.width  = static_cast<int>(width);
-		filter_pass.height = static_cast<int>(height);
+		filter_pass.width  = static_cast<int32_t>(width);
+		filter_pass.height = static_cast<int32_t>(height);
 
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
+		VkAttachmentDescription attachment_description{};
 
-		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
-		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		attachment_descriptions[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachment_descriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment_descriptions[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachment_descriptions[0].finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		attachment_descriptions[0].format         = filter_pass.color[0].format;
+		attachment_description.samples        = VK_SAMPLE_COUNT_1_BIT;
+		attachment_description.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachment_description.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+		attachment_description.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachment_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachment_description.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachment_description.finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		attachment_description.format         = filter_pass.color[0].format;
 
 		std::vector<VkAttachmentReference> color_references;
 		color_references.push_back({0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
@@ -421,24 +456,23 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 
 		VkRenderPassCreateInfo render_pass_create_info = {};
 		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_create_info.pAttachments           = attachment_descriptions.data();
-		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
+		render_pass_create_info.pAttachments           = &attachment_description;
+		render_pass_create_info.attachmentCount        = 1;
 		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
+		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &filter_pass.render_pass));
 
-		std::array<VkImageView, 1> attachments{};
-		attachments[0] = filter_pass.color[0].view;
+		VkImageView attachment = filter_pass.color[0].view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = filter_pass.render_pass;
-		framebuffer_create_info.pAttachments            = attachments.data();
-		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
+		framebuffer_create_info.pAttachments            = &attachment;
+		framebuffer_create_info.attachmentCount         = 1;
 		framebuffer_create_info.width                   = filter_pass.width;
 		framebuffer_create_info.height                  = filter_pass.height;
 		framebuffer_create_info.layers                  = 1;
@@ -615,11 +649,6 @@ void CalibratedTimestamps::prepare_pipelines()
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
 
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	};
-
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
 	pipeline_create_info.pColorBlendState    = &color_blend_state;
@@ -644,7 +673,7 @@ void CalibratedTimestamps::prepare_pipelines()
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
 	color_blend_state.attachmentCount = 1;
-	color_blend_state.pAttachments    = blend_attachment_states.data();
+	color_blend_state.pAttachments    = &blend_attachment_state;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
 	shader_stages[0]                           = load_shader("hdr/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -672,6 +701,11 @@ void CalibratedTimestamps::prepare_pipelines()
 
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
+	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	};
+
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
@@ -691,7 +725,7 @@ void CalibratedTimestamps::prepare_pipelines()
 	blend_attachment_state.blendEnable = VK_FALSE;
 	pipeline_create_info.layout        = pipeline_layouts.models;
 	pipeline_create_info.renderPass    = offscreen.render_pass;
-	color_blend_state.attachmentCount  = 2;
+	color_blend_state.attachmentCount  = static_cast<uint32_t>(blend_attachment_states.size());
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
 	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -752,7 +786,7 @@ bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	// Get the optimal time domain as soon as possible
-	get_optimal_time_domain();
+	get_device_time_domain();
 
 	// Preparations
 	load_assets();
@@ -777,27 +811,10 @@ void CalibratedTimestamps::render(float delta_time)
 		update_uniform_buffers();
 }
 
-std::string CalibratedTimestamps::read_time_domain(VkTimeDomainEXT inputTimeDomain)
-{
-	switch (inputTimeDomain)
-	{
-		case VK_TIME_DOMAIN_DEVICE_EXT:
-			return "device time domain";
-		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
-			return "clock monotonic time domain";
-		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
-			return "clock monotonic raw time domain";
-		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
-			return "query performance time domain";
-		default:
-			return "unknown time domain";
-	}
-}
-
-void CalibratedTimestamps::update_time_domains()
+void CalibratedTimestamps::get_time_domains()
 {
 	// Initialize time domain count:
-	time_domain_count = 0;
+	uint32_t time_domain_count = 0;
 	// Update time domain count:
 	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
 
@@ -810,18 +827,9 @@ void CalibratedTimestamps::update_time_domains()
 		// Update time_domain vector:
 		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
 	}
-	// Time domain is successfully updated:
-	isTimeDomainUpdated = (result == VK_SUCCESS);
-}
 
-void CalibratedTimestamps::update_timestamps()
-{
-	// Ensures that time domain exists
-	if (isTimeDomainUpdated)
+	if (time_domain_count > 0)
 	{
-		// Create LOCAL calibrate time stamps info:
-		std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};
-
 		for (VkTimeDomainEXT time_domain : time_domains)
 		{
 			// Initialize in-scope time stamp info variable:
@@ -840,92 +848,107 @@ void CalibratedTimestamps::update_timestamps()
 		timestamps.resize(static_cast<int>(time_domain_count));
 		// Resize max deviations vector
 		max_deviations.resize(static_cast<int>(time_domain_count));
+	}
 
+	// Time domain is successfully updated:
+	is_time_domain_updated = ((result == VK_SUCCESS) && (time_domain_count > 0));
+}
+
+void CalibratedTimestamps::get_timestamps()
+{
+	// Ensures that time domain exists
+	if (is_time_domain_updated)
+	{
 		// Get calibrated timestamps:
-		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domain_count, timestamps_info.data(), timestamps.data(), max_deviations.data());
+		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domains.size(), timestamps_info.data(), timestamps.data(), max_deviations.data());
 
 		// Timestamps is successfully updated:
-		isTimestampUpdated = (result == VK_SUCCESS);
+		is_timestamp_updated = (result == VK_SUCCESS);
 	}
 }
 
-void CalibratedTimestamps::init_timeDomains_and_timestamps()
+void CalibratedTimestamps::init_time_domains_and_timestamps()
 {
-	isTimeDomainUpdated = false;
-	isTimestampUpdated  = false;
-
-	time_domain_count = 0;
+	is_time_domain_updated = false;
+	is_timestamp_updated   = false;
 
 	time_domains.clear();
 	timestamps.clear();
 	max_deviations.clear();
 }
 
-void CalibratedTimestamps::get_optimal_time_domain()
+void CalibratedTimestamps::get_device_time_domain()
 {
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	init_time_domains_and_timestamps();
+	get_time_domains();
 
-	if (isTimeDomainUpdated && isTimestampUpdated && (time_domain_count > 1))
+	if (is_time_domain_updated && (time_domains.size() > 1))
 	{
-		uint64_t optimal_maxDeviation = *std::min_element(max_deviations.begin(), max_deviations.end());
+		auto iterator_device = std::find(time_domains.begin(), time_domains.end(), VK_TIME_DOMAIN_DEVICE_EXT);
 
-		auto iterator_optimal = std::find(max_deviations.begin(), max_deviations.end(), optimal_maxDeviation);
+		int device_index = static_cast<int>(iterator_device - time_domains.begin());
 
-		if (iterator_optimal != max_deviations.end())
-		{
-			int optimal_index = static_cast<int>(iterator_optimal - max_deviations.begin());
-
-			optimal_time_domain.index         = optimal_index;
-			optimal_time_domain.timeDomainEXT = time_domains[optimal_index];
-		}
+		selected_time_domain.index         = device_index;
+		selected_time_domain.timeDomainEXT = time_domains[device_index];
 	}
 }
 
-void CalibratedTimestamps::tic(const std::string &input_tag)
+void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
 	// Initialize, then update time domains and timestamps
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	is_timestamp_updated = false;
+	timestamps.clear();
+	max_deviations.clear();
 
-	// Create a local delta_timestamp to push back to the vector delta_timestamps
-	DeltaTimestamp delta_timestamp{};
+	// Now to get timestamps
+	get_timestamps();
 
-	// Naming the tic-toc tags and begin timestamp for this particular mark
-	if (!input_tag.empty())
+	if (is_timestamp_updated)
 	{
-		delta_timestamp.tag = input_tag;
-	}
-	delta_timestamp.begin = timestamps[optimal_time_domain.index];
+		// Create a local delta_timestamp to push back to the vector delta_timestamps
+		DeltaTimestamp delta_timestamp{};
 
-	// Push back this partially filled element to the vector, which will be filled in its corresponding toc
-	delta_timestamps.push_back(delta_timestamp);
+		// Naming the tic-toc tags and begin timestamp for this particular mark
+		if (!input_tag.empty())
+		{
+			delta_timestamp.tag = input_tag;
+		}
+		delta_timestamp.begin = timestamps[selected_time_domain.index];
+
+		// Push back this partially filled element to the vector, which will be filled in its corresponding toc
+		delta_timestamps.push_back(delta_timestamp);
+	}
 }
 
-void CalibratedTimestamps::toc(const std::string &input_tag)
+void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 {
 	if (delta_timestamps.empty() || (input_tag != delta_timestamps.back().tag))
 	{
-		LOGI("Tic-toc Fatal Error: toc is not tagged the same as its tic!\n")
+		LOGI("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
 		return;        // exits the function here, further calculation is meaningless
 	}
 
 	// Initialize, then update time domains and timestamps
-	init_timeDomains_and_timestamps();
-	update_time_domains();
-	update_timestamps();
+	is_timestamp_updated = false;
+	timestamps.clear();
+	max_deviations.clear();
 
-	delta_timestamps.back().end = timestamps[optimal_time_domain.index];
-	delta_timestamps.back().get_delta();
+	// Now to get timestamps
+	get_timestamps();
+
+	if (is_timestamp_updated)
+	{
+		// Add this data to the last term of delta_timestamps vector
+		delta_timestamps.back().end = timestamps[selected_time_domain.index];
+		delta_timestamps.back().get_delta();
+	}
 }
 
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	// Timestamps period extracted in runtime
 	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
-	drawer.text("Timestamps Period: %.1f ns", timestamp_period);
+	drawer.text("Timestamps Period:\n %.1f Nanoseconds", timestamp_period);
 
 	// Adjustment Handles:
 	if (drawer.header("Settings"))
@@ -947,11 +970,11 @@ void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	if (!delta_timestamps.empty())
 	{
-		drawer.text("Optimal Time Domain Selected:\n %s", read_time_domain(optimal_time_domain.timeDomainEXT).c_str());
+		drawer.text("Time Domain Selected:\n %s", time_domain_to_string(selected_time_domain.timeDomainEXT).c_str());
 
 		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("%s: %.1f ns", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period);
+			drawer.text("%s:\n %.1f Microseconds", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period * 0.001f);
 		}
 	}
 }

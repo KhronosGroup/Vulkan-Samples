@@ -23,21 +23,22 @@
 
 #include "api_vulkan_sample.h"
 
+static std::string time_domain_to_string(VkTimeDomainEXT input_time_domain);        // this returns a string the input time domain Enum value
+
 class CalibratedTimestamps : public ApiVulkanSample
 {
   private:
-	bool                         isTimeDomainUpdated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
-	bool                         isTimestampUpdated  = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
-	uint32_t                     time_domain_count   = 0;
-	std::vector<VkTimeDomainEXT> time_domains{};          // this holds all time domains extracted from the current Instance
-	std::vector<uint64_t>        timestamps{};            // timestamps vector
-	std::vector<uint64_t>        max_deviations{};        // max deviations vector
+	bool                         is_time_domain_updated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
+	bool                         is_timestamp_updated   = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+	std::vector<VkTimeDomainEXT> time_domains{};                        // this holds all time domains extracted from the current Instance
+	std::vector<uint64_t>        timestamps{};                          // timestamps vector
+	std::vector<uint64_t>        max_deviations{};                      // max deviations vector
 
 	struct
 	{
 		int             index = 0;
 		VkTimeDomainEXT timeDomainEXT{};
-	} optimal_time_domain{};
+	} selected_time_domain{};
 
 	struct DeltaTimestamp
 	{
@@ -51,8 +52,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 			this->delta = this->end - this->begin;
 		}
 	};
-
-	std::vector<DeltaTimestamp> delta_timestamps{};
+	std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
+	std::vector<DeltaTimestamp>               delta_timestamps{};
 
   public:
 	bool bloom          = true;
@@ -122,10 +123,10 @@ class CalibratedTimestamps : public ApiVulkanSample
 
 	struct FrameBufferAttachment
 	{
-		VkImage        image{};
-		VkDeviceMemory mem{};
-		VkImageView    view{};
-		VkFormat       format{};
+		VkImage        image  = VK_NULL_HANDLE;
+		VkDeviceMemory mem    = VK_NULL_HANDLE;
+		VkImageView    view   = VK_NULL_HANDLE;
+		VkFormat       format = VK_FORMAT_UNDEFINED;
 		void           destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
@@ -133,38 +134,37 @@ class CalibratedTimestamps : public ApiVulkanSample
 			vkFreeMemory(device, mem, nullptr);
 		}
 	};
+
 	struct FrameBuffer
 	{
-		int32_t               width{};
-		int32_t               height{};
-		VkFramebuffer         framebuffer{};
+		int32_t               width       = 0;
+		int32_t               height      = 0;
+		VkFramebuffer         framebuffer = VK_NULL_HANDLE;
 		FrameBufferAttachment color[2]{};
 		FrameBufferAttachment depth{};
-		VkRenderPass          render_pass{};
-		VkSampler             sampler{};
+		VkRenderPass          render_pass = VK_NULL_HANDLE;
+		VkSampler             sampler     = VK_NULL_HANDLE;
 	} offscreen{};
 
 	struct
 	{
-		int32_t               width{};
-		int32_t               height{};
-		VkFramebuffer         framebuffer{};
+		int32_t               width       = 0;
+		int32_t               height      = 0;
+		VkFramebuffer         framebuffer = VK_NULL_HANDLE;
 		FrameBufferAttachment color[1]{};
-		VkRenderPass          render_pass{};
-		VkSampler             sampler{};
+		VkRenderPass          render_pass = VK_NULL_HANDLE;
+		VkSampler             sampler     = VK_NULL_HANDLE;
 	} filter_pass{};
 
 	std::vector<std::string> object_names{};
 
   private:
-	// MODs:
-	static std::string read_time_domain(VkTimeDomainEXT inputTimeDomain);        // this returns a human-readable info for what time domain corresponds to what
-	void               update_time_domains();                                    // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
-	void               update_timestamps();                                      // this creates local timestamps information vector, update timestamps vector and deviation vector
-	void               init_timeDomains_and_timestamps();                        // this initializes all time domain and timestamps related variables, vectors, and booleans
-	void               get_optimal_time_domain();                                // this gets the optimal time domain which has the minimal value on its max deviation.
-	void               tic(const std::string &input_tag = "Untagged");           // this marks the timestamp begin and partially updates the delta_timestamps
-	void               toc(const std::string &input_tag = "Untagged");           // this marks the timestamp ends and updates the delta_timestamps
+	void get_time_domains();                                                 // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
+	void get_timestamps();                                                   // this creates local timestamps information vector, update timestamps vector and deviation vector
+	void init_time_domains_and_timestamps();                                 // this initializes all time domain and timestamps related variables, vectors, and booleans
+	void get_device_time_domain();                                           // this gets the optimal time domain which has the minimal value on its max deviation.
+	void timestamps_begin(const std::string &input_tag = "Untagged");        // this marks the timestamp begin and partially updates the delta_timestamps
+	void timestamps_end(const std::string &input_tag = "Untagged");          // this marks the timestamp ends and updates the delta_timestamps
 
   public:
 	CalibratedTimestamps();
