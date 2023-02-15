@@ -167,8 +167,7 @@ std::vector<std::string> StdFSFileSystem::enumerate_files(const std::string &dir
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
-		std::string_view view {entry.path().c_str()};
-		if (view.size() > 255)
+		if (entry.path().string().size() > 255)
 		{
 			// avoid processing large file paths
 			continue;
@@ -203,8 +202,7 @@ std::vector<std::string> StdFSFileSystem::enumerate_folders(const std::string &d
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
-		std::string_view view {entry.path().c_str()};
-		if (view.size() > 255)
+		if (entry.path().string().size() > 255)
 		{
 			// avoid processing large file paths
 			continue;

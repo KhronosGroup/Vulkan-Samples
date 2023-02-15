@@ -22,6 +22,7 @@ vkb__register_component(
     src/sample.cpp
   LINK_LIBS
     ${CMAKE_DL_LIBS}
+    vkb__common
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
