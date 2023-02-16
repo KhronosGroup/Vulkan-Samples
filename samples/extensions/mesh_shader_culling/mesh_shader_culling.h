@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 /*
- * Demonstrate and showcase a sample application using mesh shader rendering pipeline.
+ * Demonstrate and showcase a sample application using mesh shader culling features.
  */
 
 #pragma once
@@ -23,18 +23,18 @@
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
 
-class MeshShadingCulling : public ApiVulkanSample
+class MeshShaderCulling : public ApiVulkanSample
 {
   private:
-	int32_t density_level = 0;
+	int32_t density_level = 2;
 
   public:
 	struct UBO
 	{
 		float cull_center_x   = 0.0f;
 		float cull_center_y   = 0.0f;
-		float cull_radius     = 1.0f;
-		float meshlet_density = 1.0f;
+		float cull_radius     = 1.75f;
+		float meshlet_density = 2.0f;
 	} ubo_cull{};
 
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer{};
@@ -45,12 +45,10 @@ class MeshShadingCulling : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
 
   public:
-	MeshShadingCulling();
-	~MeshShadingCulling() override;
-
+	MeshShaderCulling();
+	~MeshShaderCulling() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
-
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_sets();
@@ -60,9 +58,8 @@ class MeshShadingCulling : public ApiVulkanSample
 	void draw();
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
-
-	// TODO: add on_update_ui_overlay()
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	bool resize(uint32_t width, uint32_t height) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling();

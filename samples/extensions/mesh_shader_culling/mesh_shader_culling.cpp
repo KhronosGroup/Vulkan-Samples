@@ -15,12 +15,12 @@
  * limitations under the License.
  */
 /*
- * Demonstrate and showcase a sample application using mesh shader rendering pipeline.
+ * Demonstrate and showcase a sample application using mesh shader culling features.
  */
 
 #include "mesh_shader_culling.h"
 
-MeshShadingCulling::MeshShadingCulling()
+MeshShaderCulling::MeshShaderCulling()
 {
 	title = "Mesh shader culling";
 
@@ -35,15 +35,9 @@ MeshShadingCulling::MeshShadingCulling()
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
-
-	// Initialization
-	ubo_cull.cull_center_x   = 0.0f;
-	ubo_cull.cull_center_y   = 0.0f;
-	ubo_cull.cull_radius     = 1.0f;
-	ubo_cull.meshlet_density = 1.0f;
 }
 
-MeshShadingCulling::~MeshShadingCulling()
+MeshShaderCulling::~MeshShaderCulling()
 {
 	if (device)
 	{
@@ -53,7 +47,7 @@ MeshShadingCulling::~MeshShadingCulling()
 	}
 }
 
-void MeshShadingCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
@@ -64,7 +58,7 @@ void MeshShadingCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 	meshFeatures.meshShader = VK_TRUE;
 }
 
-void MeshShadingCulling::build_command_buffers()
+void MeshShaderCulling::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -97,7 +91,7 @@ void MeshShadingCulling::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		// Mesh shaders need the vkCmdDrawMeshTasksExt
-		uint32_t num_workgroups_x = 2;
+		uint32_t num_workgroups_x = 1;
 		uint32_t num_workgroups_y = 1;
 		uint32_t num_workgroups_z = 1;
 
@@ -111,7 +105,7 @@ void MeshShadingCulling::build_command_buffers()
 	}
 }
 
-void MeshShadingCulling::setup_descriptor_pool()
+void MeshShaderCulling::setup_descriptor_pool()
 {
 	// I still build the pool using a vector, since practically it cannot be just one descriptor pool size.
 	// And it is a good practice to showcase how to use its vector form
@@ -128,7 +122,7 @@ void MeshShadingCulling::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void MeshShadingCulling::setup_descriptor_set_layout()
+void MeshShaderCulling::setup_descriptor_set_layout()
 {
 	// I still build the layout binding using a vector, since practically it cannot be just one binding.
 	// And it is a good practice to showcase how to use its vector form
@@ -148,7 +142,7 @@ void MeshShadingCulling::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
-void MeshShadingCulling::setup_descriptor_sets()
+void MeshShaderCulling::setup_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
@@ -169,7 +163,7 @@ void MeshShadingCulling::setup_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void MeshShadingCulling::prepare_pipelines()
+void MeshShaderCulling::prepare_pipelines()
 {
 	// Pipeline creation information
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
@@ -229,7 +223,7 @@ void MeshShadingCulling::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-void MeshShadingCulling::prepare_uniform_buffers()
+void MeshShaderCulling::prepare_uniform_buffers()
 {
 	uniform_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                     sizeof(ubo_cull),
@@ -238,12 +232,12 @@ void MeshShadingCulling::prepare_uniform_buffers()
 	update_uniform_buffers();
 }
 
-void MeshShadingCulling::update_uniform_buffers()
+void MeshShaderCulling::update_uniform_buffers()
 {
 	uniform_buffer->convert_and_update(ubo_cull);
 }
 
-void MeshShadingCulling::draw()
+void MeshShaderCulling::draw()
 {
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
@@ -255,7 +249,7 @@ void MeshShadingCulling::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool MeshShadingCulling::prepare(vkb::Platform &platform)
+bool MeshShaderCulling::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -277,7 +271,7 @@ bool MeshShadingCulling::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void MeshShadingCulling::render(float delta_time)
+void MeshShaderCulling::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -291,34 +285,33 @@ void MeshShadingCulling::render(float delta_time)
 		ubo_cull.cull_center_x = (-1.0f) * camera.position.x;
 		ubo_cull.cull_center_y = (-1.0f) * camera.position.z;
 		update_uniform_buffers();
-
-		//TODO: delete this:
-		printf("x: %f, y: %f\n", ubo_cull.cull_center_x, ubo_cull.cull_center_y);
 	}
 }
-void MeshShadingCulling::on_update_ui_overlay(vkb::Drawer &drawer)
+
+void MeshShaderCulling::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (drawer.header("Configurations"))
+	if (drawer.header("Use WASD to move the square\n Configurations:\n"))
 	{
-		if (drawer.slider_float("Cull Radius: ", &ubo_cull.cull_radius, 0.01f, 1.0f))
+		if (drawer.slider_float("Cull Radius: ", &ubo_cull.cull_radius, 0.5f, 2.0f))
 		{
 			update_uniform_buffers();
-
-			//TODO: delete this:
-			printf("r: %f\n", ubo_cull.cull_radius);
 		}
-		if (drawer.combo_box("Meshlet Density Level: ", &density_level, {"low", "mid", "high", "ultra"}))
+		if (drawer.combo_box("Meshlet Density Level: ", &density_level, {"4 x 4", "6 x 6", "8 x 8"}))
 		{
 			ubo_cull.meshlet_density = static_cast<float>(density_level);
 			update_uniform_buffers();
-
-			//TODO: delete this:
-			printf("rho: %f\n", ubo_cull.meshlet_density);
 		}
 	}
+}
+
+bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
+{
+	ApiVulkanSample::resize(width, height);
+	update_uniform_buffers();
+	return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling()
 {
-	return std::make_unique<MeshShadingCulling>();
+	return std::make_unique<MeshShaderCulling>();
 }

@@ -21,83 +21,95 @@
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 layout(triangles, max_vertices = 64 * 4, max_primitives = 124 * 2) out;
 
-// Structures
+// Example of how to read shared data from its associated task shader:
+// 1) the same structure must be defined (name can vary however):
 
-struct PrimitiveColor
+struct SharedData
 {
-    vec3 color_1;
-    vec3 color_2;
+    vec4  positionTransformation;
+    int   N;
+    int   meshletsNumber;
+    float subDimension;
+    float cullRadius;
 };
 
-// Shared Data from Task:
+// 2) using the following command to "establish the connection" (variable name can vary):
 
-taskPayloadSharedEXT vec4 deltaPosition;
+taskPayloadSharedEXT SharedData sharedData;
 
-// Output
+// Example of a default output layout and location format:
 
 layout (location=0) out vec4 perVertex[];
 layout (location=1) perprimitiveEXT out vec4 perPrimitiveEXT[];
 layout (location=3) out vec3 outColor[];
 
-
-// Defined constants
-
-// 1) Unit vertices and primitives
+// Define some constants in order to create an identical meshlet square, using two triangles:
+// 1) a simplified vertex data, using vec2 format
 
 const vec2 unitVertex_0 = vec2(-0.5f,  0.5f);
 const vec2 unitVertex_1 = vec2( 0.5f,  0.5f);
 const vec2 unitVertex_2 = vec2( 0.5f, -0.5f);
 const vec2 unitVertex_3 = vec2(-0.5f, -0.5f);
 
+// 2) index data associated with the vertex data, triangle defined using right-hand rule
+
 const uvec3 unitPrimitive_0 = uvec3(0, 1, 2);
 const uvec3 unitPrimitive_1 = uvec3(2, 0, 3);
 
-
-//Test
-const float squareDimension = 1.0f;
-
-int N = 8;
-int meshletsNumber = N * N;
-
-float subDimension = squareDimension / N * 0.5f;
-
 void main()
 {
-    SetMeshOutputsEXT( meshletsNumber * 4, meshletsNumber * 2);
+    // 1) The first variable means: the total number of vertices to be created:
+    // 2) The second variable means total number of primitives to be created (at least 3 index per primitive):
 
-    vec4 displacement;
+    SetMeshOutputsEXT( sharedData.meshletsNumber * 4, sharedData.meshletsNumber * 2);
 
-    for (uint i = 0; i < meshletsNumber; i++)
+    // Creating meshlets:
+    for (uint k = 0; k < sharedData.meshletsNumber; k++)
     {
+        // processing index, "breaking" a linear index into a coordinate index
+        // (i.e., (i, j) means the ith column and jth row)
 
-        float j = floor(i / N);
-        float k = i - j * N;
+        float j = floor(k / sharedData.N);   // calculating which row this meshlet belongs to
+        float i = k - j * sharedData.N;      // calculating which column this meshlet belongs to
 
-        vec2 deltaPosition_xy = ( 2.0f * vec2(k, j) - N - 1.0f ) * subDimension;
-        displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
+        // translate the identical meshlet to its targeted position:
 
-        vec4 position = displacement + deltaPosition;
+        vec2 deltaPosition_xy = ( 2.0f * vec2( i, j ) - sharedData.N - 1.0f ) * sharedData.subDimension;
 
-        float radius = position.x * position.x + position.y * position.y;
+        // this is the displacement with respect to the origin, displacement is used in cull logic:
 
-        if (radius < 1.0)
+        vec4 displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
+
+        // the actual position of each and every meshlet:
+
+        vec4 position = displacement + sharedData.positionTransformation;
+        float squareRadius = position.x * position.x + position.y * position.y;
+
+        // Cull Logic: only is the meshlet center position is within the view circle defined by the cull radius,
+        // then this very meshlet will be generated. Otherwise, meshlet will NOT be generated.
+
+        if (squareRadius < sharedData.cullRadius * sharedData.cullRadius)
         {
-            gl_MeshVerticesEXT[ i * 4 + 0 ].gl_Position = vec4(unitVertex_0 / N, 0.0f, 1.0f) + deltaPosition + displacement;
-        gl_MeshVerticesEXT[ i * 4 + 1 ].gl_Position = vec4(unitVertex_1 / N, 0.0f, 1.0f) + deltaPosition + displacement;
-        gl_MeshVerticesEXT[ i * 4 + 2 ].gl_Position = vec4(unitVertex_2 / N, 0.0f, 1.0f) + deltaPosition + displacement;
-        gl_MeshVerticesEXT[ i * 4 + 3 ].gl_Position = vec4(unitVertex_3 / N, 0.0f, 1.0f) + deltaPosition + displacement;
+            // Vertices:
 
-        gl_PrimitiveTriangleIndicesEXT[ i * 2 + 0 ] = unitPrimitive_0 + uvec3(4) * i;
-        gl_PrimitiveTriangleIndicesEXT[ i * 2 + 1 ] = unitPrimitive_1 + uvec3(4) * i;
+            gl_MeshVerticesEXT[ k * 4 + 0 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+            gl_MeshVerticesEXT[ k * 4 + 1 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+            gl_MeshVerticesEXT[ k * 4 + 2 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+            gl_MeshVerticesEXT[ k * 4 + 3 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
 
-        vec3 color;
+            // Indices
 
-        color = vec3(1.0, 0.0, 0.0) * (i + 1) / meshletsNumber;
+            gl_PrimitiveTriangleIndicesEXT[ k * 2 + 0 ] = unitPrimitive_0 + k * uvec3(4);
+            gl_PrimitiveTriangleIndicesEXT[ k * 2 + 1 ] = unitPrimitive_1 + k * uvec3(4);
 
-        outColor[ i * 4 + 0] = color;
-        outColor[ i * 4 + 1] = color;
-        outColor[ i * 4 + 2] = color;
-            outColor[ i * 4 + 3] = color;
+            // Assigning the color output:
+
+            vec3 color = vec3( 1.0f, 0.0f, 0.0f ) * ( k + 1 ) / sharedData.meshletsNumber;
+
+            outColor[ k * 4 + 0] = color;
+            outColor[ k * 4 + 1] = color;
+            outColor[ k * 4 + 2] = color;
+            outColor[ k * 4 + 3] = color;
         }
     }
 }

@@ -16,22 +16,10 @@
  * limitations under the License.
  */
 
-layout(location = 3) in vec3 inColor;
+layout(location = 3) in vec3  inColor;
 layout(location = 0) out vec4 outColor;
 
 void main()
 {
-
-
-    if (inColor.x == 0.0 && inColor.y == 0.0 && inColor.z == 0.0)
-    {
-        outColor = vec4(1.0, 0.0, 1.0, 1.0);
-    }
-    else
-    {
-        outColor = vec4(inColor, 1.0);
-    }
-
-
-
+    outColor = vec4(inColor, 1.0);
 }

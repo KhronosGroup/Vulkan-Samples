@@ -20,15 +20,7 @@
 
 layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
 
-// Structures
-
-struct PrimitiveColor
-{
-    vec4 position;
-    vec3 color_2;
-};
-
-// Input
+// Example of how to read a binding input from cpp:
 
 layout (binding = 0) uniform UBO
 {
@@ -38,27 +30,67 @@ layout (binding = 0) uniform UBO
     float meshlet_density;
 } ubo;
 
-// Shared Data to mesh:
+// Example of the data shared with its associated mesh shader:
+// 1) define some structure if more than one variable data sharing is desired:
 
-taskPayloadSharedEXT vec4 deltaPosition;
+struct SharedData
+{
+    vec4  positionTransformation;
+    int   N;
+    int   meshletsNumber;
+    float subDimension;
+    float cullRadius;
+};
 
-// Task Shader Functions
+// 2) use the following command to "establish the connection" to its associated mesh shader:
 
+taskPayloadSharedEXT SharedData sharedData;
 
-// Shader Constant
+// Defines the square mesh dimension as a constant:
 
-const float squareDimension = 1.0f;
-
-int N = 2;
-int meshletsNumber = N * N;
-
-float subDimension = squareDimension / N * 0.5f;
-
+const float squareDimension = 1.1f;
 
 void main()
 {
-    deltaPosition = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
-    //outRadius = ubo.cull_radius;
+    // Example of processing the shared data:
+
+    sharedData.positionTransformation = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
+    sharedData.cullRadius = ubo.cull_radius;
+
+    if (ubo.meshlet_density == 0)
+    {
+        // Attempt to create a 6 by 6 meshlets array
+
+        sharedData.N = 4;
+        sharedData.meshletsNumber = 4 * 4;
+        sharedData.subDimension = squareDimension / 4.0f;
+    }
+    else if (ubo.meshlet_density == 1)
+    {
+        // Attempt to create a 6 by 6 meshlets array
+
+        sharedData.N = 6;
+        sharedData.meshletsNumber = 6 * 6;
+        sharedData.subDimension = squareDimension / 6.0f;
+    }
+    else if (ubo.meshlet_density == 2)
+    {
+        // Attempt to create a 6 by 6 meshlets array
+
+        sharedData.N = 8;
+        sharedData.meshletsNumber = 8 * 8;
+        sharedData.subDimension = squareDimension / 8.0f;
+    }
+    else
+    {
+        // Debug if one sees a 2 by 2 meshlets array, that means uniform buffer (e.g., ubo) is not read
+        sharedData.N = 2;
+        sharedData.meshletsNumber = 2 * 2;
+        sharedData.subDimension = squareDimension / 2.0f;
+    }
+    // Nothing else should be done, the above data automatically share with its associated mesh shader
+
+    // Example of emit mesh tasks, which only 1 group, 1 sub group, and etc.,
 
 	EmitMeshTasksEXT(1, 1, 1);
 }
