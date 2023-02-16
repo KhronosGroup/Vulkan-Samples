@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -66,15 +66,15 @@ using AttachmentSet = std::unordered_set<uint32_t>;
 class PostProcessingRenderPass;
 
 /**
-* @brief A single step of a vkb::PostProcessingRenderPass.
-*/
+ * @brief A single step of a vkb::PostProcessingRenderPass.
+ */
 class PostProcessingSubpass : public Subpass
 {
   public:
 	PostProcessingSubpass(PostProcessingRenderPass *parent, RenderContext &render_context, ShaderSource &&triangle_vs,
 	                      ShaderSource &&fs, ShaderVariant &&fs_variant = {});
 
-	PostProcessingSubpass(const PostProcessingSubpass &to_copy) = delete;
+	PostProcessingSubpass(const PostProcessingSubpass &to_copy)            = delete;
 	PostProcessingSubpass &operator=(const PostProcessingSubpass &to_copy) = delete;
 
 	PostProcessingSubpass(PostProcessingSubpass &&to_move);
@@ -83,45 +83,45 @@ class PostProcessingSubpass : public Subpass
 	~PostProcessingSubpass() = default;
 
 	/**
-	* @brief Maps the names of input attachments in the shader to indices into the render target's images.
-	*        These are given as `subpassInput`s to the subpass, at set 0; they are bound automatically according to their name.
-	*/
+	 * @brief Maps the names of input attachments in the shader to indices into the render target's images.
+	 *        These are given as `subpassInput`s to the subpass, at set 0; they are bound automatically according to their name.
+	 */
 	inline const AttachmentMap &get_input_attachments() const
 	{
 		return input_attachments;
 	}
 
 	/**
-	* @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
-	*        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
-	* @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
-	*          The RenderTarget for the current PostProcessingSubpass is used if none is specified for attachment images.
-	*/
+	 * @brief Maps the names of samplers in the shader to vkb::core::SampledImage.
+	 *        These are given as samplers to the subpass, at set 0; they are bound automatically according to their name.
+	 * @remarks PostProcessingPipeline::get_sampler() is used as the default sampler if none is specified.
+	 *          The RenderTarget for the current PostProcessingSubpass is used if none is specified for attachment images.
+	 */
 	inline const SampledMap &get_sampled_images() const
 	{
 		return sampled_images;
 	}
 
 	/**
-	* @brief Maps the names of storage images in the shader to vkb::core::ImageView.
-	*        These are given as image2D[Array] to the subpass, at set 0; they are bound automatically according to their name.
-	*/
+	 * @brief Maps the names of storage images in the shader to vkb::core::ImageView.
+	 *        These are given as image2D[Array] to the subpass, at set 0; they are bound automatically according to their name.
+	 */
 	inline const StorageImageMap &get_storage_images() const
 	{
 		return storage_images;
 	}
 
 	/**
-	* @brief Returns the shader variant used for this postprocess' fragment shader.
-	*/
+	 * @brief Returns the shader variant used for this postprocess' fragment shader.
+	 */
 	inline ShaderVariant &get_fs_variant()
 	{
 		return fs_variant;
 	}
 
 	/**
-	* @brief Sets the shader variant that will be used for this postprocess' fragment shader.
-	*/
+	 * @brief Sets the shader variant that will be used for this postprocess' fragment shader.
+	 */
 	inline PostProcessingSubpass &set_fs_variant(ShaderVariant &&new_variant)
 	{
 		fs_variant = std::move(new_variant);
@@ -209,8 +209,8 @@ class PostProcessingSubpass : public Subpass
 };
 
 /**
-* @brief A collection of vkb::PostProcessingSubpass that are run as a single renderpass.
-*/
+ * @brief A collection of vkb::PostProcessingSubpass that are run as a single renderpass.
+ */
 class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderPass>
 {
   public:
@@ -218,20 +218,21 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 
 	PostProcessingRenderPass(PostProcessingPipeline *parent, std::unique_ptr<core::Sampler> &&default_sampler = nullptr);
 
-	PostProcessingRenderPass(const PostProcessingRenderPass &to_copy) = delete;
+	PostProcessingRenderPass(const PostProcessingRenderPass &to_copy)            = delete;
 	PostProcessingRenderPass &operator=(const PostProcessingRenderPass &to_copy) = delete;
 
-	PostProcessingRenderPass(PostProcessingRenderPass &&to_move) = default;
+	PostProcessingRenderPass(PostProcessingRenderPass &&to_move)            = default;
 	PostProcessingRenderPass &operator=(PostProcessingRenderPass &&to_move) = default;
 
 	void draw(CommandBuffer &command_buffer, RenderTarget &default_render_target) override;
 
 	/**
-	* @brief Gets the step at the given index.
-	*/
+	 * @brief Gets the step at the given index.
+	 */
 	inline PostProcessingSubpass &get_subpass(size_t index)
 	{
-		return *dynamic_cast<PostProcessingSubpass *>(pipeline.get_subpasses().at(index).get());
+		assert(index < pipeline.get_subpasses().size());
+		return *dynamic_cast<PostProcessingSubpass *>(pipeline.get_subpasses()[index].get());
 	}
 
 	/**
@@ -240,11 +241,11 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 * @returns The inserted step.
 	 */
 	template <typename... ConstructorArgs>
-	PostProcessingSubpass &add_subpass(ConstructorArgs &&... args)
+	PostProcessingSubpass &add_subpass(ConstructorArgs &&...args)
 	{
 		ShaderSource vs_copy         = get_triangle_vs();
 		auto         new_subpass     = std::make_unique<PostProcessingSubpass>(this, get_render_context(), std::move(vs_copy), std::forward<ConstructorArgs>(args)...);
-		auto &       new_subpass_ref = *new_subpass;
+		auto        &new_subpass_ref = *new_subpass;
 
 		pipeline.add_subpass(std::move(new_subpass));
 
@@ -282,11 +283,11 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 * @brief Transition input, sampled and output attachments as appropriate.
 	 * @remarks If a RenderTarget is not explicitly set for this pass, fallback_render_target is used.
 	 */
-	void transition_attachments(const AttachmentSet &       input_attachments,
+	void transition_attachments(const AttachmentSet        &input_attachments,
 	                            const SampledAttachmentSet &sampled_attachments,
-	                            const AttachmentSet &       output_attachments,
-	                            CommandBuffer &             command_buffer,
-	                            RenderTarget &              fallback_render_target);
+	                            const AttachmentSet        &output_attachments,
+	                            CommandBuffer              &command_buffer,
+	                            RenderTarget               &fallback_render_target);
 
 	/**
 	 * @brief Select appropriate load/store operations for each buffer of render_target,
@@ -294,10 +295,10 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 	 *        in the pipeline.
 	 * @remarks If a RenderTarget is not explicitly set for this pass, fallback_render_target is used.
 	 */
-	void update_load_stores(const AttachmentSet &       input_attachments,
+	void update_load_stores(const AttachmentSet        &input_attachments,
 	                        const SampledAttachmentSet &sampled_attachments,
-	                        const AttachmentSet &       output_attachments,
-	                        const RenderTarget &        fallback_render_target);
+	                        const AttachmentSet        &output_attachments,
+	                        const RenderTarget         &fallback_render_target);
 
 	/**
 	 * @brief Transition images and prepare load/stores before draw()ing.
@@ -309,7 +310,7 @@ class PostProcessingRenderPass : public PostProcessingPass<PostProcessingRenderP
 
 	RenderPipeline                    pipeline{};
 	std::unique_ptr<core::Sampler>    default_sampler{};
-	RenderTarget *                    draw_render_target{nullptr};
+	RenderTarget                     *draw_render_target{nullptr};
 	std::vector<LoadStoreInfo>        load_stores{};
 	bool                              load_stores_dirty{true};
 	std::vector<uint8_t>              uniform_data{};

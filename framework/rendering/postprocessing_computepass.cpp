@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,7 +124,8 @@ void PostProcessingComputePass::transition_images(CommandBuffer &command_buffer,
 			barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
 
-			command_buffer.image_memory_barrier(sampled_rt->get_views().at(*attachment), barrier);
+			assert(*attachment < sampled_rt->get_views().size());
+			command_buffer.image_memory_barrier(sampled_rt->get_views()[*attachment], barrier);
 			sampled_rt->set_layout(*attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 		}
 	}
@@ -181,7 +182,8 @@ void PostProcessingComputePass::transition_images(CommandBuffer &command_buffer,
 				barrier.dst_access_mask |= VK_ACCESS_SHADER_WRITE_BIT;
 			}
 
-			command_buffer.image_memory_barrier(storage_rt->get_views().at(*attachment), barrier);
+			assert(*attachment < storage_rt->get_views().size());
+			command_buffer.image_memory_barrier(storage_rt->get_views()[*attachment], barrier);
 			storage_rt->set_layout(*attachment, barrier.new_layout);
 		}
 	}
