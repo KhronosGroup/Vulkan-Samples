@@ -17,31 +17,32 @@
 -
 -->
 
-# Mesh Shader Culling 
+# Mesh Shader Culling
 
 ## Overview
 
-This code sample demonstrates how to incorporate the Vulkan extension ```VK_EXT_mesh_shader_exclusive ```, and 
+This code sample demonstrates how to incorporate the Vulkan extension ```VK_EXT_mesh_shader_exclusive ```, and
 introduces the concept of mesh shader culling using meshlets.
 
 ## Introduction
 
-This sample provides a detailed procedure to 1) enable the mesh shader extension, 2) create a mesh shading graphic 
+This sample provides a detailed procedure to 1) enable the mesh shader extension, 2) create a mesh shading graphic
 pipeline, 3) generate a simple mesh using meshlets, and 4) establish a basic cull logic for the meshlets.
 
 ## Enabling mesh shading
 
-To enable the mesh shading feature, the following procedure is required: 
+To enable the mesh shading feature, the following procedure is required:
 
-1) the instance extension ```VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2``` must be added. 
-2) the device extension ```VK_KHR_SPIRV_1_4``` must be added. 
-3) the device extension ```VK_EXT_MESH_SHADER``` must be added, and the device must support this extension. 
+1) the instance extension ```VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2``` must be added.
+2) the device extension ```VK_KHR_SPIRV_1_4``` must be added.
+3) the device extension ```VK_EXT_MESH_SHADER``` must be added, and the device must support this extension.
 4) the application version ```VK_API_VERSION_1_3``` is required.
-5) SPIR-V version 1.4 is required. 
+5) SPIR-V version 1.4 is required.
 6) ```taskShader``` from ```VkPhysicalDeviceMeshShaderFeaturesEXT``` must be enabled.
 7) ```meshShader``` from ```VkPhysicalDeviceMeshShaderFeaturesEXT``` must be enabled.
 
-One may refer to the following examples of how to accomplish the above procedure for more details: 
+One may refer to the following examples of how to accomplish the above procedure for more details:
+
 ```cpp
 MeshShaderCulling::MeshShaderCulling()
 {
@@ -60,6 +61,7 @@ MeshShaderCulling::MeshShaderCulling()
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
 ```
+
 ```cpp
 void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
@@ -74,9 +76,11 @@ void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 ```
 
 ## Creating pipeline
-In this sample, a very simple pipeline is created. However, one shall pay attention to the 
-```VkGraphicsPipelineCreateInfo```, where bot its ```pVertexInputState``` and ```pInputAssemblyState``` must be 
+
+In this sample, a very simple pipeline is created. However, one shall pay attention to the
+```VkGraphicsPipelineCreateInfo```, where bot its ```pVertexInputState``` and ```pInputAssemblyState``` must be
 connected to a ```nullptr```. More details can be found in the ```prepare_pipelines()``` function, shown as follows:
+
 ```cpp
 void MeshShaderCulling::prepare_pipelines()
 {
@@ -118,10 +122,12 @@ void MeshShaderCulling::prepare_pipelines()
 ```
 
 ## Linking resources
-In this sample, a very light-wighted resource is linked to the shader. Therefore, a uniform buffer is declared for 
-such purpose. Where, the creation of its descriptor set, pool and layout can be referred in functions 
+
+In this sample, a very light-wighted resource is linked to the shader. Therefore, a uniform buffer is declared for such
+purpose. Where, the creation of its descriptor set, pool and layout can be referred in functions
 ```setup_descriptor_sets()```, ```setup_descriptor_pool()```, and ```setup_descriptor_set_layout()```. The uniform
-buffer only stores necessary information for the sampling purpose, and is defined as follows: 
+buffer only stores necessary information for the sampling purpose, and is defined as follows:
+
 ```cpp
 	struct UBO
 	{
@@ -131,16 +137,15 @@ buffer only stores necessary information for the sampling purpose, and is define
 		float meshlet_density = 2.0f;
 	} ubo_cull{};
 ```
+
 Where, ```cull_center_x``` and ```cull_center_y``` determines the translation of the cull mask, and ```cull_radius```
-defines the size of the cull mask. ```meshlet_density``` defines the total number of meshlets used for the sample. 
-
-
-
+defines the size of the cull mask. ```meshlet_density``` defines the total number of meshlets used for the sample.
 
 ## Task Shader
 
-A simple task shader is created to process the data from the uniform buffer, and then send it to its associated mesh 
-shader. Where: 
+A simple task shader is created to process the data from the uniform buffer, and then send it to its associated mesh
+shader. Where:
+
 ```glsl
 // Example of how to read a binding input from cpp:
 
@@ -152,8 +157,10 @@ layout (binding = 0) uniform UBO
     float meshlet_density;
 } ubo;
 ```
-One should notice that, mesh shading allows data sharing from the task shader to its associated mesh shader, where, an 
-example can be found in the following codes: 
+
+One should notice that, mesh shading allows data sharing from the task shader to its associated mesh shader, where, an
+example can be found in the following codes:
+
 ```glsl
 // Example of the data shared with its associated mesh shader:
 // 1) define some structure if more than one variable data sharing is desired:
@@ -168,8 +175,10 @@ struct SharedData
 // 2) use the following command to "establish the connection" to its associated mesh shader:
 taskPayloadSharedEXT SharedData sharedData;
 ```
-The ```sharedData``` declared in the task shader can be directly accessed from the mesh shader, if the same data 
-structure is defined in the mesh shader as well. Where, in its associated mesh shader: 
+
+The ```sharedData``` declared in the task shader can be directly accessed from the mesh shader, if the same data
+structure is defined in the mesh shader as well. Where, in its associated mesh shader:
+
 ```glsl
 // Example of how to read shared data from its associated task shader:
 // 1) the same structure must be defined (name can vary however):
@@ -184,8 +193,9 @@ struct SharedData
 // 2) using the following command to "establish the connection" (variable name can vary):
 taskPayloadSharedEXT SharedData sharedData;
 ```
-In this simple task shader, it merely processes the uniform data, sharing them to its associated mesh shader, and then 
-emits a simple mesh task. 
+
+In this simple task shader, it merely processes the uniform data, sharing them to its associated mesh shader, and then
+emits a simple mesh task.
 
 More details about emitting a mesh task can be found in the attached article:
 
@@ -193,50 +203,55 @@ More details about emitting a mesh task can be found in the attached article:
 
 ## Mesh Shader
 
-A simple mesh shader is created to generate vertices and indices based on the number of meshlets determined by its 
-task shader. Where, its vertices and indices generation process can be found in the following code: 
+A simple mesh shader is created to generate vertices and indices based on the number of meshlets determined by its task
+shader. Where, its vertices and indices generation process can be found in the following code:
+
 ```glsl
 // Vertices:
-gl_MeshVerticesEXT[ k * 4 + 0 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-gl_MeshVerticesEXT[ k * 4 + 1 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-gl_MeshVerticesEXT[ k * 4 + 2 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-gl_MeshVerticesEXT[ k * 4 + 3 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+gl_MeshVerticesEXT[k * 4 + 0].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+gl_MeshVerticesEXT[k * 4 + 1].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+gl_MeshVerticesEXT[k * 4 + 2].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+gl_MeshVerticesEXT[k * 4 + 3].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
 // Indices
-gl_PrimitiveTriangleIndicesEXT[ k * 2 + 0 ] = unitPrimitive_0 + k * uvec3(4);
-gl_PrimitiveTriangleIndicesEXT[ k * 2 + 1 ] = unitPrimitive_1 + k * uvec3(4);
+gl_PrimitiveTriangleIndicesEXT[k * 2 + 0] = unitPrimitive_0 + k * uvec3(4);
+gl_PrimitiveTriangleIndicesEXT[k * 2 + 1] = unitPrimitive_1 + k * uvec3(4);
 // Assigning the color output:
-vec3 color = vec3( 1.0f, 0.0f, 0.0f ) * ( k + 1 ) / sharedData.meshletsNumber;
-outColor[ k * 4 + 0] = color;
-outColor[ k * 4 + 1] = color;
-outColor[ k * 4 + 2] = color;
-outColor[ k * 4 + 3] = color;
+vec3 color = vec3(1.0f, 0.0f, 0.0f) * (k + 1) / sharedData.meshletsNumber;
+outColor[k * 4 + 0] = color;
+outColor[k * 4 + 1] = color;
+outColor[k * 4 + 2] = color;
+outColor[k * 4 + 3] = color;
 ```
-Where, a set of ```const``` data is declared to simply the above process: 
+
+Where, a set of ```const``` data is declared to simply the above process:
+
 ```glsl
 // Define some constants in order to create an identical meshlet square, using two triangles:
 // 1) a simplified vertex data, using vec2 format
-const vec2 unitVertex_0 = vec2(-0.5f,  0.5f);
-const vec2 unitVertex_1 = vec2( 0.5f,  0.5f);
-const vec2 unitVertex_2 = vec2( 0.5f, -0.5f);
+const vec2 unitVertex_0 = vec2(-0.5f, 0.5f);
+const vec2 unitVertex_1 = vec2(0.5f, 0.5f);
+const vec2 unitVertex_2 = vec2(0.5f, -0.5f);
 const vec2 unitVertex_3 = vec2(-0.5f, -0.5f);
 // 2) index data associated with the vertex data, triangle defined using right-hand rule
 const uvec3 unitPrimitive_0 = uvec3(0, 1, 2);
 const uvec3 unitPrimitive_1 = uvec3(2, 0, 3);
 ```
-More details of meshlets generation can be found in the attached article: 
+
+More details of meshlets generation can be found in the attached article:
 
 [Using Mesh Shaders for Professional Graphics](https://developer.nvidia.com/blog/using-mesh-shaders-for-professional-graphics/)
 
-
 ## Meshlets culling
-A simple cull logic is introduced in this sample from the mesh shader. One shall notice that, in mesh shading, there
-is no command, or automated functions that helps to "cull" a geometry. The cull logic simply determines the condition, 
-whether a meshlet may be generated or not. That says, after processing the cull logic, and a meshlet is determined to
-be visible, it will then be generated normally; otherwise, its generation will be skipped. Hence, in principle, when a
+
+A simple cull logic is introduced in this sample from the mesh shader. One shall notice that, in mesh shading, there is
+no command, or automated functions that helps to "cull" a geometry. The cull logic simply determines the condition,
+whether a meshlet may be generated or not. That says, after processing the cull logic, and a meshlet is determined to be
+visible, it will then be generated normally; otherwise, its generation will be skipped. Hence, in principle, when a
 meshlet is culled, it simply indicates that all its vertex and index information are not being created at all.
 
-In this sample, a circular visual zone is centered at the origin, with an adjustable radius, controlled by the gui. 
-Whenever a meshlet moves out of the visual zone, its generation process will be skipped. Where: 
+In this sample, a circular visual zone is centered at the origin, with an adjustable radius, controlled by the gui.
+Whenever a meshlet moves out of the visual zone, its generation process will be skipped. Where:
+
 ```glsl
 // the actual position of each meshlet:
 vec4 position = displacement + sharedData.positionTransformation;
@@ -245,14 +260,14 @@ float squareRadius = position.x * position.x + position.y * position.y;
 // then this very meshlet will be generated. Otherwise, meshlet will NOT be generated.
 if (squareRadius < sharedData.cullRadius * sharedData.cullRadius)
 {
-   // Generating meshlets
+    // Generating meshlets
 }
 ```
-There are, indeed, more adaptive theories developed for such purpose, and a commonly used cull logic can be found in 
-the following video: 
+
+There are, indeed, more adaptive theories developed for such purpose, and a commonly used cull logic can be found in the
+following video:
 
 [Culling with NVIDIA Mesh Shaders](https://www.youtube.com/watch?v=n3cnUHYGbpw)
-
 
 ## UI overlay
 
@@ -260,9 +275,10 @@ the following video:
 
 A simple UI overlay is created to help showcase the mesh shader cull feature. Where, the radius of the circular cull
 mask can be adjusted using the "Cull Radius" slider, which ranges from ```0.5f``` to ```2.0f```. And the meshlet density
-level can be controlled using the combo-box. Where, a selection of 4-by-4, 6-by-6, and 8-by-8 of density opinions is 
+level can be controlled using the combo-box. Where, a selection of 4-by-4, 6-by-6, and 8-by-8 of density opinions is
 provided. Where, users may use keyboard input ```W``` ```A``` ```S``` ```D``` to move the square mesh around the scene.
-Code reference of the UI overlay can be found as follows: 
+Code reference of the UI overlay can be found as follows:
+
 ```cpp
 void MeshShaderCulling::on_update_ui_overlay(vkb::Drawer &drawer)
 {
