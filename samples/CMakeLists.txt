@@ -76,6 +76,7 @@ set(ORDER_LIST
     "descriptor_indexing"
     "portability"
     "vertex_dynamic_state"
+    "fragment_shader_barycentric"
 
     #Performance Samples
     "swapchain_images"
