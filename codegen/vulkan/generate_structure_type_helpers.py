@@ -47,7 +47,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
             'namespace vulkan\n' + \
             '{\n' + \
             'template <typename Type>\n' + \
-            'VkStructureType get_structure_type()\n' + \
+            'inline VkStructureType get_structure_type()\n' + \
             '{\n' + \
             '	throw "function not implemented";\n' + \
             '}\n'
@@ -97,7 +97,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
 
                 if sTypeValue:
                     section += 'template <>\n' + \
-                        f'VkStructureType get_structure_type<{name}>()\n' + \
+                        f'inline VkStructureType get_structure_type<{name}>()\n' + \
                         '{\n' + \
                         f'	return {sTypeValue};\n' + \
                         '}\n'

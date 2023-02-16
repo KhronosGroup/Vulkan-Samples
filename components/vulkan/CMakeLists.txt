@@ -18,8 +18,17 @@
 vkb__register_component(
   NAME vulkan
   LINK_LIBS
+    vkb__common
     volk
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
   SRC
+    src/context/context_builder_funcs.cpp
+    src/context/context_builder.cpp
+    src/context/instance_builder.cpp
+    src/context/physical_device_builder.cpp
+    src/context/device_builder.cpp
 )
+
+add_subdirectory(tests)

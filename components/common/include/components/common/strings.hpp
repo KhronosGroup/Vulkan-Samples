@@ -18,11 +18,14 @@
 #pragma once
 
 #include <string>
+#include <string_view>
+#include <vector>
 
 namespace components
 {
 namespace strings
 {
+//	Replace all occurrences of a substring with another substring
 inline std::string replace_all(std::string str, const std::string &from, const std::string &to)
 {
 	size_t start_pos = 0;
@@ -34,6 +37,7 @@ inline std::string replace_all(std::string str, const std::string &from, const s
 	return str;
 }
 
+// Trim all occurrences of a substring from the left
 inline std::string trim_right(const std::string &str, const std::string &chars = "")
 {
 	std::string result = str;
@@ -41,10 +45,29 @@ inline std::string trim_right(const std::string &str, const std::string &chars =
 	return result;
 }
 
+// Trim all occurrences of a substring from the right
 inline std::string trim_left(const std::string &str, const std::string &chars = "")
 {
 	std::string result = str;
 	result.erase(0, str.find_first_not_of(chars));
+	return result;
+}
+
+// Trim all occurrences of a substring from both sides
+inline std::string trim(const std::string &str, const std::string &chars = "")
+{
+	return trim_left(trim_right(str, chars), chars);
+}
+
+// Convert a vector of string_view to a vector of C strings
+inline std::vector<const char *> to_cstr(const std::vector<std::string_view> &strs)
+{
+	std::vector<const char *> result;
+	result.reserve(strs.size());
+	for (const auto &str : strs)
+	{
+		result.push_back(str.data());
+	}
 	return result;
 }
 }        // namespace strings

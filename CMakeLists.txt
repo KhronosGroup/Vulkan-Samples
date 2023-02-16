@@ -31,6 +31,7 @@ option(VKB_VALIDATION_LAYERS_GPU_ASSISTED "Enable GPU assisted validation layers
 option(VKB_VULKAN_DEBUG "Enable VK_EXT_debug_utils or VK_EXT_debug_marker if supported." ON)
 option(VKB_BUILD_SAMPLES "Enable generation and building of Vulkan best practice samples." ON)
 option(VKB_BUILD_TESTS "Enable generation and building of Vulkan best practice tests." OFF)
+option(VKB_BUILD_GPU_TESTS "Enable generation and building of GPU tests." OFF)
 set(VKB_WSI_SELECTION "XCB" CACHE STRING "Select WSI target (XCB, XLIB, WAYLAND, D2D)")
 
 include(utils)
