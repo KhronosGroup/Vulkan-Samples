@@ -37,7 +37,7 @@ struct SceneNode
 class Node
 {
   public:
-	static NodePtr create(Registry &registry, const std::string &name, Transform transform = {});
+	static NodePtr create(Registry registry, const std::string &name, Transform transform = {});
 
 	virtual ~Node();
 
@@ -67,7 +67,7 @@ class Node
 
 	std::string name;
 
-	inline Registry registry() const
+	inline Registry registry()
 	{
 		return m_registry;
 	}
@@ -77,8 +77,8 @@ class Node
 
 	void remove_child(Node *child);
 
-	mutable Registry m_registry;
-	entt::entity     m_entity;
+	Registry     m_registry;
+	entt::entity m_entity;
 
 	Node                *m_parent{nullptr};
 	std::vector<NodePtr> m_children;

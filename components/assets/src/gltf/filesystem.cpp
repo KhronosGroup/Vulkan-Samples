@@ -22,7 +22,7 @@ std::string ExpandFilePathFunction(const std::string &file_path, void *data)
 	auto *user_data = static_cast<UserData *>(data);
 	if (!user_data)
 	{
-		return false;
+		return "";
 	}
 
 	auto path = strings::replace_all(file_path, "./", "");

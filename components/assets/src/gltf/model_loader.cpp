@@ -147,14 +147,14 @@ void GLTFModelLoader::load_from_file(vfs::FileSystem &fs, const std::string &pat
 				auto &gltf_accessor    = model.accessors[attribute.second];
 				auto &gltf_buffer_view = model.bufferViews[gltf_accessor.bufferView];
 
-				sg::VertexAttribute attribute;
-				attribute.buffer = buffers[gltf_buffer_view.buffer];
-				attribute.format = get_attribute_format(gltf_accessor);
-				attribute.stride = gltf_accessor.ByteStride(gltf_buffer_view);
-				attribute.offset = static_cast<uint32_t>(gltf_accessor.byteOffset + gltf_buffer_view.byteOffset);
-				attribute.count  = static_cast<uint32_t>(gltf_accessor.count);
+				sg::VertexAttribute vertex_attribute;
+				vertex_attribute.buffer = buffers[gltf_buffer_view.buffer];
+				vertex_attribute.format = get_attribute_format(gltf_accessor);
+				vertex_attribute.stride = gltf_accessor.ByteStride(gltf_buffer_view);
+				vertex_attribute.offset = static_cast<uint32_t>(gltf_accessor.byteOffset + gltf_buffer_view.byteOffset);
+				vertex_attribute.count  = static_cast<uint32_t>(gltf_accessor.count);
 
-				mesh.vertex_attributes[type] = attribute;
+				mesh.vertex_attributes[type] = vertex_attribute;
 			}
 
 			mesh.topology = get_topology(gltf_primitive.mode);

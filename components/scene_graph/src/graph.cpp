@@ -7,7 +7,7 @@ namespace components
 namespace sg
 {
 
-NodePtr Node::create(Registry &registry, const std::string &name, Transform transform)
+NodePtr Node::create(Registry registry, const std::string &name, Transform transform)
 {
 	auto node = std::shared_ptr<Node>(new Node(registry, name));
 	node->set_component<Transform>(transform);
