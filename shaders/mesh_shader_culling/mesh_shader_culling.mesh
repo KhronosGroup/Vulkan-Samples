@@ -80,7 +80,7 @@ void main()
 
         vec4 displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
 
-        // the actual position of each and every meshlet:
+        // the actual position of each meshlet:
 
         vec4 position = displacement + sharedData.positionTransformation;
         float squareRadius = position.x * position.x + position.y * position.y;
