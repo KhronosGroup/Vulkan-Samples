@@ -10,8 +10,8 @@ namespace sg
 NodePtr Node::create(Registry &registry, const std::string &name, Transform transform)
 {
 	auto node = std::shared_ptr<Node>(new Node(registry, name));
-	node->emplace_component<Transform>(transform);
-	node->emplace_component<SceneNode>(std::weak_ptr<Node>{node});
+	node->set_component<Transform>(transform);
+	node->set_component<SceneNode>(std::weak_ptr<Node>{node});
 	return node;
 }
 

@@ -17,11 +17,20 @@
 
 #include <stdexcept>
 
-
+#include <components/common/strings.hpp>
 #include <components/platform/dl.hpp>
 #include <components/platform/platform.hpp>
 #include <components/platform/sample.hpp>
 #include <components/vfs/filesystem.hpp>
+
+// fallbacks incase the library path is not set externally
+#ifndef SOURCE_PATH
+#	define SOURCE_PATH ""
+#endif
+
+#ifndef SAMPLE_LIB_PATH
+#	define SAMPLE_LIB_PATH "/"
+#endif
 
 using namespace components;
 
@@ -31,8 +40,11 @@ CUSTOM_MAIN(context)
 
 	auto &fs = vfs::_default(context);
 
-	auto files = fs.enumerate_files_recursive("/", dl::os_library_name("vkb__dummy_sample"));
-	if (files.size() != 1) {
+	auto search_path = strings::replace_all(SAMPLE_LIB_PATH, SOURCE_PATH, "");
+
+	auto files = fs.enumerate_files_recursive(search_path, dl::os_library_name("vkb__dummy_sample"));
+	if (files.size() != 1)
+	{
 		throw std::runtime_error{"failed to find dummy dynamic library"};
 	}
 

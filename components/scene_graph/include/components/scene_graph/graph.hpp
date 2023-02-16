@@ -51,11 +51,14 @@ class Node
 	const std::vector<NodePtr>  children() const;
 	const std::vector<NodePtr> &children();
 
+	template <typename Component>
+	void set_component(const Component &component);
+
 	template <typename Component, typename... Args>
-	void emplace_component(Args &&...args);
+	void set_component(Args &&...args);
 
 	template <typename... Components>
-	bool contains_components() const;
+	bool has_components() const;
 
 	template <typename Component>
 	Component &get_component() const;
@@ -63,6 +66,11 @@ class Node
 	glm::mat4 world_matrix() const;
 
 	std::string name;
+
+	inline Registry registry() const
+	{
+		return m_registry;
+	}
 
   private:
 	Node(Registry &registry, const std::string &name);
@@ -78,14 +86,20 @@ class Node
 	mutable std::mutex m_mut;
 };
 
+template <typename Component>
+void Node::set_component(const Component &component)
+{
+	m_registry->emplace<Component>(m_entity) = component;
+}
+
 template <typename Component, typename... Args>
-void Node::emplace_component(Args &&...args)
+void Node::set_component(Args &&...args)
 {
 	m_registry->emplace_or_replace<Component>(m_entity, std::move(args)...);
 }
 
 template <typename... Components>
-bool Node::contains_components() const
+bool Node::has_components() const
 {
 	return m_registry->all_of<Components...>(m_entity);
 }
@@ -93,7 +107,7 @@ bool Node::contains_components() const
 template <typename Component>
 Component &Node::get_component() const
 {
-	assert(contains_components<Component>() && "attempting to get a component which was not set");
+	assert(has_components<Component>() && "attempting to get a component which was not set");
 	return m_registry->get<Component>(m_entity);
 }
 

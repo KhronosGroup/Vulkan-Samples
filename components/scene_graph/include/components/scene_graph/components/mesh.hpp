@@ -22,33 +22,69 @@
 #include <unordered_map>
 #include <vector>
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <glm/glm.hpp>
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
+
+#include <components/assets/image.hpp>
 
 namespace components
 {
 namespace sg
 {
-// Bounding Box
-struct AABB
+using Buffer = std::shared_ptr<std::vector<uint8_t>>;
+
+inline Buffer make_buffer(std::vector<uint8_t> &&data)
 {
-	glm::vec3 min;
-	glm::vec3 max;
+	return std::make_shared<std::vector<uint8_t>>(std::move(data));
+}
+
+enum class AttributeType
+{
+	Position,
+	Normal,
+	Tangent,
+	TexCoord_0,
+	TexCoord_1,
+	Color_0,
+	Joints_0,
+	Weights_0,
+	Unknown
+};
+
+struct VertexAttribute
+{
+	VkFormat format = VK_FORMAT_UNDEFINED;
+	uint32_t stride = 0;
+	uint32_t offset = 0;
+	uint32_t count  = 0;
+
+	Buffer buffer;
 };
 
 struct Sampler
 {
 	VkFilter             min_filter;
 	VkFilter             mag_filter;
-	VkSamplerMipmapMode  mipmap_mode;
 	VkSamplerAddressMode address_mode_u;
 	VkSamplerAddressMode address_mode_v;
+	VkSamplerMipmapMode  mipmap_mode{VK_SAMPLER_MIPMAP_MODE_NEAREST};
 };
 
 struct Texture
 {
-	// Image
-	Sampler sampler;
+	AttributeType         texCoord;
+	assets::ImageAssetPtr image;
+	Sampler               sampler;
+
+	inline AttributeType get_valid_tex_coord_target() const
+	{
+		assert(texCoord != AttributeType::TexCoord_0 || texCoord != AttributeType::TexCoord_1 && "invalid texture coordinate attribute");
+		return texCoord;
+	}
 };
 
 // How the alpha value of the main factor and texture should be interpreted
@@ -61,12 +97,12 @@ enum class AlphaMode
 
 enum class TextureType
 {
-	BaseColorTexture,
-	NormalTexture,
-	OcclusionTexture,
-	EmissiveTexture,
-	MetallicRoughnessTexture,
-	Max
+	BaseColor,
+	Normal,
+	Occlusion,
+	Emissive,
+	MetallicRoughness,
+	Unknown
 };
 
 struct Material
@@ -80,31 +116,6 @@ struct Material
 	glm::vec3 emissive_factor{0.0f, 0.0f, 0.0f};
 	float     metallic_factor{0.0f};
 	float     roughness_factor{0.0f};
-};
-
-using Buffer = std::shared_ptr<std::vector<uint8_t>>;
-
-enum class AttributeType
-{
-	Position,
-	Normal,
-	Tangent,
-	TexCoord_0,
-	TexCoord_1,
-	Color_0,
-	Joints_0,
-	Weights_0,
-	Max
-};
-
-struct VertexAttribute
-{
-	VkFormat format = VK_FORMAT_UNDEFINED;
-	uint32_t stride = 0;
-	uint32_t offset = 0;
-	uint32_t count  = 0;
-
-	Buffer buffer;
 };
 
 struct Mesh

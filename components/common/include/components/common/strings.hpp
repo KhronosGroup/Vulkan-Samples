@@ -33,5 +33,19 @@ inline std::string replace_all(std::string str, const std::string &from, const s
 	}
 	return str;
 }
+
+inline std::string trim_right(const std::string &str, const std::string &chars = "")
+{
+	std::string result = str;
+	result.erase(str.find_last_not_of(chars) + 1);
+	return result;
+}
+
+inline std::string trim_left(const std::string &str, const std::string &chars = "")
+{
+	std::string result = str;
+	result.erase(0, str.find_first_not_of(chars));
+	return result;
+}
 }        // namespace strings
 }        // namespace components

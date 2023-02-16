@@ -13,6 +13,13 @@ namespace components
 {
 namespace sg
 {
+// Bounding Box
+struct AABB
+{
+	glm::vec3 min;
+	glm::vec3 max;
+};
+
 struct Transform
 {
 	glm::vec3 position;

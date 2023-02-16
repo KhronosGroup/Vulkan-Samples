@@ -27,6 +27,9 @@ TEST_CASE("sg::Node::create", "[scene_graph]")
 	auto root_node = sg::Node::create(registry, "root");
 	REQUIRE(root_node->parent() == nullptr);
 	REQUIRE(root_node->children().size() == 0);
+
+	// default components set by create
+	REQUIRE(root_node->has_components<sg::Transform, sg::SceneNode>());
 }
 
 TEST_CASE("multiple children test", "[scene_graph]")
@@ -41,6 +44,14 @@ TEST_CASE("multiple children test", "[scene_graph]")
 		auto child = sg::Node::create(registry, "child");
 		root_node->add_child(child);
 		children.push_back(child);
+	}
+
+	REQUIRE(root_node->children().size() == 10);
+
+	// adding the same children again should have no new effects
+	for (auto &child : children)
+	{
+		root_node->add_child(child);
 	}
 
 	REQUIRE(root_node->children().size() == 10);
@@ -82,10 +93,10 @@ TEST_CASE("node add component test", "[scene_graph]")
 		uint32_t value;
 	};
 
-	REQUIRE(!root_node->contains_components<Component>());
+	REQUIRE(!root_node->has_components<Component>());
 
-	root_node->emplace_component<Component>(12U);
-	REQUIRE(root_node->contains_components<Component>());
+	root_node->set_component<Component>(12U);
+	REQUIRE(root_node->has_components<Component>());
 
 	auto &component = root_node->get_component<Component>();
 	REQUIRE(component.value == 12U);
@@ -108,7 +119,7 @@ TEST_CASE("component view across multiple nodes", "[scene_graph]")
 	for (size_t i = 0; i < node_count; i++)
 	{
 		auto node = sg::Node::create(registry, "node");
-		node->emplace_component<Component>(static_cast<uint32_t>(i));
+		node->set_component<Component>(static_cast<uint32_t>(i));
 	}
 
 	auto view = registry->view<Component>();
