@@ -722,7 +722,6 @@ void FragmentShadingRate::render(float delta_time)
 	if (!prepared)
 		return;
 	draw();
-
 	if (camera.updated)
 		update_uniform_buffers();
 }
