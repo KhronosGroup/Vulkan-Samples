@@ -142,7 +142,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
-	void create_pipeline();
+	void create_pipelines();
 	void draw();
 
 	void      load_assets();

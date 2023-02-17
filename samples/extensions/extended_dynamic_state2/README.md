@@ -25,7 +25,7 @@
 
 This sample demonstrates how to use `VK_EXT_extended_dynamic_state2` extension, which eliminates the need to create multiple pipelines in case of specific different parameters.
 
-This extension changes how `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` are managed. Instead of static description during pipeline creation, this extension allows developers to change those parameters by using a function before every draw.
+This extension changes how **Depth Bias**, **Primitive Restart**, **Rasterizer Discard** and **Patch Control Points** are managed. Instead of static description during pipeline creation, this extension allows developers to change those parameters by using a function before every draw.
 
 Below is a comparison of common Vulkan static and dynamic implementation of those extensions with additional usage of `vkCmdSetPrimitiveTopologyEXT` extension from dynamic state . 
   
@@ -33,14 +33,13 @@ Below is a comparison of common Vulkan static and dynamic implementation of thos
 | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
 | dynamic_state = {} | dynamic_state = {VK_DYNAMIC_STATE_VIEWPORT,<br>VK_DYNAMIC_STATE_SCISSOR,<br>VK_DYNAMIC_STATE_DEPTH_BIAS_ENABLE_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,<br>VK_DYNAMIC_STATE_RASTERIZER_DISCARD_ENABLE_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,<br>VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT} |
 | vkCreateGraphicsPipelines(pipeline1)<br>vkCreateGraphicsPipelines(pipeline2)<br>vkCreateGraphicsPipelines(pipeline3)<br>vkCreateGraphicsPipelines(pipeline4) | vkCreateGraphicsPipelines(pipeline1)<br>vkCreateGraphicsPipelines(pipeline2) |
-| draw(model1, pipeline1)<br>draw(model2, pipeline2)<br>draw(model3, pipeline3)<br>draw(model4, pipeline4) | vkCmdSetPrimitiveRestartEnableEXT(model1, primitiveBoolParam)<br>vkCmdSetDepthBiasEnableEXT(model3, depthBiasBoolParam)<br>vkCmdSetRasterizerDiscardEnableEXT(model1,rasterizerBoolParam)<br>vkCmdSetPrimitiveTopologyEXT(model1, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)<br>draw(model1, pipeline1)<br>vkCmdSetPrimitiveTopologyEXT(model2, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP)<br>vkCmdSetPrimitiveRestartEnableEXT(model2, primitiveBoolParam)<br>draw(model2, pipeline1)<br>vkCmdSetDepthBiasEnableEXT(model3, depthBiasBoolParam)<br>vkCmdSetPrimitiveRestartEnableEXT(model3, primitiveBoolParam)<br>draw(model3, pipeline1)<br>vkCmdSetPatchControlPointsEXT(model4, patchControlPoints)<br>draw(model4, pipeline2) |
-	
-	
+| draw(model1, pipeline1)<br>draw(model2, pipeline2)<br>draw(model3, pipeline3)<br>draw(model4, pipeline4) | vkCmdSetPrimitiveRestartEnableEXT(commandBuffer1, primitiveBoolParam)<br>vkCmdSetDepthBiasEnableEXT(commandBuffer1, depthBiasBoolParam)<br>vkCmdSetRasterizerDiscardEnableEXT(commandBuffer1,rasterizerBoolParam)<br>vkCmdSetPrimitiveTopologyEXT(commandBuffer1, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST)<br>draw(model1, pipeline1)<br>vkCmdSetPrimitiveTopologyEXT(commandBuffer2, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP)<br>vkCmdSetPrimitiveRestartEnableEXT(commandBuffer2, primitiveBoolParam)<br>draw(model2, pipeline1)<br>vkCmdSetDepthBiasEnableEXT(commandBuffer3, depthBiasBoolParam)<br>vkCmdSetPrimitiveRestartEnableEXT(commandBuffer3, primitiveBoolParam)<br>draw(model3, pipeline1)<br>vkCmdSetPatchControlPointsEXT(commandBuffer4, patchControlPoints)<br>draw(model4, pipeline2) |
 	
 More details are provided in the sections that follow.
 
 ## Pipelines
-Previously developers had to create multiple pipelines for different parameters in `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points`. This is illustrated in static/non-dynamic pipeline creation.
+
+Previously developers had to create multiple pipelines for different parameters in Depth Bias, Primitive Restart, Rasterizer Discard and Patch Control Points. This is illustrated in a static/non-dynamic pipeline creation.
 
 ```C++
 ...
@@ -108,11 +107,11 @@ VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1,
 
 In the above approach if developer would like to change the patch control points number, then for each different number a new pipeline would be required.
 
-However, with 'VK_EXT_extended_dynamic_state2' the number of pipelines can be reduced by the possibility to change parameters of `Depth Bias`, `Primitive Restart`, `Rasterizer Discard` and `Patch Control Points` by calling `vkCmdSetDepthBiasEnableEXT`, `vkCmdSetPrimitiveRestartEnableEXT`, `vkCmdSetRasterizerDiscardEnableEXT` and `vkCmdSetPatchControlPointsEXT` respectively before calling `draw_model`.
+However, with `VK_EXT_extended_dynamic_state2` the number of pipelines can be reduced by the possibility to change parameters of Depth Bias, Primitive Restart, Rasterizer Discard and Patch Control Points by calling `vkCmdSetDepthBiasEnableEXT`, `vkCmdSetPrimitiveRestartEnableEXT`, `vkCmdSetRasterizerDiscardEnableEXT` and `vkCmdSetPatchControlPointsEXT` respectively before calling the `draw_model` method.
 
-With the usage of above functions we can reduce the number of pipelines. Required dynamic states must be enabled and passed to the`VkGraphicsPipelineCreateInfo` struct. 
+With the usage of above functions we can reduce the number of pipelines. Required dynamic states must be enabled and passed to the `VkGraphicsPipelineCreateInfo` structure. 
 
-`VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT` specifies that the topology state in the `VkPipelineInputAssemblyStateCreateInfo` struct only specifies the topology class and the specific topology order and adjacency must be set dynamically with `vkCmdSetPrimitiveTopology` before any drawing commands.
+`VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT` specifies that the topology state in the `VkPipelineInputAssemblyStateCreateInfo` struct only specifies the topology class. The specific topology order and adjacency must be set dynamically with `vkCmdSetPrimitiveTopology` before any drawing commands.
 
 ```C+
 VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -204,6 +203,9 @@ vkCmdBindDescriptorSets(draw_cmd_buffer,
 		                nullptr);
 vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
+/* Setting topology to triangle list */
+vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+
 /* Drawing background */
 draw_model(background_model, draw_cmd_buffer);
 ...
@@ -234,8 +236,8 @@ void ExtendedDynamicState2::draw_from_scene(VkCommandBuffer command_buffer, std:
 }
 ```
 
-
 ## Enabling the Extension
+
 The extended dynamic state 2 api requires Vulkan 1.0 and the appropriate headers / SDK is required. This extension has been [partially](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3) promoted to Vulkan 1.3.
 
 The device extension is provided by `VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME`. It also requires 
@@ -246,14 +248,5 @@ add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
 ```
 
-Additional features are provided by the VkPhysicalDeviceExtendedDynamicState2FeaturesEXT struct:
-
-```C++
-typedef struct VkPhysicalDeviceExtendedDynamicState2FeaturesEXT {
-    VkStructureType    sType;
-    void*              pNext;
-    VkBool32           extendedDynamicState2;
-    VkBool32           extendedDynamicState2LogicOp;
-    VkBool32           extendedDynamicState2PatchControlPoints;
-} VkPhysicalDeviceExtendedDynamicState2FeaturesEXT;
-```
+If the [`VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceExtendedDynamicState2FeaturesEXT.html) structure is included in the pNext chain of the `VkPhysicalDeviceFeatures2` structure passed to vkGetPhysicalDeviceFeatures2, it is filled in to indicate whether each corresponding feature is supported. 
+`VkPhysicalDeviceExtendedDynamicState2FeaturesEXT` can also be used in the pNext chain of `VkDeviceCreateInfo` to selectively enable these features.

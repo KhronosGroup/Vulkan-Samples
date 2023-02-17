@@ -80,7 +80,7 @@ bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
 	create_descriptor_sets();
-	create_pipeline();
+	create_pipelines();
 	build_command_buffers();
 	prepared = true;
 
@@ -210,10 +210,10 @@ void ExtendedDynamicState2::update_uniform_buffers()
 }
 
 /**
- * 	@fn void ExtendedDynamicState2::create_pipeline()
+ * 	@fn void ExtendedDynamicState2::create_pipelines()
  * 	@brief Creating graphical pipelines: baseline, background, tessellation.
  */
-void ExtendedDynamicState2::create_pipeline()
+void ExtendedDynamicState2::create_pipelines()
 {
 	/* Setup for first pipeline */
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
@@ -512,6 +512,9 @@ void ExtendedDynamicState2::build_command_buffers()
 		                        0,
 		                        nullptr);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
+
+		/* Setting topology to triangle list */
+		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
 
 		/* Drawing background */
 		draw_model(background_model, draw_cmd_buffer);
