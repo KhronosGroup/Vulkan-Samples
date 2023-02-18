@@ -20,15 +20,23 @@ vkb__register_component(
   LINK_LIBS
     vkb__common
     volk
+    vma
   INCLUDE_DIRS
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
   SRC
+    # Context
     src/context/context_builder_funcs.cpp
     src/context/context_builder.cpp
     src/context/instance_builder.cpp
     src/context/physical_device_builder.cpp
     src/context/device_builder.cpp
+
+    # Pools
+    src/pools/buffer_pool.cpp
+
+    # Third Party
+    src/third_party.cpp
 )
 
 add_subdirectory(tests)
