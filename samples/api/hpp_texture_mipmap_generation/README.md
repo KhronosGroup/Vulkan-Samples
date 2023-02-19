@@ -113,6 +113,7 @@ There are two different ways of generating the mip-chain. The first one is to bl
 We simply loop over all remaining mip levels (level 0 was loaded from disk) and prepare a ```vk::ImageBlit``` structure for each blit from mip level i-1 to level i.
 
 First the source for our blit. This is the previous mip level:
+<!-- {% raw %} -->
 ```cpp
 for (int32_t i = 1; i < texture.mipLevels; i++)
 {
@@ -122,7 +123,9 @@ for (int32_t i = 1; i < texture.mipLevels; i++)
                            // Destination
                            {vk::ImageAspectFlagBits::eColor, i, 0, 1},
                            {{{}, {int32_t(texture.extent.width >> i), int32_t(texture.extent.height >> i), int32_t(1)}}});
+}
 ```
+<!-- {% endraw %} -->
 
 Before we can blit to this mip level, we need to transition it's image layout to ```vk::ImageLayout::eTransferDstOptimal```:
 ```cpp

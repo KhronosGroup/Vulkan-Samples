@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,7 +95,7 @@ void HDR::build_command_buffers()
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
 
 			std::array<VkClearValue, 3> clear_values;
@@ -113,7 +113,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) offscreen.width, (float) offscreen.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
@@ -140,7 +140,7 @@ void HDR::build_command_buffers()
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
 		if (bloom)
 		{
@@ -159,7 +159,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) filter_pass.width, (float) filter_pass.height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
@@ -174,11 +174,11 @@ void HDR::build_command_buffers()
 		}
 
 		/*
-			Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
 			VkClearValue clear_values[2];
@@ -196,7 +196,7 @@ void HDR::build_command_buffers()
 
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -287,6 +287,28 @@ void HDR::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBu
 // Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
 void HDR::prepare_offscreen_buffer()
 {
+	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
+	VkFormat color_format{VK_FORMAT_UNDEFINED};
+
+	const std::vector<VkFormat> float_format_priority_list = {
+	    VK_FORMAT_R32G32B32A32_SFLOAT,
+	    VK_FORMAT_R16G16B16A16_SFLOAT};
+
+	for (auto &format : float_format_priority_list)
+	{
+		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		{
+			color_format = format;
+			break;
+		}
+	}
+
+	if (color_format == VK_FORMAT_UNDEFINED)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
+
 	{
 		offscreen.width  = width;
 		offscreen.height = height;
@@ -295,8 +317,8 @@ void HDR::prepare_offscreen_buffer()
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
 		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
@@ -409,10 +431,8 @@ void HDR::prepare_offscreen_buffer()
 		filter_pass.width  = width;
 		filter_pass.height = height;
 
-		// Color attachments
-
-		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		// Floating point color attachment
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
 		// Set up separate renderpass with references to the colorand depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
@@ -866,7 +886,7 @@ bool HDR::prepare(vkb::Platform &platform)
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -883,10 +903,14 @@ bool HDR::prepare(vkb::Platform &platform)
 void HDR::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void HDR::on_update_ui_overlay(vkb::Drawer &drawer)

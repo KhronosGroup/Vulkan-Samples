@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2022, Arm Limited and Contributors
+ Copyright (c) 2019-2023, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -174,5 +174,9 @@ function(add_project)
     elseif(${TARGET_TYPE} STREQUAL "Test")
         # add test project to a folder
         set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
+    endif()
+
+    if(VKB_DO_CLANG_TIDY)
+        set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 endfunction()

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2022, Arm Limited and Contributors
+- Copyright (c) 2020-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -147,8 +147,11 @@ A transcoded version of the API sample [Terrain Tessellation](#terrain_tessellat
 ### [HPP Texture Loading](./api/hpp_texture_loading)<br/>
 A transcoded version of the API sample [Texture loading](#texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
-### [HPP Texture tun-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
+### [HPP Texture run-time mip-map generation](./api/hpp_texture_mipmap_generation)<br/>
 A transcoded version of the API sample [Texture run-time mip-map generation](#texture_mipmap_generation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+
+### [HPP Timestamp queries](./api/hpp_timestamp_queries/)<br/>
+A transcoded version of the API sample [Timestamp queries](#timestamp_queries) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 ### [Instancing](./api/instancing)<br/>
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.
@@ -190,6 +193,10 @@ Push descriptors apply the push constants concept to descriptor sets. Instead of
 ### [Debug Utilities](./extensions/debug_utils)<br/>
 **Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
 Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
+
+### [Memory Budget](./extensions/memory_budget)<br/>
+**Extension**: [```VK_EXT_memory_budget``](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_memory_budget)<br/>
+Uses the memory budget extension to monitor the allocated memory in the GPU and demonstrates how to use it.
 
 ### [Basic ray queries](./extensions/ray_queries)<br/>
 **Extensions**: [```VK_KHR_ray_query```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>

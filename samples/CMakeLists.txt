@@ -58,24 +58,25 @@ set(ORDER_LIST
         "terrain_tessellation"
         "hlsl"
 
-        #Extension Samples
-        "dynamic_rendering"
-        "conservative_rasterization"
-        "fragment_shading_rate"
-        "fragment_shading_rate_dynamic"
-        "graphics_pipeline_library"
-        "mesh_shader_culling"
-        "push_descriptors"
-        "ray_queries"
-        "raytracing_basic"
-        "raytracing_extended"
-        "raytracing_reflection"
-        "timeline_semaphore"
-        "synchronization_2"
-        "buffer_device_address"
-        "descriptor_indexing"
-        "portability"
-        "vertex_dynamic_state"
+    #Extension Samples
+    "dynamic_rendering"
+    "conservative_rasterization"
+    "fragment_shading_rate"
+    "fragment_shading_rate_dynamic"
+    "graphics_pipeline_library"
+    "memory_budget"
+    "mesh_shader_culling"
+    "push_descriptors"
+    "ray_queries"
+    "raytracing_basic"
+    "raytracing_extended"
+    "raytracing_reflection"
+    "timeline_semaphore"
+    "synchronization_2"
+    "buffer_device_address"
+    "descriptor_indexing"
+    "portability"
+    "vertex_dynamic_state"
 
         #Performance Samples
         "swapchain_images"
@@ -102,20 +103,21 @@ set(ORDER_LIST
         #Tooling samples
         "profiles"
 
-        #HPP API Samples
-        "hpp_compute_nbody"
-        "hpp_dynamic_uniform_buffers"
-        "hpp_hdr"
-        "hpp_hello_triangle"
-        "hpp_hlsl_shaders"
-        "hpp_instancing"
-        "hpp_separate_image_sampler"
-        "hpp_terrain_tessellation"
-        "hpp_texture_loading"
-        "hpp_texture_mipmap_generation"
-
-        #HPP Performance Samples
-        "hpp_swapchain_images")
+    #HPP API Samples
+    "hpp_compute_nbody"
+	"hpp_dynamic_uniform_buffers"
+	"hpp_hdr"
+    "hpp_hello_triangle"
+	"hpp_hlsl_shaders"
+	"hpp_instancing"
+	"hpp_separate_image_sampler"
+	"hpp_terrain_tessellation"
+	"hpp_texture_loading"
+	"hpp_texture_mipmap_generation"
+	
+    #HPP Performance Samples
+    "hpp_pipeline_cache"
+    "hpp_swapchain_images")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

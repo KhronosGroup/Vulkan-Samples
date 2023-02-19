@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -138,6 +138,7 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 	//
 
 	auto &views = render_target.get_views();
+	assert(1 < views.size());
 
 	{
 		// Image 0 is the swapchain
@@ -149,13 +150,13 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 
 		// Skip 1 as it is handled later as a depth-stencil attachment
 		for (size_t i = 2; i < views.size(); ++i)
 		{
 			memory_barrier.old_layout = pick_old_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-			command_buffer.image_memory_barrier(views.at(i), memory_barrier);
+			command_buffer.image_memory_barrier(views[i], memory_barrier);
 		}
 	}
 
@@ -168,7 +169,7 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
-		command_buffer.image_memory_barrier(views.at(1), memory_barrier);
+		command_buffer.image_memory_barrier(views[1], memory_barrier);
 	}
 
 	auto &extent = render_target.get_extent();
@@ -191,7 +192,7 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 	// Memory barriers needed
 	for (size_t i = 1; i < render_target.get_views().size(); ++i)
 	{
-		auto &view = render_target.get_views().at(i);
+		auto &view = render_target.get_views()[i];
 
 		vkb::ImageMemoryBarrier barrier;
 
@@ -235,7 +236,7 @@ void LayoutTransitions::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarg
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		command_buffer.image_memory_barrier(views.at(0), memory_barrier);
+		command_buffer.image_memory_barrier(views[0], memory_barrier);
 	}
 }
 

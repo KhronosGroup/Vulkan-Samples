@@ -29,10 +29,11 @@ class HPPSwapchainImages : public vkb::HPPVulkanSample
   public:
 	HPPSwapchainImages();
 
+  private:
 	// from vkb::HPPVulkanSample
+	virtual void draw_gui() override;
 	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
 	virtual void update(float delta_time) override;
-	virtual void draw_gui() override;
 
   private:
 	vkb::sg::Camera *camera{nullptr};

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,4 +15,26 @@
  * limitations under the License.
  */
 
-#include "pch.h"
+#pragma once
+
+#include "core/pipeline_layout.h"
+
+namespace vkb
+{
+namespace core
+{
+/**
+ * @brief facade class around vkb::core::PipelineLayout, providing a vulkan.hpp-based interface
+ *
+ * See vkb::core::PipelineLayout for documentation
+ */
+class HPPPipelineLayout : private vkb::PipelineLayout
+{
+  public:
+	vk::PipelineLayout get_handle() const
+	{
+		return static_cast<vk::PipelineLayout>(vkb::PipelineLayout::get_handle());
+	}
+};
+}        // namespace core
+}        // namespace vkb

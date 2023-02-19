@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,7 +99,8 @@ std::vector<std::unique_ptr<CommandPool>> &RenderFrame::get_command_pools(const 
 
 	if (command_pool_it != command_pools.end())
 	{
-		if (command_pool_it->second.at(0)->get_reset_mode() != reset_mode)
+		assert(!command_pool_it->second.empty());
+		if (command_pool_it->second[0]->get_reset_mode() != reset_mode)
 		{
 			device.wait_idle();
 
@@ -207,7 +208,8 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
-	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools.at(thread_index), descriptor_set_layout);
+	assert(thread_index < descriptor_pools.size());
+	auto &descriptor_pool = request_resource(device, nullptr, *descriptor_pools[thread_index], descriptor_set_layout);
 	if (descriptor_management_strategy == DescriptorManagementStrategy::StoreInCache)
 	{
 		// The bindings we want to update before binding, if empty we update all bindings
@@ -219,7 +221,8 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 		}
 
 		// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
-		auto &descriptor_set = request_resource(device, nullptr, *descriptor_sets.at(thread_index), descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+		assert(thread_index < descriptor_sets.size());
+		auto &descriptor_set = request_resource(device, nullptr, *descriptor_sets[thread_index], descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 		descriptor_set.update(bindings_to_update);
 		return descriptor_set.get_handle();
 	}
@@ -234,7 +237,8 @@ VkDescriptorSet RenderFrame::request_descriptor_set(const DescriptorSetLayout &d
 
 void RenderFrame::update_descriptor_sets(size_t thread_index)
 {
-	auto &thread_descriptor_sets = *descriptor_sets.at(thread_index);
+	assert(thread_index < descriptor_sets.size());
+	auto &thread_descriptor_sets = *descriptor_sets[thread_index];
 	for (auto &descriptor_set_it : thread_descriptor_sets)
 	{
 		descriptor_set_it.second.update();
@@ -287,14 +291,17 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 		return BufferAllocation{};
 	}
 
-	auto &buffer_pool  = buffer_pool_it->second.at(thread_index).first;
-	auto &buffer_block = buffer_pool_it->second.at(thread_index).second;
+	assert(thread_index < buffer_pool_it->second.size());
+	auto &buffer_pool  = buffer_pool_it->second[thread_index].first;
+	auto &buffer_block = buffer_pool_it->second[thread_index].second;
 
-	if (buffer_allocation_strategy == BufferAllocationStrategy::OneAllocationPerBuffer || !buffer_block)
+	bool want_minimal_block = buffer_allocation_strategy == BufferAllocationStrategy::OneAllocationPerBuffer;
+
+	if (want_minimal_block || !buffer_block)
 	{
 		// If there is no block associated with the pool or we are creating a buffer for each allocation,
 		// request a new buffer block
-		buffer_block = &buffer_pool.request_buffer_block(to_u32(size));
+		buffer_block = &buffer_pool.request_buffer_block(to_u32(size), want_minimal_block);
 	}
 
 	auto data = buffer_block->allocate(to_u32(size));
@@ -302,7 +309,7 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 	// Check if the buffer block can allocate the requested size
 	if (data.empty())
 	{
-		buffer_block = &buffer_pool.request_buffer_block(to_u32(size));
+		buffer_block = &buffer_pool.request_buffer_block(to_u32(size), want_minimal_block);
 
 		data = buffer_block->allocate(to_u32(size));
 	}

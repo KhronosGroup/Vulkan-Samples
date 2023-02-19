@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,40 +17,29 @@
 
 #pragma once
 
-#include <core/image.h>
-
-#include <core/hpp_device.h>
+#include "core/hpp_vulkan_resource.h"
+#include <unordered_set>
+#include <vk_mem_alloc.h>
 
 namespace vkb
 {
 namespace core
 {
-/**
- * @brief facade class around vkb::core::Image, providing a vulkan.hpp-based interface
- *
- * See vkb::core::Image for documentation
- */
-class HPPImage : private Image
+class HPPDevice;
+class HPPImageView;
+
+class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 {
   public:
-	using Image::get_array_layer_count;
-
-	HPPImage(HPPDevice const &       device,
+	HPPImage(HPPDevice const        &device,
 	         vk::Image               handle,
-	         const vk::Extent3D &    extent,
+	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
-	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1) :
-	    Image(reinterpret_cast<vkb::Device const &>(device),
-	          handle,
-	          static_cast<VkExtent3D const &>(extent),
-	          static_cast<VkFormat>(format),
-	          static_cast<VkImageUsageFlags>(image_usage),
-	          static_cast<VkSampleCountFlagBits>(sample_count))
-	{}
+	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
-	HPPImage(HPPDevice const &       device,
-	         const vk::Extent3D &    extent,
+	HPPImage(HPPDevice const        &device,
+	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
 	         VmaMemoryUsage          memory_usage,
@@ -60,25 +49,54 @@ class HPPImage : private Image
 	         vk::ImageTiling         tiling             = vk::ImageTiling::eOptimal,
 	         vk::ImageCreateFlags    flags              = {},
 	         uint32_t                num_queue_families = 0,
-	         const uint32_t *        queue_families     = nullptr) :
-	    Image(reinterpret_cast<vkb::Device const &>(device),
-	          static_cast<VkExtent3D>(extent),
-	          static_cast<VkFormat>(format),
-	          static_cast<VkImageUsageFlags>(image_usage),
-	          memory_usage,
-	          static_cast<VkSampleCountFlagBits>(sample_count),
-	          mip_levels,
-	          array_layers,
-	          static_cast<VkImageTiling>(tiling),
-	          static_cast<VkImageCreateFlags>(flags),
-	          num_queue_families,
-	          queue_families)
-	{}
+	         const uint32_t         *queue_families     = nullptr);
 
-	vk::Image get_handle() const
-	{
-		return Image::get_handle();
-	}
+	HPPImage(const HPPImage &) = delete;
+
+	HPPImage(HPPImage &&other);
+
+	~HPPImage() override;
+
+	HPPImage &operator=(const HPPImage &) = delete;
+
+	HPPImage &operator=(HPPImage &&) = delete;
+
+	VmaAllocation get_memory() const;
+
+	/**
+	 * @brief Maps vulkan memory to an host visible address
+	 * @return Pointer to host visible memory
+	 */
+	uint8_t *map();
+
+	/**
+	 * @brief Unmaps vulkan memory from the host visible address
+	 */
+	void unmap();
+
+	vk::ImageType                                  get_type() const;
+	const vk::Extent3D                            &get_extent() const;
+	vk::Format                                     get_format() const;
+	vk::SampleCountFlagBits                        get_sample_count() const;
+	vk::ImageUsageFlags                            get_usage() const;
+	vk::ImageTiling                                get_tiling() const;
+	vk::ImageSubresource                           get_subresource() const;
+	uint32_t                                       get_array_layer_count() const;
+	std::unordered_set<vkb::core::HPPImageView *> &get_views();
+
+  private:
+	VmaAllocation                                 memory = VK_NULL_HANDLE;
+	vk::ImageType                                 type;
+	vk::Extent3D                                  extent;
+	vk::Format                                    format;
+	vk::ImageUsageFlags                           usage;
+	vk::SampleCountFlagBits                       sample_count;
+	vk::ImageTiling                               tiling;
+	vk::ImageSubresource                          subresource;
+	uint32_t                                      array_layer_count = 0;
+	std::unordered_set<vkb::core::HPPImageView *> views;        /// HPPImage views referring to this image
+	uint8_t                                      *mapped_data = nullptr;
+	bool                                          mapped      = false;        /// Whether it was mapped with vmaMapMemory
 };
 }        // namespace core
 }        // namespace vkb
