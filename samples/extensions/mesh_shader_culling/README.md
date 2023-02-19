@@ -146,6 +146,15 @@ More details about emitting a mesh task can be found in the attached article:
 
 [Introduction to Turing Mesh Shaders](https://developer.nvidia.com/blog/introduction-turing-mesh-shaders/)
 
+GPU manufactures have recommended best practices for 
+their hardware in setting the work group and mesh size 
+number. Further reading can be found here:
+
+* [Meshlet Size tradeoffs](https://zeux.io/2023/01/16/meshlet-size-tradeoffs/)
+* NVIDIA - [Mesh Shaders in Turing](https://on-demand.gputechconf.com/gtc-eu/2018/pdf/e8515-mesh-shaders-in-turing.pdf)
+* AMD - [Sampler feedback ultimate in Mesh shaders](https://gpuopen.com/wp-content/uploads/slides/AMD_RDNA2_DirectX12_Ultimate_SamplerFeedbackMeshShaders.pdf)
+* [Timur's blog](https://timur.hu/blog/2022/mesh-and-task-shaders)
+
 ## Mesh Shader
 
 A simple mesh shader generates vertices and indices 
