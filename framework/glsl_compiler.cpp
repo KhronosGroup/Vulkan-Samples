@@ -20,9 +20,9 @@
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GLSL.std.450.h>
 #include <SPIRV/GlslangToSpv.h>
-#include <glslang_default_resource_limits.h>
 #include <glslang/Include/ShHandle.h>
 #include <glslang/OSDependent/osinclude.h>
+#include <glslang_default_resource_limits.h>
 VKBP_ENABLE_WARNINGS()
 
 namespace vkb
@@ -82,7 +82,7 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 }        // namespace
 
 glslang::EShTargetLanguage        GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
-glslang::EShTargetLanguageVersion GLSLCompiler::env_target_language_version = (glslang::EShTargetLanguageVersion) 0;
+glslang::EShTargetLanguageVersion GLSLCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
 
 void GLSLCompiler::set_target_environment(glslang::EShTargetLanguage target_language, glslang::EShTargetLanguageVersion target_language_version)
 {
@@ -93,7 +93,7 @@ void GLSLCompiler::set_target_environment(glslang::EShTargetLanguage target_lang
 void GLSLCompiler::reset_target_environment()
 {
 	GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
-	GLSLCompiler::env_target_language_version = (glslang::EShTargetLanguageVersion) 0;
+	GLSLCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
 }
 
 bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
