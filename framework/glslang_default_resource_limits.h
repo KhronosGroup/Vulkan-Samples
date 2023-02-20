@@ -1,19 +1,19 @@
 /* Copyright (c) 2023, Holochip Corporation
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-* Licensed under the Apache License, Version 2.0 the "License";
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 #ifndef VULKAN_SAMPLES_GLSLANG_DEFAULT_RESOURCE_LIMITS_H
 #define VULKAN_SAMPLES_GLSLANG_DEFAULT_RESOURCE_LIMITS_H
@@ -127,15 +127,15 @@ const TBuiltInResource DefaultTBuiltInResource = {
     /* .maxDualSourceDrawBuffersEXT = */ 1,
 
     /* .limits = */ {
-        /* .nonInductiveForLoops = */ 1,
-        /* .whileLoops = */ 1,
-        /* .doWhileLoops = */ 1,
-        /* .generalUniformIndexing = */ 1,
-        /* .generalAttributeMatrixVectorIndexing = */ 1,
-        /* .generalVaryingIndexing = */ 1,
-        /* .generalSamplerIndexing = */ 1,
-        /* .generalVariableIndexing = */ 1,
-        /* .generalConstantMatrixVectorIndexing = */ 1,
+        /* .nonInductiveForLoops = */ true,
+        /* .whileLoops = */ true,
+        /* .doWhileLoops = */ true,
+        /* .generalUniformIndexing = */ true,
+        /* .generalAttributeMatrixVectorIndexing = */ true,
+        /* .generalVaryingIndexing = */ true,
+        /* .generalSamplerIndexing = */ true,
+        /* .generalVariableIndexing = */ true,
+        /* .generalConstantMatrixVectorIndexing = */ true,
     }};
 }
 
