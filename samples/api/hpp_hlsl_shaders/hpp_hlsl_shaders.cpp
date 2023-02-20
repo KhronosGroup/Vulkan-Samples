@@ -25,7 +25,7 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/ResourceLimits.h>
+#include <glslang_default_resource_limits.h>
 VKBP_ENABLE_WARNINGS()
 
 vk::PipelineShaderStageCreateInfo HPPHlslShaders::load_hlsl_shader(const std::string &file, vk::ShaderStageFlagBits stage)
