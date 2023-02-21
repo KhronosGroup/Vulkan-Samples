@@ -104,7 +104,7 @@ class FullScreenExclusive : public vkb::Application
   public:
 	FullScreenExclusive() = default;
 	~FullScreenExclusive() override;
-	void                         initialize_windows();                             // This only calls when a Windows platform is detected, and it initializes the full screen exclusive related variables
+	void                         initialize_windows();
 	bool                         prepare(vkb::Platform &platform) override;        // This syncs all required extensions and booleans is a Windows platform is detected
 	void                         update(float delta_time) override;
 	bool                         resize(uint32_t width, uint32_t height) override;
