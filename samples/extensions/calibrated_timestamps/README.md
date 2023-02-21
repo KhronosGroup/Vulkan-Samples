@@ -47,7 +47,7 @@ This sample is built upon the framework of the Vulkan Sample ```HDR```. Where, u
 deactivate skybox, and the bloom effect. And those changes will apply to ```build_command_buffers()```, which is
 profiled by calibrated timestamps.
 
-##                                     * Time domain, timestamp, timestamp period, and max deviation
+##                                       * Time domain, timestamp, timestamp period, and max deviation
 
 This is an optional section.
 
@@ -177,7 +177,7 @@ void CalibratedTimestamps::get_timestamps()
 
 The boolean ```is_timestamp_updated``` flags its success.
 
-##                            * Get device time domain
+##                              * Get device time domain
 
 This is an optional section.
 
@@ -255,9 +255,7 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
 	// Initialize, then update time domains and timestamps
 	is_timestamp_updated = false;
-	timestamps.clear();
-	max_deviations.clear();
-
+    
 	// Now to get timestamps
 	get_timestamps();
 
@@ -292,8 +290,6 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 
 	// Initialize, then update time domains and timestamps
 	is_timestamp_updated = false;
-	timestamps.clear();
-	max_deviations.clear();
 
 	// Now to get timestamps
 	get_timestamps();
