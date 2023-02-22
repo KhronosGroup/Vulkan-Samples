@@ -897,8 +897,6 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
 	// Initialize, then update time domains and timestamps
 	is_timestamp_updated = false;
-	timestamps.clear();
-	max_deviations.clear();
 
 	// Now to get timestamps
 	get_timestamps();
@@ -930,8 +928,6 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 
 	// Initialize, then update time domains and timestamps
 	is_timestamp_updated = false;
-	timestamps.clear();
-	max_deviations.clear();
 
 	// Now to get timestamps
 	get_timestamps();
