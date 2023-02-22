@@ -22,25 +22,23 @@
 ## Overview
 
 This code sample demonstrates how to incorporate the Vulkan extension ```VK_EXT_full_screen_exclusive ```. This
-extension provides a solution for the full screen exclusion issue on Windows platform, which its application window
-cannot correctly adapt the ture exclusive mode. Notice that, ```VK_EXT_full_screen_exclusive ```
-is applicable on Windows platform alone.
+extension provides a solution for the full screen exclusion issue on Windows prior to the 11 version.  Windows prior to 11 cannot
+correctly get an exclusive full screen window, ```VK_EXT_full_screen_exclusive ``` is applicable on Windows prior to 
+version 11
+platform alone.
 
 ## Introduction
 
-This sample provides a detailed procedure to activate full screen exclusive mode on Windows applications. Users can
-switch display mode from: 1) windowed, 2) borderless fullscreen, and 3) exclusive fullscreen
-using ```keyboard input events```, while running this sample on the Windows platform. On other platforms, however, this
-sample simply renders a triangle.
+This sample provides a detailed procedure to activate full screen exclusive mode on Windows 10 applications. Users can
+switch display mode from: 1) windowed, 2) borderless fullscreen, and 3) exclusive fullscreen using keyboard inputs.
 
 ## *Reminder
 
 This is an optional section.
 
 One must notice that, by configuring the ```swapchain create info```
-using full screen exclusive extension **DOES NOT** automatically set the application window to full screen mode. In
-fact, it only configures the ```swapchain``` to provide the correct ```swapchain images``` for a full screened
-application. The following procedure shows how to activate full screen exclusive mode correctly:
+using full screen exclusive extension **DOES NOT** automatically set the application window to full screen mode. The
+following procedure shows how to activate full screen exclusive mode correctly:
 
 1) recreate the ```swapchain``` using ```full screen exclusive``` related features.
 2) recreate the ```frame buffers``` with the new ```swapchain```.
@@ -70,37 +68,20 @@ Device extensions are added in ```perpare()``` using ```init_device()```, due to
 check, where:
 
 ```cpp
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-	// If application is running on a Windows platform, then the following TWO device extension is also needed:
-	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});
-#else
-	// If application is NOT running on a Windows platform, then only VK_KHR_swapchain is needed:
-	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME});
-#endif
+init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});
 ```
-
-Where, a Windows platform can be detected by using:
-
-```cpp 
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-   // Windows platform functions and extensions only
-#endif
-```
-
-And if the target application might run on platforms other than Windows, be certain to check for Windows in the build to
-ensure those other platforms still compile.
 
 ## Swapchain creation
 
-During the ```swapchain``` creation, if Windows platform is detected, then ```surface_full_screen_exclusive_info_EXT```
-and ```surface_full_screen_exclusive_Win32_info_EXT``` will be created inside the function scope, where:
+When creating the ```swapchain```, ```surface_full_screen_exclusive_info_EXT```
+and ```surface_full_screen_exclusive_Win32_info_EXT``` are defined inside the function scope, where:
 
 ```cpp
 VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};
 VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};
 ```
 
-Both variables are initialized using```initialize_windows()```:
+Where, both variables are initialized using```initialize_windows()```:
 
 ```cpp
 void FullScreenExclusive::initialize_windows()
@@ -119,7 +100,7 @@ void FullScreenExclusive::initialize_windows()
 }
 ```
 
-```sType``` of ```surface_full_screen_exclusive_Win32_info_EXT```
+The ```sType``` of ```surface_full_screen_exclusive_Win32_info_EXT```
 is ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT```
 and its ```pNext``` is connected to a ```nullptr```. One can get its ```hmonitor``` using the following Windows command:
 
@@ -145,7 +126,7 @@ HWND_application_window = GetActiveWindow();
 More details can be found in the link:
 [GetActiveWindow  function (winuser.h)](https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getactivewindow)
 
-```sType``` of the ```surface_full_screen_exclusive_info_EXT``` is
+The ```sType``` of the ```surface_full_screen_exclusive_info_EXT``` is
 ```VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_INFO_EXT```, and its ```pNext``` is connected to
 ```surface_full_screen_exclusive_Win32_info_EXT```. Its ```display mode``` must be selected from one of the following
 enums:
@@ -163,12 +144,7 @@ the ```surface_full_screen_exclusive_info_EXT```.
 ```cpp
 VkSwapchainCreateInfoKHR info{};
 info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-
-#if defined(VK_USE_PLATFORM_WIN32_KHR)
-    info.pNext = &surface_full_screen_exclusive_info_EXT;
-#else
-    info.pNext = nullptr;
-#endif
+info.pNext = &surface_full_screen_exclusive_info_EXT;
 ```
 
 ## *Application window modes
@@ -212,7 +188,7 @@ void FullScreenExclusive::update_application_window()
 
 ## Recreation
 
-When display mode is changed, ```recreate()``` will be called. ```recreate()``` idles the ```logic device```, tears down
+```recreate()``` will be called, when display mode changes. ```recreate()``` idles the ```logic device```, tears down
 the current ```frame buffers```, then creates a new ```swapchain```
 based on the selected display mode:
 
