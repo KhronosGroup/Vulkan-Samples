@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,10 +51,10 @@ struct HPPAttachment
 };
 
 /**
-* @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
-* 
-* See vkb::RenderContext for documentation
-*/
+ * @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
+ *
+ * See vkb::RenderContext for documentation
+ */
 class HPPRenderTarget
 {
   public:
@@ -74,9 +74,9 @@ class HPPRenderTarget
 
 	HPPRenderTarget &operator=(HPPRenderTarget &&other) noexcept = delete;
 
-	const vk::Extent2D &                   get_extent() const;
+	const vk::Extent2D                    &get_extent() const;
 	const std::vector<core::HPPImageView> &get_views() const;
-	const std::vector<HPPAttachment> &     get_attachments() const;
+	const std::vector<HPPAttachment>      &get_attachments() const;
 
 	/**
 	 * @brief Sets the current input attachments overwriting the current ones
@@ -97,7 +97,7 @@ class HPPRenderTarget
 	vk::ImageLayout              get_layout(uint32_t attachment) const;
 
   private:
-	core::HPPDevice const &         device;
+	core::HPPDevice const          &device;
 	vk::Extent2D                    extent;
 	std::vector<core::HPPImage>     images;
 	std::vector<core::HPPImageView> views;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,8 +43,8 @@ inline vk::ImageType find_image_type(vk::Extent3D const &extent)
 
 namespace core
 {
-HPPImage::HPPImage(HPPDevice const &       device,
-                   const vk::Extent3D &    extent,
+HPPImage::HPPImage(HPPDevice const        &device,
+                   const vk::Extent3D     &extent,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
                    VmaMemoryUsage          memory_usage,
@@ -54,7 +54,7 @@ HPPImage::HPPImage(HPPDevice const &       device,
                    vk::ImageTiling         tiling,
                    vk::ImageCreateFlags    flags,
                    uint32_t                num_queue_families,
-                   const uint32_t *        queue_families) :
+                   const uint32_t         *queue_families) :
     HPPVulkanResource{nullptr, &device},
     type{find_image_type(extent)},
     extent{extent},
@@ -100,9 +100,9 @@ HPPImage::HPPImage(HPPDevice const &       device,
 	}
 }
 
-HPPImage::HPPImage(HPPDevice const &       device,
+HPPImage::HPPImage(HPPDevice const        &device,
                    vk::Image               handle,
-                   const vk::Extent3D &    extent,
+                   const vk::Extent3D     &extent,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
                    vk::SampleCountFlagBits sample_count) :

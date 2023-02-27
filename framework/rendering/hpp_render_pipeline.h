@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,7 +38,7 @@ class HPPRenderPipeline : private vkb::RenderPipeline
 		vkb::RenderPipeline::add_subpass(std::move(subpass));
 	}
 
-	void draw(vkb::core::HPPCommandBuffer &    command_buffer,
+	void draw(vkb::core::HPPCommandBuffer     &command_buffer,
 	          vkb::rendering::HPPRenderTarget &render_target,
 	          vk::SubpassContents              contents = vk::SubpassContents::eInline)
 	{

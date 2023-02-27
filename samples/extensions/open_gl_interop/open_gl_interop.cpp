@@ -1,5 +1,5 @@
-/* Copyright (c) 2020-2022, Bradley Austin Davis
- * Copyright (c) 2020-2022, Arm Limited
+/* Copyright (c) 2020-2023, Bradley Austin Davis
+ * Copyright (c) 2020-2023, Arm Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,7 +171,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 		VkExportSemaphoreCreateInfo exportSemaphoreCreateInfo{
 		    VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO, nullptr,
-		    VkExternalSemaphoreHandleTypeFlags(compatable_semaphore_type)};
+		    static_cast<VkExternalSemaphoreHandleTypeFlags>(compatable_semaphore_type)};
 		VkSemaphoreCreateInfo semaphoreCreateInfo{VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO,
 		                                          &exportSemaphoreCreateInfo};
 		VK_CHECK(vkCreateSemaphore(deviceHandle, &semaphoreCreateInfo, nullptr,
@@ -224,7 +224,7 @@ void OpenGLInterop::prepare_shared_resources()
 
 		memAllocInfo.allocationSize = sharedTexture.allocationSize = memReqs.size;
 		memAllocInfo.memoryTypeIndex                               = device->get_memory_type(memReqs.memoryTypeBits,
-                                                               VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+		                                                                                     VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 		VK_CHECK(vkAllocateMemory(deviceHandle, &memAllocInfo, nullptr, &sharedTexture.memory));
 		VK_CHECK(vkBindImageMemory(deviceHandle, sharedTexture.image, sharedTexture.memory, 0));
 
@@ -245,9 +245,9 @@ void OpenGLInterop::prepare_shared_resources()
 		samplerCreateInfo.magFilter  = VK_FILTER_LINEAR;
 		samplerCreateInfo.minFilter  = VK_FILTER_LINEAR;
 		samplerCreateInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-		samplerCreateInfo.maxLod     = (float) 1;
-		//samplerCreateInfo.maxAnisotropy = context.deviceFeatures.samplerAnisotropy ? context.deviceProperties.limits.maxSamplerAnisotropy : 1.0f;
-		//samplerCreateInfo.anisotropyEnable = context.deviceFeatures.samplerAnisotropy;
+		samplerCreateInfo.maxLod     = static_cast<float>(1);
+		// samplerCreateInfo.maxAnisotropy = context.deviceFeatures.samplerAnisotropy ? context.deviceProperties.limits.maxSamplerAnisotropy : 1.0f;
+		// samplerCreateInfo.anisotropyEnable = context.deviceFeatures.samplerAnisotropy;
 		samplerCreateInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 		vkCreateSampler(deviceHandle, &samplerCreateInfo, nullptr, &sharedTexture.sampler);
 
@@ -525,8 +525,8 @@ void OpenGLInterop::prepare_uniform_buffers()
 void OpenGLInterop::update_uniform_buffers()
 {
 	// Vertex shader
-	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), (float) width / (float) height,
-                                         0.001f, 256.0f);
+	ubo_vs.projection     = glm::perspective(glm::radians(60.0f), static_cast<float>(width) / static_cast<float>(height),
+	                                         0.001f, 256.0f);
 	glm::mat4 view_matrix = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, zoom));
 
 	ubo_vs.model = view_matrix * glm::translate(glm::mat4(1.0f), camera_pos);
@@ -592,8 +592,8 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 	glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, gl_data->color, 0);
 
 	glUseProgram(gl_data->program);
-	glProgramUniform3f(gl_data->program, 0, (float) SHARED_TEXTURE_DIMENSION,
-	                   (float) SHARED_TEXTURE_DIMENSION, 0.0f);
+	glProgramUniform3f(gl_data->program, 0, static_cast<float>(SHARED_TEXTURE_DIMENSION),
+	                   static_cast<float>(SHARED_TEXTURE_DIMENSION), 0.0f);
 
 	glViewport(0, 0, SHARED_TEXTURE_DIMENSION, SHARED_TEXTURE_DIMENSION);
 
@@ -611,11 +611,13 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 void OpenGLInterop::render(float)
 {
 	if (!prepared)
+	{
 		return;
+	}
 
 	ApiVulkanSample::prepare_frame();
 	// RENDER
-	float time = (float) timer.elapsed();
+	float time = static_cast<float>(timer.elapsed());
 	// The GL shader animates the image, so provide the time as input
 	glProgramUniform1f(gl_data->program, 1, time);
 
@@ -720,7 +722,7 @@ void OpenGLInterop::build_command_buffers()
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info,
 		                     VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f,
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f,
 		                                                  1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 

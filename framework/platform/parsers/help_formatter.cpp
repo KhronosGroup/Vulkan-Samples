@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,7 +50,9 @@ std::string HelpFormatter::make_help(const CLI::App *app, std::string name, CLI:
 	// This immediately forwards to the make_expanded method. This is done this way so that subcommands can
 	// have overridden formatters
 	if (mode == CLI::AppFormatMode::Sub)
+	{
 		return make_expanded(app);
+	}
 
 	std::stringstream out;
 	if ((app->get_name().empty()) && (app->get_parent() != nullptr))

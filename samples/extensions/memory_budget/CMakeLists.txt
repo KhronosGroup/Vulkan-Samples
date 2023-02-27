@@ -1,4 +1,5 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2019-2023, Sascha Willems
+# Copyright (c) 2023, Holochip Corporation
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -19,14 +20,16 @@ get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample(
-    ID ${FOLDER_NAME}
-    CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Arm"
-    NAME "HPP Hello Triangle"
-    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
-    SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+add_sample_with_tags(
+        ID ${FOLDER_NAME}
+        CATEGORY ${CATEGORY_NAME}
+        AUTHOR "Holochip Corporation"
+        NAME "Memory Budget"
+        DESCRIPTION "Modifications were created by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features."
+        SHADER_FILES_GLSL
+        "instancing/instancing.vert"
+        "instancing/instancing.frag"
+        "instancing/planet.vert"
+        "instancing/planet.frag"
+        "instancing/starfield.vert"
+        "instancing/starfield.frag")
