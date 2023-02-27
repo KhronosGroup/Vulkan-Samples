@@ -101,7 +101,7 @@ color_blend_state.logicOpEnable = VK_FALSE;
 
 ## Logical operation dynamic setting in command buffer creation
 
-Calling [`vkCmdSetLogicOpEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLogicOpEXT.html) allows to set the logic operation dynamically. In the sample it is called before drawing the model in the `build_command_buffers` method using a value provided by the GUI. Available logical operations are defined by the `VkLogicOp` enumeration (check the Vulkan&reg; specification for details of [the logical operations](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#VkLogicOp)).
+Calling [`vkCmdSetLogicOpEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetLogicOpEXT.html) allows to set the logic operation dynamically. In the sample it is called before drawing the model in the `build_command_buffers` method using a value provided by the GUI. Available logical operations are defined by the `VkLogicOp` enumeration (check the Vulkan specification for details of [the logical operations](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#VkLogicOp)).
 The background model is drawn before the cube model (with logical operations enabled) to observe blending results on the cube model.
 
 ```C++
@@ -124,7 +124,7 @@ VK_CHECK(vkEndCommandBuffer(draw_cmd_buffer));
 
 ## Enabling the required extensions
 
-The extended dynamic state 2 API requires Vulkan&reg; 1.0 and the appropriate headers / SDK is required. This extension has been [partially](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3) promoted to Vulkan&reg; 1.3.
+The extended dynamic state 2 API requires Vulkan 1.0 and the appropriate headers / SDK is required. This extension has been [partially](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html#_promotion_to_vulkan_1_3) promoted to Vulkan 1.3.
 
 The device extension `VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME` requires 
 `VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME` instance extension to be enabled.
