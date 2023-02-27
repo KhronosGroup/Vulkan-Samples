@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -179,7 +179,8 @@ VkFormat Image::get_format() const
 
 const VkExtent3D &Image::get_extent() const
 {
-	return mipmaps.at(0).extent;
+	assert(!mipmaps.empty());
+	return mipmaps[0].extent;
 }
 
 const uint32_t Image::get_layers() const
@@ -231,7 +232,8 @@ const core::ImageView &Image::get_vk_image_view() const
 
 Mipmap &Image::get_mipmap(const size_t index)
 {
-	return mipmaps.at(index);
+	assert(index < mipmaps.size());
+	return mipmaps[index];
 }
 
 void Image::generate_mipmaps()
@@ -303,17 +305,20 @@ void Image::set_format(const VkFormat f)
 
 void Image::set_width(const uint32_t width)
 {
-	mipmaps.at(0).extent.width = width;
+	assert(!mipmaps.empty());
+	mipmaps[0].extent.width = width;
 }
 
 void Image::set_height(const uint32_t height)
 {
-	mipmaps.at(0).extent.height = height;
+	assert(!mipmaps.empty());
+	mipmaps[0].extent.height = height;
 }
 
 void Image::set_depth(const uint32_t depth)
 {
-	mipmaps.at(0).extent.depth = depth;
+	assert(!mipmaps.empty());
+	mipmaps[0].extent.depth = depth;
 }
 
 void Image::set_layers(uint32_t l)

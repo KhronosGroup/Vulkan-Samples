@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -191,7 +191,7 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 	{
 		if (active_primary_command_buffer_count < primary_command_buffers.size())
 		{
-			return *primary_command_buffers.at(active_primary_command_buffer_count++);
+			return *primary_command_buffers[active_primary_command_buffer_count++];
 		}
 
 		primary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));
@@ -204,7 +204,7 @@ CommandBuffer &CommandPool::request_command_buffer(VkCommandBufferLevel level)
 	{
 		if (active_secondary_command_buffer_count < secondary_command_buffers.size())
 		{
-			return *secondary_command_buffers.at(active_secondary_command_buffer_count++);
+			return *secondary_command_buffers[active_secondary_command_buffer_count++];
 		}
 
 		secondary_command_buffers.emplace_back(std::make_unique<CommandBuffer>(*this, level));

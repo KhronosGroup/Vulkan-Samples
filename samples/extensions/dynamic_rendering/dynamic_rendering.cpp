@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021-2022, Holochip Corporation
+ * Copyright (c) 2021-2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,8 +59,8 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	{
 		VkInstance instance = get_device().get_gpu().get_instance().get_handle();
 		assert(!!instance);
-		vkCmdBeginRenderingKHR = (PFN_vkCmdBeginRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR");
-		vkCmdEndRenderingKHR   = (PFN_vkCmdEndRenderingKHR) vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR");
+		vkCmdBeginRenderingKHR = reinterpret_cast<PFN_vkCmdBeginRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdBeginRenderingKHR"));
+		vkCmdEndRenderingKHR   = reinterpret_cast<PFN_vkCmdEndRenderingKHR>(vkGetInstanceProcAddr(instance, "vkCmdEndRenderingKHR"));
 		if (!vkCmdBeginRenderingKHR || !vkCmdEndRenderingKHR)
 		{
 			throw std::runtime_error("Unable to dynamically load vkCmdBeginRenderingKHR and vkCmdEndRenderingKHR");
@@ -71,7 +71,7 @@ bool DynamicRendering::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.f, 0.f, -4.f});
 	camera.set_rotation({0.f, 180.f, 0.f});
-	camera.set_perspective(60.f, (float) width / (float) height, 256.f, 0.1f);
+	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
 	load_assets();
 	prepare_uniform_buffers();
@@ -262,7 +262,10 @@ void DynamicRendering::create_pipeline()
 	pipeline_create.colorAttachmentCount    = 1;
 	pipeline_create.pColorAttachmentFormats = &color_rendering_format;
 	pipeline_create.depthAttachmentFormat   = depth_format;
-	pipeline_create.stencilAttachmentFormat = depth_format;
+	if (!vkb::is_depth_only_format(depth_format))
+	{
+		pipeline_create.stencilAttachmentFormat = depth_format;
+	}
 
 	// Use the pNext to point to the rendering create struct
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -335,7 +338,7 @@ void DynamicRendering::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
 		auto draw_scene = [&] {
-			VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 			vkCmdSetViewport(draw_cmd_buffer, 0, 1, &viewport);
 
 			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
@@ -352,8 +355,7 @@ void DynamicRendering::build_command_buffers()
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
 
-			// UI
-			draw_ui(draw_cmd_buffer);
+			// Note: This sample does not render a UI, as the framework's UI overlay doesn't handle dynamic rendering
 		};
 
 		VkImageSubresourceRange range{};
@@ -402,11 +404,14 @@ void DynamicRendering::build_command_buffers()
 			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_attachment_info.clearValue                   = clear_values[1];
 
-			auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-			auto render_info               = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-			render_info.layerCount         = 1;
-			render_info.pDepthAttachment   = &depth_attachment_info;
-			render_info.pStencilAttachment = &depth_attachment_info;
+			auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
+			auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
+			render_info.layerCount       = 1;
+			render_info.pDepthAttachment = &depth_attachment_info;
+			if (!vkb::is_depth_only_format(depth_format))
+			{
+				render_info.pStencilAttachment = &depth_attachment_info;
+			}
 
 			vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
 			draw_scene();
@@ -446,10 +451,14 @@ void DynamicRendering::build_command_buffers()
 void DynamicRendering::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 void DynamicRendering::view_changed()
