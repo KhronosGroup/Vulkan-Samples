@@ -32,7 +32,6 @@ MeshShaderCulling::MeshShaderCulling()
 	// Adding device extensions
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
-	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
@@ -107,8 +106,6 @@ void MeshShaderCulling::build_command_buffers()
 
 void MeshShaderCulling::setup_descriptor_pool()
 {
-	// I still build the pool using a vector, since practically it cannot be just one descriptor pool size.
-	// And it is a good practice to showcase how to use its vector form
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1)};
 
@@ -124,8 +121,6 @@ void MeshShaderCulling::setup_descriptor_pool()
 
 void MeshShaderCulling::setup_descriptor_set_layout()
 {
-	// I still build the layout binding using a vector, since practically it cannot be just one binding.
-	// And it is a good practice to showcase how to use its vector form
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	                                                     VK_SHADER_STAGE_TASK_BIT_EXT,
@@ -152,8 +147,6 @@ void MeshShaderCulling::setup_descriptor_sets()
 
 	VkDescriptorBufferInfo uniform_buffer_descriptor = create_descriptor(*uniform_buffer);
 
-	// I still build the set using a vector, since practically it cannot be just one set.
-	// And it is a good practice to showcase how to use its vector form
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(descriptor_set,
 	                                            VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
