@@ -162,10 +162,6 @@ void LogicOpDynamicState::build_command_buffers()
 		                        VK_NULL_HANDLE);
 		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.background);
 
-		/* Setting topology to triangle list and disabling primitive restart functionality */
-		vkCmdSetPrimitiveTopologyEXT(draw_cmd_buffer, VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
-		vkCmdSetPrimitiveRestartEnableEXT(draw_cmd_buffer, VK_FALSE);
-
 		/* Drawing background */
 		draw_model(background_model, draw_cmd_buffer);
 
@@ -220,6 +216,8 @@ void LogicOpDynamicState::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
+
+	gpu.get_mutable_requested_features().logicOp = VK_TRUE;
 }
 
 void LogicOpDynamicState::prepare_uniform_buffers()
@@ -297,6 +295,8 @@ void LogicOpDynamicState::create_pipeline()
 	    VK_DYNAMIC_STATE_VIEWPORT,
 	    VK_DYNAMIC_STATE_SCISSOR,
 	    VK_DYNAMIC_STATE_LOGIC_OP_EXT,
+	    VK_DYNAMIC_STATE_PRIMITIVE_TOPOLOGY_EXT,
+	    VK_DYNAMIC_STATE_PRIMITIVE_RESTART_ENABLE_EXT,
 	};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(
@@ -413,10 +413,8 @@ void LogicOpDynamicState::load_assets()
  */
 void LogicOpDynamicState::create_descriptor_pool()
 {
-	constexpr uint32_t num_descriptor_sets = 2;
-
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, num_descriptor_sets),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 	};
 
@@ -424,7 +422,7 @@ void LogicOpDynamicState::create_descriptor_pool()
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        num_descriptor_sets);
+	        2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, VK_NULL_HANDLE, &descriptor_pool));
 }
