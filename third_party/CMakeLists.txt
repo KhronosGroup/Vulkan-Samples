@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -237,7 +237,7 @@ if (NOT TARGET glslang-default-resource-limits)
     set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "ThirdParty")
     
     target_include_directories(glslang-default-resource-limits
-                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
+            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 endif()
 
 if(NOT MSVC)
