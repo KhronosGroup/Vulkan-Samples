@@ -98,7 +98,7 @@ void LogicOpDynamicState::create_render_context(vkb::Platform &platform)
 	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{
 	    {VK_FORMAT_B8G8R8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR},
 	};
-	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
+	render_context = platform.create_render_context(get_device(), surface, surface_priority_list);
 }
 
 /**
@@ -324,7 +324,7 @@ void LogicOpDynamicState::create_pipeline()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	shader_stages[0] = load_shader("logic_op_dynamic_state/baseline.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("logic_op_dynamic_state/baseline.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-C:
+
 	/* Use the pNext to point to the rendering create structure */
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
 	graphics_create.pNext               = VK_NULL_HANDLE;
@@ -612,8 +612,8 @@ void LogicOpDynamicState::model_data_creation()
 
 	struct
 	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
+		VkBuffer       buffer{VK_NULL_HANDLE};
+		VkDeviceMemory memory{VK_NULL_HANDLE};
 	} vertex_pos_staging, vertex_norm_staging, index_staging;
 
 	vertex_pos_staging.buffer = get_device().create_buffer(
@@ -713,7 +713,7 @@ void LogicOpDynamicState::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
-		if (drawer.combo_box("Logic operation", &gui_settings.selected_operation, gui_settings.logic_op_names))
+		if (drawer.combo_box("Logic operation", &gui_settings.selected_operation, LogicOpDynamicState::GUI_settings::logic_op_names))
 		{
 			update_uniform_buffers();
 		}

@@ -95,7 +95,7 @@ class LogicOpDynamicState : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> vertices_pos;
 		std::unique_ptr<vkb::core::Buffer> vertices_norm;
 		std::unique_ptr<vkb::core::Buffer> indices;
-		uint32_t                           index_count;
+		uint32_t                           index_count{};
 	} cube;
 
 	struct GUI_settings
@@ -117,12 +117,13 @@ class LogicOpDynamicState : public ApiVulkanSample
 	} gui_settings;
 
 	LogicOpDynamicState();
-	~LogicOpDynamicState();
+	~LogicOpDynamicState() override;
 
 	bool prepare(vkb::Platform &platform) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
@@ -134,7 +135,6 @@ class LogicOpDynamicState : public ApiVulkanSample
 	void create_descriptor_sets();
 	void model_data_creation();
 	void draw_created_model(VkCommandBuffer commandBuffer);
-	void on_update_ui_overlay(vkb::Drawer &drawer);
 
   protected:
 	void create_render_context(vkb::Platform &platform) override;
