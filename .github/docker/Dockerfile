@@ -40,6 +40,7 @@ RUN apt-get update && apt-get install -y \
         libglu1-mesa-dev \
         xorg-dev \
         adb \
+        ninja-build \
         software-properties-common
 
 RUN pip3 --no-cache-dir install \
