@@ -2,9 +2,9 @@ name: "External Project Check"
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
   push:
-    branches: [master]
+    branches: [main]
 
 jobs:
   external_project:

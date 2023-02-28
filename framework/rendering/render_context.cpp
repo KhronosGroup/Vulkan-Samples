@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -331,7 +331,8 @@ void RenderContext::begin_frame()
 
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
-	auto &prev_frame = *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	auto &prev_frame = *frames[active_frame_index];
 
 	// We will use the acquired semaphore in a different frame context,
 	// so we need to hold ownership.
@@ -471,7 +472,8 @@ VkSemaphore RenderContext::consume_acquired_semaphore()
 RenderFrame &RenderContext::get_active_frame()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
-	return *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	return *frames[active_frame_index];
 }
 
 uint32_t RenderContext::get_active_frame_index()
@@ -483,7 +485,8 @@ uint32_t RenderContext::get_active_frame_index()
 RenderFrame &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");
-	return *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	return *frames[active_frame_index];
 }
 
 VkSemaphore RenderContext::request_semaphore()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
 
 namespace vkb
 {
-std::vector<std::unique_ptr<field::Base>> &DebugInfo::get_fields()
+const std::vector<std::unique_ptr<field::Base>> &DebugInfo::get_fields() const
 {
 	return fields;
 }

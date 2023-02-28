@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -122,8 +122,13 @@ void ResourceReplay::create_pipeline_layout(ResourceCache &resource_cache, std::
 	     shader_indices);
 
 	std::vector<ShaderModule *> shader_stages(shader_indices.size());
-	std::transform(shader_indices.begin(), shader_indices.end(), shader_stages.begin(),
-	               [&](size_t shader_index) { return shader_modules.at(shader_index); });
+	std::transform(shader_indices.begin(),
+	               shader_indices.end(),
+	               shader_stages.begin(),
+	               [&](size_t shader_index) {
+		               assert(shader_index < shader_modules.size());
+		               return shader_modules[shader_index];
+	               });
 
 	auto &pipeline_layout = resource_cache.request_pipeline_layout(shader_stages);
 
@@ -189,8 +194,10 @@ void ResourceReplay::create_graphics_pipeline(ResourceCache &resource_cache, std
 	     color_blend_state.attachments);
 
 	PipelineState pipeline_state{};
-	pipeline_state.set_pipeline_layout(*pipeline_layouts.at(pipeline_layout_index));
-	pipeline_state.set_render_pass(*render_passes.at(render_pass_index));
+	assert(pipeline_layout_index < pipeline_layouts.size());
+	pipeline_state.set_pipeline_layout(*pipeline_layouts[pipeline_layout_index]);
+	assert(render_pass_index < render_passes.size());
+	pipeline_state.set_render_pass(*render_passes[render_pass_index]);
 
 	for (auto &item : specialization_constant_state)
 	{

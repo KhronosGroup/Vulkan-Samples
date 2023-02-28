@@ -44,7 +44,7 @@ class HPPVulkanResource
 	{
 	}
 
-	HPPVulkanResource(const HPPVulkanResource &) = delete;
+	HPPVulkanResource(const HPPVulkanResource &)            = delete;
 	HPPVulkanResource &operator=(const HPPVulkanResource &) = delete;
 
 	HPPVulkanResource(HPPVulkanResource &&other) :
@@ -76,6 +76,11 @@ class HPPVulkanResource
 	}
 
 	inline const HPPHandle &get_handle() const
+	{
+		return handle;
+	}
+
+	inline HPPHandle &get_handle()
 	{
 		return handle;
 	}

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,7 +52,7 @@ namespace
 void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
 {
 	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx * idx_dst = (ImDrawIdx *) index_data;
+	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -655,7 +655,7 @@ void Gui::draw(VkCommandBuffer command_buffer)
 		return;
 	}
 
-	auto &      io            = ImGui::GetIO();
+	auto       &io            = ImGui::GetIO();
 	ImDrawData *draw_data     = ImGui::GetDrawData();
 	int32_t     vertex_offset = 0;
 	int32_t     index_offset  = 0;
@@ -751,7 +751,9 @@ bool Gui::is_debug_view_active() const
 Gui::StatsView::StatsView(const Stats *stats)
 {
 	if (stats == nullptr)
+	{
 		return;
+	}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();
@@ -928,10 +930,10 @@ void Gui::show_stats(const Stats &stats)
 		assert(pr != stats_view.graph_map.end() && "StatIndex not implemented in gui graph_map");
 
 		// Draw graph
-		auto &      graph_data     = pr->second;
+		auto       &graph_data     = pr->second;
 		const auto &graph_elements = stats.get_data(stat_index);
 		float       graph_min      = 0.0f;
-		float &     graph_max      = graph_data.max_value;
+		float      &graph_max      = graph_data.max_value;
 
 		if (!graph_data.has_fixed_max)
 		{
