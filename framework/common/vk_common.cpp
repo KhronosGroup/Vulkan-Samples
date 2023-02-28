@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -117,6 +117,14 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	else if (ext == "rcall")
 	{
 		return VK_SHADER_STAGE_CALLABLE_BIT_KHR;
+	}
+	else if (ext == "mesh")
+	{
+		return VK_SHADER_STAGE_MESH_BIT_EXT;
+	}
+	else if (ext == "task")
+	{
+		return VK_SHADER_STAGE_TASK_BIT_EXT;
 	}
 
 	throw std::runtime_error("File extension `" + ext + "` does not have a vulkan shader stage.");

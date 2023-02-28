@@ -194,6 +194,10 @@ Push descriptors apply the push constants concept to descriptor sets. Instead of
 **Extension**: [```VK_EXT_debug_utils```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils)<br/>
 Uses the debug utilities extension to name and group Vulkan objects (command buffers, images, etc.). This information makes debugging in tools like RenderDoc significantly easier.
 
+### [Memory Budget](./extensions/memory_budget)<br/>
+**Extension**: [```VK_EXT_memory_budget``](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_memory_budget)<br/>
+Uses the memory budget extension to monitor the allocated memory in the GPU and demonstrates how to use it.
+
 ### [Basic ray queries](./extensions/ray_queries)<br/>
 **Extensions**: [```VK_KHR_ray_query```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_query), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure) <br/>
 Render a sponza scene using the ray query extension. Shows how to set up all data structures required for ray queries, including the bottom and top level acceleration structures for the geometry and a standard vertex/fragment shader pipeline. Shadows are cast dynamically by ray queries being cast by the fragment shader.<br/>
@@ -209,6 +213,13 @@ demonstrates the TLAS (Top Level Acceleration Structure) animation for the same 
 Procedurally generate a transparent quad and deform the geometry of the quad in the BLAS (Bottom Level Acceleration 
 Structure) to demonstrate how to animate with deforming geometry.
 Shows how to rebuild the acceleration structure and when to set it to fast rebuild vs fast traversal.
+
+### [Mesh shading](./extensions/mesh_shading)<br/>
+**Extensions**: [```VK_EXT_mesh_shader``](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_KHR_mesh_shader.html)<br/>
+Renders a triangle with the most simple of all possible mesh shader pipeline examples.  There is no vertex shader, 
+there is only a mesh and fragment shader.  The mesh shader creates the vertices for the triangle.  The mesh shading 
+pipeline includes the task and mesh shaders before going into the fragment shader.  This replaces the vertex / 
+geometry shader standard pipeline.
 
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>

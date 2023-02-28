@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -75,7 +75,7 @@ VkSemaphore SemaphorePool::request_semaphore()
 	// Check if there is an available semaphore
 	if (active_semaphore_count < semaphores.size())
 	{
-		return semaphores.at(active_semaphore_count++);
+		return semaphores[active_semaphore_count++];
 	}
 
 	VkSemaphore semaphore{VK_NULL_HANDLE};

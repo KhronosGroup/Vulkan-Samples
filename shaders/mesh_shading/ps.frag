@@ -1,4 +1,6 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+#version 450
+
+/* Copyright (c) 2023 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,24 +17,9 @@
  * limitations under the License.
  */
 
-#pragma once
+layout (location = 0) out vec4 color;
 
-#include "buffer_pool.h"
-#include "common/error.h"
-#include "common/helpers.h"
-#include "common/logging.h"
-#include "common/utils.h"
-#include "common/vk_common.h"
-#include "debug_info.h"
-#include "fence_pool.h"
-#include "glsl_compiler.h"
-#include "gui.h"
-#include "resource_binding_state.h"
-#include "resource_cache.h"
-#include "resource_record.h"
-#include "resource_replay.h"
-#include "semaphore_pool.h"
-#include "spirv_reflection.h"
-#include "stats/stats.h"
-#include "timer.h"
-#include "vulkan_sample.h"
+void main()
+{
+  color = vec4(1.0,0.0,0.0,1.0);
+}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -140,14 +140,14 @@ void Instancing::load_assets()
 	models.rock   = load_model("scenes/rock.gltf");
 	models.planet = load_model("scenes/planet.gltf");
 
-	//models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
-	//models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
+	// models.rock.loadFromFile(getAssetPath() + "scenes/rock.gltf", device.get(), queue);
+	// models.planet.loadFromFile(getAssetPath() + "scenes/planet.gltf", device.get(), queue);
 
 	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
 	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
 
-	//textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
-	//textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
+	// textures.rocks.loadFromFile(getAssetPath() + "textures/texturearray_rocks_color_rgba.ktx", device.get(), queue);
+	// textures.planet.loadFromFile(getAssetPath() + "textures/lavaplanet_color_rgba.ktx", device.get(), queue);
 }
 
 void Instancing::setup_descriptor_pool()
@@ -366,7 +366,7 @@ void Instancing::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(INSTANCE_COUNT);
 
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -493,7 +493,7 @@ bool Instancing::prepare(vkb::Platform &platform)
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
 	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
 

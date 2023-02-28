@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,7 +61,8 @@ std::unique_ptr<Component> Scene::get_model(uint32_t index)
 {
 	auto meshes = std::move(components.at(typeid(SubMesh)));
 
-	return std::move(meshes.at(index));
+	assert(index < meshes.size());
+	return std::move(meshes[index]);
 }
 
 void Scene::add_component(std::unique_ptr<Component> &&component, Node &node)
