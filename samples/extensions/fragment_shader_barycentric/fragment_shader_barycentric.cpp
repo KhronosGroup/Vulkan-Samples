@@ -38,6 +38,7 @@ FragmentShaderBarycentric::~FragmentShaderBarycentric()
 	if (device)
 	{
 		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), textures.cube.sampler, VK_NULL_HANDLE);
 		textures = {};
 		skybox.reset();
 		object.reset();
@@ -68,16 +69,6 @@ bool FragmentShaderBarycentric::prepare(vkb::Platform &platform)
 	camera.set_rotation({0.f, 0.f, 0.f});
 	camera.set_perspective(60.f, static_cast<float>(width) / static_cast<float>(height), 256.f, 0.1f);
 
-	// Get the fragment shader barycentric properties, which we'll need later on in the sample
-	VkPhysicalDeviceProperties2 device_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2};
-	device_properties.pNext = &fragment_shader_barycentric_properties;
-	vkGetPhysicalDeviceProperties2(get_device().get_gpu().get_handle(), &device_properties);
-
-	// Get the fragment shader barycentric features, which we'll need later on in the sample
-	VkPhysicalDeviceFeatures2 device_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2};
-	device_features.pNext = &fragment_shader_barycentric_features;
-	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
-
 	load_assets();
 	prepare_uniform_buffers();
 	create_descriptor_pool();
@@ -98,10 +89,11 @@ void FragmentShaderBarycentric::load_assets()
 {
 	// Models
 	skybox = load_model("scenes/cube.gltf");
-	object = load_model("scenes/geosphere.gltf");
+	object = load_model("scenes/textured_unit_cube.gltf"); 
 
 	// Load HDR cube map
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	textures.cube = load_texture("textures/crate01_color_height_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void FragmentShaderBarycentric::prepare_uniform_buffers()
@@ -113,16 +105,15 @@ void FragmentShaderBarycentric::prepare_uniform_buffers()
 
 /**
  * 	@fn void FragmentShaderBarycentric::create_descriptor_pool()
- * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
+ * 	@brief Creating descriptor pfool with size adjusted to use uniform buffer and image sampler
  */
 void FragmentShaderBarycentric::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2)};
-	uint32_t                   num_descriptor_sets = 4;
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 1);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -143,6 +134,7 @@ void FragmentShaderBarycentric::setup_descriptor_set_layout()
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -170,9 +162,11 @@ void FragmentShaderBarycentric::create_descriptor_sets()
 
 	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*ubo);
 	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.envmap);
+	VkDescriptorImageInfo             cube_image_descriptor        = create_descriptor(textures.cube);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
         vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+				vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &cube_image_descriptor),
     };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
@@ -240,6 +234,7 @@ void FragmentShaderBarycentric::create_pipeline()
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Normal
+	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6)            // UV
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -280,7 +275,7 @@ void FragmentShaderBarycentric::create_pipeline()
 	shader_stages[0].pSpecializationInfo = &specialization_info;
 	shader_stages[1].pSpecializationInfo = &specialization_info;
 
-	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &skybox_pipeline);
+	vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &skybox_pipeline);
 
 	// Object rendering pipeline
 	shadertype = 1;
@@ -290,7 +285,7 @@ void FragmentShaderBarycentric::create_pipeline()
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
 	// Flip cull mode
 	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
-	vkCreateGraphicsPipelines(get_device().get_handle(), VK_NULL_HANDLE, 1, &graphics_create, VK_NULL_HANDLE, &model_pipeline);
+	vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &model_pipeline);
 }
 
 /**
@@ -380,6 +375,11 @@ void FragmentShaderBarycentric::render(float delta_time)
 
 void FragmentShaderBarycentric::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	
+
+	auto &requested_fragment_shader_barycentric_features = gpu.request_extension_features<VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR>
+																												 (VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR);
+	requested_fragment_shader_barycentric_features.fragmentShaderBarycentric = VK_TRUE;
 	if (gpu.get_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = true;

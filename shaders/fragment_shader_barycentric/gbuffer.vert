@@ -18,6 +18,7 @@
 
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec3 inNormal;
+layout (location = 2) in vec2 inUV;
 
 layout (constant_id = 0) const int type = 0;
 
@@ -31,9 +32,7 @@ layout (binding = 0) uniform UBO {
 layout (location = 0) out vec3 outUVW;
 layout (location = 1) out vec3 outPos;
 layout (location = 2) out vec3 outNormal;
-layout (location = 3) out vec3 outViewVec;
-layout (location = 4) out vec3 outLightVec;
-layout (location = 5) out mat4 outInvModelView;
+layout (location = 3) out vec2 outUV; // needed for 2D texture
 
 out gl_PerVertex 
 {
@@ -43,7 +42,7 @@ out gl_PerVertex
 void main() 
 {
 	outUVW = inPos;
-
+	outUV = inUV;
 	switch(type) {
 		case 0: // Skybox
 			outPos = vec3(mat3(ubo.skybox_modelview) * inPos);
@@ -55,10 +54,4 @@ void main()
 			break;
 	}
 	outNormal = mat3(ubo.modelview) * inNormal;	
-	
-	outInvModelView = inverse(ubo.skybox_modelview);
-
-	vec3 lightPos = vec3(0.0f, -5.0f, 5.0f);
-	outLightVec = lightPos.xyz - outPos.xyz;
-	outViewVec = -outPos.xyz;		
 }

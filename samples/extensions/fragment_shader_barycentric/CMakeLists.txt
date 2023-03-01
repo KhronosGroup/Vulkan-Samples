@@ -24,4 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
     NAME "fragment_shader_barycentric"
-    DESCRIPTION "TODO: add sample description")
+    DESCRIPTION "TODO: add sample description"
+    SHADER_FILES_GLSL
+    "fragment_shader_barycentric/gbuffer.vert"
+    "fragment_shader_barycentric/gbuffer.frag")

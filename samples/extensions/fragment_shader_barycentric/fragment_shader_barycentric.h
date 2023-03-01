@@ -27,6 +27,7 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	struct
 	{
 		Texture envmap;
+		Texture cube;
 	} textures;
 
 	struct UBOVS
@@ -34,7 +35,7 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 		glm::mat4 projection;
 		glm::mat4 modelview;
 		glm::mat4 skybox_modelview;
-		float     modelscale = 0.05f;
+		float     modelscale = 1.0f;
 	} ubo_vs;
 
 	std::unique_ptr<vkb::sg::SubMesh>  skybox;
@@ -47,10 +48,6 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
-
-	VkPhysicalDeviceFragmentShaderBarycentricPropertiesKHR fragment_shader_barycentric_properties{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_PROPERTIES_KHR};
-	VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR  fragment_shader_barycentric_features{VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR};
-
 
 	FragmentShaderBarycentric();
 	~FragmentShaderBarycentric();
