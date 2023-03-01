@@ -6,3 +6,19 @@ plugins {
 task clean(type: Delete) {
 	delete rootProject.buildDir
 }
+
+task resolveDependencies {
+    setDescription "Resolves all projects dependencies from the repository."
+    doLast {
+        rootProject.allprojects { project ->
+            Set<Configuration> configurations =
+                    project.buildscript.configurations +
+                            project.configurations
+            configurations
+                    .findAll { it.canBeResolved && it.name.contains("debugRuntimeClasspath") }
+                    .forEach {
+                        it.resolve()
+                    }
+        }
+    }
+}
