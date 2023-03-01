@@ -66,6 +66,7 @@ jobs:
         run: ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "retrieve the dependencies"
+        working-directory: build/android_gradle
         run: ./gradlew resolveDependencies
 
       - name: "Build Android using gradlew."
