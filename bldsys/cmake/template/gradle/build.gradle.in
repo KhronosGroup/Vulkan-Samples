@@ -15,7 +15,7 @@ task resolveDependencies {
                     project.buildscript.configurations +
                             project.configurations
             configurations
-                    .findAll { it.canBeResolved }
+                    .findAll { it.canBeResolved && it.name.contains("debugRuntimeClasspath") }
                     .forEach {
                         it.resolve()
                     }
