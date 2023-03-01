@@ -70,5 +70,5 @@ jobs:
         run: ./gradlew resolveDependencies
 
       - name: "Build Android using gradlew."
-        working-directory: build/android_gradle
+        working-directory: build/android_gradle --info
         run: ./gradlew app:assemble${{ matrix.build_type }}
