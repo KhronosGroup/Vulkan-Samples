@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,41 +17,16 @@
  */
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec3 inNormal;
-layout (location = 2) in vec2 inUV;
-
-layout (constant_id = 0) const int type = 0;
 
 layout (binding = 0) uniform UBO {
 	mat4 projection;
 	mat4 modelview;
-	mat4 skybox_modelview;
-	float modelscale;
 } ubo;
 
 layout (location = 0) out vec3 outUVW;
-layout (location = 1) out vec3 outPos;
-layout (location = 2) out vec3 outNormal;
-layout (location = 3) out vec2 outUV; // needed for 2D texture
-
-out gl_PerVertex 
-{
-	vec4 gl_Position;
-};
 
 void main() 
 {
 	outUVW = inPos;
-	outUV = inUV;
-	switch(type) {
-		case 0: // Skybox
-			outPos = vec3(mat3(ubo.skybox_modelview) * inPos);
-			gl_Position = vec4(ubo.projection * vec4(outPos, 1.0));
-			break;
-		case 1: // Object
-			outPos = vec3(ubo.modelview * vec4(inPos * ubo.modelscale, 1.0));
-			gl_Position = ubo.projection * ubo.modelview * vec4(inPos.xyz * ubo.modelscale, 1.0);
-			break;
-	}
-	outNormal = mat3(ubo.modelview) * inNormal;	
+	gl_Position = vec4(ubo.projection * vec4(vec3(mat3(ubo.modelview) * inPos), 1.0));
 }

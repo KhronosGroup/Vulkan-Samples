@@ -34,18 +34,34 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
-		glm::mat4 skybox_modelview;
-		float     modelscale = 1.0f;
 	} ubo_vs;
 
+	struct GUI_settings
+	{
+		int                             selected_operation = 0; /* VK_LOGIC_OP_COPY */
+		std::vector<std::string> 				effect_names = {"Normal interpolation",
+																										"Barycoords diff",
+																										"Wireframe", "Mass center"};
+	} gui_settings;
+
 	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  object;
+	std::unique_ptr<vkb::sg::SubMesh>  model;
+
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
-	VkPipeline            model_pipeline{VK_NULL_HANDLE};
-	VkPipeline            skybox_pipeline{VK_NULL_HANDLE};
+	struct
+	{
+		VkPipeline            model{VK_NULL_HANDLE};
+		VkPipeline            skybox{VK_NULL_HANDLE};
+	} pipelines;
+	
+	struct
+	{
+		VkDescriptorSet       skybox{VK_NULL_HANDLE};
+		VkDescriptorSet       model{VK_NULL_HANDLE};
+	} descriptor_sets;
+	
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
-	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
@@ -67,6 +83,7 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	void create_descriptor_pool();
 	void create_pipeline();
 	void draw();
+	void on_update_ui_overlay(vkb::Drawer &drawer);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shader_barycentric();
