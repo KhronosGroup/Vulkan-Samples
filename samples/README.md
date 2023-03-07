@@ -120,6 +120,9 @@ Implements a high dynamic range rendering pipeline using 16/32 bit floating poin
 ### [Hello Triangle](./api/hello_triangle)<br/>
 A self-contained (minimal use of framework) sample that illustrates the rendering of a triangle.
 
+### [Hello Triangle Framework](./api/hello_triangle_framework)<br/>
+Triangle rendering using framework. Might be used for experimentation without worry about Vulkan initialization.
+
 ### [HPP Compute shader N-Body simulation](./api/hpp_compute_nbody)<br/>
 A transcoded version of the API sample [Compute N-Body](#compute_nbody) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
