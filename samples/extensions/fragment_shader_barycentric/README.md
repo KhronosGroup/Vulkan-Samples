@@ -19,7 +19,7 @@
 
 # Fragment shader barycentric
 
-Fragment shader barycentric feature provides support for accessing the barycentric coordinates (linear and perspective) in the fragment shader and vertex attribute with `pervertexEXT` decoration.
+Fragment shader barycentric feature provides support for accessing the barycentric coordinates (linear and perspective) in the fragment shader and vertex attribute with the `pervertexEXT` decoration.
 
 ## Overview
 
@@ -44,17 +44,17 @@ The fragment shader inputs declared with the `pervertexEXT` decoration get the p
 layout(location = 0) pervertexEXT in vec4 perVertexAttr[];
 ```
 
-Each array element corresponds to one of the  vertices of the primitive that produced the fragment. The order of the vertices is defined in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#primsrast-barycentric). Interpolated values are not available for inputs declared with [`pervertexEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-interpolation-decorations-pervertexkhr).
+Each array element corresponds to one of the  vertices of the primitive that produced the fragment. The order of the vertices is defined in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#primsrast-barycentric). Interpolated values are not available for inputs declared with the [`pervertexEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-interpolation-decorations-pervertexkhr).
 
 
-The fragment shader barycentric sample demonstrates feature usage by applying different effects on a cube. The effects are implemented using `pervertexEXT` decoration and built-in variables `gl_BaryCoordEXT` and `gl_BaryCoordNoPerspEXT`.
+The fragment shader barycentric sample demonstrates feature usage by applying different effects on a cube. The effects are implemented using the `pervertexEXT` decoration and built-in variables `gl_BaryCoordEXT` and `gl_BaryCoordNoPerspEXT`.
 
 The following effects are available from the GUI:
 
-- COLOR_INTERP - Demonstrates color interpolation using barycentric coordinates and information about color in vertices of the triangle (passed as `pervertexEXT` variable from vertex shader).
+- COLOR_INTERP - Demonstrates color interpolation using barycentric coordinates and information about color in vertices of the triangle (passed as `pervertexEXT` variable from the vertex shader).
 - DIFF_PERSP_NOPERSP - Demonstrates the difference between barycentric perspective and non-perspective coordinates.
 - WIREFRAME - Demonstrates rendering a wireframe using barycentric coordinates.
-- INTERP_TO_MASS_CENTER - Demonstrates interpolation color to the triangle center of mass using barycentric coordinates.
+- INTERP_TO_MASS_CENTER - Demonstrates color interpolation to the triangle's center of mass using barycentric coordinates.
 - BARYCOORD_TEXTURE - Demonstrates the modification of a texture using barycentric coordinates.
 
 ## Enabling the Extension
@@ -75,7 +75,7 @@ In the sample it is done in the `FragmentShaderBarycentric::request_gpu_features
 
 ### Vertex shader
 
-In the vertex shader a variable `outColor` is declared. It is used in the fragment shader with `pervertexEXT` decoration:
+In the vertex shader a variable `outColor` is declared. It is used in the fragment shader with the `pervertexEXT` decoration:
 
 ```GLSL
 layout (location = 0) out vec3 outColor;
@@ -89,13 +89,13 @@ In the fragment shader the required feature is defined:
 #extension GL_EXT_fragment_shader_barycentric : require
 ```
 
-The color input variable is declared with `pervertexEXT` decoration and as a matrix (it contains color for three vertices of the triangle for each processed fragment):
+The color input variable is declared with the `pervertexEXT` decoration and as a matrix (it contains color for three vertices of the triangle for each processed fragment):
 
 ```GLSL
-layout (location = 0) in pervertexEXT vec3 inColor[]; 
+layout (location = 0) in pervertexEXT vec3 inColor[];
 ```
 
-Depending on the effect chosen in the GUI `outColor` is calculated differently in switch-case statement, e.g. for color interpolation using barycentric perspective coordinates:
+Depending on the effect chosen in the GUI `outColor` is calculated differently in the switch-case statement, e.g. for color interpolation using barycentric perspective coordinates:
 
 ```GLSL
 outColor.rgb = inColor[0].rgb * gl_BaryCoordEXT.x +
