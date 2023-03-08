@@ -91,7 +91,7 @@ void FragmentShaderBarycentric::load_assets()
 
 	// Loading textures
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
-	textures.cube   = load_texture("textures/crate01_color_height_rgba.ktx", vkb::sg::Image::Color);
+	textures.cube   = load_texture("textures/checkerboard_rgba.ktx", vkb::sg::Image::Color);
 }
 
 /**

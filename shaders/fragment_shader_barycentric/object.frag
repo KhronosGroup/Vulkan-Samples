@@ -35,13 +35,12 @@ void main()
 			outColor.rgb = inColor[0].rgb * gl_BaryCoordEXT.x +
 				inColor[1].rgb * gl_BaryCoordEXT.y +
 				inColor[2].rgb * gl_BaryCoordEXT.z;
+			outColor.a = 1.0;
 			break;
 		}
 		case 1: 
 		{
-			outColor.x = gl_BaryCoordEXT.x - gl_BaryCoordNoPerspEXT.x;
-			outColor.y = gl_BaryCoordEXT.y - gl_BaryCoordNoPerspEXT.y;
-			outColor.z = gl_BaryCoordEXT.z - gl_BaryCoordNoPerspEXT.z;
+			outColor.rgb = gl_BaryCoordEXT - gl_BaryCoordNoPerspEXT;
 			const float exposure = 10.f;
 			outColor = vec4(vec3(1.0) - exp(-outColor.rgb * exposure), 1.0);
 			break;
@@ -66,7 +65,7 @@ void main()
 		}
 		case 4:
 		{
-			// outColor = vec4(texture(samplerColorMap, gl_PointCoord.xy));
+			outColor = texture(samplerColorMap, vec2(sin(gl_BaryCoordEXT.x) + cos(2 * gl_BaryCoordEXT.z), sin(gl_BaryCoordEXT.x) + cos(2 * gl_BaryCoordEXT.y)));
 		}
 	}
 }

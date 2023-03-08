@@ -42,7 +42,8 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 		const std::vector<std::string> effect_names    = {"Color interpolation",
 		                                                  "Barycentric coordinates diff",
 		                                                  "Wireframe",
-		                                                  "Interpolation to mass center"};
+		                                                  "Interpolation to mass center",
+		                                                  "Textured using barycentrics"};
 	} gui_settings;
 
 	std::unique_ptr<vkb::sg::SubMesh> skybox;
