@@ -95,7 +95,7 @@ The color input variable is declared with `pervertexEXT` decoration and as a mat
 layout (location = 0) in pervertexEXT vec3 inColor[]; 
 ```
 
-Depending on the effect chosen in the GUI `outColor` is calculated differently in switch-case statement, e.g. for color interpolation using barycentric perspective coordiantes:
+Depending on the effect chosen in the GUI `outColor` is calculated differently in switch-case statement, e.g. for color interpolation using barycentric perspective coordinates:
 
 ```GLSL
 outColor.rgb = inColor[0].rgb * gl_BaryCoordEXT.x +
