@@ -46,20 +46,20 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	} gui_settings;
 
 	std::unique_ptr<vkb::sg::SubMesh> skybox;
-	std::unique_ptr<vkb::sg::SubMesh> model;
+	std::unique_ptr<vkb::sg::SubMesh> object;
 
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
 	struct
 	{
-		VkPipeline model{VK_NULL_HANDLE};
+		VkPipeline object{VK_NULL_HANDLE};
 		VkPipeline skybox{VK_NULL_HANDLE};
 	} pipelines;
 
 	struct
 	{
 		VkDescriptorSet skybox{VK_NULL_HANDLE};
-		VkDescriptorSet model{VK_NULL_HANDLE};
+		VkDescriptorSet object{VK_NULL_HANDLE};
 	} descriptor_sets;
 
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};

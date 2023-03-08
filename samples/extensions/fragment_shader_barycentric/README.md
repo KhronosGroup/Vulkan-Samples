@@ -23,28 +23,28 @@ Fragment shader barycentric feature provides support for accessing the barycentr
 
 ## Overview
 
-[VK_KHR_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) extension is based on [VK_NV_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_NV_fragment_shader_barycentric.html).
+The [VK_KHR_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) extension is based on [VK_NV_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_NV_fragment_shader_barycentric.html).
 
-The extension provides access to additional build-in variable and decoration:
+The extension provides access to additional built-in variables and decorations:
 
 | Type              | GLSL                            | SPIR-V              |
 |-------------------|---------------------------------|---------------------|
-| build-in variable | in vec3 gl_BaryCoordEXT;        | BaryCoordKHR        |
-| build-in variable | in vec3 gl_BaryCoordNoPerspEXT; | BaryCoordNoPerspKHR |
+| built-in variable | in vec3 gl_BaryCoordEXT;        | BaryCoordKHR        |
+| built-in variable | in vec3 gl_BaryCoordNoPerspEXT; | BaryCoordNoPerspKHR |
 | decoration        | pervertexEXT                    | perVertexKHR        |
 
-The built-in fragment shader input variables `gl_BaryCoordEXT` and `gl_BaryCoordNoPerspEXT` are three-component floating-point vectors providing barycentric coordinates for the fragment.  The values for these built-ins are derived as described in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#interfaces-builtin-variables).
-The build-in variables hold barycentric weights for the fragment produced using:
+The built-in fragment shader input variables `gl_BaryCoordEXT` and `gl_BaryCoordNoPerspEXT` are three-component floating-point vectors that provide the barycentric coordinates for the fragment. The values for these built-ins are derived as described in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#interfaces-builtin-variables).
+The built-in variables hold barycentric weights for the fragment produced using:
 + perspective interpolation: `gl_BaryCoordEXT`
 + linear interpolation: `gl_BaryCoordNoPerspEXT`
 
-The fragment shader inputs declared with `pervertexEXT` decoration get the per-vertex values of the outputs from the previous shader stage declared with the same name. Such inputs needs to be declared as an array, because the have values for each vertex in the input primitive, e.g.
+The fragment shader inputs declared with the `pervertexEXT` decoration get the per-vertex values of the outputs from the previous shader stage declared with the same name. Such inputs must be declared as an array, because they have values for each vertex in the input primitive, e.g.
 
 ```
 layout(location = 0) pervertexEXT in vec4 perVertexAttr[];
 ```
 
-Each array element corresponds to one of the  vertices of the primitive that produced the fragment. The order of the verticies is defined in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#primsrast-barycentric). Interpolated values are not available for inputs declared with [`pervertexEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-interpolation-decorations-pervertexkhr).
+Each array element corresponds to one of the  vertices of the primitive that produced the fragment. The order of the vertices is defined in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#primsrast-barycentric). Interpolated values are not available for inputs declared with [`pervertexEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-interpolation-decorations-pervertexkhr).
 
 ## Enabling the Extension
 
