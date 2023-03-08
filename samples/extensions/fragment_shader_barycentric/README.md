@@ -19,6 +19,8 @@
 
 # Fragment shader barycentric
 
+![fragment_shader_barycentric](./images/fragment_shader_barycentric_screenshot.png)
+
 Fragment shader barycentric feature provides support for accessing the barycentric coordinates (linear and perspective) in the fragment shader and vertex attribute with the `pervertexEXT` decoration.
 
 ## Overview
