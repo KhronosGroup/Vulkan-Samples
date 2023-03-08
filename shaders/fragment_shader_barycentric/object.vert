@@ -23,19 +23,19 @@ layout (binding = 0) uniform UBO {
 	mat4 modelview;
 } ubo;
 
-layout (location = 0) out vec3 out_color;
+layout (location = 0) out vec3 outColor;
 
-vec3 triangle_colors[6] = vec3[](
-    vec3(1.0, 0.0, 0.0),
-    vec3(0.0, 1.0, 0.0),
-    vec3(0.0, 0.0, 1.0),
-		vec3(0.0, 0.0, 1.0),
-    vec3(0.0, 1.0, 0.0),
-		vec3(1.0, 0.0, 0.0)
+vec3 triangleColors[6] = vec3[](
+	vec3(1.0, 0.0, 0.0),
+	vec3(0.0, 1.0, 0.0),
+	vec3(0.0, 0.0, 1.0),
+	vec3(0.0, 0.0, 1.0),
+	vec3(0.0, 1.0, 0.0),
+	vec3(1.0, 0.0, 0.0)
 );
 
 void main() 
 {
-		gl_Position = ubo.projection * ubo.modelview * vec4(inPos.xyz, 1.0);
-		out_color = triangle_colors[gl_VertexIndex % 6];
+	gl_Position = ubo.projection * ubo.modelview * vec4(inPos.xyz, 1.0);
+	outColor = triangleColors[gl_VertexIndex % 6];
 }

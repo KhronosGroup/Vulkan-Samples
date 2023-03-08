@@ -24,7 +24,9 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
     NAME "fragment_shader_barycentric"
-    DESCRIPTION "TODO: add sample description"
+    DESCRIPTION "Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment."
     SHADER_FILES_GLSL
-    "fragment_shader_barycentric/gbuffer.vert"
-    "fragment_shader_barycentric/gbuffer.frag")
+    "fragment_shader_barycentric/object.vert"
+    "fragment_shader_barycentric/object.frag"
+    "fragment_shader_barycentric/skybox.vert"
+    "fragment_shader_barycentric/skybox.frag")

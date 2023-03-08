@@ -20,9 +20,9 @@ layout (binding = 1) uniform samplerCube samplerEnvMap;
 
 layout (location = 0) in vec3 inUVW;
 
-layout (location = 0) out vec4 outColor0;
+layout (location = 0) out vec4 outColor;
 
 void main() 
 {
-	outColor0 = texture(samplerEnvMap, inUVW);
+	outColor = texture(samplerEnvMap, inUVW);
 }

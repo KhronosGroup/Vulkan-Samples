@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "api_vulkan_sample.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
-#include "api_vulkan_sample.h"
 
 class FragmentShaderBarycentric : public ApiVulkanSample
 {
@@ -38,41 +38,43 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 
 	struct GUI_settings
 	{
-		int                             selected_operation = 0; /* VK_LOGIC_OP_COPY */
-		std::vector<std::string> 				effect_names = {"Normal interpolation",
-																										"Barycoords diff",
-																										"Wireframe", "Mass center"};
+		int                            selected_effect = 0; /* default interpolation */
+		const std::vector<std::string> effect_names    = {"Color interpolation",
+		                                                  "Barycentric coordinates diff",
+		                                                  "Wireframe",
+		                                                  "Interpolation to mass center"};
 	} gui_settings;
 
-	std::unique_ptr<vkb::sg::SubMesh>  skybox;
-	std::unique_ptr<vkb::sg::SubMesh>  model;
+	std::unique_ptr<vkb::sg::SubMesh> skybox;
+	std::unique_ptr<vkb::sg::SubMesh> model;
 
 	std::unique_ptr<vkb::core::Buffer> ubo;
 
 	struct
 	{
-		VkPipeline            model{VK_NULL_HANDLE};
-		VkPipeline            skybox{VK_NULL_HANDLE};
+		VkPipeline model{VK_NULL_HANDLE};
+		VkPipeline skybox{VK_NULL_HANDLE};
 	} pipelines;
-	
+
 	struct
 	{
-		VkDescriptorSet       skybox{VK_NULL_HANDLE};
-		VkDescriptorSet       model{VK_NULL_HANDLE};
+		VkDescriptorSet skybox{VK_NULL_HANDLE};
+		VkDescriptorSet model{VK_NULL_HANDLE};
 	} descriptor_sets;
-	
+
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
 	FragmentShaderBarycentric();
-	~FragmentShaderBarycentric();
+	~FragmentShaderBarycentric() override;
 
 	bool prepare(vkb::Platform &platform) override;
 
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	void load_assets();
@@ -83,7 +85,6 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 	void create_descriptor_pool();
 	void create_pipeline();
 	void draw();
-	void on_update_ui_overlay(vkb::Drawer &drawer);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_fragment_shader_barycentric();

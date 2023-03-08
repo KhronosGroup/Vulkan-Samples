@@ -19,10 +19,46 @@
 
 # Fragment shader barycentric
 
-TODO: fill the document
+Fragment shader barycentric feature provides support for accessing the barycentric coordinates (linear and perspective) in the fragment shader and vertex attribute with `pervertexEXT` decoration.
 
 ## Overview
 
-## Pipelines
+[VK_KHR_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) extension is based on [VK_NV_fragment_shader_barycentric](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_NV_fragment_shader_barycentric.html).
+
+The extension provides access to additional build-in variable and decoration:
+
+| Type              | GLSL                            | SPIR-V              |
+|-------------------|---------------------------------|---------------------|
+| build-in variable | in vec3 gl_BaryCoordEXT;        | BaryCoordKHR        |
+| build-in variable | in vec3 gl_BaryCoordNoPerspEXT; | BaryCoordNoPerspKHR |
+| decoration        | pervertexEXT                    | perVertexKHR        |
+
+The built-in fragment shader input variables `gl_BaryCoordEXT` and `gl_BaryCoordNoPerspEXT` are three-component floating-point vectors providing barycentric coordinates for the fragment.  The values for these built-ins are derived as described in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#interfaces-builtin-variables).
+The build-in variables hold barycentric weights for the fragment produced using:
++ perspective interpolation: `gl_BaryCoordEXT`
++ linear interpolation: `gl_BaryCoordNoPerspEXT`
+
+The fragment shader inputs declared with `pervertexEXT` decoration get the per-vertex values of the outputs from the previous shader stage declared with the same name. Such inputs needs to be declared as an array, because the have values for each vertex in the input primitive, e.g.
+
+```
+layout(location = 0) pervertexEXT in vec4 perVertexAttr[];
+```
+
+Each array element corresponds to one of the  vertices of the primitive that produced the fragment. The order of the verticies is defined in [the Vulkan API Specifications](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#primsrast-barycentric). Interpolated values are not available for inputs declared with [`pervertexEXT`](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/vkspec.html#shaders-interpolation-decorations-pervertexkhr).
 
 ## Enabling the Extension
+
+Enabling the fragment shader barycentric feature is done using the [`VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR.html) structure, where `fragmentShaderBarycentric` indicates barycentric support in fragment shaders. 
+The structure should be passed to `vkGetPhysicalDeviceFeatures2` in the pNext member of the [`VkPhysicalDeviceFeatures2`](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceFeatures2.html) structure.
+
+
+```C++
+VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR requested_fragment_shader_barycentric_features
+requested_fragment_shader_barycentric_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR;
+requested_fragment_shader_barycentric_features.fragmentShaderBarycentric = VK_TRUE;
+```
+
+In the sample it is done in the `FragmentShaderBarycentric::request_gpu_features` method using the template function `vkb::PhysicalDevice::request_extension_features` provided by the Vulkan-Samples framework.
+
+## Shaders
+

@@ -19,53 +19,54 @@
 #extension GL_EXT_fragment_shader_barycentric : require
 
 layout (binding = 1) uniform sampler2D samplerColorMap;
-layout (location = 0) in pervertexEXT vec3 in_color[]; 
+layout (location = 0) in pervertexEXT vec3 inColor[]; 
 
-layout (location = 0) out vec4 outColor0;
+layout (location = 0) out vec4 outColor;
 
 layout( push_constant ) uniform Push_Constants{
-  int type;
-} PushConstant;
+	int type;
+} pushConstant;
+
 void main() 
 {
-	switch (PushConstant.type) {
-		case 0: // Object
+	switch (pushConstant.type) {
+		case 0:
 		{
-    outColor0.rgb = in_color[0].rgb * gl_BaryCoordEXT.x +
-                    in_color[1].rgb * gl_BaryCoordEXT.y +
-                    in_color[2].rgb * gl_BaryCoordEXT.z;
-		break;
+			outColor.rgb = inColor[0].rgb * gl_BaryCoordEXT.x +
+				inColor[1].rgb * gl_BaryCoordEXT.y +
+				inColor[2].rgb * gl_BaryCoordEXT.z;
+			break;
 		}
-    case 1: 
-    {
-    outColor0.x = gl_BaryCoordEXT.x - gl_BaryCoordNoPerspEXT.x;
-		outColor0.y = gl_BaryCoordEXT.y - gl_BaryCoordNoPerspEXT.y;
-		outColor0.z = gl_BaryCoordEXT.z - gl_BaryCoordNoPerspEXT.z;
-		const float exposure = 10.f;
-		outColor0 = vec4(vec3(1.0) - exp(-outColor0.rgb * exposure), 1.0);
-    break;
-    }
-    case 2:
-    {
-    if(gl_BaryCoordEXT.x < 0.01 || gl_BaryCoordEXT.y < 0.01 || gl_BaryCoordEXT.z < 0.01) 
-		  outColor0 = vec4(0.0, 0.0, 0.0, 1.0);
-		else
-		  outColor0 = vec4(0.5, 0.5, 0.5, 1.0);
-    break;
-    }
-    case 3:
-    {
-    if (gl_BaryCoordEXT.x <= gl_BaryCoordEXT.y && gl_BaryCoordEXT.x <= gl_BaryCoordEXT.z)
-      outColor0 = vec4(in_color[0].rgb * gl_BaryCoordEXT.x, 1.0); 
-    else if (gl_BaryCoordEXT.y < gl_BaryCoordEXT.x && gl_BaryCoordEXT.y <= gl_BaryCoordEXT.z)
-      outColor0 = vec4(in_color[1].rgb * gl_BaryCoordEXT.y, 1.0); 
-    else
-      outColor0 = vec4(in_color[2].rgb * gl_BaryCoordEXT.z, 1.0); 
-    break;
-    }
-    case 4:
-    {
-      // outColor0 = vec4(texture(samplerColorMap, gl_PointCoord.xy));
-    }
+		case 1: 
+		{
+			outColor.x = gl_BaryCoordEXT.x - gl_BaryCoordNoPerspEXT.x;
+			outColor.y = gl_BaryCoordEXT.y - gl_BaryCoordNoPerspEXT.y;
+			outColor.z = gl_BaryCoordEXT.z - gl_BaryCoordNoPerspEXT.z;
+			const float exposure = 10.f;
+			outColor = vec4(vec3(1.0) - exp(-outColor.rgb * exposure), 1.0);
+			break;
+		}
+		case 2:
+		{
+			if(gl_BaryCoordEXT.x < 0.01 || gl_BaryCoordEXT.y < 0.01 || gl_BaryCoordEXT.z < 0.01) 
+				outColor = vec4(0.0, 0.0, 0.0, 1.0);
+			else
+				outColor = vec4(0.5, 0.5, 0.5, 1.0);
+			break;
+		}
+		case 3:
+		{
+			if (gl_BaryCoordEXT.x <= gl_BaryCoordEXT.y && gl_BaryCoordEXT.x <= gl_BaryCoordEXT.z)
+				outColor = vec4(inColor[0].rgb * gl_BaryCoordEXT.x, 1.0); 
+			else if (gl_BaryCoordEXT.y < gl_BaryCoordEXT.x && gl_BaryCoordEXT.y <= gl_BaryCoordEXT.z)
+				outColor = vec4(inColor[1].rgb * gl_BaryCoordEXT.y, 1.0); 
+			else
+				outColor = vec4(inColor[2].rgb * gl_BaryCoordEXT.z, 1.0); 
+			break;
+		}
+		case 4:
+		{
+			// outColor = vec4(texture(samplerColorMap, gl_PointCoord.xy));
+		}
 	}
 }
