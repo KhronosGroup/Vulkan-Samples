@@ -65,7 +65,6 @@ class FragmentShaderBarycentric : public ApiVulkanSample
 
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
-	VkDescriptorPool      descriptor_pool{VK_NULL_HANDLE};
 
 	FragmentShaderBarycentric();
 	~FragmentShaderBarycentric() override;
