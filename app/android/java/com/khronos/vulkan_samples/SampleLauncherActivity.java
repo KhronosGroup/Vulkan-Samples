@@ -77,7 +77,6 @@ public class SampleLauncherActivity extends AppCompatActivity {
                 // User no longer has permissions to access applications' storage, save files in
                 // top level (shared) external storage directory
                 String shared_storage = external_files_dir.getPath().split(Pattern.quote("Android"))[0];
-                external_files_dir = new File(shared_storage, getPackageName());
                 initFilePath(external_files_dir.toString(), temp_files_dir.toString());
             }
 

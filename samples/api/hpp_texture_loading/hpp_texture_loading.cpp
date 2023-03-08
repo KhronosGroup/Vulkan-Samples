@@ -85,7 +85,7 @@ void HPPTextureLoading::load_texture()
 	vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
 	ktxTexture    *ktx_texture;
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	KTX_error_code result = vkb::fs::read_ktx_file(filename, &ktx_texture);
 	if ((result != KTX_SUCCESS) || (ktx_texture == nullptr))
 	{
 		throw std::runtime_error("Couldn't load texture");

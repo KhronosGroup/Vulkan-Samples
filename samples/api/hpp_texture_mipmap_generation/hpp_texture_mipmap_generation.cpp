@@ -179,7 +179,7 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	vk::Format format = vk::Format::eR8G8B8A8Srgb;
 
 	ktxTexture    *ktx_texture;
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	KTX_error_code result = vkb::fs::read_ktx_file(file_name, &ktx_texture);
 	// @todo: get format from libktx
 	if (ktx_texture == nullptr)
 	{

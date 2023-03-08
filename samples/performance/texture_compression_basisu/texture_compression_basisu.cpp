@@ -21,6 +21,8 @@
 
 #include "texture_compression_basisu.h"
 
+
+
 TextureCompressionBasisu::TextureCompressionBasisu()
 {
 	zoom     = -1.75f;
@@ -133,7 +135,8 @@ void TextureCompressionBasisu::transcode_texture(const std::string &input_file, 
 	// We are working with KTX2.0 files, so we need to use the ktxTexture2 class
 	ktxTexture2 *ktx_texture;
 	// Load the KTX2.0 file into memory. This is agnostic to the KTX version, so we cast the ktxTexture2 down to ktxTexture
-	KTX_error_code result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, reinterpret_cast<ktxTexture **>(&ktx_texture));
+	KTX_error_code result = vkb::fs::read_ktx_file(file_name, reinterpret_cast<ktxTexture **>(&ktx_texture));
+
 	if (result != KTX_SUCCESS)
 	{
 		throw std::runtime_error("Could not load the requested image file.");

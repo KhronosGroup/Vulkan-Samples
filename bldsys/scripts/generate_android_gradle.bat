@@ -34,7 +34,7 @@ call cmake.exe -DPROJECT_NAME="vulkan_samples"^
 			   -DJAVA_DIRS="%ROOT_DIR%\app\android\java"^
 			   -DRES_DIRS="%ROOT_DIR%\app\android\res"^
 			   -DOUTPUT_DIR="%BUILD_DIR%"^
-			   -DASSET_DIRS=""^
+			   -DASSET_DIRS="../../assets"^
 			   -DJNI_LIBS_DIRS=""^
 			   -DNATIVE_SCRIPT="%ROOT_DIR%\CMakeLists.txt"^
 			   -P "%ROOT_DIR%\bldsys\cmake\create_gradle_project.cmake"

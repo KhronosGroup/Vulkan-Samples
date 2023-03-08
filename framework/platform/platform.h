@@ -36,6 +36,10 @@
 #	undef Success
 #endif
 
+#if defined(__ANDROID__)
+#include "platform/android/asset_manager.h"
+#endif
+
 namespace vkb
 {
 enum class ExitCode

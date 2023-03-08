@@ -26,6 +26,7 @@
 #include <vector>
 
 #include <json.hpp>
+#include <ktx.h>
 
 namespace vkb
 {
@@ -115,6 +116,15 @@ std::string read_shader(const std::string &filename);
  * @return A vector filled with data read from the file
  */
 std::vector<uint8_t> read_shader_binary(const std::string &filename);
+
+/**
+ * @brief Helper to read a ktx file
+ *
+ * @param filename The path to the file (relative to the assets directory)
+ * @param ktx_texture Pointer to loaded texture data pointer
+ * @return A ktx error code
+ */
+KTX_error_code read_ktx_file(const std::string &filename, ktxTexture **ktx_texture);
 
 /**
  * @brief Helper to read a temporary file into a byte-array

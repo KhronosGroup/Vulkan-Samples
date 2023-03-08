@@ -84,8 +84,8 @@ void TextureLoading::load_texture()
 
 	ktxTexture    *ktx_texture;
 	KTX_error_code result;
-
-	result = ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	
+	result = vkb::fs::read_ktx_file(filename, &ktx_texture);
 
 	if (ktx_texture == nullptr)
 	{

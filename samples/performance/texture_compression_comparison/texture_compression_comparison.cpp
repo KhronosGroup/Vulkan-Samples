@@ -22,6 +22,7 @@
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 
+
 namespace
 {
 constexpr std::array<const char *, 19> error_codes = {
@@ -368,7 +369,7 @@ std::vector<uint8_t> TextureCompressionComparison::get_raw_image(const std::stri
 std::pair<std::unique_ptr<vkb::sg::Image>, TextureCompressionComparison::TextureBenchmark> TextureCompressionComparison::compress(const std::string &filename, TextureCompressionComparison::CompressedTexture_t texture_format, const std::string &name)
 {
 	ktxTexture2 *ktx_texture{nullptr};
-	KTX_CHECK(ktxTexture2_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture));
+	KTX_CHECK(vkb::fs::read_ktx_file(filename, reinterpret_cast<ktxTexture **>(&ktx_texture)));
 
 	TextureBenchmark benchmark;
 	{

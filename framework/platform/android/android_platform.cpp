@@ -35,6 +35,7 @@ VKBP_ENABLE_WARNINGS()
 #include "common/logging.h"
 #include "common/strings.h"
 #include "platform/android/android_window.h"
+#include "platform/android/asset_manager.h"
 #include "platform/input_events.h"
 
 extern "C"
@@ -421,6 +422,7 @@ ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 		return code;
 	}
 
+	fs::AssetManager::set_android_asset_manager(get_activity()->assetManager);
 	// Wait until the android window is loaded before allowing the app to continue
 	LOGI("Waiting on window surface to be ready");
 	do

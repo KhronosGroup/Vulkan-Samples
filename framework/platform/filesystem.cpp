@@ -52,6 +52,16 @@ const std::string get(const Type type, const std::string &file)
 	{
 		return Platform::get_temp_directory();
 	}
+#if defined(__ANDROID__)
+	else if (type == Type::Assets)
+	{
+		return file; //Because android asset manager's working directory is /assets
+	}
+	else if (type == Type::Shaders)
+	{
+		return "shaders/" + file;
+	}
+#endif
 
 	// Check for relative paths
 	auto it = relative_paths.find(type);
@@ -180,17 +190,40 @@ static void write_binary_file(const std::vector<uint8_t> &data, const std::strin
 
 std::vector<uint8_t> read_asset(const std::string &filename, const uint32_t count)
 {
+#if defined(__ANDROID__)
+	return AssetManager::read_binary_file(path::get(path::Type::Assets) + filename);
+#else
 	return read_binary_file(path::get(path::Type::Assets) + filename, count);
+#endif
 }
 
 std::string read_shader(const std::string &filename)
 {
+#if defined(__ANDROID__)
+	const auto& bytes = AssetManager::read_binary_file(path::get(path::Type::Shaders) + filename);
+	return std::string(bytes.begin(), bytes.end());
+#else
 	return read_text_file(path::get(path::Type::Shaders) + filename);
+#endif
 }
 
 std::vector<uint8_t> read_shader_binary(const std::string &filename)
 {
+#if defined(__ANDROID__)
+	return AssetManager::read_binary_file(path::get(path::Type::Shaders) + filename);
+#else
 	return read_binary_file(path::get(path::Type::Shaders) + filename, 0);
+#endif
+}
+
+KTX_error_code read_ktx_file(const std::string &filename, ktxTexture **ktx_texture)
+{
+#if defined(__ANDROID__)
+	const auto& bytes = vkb::fs::AssetManager::read_binary_file(filename);
+	return ktxTexture_CreateFromMemory(bytes.data(), bytes.size(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, ktx_texture);
+#else
+	return ktxTexture_CreateFromNamedFile(filename.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, ktx_texture);
+#endif
 }
 
 std::vector<uint8_t> read_temp(const std::string &filename, const uint32_t count)

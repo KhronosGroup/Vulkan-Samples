@@ -65,7 +65,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	ktxTexture    *ktx_texture;
 	KTX_error_code result;
 
-	result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
+	result = vkb::fs::read_ktx_file(file_name, &ktx_texture);
 	// @todo: get format from libktx
 
 	if (ktx_texture == nullptr)
