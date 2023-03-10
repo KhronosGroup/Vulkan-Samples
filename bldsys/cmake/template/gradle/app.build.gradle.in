@@ -13,7 +13,7 @@ android {
 	defaultConfig {
 		applicationId "com.khronos.vulkan_samples"
 		@MIN_SDK_VERSION@
-		targetSdk 32
+		targetSdk 33
 		versionCode 1
 		versionName "1.0"
 
