@@ -1,7 +1,7 @@
 android.useAndroidX=true
-# android.enableJetifier=true
-# org.gradle.parallel=true
+android.enableJetifier=true
+org.gradle.parallel=true
 org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
 org.gradle.caching=true
-# android.prefabVersion=2.0.0
+android.prefabVersion=2.0.0
 
