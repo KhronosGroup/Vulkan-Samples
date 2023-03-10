@@ -80,5 +80,5 @@ dependencies {
 	implementation 'com.google.android.material:material:1.7.0'
 	implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 	implementation 'androidx.core:core:1.9.0'
-	implementation 'androidx.games:games-activity:1.2.2-alpha01'
+	implementation 'androidx.games:games-activity:2.0.0'
 }
