@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021-2022, Holochip
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
