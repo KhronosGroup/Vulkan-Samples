@@ -17,6 +17,7 @@
 
 # order matters
 add_subdirectory(common)
+add_subdirectory(scene_graph)
 add_subdirectory(platform)
 add_subdirectory(events)
 add_subdirectory(windows)

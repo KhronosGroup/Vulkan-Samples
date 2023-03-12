@@ -300,11 +300,11 @@ class ContextTracker
 };        // namespace detail
 }        // namespace detail
 
-void AstcCodec::encode(const assets::ImageAsset &image, assets::ImageAssetPtr */* o_image */) const
+void AstcCodec::encode(const assets::ImageAsset &image, assets::ImageAssetPtr * /* o_image */) const
 {
 	if (!image.valid())
 	{
-		ERROR("image not valid");
+		ERRORF("image not valid");
 	}
 
 	// BlockDim blockdim = detail::to_blockdim(image.format);
@@ -320,19 +320,19 @@ void AstcCodec::encode(const assets::ImageAsset &image, assets::ImageAssetPtr */
 	// auto &tracker = detail::ContextTracker::get();
 	// auto *context = tracker.alloc_context(config);
 
-	ERROR("not implemented");
+	NOT_IMPLEMENTED();
 }
 
 void AstcCodec::decode(const assets::ImageAsset &image, assets::ImageAssetPtr *o_image) const
 {
 	if (!image.valid())
 	{
-		ERROR("image not valid");
+		ERRORF("image not valid");
 	}
 
 	if (!detail::is_astc(image.format))
 	{
-		ERROR("input format not supported by this codec");
+		ERRORF("input format not supported by this codec");
 	}
 
 	BlockDim blockdim = detail::to_blockdim(image.format);
@@ -351,9 +351,9 @@ void AstcCodec::decode(const assets::ImageAsset &image, assets::ImageAssetPtr *o
 	astcenc_swizzle swizzle{ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
 
 	assets::ImageAssetPtr output_image = std::shared_ptr<assets::ImageAsset>();
-	output_image->name    = image.name;
-	output_image->format  = VK_FORMAT_R8G8B8A8_SRGB;
-	output_image->layers  = image.layers;
+	output_image->name                 = image.name;
+	output_image->format               = VK_FORMAT_R8G8B8A8_SRGB;
+	output_image->layers               = image.layers;
 	output_image->mips.reserve(image.mips.size());
 
 	size_t running_offset = 0;
@@ -377,9 +377,9 @@ void AstcCodec::decode(const assets::ImageAsset &image, assets::ImageAssetPtr *o
 			ERRORF("ASTC Codec decode failed: {}", astcenc_get_error_string(status));
 		}
 
-		assets::Mipmap copy      = mip;
-		copy.byte_length = expected_output_size;
-		copy.offset      = running_offset;
+		assets::Mipmap copy = mip;
+		copy.byte_length    = static_cast<uint32_t>(expected_output_size);
+		copy.offset         = static_cast<uint32_t>(running_offset);
 		output_image->mips.push_back(copy);
 
 		running_offset += expected_output_size;

@@ -17,35 +17,34 @@
 
 #pragma once
 
-#include <string>
+#include <glm/glm.hpp>
 
 namespace components
 {
-namespace strings
+namespace sg
 {
-inline std::string replace_all(std::string str, const std::string &from, const std::string &to)
+struct PointLight
 {
-	size_t start_pos = 0;
-	while ((start_pos = str.find(from, start_pos)) != std::string::npos)
-	{
-		str.replace(start_pos, from.length(), to);
-		start_pos += to.length() - 1;
-	}
-	return str;
-}
+	glm::vec3 color{1.0f, 1.0f, 1.0f};
+	float     intensity{1.0f};
+	float     range{0.0f};
+};
 
-inline std::string trim_right(const std::string &str, const std::string &chars = "")
+struct DirectionalLight
 {
-	std::string result = str;
-	result.erase(str.find_last_not_of(chars) + 1);
-	return result;
-}
+	glm::vec3 direction{0.0f, 0.0f, -1.0f};
+	glm::vec3 color{1.0f, 1.0f, 1.0f};
+	float     intensity{1.0f};
+};
 
-inline std::string trim_left(const std::string &str, const std::string &chars = "")
+struct SpotLight
 {
-	std::string result = str;
-	result.erase(0, str.find_first_not_of(chars));
-	return result;
-}
-}        // namespace strings
+	glm::vec3 direction{0.0f, 0.0f, -1.0f};
+	glm::vec3 color{1.0f, 1.0f, 1.0f};
+	float     intensity{1.0f};
+	float     range{0.0f};
+	float     inner_cone_angle{0.0f};
+	float     outer_cone_angle{0.0f};
+};
+}        // namespace sg
 }        // namespace components

@@ -78,6 +78,7 @@ std::vector<std::string> FileSystem::enumerate_files(const std::string &folder_p
 std::vector<std::string> FileSystem::enumerate_files_recursive(const std::string &folder_path, const std::string &extension) const
 {
 	std::vector<std::string> folders = enumerate_folders_recursive(folder_path);
+	folders.push_back(folder_path);
 
 	std::vector<std::string> all_files;
 

@@ -26,6 +26,7 @@
 #include <string_view>
 
 #include <components/vfs/helpers.hpp>
+#include <components/common/strings.hpp>
 
 namespace components
 {
@@ -49,7 +50,7 @@ inline std::filesystem::path get_full_path(const std::filesystem::path &base, co
 
 StdFSFileSystem::StdFSFileSystem(const std::filesystem::path &base_path) :
     FileSystem{},
-    m_base_path{base_path}
+    m_base_path{strings::trim_right(base_path.string(), "/")}
 {
 }
 
@@ -73,7 +74,7 @@ bool StdFSFileSystem::folder_exists(const std::string &folder_path) const
 
 bool StdFSFileSystem::file_exists(const std::string &file_path) const
 {
-	return std::filesystem::is_regular_file(m_base_path / file_path);
+	return std::filesystem::is_regular_file(m_base_path / strings::trim_left(file_path, "/"));
 }
 
 std::vector<uint8_t> StdFSFileSystem::read_chunk(const std::string &file_path, size_t offset, size_t count) const
@@ -167,8 +168,7 @@ std::vector<std::string> StdFSFileSystem::enumerate_files(const std::string &dir
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
-		std::string_view view {entry.path().c_str()};
-		if (view.size() > 255)
+		if (entry.path().string().size() > 255)
 		{
 			// avoid processing large file paths
 			continue;
@@ -203,8 +203,7 @@ std::vector<std::string> StdFSFileSystem::enumerate_folders(const std::string &d
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
-		std::string_view view {entry.path().c_str()};
-		if (view.size() > 255)
+		if (entry.path().string().size() > 255)
 		{
 			// avoid processing large file paths
 			continue;

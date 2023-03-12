@@ -19,6 +19,7 @@ vkb__register_component(
   NAME window_headers
   LINK_LIBS
     vkb__events
+    vkb__common
     volk
   INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -65,8 +66,9 @@ if(VKB_TEST_GLFW)
   vkb__register_tests(
     NAME glfw_window_test
     SRC
-    tests/glfw.test.cpp
+      tests/glfw.test.cpp
     LIBS
-    vkb__glfw_window
+      vkb__glfw_window
+      vkb__common
   )
 endif()

@@ -2,7 +2,7 @@
 # Image Loader Headers
 vkb__register_component(
     NAME
-        image_loader_headers
+        asset_headers
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     LINK_LIBS
@@ -18,7 +18,7 @@ vkb__register_component(
     SRC
         src/images/stb.cpp
     LINK_LIBS
-        vkb__image_loader_headers
+        vkb__asset_headers
         stb
 )
 
@@ -29,7 +29,7 @@ vkb__register_component(
     SRC
         src/images/ktx.cpp
     LINK_LIBS
-        vkb__image_loader_headers
+        vkb__asset_headers
         ktx
 )
 
@@ -40,7 +40,7 @@ vkb__register_component(
     SRC
         src/images/astc.cpp
     LINK_LIBS
-        vkb__image_loader_headers
+        vkb__asset_headers
         astc
 )
 
@@ -51,7 +51,7 @@ vkb__register_component(
     INCLUDE_DIRS
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     LINK_LIBS
-        vkb__image_loader_headers
+        vkb__asset_headers
         vkb__stb_loader
         vkb__ktx_loader
         vkb__astc_loader
@@ -65,4 +65,30 @@ vkb__register_tests(
   LIBS
     vkb__image_loaders
     vkb__vfs
+)
+
+# gltf
+vkb__register_component(
+    NAME
+        gltf_loader
+    SRC
+        src/gltf/filesystem.cpp
+        src/gltf/model_loader.cpp
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/gltf
+    LINK_LIBS
+        vkb__asset_headers
+        vkb__vfs
+        vkb__scene_graph
+        vkb__common
+        tinygltf
+)
+
+vkb__register_tests(
+  NAME "gltf_loader_tests"
+  SRC
+    tests/gltf_loader.test.cpp
+  LIBS
+    vkb__gltf_loader
 )

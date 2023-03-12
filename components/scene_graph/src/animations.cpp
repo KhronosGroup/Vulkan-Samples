@@ -15,37 +15,21 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include <string>
+#include "components/scene_graph/components/animations.hpp"
 
 namespace components
 {
-namespace strings
+namespace sg
 {
-inline std::string replace_all(std::string str, const std::string &from, const std::string &to)
+namespace systems
 {
-	size_t start_pos = 0;
-	while ((start_pos = str.find(from, start_pos)) != std::string::npos)
-	{
-		str.replace(start_pos, from.length(), to);
-		start_pos += to.length() - 1;
-	}
-	return str;
+void step_node_animation_funcs(Registry &registry, float delta_time)
+{
 }
 
-inline std::string trim_right(const std::string &str, const std::string &chars = "")
+void step_animation(Registry &registry, float delta_time)
 {
-	std::string result = str;
-	result.erase(str.find_last_not_of(chars) + 1);
-	return result;
 }
-
-inline std::string trim_left(const std::string &str, const std::string &chars = "")
-{
-	std::string result = str;
-	result.erase(0, str.find_first_not_of(chars));
-	return result;
-}
-}        // namespace strings
+}        // namespace systems
+}        // namespace sg
 }        // namespace components

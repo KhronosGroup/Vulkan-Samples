@@ -54,12 +54,17 @@ VKBP_DISABLE_WARNINGS()
 #include <fmt/format.h>
 VKBP_ENABLE_WARNINGS()
 
-#define ERROR(message)       \
-	throw std::runtime_error \
-	{                        \
-		message              \
-	}
+#include <stdexcept>
 
-#define ERRORF(format_, ...) ERROR(fmt::format(format_, __VA_ARGS__))
+template <typename... Args>
+inline void ERRORF(const std::string &format, Args &&...args)
+{
+	throw std::runtime_error(fmt::format(format, std::forward<Args>(args)...));
+}
 
-#define NOT_IMPLEMENTED() ERROR("not implemented");
+inline void ERRORF(const std::string &message)
+{
+	throw std::runtime_error(message);
+}
+
+#define NOT_IMPLEMENTED() ERRORF("not implemented")

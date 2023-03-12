@@ -21,8 +21,12 @@
 #include <algorithm>
 #include <cassert>
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <ktx.h>
 #include <ktxvulkan.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace components
 {
