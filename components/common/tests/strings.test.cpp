@@ -15,7 +15,11 @@
  * limitations under the License.
  */
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <catch2/catch_test_macros.hpp>
+VKBP_ENABLE_WARNINGS()
 
 #include <components/common/strings.hpp>
 

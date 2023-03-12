@@ -59,3 +59,12 @@
 [submodule "third_party/re"]
 	path = third_party/re
 	url = https://github.com/google/re2
+[submodule "third_party/entt"]
+	path = third_party/entt
+	url = https://github.com/skypjack/entt
+[submodule "third_party/tracy"]
+	path = third_party/tracy
+	url = https://github.com/wolfpld/tracy
+[submodule "third_party/fmt"]
+	path = third_party/fmt
+	url = https://github.com/fmtlib/fmt

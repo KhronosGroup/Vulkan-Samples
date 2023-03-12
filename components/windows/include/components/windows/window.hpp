@@ -23,7 +23,11 @@
 
 #include <components/events/event_bus.hpp>
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <volk.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace components
 {

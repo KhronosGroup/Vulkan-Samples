@@ -17,7 +17,11 @@
 
 #pragma once
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <Windows.h>
+VKBP_ENABLE_WARNINGS()
 
 #include "components/platform/platform.hpp"
 

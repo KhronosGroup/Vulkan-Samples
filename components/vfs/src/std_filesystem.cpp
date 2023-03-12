@@ -23,8 +23,9 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <string_view>
 
-#include "components/vfs/helpers.hpp"
+#include <components/vfs/helpers.hpp>
 
 namespace components
 {
@@ -166,6 +167,13 @@ std::vector<std::string> StdFSFileSystem::enumerate_files(const std::string &dir
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
+		std::string_view view {entry.path().c_str()};
+		if (view.size() > 255)
+		{
+			// avoid processing large file paths
+			continue;
+		}
+
 		if (std::filesystem::is_regular_file(entry.status()))
 		{
 			// TODO: switching between std::path and std::string is inefficient
@@ -195,6 +203,13 @@ std::vector<std::string> StdFSFileSystem::enumerate_folders(const std::string &d
 
 	for (const auto &entry : std::filesystem::directory_iterator(full_path))
 	{
+		std::string_view view {entry.path().c_str()};
+		if (view.size() > 255)
+		{
+			// avoid processing large file paths
+			continue;
+		}
+
 		if (std::filesystem::is_directory(entry.status()))
 		{
 			// TODO: switching between std::path and std::string is inefficient

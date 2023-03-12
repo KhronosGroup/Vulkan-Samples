@@ -49,4 +49,5 @@ vkb__register_tests(
     tests/event_pipeline.test.cpp
   LIBS
     vkb__events
+    vkb__common
 )

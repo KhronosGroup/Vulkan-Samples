@@ -17,7 +17,11 @@
 
 #include "components/vfs/android.hpp"
 
+#include <components/common/error.hpp>
+
+VKBP_DISABLE_WARNINGS()
 #include <android/asset_manager.h>
+VKBP_ENABLE_WARNINGS()
 
 namespace components
 {

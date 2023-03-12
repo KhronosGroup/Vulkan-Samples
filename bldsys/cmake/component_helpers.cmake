@@ -54,13 +54,17 @@ function(vkb__register_component)
             target_include_directories("vkb__${TARGET_NAME}" PUBLIC ${TARGET_INCLUDE_DIRS})
         endif()
 
-        if(MSVC)
-            target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W4 /WX)
-        else()
-            target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
-        endif()
-
         target_compile_features("vkb__${TARGET_NAME}" PUBLIC cxx_std_17)
+
+        if(${VKB_WARNINGS_AS_ERRORS})
+            if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+                target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Werror)
+                # target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
+            elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+                target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W3 /WX)
+                # target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W4 /WX)
+            endif()
+        endif()
 
     else() # Create interface library
         message("ADDING INTERFACE: vkb__${TARGET_NAME}")
@@ -78,7 +82,7 @@ function(vkb__register_component)
         target_compile_features("vkb__${TARGET_NAME}" INTERFACE cxx_std_17)
     endif()
 
-    set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY FOLDER "components")
+    set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY FOLDER "components/${TARGET_NAME}")
 
     add_dependencies(vkb_components "vkb__${TARGET_NAME}")
 endfunction()

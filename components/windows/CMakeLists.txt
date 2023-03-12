@@ -31,6 +31,7 @@ vkb__register_component(
   src/headless.cpp
   LINK_LIBS
   vkb__window_headers
+  vkb__common
 )
 
 vkb__register_tests(
@@ -39,6 +40,7 @@ vkb__register_tests(
   tests/headless.test.cpp
   LIBS
   vkb__headless_window
+  vkb__common
 )
 
 if(DIRECT_TO_DISPLAY)
@@ -53,6 +55,7 @@ vkb__register_component(
   src/glfw.cpp
   LINK_LIBS
     vkb__window_headers
+    vkb__common
     glfw
 )
 

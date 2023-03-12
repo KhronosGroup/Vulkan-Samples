@@ -21,5 +21,5 @@ add_subdirectory(platform)
 add_subdirectory(events)
 add_subdirectory(windows)
 add_subdirectory(vfs)
-
 add_subdirectory(vulkan)
+add_subdirectory(assets)
