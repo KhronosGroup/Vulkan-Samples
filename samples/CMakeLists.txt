@@ -76,6 +76,7 @@ set(ORDER_LIST
     "descriptor_indexing"
     "portability"
     "vertex_dynamic_state"
+    "logic_op_dynamic_state"
 
     #Performance Samples
     "swapchain_images"
