@@ -23,10 +23,17 @@ namespace vkb
 {
 namespace core
 {
+class HPPComputePipeline;
 class HPPDevice;
+class HPPGraphicsPipeline;
 class HPPPipelineLayout;
 class HPPShaderModule;
 }        // namespace core
+
+namespace rendering
+{
+struct HPPAttachment;
+}
 
 /**
  * @brief facade class around vkb::ResourceCache, providing a vulkan.hpp-based interface
@@ -46,10 +53,38 @@ class HPPResourceCache : private vkb::ResourceCache
 	    vkb::ResourceCache(reinterpret_cast<vkb::Device &>(device))
 	{}
 
+	vkb::core::HPPComputePipeline &request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+	{
+		return reinterpret_cast<vkb::core::HPPComputePipeline &>(
+		    vkb::ResourceCache::request_compute_pipeline(reinterpret_cast<vkb::PipelineState &>(pipeline_state)));
+	}
+
+	vkb::core::HPPFramebuffer &request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass)
+	{
+		return reinterpret_cast<vkb::core::HPPFramebuffer &>(vkb::ResourceCache::request_framebuffer(reinterpret_cast<vkb::RenderTarget const &>(render_target),
+		                                                                                             reinterpret_cast<vkb::RenderPass const &>(render_pass)));
+	}
+
+	vkb::core::HPPGraphicsPipeline &request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
+	{
+		return reinterpret_cast<vkb::core::HPPGraphicsPipeline &>(
+		    vkb::ResourceCache::request_graphics_pipeline(reinterpret_cast<vkb::PipelineState &>(pipeline_state)));
+	}
+
 	vkb::core::HPPPipelineLayout &request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
 	{
 		return reinterpret_cast<vkb::core::HPPPipelineLayout &>(
 		    vkb::ResourceCache::request_pipeline_layout(reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules)));
+	}
+
+	vkb::core::HPPRenderPass &request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
+	                                              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
+	                                              const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
+	{
+		return reinterpret_cast<vkb::core::HPPRenderPass &>(
+		    vkb::ResourceCache::request_render_pass(reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
+		                                            reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
+		                                            reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses)));
 	}
 
 	vkb::core::HPPShaderModule &request_shader_module(vk::ShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {})
