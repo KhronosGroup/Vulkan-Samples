@@ -18,8 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "rendering/render_pipeline.h"
-#include "scene_graph/components/camera.h"
 
 class FragmentShaderBarycentric : public ApiVulkanSample
 {
