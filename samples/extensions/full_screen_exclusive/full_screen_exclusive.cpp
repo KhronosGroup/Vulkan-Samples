@@ -172,7 +172,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
 	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
-#ifdef VKB_VALIDATION_LAYERS
+#ifdef defined(VKB_DEBUG) || VKB_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
 	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
