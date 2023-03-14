@@ -493,7 +493,7 @@ void FullScreenExclusive::init_swapchain()
 	info.oldSwapchain       = old_swapchain;
 
 	VkResult result = vkCreateSwapchainKHR(context.device, &info, nullptr, &context.swapchain);
-	if(result == VK_ERROR_INITIALIZATION_FAILED)
+	if (result == VK_ERROR_INITIALIZATION_FAILED)
 	{
 		LOGE("this mode doesn't work with the current setup.")
 		abort();
