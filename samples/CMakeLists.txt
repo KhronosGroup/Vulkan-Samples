@@ -77,6 +77,7 @@ set(ORDER_LIST
     "portability"
     "vertex_dynamic_state"
     "extended_dynamic_state2"
+    "logic_op_dynamic_state"
 
     #Performance Samples
     "swapchain_images"

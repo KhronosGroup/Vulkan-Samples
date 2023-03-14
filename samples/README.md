@@ -287,6 +287,10 @@ Demonstrate how to use vertex input bindings and attribute descriptions dynamica
 <br/>
 Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
 
+### [Logic operations dynamic state](./extensions/logic_op_dynamic_state)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html) <br/>
+Demonstrate how to use logical operations dynamically, which can reduce the number of pipeline objects that are needed to be created or allow to change the pipeline state dynamically (change type of the logical operation).
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
