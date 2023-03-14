@@ -22,29 +22,27 @@
 #include "platform/platform.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type, uint64_t object, size_t location, int32_t message_code, const char *layer_prefix, const char *message, void *user_data)
+static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
+                                                     const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                     void                                       *user_data)
 {
-	(void) type;
-	(void) object;
-	(void) location;
-	(void) message_code;
 	(void) user_data;
 
-	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message)
+		LOGE("{} Validation Layer: Error: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
 	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message)
+		LOGE("{} Validation Layer: Warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
 	}
-	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
+	else if (message_type & VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT)
 	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message)
+		LOGI("{} Validation Layer: Performance warning: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
 	}
 	else
 	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message)
+		LOGI("{} Validation Layer: Information: {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
 	}
 	return VK_FALSE;
 }
@@ -144,7 +142,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	std::vector<const char *> active_instance_extensions(required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -172,7 +170,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	VK_CHECK(vkEnumerateInstanceLayerProperties(&instance_layer_count, supported_validation_layers.data()));
 	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
-#ifdef defined(VKB_DEBUG) || VKB_VALIDATION_LAYERS
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
 	std::vector<const char *> optimal_validation_layers = vkb::get_optimal_validation_layers(supported_validation_layers);
 	requested_validation_layers.insert(requested_validation_layers.end(), optimal_validation_layers.begin(), optimal_validation_layers.end());
@@ -204,11 +202,12 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	instance_info.ppEnabledLayerNames     = requested_validation_layers.data();
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
-	debug_report_create_info.flags                              = VK_DEBUG_REPORT_ERROR_BIT_EXT | VK_DEBUG_REPORT_WARNING_BIT_EXT;
-	debug_report_create_info.pfnCallback                        = debug_callback;
+	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
+	debug_utils_create_info.messageSeverity                    = VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT;
+	debug_utils_create_info.messageType                        = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+	debug_utils_create_info.pfnUserCallback                    = debug_callback;
 
-	instance_info.pNext = &debug_report_create_info;
+	instance_info.pNext = &debug_utils_create_info;
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -219,7 +218,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	volkLoadInstance(context.instance);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	VK_CHECK(vkCreateDebugReportCallbackEXT(context.instance, &debug_report_create_info, nullptr, &context.debug_callback));
+	VK_CHECK(vkCreateDebugUtilsMessengerEXT(context.instance, &debug_utils_create_info, nullptr, &context.debug_callback));
 #endif
 }
 
@@ -901,7 +900,7 @@ void FullScreenExclusive::teardown()
 
 	if (context.debug_callback != VK_NULL_HANDLE)
 	{
-		vkDestroyDebugReportCallbackEXT(context.instance, context.debug_callback, nullptr);
+		vkDestroyDebugUtilsMessengerEXT(context.instance, context.debug_callback, nullptr);
 		context.debug_callback = VK_NULL_HANDLE;
 	}
 

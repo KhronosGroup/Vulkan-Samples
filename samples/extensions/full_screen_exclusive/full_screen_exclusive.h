@@ -75,7 +75,7 @@ class FullScreenExclusive : public vkb::Application
 		VkRenderPass               render_pass     = VK_NULL_HANDLE;
 		VkPipeline                 pipeline        = VK_NULL_HANDLE;
 		VkPipelineLayout           pipeline_layout = VK_NULL_HANDLE;
-		VkDebugReportCallbackEXT   debug_callback  = VK_NULL_HANDLE;
+		VkDebugUtilsMessengerEXT   debug_callback  = VK_NULL_HANDLE;
 		std::vector<VkSemaphore>   recycled_semaphores{};
 		std::vector<PerFrame>      per_frame{};
 	};
