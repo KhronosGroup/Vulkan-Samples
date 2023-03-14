@@ -142,7 +142,7 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	std::vector<const char *> active_instance_extensions(required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
