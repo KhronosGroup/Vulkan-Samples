@@ -27,6 +27,8 @@ jobs:
           sudo apt install xorg-dev libglu1-mesa-dev
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
@@ -48,6 +50,8 @@ jobs:
           sudo apt install xorg-dev libglu1-mesa-dev
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
       - name: Configure
         run: cmake -H"." -B"build/ubuntu-latest-d2d" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DVKB_WSI_SELECTION=D2D
       - name: "Build Ubuntu in Release with VKB_WSI_SELECTION=D2D"
@@ -67,6 +71,8 @@ jobs:
           submodules: "recursive"
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
 
