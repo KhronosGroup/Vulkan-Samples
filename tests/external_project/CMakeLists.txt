@@ -15,6 +15,12 @@
 # limitations under the License.
 #
 
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+endif(CCACHE_FOUND)
+
+
 cmake_minimum_required(VERSION 3.16)
 
 project(external_project LANGUAGES C CXX)
