@@ -314,6 +314,7 @@ add_library(astc SHARED ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(astc PUBLIC stb)
 
 if(ANDROID)
     # native_app_glue
