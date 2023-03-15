@@ -1,4 +1,4 @@
-/* Copyright (c) 2021 Holochip Corporation
+/* Copyright (c) 2021-2023 Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ namespace
 struct QuickTimer
 {
 	using clock = std::chrono::high_resolution_clock;
-	const char *            name;
+	const char             *name;
 	const clock::time_point start;
 	bool                    print_on_exit;
 	explicit QuickTimer(const char *name_, bool print_on_exit_ = true) :
@@ -217,13 +217,13 @@ uint64_t RaytracingExtended::get_buffer_device_address(VkBuffer buffer)
 
 void RaytracingExtended::create_flame_model()
 {
-	flame_texture                   = load_texture("textures/generated_flame.ktx");
+	flame_texture                   = load_texture("textures/generated_flame.ktx", vkb::sg::Image::Color);
 	std::vector<glm::vec3> pts_     = {{0, 0, 0},
-                                   {1, 0, 0},
-                                   {1, 1, 0},
-                                   {0, 1, 0}};
+	                                   {1, 0, 0},
+	                                   {1, 1, 0},
+	                                   {0, 1, 0}};
 	std::vector<Triangle>  indices_ = {{0, 1, 2},
-                                      {0, 2, 3}};
+	                                   {0, 2, 3}};
 
 	std::vector<NewVertex> vertices;
 	for (auto &pt : pts_)
@@ -231,7 +231,7 @@ void RaytracingExtended::create_flame_model()
 		NewVertex vertex;
 		vertex.pos       = pt - glm::vec3(0.5f, 0.5f, 0.f);        // center the point
 		vertex.normal    = {0, 0, 1};
-		vertex.tex_coord = {float(pt.x), 1.f - float(pt.y)};
+		vertex.tex_coord = {static_cast<float>(pt.x), 1.f - static_cast<float>(pt.y)};
 		vertices.push_back(vertex);
 	}
 
@@ -618,7 +618,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
             return model_buffer.object_type == ObjectType::OBJECT_FLAME;
         });
 		ASSERT_LOG(iter != model_buffers.cend(), "Can't find flame object.")
-		auto &   model_buffer = *iter;
+		auto    &model_buffer = *iter;
 		uint32_t index        = std::distance(model_buffers.begin(), iter);
 		for (auto &&particle : flame_generator.particles)
 		{
@@ -645,7 +645,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
 
 #ifdef USE_FRAMEWORK_ACCELERATION_STRUCTURE
 	// Top Level AS with single instance
-	if (instance_uid == std::numeric_limits<uint64_t>::max())        //test if first time adding
+	if (instance_uid == std::numeric_limits<uint64_t>::max())        // test if first time adding
 	{
 		instance_uid = top_level_acceleration_structure->add_instance_geometry(instances_buffer, instances.size());
 	}
@@ -779,7 +779,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -947,13 +947,13 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 	{
 		for (uint32_t j = 0; j < grid_size; ++j)
 		{
-			const float x                                 = float(i) / float(grid_size);
-			const float y                                 = float(j) / float(grid_size);
+			const float x                                 = static_cast<float>(i) / static_cast<float>(grid_size);
+			const float y                                 = static_cast<float>(j) / static_cast<float>(grid_size);
 			const float lateral_scale                     = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
 			refraction_model[grid_size * i + j].normal    = {0.f, 0.f, 0.f};
 			refraction_model[grid_size * i + j].pos       = {y - 0.5f,
-                                                       2 * x - 1.f,
-                                                       lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
+			                                                 2 * x - 1.f,
+			                                                 lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
 			refraction_model[grid_size * i + j].tex_coord = glm::vec2{x, y};
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
@@ -1362,7 +1362,7 @@ bool RaytracingExtended::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 1.5f, 0.f));
 
@@ -1452,7 +1452,9 @@ void RaytracingExtended::draw()
 void RaytracingExtended::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	frame_count     = (frame_count + 1) % 60;
 	bool print_time = !frame_count;
 	auto time       = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::high_resolution_clock::now() - start);
@@ -1462,7 +1464,9 @@ void RaytracingExtended::render(float delta_time)
 	create_top_level_acceleration_structure(print_time);
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_extended()
@@ -1485,7 +1489,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 			for (auto &&sub_mesh : mesh->get_submeshes())
 			{
 				auto   material        = sub_mesh->get_material();
-				auto & textures        = material->textures;
+				auto  &textures        = material->textures;
 				size_t textureIndex    = std::numeric_limits<size_t>::max();
 				auto   baseTextureIter = textures.find("base_color_texture");
 				bool   is_vase         = false;
@@ -1493,7 +1497,9 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 				{
 					auto texture = baseTextureIter->second;
 					if (!texture)
+					{
 						continue;
+					}
 
 					const auto name             = texture->get_image()->get_name();
 					is_vase                     = (name.find("vase_dif.ktx") != std::basic_string<char>::npos);
@@ -1550,9 +1556,9 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 					memcpy(&tempBuffer[0], ptr, sz);
 					for (size_t i = 0; i < nTriangles; ++i)
 					{
-						model.triangles[i] = {uint32_t(tempBuffer[3 * i]),
-						                      uint32_t(tempBuffer[3 * i + 1]),
-						                      uint32_t(tempBuffer[3 * i + 2])};
+						model.triangles[i] = {static_cast<uint32_t>(tempBuffer[3 * i]),
+						                      static_cast<uint32_t>(tempBuffer[3 * i + 1]),
+						                      static_cast<uint32_t>(tempBuffer[3 * i + 2])};
 					}
 				}
 

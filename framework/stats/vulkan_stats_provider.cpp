@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Broadcom Inc. and Contributors
+/* Copyright (c) 2020-2023, Broadcom Inc. and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "common/error.h"
 #include "core/device.h"
 
 #include "core/command_buffer.h"
@@ -26,16 +25,18 @@
 
 namespace vkb
 {
-VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_stats,
+VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex>         &requested_stats,
                                          const CounterSamplingConfig &sampling_config,
-                                         RenderContext &              render_context) :
+                                         RenderContext               &render_context) :
     render_context(render_context)
 {
 	// Check all the Vulkan capabilities we require are present
 	if (!is_supported(sampling_config))
+	{
 		return;
+	}
 
-	Device &              device = render_context.get_device();
+	Device               &device = render_context.get_device();
 	const PhysicalDevice &gpu    = device.get_gpu();
 
 	has_timestamps   = gpu.get_properties().limits.timestampComputeAndGraphics;
@@ -50,7 +51,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	                                                      nullptr, nullptr);
 
 	if (count == 0)
+	{
 		return;        // No counters available
+	}
 
 	std::vector<VkPerformanceCounterKHR>            counters(count);
 	std::vector<VkPerformanceCounterDescriptionKHR> descs(count);
@@ -70,7 +73,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	// Every vendor has a different set of performance counters each
 	// with different names. Match them to the stats we want, where available.
 	if (!fill_vendor_data())
+	{
 		return;
+	}
 
 	bool performance_impact = false;
 
@@ -80,7 +85,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 		StatIndex index = s.first;
 
 		if (requested_stats.find(index) == requested_stats.end())
+		{
 			continue;        // We weren't asked for this stat
+		}
 
 		VendorStat &init      = s.second;
 		bool        found_ctr = false;
@@ -131,7 +138,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 		LOGW("The collection of performance counters may impact performance");
 
 	if (counter_indices.size() == 0)
+	{
 		return;        // No stats available
+	}
 
 	// Acquire the profiling lock, without which we can't collect stats
 	VkAcquireProfilingLockInfoKHR info{};
@@ -158,7 +167,9 @@ VulkanStatsProvider::VulkanStatsProvider(std::set<StatIndex> &        requested_
 	// from the requested set.
 	// Subsequent providers will then only look for things that aren't already supported.
 	for (const auto &s : stat_data)
+	{
 		requested_stats.erase(s.first);
+	}
 }
 
 VulkanStatsProvider::~VulkanStatsProvider()
@@ -194,7 +205,7 @@ bool VulkanStatsProvider::fill_vendor_data()
 		// clang-format on
 
 		// Override vendor-specific graph data
-		vendor_data.at(StatIndex::gpu_vertex_cycles).set_vendor_graph_data({"Vertex/Coord/User Cycles", "{:4.1f} M/s", float(1e-6)});
+		vendor_data.at(StatIndex::gpu_vertex_cycles).set_vendor_graph_data({"Vertex/Coord/User Cycles", "{:4.1f} M/s", static_cast<float>(1e-6)});
 		vendor_data.at(StatIndex::gpu_fragment_jobs).set_vendor_graph_data({"Render Jobs", "{:4.0f}/s"});
 
 		return true;
@@ -214,9 +225,9 @@ bool VulkanStatsProvider::fill_vendor_data()
 
 bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 {
-	Device &              device           = render_context.get_device();
+	Device               &device           = render_context.get_device();
 	const PhysicalDevice &gpu              = device.get_gpu();
-	uint32_t              num_framebuffers = uint32_t(render_context.get_render_frames().size());
+	uint32_t              num_framebuffers = static_cast<uint32_t>(render_context.get_render_frames().size());
 
 	// Now we know the available counters, we can build a query pool that will collect them.
 	// We will check that the counters can be collected in a single pass. Multi-pass would
@@ -224,7 +235,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 	VkQueryPoolPerformanceCreateInfoKHR perf_create_info{};
 	perf_create_info.sType             = VK_STRUCTURE_TYPE_QUERY_POOL_PERFORMANCE_CREATE_INFO_KHR;
 	perf_create_info.queueFamilyIndex  = queue_family_index;
-	perf_create_info.counterIndexCount = uint32_t(counter_indices.size());
+	perf_create_info.counterIndexCount = static_cast<uint32_t>(counter_indices.size());
 	perf_create_info.pCounterIndices   = counter_indices.data();
 
 	uint32_t passes_needed = gpu.get_queue_family_performance_query_passes(&perf_create_info);
@@ -275,13 +286,17 @@ bool VulkanStatsProvider::is_supported(const CounterSamplingConfig &sampling_con
 {
 	// Continuous sampling mode cannot be supported by VK_KHR_performance_query
 	if (sampling_config.mode == CounterSamplingMode::Continuous)
+	{
 		return false;
+	}
 
 	Device &device = render_context.get_device();
 
 	// The VK_KHR_performance_query must be available and enabled
 	if (!(device.is_enabled("VK_KHR_performance_query") && device.is_enabled("VK_EXT_host_query_reset")))
+	{
 		return false;
+	}
 
 	// Check the performance query features flag.
 	// Note: VK_KHR_get_physical_device_properties2 is a pre-requisite of VK_KHR_performance_query
@@ -295,7 +310,9 @@ bool VulkanStatsProvider::is_supported(const CounterSamplingConfig &sampling_con
 
 	vkGetPhysicalDeviceFeatures2(device.get_gpu().get_handle(), &device_features);
 	if (!perf_query_features.performanceCounterQueryPools)
+	{
 		return false;
+	}
 
 	return true;
 }
@@ -311,7 +328,9 @@ const StatGraphData &VulkanStatsProvider::get_graph_data(StatIndex index) const
 
 	const auto &data = vendor_data.find(index)->second;
 	if (data.has_vendor_graph_data)
+	{
 		return data.graph_data;
+	}
 
 	return default_graph_map[index];
 }
@@ -331,7 +350,9 @@ void VulkanStatsProvider::begin_sampling(CommandBuffer &cb)
 	}
 
 	if (query_pool)
-		cb.begin_query(*query_pool, active_frame_idx, VkQueryControlFlags(0));
+	{
+		cb.begin_query(*query_pool, active_frame_idx, static_cast<VkQueryControlFlags>(0));
+	}
 }
 
 void VulkanStatsProvider::end_sampling(CommandBuffer &cb)
@@ -366,17 +387,17 @@ static double get_counter_value(const VkPerformanceCounterResultKHR &result,
 	switch (storage)
 	{
 		case VK_PERFORMANCE_COUNTER_STORAGE_INT32_KHR:
-			return double(result.int32);
+			return static_cast<double>(result.int32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_INT64_KHR:
-			return double(result.int64);
+			return static_cast<double>(result.int64);
 		case VK_PERFORMANCE_COUNTER_STORAGE_UINT32_KHR:
-			return double(result.uint32);
+			return static_cast<double>(result.uint32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_UINT64_KHR:
-			return double(result.uint64);
+			return static_cast<double>(result.uint64);
 		case VK_PERFORMANCE_COUNTER_STORAGE_FLOAT32_KHR:
-			return double(result.float32);
+			return static_cast<double>(result.float32);
 		case VK_PERFORMANCE_COUNTER_STORAGE_FLOAT64_KHR:
-			return double(result.float64);
+			return (result.float64);
 		default:
 			assert(0);
 			return 0.0;
@@ -386,7 +407,9 @@ static double get_counter_value(const VkPerformanceCounterResultKHR &result,
 float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 {
 	if (!timestamp_pool)
+	{
 		return sw_delta_time;
+	}
 
 	float delta_time = sw_delta_time;
 
@@ -401,7 +424,7 @@ float VulkanStatsProvider::get_best_delta_time(float sw_delta_time) const
 	                                         VK_QUERY_RESULT_WAIT_BIT | VK_QUERY_RESULT_64_BIT);
 	if (r == VK_SUCCESS)
 	{
-		float elapsed_ns = timestamp_period * float(timestamps[1] - timestamps[0]);
+		float elapsed_ns = timestamp_period * static_cast<float>(timestamps[1] - timestamps[0]);
 		delta_time       = elapsed_ns * 0.000000001f;
 	}
 
@@ -412,7 +435,9 @@ StatsProvider::Counters VulkanStatsProvider::sample(float delta_time)
 {
 	Counters out;
 	if (!query_pool || queries_ready == 0)
+	{
 		return out;
+	}
 
 	uint32_t active_frame_idx = render_context.get_active_frame_index();
 
@@ -424,7 +449,9 @@ StatsProvider::Counters VulkanStatsProvider::sample(float delta_time)
 	                                     results.size() * sizeof(VkPerformanceCounterResultKHR),
 	                                     results.data(), stride, VK_QUERY_RESULT_WAIT_BIT);
 	if (r != VK_SUCCESS)
+	{
 		return out;
+	}
 
 	// Use timestamps to get a more accurate delta if available
 	delta_time = get_best_delta_time(delta_time);
@@ -456,9 +483,13 @@ StatsProvider::Counters VulkanStatsProvider::sample(float delta_time)
 		if (found_ctr && found_div)
 		{
 			if (stat_data[si].scaling == StatScaling::ByDeltaTime && delta_time != 0.0)
+			{
 				value /= delta_time;
+			}
 			else if (stat_data[si].scaling == StatScaling::ByCounter && divisor_value != 0.0)
+			{
 				value /= divisor_value;
+			}
 			out[si].result = value;
 		}
 	}

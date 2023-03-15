@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -70,7 +70,7 @@ void DescriptorIndexing::render(float delta_time)
 	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
 	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
 
-	VkViewport viewport = {0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f};
+	VkViewport viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
 
 	auto cmd         = draw_cmd_buffers[current_buffer];
@@ -84,9 +84,9 @@ void DescriptorIndexing::render(float delta_time)
 	render_pass_begin.renderArea.extent.height = height;
 	render_pass_begin.clearValueCount          = 2;
 	VkClearValue clears[2]                     = {};
-	clears[0].color.float32[0]                 = 0.2f;
-	clears[0].color.float32[1]                 = 0.3f;
-	clears[0].color.float32[2]                 = 0.4f;
+	clears[0].color.float32[0]                 = 0.033f;
+	clears[0].color.float32[1]                 = 0.073f;
+	clears[0].color.float32[2]                 = 0.133f;
 	render_pass_begin.pClearValues             = clears;
 	render_pass_begin.framebuffer              = framebuffers[current_buffer];
 
@@ -263,7 +263,7 @@ void DescriptorIndexing::create_pipelines()
 	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_VERTEX_BIT, sizeof(uint32_t), 0),
 	    vkb::initializers::push_constant_range(VK_SHADER_STAGE_FRAGMENT_BIT, sizeof(uint32_t), sizeof(uint32_t)),
 	};
-	layout_create_info.pushConstantRangeCount = uint32_t(ranges.size());
+	layout_create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
 	layout_create_info.pPushConstantRanges    = ranges.data();
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_create_info, nullptr, &pipelines.pipeline_layout));
 
@@ -316,6 +316,8 @@ void DescriptorIndexing::create_pipelines()
 DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3], unsigned image_seed)
 {
 	// Fairly basic setup, generate some random textures so we can visualize that we are sampling many different textures.
+	// Note: since we're creating the texture data ourselves, it will already be in linear colorspace so we set the format
+	// as unorm, not sRGB.
 	DescriptorIndexing::TestImage test_image;
 
 	VkImageCreateInfo image_info = vkb::initializers::image_create_info();
@@ -369,7 +371,7 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 
 			const auto float_to_unorm8 = [](float v) -> uint8_t {
 				v *= 255.0f;
-				int rounded = int(v + 0.5f);
+				int rounded = static_cast<int>(v + 0.5f);
 				if (rounded < 0)
 				{
 					return 0;
@@ -380,32 +382,36 @@ DescriptorIndexing::TestImage DescriptorIndexing::create_image(const float rgb[3
 				}
 				else
 				{
-					return uint8_t(rounded);
+					return static_cast<uint8_t>(rounded);
 				}
 			};
 
 			uint32_t pattern;
 			switch (image_seed & 3u)
 			{
-				default: {
+				default:
+				{
 					// Checkerboard
 					pattern = ((x >> 2u) ^ (y >> 2u)) & 1u;
 					break;
 				}
 
-				case 1: {
+				case 1:
+				{
 					// Horizontal stripes
 					pattern = (x >> 2u) & 1u;
 					break;
 				}
 
-				case 2: {
+				case 2:
+				{
 					// Vertical stripes
 					pattern = (y >> 2u) & 1u;
 					break;
 				}
 
-				case 3: {
+				case 3:
+				{
 					// Diagonal stripes
 					pattern = ((x + y) >> 2u) & 1u;
 					break;

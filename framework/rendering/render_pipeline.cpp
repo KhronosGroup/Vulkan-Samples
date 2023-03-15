@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -104,6 +104,12 @@ void RenderPipeline::draw(CommandBuffer &command_buffer, RenderTarget &render_ta
 		{
 			command_buffer.next_subpass();
 		}
+
+		if (subpass->get_debug_name().empty())
+		{
+			subpass->set_debug_name(fmt::format("RP subpass #{}", i));
+		}
+		ScopedDebugLabel subpass_debug_label{command_buffer, subpass->get_debug_name().c_str()};
 
 		subpass->draw(command_buffer);
 	}

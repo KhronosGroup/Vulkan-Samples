@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,36 +17,60 @@
 
 #pragma once
 
-#include <core/queue.h>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
+class HPPCommandBuffer;
+class HPPDevice;
+
 /**
- * @brief facade class around vkb::Queue, providing a vulkan.hpp-based interface
+ * @brief A wrapper class for vk::Queue
  *
- * See vkb::Queue for documentation
  */
-class HPPQueue : protected vkb::Queue
+class HPPQueue
 {
   public:
-	using vkb::Queue::get_family_index;
+	HPPQueue(HPPDevice &device, uint32_t family_index, vk::QueueFamilyProperties properties, vk::Bool32 can_present, uint32_t index);
 
-	vk::Queue get_handle() const
-	{
-		return vkb::Queue::get_handle();
-	}
+	HPPQueue(const HPPQueue &) = default;
 
-	vk::Result present(const vk::PresentInfoKHR &present_infos) const
-	{
-		return static_cast<vk::Result>(vkb::Queue::present(present_infos));
-	}
+	HPPQueue(HPPQueue &&other);
 
-	vk::Result wait_idle() const
-	{
-		return static_cast<vk::Result>(vkb::Queue::wait_idle());
-	}
+	HPPQueue &operator=(const HPPQueue &) = delete;
+
+	HPPQueue &operator=(HPPQueue &&) = delete;
+
+	const HPPDevice &get_device() const;
+
+	vk::Queue get_handle() const;
+
+	uint32_t get_family_index() const;
+
+	uint32_t get_index() const;
+
+	const vk::QueueFamilyProperties &get_properties() const;
+
+	vk::Bool32 support_present() const;
+
+	void submit(const HPPCommandBuffer &command_buffer, vk::Fence fence) const;
+
+	vk::Result present(const vk::PresentInfoKHR &present_infos) const;
+
+  private:
+	HPPDevice &device;
+
+	vk::Queue handle;
+
+	uint32_t family_index{0};
+
+	uint32_t index{0};
+
+	vk::Bool32 can_present = false;
+
+	vk::QueueFamilyProperties properties{};
 };
 }        // namespace core
 }        // namespace vkb

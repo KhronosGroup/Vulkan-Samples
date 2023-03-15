@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,8 +67,8 @@ inline VkImageType find_image_type(VkExtent3D extent)
 
 namespace core
 {
-Image::Image(Device const &        device,
-             const VkExtent3D &    extent,
+Image::Image(Device const         &device,
+             const VkExtent3D     &extent,
              VkFormat              format,
              VkImageUsageFlags     image_usage,
              VmaMemoryUsage        memory_usage,
@@ -78,8 +78,8 @@ Image::Image(Device const &        device,
              VkImageTiling         tiling,
              VkImageCreateFlags    flags,
              uint32_t              num_queue_families,
-             const uint32_t *      queue_families) :
-    device{device},
+             const uint32_t       *queue_families) :
+    VulkanResource{VK_NULL_HANDLE, &device},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
@@ -132,8 +132,7 @@ Image::Image(Device const &        device,
 }
 
 Image::Image(Device const &device, VkImage handle, const VkExtent3D &extent, VkFormat format, VkImageUsageFlags image_usage, VkSampleCountFlagBits sample_count) :
-    device{device},
-    handle{handle},
+    VulkanResource{handle, &device},
     type{find_image_type(extent)},
     extent{extent},
     format{format},
@@ -145,8 +144,7 @@ Image::Image(Device const &device, VkImage handle, const VkExtent3D &extent, VkF
 }
 
 Image::Image(Image &&other) :
-    device{other.device},
-    handle{other.handle},
+    VulkanResource{std::move(other)},
     memory{other.memory},
     type{other.type},
     extent{other.extent},
@@ -155,10 +153,10 @@ Image::Image(Image &&other) :
     usage{other.usage},
     tiling{other.tiling},
     subresource{other.subresource},
+    views(std::exchange(other.views, {})),
     mapped_data{other.mapped_data},
     mapped{other.mapped}
 {
-	other.handle      = VK_NULL_HANDLE;
 	other.memory      = VK_NULL_HANDLE;
 	other.mapped_data = nullptr;
 	other.mapped      = false;
@@ -175,18 +173,8 @@ Image::~Image()
 	if (handle != VK_NULL_HANDLE && memory != VK_NULL_HANDLE)
 	{
 		unmap();
-		vmaDestroyImage(device.get_memory_allocator(), handle, memory);
+		vmaDestroyImage(device->get_memory_allocator(), handle, memory);
 	}
-}
-
-Device const &Image::get_device()
-{
-	return device;
-}
-
-VkImage Image::get_handle() const
-{
-	return handle;
 }
 
 VmaAllocation Image::get_memory() const
@@ -202,7 +190,7 @@ uint8_t *Image::map()
 		{
 			LOGW("Mapping image memory that is not linear");
 		}
-		VK_CHECK(vmaMapMemory(device.get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
+		VK_CHECK(vmaMapMemory(device->get_memory_allocator(), memory, reinterpret_cast<void **>(&mapped_data)));
 		mapped = true;
 	}
 	return mapped_data;
@@ -212,7 +200,7 @@ void Image::unmap()
 {
 	if (mapped)
 	{
-		vmaUnmapMemory(device.get_memory_allocator(), memory);
+		vmaUnmapMemory(device->get_memory_allocator(), memory);
 		mapped_data = nullptr;
 		mapped      = false;
 	}

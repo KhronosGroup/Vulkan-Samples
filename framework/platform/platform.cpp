@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -184,10 +184,9 @@ void Platform::update()
 
 std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
 {
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain atleast one preffered surface format");
+	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
 
-	auto extent  = window->get_extent();
-	auto context = std::make_unique<RenderContext>(device, surface, extent.width, extent.height);
+	auto context = std::make_unique<RenderContext>(device, surface, *window);
 
 	context->set_surface_format_priority(surface_format_priority);
 
@@ -309,7 +308,7 @@ Application &Platform::get_app() const
 	return *active_app;
 }
 
-Window &Platform::get_window() const
+Window &Platform::get_window()
 {
 	return *window;
 }
@@ -410,7 +409,7 @@ void Platform::input_event(const InputEvent &input_event)
 void Platform::resize(uint32_t width, uint32_t height)
 {
 	auto extent = Window::Extent{std::max<uint32_t>(width, MIN_WINDOW_WIDTH), std::max<uint32_t>(height, MIN_WINDOW_HEIGHT)};
-	if (window)
+	if ((window) && (width > 0) && (height > 0))
 	{
 		auto actual_extent = window->resize(extent);
 
@@ -431,7 +430,7 @@ void Platform::resize(uint32_t width, uint32_t height)
 		}                               \
 	}
 
-void Platform::on_post_draw(RenderContext &context) const
+void Platform::on_post_draw(RenderContext &context)
 {
 	HOOK(Hook::PostDraw, on_post_draw(context));
 }

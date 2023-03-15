@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -52,7 +52,7 @@ namespace
 void upload_draw_data(ImDrawData *draw_data, const uint8_t *vertex_data, const uint8_t *index_data)
 {
 	ImDrawVert *vtx_dst = (ImDrawVert *) vertex_data;
-	ImDrawIdx * idx_dst = (ImDrawIdx *) index_data;
+	ImDrawIdx  *idx_dst = (ImDrawIdx *) index_data;
 
 	for (int n = 0; n < draw_data->CmdListsCount; n++)
 	{
@@ -106,6 +106,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	ImGuiStyle &style = ImGui::GetStyle();
 
 	// Color scheme
+	style.Colors[ImGuiCol_WindowBg]         = ImVec4(0.005f, 0.005f, 0.005f, 0.94f);
 	style.Colors[ImGuiCol_TitleBg]          = ImVec4(1.0f, 0.0f, 0.0f, 0.6f);
 	style.Colors[ImGuiCol_TitleBgActive]    = ImVec4(1.0f, 0.0f, 0.0f, 0.8f);
 	style.Colors[ImGuiCol_MenuBarBg]        = ImVec4(1.0f, 0.0f, 0.0f, 0.4f);
@@ -162,10 +163,14 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 
 	// Create target image for copy
 	VkExtent3D font_extent{to_u32(tex_width), to_u32(tex_height), 1u};
-	font_image      = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
-                                               VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                                               VMA_MEMORY_USAGE_GPU_ONLY);
+
+	font_image = std::make_unique<core::Image>(device, font_extent, VK_FORMAT_R8G8B8A8_UNORM,
+	                                           VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+	                                           VMA_MEMORY_USAGE_GPU_ONLY);
+	font_image->set_debug_name("GUI font image");
+
 	font_image_view = std::make_unique<core::ImageView>(*font_image, VK_IMAGE_VIEW_TYPE_2D);
+	font_image_view->set_debug_name("View on GUI font image");
 
 	// Upload font data into the vulkan image memory
 	{
@@ -247,11 +252,15 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	pipeline_layout = &device.get_resource_cache().request_pipeline_layout(shader_modules);
 
 	sampler = std::make_unique<core::Sampler>(device, sampler_info);
+	sampler->set_debug_name("GUI sampler");
 
 	if (explicit_update)
 	{
 		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
-		index_buffer  = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer->set_debug_name("GUI vertex buffer");
+
+		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), 1, VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer->set_debug_name("GUI index buffer");
 	}
 }
 
@@ -401,6 +410,7 @@ bool Gui::update_buffers()
 		vertex_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), vertex_buffer_size,
 		                                               VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
 		                                               VMA_MEMORY_USAGE_GPU_TO_CPU);
+		vertex_buffer->set_debug_name("GUI vertex buffer");
 	}
 
 	if ((index_buffer->get_handle() == VK_NULL_HANDLE) || (index_buffer_size != last_index_buffer_size))
@@ -412,6 +422,7 @@ bool Gui::update_buffers()
 		index_buffer = std::make_unique<core::Buffer>(sample.get_render_context().get_device(), index_buffer_size,
 		                                              VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 		                                              VMA_MEMORY_USAGE_GPU_TO_CPU);
+		index_buffer->set_debug_name("GUI index buffer");
 	}
 
 	// Upload data
@@ -479,6 +490,8 @@ void Gui::draw(CommandBuffer &command_buffer)
 	{
 		return;
 	}
+
+	ScopedDebugLabel debug_label{command_buffer, "GUI"};
 
 	// Vertex input state
 	VkVertexInputBindingDescription vertex_input_binding{};
@@ -642,7 +655,7 @@ void Gui::draw(VkCommandBuffer command_buffer)
 		return;
 	}
 
-	auto &      io            = ImGui::GetIO();
+	auto       &io            = ImGui::GetIO();
 	ImDrawData *draw_data     = ImGui::GetDrawData();
 	int32_t     vertex_offset = 0;
 	int32_t     index_offset  = 0;
@@ -738,7 +751,9 @@ bool Gui::is_debug_view_active() const
 Gui::StatsView::StatsView(const Stats *stats)
 {
 	if (stats == nullptr)
+	{
 		return;
+	}
 
 	// Request graph data information for each stat and record it in graph_map
 	const std::set<StatIndex> &indices = stats->get_requested_stats();
@@ -915,10 +930,10 @@ void Gui::show_stats(const Stats &stats)
 		assert(pr != stats_view.graph_map.end() && "StatIndex not implemented in gui graph_map");
 
 		// Draw graph
-		auto &      graph_data     = pr->second;
+		auto       &graph_data     = pr->second;
 		const auto &graph_elements = stats.get_data(stat_index);
 		float       graph_min      = 0.0f;
-		float &     graph_max      = graph_data.max_value;
+		float      &graph_max      = graph_data.max_value;
 
 		if (!graph_data.has_fixed_max)
 		{

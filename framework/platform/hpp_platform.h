@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,6 +18,9 @@
 #pragma once
 
 #include <platform/platform.h>
+
+#include <core/hpp_device.h>
+#include <platform/hpp_window.h>
 #include <rendering/hpp_render_context.h>
 
 namespace vkb
@@ -29,10 +32,44 @@ namespace platform
  *
  * See vkb::Platform for documentation
  */
-class HPPPlatform : protected vkb::Platform
+class HPPPlatform : private vkb::Platform
 {
   public:
-	void on_post_draw(vkb::rendering::HPPRenderContext &context) const
+	using vkb::Platform::get_surface_extension;
+
+	std::unique_ptr<vkb::rendering::HPPRenderContext>
+	    create_render_context(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const std::vector<vk::SurfaceFormatKHR> &surface_format_priority) const
+	{
+		assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
+
+		auto context = std::make_unique<vkb::rendering::HPPRenderContext>(device, surface, reinterpret_cast<vkb::platform::HPPWindow const &>(*window));
+
+		context->set_surface_format_priority(surface_format_priority);
+
+		context->request_image_format(surface_format_priority[0].format);
+
+		context->set_present_mode_priority({vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate});
+
+		switch (window_properties.vsync)
+		{
+			case Window::Vsync::ON:
+				context->request_present_mode(vk::PresentModeKHR::eFifo);
+				break;
+			case Window::Vsync::OFF:
+			default:
+				context->request_present_mode(vk::PresentModeKHR::eMailbox);
+				break;
+		}
+
+		return std::move(context);
+	}
+
+	vkb::platform::HPPWindow &get_window()
+	{
+		return reinterpret_cast<vkb::platform::HPPWindow &>(vkb::Platform::get_window());
+	}
+
+	void on_post_draw(vkb::rendering::HPPRenderContext &context)
 	{
 		vkb::Platform::on_post_draw(reinterpret_cast<vkb::RenderContext &>(context));
 	}

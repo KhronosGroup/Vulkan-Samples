@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -38,6 +38,12 @@ enum BufferAllocationStrategy
 {
 	OneAllocationPerBuffer,
 	MultipleAllocationsPerBuffer
+};
+
+enum DescriptorManagementStrategy
+{
+	StoreInCache,
+	CreateDirectly
 };
 
 /**
@@ -117,10 +123,11 @@ class RenderFrame
 	                                      VkCommandBufferLevel     level        = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
 	                                      size_t                   thread_index = 0);
 
-	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
-	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                      const BindingMap<VkDescriptorImageInfo> & image_infos,
-	                                      size_t                                    thread_index = 0);
+	VkDescriptorSet request_descriptor_set(const DescriptorSetLayout &               descriptor_set_layout,
+	                                       const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
+	                                       const BindingMap<VkDescriptorImageInfo> & image_infos,
+	                                       bool                                      update_after_bind,
+	                                       size_t                                    thread_index = 0);
 
 	void clear_descriptors();
 
@@ -129,6 +136,12 @@ class RenderFrame
 	 * @param new_strategy The new buffer allocation strategy
 	 */
 	void set_buffer_allocation_strategy(BufferAllocationStrategy new_strategy);
+
+	/**
+	 * @brief Sets a new descriptor set management strategy
+	 * @param new_strategy The new descriptor set management strategy
+	 */
+	void set_descriptor_management_strategy(DescriptorManagementStrategy new_strategy);
 
 	/**
 	 * @param usage Usage of the buffer
@@ -172,8 +185,11 @@ class RenderFrame
 
 	std::unique_ptr<RenderTarget> swapchain_render_target;
 
-	BufferAllocationStrategy buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
+	BufferAllocationStrategy     buffer_allocation_strategy{BufferAllocationStrategy::MultipleAllocationsPerBuffer};
+	DescriptorManagementStrategy descriptor_management_strategy{DescriptorManagementStrategy::StoreInCache};
 
 	std::map<VkBufferUsageFlags, std::vector<std::pair<BufferPool, BufferBlock *>>> buffer_pools;
+
+	static std::vector<uint32_t> collect_bindings_to_update(const DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos);
 };
 }        // namespace vkb

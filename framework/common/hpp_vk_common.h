@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,85 +17,118 @@
 
 #pragma once
 
-#include <common/vk_common.h>
-#include <vulkan/vulkan.hpp>
+#include "common/vk_common.h"
+
+#include "common/logging.h"
+#include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
 namespace common
 {
 /**
- * @brief facade helper functions around the functions in common/vk_commmon, providing a vulkan.hpp-based interface
+ * @brief facade helper functions and structs around the functions and structs in common/vk_common, providing a vulkan.hpp-based interface
  */
-vk::Format get_suitable_depth_format(vk::PhysicalDevice             physical_device,
-                                     bool                           depth_only                 = false,
-                                     const std::vector<vk::Format> &depth_format_priority_list = {
-                                         vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
+struct HPPImageMemoryBarrier
 {
-	std::vector<VkFormat> dfpl;
-	dfpl.reserve(depth_format_priority_list.size());
-	for (auto const &format : depth_format_priority_list)
-	{
-		dfpl.push_back(static_cast<VkFormat>(format));
-	}
-	return static_cast<vk::Format>(vkb::get_suitable_depth_format(physical_device, depth_only, dfpl));
+	vk::PipelineStageFlags src_stage_mask = vk::PipelineStageFlagBits::eBottomOfPipe;
+	vk::PipelineStageFlags dst_stage_mask = vk::PipelineStageFlagBits::eTopOfPipe;
+	vk::AccessFlags        src_access_mask;
+	vk::AccessFlags        dst_access_mask;
+	vk::ImageLayout        old_layout       = vk::ImageLayout::eUndefined;
+	vk::ImageLayout        new_layout       = vk::ImageLayout::eUndefined;
+	uint32_t               old_queue_family = VK_QUEUE_FAMILY_IGNORED;
+	uint32_t               new_queue_family = VK_QUEUE_FAMILY_IGNORED;
+};
+
+inline int32_t get_bits_per_pixel(vk::Format format)
+{
+	return vkb::get_bits_per_pixel(static_cast<VkFormat>(format));
 }
 
-bool is_depth_only_format(vk::Format format)
+inline vk::Format get_suitable_depth_format(vk::PhysicalDevice             physical_device,
+                                            bool                           depth_only                 = false,
+                                            const std::vector<vk::Format> &depth_format_priority_list = {
+                                                vk::Format::eD32Sfloat, vk::Format::eD24UnormS8Uint, vk::Format::eD16Unorm})
 {
-	return format == vk::Format::eD16Unorm || format == vk::Format::eD32Sfloat;
+	return static_cast<vk::Format>(
+	    vkb::get_suitable_depth_format(physical_device, depth_only, reinterpret_cast<std::vector<VkFormat> const &>(depth_format_priority_list)));
 }
 
-bool is_depth_stencil_format(vk::Format format)
+inline bool is_depth_only_format(vk::Format format)
 {
-	return format == vk::Format::eD16UnormS8Uint || format == vk::Format::eD24UnormS8Uint || format == vk::Format::eD32SfloatS8Uint ||
-	       is_depth_only_format(format);
+	return vkb::is_depth_only_format(static_cast<VkFormat>(format));
 }
 
-vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
+inline bool is_depth_stencil_format(vk::Format format)
+{
+	return vkb::is_depth_stencil_format(static_cast<VkFormat>(format));
+}
+
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
 {
 	return vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage));
 }
 
-vk::ImageLayout map_descriptor_type_to_image_layout(vk::DescriptorType descriptor_type, vk::Format format)
-{
-	switch (descriptor_type)
-	{
-		case vk::DescriptorType::eCombinedImageSampler:
-		case vk::DescriptorType::eInputAttachment:
-			if (is_depth_stencil_format(format))
-			{
-				return vk::ImageLayout::eDepthStencilReadOnlyOptimal;
-			}
-			else
-			{
-				return vk::ImageLayout::eShaderReadOnlyOptimal;
-			}
-			break;
-		case vk::DescriptorType::eStorageImage:
-			return vk::ImageLayout::eGeneral;
-			break;
-		default:
-			return vk::ImageLayout::eUndefined;
-			break;
-	}
-}
-
-void set_image_layout(vk::CommandBuffer         command_buffer,
-                      vk::Image                 image,
-                      vk::ImageLayout           old_layout,
-                      vk::ImageLayout           new_layout,
-                      vk::ImageSubresourceRange subresource_range,
-                      vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
-                      vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
+inline void set_image_layout(vk::CommandBuffer         command_buffer,
+                             vk::Image                 image,
+                             vk::ImageLayout           old_layout,
+                             vk::ImageLayout           new_layout,
+                             vk::ImageSubresourceRange subresource_range,
+                             vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
+                             vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
 {
 	vkb::set_image_layout(command_buffer,
 	                      image,
 	                      static_cast<VkImageLayout>(old_layout),
 	                      static_cast<VkImageLayout>(new_layout),
-	                      subresource_range,
+	                      static_cast<VkImageSubresourceRange>(subresource_range),
 	                      static_cast<VkPipelineStageFlags>(src_mask),
 	                      static_cast<VkPipelineStageFlags>(dst_mask));
+}
+
+// helper functions not backed by vk_common.h
+inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
+{
+#if defined(ANDROID)
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, 1, &descriptor_set_layout);
+#else
+	vk::DescriptorSetAllocateInfo descriptor_set_allocate_info(descriptor_pool, descriptor_set_layout);
+#endif
+	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
+}
+
+inline vk::PipelineLayout create_pipeline_layout(vk::Device device, vk::DescriptorSetLayout descriptor_set_layout)
+{
+#if defined(ANDROID)
+	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
+#else
+	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
+#endif
+	return device.createPipelineLayout(pipeline_layout_create_info);
+}
+
+inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
+{
+	// Submit command_buffer
+	vk::SubmitInfo submit_info(nullptr, {}, command_buffers, semaphores);
+
+	// Create fence to ensure that command_buffer has finished executing
+	vk::Fence fence = device.createFence({});
+
+	// Submit to the queue
+	queue.submit(submit_info, fence);
+
+	// Wait for the fence to signal that command_buffer has finished executing
+	vk::Result result = device.waitForFences(fence, true, DEFAULT_FENCE_TIMEOUT);
+	if (result != vk::Result::eSuccess)
+	{
+		LOGE("Vulkan error on waitForFences: {}", vk::to_string(result));
+		abort();
+	}
+
+	// Destroy the fence
+	device.destroyFence(fence);
 }
 
 }        // namespace common

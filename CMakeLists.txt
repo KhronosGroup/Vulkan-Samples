@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2021, Arm Limited and Contributors
+# Copyright (c) 2020-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 project(vulkan_samples)
 
@@ -26,18 +26,6 @@ file(MAKE_DIRECTORY output)
 list(APPEND CMAKE_MODULE_PATH
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake
     ${CMAKE_CURRENT_SOURCE_DIR}/bldsys/cmake/module)
-
-# Precompiled header macro. Parameters are source file list and filename for pch cpp file.
-macro(vulkan_samples_pch SRCS PCHCPP)
-  if(MSVC AND CMAKE_GENERATOR MATCHES "^Visual Studio")
-    set(PCH_NAME "$(IntDir)\\pch.pch")
-    # make source files use/depend on PCH_NAME
-    set_source_files_properties(${${SRCS}} PROPERTIES COMPILE_FLAGS "/Yupch.h /FIpch.h /Fp${PCH_NAME} /Zm300" OBJECT_DEPENDS "${PCH_NAME}")
-    # make PCHCPP file compile and generate PCH_NAME
-    set_source_files_properties(${PCHCPP} PROPERTIES COMPILE_FLAGS "/Ycpch.h /Fp${PCH_NAME} /Zm300" OBJECT_OUTPUTS "${PCH_NAME}")
-    list(APPEND ${SRCS} "${PCHCPP}")
-  endif()
-endmacro(vulkan_samples_pch)
 
 include(utils)
 include(global_options)

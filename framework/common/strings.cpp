@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -486,7 +486,7 @@ const std::string to_string(VkImageUsageFlagBits image_usage)
 	}
 }
 
-const std::string to_string(VkExtent2D extent)
+std::string to_string(VkExtent2D extent)
 {
 	return fmt::format("{}x{}", extent.width, extent.height);
 }

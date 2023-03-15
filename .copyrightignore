@@ -10,7 +10,10 @@
 .jar
 doxyfile
 build.gradle.in
+app.build.gradle.in
 settings.gradle.in
+gradle.properties.in
+local.properties.in
 gradlew
 gradlew.bat
 gradle.properties.in

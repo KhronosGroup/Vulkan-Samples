@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,19 +17,16 @@
 
 #pragma once
 
-#include <core/hpp_device.h>
-#include <vulkan/vulkan.hpp>
+#include "hpp_vulkan_resource.h"
+
+#include <unordered_map>
+#include <vk_mem_alloc.h>
 
 namespace vkb
 {
 namespace core
 {
-/**
- * @brief vulkan.hpp version of the vkb::core::Buffer class
- *
- * See vkb::core::Buffer for documentation
- */
-class HPPBuffer
+class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 {
   public:
 	/**
@@ -39,31 +36,41 @@ class HPPBuffer
 	 * @param buffer_usage The usage flags for the VkBuffer
 	 * @param memory_usage The memory usage of the buffer
 	 * @param flags The allocation create flags
+	 * @param queue_family_indices optional queue family indices
 	 */
-	HPPBuffer(vkb::core::HPPDevice const &device,
-	          vk::DeviceSize              size,
-	          vk::BufferUsageFlags        buffer_usage,
-	          VmaMemoryUsage              memory_usage,
-	          VmaAllocationCreateFlags    flags = VMA_ALLOCATION_CREATE_MAPPED_BIT);
+	HPPBuffer(vkb::core::HPPDevice const  &device,
+	          vk::DeviceSize               size,
+	          vk::BufferUsageFlags         buffer_usage,
+	          VmaMemoryUsage               memory_usage,
+	          VmaAllocationCreateFlags     flags                = VMA_ALLOCATION_CREATE_MAPPED_BIT,
+	          const std::vector<uint32_t> &queue_family_indices = {});
 
 	HPPBuffer(const HPPBuffer &) = delete;
-	HPPBuffer(HPPBuffer &&rhs);
+	HPPBuffer(HPPBuffer &&other);
+
 	~HPPBuffer();
 
 	HPPBuffer &operator=(const HPPBuffer &) = delete;
-	HPPBuffer &operator                     =(HPPBuffer &&rhs);
+	HPPBuffer &operator=(HPPBuffer &&)      = delete;
+
+	VmaAllocation  get_allocation() const;
+	const uint8_t *get_data() const;
+	VkDeviceMemory get_memory() const;
 
 	/**
-	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
+	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)
 	 */
-	void flush() const;
-
-	vk::Buffer get_handle() const;
+	uint64_t get_device_address() const;
 
 	/**
 	 * @return The size of the buffer
 	 */
 	vk::DeviceSize get_size() const;
+
+	/**
+	 * @brief Flushes memory if it is HOST_VISIBLE and not HOST_COHERENT
+	 */
+	void flush();
 
 	/**
 	 * @brief Maps vulkan memory if it isn't already mapped to an host visible address
@@ -82,7 +89,7 @@ class HPPBuffer
 	 * @param size The amount of bytes to copy
 	 * @param offset The offset to start the copying into the mapped data
 	 */
-	void update(uint8_t const *data, size_t size, size_t offset = 0);
+	void update(const uint8_t *data, size_t size, size_t offset = 0);
 
 	/**
 	 * @brief Converts any non byte data into bytes and then updates the buffer
@@ -111,15 +118,12 @@ class HPPBuffer
 	}
 
   private:
-	void destroy();
-
-  private:
-	vk::Buffer           handle = nullptr;
-	vk::BufferCreateInfo buffer_create_info;
-	uint8_t *            mapped_data   = nullptr;
-	bool                 persistent    = false;        /// Whether the buffer is persistently mapped or not
-	VmaAllocation        vmaAllocation = VK_NULL_HANDLE;
-	VmaAllocator         vmaAllocator  = VK_NULL_HANDLE;
+	VmaAllocation    allocation  = VK_NULL_HANDLE;
+	vk::DeviceMemory memory      = nullptr;
+	vk::DeviceSize   size        = 0;
+	uint8_t         *mapped_data = nullptr;
+	bool             persistent  = false;        // Whether the buffer is persistently mapped or not
+	bool             mapped      = false;        // Whether the buffer has been mapped with vmaMapMemory
 };
 }        // namespace core
 }        // namespace vkb

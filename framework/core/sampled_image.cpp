@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,7 +84,8 @@ const core::ImageView &SampledImage::get_image_view(const RenderTarget &default_
 	else
 	{
 		const auto &target = render_target ? *render_target : default_target;
-		return target.get_views().at(target_attachment);
+		assert(target_attachment < target.get_views().size());
+		return target.get_views()[target_attachment];
 	}
 }
 

@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -39,7 +39,7 @@ if( NOT NSIGHT_TEGRA_VERSION )
 	message(FATAL_ERROR "Engine requires Android Nsight Tegra to be installed in order to build Android platform.")
 endif()
 
-file(TO_CMAKE_PATH $ENV{ANDROID_NDK_ROOT} CMAKE_ANDROID_NDK)
+file(TO_CMAKE_PATH $ENV{ANDROID_NDK_HOME} CMAKE_ANDROID_NDK)
 if(NOT CMAKE_ANDROID_NDK)
 	message(FATAL_ERROR "Engine requires CMAKE_ANDROID_NDK environment variable to point to your Android NDK.")
 endif()

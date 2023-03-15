@@ -1,4 +1,4 @@
-# Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -23,7 +23,7 @@ add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Arm"
-    NAME "Hello Triangle HPP"
+    NAME "HPP Hello Triangle"
     DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
     SHADER_FILES_GLSL
         "triangle.vert"

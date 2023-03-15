@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -224,7 +224,7 @@ set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_
 # glslang
 option(ENABLE_SPVREMAPPER OFF)
 option(ENABLE_GLSLANG_BINARIES OFF)
-option(ENABLE_HLSL OFF)
+set(ENABLE_HLSL ON)
 option(ENABLE_OPT OFF)
 option(BUILD_TESTING OFF)
 option(BUILD_EXTERNAL OFF)
@@ -238,7 +238,7 @@ if (NOT TARGET glslang-default-resource-limits)
     set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
     target_include_directories(glslang-default-resource-limits
-                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
+            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 endif()
 
 if(NOT MSVC)

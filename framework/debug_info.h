@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -171,7 +171,7 @@ struct MinMax final : public Dynamic<T>
 class DebugInfo
 {
   public:
-	std::vector<std::unique_ptr<field::Base>> &get_fields();
+	const std::vector<std::unique_ptr<field::Base>> &get_fields() const;
 
 	/**
 	 * @brief   Calculates the field label with the most amount of characters
@@ -185,7 +185,7 @@ class DebugInfo
 	 * Replaces the field if it is of type static.
 	 */
 	template <template <typename> class C, typename T, typename... A>
-	void insert(const std::string &label, A &&... args)
+	void insert(const std::string &label, A &&...args)
 	{
 		static_assert(std::is_base_of<field::Base, C<T>>::value, "C is not a type of field::Base.");
 

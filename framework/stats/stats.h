@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2020-2021, Broadcom Inc.
+/* Copyright (c) 2018-2022, Arm Limited and Contributors
+ * Copyright (c) 2020-2022, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,8 +25,6 @@
 #include <set>
 #include <vector>
 
-#include "common/error.h"
-
 #include "stats_common.h"
 #include "stats_provider.h"
 #include "timer.h"
@@ -48,7 +46,7 @@ class Stats
 	 * @param render_context The RenderContext for this sample
 	 * @param buffer_size Size of the circular buffers
 	 */
-	Stats(RenderContext &render_context, size_t buffer_size = 16);
+	explicit Stats(RenderContext &render_context, size_t buffer_size = 16);
 
 	/**
 	 * @brief Destroys the Stats object

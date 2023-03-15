@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -395,7 +395,7 @@ void Subpasses::draw_renderpasses(vkb::CommandBuffer &command_buffer, vkb::Rende
 	// Memory barriers needed
 	for (size_t i = 1; i < render_target.get_views().size(); ++i)
 	{
-		auto &view = render_target.get_views().at(i);
+		auto &view = render_target.get_views()[i];
 
 		vkb::ImageMemoryBarrier barrier;
 

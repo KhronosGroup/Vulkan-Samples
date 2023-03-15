@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2021, Arm Limited and Contributors
+ Copyright (c) 2019-2022, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -17,7 +17,7 @@
 
  ]]
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.16)
 
 # Snake case to Pascal case helper
 

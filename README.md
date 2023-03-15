@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -23,6 +23,7 @@
 
 ## Contents <!-- omit in toc -->
 
+- [Renaming Default Branch](#renaming-default-branch)
 - [Introduction](#introduction)
   - [Goals](#goals)
 - [Samples](#samples)
@@ -36,6 +37,15 @@
   - [Trademarks](#trademarks)
 - [Contributions](#contributions)
 - [Related resources](#related-resources)
+
+## Renaming Default Branch
+
+We have recently transitioned the repository to use the `main` branch by default. All remote git usage is handled automatically. To update your local repository to use main please use the following commands
+
+> git branch -m master main
+> git fetch origin
+> git branch -u origin/main main
+> git remote set-head origin -a
 
 ## Introduction
 
@@ -69,6 +79,8 @@ Additionally you may find the following links useful:
   - [Memory limits](./docs/memory_limits.md)
 
 ## Setup
+
+Prerequisites: [git](https://git-scm.com/downloads) with [git large file storage (git-lfs)](https://docs.github.com/en/repositories/working-with-files/managing-large-files/installing-git-large-file-storage).
 
 Clone the repo with submodules using the following command:
 
@@ -111,7 +123,7 @@ vulkan_samples test bonza --headless
 vulkan_samples batch --category performance --duration 10
 
 # Run Swapchain Images sample on an Android device
-adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -es "cmd" "sample swapchain_images"
+adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_samples.SampleLauncherActivity -e sample swapchain_images
 ```
 
 ## Tests
@@ -133,7 +145,6 @@ This project has some third-party dependencies, each of which may have independe
 - [glm](https://github.com/g-truc/glm): OpenGL Mathematics
 - [glslang](https://github.com/KhronosGroup/glslang): Shader front end and validator
 - [dear imgui](https://github.com/ocornut/imgui): Immediate Mode Graphical User Interface
-  - [dear imgui shaders](https://github.com/SaschaWillems/Vulkan/tree/master/data/shaders/imgui): GLSL shaders for dear imgui
 - [HWCPipe](https://github.com/ARM-software/HWCPipe): Interface to mobile Hardware Counters
 - [KTX-Software](https://github.com/KhronosGroup/KTX-Software): Khronos Texture Library and Tools
 - [spdlog](https://github.com/gabime/spdlog): Fast C++ logging library
@@ -159,5 +170,5 @@ Also see [CONTRIBUTING](CONTRIBUTING.md) for contribution guidelines.
 
 ## Related resources
 
-- [Mali GPU Best Practices](https://developer.arm.com/solutions/graphics/developer-guides/advanced-guides/mali-gpu-best-practices): A document with recommendations for efficient API usage
+- [Mali GPU Best Practices](https://developer.arm.com/documentation/101897/latest/): A document with recommendations for efficient API usage
 - [PerfDoc](https://github.com/ARM-software/perfdoc): A Vulkan layer which aims to validate applications against Mali GPU Best Practices

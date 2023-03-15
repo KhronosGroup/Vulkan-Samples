@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,13 +55,14 @@ void TextureMipMapGeneration::request_gpu_features(vkb::PhysicalDevice &gpu)
 }
 
 /*
-	Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
+    Load the base texture containing only the first mip level and generate the whole mip-chain at runtime
 */
 void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_name)
 {
-	VkFormat format = VK_FORMAT_R8G8B8A8_UNORM;
+	// ktx1 doesn't know whether the content is sRGB or linear, but most tools save in sRGB, so assume that.
+	VkFormat format = VK_FORMAT_R8G8B8A8_SRGB;
 
-	ktxTexture *   ktx_texture;
+	ktxTexture    *ktx_texture;
 	KTX_error_code result;
 
 	result = ktxTexture_CreateFromNamedFile(file_name.c_str(), KTX_TEXTURE_CREATE_LOAD_IMAGE_DATA_BIT, &ktx_texture);
@@ -196,16 +197,16 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 		image_blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		image_blit.srcSubresource.layerCount = 1;
 		image_blit.srcSubresource.mipLevel   = i - 1;
-		image_blit.srcOffsets[1].x           = int32_t(texture.width >> (i - 1));
-		image_blit.srcOffsets[1].y           = int32_t(texture.height >> (i - 1));
+		image_blit.srcOffsets[1].x           = static_cast<int32_t>(texture.width >> (i - 1));
+		image_blit.srcOffsets[1].y           = static_cast<int32_t>(texture.height >> (i - 1));
 		image_blit.srcOffsets[1].z           = 1;
 
 		// Destination
 		image_blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
 		image_blit.dstSubresource.layerCount = 1;
 		image_blit.dstSubresource.mipLevel   = i;
-		image_blit.dstOffsets[1].x           = int32_t(texture.width >> i);
-		image_blit.dstOffsets[1].y           = int32_t(texture.height >> i);
+		image_blit.dstOffsets[1].x           = static_cast<int32_t>(texture.width >> i);
+		image_blit.dstOffsets[1].y           = static_cast<int32_t>(texture.height >> i);
 		image_blit.dstOffsets[1].z           = 1;
 
 		// Prepare current mip level as image blit destination
@@ -344,7 +345,7 @@ void TextureMipMapGeneration::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
@@ -543,9 +544,8 @@ void TextureMipMapGeneration::prepare_pipelines()
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),           // Location 1: UV
-	    vkb::initializers::vertex_input_attribute_description(0, 2, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 8),        // Location 2: Color
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                     // Location 0: Position
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, sizeof(float) * 6),        // Location 1: UV
 	};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
@@ -601,7 +601,7 @@ bool TextureMipMapGeneration::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 1024.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 1024.0f);
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -12.5f));
 
 	load_assets();
@@ -619,10 +619,14 @@ bool TextureMipMapGeneration::prepare(vkb::Platform &platform)
 void TextureMipMapGeneration::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (rotate_scene)
+	{
 		update_uniform_buffers(delta_time);
+	}
 }
 
 void TextureMipMapGeneration::view_changed()
@@ -635,7 +639,7 @@ void TextureMipMapGeneration::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Settings"))
 	{
 		drawer.checkbox("Rotate", &rotate_scene);
-		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, (float) texture.mip_levels))
+		if (drawer.slider_float("LOD bias", &ubo.lod_bias, 0.0f, static_cast<float>(texture.mip_levels)))
 		{
 			update_uniform_buffers();
 		}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,7 +67,7 @@ uint32_t Queue::get_index() const
 	return index;
 }
 
-VkQueueFamilyProperties Queue::get_properties() const
+const VkQueueFamilyProperties &Queue::get_properties() const
 {
 	return properties;
 }
