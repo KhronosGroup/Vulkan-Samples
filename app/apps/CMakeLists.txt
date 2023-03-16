@@ -65,7 +65,7 @@ list(JOIN TEST_INFO_LIST "\n" TEST_INFO_LIST)
 list(JOIN TEST_APP_INFO_LIST "\n" TEST_APP_INFO_LIST)
 list(JOIN APP_INFO_LIST "\n" APP_INFO_LIST)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/apps.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/apps.cpp)
+configure_file(apps.cpp.in apps.cpp)
 
 # Create apps library
 
@@ -87,10 +87,10 @@ target_include_directories(${PROJECT_NAME} PUBLIC
 set(PROJECT_ID_LIST ${TOTAL_SAMPLE_ID_LIST} ${TOTAL_TEST_ID_LIST})
 foreach(ID ${PROJECT_ID_LIST})
     if(TARGET ${ID})
-#        get_target_property(TARGET_TYPE ${ID} TYPE)
-#
-#        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+        get_target_property(TARGET_TYPE ${ID} TYPE)
+
+        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
             target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
-#        endif()
+        endif()
     endif()
 endforeach()

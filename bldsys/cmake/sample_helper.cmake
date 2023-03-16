@@ -137,7 +137,7 @@ function(add_project)
         source_group("\\Shaders" FILES ${SHADERS_GLSL})
     endif()
 
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # add VKB_DEBUG for the debug build

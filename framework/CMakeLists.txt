@@ -447,8 +447,8 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
-#NB: switch this to shared library and things stop working.
-add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+#NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
+add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
 set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type
