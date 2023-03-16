@@ -30,6 +30,7 @@ set(FRAMEWORK_FILES
 source_group("\\" FILES ${FRAMEWORK_FILES})
 
 add_library(${PROJECT_NAME} STATIC ${FRAMEWORK_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(test_framework_headers INTERFACE)
 target_include_directories(test_framework_headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
