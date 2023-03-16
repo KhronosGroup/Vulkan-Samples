@@ -28,7 +28,7 @@ set_property(TARGET vkb_tests PROPERTY FOLDER "tests")
 function(vkb__register_tests)
     set(options)
     set(oneValueArgs NAME)
-    set(multiValueArgs SRC LIBS)
+    set(multiValueArgs SRC LIBS INCLUDE_DIRS)
 
     if(NOT((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
         return() # testing not enabled
@@ -55,18 +55,20 @@ function(vkb__register_tests)
 
     set_target_properties(${TARGET_NAME}
         PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
+        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests"
     )
+
+    if(TARGET_INCLUDE_DIRS)
+        target_include_directories(${TARGET_NAME} PUBLIC ${TARGET_INCLUDE_DIRS})
+    endif()
 
     if(TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
 
     if(${VKB_WARNINGS_AS_ERRORS})
-        message(STATUS "Warnings as Errors Enabled")
-
         if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
             target_compile_options(${TARGET_NAME} PRIVATE -Werror)
         elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
@@ -106,13 +108,6 @@ function(vkb__register_tests_no_catch2)
         add_executable(${TARGET_NAME} ${TARGET_SRC})
     endif()
 
-    set_target_properties(${TARGET_NAME}
-        PROPERTIES
-        ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/tests/${CMAKE_BUILD_TYPE}"
-    )
-
     if(TARGET_LIBS)
         target_link_libraries(${TARGET_NAME} PUBLIC ${TARGET_LIBS})
     endif()
@@ -125,8 +120,6 @@ function(vkb__register_tests_no_catch2)
     )
 
     if(${VKB_WARNINGS_AS_ERRORS})
-        message(STATUS "Warnings as Errors Enabled")
-
         if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
             target_compile_options(${TARGET_NAME} PRIVATE -Werror)
         elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")

@@ -17,12 +17,12 @@
 
 #pragma once
 
-#include <vector>
 #include <memory>
+#include <vector>
 
 #include <volk.h>
 
-#include "queue_manager.hpp"
+#include "queue.hpp"
 
 namespace components
 {
@@ -57,19 +57,6 @@ struct PhysicalDeviceInfo
 	std::vector<QueueFamilyInfo>     queue_families;
 };
 
-// represents the allocated queue at vkCreateDevice
-struct QueueFamily
-{
-	uint32_t family_index;
-
-	uint32_t graphics_queue_count{0};
-	uint32_t compute_queue_count{0};
-	uint32_t transfer_queue_count{0};
-
-	uint32_t total_supported_queues_count{0};
-	bool     supports_presentation{false};
-};
-
 /**
  * @brief A Vulkan Context containing the core Vulkan handles needed for a Sample
  *
@@ -78,12 +65,12 @@ struct QueueFamily
 class Context
 {
   public:
-	Context(VkInstance                instance,
-	        DebuggerInfo              debugger_info,
-	        VkPhysicalDevice          gpu,
-	        const PhysicalDeviceInfo &device_info,
-	        VkDevice                  device,
-	        const QueueManager       &queues) :
+	Context(VkInstance                   instance,
+	        DebuggerInfo                 debugger_info,
+	        VkPhysicalDevice             gpu,
+	        const PhysicalDeviceInfo    &device_info,
+	        VkDevice                     device,
+	        const std::vector<QueuePtr> &queues) :
 	    instance{instance},
 	    debugger_info{debugger_info},
 	    gpu{gpu},
@@ -121,7 +108,7 @@ class Context
 
 	VkDevice device{VK_NULL_HANDLE};
 
-	QueueManager queues;
+	std::vector<QueuePtr> queues;
 
   private:
 	DebuggerInfo debugger_info{};

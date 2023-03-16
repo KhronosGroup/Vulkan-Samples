@@ -14,12 +14,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from common import StructMembers, CommandMembers, print_vulkan_helper
+from common import StructMembers, CommandMembers
+import os
+import sys
 
 try:
+    PATH = os.path.join(os.path.dirname(os.path.realpath(
+        __file__)), '..', '..', 'third_party', 'vulkan', 'registry')
+    sys.path.append(PATH)
+    
     import reg
+    from vkconventions import VulkanConventions
 except ModuleNotFoundError:
-    print_vulkan_helper()
+    print("Failed to import vulkan registry, please make sure you have the vulkan registry submodule checked out")
 
 
 class HelperOutputGenerator(reg.OutputGenerator):

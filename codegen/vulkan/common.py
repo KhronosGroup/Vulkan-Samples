@@ -16,30 +16,22 @@
 
 import math
 import re
+import os
 import sys
 import traceback
 
 from dataclasses import dataclass
 from lxml import etree
 
-
-def print_vulkan_helper():
-    print(traceback.format_exc())
-    print(
-        'Unable to import the Vulkan registry script. Please make sure you have'
-        ' a copy of the Vulkan-Docs repository and have set PYTHONPATH'
-        ' appropriately.'
-    )
-    print('e.g (for bash):')
-    print(' $ git clone https://github.com/KhronosGroup/Vulkan-Docs')
-    print(' $ export PYTHONPATH=Vulkan-Docs/scripts')
-    sys.exit(1)
-
-
 try:
+    PATH = os.path.join(os.path.dirname(os.path.realpath(
+        __file__)), '..', '..', 'third_party', 'vulkan', 'registry')
+    sys.path.append(PATH)
+    
     import reg
+    from vkconventions import VulkanConventions
 except ModuleNotFoundError:
-    print_vulkan_helper()
+    print("Failed to import vulkan registry, please make sure you have the vulkan registry submodule checked out")
 
 
 def gen_hpp_header() -> str:

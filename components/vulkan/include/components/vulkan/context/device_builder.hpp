@@ -14,24 +14,22 @@ namespace vulkan
 class DeviceBuilder final : public DeviceExtensionBuilder
 {
 	CVC_CREATE_BUILDER(DeviceBuilder)
+
   public:
 	using FeatureFunc = std::function<void(VkPhysicalDeviceFeatures &)>;
 	Self &configure_features(FeatureFunc &&func);
-	Self &enable_queue(VkQueueFlagBits queue_type, uint32_t required_queue_count = 1);
-	Self &must_support_presentation(VkSurfaceKHR surface);
 
   private:
 	struct Output
 	{
-		VkDevice     device;
-		QueueManager queue_manager;
+		VkDevice              device;
+		std::vector<QueuePtr> queues;
 	};
 
-	Output build(VkPhysicalDevice gpu, const PhysicalDeviceInfo &info);
+	Output build(VkPhysicalDevice gpu, const PhysicalDeviceInfo &info, std::vector<QueuePtr> requested_queues);
 
-	std::unordered_map<VkQueueFlagBits, uint32_t> _required_queue_counts;
-	VkSurfaceKHR                                  _surface{VK_NULL_HANDLE};
 	VkPhysicalDeviceFeatures                      _features{};
+	std::vector<Queue>                            _enabled_queues;
 };
 
 }        // namespace vulkan

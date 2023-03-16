@@ -21,13 +21,13 @@
 
 #include <volk.h>
 
-#include "components/vulkan/common/strings.hpp"
+#include "strings.hpp"
 
-#define VK_CHECK(expression, message)                           \
-	{                                                           \
-		VkResult err = expression;                              \
-		if (err != VK_SUCCESS)                                  \
-		{                                                       \
-			throw std::runtime_error{message + to_string(err)}; \
-		}                                                       \
+#define VK_CHECK(expression, message)                                               \
+	{                                                                               \
+		VkResult err = expression;                                                  \
+		if (err != VK_SUCCESS)                                                      \
+		{                                                                           \
+			throw std::runtime_error{message + components::vulkan::to_string(err)}; \
+		}                                                                           \
 	}

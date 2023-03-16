@@ -48,11 +48,6 @@ PhysicalDeviceInfo PhysicalDeviceBuilder::get_device_info(VkPhysicalDevice gpu) 
 
 PhysicalDeviceBuilder::Output PhysicalDeviceBuilder::select_physical_device(VkInstance instance)
 {
-	if (!_scoring_func)
-	{
-		return {VK_NULL_HANDLE};
-	}
-
 	uint32_t physical_device_count{0U};
 	vkEnumeratePhysicalDevices(instance, &physical_device_count, nullptr);
 	std::vector<VkPhysicalDevice> physical_devices{physical_device_count};
@@ -66,7 +61,16 @@ PhysicalDeviceBuilder::Output PhysicalDeviceBuilder::select_physical_device(VkIn
 	for (VkPhysicalDevice gpu : physical_devices)
 	{
 		PhysicalDeviceInfo gpu_info = get_device_info(gpu);
-		uint32_t           score    = _scoring_func(gpu, gpu_info);
+
+		uint32_t score{0};
+
+		for (auto &func : _scoring_funcs)
+		{
+			if (func)
+			{
+				score += func(gpu, gpu_info);
+			}
+		}
 
 		if (score > highest_score)
 		{
@@ -124,55 +128,49 @@ PhysicalDeviceBuilder::ScoringFunc device_preference(const std::vector<VkPhysica
 	};
 }
 
-PhysicalDeviceBuilder::ScoringFunc has_queue(VkQueueFlagBits queue_type, uint32_t required_queue_count)
+PhysicalDeviceBuilder::ScoringFunc supports_queue(const QueuePtr &queue)
 {
 	return [=](VkPhysicalDevice gpu, const PhysicalDeviceInfo &device_info) -> uint32_t {
 		uint32_t score{0};
-		uint32_t count{required_queue_count};
 
 		for (auto &family : device_info.queue_families)
 		{
-			if ((family.properties.queueFlags & queue_type))
+			// supports queue types
+			bool supports_queue_types{true};
+			if (family.properties.queueFlags & queue->requested_queue_types())
 			{
 				score += PhysicalDeviceBuilder::GeneralScore;
 			}
-
-			if (count > 0)
+			else
 			{
-				// reduce the count until it hits zero
-				count -= std::min(count, family.properties.queueCount);
+				supports_queue_types = false;
 			}
-		}
 
-		if (count == 0)
-		{
-			score += PhysicalDeviceBuilder::RequiredScore;
+			// supports surface
+			bool supports_all_surfaces{true};
+			for (auto &surface : queue->requested_surfaces())
+			{
+				VkBool32 present_supported{false};
+				VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, family.index, surface, &present_supported), "failed to query for presentation support");
+
+				if (present_supported)
+				{
+					score += PhysicalDeviceBuilder::GeneralScore;
+				}
+				else
+				{
+					supports_all_surfaces = false;
+				}
+			}
+
+			// prefer devices which support presentation to all required surfaces
+			if (supports_all_surfaces)
+			{
+				score += PhysicalDeviceBuilder::RequiredScore;
+			}
 		}
 
 		return score;
-	};
-}
-
-PhysicalDeviceBuilder::ScoringFunc can_present(VkSurfaceKHR surface)
-{
-	if (surface == VK_NULL_HANDLE)
-	{
-		return [](VkPhysicalDevice gpu, const PhysicalDeviceInfo &device_info) -> uint32_t { return 0; };
-	}
-
-	return [=](VkPhysicalDevice gpu, const PhysicalDeviceInfo &device_info) -> uint32_t {
-		for (auto &family : device_info.queue_families)
-		{
-			VkBool32 present_supported{false};
-			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, family.index, surface, &present_supported), "failed to query for presentation support");
-
-			if (present_supported)
-			{
-				return PhysicalDeviceBuilder::RequiredScore;
-			}
-		}
-
-		return 0;
 	};
 }
 }        // namespace scores

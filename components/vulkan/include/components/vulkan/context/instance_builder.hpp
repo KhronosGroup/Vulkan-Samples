@@ -8,7 +8,7 @@
 #include "components/vulkan/context/context.hpp"
 #include "components/vulkan/context/extension_builder.hpp"
 
-#include "components/vulkan/pnext_chain.hpp"
+#include "components/vulkan/common/pnext_chain.hpp"
 
 namespace components
 {

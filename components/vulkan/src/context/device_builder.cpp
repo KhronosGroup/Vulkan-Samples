@@ -2,6 +2,7 @@
 
 #include <cassert>
 
+#include <components/common/map.hpp>
 #include <components/common/strings.hpp>
 
 #ifdef min
@@ -19,116 +20,70 @@ DeviceBuilder &DeviceBuilder::configure_features(FeatureFunc &&func)
 	return *this;
 }
 
-DeviceBuilder &DeviceBuilder::enable_queue(VkQueueFlagBits queue_type, uint32_t required_queue_count)
+struct QueueFamily
 {
-	_required_queue_counts[queue_type] = required_queue_count;
-	return *this;
-}
+	uint32_t family_index;
 
-DeviceBuilder &DeviceBuilder::must_support_presentation(VkSurfaceKHR surface)
-{
-	_surface = surface;
-	return *this;
-}
+	inline void add_queue(QueuePtr queue)
+	{
+		queues.push_back(queue);
+	}
 
-DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalDeviceInfo &info)
+	std::vector<QueuePtr> queues;
+};
+
+DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalDeviceInfo &info, std::vector<QueuePtr> requested_queues)
 {
 	VkDeviceCreateInfo device_info{VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO};
 
-	std::unordered_map<VkQueueFlagBits, uint32_t> queue_tally = _required_queue_counts;
+	Map<uint32_t, QueueFamily> allocated_families;
 
-	if (queue_tally.empty())
+	for (auto queue : requested_queues)
 	{
-		throw std::runtime_error{"No queues requested. Device must request one or more queues."};
-	}
-
-	std::unordered_map<uint32_t, QueueFamily> allocated_families;
-
-	const auto get_family = [&](const QueueFamilyInfo &family) {
-		auto it = allocated_families.find(family.index);
-		if (it == allocated_families.end())
+		for (auto family : info.queue_families)
 		{
-			QueueFamily queue{family.index};
-			queue.total_supported_queues_count = family.properties.queueCount;
-			it                                 = allocated_families.emplace(family.index, queue).first;
-		}
-		return it;
-	};
+			bool use_family = true;
 
-	const auto allocate = [&](const QueueFamilyInfo &family) {
-		auto it = get_family(family);
-
-		std::vector<VkQueueFlagBits> queues_to_remove;
-
-		for (auto &[queue_type, remaining_tally] : queue_tally)
-		{
-			if (remaining_tally == 0)
+			// make sure requested surfaces are supported
+			for (VkSurfaceKHR surface : queue->requested_surfaces())
 			{
-				queues_to_remove.push_back(queue_type);
+				// prioritize the first queue which can present to the requested surface
+				for (const auto &family : info.queue_families)
+				{
+					VkBool32 present_supported{false};
+					VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, family.index, surface, &present_supported), "failed to query for presentation support");
+
+					if (present_supported)
+					{
+						use_family = false;
+						break;
+					}
+				}
+
+				if (!use_family)
+				{
+					break;
+				}
+			}
+
+			if (!use_family)
+			{
 				continue;
 			}
 
-			// try and allocate as many queues as possible up to the required count for this queue type
-			uint32_t allocated_count = std::min(remaining_tally, family.properties.queueCount);
-
-			if (queue_type == VK_QUEUE_GRAPHICS_BIT)
+			// make sure that supported queue types are supported
+			if ((queue->requested_queue_types() & family.properties.queueFlags) != queue->requested_queue_types())
 			{
-				it->second.graphics_queue_count += allocated_count;
-			}
-			if (queue_type == VK_QUEUE_COMPUTE_BIT)
-			{
-				it->second.compute_queue_count += allocated_count;
-			}
-			if (queue_type == VK_QUEUE_TRANSFER_BIT)
-			{
-				it->second.transfer_queue_count += allocated_count;
+				continue;
 			}
 
-			remaining_tally -= allocated_count;
-		}
-
-		// clean up any queues which have been fully allocated
-		for (auto queue_type : queues_to_remove)
-		{
-			queue_tally.erase(queue_type);
-		}
-	};
-
-	if (_surface != VK_NULL_HANDLE)
-	{
-		// prioritize the first queue which can present to the requested surface
-		for (const auto &family : info.queue_families)
-		{
-			VkBool32 present_supported{false};
-			VK_CHECK(vkGetPhysicalDeviceSurfaceSupportKHR(gpu, family.index, _surface, &present_supported), "failed to query for presentation support");
-
-			if (present_supported)
+			auto it = allocated_families.find_or_create(family.index, [&]() { return QueueFamily{family.index}; });
+			if (family.properties.queueCount > it->second.queues.size())
 			{
-				auto it = get_family(family);
-
-				it->second.supports_presentation = true;
-
-				allocate(family);
+				it->second.add_queue(queue);
 				break;
 			}
 		}
-	}
-
-	for (const auto &family : info.queue_families)
-	{
-		if (queue_tally.empty())
-		{
-			// no longer need queues
-			break;
-		}
-
-		allocate(family);
-	}
-
-	if (!queue_tally.empty())
-	{
-		// we didn't find enough queues
-		throw std::runtime_error("Could not find enough queues to satisfy the requested requirements");
 	}
 
 	std::vector<VkDeviceQueueCreateInfo> queue_create_infos;
@@ -136,8 +91,7 @@ DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalD
 
 	for (const auto &[index, family] : allocated_families)
 	{
-		auto total_requested_queues = family.graphics_queue_count + family.compute_queue_count + family.transfer_queue_count;
-		if (total_requested_queues == 0)
+		if (family.queues.size() == 0)
 		{
 			continue;
 		}
@@ -146,10 +100,8 @@ DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalD
 
 		VkDeviceQueueCreateInfo queue_create_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
 		queue_create_info.queueFamilyIndex = family.family_index;
-		queue_create_info.queueCount       = total_requested_queues;
+		queue_create_info.queueCount       = static_cast<uint32_t>(family.queues.size());
 		queue_create_info.pQueuePriorities = &queue_priority;
-
-		assert(queue_create_info.queueCount <= family.total_supported_queues_count && "Requested more queues than the family supports");
 
 		queue_create_infos.push_back(queue_create_info);
 	}
@@ -163,7 +115,7 @@ DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalD
 	device_info.ppEnabledLayerNames               = enabled_layers_cstr.data();
 
 	device_info.queueCreateInfoCount = static_cast<uint32_t>(queue_create_infos.size());
-	device_info.pQueueCreateInfos    = queue_create_infos.data();
+	device_info.pQueueCreateInfos    = queue_create_infos.size() > 0 ? queue_create_infos.data() : nullptr;
 
 // check that all features are supported before calling vkCreateDevice
 #define FEATURE_IS_SUPPORTED(name)                                                                  \
@@ -232,7 +184,21 @@ DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalD
 
 	VkDevice device{VK_NULL_HANDLE};
 	VK_CHECK(vkCreateDevice(gpu, &device_info, nullptr, &device), "Could not create Vulkan device");
-	return {device, QueueManager{}};
+
+	for (const auto &[index, family] : allocated_families)
+	{
+		uint32_t index{0};
+		for (auto queue : family.queues)
+		{
+			Queue::QueueInfo queue_info;
+			queue_info._family_index = family.family_index;
+			queue_info._index        = index++;
+			vkGetDeviceQueue(device, queue_info._family_index, queue_info._index, &queue_info._queue);
+			queue->_queue_info = queue_info;
+		}
+	}
+
+	return {device, requested_queues};
 }
 }        // namespace vulkan
 }        // namespace components

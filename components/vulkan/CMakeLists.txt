@@ -33,7 +33,12 @@ vkb__register_component(
     src/context/device_builder.cpp
 
     # Pools
-    src/pools/buffer_pool.cpp
+    src/pools/memory_pool.cpp
+    src/pools/fence_pool.cpp
+    src/pools/command_pool.cpp
+
+    # Common
+    src/strings.cpp
 
     # Third Party
     src/third_party.cpp

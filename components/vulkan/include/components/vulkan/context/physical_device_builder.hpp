@@ -1,6 +1,7 @@
 #pragma once
 
 #include "components/vulkan/context/instance_builder.hpp"
+#include "components/vulkan/context/queue.hpp"
 
 namespace components
 {
@@ -29,7 +30,7 @@ class PhysicalDeviceBuilder final
 	using ScoringFunc = std::function<uint32_t(VkPhysicalDevice gpu, const PhysicalDeviceInfo &)>;
 	inline Self &score_device(ScoringFunc &&func)
 	{
-		_scoring_func = std::move(func);
+		_scoring_funcs.push_back(std::move(func));
 		return *this;
 	}
 
@@ -44,7 +45,7 @@ class PhysicalDeviceBuilder final
 
 	PhysicalDeviceInfo get_device_info(VkPhysicalDevice gpu) const;
 
-	ScoringFunc _scoring_func;
+	std::vector<ScoringFunc> _scoring_funcs;
 };
 
 namespace scores
@@ -59,10 +60,7 @@ PhysicalDeviceBuilder::ScoringFunc require_device_type(VkPhysicalDeviceType type
 PhysicalDeviceBuilder::ScoringFunc device_preference(const std::vector<VkPhysicalDeviceType> &preference_order);
 
 // requires that a device has the correct amount of queues of a specific type
-PhysicalDeviceBuilder::ScoringFunc has_queue(VkQueueFlagBits queue_type, uint32_t required_queue_count = 1);
-
-// require a device supports presenting to a specific surface
-PhysicalDeviceBuilder::ScoringFunc can_present(VkSurfaceKHR surface);
-}        // namespace funcs
+PhysicalDeviceBuilder::ScoringFunc supports_queue(const QueuePtr &queue);
+}        // namespace scores
 }        // namespace vulkan
 }        // namespace components

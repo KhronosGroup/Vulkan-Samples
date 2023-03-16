@@ -18,12 +18,13 @@
 #pragma once
 
 #include "device_builder.hpp"
+#include "queue.hpp"
 
 namespace components
 {
 namespace vulkan
 {
-InstanceBuilder::ApplicationInfoFunc default_application_info(uint32_t api_version);
+InstanceBuilder::ApplicationInfoFunc default_application_info(uint32_t api_version = VK_API_VERSION_1_3);
 
 /**
  * @brief A builder to construct a Context Object
@@ -48,6 +49,8 @@ class ContextBuilder final
 		return _instance_builder;
 	}
 
+	ContextBuilder &request_queue(VkQueueFlags queue_types, const std::vector<VkSurfaceKHR> &presentable_surfaces, QueuePtr *queue);
+
 	inline PhysicalDeviceBuilder &select_gpu()
 	{
 		return _physical_device_selector;
@@ -69,13 +72,8 @@ class ContextBuilder final
 	InstanceBuilder       _instance_builder{*this};
 	PhysicalDeviceBuilder _physical_device_selector{*this};
 	DeviceBuilder         _device_builder{*this};
+
+	std::vector<QueuePtr> _requested_queues;
 };
-
-namespace funcs
-{
-void apply_debug_configuration(ContextBuilder &builder);
-void apply_default_configuration(ContextBuilder &builder);
-}        // namespace funcs
-
 }        // namespace vulkan
 }        // namespace components

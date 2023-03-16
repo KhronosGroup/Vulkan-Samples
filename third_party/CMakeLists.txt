@@ -256,16 +256,26 @@ set_property(TARGET GenericCodeGen PROPERTY FOLDER "third_party")
 set_property(TARGET MachineIndependent PROPERTY FOLDER "third_party")
 
 # spirv-cross
-# add_subdirectory(spirv-cross)
+add_subdirectory(spirv-cross)
 
-# set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
-# set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
+set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
+
+# spirv-reflect
+set(SPIRV_REFLECT_EXECUTABLE OFF)
+set(SPIRV_REFLECT_EXAMPLES OFF)
+set(SPIRV_REFLECT_STRIPPER OFF)
+set(SPIRV_REFLECT_STATIC_LIB ON)
+set(SPIRV_REFLECT_BUILD_TESTS OFF)
+set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
+
+add_subdirectory(spirv-reflect)
 
 # hwcpipe
 add_subdirectory(hwcpipe)

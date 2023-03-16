@@ -16,16 +16,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import sys
 import os
 import argparse
-from common import print_vulkan_helper, StructMembers, gen_hpp_header
+from common import StructMembers, gen_hpp_header
 from helper_generator import HelperOutputGenerator
 
 try:
+    PATH = os.path.join(os.path.dirname(os.path.realpath(
+        __file__)), '..', '..', 'third_party', 'vulkan', 'registry')
+    sys.path.append(PATH)
+    
     import reg
     from vkconventions import VulkanConventions
 except ModuleNotFoundError:
-    print_vulkan_helper()
+    print("Failed to import vulkan registry, please make sure you have the vulkan registry submodule checked out")
 
 from lxml import etree
 
@@ -40,7 +45,7 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
         super().beginFile(genOpts)
 
         header = gen_hpp_header() + \
-            '#include <volk.h>\n' + \
+            '#include <vulkan/vulkan.h>\n' + \
             '\n' + \
             'namespace components\n' + \
             '{\n' + \
@@ -77,6 +82,10 @@ class StructureTypeNameGenerator(HelperOutputGenerator):
         # ... Or the first change between feature sets
         if self.featureName is not self.lastUsedFeature:
             is_new_feature = True
+
+        if self.featureName in ["VK_NV_displacement_micromap"]:
+            # These features are broken
+            return None
 
         for member in members:
             if member.name == "sType":
