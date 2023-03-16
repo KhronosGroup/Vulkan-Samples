@@ -215,7 +215,7 @@ set(IMGUI_FILES
     "${IMGUI_DIR}/imstb_textedit.h"
     "${IMGUI_DIR}/imstb_truetype.h")
 
-add_library(imgui SHARED ${IMGUI_FILES})
+add_library(imgui STATIC ${IMGUI_FILES})
 
 target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
