@@ -42,12 +42,11 @@ if(ANDROID)
     endif()
 
     add_library(${PROJECT_NAME} SHARED ${SRC})
-    target_link_libraries(${PROJECT_NAME} PUBLIC plugins)
 else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC apps)
+target_link_libraries(${PROJECT_NAME} PUBLIC apps plugins)
 
 # Create android project
 if(ANDROID)
