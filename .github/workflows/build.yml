@@ -28,6 +28,8 @@ jobs:
       - if: ${{ matrix.platform == 'windows' }}
         name: sccache-cache
         uses: mozilla-actions/sccache-action@v0.0.2
+        with:
+          version: "v0.4.0-pre.9"
       - if: ${{ matrix.platform != 'windows' }}
         name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
