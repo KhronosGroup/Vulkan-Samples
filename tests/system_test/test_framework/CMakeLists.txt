@@ -36,7 +36,7 @@ target_include_directories(test_framework_headers INTERFACE ${CMAKE_CURRENT_SOUR
 
 # inherit compile definitions from framework target
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
-target_link_libraries(${PROJECT_NAME} PRIVATE framework) 
+target_link_libraries(${PROJECT_NAME} PRIVATE framework imgui)
 target_link_libraries(${PROJECT_NAME} PUBLIC test_framework_headers)
 
 if(ANDROID)
