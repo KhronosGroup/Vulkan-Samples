@@ -1,0 +1,41 @@
+struct Payload
+{
+    float3 hitValue;
+};
+
+struct CameraProperties
+{
+    float4x4 viewInverse;
+    float4x4 projInverse;
+};
+
+RaytracingAccelerationStructure g_topLevel : register(t0, space0);
+RWTexture2D<float4> g_output : register(u1, space0);
+CameraProperties cam : register(u2, space0);
+
+
+[shader("raygeneration")]
+void main()
+{
+    uint2 launchIndex = DispatchRaysIndex().xy;
+    float2 dims = DispatchRaysDimensions().xy;
+
+    float2 pixelCenter = launchIndex + 0.5;
+    float2 uv = pixelCenter / dims.xy;
+
+    float2 d = uv * 2.0 - 1.0;
+
+    RayDesc ray;
+    ray.Origin = float3(mul(cam.viewInverse, float4(0.0, 0.0, 0.0, 1.0)).xyz);
+    float4 target = mul(cam.projInverse, float4(d.x, d.y, 1.0, 1.0));
+    ray.Direction = float3(mul(cam.viewInverse, normalize(target)).xyz);
+    ray.TMin = 0.001;
+    ray.TMax = 10000.0;
+
+    Payload payload;
+    payload.hitValue = float3(0.0, 0.0, 0.0);
+
+    TraceRay(g_topLevel, RAY_FLAG_FORCE_OPAQUE, 0xff, 0, 0, 0, ray, payload);
+
+    g_output[launchIndex] = float4(payload.hitValue, 1.0f);
+}
