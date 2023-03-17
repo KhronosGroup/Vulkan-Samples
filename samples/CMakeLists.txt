@@ -86,6 +86,7 @@ set(ORDER_LIST
     "fragment_shader_barycentric"
     "gshader_to_mshader"
     "color_write_enable"
+    "hlsl_raytracing_basic"
 
     #Performance Samples
     "swapchain_images"
