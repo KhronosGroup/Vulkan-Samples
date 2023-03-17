@@ -15,26 +15,6 @@
 # limitations under the License.
 #
 
-find_program(CCACHE_FOUND ccache)
-find_program(SCCACHE_FOUND sccache)
-if(CCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
-elseif(SCCACHE_FOUND)
-    set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE sccache)
-    if(MSVC)
-        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
-            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
-        elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
-            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
-            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
-        elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
-            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
-        endif()
-    endif()
-endif(CCACHE_FOUND)
-
 cmake_minimum_required(VERSION 3.16)
 include(android_package)
 

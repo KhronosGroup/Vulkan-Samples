@@ -15,6 +15,28 @@
 # limitations under the License.
 #
 
+find_program(CCACHE_FOUND ccache)
+find_program(SCCACHE_FOUND sccache)
+if(CCACHE_FOUND)
+    set(CMAKE_C_COMPILER_LAUNCHER ${CCACHE_FOUND})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${CCACHE_FOUND})
+elseif(SCCACHE_FOUND)
+    set(CMAKE_C_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+    set(CMAKE_CXX_COMPILER_LAUNCHER ${SCCACHE_FOUND})
+    if(MSVC)
+        if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG}")
+            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG}")
+        elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE}")
+            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE}")
+        elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+            string(REPLACE "/Zi" "/Z7" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+            string(REPLACE "/Zi" "/Z7" CMAKE_C_FLAGS_RELWITHDEBINFO "${CMAKE_C_FLAGS_RELWITHDEBINFO}")
+        endif()
+    endif()
+endif(CCACHE_FOUND)
+
 cmake_minimum_required(VERSION 3.16)
 
 project(vulkan_samples)
