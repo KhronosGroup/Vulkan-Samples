@@ -15,6 +15,7 @@
 # limitations under the License.
 #
 
+if(NOT CMAKE_C_COMPILER_LAUNCHER)
 find_program(CCACHE_FOUND ccache)
 find_program(SCCACHE_FOUND sccache)
 if(CCACHE_FOUND)
@@ -36,6 +37,7 @@ elseif(SCCACHE_FOUND)
         endif()
     endif()
 endif(CCACHE_FOUND)
+endif()
 
 cmake_minimum_required(VERSION 3.16)
 

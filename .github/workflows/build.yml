@@ -25,17 +25,15 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install xorg-dev libglu1-mesa-dev
-      - if: ${{ matrix.platform == 'windows' }}
-        name: sccache-cache
-        uses: mozilla-actions/sccache-action@v0.0.2
-        with:
-          version: "v0.4.0-pre.9"
-      - if: ${{ matrix.platform != 'windows' }}
-        name: ccache
+      - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: ${{ github.job }}-${{ matrix.os }}
-      - name: Configure
+      - if: ${{ matrix.platform == 'windows' }}
+        name: Configure
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=sccache -D CMAKE_CXX_COMPILER_LAUNCHER=sccache
+      - if: ${{ matrix.platform != 'windows' }}
+        name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
         run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
