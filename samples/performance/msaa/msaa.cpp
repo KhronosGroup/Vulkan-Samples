@@ -496,6 +496,13 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
+		if (run_postprocessing)
+		{
+			// Synchronize depth with previous depth resolve operation
+			memory_barrier.dst_stage_mask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			memory_barrier.dst_access_mask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+
 		for (auto &i_depth : depth_atts)
 		{
 			assert(i_depth < views.size());
