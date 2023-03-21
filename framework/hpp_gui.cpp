@@ -16,11 +16,11 @@
  */
 
 #include "hpp_gui.h"
-
-#include "common/hpp_utils.h"
-#include "core/hpp_command_pool.h"
-#include "hpp_vulkan_sample.h"
-#include "imgui_internal.h"
+#include <common/hpp_utils.h>
+#include <core/hpp_buffer.h>
+#include <core/hpp_command_pool.h>
+#include <hpp_vulkan_sample.h>
+#include <imgui_internal.h>
 
 namespace vkb
 {

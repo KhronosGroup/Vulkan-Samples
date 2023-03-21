@@ -20,7 +20,6 @@
 #include <core/command_buffer.h>
 
 #include <common/hpp_vk_common.h>
-#include <core/hpp_buffer.h>
 #include <core/hpp_image_view.h>
 #include <core/hpp_pipeline_layout.h>
 #include <core/hpp_sampler.h>
@@ -30,6 +29,7 @@ namespace vkb
 {
 namespace core
 {
+class HPPBuffer;
 class HPPCommandPool;
 
 /**
