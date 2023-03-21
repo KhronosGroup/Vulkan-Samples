@@ -585,6 +585,10 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
+	// Unbind sampled images to prevent invalid image transitions on unused images
+	postprocessing_subpass.unbind_sampled_image("depth_sampler");
+	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
+
 	postprocessing_subpass.get_fs_variant().clear();
 	if (multisampled_depth)
 	{
