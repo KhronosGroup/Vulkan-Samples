@@ -214,7 +214,7 @@ cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
 `Step 2.` Build the project
 
 ```
-cmake --build build/linux --config Release --target vulkan_samples -- -j$(nproc)
+cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 ```
 
 `Step 3.` Run the **Vulkan Samples** application to display the help message
@@ -245,7 +245,7 @@ cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
 `Step 2.` Build the project
 
 ```
-cmake --build build/mac --config Release --target vulkan_samples -- -j4
+cmake --build build/mac --config Release --target vulkan_samples -j4
 ```
 
 `Step 3.` Run the **Vulkan Samples** application to display the help message
