@@ -150,15 +150,12 @@ void FullScreenExclusive::init_instance(const std::vector<const char *> &require
 	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
-	LOGI("Windows Platform Detected, isWin32 set to be: true")
 	// Add Instance extensions for full screen exclusive
 	active_instance_extensions.push_back(VK_KHR_WIN32_SURFACE_EXTENSION_NAME);
 	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	active_instance_extensions.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
 	// Get the HWND application window handle and stores it in the class variable
-	HWND_application_window = GetActiveWindow();
-	// Initialize full screen exclusive related variables since the application is now running on a windows platform
-	initialize_windows();        // this can be only called after GetActiveWindow(), or as long as HWND_application_window represent the correct handle!
+	initialize_windows();
 
 	if (!validate_extensions(active_instance_extensions, instance_extensions))
 	{
@@ -237,7 +234,7 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 	std::vector<VkPhysicalDevice> gpus(gpu_count);
 	VK_CHECK(vkEnumeratePhysicalDevices(context.instance, &gpu_count, gpus.data()));
 
-	for (size_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
+	for (uint32_t i = 0; i < gpu_count && (context.graphics_queue_index < 0); i++)
 	{
 		context.gpu = gpus[i];
 
@@ -252,7 +249,7 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 		std::vector<VkQueueFamilyProperties> queue_family_properties(queue_family_count);
 		vkGetPhysicalDeviceQueueFamilyProperties(context.gpu, &queue_family_count, queue_family_properties.data());
 
-		for (int32_t j = 0; j < static_cast<int32_t>(queue_family_count); j++)
+		for (uint32_t j = 0; j < queue_family_count; j++)
 		{
 			VkBool32 supports_present;
 			vkGetPhysicalDeviceSurfaceSupportKHR(context.gpu, j, context.surface, &supports_present);
@@ -267,7 +264,7 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 
 	if (context.graphics_queue_index < 0)
 	{
-		LOGE("Did not find suitable queue which supports graphics, compute and presentation.")
+		LOGE("Did not find suitable queue which supports graphics, and presentation.")
 	}
 
 	uint32_t device_extension_count;
@@ -280,8 +277,6 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 		throw std::runtime_error("Required device extensions are missing, will try without.");
 	}
 
-	std::vector<const char *> active_device_extensions = required_device_extensions;
-
 	float queue_priority = 1.0f;
 
 	VkDeviceQueueCreateInfo queue_info{VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO};
@@ -293,8 +288,8 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 	device_info.queueCreateInfoCount = 1;
 	device_info.pQueueCreateInfos    = &queue_info;
 
-	device_info.enabledExtensionCount   = vkb::to_u32(active_device_extensions.size());
-	device_info.ppEnabledExtensionNames = active_device_extensions.data();
+	device_info.enabledExtensionCount   = vkb::to_u32(required_device_extensions.size());
+	device_info.ppEnabledExtensionNames = required_device_extensions.data();
 
 	VK_CHECK(vkCreateDevice(context.gpu, &device_info, nullptr, &context.device));
 	volkLoadDevice(context.device);
@@ -418,7 +413,7 @@ void FullScreenExclusive::init_swapchain()
 
 	if (is_full_screen_exclusive)
 	{
-		swapchain_size = get_current_max_image_extent();
+		swapchain_size = surface_properties.maxImageExtent;
 	}
 	else
 	{
@@ -474,7 +469,6 @@ void FullScreenExclusive::init_swapchain()
 	VkSwapchainCreateInfoKHR info{};        // initialize the swapchain create info without adding pNext info
 	info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
 
-	// if this application is running on a Windows platform, then apply the full screen exclusive EXT, otherwise, nullptr.
 	info.pNext = &surface_full_screen_exclusive_info_EXT;        // syncing the full screen exclusive info.
 
 	info.surface            = context.surface;
@@ -520,7 +514,8 @@ void FullScreenExclusive::init_swapchain()
 		vkDestroySwapchainKHR(context.device, old_swapchain, nullptr);
 	}
 
-	context.swapchain_dimensions = {swapchain_size.width, swapchain_size.height, format.format};
+	context.swapchain_dimensions = {swapchain_size.width, swapchain_size.height };
+	context.swapchain_format = format.format;
 
 	uint32_t image_count;
 	VK_CHECK(vkGetSwapchainImagesKHR(context.device, context.swapchain, &image_count, nullptr));
@@ -540,7 +535,7 @@ void FullScreenExclusive::init_swapchain()
 	{
 		VkImageViewCreateInfo view_info{VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO};
 		view_info.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-		view_info.format                      = context.swapchain_dimensions.format;
+		view_info.format                      = context.swapchain_format;
 		view_info.image                       = swapchain_images[i];
 		view_info.subresourceRange.levelCount = 1;
 		view_info.subresourceRange.layerCount = 1;
@@ -560,7 +555,7 @@ void FullScreenExclusive::init_swapchain()
 void FullScreenExclusive::init_render_pass()
 {
 	VkAttachmentDescription attachment = {0};
-	attachment.format                  = context.swapchain_dimensions.format;
+	attachment.format                  = context.swapchain_format;
 	attachment.samples                 = VK_SAMPLE_COUNT_1_BIT;
 	attachment.loadOp                  = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachment.storeOp                 = VK_ATTACHMENT_STORE_OP_STORE;
@@ -742,7 +737,7 @@ VkResult FullScreenExclusive::acquire_next_image(uint32_t *image)
 
 void FullScreenExclusive::render_triangle(uint32_t swapchain_index)
 {
-	VkFramebuffer framebuffer = context.swapchain_frame_buffers[swapchain_index];
+	VkFramebuffer framebuffer = context.swapchain_framebuffers[swapchain_index];
 
 	VkCommandBuffer cmd = context.per_frame[swapchain_index].primary_command_buffer;
 
@@ -832,7 +827,7 @@ void FullScreenExclusive::init_framebuffers()
 		VkFramebuffer framebuffer;
 		VK_CHECK(vkCreateFramebuffer(device, &fb_info, nullptr, &framebuffer));
 
-		context.swapchain_frame_buffers.push_back(framebuffer);
+		context.swapchain_framebuffers.push_back(framebuffer);
 	}
 }
 
@@ -840,12 +835,12 @@ void FullScreenExclusive::teardown_framebuffers()
 {
 	vkQueueWaitIdle(context.queue);
 
-	for (auto &framebuffer : context.swapchain_frame_buffers)
+	for (auto &framebuffer : context.swapchain_framebuffers)
 	{
 		vkDestroyFramebuffer(context.device, framebuffer, nullptr);
 	}
 
-	context.swapchain_frame_buffers.clear();
+	context.swapchain_framebuffers.clear();
 }
 
 void FullScreenExclusive::teardown()
@@ -920,6 +915,7 @@ FullScreenExclusive::~FullScreenExclusive()
 
 void FullScreenExclusive::initialize_windows()
 {
+	HWND_application_window = GetActiveWindow();
 	// The following variable has to be attached to the pNext of surface_full_screen_exclusive_info_EXT:
 	surface_full_screen_exclusive_Win32_info_EXT.sType    = VK_STRUCTURE_TYPE_SURFACE_FULL_SCREEN_EXCLUSIVE_WIN32_INFO_EXT;
 	surface_full_screen_exclusive_Win32_info_EXT.pNext    = nullptr;
@@ -940,6 +936,8 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
 	context.surface                     = platform.get_window().create_surface(*vk_instance);
+	if (!context.surface)
+		throw std::runtime_error("Failed to create window surface.");
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
@@ -947,10 +945,7 @@ bool FullScreenExclusive::prepare(vkb::Platform &platform)
 	// This is to sync the platform with the class variable, so one may gain direct access to it
 	this->platform = &platform;
 
-	if (!context.surface)
-		throw std::runtime_error("Failed to create window surface.");
-
-	// If application is running on a Windows platform, then the following TWO device extension is also needed:
+	// As application is running on a Windows platform, then the following TWO device extension are also needed:
 	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});
 
 	init_swapchain();
@@ -1034,7 +1029,6 @@ VkExtent2D FullScreenExclusive::get_current_max_image_extent() const
 
 void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 {
-	// if application is running on a Windows platform:
 	if (input_event.get_source() == vkb::EventSource::Keyboard)
 	{
 		const auto &key_button = reinterpret_cast<const vkb::KeyInputEvent &>(input_event);
@@ -1061,9 +1055,9 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 							{
 								LOGI("vkReleaseFullScreenExclusiveModeEXT: " + vkb::to_string(result))
 							}
+							is_full_screen_exclusive = false;
 						}
 
-						is_full_screen_exclusive = false;
 						LOGI("Windowed Mode Detected!")
 					}
 					break;
@@ -1083,9 +1077,9 @@ void FullScreenExclusive::input_event(const vkb::InputEvent &input_event)
 							{
 								LOGI("vkReleaseFullScreenExclusiveModeEXT: " + vkb::to_string(result))
 							}
+							is_full_screen_exclusive = false;
 						}
 
-						is_full_screen_exclusive = false;
 						LOGI("Borderless Fullscreen Mode Detected!")
 					}
 					break;
@@ -1166,7 +1160,8 @@ void FullScreenExclusive::recreate()
 		if (is_full_screen_exclusive)
 		{
 			VkResult result = vkAcquireFullScreenExclusiveModeEXT(context.device, context.swapchain);
-			LOGI("vkAcquireFullScreenExclusiveModeEXT: " + vkb::to_string(result))        // it would be necessary to learn the result on an unsuccessful attempt
+			if(result != VK_SUCCESS)
+				LOGI("vkAcquireFullScreenExclusiveModeEXT: " + vkb::to_string(result))        // it would be necessary to learn the result on an unsuccessful attempt
 		}
 	}
 }

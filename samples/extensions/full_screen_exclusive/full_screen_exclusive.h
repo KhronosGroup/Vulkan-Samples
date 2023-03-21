@@ -42,13 +42,6 @@ class FullScreenExclusive : public vkb::Application
 		Fullscreen
 	};
 
-	struct SwapchainDimensions
-	{
-		uint32_t width  = 0;
-		uint32_t height = 0;
-		VkFormat format = VK_FORMAT_UNDEFINED;
-	};
-
 	struct PerFrame
 	{
 		VkDevice        device                      = VK_NULL_HANDLE;
@@ -67,11 +60,12 @@ class FullScreenExclusive : public vkb::Application
 		VkDevice                   device    = VK_NULL_HANDLE;
 		VkQueue                    queue     = VK_NULL_HANDLE;
 		VkSwapchainKHR             swapchain = VK_NULL_HANDLE;
-		SwapchainDimensions        swapchain_dimensions{};
+		VkExtent2D				   swapchain_dimensions;
+		VkFormat				   swapchain_format;
 		VkSurfaceKHR               surface              = VK_NULL_HANDLE;
 		int32_t                    graphics_queue_index = -1;
 		std::vector<VkImageView>   swapchain_image_views{};
-		std::vector<VkFramebuffer> swapchain_frame_buffers{};
+		std::vector<VkFramebuffer> swapchain_framebuffers{};
 		VkRenderPass               render_pass     = VK_NULL_HANDLE;
 		VkPipeline                 pipeline        = VK_NULL_HANDLE;
 		VkPipelineLayout           pipeline_layout = VK_NULL_HANDLE;
@@ -90,7 +84,7 @@ class FullScreenExclusive : public vkb::Application
 	LONG                                     HWND_style          = 0;                                            // current Hwnd style
 	LONG                                     HWND_extended_style = 0;                                            // previous Hwnd style
 	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};                           // it can be created locally, however, it is a good reminder that they are declared here as a class variable
-	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};                     // if using DirectX, then this variable has to be created and attach to the pNext of a VkSurfaceFullScreenExclusiveInfoEXT value
+	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};
 	bool                                     is_full_screen_exclusive  = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
 	ApplicationWindowMode                    application_window_status = ApplicationWindowMode::Windowed;        // declare and initialize the application window mode
 	SwapchainMode                            full_screen_status        = SwapchainMode::Default;                 // declare and initialize the swapchain mode
