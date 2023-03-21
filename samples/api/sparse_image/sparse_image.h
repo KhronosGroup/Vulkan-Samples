@@ -48,6 +48,7 @@ class SparseImage : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
 	// Create pipeline
+	void set_camera();
 	void load_assets();
 	void prepare_pipeline();
 	void prepare_uniform_buffers();

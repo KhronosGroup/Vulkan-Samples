@@ -57,6 +57,7 @@ set(ORDER_LIST
     "compute_nbody"
     "terrain_tessellation"
     "hlsl"
+    "sparse_image"
 
     #Extension Samples
     "dynamic_rendering"

@@ -1,4 +1,4 @@
-# Copyright (c) 2023, Arm Limited and Contributors
+# Copyright (c) 2023, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -22,9 +22,9 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Khronos"
+    AUTHOR "Mobica"
     NAME "Sparse image"
-    DESCRIPTION "Sample description"
+    DESCRIPTION "Demonstarates how to use sparse image resource for textures."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "sparse_image/object.vert"
+        "sparse_image/object.frag")
