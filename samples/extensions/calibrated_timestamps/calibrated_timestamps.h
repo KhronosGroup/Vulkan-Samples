@@ -28,10 +28,10 @@ static std::string time_domain_to_string(VkTimeDomainEXT input_time_domain);    
 class CalibratedTimestamps : public ApiVulkanSample
 {
   private:
-	bool                         is_time_domain_init    = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
-	std::vector<VkTimeDomainEXT> time_domains{};                        // this holds all time domains extracted from the current Instance
-	std::vector<uint64_t>        timestamps{};                          // timestamps vector
-	std::vector<uint64_t>        max_deviations{};                      // max deviations vector
+	bool                         is_time_domain_init = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
+	std::vector<VkTimeDomainEXT> time_domains{};                     // this holds all time domains extracted from the current Instance
+	std::vector<uint64_t>        timestamps{};                       // timestamps vector
+	std::vector<uint64_t>        max_deviations{};                   // max deviations vector
 
 	struct
 	{
@@ -153,11 +153,11 @@ class CalibratedTimestamps : public ApiVulkanSample
 	std::vector<std::string> object_names{};
 
   private:
-	void get_time_domains();                                                 // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
+	void     get_time_domains();                                                 // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
 	VkResult get_timestamps();                                                   // this creates local timestamps information vector, update timestamps vector and deviation vector
-	void get_device_time_domain();                                           // this gets the optimal time domain which has the minimal value on its max deviation.
-	void timestamps_begin(const std::string &input_tag = "Untagged");        // this marks the timestamp begin and partially updates the delta_timestamps
-	void timestamps_end(const std::string &input_tag = "Untagged");          // this marks the timestamp ends and updates the delta_timestamps
+	void     get_device_time_domain();                                           // this gets the optimal time domain which has the minimal value on its max deviation.
+	void     timestamps_begin(const std::string &input_tag = "Untagged");        // this marks the timestamp begin and partially updates the delta_timestamps
+	void     timestamps_end(const std::string &input_tag = "Untagged");          // this marks the timestamp ends and updates the delta_timestamps
 
   public:
 	CalibratedTimestamps();

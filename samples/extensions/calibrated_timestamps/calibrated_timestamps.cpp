@@ -34,8 +34,8 @@ std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 	}
 }
 
-CalibratedTimestamps::CalibratedTimestamps()
-    : is_time_domain_init(false)
+CalibratedTimestamps::CalibratedTimestamps() :
+    is_time_domain_init(false)
 {
 	title = "Calibrated Timestamps";
 
@@ -99,111 +99,77 @@ void CalibratedTimestamps::build_command_buffers()
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	std::array<VkClearValue, 2> clear_values_0{};
-	clear_values_0[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values_0[1].depthStencil = {0.0f, 0};
+	std::array<VkClearValue, 3> offscreen_clear_values{};
+	VkClearValue                filter_clear_value{};
+	std::array<VkClearValue, 2> bloom_clear_values{};
 
-	VkRenderPassBeginInfo render_pass_begin_info_0 = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info_0.renderPass            = render_pass;
-	render_pass_begin_info_0.renderArea.offset.x   = 0;
-	render_pass_begin_info_0.renderArea.offset.y   = 0;
-	render_pass_begin_info_0.clearValueCount       = static_cast<uint32_t>(clear_values_0.size());
-	render_pass_begin_info_0.pClearValues          = clear_values_0.data();
+	VkRenderPassBeginInfo offscreen_render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	offscreen_render_pass_begin_info.renderPass               = offscreen.render_pass;
+	offscreen_render_pass_begin_info.framebuffer              = offscreen.framebuffer;
+	offscreen_render_pass_begin_info.renderArea.extent.width  = offscreen.width;
+	offscreen_render_pass_begin_info.renderArea.extent.height = offscreen.height;
+	offscreen_render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(offscreen_clear_values.size());
+	offscreen_render_pass_begin_info.pClearValues             = offscreen_clear_values.data();
+	VkRenderPassBeginInfo filter_render_pass_begin_info       = vkb::initializers::render_pass_begin_info();
+	filter_render_pass_begin_info.framebuffer                 = filter_pass.framebuffer;
+	filter_render_pass_begin_info.renderPass                  = filter_pass.render_pass;
+	filter_render_pass_begin_info.clearValueCount             = 1;
+	filter_render_pass_begin_info.renderArea.extent.width     = filter_pass.width;
+	filter_render_pass_begin_info.renderArea.extent.height    = filter_pass.height;
+	filter_render_pass_begin_info.pClearValues                = &filter_clear_value;
+	VkRenderPassBeginInfo bloom_render_pass_begin_info        = vkb::initializers::render_pass_begin_info();
+	bloom_render_pass_begin_info.renderPass                   = render_pass;
+	bloom_render_pass_begin_info.clearValueCount              = static_cast<uint32_t>(bloom_clear_values.size());
+	bloom_render_pass_begin_info.renderArea.extent.width      = width;
+	bloom_render_pass_begin_info.renderArea.extent.height     = height;
+	bloom_render_pass_begin_info.pClearValues                 = bloom_clear_values.data();
 
-	std::array<VkClearValue, 3> clear_values_1{};
-	clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values_1[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values_1[2].depthStencil = {0.0f, 0};
+	VkViewport offscreen_viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
+	VkViewport filter_viewport    = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
+	VkViewport bloom_viewport     = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 
-	VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info_1.renderPass               = offscreen.render_pass;
-	render_pass_begin_info_1.framebuffer              = offscreen.framebuffer;
-	render_pass_begin_info_1.renderArea.extent.width  = offscreen.width;
-	render_pass_begin_info_1.renderArea.extent.height = offscreen.height;
-	render_pass_begin_info_1.clearValueCount          = static_cast<uint32_t>(clear_values_1.size());
-	render_pass_begin_info_1.pClearValues             = clear_values_1.data();
+	VkRect2D offscreen_scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
+	VkRect2D filter_scissor    = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
+	VkRect2D bloom_scissor     = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-
 		{
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &offscreen_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &offscreen_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &offscreen_scissor);
 
 			if (display_skybox)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
 				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
-
 				draw_model(models.skybox, draw_cmd_buffers[i]);
 			}
-
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
-
 			draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
 		if (bloom)
 		{
-			VkClearValue clear_value{};
-			clear_value.color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
-			render_pass_begin_info.renderPass               = filter_pass.render_pass;
-			render_pass_begin_info.clearValueCount          = 1;
-			render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
-			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
-			render_pass_begin_info.pClearValues             = &clear_value;
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &filter_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &filter_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &filter_scissor);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, nullptr);
-
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 
 		{
-			std::array<VkClearValue, 2> clear_values{};
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			bloom_render_pass_begin_info.framebuffer = framebuffers[i];
 
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.pClearValues             = clear_values.data();
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &bloom_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &bloom_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &bloom_scissor);
 			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
-
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
@@ -214,10 +180,8 @@ void CalibratedTimestamps::build_command_buffers()
 			}
 
 			draw_ui(draw_cmd_buffers[i]);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
-
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 
@@ -373,7 +337,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		render_pass_create_info.pAttachments           = attachment_descriptions.data();
 		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
-		render_pass_create_info.subpassCount           = static_cast<uint32_t>(color_references.size());
+		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
 		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
@@ -908,7 +872,7 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 	if (get_timestamps() == VK_SUCCESS)
 	{
 		// Add this data to the last term of delta_timestamps vector
-		delta_timestamps.back().end = timestamps[selected_time_domain.index];
+		delta_timestamps.back().end   = timestamps[selected_time_domain.index];
 		delta_timestamps.back().delta = delta_timestamps.back().end - delta_timestamps.back().begin;
 	}
 }
