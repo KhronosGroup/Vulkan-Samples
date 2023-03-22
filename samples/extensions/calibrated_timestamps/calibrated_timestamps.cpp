@@ -434,7 +434,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.pColorAttachments    = color_references.data();
-		subpass.colorAttachmentCount = 1;
+		subpass.colorAttachmentCount = static_cast<uint32_t>(color_references.size());
 
 		std::array<VkSubpassDependency, 2> dependencies{};
 
