@@ -60,8 +60,8 @@ class FullScreenExclusive : public vkb::Application
 		VkDevice                   device    = VK_NULL_HANDLE;
 		VkQueue                    queue     = VK_NULL_HANDLE;
 		VkSwapchainKHR             swapchain = VK_NULL_HANDLE;
-		VkExtent2D				   swapchain_dimensions;
-		VkFormat				   swapchain_format;
+		VkExtent2D                 swapchain_dimensions;
+		VkFormat                   swapchain_format;
 		VkSurfaceKHR               surface              = VK_NULL_HANDLE;
 		int32_t                    graphics_queue_index = -1;
 		std::vector<VkImageView>   swapchain_image_views{};
@@ -78,12 +78,12 @@ class FullScreenExclusive : public vkb::Application
 	Context                        context{};
 	std::unique_ptr<vkb::Instance> vk_instance{};
 
-	HWND                                     HWND_application_window{};                                          // sync the application HWND handle
-	bool                                     is_windowed = true;                                                 // this is to tell if the application window is already set in the desired mode
-	WINDOWPLACEMENT                          wpc{};                                                              // window placement information
-	LONG                                     HWND_style          = 0;                                            // current Hwnd style
-	LONG                                     HWND_extended_style = 0;                                            // previous Hwnd style
-	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};                           // it can be created locally, however, it is a good reminder that they are declared here as a class variable
+	HWND                                     HWND_application_window{};                       // sync the application HWND handle
+	bool                                     is_windowed = true;                              // this is to tell if the application window is already set in the desired mode
+	WINDOWPLACEMENT                          wpc{};                                           // window placement information
+	LONG                                     HWND_style          = 0;                         // current Hwnd style
+	LONG                                     HWND_extended_style = 0;                         // previous Hwnd style
+	VkSurfaceFullScreenExclusiveInfoEXT      surface_full_screen_exclusive_info_EXT{};        // it can be created locally, however, it is a good reminder that they are declared here as a class variable
 	VkSurfaceFullScreenExclusiveWin32InfoEXT surface_full_screen_exclusive_Win32_info_EXT{};
 	bool                                     is_full_screen_exclusive  = false;                                  // this is to tell if the screen is in full screen EXCLUSIVE or not
 	ApplicationWindowMode                    application_window_status = ApplicationWindowMode::Windowed;        // declare and initialize the application window mode
