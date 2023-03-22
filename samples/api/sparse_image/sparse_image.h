@@ -37,6 +37,16 @@ class SparseImage : public ApiVulkanSample
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
 
+	struct SparseImageResource
+	{
+		VkImage        image{VK_NULL_HANDLE};
+		VkDeviceMemory memory{VK_NULL_HANDLE};
+		VkImageLayout  layout;
+		VkImageView    view;
+	} sparse_image;
+
+	std::unique_ptr<vkb::sg::Image> texture;
+
 	SparseImage();
 	virtual ~SparseImage();
 
@@ -57,6 +67,8 @@ class SparseImage : public ApiVulkanSample
 	void create_descriptor_sets();
 	void create_descriptor_pool();
 	void draw();
+	void create_texture();
+	void create_sparse_image();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_sparse_image();

@@ -48,6 +48,8 @@ bool SparseImage::prepare(vkb::Platform &platform)
 
 	set_camera();
 	load_assets();
+	create_texture();
+	create_sparse_image();
 	prepare_uniform_buffers();
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
@@ -77,6 +79,67 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().sparseResidencyImage2D  = VK_TRUE;
 	}
 }
+
+void SparseImage::create_texture()
+{
+	const std::string file{"textures/vulkan_logo_full.ktx"};
+
+	texture = vkb::sg::Image::load(file, file, vkb::sg::Image::Color);
+}
+
+void SparseImage::create_sparse_image()
+{
+	auto texture_mipmaps = texture->get_mipmaps();
+	assert(!texture_mipmaps.empty());
+
+	VkImageCreateInfo sparseImageCreateInfo = vkb::initializers::image_create_info();
+	sparseImageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
+
+	sparseImageCreateInfo.extent.width  = texture_mipmaps[0].extent.width;
+	sparseImageCreateInfo.extent.height = texture_mipmaps[0].extent.height;
+	sparseImageCreateInfo.mipLevels     = texture_mipmaps.size();
+	sparseImageCreateInfo.extent.depth  = texture_mipmaps[0].extent.depth;
+	sparseImageCreateInfo.arrayLayers   = 1;
+	sparseImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_SRGB;
+	sparseImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+	sparseImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+	sparseImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	sparseImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+	sparseImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+	sparseImageCreateInfo.flags         = VK_IMAGE_CREATE_SPARSE_BINDING_BIT | VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
+
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &sparseImageCreateInfo, VK_NULL_HANDLE, &sparse_image.image));
+
+	VkMemoryRequirements sparseImageMemoryRequirements{};
+	vkGetImageMemoryRequirements(get_device().get_handle(), sparse_image.image, &sparseImageMemoryRequirements);
+
+	VkPhysicalDeviceProperties gpu_properties{};
+	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
+
+	// Check requested image size against gpu sparse limit
+	if (sparseImageMemoryRequirements.size > gpu_properties.limits.sparseAddressSpaceSize)
+	{
+		throw std::runtime_error("Sparse image memory size exceeds limits of sparse address space size!");
+	};
+
+	uint32_t sparseMemoryRequirementCount = 0;
+	vkGetImageSparseMemoryRequirements(get_device().get_handle(), sparse_image.image, &sparseMemoryRequirementCount, VK_NULL_HANDLE);
+	if (sparseMemoryRequirementCount == 0)
+	{
+		throw std::runtime_error("No memory requirements for the sparse image!");
+	}
+
+	std::vector<VkSparseImageMemoryRequirements> sparseMemoryRequirements(sparseMemoryRequirementCount);
+	vkGetImageSparseMemoryRequirements(get_device().get_handle(), sparse_image.image, &sparseMemoryRequirementCount, sparseMemoryRequirements.data());
+
+	VkMemoryAllocateInfo allocInfo = vkb::initializers::memory_allocate_info();
+	allocInfo.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+	allocInfo.allocationSize       = sparseImageMemoryRequirements.size;
+	allocInfo.memoryTypeIndex      = get_device().get_memory_type(sparseImageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &allocInfo, VK_NULL_HANDLE, &sparse_image.memory));
+}
+
 
 /**
  * @fn void SparseImage::on_update_ui_overlay(vkb::Drawer &drawer)
