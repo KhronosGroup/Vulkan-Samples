@@ -28,8 +28,7 @@ static std::string time_domain_to_string(VkTimeDomainEXT input_time_domain);    
 class CalibratedTimestamps : public ApiVulkanSample
 {
   private:
-	bool                         is_time_domain_updated = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
-	bool                         is_timestamp_updated   = false;        // this is just to tell the GUI whether timestamps operation has a VK_SUCCESS in the end
+	bool                         is_time_domain_init    = false;        // this is just to tell if time domain update has a VK_SUCCESS in the end
 	std::vector<VkTimeDomainEXT> time_domains{};                        // this holds all time domains extracted from the current Instance
 	std::vector<uint64_t>        timestamps{};                          // timestamps vector
 	std::vector<uint64_t>        max_deviations{};                      // max deviations vector
@@ -46,11 +45,6 @@ class CalibratedTimestamps : public ApiVulkanSample
 		uint64_t    end   = 0;
 		uint64_t    delta = 0;
 		std::string tag   = "Untagged";
-
-		void get_delta()
-		{
-			this->delta = this->end - this->begin;
-		}
 	};
 	std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
 	std::vector<DeltaTimestamp>               delta_timestamps{};
@@ -64,7 +58,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		Texture environment_map{};
 	} textures{};
 
-	struct Models
+	struct
 	{
 		std::unique_ptr<vkb::sg::SubMesh>              skybox{};
 		std::vector<std::unique_ptr<vkb::sg::SubMesh>> objects{};
@@ -78,7 +72,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> params{};
 	} uniform_buffers{};
 
-	struct UBOVS
+	struct
 	{
 		glm::mat4 projection{};
 		glm::mat4 model_view{};
@@ -86,7 +80,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		float     model_scale = 0.05f;
 	} ubo_vs{};
 
-	struct UBOParams
+	struct
 	{
 		float exposure = 1.0f;
 	} ubo_params{};
@@ -135,7 +129,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 		}
 	};
 
-	struct FrameBuffer
+	struct
 	{
 		int32_t               width       = 0;
 		int32_t               height      = 0;
@@ -160,8 +154,7 @@ class CalibratedTimestamps : public ApiVulkanSample
 
   private:
 	void get_time_domains();                                                 // this extracts total number of time domain the (physical device has, and then sync the time domain EXT data to its vector
-	void get_timestamps();                                                   // this creates local timestamps information vector, update timestamps vector and deviation vector
-	void init_time_domains_and_timestamps();                                 // this initializes all time domain and timestamps related variables, vectors, and booleans
+	VkResult get_timestamps();                                                   // this creates local timestamps information vector, update timestamps vector and deviation vector
 	void get_device_time_domain();                                           // this gets the optimal time domain which has the minimal value on its max deviation.
 	void timestamps_begin(const std::string &input_tag = "Untagged");        // this marks the timestamp begin and partially updates the delta_timestamps
 	void timestamps_end(const std::string &input_tag = "Untagged");          // this marks the timestamp ends and updates the delta_timestamps

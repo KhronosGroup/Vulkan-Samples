@@ -35,6 +35,7 @@ std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 }
 
 CalibratedTimestamps::CalibratedTimestamps()
+    : is_time_domain_init(false)
 {
 	title = "Calibrated Timestamps";
 
@@ -109,24 +110,24 @@ void CalibratedTimestamps::build_command_buffers()
 	render_pass_begin_info_0.clearValueCount       = static_cast<uint32_t>(clear_values_0.size());
 	render_pass_begin_info_0.pClearValues          = clear_values_0.data();
 
+	std::array<VkClearValue, 3> clear_values_1{};
+	clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+	clear_values_1[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+	clear_values_1[2].depthStencil = {0.0f, 0};
+
+	VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info_1.renderPass               = offscreen.render_pass;
+	render_pass_begin_info_1.framebuffer              = offscreen.framebuffer;
+	render_pass_begin_info_1.renderArea.extent.width  = offscreen.width;
+	render_pass_begin_info_1.renderArea.extent.height = offscreen.height;
+	render_pass_begin_info_1.clearValueCount          = static_cast<uint32_t>(clear_values_1.size());
+	render_pass_begin_info_1.pClearValues             = clear_values_1.data();
+
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		{
-			std::array<VkClearValue, 3> clear_values_1{};
-			clear_values_1[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values_1[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values_1[2].depthStencil = {0.0f, 0};
-
-			VkRenderPassBeginInfo render_pass_begin_info_1    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info_1.renderPass               = offscreen.render_pass;
-			render_pass_begin_info_1.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info_1.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info_1.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info_1.clearValueCount          = static_cast<uint32_t>(clear_values_1.size());
-			render_pass_begin_info_1.pClearValues             = clear_values_1.data();
-
 			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info_1, VK_SUBPASS_CONTENTS_INLINE);
 
 			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
@@ -155,7 +156,6 @@ void CalibratedTimestamps::build_command_buffers()
 		{
 			VkClearValue clear_value{};
 			clear_value.color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_value.depthStencil = {0.0f, 0};
 
 			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
@@ -348,7 +348,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		VkSubpassDescription subpass    = {};
 		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.pColorAttachments       = color_references.data();
-		subpass.colorAttachmentCount    = 2;
+		subpass.colorAttachmentCount    = static_cast<uint32_t>(color_references.size());
 		subpass.pDepthStencilAttachment = &depth_reference;
 
 		std::array<VkSubpassDependency, 2> dependencies{};
@@ -373,7 +373,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 		render_pass_create_info.pAttachments           = attachment_descriptions.data();
 		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
-		render_pass_create_info.subpassCount           = 1;
+		render_pass_create_info.subpassCount           = static_cast<uint32_t>(color_references.size());
 		render_pass_create_info.pSubpasses             = &subpass;
 		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
@@ -820,10 +820,8 @@ void CalibratedTimestamps::get_time_domains()
 
 	if (result == VK_SUCCESS)
 	{
-		// Initialize time domain vector
-		time_domains.clear();
 		// Resize time domains vector:
-		time_domains.resize(static_cast<int>(time_domain_count));        // this needs static cast to int
+		time_domains.resize(time_domain_count);        // this needs static cast to int
 		// Update time_domain vector:
 		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
 	}
@@ -845,44 +843,31 @@ void CalibratedTimestamps::get_time_domains()
 		}
 
 		// Resize time stamps vector
-		timestamps.resize(static_cast<int>(time_domain_count));
+		timestamps.resize(time_domain_count);
 		// Resize max deviations vector
-		max_deviations.resize(static_cast<int>(time_domain_count));
+		max_deviations.resize(time_domain_count);
 	}
 
 	// Time domain is successfully updated:
-	is_time_domain_updated = ((result == VK_SUCCESS) && (time_domain_count > 0));
+	is_time_domain_init = ((result == VK_SUCCESS) && (time_domain_count > 0));
 }
 
-void CalibratedTimestamps::get_timestamps()
+VkResult CalibratedTimestamps::get_timestamps()
 {
 	// Ensures that time domain exists
-	if (is_time_domain_updated)
+	if (is_time_domain_init)
 	{
 		// Get calibrated timestamps:
-		VkResult result = vkGetCalibratedTimestampsEXT(get_device().get_handle(), time_domains.size(), timestamps_info.data(), timestamps.data(), max_deviations.data());
-
-		// Timestamps is successfully updated:
-		is_timestamp_updated = (result == VK_SUCCESS);
+		return vkGetCalibratedTimestampsEXT(get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(), max_deviations.data());
 	}
-}
-
-void CalibratedTimestamps::init_time_domains_and_timestamps()
-{
-	is_time_domain_updated = false;
-	is_timestamp_updated   = false;
-
-	time_domains.clear();
-	timestamps.clear();
-	max_deviations.clear();
+	return VK_ERROR_UNKNOWN;
 }
 
 void CalibratedTimestamps::get_device_time_domain()
 {
-	init_time_domains_and_timestamps();
 	get_time_domains();
 
-	if (is_time_domain_updated && (time_domains.size() > 1))
+	if (is_time_domain_init && (time_domains.size() > 1))
 	{
 		auto iterator_device = std::find(time_domains.begin(), time_domains.end(), VK_TIME_DOMAIN_DEVICE_EXT);
 
@@ -895,25 +880,19 @@ void CalibratedTimestamps::get_device_time_domain()
 
 void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
-	// Initialize, then update time domains and timestamps
-	is_timestamp_updated = false;
-
 	// Now to get timestamps
-	get_timestamps();
-
-	if (is_timestamp_updated)
+	if (get_timestamps() == VK_SUCCESS)
 	{
 		// Create a local delta_timestamp to push back to the vector delta_timestamps
 		DeltaTimestamp delta_timestamp{};
 
-		// Naming the tic-toc tags and begin timestamp for this particular mark
 		if (!input_tag.empty())
 		{
 			delta_timestamp.tag = input_tag;
 		}
 		delta_timestamp.begin = timestamps[selected_time_domain.index];
 
-		// Push back this partially filled element to the vector, which will be filled in its corresponding toc
+		// Push back this partially filled element to the vector
 		delta_timestamps.push_back(delta_timestamp);
 	}
 }
@@ -926,17 +905,11 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 		return;        // exits the function here, further calculation is meaningless
 	}
 
-	// Initialize, then update time domains and timestamps
-	is_timestamp_updated = false;
-
-	// Now to get timestamps
-	get_timestamps();
-
-	if (is_timestamp_updated)
+	if (get_timestamps() == VK_SUCCESS)
 	{
 		// Add this data to the last term of delta_timestamps vector
 		delta_timestamps.back().end = timestamps[selected_time_domain.index];
-		delta_timestamps.back().get_delta();
+		delta_timestamps.back().delta = delta_timestamps.back().end - delta_timestamps.back().begin;
 	}
 }
 
