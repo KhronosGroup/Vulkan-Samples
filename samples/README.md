@@ -214,6 +214,13 @@ Procedurally generate a transparent quad and deform the geometry of the quad in 
 Structure) to demonstrate how to animate with deforming geometry.
 Shows how to rebuild the acceleration structure and when to set it to fast rebuild vs fast traversal.
 
+### [Mesh shading](./extensions/mesh_shading)<br/>
+**Extensions**: [```VK_EXT_mesh_shader``](https://www.khronos.org/registry/vulkan/specs/1.3-extensions/man/html/VK_KHR_mesh_shader.html)<br/>
+Renders a triangle with the most simple of all possible mesh shader pipeline examples.  There is no vertex shader, 
+there is only a mesh and fragment shader.  The mesh shader creates the vertices for the triangle.  The mesh shading 
+pipeline includes the task and mesh shaders before going into the fragment shader.  This replaces the vertex / 
+geometry shader standard pipeline.
+
 ### [OpenGL interoperability](./extensions/open_gl_interop)<br/>
 **Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
@@ -273,7 +280,16 @@ Demonstrate how to do conditional rendering, dynamically discarding rendering co
 
 ### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
 **Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
-Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are need to be created.
+Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
+### [Extended dynamic state 2](./extensions/extended_dynamic_state2)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html)
+<br/>
+Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
+### [Logic operations dynamic state](./extensions/logic_op_dynamic_state)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html) <br/>
+Demonstrate how to use logical operations dynamically, which can reduce the number of pipeline objects that are needed to be created or allow to change the pipeline state dynamically (change type of the logical operation).
 
 ### [Basic descriptor buffer](./extensions/descriptor_buffer_basic/)
 **Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)

@@ -69,6 +69,12 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 		case VK_SHADER_STAGE_CALLABLE_BIT_KHR:
 			return EShLangCallable;
 
+		case VK_SHADER_STAGE_MESH_BIT_EXT:
+			return EShLangMesh;
+
+		case VK_SHADER_STAGE_TASK_BIT_EXT:
+			return EShLangTask;
+
 		default:
 			return EShLangVertex;
 	}

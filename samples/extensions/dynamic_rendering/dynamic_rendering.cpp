@@ -262,7 +262,10 @@ void DynamicRendering::create_pipeline()
 	pipeline_create.colorAttachmentCount    = 1;
 	pipeline_create.pColorAttachmentFormats = &color_rendering_format;
 	pipeline_create.depthAttachmentFormat   = depth_format;
-	pipeline_create.stencilAttachmentFormat = depth_format;
+	if (!vkb::is_depth_only_format(depth_format))
+	{
+		pipeline_create.stencilAttachmentFormat = depth_format;
+	}
 
 	// Use the pNext to point to the rendering create struct
 	VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
@@ -352,8 +355,7 @@ void DynamicRendering::build_command_buffers()
 			vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, model_pipeline);
 			draw_model(object, draw_cmd_buffer);
 
-			// UI
-			draw_ui(draw_cmd_buffer);
+			// Note: This sample does not render a UI, as the framework's UI overlay doesn't handle dynamic rendering
 		};
 
 		VkImageSubresourceRange range{};
@@ -402,11 +404,14 @@ void DynamicRendering::build_command_buffers()
 			depth_attachment_info.storeOp                      = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 			depth_attachment_info.clearValue                   = clear_values[1];
 
-			auto render_area               = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
-			auto render_info               = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
-			render_info.layerCount         = 1;
-			render_info.pDepthAttachment   = &depth_attachment_info;
-			render_info.pStencilAttachment = &depth_attachment_info;
+			auto render_area             = VkRect2D{VkOffset2D{}, VkExtent2D{width, height}};
+			auto render_info             = vkb::initializers::rendering_info(render_area, 1, &color_attachment_info);
+			render_info.layerCount       = 1;
+			render_info.pDepthAttachment = &depth_attachment_info;
+			if (!vkb::is_depth_only_format(depth_format))
+			{
+				render_info.pStencilAttachment = &depth_attachment_info;
+			}
 
 			vkCmdBeginRenderingKHR(draw_cmd_buffer, &render_info);
 			draw_scene();

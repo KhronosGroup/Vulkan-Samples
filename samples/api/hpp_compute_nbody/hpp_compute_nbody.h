@@ -21,7 +21,7 @@
 
 #pragma once
 
-#include "hpp_api_vulkan_sample.h"
+#include <hpp_api_vulkan_sample.h>
 
 #if defined(__ANDROID__)
 // Lower particle count on Android for performance reasons
@@ -115,7 +115,6 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	void create_compute_pipeline_particle_integration();
 	void create_compute_pipeline_particle_movement();
 	void create_compute_pipelines();
-	void prepare_compute_storage_buffers();
 	void create_descriptor_pool();
 	void create_graphics_descriptor_set_layout();
 	void create_graphics_pipeline();
@@ -123,6 +122,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	void initializeCamera();
 	void load_assets();
 	void prepare_compute();
+	void prepare_compute_storage_buffers();
 	void prepare_graphics();
 	void update_compute_descriptor_set();
 	void update_compute_uniform_buffers(float delta_time);
