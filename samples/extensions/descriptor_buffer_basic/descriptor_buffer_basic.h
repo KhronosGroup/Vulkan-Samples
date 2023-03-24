@@ -35,8 +35,8 @@ class DescriptorBufferBasic : public ApiVulkanSample
 
 	VkPhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_properties{};
 
-	VkDescriptorSetLayout descriptor_set_layout_buffer;
-	VkDescriptorSetLayout descriptor_set_layout_image;
+	VkDescriptorSetLayout descriptor_set_layout_buffer{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout_image{VK_NULL_HANDLE};
 
 	struct Cube
 	{
@@ -63,11 +63,11 @@ class DescriptorBufferBasic : public ApiVulkanSample
 		glm::mat4 view;
 	} ubo_scene;
 
-	VkPipeline       pipeline;
-	VkPipelineLayout pipeline_layout;
+	VkPipeline       pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
 
 	DescriptorBufferBasic();
-	~DescriptorBufferBasic();
+	~DescriptorBufferBasic() override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void         build_command_buffers() override;
 	void         load_assets();
@@ -79,8 +79,8 @@ class DescriptorBufferBasic : public ApiVulkanSample
 	void         update_cube_uniform_buffers(float delta_time);
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;
-	virtual void render(float delta_time) override;
-	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
+	void         render(float delta_time) override;
+	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_descriptor_buffer_basic();

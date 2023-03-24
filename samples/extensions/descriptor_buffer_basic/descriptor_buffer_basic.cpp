@@ -156,7 +156,7 @@ void DescriptorBufferBasic::build_command_buffers()
 		}
 
 		// @todo: can't mix descriptor buffers and descriptors, so we disable the UI for now
-		// draw_ui(draw_cmd_buffers[i]);
+		draw_ui(draw_cmd_buffers[i]);
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
@@ -173,7 +173,7 @@ void DescriptorBufferBasic::load_assets()
 
 void DescriptorBufferBasic::setup_descriptor_set_layout()
 {
-	// Using descriptor buffers still requires use to create descriptor set layouts
+	// Using descriptor buffers still requires the creation of descriptor set layouts
 
 	VkDescriptorSetLayoutBinding set_layout_binding{};
 
@@ -192,9 +192,9 @@ void DescriptorBufferBasic::setup_descriptor_set_layout()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout_image));
 
 	// Create a pipeline layout using set 0 = Camera UBO, set 1 = Model UBO and set 2 = Model combined image
-	const std::array<VkDescriptorSetLayout, 3> decriptor_set_layouts = {descriptor_set_layout_buffer, descriptor_set_layout_buffer, descriptor_set_layout_image};
+	const std::array<VkDescriptorSetLayout, 3> descriptor_set_layouts = {descriptor_set_layout_buffer, descriptor_set_layout_buffer, descriptor_set_layout_image};
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(decriptor_set_layouts.data(), static_cast<uint32_t>(decriptor_set_layouts.size()));
+	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(descriptor_set_layouts.data(), static_cast<uint32_t>(descriptor_set_layouts.size()));
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 }
 
@@ -252,7 +252,7 @@ void DescriptorBufferBasic::prepare_pipelines()
 	pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
 	pipeline_create_info.pDynamicState                = &dynamic_state;
 
-	// We need to set this flag to let the implemenation know that this pipeline uses descriptor buffers
+	// We need to set this flag to let the implementation know that this pipeline uses descriptor buffers
 	pipeline_create_info.flags = VK_PIPELINE_CREATE_DESCRIPTOR_BUFFER_BIT_EXT;
 
 	const std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages = {
@@ -265,23 +265,23 @@ void DescriptorBufferBasic::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-// This function creates the desctiptor bffers and puts the descriptors into those buffers, so they can be used during command buffer creation
+// This function creates the descriptor buffers and puts the descriptors into those buffers, so they can be used during command buffer creation
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
 	// For sizing the descriptor buffers, we need to know the size for the descriptor set layouts the pipeline is using
-	std::array<VkDeviceSize, 2> descriptorLayoutSizes{};
-	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_buffer, &descriptorLayoutSizes[0]);
-	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_image, &descriptorLayoutSizes[1]);
+	std::array<VkDeviceSize, 2> descriptor_layout_sizes{};
+	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_buffer, &descriptor_layout_sizes[0]);
+	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), descriptor_set_layout_image, &descriptor_layout_sizes[1]);
 
 	// This buffer will contain resource descriptors for all the uniform buffers (one per cube and one with global matrices)
 	resource_descriptor_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                 (static_cast<uint32_t>(cubes.size()) + 1) * descriptorLayoutSizes[0],
+	                                                                 (static_cast<uint32_t>(cubes.size()) + 1) * descriptor_layout_sizes[0],
 	                                                                 VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                                 VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Samplers and combined images need to be stored in a separate buffer due to different flags (VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT) (one image per cube)
 	image_descriptor_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                              static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[1],
+	                                                              static_cast<uint32_t>(cubes.size()) * descriptor_layout_sizes[1],
 	                                                              VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 
@@ -289,7 +289,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	// This is done with vkGetDescriptorEXT
 	// We use pointers to offset and align the data we put into the descriptor buffers
 	VkDescriptorGetInfoEXT desc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
-	const uint32_t         alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
+	const VkDeviceSize     alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
 
 	// For combined images we need to put descriptors into the descriptor buffers
 	char *buf_ptr  = (char *) image_descriptor_buffer->get_data();
@@ -311,24 +311,22 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	addr_info.range                      = uniform_buffers.scene->get_size();
 	addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-	desc_info.type                       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	desc_info.data.pCombinedImageSampler = nullptr;
-	desc_info.data.pUniformBuffer        = &addr_info;
+	desc_info.type                = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	desc_info.data.pUniformBuffer = &addr_info;
 	vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
 
 	// Per-cube uniform buffers
 	buf_ptr += alignment;
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
-		VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
-		addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
-		addr_info.range                      = cubes[i].uniform_buffer->get_size();
-		addr_info.format                     = VK_FORMAT_UNDEFINED;
+		VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
+		cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
+		cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
+		cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-		desc_info.type                       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		desc_info.data.pCombinedImageSampler = nullptr;
-		desc_info.data.pUniformBuffer        = &addr_info;
-		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr);
+		desc_info.type                = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+		desc_info.data.pUniformBuffer = &cube_addr_info;
+		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
 		buf_ptr += alignment;
 	}
 }
@@ -415,7 +413,7 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	device_properties.pNext            = &descriptor_buffer_properties;
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
-	// This sample makes use of combined image samplers in a single array, which is an optional feeature
+	// This sample makes use of combined image samplers in a single array, which is an optional feature
 	if (!descriptor_buffer_properties.combinedImageSamplerDescriptorSingleArray)
 	{
 		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
@@ -427,7 +425,7 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, static_cast<float>(width) / height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -5.0f));
 
