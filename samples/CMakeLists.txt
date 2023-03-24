@@ -78,6 +78,7 @@ set(ORDER_LIST
     "vertex_dynamic_state"
     "extended_dynamic_state2"
     "logic_op_dynamic_state"
+    "patch_control_points"
 
     #Performance Samples
     "swapchain_images"
