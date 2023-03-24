@@ -21,15 +21,15 @@
 
 ## Overview
 
-Binding and managing descriptors in Vulkan can become pretty complex, both for the application and the driver. With the [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer) extension, this interface is simplified and maps more direct how hardware sees descriptors. It also simplifies the programming model, as you now longer have to create descriptor pool upfront.
+Binding and managing descriptors in Vulkan can become pretty complex, both for the application and the driver. With the [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer) extension, this interface is simplified and maps more directly to how hardware sees descriptors. It also simplifies the programming model, as you no longer have to create descriptor pool upfront.
 
-This sample shows how to use that extension by rendering multiple objects with different uniform buffers and images using the new interface of creating and binding descriptors with this extension.
+This sample shows how to use that extension by rendering multiple objects with different uniform buffers and images using the new interface of creating and binding descriptors.
 
 ## Deprecated descriptor bindings
 
 Creating and binding descriptors in Vulkan requires different steps and function calls.
 
-After all, descriptors are just memory, and something like a `VkDescriptorPool` was an abstract concept that didn't actually map to hardware. On most implementations `vkCreateDescriptorPool` did nothing more than a just memory allocation. Same for `vkAllocateDescriptorSets`, which in the end is also just some sort of memory allocation, while `vkUpdateDescriptorSets` did some memory copies for the descriptors to that buffer.
+After all, descriptors are just memory, and something like a `VkDescriptorPool` was an abstract concept that didn't actually map to hardware. On most implementations `vkCreateDescriptorPool` did nothing more than just a memory allocation. Same for `vkAllocateDescriptorSets`, which in the end is also just some sort of memory allocation, while `vkUpdateDescriptorSets` did some memory copies for the descriptors to that buffer.
 
 With the streamlined descriptor setup from `VK_EXT_descriptor_buffer`, the api now maps more closely to this and removes the need for the following functions:
 
@@ -43,7 +43,7 @@ Other concepts of Vulkan's descriptor logic like descriptor set layouts and pipe
 
 ## The new way
 
-The `VK_EXT_descriptor_buffer` replaces all of this with **resource descriptor buffer**. These store descriptors in a way that the GPU can directly read them from such a buffer. The application simply puts them into those buffers. That buffer is then bound at command buffer time similar to other buffer types.
+The `VK_EXT_descriptor_buffer` replaces all of this with **resource descriptor buffer**. These store descriptors in a way that the GPU can directly read them from such a buffer. The application simply puts them into those buffers. That buffer is then bound at command buffer recording time similar to other buffer types.
 
 To make the following code easier to understand, let's take a look at the interfaces of our shaders:
 
@@ -92,7 +92,7 @@ resource_descriptor_buffer =
 										VMA_MEMORY_USAGE_CPU_TO_GPU);
 ```
 
-Creating the combined image sampler descriptors adding the additional `VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
+Creating the combined image sampler descriptors by additionally adding the `VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
 
 ```cpp
 image_descriptor_buffer =
@@ -136,7 +136,7 @@ For resource descriptor buffers, we can simply put buffer device addresses into 
 
 	// Per-cube uniform buffers
 	buf_ptr += alignment;
-	for (uint32_t i = 0; i < static_cast<uint32_t>(cubes.size()); i++)
+	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
 		addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
@@ -160,7 +160,7 @@ For combined image samplers (or samplers alone) we can't use buffer device addre
 	// For combined images we need to put descriptors into the descriptor buffers
 	char *buf_ptr  = (char *) image_descriptor_buffer->get_data();
 	desc_info.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	for (uint32_t i = 0; i < static_cast<uint32_t>(cubes.size()); i++)
+	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
 		desc_info.data.pCombinedImageSampler   = &image_descriptor;
@@ -170,7 +170,7 @@ For combined image samplers (or samplers alone) we can't use buffer device addre
 
 ### Binding the buffers
 
-As noted earlier, we no longer bind descriptor sets using `vkCmdBindDescriptorSets` but instead use `vkCmdBindDescriptorBuffersEXT` the bind the (resource) descriptor buffers and then use `vkCmdSetDescriptorBufferOffsetsEXT` to index into that buffer for the next draw:
+As noted earlier, we no longer bind descriptor sets using `vkCmdBindDescriptorSets` but instead use `vkCmdBindDescriptorBuffersEXT` to bind the (resource) descriptor buffers and then use `vkCmdSetDescriptorBufferOffsetsEXT` to index into that buffer for the next draw:
 
 ```cpp
 // Descriptor buffer bindings
@@ -181,7 +181,6 @@ descriptor_buffer_binding_info[0].address = resource_descriptor_buffer->get_devi
 descriptor_buffer_binding_info[0].usage   = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 // Binding 1 = Image
 descriptor_buffer_binding_info[1].sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
-descriptor_buffer_binding_info[1].pNext   = nullptr;
 descriptor_buffer_binding_info[1].address = image_descriptor_buffer->get_device_address();
 descriptor_buffer_binding_info[1].usage   = VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 vkCmdBindDescriptorBuffersEXT(draw_cmd_buffers[i], 2, descriptor_buffer_binding_info);
@@ -194,11 +193,11 @@ VkDeviceSize buffer_offset    = 0;
 vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &buffer_index_ubo, &buffer_offset);
 
 // Set and offset into descriptor for each model
-for (uint32_t j = 0; j < static_cast<uint32_t>(cubes.size()); j++)
+for (size_t j = 0; j < cubes.size(); j++)
 {
     // Uniform buffer (set 1)
     // Model ubos start at offset * 1 (slot 0 is global matrices)
-    buffer_offset = alignment + j * alignment;
+    buffer_offset = (j + 1) * alignment;
     vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
     // Image (set 2)
     uint32_t buffer_index_image = 1;

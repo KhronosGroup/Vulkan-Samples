@@ -130,28 +130,27 @@ void DescriptorBufferBasic::build_command_buffers()
 		descriptor_buffer_binding_info[0].usage   = VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 		// Binding 1 = Image
 		descriptor_buffer_binding_info[1].sType   = VK_STRUCTURE_TYPE_DESCRIPTOR_BUFFER_BINDING_INFO_EXT;
-		descriptor_buffer_binding_info[1].pNext   = nullptr;
 		descriptor_buffer_binding_info[1].address = image_descriptor_buffer->get_device_address();
 		descriptor_buffer_binding_info[1].usage   = VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 		vkCmdBindDescriptorBuffersEXT(draw_cmd_buffers[i], 2, descriptor_buffer_binding_info);
 
-		uint32_t     buffer_index_ubo = 0;
-		VkDeviceSize alignment        = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
-		VkDeviceSize buffer_offset    = 0;
+		uint32_t     buffer_index_ubo   = 0;
+		uint32_t     buffer_index_image = 1;
+		VkDeviceSize alignment          = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
+		VkDeviceSize buffer_offset      = 0;
 
 		// Global Matrices (set 0)
 		vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &buffer_index_ubo, &buffer_offset);
 
 		// Set and offset into descriptor for each model
-		for (uint32_t j = 0; j < static_cast<uint32_t>(cubes.size()); j++)
+		for (size_t j = 0; j < cubes.size(); j++)
 		{
 			// Uniform buffer (set 1)
 			// Model ubos start at offset * 1 (slot 0 is global matrices)
-			buffer_offset = alignment + j * alignment;
+			buffer_offset = (j + 1) * alignment;
 			vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
 			// Image (set 2)
-			uint32_t buffer_index_image = 1;
-			buffer_offset               = j * alignment;
+			buffer_offset = j * alignment;
 			vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
 			draw_model(models.cube, draw_cmd_buffers[i]);
 		}
@@ -295,7 +294,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	// For combined images we need to put descriptors into the descriptor buffers
 	char *buf_ptr  = (char *) image_descriptor_buffer->get_data();
 	desc_info.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	for (uint32_t i = 0; i < static_cast<uint32_t>(cubes.size()); i++)
+	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
 		desc_info.data.pCombinedImageSampler   = &image_descriptor;
@@ -319,7 +318,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 
 	// Per-cube uniform buffers
 	buf_ptr += alignment;
-	for (uint32_t i = 0; i < static_cast<uint32_t>(cubes.size()); i++)
+	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
 		addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
