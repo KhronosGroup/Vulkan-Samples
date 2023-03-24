@@ -129,24 +129,22 @@ For resource descriptor buffers, we can simply put buffer device addresses into 
 	addr_info.range                      = uniform_buffers.scene->get_size();
 	addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-	desc_info.type                       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	desc_info.data.pCombinedImageSampler = nullptr;
-	desc_info.data.pUniformBuffer        = &addr_info;
-	vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
+	VkDescriptorGetInfoEXT buffer_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
+	buffer_descriptor_info.type                = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	buffer_descriptor_info.data.pUniformBuffer = &addr_info;
+	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
 
 	// Per-cube uniform buffers
 	buf_ptr += alignment;
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
-		VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
-		addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
-		addr_info.range                      = cubes[i].uniform_buffer->get_size();
-		addr_info.format                     = VK_FORMAT_UNDEFINED;
+		VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
+		cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
+		cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
+		cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-		desc_info.type                       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		desc_info.data.pCombinedImageSampler = nullptr;
-		desc_info.data.pUniformBuffer        = &addr_info;
-		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
+		buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
+		vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
 		buf_ptr += alignment;
 	}
 ```
@@ -154,17 +152,18 @@ For resource descriptor buffers, we can simply put buffer device addresses into 
 For combined image samplers (or samplers alone) we can't use buffer device addresses as the implementation needs more information, so we have to put actual descriptors into the buffer instead:
 
 ```cpp
-	VkDescriptorGetInfoEXT desc_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
-	const uint32_t         alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
+	const VkDeviceSize alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
 
 	// For combined images we need to put descriptors into the descriptor buffers
-	char *buf_ptr  = (char *) image_descriptor_buffer->get_data();
-	desc_info.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	char *buf_ptr = (char *) image_descriptor_buffer->get_data();
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
-		desc_info.data.pCombinedImageSampler   = &image_descriptor;
-		vkGetDescriptorEXT(get_device().get_handle(), &desc_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr + i * alignment);
+
+		VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
+		image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
+		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr + i * alignment);
 	}
 ```
 
