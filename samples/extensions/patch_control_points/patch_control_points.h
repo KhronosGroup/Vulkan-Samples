@@ -42,7 +42,7 @@ class PatchControlPoints : public ApiVulkanSample
 
 	struct UBOTESS
 	{
-		float     tessellation_factor = 3.0f;
+		float tessellation_factor = 3.0f;
 	} ubo_tess;
 
 	VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};
