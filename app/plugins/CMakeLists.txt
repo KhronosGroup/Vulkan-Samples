@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2022, Arm Limited and Contributors
+ Copyright (c) 2019-2023, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -95,6 +95,8 @@ foreach(PLUGIN IN LISTS PLUGINS)
     list(APPEND SRC_FILES "${PLUGIN}/${PLUGIN}.cpp")
 endforeach()
 
-add_library(plugins STATIC ${SRC_FILES})
-target_link_libraries(plugins PRIVATE framework apps)
-target_include_directories(plugins PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+add_library(plugins OBJECT ${SRC_FILES})
+target_include_directories(plugins PRIVATE ${CMAKE_CURRENT_SOURCE_DIR} $<TARGET_PROPERTY:apps,INTERFACE_INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:framework,INTERFACE_INCLUDE_DIRECTORIES>)
+target_compile_options(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_OPTIONS> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_OPTIONS>)
+target_compile_features(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_FEATURES> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_FEATURES>)
+target_compile_definitions(plugins PRIVATE $<TARGET_PROPERTY:apps,INTERFACE_COMPILE_DEFINITIONS> $<TARGET_PROPERTY:framework,INTERFACE_COMPILE_DEFINITIONS>)
