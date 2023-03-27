@@ -30,6 +30,7 @@
       - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
   - [VKB_VULKAN_DEBUG](#vkb_vulkan_debug)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
+- [Quality Assurance](#quality-assurance)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 - [Windows](#windows)
@@ -103,6 +104,17 @@ Treat all warnings as errors
 
 **Default:** `ON`
 
+# Quality Assurance
+
+We use a small set of tools to provide a level of quality to the project. These tools are part of our CI/CD process. If your local environment does not have the same versions of the tools we use in the CI you may see some errors or warnings pop-up when pushing.
+
+For up-to date version information please see the repositories for the individual tools
+
+- Doxygen [Doxygen Repository](https://github.com/KhronosGroupActions/doxygen)
+- Clang Format / Clang Tidy [Clang Tools Repository](https://github.com/KhronosGroupActions/clang-tools)
+- Snake Case Check [Snake Case Check Repository](https://github.com/KhronosGroupActions/snake-case-check)
+- Android NDK [Android NDK Repository](https://github.com/KhronosGroupActions/android-ndk-build)
+
 # 3D models
 
 Most of the samples require 3D models downloaded from <https://github.com/KhronosGroup/Vulkan-Samples-Assets>.
@@ -137,10 +149,9 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2 and 3.19.3)
+- CMake v3.12+
 - Python 3
 - Visual Studio 2017 or above
-- [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -194,8 +205,8 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2)
-- C++14 Compiler (tested on GCC 7.3)
+- CMake v3.12+
+- C++14 Compiler
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -227,7 +238,7 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2; Apple Silicon requires at least 3.19.2)
+- CMake v3.12+ (Apple Silicon requires at least 3.19.2)
 - XCode v12 for Apple Silicon
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
@@ -268,6 +279,8 @@ For all dependencies set the following environment variables:
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
+
+> We use this environment in the CI [Android NDK Repository](https://github.com/KhronosGroupActions/android-ndk-build)
 
 It is highly recommended to install [Android Studio](https://d.android.com/studio) to build, run and trace the sample project.
 Android Studio uses the following plugins/tools to build samples:

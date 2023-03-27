@@ -41,11 +41,7 @@ else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})
 endif()
 
-target_include_directories(${PROJECT_NAME} PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-    ${CMAKE_CURRENT_SOURCE_DIR}/../framework)
-
-target_link_libraries(${PROJECT_NAME} PRIVATE framework plugins apps spdlog)
+target_link_libraries(${PROJECT_NAME} PUBLIC apps plugins)
 
 # Create android project
 if(ANDROID)

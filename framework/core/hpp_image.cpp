@@ -43,7 +43,7 @@ inline vk::ImageType find_image_type(vk::Extent3D const &extent)
 
 namespace core
 {
-HPPImage::HPPImage(HPPDevice const        &device,
+HPPImage::HPPImage(HPPDevice              &device,
                    const vk::Extent3D     &extent,
                    vk::Format              format,
                    vk::ImageUsageFlags     image_usage,
@@ -100,7 +100,7 @@ HPPImage::HPPImage(HPPDevice const        &device,
 	}
 }
 
-HPPImage::HPPImage(HPPDevice const        &device,
+HPPImage::HPPImage(HPPDevice              &device,
                    vk::Image               handle,
                    const vk::Extent3D     &extent,
                    vk::Format              format,

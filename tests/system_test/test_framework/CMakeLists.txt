@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2022, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,11 +30,16 @@ set(FRAMEWORK_FILES
 source_group("\\" FILES ${FRAMEWORK_FILES})
 
 add_library(${PROJECT_NAME} STATIC ${FRAMEWORK_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 add_library(test_framework_headers INTERFACE)
 target_include_directories(test_framework_headers INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 
 # inherit compile definitions from framework target
 target_compile_definitions(${PROJECT_NAME} PRIVATE $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
-target_link_libraries(${PROJECT_NAME} PRIVATE framework) 
-target_link_libraries(${PROJECT_NAME} PUBLIC test_framework_headers) 
+target_link_libraries(${PROJECT_NAME} PRIVATE framework imgui)
+target_link_libraries(${PROJECT_NAME} PUBLIC test_framework_headers)
+
+if(ANDROID)
+    target_link_libraries(${PROJECT_NAME} PRIVATE apps)
+endif()
