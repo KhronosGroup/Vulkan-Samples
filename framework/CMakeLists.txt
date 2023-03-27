@@ -456,7 +456,9 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+#NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
+add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type
 if(NOT MSVC)
@@ -518,7 +520,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     spdlog
     ctpl
     CLI11::CLI11
-    apps
     plugins)
 
 if(${NEED_LINK_ATOMIC})
