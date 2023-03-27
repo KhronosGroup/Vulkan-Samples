@@ -63,19 +63,26 @@ jobs:
 
   build_android:
     name: "Build Android in ${{ matrix.build_type }}"
-    container: ghcr.io/khronosgroupactions/android-ndk-build:r25b
     runs-on: ubuntu-latest
     strategy:
       matrix:
         build_type: [Debug]
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: "recursive"
+
+      - name: set up JDK 11
+        uses: actions/setup-java@v3
+        with:
+          java-version: "11"
+          distribution: "temurin"
+          cache: gradle
+
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew app:assemble${{ matrix.build_type }}
+        run: ./gradlew app:assemble${{ matrix.build_type }} --info

@@ -316,18 +316,7 @@ target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
 set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 target_link_libraries(astc PUBLIC stb)
 
-if(ANDROID)
-    # native_app_glue
-    set(NATIVE_APP_GLUE_DIR "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
-
-    file(GLOB NATIVE_APP_GLUE_FILES "${NATIVE_APP_GLUE_DIR}/*.c" "${NATIVE_APP_GLUE_DIR}/*.h")
-    
-    add_library(native_app_glue STATIC ${NATIVE_APP_GLUE_FILES})
-        
-    target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
-
-    set_target_properties(native_app_glue PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
-else()
+if(NOT ANDROID)
     if (NOT DIRECT_TO_DISPLAY)
         # GLFW
         option(GLFW_BUILD_DOCS OFF)
