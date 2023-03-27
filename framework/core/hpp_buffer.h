@@ -38,7 +38,7 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	 * @param flags The allocation create flags
 	 * @param queue_family_indices optional queue family indices
 	 */
-	HPPBuffer(vkb::core::HPPDevice const  &device,
+	HPPBuffer(vkb::core::HPPDevice        &device,
 	          vk::DeviceSize               size,
 	          vk::BufferUsageFlags         buffer_usage,
 	          VmaMemoryUsage               memory_usage,

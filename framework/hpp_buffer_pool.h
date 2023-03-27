@@ -18,6 +18,7 @@
 #pragma once
 
 #include "buffer_pool.h"
+#include <core/hpp_buffer.h>
 
 namespace vkb
 {
@@ -40,6 +41,11 @@ class HPPBufferAllocation : private vkb::BufferAllocation
 	vk::DeviceSize get_offset() const
 	{
 		return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_offset());
+	}
+
+	vk::DeviceSize get_size() const
+	{
+		return static_cast<vk::DeviceSize>(vkb::BufferAllocation::get_size());
 	}
 };
 
