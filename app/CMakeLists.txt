@@ -45,8 +45,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC apps plugins)
 
 # Create android project
 if(ANDROID)
-    set_target_properties(${PROJECT_NAME} PROPERTIES LINK_FLAGS "-u ANativeActivity_onCreate")
-    
     if(CMAKE_VS_NsightTegra_VERSION)
         set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_GUI ON)
         set_property(TARGET ${PROJECT_NAME} PROPERTY ANDROID_ASSETS_DIRECTORIES ${CMAKE_CURRENT_SOURCE_DIR}/../assets)
