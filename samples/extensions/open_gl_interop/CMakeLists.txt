@@ -1,5 +1,5 @@
-# Copyright (c) 2020-2021, Bradley Austin Davis
-# Copyright (c) 2020-2021, Arm Limited
+# Copyright (c) 2020-2023, Bradley Austin Davis
+# Copyright (c) 2020-2023, Arm Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -34,13 +34,14 @@ set(GLAD_SOURCES
     ${GLAD_DIR}/include/glad/glad.h
     ${GLAD_DIR}/include/KHR/khrplatform.h
 )
-add_library(glad ${GLAD_SOURCES})
+add_library(glad STATIC ${GLAD_SOURCES})
 target_sources(glad PRIVATE ${GLAD_SOURCES})
 target_include_directories(glad PUBLIC ${GLAD_DIR}/include)
-set_property(TARGET glad PROPERTY FOLDER "ThirdParty")
+set_target_properties(glad PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # Only Compile on platforms that support glfw
 if (NOT (ANDROID OR DIRECT_TO_DISPLAY))
+    target_link_libraries( glad PUBLIC glfw )
     add_sample_with_tags(
         ID ${FOLDER_NAME}
         CATEGORY ${CATEGORY_NAME}
