@@ -23,7 +23,7 @@ namespace vkb
 {
 namespace core
 {
-HPPBuffer::HPPBuffer(vkb::core::HPPDevice const  &device,
+HPPBuffer::HPPBuffer(vkb::core::HPPDevice        &device,
                      vk::DeviceSize               size_,
                      vk::BufferUsageFlags         buffer_usage,
                      VmaMemoryUsage               memory_usage,
