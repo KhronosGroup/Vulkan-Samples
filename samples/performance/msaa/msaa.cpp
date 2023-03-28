@@ -496,6 +496,13 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
+		if (run_postprocessing)
+		{
+			// Synchronize depth with previous depth resolve operation
+			memory_barrier.dst_stage_mask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			memory_barrier.dst_access_mask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+
 		for (auto &i_depth : depth_atts)
 		{
 			assert(i_depth < views.size());
@@ -578,6 +585,10 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
+	// Unbind sampled images to prevent invalid image transitions on unused images
+	postprocessing_subpass.unbind_sampled_image("depth_sampler");
+	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
+
 	postprocessing_subpass.get_fs_variant().clear();
 	if (multisampled_depth)
 	{
@@ -605,10 +616,12 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 	{
 		// The multisampled color is the source of the resolve operation
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
 
 		assert(i_color_ms < views.size());
 		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
@@ -628,10 +641,12 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 		auto color_new_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = color_layout;
-		memory_barrier.new_layout     = color_new_layout;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.old_layout      = color_layout;
+		memory_barrier.new_layout      = color_new_layout;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
 		color_layout = color_new_layout;
 
@@ -647,10 +662,12 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 		auto color_new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = color_layout;
-		memory_barrier.new_layout     = color_new_layout;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.old_layout      = color_layout;
+		memory_barrier.new_layout      = color_new_layout;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 
 		color_layout = color_new_layout;
 
@@ -659,10 +676,12 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 
 		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}
