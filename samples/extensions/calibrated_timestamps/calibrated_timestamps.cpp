@@ -92,9 +92,6 @@ void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void CalibratedTimestamps::build_command_buffers()
 {
-	// Reset the delta timestamps vector
-	delta_timestamps.clear();
-
 	timestamps_begin("Build Command Buffers");
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -722,19 +719,23 @@ void CalibratedTimestamps::prepare_uniform_buffers()
 
 void CalibratedTimestamps::update_uniform_buffers()
 {
+	timestamps_begin("update ubo");
 	ubo_vs.projection        = camera.matrices.perspective;
 	ubo_vs.model_view        = camera.matrices.view * models.transforms[models.object_index];
 	ubo_vs.skybox_model_view = camera.matrices.view;
 	uniform_buffers.matrices->convert_and_update(ubo_vs);
+	timestamps_end("update ubo");
 }
 
 void CalibratedTimestamps::draw()
 {
+	timestamps_begin("draw");
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
+	timestamps_end("draw");
 }
 
 bool CalibratedTimestamps::prepare(vkb::Platform &platform)
@@ -846,6 +847,12 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 	// Now to get timestamps
 	if (get_timestamps() == VK_SUCCESS)
 	{
+		if (!input_tag.empty())
+		{
+			auto pos =std::remove_if(delta_timestamps.begin(), delta_timestamps.end(), [input_tag](auto ts) { return ts.tag == input_tag; });
+			if(pos != delta_timestamps.end())
+				delta_timestamps.erase(pos);
+		}
 		// Create a local delta_timestamp to push back to the vector delta_timestamps
 		DeltaTimestamp delta_timestamp{};
 
@@ -862,18 +869,29 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 
 void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 {
-	if (delta_timestamps.empty() || (input_tag != delta_timestamps.back().tag))
+	if (delta_timestamps.empty())
 	{
-		LOGI("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
+		LOGE("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
 		return;        // exits the function here, further calculation is meaningless
 	}
 
-	if (get_timestamps() == VK_SUCCESS)
+	auto result = get_timestamps();
+	if (result == VK_SUCCESS)
 	{
-		// Add this data to the last term of delta_timestamps vector
-		delta_timestamps.back().end   = timestamps[selected_time_domain.index];
-		delta_timestamps.back().delta = delta_timestamps.back().end - delta_timestamps.back().begin;
+		for (auto ts : delta_timestamps)
+		{
+			if (ts.tag == input_tag)
+			{
+				// Add this data to the last term of delta_timestamps vector
+				ts.end   = timestamps[selected_time_domain.index];
+				ts.delta = ts.end - ts.begin;
+				return;
+			}
+		}
+		LOGE("timestamps_end called without a found corresponding begin timestamp.\n")
+		return;
 	}
+	LOGE("get_timestamps failed with %d", result);
 }
 
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
