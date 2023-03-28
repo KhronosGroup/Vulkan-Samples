@@ -36,6 +36,7 @@ layout(location = 1) in vec3 inNormal[];
 
 layout(location = 0) out vec3 outPos[3];
 layout(location = 1) out vec3 outNormal[3];
+layout(location = 2) out vec3 outColor[3];
 
 float GetTessLevel(vec4 p0, vec4 p1)
 {
@@ -59,14 +60,17 @@ float GetTessLevel(vec4 p0, vec4 p1)
 	if (AvgDistance >= midDistance)
 	{
 		tesselationValue = 1.0f;
+		outColor[gl_InvocationID] = vec3(1.0f, 0.0f, 0.0f); // red color
 	}
 	else if (AvgDistance >= shortDistance && AvgDistance < midDistance)
 	{
 		tesselationValue = ubo_tessellation.tessellationFactor * 0.4;
+		outColor[gl_InvocationID] = vec3(0.0f, 0.0f, 1.0f); // blue color
 	}
 	else
 	{
 		tesselationValue = ubo_tessellation.tessellationFactor;
+		outColor[gl_InvocationID] = vec3(0.0f, 1.0f, 0.0f); // green color
 	}
 
 	return tesselationValue;
@@ -87,6 +91,7 @@ void main()
 		gl_TessLevelOuter[1] = 1;
 		gl_TessLevelOuter[2] = 1;
 		gl_TessLevelInner[0] = 1;
+		outColor[gl_InvocationID] = vec3(0.6667, 0.1176, 0.1176); // default color
 	}
 
 	gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;

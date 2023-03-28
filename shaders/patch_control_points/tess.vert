@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 #version 450
-
+#define PI 3.14159
 layout(location = 0) in vec3 inPos;
 layout(location = 1) in vec3 inNormal;
 
@@ -38,7 +38,13 @@ push_constants;
 
 void main(void)
 {
-	gl_Position = vec4(inPos + push_constants.direction, 1.0);
+	mat4 rotX = mat4(1.0f);
+	rotX[1][1] = cos(PI);
+	rotX[1][2] = sin(PI);
+	rotX[2][1] = -sin(PI);
+	rotX[2][2] = cos(PI);
+	vec4 pos = rotX * vec4(inPos + push_constants.direction, 1.0f);
+	gl_Position = pos;
 	outNormal   = mat3(ubo.view) * inNormal;
-	outPos      = inPos + push_constants.direction;
+	outPos      = vec3(pos.xyz) + push_constants.direction;
 }

@@ -59,8 +59,7 @@ bool PatchControlPoints::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_position({5.0f, -1.0f, -3.0f});
-	camera.set_rotation({-190.0f, -180.0f, 0.2f});
+	camera.set_position({-1.25f, 0.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
@@ -80,7 +79,7 @@ bool PatchControlPoints::prepare(vkb::Platform &platform)
  */
 void PatchControlPoints::load_assets()
 {
-	model = load_model("scenes/terrain.gltf");
+	model = load_model("scenes/terrain/terrain.gltf");
 }
 
 /**
@@ -304,8 +303,8 @@ void PatchControlPoints::build_command_buffers()
 	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil = {0.0f, 0};
 
-	const std::array<glm::vec3, 2> directions = {glm::vec3(-6.00f, 0.0f, 0.0f),  /* first model */
-	                                             glm::vec3(-3.95f, 0.0f, 0.0f)}; /* second model */
+	const std::array<glm::vec3, 2> directions = {glm::vec3(2.5f, -1.0f, 3.0f),  /* first model */
+	                                             glm::vec3(0.0f, -1.0f, 3.0f)}; /* second model */
 
 	constexpr uint32_t patch_control_points = 3;
 
