@@ -785,7 +785,7 @@ void CalibratedTimestamps::get_time_domains()
 	if (result == VK_SUCCESS)
 	{
 		// Resize time domains vector:
-		time_domains.resize(time_domain_count);        // this needs static cast to int
+		time_domains.resize(time_domain_count);
 		// Update time_domain vector:
 		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
 	}
@@ -812,7 +812,6 @@ void CalibratedTimestamps::get_time_domains()
 		max_deviations.resize(time_domain_count);
 	}
 
-	// Time domain is successfully updated:
 	is_time_domain_init = ((result == VK_SUCCESS) && (time_domain_count > 0));
 }
 
