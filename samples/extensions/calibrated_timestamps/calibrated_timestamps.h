@@ -46,8 +46,8 @@ class CalibratedTimestamps : public ApiVulkanSample
 		uint64_t    delta = 0;
 		std::string tag   = "Untagged";
 	};
-	std::vector<VkCalibratedTimestampInfoEXT> timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
-	std::vector<DeltaTimestamp>               delta_timestamps{};
+	std::vector<VkCalibratedTimestampInfoEXT>       timestamps_info{};        // This vector is essential to vkGetCalibratedTimestampsEXT, and only need to be registered once.
+	std::unordered_map<std::string, DeltaTimestamp> delta_timestamps{};
 
   public:
 	bool bloom          = true;

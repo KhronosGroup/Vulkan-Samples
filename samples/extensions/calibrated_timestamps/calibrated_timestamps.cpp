@@ -92,7 +92,7 @@ void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void CalibratedTimestamps::build_command_buffers()
 {
-	timestamps_begin("Build Command Buffers");
+	timestamps_begin("Build_Command_Buffers");
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -182,7 +182,7 @@ void CalibratedTimestamps::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 
-	timestamps_end("Build Command Buffers");
+	timestamps_end("Build_Command_Buffers");
 }
 
 void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
@@ -457,6 +457,7 @@ void CalibratedTimestamps::prepare_offscreen_buffer()
 
 void CalibratedTimestamps::load_assets()
 {
+	timestamps_begin("loadAssets");
 	models.skybox                      = load_model("scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
@@ -476,6 +477,7 @@ void CalibratedTimestamps::load_assets()
 	models.transforms.push_back(torus_matrix);
 
 	textures.environment_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	timestamps_end("loadAssets");
 }
 
 void CalibratedTimestamps::setup_descriptor_pool()
@@ -847,23 +849,15 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 	// Now to get timestamps
 	if (get_timestamps() == VK_SUCCESS)
 	{
-		if (!input_tag.empty())
+		std::string tag = input_tag;
+		if (input_tag.empty())
 		{
-			auto pos = std::remove_if(delta_timestamps.begin(), delta_timestamps.end(), [input_tag](auto ts) { return ts.tag == input_tag; });
-			if (pos != delta_timestamps.end())
-				delta_timestamps.erase(pos);
+			tag = "Unknown";
 		}
-		// Create a local delta_timestamp to push back to the vector delta_timestamps
-		DeltaTimestamp delta_timestamp{};
+		delta_timestamps[tag].tag   = input_tag;
+		delta_timestamps[tag].begin = timestamps[selected_time_domain.index];
 
-		if (!input_tag.empty())
-		{
-			delta_timestamp.tag = input_tag;
-		}
-		delta_timestamp.begin = timestamps[selected_time_domain.index];
-
-		// Push back this partially filled element to the vector
-		delta_timestamps.push_back(delta_timestamp);
+		usleep(50);
 	}
 }
 
@@ -878,20 +872,17 @@ void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
 	auto result = get_timestamps();
 	if (result == VK_SUCCESS)
 	{
-		for (auto ts : delta_timestamps)
+		if (delta_timestamps.find(input_tag) != delta_timestamps.end())
 		{
-			if (ts.tag == input_tag)
-			{
-				// Add this data to the last term of delta_timestamps vector
-				ts.end   = timestamps[selected_time_domain.index];
-				ts.delta = ts.end - ts.begin;
-				return;
-			}
+			// Add this data to the last term of delta_timestamps vector
+			delta_timestamps[input_tag].end   = timestamps[selected_time_domain.index];
+			delta_timestamps[input_tag].delta = delta_timestamps[input_tag].end - delta_timestamps[input_tag].begin;
+			return;
 		}
-		LOGE("timestamps_end called without a found corresponding begin timestamp.\n")
+		LOGE("timestamps_end called without a found corresponding begin timestamp for {}.", input_tag.c_str())
 		return;
 	}
-	LOGE("get_timestamps failed with %d", result);
+	LOGE("get_timestamps failed with %d", result)
 }
 
 void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -924,7 +915,7 @@ void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("%s:\n %.1f Microseconds", delta_timestamp.tag.c_str(), static_cast<float>(delta_timestamp.delta) * timestamp_period * 0.001f);
+			drawer.text("%s:\n %.1f Microseconds", delta_timestamp.second.tag.c_str(), static_cast<float>(delta_timestamp.second.delta) * timestamp_period * 0.001f);
 		}
 	}
 }
