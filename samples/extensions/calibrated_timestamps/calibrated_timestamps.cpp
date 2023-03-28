@@ -849,8 +849,8 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 	{
 		if (!input_tag.empty())
 		{
-			auto pos =std::remove_if(delta_timestamps.begin(), delta_timestamps.end(), [input_tag](auto ts) { return ts.tag == input_tag; });
-			if(pos != delta_timestamps.end())
+			auto pos = std::remove_if(delta_timestamps.begin(), delta_timestamps.end(), [input_tag](auto ts) { return ts.tag == input_tag; });
+			if (pos != delta_timestamps.end())
 				delta_timestamps.erase(pos);
 		}
 		// Create a local delta_timestamp to push back to the vector delta_timestamps
