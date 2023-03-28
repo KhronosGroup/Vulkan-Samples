@@ -856,8 +856,6 @@ void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 		}
 		delta_timestamps[tag].tag   = input_tag;
 		delta_timestamps[tag].begin = timestamps[selected_time_domain.index];
-
-		usleep(50);
 	}
 }
 
