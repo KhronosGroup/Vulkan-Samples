@@ -44,6 +44,7 @@ set(FRAMEWORK_FILES
     hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
+    hpp_resource_binding_state.h
     hpp_resource_cache.h
     hpp_vulkan_sample.h
     # Source Files
@@ -113,6 +114,7 @@ set(RENDERING_FILES
     rendering/hpp_render_frame.h
     rendering/hpp_render_pipeline.h
     rendering/hpp_render_target.h
+    rendering/hpp_subpass.h
     # Source files
     rendering/pipeline_state.cpp
     rendering/postprocessing_pipeline.cpp
@@ -247,14 +249,20 @@ set(CORE_FILES
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
+    core/hpp_descriptor_set_layout.h
     core/hpp_device.h
+    core/hpp_framebuffer.h
     core/hpp_image.h
     core/hpp_image_view.h
     core/hpp_instance.h
     core/hpp_physical_device.h
+    core/hpp_pipeline.h
     core/hpp_pipeline_layout.h
+    core/hpp_query_pool.h
     core/hpp_queue.h
+	core/hpp_render_pass.h
     core/hpp_sampler.h
+    core/hpp_shader_module.h
     core/hpp_swapchain.h
     core/hpp_vulkan_resource.h
     core/vulkan_resource.h
@@ -288,6 +296,7 @@ set(CORE_FILES
     core/shader_binding_table.cpp
     core/vulkan_resource.cpp
     core/hpp_buffer.cpp
+    core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
     core/hpp_device.cpp
     core/hpp_image.cpp
@@ -417,7 +426,7 @@ set(PROJECT_FILES
     ${STATS_FILES}
     ${GRAPHING_FILES})
 
-# No need for explict casts from vk::HandleType to VkHandleType on ANDROID
+# No need for explicit casts from vk::HandleType to VkHandleType on ANDROID
 if(ANDROID)
     add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION=1)
 endif()
@@ -447,7 +456,9 @@ if(MSVC)
     add_definitions(-DNOMINMAX)
 endif()
 
-add_library(${PROJECT_NAME} STATIC ${PROJECT_FILES})
+#NB: switch this to shared library and things stop working. (there is likely two copies of volk somewhere.
+add_library(${PROJECT_NAME} OBJECT ${PROJECT_FILES})
+set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 # compiler flags based on compiler type
 if(NOT MSVC)
@@ -509,7 +520,6 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     spdlog
     ctpl
     CLI11::CLI11
-    apps
     plugins)
 
 if(${NEED_LINK_ATOMIC})
@@ -518,7 +528,9 @@ endif()
 
 # Link platform specific libraries
 if(ANDROID)
-    target_link_libraries(${PROJECT_NAME} PUBLIC log android native_app_glue)
+    # Import game-activity static lib inside the game-activity_static prefab module.
+    find_package(game-activity REQUIRED CONFIG)
+    target_link_libraries(${PROJECT_NAME} PUBLIC log android game-activity::game-activity_static)
 else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)

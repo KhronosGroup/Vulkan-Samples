@@ -18,10 +18,15 @@
 #pragma once
 
 #include <core/hpp_command_buffer.h>
-#include <rendering/hpp_render_frame.h>
+#include <cstdint>
 
 namespace vkb
 {
+namespace rendering
+{
+class HPPRenderFrame;
+}
+
 namespace core
 {
 class HPPDevice;
@@ -29,11 +34,11 @@ class HPPDevice;
 class HPPCommandPool
 {
   public:
-	HPPCommandPool(HPPDevice const                      &device,
-	               uint32_t                              queue_family_index,
-	               vkb::rendering::HPPRenderFrame const *render_frame = nullptr,
-	               size_t                                thread_index = 0,
-	               HPPCommandBuffer::ResetMode           reset_mode   = HPPCommandBuffer::ResetMode::ResetPool);
+	HPPCommandPool(HPPDevice                      &device,
+	               uint32_t                        queue_family_index,
+	               vkb::rendering::HPPRenderFrame *render_frame = nullptr,
+	               size_t                          thread_index = 0,
+	               HPPCommandBuffer::ResetMode     reset_mode   = HPPCommandBuffer::ResetMode::ResetPool);
 	HPPCommandPool(const HPPCommandPool &) = delete;
 	HPPCommandPool(HPPCommandPool &&other);
 	~HPPCommandPool();
@@ -41,22 +46,22 @@ class HPPCommandPool
 	HPPCommandPool &operator=(const HPPCommandPool &) = delete;
 	HPPCommandPool &operator=(HPPCommandPool &&)      = delete;
 
-	HPPDevice const                      &get_device() const;
-	vk::CommandPool                       get_handle() const;
-	uint32_t                              get_queue_family_index() const;
-	vkb::rendering::HPPRenderFrame const *get_render_frame() const;
-	HPPCommandBuffer::ResetMode           get_reset_mode() const;
-	size_t                                get_thread_index() const;
-	HPPCommandBuffer                     &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
-	void                                  reset_pool();
+	HPPDevice                      &get_device();
+	vk::CommandPool                 get_handle() const;
+	uint32_t                        get_queue_family_index() const;
+	vkb::rendering::HPPRenderFrame *get_render_frame();
+	HPPCommandBuffer::ResetMode     get_reset_mode() const;
+	size_t                          get_thread_index() const;
+	HPPCommandBuffer               &request_command_buffer(vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary);
+	void                            reset_pool();
 
   private:
 	void reset_command_buffers();
 
   private:
-	HPPDevice const                               &device;
+	HPPDevice                                     &device;
 	vk::CommandPool                                handle             = nullptr;
-	vkb::rendering::HPPRenderFrame const          *render_frame       = nullptr;
+	vkb::rendering::HPPRenderFrame                *render_frame       = nullptr;
 	size_t                                         thread_index       = 0;
 	uint32_t                                       queue_family_index = 0;
 	std::vector<std::unique_ptr<HPPCommandBuffer>> primary_command_buffers;
