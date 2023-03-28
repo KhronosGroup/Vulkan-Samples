@@ -295,6 +295,11 @@ void FullScreenExclusive::init_device(const std::vector<const char *> &required_
 	volkLoadDevice(context.device);
 
 	vkGetDeviceQueue(context.device, context.graphics_queue_index, 0, &context.queue);
+
+	LOGI("Press the F1-F3 keys to control this sample.  Here's what they do:")
+	LOGI("F1 sets Windowed view.")
+	LOGI("F2 sets Borderless Fullscreen.")
+	LOGI("F3 sets Exclusive Fullscreen.")
 }
 
 void FullScreenExclusive::init_per_frame(PerFrame &per_frame) const
