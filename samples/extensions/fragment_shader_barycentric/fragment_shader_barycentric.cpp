@@ -205,14 +205,10 @@ void FragmentShaderBarycentric::create_pipeline()
 	        0xf,
 	        VK_FALSE);
 
-	const auto color_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
-
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
 	        1,
 	        &blend_attachment_state);
-	color_blend_state.attachmentCount = 1;
-	color_blend_state.pAttachments    = &color_attachment_state;
 
 	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
@@ -317,22 +313,12 @@ void FragmentShaderBarycentric::build_command_buffers()
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
-		VkImageSubresourceRange range{};
-		range.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-		range.baseMipLevel   = 0;
-		range.levelCount     = VK_REMAINING_MIP_LEVELS;
-		range.baseArrayLayer = 0;
-		range.layerCount     = VK_REMAINING_ARRAY_LAYERS;
-
-		VkImageSubresourceRange depth_range{range};
-		depth_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
-
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
 		render_pass_begin_info.renderPass               = render_pass;
 		render_pass_begin_info.framebuffer              = framebuffers[i];
 		render_pass_begin_info.renderArea.extent.width  = width;
 		render_pass_begin_info.renderArea.extent.height = height;
-		render_pass_begin_info.clearValueCount          = 3;
+		render_pass_begin_info.clearValueCount          = 2;
 		render_pass_begin_info.pClearValues             = clear_values.data();
 
 		vkCmdBeginRenderPass(draw_cmd_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);

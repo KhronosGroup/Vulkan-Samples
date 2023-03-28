@@ -30,7 +30,7 @@ The [VK_KHR_fragment_shader_barycentric](https://registry.khronos.org/vulkan/spe
 The extension provides access to additional built-in variables and decorations:
 
 | Type              | GLSL                            | SPIR-V              |
-|-------------------|---------------------------------|---------------------|
+| ----------------- | ------------------------------- | ------------------- |
 | built-in variable | in vec3 gl_BaryCoordEXT;        | BaryCoordKHR        |
 | built-in variable | in vec3 gl_BaryCoordNoPerspEXT; | BaryCoordNoPerspKHR |
 | decoration        | pervertexEXT                    | perVertexKHR        |
@@ -53,11 +53,11 @@ The fragment shader barycentric sample demonstrates feature usage by applying di
 
 The following effects are available from the GUI:
 
-- COLOR_INTERP - Demonstrates color interpolation using barycentric coordinates and information about color in vertices of the triangle (passed as `pervertexEXT` variable from the vertex shader).
-- DIFF_PERSP_NOPERSP - Demonstrates the difference between barycentric perspective and non-perspective coordinates.
-- WIREFRAME - Demonstrates rendering a wireframe using barycentric coordinates.
-- INTERP_TO_MASS_CENTER - Demonstrates color interpolation to the triangle's center of mass using barycentric coordinates.
-- BARYCOORD_TEXTURE - Demonstrates the modification of a texture using barycentric coordinates.
+- Color interpolation - Demonstrates color interpolation using barycentric coordinates and information about color in vertices of the triangle (passed as `pervertexEXT` variable from the vertex shader).
+- Perspective vs non-perspective - Demonstrates the difference between barycentric perspective and non-perspective coordinates.
+- Wireframe - Demonstrates rendering a wireframe using barycentric coordinates.
+- Interpolate to mass center - Demonstrates color interpolation to the triangle's center of mass using barycentric coordinates.
+- Barycoord texture - Demonstrates the modification of a texture using barycentric coordinates.
 
 ## Enabling the Extension
 
