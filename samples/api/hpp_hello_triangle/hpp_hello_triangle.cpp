@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -58,7 +58,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &           required,
+bool HPPHelloTriangle::validate_extensions(const std::vector<const char *>            &required,
                                            const std::vector<vk::ExtensionProperties> &available)
 {
 	// inner find_if gives true if the extension was not found
@@ -74,7 +74,7 @@ bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &    
 	                    }) == required.end();
 }
 
-bool validate_layers(const std::vector<const char *> &       required,
+bool validate_layers(const std::vector<const char *>        &required,
                      const std::vector<vk::LayerProperties> &available)
 {
 	// inner find_if returns true if the layer was not found
@@ -138,7 +138,7 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::La
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HPPHelloTriangle::init_instance(Context &                        context,
+void HPPHelloTriangle::init_instance(Context                         &context,
                                      const std::vector<const char *> &required_instance_extensions,
                                      const std::vector<const char *> &required_validation_layers)
 {
@@ -268,7 +268,9 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
 		}
 		context.surface = platform.get_window().create_surface(context.instance, context.gpu);
 		if (!context.surface)
+		{
 			throw std::runtime_error("Failed to create window surface.");
+		}
 
 		for (uint32_t j = 0; j < vkb::to_u32(queue_family_properties.size()); j++)
 		{
@@ -295,7 +297,7 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
  */
-void HPPHelloTriangle::init_device(Context &                        context,
+void HPPHelloTriangle::init_device(Context                         &context,
                                    const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
@@ -394,48 +396,20 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 {
 	vk::SurfaceCapabilitiesKHR surface_properties = context.gpu.getSurfaceCapabilitiesKHR(context.surface);
 
-	std::vector<vk::SurfaceFormatKHR> formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	assert(!supported_surface_formats.empty());
 
-	vk::SurfaceFormatKHR format;
-	if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
-	{
-		// Always prefer sRGB for display
-		format        = formats[0];
-		format.format = vk::Format::eB8G8R8A8Srgb;
-	}
-	else
-	{
-		if (formats.empty())
-		{
-			throw std::runtime_error("Surface has no formats.");
-		}
+	// We want to get an SRGB image format that matches our list of preferred format candiates
+	auto preferred_format_list = std::vector<vk::Format>{vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32};
 
-		format.format = vk::Format::eUndefined;
-		for (auto &candidate : formats)
-		{
-			switch (candidate.format)
-			{
-				case vk::Format::eR8G8B8A8Srgb:
-				case vk::Format::eB8G8R8A8Srgb:
-				case vk::Format::eA8B8G8R8SrgbPack32:
-					format = candidate;
-					break;
+	// Look for the first supported format in our list of preferred formats
+	auto formatIt =
+	    std::find_if(supported_surface_formats.begin(),
+	                 supported_surface_formats.end(),
+	                 [&preferred_format_list](vk::SurfaceFormatKHR const &candidate) { return std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end(); });
 
-				default:
-					break;
-			}
-
-			if (format.format != vk::Format::eUndefined)
-			{
-				break;
-			}
-		}
-
-		if (format.format == vk::Format::eUndefined)
-		{
-			format = formats[0];
-		}
-	}
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	vk::SurfaceFormatKHR format = (formatIt == supported_surface_formats.end()) ? supported_surface_formats[0] : formatIt->format;
 
 	vk::Extent2D swapchain_size;
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)

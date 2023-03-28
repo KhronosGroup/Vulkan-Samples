@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,7 +57,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_extensions(const std::vector<const char *> &         required,
+bool HelloTriangle::validate_extensions(const std::vector<const char *>          &required,
                                         const std::vector<VkExtensionProperties> &available)
 {
 	for (auto extension : required)
@@ -89,7 +89,7 @@ bool HelloTriangle::validate_extensions(const std::vector<const char *> &       
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_layers(const std::vector<const char *> &     required,
+bool HelloTriangle::validate_layers(const std::vector<const char *>      &required,
                                     const std::vector<VkLayerProperties> &available)
 {
 	for (auto extension : required)
@@ -156,7 +156,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HelloTriangle::init_instance(Context &                        context,
+void HelloTriangle::init_instance(Context                         &context,
                                   const std::vector<const char *> &required_instance_extensions,
                                   const std::vector<const char *> &required_validation_layers)
 {
@@ -274,7 +274,7 @@ void HelloTriangle::init_instance(Context &                        context,
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
  */
-void HelloTriangle::init_device(Context &                        context,
+void HelloTriangle::init_device(Context                         &context,
                                 const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
@@ -435,49 +435,22 @@ void HelloTriangle::init_swapchain(Context &context)
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	uint32_t format_count;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, nullptr);
-	std::vector<VkSurfaceFormatKHR> formats(format_count);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, formats.data());
+	uint32_t surface_format_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, nullptr);
+	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, supported_surface_formats.data());
 
-	VkSurfaceFormatKHR format;
-	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
+	// We want to get an SRGB image format that matches our list of preferred format candiates
+	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
+	VkSurfaceFormatKHR format                = supported_surface_formats[0];
+	auto               preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};
+
+	for (auto &candidate : supported_surface_formats)
 	{
-		// Always prefer sRGB for display
-		format        = formats[0];
-		format.format = VK_FORMAT_B8G8R8A8_SRGB;
-	}
-	else
-	{
-		if (format_count == 0)
+		if (std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end())
 		{
-			throw std::runtime_error("Surface has no formats.");
-		}
-
-		format.format = VK_FORMAT_UNDEFINED;
-		for (auto &candidate : formats)
-		{
-			switch (candidate.format)
-			{
-				case VK_FORMAT_R8G8B8A8_SRGB:
-				case VK_FORMAT_B8G8R8A8_SRGB:
-				case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
-					format = candidate;
-					break;
-
-				default:
-					break;
-			}
-
-			if (format.format != VK_FORMAT_UNDEFINED)
-			{
-				break;
-			}
-		}
-
-		if (format.format == VK_FORMAT_UNDEFINED)
-		{
-			format = formats[0];
+			format = candidate;
+			break;
 		}
 	}
 
@@ -1102,7 +1075,9 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	context.swapchain_dimensions.height = extent.height;
 
 	if (!context.surface)
+	{
 		throw std::runtime_error("Failed to create window surface.");
+	}
 
 	init_device(context, {"VK_KHR_swapchain"});
 

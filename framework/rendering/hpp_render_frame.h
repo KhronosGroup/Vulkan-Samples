@@ -17,8 +17,7 @@
 
 #pragma once
 
-#include <rendering/render_frame.h>
-
+#include "rendering/render_frame.h"
 #include <core/hpp_command_buffer.h>
 #include <core/hpp_queue.h>
 #include <hpp_buffer_pool.h>
@@ -70,6 +69,19 @@ class HPPRenderFrame : private vkb::RenderFrame
 		                                             static_cast<vkb::CommandBuffer::ResetMode>(reset_mode),
 		                                             static_cast<VkCommandBufferLevel>(level),
 		                                             thread_index));
+	}
+
+	vk::DescriptorSet request_descriptor_set(const vkb::core::HPPDescriptorSetLayout    &descriptor_set_layout,
+	                                         const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
+	                                         const BindingMap<vk::DescriptorImageInfo>  &image_infos,
+	                                         bool                                        update_after_bind,
+	                                         size_t                                      thread_index = 0)
+	{
+		return static_cast<vk::DescriptorSet>(vkb::RenderFrame::request_descriptor_set(reinterpret_cast<vkb::DescriptorSetLayout const &>(descriptor_set_layout),
+		                                                                               reinterpret_cast<BindingMap<VkDescriptorBufferInfo> const &>(buffer_infos),
+		                                                                               reinterpret_cast<BindingMap<VkDescriptorImageInfo> const &>(image_infos),
+		                                                                               update_after_bind,
+		                                                                               thread_index));
 	}
 
 	vk::Fence request_fence()

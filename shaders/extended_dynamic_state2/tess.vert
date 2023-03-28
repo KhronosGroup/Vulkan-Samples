@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2019, Arm Limited and Contributors
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,5 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-#include "pch.h"
+layout(location = 0) in vec3 inPos;
+layout(location = 1) in vec3 inNormal;
+
+layout(location = 0) out vec3 outPos;
+layout(location = 1) out vec3 outNormal;
+
+layout(binding = 0) uniform UBO
+{
+	mat4  projection;
+	mat4  view;
+}
+ubo;
+
+void main(void)
+{
+	gl_Position = vec4(inPos, 1.0);
+	outNormal   = mat3(ubo.view) * inNormal;
+	outPos      = inPos;
+}

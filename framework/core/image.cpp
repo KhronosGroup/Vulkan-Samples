@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -67,8 +67,8 @@ inline VkImageType find_image_type(VkExtent3D extent)
 
 namespace core
 {
-Image::Image(Device const &        device,
-             const VkExtent3D &    extent,
+Image::Image(Device const         &device,
+             const VkExtent3D     &extent,
              VkFormat              format,
              VkImageUsageFlags     image_usage,
              VmaMemoryUsage        memory_usage,
@@ -78,7 +78,7 @@ Image::Image(Device const &        device,
              VkImageTiling         tiling,
              VkImageCreateFlags    flags,
              uint32_t              num_queue_families,
-             const uint32_t *      queue_families) :
+             const uint32_t       *queue_families) :
     VulkanResource{VK_NULL_HANDLE, &device},
     type{find_image_type(extent)},
     extent{extent},

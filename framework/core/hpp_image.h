@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,15 +31,15 @@ class HPPImageView;
 class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 {
   public:
-	HPPImage(HPPDevice const &       device,
+	HPPImage(HPPDevice              &device,
 	         vk::Image               handle,
-	         const vk::Extent3D &    extent,
+	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
 	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
-	HPPImage(HPPDevice const &       device,
-	         const vk::Extent3D &    extent,
+	HPPImage(HPPDevice              &device,
+	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
 	         VmaMemoryUsage          memory_usage,
@@ -49,7 +49,7 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	         vk::ImageTiling         tiling             = vk::ImageTiling::eOptimal,
 	         vk::ImageCreateFlags    flags              = {},
 	         uint32_t                num_queue_families = 0,
-	         const uint32_t *        queue_families     = nullptr);
+	         const uint32_t         *queue_families     = nullptr);
 
 	HPPImage(const HPPImage &) = delete;
 
@@ -75,7 +75,7 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	void unmap();
 
 	vk::ImageType                                  get_type() const;
-	const vk::Extent3D &                           get_extent() const;
+	const vk::Extent3D                            &get_extent() const;
 	vk::Format                                     get_format() const;
 	vk::SampleCountFlagBits                        get_sample_count() const;
 	vk::ImageUsageFlags                            get_usage() const;
@@ -95,7 +95,7 @@ class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 	vk::ImageSubresource                          subresource;
 	uint32_t                                      array_layer_count = 0;
 	std::unordered_set<vkb::core::HPPImageView *> views;        /// HPPImage views referring to this image
-	uint8_t *                                     mapped_data = nullptr;
+	uint8_t                                      *mapped_data = nullptr;
 	bool                                          mapped      = false;        /// Whether it was mapped with vmaMapMemory
 };
 }        // namespace core

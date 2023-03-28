@@ -39,12 +39,12 @@ template <typename HPPHandle, typename VKBDevice = vkb::core::HPPDevice>
 class HPPVulkanResource
 {
   public:
-	HPPVulkanResource(HPPHandle handle = nullptr, VKBDevice const *device = nullptr) :
+	HPPVulkanResource(HPPHandle handle = nullptr, VKBDevice *device = nullptr) :
 	    handle{handle}, device{device}
 	{
 	}
 
-	HPPVulkanResource(const HPPVulkanResource &) = delete;
+	HPPVulkanResource(const HPPVulkanResource &)            = delete;
 	HPPVulkanResource &operator=(const HPPVulkanResource &) = delete;
 
 	HPPVulkanResource(HPPVulkanResource &&other) :
@@ -75,7 +75,18 @@ class HPPVulkanResource
 		return *device;
 	}
 
+	inline VKBDevice &get_device()
+	{
+		assert(device && "VKBDevice handle not set");
+		return *device;
+	}
+
 	inline const HPPHandle &get_handle() const
+	{
+		return handle;
+	}
+
+	inline HPPHandle &get_handle()
 	{
 		return handle;
 	}
@@ -107,9 +118,9 @@ class HPPVulkanResource
 	}
 
   private:
-	HPPHandle        handle;
-	VKBDevice const *device;
-	std::string      debug_name;
+	HPPHandle   handle;
+	VKBDevice  *device;
+	std::string debug_name;
 };
 
 }        // namespace core

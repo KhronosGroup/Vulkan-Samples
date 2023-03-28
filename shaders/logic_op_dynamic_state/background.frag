@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,25 +14,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-#pragma once
+layout(binding = 1) uniform samplerCube samplerEnvMap;
 
-#include "buffer_pool.h"
-#include "common/error.h"
-#include "common/helpers.h"
-#include "common/logging.h"
-#include "common/utils.h"
-#include "common/vk_common.h"
-#include "debug_info.h"
-#include "fence_pool.h"
-#include "glsl_compiler.h"
-#include "gui.h"
-#include "resource_binding_state.h"
-#include "resource_cache.h"
-#include "resource_record.h"
-#include "resource_replay.h"
-#include "semaphore_pool.h"
-#include "spirv_reflection.h"
-#include "stats/stats.h"
-#include "timer.h"
-#include "vulkan_sample.h"
+layout(location = 0) in vec3 inUVW;
+
+layout(location = 0) out vec4 outColor0;
+
+void main()
+{
+	vec4 color;
+
+	vec3 normal = normalize(inUVW);
+	color       = texture(samplerEnvMap, normal);
+
+	outColor0 = vec4(color.rgb, 1.0);
+}
