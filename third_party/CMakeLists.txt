@@ -177,7 +177,7 @@ target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
 
 target_link_libraries(ktx PUBLIC vulkan)
 
-set_target_properties(ktx PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(ktx PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/app/$<TARGET_PROPERTY:vulkan_samples,RUNTIME_OUTPUT_DIRECTORY>)
 
 # volk
 set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
