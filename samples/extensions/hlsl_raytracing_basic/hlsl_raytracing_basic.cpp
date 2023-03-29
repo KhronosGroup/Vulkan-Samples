@@ -21,6 +21,34 @@
 
 #include "hlsl_raytracing_basic.h"
 
+/*
+    Load shader from SPIR-V binary file
+*/
+VkPipelineShaderStageCreateInfo HlslRaytracingBasic::load_spirv_shader(const std::string &filename, VkShaderStageFlagBits stage)
+{
+	auto buffer = vkb::fs::read_shader_binary(filename);
+
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = buffer.size();
+	createInfo.pCode    = reinterpret_cast<const uint32_t *>(buffer.data());
+
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(get_device().get_handle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create shader module!");
+	}
+
+	VkPipelineShaderStageCreateInfo ShaderStageInfo{};
+	ShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	ShaderStageInfo.stage  = stage;
+	ShaderStageInfo.module = shaderModule;
+	ShaderStageInfo.pName  = "main";
+
+	shader_modules.push_back(shaderModule);
+	return ShaderStageInfo;
+}
+
 HlslRaytracingBasic::HlslRaytracingBasic()
 {
 	title = "Hardware accelerated HLSL ray tracing";
@@ -31,6 +59,7 @@ HlslRaytracingBasic::HlslRaytracingBasic()
 	// Ray tracing related extensions required by this sample
 	add_device_extension(VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME);
 	add_device_extension(VK_KHR_RAY_TRACING_PIPELINE_EXTENSION_NAME);
+	add_device_extension(VK_KHR_RAY_QUERY_EXTENSION_NAME);
 
 	// Required by VK_KHR_acceleration_structure
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
@@ -72,6 +101,8 @@ void HlslRaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 	requested_ray_tracing_features.rayTracingPipeline               = VK_TRUE;
 	auto &requested_acceleration_structure_features                 = gpu.request_extension_features<VkPhysicalDeviceAccelerationStructureFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ACCELERATION_STRUCTURE_FEATURES_KHR);
 	requested_acceleration_structure_features.accelerationStructure = VK_TRUE;
+	auto &requested_ray_queries_features                            = gpu.request_extension_features<VkPhysicalDeviceRayQueryFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_QUERY_FEATURES_KHR);
+	requested_ray_queries_features.rayQuery                         = VK_TRUE;
 }
 
 /*
@@ -535,30 +566,6 @@ void HlslRaytracingBasic::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, VK_NULL_HANDLE);
 }
 
-VkPipelineShaderStageCreateInfo HlslRaytracingBasic::load_spirv_shader(const std::string &filename, VkShaderStageFlagBits stage)
-{
-	auto buffer = vkb::fs::read_shader_binary(filename);
-
-	VkShaderModuleCreateInfo createInfo{};
-	createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	createInfo.codeSize = buffer.size();
-	createInfo.pCode    = reinterpret_cast<const uint32_t *>(buffer.data());
-
-	VkShaderModule shaderModule;
-	if (vkCreateShaderModule(get_device().get_handle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
-	{
-		throw std::runtime_error("failed to create shader module!");
-	}
-
-	VkPipelineShaderStageCreateInfo ShaderStageInfo{};
-	ShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
-	ShaderStageInfo.stage  = stage;
-	ShaderStageInfo.module = shaderModule;
-	ShaderStageInfo.pName  = "main";
-
-	return ShaderStageInfo;
-}
-
 /*
     Create our ray tracing pipeline
 */
@@ -661,7 +668,7 @@ void HlslRaytracingBasic::create_ray_tracing_pipeline()
 }
 
 /*
-    Deletes all ressources acquired by an acceleration structure
+    Deletes all resources acquired by an acceleration structure
 */
 void HlslRaytracingBasic::delete_acceleration_structure(AccelerationStructure &acceleration_structure)
 {
@@ -839,12 +846,16 @@ bool HlslRaytracingBasic::prepare(vkb::Platform &platform)
 		return false;
 	}
 
+	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
+	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
+
+	gui->prepare(pipeline_cache, render_pass,
+	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+
 	// This sample copies the ray traced output to the swap chain image, so we need to enable the required image usage flags
 	const std::set<VkImageUsageFlagBits> image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_DST_BIT};
 	update_swapchain_image_usage_flags(image_usage_flags);
-
-	// This sample renders the UI overlay on top of the ray tracing output, so we need to disable color attachment clears
-	update_render_pass_flags(RenderPassCreateFlags::ColorAttachmentLoad);
 
 	// Get the ray tracing pipeline properties, which we'll need later on in the sample
 	ray_tracing_pipeline_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_PIPELINE_PROPERTIES_KHR;

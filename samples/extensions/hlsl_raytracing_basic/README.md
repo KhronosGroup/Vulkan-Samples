@@ -17,6 +17,13 @@
 -
 -->
 
-### Basic hardware accelerated ray tracing<br/>
-**Extensions**: [```VK_KHR_ray_tracing_pipeline```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_ray_tracing_pipeline), [```VK_KHR_acceleration_structure```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_acceleration_structure)<br/>
-Render a basic scene using the official cross-vendor ray tracing extension. Shows how to setup all data structures required for ray tracing, including the bottom and top level acceleration structures for the geometry, the shader binding table and the ray tracing pipelines with shader groups for ray generation, ray hits, and ray misses. After dispatching the rays, the final result is copied to the swapchain image.<br/>
+# Basic HLSL hardware accelerated ray tracing<br/>
+
+## Overview
+
+This sample is based on raytracing_basic sample. The only difference is using precompiled HLSL shaders instead of GLSL shaders
+
+## HLSL shaders
+
+HLSL shaders can be compiled by Microsoft’s DirectX shader compiler (DXC). For compiling raytracing shaders above commend can be used:
+dxc.exe -fspv-target-env=vulkan1.1spirv1.4 -spirv -T lib_6_3 <path_to_raytracing_shader> -Fo <output_path>
