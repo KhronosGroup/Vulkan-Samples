@@ -1,6 +1,7 @@
 #include "components/vulkan/pools/memory_pool.hpp"
 
 #include <cassert>
+#include <cstring>
 
 #include "macros.hpp"
 
@@ -70,13 +71,13 @@ void MemoryPool::upload(const Allocation &allocation, const void *data, size_t s
 	if (void *persistentMapped = allocation.allocation_info.pMappedData)
 	{
 		// allocation was created with VMA_ALLOCATION_CREATE_MAPPED_BIT flag
-		memcpy(static_cast<uint8_t *>(persistentMapped) + offset, data, size);
+		std::memcpy(static_cast<uint8_t *>(persistentMapped) + offset, data, size);
 	}
 	else
 	{
 		void *mapped;
 		VK_CHECK(vmaMapMemory(_allocator, allocation.allocation_handle, &mapped), "unable to map memory");
-		memcpy(static_cast<uint8_t *>(mapped) + offset, data, size);
+		std::memcpy(static_cast<uint8_t *>(mapped) + offset, data, size);
 		vmaUnmapMemory(_allocator, allocation.allocation_handle);
 	}
 }
