@@ -118,18 +118,18 @@ void PatchControlPoints::render(float delta_time)
  */
 void PatchControlPoints::prepare_uniform_buffers()
 {
-	uniform_buffers.common                   = std::make_unique<vkb::core::Buffer>(get_device(),
+	uniform_buffers.common               = std::make_unique<vkb::core::Buffer>(get_device(),
                                                                  sizeof(ubo_common),
                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.dynamic_tessellation = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                               sizeof(ubo_tess),
-	                                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                                           sizeof(ubo_tess),
+	                                                                           VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+	                                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
 	uniform_buffers.static_tessellation  = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                                  sizeof(ubo_tess),
-                                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
+                                                                              sizeof(ubo_tess),
+                                                                              VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
 
