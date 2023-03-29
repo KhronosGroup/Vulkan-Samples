@@ -66,7 +66,8 @@ vkb__register_component(
   SRC
     src/spirv_reflect/shader_reflector.cpp
   HEADERS ${REFLECT_HEADERS}
-  INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/include
+  INCLUDE_DIRS
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
   LINK_LIBS
     spirv-reflect-static
     vkb__vulkan__headers # we only require the interface definitions

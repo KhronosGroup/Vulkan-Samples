@@ -20,7 +20,7 @@
 #include <components/common/error.hpp>
 
 VKBP_DISABLE_WARNINGS()
-#include <vulkan/vulkan.h>
+#include <volk.h>
 
 #include <GLFW/glfw3.h>
 

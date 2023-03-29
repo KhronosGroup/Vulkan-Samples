@@ -51,7 +51,7 @@ class Shader
 		return _stages;
 	}
 
-	const ShaderResources &resources(VkShaderStageFlagBits stage) const
+	ShaderResources resources(VkShaderStageFlagBits stage) const
 	{
 		for (auto &s : _stages)
 		{

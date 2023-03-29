@@ -187,12 +187,12 @@ DeviceBuilder::Output DeviceBuilder::build(VkPhysicalDevice gpu, const PhysicalD
 
 	for (const auto &[index, family] : allocated_families)
 	{
-		uint32_t index{0};
+		uint32_t queue_index{0};
 		for (auto queue : family.queues)
 		{
 			Queue::QueueInfo queue_info;
 			queue_info._family_index = family.family_index;
-			queue_info._index        = index++;
+			queue_info._index        = queue_index++;
 			vkGetDeviceQueue(device, queue_info._family_index, queue_info._index, &queue_info._queue);
 			queue->_queue_info = queue_info;
 		}

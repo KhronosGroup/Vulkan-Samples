@@ -19,6 +19,12 @@ cmake_minimum_required(VERSION 3.10)
 
 project(third_party LANGUAGES C CXX)
 
+# spirv-reflect
+# cmake integration for spirv-reflect is not yet working as a submodule
+# luckily its a small library so we can define it easily enough manually
+add_library(spirv-reflect-static STATIC ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect/spirv_reflect.h ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect/spirv_reflect.c)
+target_include_directories(spirv-reflect-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect)
+
 # glm
 add_library(glm INTERFACE)
 set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
@@ -255,27 +261,17 @@ set_property(TARGET HLSL PROPERTY FOLDER "third_party")
 set_property(TARGET GenericCodeGen PROPERTY FOLDER "third_party")
 set_property(TARGET MachineIndependent PROPERTY FOLDER "third_party")
 
-# spirv-cross
-add_subdirectory(spirv-cross)
+# # spirv-cross
+# add_subdirectory(spirv-cross)
 
-set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
-set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
-
-# spirv-reflect
-set(SPIRV_REFLECT_EXECUTABLE OFF)
-set(SPIRV_REFLECT_EXAMPLES OFF)
-set(SPIRV_REFLECT_STRIPPER OFF)
-set(SPIRV_REFLECT_STATIC_LIB ON)
-set(SPIRV_REFLECT_BUILD_TESTS OFF)
-set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
-
-add_subdirectory(spirv-reflect)
+# set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-core PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-msl PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "third_party")
+# set_property(TARGET spirv-cross-util PROPERTY FOLDER "third_party")
 
 # hwcpipe
 add_subdirectory(hwcpipe)

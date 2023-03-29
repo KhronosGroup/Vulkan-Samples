@@ -80,6 +80,12 @@ function(vkb__register_component)
             endif()
         endif()
 
+        set_target_properties("vkb__${TARGET_NAME}"
+            PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        )
+
     else() # Create interface library
         message("ADDING INTERFACE: vkb__${TARGET_NAME}")
 
