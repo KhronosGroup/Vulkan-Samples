@@ -29,7 +29,7 @@ class PatchControlPoints : public ApiVulkanSample
   public:
 	struct
 	{
-		bool  tessellation = false;
+		bool  tessellation = true;
 		float tess_factor  = 3.0f;
 	} gui_settings;
 
@@ -49,33 +49,33 @@ class PatchControlPoints : public ApiVulkanSample
 
 	struct
 	{
-		VkDescriptorSetLayout statically_tessellation{VK_NULL_HANDLE};
-		VkDescriptorSetLayout dynamically_tessellation{VK_NULL_HANDLE};
+		VkDescriptorSetLayout static_tessellation{VK_NULL_HANDLE};
+		VkDescriptorSetLayout dynamic_tessellation{VK_NULL_HANDLE};
 	} descriptor_set_layouts;
 
 	struct
 	{
-		VkPipelineLayout statically_tessellation{VK_NULL_HANDLE};
-		VkPipelineLayout dynamically_tessellation{VK_NULL_HANDLE};
+		VkPipelineLayout static_tessellation{VK_NULL_HANDLE};
+		VkPipelineLayout dynamic_tessellation{VK_NULL_HANDLE};
 	} pipeline_layouts;
 
 	struct
 	{
-		VkDescriptorSet statically_tessellation{VK_NULL_HANDLE};
-		VkDescriptorSet dynamically_tessellation{VK_NULL_HANDLE};
+		VkDescriptorSet static_tessellation{VK_NULL_HANDLE};
+		VkDescriptorSet dynamic_tessellation{VK_NULL_HANDLE};
 	} descriptor_sets;
 
 	struct
 	{
-		VkPipeline statically_tessellation{VK_NULL_HANDLE};
-		VkPipeline dynamically_tessellation{VK_NULL_HANDLE};
+		VkPipeline static_tessellation{VK_NULL_HANDLE};
+		VkPipeline dynamic_tessellation{VK_NULL_HANDLE};
 	} pipeline;
 
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> common;
-		std::unique_ptr<vkb::core::Buffer> statically_tessellation;
-		std::unique_ptr<vkb::core::Buffer> dynamically_tessellation;
+		std::unique_ptr<vkb::core::Buffer> static_tessellation;
+		std::unique_ptr<vkb::core::Buffer> dynamic_tessellation;
 	} uniform_buffers;
 
 	struct

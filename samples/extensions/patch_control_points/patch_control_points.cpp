@@ -31,17 +31,17 @@ PatchControlPoints::~PatchControlPoints()
 	if (device)
 	{
 		uniform_buffers.common.reset();
-		uniform_buffers.dynamically_tessellation.reset();
-		uniform_buffers.statically_tessellation.reset();
+		uniform_buffers.dynamic_tessellation.reset();
+		uniform_buffers.static_tessellation.reset();
 
-		vkDestroyPipeline(get_device().get_handle(), pipeline.dynamically_tessellation, VK_NULL_HANDLE);
-		vkDestroyPipeline(get_device().get_handle(), pipeline.statically_tessellation, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), pipeline.dynamic_tessellation, VK_NULL_HANDLE);
+		vkDestroyPipeline(get_device().get_handle(), pipeline.static_tessellation, VK_NULL_HANDLE);
 
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.dynamically_tessellation, VK_NULL_HANDLE);
-		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.statically_tessellation, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.dynamic_tessellation, VK_NULL_HANDLE);
+		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layouts.static_tessellation, VK_NULL_HANDLE);
 
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.dynamically_tessellation, VK_NULL_HANDLE);
-		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.statically_tessellation, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.dynamic_tessellation, VK_NULL_HANDLE);
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layouts.static_tessellation, VK_NULL_HANDLE);
 
 		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	}
@@ -59,7 +59,7 @@ bool PatchControlPoints::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_position({-1.25f, 0.0f, 0.0f});
+	camera.set_position({-1.25f, -0.75f, 1.5f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
@@ -122,11 +122,11 @@ void PatchControlPoints::prepare_uniform_buffers()
                                                                  sizeof(ubo_common),
                                                                  VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                                  VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.dynamically_tessellation = std::make_unique<vkb::core::Buffer>(get_device(),
+	uniform_buffers.dynamic_tessellation = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                                               sizeof(ubo_tess),
 	                                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 	                                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
-	uniform_buffers.statically_tessellation  = std::make_unique<vkb::core::Buffer>(get_device(),
+	uniform_buffers.static_tessellation  = std::make_unique<vkb::core::Buffer>(get_device(),
                                                                                   sizeof(ubo_tess),
                                                                                   VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
                                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -153,10 +153,10 @@ void PatchControlPoints::update_uniform_buffers()
 	}
 
 	/* Dynamically tessellation */
-	uniform_buffers.dynamically_tessellation->convert_and_update(ubo_tess);
+	uniform_buffers.dynamic_tessellation->convert_and_update(ubo_tess);
 
 	/* Statically tessellation */
-	uniform_buffers.statically_tessellation->convert_and_update(ubo_tess);
+	uniform_buffers.static_tessellation->convert_and_update(ubo_tess);
 }
 
 /**s
@@ -264,31 +264,31 @@ void PatchControlPoints::create_pipelines()
 	graphics_create.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	graphics_create.pStages             = shader_stages.data();
 
-	/* Specific setup of statically_tessellation pipeline */
+	/* Specific setup of static_tessellation pipeline */
 
 	constexpr uint32_t                    patch_control_points = 3;
 	VkPipelineTessellationStateCreateInfo tessellation_state =
 	    vkb::initializers::pipeline_tessellation_state_create_info(patch_control_points); /* static patch control points */
 	graphics_create.pTessellationState = &tessellation_state;
-	graphics_create.layout             = pipeline_layouts.statically_tessellation;
+	graphics_create.layout             = pipeline_layouts.static_tessellation;
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.statically_tessellation));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.static_tessellation));
 
-	/* Specific setup of dynamically_tessellation pipeline  */
+	/* Specific setup of dynamic_tessellation pipeline  */
 
 	/*
 	 * patchControlPoints might be set with any valid value i.e. 0 < patchControlPoints <= 32
 	 * because it is set dynamically using vkCmdSetPatchControlPointsEXT
 	 */
 	tessellation_state.patchControlPoints = 1; /* set to 1 to demonstrate that value from vkCmdSetPatchControlPointsEXT is used */
-	graphics_create.layout                = pipeline_layouts.dynamically_tessellation;
+	graphics_create.layout                = pipeline_layouts.dynamic_tessellation;
 
 	/* Add patch control points dynamic state */
 	dynamic_state_enables.push_back(VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT);
 	dynamic_state.pDynamicStates    = dynamic_state_enables.data();
 	dynamic_state.dynamicStateCount = static_cast<uint32_t>(dynamic_state_enables.size());
 
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.dynamically_tessellation));
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &graphics_create, VK_NULL_HANDLE, &pipeline.dynamic_tessellation));
 }
 
 /**
@@ -333,44 +333,44 @@ void PatchControlPoints::build_command_buffers()
 
 		vkCmdBindDescriptorSets(draw_cmd_buffer,
 		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        pipeline_layouts.statically_tessellation,
+		                        pipeline_layouts.static_tessellation,
 		                        0,
 		                        1,
-		                        &descriptor_sets.statically_tessellation,
+		                        &descriptor_sets.static_tessellation,
 		                        0,
 		                        nullptr);
 
 		push_const_block.direction = directions[0];
 		vkCmdPushConstants(draw_cmd_buffer,
-		                   pipeline_layouts.statically_tessellation,
+		                   pipeline_layouts.static_tessellation,
 		                   VK_SHADER_STAGE_VERTEX_BIT,
 		                   0,
 		                   sizeof(push_const_block),
 		                   &push_const_block);
 
-		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.statically_tessellation);
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.static_tessellation);
 
 		draw_model(model, draw_cmd_buffer);
 
 		//	dynamically tessellation
 		vkCmdBindDescriptorSets(draw_cmd_buffer,
 		                        VK_PIPELINE_BIND_POINT_GRAPHICS,
-		                        pipeline_layouts.dynamically_tessellation,
+		                        pipeline_layouts.dynamic_tessellation,
 		                        0,
 		                        1,
-		                        &descriptor_sets.dynamically_tessellation,
+		                        &descriptor_sets.dynamic_tessellation,
 		                        0,
 		                        nullptr);
 
 		push_const_block.direction = directions[1];
 		vkCmdPushConstants(draw_cmd_buffer,
-		                   pipeline_layouts.dynamically_tessellation,
+		                   pipeline_layouts.dynamic_tessellation,
 		                   VK_SHADER_STAGE_VERTEX_BIT,
 		                   0,
 		                   sizeof(push_const_block),
 		                   &push_const_block);
 
-		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.dynamically_tessellation);
+		vkCmdBindPipeline(draw_cmd_buffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.dynamic_tessellation);
 
 		vkCmdSetPatchControlPointsEXT(draw_cmd_buffer, patch_control_points);
 
@@ -432,11 +432,11 @@ void PatchControlPoints::setup_descriptor_set_layout()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(),
 	                                     &descriptor_layout_create_info,
 	                                     nullptr,
-	                                     &descriptor_set_layouts.statically_tessellation));
+	                                     &descriptor_set_layouts.static_tessellation));
 
 	VkPipelineLayoutCreateInfo pipeline_layout_create_info =
 	    vkb::initializers::pipeline_layout_create_info(
-	        &descriptor_set_layouts.statically_tessellation,
+	        &descriptor_set_layouts.static_tessellation,
 	        1);
 
 	/* Pass scene node information via push constants */
@@ -449,7 +449,7 @@ void PatchControlPoints::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
 	                                &pipeline_layout_create_info,
 	                                nullptr,
-	                                &pipeline_layouts.statically_tessellation));
+	                                &pipeline_layouts.static_tessellation));
 
 	/* Second descriptor set */
 	set_layout_bindings = {
@@ -469,15 +469,15 @@ void PatchControlPoints::setup_descriptor_set_layout()
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(),
 	                                     &descriptor_layout_create_info,
 	                                     nullptr,
-	                                     &descriptor_set_layouts.dynamically_tessellation));
+	                                     &descriptor_set_layouts.dynamic_tessellation));
 
-	pipeline_layout_create_info.pSetLayouts = &descriptor_set_layouts.dynamically_tessellation;
+	pipeline_layout_create_info.pSetLayouts = &descriptor_set_layouts.dynamic_tessellation;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
 	                                //&pipeline_layout_create_info_2,
 	                                &pipeline_layout_create_info,
 	                                nullptr,
-	                                &pipeline_layouts.dynamically_tessellation));
+	                                &pipeline_layouts.dynamic_tessellation));
 }
 
 /**
@@ -490,24 +490,24 @@ void PatchControlPoints::create_descriptor_sets()
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
 	        descriptor_pool,
-	        &descriptor_set_layouts.statically_tessellation,
+	        &descriptor_set_layouts.static_tessellation,
 	        1);
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(),
 	                                  &alloc_info,
-	                                  &descriptor_sets.statically_tessellation));
+	                                  &descriptor_sets.static_tessellation));
 
 	VkDescriptorBufferInfo matrix_common_buffer_descriptor = create_descriptor(*uniform_buffers.common);
-	VkDescriptorBufferInfo matrix_tess_buffer_descriptor   = create_descriptor(*uniform_buffers.statically_tessellation);
+	VkDescriptorBufferInfo matrix_tess_buffer_descriptor   = create_descriptor(*uniform_buffers.static_tessellation);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.statically_tessellation,
+	        descriptor_sets.static_tessellation,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
 	        &matrix_common_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.statically_tessellation,
+	        descriptor_sets.static_tessellation,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        1,
 	        &matrix_tess_buffer_descriptor)};
@@ -519,21 +519,21 @@ void PatchControlPoints::create_descriptor_sets()
 	alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
 	        descriptor_pool,
-	        &descriptor_set_layouts.dynamically_tessellation,
+	        &descriptor_set_layouts.dynamic_tessellation,
 	        1);
 
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.dynamically_tessellation));
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.dynamic_tessellation));
 
-	matrix_tess_buffer_descriptor = create_descriptor(*uniform_buffers.dynamically_tessellation);
+	matrix_tess_buffer_descriptor = create_descriptor(*uniform_buffers.dynamic_tessellation);
 
 	write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.dynamically_tessellation,
+	        descriptor_sets.dynamic_tessellation,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
 	        &matrix_common_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(
-	        descriptor_sets.dynamically_tessellation,
+	        descriptor_sets.dynamic_tessellation,
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        1,
 	        &matrix_tess_buffer_descriptor)};
