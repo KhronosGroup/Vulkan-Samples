@@ -20,6 +20,7 @@
 #include <components/common/error.hpp>
 
 VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 

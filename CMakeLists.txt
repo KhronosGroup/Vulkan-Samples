@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.19)
 
 project(vulkan_samples)
 
@@ -40,6 +40,7 @@ include(sample_helper)
 include(check_atomic)
 include(test_helpers)
 include(component_helpers)
+include(shader_helpers)
 
 # Add third party libraries
 add_subdirectory(third_party)
@@ -47,3 +48,15 @@ add_subdirectory(third_party)
 vkb__enable_testing()
 
 add_subdirectory(components)
+
+add_subdirectory(cmd)
+
+vkb__register_shader(
+    NAME "hello_triangle_shader"
+    LANGUAGE GLSL
+    VERTEX ${CMAKE_CURRENT_SOURCE_DIR}/shaders/hello_triangle.vert
+    FRAGMENT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/hello_triangle.frag
+    INCLUDE_DIRS
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders
+        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/include
+)

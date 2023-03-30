@@ -4,7 +4,6 @@
 
 
 VKBP_DISABLE_WARNINGS()
-#include <spdlog/fmt/fmt.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()

@@ -348,7 +348,12 @@ else()
     endif()
 endif()
 
+# fmt
+add_subdirectory(fmt)
+set_property(TARGET fmt PROPERTY FOLDER "third_party")
+
 # spdlog
+option(SPDLOG_FMT_EXTERNAL "Use external fmt library instead of bundled" ON)
 add_subdirectory(spdlog)
 
 set_property(TARGET spdlog PROPERTY FOLDER "third_party")
@@ -397,6 +402,5 @@ set_property(TARGET EnTT PROPERTY FOLDER "third_party")
 add_subdirectory(tracy)
 set_property(TARGET TracyClient PROPERTY FOLDER "third_party")
 
-# fmt
-add_subdirectory(fmt)
-set_property(TARGET fmt PROPERTY FOLDER "third_party")
+add_subdirectory(json)
+set_property(TARGET nlohmann_json PROPERTY FOLDER "third_party")

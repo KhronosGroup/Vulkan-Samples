@@ -37,7 +37,7 @@ class PlatformContext
 	PlatformContext()          = default;
 	virtual ~PlatformContext() = default;
 
-	virtual std::vector<std::string_view> arguments() const = 0;
+	virtual std::vector<std::string> arguments() const = 0;
 
 #if defined(_WIN32)
 	inline const WindowsContext *cast() const;
