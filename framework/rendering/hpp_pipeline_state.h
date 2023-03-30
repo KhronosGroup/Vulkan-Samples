@@ -18,12 +18,15 @@
 #pragma once
 
 #include "pipeline_state.h"
-#include <core/hpp_pipeline_layout.h>
-#include <core/hpp_render_pass.h>
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
+namespace core
+{
+class HPPPipelineLayout;
+}
+
 namespace rendering
 {
 struct HPPColorBlendAttachmentState
@@ -82,6 +85,9 @@ struct HPPRasterizationState
 	vk::Bool32        depth_bias_enable         = false;
 };
 
+class HPPSpecializationConstantState : private vkb::SpecializationConstantState
+{};
+
 struct HPPStencilOpState
 {
 	vk::StencilOp fail_op       = vk::StencilOp::eReplace;
@@ -121,6 +127,16 @@ class HPPPipelineState : private vkb::PipelineState
 	const vkb::core::HPPPipelineLayout &get_pipeline_layout() const
 	{
 		return reinterpret_cast<vkb::core::HPPPipelineLayout const &>(vkb::PipelineState::get_pipeline_layout());
+	}
+
+	const vkb::core::HPPRenderPass *get_render_pass() const
+	{
+		return reinterpret_cast<vkb::core::HPPRenderPass const *>(vkb::PipelineState::get_render_pass());
+	}
+
+	const vkb::rendering::HPPSpecializationConstantState &get_specialization_constant_state() const
+	{
+		return reinterpret_cast<vkb::rendering::HPPSpecializationConstantState const &>(vkb::PipelineState::get_specialization_constant_state());
 	}
 
 	void set_color_blend_state(const vkb::rendering::HPPColorBlendState &color_blend_state)
