@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_custom_target(vkb_components)
+add_custom_target(vkb__components)
 
-set_property(TARGET vkb_components PROPERTY FOLDER "components")
+set_property(TARGET vkb__components PROPERTY FOLDER "components")
 
 function(vkb__register_headers)
     set(options)
@@ -41,48 +41,59 @@ function(vkb__register_component)
         message(FATAL_ERROR "NAME must be defined in vkb__register_tests")
     endif()
 
+
+    # Create interface header only library
+    # This does not garantee that all headers will compile without the source target
+    message(STATUS "ADDING HEADERS: vkb__${TARGET_NAME}__headers")
+
+    set(TARGET_HEADER_ONLY "vkb__${TARGET_NAME}__headers")
+
+    add_library(${TARGET_HEADER_ONLY} INTERFACE ${TARGET_HEADERS})
+
+    if(TARGET_LINK_LIBS)
+        target_link_libraries(${TARGET_HEADER_ONLY} INTERFACE ${TARGET_LINK_LIBS})
+    endif()
+
+    if(TARGET_INCLUDE_DIRS)
+        target_include_directories(${TARGET_HEADER_ONLY} INTERFACE ${TARGET_INCLUDE_DIRS})
+    endif()
+
+    target_compile_features(${TARGET_HEADER_ONLY} INTERFACE cxx_std_17)
+
+
+
     if(TARGET_SRC) # Create static library
-        message("ADDING STATIC: vkb__${TARGET_NAME}")
+        message(STATUS "ADDING STATIC: vkb__${TARGET_NAME}")
 
         add_library("vkb__${TARGET_NAME}" STATIC ${TARGET_SRC})
-
-        if(TARGET_LINK_LIBS)
-            target_link_libraries("vkb__${TARGET_NAME}" PUBLIC ${TARGET_LINK_LIBS})
-        endif()
-
-        if(TARGET_INCLUDE_DIRS)
-            target_include_directories("vkb__${TARGET_NAME}" PUBLIC ${TARGET_INCLUDE_DIRS})
-        endif()
-
-        target_compile_features("vkb__${TARGET_NAME}" PUBLIC cxx_std_17)
+        target_link_libraries("vkb__${TARGET_NAME}" PUBLIC ${TARGET_HEADER_ONLY})
 
         if(${VKB_WARNINGS_AS_ERRORS})
-            if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+            if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
                 target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Werror)
-                # target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
-            elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+
+            # target_compile_options("vkb__${TARGET_NAME}" PRIVATE -Wall -Wextra -Wpedantic -Werror)
+            elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
                 target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W3 /WX)
+
                 # target_compile_options("vkb__${TARGET_NAME}" PRIVATE /W4 /WX)
             endif()
         endif()
 
+        set_target_properties("vkb__${TARGET_NAME}"
+            PROPERTIES
+            LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+            RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
+        )
+
     else() # Create interface library
-        message("ADDING INTERFACE: vkb__${TARGET_NAME}")
+        message(STATUS "ADDING INTERFACE: vkb__${TARGET_NAME}")
 
         add_library("vkb__${TARGET_NAME}" INTERFACE ${TARGET_HEADERS})
-
-        if(TARGET_LINK_LIBS)
-            target_link_libraries("vkb__${TARGET_NAME}" INTERFACE ${TARGET_LINK_LIBS})
-        endif()
-
-        if(TARGET_INCLUDE_DIRS)
-            target_include_directories("vkb__${TARGET_NAME}" INTERFACE ${TARGET_INCLUDE_DIRS})
-        endif()
-
-        target_compile_features("vkb__${TARGET_NAME}" INTERFACE cxx_std_17)
+        target_link_libraries("vkb__${TARGET_NAME}" INTERFACE ${TARGET_HEADER_ONLY})
     endif()
 
     set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY FOLDER "components/${TARGET_NAME}")
 
-    add_dependencies(vkb_components "vkb__${TARGET_NAME}")
+    add_dependencies(vkb__components "vkb__${TARGET_NAME}")
 endfunction()

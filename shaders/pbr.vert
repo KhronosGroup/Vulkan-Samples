@@ -14,9 +14,7 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
-
-#define MAX_FORWARD_LIGHT_COUNT 16
+ */ 
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;

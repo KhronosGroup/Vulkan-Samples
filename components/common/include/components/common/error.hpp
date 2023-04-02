@@ -67,4 +67,8 @@ inline void ERRORF(const std::string &message)
 	throw std::runtime_error(message);
 }
 
-#define NOT_IMPLEMENTED() ERRORF("not implemented")
+#define NOT_IMPLEMENTED()    \
+	throw std::runtime_error \
+	{                        \
+		"not implemented"    \
+	}

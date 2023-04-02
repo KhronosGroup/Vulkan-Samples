@@ -17,6 +17,9 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+
 #include <components/common/error.hpp>
 
 VKBP_DISABLE_WARNINGS()
@@ -27,15 +30,63 @@ VKBP_ENABLE_WARNINGS()
 
 namespace components
 {
+namespace detail
+{
+/// @brief Converts wstring to string using Windows specific function
+/// @param wstr Wide string to convert
+/// @return A converted utf8 string
+inline std::string wstr_to_str(const std::wstring &wstr)
+{
+	if (wstr.empty())
+	{
+		return {};
+	}
+
+	auto wstr_len = static_cast<int>(wstr.size());
+	auto str_len  = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], wstr_len, NULL, 0, NULL, NULL);
+
+	std::string str(str_len, 0);
+	WideCharToMultiByte(CP_UTF8, 0, &wstr[0], wstr_len, &str[0], str_len, NULL, NULL);
+
+	return str;
+}
+}        // namespace detail
+
 class WindowsContext final : public PlatformContext
 {
   public:
 	WindowsContext()          = default;
 	virtual ~WindowsContext() = default;
 
-	virtual std::vector<std::string_view> arguments() const override
+	virtual std::vector<std::string> arguments() const override
 	{
-		return {m_arguments.begin(), m_arguments.end()};
+		if (m_arguments.empty())
+		{
+			int     argc;
+			LPWSTR *argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+			if (argv)
+			{
+				for (int i = 0; i < argc; i++)
+				{
+					m_arguments.push_back(detail::wstr_to_str(std::wstring(argv[i])));
+				}
+				LocalFree(argv);
+			}
+		}
+
+		if (m_arguments.empty())
+		{
+			throw std::runtime_error("Failed to parse command line arguments");
+		}
+
+		if (m_arguments.size() == 1)
+		{
+			// only executable name
+			return {};
+		}
+
+		// remove executable name
+		return {m_arguments.begin() + 1, m_arguments.end()};
 	}
 
 	HINSTANCE hInstance;
@@ -44,11 +95,10 @@ class WindowsContext final : public PlatformContext
 	INT       nCmdShow;
 
   private:
-	std::vector<std::string> m_arguments;
+	mutable std::vector<std::string> m_arguments;
 };
 }        // namespace components
 
-// TODO: get arguments from handles
 #define CUSTOM_MAIN(context_name)                                                                    \
 	int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) \
 	{                                                                                                \

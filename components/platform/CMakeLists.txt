@@ -18,13 +18,13 @@
 vkb__register_component(
   NAME platform
   SRC
-  src/dl.cpp
-  src/sample.cpp
+    src/dl.cpp
+    src/sample.cpp
   LINK_LIBS
-  ${CMAKE_DL_LIBS}
-  vkb__common
+    ${CMAKE_DL_LIBS}
+    vkb__common
   INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
 # Dummy Sample
@@ -35,23 +35,26 @@ add_dependencies(vkb_tests vkb__dummy_sample)
 vkb__register_tests_no_catch2(
   NAME "platform_test"
   SRC
-  tests/platform.test.cpp
+    tests/platform.test.cpp
   LIBS
-  vkb__platform
-  vkb__dummy_sample
+    vkb__platform
+    vkb__dummy_sample
 )
 
 vkb__register_tests_no_catch2(
   NAME "sample_test"
   SRC
-  tests/sample.test.cpp
+    tests/sample.test.cpp
   LIBS
-  vkb__platform
-  vkb__dummy_sample
-  vkb__vfs
+    vkb__platform
+    vkb__dummy_sample
+    vkb__vfs
 )
 
-# improve sample test time by reducing the number of files it needs to search over before finding the dummy sample
-# the sample has a fallback if these are not set or supported
-# reduces the overall test time from 10+ seconds to <0.05
-target_compile_definitions(sample_test PUBLIC SOURCE_PATH="${CMAKE_SOURCE_DIR}" SAMPLE_LIB_PATH="$<TARGET_FILE_DIR:vkb__dummy_sample>")
+
+if (TARGET sample_test)
+  # improve sample test time by reducing the number of files it needs to search over before finding the dummy sample
+  # the sample has a fallback if these are not set or supported
+  # reduces the overall test time from 10+ seconds to <0.05
+  target_compile_definitions(sample_test PUBLIC SOURCE_PATH="${CMAKE_SOURCE_DIR}" SAMPLE_LIB_PATH="$<TARGET_FILE_DIR:vkb__dummy_sample>")
+endif()

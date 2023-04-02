@@ -68,3 +68,9 @@
 [submodule "third_party/fmt"]
 	path = third_party/fmt
 	url = https://github.com/fmtlib/fmt
+[submodule "third_party/spirv-reflect"]
+	path = third_party/spirv-reflect
+	url = https://github.com/KhronosGroup/SPIRV-Reflect.git
+[submodule "third_party/json"]
+	path = third_party/json
+	url = https://github.com/nlohmann/json.git

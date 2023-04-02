@@ -30,7 +30,7 @@ class MacOSXContext final : public PlatformContext
 
 	virtual ~MacOSXContext() = default;
 
-	virtual std::vector<std::string_view> arguments() const override
+	virtual std::vector<std::string> arguments() const override
 	{
 		return {m_arguments.begin(), m_arguments.end()};
 	}

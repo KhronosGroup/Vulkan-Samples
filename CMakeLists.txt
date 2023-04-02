@@ -39,6 +39,7 @@ include(sample_helper)
 include(check_atomic)
 include(test_helpers)
 include(component_helpers)
+include(shader_helpers)
 
 # Add third party libraries
 add_subdirectory(third_party)
@@ -46,3 +47,7 @@ add_subdirectory(third_party)
 vkb__enable_testing()
 
 add_subdirectory(components)
+
+add_subdirectory(cmd)
+
+add_subdirectory(shaders)

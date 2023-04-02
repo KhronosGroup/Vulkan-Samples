@@ -19,6 +19,12 @@ cmake_minimum_required(VERSION 3.10)
 
 project(third_party LANGUAGES C CXX)
 
+# spirv-reflect
+# cmake integration for spirv-reflect is not yet working as a submodule
+# luckily its a small library so we can define it easily enough manually
+add_library(spirv-reflect-static STATIC ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect/spirv_reflect.h ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect/spirv_reflect.c)
+target_include_directories(spirv-reflect-static PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/spirv-reflect)
+
 # glm
 add_library(glm INTERFACE)
 set(GLM_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glm)
@@ -255,7 +261,7 @@ set_property(TARGET HLSL PROPERTY FOLDER "third_party")
 set_property(TARGET GenericCodeGen PROPERTY FOLDER "third_party")
 set_property(TARGET MachineIndependent PROPERTY FOLDER "third_party")
 
-# spirv-cross
+# # spirv-cross
 # add_subdirectory(spirv-cross)
 
 # set_property(TARGET spirv-cross PROPERTY FOLDER "third_party")
@@ -342,7 +348,12 @@ else()
     endif()
 endif()
 
+# fmt
+add_subdirectory(fmt)
+set_property(TARGET fmt PROPERTY FOLDER "third_party")
+
 # spdlog
+set(SPDLOG_FMT_EXTERNAL ON)
 add_subdirectory(spdlog)
 
 set_property(TARGET spdlog PROPERTY FOLDER "third_party")
@@ -391,6 +402,5 @@ set_property(TARGET EnTT PROPERTY FOLDER "third_party")
 add_subdirectory(tracy)
 set_property(TARGET TracyClient PROPERTY FOLDER "third_party")
 
-# fmt
-add_subdirectory(fmt)
-set_property(TARGET fmt PROPERTY FOLDER "third_party")
+add_subdirectory(json)
+set_property(TARGET nlohmann_json PROPERTY FOLDER "third_party")
