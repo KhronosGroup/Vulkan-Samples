@@ -28,6 +28,6 @@ jobs:
       - name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vkb_tests --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+        run: cmake --build "build/${{ matrix.platform }}" --target vkb__tests --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
       - name: Run Tests
         run: ctest --output-on-failure --test-dir "build/${{ matrix.platform }}" -C ${{ matrix.build_type }}

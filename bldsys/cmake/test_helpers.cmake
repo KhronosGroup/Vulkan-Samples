@@ -21,9 +21,9 @@ macro(vkb__enable_testing)
     endif()
 endmacro()
 
-add_custom_target(vkb_tests)
+add_custom_target(vkb__tests)
 
-set_property(TARGET vkb_tests PROPERTY FOLDER "tests")
+set_property(TARGET vkb__tests PROPERTY FOLDER "tests")
 
 function(vkb__register_tests)
     set(options)
@@ -80,7 +80,7 @@ function(vkb__register_tests)
         COMMAND ${TARGET_NAME}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
-    add_dependencies(vkb_tests ${TARGET_NAME})
+    add_dependencies(vkb__tests ${TARGET_NAME})
 endfunction()
 
 function(vkb__register_tests_no_catch2)
@@ -132,7 +132,7 @@ function(vkb__register_tests_no_catch2)
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         COMMAND ${TARGET_NAME})
 
-    add_dependencies(vkb_tests ${TARGET_NAME})
+    add_dependencies(vkb__tests ${TARGET_NAME})
 endfunction()
 
 function(vkb__register_gpu_tests)

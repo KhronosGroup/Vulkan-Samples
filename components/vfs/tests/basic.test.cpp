@@ -116,7 +116,7 @@ TEST_CASE("Search for files recursive", "[vfs]")
 		std::set<std::string> individual_files{files.begin(), files.end()};
 		REQUIRE(individual_files.find("/bldsys/cmake/check_atomic.cmake") != individual_files.end());
 
-		REQUIRE(files.size() == 8);
+		REQUIRE(files.size() == 9);
 	}
 	CATCH_ERROR()
 }

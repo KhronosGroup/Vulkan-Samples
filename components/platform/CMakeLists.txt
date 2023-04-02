@@ -30,7 +30,7 @@ vkb__register_component(
 # Dummy Sample
 add_library(vkb__dummy_sample SHARED tests/dummy_sample.cpp)
 target_link_libraries(vkb__dummy_sample PUBLIC vkb__platform)
-add_dependencies(vkb_tests vkb__dummy_sample)
+add_dependencies(vkb__tests vkb__dummy_sample)
 
 vkb__register_tests_no_catch2(
   NAME "platform_test"

@@ -107,11 +107,8 @@ function(vkb__register_shader)
         string(JSON JSON_DATA SET ${JSON_DATA} "variant_defines" "${ARRAY}")
     endif()
 
-    set(JSON_FILE "${CMAKE_BINARY_DIR}/output/${TARGET_NAME}.json")
-    set(OUTPUT_FILE "${CMAKE_BINARY_DIR}/output/${TARGET_NAME}.generated.hpp")
-
-    # set(JSON_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.json")
-    # set(OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.generated.hpp")
+    set(JSON_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.json")
+    set(OUTPUT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${TARGET_NAME}.generated.hpp")
 
     # Check if the shader has changed, if not, skip the generation
     # Altering the json file will trigger a recompile
