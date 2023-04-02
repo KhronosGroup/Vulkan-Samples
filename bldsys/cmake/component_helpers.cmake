@@ -14,9 +14,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_custom_target(vkb_components)
+add_custom_target(vkb__components)
 
-set_property(TARGET vkb_components PROPERTY FOLDER "components")
+set_property(TARGET vkb__components PROPERTY FOLDER "components")
 
 function(vkb__register_headers)
     set(options)
@@ -95,5 +95,5 @@ function(vkb__register_component)
 
     set_property(TARGET "vkb__${TARGET_NAME}" PROPERTY FOLDER "components/${TARGET_NAME}")
 
-    add_dependencies(vkb_components "vkb__${TARGET_NAME}")
+    add_dependencies(vkb__components "vkb__${TARGET_NAME}")
 endfunction()

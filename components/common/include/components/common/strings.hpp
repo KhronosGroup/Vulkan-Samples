@@ -70,5 +70,20 @@ inline std::vector<const char *> to_cstr(const std::vector<std::string_view> &st
 	}
 	return result;
 }
+
+// Split a string into a vector of strings by a delimiter
+inline std::vector<std::string> split(const std::string &str, const std::string &delimiter)
+{
+	std::vector<std::string> result;
+	size_t                   start = 0;
+	size_t                   end   = 0;
+	while ((end = str.find(delimiter, start)) != std::string::npos)
+	{
+		result.push_back(str.substr(start, end - start));
+		start = end + delimiter.length();
+	}
+	result.push_back(str.substr(start));
+	return result;
+}
 }        // namespace strings
 }        // namespace components

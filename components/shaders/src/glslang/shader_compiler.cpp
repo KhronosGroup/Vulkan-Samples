@@ -65,7 +65,7 @@ GlslangShaderCompiler::GlslangShaderCompiler(LogCallback &&log_callback) :
 {
 }
 
-std::vector<uint32_t> GlslangShaderCompiler::compile_spirv(const vulkan::CompilerConfig &config, const std::vector<uint8_t> &shader_source) const
+std::vector<uint32_t> GlslangShaderCompiler::compile_spirv(const shaders::CompilerConfig &config, const std::vector<uint8_t> &shader_source) const
 {
 	if (shader_source.size() == 0)
 	{
@@ -106,7 +106,7 @@ std::vector<uint32_t> GlslangShaderCompiler::compile_spirv(const vulkan::Compile
 
 	if (!shader.parse(GetDefaultResourceLimits(), 110, false, messages))
 	{
-		throw std::runtime_error{"Failed to parse shader source:\n\t" + std::string{shader.getInfoDebugLog()}};
+		throw std::runtime_error{"Failed to parse shader source:\n\t" + std::string{shader.getInfoLog()}};
 	}
 
 	// Add shader to new program object.

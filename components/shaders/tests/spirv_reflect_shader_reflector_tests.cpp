@@ -29,27 +29,27 @@ VKBP_ENABLE_WARNINGS()
 
 using namespace components::spirv_reflect;
 using namespace components::glslang;
-using namespace components::vulkan;
+using namespace components::shaders;
 
-// TEST_CASE("reflect hello triangle vert spirv", "[glslang]")
-// {
-// 	GlslangShaderCompiler compiler;
-// 	std::vector<uint32_t> spirv = compiler.compile_spirv({VK_SHADER_STAGE_VERTEX_BIT}, HELLO_TRIANGLE_VERT);
+TEST_CASE("reflect hello triangle vert spirv", "[glslang]")
+{
+	GlslangShaderCompiler compiler;
+	std::vector<uint32_t> spirv = compiler.compile_spirv({VK_SHADER_STAGE_VERTEX_BIT}, HELLO_TRIANGLE_VERT);
 
-// 	REQUIRE(spirv.size() != 0);
+	REQUIRE(spirv.size() != 0);
 
-// 	SpirvReflectShaderReflector reflector;
-// 	ShaderResources             resources = reflector.reflect_spirv(spirv);
-// }
+	SpirvReflectShaderReflector reflector;
+	ShaderResources             resources = reflector.reflect_spirv(spirv);
+}
 
-// TEST_CASE("reflect hello triangle frag spirv", "[glslang]")
-// {
-// 	GlslangShaderCompiler compiler;
-// 	std::vector<uint32_t> spirv = compiler.compile_spirv({VK_SHADER_STAGE_FRAGMENT_BIT}, HELLO_TRIANGLE_FRAG);
+TEST_CASE("reflect hello triangle frag spirv", "[glslang]")
+{
+	GlslangShaderCompiler compiler;
+	std::vector<uint32_t> spirv = compiler.compile_spirv({VK_SHADER_STAGE_FRAGMENT_BIT}, HELLO_TRIANGLE_FRAG);
 
-// 	SpirvReflectShaderReflector reflector;
-// 	ShaderResources             resources = reflector.reflect_spirv(spirv);
-// }
+	SpirvReflectShaderReflector reflector;
+	ShaderResources             resources = reflector.reflect_spirv(spirv);
+}
 
 TEST_CASE("reflect input attachment frag spirv", "[glslang]")
 {

@@ -17,12 +17,13 @@ vkb__register_component(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src/glslang
   LINK_LIBS
+    vkb__common
     glslang
     SPIRV
     OGLCompiler
     OSDependent
     MachineIndependent
-    vkb__vulkan__headers # we only require the interface definitions
+    volk
 )
 
 vkb__register_tests(
@@ -70,7 +71,8 @@ vkb__register_component(
     ${CMAKE_CURRENT_SOURCE_DIR}/include
   LINK_LIBS
     spirv-reflect-static
-    vkb__vulkan__headers # we only require the interface definitions
+    volk
+    vkb__common
 )
 
 vkb__register_tests(

@@ -51,12 +51,4 @@ add_subdirectory(components)
 
 add_subdirectory(cmd)
 
-vkb__register_shader(
-    NAME "hello_triangle_shader"
-    LANGUAGE GLSL
-    VERTEX ${CMAKE_CURRENT_SOURCE_DIR}/shaders/hello_triangle.vert
-    FRAGMENT ${CMAKE_CURRENT_SOURCE_DIR}/shaders/hello_triangle.frag
-    INCLUDE_DIRS
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders
-        ${CMAKE_CURRENT_SOURCE_DIR}/shaders/include
-)
+add_subdirectory(shaders)

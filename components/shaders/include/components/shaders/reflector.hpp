@@ -1,10 +1,10 @@
 #pragma once
 
-#include "components/vulkan/shaders/shader.hpp"
+#include "components/shaders/shader.hpp"
 
 namespace components
 {
-namespace vulkan
+namespace shaders
 {
 class ShaderReflector
 {

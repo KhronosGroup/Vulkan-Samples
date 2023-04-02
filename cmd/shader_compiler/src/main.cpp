@@ -1,10 +1,12 @@
 #include <components/common/logging.hpp>
 
 #include <CLI/CLI.hpp>
+#include <nlohmann/json.hpp>
 
 #include <components/platform/platform.hpp>
 
-#include <nlohmann/json.hpp>
+#include "header_generator.hpp"
+#include "shader_descriptor.hpp"
 
 using json = nlohmann::json;
 using namespace components;
@@ -15,7 +17,8 @@ CUSTOM_MAIN(platform_context)
 
 	CLI::App app{"Shader Compiler. Compiles shaders to SPIR-V."};
 
-	CLI::Option *option = app.add_option("--json-schema", "A JSON schema string");
+	CLI::Option *schema_option = app.add_option("--json-schema", "A JSON schema string");
+	CLI::Option *output_option = app.add_option("--output", "Where to write the compiled shader header to");
 
 	try
 	{
@@ -26,51 +29,33 @@ CUSTOM_MAIN(platform_context)
 		return app.exit(e);
 	}
 
-	std::string json_schema = option->as<std::string>();
-
-	LOGI("Starting Shader Compiler");
-
+	json json_data;
 	try
 	{
-		json data = json::parse(json_schema);
-		LOGI("Parsed JSON");
+		std::string json_schema = schema_option->as<std::string>();
 
-		if (data.contains("language"))
-		{
-			auto language = data.at("language").get<std::string>();
-			LOGI("Language: {}", language.c_str());
-		}
-
-		if (data.contains("vertex"))
-		{
-			auto vertex = data.at("vertex").get<std::string>();
-			LOGI("Vertex: {}", vertex.c_str());
-		}
-
-		if (data.contains("fragment"))
-		{
-			auto fragment = data.at("fragment").get<std::string>();
-			LOGI("Fragment: {}", fragment.c_str());
-		}
-
-		if (data.contains("compute"))
-		{
-			auto compute = data.at("compute").get<std::string>();
-			LOGI("Compute: {}", compute.c_str());
-		}
-
-		if (data.contains("includeFolders"))
-		{
-			auto includes = data.at("includeFolders").get<std::vector<std::string>>();
-			for (auto &include : includes)
-			{
-				LOGI("Include Folder: {}", include.c_str());
-			}
-		}
+		json_data = json::parse(json_schema);
 	}
 	catch (json::parse_error &e)
 	{
-		LOGE("Error parsing JSON: %s", e.what());
+		LOGE("Error processing shader: {}", e.what());
+		return -1;
+	}
+
+	shader_compiler::ShaderDescriptor descriptor;
+	try
+	{
+		descriptor = shader_compiler::shader_descriptor_from_json(json_data);
+		shader_compiler::compile_and_reflect_shader(descriptor);
+
+		std::string output_file = output_option->as<std::string>();
+		shader_compiler::generate_shader_header(descriptor, output_file);
+	}
+	catch (std::exception &e)
+	{
+		shader_compiler::print_shader_descriptor(descriptor);
+		LOGE("Error processing shader: {}", e.what());
+		// return -1;
 	}
 
 	return 0;

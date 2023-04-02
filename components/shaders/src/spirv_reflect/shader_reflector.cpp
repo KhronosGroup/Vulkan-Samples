@@ -4,9 +4,11 @@
 
 #include <spirv_reflect.h>
 
+#include <components/common/logging.hpp>
+
 namespace components
 {
-using namespace vulkan;
+using namespace shaders;
 
 namespace spirv_reflect
 {
@@ -164,7 +166,8 @@ std::unique_ptr<RawShaderData> process_array_type(const SpvReflectTypeDescriptio
 {
 	if (description.traits.array.dims_count != 1)
 	{
-		throw std::runtime_error("Only 1D arrays are supported for now. (TODO: Support multidimensional arrays)");
+		LOGI("Array dimensions count is not 1, skipping");
+		return RawShaderData::create_unknown();
 	}
 
 	auto data                = std::make_unique<ArrayShaderData>();
@@ -216,11 +219,12 @@ std::unique_ptr<RawShaderData> process_resource_type(const SpvReflectTypeDescrip
 		case SpvOpTypeMatrix:
 			return process_matrix_type(description);
 
+		case SpvOpTypeArray:
+			return process_array_type(description);
+
 		case SpvOpTypeImage:
 		case SpvOpTypeSampler:
 		case SpvOpTypeSampledImage:
-		case SpvOpTypeArray:
-			return process_array_type(description);
 		case SpvOpTypeRuntimeArray:
 		case SpvOpTypeOpaque:
 		case SpvOpTypePointer:
@@ -232,9 +236,13 @@ std::unique_ptr<RawShaderData> process_resource_type(const SpvReflectTypeDescrip
 		case SpvOpTypePipe:
 		case SpvOpTypeForwardPointer:
 		case SpvOpTypeVoid:
-			return RawShaderData::create_unknown();
-
 		default:
+			if (description.type_name)
+				LOGI("Unsupported resource: {}", description.type_name);
+
+			if (description.struct_member_name)
+				LOGI("Unsupported resource struct member: {}", description.struct_member_name);
+				
 			return RawShaderData::create_unknown();
 	}
 }
@@ -260,7 +268,7 @@ ShaderResources SpirvReflectShaderReflector::reflect_spirv(const std::vector<uin
 	SpvReflectShaderModule module;
 	REFLECT_CHECK(spvReflectCreateShaderModule(spirv.size() * sizeof(uint32_t), spirv.data(), &module), "Failed to create shader module");
 
-	vulkan::ShaderResources                resources;
+	shaders::ShaderResources               resources;
 	std::unordered_map<uint32_t, uint32_t> spirv_id_to_resource_index;
 
 	auto get_resource_at_index = [&](uint32_t index) -> ShaderResource * {

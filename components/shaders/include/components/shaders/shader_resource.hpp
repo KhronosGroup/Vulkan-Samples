@@ -27,7 +27,7 @@
 
 namespace components
 {
-namespace vulkan
+namespace shaders
 {
 // Types of shader resources
 enum class ShaderResourceType

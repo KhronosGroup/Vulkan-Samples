@@ -23,11 +23,11 @@
 
 #include <volk.h>
 
-#include "components/vulkan/shaders/shader_resource.hpp"
+#include "components/shaders/shader_resource.hpp"
 
 namespace components
 {
-namespace vulkan
+namespace shaders
 {
 class ShaderStage
 {

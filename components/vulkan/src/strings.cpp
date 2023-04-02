@@ -1181,19 +1181,5 @@ const std::string color_component_to_string(VkColorComponentFlags flags)
 	                                            {VK_COLOR_COMPONENT_B_BIT, "B"},
 	                                            {VK_COLOR_COMPONENT_A_BIT, "A"}});
 }
-
-std::vector<std::string> split(const std::string &input, char delim)
-{
-	std::vector<std::string> tokens;
-
-	std::stringstream sstream(input);
-	std::string       token;
-	while (std::getline(sstream, token, delim))
-	{
-		tokens.push_back(token);
-	}
-
-	return tokens;
-}
 }        // namespace vulkan
 }        // namespace components

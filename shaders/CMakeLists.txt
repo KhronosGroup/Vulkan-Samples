@@ -1,0 +1,14 @@
+set(MAX_LIGHT_COUNT 20)
+
+add_subdirectory(16bit_arithmetic)
+add_subdirectory(16bit_storage_input_output)
+add_subdirectory(async_compute)
+add_subdirectory(buffer_device_address)
+add_subdirectory(compute_nbody)
+add_subdirectory(conservative_rasterization)
+add_subdirectory(constant_data)
+add_subdirectory(debug_utils)
+add_subdirectory(deferred)
+add_subdirectory(descriptor_indexing)
+
+add_subdirectory(dynamic_rendering)
