@@ -29,6 +29,12 @@ SparseImage::~SparseImage()
 		object.reset();
 		ubo.reset();
 
+		vkDestroyImageView(get_device().get_handle(), texture.view, VK_NULL_HANDLE);
+		vkDestroyImage(get_device().get_handle(), sparse_image.image, VK_NULL_HANDLE);
+		vkDestroySampler(get_device().get_handle(), texture.sampler, VK_NULL_HANDLE);
+		texture = {};
+		sparse_image = {};
+
 		vkDestroyPipeline(get_device().get_handle(), pipeline, VK_NULL_HANDLE);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, VK_NULL_HANDLE);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, VK_NULL_HANDLE);
@@ -48,12 +54,12 @@ bool SparseImage::prepare(vkb::Platform &platform)
 
 	set_camera();
 	load_assets();
-	create_texture();
 	create_sparse_image();
+	create_sparse_texture();
 	prepare_uniform_buffers();
 	create_descriptor_pool();
 	setup_descriptor_set_layout();
-	create_descriptor_sets();
+	create_descriptor_set();
 	prepare_pipeline();
 	build_command_buffers();
 
@@ -80,24 +86,20 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-void SparseImage::create_texture()
-{
-	const std::string file{"textures/vulkan_logo_full.ktx"};
-
-	texture = vkb::sg::Image::load(file, file, vkb::sg::Image::Color);
-}
 
 void SparseImage::create_sparse_image()
 {
-	auto texture_mipmaps = texture->get_mipmaps();
+	auto texture_mipmaps = texture.image->get_mipmaps();
 	assert(!texture_mipmaps.empty());
+
+	// Calculate number of mip levels as per Vulkan specs:
+	texture.mip_levels = vkb::to_u32(floor(log2(std::max(texture_mipmaps[0].extent.width, texture_mipmaps[0].extent.height))) + 1);
 
 	VkImageCreateInfo sparseImageCreateInfo = vkb::initializers::image_create_info();
 	sparseImageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
-
 	sparseImageCreateInfo.extent.width  = texture_mipmaps[0].extent.width;
 	sparseImageCreateInfo.extent.height = texture_mipmaps[0].extent.height;
-	sparseImageCreateInfo.mipLevels     = texture_mipmaps.size();
+	sparseImageCreateInfo.mipLevels     = texture.mip_levels;
 	sparseImageCreateInfo.extent.depth  = texture_mipmaps[0].extent.depth;
 	sparseImageCreateInfo.arrayLayers   = 1;
 	sparseImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_SRGB;
@@ -140,6 +142,9 @@ void SparseImage::create_sparse_image()
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &allocInfo, VK_NULL_HANDLE, &sparse_image.memory));
 }
 
+void SparseImage::create_sparse_texture()
+{
+}
 
 /**
  * @fn void SparseImage::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -334,7 +339,11 @@ void SparseImage::set_camera()
  */
 void SparseImage::load_assets()
 {
+	// load model from gltf
 	object = load_model("scenes/textured_unit_cube.gltf");
+
+	// load texture from file
+	texture.image = vkb::sg::Image::load("textures/vulkan_logo_full.ktx", "textures/vulkan_logo_full.ktx", vkb::sg::Image::Color);
 }
 
 /**
@@ -369,6 +378,10 @@ void SparseImage::setup_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        VK_SHADER_STAGE_VERTEX_BIT,
 	        0),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	        VK_SHADER_STAGE_FRAGMENT_BIT,
+	        1),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
@@ -385,12 +398,57 @@ void SparseImage::setup_descriptor_set_layout()
 }
 
 /**
- * 	@fn void SparseImage::create_descriptor_sets()
+ * 	@fn void SparseImage::create_image_descriptor()
+ * 	@brief Creating image descriptor info
+ */
+VkDescriptorImageInfo SparseImage::create_image_descriptor()
+{
+	VkDescriptorImageInfo descriptor{};
+
+	// Create sampler
+	VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
+	sampler.magFilter           = VK_FILTER_LINEAR;
+	sampler.minFilter           = VK_FILTER_LINEAR;
+	sampler.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_NEAREST;
+	sampler.addressModeU        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler.addressModeV        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler.addressModeW        = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+	sampler.mipLodBias          = 0.0f;
+	sampler.compareOp           = VK_COMPARE_OP_NEVER;
+	sampler.minLod              = 0.0f;
+	sampler.maxLod              = static_cast<float>(texture.mip_levels);
+	sampler.maxAnisotropy       = get_device().get_gpu().get_features().samplerAnisotropy ? get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
+	sampler.anisotropyEnable    = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler.borderColor         = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, VK_NULL_HANDLE, &texture.sampler));
+
+	// Create image view
+	VkImageViewCreateInfo view           = vkb::initializers::image_view_create_info();
+	view.image                           = VK_NULL_HANDLE;
+	view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+	view.format                          = texture.format;
+	view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	view.subresourceRange.baseMipLevel   = 0;
+	view.subresourceRange.baseArrayLayer = 0;
+	view.subresourceRange.layerCount     = 1;
+	view.subresourceRange.levelCount     = texture.mip_levels;
+	view.image                           = sparse_image.image;
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view, VK_NULL_HANDLE, &texture.view));
+
+	descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; 	 //sparse_image.layout; - should use instead?
+	descriptor.imageView   = texture.view;
+	descriptor.sampler     = texture.sampler;
+
+	return descriptor;
+}
+
+/**
+ * 	@fn void SparseImage::create_descriptor_set()
  * 	@brief Creating both descriptor set:
  * 		   1. Uniform buffer
- * 		   2. Image sampler //TODO remove comment if not needed
+ * 		   2. Image sampler
  */
-void SparseImage::create_descriptor_sets()
+void SparseImage::create_descriptor_set()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
@@ -401,6 +459,7 @@ void SparseImage::create_descriptor_sets()
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
 	VkDescriptorBufferInfo matrix_buffer_descriptor = create_descriptor(*ubo);
+	VkDescriptorImageInfo  image_descriptor         = create_image_descriptor();
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(
@@ -408,6 +467,11 @@ void SparseImage::create_descriptor_sets()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 	        0,
 	        &matrix_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(
+	        descriptor_set,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+	        1,
+	        &image_descriptor),
 	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()),
@@ -422,13 +486,14 @@ void SparseImage::create_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 	};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        1);
+	        2);
 
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, VK_NULL_HANDLE, &descriptor_pool));
 }

@@ -41,11 +41,20 @@ class SparseImage : public ApiVulkanSample
 	{
 		VkImage        image{VK_NULL_HANDLE};
 		VkDeviceMemory memory{VK_NULL_HANDLE};
-		VkImageLayout  layout;
-		VkImageView    view;
+		VkImageLayout  layout{};
 	} sparse_image;
 
-	std::unique_ptr<vkb::sg::Image> texture;
+	struct Texture
+	{
+		std::unique_ptr<vkb::sg::Image> image;
+		//	uint32_t width{};
+		//	uint32_t height{};
+		uint32_t                mip_levels{};
+		VkImageSubresourceRange sub_range{};
+		VkFormat                format{VK_FORMAT_R8G8B8A8_SRGB};
+		VkSampler               sampler{VK_NULL_HANDLE};
+		VkImageView             view{VK_NULL_HANDLE};
+	} texture;
 
 	SparseImage();
 	virtual ~SparseImage();
@@ -57,18 +66,19 @@ class SparseImage : public ApiVulkanSample
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
-	// Create pipeline
 	void set_camera();
 	void load_assets();
 	void prepare_pipeline();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
 	void setup_descriptor_set_layout();
-	void create_descriptor_sets();
+	void create_descriptor_set();
 	void create_descriptor_pool();
 	void draw();
-	void create_texture();
-	void create_sparse_image();
+
+	void                  create_sparse_image();
+	void                  create_sparse_texture();
+	VkDescriptorImageInfo create_image_descriptor();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_sparse_image();
