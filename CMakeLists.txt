@@ -41,6 +41,9 @@ endif()
 
 cmake_minimum_required(VERSION 3.16)
 
+# globally add VKB_DEBUG for the debug build
+add_compile_definitions($<$<CONFIG:DEBUG>:VKB_DEBUG>)
+
 project(vulkan_samples)
 
 # create output folder
