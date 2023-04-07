@@ -293,7 +293,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 
 	// For combined images we need to put descriptors into the descriptor buffers
 	// We use pointers to offset and align the data we put into the descriptor buffers
-	char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
+	char              *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
 	const VkDeviceSize image_descriptor_offset  = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
@@ -306,7 +306,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	}
 
 	// For uniform buffers we only need to put their buffer device addresses into the descriptor buffers
-	char* uniform_descriptor_buf_ptr = (char *) resource_descriptor_buffer->get_data();
+	char *uniform_descriptor_buf_ptr = (char *) resource_descriptor_buffer->get_data();
 
 	// Global matrices uniform buffer
 	VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -421,7 +421,6 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	{
 		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
 	}
-
 
 	/*
 	    End of extension specific functions
