@@ -264,6 +264,11 @@ void DescriptorBufferBasic::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
+inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
 // This function creates the descriptor buffers and puts the descriptors into those buffers, so they can be used during command buffer creation
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
@@ -285,12 +290,11 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Put the descriptors into the above buffers
-	// This is done with vkGetDescriptorEXT
-	// We use pointers to offset and align the data we put into the descriptor buffers
-	const VkDeviceSize alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
 
 	// For combined images we need to put descriptors into the descriptor buffers
-	char *buf_ptr = (char *) image_descriptor_buffer->get_data();
+	// We use pointers to offset and align the data we put into the descriptor buffers
+	char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
+	const VkDeviceSize image_descriptor_offset  = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
@@ -298,12 +302,11 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 		VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 		image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 		image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr + i * alignment);
+		vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_descriptor_offset);
 	}
 
 	// For uniform buffers we only need to put their buffer device addresses into the descriptor buffers
-
-	buf_ptr = (char *) resource_descriptor_buffer->get_data();
+	char* uniform_descriptor_buf_ptr = (char *) resource_descriptor_buffer->get_data();
 
 	// Global matrices uniform buffer
 	VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -314,10 +317,11 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 	VkDescriptorGetInfoEXT buffer_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 	buffer_descriptor_info.type                = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	buffer_descriptor_info.data.pUniformBuffer = &addr_info;
-	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
+	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr);
 
 	// Per-cube uniform buffers
-	buf_ptr += alignment;
+	// We use pointers to offset and align the data we put into the descriptor buffers
+	const VkDeviceSize uniform_descriptor_offset = aligned_size(descriptor_buffer_properties.uniformBufferDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -326,8 +330,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 		cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
 		buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
-		vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
-		buf_ptr += alignment;
+		vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_descriptor_offset);
 	}
 }
 
@@ -418,6 +421,7 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	{
 		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
 	}
+
 
 	/*
 	    End of extension specific functions
