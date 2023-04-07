@@ -35,6 +35,9 @@ class DescriptorBufferBasic : public ApiVulkanSample
 
 	VkPhysicalDeviceDescriptorBufferPropertiesEXT descriptor_buffer_properties{};
 
+	VkDeviceSize uniform_descriptor_offset;
+	VkDeviceSize image_descriptor_offset;
+
 	VkDescriptorSetLayout descriptor_set_layout_buffer{VK_NULL_HANDLE};
 	VkDescriptorSetLayout descriptor_set_layout_image{VK_NULL_HANDLE};
 

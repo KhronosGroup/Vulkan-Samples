@@ -136,7 +136,6 @@ void DescriptorBufferBasic::build_command_buffers()
 
 		uint32_t     buffer_index_ubo   = 0;
 		uint32_t     buffer_index_image = 1;
-		VkDeviceSize alignment          = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
 		VkDeviceSize buffer_offset      = 0;
 
 		// Global Matrices (set 0)
@@ -147,10 +146,10 @@ void DescriptorBufferBasic::build_command_buffers()
 		{
 			// Uniform buffer (set 1)
 			// Model ubos start at offset * 1 (slot 0 is global matrices)
-			buffer_offset = (j + 1) * alignment;
+			buffer_offset = (j + 1) * uniform_descriptor_offset;
 			vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
 			// Image (set 2)
-			buffer_offset = j * alignment;
+			buffer_offset = j * image_descriptor_offset;
 			vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
 			draw_model(models.cube, draw_cmd_buffers[i]);
 		}
@@ -264,11 +263,6 @@ void DescriptorBufferBasic::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipeline));
 }
 
-inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
-{
-	return (value + alignment - 1) & ~(alignment - 1);
-}
-
 // This function creates the descriptor buffers and puts the descriptors into those buffers, so they can be used during command buffer creation
 void DescriptorBufferBasic::prepare_descriptor_buffer()
 {
@@ -293,8 +287,7 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 
 	// For combined images we need to put descriptors into the descriptor buffers
 	// We use pointers to offset and align the data we put into the descriptor buffers
-	char              *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
-	const VkDeviceSize image_descriptor_offset  = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+	char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
@@ -321,7 +314,6 @@ void DescriptorBufferBasic::prepare_descriptor_buffer()
 
 	// Per-cube uniform buffers
 	// We use pointers to offset and align the data we put into the descriptor buffers
-	const VkDeviceSize uniform_descriptor_offset = aligned_size(descriptor_buffer_properties.uniformBufferDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 	for (size_t i = 0; i < cubes.size(); i++)
 	{
 		VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -399,6 +391,11 @@ void DescriptorBufferBasic::draw()
 	ApiVulkanSample::submit_frame();
 }
 
+inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
 bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
@@ -421,6 +418,10 @@ bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
 	{
 		throw std::runtime_error("This sample requires the combinedImageSamplerDescriptorSingleArray feature, which is not supported on the selected device");
 	}
+
+	// We need buffer offsets in some places, which are implementation depenendend, so we get them from the decsriptor buffer properties structure
+	uniform_descriptor_offset = aligned_size(descriptor_buffer_properties.uniformBufferDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+	image_descriptor_offset   = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 
 	/*
 	    End of extension specific functions
