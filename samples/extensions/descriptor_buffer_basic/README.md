@@ -116,12 +116,17 @@ descriptor_buffer_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTO
 device_properties.sType            = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
 device_properties.pNext            = &descriptor_buffer_properties;
 vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
+...
+// Get required alignments based implementation dependant values
+uniform_descriptor_offset = aligned_size(descriptor_buffer_properties.uniformBufferDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+image_descriptor_offset   = aligned_size(descriptor_buffer_properties.combinedImageSamplerDescriptorSize, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+
 ```
 
 For resource descriptor buffers, we can simply put buffer device addresses into it. No need for descriptors, as the GPU only needs to know the address of the buffers to access them:
 
 ```cpp
-buf_ptr = (char *) resource_descriptor_buffer->get_data();
+char *uniform_descriptor_buf_ptr = (char *) resource_descriptor_buffer->get_data();
 
 // Global matrices uniform buffer
 VkDescriptorAddressInfoEXT addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -132,10 +137,10 @@ addr_info.format                     = VK_FORMAT_UNDEFINED;
 VkDescriptorGetInfoEXT buffer_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 buffer_descriptor_info.type                = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 buffer_descriptor_info.data.pUniformBuffer = &addr_info;
-vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
+vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr);
 
 // Per-cube uniform buffers
-buf_ptr += alignment;
+// We use pointers to offset and align the data we put into the descriptor buffers
 for (size_t i = 0; i < cubes.size(); i++)
 {
 	VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
@@ -144,18 +149,16 @@ for (size_t i = 0; i < cubes.size(); i++)
 	cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
 	buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
-	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, buf_ptr);
-	buf_ptr += alignment;
+	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_descriptor_offset);
 }
 ```
 
 For combined image samplers (or samplers alone) we can't use buffer device addresses as the implementation needs more information, so we have to put actual descriptors into the buffer instead:
 
 ```cpp
-const VkDeviceSize alignment = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
-
 // For combined images we need to put descriptors into the descriptor buffers
-char *buf_ptr = (char *) image_descriptor_buffer->get_data();
+// We use pointers to offset and align the data we put into the descriptor buffers
+char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
 for (size_t i = 0; i < cubes.size(); i++)
 {
 	VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
@@ -163,7 +166,7 @@ for (size_t i = 0; i < cubes.size(); i++)
 	VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
 	image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, buf_ptr + i * alignment);
+	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_descriptor_offset);
 }
 ```
 
@@ -184,9 +187,8 @@ descriptor_buffer_binding_info[1].address = image_descriptor_buffer->get_device_
 descriptor_buffer_binding_info[1].usage   = VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT;
 vkCmdBindDescriptorBuffersEXT(draw_cmd_buffers[i], 2, descriptor_buffer_binding_info);
 
-uint32_t     buffer_index_ubo = 0;
-VkDeviceSize alignment        = descriptor_buffer_properties.descriptorBufferOffsetAlignment;
-VkDeviceSize buffer_offset    = 0;
+uint32_t     buffer_index_ubo   = 0;
+uint32_t     buffer_index_image = 1;
 
 // Global Matrices (set 0)
 vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &buffer_index_ubo, &buffer_offset);
@@ -196,11 +198,9 @@ for (size_t j = 0; j < cubes.size(); j++)
 {
     // Uniform buffer (set 1)
     // Model ubos start at offset * 1 (slot 0 is global matrices)
-    buffer_offset = (j + 1) * alignment;
+    buffer_offset = (j + 1) * uniform_descriptor_offset;
     vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
     // Image (set 2)
-    uint32_t buffer_index_image = 1;
-    buffer_offset               = j * alignment;
     vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 2, 1, &buffer_index_image, &buffer_offset);
     draw_model(models.cube, draw_cmd_buffers[i]);
 }
