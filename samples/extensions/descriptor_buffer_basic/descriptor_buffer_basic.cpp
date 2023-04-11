@@ -33,12 +33,9 @@ DescriptorBufferBasic::DescriptorBufferBasic()
 	set_api_version(VK_API_VERSION_1_1);
 
 	// Enable extension required for descriptor buffers
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
-
 	add_device_extension(VK_KHR_BUFFER_DEVICE_ADDRESS_EXTENSION_NAME);
 	add_device_extension(VK_EXT_DESCRIPTOR_INDEXING_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME);
-	add_device_extension(VK_KHR_MAINTENANCE3_EXTENSION_NAME);
 
 	add_device_extension(VK_EXT_DESCRIPTOR_BUFFER_EXTENSION_NAME);
 }
@@ -145,7 +142,7 @@ void DescriptorBufferBasic::build_command_buffers()
 		for (size_t j = 0; j < cubes.size(); j++)
 		{
 			// Uniform buffer (set 1)
-			// Model ubos start at offset * 1 (slot 0 is global matrices)
+			// Model ubos start at offset * (j + 1) (+1 as slot 0 is global matrices)
 			buffer_offset = (j + 1) * uniform_descriptor_offset;
 			vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 1, 1, &buffer_index_ubo, &buffer_offset);
 			// Image (set 2)
