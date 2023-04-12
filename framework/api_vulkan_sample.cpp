@@ -474,12 +474,14 @@ void ApiVulkanSample::prepare_frame()
 		handle_surface_changes();
 		// Acquire the next image from the swap chain
 		VkResult result = render_context->get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
-		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
-		if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR))
+		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			resize(width, height);
 		}
-		else
+		// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
+		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
+		else if (result != VK_SUBOPTIMAL_KHR)
 		{
 			VK_CHECK(result);
 		}
