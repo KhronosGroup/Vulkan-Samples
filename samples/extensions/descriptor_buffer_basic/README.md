@@ -50,12 +50,12 @@ To make the following code easier to understand, let's take a look at the interf
 ```glsl
 // Vertex shader
 layout (set = 0, binding = 0) uniform UBOScene {
-	mat4 projection;
-	mat4 view;
+    mat4 projection;
+    mat4 view;
 } uboCamera;
 
 layout (set = 1, binding = 0) uniform UBOModel {
-	mat4 local;
+    mat4 local;
 } uboModel;
 
 // Fragment shader
@@ -86,20 +86,20 @@ Creating the resource descriptors for the uniform buffers using the `VK_BUFFER_U
 
 ```cpp
 resource_descriptor_buffer =
-	std::make_unique<vkb::core::Buffer>(get_device(),
-										(static_cast<uint32_t>(cubes.size()) + 1) * descriptorLayoutSizes[0],
-										VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-										VMA_MEMORY_USAGE_CPU_TO_GPU);
+    std::make_unique<vkb::core::Buffer>(get_device(),
+                                        (static_cast<uint32_t>(cubes.size()) + 1) * descriptorLayoutSizes[0],
+                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 ```
 
 Creating the combined image sampler descriptors by additionally adding the `VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT` usage flag:
 
 ```cpp
 image_descriptor_buffer =
-	std::make_unique<vkb::core::Buffer>(get_device(),
-										static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[1],
-										VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
-										VMA_MEMORY_USAGE_CPU_TO_GPU);
+    std::make_unique<vkb::core::Buffer>(get_device(),
+                                        static_cast<uint32_t>(cubes.size()) * descriptorLayoutSizes[1],
+                                        VK_BUFFER_USAGE_RESOURCE_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SAMPLER_DESCRIPTOR_BUFFER_BIT_EXT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT,
+                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 ```
 
 ### Putting the descriptors into the buffers
@@ -143,13 +143,13 @@ vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descripto
 // We use pointers to offset and align the data we put into the descriptor buffers
 for (size_t i = 0; i < cubes.size(); i++)
 {
-	VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
-	cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
-	cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
-	cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
+    VkDescriptorAddressInfoEXT cube_addr_info = {VK_STRUCTURE_TYPE_DESCRIPTOR_ADDRESS_INFO_EXT};
+    cube_addr_info.address                    = cubes[i].uniform_buffer->get_device_address();
+    cube_addr_info.range                      = cubes[i].uniform_buffer->get_size();
+    cube_addr_info.format                     = VK_FORMAT_UNDEFINED;
 
-	buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
-	vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_descriptor_offset);
+    buffer_descriptor_info.data.pUniformBuffer = &cube_addr_info;
+    vkGetDescriptorEXT(get_device().get_handle(), &buffer_descriptor_info, descriptor_buffer_properties.uniformBufferDescriptorSize, uniform_descriptor_buf_ptr + (i + 1) * uniform_descriptor_offset);
 }
 ```
 
@@ -161,12 +161,12 @@ For combined image samplers (or samplers alone) we can't use buffer device addre
 char *image_descriptor_buf_ptr = (char *) image_descriptor_buffer->get_data();
 for (size_t i = 0; i < cubes.size(); i++)
 {
-	VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
+    VkDescriptorImageInfo image_descriptor = create_descriptor(cubes[i].texture);
 
-	VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
-	image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
-	vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_descriptor_offset);
+    VkDescriptorGetInfoEXT image_descriptor_info{VK_STRUCTURE_TYPE_DESCRIPTOR_GET_INFO_EXT};
+    image_descriptor_info.type                       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    image_descriptor_info.data.pCombinedImageSampler = &image_descriptor;
+    vkGetDescriptorEXT(get_device().get_handle(), &image_descriptor_info, descriptor_buffer_properties.combinedImageSamplerDescriptorSize, image_descriptor_buf_ptr + i * image_descriptor_offset);
 }
 ```
 
