@@ -39,9 +39,9 @@ The Debug Window shows information about the current application.
 
 ## Driver version
 
-The debug window shows the driver version of the GPU, which follows the [Vulkan semantics](https://vulkan.lunarg.com/doc/view/1.0.26.0/linux/vkspec.chunked/ch02s09.html), with a major, minor, and patch number. New versions of the driver will increment these numbers.
+The debug window shows the driver version of the GPU, which follows the [Vulkan semantics](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap44.html#extendingvulkan-coreversions-versionnumbers), with a major, minor, and patch number. New versions of the driver will increment these numbers.
 
-The framework is able to get these values by calling `vkGetPhysicalDeviceProperties(physical_device, &properties)`. This will set all attributes of properties, which type is `struct VkPhysicalDeviceProperties`. Then it extracts the relevant bits from `properties.driverVersion` using the following [Vulkan macros](https://vulkan.lunarg.com/doc/view/1.0.26.0/linux/vkspec.chunked/apds03.html#boilerplate-versions):
+The framework is able to get these values by calling `vkGetPhysicalDeviceProperties(physical_device, &properties)`. This will set all attributes of properties, which type is `struct VkPhysicalDeviceProperties`. Then it extracts the relevant bits from `properties.driverVersion` using the following Vulkan macros:
 
 ```c
 VK_VERSION_MAJOR(properties.driverVersion);
