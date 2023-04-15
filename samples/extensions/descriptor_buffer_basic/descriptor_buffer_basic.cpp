@@ -372,9 +372,9 @@ void DescriptorBufferBasic::update_cube_uniform_buffers(float delta_time)
 			cubes[0].rotation.x -= 360.0f;
 		}
 		cubes[1].rotation.y += 2.0f * delta_time;
-		if (cubes[1].rotation.x > 360.0f)
+		if (cubes[1].rotation.y > 360.0f)
 		{
-			cubes[1].rotation.x -= 360.0f;
+			cubes[1].rotation.y -= 360.0f;
 		}
 	}
 }
