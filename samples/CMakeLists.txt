@@ -74,6 +74,7 @@ set(ORDER_LIST
     "ray_tracing_extended"
     "ray_tracing_reflection"
     "timeline_semaphore"
+    "shader_object"
     "synchronization_2"
     "buffer_device_address"
     "descriptor_indexing"
