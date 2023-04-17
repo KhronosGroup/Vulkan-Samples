@@ -30,7 +30,7 @@ class PatchControlPoints : public ApiVulkanSample
 	struct
 	{
 		bool  tessellation = true;
-		float tess_factor  = 3.0f;
+		float tess_level   = 3.0f;
 	} gui_settings;
 
 	/* Buffer used in both pipelines */
@@ -42,7 +42,7 @@ class PatchControlPoints : public ApiVulkanSample
 
 	struct UBOTESS
 	{
-		float tessellation_factor = 3.0f;
+		float tessellation_level = 3.0f;
 	} ubo_tess;
 
 	VkDescriptorPool descriptor_pool{VK_NULL_HANDLE};

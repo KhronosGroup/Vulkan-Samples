@@ -145,11 +145,11 @@ void PatchControlPoints::update_uniform_buffers()
 	uniform_buffers.common->convert_and_update(ubo_common);
 
 	/* Tessellation uniform buffer */
-	ubo_tess.tessellation_factor = gui_settings.tess_factor;
+	ubo_tess.tessellation_level = gui_settings.tess_level;
 	if (!gui_settings.tessellation)
 	{
-		// Setting this to zero sets all tessellation factors to 1.0 in the shader
-		ubo_tess.tessellation_factor = 0.0f;
+		// Setting this to zero sets all tessellation levels to 1.0 in the shader
+		ubo_tess.tessellation_level = 1.0f;
 	}
 
 	/* Dynamically tessellation */
@@ -233,8 +233,7 @@ void PatchControlPoints::create_pipelines()
 
 	/* Attribute descriptions */
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                               // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal)),        // Normal
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),        // Position
 	};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
@@ -474,7 +473,6 @@ void PatchControlPoints::setup_descriptor_set_layout()
 	pipeline_layout_create_info.pSetLayouts = &descriptor_set_layouts.dynamic_tessellation;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(),
-	                                //&pipeline_layout_create_info_2,
 	                                &pipeline_layout_create_info,
 	                                nullptr,
 	                                &pipeline_layouts.dynamic_tessellation));
@@ -597,8 +595,8 @@ void PatchControlPoints::on_update_ui_overlay(vkb::Drawer &drawer)
 			update_uniform_buffers();
 		}
 
-		/* Maximum tessellation factor is set to 7.0 */
-		if (drawer.slider_float("Tessellation Factor", &gui_settings.tess_factor, 3.0f, 7.0f))
+		/* Maximum tessellation level is set to 7.0 */
+		if (drawer.slider_float("Tessellation level", &gui_settings.tess_level, 3.0f, 7.0f))
 		{
 			update_uniform_buffers();
 		}

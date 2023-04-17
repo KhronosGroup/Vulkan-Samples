@@ -31,7 +31,7 @@ Below is a comparison of common Vulkan static and dynamic setting of patch contr
   
 | Static/Non-dynamic | Dynamic State 2 |
 | ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------- |
-| dynamic_state = \{} | dynamic_state = {VK_DYNAMIC_STATE_VIEWPORT,<br>VK_DYNAMIC_STATE_SCISSOR,<br>**VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT**} |
+| dynamic_state = {VK_DYNAMIC_STATE_VIEWPORT,<br>VK_DYNAMIC_STATE_SCISSOR} | dynamic_state = {VK_DYNAMIC_STATE_VIEWPORT,<br>VK_DYNAMIC_STATE_SCISSOR,<br>**VK_DYNAMIC_STATE_PATCH_CONTROL_POINTS_EXT**} |
   VkPipelineTessellationStateCreateInfo tessellation_state\{}<br>tessellation_state.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO<br>**tessellation_state.patchControlPoints = patchControlPoints**<br>...<br>vkCreateGraphicsPipelines(pipeline) | vkCreateGraphicsPipelines(pipeline) |
 | draw(model, pipeline) | **vkCmdSetPatchControlPointsEXT(commandBuffer, patchControlPoints)**<br>draw(model, pipeline) |
 	
@@ -76,6 +76,8 @@ In the approach if developer would like to change the patch control points numbe
 However, with `VK_EXT_extended_dynamic_state2` the number of pipelines can be reduced by the possibility to change parameter Patch Control Points by calling `vkCmdSetPatchControlPointsEXT` before calling the `draw_model` method.
 
 With the usage of above function we can reduce the number of pipelines. Required dynamic states must be enabled and passed to the `VkGraphicsPipelineCreateInfo` structure. 
+
+By setting `VK_PRIMITIVE_TOPOLOGY_PATCH_LIST` in the `VkPipelineInputAssemblyStateCreateInfo` structure, the pipeline can use the `patch control points` functionality.
 
 ```C+
 VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
