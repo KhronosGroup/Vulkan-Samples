@@ -49,11 +49,16 @@ class SparseImage : public ApiVulkanSample
 		std::unique_ptr<vkb::sg::Image> image;
 		//	uint32_t width{};
 		//	uint32_t height{};
-		uint32_t                mip_levels{};
-		VkImageSubresourceRange sub_range{};
-		VkFormat                format{VK_FORMAT_R8G8B8A8_SRGB};
-		VkSampler               sampler{VK_NULL_HANDLE};
-		VkImageView             view{VK_NULL_HANDLE};
+		uint32_t                        mip_levels{};
+		VkImageSubresourceRange         sub_range{};
+		VkFormat                        format{VK_FORMAT_R8G8B8A8_SRGB};
+		VkSampler                       sampler{VK_NULL_HANDLE};
+		VkImageView                     view{VK_NULL_HANDLE};
+		VkSparseImageMemoryRequirements sparse_image_memory_requirements;
+		uint32_t                        memory_type_index{};
+
+		bool single_mip_tail;
+		bool alinged_mip_size;
 	} texture;
 
 	SparseImage();

@@ -32,7 +32,7 @@ SparseImage::~SparseImage()
 		vkDestroyImageView(get_device().get_handle(), texture.view, VK_NULL_HANDLE);
 		vkDestroyImage(get_device().get_handle(), sparse_image.image, VK_NULL_HANDLE);
 		vkDestroySampler(get_device().get_handle(), texture.sampler, VK_NULL_HANDLE);
-		texture = {};
+		texture      = {};
 		sparse_image = {};
 
 		vkDestroyPipeline(get_device().get_handle(), pipeline, VK_NULL_HANDLE);
@@ -43,7 +43,8 @@ SparseImage::~SparseImage()
 
 /**
  * 	@fn bool SparseImage::prepare(vkb::Platform &platform)
- * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
+ * 	@brief Configuring all sample specific settings, creating descriptor sets/pool,
+ * 	pipelines, generating or loading models etc.
  */
 bool SparseImage::prepare(vkb::Platform &platform)
 {
@@ -86,7 +87,10 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
-
+/**
+ * @fn void SparseImage::create_sparse_image()
+ * @brief Creating sparse image and allocating memory
+ */
 void SparseImage::create_sparse_image()
 {
 	auto texture_mipmaps = texture.image->get_mipmaps();
@@ -97,18 +101,18 @@ void SparseImage::create_sparse_image()
 
 	VkImageCreateInfo sparseImageCreateInfo = vkb::initializers::image_create_info();
 	sparseImageCreateInfo.imageType         = VK_IMAGE_TYPE_2D;
-	sparseImageCreateInfo.extent.width  = texture_mipmaps[0].extent.width;
-	sparseImageCreateInfo.extent.height = texture_mipmaps[0].extent.height;
-	sparseImageCreateInfo.mipLevels     = texture.mip_levels;
-	sparseImageCreateInfo.extent.depth  = texture_mipmaps[0].extent.depth;
-	sparseImageCreateInfo.arrayLayers   = 1;
-	sparseImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_SRGB;
-	sparseImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-	sparseImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	sparseImageCreateInfo.usage         = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-	sparseImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-	sparseImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-	sparseImageCreateInfo.flags         = VK_IMAGE_CREATE_SPARSE_BINDING_BIT | VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
+	sparseImageCreateInfo.extent.width      = texture_mipmaps[0].extent.width;
+	sparseImageCreateInfo.extent.height     = texture_mipmaps[0].extent.height;
+	sparseImageCreateInfo.mipLevels         = texture.mip_levels;
+	sparseImageCreateInfo.extent.depth      = texture_mipmaps[0].extent.depth;
+	sparseImageCreateInfo.arrayLayers       = 1;
+	sparseImageCreateInfo.format            = VK_FORMAT_R8G8B8A8_SRGB;
+	sparseImageCreateInfo.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	sparseImageCreateInfo.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
+	sparseImageCreateInfo.usage             = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	sparseImageCreateInfo.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
+	sparseImageCreateInfo.samples           = VK_SAMPLE_COUNT_1_BIT;
+	sparseImageCreateInfo.flags             = VK_IMAGE_CREATE_SPARSE_BINDING_BIT | VK_IMAGE_CREATE_SPARSE_RESIDENCY_BIT;
 
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &sparseImageCreateInfo, VK_NULL_HANDLE, &sparse_image.image));
 
@@ -121,29 +125,104 @@ void SparseImage::create_sparse_image()
 	// Check requested image size against gpu sparse limit
 	if (sparseImageMemoryRequirements.size > gpu_properties.limits.sparseAddressSpaceSize)
 	{
-		throw std::runtime_error("Sparse image memory size exceeds limits of sparse address space size!");
+		throw std::runtime_error("Sparse image memory size exceeds limits of sparse address space size");
 	};
 
 	uint32_t sparseMemoryRequirementCount = 0;
 	vkGetImageSparseMemoryRequirements(get_device().get_handle(), sparse_image.image, &sparseMemoryRequirementCount, VK_NULL_HANDLE);
 	if (sparseMemoryRequirementCount == 0)
 	{
-		throw std::runtime_error("No memory requirements for the sparse image!");
+		throw std::runtime_error("No memory requirements for the sparse image");
 	}
 
 	std::vector<VkSparseImageMemoryRequirements> sparseMemoryRequirements(sparseMemoryRequirementCount);
 	vkGetImageSparseMemoryRequirements(get_device().get_handle(), sparse_image.image, &sparseMemoryRequirementCount, sparseMemoryRequirements.data());
+	texture.memory_type_index = get_device().get_memory_type(sparseImageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
 	VkMemoryAllocateInfo allocInfo = vkb::initializers::memory_allocate_info();
 	allocInfo.sType                = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize       = sparseImageMemoryRequirements.size;
-	allocInfo.memoryTypeIndex      = get_device().get_memory_type(sparseImageMemoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	allocInfo.memoryTypeIndex      = texture.memory_type_index;
 
 	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &allocInfo, VK_NULL_HANDLE, &sparse_image.memory));
+
+	// Get sparse image requirements for the color aspect
+	VkSparseImageMemoryRequirements sparseMemoryReq;
+	bool                            colorAspectFound{false};
+	for (auto &reqs : sparseMemoryRequirements)
+	{
+		if (reqs.formatProperties.aspectMask & VK_IMAGE_ASPECT_COLOR_BIT)
+		{
+			sparseMemoryReq  = reqs;
+			colorAspectFound = true;
+			break;
+		}
+	}
+	if (!colorAspectFound)
+	{
+		throw std::runtime_error("Could not find sparse image memory requirements for color aspect bit");
+	}
+
+	// Calculate number of required sparse memory bindings by alignment
+	assert((sparseImageMemoryRequirements.size % sparseImageMemoryRequirements.alignment) == 0);
+
+	// Get sparse bindings
+	uint32_t                        sparseBindsCount = vkb::to_u32(sparseImageMemoryRequirements.size / sparseImageMemoryRequirements.alignment);
+	std::vector<VkSparseMemoryBind> sparseMemoryBinds(sparseBindsCount);
+
+	texture.sparse_image_memory_requirements = sparseMemoryReq;
+
+	// The mip tail contains all mip levels > sparseMemoryReq.imageMipTailFirstLod
+	// Check if the format has a single mip tail for all layers or one mip tail for each layer
+	texture.single_mip_tail  = sparseMemoryReq.formatProperties.flags & VK_SPARSE_IMAGE_FORMAT_SINGLE_MIPTAIL_BIT;
+	texture.alinged_mip_size = sparseMemoryReq.formatProperties.flags & VK_SPARSE_IMAGE_FORMAT_ALIGNED_MIP_SIZE_BIT;
 }
 
+/**
+ * @fn void SparseImage::void SparseImage::create_sparse_texture()
+ * @brief Creating texture
+ */
 void SparseImage::create_sparse_texture()
 {
+	texture.sub_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, texture.mip_levels, 0, 1};
+
+	// Get device properties for the requested texture format
+	VkFormatProperties formatProperties;
+	vkGetPhysicalDeviceFormatProperties(get_device().get_gpu().get_handle(), texture.format, &formatProperties);
+	if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_SRC_BIT) || !(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_BLIT_DST_BIT))
+	{
+		throw std::runtime_error("Selected image format does not support blit source and destination");
+	}
+
+	const VkImageType           imageType   = VK_IMAGE_TYPE_2D;
+	const VkSampleCountFlagBits sampleCount = VK_SAMPLE_COUNT_1_BIT;
+	const VkImageUsageFlags     imageUsage  = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	const VkImageTiling         imageTiling = VK_IMAGE_TILING_OPTIMAL;
+
+	// Get sparse image properties
+	std::vector<VkSparseImageFormatProperties> sparseProperties;
+	// Sparse properties count for the desired format
+	uint32_t sparsePropertiesCount;
+	vkGetPhysicalDeviceSparseImageFormatProperties(get_device().get_gpu().get_handle(), texture.format, imageType, sampleCount, imageUsage, imageTiling, &sparsePropertiesCount, nullptr);
+	// Check if sparse is supported for this format
+	if (sparsePropertiesCount == 0)
+	{
+		throw std::runtime_error("Requested format does not support sparse features");
+	}
+
+	// Get actual image format properties
+	sparseProperties.resize(sparsePropertiesCount);
+	vkGetPhysicalDeviceSparseImageFormatProperties(get_device().get_gpu().get_handle(), texture.format, imageType, sampleCount, imageUsage, imageTiling, &sparsePropertiesCount, sparseProperties.data());
+
+	// FLAGS
+	/*VK_SPARSE_IMAGE_FORMAT_SINGLE_MIPTAIL_BIT specifies that the image uses a single mip tail region for all array layers.
+	VK_SPARSE_IMAGE_FORMAT_ALIGNED_MIP_SIZE_BIT specifies that the first mip level whose dimensions are not integer multiples of the corresponding dimensions of the sparse image block begins the mip tail region.
+	VK_SPARSE_IMAGE_FORMAT_NONSTANDARD_BLOCK_SIZE_BIT specifies that the image uses non-standard sparse image block dimensions, and the imageGranularity values do not match the standard sparse image block dimensions for the given format.*/
+
+	VkCommandBuffer copy_cmd = device->create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+	vkb::set_image_layout(copy_cmd, sparse_image.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, texture.sub_range);
+	device->flush_command_buffer(copy_cmd, queue, true);
 }
 
 /**
@@ -328,9 +407,15 @@ void SparseImage::set_camera()
 {
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({2.0f, 0.0f, -10.0f});
-	// camera.set_rotation({-15.0f, 190.0f, 0.0f});
-	camera.set_rotation({0.0f, 0.0f, 0.0f});
+	camera.set_rotation({0.0f, 15.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
+
+	// Maybe different camera type will be better e.g. FirstPerson as in texture_mipmap_generation
+	//	zoom = -2.5f;
+	//	camera.set_rotation({0.0f, 15.0f, 0.0f});
+	//	camera.type = vkb::CameraType::FirstPerson;
+	//	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 1024.0f);
+	//	camera.set_translation(glm::vec3(0.0f, 0.0f, -12.5f));
 }
 
 /**
@@ -340,7 +425,8 @@ void SparseImage::set_camera()
 void SparseImage::load_assets()
 {
 	// load model from gltf
-	object = load_model("scenes/textured_unit_cube.gltf");
+	// object = load_model("scenes/textured_unit_cube.gltf");
+	object = load_model("scenes/tunnel_cylinder.gltf");
 
 	// load texture from file
 	texture.image = vkb::sg::Image::load("textures/vulkan_logo_full.ktx", "textures/vulkan_logo_full.ktx", vkb::sg::Image::Color);
@@ -435,7 +521,7 @@ VkDescriptorImageInfo SparseImage::create_image_descriptor()
 	view.image                           = sparse_image.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view, VK_NULL_HANDLE, &texture.view));
 
-	descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL; 	 //sparse_image.layout; - should use instead?
+	descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;        // sparse_image.layout; - should use instead?
 	descriptor.imageView   = texture.view;
 	descriptor.sampler     = texture.sampler;
 
