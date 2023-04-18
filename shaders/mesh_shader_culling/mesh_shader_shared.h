@@ -16,13 +16,12 @@
  */
 
 // Example of the data shared with its associated mesh shader:
-// 1) define some structure if more than one variable data sharing is desired:
+// Note that all of these could be removed.  One can pass positionTransformation, subDimension, and cullRadius from a UBO.
+// however, in the interests of demonstrating how to use shared data between task and mesh shaders.
 
 struct SharedData
 {
-	vec4  positionTransformation;
-	int   N;
-	int   meshletsNumber;
+	vec2  positionTransformation;
 	float subDimension;
 	float cullRadius;
 };

@@ -23,7 +23,7 @@
 ## Overview
 
 This sample demonstrates how to incorporate the Vulkan extension [```VK_EXT_mesh_shader```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_mesh_shader), and
-introduces per primative culling in a mesh shader.
+introduces per primitive culling in a mesh shader.
 
 ## Contents
 
@@ -39,7 +39,7 @@ To enable the mesh shading feature, the following
 extensions are required: (NB: ```VK_API_VERSION_1_1``` is required as a base requirement)
 
 1) ```VK_KHR_SPIRV_1_4_EXTENSION_NAME```
-2) ```VK_EXT_MESH_SHADER```
+2) ```VK_EXT_MESH_SHADER_EXTENSION_NAME```
 3) ```VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME```
 
 To enable task shaders and mesh shaders enable the 

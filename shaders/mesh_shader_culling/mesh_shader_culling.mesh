@@ -24,8 +24,6 @@ layout(triangles, max_vertices = 4, max_primitives = 2) out;
 
 #include "mesh_shader_culling/mesh_shader_shared.h"
 
-// 2) using the following command to "establish the connection" (variable name can vary):
-
 taskPayloadSharedEXT SharedData sharedData;
 
 // Example of a default output layout and location format:
@@ -34,15 +32,10 @@ layout (location=0) out vec4 perVertex[];
 layout (location=1) perprimitiveEXT out vec4 perPrimitiveEXT[];
 layout (location=3) out vec3 outColor[];
 
-// Define some constants in order to create an identical meshlet square, using two triangles:
-// 1) a simplified vertex data, using vec2 format
-
 const vec2 unitVertex_0 = vec2(-0.5f,  0.5f);
 const vec2 unitVertex_1 = vec2( 0.5f,  0.5f);
 const vec2 unitVertex_2 = vec2( 0.5f, -0.5f);
 const vec2 unitVertex_3 = vec2(-0.5f, -0.5f);
-
-// 2) index data associated with the vertex data, triangle defined using right-hand rule
 
 const uvec3 unitPrimitive_0 = uvec3(0, 1, 2);
 const uvec3 unitPrimitive_1 = uvec3(2, 3, 0);

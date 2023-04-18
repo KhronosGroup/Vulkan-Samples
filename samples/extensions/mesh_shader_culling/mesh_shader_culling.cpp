@@ -54,7 +54,7 @@ MeshShaderCulling::~MeshShaderCulling()
 
 void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Query whether the device supports buffer device addresses
+	// Check whether the device supports task and mesh shaders
 	VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features;
 	mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
 	mesh_shader_features.pNext = VK_NULL_HANDLE;

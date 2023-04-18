@@ -21,10 +21,6 @@
 
 layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
 
-#include "mesh_shader_culling/mesh_shader_shared.h"
-
-// Example of how to read a binding input from cpp:
-
 layout (binding = 0) uniform UBO
 {
     float cull_center_x;
@@ -33,52 +29,36 @@ layout (binding = 0) uniform UBO
     float meshlet_density;
 } ubo;
 
-
-// 2) use the following command to "establish the connection" to its associated mesh shader:
+#include "mesh_shader_culling/mesh_shader_shared.h"
 
 taskPayloadSharedEXT SharedData sharedData;
-
-// Defines the square mesh dimension as a constant:
 
 const float squareDimension = 1.1f;
 
 void main()
 {
-    // Example of processing the shared data:
+    uint N = 0;
 
     sharedData.positionTransformation = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
     sharedData.cullRadius = ubo.cull_radius;
 
     if (ubo.meshlet_density == 0)
     {
-        // Attempt to create a 4 by 4 meshlets array
-
-        sharedData.N = 4;
-        sharedData.meshletsNumber = 4 * 4;
-        sharedData.subDimension = squareDimension / 4.0f;
+        N = 4;
     }
     else if (ubo.meshlet_density == 1)
     {
-        // Attempt to create a 6 by 6 meshlets array
-
-        sharedData.N = 6;
-        sharedData.meshletsNumber = 6 * 6;
-        sharedData.subDimension = squareDimension / 6.0f;
+        N = 6;
     }
     else if (ubo.meshlet_density == 2)
     {
-        // Attempt to create a 8 by 8 meshlets array
-
-        sharedData.N = 8;
-        sharedData.meshletsNumber = 8 * 8;
-        sharedData.subDimension = squareDimension / 8.0f;
+        N = 8;
     }
     else
     {
-        // Debug if one sees a 2 by 2 meshlets array, that means uniform buffer (e.g., ubo) is not read
-        sharedData.N = 2;
-        sharedData.meshletsNumber = 2 * 2;
-        sharedData.subDimension = squareDimension / 2.0f;
+        N = 2;
     }
-        EmitMeshTasksEXT(sharedData.N, sharedData.N, 1);
+
+    sharedData.subDimension = squareDimension / N;
+    EmitMeshTasksEXT(N, N, 1);
 }
