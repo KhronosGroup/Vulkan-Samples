@@ -27,11 +27,10 @@ MeshShaderCulling::MeshShaderCulling()
 	// Configure application version
 	set_api_version(VK_API_VERSION_1_1);
 
-	// Adding instance extension
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	// Adding device extensions
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
+	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
 	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 }
@@ -43,11 +42,36 @@ MeshShaderCulling::~MeshShaderCulling()
 		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+
+		if (query_pool != VK_NULL_HANDLE)
+		{
+			vkDestroyQueryPool(get_device().get_handle(), query_pool, nullptr);
+			vkDestroyBuffer(get_device().get_handle(), query_result.buffer, nullptr);
+			vkFreeMemory(get_device().get_handle(), query_result.memory, nullptr);
+		}
 	}
 }
 
 void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// Query whether the device supports buffer device addresses
+	VkPhysicalDeviceMeshShaderFeaturesEXT mesh_shader_features;
+	mesh_shader_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT;
+	mesh_shader_features.pNext = VK_NULL_HANDLE;
+	VkPhysicalDeviceFeatures2 features2;
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &mesh_shader_features;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+
+	if (!mesh_shader_features.taskShader || !mesh_shader_features.meshShader)
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support task and mesh shaders!");
+	}
+	if (!mesh_shader_features.meshShaderQueries)
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support mesh shader queries!");
+	}
+
 	// Enable extension features required by this sample
 	// These are passed to device creation via a pNext structure chain
 	auto &meshFeatures = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(
@@ -55,6 +79,13 @@ void MeshShaderCulling::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 	meshFeatures.taskShader = VK_TRUE;
 	meshFeatures.meshShader = VK_TRUE;
+
+	// Pipeline statistics
+	auto &requested_features = gpu.get_mutable_requested_features();
+	if (gpu.get_features().pipelineStatisticsQuery)
+	{
+		requested_features.pipelineStatisticsQuery = VK_TRUE;
+	}
 }
 
 void MeshShaderCulling::build_command_buffers()
@@ -78,6 +109,11 @@ void MeshShaderCulling::build_command_buffers()
 	{
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		{
+			vkCmdResetQueryPool(draw_cmd_buffers[i], query_pool, 0, 3);
+		}
+
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
@@ -94,7 +130,19 @@ void MeshShaderCulling::build_command_buffers()
 		uint32_t num_workgroups_y = 1;
 		uint32_t num_workgroups_z = 1;
 
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		{
+			// Begin pipeline statistics query
+			vkCmdBeginQuery(draw_cmd_buffers[i], query_pool, 0, 0);
+		}
+
 		vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, num_workgroups_z);
+
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		{
+			// Begin pipeline statistics query
+			vkCmdEndQuery(draw_cmd_buffers[i], query_pool, 0);
+		}
 
 		draw_ui(draw_cmd_buffers[i]);
 
@@ -239,6 +287,12 @@ void MeshShaderCulling::draw()
 	// Submit to queue
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	{
+		// Read query results for displaying in next frame
+		get_query_results();
+	}
+
 	ApiVulkanSample::submit_frame();
 }
 
@@ -252,6 +306,11 @@ bool MeshShaderCulling::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -0.1f));
 	camera.rotation_speed = 0.0f;
+
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	{
+		setup_query_result_buffer();
+	}
 
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
@@ -294,6 +353,16 @@ void MeshShaderCulling::on_update_ui_overlay(vkb::Drawer &drawer)
 			ubo_cull.meshlet_density = static_cast<float>(density_level);
 			update_uniform_buffers();
 		}
+
+		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+		{
+			if (drawer.header("Pipeline statistics"))
+			{
+				drawer.text("FS invocations: %d", pipeline_stats[0]);
+				drawer.text("TS invocations: %d", pipeline_stats[1]);
+				drawer.text("MS invocations: %d", pipeline_stats[2]);
+			}
+		}
 	}
 }
 
@@ -307,4 +376,54 @@ bool MeshShaderCulling::resize(uint32_t width, uint32_t height)
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling()
 {
 	return std::make_unique<MeshShaderCulling>();
+}
+
+// Setup pool and buffer for storing pipeline statistics results
+void MeshShaderCulling::setup_query_result_buffer()
+{
+	uint32_t buffer_size = 2 * sizeof(uint64_t);
+
+	VkMemoryRequirements memory_requirements;
+	VkMemoryAllocateInfo memory_allocation = vkb::initializers::memory_allocate_info();
+	VkBufferCreateInfo   buffer_create_info =
+	    vkb::initializers::buffer_create_info(
+	        VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+	        buffer_size);
+
+	// Results are saved in a host visible buffer for easy access by the application
+	VK_CHECK(vkCreateBuffer(get_device().get_handle(), &buffer_create_info, nullptr, &query_result.buffer));
+	vkGetBufferMemoryRequirements(get_device().get_handle(), query_result.buffer, &memory_requirements);
+	memory_allocation.allocationSize  = memory_requirements.size;
+	memory_allocation.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocation, nullptr, &query_result.memory));
+	VK_CHECK(vkBindBufferMemory(get_device().get_handle(), query_result.buffer, query_result.memory, 0));
+
+	// Create query pool
+	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
+	{
+		VkQueryPoolCreateInfo query_pool_info = {};
+		query_pool_info.sType                 = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
+		query_pool_info.queryType             = VK_QUERY_TYPE_PIPELINE_STATISTICS;
+		query_pool_info.pipelineStatistics =
+		    VK_QUERY_PIPELINE_STATISTIC_FRAGMENT_SHADER_INVOCATIONS_BIT |
+		    VK_QUERY_PIPELINE_STATISTIC_TASK_SHADER_INVOCATIONS_BIT_EXT |
+		    VK_QUERY_PIPELINE_STATISTIC_MESH_SHADER_INVOCATIONS_BIT_EXT;
+		query_pool_info.queryCount = 3;
+		VK_CHECK(vkCreateQueryPool(get_device().get_handle(), &query_pool_info, nullptr, &query_pool));
+	}
+}
+
+// Retrieves the results of the pipeline statistics query submitted to the command buffer
+void MeshShaderCulling::get_query_results()
+{
+	// We use vkGetQueryResults to copy the results into a host visible buffer
+	vkGetQueryPoolResults(
+	    get_device().get_handle(),
+	    query_pool,
+	    0,
+	    1,
+	    sizeof(pipeline_stats),
+	    pipeline_stats,
+	    sizeof(uint64_t),
+	    VK_QUERY_RESULT_64_BIT);
 }

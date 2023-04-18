@@ -26,7 +26,22 @@
 class MeshShaderCulling : public ApiVulkanSample
 {
   private:
-	int32_t density_level = 2;
+	int32_t                            density_level = 2;
+	std::unique_ptr<vkb::core::Buffer> uniform_buffer{};
+
+	VkPipeline            pipeline              = VK_NULL_HANDLE;
+	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
+	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
+	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+
+	// Pipeline statistics
+	struct
+	{
+		VkBuffer       buffer;
+		VkDeviceMemory memory;
+	} query_result{};
+	VkQueryPool query_pool        = VK_NULL_HANDLE;
+	uint64_t    pipeline_stats[3] = {0};
 
   public:
 	struct UBO
@@ -36,15 +51,6 @@ class MeshShaderCulling : public ApiVulkanSample
 		float cull_radius     = 1.75f;
 		float meshlet_density = 2.0f;
 	} ubo_cull{};
-
-	std::unique_ptr<vkb::core::Buffer> uniform_buffer{};
-
-	VkPipeline            pipeline              = VK_NULL_HANDLE;
-	VkPipelineLayout      pipeline_layout       = VK_NULL_HANDLE;
-	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
-	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
-
-  public:
 	MeshShaderCulling();
 	~MeshShaderCulling() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
@@ -60,6 +66,8 @@ class MeshShaderCulling : public ApiVulkanSample
 	void render(float delta_time) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	bool resize(uint32_t width, uint32_t height) override;
+	void setup_query_result_buffer();
+	void get_query_results();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_mesh_shader_culling();

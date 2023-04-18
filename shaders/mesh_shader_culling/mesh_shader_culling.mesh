@@ -17,21 +17,12 @@
  */
 
 #extension GL_EXT_mesh_shader: require
+#extension GL_GOOGLE_include_directive: require
 
-layout(local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
-layout(triangles, max_vertices = 64 * 4, max_primitives = 124 * 2) out;
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+layout(triangles, max_vertices = 4, max_primitives = 2) out;
 
-// Example of how to read shared data from its associated task shader:
-// 1) the same structure must be defined (name can vary however):
-
-struct SharedData
-{
-    vec4  positionTransformation;
-    int   N;
-    int   meshletsNumber;
-    float subDimension;
-    float cullRadius;
-};
+#include "mesh_shader_culling/mesh_shader_shared.h"
 
 // 2) using the following command to "establish the connection" (variable name can vary):
 
@@ -54,62 +45,50 @@ const vec2 unitVertex_3 = vec2(-0.5f, -0.5f);
 // 2) index data associated with the vertex data, triangle defined using right-hand rule
 
 const uvec3 unitPrimitive_0 = uvec3(0, 1, 2);
-const uvec3 unitPrimitive_1 = uvec3(2, 0, 3);
+const uvec3 unitPrimitive_1 = uvec3(2, 3, 0);
 
 void main()
 {
-    // 1) The first variable means: the total number of vertices to be created:
-    // 2) The second variable means total number of primitives to be created (at least 3 index per primitive):
+    float x = float(gl_GlobalInvocationID.x) / gl_WorkGroupSize.x;
+    float y = float(gl_GlobalInvocationID.y) / gl_WorkGroupSize.y;
 
-    SetMeshOutputsEXT( sharedData.meshletsNumber * 4, sharedData.meshletsNumber * 2);
+    // translate the identical meshlet to its targeted position:
+    vec2 deltaPosition_xy = ( 2.0f * vec2( x, y ) - gl_WorkGroupSize.x - 1.0f ) * sharedData.subDimension;
+    // this is the displacement with respect to the origin, displacement is used in cull logic:
+    vec4 displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
 
-    // Creating meshlets:
-    for (uint k = 0; k < sharedData.meshletsNumber; k++)
+    // the actual position of each meshlet:
+    vec4 position = displacement + sharedData.positionTransformation;
+    float squareRadius = position.x * position.x + position.y * position.y;
+
+    uint number_of_vertices = 0;
+    uint number_of_primitives = 0;
+    bool do_emit = (squareRadius < sharedData.cullRadius * sharedData.cullRadius);
+    if ( do_emit )
     {
-        // processing index, "breaking" a linear index into a coordinate index
-        // (i.e., (i, j) means the ith column and jth row)
+        number_of_vertices = 4;
+        number_of_primitives = 2;
+    }
 
-        float j = floor(k / sharedData.N);   // calculating which row this meshlet belongs to
-        float i = k - j * sharedData.N;      // calculating which column this meshlet belongs to
+    SetMeshOutputsEXT( number_of_vertices, number_of_primitives);
 
-        // translate the identical meshlet to its targeted position:
+    if ( do_emit )
+    {
+        // Vertices:
+        gl_MeshVerticesEXT[0].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+        gl_MeshVerticesEXT[1].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+        gl_MeshVerticesEXT[2].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+        gl_MeshVerticesEXT[3].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
 
-        vec2 deltaPosition_xy = ( 2.0f * vec2( i, j ) - sharedData.N - 1.0f ) * sharedData.subDimension;
+        // Indices
+        gl_PrimitiveTriangleIndicesEXT[0] = unitPrimitive_0;
+        gl_PrimitiveTriangleIndicesEXT[1] = unitPrimitive_1;
 
-        // this is the displacement with respect to the origin, displacement is used in cull logic:
-
-        vec4 displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
-
-        // the actual position of each meshlet:
-
-        vec4 position = displacement + sharedData.positionTransformation;
-        float squareRadius = position.x * position.x + position.y * position.y;
-
-        // Cull Logic: only is the meshlet center position is within the view circle defined by the cull radius,
-        // then this very meshlet will be generated. Otherwise, meshlet will NOT be generated.
-
-        if (squareRadius < sharedData.cullRadius * sharedData.cullRadius)
-        {
-            // Vertices:
-
-            gl_MeshVerticesEXT[ k * 4 + 0 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-            gl_MeshVerticesEXT[ k * 4 + 1 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-            gl_MeshVerticesEXT[ k * 4 + 2 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-            gl_MeshVerticesEXT[ k * 4 + 3 ].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-
-            // Indices
-
-            gl_PrimitiveTriangleIndicesEXT[ k * 2 + 0 ] = unitPrimitive_0 + k * uvec3(4);
-            gl_PrimitiveTriangleIndicesEXT[ k * 2 + 1 ] = unitPrimitive_1 + k * uvec3(4);
-
-            // Assigning the color output:
-
-            vec3 color = vec3( 1.0f, 0.0f, 0.0f ) * ( k + 1 ) / sharedData.meshletsNumber;
-
-            outColor[ k * 4 + 0] = color;
-            outColor[ k * 4 + 1] = color;
-            outColor[ k * 4 + 2] = color;
-            outColor[ k * 4 + 3] = color;
-        }
+        // Assigning the color output:
+        vec3 color = vec3( 1.0f, 0.0f, 0.0f ) * ( gl_GlobalInvocationID + 1 ) / gl_NumWorkGroups;
+        outColor[0] = color;
+        outColor[1] = color;
+        outColor[2] = color;
+        outColor[3] = color;
     }
 }

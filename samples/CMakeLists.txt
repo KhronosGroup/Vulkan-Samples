@@ -48,15 +48,15 @@ endforeach ()
 
 # Order of the sample ids
 set(ORDER_LIST
-        #API Samples
-        "hello_triangle"
-        "dynamic_uniform_buffers"
-        "texture_loading"
-        "hdr"
-        "instancing"
-        "compute_nbody"
-        "terrain_tessellation"
-        "hlsl"
+    #API Samples
+    "hello_triangle"
+    "dynamic_uniform_buffers"
+    "texture_loading"
+    "hdr"
+    "instancing"
+    "compute_nbody"
+    "terrain_tessellation"
+    "hlsl"
 
     #Extension Samples
     "dynamic_rendering"
@@ -78,30 +78,30 @@ set(ORDER_LIST
     "portability"
     "vertex_dynamic_state"
 
-        #Performance Samples
-        "swapchain_images"
-        "surface_rotation"
-        "pipeline_cache"
-        "descriptor_management"
-        "constant_data"
-        "render_passes"
-        "msaa"
-        "subpasses"
-        "pipeline_barriers"
-        "wait_idle"
-        "layout_transitions"
-        "specialization_constants"
-        "command_buffer_usage"
-        "multithreading_render_passes"
-        "afbc"
-        "16bit_storage_input_output"
-        "16bit_arithmetic"
-        "async_compute"
-        "multi_draw_indirect"
-        "texture_compression_comparison"
+    #Performance Samples
+    "swapchain_images"
+    "surface_rotation"
+    "pipeline_cache"
+    "descriptor_management"
+    "constant_data"
+    "render_passes"
+    "msaa"
+    "subpasses"
+    "pipeline_barriers"
+    "wait_idle"
+    "layout_transitions"
+    "specialization_constants"
+    "command_buffer_usage"
+    "multithreading_render_passes"
+    "afbc"
+    "16bit_storage_input_output"
+    "16bit_arithmetic"
+    "async_compute"
+    "multi_draw_indirect"
+    "texture_compression_comparison"
 
-        #Tooling samples
-        "profiles"
+    #Tooling samples
+    "profiles"
 
     #HPP API Samples
     "hpp_compute_nbody"

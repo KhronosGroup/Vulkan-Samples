@@ -18,6 +18,7 @@
 -->
 
 # Mesh Shader Culling
+![Mesh Shader Culling](./images/mesh_shader_culling.png)
 
 ## Overview
 
@@ -37,9 +38,9 @@ pipeline](#creating-pipeline)
 To enable the mesh shading feature, the following 
 extensions are required: (NB: ```VK_API_VERSION_1_1``` is required as a base requirement)
 
-1) ```VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2```
-2) ```VK_KHR_SPIRV_1_4```
-3) ```VK_EXT_MESH_SHADER```
+1) ```VK_KHR_SPIRV_1_4_EXTENSION_NAME```
+2) ```VK_EXT_MESH_SHADER```
+3) ```VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME```
 
 To enable task shaders and mesh shaders enable the 
 following flags from the 
@@ -61,7 +62,7 @@ application the same way one would for compute shaders
 when working with models.
 
 Thus, we disable the ```pVertexInputState``` and 
-```pInputAssemblyState```.
+```pInputAssemblyState``` by setting them to NULL.
 
 ## Linking resources
 
@@ -88,13 +89,18 @@ the translation of the cull mask
 A task shader is an optional stage responsible for launching mesh shaders.  It has two purposes:
 
 * Decide how many mesh shaders to launch in the workgroup.
-* Create task payload to share with the mesh shader.
+* Create a task payload that mesh shaders will have read-only access to.
   * taskPayloadSharedEXT type variable in GLSL can exist at most once it gets implicitly used by EmitMeshTasksEXT 
-    and behaves like shared memory.
+    and behaves like shared memory in the task shader and like a read-only SSBO in a mesh shader.
+
+In general, one should use task shaders anytime you use the mesh pipeline.  While it is "optional,"  their use is 
+strongly encouraged to get the most out of the mesh shading pipeline.  The only time one wouldn't use them is for 
+very simplistic scenes such as rendering a single triangle found in the [mesh shader sample](../mesh_shading).
 
 ```glsl
 // Example of the data shared with its associated mesh shader:
 // 1) define some structure if more than one variable data sharing is desired:
+// Please note: GPU vendors recommend to use as little task payload as possible, eg. by packing the data to fewer bits etc.
 struct SharedData
 {
     vec4  positionTransformation;
@@ -103,7 +109,7 @@ struct SharedData
     float subDimension;
     float cullRadius;
 };
-// 2) use the following command to "establish the connection" to its associated mesh shader:
+// 2) use the following variable with a storage class specifier to "establish the connection"
 taskPayloadSharedEXT SharedData sharedData;
 ```
 
@@ -115,12 +121,13 @@ which replaces everything before the fragment shader
 with an (optional) task shading stage that can call other mesh 
 shading stages.
 
-* A task shader (optional) is used to emit mesh shader(s)
+* A task shader (optional) is used to launch mesh shader workgroup(s)
 * A mesh shader has the responsibility to generate 
-  primitives.
+  primitives and vertices.
 
 More details about emitting a mesh task can be found in the attached article:
 
+[Mesh Shading For Vulkan](https://www.khronos.org/blog/mesh-shading-for-vulkan)
 [Introduction to Turing Mesh Shaders](https://developer.nvidia.com/blog/introduction-turing-mesh-shaders/)
 
 GPU manufactures have recommended best practices for 
@@ -134,12 +141,10 @@ number. Further reading can be found here:
 
 ## Mesh Shader
 
-A mesh shader executes on the same workgroup as the task shader that emitted it if a task shader exists. A 
-mesh shader is responsible for generating 
-vertices and indices 
-based on the number of meshlets determined by its task
-shader. The vertices and indices generation process can be 
-found in the following code:
+A mesh shader does not execute on the same workgroup as the task shader that emitted it if a task shader exists.  
+Many workgroups can be  One task shader workgroup can launch many mesh shader workgroups.
+mesh shader is responsible for generating vertices and primitives based on the number of meshlets determined by its task
+shader. The vertices and primitives generation process can be found in the following code:
 
 ```glsl
 // Vertices:
@@ -162,7 +167,7 @@ More details of meshlets generation can be found in the attached article:
 
 [Using Mesh Shaders for Professional Graphics](https://developer.nvidia.com/blog/using-mesh-shaders-for-professional-graphics/)
 
-## Meshlets culling
+## Per-primitive culling
 
 This sample uses a simple cull functionality from the mesh 
 shader. The intention in mesh shading is to only generate geometry that is relevant to the scene.  Thus, the correct 
@@ -182,6 +187,11 @@ if (squareRadius < sharedData.cullRadius * sharedData.cullRadius)
     // Generating meshlets
 }
 ```
+
+Please note that per mesh culling should be done in the task shader and used to prevent mesh shaders from even 
+launching.  The simplistic culling method demonstrated here is not the most ideal use of culling in mesh shaders and 
+infact is discouraged due to limited benefit.  Instead please opt for limiting the number of mesh shaders that 
+require launching by doing the cull within the task shader.
 
 More advanced culling solutions can be found in the following video:
 
