@@ -23,7 +23,7 @@
 ## Overview
 
 This sample demonstrates how to incorporate the Vulkan extension [```VK_EXT_mesh_shader```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_mesh_shader), and
-introduces mesh shader culling using meshlets.
+introduces per primative culling in a mesh shader.
 
 ## Contents
 
@@ -86,7 +86,7 @@ the translation of the cull mask
 
 ## Task Shader
 
-A task shader is an optional stage responsible for launching mesh shaders.  It has two purposes:
+A task shader is an optional but recommended stage responsible for launching mesh shaders.  It has two purposes:
 
 * Decide how many mesh shaders to launch in the workgroup.
 * Create a task payload that mesh shaders will have read-only access to.
@@ -141,10 +141,12 @@ number. Further reading can be found here:
 
 ## Mesh Shader
 
-A mesh shader does not execute on the same workgroup as the task shader that emitted it if a task shader exists.  
-Many workgroups can be  One task shader workgroup can launch many mesh shader workgroups.
-mesh shader is responsible for generating vertices and primitives based on the number of meshlets determined by its task
-shader. The vertices and primitives generation process can be found in the following code:
+Task and mesh shaders are executed in workgroups similar to compute shaders. Each task shader workgroup can launch 
+many mesh shader workgroups. Each mesh shader workgroup is responsible for generating vertices and primitives. The 
+API allows for any logic, but a typical application it is recommended to organize this around meshlets, which are a 
+small group of vertices and primitives. Typically, each task shader invocation processes a group of meshlets and 
+each mesh shader workgroup processes one meshlet.
+The vertices and primitives generation process can be found in the following code:
 
 ```glsl
 // Vertices:
@@ -169,12 +171,11 @@ More details of meshlets generation can be found in the attached article:
 
 ## Per-primitive culling
 
-This sample uses a simple cull functionality from the mesh 
-shader. The intention in mesh shading is to only generate geometry that is relevant to the scene.  Thus, the correct 
-method of culling is to decide via a condition if a meshlet should be generated or not.
+This sample uses a simple per-primitive cull functionality from the mesh 
+shader. The intention in mesh shading is to only generate geometry that is relevant to the scene.
 
 In this sample, a circular visual zone is centered at the origin, with an adjustable radius, controlled by the gui.
-When a meshlet moves out of the visual zone, its generation process will be skipped.
+When a primitive moves out of the visual zone, its generation process will be skipped.
 
 ```glsl
 // the actual position of each meshlet:
