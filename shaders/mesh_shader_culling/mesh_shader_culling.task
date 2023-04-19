@@ -39,7 +39,7 @@ void main()
 {
     uint N = 0;
 
-    sharedData.positionTransformation = vec4(ubo.cull_center_x, ubo.cull_center_y, 0.0f, 0.0f);
+    sharedData.positionTransformation = vec2(ubo.cull_center_x, ubo.cull_center_y);
     sharedData.cullRadius = ubo.cull_radius;
 
     if (ubo.meshlet_density == 0)

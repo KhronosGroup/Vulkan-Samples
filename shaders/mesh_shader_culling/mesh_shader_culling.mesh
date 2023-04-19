@@ -51,7 +51,8 @@ void main()
     vec4 displacement = vec4(deltaPosition_xy, 0.0f, 1.0f);
 
     // the actual position of each meshlet:
-    vec4 position = displacement + sharedData.positionTransformation;
+    vec4 posTrans = vec4(sharedData.positionTransformation.x, sharedData.positionTransformation.y, 0.0, 0.0);
+    vec4 position = displacement + posTrans;
     float squareRadius = position.x * position.x + position.y * position.y;
 
     uint number_of_vertices = 0;
@@ -68,10 +69,10 @@ void main()
     if ( do_emit )
     {
         // Vertices:
-        gl_MeshVerticesEXT[0].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-        gl_MeshVerticesEXT[1].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-        gl_MeshVerticesEXT[2].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
-        gl_MeshVerticesEXT[3].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + sharedData.positionTransformation + displacement;
+        gl_MeshVerticesEXT[0].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0, 0.0f, 1.0f) + posTrans + displacement;
+        gl_MeshVerticesEXT[1].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1, 0.0f, 1.0f) + posTrans + displacement;
+        gl_MeshVerticesEXT[2].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2, 0.0f, 1.0f) + posTrans + displacement;
+        gl_MeshVerticesEXT[3].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3, 0.0f, 1.0f) + posTrans + displacement;
 
         // Indices
         gl_PrimitiveTriangleIndicesEXT[0] = unitPrimitive_0;
