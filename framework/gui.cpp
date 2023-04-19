@@ -264,7 +264,7 @@ Gui::Gui(VulkanSample &sample_, const Window &window, const Stats *stats,
 	}
 }
 
-void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages)
+void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass render_pass, const void *pipeline_create_next, const std::vector<VkPipelineShaderStageCreateInfo> &shader_stages)
 {
 	// Descriptor pool
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
@@ -328,6 +328,7 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout->get_handle(), render_pass);
 
+	pipeline_create_info.pNext               = pipeline_create_next;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
 	pipeline_create_info.pColorBlendState    = &color_blend_state;

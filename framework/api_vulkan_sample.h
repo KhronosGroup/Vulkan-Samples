@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -159,14 +159,14 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<VkFence> wait_fences;
 
 	/**
-	 * @brief Populates the swapchain_buffers vector with the image and imageviews 
+	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
 
 	/**
 	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
 	 * @param image_usage_flags The usage flags the new swapchain images will have
- 	 */
+	 */
 	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
 
 	/**
@@ -279,6 +279,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	virtual void setup_render_pass();
 
 	/**
+	 * @brief Prepare gui
+	 */
+	virtual bool prepare_gui(vkb::Platform &platform);
+
+	/**
 	 * @brief Update flags for the default render pass and recreate it
 	 * @param flags Optional flags for render pass creation
 	 */
@@ -312,7 +317,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
 
 	/**
-	 * @brief Updates the overlay 
+	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */
 	void update_overlay(float delta_time);
@@ -324,7 +329,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	void draw_ui(const VkCommandBuffer command_buffer);
 
 	/**
-	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and 
+	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
 	 */
 	void prepare_frame();
