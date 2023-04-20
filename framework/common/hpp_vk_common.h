@@ -123,6 +123,73 @@ inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::Descript
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
+inline vk::DescriptorSetLayout create_descriptor_set_layout(vk::Device device, std::vector<vk::DescriptorSetLayoutBinding> const &bindings)
+{
+	vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info({}, bindings);
+
+	return device.createDescriptorSetLayout(descriptor_set_layout_create_info);
+}
+
+inline vk::DescriptorPool create_descriptor_pool(vk::Device device, uint32_t max_sets, std::vector<vk::DescriptorPoolSize> const &pool_sizes)
+{
+	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, max_sets, pool_sizes);
+
+	return device.createDescriptorPool(descriptor_pool_create_info);
+}
+
+inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
+                                             vk::PipelineCache                                         pipeline_cache,
+                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const   &shader_stages,
+                                             vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
+                                             vk::PrimitiveTopology                                     primitive_topology,
+                                             vk::CullModeFlags                                         cull_mode,
+                                             std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
+                                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
+                                             vk::PipelineLayout                                        pipeline_layout,
+                                             vk::RenderPass                                            render_pass)
+{
+	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
+
+	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
+
+	vk::PipelineRasterizationStateCreateInfo rasterization_state;
+	rasterization_state.polygonMode = vk::PolygonMode::eFill;
+	rasterization_state.cullMode    = cull_mode;
+	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
+	rasterization_state.lineWidth   = 1.0f;
+
+	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
+
+	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_states);
+
+	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
+	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
+
+	// Final fullscreen composition pass pipeline
+	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
+	                                                    shader_stages,
+	                                                    &vertex_input_state,
+	                                                    &input_assembly_state,
+	                                                    {},
+	                                                    &viewport_state,
+	                                                    &rasterization_state,
+	                                                    &multisample_state,
+	                                                    &depth_stencil_state,
+	                                                    &color_blend_state,
+	                                                    &dynamic_state,
+	                                                    pipeline_layout,
+	                                                    render_pass,
+	                                                    {},
+	                                                    {},
+	                                                    -1);
+
+	vk::Result   result;
+	vk::Pipeline pipeline;
+	std::tie(result, pipeline) = device.createGraphicsPipeline(pipeline_cache, pipeline_create_info);
+	assert(result == vk::Result::eSuccess);
+	return pipeline;
+}
+
 inline vk::PipelineLayout create_pipeline_layout(vk::Device device, vk::DescriptorSetLayout descriptor_set_layout)
 {
 #if defined(ANDROID)
@@ -131,6 +198,30 @@ inline vk::PipelineLayout create_pipeline_layout(vk::Device device, vk::Descript
 	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
 #endif
 	return device.createPipelineLayout(pipeline_layout_create_info);
+}
+
+inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage, vk::Format format)
+{
+	vk::ImageAspectFlags image_aspect_flags;
+
+	switch (usage)
+	{
+		case vk::ImageUsageFlagBits::eColorAttachment:
+			image_aspect_flags = vk::ImageAspectFlagBits::eColor;
+			break;
+		case vk::ImageUsageFlagBits::eDepthStencilAttachment:
+			image_aspect_flags = vk::ImageAspectFlagBits::eDepth;
+			// Stencil aspect should only be set on depth + stencil formats
+			if (vkb::common::is_depth_stencil_format(format) && !vkb::common::is_depth_only_format(format))
+			{
+				image_aspect_flags |= vk::ImageAspectFlagBits::eStencil;
+			}
+			break;
+		default:
+			assert(false);
+	}
+
+	return image_aspect_flags;
 }
 
 inline void submit_and_wait(vk::Device device, vk::Queue queue, std::vector<vk::CommandBuffer> command_buffers, std::vector<vk::Semaphore> semaphores = {})
