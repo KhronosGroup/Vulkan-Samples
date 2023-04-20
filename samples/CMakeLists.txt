@@ -63,6 +63,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
+    "calibrated_timestamps"
     "graphics_pipeline_library"
     "memory_budget"
     "push_descriptors"
