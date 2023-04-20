@@ -305,7 +305,7 @@ bool MeshShaderCulling::prepare(vkb::Platform &platform)
 
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(1.0f, 0.0f, 1.0f));
-	camera.rotation_speed = 0.0f;
+	camera.rotation_speed  = 0.0f;
 	ubo_cull.cull_center_x = -camera.position.x;
 	ubo_cull.cull_center_y = -camera.position.z;
 
