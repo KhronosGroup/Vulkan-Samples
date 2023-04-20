@@ -304,8 +304,10 @@ bool MeshShaderCulling::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_position(glm::vec3(0.0f, 0.0f, -0.1f));
+	camera.set_position(glm::vec3(1.0f, 0.0f, 1.0f));
 	camera.rotation_speed = 0.0f;
+	ubo_cull.cull_center_x = -camera.position.x;
+	ubo_cull.cull_center_y = -camera.position.z;
 
 	if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
 	{
@@ -334,8 +336,8 @@ void MeshShaderCulling::render(float delta_time)
 
 	if (camera.keys.left || camera.keys.right || camera.keys.up || camera.keys.down)
 	{
-		ubo_cull.cull_center_x = (-1.0f) * camera.position.x;
-		ubo_cull.cull_center_y = (-1.0f) * camera.position.z;
+		ubo_cull.cull_center_x = -camera.position.x;
+		ubo_cull.cull_center_y = -camera.position.z;
 		update_uniform_buffers();
 	}
 }

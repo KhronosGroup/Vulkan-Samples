@@ -28,4 +28,5 @@ add_sample_with_tags(
         SHADER_FILES_GLSL
         "mesh_shader_culling/mesh_shader_culling.task"
         "mesh_shader_culling/mesh_shader_culling.mesh"
-        "mesh_shader_culling/mesh_shader_culling.frag")
+        "mesh_shader_culling/mesh_shader_culling.frag"
+        "mesh_shader_culling/mesh_shader_shared.h")

@@ -46,8 +46,8 @@ class MeshShaderCulling : public ApiVulkanSample
   public:
 	struct UBO
 	{
-		float cull_center_x   = -0.75f;
-		float cull_center_y   = -0.75f;
+		float cull_center_x   = 0.0f;
+		float cull_center_y   = 0.0f;
 		float cull_radius     = 1.0f;
 		float meshlet_density = 2.0f;
 	} ubo_cull{};
