@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
  * High dynamic range rendering, using vulkan.hpp
  */
 
-#include <hpp_hdr.h>
+#include "hpp_hdr.h"
 
 HPPHDR::HPPHDR()
 {
@@ -32,37 +32,43 @@ HPPHDR::~HPPHDR()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		device.destroyPipeline(pipelines.skybox);
-		device.destroyPipeline(pipelines.reflect);
-		device.destroyPipeline(pipelines.composition);
-		device.destroyPipeline(pipelines.bloom[0]);
-		device.destroyPipeline(pipelines.bloom[1]);
-
-		device.destroyPipelineLayout(pipeline_layouts.models);
-		device.destroyPipelineLayout(pipeline_layouts.composition);
-		device.destroyPipelineLayout(pipeline_layouts.bloom_filter);
-
-		device.destroyDescriptorSetLayout(descriptor_set_layouts.models);
-		device.destroyDescriptorSetLayout(descriptor_set_layouts.composition);
-		device.destroyDescriptorSetLayout(descriptor_set_layouts.bloom_filter);
-
-		device.destroyRenderPass(offscreen.render_pass);
-		device.destroyRenderPass(filter_pass.render_pass);
-
-		device.destroyFramebuffer(offscreen.framebuffer);
-		device.destroyFramebuffer(filter_pass.framebuffer);
-
-		device.destroySampler(offscreen.sampler);
-		device.destroySampler(filter_pass.sampler);
-
-		offscreen.depth.destroy(device);
-		offscreen.color[0].destroy(device);
-		offscreen.color[1].destroy(device);
-
-		filter_pass.color[0].destroy(device);
-
-		device.destroySampler(textures.envmap.sampler);
+		bloom.destroy(device, descriptor_pool);
+		composition.destroy(device, descriptor_pool);
+		filter_pass.destroy(device);
+		models.destroy(device, descriptor_pool);
+		offscreen.destroy(device);
+		textures.destroy(device);
 	}
+}
+
+bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
+{
+	if (!HPPApiVulkanSample::prepare(platform))
+	{
+		return false;
+	}
+
+	prepare_camera();
+	load_assets();
+	prepare_uniform_buffers();
+	prepare_offscreen_buffer();
+
+	std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}};
+	descriptor_pool                                = vkb::common::create_descriptor_pool(get_device()->get_handle(), 4, pool_sizes);
+
+	setup_bloom();
+	setup_composition();
+	setup_models();
+	build_command_buffers();
+	prepared = true;
+	return true;
+}
+
+bool HPPHDR::resize(const uint32_t width, const uint32_t height)
+{
+	HPPApiVulkanSample::resize(width, height);
+	update_uniform_buffers();
+	return true;
 }
 
 void HPPHDR::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
@@ -80,141 +86,255 @@ void HPPHDR::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		draw_cmd_buffers[i].begin(command_buffer_begin_info);
+		vk::CommandBuffer command_buffer = draw_cmd_buffers[i];
+		command_buffer.begin(command_buffer_begin_info);
 
 		{
 			/*
-				First pass: Render scene to offscreen framebuffer
+			    First pass: Render scene to offscreen framebuffer
 			*/
-
-			std::array<vk::ClearValue, 3> clear_values =
-			    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			      vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			      vk::ClearDepthStencilValue(0.0f, 0)}};
-
-			vk::RenderPassBeginInfo render_pass_begin_info(offscreen.render_pass, offscreen.framebuffer, {{0, 0}, offscreen.extent}, clear_values);
-
-			draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+			std::array<vk::ClearValue, 3> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
+			                                               vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
+			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+			vk::RenderPassBeginInfo       render_pass_begin_info(offscreen.render_pass, offscreen.framebuffer, {{0, 0}, offscreen.extent}, clear_values);
+			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(offscreen.extent.width), static_cast<float>(offscreen.extent.height), 0.0f, 1.0f);
-			draw_cmd_buffers[i].setViewport(0, viewport);
+			command_buffer.setViewport(0, viewport);
 
 			vk::Rect2D scissor({0, 0}, offscreen.extent);
-			draw_cmd_buffers[i].setScissor(0, scissor);
+			command_buffer.setScissor(0, scissor);
 
 			// Skybox
 			if (display_skybox)
 			{
-				draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.skybox);
-				draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.models, 0, descriptor_sets.skybox, {});
-
-				draw_model(models.skybox, draw_cmd_buffers[i]);
+				command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, models.skybox.pipeline);
+				command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, models.pipeline_layout, 0, models.skybox.descriptor_set, {});
+				draw_model(models.skybox.meshes[0], command_buffer);
 			}
 
 			// 3D object
-			draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.reflect);
-			draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.models, 0, descriptor_sets.object, {});
+			command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, models.objects.pipeline);
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, models.pipeline_layout, 0, models.objects.descriptor_set, {});
+			draw_model(models.objects.meshes[models.object_index], command_buffer);
 
-			draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
-
-			draw_cmd_buffers[i].endRenderPass();
+			command_buffer.endRenderPass();
 		}
 
 		/*
-			Second render pass: First bloom pass
+		    Second render pass: First bloom pass
 		*/
-		if (bloom)
+		if (bloom.enabled)
 		{
-			vk::ClearValue clear_value(vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})));
-
 			// Bloom filter
+			vk::ClearValue          clear_value(vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})));
 			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_value);
-
-			draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(filter_pass.extent.width), static_cast<float>(filter_pass.extent.height), 0.0f, 1.0f);
-			draw_cmd_buffers[i].setViewport(0, viewport);
+			command_buffer.setViewport(0, viewport);
 
 			vk::Rect2D scissor({0, 0}, filter_pass.extent);
-			draw_cmd_buffers[i].setScissor(0, scissor);
+			command_buffer.setScissor(0, scissor);
 
-			draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.bloom_filter, 0, descriptor_sets.bloom_filter, {});
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, bloom.pipeline_layout, 0, bloom.descriptor_set, {});
+			command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, bloom.pipelines[1]);
+			command_buffer.draw(3, 1, 0, 0);
 
-			draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.bloom[1]);
-			draw_cmd_buffers[i].draw(3, 1, 0, 0);
-
-			draw_cmd_buffers[i].endRenderPass();
+			command_buffer.endRenderPass();
 		}
 
 		/*
-			Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
+		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
 		*/
 
 		/*
-			Third render pass: Scene rendering with applied second bloom pass (when enabled)
+		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
 		*/
 		{
-			std::array<vk::ClearValue, 2> clear_values =
-			    {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			      vk::ClearDepthStencilValue(0.0f, 0)}};
-
 			// Final composition
-			vk::RenderPassBeginInfo render_pass_begin_info(render_pass, framebuffers[i], {{0, 0}, extent}, clear_values);
-
-			draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+			std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
+			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+			vk::RenderPassBeginInfo       render_pass_begin_info(render_pass, framebuffers[i], {{0, 0}, extent}, clear_values);
+			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-			draw_cmd_buffers[i].setViewport(0, viewport);
+			command_buffer.setViewport(0, viewport);
 
 			vk::Rect2D scissor({0, 0}, extent);
-			draw_cmd_buffers[i].setScissor(0, scissor);
+			command_buffer.setScissor(0, scissor);
 
-			draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.composition, 0, descriptor_sets.composition, {});
+			command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, composition.pipeline_layout, 0, composition.descriptor_set, {});
 
 			// Scene
-			draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.composition);
-			draw_cmd_buffers[i].draw(3, 1, 0, 0);
+			command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, composition.pipeline);
+			command_buffer.draw(3, 1, 0, 0);
 
 			// Bloom
-			if (bloom)
+			if (bloom.enabled)
 			{
-				draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.bloom[0]);
-				draw_cmd_buffers[i].draw(3, 1, 0, 0);
+				command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, bloom.pipelines[0]);
+				command_buffer.draw(3, 1, 0, 0);
 			}
 
-			draw_ui(draw_cmd_buffers[i]);
+			draw_ui(command_buffer);
 
-			draw_cmd_buffers[i].endRenderPass();
+			command_buffer.endRenderPass();
 		}
 
-		draw_cmd_buffers[i].end();
+		command_buffer.end();
 	}
+}
+
+void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+{
+	if (drawer.header("Settings"))
+	{
+		if (drawer.combo_box("Object type", &models.object_index, object_names))
+		{
+			update_uniform_buffers();
+			build_command_buffers();
+		}
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		{
+			update_params();
+		}
+		if (drawer.checkbox("Bloom", &bloom.enabled))
+		{
+			build_command_buffers();
+		}
+		if (drawer.checkbox("Skybox", &display_skybox))
+		{
+			build_command_buffers();
+		}
+	}
+}
+
+void HPPHDR::render(float delta_time)
+{
+	if (!prepared)
+	{
+		return;
+	}
+	draw();
+	if (camera.updated)
+	{
+		update_uniform_buffers();
+	}
+}
+
+vk::DeviceMemory HPPHDR::allocate_memory(vk::Image image)
+{
+	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getImageMemoryRequirements(image);
+
+	vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size,
+	                                            get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
+
+	return get_device()->get_handle().allocateMemory(memory_allocate_info);
 }
 
 HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage)
 {
-	vk::ImageAspectFlags aspect_mask;
-	vk::ImageLayout      image_layout;
+	vk::Image        image  = create_image(format, usage);
+	vk::DeviceMemory memory = allocate_memory(image);
+	get_device()->get_handle().bindImageMemory(image, memory, 0);
+	vk::ImageView view = create_image_view(format, usage, image);
 
-	switch (usage)
-	{
-		case vk::ImageUsageFlagBits::eColorAttachment:
-			aspect_mask  = vk::ImageAspectFlagBits::eColor;
-			image_layout = vk::ImageLayout::eColorAttachmentOptimal;
-			break;
-		case vk::ImageUsageFlagBits::eDepthStencilAttachment:
-			aspect_mask = vk::ImageAspectFlagBits::eDepth;
-			// Stencil aspect should only be set on depth + stencil formats (vk::Format::eD16UnormS8Uint...vk::Format::eD32SfloatS8Uint)
-			if ((format == vk::Format::eD16UnormS8Uint) || (format == vk::Format::eD24UnormS8Uint) || (format == vk::Format::eD32SfloatS8Uint))
-			{
-				aspect_mask |= vk::ImageAspectFlagBits::eStencil;
-			}
-			image_layout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-			break;
-		default:
-			assert(false);
-	}
+	return {format, image, memory, view};
+}
 
+void HPPHDR::create_bloom_pipelines()
+{
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
+	    load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	// Set constant parameters via specialization constants
+	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
+
+	uint32_t               dir = 1;
+	vk::SpecializationInfo specialization_info(1, &specialization_map_entry, sizeof(uint32_t), &dir);
+	shader_stages[1].pSpecializationInfo = &specialization_info;
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.blendEnable         = true;
+	blend_attachment_state.colorBlendOp        = vk::BlendOp::eAdd;
+	blend_attachment_state.srcColorBlendFactor = vk::BlendFactor::eOne;
+	blend_attachment_state.dstColorBlendFactor = vk::BlendFactor::eOne;
+	blend_attachment_state.alphaBlendOp        = vk::BlendOp::eAdd;
+	blend_attachment_state.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
+	blend_attachment_state.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
+	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
+	depth_stencil_state.front          = depth_stencil_state.back;
+
+	// Empty vertex input state, full screen triangles are generated by the vertex shader
+	bloom.pipelines[0] = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                           pipeline_cache,
+	                                                           shader_stages,
+	                                                           {},
+	                                                           vk::PrimitiveTopology::eTriangleList,
+	                                                           vk::CullModeFlagBits::eFront,
+	                                                           {blend_attachment_state},
+	                                                           depth_stencil_state,
+	                                                           bloom.pipeline_layout,
+	                                                           render_pass);
+
+	dir                = 0;
+	bloom.pipelines[1] = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                           pipeline_cache,
+	                                                           shader_stages,
+	                                                           {},
+	                                                           vk::PrimitiveTopology::eTriangleList,
+	                                                           vk::CullModeFlagBits::eFront,
+	                                                           {blend_attachment_state},
+	                                                           depth_stencil_state,
+	                                                           bloom.pipeline_layout,
+	                                                           filter_pass.render_pass);
+}
+
+void HPPHDR::create_composition_pipeline()
+{
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                               load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
+	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
+	depth_stencil_state.front          = depth_stencil_state.back;
+
+	// Empty vertex input state, full screen triangles are generated by the vertex shader
+	composition.pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                             pipeline_cache,
+	                                                             shader_stages,
+	                                                             {},
+	                                                             vk::PrimitiveTopology::eTriangleList,
+	                                                             vk::CullModeFlagBits::eFront,
+	                                                             {blend_attachment_state},
+	                                                             depth_stencil_state,
+	                                                             composition.pipeline_layout,
+	                                                             render_pass);
+}
+
+vk::Framebuffer HPPHDR::create_framebuffer(vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
+{
+	vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass, attachments, extent.width, extent.height, 1);
+
+	return get_device()->get_handle().createFramebuffer(framebuffer_create_info);
+}
+
+vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
+{
 	vk::ImageCreateInfo image_create_info;
 	image_create_info.imageType   = vk::ImageType::e2D;
 	image_create_info.format      = format;
@@ -224,217 +344,149 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 	image_create_info.samples     = vk::SampleCountFlagBits::e1;
 	image_create_info.tiling      = vk::ImageTiling::eOptimal;
 	image_create_info.usage       = usage | vk::ImageUsageFlagBits::eSampled;
-	vk::Image image               = get_device()->get_handle().createImage(image_create_info);
 
-	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getImageMemoryRequirements(image);
-	vk::MemoryAllocateInfo memory_allocate_info(memory_requirements.size,
-	                                            get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
-	vk::DeviceMemory       mem = get_device()->get_handle().allocateMemory(memory_allocate_info);
-	get_device()->get_handle().bindImageMemory(image, mem, 0);
-
-	vk::ImageViewCreateInfo image_view_create_info({}, image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1});
-	vk::ImageView           view = get_device()->get_handle().createImageView(image_view_create_info);
-
-	return FrameBufferAttachment(image, mem, view, format);
+	return get_device()->get_handle().createImage(image_create_info);
 }
 
-// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
-void HPPHDR::prepare_offscreen_buffer()
+vk::ImageView HPPHDR::create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image)
 {
-	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
-	vk::Format color_format{vk::Format::eUndefined};
+	vk::ImageAspectFlags aspect_mask = vkb::common::get_image_aspect_flags(usage, format);
 
-	const std::vector<vk::Format> float_format_priority_list = {
-	    vk::Format::eR32G32B32A32Sfloat,
-	    vk::Format::eR16G16B16A16Sfloat};
+	vk::ImageViewCreateInfo image_view_create_info({}, image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1});
 
-	for (auto &format : float_format_priority_list)
-	{
-		const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
-		if (properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend)
-		{
-			color_format = format;
-			break;
-		}
-	}
+	return get_device()->get_handle().createImageView(image_view_create_info);
+}
 
-	if (color_format == vk::Format::eUndefined)
-	{
-		throw std::runtime_error("No suitable float format could be determined");
-	}
+void HPPHDR::create_models_pipelines()
+{
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
+	    load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
 
-	{
-		offscreen.extent = extent;
+	// Set constant parameters via specialization constants
+	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
 
-		// Color attachments
+	// Set constant parameters via specialization constants
+	uint32_t               shadertype          = 0;
+	vk::SpecializationInfo specialization_info = vk::SpecializationInfo(1, &specialization_map_entry, sizeof(uint32_t), &shadertype);
+	shader_stages[0].pSpecializationInfo       = &specialization_info;
+	shader_stages[1].pSpecializationInfo       = &specialization_info;
 
-		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
-		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
-		// Depth attachment
-		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
+	// Vertex bindings an attributes for model rendering
+	// Binding description
+	vk::VertexInputBindingDescription vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
 
-		// Set up separate renderpass with references to the colorand depth attachments
-		std::array<vk::AttachmentDescription, 3> attachment_descriptions;
+	// Attribute descriptions
+	std::vector<vk::VertexInputAttributeDescription> vertex_input_attributes = {{0, 0, vk::Format::eR32G32B32Sfloat, 0},
+	                                                                            {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)}};
 
-		// Init attachment properties
-		for (uint32_t i = 0; i < 3; ++i)
-		{
-			attachment_descriptions[i].samples        = vk::SampleCountFlagBits::e1;
-			attachment_descriptions[i].loadOp         = vk::AttachmentLoadOp::eClear;
-			attachment_descriptions[i].storeOp        = vk::AttachmentStoreOp::eStore;
-			attachment_descriptions[i].stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-			attachment_descriptions[i].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-			if (i == 2)
-			{
-				attachment_descriptions[i].initialLayout = vk::ImageLayout::eUndefined;
-				attachment_descriptions[i].finalLayout   = vk::ImageLayout::eDepthStencilAttachmentOptimal;
-			}
-			else
-			{
-				attachment_descriptions[i].initialLayout = vk::ImageLayout::eUndefined;
-				attachment_descriptions[i].finalLayout   = vk::ImageLayout::eShaderReadOnlyOptimal;
-			}
-		}
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
 
-		// Formats
-		attachment_descriptions[0].format = offscreen.color[0].format;
-		attachment_descriptions[1].format = offscreen.color[1].format;
-		attachment_descriptions[2].format = offscreen.depth.format;
+	std::vector<vk::PipelineColorBlendAttachmentState> blend_attachment_states(2);
+	blend_attachment_states[0].colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+	blend_attachment_states[1].colorWriteMask = blend_attachment_states[0].colorWriteMask;
 
-		std::array<vk::AttachmentReference, 2> color_references{
-		    {{0, vk::ImageLayout::eColorAttachmentOptimal},
-		     {1, vk::ImageLayout::eColorAttachmentOptimal}}};
+	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
+	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
+	depth_stencil_state.front          = depth_stencil_state.back;
 
-		vk::AttachmentReference depth_reference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
+	models.skybox.pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                               pipeline_cache,
+	                                                               shader_stages,
+	                                                               vertex_input_state,
+	                                                               vk::PrimitiveTopology::eTriangleList,
+	                                                               vk::CullModeFlagBits::eBack,
+	                                                               blend_attachment_states,
+	                                                               depth_stencil_state,
+	                                                               models.pipeline_layout,
+	                                                               offscreen.render_pass);
 
-		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, nullptr, color_references, nullptr, &depth_reference);
+	// Object rendering pipeline
+	shadertype = 1;
 
-		// Use subpass dependencies for attachment layput transitions
-		std::array<vk::SubpassDependency, 2> dependencies;
+	// Enable depth test and write
+	depth_stencil_state.depthWriteEnable = true;
+	depth_stencil_state.depthTestEnable  = true;
 
-		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass      = 0;
-		dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-		dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
-		dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-		dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+	// Flip cull mode
+	models.objects.pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                                pipeline_cache,
+	                                                                shader_stages,
+	                                                                vertex_input_state,
+	                                                                vk::PrimitiveTopology::eTriangleList,
+	                                                                vk::CullModeFlagBits::eFront,
+	                                                                blend_attachment_states,
+	                                                                depth_stencil_state,
+	                                                                models.pipeline_layout,
+	                                                                offscreen.render_pass);
+}
 
-		dependencies[1].srcSubpass      = 0;
-		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-		dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-		dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
-		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description)
+{
+	// Use subpass dependencies for attachment layput transitions
+	std::array<vk::SubpassDependency, 2> subpass_dependencies;
 
-		vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass, dependencies);
+	subpass_dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+	subpass_dependencies[0].dstSubpass      = 0;
+	subpass_dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
+	subpass_dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	subpass_dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
+	subpass_dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	subpass_dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-		offscreen.render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
+	subpass_dependencies[1].srcSubpass      = 0;
+	subpass_dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+	subpass_dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	subpass_dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
+	subpass_dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	subpass_dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
+	subpass_dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
-		std::array<vk::ImageView, 3> attachments{offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view};
+	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass_description, subpass_dependencies);
 
-		vk::FramebufferCreateInfo framebuffer_create_info({}, offscreen.render_pass, attachments, offscreen.extent.width, offscreen.extent.height, 1);
-		offscreen.framebuffer = get_device()->get_handle().createFramebuffer(framebuffer_create_info);
+	return get_device()->get_handle().createRenderPass(render_pass_create_info);
+}
 
-		// Create sampler to sample from the color attachments
-		vk::SamplerCreateInfo sampler_create_info;
-		sampler_create_info.magFilter     = vk::Filter::eNearest;
-		sampler_create_info.minFilter     = vk::Filter::eNearest;
-		sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-		sampler_create_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
-		sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
-		sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
-		sampler_create_info.mipLodBias    = 0.0f;
-		sampler_create_info.maxAnisotropy = 1.0f;
-		sampler_create_info.minLod        = 0.0f;
-		sampler_create_info.maxLod        = 1.0f;
-		sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-		offscreen.sampler                 = get_device()->get_handle().createSampler(sampler_create_info);
-	}
+vk::Sampler HPPHDR::create_sampler()
+{
+	vk::SamplerCreateInfo sampler_create_info;
+	sampler_create_info.magFilter     = vk::Filter::eNearest;
+	sampler_create_info.minFilter     = vk::Filter::eNearest;
+	sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
+	sampler_create_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
+	sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
+	sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
+	sampler_create_info.mipLodBias    = 0.0f;
+	sampler_create_info.maxAnisotropy = 1.0f;
+	sampler_create_info.minLod        = 0.0f;
+	sampler_create_info.maxLod        = 1.0f;
+	sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
 
-	// Bloom separable filter pass
-	{
-		filter_pass.extent = extent;
+	return get_device()->get_handle().createSampler(sampler_create_info);
+}
 
-		// Color attachments
+void HPPHDR::draw()
+{
+	HPPApiVulkanSample::prepare_frame();
 
-		// Floating point color attachment
-		filter_pass.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
+	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
+	queue.submit(submit_info);
 
-		// Set up separate renderpass with references to the colorand depth attachments
-		vk::AttachmentDescription attachment_description;
-
-		// Init attachment properties
-		attachment_description.samples        = vk::SampleCountFlagBits::e1;
-		attachment_description.loadOp         = vk::AttachmentLoadOp::eClear;
-		attachment_description.storeOp        = vk::AttachmentStoreOp::eStore;
-		attachment_description.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
-		attachment_description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
-		attachment_description.initialLayout  = vk::ImageLayout::eUndefined;
-		attachment_description.finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal;
-		attachment_description.format         = filter_pass.color[0].format;
-
-		vk::AttachmentReference color_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
-
-		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
-
-		// Use subpass dependencies for attachment layput transitions
-		std::array<vk::SubpassDependency, 2> dependencies;
-
-		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[0].dstSubpass      = 0;
-		dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-		dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
-		dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-		dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-		dependencies[1].srcSubpass      = 0;
-		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-		dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-		dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-		dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-		dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
-		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
-
-		vk::RenderPassCreateInfo render_pass_create_info({}, attachment_description, subpass, dependencies);
-
-		filter_pass.render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
-
-		vk::FramebufferCreateInfo framebuffer_create_info(
-		    {}, filter_pass.render_pass, filter_pass.color[0].view, filter_pass.extent.width, filter_pass.extent.height, 1);
-		filter_pass.framebuffer = get_device()->get_handle().createFramebuffer(framebuffer_create_info);
-
-		// Create sampler to sample from the color attachments
-		vk::SamplerCreateInfo sampler_create_info;
-		sampler_create_info.magFilter     = vk::Filter::eNearest;
-		sampler_create_info.minFilter     = vk::Filter::eNearest;
-		sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-		sampler_create_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
-		sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
-		sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
-		sampler_create_info.mipLodBias    = 0.0f;
-		sampler_create_info.maxAnisotropy = 1.0f;
-		sampler_create_info.minLod        = 0.0f;
-		sampler_create_info.maxLod        = 1.0f;
-		sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-		filter_pass.sampler               = get_device()->get_handle().createSampler(sampler_create_info);
-	}
+	HPPApiVulkanSample::submit_frame();
 }
 
 void HPPHDR::load_assets()
 {
 	// Models
-	models.skybox                      = load_model("scenes/cube.gltf");
+	models.skybox.meshes.emplace_back(load_model("scenes/cube.gltf"));
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
 	for (auto file : filenames)
 	{
-		auto object = load_model("scenes/" + file);
-		models.objects.emplace_back(std::move(object));
+		models.objects.meshes.emplace_back(load_model("scenes/" + file));
 	}
 
 	// Transforms
@@ -453,242 +505,111 @@ void HPPHDR::load_assets()
 	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
 }
 
-void HPPHDR::setup_descriptor_pool()
+void HPPHDR::prepare_camera()
 {
-	uint32_t                              num_descriptor_sets = 4;
-	std::array<vk::DescriptorPoolSize, 2> pool_sizes          = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	vk::DescriptorPoolCreateInfo          descriptor_pool_create_info({}, num_descriptor_sets, pool_sizes);
-	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	camera.type = vkb::CameraType::LookAt;
+	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
+	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
+
+	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
-void HPPHDR::setup_descriptor_set_layout()
+// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
+void HPPHDR::prepare_offscreen_buffer()
 {
-	std::array<vk::DescriptorSetLayoutBinding, 3> set_layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	     {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
+	// We need to select a format that supports the color attachment blending flag, so we iterate over multiple formats to find one that supports this flag
+	const std::vector<vk::Format> float_format_priority_list = {vk::Format::eR32G32B32A32Sfloat, vk::Format::eR16G16B16A16Sfloat};
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings);
+	auto formatIt = std::find_if(float_format_priority_list.begin(),
+	                             float_format_priority_list.end(),
+	                             [this](vk::Format format) {
+		                             const vk::FormatProperties properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
+		                             return properties.optimalTilingFeatures & vk::FormatFeatureFlagBits::eColorAttachmentBlend;
+	                             });
+	if (formatIt == float_format_priority_list.end())
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
 
-	descriptor_set_layouts.models = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	vk::Format color_format = *formatIt;
 
-#if defined(ANDROID)
-	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layouts.models);
-#else
-	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layouts.models);
-#endif
+	{
+		offscreen.extent = extent;
 
-	pipeline_layouts.models = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+		// Color attachments
 
-	// Bloom filter
-	std::array<vk::DescriptorSetLayoutBinding, 2> bloom_set_layout_bindings = {
-	    {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+		// We are using two 128-Bit RGBA floating point color buffers for this sample
+		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
+		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
+		// Depth attachment
+		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
-	descriptor_layout_create_info.setBindings(bloom_set_layout_bindings);
-	descriptor_set_layouts.bloom_filter = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+		// Set up separate renderpass with references to the colorand depth attachments
+		std::vector<vk::AttachmentDescription> attachment_descriptions(3);
 
-	pipeline_layout_create_info.setSetLayouts(descriptor_set_layouts.bloom_filter);
-	pipeline_layouts.bloom_filter = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+		// Init attachment properties
+		for (uint32_t i = 0; i < 3; ++i)
+		{
+			attachment_descriptions[i].samples        = vk::SampleCountFlagBits::e1;
+			attachment_descriptions[i].loadOp         = vk::AttachmentLoadOp::eClear;
+			attachment_descriptions[i].storeOp        = vk::AttachmentStoreOp::eStore;
+			attachment_descriptions[i].stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+			attachment_descriptions[i].stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+			attachment_descriptions[i].initialLayout  = vk::ImageLayout::eUndefined;
+			attachment_descriptions[i].finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal;
+		}
+		attachment_descriptions[2].finalLayout = vk::ImageLayout::eDepthStencilAttachmentOptimal;
 
-	// G-Buffer composition
-	std::array<vk::DescriptorSetLayoutBinding, 2> &g_buffer_composition_set_layout_bindings = bloom_set_layout_bindings;
+		// Formats
+		attachment_descriptions[0].format = offscreen.color[0].format;
+		attachment_descriptions[1].format = offscreen.color[1].format;
+		attachment_descriptions[2].format = offscreen.depth.format;
 
-	descriptor_layout_create_info.setBindings(g_buffer_composition_set_layout_bindings);
-	descriptor_set_layouts.composition = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+		std::array<vk::AttachmentReference, 2> color_references{{{0, vk::ImageLayout::eColorAttachmentOptimal},
+		                                                         {1, vk::ImageLayout::eColorAttachmentOptimal}}};
 
-	pipeline_layout_create_info.setSetLayouts(descriptor_set_layouts.composition);
-	pipeline_layouts.composition = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
-}
+		vk::AttachmentReference depth_reference(2, vk::ImageLayout::eDepthStencilAttachmentOptimal);
 
-void HPPHDR::setup_descriptor_sets()
-{
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, 1, &descriptor_set_layouts.models);
-#else
-	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, descriptor_set_layouts.models);
-#endif
+		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, nullptr, color_references, nullptr, &depth_reference);
 
-	// 3D object descriptor set
-	descriptor_sets.object = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
+		offscreen.render_pass = create_render_pass(attachment_descriptions, subpass);
 
-	vk::DescriptorBufferInfo matrix_buffer_descriptor(uniform_buffers.matrices->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorImageInfo  environment_image_descriptor(
-        textures.envmap.sampler,
-        textures.envmap.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.envmap.image->get_vk_image_view().get_format()));
-	vk::DescriptorBufferInfo              params_buffer_descriptor(uniform_buffers.params->get_handle(), 0, VK_WHOLE_SIZE);
-	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
-	    {{descriptor_sets.object, 0, 0, vk::DescriptorType::eUniformBuffer, {}, matrix_buffer_descriptor},
-	     {descriptor_sets.object, 1, 0, vk::DescriptorType::eCombinedImageSampler, environment_image_descriptor},
-	     {descriptor_sets.object, 2, 0, vk::DescriptorType::eUniformBuffer, {}, params_buffer_descriptor}}};
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+		std::vector<vk::ImageView> attachments = {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view};
+		offscreen.framebuffer                  = create_framebuffer(offscreen.render_pass, attachments, offscreen.extent);
 
-	// Sky box descriptor set
-	descriptor_sets.skybox = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
+		// Create sampler to sample from the color attachments
+		offscreen.sampler = create_sampler();
+	}
 
-	write_descriptor_sets[0].dstSet = descriptor_sets.skybox;
-	write_descriptor_sets[1].dstSet = descriptor_sets.skybox;
-	write_descriptor_sets[2].dstSet = descriptor_sets.skybox;
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	// Bloom separable filter pass
+	{
+		filter_pass.extent = extent;
 
-	// Bloom filter
-	alloc_info.setSetLayouts(descriptor_set_layouts.bloom_filter);
-	descriptor_sets.bloom_filter = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
+		// Color attachments
 
-	std::array<vk::DescriptorImageInfo, 2> color_descriptors = {{{offscreen.sampler, offscreen.color[0].view, vk::ImageLayout::eShaderReadOnlyOptimal},
-	                                                             {offscreen.sampler, offscreen.color[1].view, vk::ImageLayout::eShaderReadOnlyOptimal}}};
+		// Floating point color attachment
+		filter_pass.color = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 
-	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {
-	    {{descriptor_sets.bloom_filter, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
-	     {descriptor_sets.bloom_filter, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+		// Set up separate renderpass with references to the color and depth attachments
+		vk::AttachmentDescription attachment_description;
+		attachment_description.samples        = vk::SampleCountFlagBits::e1;
+		attachment_description.loadOp         = vk::AttachmentLoadOp::eClear;
+		attachment_description.storeOp        = vk::AttachmentStoreOp::eStore;
+		attachment_description.stencilLoadOp  = vk::AttachmentLoadOp::eDontCare;
+		attachment_description.stencilStoreOp = vk::AttachmentStoreOp::eDontCare;
+		attachment_description.initialLayout  = vk::ImageLayout::eUndefined;
+		attachment_description.finalLayout    = vk::ImageLayout::eShaderReadOnlyOptimal;
+		attachment_description.format         = filter_pass.color.format;
 
-	// Composition descriptor set
-	alloc_info.setSetLayouts(descriptor_set_layouts.composition);
-	descriptor_sets.composition = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
+		vk::AttachmentReference color_reference(0, vk::ImageLayout::eColorAttachmentOptimal);
+		vk::SubpassDescription  subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
 
-	color_descriptors[1].imageView = filter_pass.color[0].view;
-
-	sampler_write_descriptor_sets[0].dstSet = descriptor_sets.composition;
-	sampler_write_descriptor_sets[1].dstSet = descriptor_sets.composition;
-	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
-}
-
-void HPPHDR::prepare_pipelines()
-{
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
-
-	// Empty vertex input state, full screen triangles are generated by the vertex shader
-	vk::PipelineVertexInputStateCreateInfo empty_input_state;
-
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::eTriangleList, false);
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	rasterization_state.cullMode    = vk::CullModeFlagBits::eFront;
-	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
-	rasterization_state.lineWidth   = 1.0f;
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
-
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
-	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
-	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
-	depth_stencil_state.front          = depth_stencil_state.back;
-
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_state);
-
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	// Final fullscreen composition pass pipeline
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &empty_input_state,
-	                                                    &input_assembly_state,
-	                                                    {},
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layouts.composition,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, pipelines.composition) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Bloom pass
-	shader_stages[0]                           = load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex);
-	shader_stages[1]                           = load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment);
-	blend_attachment_state.blendEnable         = true;
-	blend_attachment_state.colorBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.dstColorBlendFactor = vk::BlendFactor::eOne;
-	blend_attachment_state.alphaBlendOp        = vk::BlendOp::eAdd;
-	blend_attachment_state.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
-	blend_attachment_state.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
-
-	// Set constant parameters via specialization constants
-	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
-
-	uint32_t               dir = 1;
-	vk::SpecializationInfo specialization_info(1, &specialization_map_entry, sizeof(uint32_t), &dir);
-	shader_stages[1].pSpecializationInfo = &specialization_info;
-
-	std::tie(result, pipelines.bloom[0]) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Second blur pass (into separate framebuffer)
-	pipeline_create_info.renderPass      = filter_pass.render_pass;
-	dir                                  = 0;
-	std::tie(result, pipelines.bloom[1]) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Object rendering pipelines
-	rasterization_state.cullMode = vk::CullModeFlagBits::eBack;
-
-	// Vertex bindings an attributes for model rendering
-	// Binding description
-	vk::VertexInputBindingDescription vertex_input_binding(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
-
-	// Attribute descriptions
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},
-	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)}}};
-
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
-
-	pipeline_create_info.pVertexInputState = &vertex_input_state;
-
-	// Skybox pipeline (background cube)
-	blend_attachment_state.blendEnable = false;
-
-	std::array<vk::PipelineColorBlendAttachmentState, 2> blend_attachment_states;
-	blend_attachment_states[0].colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-	blend_attachment_states[1].colorWriteMask = blend_attachment_states[0].colorWriteMask;
-
-	color_blend_state.setAttachments(blend_attachment_states);
-	pipeline_create_info.layout     = pipeline_layouts.models;
-	pipeline_create_info.renderPass = offscreen.render_pass;
-
-	shader_stages[0] = load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex);
-	shader_stages[1] = load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment);
-
-	// Set constant parameters via specialization constants
-	uint32_t shadertype                  = 0;
-	specialization_info                  = vk::SpecializationInfo(1, &specialization_map_entry, sizeof(uint32_t), &shadertype);
-	shader_stages[0].pSpecializationInfo = &specialization_info;
-	shader_stages[1].pSpecializationInfo = &specialization_info;
-
-	std::tie(result, pipelines.skybox) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Object rendering pipeline
-	shadertype = 1;
-
-	// Enable depth test and write
-	depth_stencil_state.depthWriteEnable = true;
-	depth_stencil_state.depthTestEnable  = true;
-	// Flip cull mode
-	rasterization_state.cullMode        = vk::CullModeFlagBits::eFront;
-	std::tie(result, pipelines.reflect) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
+		filter_pass.render_pass = create_render_pass({attachment_description}, subpass);
+		filter_pass.framebuffer = create_framebuffer(filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
+		filter_pass.sampler     = create_sampler();
+	}
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
@@ -710,12 +631,93 @@ void HPPHDR::prepare_uniform_buffers()
 	update_params();
 }
 
-void HPPHDR::update_uniform_buffers()
+void HPPHDR::setup_bloom()
 {
-	ubo_matrices.projection       = camera.matrices.perspective;
-	ubo_matrices.modelview        = camera.matrices.view * models.transforms[models.object_index];
-	ubo_matrices.skybox_modelview = camera.matrices.view;
-	uniform_buffers.matrices->convert_and_update(ubo_matrices);
+	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}};
+
+	vk::Device device           = get_device()->get_handle();
+	bloom.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
+	bloom.pipeline_layout       = vkb::common::create_pipeline_layout(device, bloom.descriptor_set_layout);
+	create_bloom_pipelines();
+	bloom.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, bloom.descriptor_set_layout);
+	update_bloom_descriptor_set();
+}
+
+void HPPHDR::setup_composition()
+{
+	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}};
+
+	vk::Device device                 = get_device()->get_handle();
+	composition.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
+	composition.pipeline_layout       = vkb::common::create_pipeline_layout(device, composition.descriptor_set_layout);
+	create_composition_pipeline();
+	composition.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
+	update_composition_descriptor_set();
+}
+
+void HPPHDR::setup_models()
+{
+	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                        {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}};
+
+	vk::Device device            = get_device()->get_handle();
+	models.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
+	models.pipeline_layout       = vkb::common::create_pipeline_layout(device, models.descriptor_set_layout);
+	create_models_pipelines();
+
+	// Objects descriptor set
+	models.objects.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
+	update_model_descriptor_set(models.objects.descriptor_set);
+
+	// Sky box descriptor set
+	models.skybox.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, models.descriptor_set_layout);
+	update_model_descriptor_set(models.skybox.descriptor_set);
+}
+
+void HPPHDR::update_composition_descriptor_set()
+{
+	std::array<vk::DescriptorImageInfo, 2> color_descriptors = {{{offscreen.sampler, offscreen.color[0].view, vk::ImageLayout::eShaderReadOnlyOptimal},
+	                                                             {offscreen.sampler, filter_pass.color.view, vk::ImageLayout::eShaderReadOnlyOptimal}}};
+
+	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {
+	    {{composition.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
+	     {composition.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
+
+	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+}
+
+void HPPHDR::update_bloom_descriptor_set()
+{
+	std::array<vk::DescriptorImageInfo, 2> color_descriptors = {{{offscreen.sampler, offscreen.color[0].view, vk::ImageLayout::eShaderReadOnlyOptimal},
+	                                                             {offscreen.sampler, offscreen.color[1].view, vk::ImageLayout::eShaderReadOnlyOptimal}}};
+
+	std::array<vk::WriteDescriptorSet, 2> sampler_write_descriptor_sets = {
+	    {{bloom.descriptor_set, 0, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[0]},
+	     {bloom.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, color_descriptors[1]}}};
+
+	get_device()->get_handle().updateDescriptorSets(sampler_write_descriptor_sets, {});
+}
+
+void HPPHDR::update_model_descriptor_set(vk::DescriptorSet descriptor_set)
+{
+	vk::DescriptorBufferInfo matrix_buffer_descriptor(uniform_buffers.matrices->get_handle(), 0, VK_WHOLE_SIZE);
+
+	vk::DescriptorImageInfo environment_image_descriptor(
+	    textures.envmap.sampler,
+	    textures.envmap.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.envmap.image->get_vk_image_view().get_format()));
+
+	vk::DescriptorBufferInfo params_buffer_descriptor(uniform_buffers.params->get_handle(), 0, VK_WHOLE_SIZE);
+
+	std::array<vk::WriteDescriptorSet, 3> write_descriptor_sets = {
+	    {{descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, matrix_buffer_descriptor},
+	     {descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, environment_image_descriptor},
+	     {descriptor_set, 2, 0, vk::DescriptorType::eUniformBuffer, {}, params_buffer_descriptor}}};
+
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 void HPPHDR::update_params()
@@ -723,80 +725,12 @@ void HPPHDR::update_params()
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
-void HPPHDR::draw()
+void HPPHDR::update_uniform_buffers()
 {
-	HPPApiVulkanSample::prepare_frame();
-
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-	queue.submit(submit_info);
-
-	HPPApiVulkanSample::submit_frame();
-}
-
-bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
-{
-	if (!HPPApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
-
-	camera.type = vkb::CameraType::LookAt;
-	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
-	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
-
-	load_assets();
-	prepare_uniform_buffers();
-	prepare_offscreen_buffer();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_sets();
-	build_command_buffers();
-	prepared = true;
-	return true;
-}
-
-void HPPHDR::render(float delta_time)
-{
-	if (!prepared)
-		return;
-	draw();
-	if (camera.updated)
-		update_uniform_buffers();
-}
-
-void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
-{
-	if (drawer.header("Settings"))
-	{
-		if (drawer.combo_box("Object type", &models.object_index, object_names))
-		{
-			update_uniform_buffers();
-			build_command_buffers();
-		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
-		{
-			update_params();
-		}
-		if (drawer.checkbox("Bloom", &bloom))
-		{
-			build_command_buffers();
-		}
-		if (drawer.checkbox("Skybox", &display_skybox))
-		{
-			build_command_buffers();
-		}
-	}
-}
-
-bool HPPHDR::resize(const uint32_t width, const uint32_t height)
-{
-	HPPApiVulkanSample::resize(width, height);
-	update_uniform_buffers();
-	return true;
+	ubo_matrices.projection       = camera.matrices.perspective;
+	ubo_matrices.modelview        = camera.matrices.view * models.transforms[models.object_index];
+	ubo_matrices.skybox_modelview = camera.matrices.view;
+	uniform_buffers.matrices->convert_and_update(ubo_matrices);
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hdr()

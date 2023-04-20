@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,15 +61,16 @@ void LightingSubpass::draw(CommandBuffer &command_buffer)
 	// Get image views of the attachments
 	auto &render_target = get_render_context().get_active_frame().get_render_target();
 	auto &target_views  = render_target.get_views();
+	assert(3 < target_views.size());
 
 	// Bind depth, albedo, and normal as input attachments
-	auto &depth_view = target_views.at(1);
+	auto &depth_view = target_views[1];
 	command_buffer.bind_input(depth_view, 0, 0, 0);
 
-	auto &albedo_view = target_views.at(2);
+	auto &albedo_view = target_views[2];
 	command_buffer.bind_input(albedo_view, 0, 1, 0);
 
-	auto &normal_view = target_views.at(3);
+	auto &normal_view = target_views[3];
 	command_buffer.bind_input(normal_view, 0, 2, 0);
 
 	// Set cull mode to front as full screen triangle is clock-wise

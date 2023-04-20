@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2022, Arm Limited and Contributors
+ Copyright (c) 2019-2023, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -137,16 +137,11 @@ function(add_project)
         source_group("\\Shaders" FILES ${SHADERS_GLSL})
     endif()
 
-    add_library(${PROJECT_NAME} STATIC ${TARGET_FILES} ${SHADERS_GLSL})
-    
-    # inherit compile definitions from framework target
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,COMPILE_DEFINITIONS>)
-
-    # add VKB_DEBUG for the debug build
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:DEBUG>:VKB_DEBUG>)
+    add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
     # # inherit include directories from framework target
-    target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:framework,INCLUDE_DIRECTORIES> $<TARGET_PROPERTY:plugins,INCLUDE_DIRECTORIES> ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
+    target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE framework)
 
     # Link against extra project specific libraries
@@ -174,5 +169,9 @@ function(add_project)
     elseif(${TARGET_TYPE} STREQUAL "Test")
         # add test project to a folder
         set_property(TARGET ${PROJECT_NAME} PROPERTY FOLDER "Tests")
+    endif()
+
+    if(VKB_DO_CLANG_TIDY)
+        set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
     endif()
 endfunction()

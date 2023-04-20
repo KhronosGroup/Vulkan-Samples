@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -481,7 +481,8 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 
 		for (auto &i_color : color_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(i_color), memory_barrier);
+			assert(i_color < views.size());
+			command_buffer.image_memory_barrier(views[i_color], memory_barrier);
 			render_target.set_layout(i_color, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 		}
 	}
@@ -495,9 +496,17 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
 
+		if (run_postprocessing)
+		{
+			// Synchronize depth with previous depth resolve operation
+			memory_barrier.dst_stage_mask |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+			memory_barrier.dst_access_mask |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		}
+
 		for (auto &i_depth : depth_atts)
 		{
-			command_buffer.image_memory_barrier(views.at(i_depth), memory_barrier);
+			assert(i_depth < views.size());
+			command_buffer.image_memory_barrier(views[i_depth], memory_barrier);
 			render_target.set_layout(i_depth, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 		}
 	}
@@ -558,7 +567,8 @@ void MSAASample::draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &ren
 		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_swapchain), memory_barrier);
+		assert(i_swapchain < views.size());
+		command_buffer.image_memory_barrier(views[i_swapchain], memory_barrier);
 	}
 }
 
@@ -575,6 +585,10 @@ void MSAASample::postprocessing(vkb::CommandBuffer &command_buffer, vkb::RenderT
 	postprocessing_pass.set_uniform_data(near_far);
 
 	auto &postprocessing_subpass = postprocessing_pass.get_subpass(0);
+	// Unbind sampled images to prevent invalid image transitions on unused images
+	postprocessing_subpass.unbind_sampled_image("depth_sampler");
+	postprocessing_subpass.unbind_sampled_image("ms_depth_sampler");
+
 	postprocessing_subpass.get_fs_variant().clear();
 	if (multisampled_depth)
 	{
@@ -602,12 +616,15 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 	{
 		// The multisampled color is the source of the resolve operation
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_color_ms), memory_barrier);
+		assert(i_color_ms < views.size());
+		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}
 
 	VkImageSubresourceLayers subresource = {0};
@@ -624,42 +641,49 @@ void MSAASample::resolve_color_separate_pass(vkb::CommandBuffer &command_buffer,
 		auto color_new_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = color_layout;
-		memory_barrier.new_layout     = color_new_layout;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.old_layout      = color_layout;
+		memory_barrier.new_layout      = color_new_layout;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
 		color_layout = color_new_layout;
 
-		command_buffer.image_memory_barrier(views.at(color_destination), memory_barrier);
+		assert(color_destination < views.size());
+		command_buffer.image_memory_barrier(views[color_destination], memory_barrier);
 	}
 
 	// Resolve multisampled attachment to destination, extremely expensive
-	command_buffer.resolve_image(views.at(i_color_ms).get_image(), views.at(color_destination).get_image(), {image_resolve});
+	command_buffer.resolve_image(views[i_color_ms].get_image(), views.at(color_destination).get_image(), {image_resolve});
 
 	// Transition attachments out of transfer stage
 	{
 		auto color_new_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = color_layout;
-		memory_barrier.new_layout     = color_new_layout;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.old_layout      = color_layout;
+		memory_barrier.new_layout      = color_new_layout;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_WRITE_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 
 		color_layout = color_new_layout;
 
-		command_buffer.image_memory_barrier(views.at(color_destination), memory_barrier);
+		command_buffer.image_memory_barrier(views[color_destination], memory_barrier);
 	}
 
 	{
 		vkb::ImageMemoryBarrier memory_barrier{};
-		memory_barrier.old_layout     = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		memory_barrier.new_layout     = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-		memory_barrier.src_stage_mask = VK_PIPELINE_STAGE_TRANSFER_BIT;
-		memory_barrier.dst_stage_mask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.old_layout      = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+		memory_barrier.new_layout      = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		memory_barrier.src_stage_mask  = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		memory_barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		memory_barrier.src_access_mask = VK_ACCESS_TRANSFER_READ_BIT;
+		memory_barrier.dst_access_mask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT;
 
-		command_buffer.image_memory_barrier(views.at(i_color_ms), memory_barrier);
+		command_buffer.image_memory_barrier(views[i_color_ms], memory_barrier);
 	}
 }
 
@@ -750,7 +774,9 @@ void MSAASample::draw_gui()
 			    {
 				    bool is_selected = (gui_sample_count == supported_sample_count_list[n]);
 				    if (ImGui::Selectable(to_string(supported_sample_count_list[n]).c_str(), is_selected))
+				    {
 					    gui_sample_count = supported_sample_count_list[n];
+				    }
 				    if (is_selected)
 				    {
 					    ImGui::SetItemDefaultFocus();
@@ -794,7 +820,9 @@ void MSAASample::draw_gui()
 					    {
 						    bool is_selected = (gui_depth_resolve_mode == supported_depth_resolve_mode_list[n]);
 						    if (ImGui::Selectable(to_string(supported_depth_resolve_mode_list[n]).c_str(), is_selected))
+						    {
 							    gui_depth_resolve_mode = supported_depth_resolve_mode_list[n];
+						    }
 						    if (is_selected)
 						    {
 							    ImGui::SetItemDefaultFocus();

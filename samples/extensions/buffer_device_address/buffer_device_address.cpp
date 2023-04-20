@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -99,7 +99,7 @@ VkPipelineLayout BufferDeviceAddress::create_pipeline_layout(bool graphics)
 	    vkb::initializers::push_constant_range(graphics ? VK_SHADER_STAGE_VERTEX_BIT : VK_SHADER_STAGE_COMPUTE_BIT,
 	                                           graphics ? sizeof(PushVertex) : sizeof(PushCompute), 0),
 	};
-	layout_create_info.pushConstantRangeCount = uint32_t(ranges.size());
+	layout_create_info.pushConstantRangeCount = static_cast<uint32_t>(ranges.size());
 	layout_create_info.pPushConstantRanges    = ranges.data();
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_create_info, nullptr, &layout));
 	return layout;
@@ -347,7 +347,7 @@ void BufferDeviceAddress::update_meshlets(VkCommandBuffer cmd)
 	// we did VERTEX -> TRANSFER -> COMPUTE chain of barriers.
 
 	// Update all meshlets.
-	vkCmdDispatch(cmd, mesh_width / 8, mesh_height / 8, uint32_t(test_buffers.size()));
+	vkCmdDispatch(cmd, mesh_width / 8, mesh_height / 8, static_cast<uint32_t>(test_buffers.size()));
 
 	VkMemoryBarrier global_memory_barrier = vkb::initializers::memory_barrier();
 	global_memory_barrier.srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
@@ -363,7 +363,7 @@ void BufferDeviceAddress::render(float delta_time)
 	VK_CHECK(vkWaitForFences(get_device().get_handle(), 1, &wait_fences[current_buffer], VK_TRUE, UINT64_MAX));
 	VK_CHECK(vkResetFences(get_device().get_handle(), 1, &wait_fences[current_buffer]));
 
-	VkViewport viewport = {0.0f, 0.0f, float(width), float(height), 0.0f, 1.0f};
+	VkViewport viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
 
 	auto cmd         = draw_cmd_buffers[current_buffer];
@@ -405,7 +405,7 @@ void BufferDeviceAddress::render(float delta_time)
 
 	// Create an ad-hoc perspective matrix.
 	push_vertex.view_projection =
-	    glm::perspective(0.5f * glm::pi<float>(), float(width) / float(height), 1.0f, 100.0f) *
+	    glm::perspective(0.5f * glm::pi<float>(), static_cast<float>(width) / static_cast<float>(height), 1.0f, 100.0f) *
 	    glm::lookAt(glm::vec3(0.0f, 0.0f, 5.0f), glm::vec3(0.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 
 	// Push pointer to array of meshlets.
@@ -414,7 +414,7 @@ void BufferDeviceAddress::render(float delta_time)
 	vkCmdPushConstants(cmd, pipelines.graphics_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_vertex), &push_vertex);
 
 	vkCmdBindIndexBuffer(cmd, index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT16);
-	vkCmdDrawIndexed(cmd, mesh_num_indices, uint32_t(test_buffers.size()), 0, 0, 0);
+	vkCmdDrawIndexed(cmd, mesh_num_indices, static_cast<uint32_t>(test_buffers.size()), 0, 0, 0);
 
 	draw_ui(cmd);
 

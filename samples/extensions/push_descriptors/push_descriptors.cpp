@@ -1,28 +1,28 @@
-/* Copyright (c) 2019-2022, Sascha Willems
-*
-* SPDX-License-Identifier: Apache-2.0
-*
-* Licensed under the Apache License, Version 2.0 the "License";
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*     http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+/* Copyright (c) 2019-2023, Sascha Willems
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 /*
  * Push descriptors
  *
  * Note: Requires a device that supports the VK_KHR_push_descriptor extension
  *
- * Push descriptors apply the push constants concept to descriptor sets. So instead of creating 
- * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects, 
- * this example uses push descriptors to pass descriptor sets for per-model textures and matrices 
+ * Push descriptors apply the push constants concept to descriptor sets. So instead of creating
+ * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects,
+ * this example uses push descriptors to pass descriptor sets for per-model textures and matrices
  * at command buffer creation time.
  */
 
@@ -100,7 +100,7 @@ void PushDescriptors::build_command_buffers()
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
 		const auto &vertex_buffer = models.cube->vertex_buffers.at("vertex_buffer");
-		auto &      index_buffer  = models.cube->index_buffer;
+		auto       &index_buffer  = models.cube->index_buffer;
 
 		VkDeviceSize offsets[1] = {0};
 		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer.get(), offsets);
@@ -320,11 +320,11 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	}
 
 	/*
-		Extension specific functions
+	    Extension specific functions
 	*/
 
 	// The push descriptor update function is part of an extension so it has to be manually loaded
-	vkCmdPushDescriptorSetKHR = (PFN_vkCmdPushDescriptorSetKHR) vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdPushDescriptorSetKHR");
+	vkCmdPushDescriptorSetKHR = reinterpret_cast<PFN_vkCmdPushDescriptorSetKHR>(vkGetDeviceProcAddr(get_device().get_handle(), "vkCmdPushDescriptorSetKHR"));
 	if (!vkCmdPushDescriptorSetKHR)
 	{
 		throw std::runtime_error("Could not get a valid function pointer for vkCmdPushDescriptorSetKHR");
@@ -343,7 +343,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceProperties2KHR(get_device().get_gpu().get_handle(), &device_properties);
 
 	/*
-		End of extension specific functions
+	    End of extension specific functions
 	*/
 
 	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
@@ -364,7 +364,9 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 void PushDescriptors::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (animate)
 	{
