@@ -163,7 +163,7 @@ set(KTX_INCLUDE_DIRS
     ${KTX_DIR}/other_include
 )
 
-add_library(ktx SHARED ${KTX_SOURCES})
+add_library(ktx STATIC ${KTX_SOURCES})
 
 target_compile_definitions(ktx PUBLIC LIBKTX)
 if (WIN32)
