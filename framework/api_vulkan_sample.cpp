@@ -312,6 +312,11 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					case vkb::KeyCode::P:
 						paused = !paused;
 						break;
+					case vkb::KeyCode::F1:
+						if (gui)
+						{
+							gui->visible = !gui->visible;
+						}
 					default:
 						break;
 				}

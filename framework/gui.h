@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -83,12 +83,12 @@ class Drawer
   public:
 	Drawer() = default;
 
-	/** 
+	/**
 	 * @brief Clears the dirty bit set
 	 */
 	void clear();
 
-	/** 
+	/**
 	 * @brief Returns true if the drawer has been updated
 	 */
 	bool is_dirty();
@@ -238,6 +238,9 @@ class Gui
 		glm::vec2 scale;
 		glm::vec2 translate;
 	} push_const_block;
+
+	/// Used to show/hide the GUI
+	static bool visible;
 
 	/**
 	 * @brief Initializes the Gui
@@ -411,9 +414,6 @@ class Gui
 
 	/// Used to measure duration of input events
 	Timer timer;
-
-	/// Used to show/hide the GUI
-	bool visible{true};
 
 	bool prev_visible{true};
 
