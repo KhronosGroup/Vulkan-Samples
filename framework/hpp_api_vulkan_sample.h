@@ -170,7 +170,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	HPPTexture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
-   * @brief Laods in a ktx 2D texture array
+   * @brief Loads in a ktx 2D texture array
    * @param file The filename of the texture to load
    * @param content_type The type of content in the image file
    */

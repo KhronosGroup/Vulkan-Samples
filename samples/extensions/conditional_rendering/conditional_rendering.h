@@ -70,7 +70,7 @@ class ConditionalRendering : public ApiVulkanSample
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
-	void         preprare_visibility_buffer();
+	void         prepare_visibility_buffer();
 	void         update_visibility_buffer();
 	void         draw();
 	bool         prepare(vkb::Platform &platform) override;

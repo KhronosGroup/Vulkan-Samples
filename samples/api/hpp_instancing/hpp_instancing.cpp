@@ -221,7 +221,7 @@ void HPPInstancing::prepare_pipelines()
 	//	...
 	//	layout (location = 4) in vec3 instancePos;	Per-Instance
 	std::array<vk::VertexInputAttributeDescription, 7> attribute_descriptions = {
-	    {                                                                // Per-vertex attributees
+	    {                                                                // Per-vertex attributes
 	                                                                     // These are advanced for each vertex fetched by the vertex shader
 	     {0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Location 0: Position
 	     {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 1: Normal
@@ -415,7 +415,7 @@ void HPPInstancing::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
 
 	// Submit to queue
@@ -431,7 +431,7 @@ bool HPPInstancing::prepare(vkb::platform::HPPPlatform &platform)
 		return false;
 	}
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));

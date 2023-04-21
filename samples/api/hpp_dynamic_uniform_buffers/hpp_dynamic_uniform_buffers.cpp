@@ -297,7 +297,7 @@ void HPPDynamicUniformBuffers::prepare_camera()
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
 }
 

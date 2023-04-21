@@ -150,7 +150,7 @@ void ConstantData::draw_renderpass(vkb::CommandBuffer &command_buffer, vkb::Rend
 	// Only draw if using a defined method
 	if (selected_method != Undefined)
 	{
-		// If the GUI dropdwon value is changed by the user, then handle updating the subpasses and sample state
+		// If the GUI dropdown value is changed by the user, then handle updating the subpasses and sample state
 		if (gui_method_value != last_gui_method_value)
 		{
 			// Clear the descriptor sets for all render frames so that they recreate properly

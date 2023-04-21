@@ -399,7 +399,7 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = context.gpu.getSurfaceFormatsKHR(context.surface);
 	assert(!supported_surface_formats.empty());
 
-	// We want to get an SRGB image format that matches our list of preferred format candiates
+	// We want to get an SRGB image format that matches our list of preferred format candidates
 	auto preferred_format_list = std::vector<vk::Format>{vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32};
 
 	// Look for the first supported format in our list of preferred formats

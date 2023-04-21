@@ -114,7 +114,7 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 
 	SPIRVReflection spirv_reflection;
 
-	// Reflect all shader resouces
+	// Reflect all shader resources
 	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
 	{
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};

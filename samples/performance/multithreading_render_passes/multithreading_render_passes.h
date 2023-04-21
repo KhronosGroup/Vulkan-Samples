@@ -32,7 +32,7 @@ struct alignas(16) ShadowUniform
 
 /**
  * @brief Multithreading with Render Passes
- * This sample shows perfomance improvement when using multithreading with 
+ * This sample shows performance improvement when using multithreading with 
  * multiple render passes and primary level command buffers.
  */
 class MultithreadingRenderPasses : public vkb::VulkanSample

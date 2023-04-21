@@ -54,7 +54,7 @@
  * consumed by the postprocessing renderpass.
  *
  * As with unresolved color, writing out unresolved depth attachments is very
- * bandwith intensive and therefore depth-based postprocessing was
+ * bandwidth intensive and therefore depth-based postprocessing was
  * usually avoided on mobile platforms.
  *
  * This sample shows how to use the extension to also resolve the depth

@@ -42,7 +42,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	};
 
 	// Framebuffer for offscreen rendering
-	struct FramebufferAttachement
+	struct FramebufferAttachment
 	{
 		vk::Format       format;
 		vk::Image        image;
@@ -59,7 +59,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 
 	struct FilterPassData
 	{
-		FramebufferAttachement color;
+		FramebufferAttachment color;
 		vk::Extent2D           extent;
 		vk::Framebuffer        framebuffer;
 		vk::RenderPass         render_pass;
@@ -76,8 +76,8 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 
 	struct OffscreenData
 	{
-		FramebufferAttachement color[2];
-		FramebufferAttachement depth;
+		FramebufferAttachment color[2];
+		FramebufferAttachment depth;
 		vk::Extent2D           extent;
 		vk::Framebuffer        framebuffer;
 		vk::RenderPass         render_pass;
@@ -140,7 +140,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
 	void render(float delta_time) override;
 
-	void create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachement *attachment);
+	void create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachment *attachment);
 	void draw();
 	void get_time_stamp_results();
 	void load_assets();

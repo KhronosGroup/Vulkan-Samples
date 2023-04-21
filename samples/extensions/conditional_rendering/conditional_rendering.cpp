@@ -311,7 +311,7 @@ void ConditionalRendering::update_uniform_buffers()
 }
 
 // Creates a dedicated buffer to store the visibility information sourced at draw time
-void ConditionalRendering::preprare_visibility_buffer()
+void ConditionalRendering::prepare_visibility_buffer()
 {
 	// Conditional values are 32 bits wide and if it's zero the rendering commands are discarded
 	// We therefore create a buffer that can hold int32 conditional values for all nodes in the glTF scene
@@ -354,7 +354,7 @@ bool ConditionalRendering::prepare(vkb::Platform &platform)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	load_assets();
 	prepare_uniform_buffers();
-	preprare_visibility_buffer();
+	prepare_visibility_buffer();
 	setup_descriptor_set_layout();
 	prepare_pipelines();
 	setup_descriptor_pool();
