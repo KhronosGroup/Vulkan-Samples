@@ -58,7 +58,7 @@ float getTessLevel(vec4 p0, vec4 p1)
 	}
 	else if (centerDistance >= shortDistance && centerDistance < midDistance)
 	{
-		tessellationLevel = ubo_tessellation.tessellationFactor * 0.4;
+		tessellationLevel = ubo_tessellation.tessellationFactor * 0.4f;
 	}
 	else
 	{
@@ -75,7 +75,7 @@ vec3 getColor(float tessellationLevel)
 	{
 		outColor = vec3(1.0f, 0.0f, 0.0f);        // red color
 	}
-	else if (tessellationLevel == ubo_tessellation.tessellationFactor * 0.4)
+	else if (tessellationLevel == ubo_tessellation.tessellationFactor * 0.4f)
 	{
 		outColor = vec3(0.0f, 0.0f, 1.0f);        // blue color
 	}

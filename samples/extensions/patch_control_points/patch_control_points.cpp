@@ -148,7 +148,7 @@ void PatchControlPoints::update_uniform_buffers()
 	ubo_tess.tessellation_level = gui_settings.tess_level;
 	if (!gui_settings.tessellation)
 	{
-		// Setting this to zero sets all tessellation levels to 1.0 in the shader
+		// Setting the tessellation level to 1.0 in the shader
 		ubo_tess.tessellation_level = 1.0f;
 	}
 

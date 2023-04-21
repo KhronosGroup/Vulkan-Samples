@@ -38,6 +38,5 @@ void main(void)
 	rotX[1][2]  = sin(PI);
 	rotX[2][1]  = -sin(PI);
 	rotX[2][2]  = cos(PI);
-	vec4 pos    = rotX * vec4(inPos + push_constants.direction, 1.0f);
-	gl_Position = pos;
+	gl_Position = rotX * vec4(inPos + push_constants.direction, 1.0f);
 }
