@@ -40,7 +40,7 @@ enum LightType
 	Directional = 0,
 	Point       = 1,
 	Spot        = 2,
-	// Insert new lightype here
+	// Insert new light type here
 	Max
 };
 

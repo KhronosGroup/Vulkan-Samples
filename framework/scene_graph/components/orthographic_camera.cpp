@@ -102,7 +102,7 @@ float OrthographicCamera::get_far_plane() const
 
 glm::mat4 OrthographicCamera::get_projection()
 {
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	return glm::ortho(left, right, bottom, top, far_plane, near_plane);
 }
 }        // namespace sg

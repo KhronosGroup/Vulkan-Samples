@@ -61,8 +61,8 @@ CommandGroup::CommandGroup(const std::string &name, const std::vector<Command *>
 {
 }
 
-SubCommand::SubCommand(const std::string &name, const std::string &help_line, const std::vector<Command *> &comamnds) :
-    TypedCommand<SubCommand>(name, help_line), MultipleCommands(comamnds)
+SubCommand::SubCommand(const std::string &name, const std::string &help_line, const std::vector<Command *> &commands) :
+    TypedCommand<SubCommand>(name, help_line), MultipleCommands(commands)
 {}
 
 PositionalCommand::PositionalCommand(const std::string &name, const std::string &help_line) :

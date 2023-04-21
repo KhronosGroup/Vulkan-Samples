@@ -500,7 +500,7 @@ MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::RenderContext &ren
 void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
 {
 	// Enabling depth bias to get rid of self-shadowing artifacts
-	// Depth bias leterally "pushes" slightly all the primitives further away from the camera taking their slope into account
+	// Depth bias literally "pushes" slightly all the primitives further away from the camera taking their slope into account
 	// It helps to avoid precision related problems while doing depth comparisons in the final pass
 	vkb::RasterizationState rasterization_state{};
 	rasterization_state.front_face        = front_face;

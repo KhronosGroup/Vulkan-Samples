@@ -27,7 +27,7 @@ class Device;
 namespace core
 {
 /**
- * @brief A simplied buffer class for creating temporary device local scratch buffers, used in e.g. ray tracing
+ * @brief A simplified buffer class for creating temporary device local scratch buffers, used in e.g. ray tracing
  */
 class ScratchBuffer
 {

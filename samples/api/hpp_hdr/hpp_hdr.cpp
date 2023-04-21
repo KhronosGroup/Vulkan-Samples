@@ -426,7 +426,7 @@ void HPPHDR::create_models_pipelines()
 
 vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description)
 {
-	// Use subpass dependencies for attachment layput transitions
+	// Use subpass dependencies for attachment layout transitions
 	std::array<vk::SubpassDependency, 2> subpass_dependencies;
 
 	subpass_dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
@@ -511,7 +511,7 @@ void HPPHDR::prepare_camera()
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
@@ -540,13 +540,13 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Color attachments
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		// Depth attachment
 		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		std::vector<vk::AttachmentDescription> attachment_descriptions(3);
 
 		// Init attachment properties

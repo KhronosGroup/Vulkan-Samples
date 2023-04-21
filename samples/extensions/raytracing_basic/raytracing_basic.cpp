@@ -577,7 +577,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
-	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target envinroment for the glslang compiler
+	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the glslang compiler
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
 	/*
@@ -640,7 +640,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 }
 
 /*
-    Deletes all ressources acquired by an acceleration structure
+    Deletes all resources acquired by an acceleration structure
 */
 void RaytracingBasic::delete_acceleration_structure(AccelerationStructure &acceleration_structure)
 {

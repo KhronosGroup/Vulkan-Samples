@@ -111,7 +111,7 @@ void PushDescriptors::build_command_buffers()
 		{
 			// Instead of preparing the descriptor sets up-front, using push descriptors we can set (push) them inside of a command buffer
 			// This allows a more dynamic approach without the need to create descriptor sets for each model
-			// Note: dstSet for each descriptor set write is left at zero as this is ignored when ushing push descriptors
+			// Note: dstSet for each descriptor set write is left at zero as this is ignored when using push descriptors
 
 			std::array<VkWriteDescriptorSet, 3> write_descriptor_sets{};
 
@@ -346,7 +346,7 @@ bool PushDescriptors::prepare(vkb::Platform &platform)
 	    End of extension specific functions
 	*/
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, static_cast<float>(width) / height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));

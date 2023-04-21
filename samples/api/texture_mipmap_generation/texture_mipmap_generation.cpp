@@ -78,7 +78,7 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	// numLevels = 1 + floor(log2(max(w, h, d)))
 	texture.mip_levels = static_cast<uint32_t>(floor(log2(std::max(texture.width, texture.height))) + 1);
 
-	// Get device properites for the requested texture format
+	// Get device properties for the requested texture format
 	// Check if the selected format supports blit source and destination, which is required for generating the mip levels
 	// If this is not supported you could implement a fallback via compute shader image writes and stores
 	VkFormatProperties formatProperties;
@@ -368,7 +368,7 @@ void TextureMipMapGeneration::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 

@@ -311,7 +311,7 @@ void HPPTimestampQueries::render(float delta_time)
 		update_uniform_buffers();
 }
 
-void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachement *attachment)
+void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachment *attachment)
 {
 	attachment->format = format;
 
@@ -570,7 +570,7 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 		// Color attachments
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment, &offscreen.color[0]);
 		create_attachment(vk::Format::eR32G32B32A32Sfloat, vk::ImageUsageFlagBits::eColorAttachment, &offscreen.color[1]);
 		// Depth attachment
@@ -613,7 +613,7 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_references, {}, &depth_reference);
 
-		// Use subpass dependencies for attachment layput transitions
+		// Use subpass dependencies for attachment layout transitions
 		std::array<vk::SubpassDependency, 2> dependencies = {{{VK_SUBPASS_EXTERNAL,
 		                                                       0,
 		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,
@@ -684,7 +684,7 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
 
-		// Use subpass dependencies for attachment layput transitions
+		// Use subpass dependencies for attachment layout transitions
 		std::array<vk::SubpassDependency, 2> dependencies = {{{VK_SUBPASS_EXTERNAL,
 		                                                       0,
 		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,

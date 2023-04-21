@@ -50,7 +50,7 @@ class Command
 	}
 
 	/**
-	 * @brief Case to a specfic type of command
+	 * @brief Case to a specific type of command
 	 * 
 	 * @tparam U The type of command to cast to
 	 * @return U* A ptr to this as the type of command
@@ -63,7 +63,7 @@ class Command
 	}
 
 	/**
-	 * @brief Case to a specfic type of command
+	 * @brief Case to a specific type of command
 	 * 
 	 * @tparam U The type of command to cast to
 	 * @return const U* A ptr to this as the type of command
@@ -173,7 +173,7 @@ enum class FlagType
 };
 
 /**
- * @brief Flag command reprosent a flag and value e.g --sample afbc
+ * @brief Flag command represent a flag and value e.g --sample afbc
  */
 class FlagCommand : public TypedCommand<FlagCommand>
 {

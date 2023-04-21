@@ -206,7 +206,7 @@ VkPipelineShaderStageCreateInfo DebugUtils::debug_load_shader(const std::string 
 
 	if (debug_utils_supported)
 	{
-		// Name the sader (by file name)
+		// Name the shader (by file name)
 		set_object_name(VK_OBJECT_TYPE_SHADER_MODULE, (uint64_t) shader_stage.module, std::string("Shader " + file).c_str());
 
 		std::vector<uint8_t> buffer = vkb::fs::read_shader_binary(file);
@@ -542,7 +542,7 @@ void DebugUtils::prepare_offscreen_buffer()
 		// Depth attachment
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
 
 		// Init attachment properties
@@ -654,7 +654,7 @@ void DebugUtils::prepare_offscreen_buffer()
 		// Two color buffers
 		create_attachment(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
 
 		// Init attachment properties
@@ -1066,7 +1066,7 @@ bool DebugUtils::prepare(vkb::Platform &platform)
 	camera.set_position(glm::vec3(0.0f, 0.0f, -6.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	debug_check_extension();

@@ -32,7 +32,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessag
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                               void                                       *user_data)
 {
-	// Log debug messge
+	// Log debug message
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
 		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
