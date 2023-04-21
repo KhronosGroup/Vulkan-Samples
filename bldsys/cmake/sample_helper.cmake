@@ -140,9 +140,6 @@ function(add_project)
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
     set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
-    # add VKB_DEBUG for the debug build
-    target_compile_definitions(${PROJECT_NAME} PUBLIC $<$<CONFIG:DEBUG>:VKB_DEBUG>)
-
     # # inherit include directories from framework target
     target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR})
     target_link_libraries(${PROJECT_NAME} PRIVATE framework)

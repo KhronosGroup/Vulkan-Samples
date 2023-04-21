@@ -1,4 +1,4 @@
-/* Copyright (c) 2022-2023, Sascha Willems
+/* Copyright (c) 2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,28 +15,40 @@
  * limitations under the License.
  */
 
-/*
- * Timestamp queries (based on the HDR sample)
- */
+#include "calibrated_timestamps.h"
 
-#include "timestamp_queries.h"
-
-#include "scene_graph/components/sub_mesh.h"
-
-TimestampQueries::TimestampQueries()
+std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 {
-	title = "Timestamp queries";
-	// This sample uses vkCmdResetQueryPool to reset the timestamp query pool on the host, which requires VK_EXT_host_query_reset or Vulkan 1.2
-	add_device_extension(VK_EXT_HOST_QUERY_RESET_EXTENSION_NAME);
-	// This also requires us to enable the feature in the appropriate feature struct, see request_gpu_features()
+	switch (input_time_domain)
+	{
+		case VK_TIME_DOMAIN_DEVICE_EXT:
+			return "device time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_EXT:
+			return "clock monotonic time domain";
+		case VK_TIME_DOMAIN_CLOCK_MONOTONIC_RAW_EXT:
+			return "clock monotonic raw time domain";
+		case VK_TIME_DOMAIN_QUERY_PERFORMANCE_COUNTER_EXT:
+			return "query performance time domain";
+		default:
+			return "unknown time domain";
+	}
 }
 
-TimestampQueries::~TimestampQueries()
+CalibratedTimestamps::CalibratedTimestamps() :
+    is_time_domain_init(false)
+{
+	title = "Calibrated Timestamps";
+
+	// Add instance extensions required for calibrated timestamps
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	// NOTICE THAT: calibrated timestamps is a DEVICE extension!
+	add_device_extension(VK_EXT_CALIBRATED_TIMESTAMPS_EXTENSION_NAME);
+}
+
+CalibratedTimestamps::~CalibratedTimestamps()
 {
 	if (device)
 	{
-		vkDestroyQueryPool(get_device().get_handle(), query_pool_timestamps, nullptr);
-
 		vkDestroyPipeline(get_device().get_handle(), pipelines.skybox, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.reflect, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), pipelines.composition, nullptr);
@@ -66,171 +78,98 @@ TimestampQueries::~TimestampQueries()
 
 		filter_pass.color[0].destroy(get_device().get_handle());
 
-		vkDestroySampler(get_device().get_handle(), textures.envmap.sampler, nullptr);
+		vkDestroySampler(get_device().get_handle(), textures.environment_map.sampler, nullptr);
 	}
 }
 
-void TimestampQueries::request_gpu_features(vkb::PhysicalDevice &gpu)
+void CalibratedTimestamps::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// We need to enable the command pool reset feature in the extension struct
-	auto &requested_extension_features          = gpu.request_extension_features<VkPhysicalDeviceHostQueryResetFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_HOST_QUERY_RESET_FEATURES_EXT);
-	requested_extension_features.hostQueryReset = VK_TRUE;
-
-	// Enable anisotropic filtering if supported
 	if (gpu.get_features().samplerAnisotropy)
 	{
 		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
 	}
 }
 
-void TimestampQueries::build_command_buffers()
+void CalibratedTimestamps::build_command_buffers()
 {
+	timestamps_begin("Build_Command_Buffers");
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[2];
-	clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-	clear_values[1].depthStencil = {0.0f, 0};
+	std::array<VkClearValue, 3> offscreen_clear_values{};
+	VkClearValue                filter_clear_value{};
+	std::array<VkClearValue, 2> bloom_clear_values{};
 
-	VkRenderPassBeginInfo render_pass_begin_info = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass            = render_pass;
-	render_pass_begin_info.renderArea.offset.x   = 0;
-	render_pass_begin_info.renderArea.offset.y   = 0;
-	render_pass_begin_info.clearValueCount       = 2;
-	render_pass_begin_info.pClearValues          = clear_values;
+	VkRenderPassBeginInfo offscreen_render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	offscreen_render_pass_begin_info.renderPass               = offscreen.render_pass;
+	offscreen_render_pass_begin_info.framebuffer              = offscreen.framebuffer;
+	offscreen_render_pass_begin_info.renderArea.extent.width  = offscreen.width;
+	offscreen_render_pass_begin_info.renderArea.extent.height = offscreen.height;
+	offscreen_render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(offscreen_clear_values.size());
+	offscreen_render_pass_begin_info.pClearValues             = offscreen_clear_values.data();
+	VkRenderPassBeginInfo filter_render_pass_begin_info       = vkb::initializers::render_pass_begin_info();
+	filter_render_pass_begin_info.framebuffer                 = filter_pass.framebuffer;
+	filter_render_pass_begin_info.renderPass                  = filter_pass.render_pass;
+	filter_render_pass_begin_info.clearValueCount             = 1;
+	filter_render_pass_begin_info.renderArea.extent.width     = filter_pass.width;
+	filter_render_pass_begin_info.renderArea.extent.height    = filter_pass.height;
+	filter_render_pass_begin_info.pClearValues                = &filter_clear_value;
+	VkRenderPassBeginInfo bloom_render_pass_begin_info        = vkb::initializers::render_pass_begin_info();
+	bloom_render_pass_begin_info.renderPass                   = render_pass;
+	bloom_render_pass_begin_info.clearValueCount              = static_cast<uint32_t>(bloom_clear_values.size());
+	bloom_render_pass_begin_info.renderArea.extent.width      = width;
+	bloom_render_pass_begin_info.renderArea.extent.height     = height;
+	bloom_render_pass_begin_info.pClearValues                 = bloom_clear_values.data();
+
+	VkViewport offscreen_viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
+	VkViewport filter_viewport    = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
+	VkViewport bloom_viewport     = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+
+	VkRect2D offscreen_scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
+	VkRect2D filter_scissor    = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
+	VkRect2D bloom_scissor     = vkb::initializers::rect2D(static_cast<int>(width), static_cast<int>(height), 0, 0);
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
-
-		// Reset the timestamp query pool, so we can start fetching new values into it
-		vkCmdResetQueryPool(draw_cmd_buffers[i], query_pool_timestamps, 0, static_cast<uint32_t>(time_stamps.size()));
-
 		{
-			/*
-			    First pass: Render scene to offscreen framebuffer
-			*/
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &offscreen_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &offscreen_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &offscreen_scissor);
 
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 0);
-
-			std::array<VkClearValue, 3> clear_values;
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[2].depthStencil = {0.0f, 0};
-
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.renderPass               = offscreen.render_pass;
-			render_pass_begin_info.framebuffer              = offscreen.framebuffer;
-			render_pass_begin_info.renderArea.extent.width  = offscreen.width;
-			render_pass_begin_info.renderArea.extent.height = offscreen.height;
-			render_pass_begin_info.clearValueCount          = 3;
-			render_pass_begin_info.pClearValues             = clear_values.data();
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(offscreen.width), static_cast<float>(offscreen.height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(offscreen.width, offscreen.height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-			VkDeviceSize offsets[1] = {0};
-
-			// Skybox
 			if (display_skybox)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.skybox);
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, NULL);
-
+				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.skybox, 0, nullptr);
 				draw_model(models.skybox, draw_cmd_buffers[i]);
 			}
-
-			// 3D object
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.reflect);
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, NULL);
-
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.models, 0, 1, &descriptor_sets.object, 0, nullptr);
 			draw_model(models.objects[models.object_index], draw_cmd_buffers[i]);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, 1);
 		}
 
-		/*
-		    Second render pass: First bloom pass
-		*/
 		if (bloom)
 		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
-
-			// Bloom filter
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = filter_pass.framebuffer;
-			render_pass_begin_info.renderPass               = filter_pass.render_pass;
-			render_pass_begin_info.clearValueCount          = 1;
-			render_pass_begin_info.renderArea.extent.width  = filter_pass.width;
-			render_pass_begin_info.renderArea.extent.height = filter_pass.height;
-			render_pass_begin_info.pClearValues             = clear_values;
-
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, 2);
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(filter_pass.width), static_cast<float>(filter_pass.height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(filter_pass.width, filter_pass.height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, NULL);
-
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &filter_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &filter_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &filter_scissor);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.bloom_filter, 0, 1, &descriptor_sets.bloom_filter, 0, nullptr);
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[1]);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, 3);
 		}
 
-		/*
-		    Note: Explicit synchronization is not required between the render pass, as this is done implicit via sub pass dependencies
-		*/
-
-		/*
-		    Third render pass: Scene rendering with applied second bloom pass (when enabled)
-		*/
 		{
-			VkClearValue clear_values[2];
-			clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
-			clear_values[1].depthStencil = {0.0f, 0};
+			bloom_render_pass_begin_info.framebuffer = framebuffers[i];
 
-			// Final composition
-			VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-			render_pass_begin_info.framebuffer              = framebuffers[i];
-			render_pass_begin_info.renderPass               = render_pass;
-			render_pass_begin_info.clearValueCount          = 2;
-			render_pass_begin_info.renderArea.extent.width  = width;
-			render_pass_begin_info.renderArea.extent.height = height;
-			render_pass_begin_info.pClearValues             = clear_values;
-
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, query_pool_timestamps, bloom ? 4 : 2);
-
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-
-			VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
-
-			VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
-
-			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, NULL);
-
-			// Scene
+			vkCmdBeginRenderPass(draw_cmd_buffers[i], &bloom_render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+			vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &bloom_viewport);
+			vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &bloom_scissor);
+			vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layouts.composition, 0, 1, &descriptor_sets.composition, 0, nullptr);
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.composition);
 			vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
-			// Bloom
 			if (bloom)
 			{
 				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines.bloom[0]);
@@ -238,37 +177,32 @@ void TimestampQueries::build_command_buffers()
 			}
 
 			draw_ui(draw_cmd_buffers[i]);
-
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
-
-			vkCmdWriteTimestamp(draw_cmd_buffers[i], VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, query_pool_timestamps, bloom ? 5 : 3);
 		}
-
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
+
+	timestamps_end("Build_Command_Buffers");
 }
 
-void TimestampQueries::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
+void CalibratedTimestamps::create_attachment(VkFormat format, VkImageUsageFlagBits usage, FrameBufferAttachment *attachment)
 {
 	VkImageAspectFlags aspect_mask = 0;
-	VkImageLayout      image_layout;
 
 	attachment->format = format;
 
 	if (usage & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT)
 	{
-		aspect_mask  = VK_IMAGE_ASPECT_COLOR_BIT;
-		image_layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		aspect_mask = VK_IMAGE_ASPECT_COLOR_BIT;
 	}
 	if (usage & VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT)
 	{
 		aspect_mask = VK_IMAGE_ASPECT_DEPTH_BIT;
-		// Stencil aspect should only be set on depth + stencil formats (VK_FORMAT_D16_UNORM_S8_UINT..VK_FORMAT_D32_SFLOAT_S8_UINT
+
 		if (format >= VK_FORMAT_D16_UNORM_S8_UINT)
 		{
 			aspect_mask |= VK_IMAGE_ASPECT_STENCIL_BIT;
 		}
-		image_layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	}
 
 	assert(aspect_mask > 0);
@@ -308,26 +242,39 @@ void TimestampQueries::create_attachment(VkFormat format, VkImageUsageFlagBits u
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
 }
 
-// Prepare a new framebuffer and attachments for offscreen rendering (G-Buffer)
-void TimestampQueries::prepare_offscreen_buffer()
+void CalibratedTimestamps::prepare_offscreen_buffer()
 {
+	VkFormat color_format{VK_FORMAT_UNDEFINED};
+
+	const std::vector<VkFormat> float_format_priority_list = {
+	    VK_FORMAT_R32G32B32A32_SFLOAT,
+	    VK_FORMAT_R16G16B16A16_SFLOAT};
+
+	for (auto &format : float_format_priority_list)
 	{
-		offscreen.width  = width;
-		offscreen.height = height;
+		const VkFormatProperties properties = get_device().get_gpu().get_format_properties(format);
+		if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT)
+		{
+			color_format = format;
+			break;
+		}
+	}
 
-		// Color attachments
+	if (color_format == VK_FORMAT_UNDEFINED)
+	{
+		throw std::runtime_error("No suitable float format could be determined");
+	}
 
-		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
-		// Depth attachment
+	{
+		offscreen.width  = static_cast<int32_t>(width);
+		offscreen.height = static_cast<int32_t>(height);
+
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[0]);
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &offscreen.color[1]);
 		create_attachment(depth_format, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, &offscreen.depth);
 
-		// Set up separate renderpass with references to the colorand depth attachments
 		std::array<VkAttachmentDescription, 3> attachment_descriptions = {};
 
-		// Init attachment properties
 		for (uint32_t i = 0; i < 3; ++i)
 		{
 			attachment_descriptions[i].samples        = VK_SAMPLE_COUNT_1_BIT;
@@ -347,7 +294,6 @@ void TimestampQueries::prepare_offscreen_buffer()
 			}
 		}
 
-		// Formats
 		attachment_descriptions[0].format = offscreen.color[0].format;
 		attachment_descriptions[1].format = offscreen.color[1].format;
 		attachment_descriptions[2].format = offscreen.depth.format;
@@ -363,11 +309,10 @@ void TimestampQueries::prepare_offscreen_buffer()
 		VkSubpassDescription subpass    = {};
 		subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.pColorAttachments       = color_references.data();
-		subpass.colorAttachmentCount    = 2;
+		subpass.colorAttachmentCount    = static_cast<uint32_t>(color_references.size());
 		subpass.pDepthStencilAttachment = &depth_reference;
 
-		// Use subpass dependencies for attachment layput transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -391,19 +336,19 @@ void TimestampQueries::prepare_offscreen_buffer()
 		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
 		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
+		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &offscreen.render_pass));
 
-		std::array<VkImageView, 3> attachments;
+		std::array<VkImageView, 3> attachments{};
 		attachments[0] = offscreen.color[0].view;
 		attachments[1] = offscreen.color[1].view;
 		attachments[2] = offscreen.depth.view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = offscreen.render_pass;
 		framebuffer_create_info.pAttachments            = attachments.data();
 		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
@@ -412,7 +357,6 @@ void TimestampQueries::prepare_offscreen_buffer()
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &offscreen.framebuffer));
 
-		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -428,28 +372,22 @@ void TimestampQueries::prepare_offscreen_buffer()
 		VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler, nullptr, &offscreen.sampler));
 	}
 
-	// Bloom separable filter pass
 	{
-		filter_pass.width  = width;
-		filter_pass.height = height;
+		filter_pass.width  = static_cast<int32_t>(width);
+		filter_pass.height = static_cast<int32_t>(height);
 
-		// Color attachments
+		create_attachment(color_format, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
 
-		// Two floating point color buffers
-		create_attachment(VK_FORMAT_R32G32B32A32_SFLOAT, VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, &filter_pass.color[0]);
+		VkAttachmentDescription attachment_description{};
 
-		// Set up separate renderpass with references to the colorand depth attachments
-		std::array<VkAttachmentDescription, 1> attachment_descriptions = {};
-
-		// Init attachment properties
-		attachment_descriptions[0].samples        = VK_SAMPLE_COUNT_1_BIT;
-		attachment_descriptions[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
-		attachment_descriptions[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
-		attachment_descriptions[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-		attachment_descriptions[0].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-		attachment_descriptions[0].initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
-		attachment_descriptions[0].finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		attachment_descriptions[0].format         = filter_pass.color[0].format;
+		attachment_description.samples        = VK_SAMPLE_COUNT_1_BIT;
+		attachment_description.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		attachment_description.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+		attachment_description.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		attachment_description.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		attachment_description.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+		attachment_description.finalLayout    = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		attachment_description.format         = filter_pass.color[0].format;
 
 		std::vector<VkAttachmentReference> color_references;
 		color_references.push_back({0, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL});
@@ -457,10 +395,9 @@ void TimestampQueries::prepare_offscreen_buffer()
 		VkSubpassDescription subpass = {};
 		subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.pColorAttachments    = color_references.data();
-		subpass.colorAttachmentCount = 1;
+		subpass.colorAttachmentCount = static_cast<uint32_t>(color_references.size());
 
-		// Use subpass dependencies for attachment layput transitions
-		std::array<VkSubpassDependency, 2> dependencies;
+		std::array<VkSubpassDependency, 2> dependencies{};
 
 		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 		dependencies[0].dstSubpass      = 0;
@@ -480,30 +417,28 @@ void TimestampQueries::prepare_offscreen_buffer()
 
 		VkRenderPassCreateInfo render_pass_create_info = {};
 		render_pass_create_info.sType                  = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		render_pass_create_info.pAttachments           = attachment_descriptions.data();
-		render_pass_create_info.attachmentCount        = static_cast<uint32_t>(attachment_descriptions.size());
+		render_pass_create_info.pAttachments           = &attachment_description;
+		render_pass_create_info.attachmentCount        = 1;
 		render_pass_create_info.subpassCount           = 1;
 		render_pass_create_info.pSubpasses             = &subpass;
-		render_pass_create_info.dependencyCount        = 2;
+		render_pass_create_info.dependencyCount        = static_cast<uint32_t>(dependencies.size());
 		render_pass_create_info.pDependencies          = dependencies.data();
 
 		VK_CHECK(vkCreateRenderPass(get_device().get_handle(), &render_pass_create_info, nullptr, &filter_pass.render_pass));
 
-		std::array<VkImageView, 1> attachments;
-		attachments[0] = filter_pass.color[0].view;
+		VkImageView attachment = filter_pass.color[0].view;
 
 		VkFramebufferCreateInfo framebuffer_create_info = {};
 		framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebuffer_create_info.pNext                   = NULL;
+		framebuffer_create_info.pNext                   = nullptr;
 		framebuffer_create_info.renderPass              = filter_pass.render_pass;
-		framebuffer_create_info.pAttachments            = attachments.data();
-		framebuffer_create_info.attachmentCount         = static_cast<uint32_t>(attachments.size());
+		framebuffer_create_info.pAttachments            = &attachment;
+		framebuffer_create_info.attachmentCount         = 1;
 		framebuffer_create_info.width                   = filter_pass.width;
 		framebuffer_create_info.height                  = filter_pass.height;
 		framebuffer_create_info.layers                  = 1;
 		VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &filter_pass.framebuffer));
 
-		// Create sampler to sample from the color attachments
 		VkSamplerCreateInfo sampler = vkb::initializers::sampler_create_info();
 		sampler.magFilter           = VK_FILTER_NEAREST;
 		sampler.minFilter           = VK_FILTER_NEAREST;
@@ -520,19 +455,18 @@ void TimestampQueries::prepare_offscreen_buffer()
 	}
 }
 
-void TimestampQueries::load_assets()
+void CalibratedTimestamps::load_assets()
 {
-	// Models
+	timestamps_begin("loadAssets");
 	models.skybox                      = load_model("scenes/cube.gltf");
 	std::vector<std::string> filenames = {"geosphere.gltf", "teapot.gltf", "torusknot.gltf"};
 	object_names                       = {"Sphere", "Teapot", "Torusknot"};
-	for (auto file : filenames)
+	for (const auto &file : filenames)
 	{
 		auto object = load_model("scenes/" + file);
 		models.objects.emplace_back(std::move(object));
 	}
 
-	// Transforms
 	auto geosphere_matrix = glm::mat4(1.0f);
 	auto teapot_matrix    = glm::mat4(1.0f);
 	teapot_matrix         = glm::scale(teapot_matrix, glm::vec3(10.0f, 10.0f, 10.0f));
@@ -542,11 +476,11 @@ void TimestampQueries::load_assets()
 	models.transforms.push_back(teapot_matrix);
 	models.transforms.push_back(torus_matrix);
 
-	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	textures.environment_map = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	timestamps_end("loadAssets");
 }
 
-void TimestampQueries::setup_descriptor_pool()
+void CalibratedTimestamps::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
@@ -557,7 +491,7 @@ void TimestampQueries::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void TimestampQueries::setup_descriptor_set_layout()
+void CalibratedTimestamps::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
@@ -577,7 +511,6 @@ void TimestampQueries::setup_descriptor_set_layout()
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.models));
 
-	// Bloom filter
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
@@ -589,7 +522,6 @@ void TimestampQueries::setup_descriptor_set_layout()
 	pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layouts.bloom_filter, 1);
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.bloom_filter));
 
-	// G-Buffer composition
 	set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
@@ -602,41 +534,34 @@ void TimestampQueries::setup_descriptor_set_layout()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layouts.composition));
 }
 
-void TimestampQueries::setup_descriptor_sets()
+void CalibratedTimestamps::setup_descriptor_sets()
 {
-	VkDescriptorSetAllocateInfo alloc_info =
-	    vkb::initializers::descriptor_set_allocate_info(
-	        descriptor_pool,
-	        &descriptor_set_layouts.models,
-	        1);
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.models, 1);
 
-	// 3D object descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.object));
 
 	VkDescriptorBufferInfo            matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.envmap);
+	VkDescriptorImageInfo             environment_image_descriptor = create_descriptor(textures.environment_map);
 	VkDescriptorBufferInfo            params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets        = {
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.object, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Sky box descriptor set
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.skybox));
 
 	matrix_buffer_descriptor     = create_descriptor(*uniform_buffers.matrices);
-	environment_image_descriptor = create_descriptor(textures.envmap);
+	environment_image_descriptor = create_descriptor(textures.environment_map);
 	params_buffer_descriptor     = create_descriptor(*uniform_buffers.params);
 	write_descriptor_sets        = {
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &environment_image_descriptor),
         vkb::initializers::write_descriptor_set(descriptor_sets.skybox, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2, &params_buffer_descriptor),
     };
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Bloom filter
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.bloom_filter, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.bloom_filter));
 
@@ -649,9 +574,8 @@ void TimestampQueries::setup_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.bloom_filter, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 
-	// Composition descriptor set
 	alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layouts.composition, 1);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_sets.composition));
 
@@ -664,68 +588,29 @@ void TimestampQueries::setup_descriptor_sets()
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &color_descriptors[0]),
 	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &color_descriptors[1]),
 	};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
-void TimestampQueries::prepare_pipelines()
+void CalibratedTimestamps::prepare_pipelines()
 {
-	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
-	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0,
-	        VK_FALSE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
-	VkPipelineRasterizationStateCreateInfo rasterization_state =
-	    vkb::initializers::pipeline_rasterization_state_create_info(
-	        VK_POLYGON_MODE_FILL,
-	        VK_CULL_MODE_BACK_BIT,
-	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
-	        0);
+	VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-	VkPipelineColorBlendAttachmentState blend_attachment_state =
-	    vkb::initializers::pipeline_color_blend_attachment_state(
-	        0xf,
-	        VK_FALSE);
+	VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE);
 
-	VkPipelineColorBlendStateCreateInfo color_blend_state =
-	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1,
-	        &blend_attachment_state);
+	VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
-	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
-	    vkb::initializers::pipeline_depth_stencil_state_create_info(
-	        VK_FALSE,
-	        VK_FALSE,
-	        VK_COMPARE_OP_GREATER);
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_GREATER);
 
-	VkPipelineViewportStateCreateInfo viewport_state =
-	    vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+	VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-	VkPipelineMultisampleStateCreateInfo multisample_state =
-	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT,
-	        0);
+	VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
 
-	std::vector<VkDynamicState> dynamic_state_enables = {
-	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo dynamic_state =
-	    vkb::initializers::pipeline_dynamic_state_create_info(
-	        dynamic_state_enables.data(),
-	        static_cast<uint32_t>(dynamic_state_enables.size()),
-	        0);
+	std::vector<VkDynamicState>      dynamic_state_enables = {VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	VkPipelineDynamicStateCreateInfo dynamic_state         = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
-	VkGraphicsPipelineCreateInfo pipeline_create_info =
-	    vkb::initializers::pipeline_create_info(
-	        pipeline_layouts.models,
-	        render_pass,
-	        0);
-
-	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
-	};
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layouts.models, render_pass, 0);
 
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pRasterizationState = &rasterization_state;
@@ -735,30 +620,25 @@ void TimestampQueries::prepare_pipelines()
 	pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	pipeline_create_info.stageCount = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages    = shader_stages.data();
 
 	VkSpecializationInfo                    specialization_info;
-	std::array<VkSpecializationMapEntry, 1> specialization_map_entries;
+	std::array<VkSpecializationMapEntry, 1> specialization_map_entries{};
 
-	// Full screen pipelines
-
-	// Empty vertex input state, full screen triangles are generated by the vertex shader
 	VkPipelineVertexInputStateCreateInfo empty_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	pipeline_create_info.pVertexInputState                 = &empty_input_state;
 
-	// Final fullscreen composition pass pipeline
 	shader_stages[0]                  = load_shader("hdr/composition.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                  = load_shader("hdr/composition.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	pipeline_create_info.layout       = pipeline_layouts.composition;
 	pipeline_create_info.renderPass   = render_pass;
 	rasterization_state.cullMode      = VK_CULL_MODE_FRONT_BIT;
 	color_blend_state.attachmentCount = 1;
-	color_blend_state.pAttachments    = blend_attachment_states.data();
+	color_blend_state.pAttachments    = &blend_attachment_state;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.composition));
 
-	// Bloom pass
 	shader_stages[0]                           = load_shader("hdr/bloom.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1]                           = load_shader("hdr/bloom.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 	color_blend_state.pAttachments             = &blend_attachment_state;
@@ -771,7 +651,6 @@ void TimestampQueries::prepare_pipelines()
 	blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_DST_ALPHA;
 
-	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t dir                         = 1;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(dir), &dir);
@@ -779,25 +658,24 @@ void TimestampQueries::prepare_pipelines()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[0]));
 
-	// Second blur pass (into separate framebuffer)
 	pipeline_create_info.renderPass = filter_pass.render_pass;
 	dir                             = 0;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.bloom[1]));
 
-	// Object rendering pipelines
 	rasterization_state.cullMode = VK_CULL_MODE_BACK_BIT;
 
-	// Vertex bindings an attributes for model rendering
-	// Binding description
+	std::vector<VkPipelineColorBlendAttachmentState> blend_attachment_states = {
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	    vkb::initializers::pipeline_color_blend_attachment_state(0xf, VK_FALSE),
+	};
+
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
 	};
 
-	// Attribute descriptions
 	std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                       // Position
-	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3)        // Normal
-	};
+	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),
+	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3)};
 
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
@@ -807,17 +685,15 @@ void TimestampQueries::prepare_pipelines()
 
 	pipeline_create_info.pVertexInputState = &vertex_input_state;
 
-	// Skybox pipeline (background cube)
 	blend_attachment_state.blendEnable = VK_FALSE;
 	pipeline_create_info.layout        = pipeline_layouts.models;
 	pipeline_create_info.renderPass    = offscreen.render_pass;
-	color_blend_state.attachmentCount  = 2;
+	color_blend_state.attachmentCount  = static_cast<uint32_t>(blend_attachment_states.size());
 	color_blend_state.pAttachments     = blend_attachment_states.data();
 
 	shader_stages[0] = load_shader("hdr/gbuffer.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("hdr/gbuffer.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// Set constant parameters via specialization constants
 	specialization_map_entries[0]        = vkb::initializers::specialization_map_entry(0, 0, sizeof(uint32_t));
 	uint32_t shadertype                  = 0;
 	specialization_info                  = vkb::initializers::specialization_info(1, specialization_map_entries.data(), sizeof(shadertype), &shadertype);
@@ -826,128 +702,60 @@ void TimestampQueries::prepare_pipelines()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.skybox));
 
-	// Object rendering pipeline
 	shadertype = 1;
 
-	// Enable depth test and write
 	depth_stencil_state.depthWriteEnable = VK_TRUE;
 	depth_stencil_state.depthTestEnable  = VK_TRUE;
-	// Flip cull mode
-	rasterization_state.cullMode = VK_CULL_MODE_FRONT_BIT;
+	rasterization_state.cullMode         = VK_CULL_MODE_FRONT_BIT;
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &pipelines.reflect));
 }
 
-// Prepare and initialize uniform buffer containing shader uniforms
-void TimestampQueries::prepare_uniform_buffers()
+void CalibratedTimestamps::prepare_uniform_buffers()
 {
-	// Matrices vertex shader uniform buffer
-	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                               sizeof(ubo_vs),
-	                                                               VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                               VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	// Params
-	uniform_buffers.params = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                             sizeof(ubo_params),
-	                                                             VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-	                                                             VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.matrices = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_vs), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	uniform_buffers.params   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ubo_params), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
-	update_params();
-}
-
-void TimestampQueries::prepare_time_stamp_queries()
-{
-	// We will get timestamps for the beginning and end of each of the three render passes in this sample, so we resize accordingly
-	time_stamps.resize(6);
-
-	// Create the query pool object used to get the GPU time tamps
-	VkQueryPoolCreateInfo query_pool_info{};
-	query_pool_info.sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO;
-	// We need to specify the query type for this pool, which in our case is for time stamps
-	query_pool_info.queryType = VK_QUERY_TYPE_TIMESTAMP;
-	// Set the no. of queries in this pool
-	query_pool_info.queryCount = static_cast<uint32_t>(time_stamps.size());
-	VK_CHECK(vkCreateQueryPool(device->get_handle(), &query_pool_info, nullptr, &query_pool_timestamps));
-}
-
-void TimestampQueries::get_time_stamp_results()
-{
-	// The number of timestamps changes if the bloom pass is disabled
-	uint32_t count = static_cast<uint32_t>(bloom ? time_stamps.size() : time_stamps.size() - 2);
-
-	// Fetch the time stamp results written in the command buffer submissions
-	// A note on the flags used:
-	//	VK_QUERY_RESULT_64_BIT: Results will have 64 bits. As time stamp values are on nano-seconds, this flag should always be used to avoid 32 bit overflows
-	//  VK_QUERY_RESULT_WAIT_BIT: Since we want to immediately display the results, we use this flag to have the CPU wait until the results are available
-	vkGetQueryPoolResults(
-	    device->get_handle(),
-	    query_pool_timestamps,
-	    0,
-	    count,
-	    time_stamps.size() * sizeof(uint64_t),
-	    time_stamps.data(),
-	    sizeof(uint64_t),
-	    VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
-}
-
-void TimestampQueries::update_uniform_buffers()
-{
-	ubo_vs.projection       = camera.matrices.perspective;
-	ubo_vs.modelview        = camera.matrices.view * models.transforms[models.object_index];
-	ubo_vs.skybox_modelview = camera.matrices.view;
-	uniform_buffers.matrices->convert_and_update(ubo_vs);
-}
-
-void TimestampQueries::update_params()
-{
 	uniform_buffers.params->convert_and_update(ubo_params);
 }
 
-void TimestampQueries::draw()
+void CalibratedTimestamps::update_uniform_buffers()
 {
+	timestamps_begin("update ubo");
+	ubo_vs.projection        = camera.matrices.perspective;
+	ubo_vs.model_view        = camera.matrices.view * models.transforms[models.object_index];
+	ubo_vs.skybox_model_view = camera.matrices.view;
+	uniform_buffers.matrices->convert_and_update(ubo_vs);
+	timestamps_end("update ubo");
+}
+
+void CalibratedTimestamps::draw()
+{
+	timestamps_begin("draw");
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
-
-	// Read back the time stamp query results after the frame is finished
-	get_time_stamp_results();
+	timestamps_end("draw");
 }
 
-bool TimestampQueries::prepare(vkb::Platform &platform)
+bool CalibratedTimestamps::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
 		return false;
 	}
 
-	// Check if the selected device supports timestamps. A value of zero means no support.
-	VkPhysicalDeviceLimits device_limits = device->get_gpu().get_properties().limits;
-	if (device_limits.timestampPeriod == 0)
-	{
-		throw std::runtime_error{"The selected device does not support timestamp queries!"};
-	}
-
-	// Check if all queues support timestamp queries, if not we need to check on a per-queue basis
-	if (!device_limits.timestampComputeAndGraphics)
-	{
-		// Check if the graphics queue used in this sample supports time stamps
-		VkQueueFamilyProperties graphics_queue_family_properties = device->get_suitable_graphics_queue().get_properties();
-		if (graphics_queue_family_properties.timestampValidBits == 0)
-		{
-			throw std::runtime_error{"The selected graphics queue family does not support timestamp queries!"};
-		}
-	}
-
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
-
-	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
+	// Get the optimal time domain as soon as possible
+	get_device_time_domain();
+
+	// Preparations
 	load_assets();
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
@@ -955,37 +763,139 @@ bool TimestampQueries::prepare(vkb::Platform &platform)
 	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_sets();
-	prepare_time_stamp_queries();
 	build_command_buffers();
+
 	prepared = true;
 	return true;
 }
 
-void TimestampQueries::render(float delta_time)
+void CalibratedTimestamps::render(float delta_time)
 {
 	if (!prepared)
-	{
 		return;
-	}
 	draw();
 	if (camera.updated)
-	{
 		update_uniform_buffers();
+}
+
+void CalibratedTimestamps::get_time_domains()
+{
+	// Initialize time domain count:
+	uint32_t time_domain_count = 0;
+	// Update time domain count:
+	VkResult result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, nullptr);
+
+	if (result == VK_SUCCESS)
+	{
+		// Resize time domains vector:
+		time_domains.resize(time_domain_count);
+		// Update time_domain vector:
+		result = vkGetPhysicalDeviceCalibrateableTimeDomainsEXT(get_device().get_gpu().get_handle(), &time_domain_count, time_domains.data());
+	}
+
+	if (time_domain_count > 0)
+	{
+		for (VkTimeDomainEXT time_domain : time_domains)
+		{
+			// Initialize in-scope time stamp info variable:
+			VkCalibratedTimestampInfoEXT timestamp_info{};
+
+			// Configure timestamp info variable:
+			timestamp_info.sType      = VK_STRUCTURE_TYPE_CALIBRATED_TIMESTAMP_INFO_EXT;
+			timestamp_info.pNext      = nullptr;
+			timestamp_info.timeDomain = time_domain;
+
+			// Push-back timestamp info to timestamps info vector:
+			timestamps_info.push_back(timestamp_info);
+		}
+
+		// Resize time stamps vector
+		timestamps.resize(time_domain_count);
+		// Resize max deviations vector
+		max_deviations.resize(time_domain_count);
+	}
+
+	is_time_domain_init = ((result == VK_SUCCESS) && (time_domain_count > 0));
+}
+
+VkResult CalibratedTimestamps::get_timestamps()
+{
+	// Ensures that time domain exists
+	if (is_time_domain_init)
+	{
+		// Get calibrated timestamps:
+		return vkGetCalibratedTimestampsEXT(get_device().get_handle(), static_cast<uint32_t>(time_domains.size()), timestamps_info.data(), timestamps.data(), max_deviations.data());
+	}
+	return VK_ERROR_UNKNOWN;
+}
+
+void CalibratedTimestamps::get_device_time_domain()
+{
+	get_time_domains();
+
+	if (is_time_domain_init && (time_domains.size() > 1))
+	{
+		auto iterator_device = std::find(time_domains.begin(), time_domains.end(), VK_TIME_DOMAIN_DEVICE_EXT);
+
+		int device_index = static_cast<int>(iterator_device - time_domains.begin());
+
+		selected_time_domain.index         = device_index;
+		selected_time_domain.timeDomainEXT = time_domains[device_index];
 	}
 }
 
-void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
+void CalibratedTimestamps::timestamps_begin(const std::string &input_tag)
 {
+	// Now to get timestamps
+	if (get_timestamps() == VK_SUCCESS)
+	{
+		std::string tag = input_tag;
+		if (input_tag.empty())
+		{
+			tag = "Unknown";
+		}
+		delta_timestamps[tag].tag   = input_tag;
+		delta_timestamps[tag].begin = timestamps[selected_time_domain.index];
+	}
+}
+
+void CalibratedTimestamps::timestamps_end(const std::string &input_tag)
+{
+	if (delta_timestamps.empty())
+	{
+		LOGE("Timestamps begin-to-end Fatal Error: Timestamps end is not tagged the same as its begin!\n")
+		return;        // exits the function here, further calculation is meaningless
+	}
+
+	auto result = get_timestamps();
+	if (result == VK_SUCCESS)
+	{
+		if (delta_timestamps.find(input_tag) != delta_timestamps.end())
+		{
+			// Add this data to the last term of delta_timestamps vector
+			delta_timestamps[input_tag].end   = timestamps[selected_time_domain.index];
+			delta_timestamps[input_tag].delta = delta_timestamps[input_tag].end - delta_timestamps[input_tag].begin;
+			return;
+		}
+		LOGE("timestamps_end called without a found corresponding begin timestamp for {}.", input_tag.c_str())
+		return;
+	}
+	LOGE("get_timestamps failed with %d", result)
+}
+
+void CalibratedTimestamps::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	// Timestamps period extracted in runtime
+	float timestamp_period = device->get_gpu().get_properties().limits.timestampPeriod;
+	drawer.text("Timestamps Period:\n %.1f Nanoseconds", timestamp_period);
+
+	// Adjustment Handles:
 	if (drawer.header("Settings"))
 	{
 		if (drawer.combo_box("Object type", &models.object_index, object_names))
 		{
 			update_uniform_buffers();
 			build_command_buffers();
-		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
-		{
-			update_params();
 		}
 		if (drawer.checkbox("Bloom", &bloom))
 		{
@@ -996,30 +906,26 @@ void TimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 			build_command_buffers();
 		}
 	}
-	if (drawer.header("timing"))
-	{
-		// Timestamps don't have a time unit themselves, but are read as timesteps
-		// The timestampPeriod property of the device tells how many nanoseconds such a timestep translates to on the selected device
-		float timestampFrequency = device->get_gpu().get_properties().limits.timestampPeriod;
 
-		drawer.text("Pass 1: Offscreen scene rendering: %.3f ms", static_cast<float>(time_stamps[1] - time_stamps[0]) * timestampFrequency / 1000000.0f);
-		drawer.text("Pass 2: %s %.3f ms", (bloom ? "First bloom pass" : "Scene display"), static_cast<float>(time_stamps[3] - time_stamps[2]) * timestampFrequency / 1000000.0f);
-		if (bloom)
+	if (!delta_timestamps.empty())
+	{
+		drawer.text("Time Domain Selected:\n %s", time_domain_to_string(selected_time_domain.timeDomainEXT).c_str());
+
+		for (const auto &delta_timestamp : delta_timestamps)
 		{
-			drawer.text("Pass 3: Second bloom pass %.3f ms", static_cast<float>(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
-			drawer.set_dirty(true);
+			drawer.text("%s:\n %.1f Microseconds", delta_timestamp.second.tag.c_str(), static_cast<float>(delta_timestamp.second.delta) * timestamp_period * 0.001f);
 		}
 	}
 }
 
-bool TimestampQueries::resize(const uint32_t width, const uint32_t height)
+bool CalibratedTimestamps::resize(uint32_t width, uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 	return true;
 }
 
-std::unique_ptr<vkb::Application> create_timestamp_queries()
+std::unique_ptr<vkb::Application> create_calibrated_timestamps()
 {
-	return std::make_unique<TimestampQueries>();
+	return std::make_unique<CalibratedTimestamps>();
 }
