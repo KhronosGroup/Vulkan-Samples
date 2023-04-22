@@ -60,10 +60,10 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	struct FilterPassData
 	{
 		FramebufferAttachment color;
-		vk::Extent2D           extent;
-		vk::Framebuffer        framebuffer;
-		vk::RenderPass         render_pass;
-		vk::Sampler            sampler;
+		vk::Extent2D          extent;
+		vk::Framebuffer       framebuffer;
+		vk::RenderPass        render_pass;
+		vk::Sampler           sampler;
 	};
 
 	struct Models
@@ -78,10 +78,10 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	{
 		FramebufferAttachment color[2];
 		FramebufferAttachment depth;
-		vk::Extent2D           extent;
-		vk::Framebuffer        framebuffer;
-		vk::RenderPass         render_pass;
-		vk::Sampler            sampler;
+		vk::Extent2D          extent;
+		vk::Framebuffer       framebuffer;
+		vk::RenderPass        render_pass;
+		vk::Sampler           sampler;
 	};
 
 	struct PipelineLayouts
