@@ -36,6 +36,10 @@ class HPPPipelineLayout : private vkb::PipelineLayout
 	using vkb::PipelineLayout::has_descriptor_set_layout;
 
   public:
+	HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
+	    vkb::PipelineLayout(reinterpret_cast<vkb::Device &>(device), reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules))
+	{}
+
 	vkb::core::HPPDescriptorSetLayout &get_descriptor_set_layout(const uint32_t set_index) const
 	{
 		return reinterpret_cast<vkb::core::HPPDescriptorSetLayout &>(vkb::PipelineLayout::get_descriptor_set_layout(set_index));

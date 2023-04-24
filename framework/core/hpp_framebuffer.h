@@ -22,8 +22,16 @@
 
 namespace vkb
 {
+namespace rendering
+{
+class HPPRenderTarget;
+}
+
 namespace core
 {
+class HPPDevice;
+class HPPRenderPass;
+
 /**
  * @brief facade class around vkb::Framebuffer, providing a vulkan.hpp-based interface
  *
@@ -32,6 +40,12 @@ namespace core
 class HPPFramebuffer : private vkb::Framebuffer
 {
   public:
+	HPPFramebuffer(vkb::core::HPPDevice &device, const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass) :
+	    vkb::Framebuffer(reinterpret_cast<vkb::Device &>(device),
+	                     reinterpret_cast<vkb::RenderTarget const &>(render_target),
+	                     reinterpret_cast<vkb::RenderPass const &>(render_pass))
+	{}
+
 	const vk::Extent2D &get_extent() const
 	{
 		return reinterpret_cast<vk::Extent2D const &>(vkb::Framebuffer::get_extent());
