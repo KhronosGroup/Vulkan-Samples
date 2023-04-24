@@ -450,17 +450,14 @@ void HPPApiVulkanSample::prepare_frame()
 		{
 			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
+		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
+		// Don't catch other failures here, they are propagated up the calling hierarchy
 		catch (vk::OutOfDateKHRError & /*err*/)
-		{
-			result = vk::Result::eErrorOutOfDateKHR;
-		}
-
-		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
-		// presentation (eSuboptimalKHR)
-		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
 		{
 			resize(extent.width, extent.height);
 		}
+		// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
+		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 	}
 }
 
