@@ -291,6 +291,10 @@ Demonstrate how to use depth bias, primitive restart, rasterizer discard and pat
 **Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html) <br/>
 Demonstrate how to use logical operations dynamically, which can reduce the number of pipeline objects that are needed to be created or allow to change the pipeline state dynamically (change type of the logical operation).
 
+### [Fragment shader barycentric](./extensions/fragment_shader_barycentric)
+**Extension**: [```VK_KHR_fragment_shader_barycentric```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) <br/>
+Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
