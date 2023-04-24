@@ -70,6 +70,23 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	static void  aligned_free(void *data);
 
   private:
+	// from platform::HPPApplication
+	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool resize(const uint32_t width, const uint32_t height) override;
+
+	// from HPPApiVulkanSample
+	void render(float delta_time) override;
+
+	void build_command_buffers() override;
+	void draw();
+	void generate_cube();
+	void prepare_camera();
+	void prepare_uniform_buffers();
+	void update_descriptor_set();
+	void update_dynamic_uniform_buffer(float delta_time, bool force = false);
+	void update_uniform_buffers();
+
+  private:
 	float                                 animation_timer = 0.0f;
 	vk::DescriptorSet                     descriptor_set;
 	vk::DescriptorSetLayout               descriptor_set_layout;
@@ -84,26 +101,6 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	UboVS                                 ubo_vs;
 	UniformBuffers                        uniform_buffers;
 	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
-
-  private:
-	// from platform::HPPApplication
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
-	bool resize(const uint32_t width, const uint32_t height) override;
-
-	// from HPPApiVulkanSample
-	void render(float delta_time) override;
-
-	void build_command_buffers() override;
-	void create_descriptor_pool();
-	void create_descriptor_set_layout();
-	void create_pipeline();
-	void draw();
-	void generate_cube();
-	void prepare_camera();
-	void prepare_uniform_buffers();
-	void update_descriptor_set();
-	void update_dynamic_uniform_buffer(float delta_time, bool force = false);
-	void update_uniform_buffers();
 };
 
 std::unique_ptr<vkb::Application> create_hpp_dynamic_uniform_buffers();

@@ -157,6 +157,11 @@ class PostProcessingSubpass : public Subpass
 	PostProcessingSubpass &bind_storage_image(const std::string &name, const core::ImageView &new_image);
 
 	/**
+	 * @brief Removes the sampled image at name for this step.
+	 */
+	void unbind_sampled_image(const std::string &name);
+
+	/**
 	 * @brief Set the constants that are pushed before each fullscreen draw.
 	 */
 	PostProcessingSubpass &set_push_constants(const std::vector<uint8_t> &data);
