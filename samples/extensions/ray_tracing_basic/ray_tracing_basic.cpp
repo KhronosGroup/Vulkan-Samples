@@ -62,6 +62,31 @@ RaytracingBasic::~RaytracingBasic()
 	}
 }
 
+VkPipelineShaderStageCreateInfo RaytracingBasic::load_spirv_shader(const std::string &filename, VkShaderStageFlagBits stage)
+{
+	auto buffer = vkb::fs::read_shader_binary(filename);
+
+	VkShaderModuleCreateInfo createInfo{};
+	createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+	createInfo.codeSize = buffer.size();
+	createInfo.pCode    = reinterpret_cast<const uint32_t *>(buffer.data());
+
+	VkShaderModule shaderModule;
+	if (vkCreateShaderModule(get_device().get_handle(), &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+	{
+		throw std::runtime_error("failed to create shader module!");
+	}
+
+	VkPipelineShaderStageCreateInfo ShaderStageInfo{};
+	ShaderStageInfo.sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+	ShaderStageInfo.stage  = stage;
+	ShaderStageInfo.module = shaderModule;
+	ShaderStageInfo.pName  = "main";
+
+	shader_modules.push_back(shaderModule);
+	return ShaderStageInfo;
+}
+
 void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	// Enable extension features required by this sample
@@ -593,7 +618,11 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray generation group
 	{
+#ifdef HLSL_SHADER
+		shader_stages.push_back(load_spirv_shader("khr_ray_tracing_basic/hlsl_raygen.rgen.spv", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+#else
 		shader_stages.push_back(load_shader("khr_ray_tracing_basic/raygen.rgen", VK_SHADER_STAGE_RAYGEN_BIT_KHR));
+#endif
 		VkRayTracingShaderGroupCreateInfoKHR raygen_group_ci{};
 		raygen_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		raygen_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -606,7 +635,11 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray miss group
 	{
+#ifdef HLSL_SHADER
+		shader_stages.push_back(load_spirv_shader("khr_ray_tracing_basic/hlsl_miss.rmiss.spv", VK_SHADER_STAGE_MISS_BIT_KHR));
+#else
 		shader_stages.push_back(load_shader("khr_ray_tracing_basic/miss.rmiss", VK_SHADER_STAGE_MISS_BIT_KHR));
+#endif
 		VkRayTracingShaderGroupCreateInfoKHR miss_group_ci{};
 		miss_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		miss_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_GENERAL_KHR;
@@ -619,7 +652,11 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 
 	// Ray closest hit group
 	{
+#ifdef HLSL_SHADER
+		shader_stages.push_back(load_spirv_shader("khr_ray_tracing_basic/hlsl_closesthit.rchit.spv", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+#else
 		shader_stages.push_back(load_shader("khr_ray_tracing_basic/closesthit.rchit", VK_SHADER_STAGE_CLOSEST_HIT_BIT_KHR));
+#endif
 		VkRayTracingShaderGroupCreateInfoKHR closes_hit_group_ci{};
 		closes_hit_group_ci.sType              = VK_STRUCTURE_TYPE_RAY_TRACING_SHADER_GROUP_CREATE_INFO_KHR;
 		closes_hit_group_ci.type               = VK_RAY_TRACING_SHADER_GROUP_TYPE_TRIANGLES_HIT_GROUP_KHR;

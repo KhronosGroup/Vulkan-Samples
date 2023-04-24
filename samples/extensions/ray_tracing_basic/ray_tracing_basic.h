@@ -21,6 +21,8 @@
 
 #pragma once
 
+#define HLSL_SHADER
+
 #include "api_vulkan_sample.h"
 #include "glsl_compiler.h"
 
@@ -83,6 +85,7 @@ class RaytracingBasic : public ApiVulkanSample
 	RaytracingBasic();
 	~RaytracingBasic();
 
+	VkPipelineShaderStageCreateInfo load_spirv_shader(const std::string &filename, VkShaderStageFlagBits stage);
 	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
@@ -101,6 +104,7 @@ class RaytracingBasic : public ApiVulkanSample
 	void          draw();
 	bool          prepare(const vkb::ApplicationOptions &options) override;
 	virtual void  render(float delta_time) override;
+
 };
 
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();
