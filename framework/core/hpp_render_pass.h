@@ -22,6 +22,16 @@
 
 namespace vkb
 {
+namespace common
+{
+struct HPPLoadStoreInfo;
+
+}
+namespace rendering
+{
+struct HPPAttachment;
+}
+
 namespace core
 {
 /**
@@ -47,6 +57,16 @@ class HPPRenderPass : private vkb::RenderPass
 	using vkb::RenderPass::get_color_output_count;
 
   public:
+	HPPRenderPass(vkb::core::HPPDevice                             &device,
+	              const std::vector<vkb::rendering::HPPAttachment> &attachments,
+	              const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
+	              const std::vector<vkb::core::HPPSubpassInfo>     &subpasses) :
+	    vkb::RenderPass(reinterpret_cast<vkb::Device &>(device),
+	                    reinterpret_cast<std::vector<vkb::Attachment> const &>(attachments),
+	                    reinterpret_cast<std::vector<vkb::LoadStoreInfo> const &>(load_store_infos),
+	                    reinterpret_cast<std::vector<vkb::SubpassInfo> const &>(subpasses))
+	{}
+
 	vk::RenderPass get_handle() const
 	{
 		return static_cast<vk::RenderPass>(vkb::RenderPass::get_handle());
