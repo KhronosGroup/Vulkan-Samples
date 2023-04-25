@@ -46,6 +46,8 @@ set(FRAMEWORK_FILES
     hpp_gui.h
     hpp_resource_binding_state.h
     hpp_resource_cache.h
+    hpp_resource_record.h
+    hpp_resource_replay.h
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
@@ -67,6 +69,7 @@ set(FRAMEWORK_FILES
     camera.cpp
     hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
+    hpp_resource_cache.cpp
 	hpp_vulkan_sample.cpp)
 
 set(COMMON_FILES
@@ -82,6 +85,7 @@ set(COMMON_FILES
     common/strings.h
     common/tags.h
     common/hpp_error.h
+    common/hpp_resource_caching.h
     common/hpp_strings.h
     common/hpp_utils.h
     common/hpp_vk_common.h
@@ -249,6 +253,8 @@ set(CORE_FILES
     core/hpp_command_buffer.h
     core/hpp_command_pool.h
     core/hpp_debug.h
+    core/hpp_descriptor_pool.h
+    core/hpp_descriptor_set.h
     core/hpp_descriptor_set_layout.h
     core/hpp_device.h
     core/hpp_framebuffer.h
