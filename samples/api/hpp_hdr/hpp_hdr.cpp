@@ -429,21 +429,26 @@ vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription>
 	// Use subpass dependencies for attachment layput transitions
 	std::array<vk::SubpassDependency, 2> subpass_dependencies;
 
-	subpass_dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
-	subpass_dependencies[0].dstSubpass      = 0;
-	subpass_dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	subpass_dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	subpass_dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
-	subpass_dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-	subpass_dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+	subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+	subpass_dependencies[0].dstSubpass = 0;
+	// End of previous commands
+	subpass_dependencies[0].srcStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+	subpass_dependencies[0].srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+	// Read/write from/to depth
+	subpass_dependencies[0].dstStageMask  = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+	subpass_dependencies[0].dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+	// Write to attachment
+	subpass_dependencies[0].dstStageMask |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	subpass_dependencies[0].dstAccessMask |= vk::AccessFlagBits::eColorAttachmentWrite;
 
-	subpass_dependencies[1].srcSubpass      = 0;
-	subpass_dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	subpass_dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	subpass_dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	subpass_dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
-	subpass_dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
-	subpass_dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+	subpass_dependencies[1].srcSubpass = 0;
+	subpass_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+	// End of write to attachment
+	subpass_dependencies[1].srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	subpass_dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+	// Attachment later read using sampler in 'bloom[0]' pipeline
+	subpass_dependencies[1].dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
+	subpass_dependencies[1].dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass_description, subpass_dependencies);
 
