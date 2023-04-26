@@ -241,7 +241,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	// that contain update after bind, as they wont be implicitly updated
 	bool update_after_bind = false;
 
-	std::unordered_map<uint32_t, vkb::core::HPPDescriptorSetLayout *> descriptor_set_layout_binding_state;
+	std::unordered_map<uint32_t, vkb::core::HPPDescriptorSetLayout const *> descriptor_set_layout_binding_state;
 };
 
 template <class T>
