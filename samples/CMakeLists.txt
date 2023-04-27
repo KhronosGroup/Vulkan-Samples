@@ -63,6 +63,7 @@ set(ORDER_LIST
     "conservative_rasterization"
     "fragment_shading_rate"
     "fragment_shading_rate_dynamic"
+    "full_screen_exclusive"
     "calibrated_timestamps"
     "graphics_pipeline_library"
     "memory_budget"
@@ -79,6 +80,7 @@ set(ORDER_LIST
     "vertex_dynamic_state"
     "extended_dynamic_state2"
     "logic_op_dynamic_state"
+    "fragment_shader_barycentric"
 
     #Performance Samples
     "swapchain_images"

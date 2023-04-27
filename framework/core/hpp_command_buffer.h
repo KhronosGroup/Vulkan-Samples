@@ -30,6 +30,7 @@ namespace vkb
 namespace core
 {
 class HPPCommandPool;
+class HPPDescriptorSetLayout;
 
 /**
  * @brief Helper class to manage and record a command buffer, building and

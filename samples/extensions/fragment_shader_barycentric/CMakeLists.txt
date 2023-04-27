@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
+# Copyright (c) 2023, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+ 
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
@@ -22,13 +22,11 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Arm"
-    NAME "HPP Hello Triangle"
-    DESCRIPTION "An introduction into Vulkan and its respective objects using vulkan.hpp."
+    AUTHOR "Mobica"
+    NAME "fragment_shader_barycentric"
+    DESCRIPTION "Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
-
-if(${VKB_${FOLDER_NAME}})
-    target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
-endif()
+    "fragment_shader_barycentric/object.vert"
+    "fragment_shader_barycentric/object.frag"
+    "fragment_shader_barycentric/skybox.vert"
+    "fragment_shader_barycentric/skybox.frag")
