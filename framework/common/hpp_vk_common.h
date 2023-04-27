@@ -113,6 +113,12 @@ inline void set_image_layout(vk::CommandBuffer         command_buffer,
 }
 
 // helper functions not backed by vk_common.h
+inline vk::CommandBuffer allocate_command_buffer(vk::Device device, vk::CommandPool command_pool, vk::CommandBufferLevel level = vk::CommandBufferLevel::ePrimary)
+{
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, level, 1);
+	return device.allocateCommandBuffers(command_buffer_allocate_info).front();
+}
+
 inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::DescriptorPool descriptor_pool, vk::DescriptorSetLayout descriptor_set_layout)
 {
 #if defined(ANDROID)
@@ -123,18 +129,10 @@ inline vk::DescriptorSet allocate_descriptor_set(vk::Device device, vk::Descript
 	return device.allocateDescriptorSets(descriptor_set_allocate_info).front();
 }
 
-inline vk::DescriptorSetLayout create_descriptor_set_layout(vk::Device device, std::vector<vk::DescriptorSetLayoutBinding> const &bindings)
+inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
 {
-	vk::DescriptorSetLayoutCreateInfo descriptor_set_layout_create_info({}, bindings);
-
-	return device.createDescriptorSetLayout(descriptor_set_layout_create_info);
-}
-
-inline vk::DescriptorPool create_descriptor_pool(vk::Device device, uint32_t max_sets, std::vector<vk::DescriptorPoolSize> const &pool_sizes)
-{
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, max_sets, pool_sizes);
-
-	return device.createDescriptorPool(descriptor_pool_create_info);
+	vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass, attachments, extent.width, extent.height, 1);
+	return device.createFramebuffer(framebuffer_create_info);
 }
 
 inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
@@ -143,6 +141,7 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
                                              vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
                                              vk::PrimitiveTopology                                     primitive_topology,
                                              vk::CullModeFlags                                         cull_mode,
+                                             vk::FrontFace                                             front_face,
                                              std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
                                              vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
                                              vk::PipelineLayout                                        pipeline_layout,
@@ -155,7 +154,7 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 	vk::PipelineRasterizationStateCreateInfo rasterization_state;
 	rasterization_state.polygonMode = vk::PolygonMode::eFill;
 	rasterization_state.cullMode    = cull_mode;
-	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
+	rasterization_state.frontFace   = front_face;
 	rasterization_state.lineWidth   = 1.0f;
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
@@ -188,16 +187,6 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 	std::tie(result, pipeline) = device.createGraphicsPipeline(pipeline_cache, pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
 	return pipeline;
-}
-
-inline vk::PipelineLayout create_pipeline_layout(vk::Device device, vk::DescriptorSetLayout descriptor_set_layout)
-{
-#if defined(ANDROID)
-	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
-#else
-	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
-#endif
-	return device.createPipelineLayout(pipeline_layout_create_info);
 }
 
 inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage, vk::Format format)
