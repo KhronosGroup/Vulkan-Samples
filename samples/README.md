@@ -284,7 +284,24 @@ Demonstrate how to do conditional rendering, dynamically discarding rendering co
 
 ### [Vertex input dynamic state](./extensions/vertex_dynamic_state)
 **Extension**: [```VK_EXT_vertex_input_dynamic_state```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_vertex_input_dynamic_state.html) <br/>
-Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are need to be created.
+Demonstrate how to use vertex input bindings and attribute descriptions dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
+### [Extended dynamic state 2](./extensions/extended_dynamic_state2)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html)
+<br/>
+Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
+### [Logic operations dynamic state](./extensions/logic_op_dynamic_state)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html) <br/>
+Demonstrate how to use logical operations dynamically, which can reduce the number of pipeline objects that are needed to be created or allow to change the pipeline state dynamically (change type of the logical operation).
+
+### [Fragment shader barycentric](./extensions/fragment_shader_barycentric)
+**Extension**: [```VK_KHR_fragment_shader_barycentric```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) <br/>
+Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
+
+### [Basic descriptor buffer](./extensions/descriptor_buffer_basic/)
+**Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)
+Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
 
 ## Tooling Samples
 

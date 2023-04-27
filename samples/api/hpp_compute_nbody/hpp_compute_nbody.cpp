@@ -19,8 +19,7 @@
  * Compute shader N-body simulation using two passes and shared compute shader memory, using vulkan.hpp
  */
 
-#include <hpp_compute_nbody.h>
-
+#include "hpp_compute_nbody.h"
 #include <benchmark_mode/benchmark_mode.h>
 #include <core/hpp_command_pool.h>
 #include <random>
@@ -37,25 +36,9 @@ HPPComputeNBody::~HPPComputeNBody()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		// Graphics
-		graphics.uniform_buffer.reset();
-		device.destroyPipeline(graphics.pipeline);
-		device.destroyPipelineLayout(graphics.pipeline_layout);
-		device.destroyDescriptorSetLayout(graphics.descriptor_set_layout);
-		device.destroySemaphore(graphics.semaphore);
-
-		// Compute
-		compute.storage_buffer.reset();
-		compute.uniform_buffer.reset();
-		device.destroyPipelineLayout(compute.pipeline_layout);
-		device.destroyDescriptorSetLayout(compute.descriptor_set_layout);
-		device.destroyPipeline(compute.pipeline_calculate);
-		device.destroyPipeline(compute.pipeline_integrate);
-		device.destroySemaphore(compute.semaphore);
-		device.destroyCommandPool(compute.command_pool);
-
-		device.destroySampler(textures.particle.sampler);
-		device.destroySampler(textures.gradient.sampler);
+		compute.destroy(device, descriptor_pool);
+		graphics.destroy(device, descriptor_pool);
+		textures.destroy(device);
 	}
 }
 
@@ -67,7 +50,12 @@ bool HPPComputeNBody::prepare(vkb::platform::HPPPlatform &platform)
 	}
 
 	load_assets();
-	create_descriptor_pool();
+
+	std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eUniformBuffer, 2},
+	                                                  {vk::DescriptorType::eStorageBuffer, 1},
+	                                                  {vk::DescriptorType::eCombinedImageSampler, 2}};
+	descriptor_pool                                = vkb::common::create_descriptor_pool(get_device()->get_handle(), 2, pool_sizes);
+
 	prepare_graphics();
 	prepare_compute();
 	build_command_buffers();
@@ -168,6 +156,13 @@ void HPPComputeNBody::render(float delta_time)
 	{
 		update_graphics_uniform_buffers();
 	}
+}
+
+vk::CommandBuffer HPPComputeNBody::allocate_command_buffer(vk::CommandPool command_pool)
+{
+	vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, vk::CommandBufferLevel::ePrimary, 1);
+
+	return get_device()->get_handle().allocateCommandBuffers(command_buffer_allocate_info).front();
 }
 
 void HPPComputeNBody::build_compute_command_buffer()
@@ -279,241 +274,29 @@ void HPPComputeNBody::build_copy_command_buffer(vk::CommandBuffer command_buffer
 	command_buffer.end();
 }
 
-void HPPComputeNBody::create_compute_descriptor_set_layout()
+vk::CommandPool HPPComputeNBody::create_command_pool(uint32_t queue_family_index)
 {
-	std::array<vk::DescriptorSetLayoutBinding, 2> set_layout_bindings = {{{0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute},
-	                                                                      {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute}}};
-
-	compute.descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
+	vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index);
+	return get_device()->get_handle().createCommandPool(command_pool_create_info);
 }
 
-void HPPComputeNBody::create_compute_pipeline_particle_integration()
+vk::Pipeline HPPComputeNBody::create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout)
 {
-	// 2nd pass - Particle integration
-	vk::ComputePipelineCreateInfo compute_pipeline_create_info({}, {}, compute.pipeline_layout);
+	vk::ComputePipelineCreateInfo compute_pipeline_create_info({}, stage, layout);
 
-	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
-
-	vk::SpecializationMapEntry integration_specialization_entry(0, 0, sizeof(compute.work_group_size));
-	vk::SpecializationInfo     specialization_info(1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size);
-
-	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
-
-	vk::Result result;
-	std::tie(result, compute.pipeline_integrate) = get_device()->get_handle().createComputePipeline(pipeline_cache, compute_pipeline_create_info);
+	vk::Result   result;
+	vk::Pipeline pipeline;
+	std::tie(result, pipeline) = get_device()->get_handle().createComputePipeline(pipeline_cache, compute_pipeline_create_info);
 	assert(result == vk::Result::eSuccess);
+
+	return pipeline;
 }
 
-void HPPComputeNBody::create_compute_pipeline_particle_movement()
+vk::Semaphore HPPComputeNBody::create_semaphore()
 {
-	// 1st pass - Particle movement calculations
-	vk::ComputePipelineCreateInfo compute_pipeline_create_info({}, {}, compute.pipeline_layout);
+	vk::SemaphoreCreateInfo semaphore_create_info;
 
-	compute_pipeline_create_info.stage = load_shader("compute_nbody/particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
-
-	// Set some shader parameters via specialization constants
-	struct MovementSpecializationData
-	{
-		uint32_t workgroup_size;
-		uint32_t shared_data_size;
-		float    gravity;
-		float    power;
-		float    soften;
-	};
-
-	std::array<vk::SpecializationMapEntry, 5> movement_specialization_map_entries = {
-	    {{0, offsetof(MovementSpecializationData, workgroup_size), sizeof(uint32_t)},
-	     {1, offsetof(MovementSpecializationData, shared_data_size), sizeof(uint32_t)},
-	     {2, offsetof(MovementSpecializationData, gravity), sizeof(float)},
-	     {3, offsetof(MovementSpecializationData, power), sizeof(float)},
-	     {4, offsetof(MovementSpecializationData, soften), sizeof(float)}}};
-
-	MovementSpecializationData movement_specialization_data{compute.work_group_size, compute.shared_data_size, 0.002f, 0.75f, 0.05f};
-
-	vk::SpecializationInfo specialization_info(static_cast<uint32_t>(movement_specialization_map_entries.size()),
-	                                           movement_specialization_map_entries.data(),
-	                                           sizeof(movement_specialization_data),
-	                                           &movement_specialization_data);
-
-	compute_pipeline_create_info.stage.pSpecializationInfo = &specialization_info;
-
-	vk::Result result;
-	std::tie(result, compute.pipeline_calculate) = get_device()->get_handle().createComputePipeline(pipeline_cache, compute_pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-}
-
-void HPPComputeNBody::create_compute_pipelines()
-{
-	create_compute_pipeline_particle_movement();
-	create_compute_pipeline_particle_integration();
-}
-
-// Setup and fill the compute shader storage buffers containing the particles
-void HPPComputeNBody::prepare_compute_storage_buffers()
-{
-#if 0
-	std::vector<glm::vec3> attractors = {
-		glm::vec3(2.5f, 1.5f, 0.0f),
-		glm::vec3(-2.5f, -1.5f, 0.0f),
-	};
-#else
-	std::vector<glm::vec3> attractors = {
-	    glm::vec3(5.0f, 0.0f, 0.0f),
-	    glm::vec3(-5.0f, 0.0f, 0.0f),
-	    glm::vec3(0.0f, 0.0f, 5.0f),
-	    glm::vec3(0.0f, 0.0f, -5.0f),
-	    glm::vec3(0.0f, 4.0f, 0.0f),
-	    glm::vec3(0.0f, -8.0f, 0.0f),
-	};
-#endif
-
-	compute.ubo.particle_count = static_cast<uint32_t>(attractors.size()) * PARTICLES_PER_ATTRACTOR;
-
-	// Initial particle positions
-	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
-
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
-	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
-
-	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
-	{
-		for (uint32_t j = 0; j < PARTICLES_PER_ATTRACTOR; j++)
-		{
-			Particle &particle = particle_buffer[i * PARTICLES_PER_ATTRACTOR + j];
-
-			// First particle in group as heavy center of gravity
-			if (j == 0)
-			{
-				particle.pos = glm::vec4(attractors[i] * 1.5f, 90000.0f);
-				particle.vel = glm::vec4(glm::vec4(0.0f));
-			}
-			else
-			{
-				// Position
-				glm::vec3 position(attractors[i] +
-				                   glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine)) * 0.75f);
-				float     len = glm::length(glm::normalize(position - attractors[i]));
-				position.y *= 2.0f - (len * len);
-
-				// Velocity
-				glm::vec3 angular  = glm::vec3(0.5f, 1.5f, 0.5f) * (((i % 2) == 0) ? 1.0f : -1.0f);
-				glm::vec3 velocity = glm::cross((position - attractors[i]), angular) +
-				                     glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine) * 0.025f);
-
-				float mass   = (rnd_distribution(rnd_engine) * 0.5f + 0.5f) * 75.0f;
-				particle.pos = glm::vec4(position, mass);
-				particle.vel = glm::vec4(velocity, 0.0f);
-			}
-
-			// Color gradient offset
-			particle.vel.w = static_cast<float>(i) * 1.0f / static_cast<uint32_t>(attractors.size());
-		}
-	}
-
-	vk::DeviceSize storage_buffer_size = particle_buffer.size() * sizeof(Particle);
-
-	// Staging
-	// SSBO won't be changed on the host after upload so copy to device local memory
-	vkb::core::HPPBuffer staging_buffer(*get_device(), storage_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
-	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
-
-	compute.storage_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
-	                                                                storage_buffer_size,
-	                                                                vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
-	                                                                    vk::BufferUsageFlagBits::eTransferDst,
-	                                                                VMA_MEMORY_USAGE_GPU_ONLY);
-
-	// Copy from staging buffer to storage buffer
-	vk::Device device = get_device()->get_handle();
-
-	vk::CommandBuffer copy_command = device.allocateCommandBuffers({get_device()->get_command_pool().get_handle(), vk::CommandBufferLevel::ePrimary, 1}).front();
-
-	build_copy_command_buffer(copy_command, staging_buffer.get_handle(), storage_buffer_size);
-
-	vkb::common::submit_and_wait(device, queue, {copy_command});
-
-	device.freeCommandBuffers(get_device()->get_command_pool().get_handle(), copy_command);
-}
-
-void HPPComputeNBody::create_descriptor_pool()
-{
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
-	    {{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eStorageBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
-
-	descriptor_pool = get_device()->get_handle().createDescriptorPool({{}, 2, pool_sizes});
-}
-
-void HPPComputeNBody::create_graphics_descriptor_set_layout()
-{
-	std::array<vk::DescriptorSetLayoutBinding, 3> set_layout_bindings = {
-	    {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	     {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}}};
-
-	graphics.descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
-}
-
-void HPPComputeNBody::create_graphics_pipeline()
-{
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::ePointList);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state(
-	    {}, {}, {}, vk::PolygonMode::eFill, vk::CullModeFlagBits::eNone, vk::FrontFace::eCounterClockwise, {}, {}, {}, {}, 1.0f);
-
-	// Additive blending
-	vk::PipelineColorBlendAttachmentState blend_attachment_state(true,
-	                                                             vk::BlendFactor::eOne,
-	                                                             vk::BlendFactor::eOne,
-	                                                             vk::BlendOp::eAdd,
-	                                                             vk::BlendFactor::eSrcAlpha,
-	                                                             vk::BlendFactor::eDstAlpha,
-	                                                             vk::BlendOp::eAdd,
-	                                                             vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG |
-	                                                                 vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA);
-
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
-
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eAlways, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
-
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {{vk::DynamicState::eViewport, vk::DynamicState::eScissor}};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	// Rendering pipeline
-	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)}};
-
-	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
-	    {{0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, pos)},          // Location 0 : Position
-	     {1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, vel)}}};        // Location 1 : Velocity
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
-
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    {},
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    graphics.pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, graphics.pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
+	return get_device()->get_handle().createSemaphore(semaphore_create_info);
 }
 
 void HPPComputeNBody::draw()
@@ -580,21 +363,68 @@ void HPPComputeNBody::prepare_compute()
 	// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
 	compute.queue = device.getQueue(compute.queue_family_index, 0);
 
-	create_compute_descriptor_set_layout();
+	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute},
+	                                                        {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute}};
+	compute.descriptor_set_layout                        = vkb::common::create_descriptor_set_layout(device, bindings);
+
 	compute.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, compute.descriptor_set_layout);
 	update_compute_descriptor_set();
 
 	compute.pipeline_layout = vkb::common::create_pipeline_layout(device, compute.descriptor_set_layout);
-	create_compute_pipelines();
+
+	// create the compute pipelines
+	// 1st pass - Particle movement calculations
+	{
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_calculate.comp", vk::ShaderStageFlagBits::eCompute);
+
+		// Set some shader parameters via specialization constants
+		struct MovementSpecializationData
+		{
+			uint32_t workgroup_size;
+			uint32_t shared_data_size;
+			float    gravity;
+			float    power;
+			float    soften;
+		};
+
+		std::array<vk::SpecializationMapEntry, 5> movement_specialization_map_entries = {
+		    {{0, offsetof(MovementSpecializationData, workgroup_size), sizeof(uint32_t)},
+		     {1, offsetof(MovementSpecializationData, shared_data_size), sizeof(uint32_t)},
+		     {2, offsetof(MovementSpecializationData, gravity), sizeof(float)},
+		     {3, offsetof(MovementSpecializationData, power), sizeof(float)},
+		     {4, offsetof(MovementSpecializationData, soften), sizeof(float)}}};
+
+		MovementSpecializationData movement_specialization_data{compute.work_group_size, compute.shared_data_size, 0.002f, 0.75f, 0.05f};
+
+		vk::SpecializationInfo specialization_info(static_cast<uint32_t>(movement_specialization_map_entries.size()),
+		                                           movement_specialization_map_entries.data(),
+		                                           sizeof(movement_specialization_data),
+		                                           &movement_specialization_data);
+
+		stage.pSpecializationInfo = &specialization_info;
+
+		compute.pipeline_calculate = create_compute_pipeline(pipeline_cache, stage, compute.pipeline_layout);
+	}
+
+	// 2nd pass - Particle integration
+	{
+		vk::PipelineShaderStageCreateInfo stage = load_shader("compute_nbody/particle_integrate.comp", vk::ShaderStageFlagBits::eCompute);
+
+		vk::SpecializationMapEntry integration_specialization_entry(0, 0, sizeof(compute.work_group_size));
+		vk::SpecializationInfo     specialization_info(1, &integration_specialization_entry, sizeof(compute.work_group_size), &compute.work_group_size);
+		stage.pSpecializationInfo = &specialization_info;
+
+		compute.pipeline_integrate = create_compute_pipeline(pipeline_cache, stage, compute.pipeline_layout);
+	}
 
 	// Separate command pool as queue family for compute may be different than graphics
-	compute.command_pool = device.createCommandPool({vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index});
+	compute.command_pool = create_command_pool(compute.queue_family_index);
 
 	// Create a command buffer for compute operations
-	compute.command_buffer = device.allocateCommandBuffers({compute.command_pool, vk::CommandBufferLevel::ePrimary, 1}).front();
+	compute.command_buffer = allocate_command_buffer(compute.command_pool);
 
 	// Semaphore for compute & graphics sync
-	compute.semaphore = device.createSemaphore({});
+	compute.semaphore = create_semaphore();
 
 	// Signal the semaphore
 	vkb::common::submit_and_wait(device, queue, {}, {compute.semaphore});
@@ -607,7 +437,7 @@ void HPPComputeNBody::prepare_compute()
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
 		// Create a transient command buffer for setting up the initial buffer transfer state
-		vk::CommandBuffer transfer_command = device.allocateCommandBuffers({compute.command_pool, vk::CommandBufferLevel::ePrimary, 1}).front();
+		vk::CommandBuffer transfer_command = allocate_command_buffer(compute.command_pool);
 
 		build_compute_transfer_command_buffer(transfer_command);
 
@@ -617,6 +447,93 @@ void HPPComputeNBody::prepare_compute()
 		// free the transfer command buffer
 		device.freeCommandBuffers(compute.command_pool, transfer_command);
 	}
+}
+
+// Setup and fill the compute shader storage buffers containing the particles
+void HPPComputeNBody::prepare_compute_storage_buffers()
+{
+#if 0
+	std::vector<glm::vec3> attractors = {
+		glm::vec3(2.5f, 1.5f, 0.0f),
+		glm::vec3(-2.5f, -1.5f, 0.0f),
+	};
+#else
+	std::vector<glm::vec3> attractors = {
+	    glm::vec3(5.0f, 0.0f, 0.0f),
+	    glm::vec3(-5.0f, 0.0f, 0.0f),
+	    glm::vec3(0.0f, 0.0f, 5.0f),
+	    glm::vec3(0.0f, 0.0f, -5.0f),
+	    glm::vec3(0.0f, 4.0f, 0.0f),
+	    glm::vec3(0.0f, -8.0f, 0.0f),
+	};
+#endif
+
+	compute.ubo.particle_count = static_cast<uint32_t>(attractors.size()) * PARTICLES_PER_ATTRACTOR;
+
+	// Initial particle positions
+	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
+
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
+
+	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
+	{
+		for (uint32_t j = 0; j < PARTICLES_PER_ATTRACTOR; j++)
+		{
+			Particle &particle = particle_buffer[i * PARTICLES_PER_ATTRACTOR + j];
+
+			// First particle in group as heavy center of gravity
+			if (j == 0)
+			{
+				particle.pos = glm::vec4(attractors[i] * 1.5f, 90000.0f);
+				particle.vel = glm::vec4(glm::vec4(0.0f));
+			}
+			else
+			{
+				// Position
+				glm::vec3 position(attractors[i] +
+				                   glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine)) * 0.75f);
+				float     len = glm::length(glm::normalize(position - attractors[i]));
+				position.y *= 2.0f - (len * len);
+
+				// Velocity
+				glm::vec3 angular  = glm::vec3(0.5f, 1.5f, 0.5f) * (((i % 2) == 0) ? 1.0f : -1.0f);
+				glm::vec3 velocity = glm::cross((position - attractors[i]), angular) +
+				                     glm::vec3(rnd_distribution(rnd_engine), rnd_distribution(rnd_engine), rnd_distribution(rnd_engine) * 0.025f);
+
+				float mass   = (rnd_distribution(rnd_engine) * 0.5f + 0.5f) * 75.0f;
+				particle.pos = glm::vec4(position, mass);
+				particle.vel = glm::vec4(velocity, 0.0f);
+			}
+
+			// Color gradient offset
+			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+		}
+	}
+
+	vk::DeviceSize storage_buffer_size = particle_buffer.size() * sizeof(Particle);
+
+	// Staging
+	// SSBO won't be changed on the host after upload so copy to device local memory
+	vkb::core::HPPBuffer staging_buffer(*get_device(), storage_buffer_size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_ONLY);
+	staging_buffer.update(particle_buffer.data(), storage_buffer_size);
+
+	compute.storage_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	                                                                storage_buffer_size,
+	                                                                vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eStorageBuffer |
+	                                                                    vk::BufferUsageFlagBits::eTransferDst,
+	                                                                VMA_MEMORY_USAGE_GPU_ONLY);
+
+	// Copy from staging buffer to storage buffer
+	vk::Device device = get_device()->get_handle();
+
+	vk::CommandBuffer copy_command = allocate_command_buffer(get_device()->get_command_pool().get_handle());
+
+	build_copy_command_buffer(copy_command, staging_buffer.get_handle(), storage_buffer_size);
+
+	vkb::common::submit_and_wait(device, queue, {copy_command});
+
+	device.freeCommandBuffers(get_device()->get_command_pool().get_handle(), copy_command);
 }
 
 void HPPComputeNBody::prepare_graphics()
@@ -630,15 +547,59 @@ void HPPComputeNBody::prepare_graphics()
 	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(graphics.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_graphics_uniform_buffers();
 
-	create_graphics_descriptor_set_layout();
+	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                        {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}};
+	graphics.descriptor_set_layout                       = vkb::common::create_descriptor_set_layout(device, bindings);
+
 	graphics.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, graphics.descriptor_set_layout);
 	update_graphics_descriptor_set();
 
 	graphics.pipeline_layout = vkb::common::create_pipeline_layout(device, graphics.descriptor_set_layout);
-	create_graphics_pipeline();
+
+	// create the rendering pipeline
+	// Load shaders
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("compute_nbody/particle.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                   load_shader("compute_nbody/particle.frag", vk::ShaderStageFlagBits::eFragment)}};
+
+	// Vertex bindings and attributes
+	vk::VertexInputBindingDescription                  vertex_input_bindings(0, sizeof(Particle), vk::VertexInputRate::eVertex);
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, pos)},          // Location 0 : Position
+	     {1, 0, vk::Format::eR32G32B32A32Sfloat, offsetof(Particle, vel)}}};        // Location 1 : Velocity
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+
+	// Additive blending
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.blendEnable         = true;
+	blend_attachment_state.colorBlendOp        = vk::BlendOp::eAdd;
+	blend_attachment_state.srcColorBlendFactor = vk::BlendFactor::eOne;
+	blend_attachment_state.dstColorBlendFactor = vk::BlendFactor::eOne;
+	blend_attachment_state.alphaBlendOp        = vk::BlendOp::eAdd;
+	blend_attachment_state.srcAlphaBlendFactor = vk::BlendFactor::eSrcAlpha;
+	blend_attachment_state.dstAlphaBlendFactor = vk::BlendFactor::eDstAlpha;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthTestEnable  = false;
+	depth_stencil_state.depthWriteEnable = false;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eAlways;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
+
+	graphics.pipeline = vkb::common::create_graphics_pipeline(device,
+	                                                          pipeline_cache,
+	                                                          shader_stages,
+	                                                          vertex_input_state,
+	                                                          vk::PrimitiveTopology::ePointList,
+	                                                          vk::CullModeFlagBits::eNone,
+	                                                          {blend_attachment_state},
+	                                                          depth_stencil_state,
+	                                                          graphics.pipeline_layout,
+	                                                          render_pass);
 
 	// Semaphore for compute & graphics sync
-	graphics.semaphore = device.createSemaphore({});
+	graphics.semaphore = create_semaphore();
 }
 
 void HPPComputeNBody::update_compute_descriptor_set()

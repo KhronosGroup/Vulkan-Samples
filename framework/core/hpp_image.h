@@ -31,14 +31,14 @@ class HPPImageView;
 class HPPImage : public vkb::core::HPPVulkanResource<vk::Image>
 {
   public:
-	HPPImage(HPPDevice const        &device,
+	HPPImage(HPPDevice              &device,
 	         vk::Image               handle,
 	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,
 	         vk::SampleCountFlagBits sample_count = vk::SampleCountFlagBits::e1);
 
-	HPPImage(HPPDevice const        &device,
+	HPPImage(HPPDevice              &device,
 	         const vk::Extent3D     &extent,
 	         vk::Format              format,
 	         vk::ImageUsageFlags     image_usage,

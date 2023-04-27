@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,43 +17,12 @@
 
 #pragma once
 
-#include <android_native_app_glue.h>
+#include <game-activity/native_app_glue/android_native_app_glue.h>
 
 #include "platform/platform.h"
 
 namespace vkb
 {
-/**
- * @brief Process android lifecycle events
- * 
- * @param app Android app context
- * @return true Events processed
- * @return false Program should close
- */
-inline bool process_android_events(android_app *app)
-{
-	android_poll_source *source;
-
-	int ident;
-	int events;
-
-	while ((ident = ALooper_pollAll(0, nullptr, &events,
-	                                (void **) &source)) >= 0)
-	{
-		if (source)
-		{
-			source->process(app, source);
-		}
-
-		if (app->destroyRequested != 0)
-		{
-			return false;
-		}
-	}
-
-	return true;
-}
-
 class AndroidPlatform : public Platform
 {
   public:
@@ -81,11 +50,13 @@ class AndroidPlatform : public Platform
 
 	android_app *get_android_app();
 
-	ANativeActivity *get_activity();
+	GameActivity *get_activity();
 
 	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const override;
 
 	void set_surface_ready();
+
+	void process_android_input_events(void);
 
   private:
 	virtual void create_window(const Window::Properties &properties) override;
@@ -99,4 +70,39 @@ class AndroidPlatform : public Platform
 
 	bool surface_ready{false};
 };
+
+/**
+ * @brief Process android lifecycle events
+ *
+ * @param app Android app context
+ * @return true Events processed
+ * @return false Program should close
+ */
+inline bool process_android_events(android_app *app)
+{
+	android_poll_source *source;
+
+	int ident;
+	int events;
+
+	while ((ident = ALooper_pollAll(0, nullptr, &events,
+	                                (void **) &source)) >= 0)
+	{
+		if (source)
+		{
+			source->process(app, source);
+		}
+
+		if (app->destroyRequested != 0)
+		{
+			return false;
+		}
+	}
+	if (app->userData)
+	{
+		auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
+		platform->process_android_input_events();
+	}
+	return true;
+}
 }        // namespace vkb

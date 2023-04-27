@@ -1,4 +1,4 @@
-# Copyright (c) 2020-2022, Arm Limited and Contributors
+# Copyright (c) 2020-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -65,7 +65,7 @@ list(JOIN TEST_INFO_LIST "\n" TEST_INFO_LIST)
 list(JOIN TEST_APP_INFO_LIST "\n" TEST_APP_INFO_LIST)
 list(JOIN APP_INFO_LIST "\n" APP_INFO_LIST)
 
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/apps.cpp.in ${CMAKE_CURRENT_BINARY_DIR}/apps.cpp)
+configure_file(apps.cpp.in apps.cpp)
 
 # Create apps library
 
@@ -75,7 +75,8 @@ set(SRC
 )
 
 add_library(${PROJECT_NAME} STATIC ${SRC})
-target_link_libraries(${PROJECT_NAME} PRIVATE framework)
+
+target_link_libraries(${PROJECT_NAME} PUBLIC framework)
 target_include_directories(${PROJECT_NAME} PUBLIC
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${CMAKE_SOURCE_DIR}/samples
@@ -88,7 +89,7 @@ foreach(ID ${PROJECT_ID_LIST})
     if(TARGET ${ID})
         get_target_property(TARGET_TYPE ${ID} TYPE)
 
-        if(TARGET_TYPE STREQUAL "STATIC_LIBRARY")
+        if(TARGET_TYPE STREQUAL "OBJECT_LIBRARY")
             target_link_libraries(${PROJECT_NAME} PUBLIC ${ID})
         endif()
     endif()

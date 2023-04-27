@@ -63,6 +63,11 @@ PostProcessingSubpass &PostProcessingSubpass::bind_input_attachment(const std::s
 	return *this;
 }
 
+void PostProcessingSubpass::unbind_sampled_image(const std::string &name)
+{
+	sampled_images.erase(name);
+}
+
 PostProcessingSubpass &PostProcessingSubpass::bind_sampled_image(const std::string &name, core::SampledImage &&new_image)
 {
 	auto it = sampled_images.find(name);
@@ -370,12 +375,19 @@ void PostProcessingRenderPass::transition_attachments(
 			continue;
 		}
 
-		// The resolving depth occurs in the COLOR_ATTACHMENT_OUT stage, not in the EARLY\LATE_FRAGMENT_TESTS stage
-		// and the corresponding access mask is COLOR_ATTACHMENT_WRITE_BIT, not DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.
-		if (is_depth_resolve && prev_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		if (prev_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 		{
-			prev_pass_barrier_info.pipeline_stage    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			prev_pass_barrier_info.image_read_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			// Synchronize with previous pass writes as barrier below might do image transition
+			prev_pass_barrier_info.pipeline_stage |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			prev_pass_barrier_info.image_read_access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			// The resolving depth occurs in the COLOR_ATTACHMENT_OUT stage, not in the EARLY\LATE_FRAGMENT_TESTS stage
+			// and the corresponding access mask is COLOR_ATTACHMENT_WRITE_BIT, not DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.
+			if (is_depth_resolve)
+			{
+				prev_pass_barrier_info.pipeline_stage |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				prev_pass_barrier_info.image_read_access |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			}
 		}
 		else
 		{

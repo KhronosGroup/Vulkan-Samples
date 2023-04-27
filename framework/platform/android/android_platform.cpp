@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -295,7 +295,7 @@ inline TouchAction translate_touch_action(int action)
 	return TouchAction::Unknown;
 }
 
-void on_content_rect_changed(ANativeActivity *activity, const ARect *rect)
+void on_content_rect_changed(GameActivity *activity, const ARect *rect)
 {
 	LOGI("ContentRectChanged: {:p}\n", static_cast<void *>(activity));
 	struct android_app *app = reinterpret_cast<struct android_app *>(activity->instance);
@@ -340,55 +340,23 @@ void on_app_cmd(android_app *app, int32_t cmd)
 	}
 }
 
-int32_t on_input_event(android_app *app, AInputEvent *input_event)
+bool key_event_filter(const GameActivityKeyEvent *event)
 {
-	auto platform = reinterpret_cast<AndroidPlatform *>(app->userData);
-	assert(platform && "Platform is not valid");
-
-	std::int32_t event_source = AInputEvent_getSource(input_event);
-
-	if (event_source == AINPUT_SOURCE_KEYBOARD)
+	if (event->source == AINPUT_SOURCE_KEYBOARD)
 	{
-		int32_t key_code = AKeyEvent_getKeyCode(input_event);
-		int32_t action   = AKeyEvent_getAction(input_event);
-
-		platform->input_event(KeyInputEvent{
-		    translate_key_code(key_code),
-		    translate_key_action(action)});
+		return true;
 	}
-	else if (event_source == AINPUT_SOURCE_MOUSE)
+	return false;
+}
+
+bool motion_event_filter(const GameActivityMotionEvent *event)
+{
+	if ((event->source == AINPUT_SOURCE_MOUSE) ||
+	    (event->source == AINPUT_SOURCE_TOUCHSCREEN))
 	{
-		std::int32_t action = AMotionEvent_getAction(input_event);
-
-		float x = AMotionEvent_getX(input_event, 0);
-		float y = AMotionEvent_getY(input_event, 0);
-
-		platform->input_event(MouseButtonInputEvent{
-		    translate_mouse_button(0),
-		    translate_mouse_action(action),
-		    x, y});
+		return true;
 	}
-	else if (event_source == AINPUT_SOURCE_TOUCHSCREEN)
-	{
-		size_t       pointer_count = AMotionEvent_getPointerCount(input_event);
-		std::int32_t action        = AMotionEvent_getAction(input_event);
-		std::int32_t pointer_id    = AMotionEvent_getPointerId(input_event, 0);
-
-		float x = AMotionEvent_getX(input_event, 0);
-		float y = AMotionEvent_getY(input_event, 0);
-
-		platform->input_event(TouchInputEvent{
-		    pointer_id,
-		    pointer_count,
-		    translate_touch_action(action),
-		    x, y});
-	}
-	else
-	{
-		return 0;
-	}
-
-	return 1;
+	return false;
 }
 }        // namespace
 
@@ -410,8 +378,10 @@ AndroidPlatform::AndroidPlatform(android_app *app) :
 
 ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)
 {
+	android_app_set_key_event_filter(app, key_event_filter);
+	android_app_set_motion_event_filter(app, motion_event_filter);
+
 	app->onAppCmd                                  = on_app_cmd;
-	app->onInputEvent                              = on_input_event;
 	app->activity->callbacks->onContentRectChanged = on_content_rect_changed;
 	app->userData                                  = this;
 
@@ -441,6 +411,65 @@ void AndroidPlatform::create_window(const Window::Properties &properties)
 	// Android window uses native window size
 	// Required so that the vulkan sample can create a VkSurface
 	window = std::make_unique<AndroidWindow>(this, app->window, properties);
+}
+
+void AndroidPlatform::process_android_input_events(void)
+{
+	auto input_buf = android_app_swap_input_buffers(app);
+	if (!input_buf)
+	{
+		return;
+	}
+	if (input_buf->motionEventsCount)
+	{
+		for (int idx = 0; idx < input_buf->motionEventsCount; idx++)
+		{
+			auto event = &input_buf->motionEvents[idx];
+			assert((event->source == AINPUT_SOURCE_MOUSE ||
+			        event->source == AINPUT_SOURCE_TOUCHSCREEN) &&
+			       "Invalid motion event source");
+
+			std::int32_t action = event->action;
+
+			float x = GameActivityPointerAxes_getX(&event->pointers[0]);
+			float y = GameActivityPointerAxes_getY(&event->pointers[0]);
+
+			if (event->source == AINPUT_SOURCE_MOUSE)
+			{
+				input_event(MouseButtonInputEvent{
+				    translate_mouse_button(0),
+				    translate_mouse_action(action),
+				    x, y});
+			}
+			else if (event->source == AINPUT_SOURCE_TOUCHSCREEN)
+			{
+				// Multiple pointers are not supported.
+				size_t       pointer_count = event->pointerCount;
+				std::int32_t pointer_id    = event->pointers[0].id;
+
+				input_event(TouchInputEvent{
+				    pointer_id,
+				    pointer_count,
+				    translate_touch_action(action),
+				    x, y});
+			}
+		}
+		android_app_clear_motion_events(input_buf);
+	}
+
+	if (input_buf->keyEventsCount)
+	{
+		for (int idx = 0; idx < input_buf->keyEventsCount; idx++)
+		{
+			auto event = &input_buf->keyEvents[idx];
+			assert((event->source == AINPUT_SOURCE_KEYBOARD) &&
+			       "Invalid key event source");
+			input_event(KeyInputEvent{
+			    translate_key_code(event->keyCode),
+			    translate_key_action(event->action)});
+		}
+		android_app_clear_key_events(input_buf);
+	}
 }
 
 void AndroidPlatform::terminate(ExitCode code)
@@ -475,9 +504,9 @@ void AndroidPlatform::send_notification(const std::string &message)
 {
 	JNIEnv *env;
 	app->activity->vm->AttachCurrentThread(&env, NULL);
-	jclass    cls         = env->GetObjectClass(app->activity->clazz);
+	jclass    cls         = env->GetObjectClass(app->activity->javaGameActivity);
 	jmethodID fatal_error = env->GetMethodID(cls, "fatalError", "(Ljava/lang/String;)V");
-	env->CallVoidMethod(app->activity->clazz, fatal_error, env->NewStringUTF(message.c_str()));
+	env->CallVoidMethod(app->activity->javaGameActivity, fatal_error, env->NewStringUTF(message.c_str()));
 	app->activity->vm->DetachCurrentThread();
 }
 
@@ -486,7 +515,7 @@ void AndroidPlatform::set_surface_ready()
 	surface_ready = true;
 }
 
-ANativeActivity *AndroidPlatform::get_activity()
+GameActivity *AndroidPlatform::get_activity()
 {
 	return app->activity;
 }

@@ -396,48 +396,20 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 {
 	vk::SurfaceCapabilitiesKHR surface_properties = context.gpu.getSurfaceCapabilitiesKHR(context.surface);
 
-	std::vector<vk::SurfaceFormatKHR> formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	assert(!supported_surface_formats.empty());
 
-	vk::SurfaceFormatKHR format;
-	if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
-	{
-		// Always prefer sRGB for display
-		format        = formats[0];
-		format.format = vk::Format::eB8G8R8A8Srgb;
-	}
-	else
-	{
-		if (formats.empty())
-		{
-			throw std::runtime_error("Surface has no formats.");
-		}
+	// We want to get an SRGB image format that matches our list of preferred format candiates
+	auto preferred_format_list = std::vector<vk::Format>{vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32};
 
-		format.format = vk::Format::eUndefined;
-		for (auto &candidate : formats)
-		{
-			switch (candidate.format)
-			{
-				case vk::Format::eR8G8B8A8Srgb:
-				case vk::Format::eB8G8R8A8Srgb:
-				case vk::Format::eA8B8G8R8SrgbPack32:
-					format = candidate;
-					break;
+	// Look for the first supported format in our list of preferred formats
+	auto formatIt =
+	    std::find_if(supported_surface_formats.begin(),
+	                 supported_surface_formats.end(),
+	                 [&preferred_format_list](vk::SurfaceFormatKHR const &candidate) { return std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end(); });
 
-				default:
-					break;
-			}
-
-			if (format.format != vk::Format::eUndefined)
-			{
-				break;
-			}
-		}
-
-		if (format.format == vk::Format::eUndefined)
-		{
-			format = formats[0];
-		}
-	}
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	vk::SurfaceFormatKHR format = (formatIt == supported_surface_formats.end()) ? supported_surface_formats[0] : formatIt->format;
 
 	vk::Extent2D swapchain_size;
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)

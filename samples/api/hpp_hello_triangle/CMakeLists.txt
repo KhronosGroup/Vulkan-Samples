@@ -29,4 +29,6 @@ add_sample(
         "triangle.vert"
         "triangle.frag")
 
-target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+if(${VKB_${FOLDER_NAME}})
+    target_compile_definitions(${FOLDER_NAME} PUBLIC VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
+endif()
