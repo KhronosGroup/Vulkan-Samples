@@ -442,6 +442,48 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 	return std::move(load_model(index));
 }
 
+std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file_to_storage_buffer(const std::string &file_name, uint32_t index)
+{
+	std::string err;
+	std::string warn;
+
+	tinygltf::TinyGLTF gltf_loader;
+
+	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
+
+	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
+
+	if (!importResult)
+	{
+		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
+
+		return nullptr;
+	}
+
+	if (!err.empty())
+	{
+		LOGE("Error loading gltf model: {}.", err.c_str());
+
+		return nullptr;
+	}
+
+	if (!warn.empty())
+	{
+		LOGI("{}", warn.c_str());
+	}
+
+	size_t pos = file_name.find_last_of('/');
+
+	model_path = file_name.substr(0, pos);
+
+	if (pos == std::string::npos)
+	{
+		model_path.clear();
+	}
+
+	return std::move(load_model_to_storage_buffer(index));
+}
+
 sg::Scene GLTFLoader::load_scene(int scene_index)
 {
 	auto scene = sg::Scene();
@@ -1166,6 +1208,182 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index)
 		                                                       VMA_MEMORY_USAGE_GPU_ONLY);
 
 		command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, index_data.size());
+
+		transient_buffers.push_back(std::move(stage_buffer));
+	}
+
+	command_buffer.end();
+
+	queue.submit(command_buffer, device.request_fence());
+
+	device.get_fence_pool().wait();
+	device.get_fence_pool().reset();
+	device.get_command_pool().reset_pool();
+
+	return std::move(submesh);
+}
+
+std::unique_ptr<sg::SubMesh> GLTFLoader::load_model_to_storage_buffer(uint32_t index)
+{
+	auto submesh = std::make_unique<sg::SubMesh>();
+
+	std::vector<core::Buffer> transient_buffers;
+
+	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+
+	auto &command_buffer = device.request_command_buffer();
+
+	command_buffer.begin(VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT);
+
+	assert(index < model.meshes.size());
+	auto &gltf_mesh = model.meshes[index];
+
+	assert(!gltf_mesh.primitives.empty());
+	auto &gltf_primitive = gltf_mesh.primitives[0];
+
+	std::vector<AllignedVertex> vertex_data;
+
+	const float *pos     = nullptr;
+	const float *normals = nullptr;
+
+	// Position attribute is required
+	auto  &accessor     = model.accessors[gltf_primitive.attributes.find("POSITION")->second];
+	size_t vertex_count = accessor.count;
+	auto  &buffer_view  = model.bufferViews[accessor.bufferView];
+	pos                 = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+
+	if (gltf_primitive.attributes.find("NORMAL") != gltf_primitive.attributes.end())
+	{
+		accessor    = model.accessors[gltf_primitive.attributes.find("NORMAL")->second];
+		buffer_view = model.bufferViews[accessor.bufferView];
+		normals     = reinterpret_cast<const float *>(&(model.buffers[buffer_view.buffer].data[accessor.byteOffset + buffer_view.byteOffset]));
+	}
+
+	for (size_t v = 0; v < vertex_count; v++)
+	{
+		AllignedVertex vert{};
+		vert.pos        = glm::vec4(glm::make_vec3(&pos[v * 3]), 1.0f);
+		vert.normal.xyz = glm::normalize(glm::vec3(normals ? glm::make_vec3(&normals[v * 3]) : glm::vec4(0.0f)));
+		vertex_data.push_back(vert);
+	}
+
+	core::Buffer stage_buffer{device,
+	                          vertex_data.size() * sizeof(AllignedVertex),
+	                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	                          VMA_MEMORY_USAGE_CPU_ONLY};
+
+	stage_buffer.update(vertex_data.data(), vertex_data.size() * sizeof(AllignedVertex));
+
+	core::Buffer buffer{device,
+	                    vertex_data.size() * sizeof(AllignedVertex),
+	                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                    VMA_MEMORY_USAGE_GPU_ONLY};
+
+	command_buffer.copy_buffer(stage_buffer, buffer, vertex_data.size() * sizeof(AllignedVertex));
+
+	auto pair = std::make_pair("vertex_buffer", std::move(buffer));
+	submesh->vertex_buffers.insert(std::move(pair));
+
+	transient_buffers.push_back(std::move(stage_buffer));
+
+	if (gltf_primitive.indices >= 0)
+	{
+		submesh->vertex_indices = to_u32(get_attribute_size(&model, gltf_primitive.indices));
+
+		auto format     = get_attribute_format(&model, gltf_primitive.indices);
+		auto index_data = get_attribute_data(&model, gltf_primitive.indices);
+
+		switch (format)
+		{
+			case VK_FORMAT_R32_UINT:
+			{
+				// Correct format
+				break;
+			}
+			case VK_FORMAT_R16_UINT:
+			{
+				index_data = convert_underlying_data_stride(index_data, 2, 4);
+				break;
+			}
+			case VK_FORMAT_R8_UINT:
+			{
+				index_data = convert_underlying_data_stride(index_data, 1, 4);
+				break;
+			}
+			default:
+			{
+				break;
+			}
+		}
+
+		// Always do uint32
+		submesh->index_type = VK_INDEX_TYPE_UINT32;
+
+		// prepare meshlets
+		std::vector<Meshlet> meshlets;
+
+		Meshlet meshlet;
+		meshlet.vertex_count = 0;
+		meshlet.index_count  = 0;
+
+		std::set<uint32_t> vertices;                  // set for unique vertices
+		uint32_t           triangle_check = 0;        // each meshlet needs to contain full primitives
+
+		for (uint32_t i = 0; i < submesh->vertex_indices; i++)
+		{
+			// index_data is unsigned char type, casting to uint32_t* will give proper value
+			meshlet.indices[meshlet.index_count] = *(reinterpret_cast<uint32_t *>(index_data.data()) + i);
+
+			size_t size1 = vertices.size();
+			vertices.insert(meshlet.indices[meshlet.index_count]);
+			size_t size2 = vertices.size();
+
+			if (size2 > size1)
+				meshlet.vertex_count++;
+
+			meshlet.index_count++;
+			triangle_check = triangle_check < 3 ? ++triangle_check : 1;
+
+			// 96 because for each traingle we draw a line in a mesh shader sample, 32 triangles/lines per meshlet = 64 vertices on output
+			if (meshlet.vertex_count == 64 || meshlet.index_count == 96)
+			{
+				std::set<uint32_t>::iterator it;
+				uint32_t                     counter = 0;
+				for (it = vertices.begin(); it != vertices.end(); ++it)
+				{
+					meshlet.vertices[counter] = *it;
+					counter++;
+				}
+				if (triangle_check != 3)
+				{
+					meshlet.index_count -= triangle_check;
+					i -= triangle_check;
+					triangle_check = 0;
+				}
+
+				meshlets.push_back(meshlet);
+				meshlet.vertex_count = 0;
+				meshlet.index_count  = 0;
+				vertices.clear();
+			}
+		}
+
+		// vertex_indices and index_buffer are used for meshlets now
+		submesh->vertex_indices = (uint32_t) meshlets.size();
+
+		core::Buffer stage_buffer{device,
+		                          meshlets.size() * sizeof(Meshlet),
+		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		                          VMA_MEMORY_USAGE_CPU_ONLY};
+
+		stage_buffer.update(meshlets.data(), meshlets.size() * sizeof(Meshlet));
+
+		submesh->index_buffer = std::make_unique<core::Buffer>(device,
+		                                                       meshlets.size() * sizeof(Meshlet),
+		                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+		                                                       VMA_MEMORY_USAGE_GPU_ONLY);
+
+		command_buffer.copy_buffer(stage_buffer, *submesh->index_buffer, meshlets.size() * sizeof(Meshlet));
 
 		transient_buffers.push_back(std::move(stage_buffer));
 	}

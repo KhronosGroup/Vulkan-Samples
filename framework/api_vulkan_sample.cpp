@@ -1285,6 +1285,21 @@ std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string 
 	return model;
 }
 
+std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model_to_storage_buffer(const std::string &file, uint32_t index)
+{
+	vkb::GLTFLoader loader{*device};
+
+	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file_to_storage_buffer(file, index);
+
+	if (!model)
+	{
+		LOGE("Cannot load model from file: {}", file.c_str());
+		throw std::runtime_error("Cannot load model from: " + file);
+	}
+
+	return model;
+}
+
 void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer)
 {
 	VkDeviceSize offsets[1] = {0};

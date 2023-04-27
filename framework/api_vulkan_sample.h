@@ -74,6 +74,27 @@ struct Vertex
 };
 
 /**
+ * @brief The structure of a vertex for storage buffer
+ * Simplified to position and normal for easier allignment
+ */
+struct AllignedVertex
+{
+	glm::vec4 pos;
+	glm::vec4 normal;
+};
+
+/**
+ * @brief The structure of a meshlet for mesh shader
+ */
+struct Meshlet
+{
+	uint32_t vertices[64];
+	uint32_t indices[126];
+	uint32_t vertex_count;
+	uint32_t index_count;
+};
+
+/**
  * @brief Sascha Willems base class for use in his ported samples into the framework
  *
  * See vkb::VulkanSample for documentation
@@ -159,14 +180,14 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<VkFence> wait_fences;
 
 	/**
-	 * @brief Populates the swapchain_buffers vector with the image and imageviews 
+	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
 
 	/**
 	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
 	 * @param image_usage_flags The usage flags the new swapchain images will have
- 	 */
+	 */
 	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
 
 	/**
@@ -216,6 +237,13 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param index The index of the model to load from the GLTF file (default: 0)
 	 */
 	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0);
+
+	/**
+	 * @brief Loads in a single model from a GLTF file to storage buffer using memory alligned vertex strucuture
+	 * @param file The filename of the model to load
+	 * @param index The index of the model to load from the GLTF file (default: 0)
+	 */
+	std::unique_ptr<vkb::sg::SubMesh> load_model_to_storage_buffer(const std::string &file, uint32_t index = 0);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer
@@ -312,7 +340,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
 
 	/**
-	 * @brief Updates the overlay 
+	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */
 	void update_overlay(float delta_time);
@@ -324,7 +352,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	void draw_ui(const VkCommandBuffer command_buffer);
 
 	/**
-	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and 
+	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
 	 */
 	void prepare_frame();

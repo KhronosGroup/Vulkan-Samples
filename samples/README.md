@@ -295,6 +295,10 @@ Demonstrate how to use logical operations dynamically, which can reduce the numb
 **Extension**: [```VK_KHR_fragment_shader_barycentric```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html) <br/>
 Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment.
 
+### [Geometry shader to mesh shader](./extensions/gshader_to_mshader)
+**Extension:** [```VK_EXT_mesh_shader```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_mesh_shader.html)<br/>
+Demonstrates how to use mesh shader to achieve the same results as with geometry shader, it loads model from file and visualizes its normals.
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
