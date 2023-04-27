@@ -614,20 +614,30 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_references, {}, &depth_reference);
 
 		// Use subpass dependencies for attachment layout transitions
-		std::array<vk::SubpassDependency, 2> dependencies = {{{VK_SUBPASS_EXTERNAL,
-		                                                       0,
-		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,
-		                                                       vk::PipelineStageFlagBits::eColorAttachmentOutput,
-		                                                       vk::AccessFlagBits::eMemoryRead,
-		                                                       vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
-		                                                       vk::DependencyFlagBits::eByRegion},
-		                                                      {0,
-		                                                       VK_SUBPASS_EXTERNAL,
-		                                                       vk::PipelineStageFlagBits::eColorAttachmentOutput,
-		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,
-		                                                       vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
-		                                                       vk::AccessFlagBits::eMemoryRead,
-		                                                       vk::DependencyFlagBits::eByRegion}}};
+		std::array<vk::SubpassDependency, 2> dependencies;
+
+		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass      = 0;
+		dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+		// End of previous commands
+		dependencies[0].srcStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+		dependencies[0].srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+		// Read/write from/to depth
+		dependencies[0].dstStageMask  = vk::PipelineStageFlagBits::eEarlyFragmentTests;
+		dependencies[0].dstAccessMask = vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
+		// Write to attachment
+		dependencies[0].dstStageMask |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[0].dstAccessMask |= vk::AccessFlagBits::eColorAttachmentWrite;
+
+		dependencies[1].srcSubpass      = 0;
+		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+		// End of write to attachment
+		dependencies[1].srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		// Attachment later read using sampler in 'composition' pipeline
+		dependencies[1].dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
+		dependencies[1].dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
 		vk::RenderPassCreateInfo render_pass_create_info({}, attachment_descriptions, subpass, dependencies);
 
@@ -685,20 +695,30 @@ void HPPTimestampQueries::prepare_offscreen_buffer()
 		vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
 
 		// Use subpass dependencies for attachment layout transitions
-		std::array<vk::SubpassDependency, 2> dependencies = {{{VK_SUBPASS_EXTERNAL,
-		                                                       0,
-		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,
-		                                                       vk::PipelineStageFlagBits::eColorAttachmentOutput,
-		                                                       vk::AccessFlagBits::eMemoryRead,
-		                                                       vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
-		                                                       vk::DependencyFlagBits::eByRegion},
-		                                                      {0,
-		                                                       VK_SUBPASS_EXTERNAL,
-		                                                       vk::PipelineStageFlagBits::eColorAttachmentOutput,
-		                                                       vk::PipelineStageFlagBits::eBottomOfPipe,
-		                                                       vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite,
-		                                                       vk::AccessFlagBits::eMemoryRead,
-		                                                       vk::DependencyFlagBits::eByRegion}}};
+		std::array<vk::SubpassDependency, 2> dependencies;
+
+		dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
+		dependencies[0].dstSubpass      = 0;
+		dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+		// End of previous commands
+		dependencies[0].srcStageMask  = vk::PipelineStageFlagBits::eBottomOfPipe;
+		dependencies[0].srcAccessMask = vk::AccessFlagBits::eNoneKHR;
+		// Read from image in fragment shader
+		dependencies[0].dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
+		dependencies[0].dstAccessMask = vk::AccessFlagBits::eShaderRead;
+		// Write to attachment
+		dependencies[0].dstStageMask |= vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[0].dstAccessMask |= vk::AccessFlagBits::eColorAttachmentWrite;
+
+		dependencies[1].srcSubpass      = 0;
+		dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
+		dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
+		// End of write to attachment
+		dependencies[1].srcStageMask  = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+		dependencies[1].srcAccessMask = vk::AccessFlagBits::eColorAttachmentWrite;
+		// Attachment later read using sampler in 'bloom[0]' pipeline
+		dependencies[1].dstStageMask  = vk::PipelineStageFlagBits::eFragmentShader;
+		dependencies[1].dstAccessMask = vk::AccessFlagBits::eShaderRead;
 
 		vk::RenderPassCreateInfo render_pass_create_info({}, attachment_description, subpass, dependencies);
 
