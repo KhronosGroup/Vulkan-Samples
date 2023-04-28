@@ -206,7 +206,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	void flush_descriptor_state(vk::PipelineBindPoint pipeline_bind_point);
 
 	/**
-	 * @brief Flush the pipelines state
+	 * @brief Flush the pipeline state
 	 */
 	void flush_pipeline_state(vk::PipelineBindPoint pipeline_bind_point);
 

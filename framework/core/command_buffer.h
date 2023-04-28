@@ -287,7 +287,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
 
 	/**
-	 * @brief Flush the pipelines state
+	 * @brief Flush the pipeline state
 	 */
 	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
 

@@ -965,7 +965,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	        blend_attachment_state.size(),
 	        blend_attachment_state.data());
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,

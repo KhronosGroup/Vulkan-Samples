@@ -278,7 +278,7 @@ void LogicOpDynamicState::create_pipeline()
 	/* Enable logic operations */
 	color_blend_state.logicOpEnable = VK_TRUE;
 
-	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
+	/* Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
