@@ -267,7 +267,7 @@ void HPPHDR::create_bloom_pipelines()
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -307,7 +307,7 @@ void HPPHDR::create_composition_pipeline()
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -387,7 +387,7 @@ void HPPHDR::create_models_pipelines()
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 	blend_attachment_states[1].colorWriteMask = blend_attachment_states[0].colorWriteMask;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -516,7 +516,7 @@ void HPPHDR::prepare_camera()
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Reserved depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 

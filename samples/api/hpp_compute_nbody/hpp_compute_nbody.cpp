@@ -327,7 +327,7 @@ void HPPComputeNBody::initializeCamera()
 {
 	camera.type = vkb::CameraType::LookAt;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
 	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
