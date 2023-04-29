@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -47,8 +47,12 @@ class OpenCLInterop : public ApiVulkanSample
 	void   update_uniform_buffers();	
 	void   update_texture_from_open_cl();
 
+	// @todo: rename?
+	void prepare_sync_objects();
+
 	// @todo: Handle type not available outside windows
 	HANDLE get_vulkan_image_handle(VkExternalMemoryHandleTypeFlagsKHR external_memory_handle_type);
+	HANDLE get_vulkan_semaphore_handle(VkExternalSemaphoreHandleTypeFlagBitsKHR external_semaphore_handle_type, VkSemaphore &sempahore);
 
 	struct VertexStructure
 	{
@@ -89,19 +93,15 @@ class OpenCLInterop : public ApiVulkanSample
 	uint32_t                           index_count{0};
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
 
+	// @todo: rename
+	VkSemaphore cl_update_vk_semaphore{VK_NULL_HANDLE};	
+	VkSemaphore vk_update_cl_semaphore{VK_NULL_HANDLE};
+
 	VkFence rendering_finished_fence{VK_NULL_HANDLE};
 
 	float total_time_passed{0};
 
 	CLData *cl_data{nullptr};
-
-#ifdef _WIN32
-	PFN_vkGetMemoryWin32HandleKHR    vkGetMemoryWin32HandleKHR{nullptr};
-	PFN_vkGetSemaphoreWin32HandleKHR vkGetSemaphoreWin32HandleKHR{nullptr};
-#else
-	PFN_vkGetMemoryFdKHR    vkGetMemoryFdKHR{nullptr};
-	PFN_vkGetSemaphoreFdKHR vkGetSemaphoreFdKHR{nullptr};
-#endif
 };
 
 std::unique_ptr<vkb::VulkanSample> create_open_cl_interop();

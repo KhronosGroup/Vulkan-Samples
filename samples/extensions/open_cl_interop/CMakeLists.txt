@@ -29,4 +29,9 @@ add_sample_with_tags(
     FILES
         open_cl_functions.inl
         open_cl_utils.h
-        open_cl_utils.cpp)
+        open_cl_utils.cpp
+    SHADER_FILES_GLSL
+        open_cl_interop/texture_display.vert
+        open_cl_interop/texture_display.frag
+        # Also add the OpenCL kernel so it cean be opened from the IDE
+        open_cl_interop/procedural_texture.cl)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Sascha Willems
+/* Copyright (c) 2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,6 +28,79 @@
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 #	include <aclapi.h>
+#	include <dxgi1_2.h>
+#endif
+
+#ifdef _WIN32
+class WindowsSecurityAttributes
+{
+  protected:
+	SECURITY_ATTRIBUTES  m_winSecurityAttributes;
+	PSECURITY_DESCRIPTOR m_winPSecurityDescriptor;
+
+  public:
+	WindowsSecurityAttributes();
+	SECURITY_ATTRIBUTES *operator&();
+	~WindowsSecurityAttributes();
+};
+
+WindowsSecurityAttributes::WindowsSecurityAttributes()
+{
+	m_winPSecurityDescriptor = (PSECURITY_DESCRIPTOR) calloc(
+	    1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
+
+	PSID *ppSID =
+	    (PSID *) ((PBYTE) m_winPSecurityDescriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
+
+	InitializeSecurityDescriptor(m_winPSecurityDescriptor,
+	                             SECURITY_DESCRIPTOR_REVISION);
+
+	SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority =
+	    SECURITY_WORLD_SID_AUTHORITY;
+	AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0,
+	                         0, 0, 0, 0, 0, ppSID);
+
+	EXPLICIT_ACCESS explicitAccess;
+	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESS));
+	explicitAccess.grfAccessPermissions =
+	    STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+	explicitAccess.grfAccessMode       = SET_ACCESS;
+	explicitAccess.grfInheritance      = INHERIT_ONLY;
+	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
+	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicitAccess.Trustee.ptstrName   = (LPTSTR) *ppSID;
+
+	SetEntriesInAcl(1, &explicitAccess, NULL, ppACL);
+
+	SetSecurityDescriptorDacl(m_winPSecurityDescriptor, TRUE, *ppACL, FALSE);
+
+	m_winSecurityAttributes.nLength              = sizeof(m_winSecurityAttributes);
+	m_winSecurityAttributes.lpSecurityDescriptor = m_winPSecurityDescriptor;
+	m_winSecurityAttributes.bInheritHandle       = TRUE;
+}
+
+SECURITY_ATTRIBUTES *WindowsSecurityAttributes::operator&()
+{
+	return &m_winSecurityAttributes;
+}
+
+WindowsSecurityAttributes::~WindowsSecurityAttributes()
+{
+	PSID *ppSID =
+	    (PSID *) ((PBYTE) m_winPSecurityDescriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
+
+	if (*ppSID)
+	{
+		FreeSid(*ppSID);
+	}
+	if (*ppACL)
+	{
+		LocalFree(*ppACL);
+	}
+	free(m_winPSecurityDescriptor);
+}
 #endif
 
 struct CLData
@@ -38,6 +111,8 @@ struct CLData
 	cl_program       program{nullptr};
 	cl_kernel        kernel{nullptr};
 	cl_mem           image{nullptr};
+	cl_semaphore_khr cl_update_vk_semaphore{nullptr};
+	cl_semaphore_khr vk_update_cl_semaphore{nullptr};
 };
 
 OpenCLInterop::OpenCLInterop()
@@ -106,6 +181,7 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 	}
 #endif
 
+	prepare_sync_objects();
 	prepare_open_cl_resources();
 	prepare_shared_resources();
 	generate_quad();
@@ -115,9 +191,6 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
-
-	auto fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
 
 	prepared = true;
 	return true;
@@ -377,8 +450,8 @@ void OpenCLInterop::prepare_pipelines()
 	// Load shaders
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
-	shader_stages[0] = load_shader("texture_loading/texture.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("texture_loading/texture.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("open_cl_interop/texture_display.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("open_cl_interop/texture_display.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -453,11 +526,22 @@ void OpenCLInterop::update_uniform_buffers()
 HANDLE OpenCLInterop::get_vulkan_image_handle(VkExternalMemoryHandleTypeFlagsKHR external_memory_handle_type)
 {
 	HANDLE                        handle;
-	VkMemoryGetWin32HandleInfoKHR win32_handle_info = {};
-	win32_handle_info.sType                         = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
-	win32_handle_info.memory                        = shared_texture.memory;
-	win32_handle_info.handleType                    = (VkExternalMemoryHandleTypeFlagBitsKHR) external_memory_handle_type;
+	VkMemoryGetWin32HandleInfoKHR win32_handle_info{};
+	win32_handle_info.sType      = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
+	win32_handle_info.memory     = shared_texture.memory;
+	win32_handle_info.handleType = (VkExternalMemoryHandleTypeFlagBitsKHR) external_memory_handle_type;
 	vkGetMemoryWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
+	return handle;
+}
+
+HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkExternalSemaphoreHandleTypeFlagBitsKHR external_semaphore_handle_type, VkSemaphore &sempahore)
+{
+	HANDLE                           handle;
+	VkSemaphoreGetWin32HandleInfoKHR win32_handle_info{};
+	win32_handle_info.sType      = VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR;
+	win32_handle_info.semaphore  = sempahore;
+	win32_handle_info.handleType = external_semaphore_handle_type;
+	vkGetSemaphoreWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
 	return handle;
 }
 
@@ -474,20 +558,49 @@ void OpenCLInterop::prepare_shared_resources()
 
 	VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
 	image_create_info.imageType         = VK_IMAGE_TYPE_2D;
-	image_create_info.format            = VK_FORMAT_R8G8B8A8_UINT;
+	image_create_info.format            = VK_FORMAT_R8G8B8A8_UNORM;
 	image_create_info.mipLevels         = 1;
 	image_create_info.arrayLayers       = 1;
 	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
 	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image_create_info.sharingMode       = VK_SHARING_MODE_EXCLUSIVE;
-	image_create_info.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
 	image_create_info.extent            = {shared_texture.width, shared_texture.height, shared_texture.depth};
 	image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	// @todo: comment
+	VkPhysicalDeviceExternalImageFormatInfo external_image_format_info{};
+	external_image_format_info.sType      = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
+#ifdef _WIN32
+	external_image_format_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
+	external_image_format_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
+
+	VkPhysicalDeviceImageFormatInfo2 format_info2{};
+	format_info2.sType  = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
+	format_info2.format = image_create_info.format;
+	format_info2.tiling = image_create_info.tiling;
+	format_info2.type   = image_create_info.imageType;
+	format_info2.usage  = image_create_info.usage;
+	format_info2.pNext  = &external_image_format_info;
+
+	VkExternalImageFormatProperties external_format_props{};
+	external_format_props.sType = VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES;
+
+	VkImageFormatProperties2 format_props2{};
+	format_props2.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
+	format_props2.pNext = &external_format_props;
+
+	vkGetPhysicalDeviceImageFormatProperties2(device->get_gpu().get_handle(), &format_info2, &format_props2);
+	// @todo: check if support is given
+
+	// @todo: comment
 	VkExternalMemoryImageCreateInfo external_memory_image_info{};
+#ifdef _WIN32
 	external_memory_image_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+#else
 	external_memory_image_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
+	external_memory_image_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
 	image_create_info.pNext                = &external_memory_image_info;
 
 	VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shared_texture.image));
@@ -524,9 +637,7 @@ void OpenCLInterop::prepare_shared_resources()
 	VkExportMemoryWin32HandleInfoKHR export_memory_win32_handle_info{};
 	export_memory_win32_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
 	export_memory_win32_handle_info.pAttributes = &security_attributes;
-	// @todo: document
-	export_memory_win32_handle_info.dwAccess = 0x80000000L | 1;
-	//vulkanExportMemoryWin32HandleInfoKHR.dwAccess = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+	export_memory_win32_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
 #endif
 	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
 	export_memory_allocate_info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
@@ -620,13 +731,13 @@ void OpenCLInterop::prepare_shared_resources()
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
 	mem_properties.push_back((cl_mem_properties) cl_handle);
 #else
-	cl_handle                               = get_vulkan_image_handle(CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
+	cl_handle = get_vulkan_image_handle(CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties_khr) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties_khr) cl_handle);
 #endif
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) cl_data->device_id);
-	mem_properties.push_back((cl_mem_properties) 0x2052);        // @todo: there is a bug in either the drivers or the headers here with CL_DEVICE_HANDLE_LIST_END_KHR
+	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
 	int cl_result;
@@ -680,8 +791,10 @@ void OpenCLInterop::prepare_open_cl_resources()
 	// Platform specific OpenCL extensions for interop
 #if defined(_WIN32)
 	required_extensions.push_back("cl_khr_external_memory_win32");
+	required_extensions.push_back("cl_khr_external_semaphore_win32");
 #else
 	required_extensions.push_back("cl_khr_external_memory_opaque_fd");
+	required_extensions.push_back("cl_khr_external_semaphore_opaque_fd");
 #endif
 	for (auto extension : required_extensions)
 	{
@@ -717,6 +830,32 @@ void OpenCLInterop::prepare_open_cl_resources()
 	{
 		throw std::runtime_error("Could not create OpenCL kernel");
 	}
+
+	// Import sempahores
+	// https://github.com/KhronosGroup/OpenCL-CTS/blob/0b7118186af0f146dd044909c677bed7869c1363/test_conformance/vulkan/test_vulkan_api_consistency.cpp
+	std::vector<cl_semaphore_properties_khr> semaphore_properties{
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
+	};
+#ifdef _WIN32
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
+	HANDLE handle = get_vulkan_semaphore_handle(VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+	// @todo
+#endif
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_data->device_id);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR);
+	semaphore_properties.push_back(0);
+
+	cl_data->cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(cl_data->context, semaphore_properties.data(), &result);
+	if (result != CL_SUCCESS)
+	{
+		throw std::runtime_error("Could not create OpenCL semaphore with properties");
+	}
+
+	// @todo: sempaphores
 }
 
 void OpenCLInterop::update_texture_from_open_cl()
@@ -740,6 +879,39 @@ void OpenCLInterop::update_texture_from_open_cl()
 	{
 		LOGE("Could not execute OpenCL kernel, error code: {}", cl_result);
 	}
+}
+
+void OpenCLInterop::prepare_sync_objects()
+{
+	// @todo: comment
+	VkSemaphoreCreateInfo semaphore_create_info{};
+	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+#ifdef _WIN32
+	WindowsSecurityAttributes windows_security_attributes;
+
+	VkExportSemaphoreWin32HandleInfoKHR export_semaphore_handle_info{};
+	export_semaphore_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
+	export_semaphore_handle_info.pAttributes = &windows_security_attributes;
+	export_semaphore_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+#endif
+
+	VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
+	export_semaphore_create_info.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO_KHR;
+#ifdef _WIN32
+	export_semaphore_create_info.pNext       = &export_semaphore_handle_info;
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+	semaphore_create_info.pNext = &export_semaphore_create_info;
+
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
+
+	// @todo: comment
+	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
 }
 
 std::unique_ptr<vkb::VulkanSample> create_open_cl_interop()
