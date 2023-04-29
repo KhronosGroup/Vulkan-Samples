@@ -21,7 +21,20 @@
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
 
-struct CLData;
+#define CL_FUNCTION_DEFINITIONS
+#include <open_cl_utils.h>
+
+struct OpenCLObjects
+{
+	cl_context       context{nullptr};
+	cl_device_id     device_id{nullptr};
+	cl_command_queue command_queue{nullptr};
+	cl_program       program{nullptr};
+	cl_kernel        kernel{nullptr};
+	cl_mem           image{nullptr};
+	cl_semaphore_khr cl_update_vk_semaphore{nullptr};
+	cl_semaphore_khr vk_update_cl_semaphore{nullptr};
+};
 
 class OpenCLInterop : public ApiVulkanSample
 {
@@ -83,6 +96,8 @@ class OpenCLInterop : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
+	OpenCLObjects opencl_objects{};
+
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
 	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
@@ -100,8 +115,6 @@ class OpenCLInterop : public ApiVulkanSample
 	VkFence rendering_finished_fence{VK_NULL_HANDLE};
 
 	float total_time_passed{0};
-
-	CLData *cl_data{nullptr};
 };
 
 std::unique_ptr<vkb::VulkanSample> create_open_cl_interop();

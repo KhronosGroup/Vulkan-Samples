@@ -22,8 +22,6 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 
-#define CL_FUNCTION_DEFINITIONS
-#include <open_cl_utils.h>
 #include <strstream>
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
@@ -103,18 +101,6 @@ WindowsSecurityAttributes::~WindowsSecurityAttributes()
 }
 #endif
 
-struct CLData
-{
-	cl_context       context{nullptr};
-	cl_device_id     device_id{nullptr};
-	cl_command_queue command_queue{nullptr};
-	cl_program       program{nullptr};
-	cl_kernel        kernel{nullptr};
-	cl_mem           image{nullptr};
-	cl_semaphore_khr cl_update_vk_semaphore{nullptr};
-	cl_semaphore_khr vk_update_cl_semaphore{nullptr};
-};
-
 OpenCLInterop::OpenCLInterop()
 {
 	zoom  = -3.5f;
@@ -147,11 +133,13 @@ OpenCLInterop::~OpenCLInterop()
 		vkFreeMemory(device->get_handle(), shared_texture.memory, nullptr);
 	}
 
-	if (cl_data)
+	if (opencl_objects.image)
 	{
-		clReleaseMemObject(cl_data->image);
-		clReleaseContext(cl_data->context);
-		delete cl_data;
+		clReleaseMemObject(opencl_objects.image);
+	}
+	if (opencl_objects.context)
+	{
+		clReleaseContext(opencl_objects.context);
 	}
 
 	unload_opencl();
@@ -163,8 +151,6 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 	{
 		return false;
 	}
-
-	cl_data = new CLData{};
 
 	prepare_sync_objects();
 	prepare_open_cl_resources();
@@ -199,8 +185,8 @@ void OpenCLInterop::render(float delta_time)
 
 	// Wait until the image update is finished
 	// @todo: Use semaphores instead
-	clFlush(cl_data->command_queue);
-	clFinish(cl_data->command_queue);
+	clFlush(opencl_objects.command_queue);
+	clFinish(opencl_objects.command_queue);
 
 	// Display the image using Vulkan
 	ApiVulkanSample::prepare_frame();
@@ -709,7 +695,7 @@ void OpenCLInterop::prepare_shared_resources()
 
 	std::vector<cl_mem_properties> mem_properties;
 
-	cl_device_id devList[] = {cl_data->device_id, NULL};
+	cl_device_id devList[] = {opencl_objects.device_id, NULL};
 
 #ifdef _WIN32
 	cl_handle = get_vulkan_image_handle(VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT);
@@ -721,12 +707,12 @@ void OpenCLInterop::prepare_shared_resources()
 	mem_properties.push_back((cl_mem_properties_khr) cl_handle);
 #endif
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
-	mem_properties.push_back((cl_mem_properties) cl_data->device_id);
+	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
 	int cl_result;
-	cl_data->image = clCreateImageWithProperties(cl_data->context,
+	opencl_objects.image = clCreateImageWithProperties(opencl_objects.context,
 	                                             mem_properties.data(),
 	                                             CL_MEM_READ_WRITE,
 	                                             &cl_img_fmt,
@@ -735,10 +721,9 @@ void OpenCLInterop::prepare_shared_resources()
 	                                             &cl_result);
 	if (CL_SUCCESS != cl_result)
 	{
-		std::cout << "Could not create OpenCL image, error: " << cl_result << std::endl;
+		LOGE("Could not create OpenCL image, error: {}", cl_result);
 		throw std::runtime_error("clCreateImageWithProperties failed");
 	}
-	std::cout << "clCreateImageWithProperties passed with extMemProperties\n";
 }
 
 std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id)
@@ -791,28 +776,29 @@ void OpenCLInterop::prepare_open_cl_resources()
 	}
 
 	cl_uint num_devices;
-	clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &cl_data->device_id, &num_devices);
+	clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &opencl_objects.device_id, &num_devices);
 
 	cl_int result    = CL_SUCCESS;
-	cl_data->context = clCreateContext(NULL, 1, &cl_data->device_id, NULL, NULL, &result);
+	opencl_objects.context = clCreateContext(NULL, 1, &opencl_objects.device_id, NULL, NULL, &result);
 
 	if (result != CL_SUCCESS)
 	{
 		throw std::runtime_error("Could not create OpenCL context");
 	}
 
-	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
+	opencl_objects.command_queue = clCreateCommandQueue(opencl_objects.context, opencl_objects.device_id, 0, &result);
 
 	auto   kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
 	auto   kernel_source_data = kernel_source.data();
 	size_t kernel_source_size = kernel_source.size();
 
-	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, &kernel_source_data, &kernel_source_size, &result);
-	clBuildProgram(cl_data->program, 1, &cl_data->device_id, NULL, NULL, NULL);
-	cl_data->kernel = clCreateKernel(cl_data->program, "generate_texture", &result);
+	opencl_objects.program = clCreateProgramWithSource(opencl_objects.context, 1, &kernel_source_data, &kernel_source_size, &result);
+	clBuildProgram(opencl_objects.program, 1, &opencl_objects.device_id, NULL, NULL, NULL);
+	opencl_objects.kernel = clCreateKernel(opencl_objects.program, "generate_texture", &result);
 
 	if (result != CL_SUCCESS)
 	{
+		LOGE("Could not create OpenCL kernel, error: {}", result);
 		throw std::runtime_error("Could not create OpenCL kernel");
 	}
 
@@ -830,13 +816,14 @@ void OpenCLInterop::prepare_open_cl_resources()
 	// @todo
 #endif
 	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_data->device_id);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) opencl_objects.device_id);
 	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR);
 	semaphore_properties.push_back(0);
 
-	cl_data->cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(cl_data->context, semaphore_properties.data(), &result);
+	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &result);
 	if (result != CL_SUCCESS)
 	{
+		LOGE("Could not create OpenCL semaphore with properties, error: {}", result);
 		throw std::runtime_error("Could not create OpenCL semaphore with properties");
 	}
 
@@ -847,8 +834,8 @@ void OpenCLInterop::update_texture_from_open_cl()
 {
 	cl_int cl_result;
 
-	cl_result = clSetKernelArg(cl_data->kernel, 0, sizeof(cl_mem), &cl_data->image);
-	cl_result |= clSetKernelArg(cl_data->kernel, 1, sizeof(float), &total_time_passed);
+	cl_result = clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image);
+	cl_result |= clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed);
 
 	if (cl_result != CL_SUCCESS)
 	{
@@ -858,7 +845,7 @@ void OpenCLInterop::update_texture_from_open_cl()
 	std::array<size_t, 2> global_size = {shared_texture.width, shared_texture.height};
 	std::array<size_t, 2> local_size  = {16, 16};
 
-	cl_result = clEnqueueNDRangeKernel(cl_data->command_queue, cl_data->kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
+	cl_result = clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), NULL, global_size.data(), local_size.data(), 0, NULL, NULL);
 
 	if (cl_result != CL_SUCCESS)
 	{
