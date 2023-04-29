@@ -166,21 +166,6 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 
 	cl_data = new CLData{};
 
-	// Fetch platform specific function pointers for external objects
-#ifdef _WIN32
-	vkGetMemoryWin32HandleKHR = reinterpret_cast<PFN_vkGetMemoryWin32HandleKHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetMemoryWin32HandleKHR"));
-	if (!vkGetMemoryWin32HandleKHR)
-	{
-		throw std::runtime_error("Could not get function pointer for \"vkGetMemoryWin32HandleKHR\"");
-	}
-#else
-	vkGetMemoryFdKHR = reinterpret_cast<PFN_vkGetMemoryFdKHR>(vkGetInstanceProcAddr(instance->get_handle(), "vkGetMemoryFdKHR"));
-	if (!vkGetMemoryFdKHR)
-	{
-		throw std::runtime_error("Could not get function pointer for \"vkGetMemoryFdKHR\"");
-	}
-#endif
-
 	prepare_sync_objects();
 	prepare_open_cl_resources();
 	prepare_shared_resources();
