@@ -40,11 +40,28 @@ class HPPPlatform : private vkb::Platform
 	std::unique_ptr<vkb::rendering::HPPRenderContext>
 	    create_render_context(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const std::vector<vk::SurfaceFormatKHR> &surface_format_priority) const
 	{
-		return std::unique_ptr<vkb::rendering::HPPRenderContext>(reinterpret_cast<vkb::rendering::HPPRenderContext *>(
-		    vkb::Platform::create_render_context(reinterpret_cast<vkb::Device &>(device),
-		                                         static_cast<VkSurfaceKHR>(surface),
-		                                         reinterpret_cast<std::vector<VkSurfaceFormatKHR> const &>(surface_format_priority))
-		        .release()));
+		assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
+
+		auto context = std::make_unique<vkb::rendering::HPPRenderContext>(device, surface, reinterpret_cast<vkb::platform::HPPWindow const &>(*window));
+
+		context->set_surface_format_priority(surface_format_priority);
+
+		context->request_image_format(surface_format_priority[0].format);
+
+		context->set_present_mode_priority({vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate});
+
+		switch (window_properties.vsync)
+		{
+			case Window::Vsync::ON:
+				context->request_present_mode(vk::PresentModeKHR::eFifo);
+				break;
+			case Window::Vsync::OFF:
+			default:
+				context->request_present_mode(vk::PresentModeKHR::eMailbox);
+				break;
+		}
+
+		return std::move(context);
 	}
 
 	vkb::platform::HPPWindow &get_window()

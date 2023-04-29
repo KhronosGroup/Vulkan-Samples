@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -83,7 +83,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 	auto count_opaque_submeshes = [is_opaque](uint32_t accumulated, const vkb::sg::Mesh *mesh) -> uint32_t {
 		return accumulated + vkb::to_u32(mesh->get_nodes().size() * std::count_if(mesh->get_submeshes().begin(), mesh->get_submeshes().end(), is_opaque));
 	};
-	const auto &   mesh_components   = scene->get_components<vkb::sg::Mesh>();
+	const auto    &mesh_components   = scene->get_components<vkb::sg::Mesh>();
 	const uint32_t opaque_mesh_count = std::accumulate(mesh_components.begin(), mesh_components.end(), 0, count_opaque_submeshes);
 
 	max_secondary_command_buffer_count = std::min(opaque_mesh_count, max_secondary_command_buffer_count);
@@ -193,7 +193,7 @@ void CommandBufferUsage::render(vkb::CommandBuffer &primary_command_buffer)
 void CommandBufferUsage::draw_renderpass(vkb::CommandBuffer &primary_command_buffer, vkb::RenderTarget &render_target)
 {
 	const auto &subpass = static_cast<ForwardSubpassSecondary *>(render_pipeline->get_active_subpass().get());
-	auto &      extent  = render_target.get_extent();
+	auto       &extent  = render_target.get_extent();
 
 	VkViewport viewport{};
 	viewport.width    = static_cast<float>(extent.width);
@@ -246,7 +246,7 @@ CommandBufferUsage::ForwardSubpassSecondary::ForwardSubpassSecondary(vkb::Render
 {
 }
 
-void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer &                                               command_buffer,
+void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer                                                &command_buffer,
                                                               const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
                                                               uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {
@@ -256,15 +256,16 @@ void CommandBufferUsage::ForwardSubpassSecondary::record_draw(vkb::CommandBuffer
 
 	command_buffer.bind_lighting(get_lighting_state(), 0, 4);
 
+	assert(mesh_end <= nodes.size());
 	for (uint32_t i = mesh_start; i < mesh_end; i++)
 	{
-		update_uniform(command_buffer, *nodes.at(i).first, thread_index);
+		update_uniform(command_buffer, *nodes[i].first, thread_index);
 
-		draw_submesh(command_buffer, *nodes.at(i).second);
+		draw_submesh(command_buffer, *nodes[i].second);
 	}
 }
 
-vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::CommandBuffer &                                               primary_command_buffer,
+vkb::CommandBuffer *CommandBufferUsage::ForwardSubpassSecondary::record_draw_secondary(vkb::CommandBuffer                                                &primary_command_buffer,
                                                                                        const std::vector<std::pair<vkb::sg::Node *, vkb::sg::SubMesh *>> &nodes,
                                                                                        uint32_t mesh_start, uint32_t mesh_end, size_t thread_index)
 {

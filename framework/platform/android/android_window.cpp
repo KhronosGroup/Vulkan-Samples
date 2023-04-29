@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -63,7 +63,7 @@ bool AndroidWindow::should_close()
 
 void AndroidWindow::close()
 {
-	ANativeActivity_finish(platform->get_activity());
+	GameActivity_finish(platform->get_activity());
 	finish_called = true;
 }
 

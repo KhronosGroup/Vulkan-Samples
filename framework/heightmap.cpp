@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -60,8 +60,8 @@ HeightMap::~HeightMap()
 float HeightMap::get_height(const uint32_t x, const uint32_t y)
 {
 	glm::ivec2 rpos = glm::ivec2(x, y) * glm::ivec2(scale);
-	rpos.x          = std::max(0, std::min(rpos.x, (int) dim - 1));
-	rpos.y          = std::max(0, std::min(rpos.y, (int) dim - 1));
+	rpos.x          = std::max(0, std::min(rpos.x, static_cast<int>(dim) - 1));
+	rpos.y          = std::max(0, std::min(rpos.y, static_cast<int>(dim) - 1));
 	rpos /= glm::ivec2(scale);
 	return *(data + (rpos.x + rpos.y * dim) * scale) / 65535.0f;
 }

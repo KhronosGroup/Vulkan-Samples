@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2022, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
 
 #include "descriptor_pool.h"
 
-#include "common/error.h"
 #include "descriptor_set_layout.h"
 #include "device.h"
 

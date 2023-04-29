@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -154,7 +154,7 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 
 	if ((width > 0.0f) && (height > 0.0f))
 	{
-		camera.update_aspect_ratio((float) width / (float) height);
+		camera.update_aspect_ratio(static_cast<float>(width) / static_cast<float>(height));
 	}
 
 	// Notify derived class
@@ -171,9 +171,9 @@ vkb::Device &ApiVulkanSample::get_device()
 
 void ApiVulkanSample::create_render_context(vkb::Platform &platform)
 {
-	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_R8G8B8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	                                                             {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	// We always want an sRGB surface to match the display.
+	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
+	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
@@ -273,8 +273,8 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					int32_t eventX = static_cast<int32_t>(touch_event.get_pos_x());
 					int32_t eventY = static_cast<int32_t>(touch_event.get_pos_y());
 
-					float deltaX = (float) (touch_pos.y - eventY) * rotation_speed * 0.5f;
-					float deltaY = (float) (touch_pos.x - eventX) * rotation_speed * 0.5f;
+					float deltaX = static_cast<float>(touch_pos.y - eventY) * rotation_speed * 0.5f;
+					float deltaY = static_cast<float>(touch_pos.x - eventX) * rotation_speed * 0.5f;
 
 					camera.rotate(glm::vec3(deltaX, 0.0f, 0.0f));
 					camera.rotate(glm::vec3(0.0f, -deltaY, 0.0f));
@@ -342,8 +342,8 @@ void ApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 
 void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 {
-	int32_t dx = (int32_t) mouse_pos.x - x;
-	int32_t dy = (int32_t) mouse_pos.y - y;
+	int32_t dx = static_cast<int32_t>(mouse_pos.x) - x;
+	int32_t dy = static_cast<int32_t>(mouse_pos.y) - y;
 
 	bool handled = false;
 
@@ -352,11 +352,11 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		ImGuiIO &io = ImGui::GetIO();
 		handled     = io.WantCaptureMouse;
 	}
-	mouse_moved((float) x, (float) y, handled);
+	mouse_moved(static_cast<float>(x), static_cast<float>(y), handled);
 
 	if (handled)
 	{
-		mouse_pos = glm::vec2((float) x, (float) y);
+		mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 		return;
 	}
 
@@ -380,7 +380,7 @@ void ApiVulkanSample::handle_mouse_move(int32_t x, int32_t y)
 		camera.translate(glm::vec3(-dx * 0.01f, -dy * 0.01f, 0.0f));
 		view_updated = true;
 	}
-	mouse_pos = glm::vec2((float) x, (float) y);
+	mouse_pos = glm::vec2(static_cast<float>(x), static_cast<float>(y));
 }
 
 void ApiVulkanSample::mouse_moved(double x, double y, bool &handled)
@@ -474,12 +474,14 @@ void ApiVulkanSample::prepare_frame()
 		handle_surface_changes();
 		// Acquire the next image from the swap chain
 		VkResult result = render_context->get_swapchain().acquire_next_image(current_buffer, semaphores.acquired_image_ready, VK_NULL_HANDLE);
-		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE) or no longer optimal for presentation (SUBOPTIMAL)
-		if ((result == VK_ERROR_OUT_OF_DATE_KHR) || (result == VK_SUBOPTIMAL_KHR))
+		// Recreate the swapchain if it's no longer compatible with the surface (OUT_OF_DATE)
+		if (result == VK_ERROR_OUT_OF_DATE_KHR)
 		{
 			resize(width, height);
 		}
-		else
+		// VK_SUBOPTIMAL_KHR means that acquire was successful and semaphore is signaled but image is suboptimal
+		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
+		else if (result != VK_SUBOPTIMAL_KHR)
 		{
 			VK_CHECK(result);
 		}
@@ -500,6 +502,15 @@ void ApiVulkanSample::submit_frame()
 		present_info.swapchainCount   = 1;
 		present_info.pSwapchains      = &sc;
 		present_info.pImageIndices    = &current_buffer;
+
+		VkDisplayPresentInfoKHR disp_present_info{};
+		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    platform->get_window().get_display_present_info(&disp_present_info, width, height))
+		{
+			// Add display present info if supported and wanted
+			present_info.pNext = &disp_present_info;
+		}
+
 		// Check if a wait semaphore has been specified to wait for before presenting the image
 		if (semaphores.render_complete != VK_NULL_HANDLE)
 		{
@@ -959,11 +970,11 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 	return descriptor;
 }
 
-Texture ApiVulkanSample::load_texture(const std::string &file)
+Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1057,11 +1068,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_array(const std::string &file)
+Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_2D_ARRAY);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1078,7 +1089,7 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1158,11 +1169,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file)
 	return texture;
 }
 
-Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
+Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
 {
 	Texture texture{};
 
-	texture.image = vkb::sg::Image::load(file, file);
+	texture.image = vkb::sg::Image::load(file, file, content_type);
 	texture.image->create_vk_image(*device, VK_IMAGE_VIEW_TYPE_CUBE, VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT);
 
 	const auto &queue = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
@@ -1179,7 +1190,7 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file)
 	// Setup buffer copy regions for each mip level
 	std::vector<VkBufferImageCopy> buffer_copy_regions;
 
-	auto &      mipmaps = texture.image->get_mipmaps();
+	auto       &mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1279,7 +1290,7 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 	VkDeviceSize offsets[1] = {0};
 
 	const auto &vertex_buffer = model->vertex_buffers.at("vertex_buffer");
-	auto &      index_buffer  = model->index_buffer;
+	auto       &index_buffer  = model->index_buffer;
 
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);

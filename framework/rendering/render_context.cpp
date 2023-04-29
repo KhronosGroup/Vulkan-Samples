@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,14 +17,17 @@
 
 #include "render_context.h"
 
+#include "platform/window.h"
+
 namespace vkb
 {
 VkFormat RenderContext::DEFAULT_VK_FORMAT = VK_FORMAT_R8G8B8A8_SRGB;
 
-RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, uint32_t window_width, uint32_t window_height) :
+RenderContext::RenderContext(Device &device, VkSurfaceKHR surface, const Window &window) :
     device{device},
+    window{window},
     queue{device.get_suitable_graphics_queue()},
-    surface_extent{window_width, window_height}
+    surface_extent{window.get_extent().width, window.get_extent().height}
 {
 	if (surface != VK_NULL_HANDLE)
 	{
@@ -328,7 +331,8 @@ void RenderContext::begin_frame()
 
 	assert(!frame_active && "Frame is still active, please call end_frame");
 
-	auto &prev_frame = *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	auto &prev_frame = *frames[active_frame_index];
 
 	// We will use the acquired semaphore in a different frame context,
 	// so we need to hold ownership.
@@ -432,6 +436,14 @@ void RenderContext::end_frame(VkSemaphore semaphore)
 		present_info.pSwapchains        = &vk_swapchain;
 		present_info.pImageIndices      = &active_frame_index;
 
+		VkDisplayPresentInfoKHR disp_present_info{};
+		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
+		    window.get_display_present_info(&disp_present_info, surface_extent.width, surface_extent.height))
+		{
+			// Add display present info if supported and wanted
+			present_info.pNext = &disp_present_info;
+		}
+
 		VkResult result = queue.present(present_info);
 
 		if (result == VK_SUBOPTIMAL_KHR || result == VK_ERROR_OUT_OF_DATE_KHR)
@@ -460,7 +472,8 @@ VkSemaphore RenderContext::consume_acquired_semaphore()
 RenderFrame &RenderContext::get_active_frame()
 {
 	assert(frame_active && "Frame is not active, please call begin_frame");
-	return *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	return *frames[active_frame_index];
 }
 
 uint32_t RenderContext::get_active_frame_index()
@@ -472,7 +485,8 @@ uint32_t RenderContext::get_active_frame_index()
 RenderFrame &RenderContext::get_last_rendered_frame()
 {
 	assert(!frame_active && "Frame is still active, please call end_frame");
-	return *frames.at(active_frame_index);
+	assert(active_frame_index < frames.size());
+	return *frames[active_frame_index];
 }
 
 VkSemaphore RenderContext::request_semaphore()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,7 @@
 
 /*
  * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
-  */
+ */
 
 #include "raytracing_basic.h"
 
@@ -75,7 +75,7 @@ void RaytracingBasic::request_gpu_features(vkb::PhysicalDevice &gpu)
 }
 
 /*
-	Set up a storage image that the ray generation shader will be writing to
+    Set up a storage image that the ray generation shader will be writing to
 */
 void RaytracingBasic::create_storage_image()
 {
@@ -125,7 +125,7 @@ void RaytracingBasic::create_storage_image()
 }
 
 /*
-	Gets the device address from a buffer that's needed in many places during the ray tracing setup
+    Gets the device address from a buffer that's needed in many places during the ray tracing setup
 */
 uint64_t RaytracingBasic::get_buffer_device_address(VkBuffer buffer)
 {
@@ -136,7 +136,7 @@ uint64_t RaytracingBasic::get_buffer_device_address(VkBuffer buffer)
 }
 
 /*
-	Create buffer and allocate memory for a temporary scratch buffer
+    Create buffer and allocate memory for a temporary scratch buffer
 */
 ScratchBuffer RaytracingBasic::create_scratch_buffer(VkDeviceSize size)
 {
@@ -184,7 +184,7 @@ void RaytracingBasic::delete_scratch_buffer(ScratchBuffer &scratch_buffer)
 }
 
 /*
-	Create the bottom level acceleration structure that contains the scene's geometry (triangles)
+    Create the bottom level acceleration structure that contains the scene's geometry (triangles)
 */
 void RaytracingBasic::create_bottom_level_acceleration_structure()
 {
@@ -320,7 +320,7 @@ void RaytracingBasic::create_bottom_level_acceleration_structure()
 }
 
 /*
-	Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
+    Create the top level acceleration structure containing geometry instances of the bottom level acceleration structure(s)
 */
 void RaytracingBasic::create_top_level_acceleration_structure()
 {
@@ -435,7 +435,7 @@ inline uint32_t aligned_size(uint32_t value, uint32_t alignment)
 }
 
 /*
-	Create scene geometry and ray tracing acceleration structures
+    Create scene geometry and ray tracing acceleration structures
 */
 void RaytracingBasic::create_scene()
 {
@@ -444,34 +444,34 @@ void RaytracingBasic::create_scene()
 }
 
 /*
-	Create the Shader Binding Tables that connects the ray tracing pipelines' programs and the  top-level acceleration structure
+    Create the Shader Binding Tables that connects the ray tracing pipelines' programs and the  top-level acceleration structure
 
-	SBT Layout used in this sample:
+    SBT Layout used in this sample:
 
-		/-----------\
-		| raygen    |
-		|-----------|
-		| miss      |
-		|-----------|
-		| hit       |
-		\-----------/
+        /-----------\
+        | raygen    |
+        |-----------|
+        | miss      |
+        |-----------|
+        | hit       |
+        \-----------/
 */
 
 void RaytracingBasic::create_shader_binding_tables()
 {
-	const uint32_t           handle_size             = ray_tracing_pipeline_properties.shaderGroupHandleSize;
-	const uint32_t           handle_size_aligned     = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
-	const uint32_t           handle_alignment        = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
-	const uint32_t           group_count             = static_cast<uint32_t>(shader_groups.size());
-	const uint32_t           sbt_size                = group_count * handle_size_aligned;
-	const VkBufferUsageFlags sbt_buffer_usafge_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
-	const VmaMemoryUsage     sbt_memory_usage        = VMA_MEMORY_USAGE_CPU_TO_GPU;
+	const uint32_t           handle_size            = ray_tracing_pipeline_properties.shaderGroupHandleSize;
+	const uint32_t           handle_size_aligned    = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
+	const uint32_t           handle_alignment       = ray_tracing_pipeline_properties.shaderGroupHandleAlignment;
+	const uint32_t           group_count            = static_cast<uint32_t>(shader_groups.size());
+	const uint32_t           sbt_size               = group_count * handle_size_aligned;
+	const VkBufferUsageFlags sbt_buffer_usage_flags = VK_BUFFER_USAGE_SHADER_BINDING_TABLE_BIT_KHR | VK_BUFFER_USAGE_TRANSFER_SRC_BIT | VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT;
+	const VmaMemoryUsage     sbt_memory_usage       = VMA_MEMORY_USAGE_CPU_TO_GPU;
 
 	// Raygen
 	// Create binding table buffers for each shader type
-	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
-	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
-	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usafge_flags, sbt_memory_usage, 0);
+	raygen_shader_binding_table = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	miss_shader_binding_table   = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
+	hit_shader_binding_table    = std::make_unique<vkb::core::Buffer>(get_device(), handle_size, sbt_buffer_usage_flags, sbt_memory_usage, 0);
 
 	// Copy the pipeline's shader handles into a host buffer
 	std::vector<uint8_t> shader_handle_storage(sbt_size);
@@ -490,7 +490,7 @@ void RaytracingBasic::create_shader_binding_tables()
 }
 
 /*
-	Create the descriptor sets used for the ray tracing dispatch
+    Create the descriptor sets used for the ray tracing dispatch
 */
 void RaytracingBasic::create_descriptor_sets()
 {
@@ -536,7 +536,7 @@ void RaytracingBasic::create_descriptor_sets()
 }
 
 /*
-	Create our ray tracing pipeline
+    Create our ray tracing pipeline
 */
 void RaytracingBasic::create_ray_tracing_pipeline()
 {
@@ -581,8 +581,8 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
 	/*
-		Setup ray tracing shader groups
-		Each shader group points at the corresponding shader in the pipeline
+	    Setup ray tracing shader groups
+	    Each shader group points at the corresponding shader in the pipeline
 	*/
 	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
 
@@ -626,7 +626,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 	}
 
 	/*
-		Create the ray tracing pipeline
+	    Create the ray tracing pipeline
 	*/
 	VkRayTracingPipelineCreateInfoKHR raytracing_pipeline_create_info{};
 	raytracing_pipeline_create_info.sType                        = VK_STRUCTURE_TYPE_RAY_TRACING_PIPELINE_CREATE_INFO_KHR;
@@ -640,7 +640,7 @@ void RaytracingBasic::create_ray_tracing_pipeline()
 }
 
 /*
-	Deletes all ressources acquired by an acceleration structure
+    Deletes all ressources acquired by an acceleration structure
 */
 void RaytracingBasic::delete_acceleration_structure(AccelerationStructure &acceleration_structure)
 {
@@ -655,7 +655,7 @@ void RaytracingBasic::delete_acceleration_structure(AccelerationStructure &accel
 }
 
 /*
-	Create the uniform buffer used to pass matrices to the ray tracing ray generation shader
+    Create the uniform buffer used to pass matrices to the ray tracing ray generation shader
 */
 void RaytracingBasic::create_uniform_buffer()
 {
@@ -669,7 +669,7 @@ void RaytracingBasic::create_uniform_buffer()
 }
 
 /*
-	Command buffer generation
+    Command buffer generation
 */
 void RaytracingBasic::build_command_buffers()
 {
@@ -698,7 +698,7 @@ void RaytracingBasic::build_command_buffers()
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
 		/*
-			Setup the strided device address regions pointing at the shader identifiers in the shader binding table
+		    Setup the strided device address regions pointing at the shader identifiers in the shader binding table
 		*/
 
 		const uint32_t handle_size_aligned = aligned_size(ray_tracing_pipeline_properties.shaderGroupHandleSize, ray_tracing_pipeline_properties.shaderGroupHandleAlignment);
@@ -721,7 +721,7 @@ void RaytracingBasic::build_command_buffers()
 		VkStridedDeviceAddressRegionKHR callable_shader_sbt_entry{};
 
 		/*
-			Dispatch the ray tracing commands
+		    Dispatch the ray tracing commands
 		*/
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline);
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_RAY_TRACING_KHR, pipeline_layout, 0, 1, &descriptor_set, 0, 0);
@@ -737,7 +737,7 @@ void RaytracingBasic::build_command_buffers()
 		    1);
 
 		/*
-			Copy ray tracing output to swap chain image
+		    Copy ray tracing output to swap chain image
 		*/
 
 		// Prepare current swap chain image as transfer destination
@@ -782,10 +782,10 @@ void RaytracingBasic::build_command_buffers()
 		    subresource_range);
 
 		/*
-			Start a new render pass to draw the UI overlay on top of the ray traced image
+		    Start a new render pass to draw the UI overlay on top of the ray traced image
 		*/
 		VkClearValue clear_values[2];
-		clear_values[0].color        = {{0.0f, 0.0f, 0.2f, 0.0f}};
+		clear_values[0].color        = {{0.0f, 0.0f, 0.033f, 0.0f}};
 		clear_values[1].depthStencil = {0.0f, 0};
 
 		VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -840,7 +840,7 @@ bool RaytracingBasic::prepare(vkb::Platform &platform)
 	vkGetPhysicalDeviceFeatures2(get_device().get_gpu().get_handle(), &device_features);
 
 	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.1f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -2.5f));
 
@@ -867,10 +867,14 @@ void RaytracingBasic::draw()
 void RaytracingBasic::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	if (camera.updated)
+	{
 		update_uniform_buffers();
+	}
 }
 
 std::unique_ptr<vkb::VulkanSample> create_raytracing_basic()

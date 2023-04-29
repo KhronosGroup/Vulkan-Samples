@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2020-2021, Broadcom Inc.
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2020-2023, Broadcom Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,7 +17,6 @@
  */
 
 #include "stats/stats.h"
-#include "common/error.h"
 #include "core/device.h"
 
 #include "frame_time_stats_provider.h"
@@ -114,8 +113,12 @@ void Stats::resize(const size_t width)
 bool Stats::is_available(const StatIndex index) const
 {
 	for (const auto &p : providers)
+	{
 		if (p->is_available(index))
+		{
 			return true;
+		}
+	}
 	return false;
 }
 
@@ -137,7 +140,8 @@ void Stats::update(float delta_time)
 {
 	switch (sampling_config.mode)
 	{
-		case CounterSamplingMode::Polling: {
+		case CounterSamplingMode::Polling:
+		{
 			StatsProvider::Counters sample;
 
 			for (auto &p : providers)
@@ -148,7 +152,8 @@ void Stats::update(float delta_time)
 			push_sample(sample);
 			break;
 		}
-		case CounterSamplingMode::Continuous: {
+		case CounterSamplingMode::Continuous:
+		{
 			// Check that we have no pending samples to be shown
 			if (pending_samples.size() == 0)
 			{
@@ -170,7 +175,9 @@ void Stats::update(float delta_time)
 			}
 
 			if (pending_samples.size() == 0)
+			{
 				return;
+			}
 
 			// Ensure the number of pending samples is capped at a reasonable value
 			if (pending_samples.size() > 100)
@@ -184,7 +191,7 @@ void Stats::update(float delta_time)
 			}
 
 			// Compute the number of samples to show this frame
-			float floating_sample_count = sampling_config.speed * delta_time * float(buffer_size) + fractional_pending_samples;
+			float floating_sample_count = sampling_config.speed * delta_time * static_cast<float>(buffer_size) + fractional_pending_samples;
 
 			// Keep track of the fractional value to avoid speeding up or slowing down too much due to rounding errors.
 			// Generally we push very few samples per frame, so this matters.
@@ -217,7 +224,9 @@ void Stats::continuous_sampling_worker(std::future<void> should_terminate)
 	worker_timer.tick();
 
 	for (auto &p : providers)
+	{
 		p->continuous_sample(0.0f);
+	}
 
 	while (should_terminate.wait_for(std::chrono::seconds(0)) != std::future_status::ready)
 	{
@@ -260,7 +269,9 @@ void Stats::push_sample(const StatsProvider::Counters &sample)
 		// Find the counter matching this StatIndex in the Sample
 		const auto &smp = sample.find(idx);
 		if (smp == sample.end())
+		{
 			continue;
+		}
 
 		float measurement = static_cast<float>(smp->second.result);
 
@@ -272,14 +283,18 @@ void Stats::begin_sampling(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
+	{
 		p->begin_sampling(cb);
+	}
 }
 
 void Stats::end_sampling(CommandBuffer &cb)
 {
 	// Inform the providers
 	for (auto &p : providers)
+	{
 		p->end_sampling(cb);
+	}
 }
 
 const StatGraphData &Stats::get_graph_data(StatIndex index) const
@@ -287,7 +302,9 @@ const StatGraphData &Stats::get_graph_data(StatIndex index) const
 	for (auto &p : providers)
 	{
 		if (p->is_available(index))
+		{
 			return p->get_graph_data(index);
+		}
 	}
 	return StatsProvider::default_graph_data(index);
 }

@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019-2022, Arm Limited and Contributors
+ Copyright (c) 2019-2023, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -23,6 +23,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 set(ROOT_DIR ${SCRIPT_DIR}/../..)
 set(GRADLE_BUILD_FILE ${SCRIPT_DIR}/template/gradle/build.gradle.in)
 set(GRADLE_APP_BUILD_FILE ${SCRIPT_DIR}/template/gradle/app.build.gradle.in)
+set(DOWNLOAD_VVL_GRADLE_SCRIPT_FILE ${SCRIPT_DIR}/template/gradle/download_vvl.gradle)
 set(GRADLE_SETTINGS_FILE ${SCRIPT_DIR}/template/gradle/settings.gradle.in)
 set(GRADLE_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle.properties.in)
 set(GRADLE_WRAPPER_PROPERTIES_FILE ${SCRIPT_DIR}/template/gradle/gradle-wrapper.properties.in)
@@ -36,7 +37,7 @@ include(${SCRIPT_DIR}/utils.cmake)
 # script parameters
 set(ANDROID_API 30 CACHE STRING "")
 set(ANDROID_MANIFEST "AndroidManifest.xml" CACHE STRING "")
-set(ARCH_ABI "arm64-v8a;armeabi-v7a" CACHE STRING "")
+set(ARCH_ABI "arm64-v8a" CACHE STRING "")
 set(ASSET_DIRS "assets" CACHE STRING "")
 set(RES_DIRS "res" CACHE STRING "")
 set(JAVA_DIRS "java" CACHE STRING "")
@@ -175,7 +176,7 @@ endif()
 if(EXISTS ${NATIVE_SCRIPT})
 	file(RELATIVE_PATH NATIVE_SCRIPT_TMP ${OUTPUT_DIR}/app ${NATIVE_SCRIPT})
 
-	set(CMAKE_PATH "cmake {\n\t\t\tpath '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'\n\t\t} ")
+	set(CMAKE_PATH "path '${NATIVE_SCRIPT_TMP}'\n\t\t\tbuildStagingDirectory \'build-native\'")
 endif()
 
 # cmake.arguments
@@ -195,6 +196,7 @@ file(MAKE_DIRECTORY ${OUTPUT_DIR}/gradle/wrapper)
 file(MAKE_DIRECTORY ${OUTPUT_DIR}/app)
 configure_file(${GRADLE_BUILD_FILE} ${OUTPUT_DIR}/build.gradle)
 configure_file(${GRADLE_APP_BUILD_FILE} ${OUTPUT_DIR}/app/build.gradle)
+file(COPY ${DOWNLOAD_VVL_GRADLE_SCRIPT_FILE} DESTINATION ${OUTPUT_DIR}/app)
 configure_file(${GRADLE_SETTINGS_FILE} ${OUTPUT_DIR}/settings.gradle)
 configure_file(${GRADLE_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle.properties)
 configure_file(${GRADLE_WRAPPER_PROPERTIES_FILE} ${OUTPUT_DIR}/gradle/wrapper/gradle-wrapper.properties)

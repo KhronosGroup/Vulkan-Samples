@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,8 +17,9 @@
 
 #include "hpp_hello_triangle.h"
 
+#include <common/hpp_error.h>
 #include <common/logging.h>
-#include <glsl_compiler.h>
+#include <hpp_glsl_compiler.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -57,7 +58,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &           required,
+bool HPPHelloTriangle::validate_extensions(const std::vector<const char *>            &required,
                                            const std::vector<vk::ExtensionProperties> &available)
 {
 	// inner find_if gives true if the extension was not found
@@ -73,43 +74,7 @@ bool HPPHelloTriangle::validate_extensions(const std::vector<const char *> &    
 	                    }) == required.end();
 }
 
-/**
- * @brief Find the vulkan shader stage for a given a string.
- *
- * @param ext A string containing the shader stage name.
- * @return vk::ShaderStageFlagBits The shader stage mapping from the given string, vk::ShaderStageFlagBits::eVertex otherwise.
- */
-VkShaderStageFlagBits HPPHelloTriangle::find_shader_stage(const std::string &ext)
-{
-	if (ext == "vert")
-	{
-		return VK_SHADER_STAGE_VERTEX_BIT;
-	}
-	else if (ext == "frag")
-	{
-		return VK_SHADER_STAGE_FRAGMENT_BIT;
-	}
-	else if (ext == "comp")
-	{
-		return VK_SHADER_STAGE_COMPUTE_BIT;
-	}
-	else if (ext == "geom")
-	{
-		return VK_SHADER_STAGE_GEOMETRY_BIT;
-	}
-	else if (ext == "tesc")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
-	}
-	else if (ext == "tese")
-	{
-		return VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
-	}
-
-	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
-};
-
-bool validate_layers(const std::vector<const char *> &       required,
+bool validate_layers(const std::vector<const char *>        &required,
                      const std::vector<vk::LayerProperties> &available)
 {
 	// inner find_if returns true if the layer was not found
@@ -173,7 +138,7 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::La
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HPPHelloTriangle::init_instance(Context &                        context,
+void HPPHelloTriangle::init_instance(Context                         &context,
                                      const std::vector<const char *> &required_instance_extensions,
                                      const std::vector<const char *> &required_validation_layers)
 {
@@ -190,6 +155,11 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -248,6 +218,10 @@ void HPPHelloTriangle::init_instance(Context &                        context,
 	instance_info.pNext = &debug_report_create_info;
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+#endif
+
 	// Create the Vulkan instance
 	context.instance = vk::createInstance(instance_info);
 
@@ -293,6 +267,10 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
 			context.instance.destroySurfaceKHR(context.surface);
 		}
 		context.surface = platform.get_window().create_surface(context.instance, context.gpu);
+		if (!context.surface)
+		{
+			throw std::runtime_error("Failed to create window surface.");
+		}
 
 		for (uint32_t j = 0; j < vkb::to_u32(queue_family_properties.size()); j++)
 		{
@@ -319,7 +297,7 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
  */
-void HPPHelloTriangle::init_device(Context &                        context,
+void HPPHelloTriangle::init_device(Context                         &context,
                                    const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
@@ -418,48 +396,20 @@ void HPPHelloTriangle::init_swapchain(Context &context)
 {
 	vk::SurfaceCapabilitiesKHR surface_properties = context.gpu.getSurfaceCapabilitiesKHR(context.surface);
 
-	std::vector<vk::SurfaceFormatKHR> formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = context.gpu.getSurfaceFormatsKHR(context.surface);
+	assert(!supported_surface_formats.empty());
 
-	vk::SurfaceFormatKHR format;
-	if (formats.size() == 1 && formats[0].format == vk::Format::eUndefined)
-	{
-		// There is no preferred format, so pick a default one
-		format        = formats[0];
-		format.format = vk::Format::eB8G8R8A8Unorm;
-	}
-	else
-	{
-		if (formats.empty())
-		{
-			throw std::runtime_error("Surface has no formats.");
-		}
+	// We want to get an SRGB image format that matches our list of preferred format candiates
+	auto preferred_format_list = std::vector<vk::Format>{vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32};
 
-		format.format = vk::Format::eUndefined;
-		for (auto &candidate : formats)
-		{
-			switch (candidate.format)
-			{
-				case vk::Format::eR8G8B8A8Unorm:
-				case vk::Format::eB8G8R8A8Unorm:
-				case vk::Format::eA8B8G8R8UnormPack32:
-					format = candidate;
-					break;
+	// Look for the first supported format in our list of preferred formats
+	auto formatIt =
+	    std::find_if(supported_surface_formats.begin(),
+	                 supported_surface_formats.end(),
+	                 [&preferred_format_list](vk::SurfaceFormatKHR const &candidate) { return std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end(); });
 
-				default:
-					break;
-			}
-
-			if (format.format != vk::Format::eUndefined)
-			{
-				break;
-			}
-		}
-
-		if (format.format == vk::Format::eUndefined)
-		{
-			format = formats[0];
-		}
-	}
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	vk::SurfaceFormatKHR format = (formatIt == supported_surface_formats.end()) ? supported_surface_formats[0] : formatIt->format;
 
 	vk::Extent2D swapchain_size;
 	if (surface_properties.currentExtent.width == 0xFFFFFFFF)
@@ -647,7 +597,13 @@ void HPPHelloTriangle::init_render_pass(Context &context)
  */
 vk::ShaderModule HPPHelloTriangle::load_shader_module(Context &context, const char *path)
 {
-	vkb::GLSLCompiler glsl_compiler;
+	static const std::map<std::string, vk::ShaderStageFlagBits> shader_stage_map = {{"comp", vk::ShaderStageFlagBits::eCompute},
+	                                                                                {"frag", vk::ShaderStageFlagBits::eFragment},
+	                                                                                {"geom", vk::ShaderStageFlagBits::eGeometry},
+	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
+	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
+	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
+	vkb::HPPGLSLCompiler                                        glsl_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
@@ -660,7 +616,12 @@ vk::ShaderModule HPPHelloTriangle::load_shader_module(Context &context, const ch
 	std::string           info_log;
 
 	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	auto stageIt = shader_stage_map.find(file_ext);
+	if (stageIt == shader_stage_map.end())
+	{
+		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
+	}
+	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;
@@ -733,7 +694,9 @@ void HPPHelloTriangle::init_pipeline(Context &context)
 	pipe.renderPass = context.render_pass;
 	pipe.layout     = context.pipeline_layout;
 
-	context.pipeline = context.device.createGraphicsPipeline(nullptr, pipe).value;
+	vk::Result result;
+	std::tie(result, context.pipeline) = context.device.createGraphicsPipeline(nullptr, pipe);
+	assert(result == vk::Result::eSuccess);
 
 	// Pipeline is baked, we can delete the shader modules now.
 	context.device.destroyShaderModule(shader_stages[0].module);
@@ -820,7 +783,7 @@ void HPPHelloTriangle::render_triangle(Context &context, uint32_t swapchain_inde
 
 	// Set clear color values.
 	vk::ClearValue clear_value;
-	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.1f, 0.1f, 0.2f, 1.0f}}));
+	clear_value.color = vk::ClearColorValue(std::array<float, 4>({{0.01f, 0.01f, 0.033f, 1.0f}}));
 
 	// Begin the render pass.
 	vk::RenderPassBeginInfo rp_begin(context.render_pass, framebuffer, {{0, 0}, {context.swapchain_dimensions.width, context.swapchain_dimensions.height}},

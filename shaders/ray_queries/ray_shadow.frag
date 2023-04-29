@@ -87,14 +87,13 @@ bool intersects_light(vec3 light_origin, vec3 pos)
 {
 	const float tmin = 0.01, tmax = 1000;
 	const vec3  direction = light_origin - pos;
-	const float distance  = sqrt(dot(direction, direction));
 
 	rayQueryEXT query;
 
 	// The following runs the actual ray query
 	// For performance, use gl_RayFlagsTerminateOnFirstHitEXT, since we only need to know
 	// whether an intersection exists, and not necessarily any particular intersection
-	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, distance);
+	rayQueryInitializeEXT(query, topLevelAS, gl_RayFlagsTerminateOnFirstHitEXT, 0xFF, pos, tmin, direction.xyz, 1.0);
 	// The following is the canonical way of using ray Queries from the fragment shader when
 	// there's more than one bounce or hit to traverse:
 	// while (rayQueryProceedEXT(query)) { }

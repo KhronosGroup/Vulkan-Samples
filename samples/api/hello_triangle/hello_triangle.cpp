@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,7 +57,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_extensions(const std::vector<const char *> &         required,
+bool HelloTriangle::validate_extensions(const std::vector<const char *>          &required,
                                         const std::vector<VkExtensionProperties> &available)
 {
 	for (auto extension : required)
@@ -89,7 +89,7 @@ bool HelloTriangle::validate_extensions(const std::vector<const char *> &       
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_layers(const std::vector<const char *> &     required,
+bool HelloTriangle::validate_layers(const std::vector<const char *>      &required,
                                     const std::vector<VkLayerProperties> &available)
 {
 	for (auto extension : required)
@@ -156,7 +156,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HelloTriangle::init_instance(Context &                        context,
+void HelloTriangle::init_instance(Context                         &context,
                                   const std::vector<const char *> &required_instance_extensions,
                                   const std::vector<const char *> &required_validation_layers)
 {
@@ -177,6 +177,11 @@ void HelloTriangle::init_instance(Context &                        context,
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	active_instance_extensions.push_back(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -249,6 +254,10 @@ void HelloTriangle::init_instance(Context &                        context,
 	instance_info.pNext = &debug_report_create_info;
 #endif
 
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
 	// Create the Vulkan instance
 	VK_CHECK(vkCreateInstance(&instance_info, nullptr, &context.instance));
 
@@ -265,7 +274,7 @@ void HelloTriangle::init_instance(Context &                        context,
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
  */
-void HelloTriangle::init_device(Context &                        context,
+void HelloTriangle::init_device(Context                         &context,
                                 const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");
@@ -426,49 +435,22 @@ void HelloTriangle::init_swapchain(Context &context)
 	VkSurfaceCapabilitiesKHR surface_properties;
 	VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(context.gpu, context.surface, &surface_properties));
 
-	uint32_t format_count;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, nullptr);
-	std::vector<VkSurfaceFormatKHR> formats(format_count);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &format_count, formats.data());
+	uint32_t surface_format_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, nullptr);
+	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, supported_surface_formats.data());
 
-	VkSurfaceFormatKHR format;
-	if (format_count == 1 && formats[0].format == VK_FORMAT_UNDEFINED)
+	// We want to get an SRGB image format that matches our list of preferred format candiates
+	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
+	VkSurfaceFormatKHR format                = supported_surface_formats[0];
+	auto               preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};
+
+	for (auto &candidate : supported_surface_formats)
 	{
-		// There is no preferred format, so pick a default one
-		format        = formats[0];
-		format.format = VK_FORMAT_B8G8R8A8_UNORM;
-	}
-	else
-	{
-		if (format_count == 0)
+		if (std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end())
 		{
-			throw std::runtime_error("Surface has no formats.");
-		}
-
-		format.format = VK_FORMAT_UNDEFINED;
-		for (auto &candidate : formats)
-		{
-			switch (candidate.format)
-			{
-				case VK_FORMAT_R8G8B8A8_UNORM:
-				case VK_FORMAT_B8G8R8A8_UNORM:
-				case VK_FORMAT_A8B8G8R8_UNORM_PACK32:
-					format = candidate;
-					break;
-
-				default:
-					break;
-			}
-
-			if (format.format != VK_FORMAT_UNDEFINED)
-			{
-				break;
-			}
-		}
-
-		if (format.format == VK_FORMAT_UNDEFINED)
-		{
-			format = formats[0];
+			format = candidate;
+			break;
 		}
 	}
 
@@ -879,7 +861,7 @@ void HelloTriangle::render_triangle(Context &context, uint32_t swapchain_index)
 
 	// Set clear color values.
 	VkClearValue clear_value;
-	clear_value.color = {{0.1f, 0.1f, 0.2f, 1.0f}};
+	clear_value.color = {{0.01f, 0.01f, 0.033f, 1.0f}};
 
 	// Begin the render pass.
 	VkRenderPassBeginInfo rp_begin{VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO};
@@ -1091,6 +1073,11 @@ bool HelloTriangle::prepare(vkb::Platform &platform)
 	auto &extent                        = platform.get_window().get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
+
+	if (!context.surface)
+	{
+		throw std::runtime_error("Failed to create window surface.");
+	}
 
 	init_device(context, {"VK_KHR_swapchain"});
 

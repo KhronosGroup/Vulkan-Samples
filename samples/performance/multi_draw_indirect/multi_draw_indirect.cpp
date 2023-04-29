@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Holochip Corporation
+/* Copyright (c) 2021-2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -159,7 +159,7 @@ void MultiDrawIndirect::build_command_buffers()
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
@@ -266,7 +266,7 @@ bool MultiDrawIndirect::prepare(vkb::Platform &platform)
 	}
 
 	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, (float) width / (float) height, 0.001f, 512.0f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.001f, 512.0f);
 	camera.set_rotation(glm::vec3(-23.5, -45, 0));
 	camera.set_translation(glm::vec3(0, 0.5, -0.2));
 
@@ -312,13 +312,13 @@ void MultiDrawIndirect::load_scene()
 	for (auto &&mesh : scene->get_components<vkb::sg::Mesh>())
 	{
 		const size_t texture_index = textures.size();
-		const auto & short_name    = mesh->get_name();
+		const auto  &short_name    = mesh->get_name();
 		auto         image_name    = scene_path + short_name + ".ktx";
-		auto         image         = vkb::sg::Image::load(image_name, image_name);
+		auto         image         = vkb::sg::Image::load(image_name, image_name, vkb::sg::Image::Color);
 
 		image->create_vk_image(*device);
 		Texture texture;
-		texture.n_mip_maps = uint32_t(image->get_mipmaps().size());
+		texture.n_mip_maps = static_cast<uint32_t>(image->get_mipmaps().size());
 		assert(texture.n_mip_maps == 1);
 		texture.image = std::make_unique<vkb::core::Image>(*device,
 		                                                   image->get_extent(),
@@ -410,9 +410,9 @@ void MultiDrawIndirect::load_scene()
 				for (size_t i = 0; i < nTriangles; ++i)
 				{
 					model.triangles[i] = {
-					    uint16_t(temp_buffer[3 * i]),
-					    uint16_t(temp_buffer[3 * i + 1]),
-					    uint16_t(temp_buffer[3 * i + 2])};
+					    static_cast<uint16_t>(temp_buffer[3 * i]),
+					    static_cast<uint16_t>(temp_buffer[3 * i + 1]),
+					    static_cast<uint16_t>(temp_buffer[3 * i + 2])};
 				}
 			}
 			model.bounding_sphere = BoundingSphere(pts);
@@ -926,7 +926,7 @@ void MultiDrawIndirect::cpu_cull()
 	for (size_t i = 0; i < models.size(); ++i)
 	{
 		// we control visibility by changing the instance count
-		auto &                       model = models[i];
+		auto                        &model = models[i];
 		VkDrawIndexedIndirectCommand cmd{};
 		cmd.firstIndex    = model.index_buffer_offset / (sizeof(model.triangles[0][0]));
 		cmd.indexCount    = static_cast<uint32_t>(model.triangles.size()) * 3;
@@ -976,7 +976,7 @@ MultiDrawIndirect::BoundingSphere::BoundingSphere(const std::vector<glm::vec3> &
 	{
 		this->center += pt;
 	}
-	this->center /= float(pts.size());
+	this->center /= static_cast<float>(pts.size());
 	this->radius = glm::distance2(pts[0], this->center);
 	for (size_t i = 1; i < pts.size(); ++i)
 	{

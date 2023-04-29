@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,8 +16,8 @@
  */
 
 /*
-  * Compute shader N-body simulation using two passes and shared compute shader memory
-  */
+ * Compute shader N-body simulation using two passes and shared compute shader memory
+ */
 
 #include "compute_nbody.h"
 
@@ -29,7 +29,7 @@ ComputeNBody::ComputeNBody()
 	camera.type = vkb::CameraType::LookAt;
 
 	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
-	camera.set_perspective(60.0f, (float) width / (float) height, 512.0f, 0.1f);
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
 	camera.translation_speed = 2.5f;
@@ -72,8 +72,8 @@ void ComputeNBody::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void ComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx");
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx");
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
 }
 
 void ComputeNBody::build_command_buffers()
@@ -134,7 +134,7 @@ void ComputeNBody::build_command_buffers()
 
 		// Draw the particle system using the update vertex buffer
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
-		VkViewport viewport = vkb::initializers::viewport((float) width, (float) height, 0.0f, 1.0f);
+		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 		VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 		vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
@@ -198,7 +198,7 @@ void ComputeNBody::build_compute_command_buffer()
 
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -253,7 +253,7 @@ void ComputeNBody::build_compute_command_buffer()
 		vkCmdPipelineBarrier(
 		    compute.command_buffer,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &buffer_barrier,
@@ -287,7 +287,7 @@ void ComputeNBody::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -319,7 +319,7 @@ void ComputeNBody::prepare_storage_buffers()
 			}
 
 			// Color gradient offset
-			particle.vel.w = (float) i * 1.0f / static_cast<uint32_t>(attractors.size());
+			particle.vel.w = static_cast<float>(i) * 1.0f / static_cast<uint32_t>(attractors.size());
 		}
 	}
 
@@ -715,7 +715,7 @@ void ComputeNBody::prepare_compute()
 		        compute.storage_buffer->get_size()};
 		vkCmdPipelineBarrier(
 		    transfer_command,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
 		    0,
 		    0, nullptr,
@@ -736,7 +736,7 @@ void ComputeNBody::prepare_compute()
 		vkCmdPipelineBarrier(
 		    transfer_command,
 		    VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-		    VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+		    VK_PIPELINE_STAGE_TRANSFER_BIT,
 		    0,
 		    0, nullptr,
 		    1, &release_buffer_barrier,
@@ -798,7 +798,7 @@ void ComputeNBody::update_graphics_uniform_buffers()
 {
 	graphics.ubo.projection = camera.matrices.perspective;
 	graphics.ubo.view       = camera.matrices.view;
-	graphics.ubo.screenDim  = glm::vec2((float) width, (float) height);
+	graphics.ubo.screenDim  = glm::vec2(static_cast<float>(width), static_cast<float>(height));
 	graphics.uniform_buffer->convert_and_update(graphics.ubo);
 }
 
@@ -848,9 +848,9 @@ bool ComputeNBody::prepare(vkb::Platform &platform)
 	compute.queue_family_index  = get_device().get_queue_family_index(VK_QUEUE_COMPUTE_BIT);
 
 	// Not all implementations support a work group size of 256, so we need to check with the device limits
-	work_group_size = std::min((uint32_t) 256, (uint32_t) get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
+	work_group_size = std::min(static_cast<uint32_t>(256), get_device().get_gpu().get_properties().limits.maxComputeWorkGroupSize[0]);
 	// Same for shared data size for passing data between shader invocations
-	shared_data_size = std::min((uint32_t) 1024, (uint32_t)(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
+	shared_data_size = std::min(static_cast<uint32_t>(1024), static_cast<uint32_t>(get_device().get_gpu().get_properties().limits.maxComputeSharedMemorySize / sizeof(glm::vec4)));
 
 	load_assets();
 	setup_descriptor_pool();
@@ -864,7 +864,9 @@ bool ComputeNBody::prepare(vkb::Platform &platform)
 void ComputeNBody::render(float delta_time)
 {
 	if (!prepared)
+	{
 		return;
+	}
 	draw();
 	update_compute_uniform_buffers(delta_time);
 	if (camera.updated)

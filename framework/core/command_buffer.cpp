@@ -623,9 +623,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 
 			std::vector<uint32_t> dynamic_offsets;
 
-			// The bindings we want to update before binding, if empty we update all bindings
-			std::vector<uint32_t> bindings_to_update;
-
 			// Iterate over all resource bindings
 			for (auto &binding_it : resource_set.get_resource_bindings())
 			{
@@ -635,12 +632,6 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 				// Check if binding exists in the pipeline layout
 				if (auto binding_info = descriptor_set_layout.get_layout_binding(binding_index))
 				{
-					// If update after bind is enabled, we store the binding index of each binding that need to be updated before being bound
-					if (update_after_bind && !(descriptor_set_layout.get_layout_binding_flag(binding_index) & VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT_EXT))
-					{
-						bindings_to_update.push_back(binding_index);
-					}
-
 					// Iterate over all binding resources
 					for (auto &element_it : binding_resources)
 					{
@@ -668,11 +659,11 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								buffer_info.offset = 0;
 							}
 
-							buffer_infos[binding_index][array_element] = std::move(buffer_info);
+							buffer_infos[binding_index][array_element] = buffer_info;
 						}
 
 						// Get image info
-						else if (image_view != nullptr || sampler != VK_NULL_HANDLE)
+						else if (image_view != nullptr || sampler != nullptr)
 						{
 							// Can be null for input attachments
 							VkDescriptorImageInfo image_info{};
@@ -706,17 +697,22 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 								}
 							}
 
-							image_infos[binding_index][array_element] = std::move(image_info);
+							image_infos[binding_index][array_element] = image_info;
 						}
 					}
+
+					assert((!update_after_bind ||
+					        (buffer_infos.count(binding_index) > 0 || (image_infos.count(binding_index) > 0))) &&
+					       "binding index with no buffer or image infos can't be checked for adding to bindings_to_update");
 				}
 			}
 
-			// Request a descriptor set from the render frame, and write the buffer infos and image infos of all the specified bindings
-			auto &descriptor_set = command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout, buffer_infos, image_infos, command_pool.get_thread_index());
-			descriptor_set.update(bindings_to_update);
-
-			VkDescriptorSet descriptor_set_handle = descriptor_set.get_handle();
+			VkDescriptorSet descriptor_set_handle =
+			    command_pool.get_render_frame()->request_descriptor_set(descriptor_set_layout,
+			                                                            buffer_infos,
+			                                                            image_infos,
+			                                                            update_after_bind,
+			                                                            command_pool.get_thread_index());
 
 			// Bind descriptor set
 			vkCmdBindDescriptorSets(get_handle(),

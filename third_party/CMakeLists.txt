@@ -1,4 +1,4 @@
-# Copyright (c) 2019-2021, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -163,7 +163,7 @@ set(KTX_INCLUDE_DIRS
     ${KTX_DIR}/other_include
 )
 
-add_library(ktx ${KTX_SOURCES})
+add_library(ktx STATIC ${KTX_SOURCES})
 
 target_compile_definitions(ktx PUBLIC LIBKTX)
 if (WIN32)
@@ -177,7 +177,7 @@ target_include_directories(ktx PUBLIC ${KTX_INCLUDE_DIRS})
 
 target_link_libraries(ktx PUBLIC vulkan)
 
-set_property(TARGET ktx PROPERTY FOLDER "ThirdParty")
+set_target_properties(ktx PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # volk
 set(VOLK_DIR "${CMAKE_CURRENT_SOURCE_DIR}/volk")
@@ -186,6 +186,7 @@ set(VOLK_FILES
     "${VOLK_DIR}/volk.h")
 
 add_library(volk STATIC ${VOLK_FILES})
+set_target_properties(volk PROPERTIES POSITION_INDEPENDENT_CODE ON)
 
 target_link_libraries(volk PUBLIC vulkan)
 
@@ -218,7 +219,7 @@ add_library(imgui STATIC ${IMGUI_FILES})
 
 target_include_directories(imgui PUBLIC ${IMGUI_DIR})
 
-set_property(TARGET imgui PROPERTY FOLDER "ThirdParty")
+set_target_properties(imgui PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # glslang
 option(ENABLE_SPVREMAPPER OFF)
@@ -234,10 +235,10 @@ if (NOT TARGET glslang-default-resource-limits)
     add_library(glslang-default-resource-limits
                 glslang/StandAlone/ResourceLimits.cpp)
 
-    set_property(TARGET glslang-default-resource-limits PROPERTY FOLDER "ThirdParty")
-    
+    set_target_properties(glslang-default-resource-limits PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+
     target_include_directories(glslang-default-resource-limits
-                                PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang/StandAlone)
+            PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/glslang)
 endif()
 
 if(NOT MSVC)
@@ -250,27 +251,27 @@ if(NOT MSVC)
         "-Wno-unused-parameter")
 endif()
 
-set_property(TARGET glslang PROPERTY FOLDER "ThirdParty")
-set_property(TARGET OGLCompiler PROPERTY FOLDER "ThirdParty")
-set_property(TARGET OSDependent PROPERTY FOLDER "ThirdParty")
-set_property(TARGET SPIRV PROPERTY FOLDER "ThirdParty")
+set_target_properties(glslang PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(OGLCompiler PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(OSDependent PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(SPIRV PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # spirv-cross
 add_subdirectory(spirv-cross)
 
-set_property(TARGET spirv-cross PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-core PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-glsl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-cpp PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-hlsl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-msl PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-reflect PROPERTY FOLDER "ThirdParty")
-set_property(TARGET spirv-cross-util PROPERTY FOLDER "ThirdParty")
+set_target_properties(spirv-cross PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-core PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-glsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-cpp PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-hlsl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-msl PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-reflect PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+set_target_properties(spirv-cross-util PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # hwcpipe
 add_subdirectory(hwcpipe)
 
-set_property(TARGET hwcpipe PROPERTY FOLDER "ThirdParty")
+set_target_properties(hwcpipe PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
 
 # stb
 add_library(stb INTERFACE)
@@ -309,23 +310,13 @@ set(ASTC_SOURCES
     ${ASTC_SOURCE_DIR}/astc_ktx_dds.cpp
 )
 
-add_library(astc ${ASTC_SOURCES})
+add_library(astc STATIC ${ASTC_SOURCES})
 target_include_directories(astc PUBLIC ${ASTC_INCLUDE_DIR})
 target_compile_definitions(astc PRIVATE -DNO_STB_IMAGE_IMPLEMENTATION)
-set_property(TARGET astc PROPERTY FOLDER "ThirdParty")
+set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_CODE ON)
+target_link_libraries(astc PUBLIC stb)
 
-if(ANDROID)
-    # native_app_glue
-    set(NATIVE_APP_GLUE_DIR "${CMAKE_ANDROID_NDK}/sources/android/native_app_glue")
-
-    file(GLOB NATIVE_APP_GLUE_FILES "${NATIVE_APP_GLUE_DIR}/*.c" "${NATIVE_APP_GLUE_DIR}/*.h")
-    
-    add_library(native_app_glue STATIC ${NATIVE_APP_GLUE_FILES})
-        
-    target_include_directories(native_app_glue PUBLIC ${NATIVE_APP_GLUE_DIR})
-    
-    set_property(TARGET native_app_glue PROPERTY FOLDER "ThirdParty")
-else()
+if(NOT ANDROID)
     if (NOT DIRECT_TO_DISPLAY)
         # GLFW
         option(GLFW_BUILD_DOCS OFF)
@@ -333,6 +324,7 @@ else()
         option(GLFW_BUILD_EXAMPLES OFF)
         option(GLFW_BUILD_TESTS OFF)
         option(GLFW_INSTALL OFF)
+        option(BUILD_SHARED_LIBS ON)
         if (VKB_WSI_SELECTION STREQUAL WAYLAND)
             set(GLFW_USE_WAYLAND ON)
         endif()

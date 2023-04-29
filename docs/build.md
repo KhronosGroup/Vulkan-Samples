@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2022, Arm Limited and Contributors
+- Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -30,6 +30,7 @@
       - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
   - [VKB_VULKAN_DEBUG](#vkb_vulkan_debug)
   - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
+- [Quality Assurance](#quality-assurance)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
 - [Windows](#windows)
@@ -103,6 +104,17 @@ Treat all warnings as errors
 
 **Default:** `ON`
 
+# Quality Assurance
+
+We use a small set of tools to provide a level of quality to the project. These tools are part of our CI/CD process. If your local environment does not have the same versions of the tools we use in the CI you may see some errors or warnings pop-up when pushing.
+
+For up-to date version information please see the repositories for the individual tools
+
+- Doxygen [Doxygen Repository](https://github.com/KhronosGroupActions/doxygen)
+- Clang Format / Clang Tidy [Clang Tools Repository](https://github.com/KhronosGroupActions/clang-tools)
+- Snake Case Check [Snake Case Check Repository](https://github.com/KhronosGroupActions/snake-case-check)
+- Android NDK [Android NDK Repository](https://github.com/KhronosGroupActions/android-ndk-build)
+
 # 3D models
 
 Most of the samples require 3D models downloaded from <https://github.com/KhronosGroup/Vulkan-Samples-Assets>.
@@ -137,10 +149,9 @@ adb shell setprop security.perf_harden 0
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2 and 3.19.3)
+- CMake v3.12+
 - Python 3
 - Visual Studio 2017 or above
-- [clang-format-8](#clang-format-and-visual-studio)
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -194,8 +205,8 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2)
-- C++14 Compiler (tested on GCC 7.3)
+- CMake v3.12+
+- C++14 Compiler
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
@@ -227,7 +238,7 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-- CMake v3.10+ (known to work with 3.10.2; Apple Silicon requires at least 3.19.2)
+- CMake v3.12+ (Apple Silicon requires at least 3.19.2)
 - XCode v12 for Apple Silicon
 - Command Line Tools (CLT) for Xcode `xcode-select --install`
 - [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
@@ -259,23 +270,33 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 
 ## Dependencies
 
-For all dependencies set the following environment variables.
+For all dependencies set the following environment variables:
 
-- CMake v3.10+
 - JDK 8+ `JAVA_HOME=<SYSTEM_DIR>/java`
-- Android NDK r18+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
 - Android SDK `ANDROID_HOME=<WORK_DIR>/android-sdk`
-- Gradle 5+ `GRADLE_HOME=<WORK_DIR>/gradle`
+- CMake v3.16+
+- Android NDK r23+ `ANDROID_NDK_HOME=<WORK_DIR>/android-ndk`
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
+
+> We use this environment in the CI [Android NDK Repository](https://github.com/KhronosGroupActions/android-ndk-build)
+
+It is highly recommended to install [Android Studio](https://d.android.com/studio) to build, run and trace the sample project.
+Android Studio uses the following plugins/tools to build samples:
+
+- Android Gradle Plugin
+- CMake Plugin, which installs and uses Ninja 
+- NDK
+
+Their versions are configured in the [build.gradle.in](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/build.gradle.in) and [app.build.gradle.in files](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/app.build.gradle.in); when updating these versions, refer to [the official documentation for the recommended combinations](https://developer.android.com/studio/projects/install-ndk#default-ndk-per-agp).
+
 
 ## Build with Gradle
 
 ### Generate the gradle project 
 
 Use the provided script for the platform you are building on by running the following command:
-
 #### Windows <!-- omit in toc -->
 
 ```
@@ -289,6 +310,18 @@ bldsys\scripts\generate_android_gradle.bat
 ```
 
 A new folder will be created in the root directory at `build\android_gradle`
+
+### Install dependencies
+
+[Android Gradle Plugin](https://d.android.com/reference/tools/gradle-api) (used by Android Studio) may not auto install dependencies. You will need to install them if they have not been installed:
+
+- Find the configured versions in `build/android_gradle/app/build.gradle`, or its template file [`bldsys/camke/template/gradle/app.build.gradle.in`](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/app.build.gradle.in)
+- [Install them with Android Studio](https://d.android.com/studio/projects/install-ndk) or [sdkmanager command line tool](https://d.android.com/studio/projects/configure-agp-ndk?language=agp4-1#command-line). For example, to install AGP port CMake 3.22.1 and NDK version 25.1.8937393 on Linux, do the following:
+```
+   yes | ${your-sdk}/cmdline-tools/latest/bin/sdkmanager --licenses
+   ${your-sdk}/cmdline-tools/latest/bin/sdkmanager --install "ndk;25.1.8937393" --channel=3
+   ${your-sdk}/cmdline-tools/latest/bin/sdkmanager --install "cmake;3.22.1" --channel=3
+```
 
 ### Build the project
 
@@ -326,16 +359,15 @@ For a debug build:
 adb install app/build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
+
 ## Build with Android Studio
 
-> Alternatively, you may import the `build/android_gradle` folder in Android Studio and run the project from here
+With [Android Studio](https://d.android.com/studio) you can open the `build/android_gradle/build.gradle` project, compile and run the project from here. The lastest Android Studio release is recommended.
 
-If you are using a newer version of cmake then 3.13, you might get this error:
+If you have agreed with the licenses previously on your development system, Android Studio will automatically install, at the start up time, CMake and NDK with the version configured in your `build/android-gradle/build.gradle`. Otherwise (or if the installation failed), you need to install the required CMake and NDK manually, refer to [the official instructions](https://d.android.com/studio/projects/install-ndk) for the detailed steps. The default installed locations are:
 
-> Execution failed for task ':externalNativeBuildDebug'.
-Expected output file at \<PATH> for target \<sample> but there was none
+- $SDK-ROOT-DIR/ndk/$ndkVersion for NDK.
+- $SDK-ROOT-DIR/cmake/$cmake-version for CMake.
 
-In this case, update the version of the gradle plugin in "bldsys/cmake/template/gradle/build.gradle.in" to 3.5.0, remove the content of build folder and repeat the build process from Step 1. This is known to work with Gradle 6.3 and NDK 20.0.55
+Android Studio will use the above default locations without any environment variable requirement; if you want to use the same NDK and CMake versions for other purpose, you can simply configure your environment variables to these locations. If you do set up the NDK and CMake environment variables, Android Studio will use them instead of the default locations.
 
-If you are using Android Studio, you can simply do these changes after importing the `build/android_gradle` folder, opening File->Project Structure, and doing the following changes:
-On the Project tab, change the Android Gradle Plugin version to 3.5.0 and the Gradle version to 6.3.(this also requires NDK 20.0.55)

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -61,6 +61,11 @@ PostProcessingSubpass &PostProcessingSubpass::bind_input_attachment(const std::s
 
 	parent->load_stores_dirty = true;
 	return *this;
+}
+
+void PostProcessingSubpass::unbind_sampled_image(const std::string &name)
+{
+	sampled_images.erase(name);
 }
 
 PostProcessingSubpass &PostProcessingSubpass::bind_sampled_image(const std::string &name, core::SampledImage &&new_image)
@@ -132,9 +137,9 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	rasterization_state.cull_mode = VK_CULL_MODE_NONE;
 	command_buffer.set_rasterization_state(rasterization_state);
 
-	auto &         render_target       = *parent->draw_render_target;
-	const auto &   target_views        = render_target.get_views();
-	const uint32_t n_input_attachments = uint32_t(get_input_attachments().size());
+	auto          &render_target       = *parent->draw_render_target;
+	const auto    &target_views        = render_target.get_views();
+	const uint32_t n_input_attachments = static_cast<uint32_t>(get_input_attachments().size());
 
 	if (parent->uniform_buffer_alloc != nullptr)
 	{
@@ -150,7 +155,8 @@ void PostProcessingSubpass::draw(CommandBuffer &command_buffer)
 	{
 		if (auto layout_binding = bindings.get_layout_binding(it.first))
 		{
-			command_buffer.bind_input(target_views.at(it.second), 0, layout_binding->binding, 0);
+			assert(it.second < target_views.size());
+			command_buffer.bind_input(target_views[it.second], 0, layout_binding->binding, 0);
 		}
 	}
 
@@ -214,10 +220,10 @@ PostProcessingRenderPass::PostProcessingRenderPass(PostProcessingPipeline *paren
 }
 
 void PostProcessingRenderPass::update_load_stores(
-    const AttachmentSet &       input_attachments,
+    const AttachmentSet        &input_attachments,
     const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet &       output_attachments,
-    const RenderTarget &        fallback_render_target)
+    const AttachmentSet        &output_attachments,
+    const RenderTarget         &fallback_render_target)
 {
 	if (!load_stores_dirty)
 	{
@@ -229,7 +235,7 @@ void PostProcessingRenderPass::update_load_stores(
 	// Update load/stores accordingly
 	load_stores.clear();
 
-	for (uint32_t j = 0; j < uint32_t(render_target.get_attachments().size()); j++)
+	for (uint32_t j = 0; j < static_cast<uint32_t>(render_target.get_attachments().size()); j++)
 	{
 		const bool is_input   = input_attachments.find(j) != input_attachments.end();
 		const bool is_sampled = std::find_if(sampled_attachments.begin(), sampled_attachments.end(),
@@ -313,13 +319,13 @@ static void ensure_src_access(uint32_t &src_access, uint32_t &src_stage, VkImage
 }
 
 void PostProcessingRenderPass::transition_attachments(
-    const AttachmentSet &       input_attachments,
+    const AttachmentSet        &input_attachments,
     const SampledAttachmentSet &sampled_attachments,
-    const AttachmentSet &       output_attachments,
-    CommandBuffer &             command_buffer,
-    RenderTarget &              fallback_render_target)
+    const AttachmentSet        &output_attachments,
+    CommandBuffer              &command_buffer,
+    RenderTarget               &fallback_render_target)
 {
-	auto &      render_target = this->render_target ? *this->render_target : fallback_render_target;
+	auto       &render_target = this->render_target ? *this->render_target : fallback_render_target;
 	const auto &views         = render_target.get_views();
 
 	BarrierInfo fallback_barrier_src{};
@@ -348,13 +354,14 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(views.at(input), barrier);
+		assert(input < views.size());
+		command_buffer.image_memory_barrier(views[input], barrier);
 		render_target.set_layout(input, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	for (const auto &sampled : sampled_attachments)
 	{
-		auto *     sampled_rt  = sampled.first ? sampled.first : &render_target;
+		auto *sampled_rt = sampled.first ? sampled.first : &render_target;
 
 		// unpack depth resolve flag and attachment
 		bool     is_depth_resolve = sampled.second & DEPTH_RESOLVE_BITMASK;
@@ -368,12 +375,19 @@ void PostProcessingRenderPass::transition_attachments(
 			continue;
 		}
 
-		// The resolving depth occurs in the COLOR_ATTACHMENT_OUT stage, not in the EARLY\LATE_FRAGMENT_TESTS stage
-		// and the corresponding access mask is COLOR_ATTACHMENT_WRITE_BIT, not DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.
-		if (is_depth_resolve && prev_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		if (prev_layout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
 		{
-			prev_pass_barrier_info.pipeline_stage    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-			prev_pass_barrier_info.image_read_access = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			// Synchronize with previous pass writes as barrier below might do image transition
+			prev_pass_barrier_info.pipeline_stage |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT | VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
+			prev_pass_barrier_info.image_read_access |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			// The resolving depth occurs in the COLOR_ATTACHMENT_OUT stage, not in the EARLY\LATE_FRAGMENT_TESTS stage
+			// and the corresponding access mask is COLOR_ATTACHMENT_WRITE_BIT, not DEPTH_STENCIL_ATTACHMENT_WRITE_BIT.
+			if (is_depth_resolve)
+			{
+				prev_pass_barrier_info.pipeline_stage |= VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+				prev_pass_barrier_info.image_read_access |= VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+			}
 		}
 		else
 		{
@@ -389,13 +403,15 @@ void PostProcessingRenderPass::transition_attachments(
 		barrier.src_stage_mask  = prev_pass_barrier_info.pipeline_stage;
 		barrier.dst_stage_mask  = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 
-		command_buffer.image_memory_barrier(sampled_rt->get_views().at(attachment), barrier);
+		assert(attachment < sampled_rt->get_views().size());
+		command_buffer.image_memory_barrier(sampled_rt->get_views()[attachment], barrier);
 		sampled_rt->set_layout(attachment, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 	}
 
 	for (uint32_t output : output_attachments)
 	{
-		const VkFormat      attachment_format = views.at(output).get_format();
+		assert(output < views.size());
+		const VkFormat      attachment_format = views[output].get_format();
 		const bool          is_depth_stencil  = vkb::is_depth_only_format(attachment_format) || vkb::is_depth_stencil_format(attachment_format);
 		const VkImageLayout output_layout     = is_depth_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		if (render_target.get_layout(output) == output_layout)
@@ -421,7 +437,7 @@ void PostProcessingRenderPass::transition_attachments(
 			barrier.dst_stage_mask  = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		}
 
-		command_buffer.image_memory_barrier(views.at(output), barrier);
+		command_buffer.image_memory_barrier(views[output], barrier);
 		render_target.set_layout(output, output_layout);
 	}
 
@@ -448,12 +464,14 @@ void PostProcessingRenderPass::prepare_draw(CommandBuffer &command_buffer, Rende
 		{
 			if (const uint32_t *sampled_attachment = it.second.get_target_attachment())
 			{
-				auto *image_rt = it.second.get_render_target();
+				auto *image_rt                  = it.second.get_render_target();
 				auto  packed_sampled_attachment = *sampled_attachment;
 
 				// pack sampled attachment
 				if (it.second.is_depth_resolve())
+				{
 					packed_sampled_attachment |= DEPTH_RESOLVE_BITMASK;
+				}
 
 				sampled_attachments.insert({image_rt, packed_sampled_attachment});
 			}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -14,25 +14,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+#version 450
 
-#pragma once
+layout(location = 0) in vec3 inPos;
+layout(location = 1) in vec3 inNormal;
 
-#include "buffer_pool.h"
-#include "common/error.h"
-#include "common/helpers.h"
-#include "common/logging.h"
-#include "common/utils.h"
-#include "common/vk_common.h"
-#include "debug_info.h"
-#include "fence_pool.h"
-#include "glsl_compiler.h"
-#include "gui.h"
-#include "resource_binding_state.h"
-#include "resource_cache.h"
-#include "resource_record.h"
-#include "resource_replay.h"
-#include "semaphore_pool.h"
-#include "spirv_reflection.h"
-#include "stats/stats.h"
-#include "timer.h"
-#include "vulkan_sample.h"
+layout(location = 0) out vec3 outPos;
+layout(location = 1) out vec3 outNormal;
+
+layout(binding = 0) uniform UBO
+{
+	mat4  projection;
+	mat4  view;
+}
+ubo;
+
+void main(void)
+{
+	gl_Position = vec4(inPos, 1.0);
+	outNormal   = mat3(ubo.view) * inNormal;
+	outPos      = inPos;
+}
