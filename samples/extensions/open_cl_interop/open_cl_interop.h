@@ -97,6 +97,7 @@ class OpenCLInterop : public ApiVulkanSample
 	} ubo_vs;
 
 	OpenCLObjects opencl_objects{};
+	bool          first_submit{true};
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
