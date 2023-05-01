@@ -58,7 +58,7 @@ class OpenCLInterop : public ApiVulkanSample
 	void   setup_descriptor_set();
 	void   prepare_uniform_buffers();
 	void   update_uniform_buffers();	
-	void   update_texture_from_open_cl();
+	void   throw_cl_error(const std::string message, cl_int result);
 
 	// @todo: rename?
 	void prepare_sync_objects();
