@@ -659,7 +659,9 @@ void OpenCLInterop::prepare_shared_resources()
 
 	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
 	export_memory_allocate_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+#ifdef _WIN32
 	export_memory_allocate_info.pNext       = &export_memory_win32_handle_info;
+#endif
 	export_memory_allocate_info.handleTypes = external_handle_type;
 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
@@ -729,20 +731,18 @@ void OpenCLInterop::prepare_shared_resources()
 	cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
 	cl_img_desc.num_mip_levels    = 1;
 
-	void *cl_handle{nullptr};
-
 	std::vector<cl_mem_properties> mem_properties;
 
 	cl_device_id devList[] = {opencl_objects.device_id, NULL};
 
 #ifdef _WIN32
-	cl_handle = get_vulkan_memory_handle(shared_texture.memory);
+	HANDLE handle = get_vulkan_memory_handle(shared_texture.memory);
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
-	mem_properties.push_back((cl_mem_properties) cl_handle);
+	mem_properties.push_back((cl_mem_properties) handle);
 #else
-	cl_handle = get_vulkan_image_handle(shared_texture.memory);
+	int fd = get_vulkan_memory_handle(shared_texture.memory);
 	mem_properties.push_back((cl_mem_properties_khr) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
-	mem_properties.push_back((cl_mem_properties_khr) cl_handle);
+	mem_properties.push_back((cl_mem_properties_khr) fd);
 #endif
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
@@ -855,14 +855,13 @@ void OpenCLInterop::prepare_open_cl_resources()
 	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
 #endif
 
-	void *cl_handle{nullptr};
-
 #ifdef _WIN32
-	cl_handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
 #else
-	cl_handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
 #endif
-	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_handle);
 	semaphore_properties.push_back(0);
 
 	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &result);
@@ -877,11 +876,12 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	// VK to CL semaphore
 #ifdef _WIN32
-	cl_handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
 #else
-	cl_handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	fd = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
 #endif
-	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_handle);
 	semaphore_properties.push_back(0);
 
 	opencl_objects.vk_update_cl_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &result);
