@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "open_cl_interop.h"
+#include "open_cl_interop_arm.h"
 
 #include "common/vk_common.h"
 #include "gui.h"
