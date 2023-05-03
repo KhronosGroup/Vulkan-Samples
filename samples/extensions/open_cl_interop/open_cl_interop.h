@@ -24,17 +24,17 @@
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
 
-struct OpenCLObjects
-{
-	cl_context       context{nullptr};
-	cl_device_id     device_id{nullptr};
-	cl_command_queue command_queue{nullptr};
-	cl_program       program{nullptr};
-	cl_kernel        kernel{nullptr};
-	cl_mem           image{nullptr};
-	cl_semaphore_khr cl_update_vk_semaphore{nullptr};
-	cl_semaphore_khr vk_update_cl_semaphore{nullptr};
-};
+/// @brief Helper macro to test the result of OpenCL calls which can return an error.
+#define CL_CHECK(x)                                                                    \
+	do                                                                                 \
+	{                                                                                  \
+		cl_int res = x;                                                                \
+		if (res)                                                                       \
+		{                                                                              \
+			LOGE("Detected OpenCL error: {}", std::to_string(res));                    \
+			throw std::runtime_error("Detected OpenCL error: " + std::to_string(res)); \
+		}                                                                              \
+	} while (0)
 
 class OpenCLInterop : public ApiVulkanSample
 {
@@ -49,16 +49,15 @@ class OpenCLInterop : public ApiVulkanSample
 	void build_command_buffers() override;
 
   private:
-	void   prepare_pipelines();
-	void   prepare_open_cl_resources();
-	void   prepare_shared_resources();
-	void   generate_quad();
-	void   setup_descriptor_pool();
-	void   setup_descriptor_set_layout();
-	void   setup_descriptor_set();
-	void   prepare_uniform_buffers();
-	void   update_uniform_buffers();	
-	void   throw_cl_error(const std::string message, cl_int result);
+	void prepare_pipelines();
+	void prepare_open_cl_resources();
+	void prepare_shared_resources();
+	void generate_quad();
+	void setup_descriptor_pool();
+	void setup_descriptor_set_layout();
+	void setup_descriptor_set();
+	void prepare_uniform_buffers();
+	void update_uniform_buffers();
 
 	// @todo: rename?
 	void prepare_sync_objects();
@@ -78,7 +77,7 @@ class OpenCLInterop : public ApiVulkanSample
 		float normal[3];
 	};
 
-	struct SharedTexture
+	struct SharedImage
 	{
 		uint32_t width{0};
 		uint32_t height{0};
@@ -91,7 +90,7 @@ class OpenCLInterop : public ApiVulkanSample
 		VkSampler      sampler{VK_NULL_HANDLE};
 		VkImageView    view{VK_NULL_HANDLE};
 
-	} shared_texture;
+	} shared_image;
 
 	struct UniformBufferData
 	{
@@ -100,8 +99,20 @@ class OpenCLInterop : public ApiVulkanSample
 		glm::vec4 view_pos;
 	} ubo_vs;
 
-	OpenCLObjects opencl_objects{};
-	bool          first_submit{true};
+	struct OpenCLObjects
+	{
+		cl_context       context{nullptr};
+		cl_device_id     device_id{nullptr};
+		cl_command_queue command_queue{nullptr};
+		cl_program       program{nullptr};
+		cl_kernel        kernel{nullptr};
+		cl_mem           image{nullptr};
+		cl_semaphore_khr cl_update_vk_semaphore{nullptr};
+		cl_semaphore_khr vk_update_cl_semaphore{nullptr};
+		bool             initialized{false};
+	} opencl_objects{};
+
+	bool first_submit{true};
 
 	VkPipeline            pipeline{VK_NULL_HANDLE};
 	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
@@ -114,7 +125,7 @@ class OpenCLInterop : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> uniform_buffer_vs;
 
 	// @todo: rename
-	VkSemaphore cl_update_vk_semaphore{VK_NULL_HANDLE};	
+	VkSemaphore cl_update_vk_semaphore{VK_NULL_HANDLE};
 	VkSemaphore vk_update_cl_semaphore{VK_NULL_HANDLE};
 
 	VkFence rendering_finished_fence{VK_NULL_HANDLE};
