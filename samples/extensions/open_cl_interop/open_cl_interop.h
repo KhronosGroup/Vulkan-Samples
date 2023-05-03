@@ -63,9 +63,13 @@ class OpenCLInterop : public ApiVulkanSample
 	// @todo: rename?
 	void prepare_sync_objects();
 
-	// @todo: Handle type not available outside windows
-	HANDLE get_vulkan_image_handle(VkExternalMemoryHandleTypeFlagsKHR external_memory_handle_type);
-	HANDLE get_vulkan_semaphore_handle(VkExternalSemaphoreHandleTypeFlagBitsKHR external_semaphore_handle_type, VkSemaphore &sempahore);
+#ifdef _WIN32
+	HANDLE get_vulkan_memory_handle(VkDeviceMemory memory);
+	HANDLE get_vulkan_semaphore_handle(VkSemaphore &sempahore);
+#else
+	int get_vulkan_memory_handle(VkDeviceMemory memory);
+	int get_vulkan_semaphore_handle(VkSemaphore &sempahore);
+#endif
 
 	struct VertexStructure
 	{

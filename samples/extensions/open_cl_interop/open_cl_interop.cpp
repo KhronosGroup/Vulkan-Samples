@@ -115,6 +115,7 @@ OpenCLInterop::OpenCLInterop()
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
 #endif
+
 	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
 }
@@ -127,6 +128,8 @@ OpenCLInterop::~OpenCLInterop()
 		vkDestroyPipelineLayout(device->get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(device->get_handle(), descriptor_set_layout, nullptr);
 		vkDestroyFence(device->get_handle(), rendering_finished_fence, nullptr);
+		vkDestroySemaphore(device->get_handle(), cl_update_vk_semaphore, nullptr);
+		vkDestroySemaphore(device->get_handle(), vk_update_cl_semaphore, nullptr);
 		vkDestroySampler(device->get_handle(), shared_texture.sampler, nullptr);
 		vkDestroyImageView(device->get_handle(), shared_texture.view, nullptr);
 		vkDestroyImage(device->get_handle(), shared_texture.image, nullptr);
@@ -509,31 +512,54 @@ void OpenCLInterop::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
+#ifdef _WIN32
 // @todo: document
-// @todo: cross platform
-HANDLE OpenCLInterop::get_vulkan_image_handle(VkExternalMemoryHandleTypeFlagsKHR external_memory_handle_type)
+HANDLE OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 {
 	HANDLE                        handle;
 	VkMemoryGetWin32HandleInfoKHR win32_handle_info{};
 	win32_handle_info.sType      = VK_STRUCTURE_TYPE_MEMORY_GET_WIN32_HANDLE_INFO_KHR;
-	win32_handle_info.memory     = shared_texture.memory;
-	win32_handle_info.handleType = (VkExternalMemoryHandleTypeFlagBitsKHR) external_memory_handle_type;
+	win32_handle_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+	win32_handle_info.memory     = memory;
 	vkGetMemoryWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
 	return handle;
 }
 
 // @todo: document
-// @todo: cross platform
-HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkExternalSemaphoreHandleTypeFlagBitsKHR external_semaphore_handle_type, VkSemaphore &sempahore)
+HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 {
 	HANDLE                           handle;
 	VkSemaphoreGetWin32HandleInfoKHR win32_handle_info{};
 	win32_handle_info.sType      = VK_STRUCTURE_TYPE_SEMAPHORE_GET_WIN32_HANDLE_INFO_KHR;
+	win32_handle_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
 	win32_handle_info.semaphore  = sempahore;
-	win32_handle_info.handleType = external_semaphore_handle_type;
 	vkGetSemaphoreWin32HandleKHR(device->get_handle(), &win32_handle_info, &handle);
 	return handle;
 }
+#else
+int OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
+{
+	int fd;
+	VkMemoryGetFdInfoKHR fd_info{};
+	fd_info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_FD_INFO_KHR;
+	fd_info.handleType = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+	fd_info.memory = memory;
+	vkGetMemoryFdKHR(device->get_handle(), &fd_info, &fd);
+	return fd;
+}
+
+// @todo: document
+int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
+{
+	int fd;
+	VkSemaphoreGetFdInfoKHR fd_info{};
+	fd_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_GET_FD_INFO_KHR;
+	fd_info.handleType = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+	fd_info.semaphore = sempahore;
+	vkGetSemaphoreFdKHR(device->get_handle(), &fd_info, &fd);
+	return fd;
+}
+#endif
 
 void OpenCLInterop::prepare_shared_resources()
 {
@@ -699,27 +725,22 @@ void OpenCLInterop::prepare_shared_resources()
 	cl_image_desc cl_img_desc{};
 	cl_img_desc.image_width       = shared_texture.width;
 	cl_img_desc.image_height      = shared_texture.height;
-	cl_img_desc.image_depth       = 0;
 	cl_img_desc.image_type        = CL_MEM_OBJECT_IMAGE2D;
-	cl_img_desc.image_array_size  = 0;
-	cl_img_desc.image_row_pitch   = 0;        // Row pitch set to zero as host_ptr is NULL
 	cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
 	cl_img_desc.num_mip_levels    = 1;
-	cl_img_desc.num_samples       = 0;
-	cl_img_desc.buffer            = NULL;
 
-	void *cl_handle = NULL;
+	void *cl_handle{nullptr};
 
 	std::vector<cl_mem_properties> mem_properties;
 
 	cl_device_id devList[] = {opencl_objects.device_id, NULL};
 
 #ifdef _WIN32
-	cl_handle = get_vulkan_image_handle(external_handle_type);
+	cl_handle = get_vulkan_memory_handle(shared_texture.memory);
 	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
 	mem_properties.push_back((cl_mem_properties) cl_handle);
 #else
-	cl_handle            = get_vulkan_image_handle(external_handle_type);
+	cl_handle = get_vulkan_image_handle(shared_texture.memory);
 	mem_properties.push_back((cl_mem_properties_khr) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
 	mem_properties.push_back((cl_mem_properties_khr) cl_handle);
 #endif
@@ -827,13 +848,21 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	// CL to VK semaphore
 
+	// We need to select the external handle type based on our target platform
 #ifdef _WIN32
 	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
-	HANDLE handle = get_vulkan_semaphore_handle(VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, cl_update_vk_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
 #else
-	// @todo
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
 #endif
+
+	void *cl_handle{nullptr};
+
+#ifdef _WIN32
+	cl_handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+#else
+	cl_handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+#endif
+	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_handle);
 	semaphore_properties.push_back(0);
 
 	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &result);
@@ -842,13 +871,18 @@ void OpenCLInterop::prepare_open_cl_resources()
 		throw_cl_error("Could not create OpenCL semaphore with properties", result);
 	}
 
+	// Remove the last two entries so we can push the next handle and zero terminator to the properties list and re-use the other values
+	semaphore_properties.pop_back();
+	semaphore_properties.pop_back();
+
 	// VK to CL semaphore
 #ifdef _WIN32
-	handle                                                = get_vulkan_semaphore_handle(VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT, vk_update_cl_semaphore);
-	semaphore_properties[semaphore_properties.size() - 2] = (cl_semaphore_properties_khr) handle;
+	cl_handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
 #else
-	// @todo
+	cl_handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
 #endif
+	semaphore_properties.push_back((cl_semaphore_properties_khr) cl_handle);
+	semaphore_properties.push_back(0);
 
 	opencl_objects.vk_update_cl_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &result);
 	if (result != CL_SUCCESS)
