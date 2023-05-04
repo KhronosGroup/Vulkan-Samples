@@ -1,4 +1,4 @@
-# Copyright (c) 2022, Sascha Willems
+# Copyright (c) 2023, Sascha Willems
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -15,23 +15,28 @@
 # limitations under the License.
 #
  
-get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
-get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
-get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
+if (NOT APPLE)
+    # Not enabled on Apple platforms, as OpenCL has been deprecated on that platform
 
-add_sample_with_tags(
-    ID ${FOLDER_NAME}
-    CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Sascha Willems"
-    NAME "OpenCL Interoperability"
-    DESCRIPTION "Example showing sharing resources between OpenCL and Vulkan using cross vendor extensions"
-    LIBS opencl
-    FILES
-        ../open_cl_common/open_cl_functions.inl
-        ../open_cl_common/open_cl_utils.h
-        ../open_cl_common/open_cl_utils.cpp
-    SHADER_FILES_GLSL
-        open_cl_interop/texture_display.vert
-        open_cl_interop/texture_display.frag
-        # Also add the OpenCL kernel so it cean be opened from the IDE
-        open_cl_interop/procedural_texture.cl)
+    get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
+    get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
+    get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
+
+    add_sample_with_tags(
+        ID ${FOLDER_NAME}
+        CATEGORY ${CATEGORY_NAME}
+        AUTHOR "Sascha Willems"
+        NAME "OpenCL Interoperability"
+        DESCRIPTION "Example showing sharing resources between OpenCL and Vulkan using cross vendor extensions"
+        LIBS opencl
+        FILES
+            ../open_cl_common/open_cl_functions.inl
+            ../open_cl_common/open_cl_utils.h
+            ../open_cl_common/open_cl_utils.cpp
+        SHADER_FILES_GLSL
+            open_cl_interop/texture_display.vert
+            open_cl_interop/texture_display.frag
+            # Also add the OpenCL kernel so it cean be opened from the IDE
+            open_cl_interop/procedural_texture.cl)
+
+endif()
