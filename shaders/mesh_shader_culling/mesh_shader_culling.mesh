@@ -19,67 +19,44 @@
 #extension GL_EXT_mesh_shader: require
 #extension GL_GOOGLE_include_directive: require
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
-layout(triangles, max_vertices = 4, max_primitives = 2) out;
-
 #include "mesh_shader_culling/mesh_shader_shared.h"
 
+layout(local_size_x = numMeshInvocationsX, local_size_y = numMeshInvocationsY, local_size_z = 1) in;
+// we'll emit 4 vertices on 2 primitives per mesh shader invocation
+layout(triangles, max_vertices = 4 * numMeshInvocationsX * numMeshInvocationsY, max_primitives = 2 * numMeshInvocationsX * numMeshInvocationsY) out;
+
 taskPayloadSharedEXT SharedData sharedData;
-
 // Example of a default output layout and location format:
-
-layout (location=0) out vec4 perVertex[];
-layout (location=1) perprimitiveEXT out vec4 perPrimitiveEXT[];
 layout (location=3) out vec3 outColor[];
-
-const vec2 unitVertex_0 = vec2(-0.5f,  0.5f);
-const vec2 unitVertex_1 = vec2( 0.5f,  0.5f);
-const vec2 unitVertex_2 = vec2( 0.5f, -0.5f);
-const vec2 unitVertex_3 = vec2(-0.5f, -0.5f);
-
-const uvec3 unitPrimitive_0 = uvec3(0, 1, 2);
-const uvec3 unitPrimitive_1 = uvec3(2, 3, 0);
 
 void main()
 {
-    float x = float(gl_GlobalInvocationID.x) / gl_WorkGroupSize.x;
-    float y = float(gl_GlobalInvocationID.y) / gl_WorkGroupSize.y;
-
-    // translate the identical meshlet to its targeted position:
-    vec2 deltaPosition_xy = ( 2.0f * vec2( x, y ) - gl_WorkGroupSize.x - 1.0f ) * sharedData.subDimension;
-
-    // the actual position of each meshlet:
-    vec2 position = deltaPosition_xy + sharedData.positionTransformation;
-    float squareRadius = position.x * position.x + position.y * position.y;
-
-    uint number_of_vertices = 0;
-    uint number_of_primitives = 0;
-    bool do_emit = (squareRadius < sharedData.cullRadius * sharedData.cullRadius);
-    if ( do_emit )
+    if ( gl_LocalInvocationIndex == 0 )
     {
-        number_of_vertices = 4;
-        number_of_primitives = 2;
+        // set the number of vertices and primitives to put out just once for the complete workgroup
+        SetMeshOutputsEXT( 4 * numMeshInvocationsX * numMeshInvocationsY, 2 * numMeshInvocationsX * numMeshInvocationsY);
     }
+    // determine 4 vertices by combining some global position and offset, as well as some local offset and size
+    vec2 globalOffset = sharedData.offsets[gl_WorkGroupID.x];
+    vec2 localSize = sharedData.size / gl_WorkGroupSize.xy;
+    vec2 localOffset = gl_LocalInvocationID.xy * localSize;
+    vec2 v0 = sharedData.position + globalOffset + localOffset;
+    vec2 v1 = v0 + vec2( localSize.x, 0.0f );
+    vec2 v2 = v0 + localSize;
+    vec2 v3 = v0 + vec2( 0.0f, localSize.y );
 
-    SetMeshOutputsEXT( number_of_vertices, number_of_primitives);
+    uint vertexBaseIndex = 4 * gl_LocalInvocationIndex;
+    gl_MeshVerticesEXT[vertexBaseIndex + 0].gl_Position = vec4( v0, 0.0f, 1.0f );
+    gl_MeshVerticesEXT[vertexBaseIndex + 1].gl_Position = vec4( v1, 0.0f, 1.0f );
+    gl_MeshVerticesEXT[vertexBaseIndex + 2].gl_Position = vec4( v2, 0.0f, 1.0f );
+    gl_MeshVerticesEXT[vertexBaseIndex + 3].gl_Position = vec4( v3, 0.0f, 1.0f );
 
-    if ( do_emit )
-    {
-        // Vertices:
-        gl_MeshVerticesEXT[0].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_0 + position, 0.0, 1.0);
-        gl_MeshVerticesEXT[1].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_1 + position, 0.0, 1.0);
-        gl_MeshVerticesEXT[2].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_2 + position, 0.0, 1.0);
-        gl_MeshVerticesEXT[3].gl_Position = vec4(2.0 * sharedData.subDimension * unitVertex_3 + position, 0.0, 1.0);
+    uint primitiveBaseIndex = 2 * gl_LocalInvocationIndex;
+    gl_PrimitiveTriangleIndicesEXT[primitiveBaseIndex + 0] = uvec3( vertexBaseIndex + 0, vertexBaseIndex + 1, vertexBaseIndex + 2 );
+    gl_PrimitiveTriangleIndicesEXT[primitiveBaseIndex + 1] = uvec3( vertexBaseIndex + 2, vertexBaseIndex + 3, vertexBaseIndex + 0 );
 
-        // Indices
-        gl_PrimitiveTriangleIndicesEXT[0] = unitPrimitive_0;
-        gl_PrimitiveTriangleIndicesEXT[1] = unitPrimitive_1;
-
-        // Assigning the color output:
-        vec3 color = vec3( 1.0f, 0.0f, 0.0f ) * ( gl_GlobalInvocationID + 1 ) / gl_NumWorkGroups;
-        outColor[0] = color;
-        outColor[1] = color;
-        outColor[2] = color;
-        outColor[3] = color;
-    }
+    outColor[vertexBaseIndex + 0] = vec3( 1.0f, 0.0f, 0.0f );
+    outColor[vertexBaseIndex + 1] = vec3( 0.0f, 1.0f, 0.0f );
+    outColor[vertexBaseIndex + 2] = vec3( 0.0f, 0.0f, 1.0f );
+    outColor[vertexBaseIndex + 3] = vec3( 1.0f, 1.0f, 0.0f );
 }

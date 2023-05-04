@@ -126,8 +126,10 @@ void MeshShaderCulling::build_command_buffers()
 		vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
 		// Mesh shaders need the vkCmdDrawMeshTasksExt
-		uint32_t num_workgroups_x = 1;
-		uint32_t num_workgroups_y = 1;
+		uint32_t N = density_level == 0 ? 4 : (density_level == 1 ? 6 : (density_level == 2 ? 8 : 2));
+		// dispatch N * N task shader workgroups
+		uint32_t num_workgroups_x = N;
+		uint32_t num_workgroups_y = N;
 		uint32_t num_workgroups_z = 1;
 
 		if (get_device().get_gpu().get_features().pipelineStatisticsQuery)
@@ -360,9 +362,9 @@ void MeshShaderCulling::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			if (drawer.header("Pipeline statistics"))
 			{
-				drawer.text("FS invocations: %d", pipeline_stats[0]);
 				drawer.text("TS invocations: %d", pipeline_stats[1]);
 				drawer.text("MS invocations: %d", pipeline_stats[2]);
+				drawer.text("FS invocations: %d", pipeline_stats[0]);
 			}
 		}
 	}

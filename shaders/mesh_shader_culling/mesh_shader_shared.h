@@ -19,9 +19,16 @@
 // Note that all of these could be removed.  One can pass positionTransformation, subDimension, and cullRadius from a UBO.
 // however, in the interests of demonstrating how to use shared data between task and mesh shaders.
 
+// Number of task shader invocations per task shader workgroup
+const uint numTaskInvocationsX = 2;
+const uint numTaskInvocationsY = 2;
+
+const uint numMeshInvocationsX = 2;
+const uint numMeshInvocationsY = 2;
+
 struct SharedData
 {
-	vec2  positionTransformation;
-	float subDimension;
-	float cullRadius;
+	vec2 position;
+	vec2 offsets[numTaskInvocationsX * numTaskInvocationsX];
+	vec2 size;
 };

@@ -18,8 +18,13 @@
 
 #extension GL_EXT_mesh_shader: require
 #extension GL_GOOGLE_include_directive: require
+#extension GL_KHR_shader_subgroup_ballot : require                  // subgroupBallot, subgroupBallotBitCount, subgroupBallotExclusiveBitCount
 
-layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+#include "mesh_shader_culling/mesh_shader_shared.h"
+
+// Use numTaskInvocationsX * numTaskInvocationsY task shader invocations per task shader workgroup,
+// resulting in N * N * numTaskInvocationsX * numTaskInvocationsY invocations
+layout(local_size_x = numTaskInvocationsX, local_size_y = numTaskInvocationsY, local_size_z = 1) in;
 
 layout (binding = 0) uniform UBO
 {
@@ -29,36 +34,53 @@ layout (binding = 0) uniform UBO
     float meshlet_density;
 } ubo;
 
-#include "mesh_shader_culling/mesh_shader_shared.h"
-
 taskPayloadSharedEXT SharedData sharedData;
 
-const float squareDimension = 1.1f;
+float square(float x)
+{
+    return x * x;
+}
+
+float square(vec2 p )
+{
+    return p.x * p.x + p.y * p.y;
+}
 
 void main()
 {
-    uint N = 0;
+    // calculate size and offset of sub-rect per task shader invocation
+    vec2 size = 2.0f / ( gl_NumWorkGroups.xy * gl_WorkGroupSize.xy );
+    vec2 offset = gl_GlobalInvocationID.xy * size;
 
-    sharedData.positionTransformation = vec2(ubo.cull_center_x, ubo.cull_center_y);
-    sharedData.cullRadius = ubo.cull_radius;
+    // determine the four corners of the sub-rect and check if it's completely out of the culling circle
+    // (ignoring the case that a sub-rect could completely include the culling circle...)
 
-    if (ubo.meshlet_density == 0)
-    {
-        N = 4;
-    }
-    else if (ubo.meshlet_density == 1)
-    {
-        N = 6;
-    }
-    else if (ubo.meshlet_density == 2)
-    {
-        N = 8;
-    }
-    else
-    {
-        N = 2;
-    }
+    vec2 position = vec2(ubo.cull_center_x, ubo.cull_center_y);
+    vec2 p0 = position + offset;
+    vec2 p1 = p0 + vec2(size.x, 0.0f);
+    vec2 p2 = p0 + size;
+    vec2 p3 = p0 + vec2(0.0f, size.y);
+    float squaredRadius = square(ubo.cull_radius);
+    bool isValid = ( square(p0) < squaredRadius )
+                    && ( square(p1) < squaredRadius )
+                    && ( square(p2) < squaredRadius)
+                    && ( square(p3) < squaredRadius);
+    // contribute a single bit by this task shader invocation
+    uvec4 validVotes = subgroupBallot(isValid);
 
-    sharedData.subDimension = squareDimension / N;
-    EmitMeshTasksEXT(N, N, 1);
+    if ( isValid )
+    {
+        // get the next free index into the offsets array
+        uint index = subgroupBallotExclusiveBitCount(validVotes);
+        sharedData.offsets[index] = offset;
+    }
+    if ( gl_LocalInvocationIndex == 0 )
+    {
+        // for just one task shader invocation we can emit mesh shaders
+        sharedData.position = position;
+        sharedData.size = size;
+        // get the actual number of task shader invocations that are determined to display something
+        uint validCount = subgroupBallotBitCount(validVotes);
+        EmitMeshTasksEXT(validCount, 1, 1);
+    }
 }
