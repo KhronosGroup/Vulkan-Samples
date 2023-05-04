@@ -102,9 +102,9 @@ cl_platform_id load_opencl()
 	}
 
 #if defined(_WIN32)
-#define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(GetProcAddress((HMODULE)handle, #func_name))
+#	define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(GetProcAddress((HMODULE) handle, #func_name))
 #else
-#define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(dlsym(handle, #func_name))
+#	define OPENCL_EXPORTED_FUNCTION(func_name) func_name##_ptr = reinterpret_cast<decltype(func_name) *>(dlsym(handle, #func_name))
 #endif
 #include "open_cl_functions.inl"
 

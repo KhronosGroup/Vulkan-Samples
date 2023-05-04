@@ -18,8 +18,8 @@
 #pragma once
 
 #define CL_TARGET_OPENCL_VERSION 300
-#include <CL/opencl.h>
 #include <CL/cl_ext.h>
+#include <CL/opencl.h>
 #include <functional>
 
 #define OPENCL_EXPORTED_FUNCTION(func_name) extern std::function<decltype(func_name)> func_name##_ptr
@@ -56,6 +56,6 @@ void           unload_opencl();
 #	define clEnqueueAcquireExternalMemObjectsKHR clEnqueueAcquireExternalMemObjectsKHR_ptr
 #	define clEnqueueReleaseExternalMemObjectsKHR clEnqueueReleaseExternalMemObjectsKHR_ptr
 #	define clCreateSemaphoreWithPropertiesKHR clCreateSemaphoreWithPropertiesKHR_ptr
-#	define clReleaseSemaphoreKHR clReleaseSemaphoreKHR_ptr 
+#	define clReleaseSemaphoreKHR clReleaseSemaphoreKHR_ptr
 
 #endif

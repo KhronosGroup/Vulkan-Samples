@@ -63,8 +63,6 @@ class OpenCLInterop : public ApiVulkanSample
 	// @todo: rename?
 	void prepare_sync_objects();
 
-	std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id);
-
 #ifdef _WIN32
 	HANDLE get_vulkan_memory_handle(VkDeviceMemory memory);
 	HANDLE get_vulkan_semaphore_handle(VkSemaphore &sempahore);

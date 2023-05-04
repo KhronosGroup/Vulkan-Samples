@@ -166,7 +166,7 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 	build_command_buffers();
 
 	opencl_objects.initialized = true;
-	prepared = true;
+	prepared                   = true;
 	return true;
 }
 
@@ -735,26 +735,6 @@ void OpenCLInterop::prepare_shared_resources()
 	CL_CHECK(cl_result);
 }
 
-std::vector<std::string> OpenCLInterop::get_available_open_cl_extensions(cl_platform_id platform_id)
-{
-	size_t extensions_info_size = 0;
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);
-
-	std::vector<char> extensions_info(extensions_info_size, '\0');
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extensions_info_size, extensions_info.data(), nullptr);
-
-	std::istrstream          extensions_info_stream(extensions_info.data(), extensions_info.size());
-	std::vector<std::string> extensions = std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
-
-	// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
-	for (auto &extension : extensions)
-	{
-		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
-	}
-
-	return extensions;
-}
-
 void OpenCLInterop::prepare_open_cl_resources()
 {
 	cl_platform_id platform_id = load_opencl();
@@ -764,8 +744,22 @@ void OpenCLInterop::prepare_open_cl_resources()
 		throw std::runtime_error("Could not load OpenCL library");
 	}
 
-	// Vulkan/OpenCL interop also requires some extensions on the OpenCL side
-	std::vector<std::string> available_extensions = get_available_open_cl_extensions(platform_id);
+	// Vulkan/OpenCL interop also requires some extensions on the OpenCL side, so we fetch the list of available OpenCL extensions
+	size_t extensions_info_size = 0;
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);
+
+	std::vector<char> extensions_info(extensions_info_size, '\0');
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extensions_info_size, extensions_info.data(), nullptr);
+
+	std::istrstream          extensions_info_stream(extensions_info.data(), extensions_info.size());
+	std::vector<std::string> available_extensions = std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
+	// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
+	for (auto &extension : available_extensions)
+	{
+		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
+	}
+
+	// Now check support for the OpenCL extensions required by this sample
 	// Platform independent OpenCL extensions for interop
 	std::vector<std::string> required_extensions{"cl_khr_external_memory", "cl_khr_external_semaphore"};
 	// Platform specific OpenCL extensions for interop
@@ -807,7 +801,7 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	opencl_objects.kernel = clCreateKernel(opencl_objects.program, "generate_texture", &cl_result);
 	CL_CHECK(cl_result);
-	
+
 	// Import sempahores
 	std::vector<cl_semaphore_properties_khr> semaphore_properties{
 	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
