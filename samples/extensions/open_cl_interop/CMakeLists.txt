@@ -27,9 +27,9 @@ add_sample_with_tags(
     DESCRIPTION "Example showing sharing resources between OpenCL and Vulkan using cross vendor extensions"
     LIBS opencl
     FILES
-        open_cl_functions.inl
-        open_cl_utils.h
-        open_cl_utils.cpp
+        ../open_cl_common/open_cl_functions.inl
+        ../open_cl_common/open_cl_utils.h
+        ../open_cl_common/open_cl_utils.cpp
     SHADER_FILES_GLSL
         open_cl_interop/texture_display.vert
         open_cl_interop/texture_display.frag

@@ -24,11 +24,11 @@
 struct CLData;
 typedef struct AHardwareBuffer AHardwareBuffer;
 
-class OpenCLInterop : public ApiVulkanSample
+class OpenCLInteropArm : public ApiVulkanSample
 {
   public:
-	OpenCLInterop();
-	~OpenCLInterop() override;
+	OpenCLInteropArm();
+	~OpenCLInteropArm() override;
 
 	bool prepare(vkb::Platform &platform) override;
 
@@ -95,4 +95,4 @@ class OpenCLInterop : public ApiVulkanSample
 	CLData *cl_data{nullptr};
 };
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop();
+std::unique_ptr<vkb::VulkanSample> create_open_cl_interop_arm();

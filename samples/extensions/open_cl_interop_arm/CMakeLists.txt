@@ -1,4 +1,4 @@
-# Copyright (c) 2021, Arm Limited and Contributors
+# Copyright (c) 2021-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -30,7 +30,7 @@ if(ANDROID)
         TAGS "arm"
         LIBS opencl
         FILES
-            open_cl_functions.inl
-            open_cl_utils.h
-            open_cl_utils.cpp)
+            ../open_cl_common/open_cl_functions.inl
+            ../open_cl_common/open_cl_utils.h
+            ../open_cl_common/open_cl_utils.cpp)
 endif()

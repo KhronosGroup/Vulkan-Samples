@@ -716,8 +716,8 @@ void OpenCLInterop::prepare_shared_resources()
 	mem_properties.push_back((cl_mem_properties) handle);
 #else
 	int fd = get_vulkan_memory_handle(shared_image.memory);
-	mem_properties.push_back((cl_mem_properties_khr) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
-	mem_properties.push_back((cl_mem_properties_khr) fd);
+	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
+	mem_properties.push_back((cl_mem_properties) fd);
 #endif
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
 	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
@@ -735,7 +735,7 @@ void OpenCLInterop::prepare_shared_resources()
 	CL_CHECK(cl_result);
 }
 
-std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id)
+std::vector<std::string> OpenCLInterop::get_available_open_cl_extensions(cl_platform_id platform_id)
 {
 	size_t extensions_info_size = 0;
 	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);

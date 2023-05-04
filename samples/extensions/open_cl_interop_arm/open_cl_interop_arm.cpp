@@ -23,7 +23,7 @@
 #include "platform/platform.h"
 
 #define CL_FUNCTION_DEFINITIONS
-#include <open_cl_utils.h>
+#include "../open_cl_common/open_cl_utils.h"
 #include <strstream>
 
 #ifdef VK_USE_PLATFORM_ANDROID_KHR
@@ -41,7 +41,7 @@ struct CLData
 	cl_mem           image{nullptr};
 };
 
-OpenCLInterop::OpenCLInterop()
+OpenCLInteropArm::OpenCLInteropArm()
 {
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
@@ -59,7 +59,7 @@ OpenCLInterop::OpenCLInterop()
 	add_device_extension(VK_KHR_DEDICATED_ALLOCATION_EXTENSION_NAME);
 }
 
-OpenCLInterop::~OpenCLInterop()
+OpenCLInteropArm::~OpenCLInteropArm()
 {
 	device->wait_idle();
 
@@ -82,7 +82,7 @@ OpenCLInterop::~OpenCLInterop()
 	unload_opencl();
 }
 
-bool OpenCLInterop::prepare(vkb::Platform &platform)
+bool OpenCLInteropArm::prepare(vkb::Platform &platform)
 {
 	if (!ApiVulkanSample::prepare(platform))
 	{
@@ -108,7 +108,7 @@ bool OpenCLInterop::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void OpenCLInterop::render(float delta_time)
+void OpenCLInteropArm::render(float delta_time)
 {
 	if (!prepared)
 	{
@@ -140,12 +140,12 @@ void OpenCLInterop::render(float delta_time)
 	ApiVulkanSample::submit_frame();
 }
 
-void OpenCLInterop::view_changed()
+void OpenCLInteropArm::view_changed()
 {
 	update_uniform_buffers();
 }
 
-void OpenCLInterop::build_command_buffers()
+void OpenCLInteropArm::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -193,7 +193,7 @@ void OpenCLInterop::build_command_buffers()
 	}
 }
 
-void OpenCLInterop::generate_quad()
+void OpenCLInteropArm::generate_quad()
 {
 	std::vector<VertexStructure> vertices =
 	    {
@@ -227,7 +227,7 @@ void OpenCLInterop::generate_quad()
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
-void OpenCLInterop::setup_descriptor_pool()
+void OpenCLInteropArm::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes =
 	    {
@@ -241,7 +241,7 @@ void OpenCLInterop::setup_descriptor_pool()
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
-void OpenCLInterop::setup_descriptor_set_layout()
+void OpenCLInteropArm::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings{
 	    // Binding 0 : Vertex shader uniform buffer
@@ -272,7 +272,7 @@ void OpenCLInterop::setup_descriptor_set_layout()
 	                           &pipeline_layout));
 }
 
-void OpenCLInterop::setup_descriptor_set()
+void OpenCLInteropArm::setup_descriptor_set()
 {
 	VkDescriptorSetAllocateInfo alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
@@ -311,7 +311,7 @@ void OpenCLInterop::setup_descriptor_set()
 	                       write_descriptor_sets.data(), 0, nullptr);
 }
 
-void OpenCLInterop::prepare_pipelines()
+void OpenCLInteropArm::prepare_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
@@ -409,7 +409,7 @@ void OpenCLInterop::prepare_pipelines()
 	                                   &pipeline_create_info, nullptr, &pipeline));
 }
 
-void OpenCLInterop::prepare_uniform_buffers()
+void OpenCLInteropArm::prepare_uniform_buffers()
 {
 	// Vertex shader uniform buffer block
 	uniform_buffer_vs = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -420,7 +420,7 @@ void OpenCLInterop::prepare_uniform_buffers()
 	update_uniform_buffers();
 }
 
-void OpenCLInterop::update_uniform_buffers()
+void OpenCLInteropArm::update_uniform_buffers()
 {
 	// Vertex shader
 	ubo_vs.projection = glm::perspective(glm::radians(60.0f), (float) width / (float) height, 0.001f, 256.0f);
@@ -437,7 +437,7 @@ void OpenCLInterop::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-void OpenCLInterop::prepare_shared_resources()
+void OpenCLInteropArm::prepare_shared_resources()
 {
 	// This texture will be shared between both APIs: OpenCL fills it and Vulkan uses it for rendering
 	shared_texture.width  = 256;
@@ -576,7 +576,7 @@ std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platfor
 	return std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
 }
 
-void OpenCLInterop::prepare_open_cl_resources()
+void OpenCLInteropArm::prepare_open_cl_resources()
 {
 	cl_platform_id platform_id = load_opencl();
 	if (platform_id == nullptr)
@@ -628,7 +628,7 @@ void OpenCLInterop::prepare_open_cl_resources()
 	}
 }
 
-void OpenCLInterop::run_texture_generation()
+void OpenCLInteropArm::run_texture_generation()
 {
 	clSetKernelArg(cl_data->kernel, 0, sizeof(cl_mem), &cl_data->image);
 	clSetKernelArg(cl_data->kernel, 1, sizeof(float), &total_time_passed);
@@ -650,7 +650,7 @@ void OpenCLInterop::run_texture_generation()
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_open_cl_interop()
+std::unique_ptr<vkb::VulkanSample> create_open_cl_interop_arm()
 {
-	return std::make_unique<OpenCLInterop>();
+	return std::make_unique<OpenCLInteropArm>();
 }

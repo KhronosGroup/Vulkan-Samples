@@ -22,7 +22,7 @@
 #include "scene_graph/components/camera.h"
 
 #define CL_FUNCTION_DEFINITIONS
-#include <open_cl_utils.h>
+#include "../open_cl_common/open_cl_utils.h";
 
 /// @brief Helper macro to test the result of OpenCL calls which can return an error.
 #define CL_CHECK(x)                                                                    \
@@ -49,6 +49,7 @@ class OpenCLInterop : public ApiVulkanSample
 	void build_command_buffers() override;
 
   private:
+
 	void prepare_pipelines();
 	void prepare_open_cl_resources();
 	void prepare_shared_resources();
@@ -61,6 +62,8 @@ class OpenCLInterop : public ApiVulkanSample
 
 	// @todo: rename?
 	void prepare_sync_objects();
+
+	std::vector<std::string> get_available_open_cl_extensions(cl_platform_id platform_id);
 
 #ifdef _WIN32
 	HANDLE get_vulkan_memory_handle(VkDeviceMemory memory);

@@ -49,6 +49,7 @@ void           unload_opencl();
 #	define clReleaseContext clReleaseContext_ptr
 #	define clGetPlatformInfo clGetPlatformInfo_ptr
 #	define clGetExtensionFunctionAddressForPlatform clGetExtensionFunctionAddressForPlatform_ptr
+#	define clImportMemoryARM clImportMemoryARM_ptr
 #	define clCreateImageWithProperties clCreateImageWithProperties_ptr
 #	define clEnqueueWaitSemaphoresKHR clEnqueueWaitSemaphoresKHR_ptr
 #	define clEnqueueSignalSemaphoresKHR clEnqueueSignalSemaphoresKHR_ptr
