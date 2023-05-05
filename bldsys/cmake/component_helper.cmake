@@ -24,7 +24,7 @@ set_property(TARGET vkb__components PROPERTY FOLDER "components")
 # Automatically decides whether to create a static or interface library
 # If NO_DEFAULT_INCLUDES is set, then the component must provide its own include directories and set its own source groups
 function(vkb__register_component)
-    set(options NO_DEFAULT_INCLUDES NO_HEADER_AUTODETECT)
+    set(options NO_DEFAULT_INCLUDES)
     set(oneValueArgs NAME)
     set(multiValueArgs SRC HEADERS LINK_LIBS INCLUDE_DIRS)
 
@@ -37,12 +37,12 @@ function(vkb__register_component)
     set(TARGET "vkb__${TARGET_NAME}")
     set(TARGET_FOLDER "components/${TARGET_NAME}")
 
-    set(LINKAGE "UNKNOWN") # Used to determine whether to create a static or interface library 
+    set(LINKAGE "UNKNOWN") # Used to determine whether to create a static or interface library
 
     if(TARGET_SRC)
         message(STATUS "STATIC: ${TARGET}")
         set(LINKAGE "PUBLIC")
-        add_library(${TARGET} STATIC ${TARGET_SRC})
+        add_library(${TARGET} STATIC ${TARGET_SRC} ${TARGET_HEADERS})
 
         if(${VKB_WARNINGS_AS_ERRORS})
             if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang" OR "${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
@@ -56,7 +56,8 @@ function(vkb__register_component)
     else()
         message("INTERFACE: ${TARGET}")
         set(LINKAGE "INTERFACE")
-        add_library(${TARGET} INTERFACE ${TARGET_HEADERS})
+        add_library(${TARGET} INTERFACE)
+        target_sources(${TARGET} INTERFACE ${TARGET_HEADERS})
     endif()
 
     if (LINKAGE STREQUAL "UNKNOWN")
@@ -75,13 +76,8 @@ function(vkb__register_component)
 
     set_property(TARGET ${TARGET} PROPERTY FOLDER ${TARGET_FOLDER})
 
-    if(NOT NO_DEFAULT_INCLUDES)
+    if(NOT TARGET_NO_DEFAULT_INCLUDES)
         target_include_directories(${TARGET} ${LINKAGE} ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    endif()
-
-    if (NOT NO_HEADER_AUTODETECT)
-        file(GLOB TARGET_HEADERS CONFIGURE_DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/include/components/*)
-        source_group(TREE ${TARGET_FOLDER} PREFIX "include" FILES ${TARGET_HEADERS})
     endif()
 
     add_dependencies(vkb__components ${TARGET})
@@ -103,7 +99,7 @@ add_custom_target(vkb__tests)
 # Uses Catch2 by default. If NO_CATCH2 is set, then the test must provide its own main function
 function(vkb__register_tests)
     set(options NO_CATCH2)
-    set(oneValueArgs NAME)
+    set(oneValueArgs COMPONENT NAME)
     set(multiValueArgs SRC HEADERS LINK_LIBS INCLUDE_DIRS)
 
     if(NOT((CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING) OR VKB_BUILD_TESTS))
@@ -120,11 +116,12 @@ function(vkb__register_tests)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
+    set(TARGET_FOLDER "components/${TARGET_COMPONENT}")
     set(TARGET_NAME "test__${TARGET_NAME}")
 
     message(STATUS "TEST: ${TARGET_NAME}")
 
-    if(WIN32)
+    if(TARGET_NO_CATCH2 AND WIN32)
         add_executable(${TARGET_NAME} WIN32 ${TARGET_SRC})
     else()
         add_executable(${TARGET_NAME} ${TARGET_SRC})
@@ -136,7 +133,7 @@ function(vkb__register_tests)
 
     target_compile_definitions(${TARGET_NAME} PUBLIC VKB_BUILD_TESTS)
 
-    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER "tests")
+    set_property(TARGET ${TARGET_NAME} PROPERTY FOLDER ${TARGET_FOLDER})
 
     set_target_properties(${TARGET_NAME}
         PROPERTIES
