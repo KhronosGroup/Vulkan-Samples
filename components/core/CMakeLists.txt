@@ -16,6 +16,10 @@
 
 vkb__register_component(
     NAME core
+    HEADERS
+        include/core/util/strings.hpp
+        include/core/util/error.hpp
+        include/core/util/hash.hpp
     SRC
         src/strings.cpp
     LINK_LIBS
@@ -23,7 +27,8 @@ vkb__register_component(
 )
 
 vkb__register_tests(
-    NAME core
+    COMPONENT core
+    NAME utils
     SRC
         tests/strings.test.cpp
     LINK_LIBS
