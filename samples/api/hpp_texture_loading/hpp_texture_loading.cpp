@@ -170,7 +170,7 @@ void HPPTextureLoading::load_texture()
 		memory_allocate_info  = {memory_requirements.size,
 		                         get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
 		texture.device_memory = get_device()->get_handle().allocateMemory(memory_allocate_info);
-		VK_CHECK(vkBindImageMemory(get_device()->get_handle(), texture.image, texture.device_memory, 0));
+		get_device()->get_handle().bindImageMemory(texture.image, texture.device_memory, 0);
 
 		vk::CommandBuffer copy_command = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 

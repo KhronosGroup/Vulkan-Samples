@@ -92,7 +92,7 @@ inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type
 
 inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
 {
-	return vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage));
+	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
 inline void set_image_layout(vk::CommandBuffer         command_buffer,
@@ -104,7 +104,7 @@ inline void set_image_layout(vk::CommandBuffer         command_buffer,
                              vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
 {
 	vkb::set_image_layout(command_buffer,
-	                      image,
+	                      static_cast<VkImage>(image),
 	                      static_cast<VkImageLayout>(old_layout),
 	                      static_cast<VkImageLayout>(new_layout),
 	                      static_cast<VkImageSubresourceRange>(subresource_range),
