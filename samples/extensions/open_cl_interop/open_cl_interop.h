@@ -50,17 +50,15 @@ class OpenCLInterop : public ApiVulkanSample
 
   private:
 	void prepare_pipelines();
-	void prepare_open_cl_resources();
-	void prepare_shared_resources();
+	void prepare_opencl_resources();
+	void prepare_shared_image();
+	void prepare_sync_objects();
 	void generate_quad();
 	void setup_descriptor_pool();
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
 	void prepare_uniform_buffers();
 	void update_uniform_buffers();
-
-	// @todo: rename?
-	void prepare_sync_objects();
 
 #ifdef _WIN32
 	HANDLE get_vulkan_memory_handle(VkDeviceMemory memory);
@@ -79,10 +77,8 @@ class OpenCLInterop : public ApiVulkanSample
 
 	struct SharedImage
 	{
-		uint32_t width{0};
-		uint32_t height{0};
-		uint32_t depth{0};
-
+		uint32_t       width{0};
+		uint32_t       height{0};
 		VkImage        image{VK_NULL_HANDLE};
 		VkDeviceMemory memory{VK_NULL_HANDLE};
 		VkDeviceSize   size{0};

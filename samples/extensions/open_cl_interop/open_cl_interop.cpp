@@ -30,74 +30,71 @@
 #endif
 
 #ifdef _WIN32
-class WindowsSecurityAttributes
+// On Windows, we need to enable some security settings to allow api interop
+// The spec states: For handles of the following types: VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT The implementation must ensure the access rights allow read and write access to the memory.
+// This class sets up the structures required for tis
+class WinSecurityAttributes
 {
-  protected:
-	SECURITY_ATTRIBUTES  m_winSecurityAttributes;
-	PSECURITY_DESCRIPTOR m_winPSecurityDescriptor;
+  private:
+	SECURITY_ATTRIBUTES  security_attributes;
+	PSECURITY_DESCRIPTOR security_descriptor;
 
   public:
-	WindowsSecurityAttributes();
+	WinSecurityAttributes();
+	~WinSecurityAttributes();
 	SECURITY_ATTRIBUTES *operator&();
-	~WindowsSecurityAttributes();
 };
 
-WindowsSecurityAttributes::WindowsSecurityAttributes()
+WinSecurityAttributes::WinSecurityAttributes()
 {
-	m_winPSecurityDescriptor = (PSECURITY_DESCRIPTOR) calloc(
-	    1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
+	security_descriptor = (PSECURITY_DESCRIPTOR) calloc(1, SECURITY_DESCRIPTOR_MIN_LENGTH + 2 * sizeof(void **));
 
-	PSID *ppSID =
-	    (PSID *) ((PBYTE) m_winPSecurityDescriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PSID *ppSID = (PSID *) ((PBYTE) security_descriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
 	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
 
-	InitializeSecurityDescriptor(m_winPSecurityDescriptor,
-	                             SECURITY_DESCRIPTOR_REVISION);
+	InitializeSecurityDescriptor(security_descriptor, SECURITY_DESCRIPTOR_REVISION);
 
-	SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority =
-	    SECURITY_WORLD_SID_AUTHORITY;
-	AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0,
-	                         0, 0, 0, 0, 0, ppSID);
+	SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority = SECURITY_WORLD_SID_AUTHORITY;
+	AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, ppSID);
 
-	EXPLICIT_ACCESS explicitAccess;
-	ZeroMemory(&explicitAccess, sizeof(EXPLICIT_ACCESS));
-	explicitAccess.grfAccessPermissions =
-	    STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-	explicitAccess.grfAccessMode       = SET_ACCESS;
-	explicitAccess.grfInheritance      = INHERIT_ONLY;
-	explicitAccess.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-	explicitAccess.Trustee.TrusteeType = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicitAccess.Trustee.ptstrName   = (LPTSTR) *ppSID;
+	EXPLICIT_ACCESS explicit_access{};
+	ZeroMemory(&explicit_access, sizeof(EXPLICIT_ACCESS));
+	explicit_access.grfAccessPermissions = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
+	explicit_access.grfAccessMode        = SET_ACCESS;
+	explicit_access.grfInheritance       = INHERIT_ONLY;
+	explicit_access.Trustee.TrusteeForm  = TRUSTEE_IS_SID;
+	explicit_access.Trustee.TrusteeType  = TRUSTEE_IS_WELL_KNOWN_GROUP;
+	explicit_access.Trustee.ptstrName    = (LPTSTR) *ppSID;
+	SetEntriesInAcl(1, &explicit_access, nullptr, ppACL);
 
-	SetEntriesInAcl(1, &explicitAccess, NULL, ppACL);
+	SetSecurityDescriptorDacl(security_descriptor, TRUE, *ppACL, FALSE);
 
-	SetSecurityDescriptorDacl(m_winPSecurityDescriptor, TRUE, *ppACL, FALSE);
-
-	m_winSecurityAttributes.nLength              = sizeof(m_winSecurityAttributes);
-	m_winSecurityAttributes.lpSecurityDescriptor = m_winPSecurityDescriptor;
-	m_winSecurityAttributes.bInheritHandle       = TRUE;
+	security_attributes.nLength              = sizeof(SECURITY_ATTRIBUTES);
+	security_attributes.lpSecurityDescriptor = security_descriptor;
+	security_attributes.bInheritHandle       = TRUE;
 }
 
-SECURITY_ATTRIBUTES *WindowsSecurityAttributes::operator&()
+SECURITY_ATTRIBUTES *WinSecurityAttributes::operator&()
 {
-	return &m_winSecurityAttributes;
+	return &security_attributes;
 }
 
-WindowsSecurityAttributes::~WindowsSecurityAttributes()
+WinSecurityAttributes::~WinSecurityAttributes()
 {
-	PSID *ppSID =
-	    (PSID *) ((PBYTE) m_winPSecurityDescriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
+	PSID *ppSID = (PSID *) ((PBYTE) security_descriptor + SECURITY_DESCRIPTOR_MIN_LENGTH);
 	PACL *ppACL = (PACL *) ((PBYTE) ppSID + sizeof(PSID *));
 
 	if (*ppSID)
 	{
 		FreeSid(*ppSID);
 	}
+
 	if (*ppACL)
 	{
 		LocalFree(*ppACL);
 	}
-	free(m_winPSecurityDescriptor);
+
+	free(security_descriptor);
 }
 #endif
 
@@ -106,8 +103,10 @@ OpenCLInterop::OpenCLInterop()
 	zoom  = -3.5f;
 	title = "Interoperability with OpenCL";
 
+	// To use external memory and semaphores, we need to enable several extensions, both on the device as well as the instance
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_EXTENSION_NAME);
+	// Some of the extensions are platform dependent
 #ifdef _WIN32
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_WIN32_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_WIN32_EXTENSION_NAME);
@@ -115,7 +114,6 @@ OpenCLInterop::OpenCLInterop()
 	add_device_extension(VK_KHR_EXTERNAL_MEMORY_FD_EXTENSION_NAME);
 	add_device_extension(VK_KHR_EXTERNAL_SEMAPHORE_FD_EXTENSION_NAME);
 #endif
-
 	add_instance_extension(VK_KHR_EXTERNAL_MEMORY_CAPABILITIES_EXTENSION_NAME);
 	add_instance_extension(VK_KHR_EXTERNAL_SEMAPHORE_CAPABILITIES_EXTENSION_NAME);
 }
@@ -145,29 +143,6 @@ OpenCLInterop::~OpenCLInterop()
 	}
 
 	unload_opencl();
-}
-
-bool OpenCLInterop::prepare(vkb::Platform &platform)
-{
-	if (!ApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
-
-	prepare_sync_objects();
-	prepare_open_cl_resources();
-	prepare_shared_resources();
-	generate_quad();
-	prepare_uniform_buffers();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_set();
-	build_command_buffers();
-
-	opencl_objects.initialized = true;
-	prepared                   = true;
-	return true;
 }
 
 void OpenCLInterop::render(float delta_time)
@@ -536,12 +511,11 @@ int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 }
 #endif
 
-void OpenCLInterop::prepare_shared_resources()
+void OpenCLInterop::prepare_shared_image()
 {
 	// This texture will be shared between both APIs: OpenCL fills it and Vulkan uses it for rendering
-	shared_image.width  = 256;
-	shared_image.height = 256;
-	shared_image.depth  = 1;
+	shared_image.width  = 512;
+	shared_image.height = 512;
 
 	// We need to select the external handle type based on our target platform
 	// Note: Windows 8 and older requires the _KMT suffixed handle type, which we don't support in this sample
@@ -563,31 +537,8 @@ void OpenCLInterop::prepare_shared_resources()
 	image_create_info.arrayLayers       = 1;
 	image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
 	image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
-	image_create_info.extent            = {shared_image.width, shared_image.height, shared_image.depth};
+	image_create_info.extent            = {shared_image.width, shared_image.height, 1};
 	image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
-
-	// @todo: comment
-	VkPhysicalDeviceExternalImageFormatInfo external_image_format_info{};
-	external_image_format_info.sType      = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTERNAL_IMAGE_FORMAT_INFO;
-	external_image_format_info.handleType = external_handle_type;
-
-	VkPhysicalDeviceImageFormatInfo2 format_info2{};
-	format_info2.sType  = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_FORMAT_INFO_2;
-	format_info2.format = image_create_info.format;
-	format_info2.tiling = image_create_info.tiling;
-	format_info2.type   = image_create_info.imageType;
-	format_info2.usage  = image_create_info.usage;
-	format_info2.pNext  = &external_image_format_info;
-
-	VkExternalImageFormatProperties external_format_props{};
-	external_format_props.sType = VK_STRUCTURE_TYPE_EXTERNAL_IMAGE_FORMAT_PROPERTIES;
-
-	VkImageFormatProperties2 format_props2{};
-	format_props2.sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_PROPERTIES_2;
-	format_props2.pNext = &external_format_props;
-
-	vkGetPhysicalDeviceImageFormatProperties2(device->get_gpu().get_handle(), &format_info2, &format_props2);
-	// @todo: check if support is given
 
 	// @todo: comment
 	VkExternalMemoryImageCreateInfo external_memory_image_info{};
@@ -600,44 +551,18 @@ void OpenCLInterop::prepare_shared_resources()
 	VkMemoryRequirements memory_requirements{};
 	vkGetImageMemoryRequirements(device->get_handle(), shared_image.image, &memory_requirements);
 
+	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
+	export_memory_allocate_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+	export_memory_allocate_info.handleTypes = external_handle_type;
+
 #ifdef _WIN32
-	// On Windows, we need to enable some security settings to allow api interop
-	// @todo: add proper explanation why this is needed
-	// Spec: For handles of the following types: VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT The implementation must ensure the access rights allow read and write access to the memory.
-	SECURITY_ATTRIBUTES security_attributes{};
-	SECURITY_DESCRIPTOR security_descriptor{};
-	PSID                sid{nullptr};
-	PACL                acl{nullptr};
-
-	InitializeSecurityDescriptor(&security_descriptor, SECURITY_DESCRIPTOR_REVISION);
-	SID_IDENTIFIER_AUTHORITY sid_identifier_authority = SECURITY_WORLD_SID_AUTHORITY;
-	AllocateAndInitializeSid(&sid_identifier_authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, &sid);
-
-	EXPLICIT_ACCESS explicit_access{};
-	explicit_access.grfAccessPermissions = STANDARD_RIGHTS_ALL | SPECIFIC_RIGHTS_ALL;
-	explicit_access.grfAccessMode        = SET_ACCESS;
-	explicit_access.grfInheritance       = INHERIT_ONLY;
-	explicit_access.Trustee.TrusteeForm  = TRUSTEE_IS_SID;
-	explicit_access.Trustee.TrusteeType  = TRUSTEE_IS_WELL_KNOWN_GROUP;
-	explicit_access.Trustee.ptstrName    = (LPTSTR) &sid;
-	SetEntriesInAcl(1, &explicit_access, nullptr, &acl);
-	SetSecurityDescriptorDacl(&security_descriptor, true, acl, false);
-	security_attributes.nLength              = sizeof(security_attributes);
-	security_attributes.lpSecurityDescriptor = &security_descriptor;
-	security_attributes.bInheritHandle       = true;
-
+	WinSecurityAttributes            win_security_attributes;
 	VkExportMemoryWin32HandleInfoKHR export_memory_win32_handle_info{};
 	export_memory_win32_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
-	export_memory_win32_handle_info.pAttributes = &security_attributes;
+	export_memory_win32_handle_info.pAttributes = &win_security_attributes;
 	export_memory_win32_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+	export_memory_allocate_info.pNext           = &export_memory_win32_handle_info;
 #endif
-
-	VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
-	export_memory_allocate_info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
-#ifdef _WIN32
-	export_memory_allocate_info.pNext = &export_memory_win32_handle_info;
-#endif
-	export_memory_allocate_info.handleTypes = external_handle_type;
 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	memory_allocate_info.pNext                = &export_memory_allocate_info;
@@ -689,26 +614,9 @@ void OpenCLInterop::prepare_shared_resources()
 
 	device->flush_command_buffer(copy_command, queue, true);
 
-#ifdef _WIN32
-	FreeSid(sid);
-	LocalFree(acl);
-#endif
-
-	// Setting up OpenCL resources
-	cl_image_format cl_img_fmt{};
-	cl_img_fmt.image_channel_order     = CL_RGBA;
-	cl_img_fmt.image_channel_data_type = CL_UNSIGNED_INT8;
-
-	cl_image_desc cl_img_desc{};
-	cl_img_desc.image_width       = shared_image.width;
-	cl_img_desc.image_height      = shared_image.height;
-	cl_img_desc.image_type        = CL_MEM_OBJECT_IMAGE2D;
-	cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
-	cl_img_desc.num_mip_levels    = 1;
+	// Import the image into OpenCL
 
 	std::vector<cl_mem_properties> mem_properties;
-
-	cl_device_id devList[] = {opencl_objects.device_id, NULL};
 
 #ifdef _WIN32
 	HANDLE handle = get_vulkan_memory_handle(shared_image.memory);
@@ -724,6 +632,18 @@ void OpenCLInterop::prepare_shared_resources()
 	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
 	mem_properties.push_back(0);
 
+	cl_image_format cl_img_fmt{};
+	cl_img_fmt.image_channel_order     = CL_RGBA;
+	cl_img_fmt.image_channel_data_type = CL_UNSIGNED_INT8;
+
+	cl_image_desc cl_img_desc{};
+	cl_img_desc.image_width       = shared_image.width;
+	cl_img_desc.image_height      = shared_image.height;
+	cl_img_desc.image_type        = CL_MEM_OBJECT_IMAGE2D;
+	cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
+	cl_img_desc.num_mip_levels    = 1;
+	cl_img_desc.buffer            = nullptr;
+
 	int cl_result;
 	opencl_objects.image = clCreateImageWithProperties(opencl_objects.context,
 	                                                   mem_properties.data(),
@@ -735,7 +655,82 @@ void OpenCLInterop::prepare_shared_resources()
 	CL_CHECK(cl_result);
 }
 
-void OpenCLInterop::prepare_open_cl_resources()
+void OpenCLInterop::prepare_sync_objects()
+{
+	// Just as the image, we also create the semaphores in Vulkan and export them
+	VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
+	export_semaphore_create_info.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO_KHR;
+
+#ifdef _WIN32
+	WinSecurityAttributes               win_security_attributes;
+	VkExportSemaphoreWin32HandleInfoKHR export_semaphore_handle_info{};
+	export_semaphore_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
+	export_semaphore_handle_info.pAttributes = &win_security_attributes;
+	export_semaphore_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+
+	export_semaphore_create_info.pNext       = &export_semaphore_handle_info;
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else
+	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+
+	VkSemaphoreCreateInfo semaphore_create_info{};
+	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	semaphore_create_info.pNext = &export_semaphore_create_info;
+
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
+	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
+
+	// We also need a fence for the Vulkan side of things, which is not shared with OpenCL
+	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
+	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
+
+	// Import the Vulkan sempahores into OpenCL
+	std::vector<cl_semaphore_properties_khr> semaphore_properties{
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
+	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
+	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+	    (cl_semaphore_properties_khr) opencl_objects.device_id,
+	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+	};
+
+	// CL to VK semaphore
+
+#ifdef _WIN32
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
+	HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
+	int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+#endif
+	semaphore_properties.push_back(0);
+
+	cl_int cl_result;
+
+	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
+	CL_CHECK(cl_result);
+
+	// Remove the last two entries so we can push the next handle and zero terminator to the properties list and re-use the other values
+	semaphore_properties.pop_back();
+	semaphore_properties.pop_back();
+
+	// VK to CL semaphore
+#ifdef _WIN32
+	handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+	fd = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
+	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+#endif
+	semaphore_properties.push_back(0);
+
+	opencl_objects.vk_update_cl_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
+	CL_CHECK(cl_result);
+}
+
+void OpenCLInterop::prepare_opencl_resources()
 {
 	cl_platform_id platform_id = load_opencl();
 	if (platform_id == nullptr)
@@ -801,86 +796,29 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	opencl_objects.kernel = clCreateKernel(opencl_objects.program, "generate_texture", &cl_result);
 	CL_CHECK(cl_result);
-
-	// Import sempahores
-	std::vector<cl_semaphore_properties_khr> semaphore_properties{
-	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
-	    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
-	    (cl_semaphore_properties_khr) opencl_objects.device_id,
-	    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
-	};
-
-	// CL to VK semaphore
-
-	// We need to select the external handle type based on our target platform
-#ifdef _WIN32
-	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
-#else
-	semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
-#endif
-
-#ifdef _WIN32
-	HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
-#else
-	int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
-#endif
-	semaphore_properties.push_back(0);
-
-	opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
-	CL_CHECK(cl_result);
-
-	// Remove the last two entries so we can push the next handle and zero terminator to the properties list and re-use the other values
-	semaphore_properties.pop_back();
-	semaphore_properties.pop_back();
-
-	// VK to CL semaphore
-#ifdef _WIN32
-	handle = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
-#else
-	fd = get_vulkan_semaphore_handle(vk_update_cl_semaphore);
-	semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
-#endif
-	semaphore_properties.push_back(0);
-
-	opencl_objects.vk_update_cl_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
-	CL_CHECK(cl_result);
 }
 
-void OpenCLInterop::prepare_sync_objects()
+bool OpenCLInterop::prepare(vkb::Platform &platform)
 {
-	// @todo: comment
-	VkSemaphoreCreateInfo semaphore_create_info{};
-	semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	if (!ApiVulkanSample::prepare(platform))
+	{
+		return false;
+	}
 
-#ifdef _WIN32
-	WindowsSecurityAttributes windows_security_attributes;
+	prepare_opencl_resources();
+	prepare_sync_objects();
+	prepare_shared_image();
+	generate_quad();
+	prepare_uniform_buffers();
+	setup_descriptor_set_layout();
+	prepare_pipelines();
+	setup_descriptor_pool();
+	setup_descriptor_set();
+	build_command_buffers();
 
-	VkExportSemaphoreWin32HandleInfoKHR export_semaphore_handle_info{};
-	export_semaphore_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
-	export_semaphore_handle_info.pAttributes = &windows_security_attributes;
-	export_semaphore_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
-#endif
-
-	VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
-	export_semaphore_create_info.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO_KHR;
-#ifdef _WIN32
-	export_semaphore_create_info.pNext       = &export_semaphore_handle_info;
-	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
-#else
-	export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
-#endif
-	semaphore_create_info.pNext = &export_semaphore_create_info;
-
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
-	VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
-
-	// @todo: comment
-	VkFenceCreateInfo fence_create_info = vkb::initializers::fence_create_info(VK_FENCE_CREATE_SIGNALED_BIT);
-	vkCreateFence(device->get_handle(), &fence_create_info, nullptr, &rendering_finished_fence);
+	opencl_objects.initialized = true;
+	prepared                   = true;
+	return true;
 }
 
 std::unique_ptr<vkb::VulkanSample> create_open_cl_interop()
