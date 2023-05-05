@@ -1,0 +1,40 @@
+name: Build and Test v2.0
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  build:
+    name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
+    strategy:
+      matrix:
+        platform: [windows, ubuntu, macos]
+        build_type: [Debug, Release]
+    env:
+      PARALLEL: -j 2
+    runs-on: "${{ matrix.platform }}-latest"
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - if: ${{ matrix.platform == 'ubuntu' }}
+        name: Install RandR headers
+        run: |
+          sudo apt-get update
+          sudo apt install xorg-dev libglu1-mesa-dev
+
+      - name: Configure
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON
+
+      - name: "Build Components ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.platform }}" --target vkb__components --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+      - name: "Build Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: cmake --build "build/${{ matrix.platform }}" --target vkb__tests --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+
+      - name: "Run Tests ${{ matrix.platform }} in ${{ matrix.build_type }}"
+        run: ctest -C ${{ matrix.build_type }} --test-dir "build/${{ matrix.platform }}" --output-on-failure
