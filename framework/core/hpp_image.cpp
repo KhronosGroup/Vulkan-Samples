@@ -138,7 +138,7 @@ HPPImage::~HPPImage()
 	if (get_handle() && memory)
 	{
 		unmap();
-		vmaDestroyImage(get_device().get_memory_allocator(), get_handle(), memory);
+		vmaDestroyImage(get_device().get_memory_allocator(), static_cast<VkImage>(get_handle()), memory);
 	}
 }
 
