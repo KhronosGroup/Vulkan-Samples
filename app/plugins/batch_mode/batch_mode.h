@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -77,6 +77,8 @@ class BatchMode : public BatchModeTags
 	float elapsed_time{0.0f};
 
 	bool wrap_to_start = false;
+
+	void request_app();
 
 	void load_next_app();
 };
