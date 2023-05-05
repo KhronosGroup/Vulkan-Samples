@@ -15,7 +15,7 @@
 # limitations under the License.
 
 vkb__register_component(
-    NAME common
+    NAME core
     SRC
         src/strings.cpp
     LINK_LIBS
@@ -23,9 +23,9 @@ vkb__register_component(
 )
 
 vkb__register_tests(
-    NAME common
+    NAME core
     SRC
         tests/strings.test.cpp
     LINK_LIBS
-        vkb__common
+        vkb__core
 )

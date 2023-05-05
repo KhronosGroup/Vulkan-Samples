@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include <components/common/strings.hpp>
+#include <core/util/strings.hpp>
 
 namespace vkb
 {
