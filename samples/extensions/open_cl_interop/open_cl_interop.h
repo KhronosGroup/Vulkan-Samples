@@ -49,7 +49,6 @@ class OpenCLInterop : public ApiVulkanSample
 	void build_command_buffers() override;
 
   private:
-
 	void prepare_pipelines();
 	void prepare_open_cl_resources();
 	void prepare_shared_resources();
