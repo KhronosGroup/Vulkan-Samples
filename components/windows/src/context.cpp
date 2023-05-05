@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +15,15 @@
  * limitations under the License.
  */
 
-#include "windows_platform.h"
+#include "windows/context.hpp"
 
 #include <Windows.h>
-#include <iostream>
-#include <shellapi.h>
+#include <cassert>
 #include <stdexcept>
-
-#include "common/error.h"
-
-#include "platform/glfw_window.h"
-#include "platform/headless_window.h"
-
-VKBP_DISABLE_WARNINGS()
-#include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
-VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-namespace
-{
+
 inline const std::string get_temp_path_from_environment()
 {
 	std::string temp_path = "temp/";
@@ -57,7 +45,7 @@ inline const std::string get_temp_path_from_environment()
 /// @brief Converts wstring to string using Windows specific function
 /// @param wstr Wide string to convert
 /// @return A converted utf8 string
-std::string wstr_to_str(const std::wstring &wstr)
+inline std::string wstr_to_str(const std::wstring &wstr)
 {
 	if (wstr.empty())
 	{
@@ -91,33 +79,42 @@ inline std::vector<std::string> get_args()
 
 	return args;
 }
-}        // namespace
 
-namespace fs
+WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
 {
-void create_directory(const std::string &path)
-{
-	if (!is_directory(path))
+	_temp_directory = get_temp_path_from_environment();
+	_arguments      = get_args();
+
+	// allocate a console for this app
+	// TODO: do we really need to do this?
+	if (!AllocConsole())
 	{
-		CreateDirectory(path.c_str(), NULL);
+		throw std::runtime_error{"AllocConsole error"};
 	}
+
+	FILE *fp;
+	freopen_s(&fp, "conin$", "r", stdin);
+	freopen_s(&fp, "conout$", "w", stdout);
+	freopen_s(&fp, "conout$", "w", stderr);
 }
-}        // namespace fs
 
-WindowsPlatform::WindowsPlatform(const PlatformContext &context) :
-    Platform(context)
+std::vector<std::string_view> WindowsPlatformContext::arguments() const
 {
+	std::vector<std::string_view> args;
+	for (auto &arg : _arguments)
+	{
+		args.push_back(arg);
+	}
+	return args;
 }
 
-void WindowsPlatform::create_window(const Window::Properties &properties)
+std::string_view WindowsPlatformContext::external_storage_directory() const
 {
-	if (properties.mode == vkb::Window::Mode::Headless)
-	{
-		window = std::make_unique<HeadlessWindow>(properties);
-	}
-	else
-	{
-		window = std::make_unique<GlfwWindow>(this, properties);
-	}
+	return _external_storage_directory;
+}
+
+std::string_view WindowsPlatformContext::temp_directory() const
+{
+	return _temp_directory;
 }
 }        // namespace vkb

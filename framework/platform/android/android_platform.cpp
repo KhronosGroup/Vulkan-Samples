@@ -21,6 +21,8 @@
 #include <unistd.h>
 #include <unordered_map>
 
+#include <android/context.hpp>
+
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
@@ -39,18 +41,6 @@ VKBP_ENABLE_WARNINGS()
 
 extern "C"
 {
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
-	{
-		const char *external_dir_cstr = env->GetStringUTFChars(external_dir, 0);
-		vkb::Platform::set_external_storage_directory(std::string(external_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
-
-		const char *temp_dir_cstr = env->GetStringUTFChars(temp_dir, 0);
-		vkb::Platform::set_temp_directory(std::string(temp_dir_cstr) + "/");
-		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
-	}
-
 	JNIEXPORT jobjectArray JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_getSamples(JNIEnv *env, jobject thiz)
 	{
@@ -80,25 +70,6 @@ extern "C"
 		}
 
 		return j_sample_list;
-	}
-
-	JNIEXPORT void JNICALL
-	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_sendArgumentsToPlatform(JNIEnv *env, jobject thiz, jobjectArray arg_strings)
-	{
-		std::vector<std::string> args;
-
-		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
-		{
-			jstring arg_string = (jstring) (env->GetObjectArrayElement(arg_strings, i));
-
-			const char *arg = env->GetStringUTFChars(arg_string, 0);
-
-			args.push_back(std::string(arg));
-
-			env->ReleaseStringUTFChars(arg_string, arg);
-		}
-
-		vkb::Platform::set_arguments(args);
 	}
 }
 
@@ -375,9 +346,13 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-AndroidPlatform::AndroidPlatform(android_app *app) :
-    app{app}
+AndroidPlatform::AndroidPlatform(const PlatformContext &context) :
+    Platform{context}
 {
+	if (auto *android = dynamic_cast<const AndroidPlatformContext *>(&context))
+	{
+		app = android->app;
+	}
 }
 
 ExitCode AndroidPlatform::initialize(const std::vector<Plugin *> &plugins)

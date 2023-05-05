@@ -55,10 +55,9 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
+UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
+    Platform{context}
 {
-	Platform::set_arguments({argv + 1, argv + argc});
-	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 void UnixD2DPlatform::create_window(const Window::Properties &properties)

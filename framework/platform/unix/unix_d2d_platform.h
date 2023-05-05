@@ -24,7 +24,7 @@ namespace vkb
 class UnixD2DPlatform : public Platform
 {
   public:
-	UnixD2DPlatform(int argc, char **argv);
+	UnixD2DPlatform(const PlatformContext &context);
 
 	virtual ~UnixD2DPlatform() = default;
 

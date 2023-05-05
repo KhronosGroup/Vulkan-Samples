@@ -14,14 +14,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(core)
+vkb__register_component(
+    NAME windows_platform
+    HEADERS
+        include/windows/context.hpp
+    SRC
+        src/context.cpp
+        src/entrypoint.cpp
+    LINK_LIBS
+        vkb__core
+)
 
-if(ANDROID)
-    add_subdirectory(android)
-elseif(WIN32)
-    add_subdirectory(windows)
-elseif(APPLE)
-    add_subdirectory(unix) # reuses then unix platform
-elseif(UNIX)
-    add_subdirectory(unix)
-endif()
+vkb__register_tests(
+    NO_CATCH2
+    COMPONENT windows_platform
+    NAME windows_platform
+    SRC
+        tests/entrypoint.test.cpp
+    LINK_LIBS
+        vkb__windows_platform
+)
+
+# attach to core
+target_link_libraries(vkb__core INTERFACE vkb__windows_platform)
