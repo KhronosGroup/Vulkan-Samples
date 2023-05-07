@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### HPP High dynamic range<br/>
-A transcoded version of the API sample [High dynamic range](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/hdr) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+### HPP High dynamic range
+
+A transcoded version of the API sample [High dynamic range](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/hdr) that illustrates the usage of the C++ bindings of Vulkan provided by vulkan.hpp.

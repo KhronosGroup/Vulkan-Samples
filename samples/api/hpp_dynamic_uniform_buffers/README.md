@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### HPP Dynamic Uniform Buffers<br/>
-A transcoded version of the API sample [Dynamic Uniform buffers](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+### HPP Dynamic Uniform Buffers
+
+A transcoded version of the API sample [Dynamic Uniform buffers](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/dynamic_uniform_buffers) that illustrates the usage of the C++ bindings of Vulkan provided by vulkan.hpp.
