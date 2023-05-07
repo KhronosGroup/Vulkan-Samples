@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2022-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,7 +17,7 @@
 -
 -->
 
-### HPP Texture mipmap generation<br/>
+### HPP Texture mipmap generation
 A transcoded version of the API sample [Texture mipmap generation](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_mipmap_generation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 # Run-time mip-map generation

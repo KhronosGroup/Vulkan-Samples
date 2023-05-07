@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2021, The Khronos Group
+- Copyright (c) 2020-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### HPP Texture Loading<br/>
-A transcoded version of the API sample [Texture loading](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_loading) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+### HPP Texture Loading
+
+A transcoded version of the API sample [Texture loading](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_loading) that illustrates the usage of the C++ bindings of Vulkan provided by vulkan.hpp.
