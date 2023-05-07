@@ -266,7 +266,7 @@ Demonstrates how to use descriptor indexing to enable update-after-bind and non-
 
 Uses a special framebuffer attachment to control fragment shading rates for different framebuffer regions. This allows explicit control over the number of fragment shader invocations for each pixel covered by a fragment, which is e.g. useful for foveated rendering.
 
-### [Fragment shading rate_dynamic](./extensions/fragment_shading_rate)
+### [Fragment shading rate_dynamic](./extensions/fragment_shading_rate_dynamic)
 **Extension**: [```VK_KHR_fragment_shading_rate```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_fragment_shading_rate.html)
 
 Render a simple scene showing the basics of shading rate dynamic.  This sample shows low and high frequency textures 
