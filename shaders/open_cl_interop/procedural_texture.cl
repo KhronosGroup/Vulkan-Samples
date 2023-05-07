@@ -17,21 +17,22 @@
  */
 
 // Generate an image with a random pattern based on a timer
-__kernel void generate_texture(__read_write image2d_t dst_img, float time) {
-    int x = get_global_id(0);
-    int y = get_global_id(1);
-    int width = get_global_size(0);
-    int height = get_global_size(1);
+__kernel void generate_texture(__read_write image2d_t dst_img, float time)
+{
+	int x      = get_global_id(0);
+	int y      = get_global_id(1);
+	int width  = get_global_size(0);
+	int height = get_global_size(1);
 
-    float dx = (x / (float)width - 0.5f) * 2.0f;
-    float dy = (y / (float)height - 0.5f) * 2.0f;
+	float dx = (x / (float) width - 0.5f) * 2.0f;
+	float dy = (y / (float) height - 0.5f) * 2.0f;
 
-    float dist = sqrt(dx * dx + dy * dy);
+	float dist = sqrt(dx * dx + dy * dy);
 
-    uint4 val;
-    val.s0 = (cos(dist * 25.0f - time * 5.0f) / 2.0f + 0.5f) * 255;
-    val.s1 = (cos(dx * 50.0f) / 2.0f + 0.5f) * 255;
-    val.s2 = (cos(dy * 50.0f) / 2.0f + 0.5f) * 255;
-    val.s3 = 255;
-    write_imageui(dst_img, (int2)(x, y), val);
+	uint4 val;
+	val.s0 = (cos(dist * 25.0f - time * 5.0f) / 2.0f + 0.5f) * 255;
+	val.s1 = (cos(dx * 50.0f) / 2.0f + 0.5f) * 255;
+	val.s2 = (cos(dy * 50.0f) / 2.0f + 0.5f) * 255;
+	val.s3 = 255;
+	write_imageui(dst_img, (int2) (x, y), val);
 }
