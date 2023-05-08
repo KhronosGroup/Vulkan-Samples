@@ -69,6 +69,6 @@ set(CMAKE_C_FLAGS_DEBUG   "-DDEBUG=0 ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_CXX_FLAGS_DEBUG "-DDEBUG=0 ${CMAKE_CXX_FLAGS_DEBUG}")
 
 if (VKB_CLANG_TIDY)
-    find_program(CLANG_TIDY "clang-tidy", "clang-tidy-15" REQUIRED)
+    find_program(CLANG_TIDY "clang-tidy" "clang-tidy-15" REQUIRED)
     set(VKB_DO_CLANG_TIDY ${CLANG_TIDY} ${VKB_CLANG_TIDY_EXTRAS})
 endif()
