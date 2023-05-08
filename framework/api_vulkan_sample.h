@@ -236,14 +236,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0);
-
-	/**
-	 * @brief Loads in a single model from a GLTF file to storage buffer using memory alligned vertex strucuture
-	 * @param file The filename of the model to load
-	 * @param index The index of the model to load from the GLTF file (default: 0)
-	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model_to_storage_buffer(const std::string &file, uint32_t index = 0);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer

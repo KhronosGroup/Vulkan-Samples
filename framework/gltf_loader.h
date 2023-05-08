@@ -79,13 +79,7 @@ class GLTFLoader
 	 * @brief Loads the first model from a GLTF file for use in simpler samples
 	 *        makes use of the Vertex struct in vulkan_example_base.h
 	 */
-	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index);
-
-	/**
-	 * @brief Loads model from a GLTF file to storage buffer for use in simpler mesh shader samples
-	 *        makes use of the AllignedVertex struct in vulkan_example_base.h
-	 */
-	std::unique_ptr<sg::SubMesh> read_model_from_file_to_storage_buffer(const std::string &file_name, uint32_t index);
+	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false);
 
   protected:
 	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node, size_t index) const;

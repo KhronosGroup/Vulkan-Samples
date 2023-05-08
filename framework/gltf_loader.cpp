@@ -400,7 +400,7 @@ std::unique_ptr<sg::Scene> GLTFLoader::read_scene_from_file(const std::string &f
 	return std::make_unique<sg::Scene>(load_scene(scene_index));
 }
 
-std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index)
+std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer)
 {
 	std::string err;
 	std::string warn;
@@ -439,49 +439,10 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file(const std::string 
 		model_path.clear();
 	}
 
-	return std::move(load_model(index));
-}
-
-std::unique_ptr<sg::SubMesh> GLTFLoader::read_model_from_file_to_storage_buffer(const std::string &file_name, uint32_t index)
-{
-	std::string err;
-	std::string warn;
-
-	tinygltf::TinyGLTF gltf_loader;
-
-	std::string gltf_file = vkb::fs::path::get(vkb::fs::path::Type::Assets) + file_name;
-
-	bool importResult = gltf_loader.LoadASCIIFromFile(&model, &err, &warn, gltf_file.c_str());
-
-	if (!importResult)
-	{
-		LOGE("Failed to load gltf file {}.", gltf_file.c_str());
-
-		return nullptr;
-	}
-
-	if (!err.empty())
-	{
-		LOGE("Error loading gltf model: {}.", err.c_str());
-
-		return nullptr;
-	}
-
-	if (!warn.empty())
-	{
-		LOGI("{}", warn.c_str());
-	}
-
-	size_t pos = file_name.find_last_of('/');
-
-	model_path = file_name.substr(0, pos);
-
-	if (pos == std::string::npos)
-	{
-		model_path.clear();
-	}
-
-	return std::move(load_model_to_storage_buffer(index));
+	if (storage_buffer)
+		return std::move(load_model_to_storage_buffer(index));
+	else
+		return std::move(load_model(index));
 }
 
 sg::Scene GLTFLoader::load_scene(int scene_index)
