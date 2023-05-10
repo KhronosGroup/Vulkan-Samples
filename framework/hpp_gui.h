@@ -376,8 +376,8 @@ class HPPGui
 	vk::DescriptorSetLayout                  descriptor_set_layout = nullptr;
 	vk::DescriptorSet                        descriptor_set        = nullptr;
 	vk::Pipeline                             pipeline              = nullptr;
-	Timer                                    timer;                                 // Used to measure duration of input events
-	bool                                     visible                = true;         // Used to show/hide the GUI
+	Timer                                    timer;                                // Used to measure duration of input events
+	bool                                     visible                = true;        // Used to show/hide the GUI
 	bool                                     prev_visible           = true;
 	bool                                     two_finger_tap         = false;        // Whether or not the GUI has detected a multi touch gesture
 	bool                                     show_graph_file_output = false;
