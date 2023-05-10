@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2023, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *

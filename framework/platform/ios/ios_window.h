@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Holochip Inc.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,6 @@ class IosWindow : public Window
 	/**
 	 * @brief Constructor
 	 * @param platform The platform this window is created for
-	 * @param window A reference to the location of the Android native window
 	 * @param properties Window configuration
 	 */
 	IosWindow(IosPlatform *platform, const Window::Properties &properties);
