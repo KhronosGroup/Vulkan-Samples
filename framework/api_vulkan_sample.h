@@ -75,9 +75,9 @@ struct Vertex
 
 /**
  * @brief The structure of a vertex for storage buffer
- * Simplified to position and normal for easier allignment
+ * Simplified to position and normal for easier alignment
  */
-struct AllignedVertex
+struct AlignedVertex
 {
 	glm::vec4 pos;
 	glm::vec4 normal;

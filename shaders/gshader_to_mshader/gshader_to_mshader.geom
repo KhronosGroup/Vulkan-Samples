@@ -30,7 +30,7 @@ layout (location = 0) out vec3 outColor;
 
 void main(void)
 {
-    float normalLength = 0.1;
+    float normalLength_f = 0.1;
 
     //middle point of triangle
     vec3 pos = (gl_in[0].gl_Position.xyz + gl_in[1].gl_Position.xyz + gl_in[2].gl_Position.xyz)/3;
@@ -41,7 +41,7 @@ void main(void)
     outColor = vec3(1.0, 0.0, 0.0);
     EmitVertex();
 
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos + normal * normalLength, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos + normal * normalLength_f, 1.0);
     outColor = vec3(0.0, 0.0, 1.0);
     EmitVertex();
 

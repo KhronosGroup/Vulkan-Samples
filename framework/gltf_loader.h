@@ -134,7 +134,6 @@ class GLTFLoader
   private:
 	sg::Scene load_scene(int scene_index = -1);
 
-	std::unique_ptr<sg::SubMesh> load_model(uint32_t index);
-	std::unique_ptr<sg::SubMesh> load_model_to_storage_buffer(uint32_t index);
+	std::unique_ptr<sg::SubMesh> load_model(uint32_t index, bool storage_buffer = false);
 };
 }        // namespace vkb

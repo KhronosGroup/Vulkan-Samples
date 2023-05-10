@@ -22,7 +22,6 @@ GshaderToMshader::GshaderToMshader()
 	title = "task_mesh_migration";
 
 	set_api_version(VK_API_VERSION_1_1);
-	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
 	add_device_extension(VK_EXT_MESH_SHADER_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
@@ -40,11 +39,10 @@ GshaderToMshader::~GshaderToMshader()
 		storage_buffer_object.reset();
 
 		vkDestroyPipeline(get_device().get_handle(), model_pipeline, nullptr);
-		vkDestroyPipeline(get_device().get_handle(), normal_pipeline, nullptr);
+		vkDestroyPipeline(get_device().get_handle(), geometry_pipeline, nullptr);
 		vkDestroyPipeline(get_device().get_handle(), mesh_pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
-		vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	}
 }
 
@@ -84,7 +82,7 @@ void GshaderToMshader::load_assets()
 
 	object = load_model("scenes/teapot.gltf");
 
-	storage_buffer_object = load_model_to_storage_buffer("scenes/teapot.gltf");
+	storage_buffer_object = load_model("scenes/teapot.gltf", 0, true);
 }
 
 /**
@@ -149,9 +147,19 @@ void GshaderToMshader::update_uniform_buffers()
 
 void GshaderToMshader::prepare_pipelines()
 {
-	std::array<VkPipelineShaderStageCreateInfo, 3> shader_stages;
-	shader_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	std::array<VkPipelineShaderStageCreateInfo, 2> model_stages;
+	model_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	model_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	std::array<VkPipelineShaderStageCreateInfo, 3> geometry_stages;
+	geometry_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader_base.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	geometry_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	geometry_stages[2] = load_shader("gshader_to_mshader/gshader_to_mshader.geom", VK_SHADER_STAGE_GEOMETRY_BIT);
+
+	// task shader is not used, the amount of spawned mesh shaders is determined by amount of meshlets stored in the storage_buffer_object->vertex_indices
+	std::array<VkPipelineShaderStageCreateInfo, 2> mesh_stages;
+	mesh_stages[0] = load_shader("gshader_to_mshader/gshader_to_mshader.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
+	mesh_stages[1] = load_shader("gshader_to_mshader/gshader_to_mshader_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// Dynamic State
 	std::vector<VkDynamicState> dynamic_state_enables = {
@@ -168,6 +176,7 @@ void GshaderToMshader::prepare_pipelines()
 	// Vertex bindings an attributes for model rendering
 
 	// Binding description
+	// Vertex structure is used here for binding description, AlignedVertex is used only in the context of a mesh shader operations
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)};
 
@@ -238,8 +247,8 @@ void GshaderToMshader::prepare_pipelines()
 	        pipeline_layout,
 	        render_pass,
 	        0);
-	pipeline_create_info.pStages             = shader_stages.data();
-	pipeline_create_info.stageCount          = 2;
+	pipeline_create_info.pStages             = model_stages.data();
+	pipeline_create_info.stageCount          = static_cast<uint32_t>(model_stages.size());
 	pipeline_create_info.pVertexInputState   = &vertex_input_state;
 	pipeline_create_info.pInputAssemblyState = &input_assembly_state;
 	pipeline_create_info.pViewportState      = &viewport_state;
@@ -251,15 +260,12 @@ void GshaderToMshader::prepare_pipelines()
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &model_pipeline));
 
-	shader_stages[0]                = load_shader("gshader_to_mshader/gshader_to_mshader_base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                = load_shader("gshader_to_mshader/gshader_to_mshader_base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	shader_stages[2]                = load_shader("gshader_to_mshader/gshader_to_mshader.geom", VK_SHADER_STAGE_GEOMETRY_BIT);
-	pipeline_create_info.stageCount = 3;
-	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &normal_pipeline));
+	pipeline_create_info.pStages    = geometry_stages.data();
+	pipeline_create_info.stageCount = static_cast<uint32_t>(geometry_stages.size());
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &geometry_pipeline));
 
-	shader_stages[0]                = load_shader("gshader_to_mshader/gshader_to_mshader.mesh", VK_SHADER_STAGE_MESH_BIT_EXT);
-	shader_stages[1]                = load_shader("gshader_to_mshader/gshader_to_mshader_mesh.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
-	pipeline_create_info.stageCount = 2;
+	pipeline_create_info.pStages    = mesh_stages.data();
+	pipeline_create_info.stageCount = static_cast<uint32_t>(mesh_stages.size());
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &mesh_pipeline));
 }
 
@@ -303,14 +309,14 @@ void GshaderToMshader::build_command_buffers()
 
 		if (showNormalsGeo)
 		{
-			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, normal_pipeline);
+			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, geometry_pipeline);
 			draw_model(object, draw_cmd_buffers[i]);
 		}
 
 		if (showNormalsMesh)
 		{
 			vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, mesh_pipeline);
-			uint32_t num_workgroups_x = storage_buffer_object->vertex_indices;
+			uint32_t num_workgroups_x = storage_buffer_object->vertex_indices;        // meshlets count
 			uint32_t num_workgroups_y = 1;
 			uint32_t num_workgroups_z = 1;
 			vkCmdDrawMeshTasksEXT(draw_cmd_buffers[i], num_workgroups_x, num_workgroups_y, num_workgroups_z);
@@ -421,7 +427,7 @@ void GshaderToMshader::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void GshaderToMshader::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	auto &requested_vertex_input_features      = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV);
+	auto &requested_vertex_input_features      = gpu.request_extension_features<VkPhysicalDeviceMeshShaderFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_EXT);
 	requested_vertex_input_features.meshShader = VK_TRUE;
 
 	if (gpu.get_features().geometryShader)

@@ -39,7 +39,7 @@ class GshaderToMshader : public ApiVulkanSample
 	VkPipelineLayout pipeline_layout{VK_NULL_HANDLE};
 
 	VkPipeline model_pipeline{VK_NULL_HANDLE};
-	VkPipeline normal_pipeline{VK_NULL_HANDLE};
+	VkPipeline geometry_pipeline{VK_NULL_HANDLE};
 	VkPipeline mesh_pipeline{VK_NULL_HANDLE};
 
 	std::unique_ptr<vkb::sg::SubMesh> object;
