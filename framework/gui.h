@@ -83,12 +83,12 @@ class Drawer
   public:
 	Drawer() = default;
 
-	/** 
+	/**
 	 * @brief Clears the dirty bit set
 	 */
 	void clear();
 
-	/** 
+	/**
 	 * @brief Returns true if the drawer has been updated
 	 */
 	bool is_dirty();
@@ -129,7 +129,7 @@ class Drawer
 	 * @param fmt Use to get precision i.e. %0.3f
 	 * @returns True if adding item was successful
 	 */
-	bool input_float(const char *caption, float *value, float step, const char* fmt);
+	bool input_float(const char *caption, float *value, float step, const char *fmt);
 
 	/**
 	 * @brief Adds a slide bar to the gui for floating points to the gui
