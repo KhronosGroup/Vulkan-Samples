@@ -40,7 +40,7 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 int main(int argc, char *argv[])
 {
 	vkb::UnixD2DPlatform platform{argc, argv};
-#elif defined(VK_USE_PLATFORM_METAL_EXT) && (defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE))
+#elif defined(VK_USE_PLATFORM_METAL_EXT) && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #	include "platform/ios/ios_platform.h"
 int main(int argc, char **argv)
 {
