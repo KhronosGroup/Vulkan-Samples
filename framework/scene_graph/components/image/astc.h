@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "astcenc.h"
 #include "common/vk_common.h"
 #include "scene_graph/components/image.h"
 
@@ -62,6 +63,9 @@ class Astc : public Image
 	 * @brief Initializes ASTC library
 	 */
 	void init();
+
+	astcenc_config config;
+	astcenc_error status;
 };
 }        // namespace sg
 }        // namespace vkb

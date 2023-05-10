@@ -19,6 +19,10 @@
 #include "platform/platform.h"
 #include "plugins/plugins.h"
 
+#if defined(VK_USE_PLATFORM_METAL_EXT)
+#include <TargetConditionals.h>
+#endif
+
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
 #	include "platform/android/android_platform.h"
 void android_main(android_app *state)
@@ -36,6 +40,11 @@ int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 int main(int argc, char *argv[])
 {
 	vkb::UnixD2DPlatform platform{argc, argv};
+#elif defined(VK_USE_PLATFORM_METAL_EXT) && (defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE))
+#	include "platform/ios/ios_platform.h"
+int main(int argc, char** argv)
+{
+	vkb::IosPlatform platform(argc, argv);
 #else
 #	include "platform/unix/unix_platform.h"
 int main(int argc, char *argv[])

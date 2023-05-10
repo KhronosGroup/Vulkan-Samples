@@ -84,7 +84,7 @@ UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
 
 const char *UnixPlatform::get_surface_extension()
 {
-	if (type == UnixType::Mac)
+	if (type == UnixType::Mac || type == UnixType::Ios)
 	{
 		return VK_EXT_METAL_SURFACE_EXTENSION_NAME;
 	}

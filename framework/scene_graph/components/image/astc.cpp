@@ -27,7 +27,7 @@ VKBP_DISABLE_WARNINGS()
 // Windows.h defines IGNORE, so we must #undef it to avoid clashes with astc header
 #	undef IGNORE
 #endif
-#include <astc_codec_internals.h>
+#include <astcenc.h>
 VKBP_ENABLE_WARNINGS()
 
 #define MAGIC_FILE_CONSTANT 0x5CA1AB13
@@ -106,9 +106,22 @@ void Astc::init()
 	std::unique_lock<std::mutex> lock{initialization};
 	if (!initialized)
 	{
+		static const unsigned int block_x = 6;
+		static const unsigned int block_y = 6;
+		static const unsigned int block_z = 1;
+		static const astcenc_profile profile = ASTCENC_PRF_LDR;
+		static const float quality = ASTCENC_PRE_MEDIUM;
+
+		config.block_x = block_x;
+		config.block_y = block_y;
+		config.profile = profile;
 		// Init stuff
-		prepare_angular_tables();
-		build_quantization_mode_table();
+		status = astcenc_config_init(profile, block_x, block_y, block_z, quality, 0, &config);
+		if (status != ASTCENC_SUCCESS)
+		{
+			printf("ERROR: Codec config init failed: %s\n", astcenc_get_error_string(status));
+			return;
+		}
 		initialized = true;
 	}
 }
@@ -116,9 +129,9 @@ void Astc::init()
 void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 {
 	// Actual decoding
-	astc_decode_mode decode_mode = DECODE_LDR_SRGB;
-	uint32_t         bitness     = 8;
-	swizzlepattern   swz_decode  = {0, 1, 2, 3};
+	astcenc_type         bitness     = ASTCENC_TYPE_U8;
+	astcenc_swizzle   swz_decode{ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
+	static const unsigned int thread_count = 1;
 
 	int xdim = blockdim.x;
 	int ydim = blockdim.y;
@@ -131,53 +144,52 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 		throw std::runtime_error{"Error reading astc: invalid block"};
 	}
 
-	int xsize = extent.width;
-	int ysize = extent.height;
-	int zsize = extent.depth;
+	uint32_t xsize = extent.width;
+	uint32_t ysize = extent.height;
+	uint32_t zsize = extent.depth;
 
 	if (xsize == 0 || ysize == 0 || zsize == 0)
 	{
 		throw std::runtime_error{"Error reading astc: invalid size"};
 	}
 
-	int xblocks = (xsize + xdim - 1) / xdim;
-	int yblocks = (ysize + ydim - 1) / ydim;
-	int zblocks = (zsize + zdim - 1) / zdim;
+	int xblocks = static_cast<int>(xsize + xdim - 1) / xdim;
+	int yblocks = static_cast<int>(ysize + ydim - 1) / ydim;
+	int zblocks = static_cast<int>(zsize + zdim - 1) / zdim;
 
-	auto astc_image = allocate_image(bitness, xsize, ysize, zsize, 0);
-	initialize_image(astc_image);
-
-	imageblock pb;
-	for (int z = 0; z < zblocks; z++)
+	// Space needed for 16 bytes of output per compressed block
+	size_t comp_len = xblocks * yblocks * zblocks * 16;
+	auto* comp_data = new uint8_t[comp_len];
+	astcenc_context* context;
+	status = astcenc_context_alloc(&config, thread_count, &context);
+	if (status != ASTCENC_SUCCESS)
 	{
-		for (int y = 0; y < yblocks; y++)
-		{
-			for (int x = 0; x < xblocks; x++)
-			{
-				int            offset = (((z * yblocks + y) * xblocks) + x) * 16;
-				const uint8_t *bp     = data_ + offset;
-
-				physical_compressed_block pcb = *reinterpret_cast<const physical_compressed_block *>(bp);
-				symbolic_compressed_block scb;
-
-				physical_to_symbolic(xdim, ydim, zdim, pcb, &scb);
-				decompress_symbolic_block(decode_mode, xdim, ydim, zdim, x * xdim, y * ydim, z * zdim, &scb, &pb);
-				write_imageblock(astc_image, &pb, xdim, ydim, zdim, x * xdim, y * ydim, z * zdim, swz_decode);
-			}
-		}
+		printf("ERROR: Codec context alloc failed: %s\n", astcenc_get_error_string(status));
+		return;
 	}
 
-	set_data(astc_image->imagedata8[0][0], astc_image->xsize * astc_image->ysize * astc_image->zsize * 4);
-	set_format(VK_FORMAT_R8G8B8A8_SRGB);
-	set_width(static_cast<uint32_t>(astc_image->xsize));
-	set_height(static_cast<uint32_t>(astc_image->ysize));
-	set_depth(static_cast<uint32_t>(astc_image->zsize));
+	astcenc_image astc_image{};
+	astc_image.dim_x = xsize;
+	astc_image.dim_y = ysize;
+	astc_image.dim_z = zsize;
+	astc_image.data_type = bitness;
+	astc_image.data = (void **) &data_;
 
-	destroy_image(astc_image);
+	status = astcenc_decompress_image(context, comp_data, comp_len, &astc_image, &swz_decode, 0);
+	if (status != ASTCENC_SUCCESS)
+	{
+		printf("ERROR: Codec decompress failed: %s\n", astcenc_get_error_string(status));
+		return;
+	}
+
+	astcenc_context_free(context);
+	delete [] comp_data;
 }
 
 Astc::Astc(const Image &image) :
-    Image{image.get_name()}
+    Image{image.get_name()},
+    config(),
+    status()
 {
 	init();
 

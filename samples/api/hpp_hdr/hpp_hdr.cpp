@@ -195,7 +195,7 @@ void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 			update_uniform_buffers();
 			build_command_buffers();
 		}
-		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
+		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, "%03f"))
 		{
 			update_params();
 		}

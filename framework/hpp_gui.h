@@ -114,10 +114,10 @@ class HPPDrawer
 	 * @param caption The text to display
 	 * @param value The value to map to
 	 * @param step The step increment
-	 * @param precision The precision
+	 * @param fmt The c-style format parameter
 	 * @returns True if adding item was successful
 	 */
-	bool input_float(const std::string &caption, float *value, float step, uint32_t precision);
+	bool input_float(const std::string &caption, float *value, float step, const char* fmt);
 
 	/**
 	 * @brief Adds a slide bar to the gui for floating points to the gui

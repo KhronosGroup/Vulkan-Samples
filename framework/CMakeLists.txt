@@ -378,6 +378,11 @@ set(ANDROID_FILES
     platform/android/android_platform.cpp
     platform/android/android_window.cpp)
 
+set(IOS_FILES
+    # Source Files
+	platform/ios/ios_platform.mm
+    platform/ios/ios_window.mm)
+
 set(WINDOWS_FILES
     # Header Files
     platform/windows/windows_platform.h
@@ -405,6 +410,7 @@ source_group("platform\\" FILES ${GLFW_FILES})
 source_group("platform\\parsers" FILES ${PARSER_FILES})
 source_group("platform\\windows" FILES ${WINDOWS_FILES})
 source_group("platform\\android" FILES ${ANDROID_FILES})
+source_group("platform\\ios" FILES ${IOS_FILES})
 source_group("platform\\unix" FILES ${UNIX_FILES})
 source_group("platform\\unix" FILES ${LINUX_D2D_FILES})
 source_group("core\\" FILES ${CORE_FILES})
@@ -446,14 +452,20 @@ else()
         list(APPEND PROJECT_FILES ${LINUX_D2D_FILES})
         message(STATUS "Unix d2d platform detected")
     else()
-        list(APPEND PROJECT_FILES ${GLFW_FILES})
-        if(WIN32)
-            list(APPEND PROJECT_FILES ${WINDOWS_FILES})
-            message(STATUS "Windows platform detected")
+        if(IOS)
+            enable_language(OBJCXX)
+            list(APPEND PROJECT_FILES ${IOS_FILES})
+            message(STATUS "iOS platform detected")
         else()
-            list(APPEND PROJECT_FILES ${UNIX_FILES})
-            message(STATUS "Unix platform detected")
-        endif()
+            list(APPEND PROJECT_FILES ${GLFW_FILES})
+            if(WIN32)
+                list(APPEND PROJECT_FILES ${WINDOWS_FILES})
+                message(STATUS "Windows platform detected")
+            else()
+                list(APPEND PROJECT_FILES ${UNIX_FILES})
+                message(STATUS "Unix platform detected")
+            endif()
+        endif ()
     endif()
 endif()
 
@@ -541,7 +553,12 @@ else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     else()
-        target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+        if (IOS)
+            target_link_libraries(${PROJECT_NAME} PRIVATE "-framework UIKit"
+                    "-framework Foundation")
+        else()
+            target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
+        endif ()
     endif()
 endif()
 

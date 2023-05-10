@@ -786,11 +786,11 @@ void Gui::show_top_window(const std::string &app_name, const Stats *stats, Debug
 	// Transparent background
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
 	ImVec2 size{ImGui::GetIO().DisplaySize.x, 0.0f};
-	ImGui::SetNextWindowSize(size, ImGuiSetCond_Always);
+	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 
 	// Top left
 	ImVec2 pos{0.0f, 0.0f};
-	ImGui::SetNextWindowPos(pos, ImGuiSetCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 
 	bool is_open = true;
 	ImGui::Begin("Top", &is_open, common_flags);
@@ -844,7 +844,7 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	}
 
 	ImGui::SetNextWindowBgAlpha(overlay_alpha);
-	ImGui::SetNextWindowPos(position, ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowPos(position, ImGuiCond_FirstUseEver);
 	ImGui::SetNextWindowContentSize(ImVec2{io.DisplaySize.x, 0.0f});
 
 	bool                   is_open = true;
@@ -980,7 +980,7 @@ void Gui::show_options_window(std::function<void()> body, const uint32_t lines)
 	const ImVec2 size = ImVec2(window_width, 0);
 	ImGui::SetNextWindowSize(size, ImGuiCond_Always);
 	const ImVec2 pos = ImVec2(0.0f, ImGui::GetIO().DisplaySize.y - window_height);
-	ImGui::SetNextWindowPos(pos, ImGuiSetCond_Always);
+	ImGui::SetNextWindowPos(pos, ImGuiCond_Always);
 	const ImGuiWindowFlags flags   = (ImGuiWindowFlags_NoMove |
                                     ImGuiWindowFlags_NoScrollbar |
                                     ImGuiWindowFlags_NoTitleBar |
@@ -1003,7 +1003,7 @@ void Gui::show_simple_window(const std::string &name, uint32_t last_fps, std::fu
 	ImGui::NewFrame();
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
 	ImGui::SetNextWindowPos(ImVec2(10, 10));
-	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiSetCond_FirstUseEver);
+	ImGui::SetNextWindowSize(ImVec2(0, 0), ImGuiCond_FirstUseEver);
 	ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
 	ImGui::TextUnformatted(name.c_str());
 	ImGui::TextUnformatted(std::string(sample.get_render_context().get_device().get_gpu().get_properties().deviceName).c_str());
@@ -1177,9 +1177,9 @@ bool Drawer::checkbox(const char *caption, int32_t *value)
 	return res;
 }
 
-bool Drawer::input_float(const char *caption, float *value, float step, uint32_t precision)
+bool Drawer::input_float(const char *caption, float *value, float step, const char* fmt)
 {
-	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, precision);
+	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, fmt);
 	if (res)
 	{
 		dirty = true;

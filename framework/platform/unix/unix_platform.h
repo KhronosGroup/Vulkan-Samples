@@ -24,6 +24,7 @@ namespace vkb
 enum UnixType
 {
 	Mac,
+	Ios,
 	Linux
 };
 
