@@ -1177,7 +1177,7 @@ bool Drawer::checkbox(const char *caption, int32_t *value)
 	return res;
 }
 
-bool Drawer::input_float(const char *caption, float *value, float step, const char* fmt)
+bool Drawer::input_float(const char *caption, float *value, float step, const char *fmt)
 {
 	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, fmt);
 	if (res)

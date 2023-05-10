@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -106,11 +106,11 @@ void Astc::init()
 	std::unique_lock<std::mutex> lock{initialization};
 	if (!initialized)
 	{
-		static const unsigned int block_x = 6;
-		static const unsigned int block_y = 6;
-		static const unsigned int block_z = 1;
+		static const unsigned int    block_x = 6;
+		static const unsigned int    block_y = 6;
+		static const unsigned int    block_z = 1;
 		static const astcenc_profile profile = ASTCENC_PRF_LDR;
-		static const float quality = ASTCENC_PRE_MEDIUM;
+		static const float           quality = ASTCENC_PRE_MEDIUM;
 
 		config.block_x = block_x;
 		config.block_y = block_y;
@@ -129,8 +129,8 @@ void Astc::init()
 void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 {
 	// Actual decoding
-	astcenc_type         bitness     = ASTCENC_TYPE_U8;
-	astcenc_swizzle   swz_decode{ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A };
+	astcenc_type              bitness = ASTCENC_TYPE_U8;
+	astcenc_swizzle           swz_decode{ASTCENC_SWZ_R, ASTCENC_SWZ_G, ASTCENC_SWZ_B, ASTCENC_SWZ_A};
 	static const unsigned int thread_count = 1;
 
 	int xdim = blockdim.x;
@@ -158,9 +158,9 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 	int zblocks = static_cast<int>(zsize + zdim - 1) / zdim;
 
 	// Space needed for 16 bytes of output per compressed block
-	size_t comp_len = xblocks * yblocks * zblocks * 16;
-	auto* comp_data = new uint8_t[comp_len];
-	astcenc_context* context;
+	size_t           comp_len  = xblocks * yblocks * zblocks * 16;
+	auto            *comp_data = new uint8_t[comp_len];
+	astcenc_context *context;
 	status = astcenc_context_alloc(&config, thread_count, &context);
 	if (status != ASTCENC_SUCCESS)
 	{
@@ -169,11 +169,11 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 	}
 
 	astcenc_image astc_image{};
-	astc_image.dim_x = xsize;
-	astc_image.dim_y = ysize;
-	astc_image.dim_z = zsize;
+	astc_image.dim_x     = xsize;
+	astc_image.dim_y     = ysize;
+	astc_image.dim_z     = zsize;
 	astc_image.data_type = bitness;
-	astc_image.data = (void **) &data_;
+	astc_image.data      = (void **) &data_;
 
 	status = astcenc_decompress_image(context, comp_data, comp_len, &astc_image, &swz_decode, 0);
 	if (status != ASTCENC_SUCCESS)
@@ -183,7 +183,7 @@ void Astc::decode(BlockDim blockdim, VkExtent3D extent, const uint8_t *data_)
 	}
 
 	astcenc_context_free(context);
-	delete [] comp_data;
+	delete[] comp_data;
 }
 
 Astc::Astc(const Image &image) :

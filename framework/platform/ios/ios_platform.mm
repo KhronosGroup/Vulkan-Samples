@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2019-2021, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,36 +15,35 @@
  * limitations under the License.
  */
 
-#include "unix_platform.h"
+#include "ios_platform.h"
 
 #include "common/error.h"
 
-#include "platform/glfw_window.h"
 #include "platform/headless_window.h"
+#include "platform/ios/ios_window.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
+#import <objc/runtime.h>
+#import <objc/message.h>
+
+// This is equivalent to creating a @class with one public variable named 'window'.
+struct AppDel
+{
+	Class isa;
+
+	id window;
+};
+
 #ifndef VK_MVK_MACOS_SURFACE_EXTENSION_NAME
 #	define VK_MVK_MACOS_SURFACE_EXTENSION_NAME "VK_MVK_macos_surface"
 #endif
 
-#ifndef VK_KHR_XCB_SURFACE_EXTENSION_NAME
-#	define VK_KHR_XCB_SURFACE_EXTENSION_NAME "VK_KHR_xcb_surface"
-#endif
-
 #ifndef VK_EXT_METAL_SURFACE_EXTENSION_NAME
 #	define VK_EXT_METAL_SURFACE_EXTENSION_NAME "VK_EXT_metal_surface"
-#endif
-
-#ifndef VK_KHR_XLIB_SURFACE_EXTENSION_NAME
-#	define VK_KHR_XLIB_SURFACE_EXTENSION_NAME "VK_KHR_xlib_surface"
-#endif
-
-#ifndef VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME
-#	define VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME "VK_KHR_wayland_surface"
 #endif
 
 namespace vkb
@@ -75,33 +74,18 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
-    type{type}
+IosPlatform::IosPlatform(int argc, char **argv)
 {
 	Platform::set_arguments({argv + 1, argv + argc});
 	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
-const char *UnixPlatform::get_surface_extension()
+const char *IosPlatform::get_surface_extension()
 {
-	if (type == UnixType::Mac || type == UnixType::Ios)
-	{
-		return VK_EXT_METAL_SURFACE_EXTENSION_NAME;
-	}
-
-#if defined(VK_USE_PLATFORM_XCB_KHR)
-	return VK_KHR_XCB_SURFACE_EXTENSION_NAME;
-#elif defined(VK_USE_PLATFORM_XLIB_KHR)
-	return VK_KHR_XLIB_SURFACE_EXTENSION_NAME;
-#elif defined(VK_USE_PLATFORM_WAYLAND_KHR)
-	return VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME;
-#else
-	assert(0 && "Platform not supported, no surface extension available");
-	return "";
-#endif
+	return VK_EXT_METAL_SURFACE_EXTENSION_NAME;
 }
 
-void UnixPlatform::create_window(const Window::Properties &properties)
+void IosPlatform::create_window(const Window::Properties &properties)
 {
 	if (properties.mode == vkb::Window::Mode::Headless)
 	{
@@ -109,7 +93,7 @@ void UnixPlatform::create_window(const Window::Properties &properties)
 	}
 	else
 	{
-		window = std::make_unique<GlfwWindow>(this, properties);
+		window = std::make_unique<IosWindow>(this, properties);
 	}
 }
 }        // namespace vkb

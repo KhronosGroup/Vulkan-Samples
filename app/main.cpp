@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,7 @@
 #include "plugins/plugins.h"
 
 #if defined(VK_USE_PLATFORM_METAL_EXT)
-#include <TargetConditionals.h>
+#	include <TargetConditionals.h>
 #endif
 
 #if defined(VK_USE_PLATFORM_ANDROID_KHR)
@@ -42,7 +42,7 @@ int main(int argc, char *argv[])
 	vkb::UnixD2DPlatform platform{argc, argv};
 #elif defined(VK_USE_PLATFORM_METAL_EXT) && (defined(TARGET_IPHONE_SIMULATOR) || defined(TARGET_OS_IPHONE))
 #	include "platform/ios/ios_platform.h"
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
 	vkb::IosPlatform platform(argc, argv);
 #else

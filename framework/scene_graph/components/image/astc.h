@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,7 +65,7 @@ class Astc : public Image
 	void init();
 
 	astcenc_config config;
-	astcenc_error status;
+	astcenc_error  status;
 };
 }        // namespace sg
 }        // namespace vkb

@@ -1111,7 +1111,7 @@ bool HPPDrawer::checkbox(const std::string &caption, int32_t *value)
 	return res;
 }
 
-bool HPPDrawer::input_float(const std::string &caption, float *value, float step, const char* fmt)
+bool HPPDrawer::input_float(const std::string &caption, float *value, float step, const char *fmt)
 {
 	bool res = ImGui::InputFloat(caption.c_str(), value, step, step * 10.0f, fmt);
 	if (res)
