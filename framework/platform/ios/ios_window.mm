@@ -16,8 +16,8 @@
  */
 
 #include "ios_window.h"
-#include <UIKit/UIWindow.h>
 #include <UIKit/UIScreen.h>
+#include <UIKit/UIWindow.h>
 
 #include "platform/ios/ios_platform.h"
 
@@ -41,15 +41,15 @@ VkSurfaceKHR IosWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 		return VK_NULL_HANDLE;
 	}
 
-	//Create a window that is the same size as the screen
-	UIWindow * window = [[UIWindow alloc] initWithFrame: [UIScreen mainScreen].bounds];
+	// Create a window that is the same size as the screen
+	UIWindow *window = [[UIWindow alloc] initWithFrame:[UIScreen mainScreen].bounds];
 	[window makeKeyAndVisible];
 
 	VkSurfaceKHR surface{};
 
 	VkMetalSurfaceCreateInfoEXT info{VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT};
 
-	info.pLayer = (CAMetalLayer *)[window layer];
+	info.pLayer = (CAMetalLayer *) [window layer];
 
 	VK_CHECK(vkCreateMetalSurfaceEXT(instance, &info, nullptr, &surface));
 
@@ -58,7 +58,7 @@ VkSurfaceKHR IosWindow::create_surface(VkInstance instance, VkPhysicalDevice)
 
 void IosWindow::process_events()
 {
-//	process_android_events(platform->get_android_app());
+	//	process_android_events(platform->get_android_app());
 }
 
 bool IosWindow::should_close()
@@ -68,12 +68,12 @@ bool IosWindow::should_close()
 
 void IosWindow::close()
 {
-//	GameActivity_finish(platform->get_activity());
+	//	GameActivity_finish(platform->get_activity());
 	finish_called = true;
 }
 
 float IosWindow::get_dpi_factor() const
 {
-//	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
+	//	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
 }        // namespace vkb

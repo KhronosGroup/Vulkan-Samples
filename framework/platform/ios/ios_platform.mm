@@ -27,8 +27,8 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
-#import <objc/runtime.h>
 #import <objc/message.h>
+#import <objc/runtime.h>
 
 // This is equivalent to creating a @class with one public variable named 'window'.
 struct AppDel
