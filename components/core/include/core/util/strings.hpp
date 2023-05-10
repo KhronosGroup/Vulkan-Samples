@@ -29,10 +29,10 @@ std::string replace_all(std::string str, const std::string &from, const std::str
 /**
  * @brief Removes all occurrences of a set of characters from the end of a string.
  */
-std::string trim_right(const std::string &str, const std::string &chars = "");
+std::string trim_right(const std::string &str, const std::string &chars = " ");
 
 /**
  * @brief Removes all occurrences of a set of characters from the beginning of a string.
  */
-std::string trim_left(const std::string &str, const std::string &chars = "");
+std::string trim_left(const std::string &str, const std::string &chars = " ");
 }        // namespace vkb

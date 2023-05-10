@@ -17,8 +17,6 @@
 ## Bucket target for all components
 add_custom_target(vkb__components)
 
-set_property(TARGET vkb__components PROPERTY FOLDER "components")
-
 # Create a new component
 # Adds the component to the vkb__components target
 # Automatically decides whether to create a static or interface library
@@ -35,7 +33,7 @@ function(vkb__register_component)
     endif()
 
     set(TARGET "vkb__${TARGET_NAME}")
-    set(TARGET_FOLDER "components/${TARGET_NAME}")
+    set(TARGET_FOLDER "components")
 
     set(LINKAGE "UNKNOWN") # Used to determine whether to create a static or interface library
 
@@ -54,7 +52,7 @@ function(vkb__register_component)
             endif()
         endif()
     else()
-        message("INTERFACE: ${TARGET}")
+        message(STATUS "INTERFACE: ${TARGET}")
         set(LINKAGE "INTERFACE")
         add_library(${TARGET} INTERFACE)
         target_sources(${TARGET} INTERFACE ${TARGET_HEADERS})
@@ -116,7 +114,7 @@ function(vkb__register_tests)
         message(FATAL_ERROR "One or more source files must be added to vkb__register_tests")
     endif()
 
-    set(TARGET_FOLDER "components/${TARGET_COMPONENT}")
+    set(TARGET_FOLDER "components")
     set(TARGET_NAME "test__${TARGET_NAME}")
 
     message(STATUS "TEST: ${TARGET_NAME}")
