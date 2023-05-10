@@ -366,5 +366,5 @@ target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 
 # Catch2
 add_subdirectory(catch2)
-set_property(TARGET Catch2 PROPERTY FOLDER "third_party")
-set_property(TARGET Catch2WithMain PROPERTY FOLDER "third_party")
+set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
+set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")

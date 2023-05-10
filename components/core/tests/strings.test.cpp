@@ -33,6 +33,7 @@ TEST_CASE("vkb::replace_all", "[common]")
 
 TEST_CASE("vkb::trim_right", "[common]")
 {
+	REQUIRE(trim_right("hello   ") == "hello");        // default case
 	REQUIRE(trim_right("hello   ", " ") == "hello");
 	REQUIRE(trim_right("hello   ignore", " ") == "hello   ignore");
 	REQUIRE(trim_right("hellocomplex", "complex") == "h");        // remember we are trimming a set
@@ -40,6 +41,7 @@ TEST_CASE("vkb::trim_right", "[common]")
 
 TEST_CASE("vkb::trim_left", "[common]")
 {
+	REQUIRE(trim_left("   hello") == "hello");        // default case
 	REQUIRE(trim_left("   hello", " ") == "hello");
 	REQUIRE(trim_left("ignore   hello", " ") == "ignore   hello");
 	REQUIRE(trim_left("complexhello", "complex") == "hello");        // remember we are trimming a set until the first non-match
