@@ -354,7 +354,7 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		triangle_check = triangle_check < 3 ? ++triangle_check : 1;
 
 		// 96 because for each traingle we draw a line in a mesh shader sample, 32 triangles/lines per meshlet = 64 vertices on output
-		if (meshlet.vertex_count == 64 || meshlet.index_count == 96)
+		if (meshlet.vertex_count == 64 || meshlet.index_count == 96 || i == submesh->vertex_indices - 1)
 		{
 			uint32_t counter = 0;
 			for (auto v : vertices)
@@ -1086,7 +1086,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 	auto &gltf_primitive = gltf_mesh.primitives[0];
 
 	std::vector<Vertex>        vertex_data;
-	std::vector<AlignedVertex> alignedVertex_data;
+	std::vector<AlignedVertex> aligned_vertex_data;
 
 	const float    *pos     = nullptr;
 	const float    *normals = nullptr;
@@ -1139,22 +1139,22 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 			AlignedVertex vert{};
 			vert.pos    = glm::vec4(glm::make_vec3(&pos[v * 3]), 1.0f);
 			vert.normal = normals ? glm::vec4(glm::normalize(glm::make_vec3(&normals[v * 3])), 0.0f) : glm::vec4(0.0f);
-			alignedVertex_data.push_back(vert);
+			aligned_vertex_data.push_back(vert);
 		}
 
 		core::Buffer stage_buffer{device,
-		                          alignedVertex_data.size() * sizeof(AlignedVertex),
+		                          aligned_vertex_data.size() * sizeof(AlignedVertex),
 		                          VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		                          VMA_MEMORY_USAGE_CPU_ONLY};
 
-		stage_buffer.update(alignedVertex_data.data(), alignedVertex_data.size() * sizeof(AlignedVertex));
+		stage_buffer.update(aligned_vertex_data.data(), aligned_vertex_data.size() * sizeof(AlignedVertex));
 
 		core::Buffer buffer{device,
-		                    alignedVertex_data.size() * sizeof(AlignedVertex),
+		                    aligned_vertex_data.size() * sizeof(AlignedVertex),
 		                    VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 		                    VMA_MEMORY_USAGE_GPU_ONLY};
 
-		command_buffer.copy_buffer(stage_buffer, buffer, alignedVertex_data.size() * sizeof(AlignedVertex));
+		command_buffer.copy_buffer(stage_buffer, buffer, aligned_vertex_data.size() * sizeof(AlignedVertex));
 
 		auto pair = std::make_pair("vertex_buffer", std::move(buffer));
 		submesh->vertex_buffers.insert(std::move(pair));

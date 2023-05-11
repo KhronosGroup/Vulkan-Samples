@@ -69,7 +69,7 @@ void main(void)
   uint primitive_count = index_count/3;
   SetMeshOutputsEXT( primitive_count * 2, primitive_count);
 
-  float normalLength_f = 0.1;
+  float normalLength = 0.1f;
 
   mat4 MVP = ubo.proj * ubo.view * ubo.model;
 
@@ -90,7 +90,7 @@ void main(void)
     gl_MeshVerticesEXT[k].gl_Position = MVP * vec4(pos ,1.0);
     v_out[k].color = vec4(0.0, 0.0, 1.0, 1.0);
 
-    gl_MeshVerticesEXT[k + 1].gl_Position = MVP * vec4(pos + normal * normalLength_f,1.0);
+    gl_MeshVerticesEXT[k + 1].gl_Position = MVP * vec4(pos + normal * normalLength,1.0);
     v_out[k + 1].color = vec4(1.0, 0.0, 0.0, 1.0);
 
     k = k + 2;

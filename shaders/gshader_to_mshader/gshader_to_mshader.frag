@@ -25,8 +25,8 @@ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-	float ambientStrength_f = 0.2;
-	vec3 ambient = ambientStrength_f * vec3(1.0, 1.0, 1.0);
+	float ambientStrength = 0.2f;
+	vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
 
 	vec3 N = normalize(inNormal);
 	vec3 L = normalize(inLightVec);

@@ -27,7 +27,7 @@ This sample demonstrates how a mesh shader can be used to achieve the same resul
 
 ## Meshlets
 
-To access model vertices from within mesh shader it needs to be stored within an **S**hader **S**torage **B**uffer **O**bject. Indices need to be divided into meshlets and also stored within an SSBO so each work item can work on a single meshlet. Meshlets are created by spliting source geometry.
+To access model vertices from within mesh shader it needs to be stored within an **S**hader **S**torage **B**uffer **O**bject (SSBO). Indices need to be divided into meshlets and also stored within an SSBO so each work item can work on a single meshlet. Meshlets are created by spliting source geometry.
 Exemplary meshlet structure used in this sample:
 ```C++
 struct Meshlet
@@ -38,10 +38,10 @@ struct Meshlet
 	uint32_t index_count;
 };
 ```
-By linearly scanning index buffer, meshlet is being filled with index values until 126 indices or 64 unique vertices are reached. New meshlets are added unitl entire model is scanned. `prepare_meshlets()` in gltf_loader.cpp contains exemplary implementation.
+By linearly scanning the indices of the model, Meshlet-structures are created with up to 126 indices or 64 unique vertex indices, whatever is reached first. See prepare_meshlets() for an exemplary implementation.
 
-This sample expands function `load_model()` in the framework, storage_buffer parameter is added (set by defalut to false).
-By setting storage_buffer to true, model data is read from the file teapot.gltf, vertex position and normals are stored in an SSBO using the `AlignedVertex` structure (because of std430 memory layout). After that, indices are divided into meshlets using the `Meshlet` structure and also stored in SSBOs.
+This sample expands function `load_model()` by adding a bool storage_buffer parameter, set to false by default.
+In that function model data is read from the file teapot.gltf. By setting storage_buffer to true, vertex position and normals are stored in an SSBO using the `AlignedVertex` structure (because of std430 memory layout). After that, indices are divided into meshlets using the `Meshlet` structure and also stored in SSBOs.
 
 ## Enabling the Extension
 
