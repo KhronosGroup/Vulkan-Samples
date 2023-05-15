@@ -17,27 +17,28 @@
 
 #pragma once
 
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 #include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 /**
- * @brief facade class around vkb::GLSLCompiler, providing a vulkan.hpp-based interface
+ * @brief facade class around vkb::ShaderCompiler, providing a vulkan.hpp-based interface
  *
- * See vkb::GLSLCompiler for documentation
+ * See vkb::ShaderCompiler for documentation
  */
-class HPPGLSLCompiler : private vkb::GLSLCompiler
+class HPPShaderCompiler : private vkb::ShaderCompiler
 {
   public:
 	inline bool compile_to_spirv(vk::ShaderStageFlagBits     stage,
-	                             const std::vector<uint8_t> &glsl_source,
-	                             const std::string &         entry_point,
-	                             const ShaderVariant &       shader_variant,
+	                             const std::vector<uint8_t> &shader_source,
+	                             const std::string          &entry_point,
+	                             const ShaderVariant        &shader_variant,
 	                             std::vector<std::uint32_t> &spirv,
-	                             std::string &               info_log)
+	                             std::string                &info_log,
+	                             vkb::ShaderSourceLanguage   src_language = vkb::ShaderSourceLanguage::VK_GLSL)
 	{
-		return vkb::GLSLCompiler::compile_to_spirv(static_cast<VkShaderStageFlagBits>(stage), glsl_source, entry_point, shader_variant, spirv, info_log);
+		return vkb::ShaderCompiler::compile_to_spirv(static_cast<VkShaderStageFlagBits>(stage), shader_source, entry_point, shader_variant, spirv, info_log, src_language);
 	}
 };
 }        // namespace vkb

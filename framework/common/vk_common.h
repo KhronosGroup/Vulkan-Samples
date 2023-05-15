@@ -97,6 +97,13 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  */
 int32_t get_bits_per_pixel(VkFormat format);
 
+typedef enum ShaderSourceLanguage
+{
+	VK_GLSL,
+	VK_HLSL,
+	VK_SPV,
+} ShaderSourceLanguage;
+
 /**
  * @brief Helper function to create a VkShaderModule
  * @param filename The shader location
@@ -104,7 +111,7 @@ int32_t get_bits_per_pixel(VkFormat format);
  * @param stage The shader stage
  * @return The string to return.
  */
-VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
+VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::VK_GLSL);
 
 /**
  * @brief Helper function to select a VkSurfaceFormatKHR
@@ -224,6 +231,43 @@ void image_layout_transition(VkCommandBuffer                                    
                              std::vector<std::pair<VkImage, VkImageSubresourceRange>> const &imagesAndRanges,
                              VkImageLayout                                                   old_layout,
                              VkImageLayout                                                   new_layout);
+/**
+ * @brief Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
+ */
+void set_image_layout(
+    VkCommandBuffer         command_buffer,
+    VkImage                 image,
+    VkImageLayout           old_layout,
+    VkImageLayout           new_layout,
+    VkImageSubresourceRange subresource_range,
+    VkPipelineStageFlags    src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VkPipelineStageFlags    dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+/**
+ * @brief Uses a fixed sub resource layout with first mip level and layer
+ */
+void set_image_layout(
+    VkCommandBuffer      command_buffer,
+    VkImage              image,
+    VkImageAspectFlags   aspect_mask,
+    VkImageLayout        old_layout,
+    VkImageLayout        new_layout,
+    VkPipelineStageFlags src_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+    VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
+
+/**
+ * @brief Insert an image memory barrier into the command buffer
+ */
+void insert_image_memory_barrier(
+    VkCommandBuffer         command_buffer,
+    VkImage                 image,
+    VkAccessFlags           src_access_mask,
+    VkAccessFlags           dst_access_mask,
+    VkImageLayout           old_layout,
+    VkImageLayout           new_layout,
+    VkPipelineStageFlags    src_stage_mask,
+    VkPipelineStageFlags    dst_stage_mask,
+    VkImageSubresourceRange subresource_range);
 
 /**
  * @brief Load and store info for a render pass attachment.

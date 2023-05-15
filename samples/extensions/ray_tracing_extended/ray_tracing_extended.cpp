@@ -1120,7 +1120,7 @@ void RaytracingExtended::create_ray_tracing_pipeline()
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
 
 	// Ray tracing shaders require SPIR-V 1.4, so we need to set the appropriate target environment for the GLSLang compiler
-	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
+	vkb::ShaderCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
 	/*
 	    Setup ray tracing shader groups

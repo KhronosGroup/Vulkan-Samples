@@ -428,12 +428,12 @@ void ApiVulkanSample::create_pipeline_cache()
 	VK_CHECK(vkCreatePipelineCache(device->get_handle(), &pipeline_cache_create_info, nullptr, &pipeline_cache));
 }
 
-VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage)
+VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
 	VkPipelineShaderStageCreateInfo shader_stage = {};
 	shader_stage.sType                           = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	shader_stage.stage                           = stage;
-	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage);
+	shader_stage.module                          = vkb::load_shader(file.c_str(), device->get_handle(), stage, src_language);
 	shader_stage.pName                           = "main";
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);

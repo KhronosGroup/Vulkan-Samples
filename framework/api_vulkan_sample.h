@@ -336,7 +336,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
 	 */
-	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
+	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::VK_GLSL);
 
 	/**
 	 * @brief Updates the overlay

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 class MeshShading : public ApiVulkanSample
 {

@@ -23,6 +23,7 @@
 #include <hpp_glsl_compiler.h>
 #include <platform/filesystem.h>
 #include <platform/window.h>
+#include <hpp_shader_compiler.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!

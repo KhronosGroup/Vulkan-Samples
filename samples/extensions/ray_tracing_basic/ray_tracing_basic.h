@@ -24,7 +24,7 @@
 #define HLSL_SHADER
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 // Holds data for a scratch buffer used as a temporary storage during acceleration structure builds
 struct ScratchBuffer

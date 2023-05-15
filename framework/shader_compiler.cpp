@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-#include "glsl_compiler.h"
+#include "shader_compiler.h"
 
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GLSL.std.450.h>
@@ -82,48 +82,58 @@ inline EShLanguage FindShaderLanguage(VkShaderStageFlagBits stage)
 }
 }        // namespace
 
-glslang::EShTargetLanguage        GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
-glslang::EShTargetLanguageVersion GLSLCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
+glslang::EShTargetLanguage        ShaderCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
+glslang::EShTargetLanguageVersion ShaderCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
 
-void GLSLCompiler::set_target_environment(glslang::EShTargetLanguage target_language, glslang::EShTargetLanguageVersion target_language_version)
+void ShaderCompiler::set_target_environment(glslang::EShTargetLanguage target_language, glslang::EShTargetLanguageVersion target_language_version)
 {
-	GLSLCompiler::env_target_language         = target_language;
-	GLSLCompiler::env_target_language_version = target_language_version;
+	ShaderCompiler::env_target_language         = target_language;
+	ShaderCompiler::env_target_language_version = target_language_version;
 }
 
-void GLSLCompiler::reset_target_environment()
+void ShaderCompiler::reset_target_environment()
 {
-	GLSLCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
-	GLSLCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
+	ShaderCompiler::env_target_language         = glslang::EShTargetLanguage::EShTargetNone;
+	ShaderCompiler::env_target_language_version = static_cast<glslang::EShTargetLanguageVersion>(0);
 }
 
-bool GLSLCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
-                                    const std::vector<uint8_t> &glsl_source,
-                                    const std::string          &entry_point,
-                                    const ShaderVariant        &shader_variant,
-                                    std::vector<std::uint32_t> &spirv,
-                                    std::string                &info_log)
+bool ShaderCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
+                                      const std::vector<uint8_t> &shader_source,
+                                      const std::string          &entry_point,
+                                      const ShaderVariant        &shader_variant,
+                                      std::vector<std::uint32_t> &spirv,
+                                      std::string                &info_log,
+                                      vkb::ShaderSourceLanguage   src_language)
 {
 	// Initialize glslang library.
 	glslang::InitializeProcess();
 
 	EShMessages messages = static_cast<EShMessages>(EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
+	if (src_language == vkb::ShaderSourceLanguage::VK_HLSL)
+	{
+		messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
+	}
+
 	EShLanguage language = FindShaderLanguage(stage);
-	std::string source   = std::string(glsl_source.begin(), glsl_source.end());
+	std::string source   = std::string(shader_source.begin(), shader_source.end());
 
 	const char *file_name_list[1] = {""};
-	const char *shader_source     = reinterpret_cast<const char *>(source.data());
+	const char *shader_data       = reinterpret_cast<const char *>(source.data());
 
 	glslang::TShader shader(language);
-	shader.setStringsWithLengthsAndNames(&shader_source, nullptr, file_name_list, 1);
+	shader.setStringsWithLengthsAndNames(&shader_data, nullptr, file_name_list, 1);
 	shader.setEntryPoint(entry_point.c_str());
 	shader.setSourceEntryPoint(entry_point.c_str());
 	shader.setPreamble(shader_variant.get_preamble().c_str());
 	shader.addProcesses(shader_variant.get_processes());
-	if (GLSLCompiler::env_target_language != glslang::EShTargetLanguage::EShTargetNone)
+	if (ShaderCompiler::env_target_language != glslang::EShTargetLanguage::EShTargetNone)
 	{
-		shader.setEnvTarget(GLSLCompiler::env_target_language, GLSLCompiler::env_target_language_version);
+		shader.setEnvTarget(ShaderCompiler::env_target_language, ShaderCompiler::env_target_language_version);
+	}
+	if (src_language == vkb::ShaderSourceLanguage::VK_HLSL)
+	{
+		shader.setEnvInput(glslang::EShSourceHlsl, language, glslang::EShClientVulkan, 1);
 	}
 
 	DirStackFileIncluder includeDir;

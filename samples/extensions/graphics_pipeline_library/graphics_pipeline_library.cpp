@@ -27,7 +27,7 @@
 #include "graphics_pipeline_library.h"
 
 #include "scene_graph/components/sub_mesh.h"
-#include <glsl_compiler.h>
+#include <shader_compiler.h>
 
 void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 {
@@ -219,10 +219,10 @@ void GraphicsPipelineLibrary::setup_descriptor_sets()
 // Compiling shaders can be simplified with the new extension, so we only require code to generate the SPIR-V in this sample
 void GraphicsPipelineLibrary::compile_shader(const std::string filename, VkShaderStageFlagBits shader_stage, std::vector<uint32_t> &spirv)
 {
-	vkb::GLSLCompiler glsl_compiler;
-	auto              buffer = vkb::fs::read_shader_binary(filename);
-	std::string       info_log;
-	if (!glsl_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
+	vkb::ShaderCompiler shader_compiler;
+	auto                buffer = vkb::fs::read_shader_binary(filename);
+	std::string         info_log;
+	if (!shader_compiler.compile_to_spirv(shader_stage, buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		throw std::runtime_error{"Failed to compile shader"};
