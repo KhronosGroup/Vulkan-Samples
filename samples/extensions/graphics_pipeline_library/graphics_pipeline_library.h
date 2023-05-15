@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, Sascha Willems
+/* Copyright (c) 2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,7 @@
  * Note: Requires a device that supports the VK_EXT_graphics_pipeline_library
  *
  * Creates a pipeline library for shared pipeline parts like vertex input and fragment output interfaces. These pre-built pipeline
- * "building blocks" are then used for runtime pipeline creation, which wlll be faster than always creating a full pipeline
+ * "building blocks" are then used for runtime pipeline creation, which will be faster than always creating a full pipeline
  */
 
 #pragma once

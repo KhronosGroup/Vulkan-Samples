@@ -31,7 +31,7 @@
 
 #include "offscreen_context.h"
 
-constexpr const char *OPENG_VERTEX_SHADER =
+constexpr const char *OPENGL_VERTEX_SHADER =
     R"SHADER(
 const vec4 VERTICES[] = vec4[](
     vec4(-1.0, -1.0, 0.0, 1.0), 
@@ -437,7 +437,7 @@ void OpenGLInterop::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -552,7 +552,7 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 
 	prepare_shared_resources();
 
-	gl_data->program = gl_context->build_program(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
+	gl_data->program = gl_context->build_program(OPENGL_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
 
 	timer.start();
 
@@ -649,7 +649,7 @@ void OpenGLInterop::render(float)
 	std::array<VkSemaphore, 2>          waitSemaphores{{semaphores.acquired_image_ready, sharedSemaphores.gl_complete}};
 
 	std::array<VkSemaphore, 2> signalSemaphores{{semaphores.render_complete, sharedSemaphores.gl_ready}};
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.waitSemaphoreCount   = vkb::to_u32(waitSemaphores.size());
 	submit_info.pWaitSemaphores      = waitSemaphores.data();
 	submit_info.pWaitDstStageMask    = waitStages.data();
@@ -758,8 +758,8 @@ void OpenGLInterop::build_command_buffers()
 			subresource_range.layerCount               = 1;
 
 			// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-			// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
-			// Destination pipeline stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+			// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
+			// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 			vkCmdPipelineBarrier(
 			    draw_cmd_buffers[i],
 			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,

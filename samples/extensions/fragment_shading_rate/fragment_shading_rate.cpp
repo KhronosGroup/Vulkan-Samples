@@ -131,7 +131,7 @@ void FragmentShadingRate::create_shading_rate_attachment()
 	uint8_t *shading_rate_pattern_data = new uint8_t[buffer_size];
 	memset(shading_rate_pattern_data, val, buffer_size);
 
-	// Create a circular pattern from the available list of fragment shadring rates with decreasing sampling rates outwards (max. range, pattern)
+	// Create a circular pattern from the available list of fragment shading rates with decreasing sampling rates outwards (max. range, pattern)
 	std::vector<VkPhysicalDeviceFragmentShadingRateKHR> fragment_shading_rates{};
 	uint32_t                                            fragment_shading_rate_count = 0;
 	vkGetPhysicalDeviceFragmentShadingRatesKHR(get_device().get_gpu().get_handle(), &fragment_shading_rate_count, nullptr);
@@ -299,7 +299,7 @@ void FragmentShadingRate::setup_render_pass()
 	fragment_shading_rate_reference.attachment             = 2;
 	fragment_shading_rate_reference.layout                 = VK_IMAGE_LAYOUT_FRAGMENT_SHADING_RATE_ATTACHMENT_OPTIMAL_KHR;
 
-	// Setup the attachment info for the shading rate image, which will be addeed to the sub pass via structure chaining (in pNext)
+	// Setup the attachment info for the shading rate image, which will be added to the sub pass via structure chaining (in pNext)
 	VkFragmentShadingRateAttachmentInfoKHR fragment_shading_rate_attachment_info = {};
 	fragment_shading_rate_attachment_info.sType                                  = VK_STRUCTURE_TYPE_FRAGMENT_SHADING_RATE_ATTACHMENT_INFO_KHR;
 	fragment_shading_rate_attachment_info.pFragmentShadingRateAttachment         = &fragment_shading_rate_reference;
@@ -583,7 +583,7 @@ void FragmentShadingRate::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
@@ -703,7 +703,7 @@ bool FragmentShadingRate::prepare(vkb::Platform &platform)
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();

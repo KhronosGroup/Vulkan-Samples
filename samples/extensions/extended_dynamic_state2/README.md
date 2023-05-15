@@ -60,7 +60,7 @@ rasterization_state.depthBiasConstantFactor = 1.0f;
 rasterization_state.depthBiasSlopeFactor    = 1.0f;
 rasterization_state.depthBiasClamp          = 0.0f;
 
-/* Note: Using Reversed depth-buffer for increased precision, so greater depth values are kept */
+/* Note: Using reversed depth-buffer for increased precision, so greater depth values are kept */
 VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	vkb::initializers::pipeline_depth_stencil_state_create_info(
 	    VK_TRUE, /* depthTestEnable */

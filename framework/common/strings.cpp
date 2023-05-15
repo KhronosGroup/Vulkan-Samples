@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,7 +51,7 @@ std::vector<std::string> split(const std::string &str, const std::string &delimi
 	return out;
 }
 
-std::string join(const std::vector<std::string> &str, const std::string &seperator)
+std::string join(const std::vector<std::string> &str, const std::string &separator)
 {
 	std::stringstream out;
 
@@ -61,7 +61,7 @@ std::string join(const std::vector<std::string> &str, const std::string &seperat
 
 		if (it != str.end() - 1)
 		{
-			out << seperator;
+			out << separator;
 		}
 	}
 

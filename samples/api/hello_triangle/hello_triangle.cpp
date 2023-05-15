@@ -440,7 +440,7 @@ void HelloTriangle::init_swapchain(Context &context)
 	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, supported_surface_formats.data());
 
-	// We want to get an SRGB image format that matches our list of preferred format candiates
+	// We want to get an SRGB image format that matches our list of preferred format candidates
 	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
 	VkSurfaceFormatKHR format                = supported_surface_formats[0];
 	auto               preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};

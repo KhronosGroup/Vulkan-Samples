@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -126,7 +126,7 @@ void GeometrySubpass::draw(CommandBuffer &command_buffer)
 
 	command_buffer.set_depth_stencil_state(get_depth_stencil_state());
 
-	// Draw transparesnt objects in back-to-front order
+	// Draw transparent objects in back-to-front order
 	{
 		ScopedDebugLabel transparent_debug_label{command_buffer, "Transparent objects"};
 

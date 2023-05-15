@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -101,7 +101,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	 *        primary command buffer it inherits from must be provided
 	 * @param flags Usage behavior for the command buffer
 	 * @param primary_cmd_buf (optional)
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
@@ -113,7 +113,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	 * @param render_pass
 	 * @param framebuffer
 	 * @param subpass_index
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, const RenderPass *render_pass, const Framebuffer *framebuffer, uint32_t subpass_index);
 
@@ -287,7 +287,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
 
 	/**
-	 * @brief Flush the piplines state
+	 * @brief Flush the pipeline state
 	 */
 	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
 

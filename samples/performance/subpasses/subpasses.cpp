@@ -322,7 +322,7 @@ std::unique_ptr<vkb::RenderPipeline> Subpasses::create_geometry_renderpass()
 	// Outputs are depth, albedo, and normal
 	scene_subpass->set_output_attachments({1, 2, 3});
 
-	// Create geomtry pipeline
+	// Create geometry pipeline
 	std::vector<std::unique_ptr<vkb::Subpass>> scene_subpasses{};
 	scene_subpasses.push_back(std::move(scene_subpass));
 
