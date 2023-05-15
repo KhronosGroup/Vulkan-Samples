@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -73,26 +73,33 @@ class Swapchain
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	Swapchain(Device &                              device,
-	          VkSurfaceKHR                          surface,
-	          const VkExtent2D &                    extent            = {},
-	          const uint32_t                        image_count       = 3,
-	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
-	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
+	Swapchain(Device                                &device,
+	          VkSurfaceKHR                           surface,
+	          const VkPresentModeKHR                 present_mode,
+	          const std::vector<VkPresentModeKHR>   &present_mode_priority_list   = {VK_PRESENT_MODE_FIFO_KHR,
+	                                                                                 VK_PRESENT_MODE_MAILBOX_KHR},
+	          const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list = {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                                                 {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
+	          const VkExtent2D                      &extent                       = {},
+	          const uint32_t                         image_count                  = 3,
+	          const VkSurfaceTransformFlagBitsKHR    transform                    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          const std::set<VkImageUsageFlagBits>  &image_usage_flags            = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	/**
 	 * @brief Constructor to create a swapchain from the old swapchain
 	 *        by configuring all parameters.
 	 */
-	Swapchain(Swapchain &                           old_swapchain,
-	          Device &                              device,
-	          VkSurfaceKHR                          surface,
-	          const VkExtent2D &                    extent            = {},
-	          const uint32_t                        image_count       = 3,
-	          const VkSurfaceTransformFlagBitsKHR   transform         = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
-	          const VkPresentModeKHR                present_mode      = VK_PRESENT_MODE_FIFO_KHR,
-	          const std::set<VkImageUsageFlagBits> &image_usage_flags = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
+	Swapchain(Swapchain                             &old_swapchain,
+	          Device                                &device,
+	          VkSurfaceKHR                           surface,
+	          const VkPresentModeKHR                 present_mode,
+	          const std::vector<VkPresentModeKHR>   &present_mode_priority_list   = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
+	          const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list = {{VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                                                                                 {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}},
+	          const VkExtent2D                      &extent                       = {},
+	          const uint32_t                         image_count                  = 3,
+	          const VkSurfaceTransformFlagBitsKHR    transform                    = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+	          const std::set<VkImageUsageFlagBits>  &image_usage_flags            = {VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT, VK_IMAGE_USAGE_TRANSFER_SRC_BIT});
 
 	Swapchain(const Swapchain &) = delete;
 
@@ -104,15 +111,11 @@ class Swapchain
 
 	Swapchain &operator=(Swapchain &&) = delete;
 
-	void create();
-
 	bool is_valid() const;
 
 	Device &get_device();
 
 	VkSwapchainKHR get_handle() const;
-
-	SwapchainProperties &get_properties();
 
 	VkResult acquire_next_image(uint32_t &image_index, VkSemaphore image_acquired_semaphore, VkFence fence = VK_NULL_HANDLE) const;
 
@@ -129,16 +132,6 @@ class Swapchain
 	VkImageUsageFlags get_usage() const;
 
 	VkPresentModeKHR get_present_mode() const;
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
-	 */
-	void set_present_mode_priority(const std::vector<VkPresentModeKHR> &present_mode_priority_list);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its surface format
-	 */
-	void set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list);
 
   private:
 	Device &device;

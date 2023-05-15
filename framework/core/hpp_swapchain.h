@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -69,16 +69,16 @@ class HPPSwapchain
 	/**
 	 * @brief Constructor to create a swapchain.
 	 */
-	HPPSwapchain(HPPDevice &                              device,
+	HPPSwapchain(HPPDevice                               &device,
 	             vk::SurfaceKHR                           surface,
-	             const vk::Extent2D &                     extent                       = {},
-	             const uint32_t                           image_count                  = 3,
-	             const vk::SurfaceTransformFlagBitsKHR    transform                    = vk::SurfaceTransformFlagBitsKHR::eIdentity,
-	             const vk::PresentModeKHR                 present_mode                 = vk::PresentModeKHR::eFifo,
-	             const std::set<vk::ImageUsageFlagBits> & image_usage_flags            = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
-	             const std::vector<vk::PresentModeKHR> &  present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+	             const vk::PresentModeKHR                 present_mode,
+	             const std::vector<vk::PresentModeKHR>   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
 	             const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                                                      {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}},
+	             const vk::Extent2D                      &extent                       = {},
+	             const uint32_t                           image_count                  = 3,
+	             const vk::SurfaceTransformFlagBitsKHR    transform                    = vk::SurfaceTransformFlagBitsKHR::eIdentity,
+	             const std::set<vk::ImageUsageFlagBits>  &image_usage_flags            = {vk::ImageUsageFlagBits::eColorAttachment, vk::ImageUsageFlagBits::eTransferSrc},
 	             vk::SwapchainKHR                         old_swapchain                = nullptr);
 
 	HPPSwapchain(const HPPSwapchain &) = delete;
@@ -91,8 +91,6 @@ class HPPSwapchain
 
 	HPPSwapchain &operator=(HPPSwapchain &&) = delete;
 
-	void create();
-
 	bool is_valid() const;
 
 	HPPDevice const &get_device() const;
@@ -104,7 +102,6 @@ class HPPSwapchain
 	const vk::Extent2D &get_extent() const;
 
 	vk::Format get_format() const;
-	void       set_format(vk::Format);
 
 	const std::vector<vk::Image> &get_images() const;
 
@@ -115,17 +112,6 @@ class HPPSwapchain
 	vk::ImageUsageFlags get_usage() const;
 
 	vk::PresentModeKHR get_present_mode() const;
-	void               set_present_mode(vk::PresentModeKHR present_mode);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
-	 */
-	void set_present_mode_priority(const std::vector<vk::PresentModeKHR> &present_mode_priority_list);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its surface format
-	 */
-	void set_surface_format_priority(const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list);
 
   private:
 	HPPDevice &device;

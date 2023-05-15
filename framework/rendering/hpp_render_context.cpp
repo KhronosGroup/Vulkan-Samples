@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,11 +25,13 @@ namespace rendering
 {
 vk::Format HPPRenderContext::DEFAULT_VK_FORMAT = vk::Format::eR8G8B8A8Srgb;
 
-HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const vkb::platform::HPPWindow &window) :
-    device{device},
-    window{window},
-    queue{device.get_suitable_graphics_queue()},
-    surface_extent{window.get_extent().width, window.get_extent().height}
+HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice                    &device,
+                                   vk::SurfaceKHR                           surface,
+                                   const vkb::platform::HPPWindow          &window,
+                                   vk::PresentModeKHR                       present_mode,
+                                   std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
+                                   std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list) :
+    device{device}, window{window}, queue{device.get_suitable_graphics_queue()}, surface_extent{window.get_extent().width, window.get_extent().height}
 {
 	if (surface)
 	{
@@ -37,28 +39,13 @@ HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice &device, vk::SurfaceKHR 
 
 		if (surface_properties.currentExtent.width == 0xFFFFFFFF)
 		{
-			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, surface_extent);
+			swapchain =
+			    std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, surface_extent);
 		}
 		else
 		{
-			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface);
+			swapchain = std::make_unique<vkb::core::HPPSwapchain>(device, surface, present_mode, present_mode_priority_list, surface_format_priority_list);
 		}
-	}
-}
-
-void HPPRenderContext::request_present_mode(const vk::PresentModeKHR present_mode)
-{
-	if (swapchain)
-	{
-		swapchain->set_present_mode(present_mode);
-	}
-}
-
-void HPPRenderContext::request_image_format(const vk::Format format)
-{
-	if (swapchain)
-	{
-		swapchain->set_format(format);
 	}
 }
 
@@ -68,10 +55,6 @@ void HPPRenderContext::prepare(size_t thread_count, vkb::rendering::HPPRenderTar
 
 	if (swapchain)
 	{
-		swapchain->set_present_mode_priority(present_mode_priority_list);
-		swapchain->set_surface_format_priority(surface_format_priority_list);
-		swapchain->create();
-
 		surface_extent = swapchain->get_extent();
 
 		vk::Extent3D extent{surface_extent.width, surface_extent.height, 1};
@@ -101,18 +84,6 @@ void HPPRenderContext::prepare(size_t thread_count, vkb::rendering::HPPRenderTar
 	this->create_render_target_func = create_render_target_func;
 	this->thread_count              = thread_count;
 	this->prepared                  = true;
-}
-
-void HPPRenderContext::set_present_mode_priority(const std::vector<vk::PresentModeKHR> &new_present_mode_priority_list)
-{
-	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
-	present_mode_priority_list = new_present_mode_priority_list;
-}
-
-void HPPRenderContext::set_surface_format_priority(const std::vector<vk::SurfaceFormatKHR> &new_surface_format_priority_list)
-{
-	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
-	surface_format_priority_list = new_surface_format_priority_list;
 }
 
 vk::Format HPPRenderContext::get_format() const
@@ -353,7 +324,7 @@ void HPPRenderContext::begin_frame()
 	wait_frame();
 }
 
-vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue &                       queue,
+vk::Semaphore HPPRenderContext::submit(const vkb::core::HPPQueue                        &queue,
                                        const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
                                        vk::Semaphore                                     wait_semaphore,
                                        vk::PipelineStageFlags                            wait_pipeline_stage)
