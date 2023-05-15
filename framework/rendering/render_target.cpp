@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -64,7 +64,7 @@ vkb::RenderTarget::RenderTarget(std::vector<core::Image> &&images) :
 	// Returns the image extent as a VkExtent2D structure from a VkExtent3D
 	auto get_image_extent = [](const core::Image &image) { return VkExtent2D{image.get_extent().width, image.get_extent().height}; };
 
-	// Constructs a set of unique image extens given a vector of images
+	// Constructs a set of unique image extents given a vector of images
 	std::transform(this->images.begin(), this->images.end(), std::inserter(unique_extent, unique_extent.end()), get_image_extent);
 
 	// Allow only one extent size for a render target

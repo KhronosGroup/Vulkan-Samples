@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -353,7 +353,7 @@ void Platform::request_application(const apps::AppInfo *app)
 bool Platform::start_app()
 {
 	auto *requested_app_info = requested_app;
-	// Reset early incase error in preperation stage
+	// Reset early incase error in preparation stage
 	requested_app = nullptr;
 
 	if (active_app)
