@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2022-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,7 +16,7 @@
 - limitations under the License.
 -
 -->
-### HPP Separate image sampler<br/>
+### HPP Separate image sampler
 A transcoded version of the API sample [Separate image sampler](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/separate_image_sampler) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 # Separating samplers and images

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### Compute shader N-Body simulation<br/>
+### Compute shader N-Body simulation
+
 Compute shader example that uses two passes and shared compute shader memory for simulating a N-Body particle system.

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### HPP Compute shader N-Body simulation<br/>
+### HPP Compute shader N-Body simulation
+
 A transcoded version of the API sample [Compute N-Body](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/compute_nbody) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### Terrain Tessellation<br/>
-A transcoded version of the API sample [Terrain Tessellation](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/terrain_tessellation) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
+### HPP Terrain Tessellation
+
+A transcoded version of the API sample [Terrain Tessellation](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/terrain_tessellation) that illustrates the usage of the C++ bindings of Vulkan provided by vulkan.hpp.
