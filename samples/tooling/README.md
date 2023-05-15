@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2023, The Khronos Group
+- Copyright (c) 2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,6 +16,9 @@
 - limitations under the License.
 -
 -->
-### Dynamic Uniform buffers
 
-Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.
+# Tooling samples
+
+The goal of these samples is to demonstrate how to use tooling features that are not directly part of Vulkan, but e.g. provided by the LunarG Vulkan SDK.
+
+A list of all tooling samples can be found [here](../README.md#tooling-samples).

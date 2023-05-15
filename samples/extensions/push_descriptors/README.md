@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2021, Arm Limited and Contributors
+- Copyright (c) 2020-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,7 +16,8 @@
 - limitations under the License.
 -
 -->
+### Push Descriptors
 
-### Push Descriptors<br/>
-**Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)<br/>
+**Extension**: [```VK_KHR_push_descriptor```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_KHR_push_descriptor)
+
 Push descriptors apply the push constants concept to descriptor sets. Instead of creating per-object descriptor sets, this example passes descriptors at command buffer creation time.
