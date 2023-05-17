@@ -75,6 +75,8 @@ inline void reset_graph_max_value(StatGraphData &graph_data)
 }
 }        // namespace
 
+bool Gui::visible = true;
+
 const double Gui::press_time_ms = 200.0f;
 
 const float Gui::overlay_alpha = 0.3f;
@@ -1077,7 +1079,7 @@ bool Gui::input_event(const InputEvent &input_event)
 		}
 	}
 
-	// Toggle GUI elements when tap or clicking outside the GUI windows
+	// Toggle debug UI view when tap or clicking outside the GUI windows
 	if (!io.WantCaptureMouse)
 	{
 		bool press_down = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
@@ -1103,11 +1105,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				if (input_event.get_source() == EventSource::Mouse)
 				{
 					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
-					if (mouse_button.get_button() == MouseButton::Left)
-					{
-						visible = !visible;
-					}
-					else if (mouse_button.get_button() == MouseButton::Right)
+					if (mouse_button.get_button() == MouseButton::Right)
 					{
 						debug_view.active = !debug_view.active;
 					}
@@ -1115,11 +1113,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				else if (input_event.get_source() == EventSource::Touchscreen)
 				{
 					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
-					if (!two_finger_tap && touch_event.get_touch_points() == 1)
-					{
-						visible = !visible;
-					}
-					else if (two_finger_tap && touch_event.get_touch_points() == 2)
+					if (two_finger_tap && touch_event.get_touch_points() == 2)
 					{
 						debug_view.active = !debug_view.active;
 					}
