@@ -298,6 +298,7 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 		if (bloom)
 		{
 			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
+			drawer.set_dirty(true);
 		}
 	}
 }
