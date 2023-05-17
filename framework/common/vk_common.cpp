@@ -363,34 +363,26 @@ int32_t get_bits_per_pixel(VkFormat format)
 
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
-	auto        buffer   = vkb::fs::read_shader_binary(filename);
-	std::string file_ext = filename;
-
+	auto                  buffer = vkb::fs::read_shader_binary(filename);
 	std::vector<uint32_t> spirv;
-	std::string           info_log;
-	if (src_language == vkb::ShaderSourceLanguage::VK_GLSL)
-	{
-		vkb::ShaderCompiler shader_compiler;
-		// Extract extension name from the glsl shader file
-		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
 
-		// Compile the GLSL source
-		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (src_language != vkb::ShaderSourceLanguage::VK_SPV)
+	{
+		std::string         file_ext = filename;
+		std::string         info_log;
+		vkb::ShaderCompiler shader_compiler;
+		// Extract extension name from the shader file
+		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), src_language, buffer, "main", {}, spirv, info_log))
 		{
 			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 			return VK_NULL_HANDLE;
 		}
 	}
-	if (src_language == vkb::ShaderSourceLanguage::VK_HLSL)
+	else
 	{
-		vkb::ShaderCompiler shader_compiler;
-		// Extract extension name from the glsl shader file
-		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
-		{
-			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-			return VK_NULL_HANDLE;
-		}
+		spirv = std::vector<uint32_t>(reinterpret_cast<uint32_t *>(buffer.data()),
+		                              reinterpret_cast<uint32_t *>(buffer.data()) + buffer.size() / sizeof(uint32_t));
 	}
 
 	VkShaderModule           shader_module;
@@ -399,11 +391,6 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	module_create_info.codeSize = spirv.size() * sizeof(uint32_t);
 	module_create_info.pCode    = spirv.data();
 
-	if (src_language == vkb::ShaderSourceLanguage::VK_SPV)
-	{
-		module_create_info.codeSize = buffer.size();
-		module_create_info.pCode    = reinterpret_cast<const uint32_t *>(buffer.data());
-	}
 	VK_CHECK(vkCreateShaderModule(device, &module_create_info, NULL, &shader_module));
 
 	return shader_module;

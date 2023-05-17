@@ -82,10 +82,19 @@ class RaytracingBasic : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
+	struct GUI_settings
+	{
+		int                            selected_language = 0; /* GLSL default */
+		const std::vector<std::string> shader_language   = {"GLSL",
+		                                                    "HLSL (not avaialble)",
+		                                                    "SPV"};
+	} gui_settings;
+
 	RaytracingBasic();
 	~RaytracingBasic();
 
 	VkPipelineShaderStageCreateInfo load_spirv_shader(const std::string &filename, VkShaderStageFlagBits stage);
+
 	void          request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	uint64_t      get_buffer_device_address(VkBuffer buffer);
 	ScratchBuffer create_scratch_buffer(VkDeviceSize size);
@@ -104,7 +113,7 @@ class RaytracingBasic : public ApiVulkanSample
 	void          draw();
 	bool          prepare(const vkb::ApplicationOptions &options) override;
 	virtual void  render(float delta_time) override;
-
+	void          on_update_ui_overlay(vkb::Drawer &drawer);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();

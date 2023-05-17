@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2023, Mobica
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,6 +28,6 @@ struct Attribute
 [shader("closesthit")]
 void main(inout Payload payload, in Attribute attribs)
 {
-    const float3 barycentrics = float3(1.0 - attribs.bary.x - attribs.bary.y, attribs.bary.x, attribs.bary.y);
+    const float3 barycentrics = float3(1.0f - attribs.bary.x - attribs.bary.y, attribs.bary.x, attribs.bary.y);
     payload.hitValue = barycentrics;
 }

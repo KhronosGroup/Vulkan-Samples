@@ -28,4 +28,7 @@ add_sample_with_tags(
     SHADER_FILES_GLSL
         "khr_ray_tracing_basic/raygen.rgen"
         "khr_ray_tracing_basic/miss.rmiss"
-        "khr_ray_tracing_basic/closesthit.rchit")
+        "khr_ray_tracing_basic/closesthit.rchit"
+        "khr_ray_tracing_basic/hlsl_raygen.rgen.spv"
+        "khr_ray_tracing_basic/hlsl_miss.rmiss.spv"
+        "khr_ray_tracing_basic/hlsl_closesthit.rchit.spv")
