@@ -193,13 +193,12 @@ void HPPTimestampQueries::build_command_buffers()
 		*/
 		if (bloom)
 		{
-			std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+			vk::ClearValue clear_value{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}}))};
 
 			// Bloom filter
 			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, time_stamps_query_pool, 2);
 
-			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_values);
+			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_value);
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(filter_pass.extent.width), static_cast<float>(filter_pass.extent.height), 0.0f, 1.0f);
