@@ -130,7 +130,7 @@ vk::ShaderModule create_shader_module(vk::Device device, const char *path)
 	// Extract extension name from the glsl shader file
 	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
 
-	std::vector<uint32_t> spirv;
+	std::vector<uint32_t> spirvCode;
 	std::string           info_log;
 
 	// Compile the GLSL source
@@ -139,15 +139,13 @@ vk::ShaderModule create_shader_module(vk::Device device, const char *path)
 	{
 		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
 	}
-	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;
 	}
 
-	vk::ShaderModuleCreateInfo module_info({}, spirv);
-
-	return device.createShaderModule(module_info);
+	return device.createShaderModule({{}, spirvCode});
 }
 
 vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk::SurfaceKHR surface, vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
