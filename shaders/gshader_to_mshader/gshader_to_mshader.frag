@@ -26,17 +26,17 @@ layout (location = 0) out vec4 outFragColor;
 void main() 
 {
 	float ambientStrength = 0.2f;
-	vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0);
+	vec3 ambient = ambientStrength * vec3(1.0f, 1.0f, 1.0f);
 
 	vec3 N = normalize(inNormal);
 	vec3 L = normalize(inLightVec);
 	vec3 V = normalize(inViewVec);
 	vec3 R = reflect(-L, N);
 
-	vec3 diffuse = max(dot(N,L),0.0) * vec3(1.0);
+	vec3 diffuse = max(dot(N,L),0.0f) * vec3(1.0f);
 
-	vec3  specular = pow(max(dot(R, V), 0.0), 64.0) * vec3(0.65);
+	vec3  specular = pow(max(dot(R, V), 0.0f), 64.0f) * vec3(0.65f);
 
 	vec3 result = (ambient + diffuse) * inColor + specular;
-	outFragColor = vec4(result, 1.0);
+	outFragColor = vec4(result, 1.0f);
 }

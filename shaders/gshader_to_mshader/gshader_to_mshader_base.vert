@@ -24,5 +24,5 @@ layout (location = 0) out vec3 outNormal;
 void main(void)
 {
 	outNormal = inNormal;
-	gl_Position = vec4(inPos.xyz, 1.0);
+	gl_Position = vec4(inPos.xyz, 1.0f);
 }

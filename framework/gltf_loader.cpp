@@ -356,6 +356,9 @@ inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb
 		// 96 because for each traingle we draw a line in a mesh shader sample, 32 triangles/lines per meshlet = 64 vertices on output
 		if (meshlet.vertex_count == 64 || meshlet.index_count == 96 || i == submesh->vertex_indices - 1)
 		{
+			if (i == submesh->vertex_indices - 1)
+				assert(triangle_check == 3);
+
 			uint32_t counter = 0;
 			for (auto v : vertices)
 			{

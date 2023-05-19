@@ -83,15 +83,15 @@ void main(void)
     uint vi3 = mbuf.meshlets[meshlet_index].indices[j + 2];
 
     //middle point of triangle
-    vec3 pos = (vb.vertices[vi1].position.xyz + vb.vertices[vi2].position.xyz + vb.vertices[vi3].position.xyz)/3;
+    vec3 pos = (vb.vertices[vi1].position.xyz + vb.vertices[vi2].position.xyz + vb.vertices[vi3].position.xyz)/3.0f;
     vec3 normal = vb.vertices[vi1].normal.xyz;
    
     //line vertices
-    gl_MeshVerticesEXT[k].gl_Position = MVP * vec4(pos ,1.0);
-    v_out[k].color = vec4(0.0, 0.0, 1.0, 1.0);
+    gl_MeshVerticesEXT[k].gl_Position = MVP * vec4(pos ,1.0f);
+    v_out[k].color = vec4(0.0f, 0.0f, 1.0f, 1.0f);
 
-    gl_MeshVerticesEXT[k + 1].gl_Position = MVP * vec4(pos + normal * normalLength,1.0);
-    v_out[k + 1].color = vec4(1.0, 0.0, 0.0, 1.0);
+    gl_MeshVerticesEXT[k + 1].gl_Position = MVP * vec4(pos + normal * normalLength, 1.0f);
+    v_out[k + 1].color = vec4(1.0f, 0.0f, 0.0f, 1.0f);
 
     k = k + 2;
     j= j + 3;

@@ -33,16 +33,16 @@ void main(void)
     float normalLength = 0.1f;
 
     //middle point of triangle
-    vec3 pos = (gl_in[0].gl_Position.xyz + gl_in[1].gl_Position.xyz + gl_in[2].gl_Position.xyz)/3;
+    vec3 pos = (gl_in[0].gl_Position.xyz + gl_in[1].gl_Position.xyz + gl_in[2].gl_Position.xyz)/3.0f;
     vec3 normal = inNormal[0].xyz;
 
     //line vertices
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0);
-    outColor = vec3(1.0, 0.0, 0.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos, 1.0f);
+    outColor = vec3(1.0f, 0.0f, 0.0f);
     EmitVertex();
 
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos + normal * normalLength, 1.0);
-    outColor = vec3(0.0, 0.0, 1.0);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(pos + normal * normalLength, 1.0f);
+    outColor = vec3(0.0f, 0.0f, 1.0f);
     EmitVertex();
 
     EndPrimitive();

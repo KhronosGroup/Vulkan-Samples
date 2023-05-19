@@ -32,14 +32,14 @@ layout (location = 3) out vec3 outLightVec;
 
 void main() 
 {
-    outColor = vec3(0.0, 1.0, 1.0);
-    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0);
+    outColor = vec3(0.0f, 1.0f, 1.0f);
+    gl_Position = ubo.proj * ubo.view * ubo.model * vec4(inPosition, 1.0f);
 
-    vec4 FragPos = ubo.model * vec4(inPosition, 1.0);
-    vec3 lightPos = vec3(-20.0,5.0,5.0);
+    vec4 FragPos = ubo.model * vec4(inPosition, 1.0f);
+    vec3 lightPos = vec3(-20.0f, 5.0f, 5.0f);
     vec3 lPos = mat3(ubo.model) * lightPos.xyz;
     outNormal = mat3(transpose(inverse( ubo.view *ubo.model))) * inNormal;
 
     outLightVec = lPos.xyz - FragPos.xyz;
-    outViewVec = - (ubo.view * ubo.model * vec4(inPosition, 1.0)).xyz;    
+    outViewVec = - (ubo.view * ubo.model * vec4(inPosition, 1.0f)).xyz;    
 }
