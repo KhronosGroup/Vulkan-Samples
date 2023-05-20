@@ -162,9 +162,7 @@ After the call to `clCreateImageWithProperties` we're ready to use the image in 
 
 ## Creating and sharing semaphores
 
-@todo: Describe get_vulkan_semaphore_handle
-
-To sync work across Vulkan and OpenCL we'll be using semaphores. Once again we create these on the Vulkan side of our sample. Sharing them is very similar to sharing any other object like e.g. the image:
+To sync work across Vulkan and OpenCL we'll be using semaphores. Once again we create these on the Vulkan side of our sample inside the `OpenCLInterop::prepare_sync_objects()` function. Sharing them is very similar to sharing any other object like e.g. the image:
 
 ```cpp
 VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
@@ -193,7 +191,7 @@ VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr
 
 We once again select the handle type based on the platform we're compiling on and if it's a Windows system we set the required security access information before creating two semaphores with `vkCreateSemaphore`.
 
-With the Vulkan part done, we again **switch over** to OpenCL, where we'll import the Vulkan semaphores:
+With the Vulkan part done, we again **switch over** to OpenCL, where we'll import the Vulkan semaphores. The `get_vulkan_semaphore_handle` function is a convenient wrapper for getting a platform specific handle to a Vulkan semaphore. It'll use `vkGetSemaphoreWin32HandleKHR` on windows, and `vkGetMemoryFdKHR` on all other platforms:
 
 ```cpp
 std::vector<cl_semaphore_properties_khr> semaphore_properties{
@@ -232,6 +230,56 @@ semaphore_properties.pop_back();
 ...
 ```
 
-## Sharing data between apis
+## Sharing data between the apis
 
-@todo: Describe render(), esp. sync and acquire and release
+Now that all objects shared between Vulkan and OpenCL have been set up we can actually start sharing the images. Remember that we'll be using OpenCL to update the contents of an image that we'll then display in our Vulkan sample on a quad. This is done in the `OpenCLInterop::render()` function.
+
+This includes proper synchronization of the image access as well as acquiring and releasing the image between the two apis.
+
+First we need to ensure that the command buffer displaying our image has finished. This is done on the Vulkan side using a fence:
+
+```cpp
+vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
+```
+
+// @todo: check if this is actually the correct order!
+
+// @todo: explain submit (why do we need a first submit?)
+
+Now we move to the OpenCL side of things to update our image with an OpenCL kernel. The concepts here are similar to those in the Vulkan API.
+
+We first wait for the Vulkan->OpenCL semaphore to ensure that the Vulkan side of the graphics queue is done before we start with the OpenCL update part:
+
+```cpp
+CL_CHECK(clEnqueueWaitSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.vk_update_cl_semaphore, nullptr, 0, nullptr, nullptr));
+```
+
+We then need to acquire the image handle created from our image. In this case, the image is an external memory handle (to OpenCL) as it was created in Vulkan:
+
+```cpp
+CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+```
+
+Once we have successfully acquired the image for use with OpenCL, we can run the kernel to update the image contents. An OpenCL kernel is similar to a Vulkan compute shader. This part of the sample isn't specific to api sharing, and just a basic example of how to run an OpenCL kernel on an image:
+
+```cpp
+std::array<size_t, 2> global_size = {shared_image.width, shared_image.height};
+std::array<size_t, 2> local_size  = {16, 16};
+
+CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
+CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
+CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
+CL_CHECK(clFinish(opencl_objects.command_queue));
+```
+
+The call to `clFinish` will wait until the kernel is finished executing, so after this command we can return ownership of the image back to Vulkan by releasing it on the OpenCL side:
+
+```cpp
+CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+```
+
+After that we signal the OpenCL->Vulkan semaphore from the OpenCL side, so Vulkan can wait on this for the next frame:
+
+```cpp
+CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));```
