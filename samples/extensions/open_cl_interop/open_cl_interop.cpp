@@ -198,21 +198,18 @@ void OpenCLInterop::render(float delta_time)
 
 	// @todo: comment
 
-	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
-	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
-
 	CL_CHECK(clEnqueueWaitSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.vk_update_cl_semaphore, nullptr, 0, nullptr, nullptr));
 	CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
 
 	std::array<size_t, 2> global_size = {shared_image.width, shared_image.height};
 	std::array<size_t, 2> local_size  = {16, 16};
 
+	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
+	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
 	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
 	CL_CHECK(clFinish(opencl_objects.command_queue));
 
 	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
-	CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
-
 	CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
 }
 
