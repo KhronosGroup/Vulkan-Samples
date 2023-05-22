@@ -36,6 +36,9 @@ struct HPPShaderResource;
 class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
 {
   public:
+	using vkb::DescriptorSetLayout::get_index;
+
+  public:
 	HPPDescriptorSetLayout(vkb::core::HPPDevice                            &device,
 	                       const uint32_t                                   set_index,
 	                       const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
