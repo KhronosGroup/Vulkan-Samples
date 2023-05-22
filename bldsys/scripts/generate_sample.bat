@@ -1,4 +1,4 @@
-:: Copyright (c) 2019, Arm Limited and Contributors
+:: Copyright (c) 2019-2023, Arm Limited and Contributors
 ::
 :: SPDX-License-Identifier: Apache-2.0
 ::
@@ -34,11 +34,18 @@ if [%2] == [] (
 )
 
 if [%3] == [] (
+    set TEMPLATE_NAME=sample
+) else (
+    set TEMPLATE_NAME=%3
+)
+
+if [%4] == [] (
     set BUILD_DIR=%ROOT_DIR%\samples\%CATEGORY%
 ) else (
-    set BUILD_DIR=%3
+    set BUILD_DIR=%4
 )
 
 call cmake.exe -DSAMPLE_NAME=%SAMPLE_NAME%^
+			   -DTEMPLATE_NAME="%TEMPLATE_NAME%"^
 			   -DOUTPUT_DIR="%BUILD_DIR%"^
 			   -P "%ROOT_DIR%\bldsys\cmake\create_sample_project.cmake"

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2019-2023, Arm Limited and Contributors
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -32,11 +32,18 @@ else
 fi
 
 if [ "$#" -lt 3 ]; then
+    TEMPLATE_NAME=sample
+else
+    TEMPLATE_NAME="$3"
+fi
+
+if [ "$#" -lt 4 ]; then
     BUILD_DIR=$ROOT_DIR/samples/$CATEGORY
 else
-    BUILD_DIR="$3"
+    BUILD_DIR="$4"
 fi
 
 cmake -DSAMPLE_NAME=$SAMPLE_NAME \
+      -DTEMPLATE_NAME=$TEMPLATE_NAME \
       -DOUTPUT_DIR=$BUILD_DIR \
       -P $ROOT_DIR/bldsys/cmake/create_sample_project.cmake
