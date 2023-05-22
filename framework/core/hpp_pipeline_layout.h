@@ -17,48 +17,48 @@
 
 #pragma once
 
-#include "core/pipeline_layout.h"
-#include <core/hpp_descriptor_set_layout.h>
 #include <core/hpp_shader_module.h>
+#include <vector>
+#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
 namespace core
 {
+class HPPDevice;
+class HPPDescriptorSetLayout;
+
 /**
- * @brief facade class around vkb::core::PipelineLayout, providing a vulkan.hpp-based interface
+ * @brief A wrapper class for vk::HPPPipelineLayout
  *
- * See vkb::core::PipelineLayout for documentation
  */
-class HPPPipelineLayout : private vkb::PipelineLayout
+class HPPPipelineLayout
 {
   public:
-	using vkb::PipelineLayout::has_descriptor_set_layout;
+	HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules);
+	HPPPipelineLayout(const HPPPipelineLayout &) = delete;
+	HPPPipelineLayout(HPPPipelineLayout &&other);
+	~HPPPipelineLayout();
 
-  public:
-	HPPPipelineLayout(vkb::core::HPPDevice &device, const std::vector<vkb::core::HPPShaderModule *> &shader_modules) :
-	    vkb::PipelineLayout(reinterpret_cast<vkb::Device &>(device), reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules))
-	{}
+	HPPPipelineLayout &operator=(const HPPPipelineLayout &) = delete;
+	HPPPipelineLayout &operator=(HPPPipelineLayout &&)      = delete;
 
-	vkb::core::HPPDescriptorSetLayout &get_descriptor_set_layout(const uint32_t set_index) const
-	{
-		return reinterpret_cast<vkb::core::HPPDescriptorSetLayout &>(vkb::PipelineLayout::get_descriptor_set_layout(set_index));
-	}
+	vkb::core::HPPDescriptorSetLayout const                                       &get_descriptor_set_layout(const uint32_t set_index) const;
+	vk::PipelineLayout                                                             get_handle() const;
+	vk::ShaderStageFlags                                                           get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const;
+	std::vector<vkb::core::HPPShaderResource>                                      get_resources(const vkb::core::HPPShaderResourceType &type  = vkb::core::HPPShaderResourceType::All,
+	                                                                                             vk::ShaderStageFlagBits                 stage = vk::ShaderStageFlagBits::eAll) const;
+	const std::vector<vkb::core::HPPShaderModule *>                               &get_shader_modules() const;
+	const std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> &get_shader_sets() const;
+	bool                                                                           has_descriptor_set_layout(const uint32_t set_index) const;
 
-	vk::PipelineLayout get_handle() const
-	{
-		return static_cast<vk::PipelineLayout>(vkb::PipelineLayout::get_handle());
-	}
-
-	vk::ShaderStageFlags get_push_constant_range_stage(uint32_t size, uint32_t offset = 0) const
-	{
-		return static_cast<vk::ShaderStageFlags>(vkb::PipelineLayout::get_push_constant_range_stage(size, offset));
-	}
-
-	const std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> &get_shader_sets() const
-	{
-		return reinterpret_cast<std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> const &>(vkb::PipelineLayout::get_shader_sets());
-	}
+  private:
+	vkb::core::HPPDevice                                                   &device;
+	vk::PipelineLayout                                                      handle;
+	std::vector<vkb::core::HPPShaderModule *>                               shader_modules;                // The shader modules that this pipeline layout uses
+	std::unordered_map<std::string, vkb::core::HPPShaderResource>           shader_resources;              // The shader resources that this pipeline layout uses, indexed by their name
+	std::unordered_map<uint32_t, std::vector<vkb::core::HPPShaderResource>> shader_sets;                   // A map of each set and the resources it owns used by the pipeline layout
+	std::vector<vkb::core::HPPDescriptorSetLayout *>                        descriptor_set_layouts;        // The different descriptor set layouts for this pipeline layout
 };
 }        // namespace core
 }        // namespace vkb
