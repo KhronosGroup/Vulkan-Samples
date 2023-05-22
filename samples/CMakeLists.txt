@@ -67,6 +67,7 @@ set(ORDER_LIST
     "calibrated_timestamps"
     "graphics_pipeline_library"
     "memory_budget"
+    "mesh_shader_culling"
     "push_descriptors"
     "ray_queries"
     "raytracing_basic"

@@ -23,7 +23,7 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/ResourceLimits.h>
+#include <glslang/Public/ResourceLimits.h>
 VKBP_ENABLE_WARNINGS()
 
 VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string &file, VkShaderStageFlagBits stage)
@@ -62,7 +62,7 @@ VkPipelineShaderStageCreateInfo HlslShaders::load_hlsl_shader(const std::string 
 	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
 	shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
 
-	if (!shader.parse(&glslang::DefaultTBuiltInResource, 100, false, messages))
+	if (!shader.parse(GetDefaultResources(), 100, false, messages))
 	{
 		LOGE("Failed to parse HLSL shader, Error: {}", std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()));
 		throw std::runtime_error("Failed to parse HLSL shader");
