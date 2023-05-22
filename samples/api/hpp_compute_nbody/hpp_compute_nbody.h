@@ -138,13 +138,10 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	void build_command_buffers() override;
 	void render(float delta_time) override;
 
-	vk::CommandBuffer allocate_command_buffer(vk::CommandPool command_pool);
 	void              build_compute_command_buffer();
 	void              build_compute_transfer_command_buffer(vk::CommandBuffer command_buffer) const;
 	void              build_copy_command_buffer(vk::CommandBuffer command_buffer, vk::Buffer staging_buffer, vk::DeviceSize buffer_size) const;
-	vk::CommandPool   create_command_pool(uint32_t queue_family_index);
 	vk::Pipeline      create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout);
-	vk::Semaphore     create_semaphore();
 	void              draw();
 	void              initializeCamera();
 	void              load_assets();

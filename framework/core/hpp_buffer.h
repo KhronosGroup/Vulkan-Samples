@@ -55,7 +55,7 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 
 	VmaAllocation  get_allocation() const;
 	const uint8_t *get_data() const;
-	VkDeviceMemory get_memory() const;
+	vk::DeviceMemory get_memory() const;
 
 	/**
 	 * @return Return the buffer's device address (note: requires that the buffer has been created with the VK_BUFFER_USAGE_SHADER_DEVICE_ADDRESS_BIT usage fla)

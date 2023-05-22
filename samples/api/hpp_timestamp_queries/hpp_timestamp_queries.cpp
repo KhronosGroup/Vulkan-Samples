@@ -298,6 +298,7 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 		if (bloom)
 		{
 			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
+			drawer.set_dirty(true);
 		}
 	}
 }
@@ -311,7 +312,7 @@ void HPPTimestampQueries::render(float delta_time)
 		update_uniform_buffers();
 }
 
-void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachement *attachment)
+void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachment *attachment)
 {
 	attachment->format = format;
 
@@ -767,7 +768,7 @@ void HPPTimestampQueries::prepare_pipelines()
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
 
 	vk::PipelineColorBlendStateCreateInfo color_blend_state;

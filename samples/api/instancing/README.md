@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### Instancing<br/>
+### Instancing
+
 Uses the instancing feature for rendering many instances of the same mesh from a single vertex buffer with variable parameters and textures.

@@ -75,7 +75,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	 *        primary command buffer it inherits from must be provided
 	 * @param flags Usage behavior for the command buffer
 	 * @param primary_cmd_buf (optional)
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	vk::Result begin(vk::CommandBufferUsageFlags flags, HPPCommandBuffer *primary_cmd_buf = nullptr);
 
@@ -87,7 +87,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	 * @param render_pass
 	 * @param framebuffer
 	 * @param subpass_index
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	vk::Result begin(vk::CommandBufferUsageFlags flags, const vkb::core::HPPRenderPass *render_pass, const vkb::core::HPPFramebuffer *framebuffer, uint32_t subpass_index);
 
@@ -206,7 +206,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	void flush_descriptor_state(vk::PipelineBindPoint pipeline_bind_point);
 
 	/**
-	 * @brief Flush the piplines state
+	 * @brief Flush the pipeline state
 	 */
 	void flush_pipeline_state(vk::PipelineBindPoint pipeline_bind_point);
 
@@ -241,7 +241,7 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 	// that contain update after bind, as they wont be implicitly updated
 	bool update_after_bind = false;
 
-	std::unordered_map<uint32_t, vkb::core::HPPDescriptorSetLayout *> descriptor_set_layout_binding_state;
+	std::unordered_map<uint32_t, vkb::core::HPPDescriptorSetLayout const *> descriptor_set_layout_binding_state;
 };
 
 template <class T>

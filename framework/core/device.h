@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -178,7 +178,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	/**
 	 * @brief Requests a command buffer from the device's command pool
 	 * @param level The command buffer level
-	 * @param begin Whether the command buffer should be implictly started before it's returned
+	 * @param begin Whether the command buffer should be implicitly started before it's returned
 	 * @returns A valid VkCommandBuffer
 	 */
 	VkCommandBuffer create_command_buffer(VkCommandBufferLevel level, bool begin = false) const;
@@ -187,7 +187,7 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	 * @brief Submits and frees up a given command buffer
 	 * @param command_buffer The command buffer
 	 * @param queue The queue to submit the work to
-	 * @param free Whether the command buffer should be implictly freed up
+	 * @param free Whether the command buffer should be implicitly freed up
 	 * @param signalSemaphore An optional semaphore to signal when the commands have been executed
 	 */
 	void flush_command_buffer(VkCommandBuffer command_buffer, VkQueue queue, bool free = true, VkSemaphore signalSemaphore = VK_NULL_HANDLE) const;

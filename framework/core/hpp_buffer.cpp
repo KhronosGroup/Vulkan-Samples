@@ -84,7 +84,7 @@ HPPBuffer::~HPPBuffer()
 	if (get_handle() && (allocation != VK_NULL_HANDLE))
 	{
 		unmap();
-		vmaDestroyBuffer(get_device().get_memory_allocator(), get_handle(), allocation);
+		vmaDestroyBuffer(get_device().get_memory_allocator(), static_cast<VkBuffer>(get_handle()), allocation);
 	}
 }
 
@@ -93,7 +93,7 @@ VmaAllocation HPPBuffer::get_allocation() const
 	return allocation;
 }
 
-VkDeviceMemory HPPBuffer::get_memory() const
+vk::DeviceMemory HPPBuffer::get_memory() const
 {
 	return memory;
 }

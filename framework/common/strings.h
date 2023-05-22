@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,7 +35,7 @@ enum class AlphaMode;
 }
 
 std::vector<std::string> split(const std::string &str, const std::string &delimiter);
-std::string              join(const std::vector<std::string> &str, const std::string &seperator);
+std::string              join(const std::vector<std::string> &str, const std::string &separator);
 
 /**
  * @brief Helper function to convert a VkFormat enum to a string

@@ -262,7 +262,7 @@ bool VulkanStatsProvider::create_query_pools(uint32_t queue_family_index)
 	}
 
 	// Reset the query pool before first use. We cannot do these in the command buffer
-	// as that is invalid usage for performance queries due to the potential for multple
+	// as that is invalid usage for performance queries due to the potential for multiple
 	// passes being required.
 	query_pool->host_reset(0, num_framebuffers);
 

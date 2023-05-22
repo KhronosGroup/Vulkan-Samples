@@ -136,7 +136,7 @@ void Profiles::create_instance()
 		throw std::runtime_error{"The selected profile is not supported (error at creating the instance)!"};
 	}
 
-	// Even when using profiles we still need to provide the platform sepcific surface extension
+	// Even when using profiles we still need to provide the platform specific surface extension
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
 	enabled_extensions.push_back(platform->get_surface_extension());
@@ -145,7 +145,7 @@ void Profiles::create_instance()
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
 	create_info.ppEnabledExtensionNames = enabled_extensions.data();
 	create_info.enabledExtensionCount   = static_cast<uint32_t>(enabled_extensions.size());
-	// Note: We don't explicitly set an application infor here so the one from the profile is used
+	// Note: We don't explicitly set an application info here so the one from the profile is used
 	// This also defines the api version to be used
 
 	// Create the instance using the profile tool library
@@ -291,7 +291,7 @@ void Profiles::generate_cubes()
 	const uint32_t count = 6;
 	for (uint32_t i = 0; i < count; i++)
 	{
-		// Get a random texture indice that the shader will sample from via the vertex attribute
+		// Get a random texture index that the shader will sample from via the vertex attribute
 		const auto texture_index = [&rndDist, &rndEngine]() {
 			return rndDist(rndEngine);
 		};
@@ -541,7 +541,7 @@ void Profiles::setup_descriptor_set()
 		texture_descriptors[i].imageView   = textures[i].image_view;
 	}
 
-	// Unlike an array texture, these are adressed like typical arrays
+	// Unlike an array texture, these are addressed like typical arrays
 	write_descriptor_sets[1]                 = {};
 	write_descriptor_sets[1].sType           = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	write_descriptor_sets[1].dstBinding      = 1;
@@ -580,7 +580,7 @@ void Profiles::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
