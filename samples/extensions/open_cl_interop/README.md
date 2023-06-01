@@ -17,11 +17,11 @@
 -
 -->
 
-# Cross vendor OpenCL interoperability 
+# Cross vendor OpenCL and Vulkan interoperability 
 
-## Overview
+## Background
 
-Even though compute support in Vulkan is mandatory, there are still use-cases where the broader range of OpenCL's compute features may be required, e.g. for complex scientific computations or for re-using existing OpenCL kernels. For that both apis offer a set of vendor independent extensions that allow zero-copy sharing of objects known to both apis. Zero-copy means that both apis can access these objects without the need to duplicate and copy them between the apis. This allows for an efficient sharing of these objects between Vulkan and OpenCL.
+Even though compute support in Vulkan is mandatory, there are still use-cases where the broader range of OpenCL's compute features may be required, e.g. for complex scientific computations or for re-using existing OpenCL kernels. For that both apis offer a set of vendor independent extensions that allow zero-copy sharing of objects known to both apis (known as "api interoperability"). Zero-copy means that both apis can access these objects without the need to duplicate and copy them between the apis. This allows for an efficient sharing of these objects between Vulkan and OpenCL.
 
 This sample demonstrates that zero-copy sharing with an image that's updated using an OpenCL compute kernel and displayed as a texture on a quad inside Vulkan. To sync between the two apis the sample also makes use of shared semaphores.
 
@@ -40,8 +40,6 @@ For **sharing the semaphores** used to sync image access between the apis, in **
 On Windows we need to ensure read and write access to the shared memory for external handles (see [spec](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkExportMemoryWin32HandleInfoKHR.html#_description)). This requires setting up security attributes using the Windows API. To simplify this, the sample implements that in the ```WinSecurityAttributes``` class. This is then used in all places where we share memory on Windows.
 
 ## Creating and sharing the image
-
-@todo: Describe get_vulkan_memory_handle
 
 The sample will update the contents of an image with OpenCL and displays that on a quad with Vulkan. So we first need to setup that image (and it's memory) in Vulkan just as any other image with the appropriate usage flags:
 
@@ -104,7 +102,7 @@ As noted earlier, on Windows we need to pass additional process security related
 
 Once we created the image along with it's memory in Vulkan, we **switch over to OpenCL** where we'll import the image. Note that the OpenCL api looks very different from Vulkan. OpenCL e.g. often uses zero terminated property lists instead of explicit structures.
 
-First we import the image memory handle from Vulkan using ```get_vulkan_memory_handle``` and the platform specific handle type:
+For this property list we need to get the shareable Vulkan image memory handle. This is done with the ```get_vulkan_memory_handle``` function, which is a light wrapper around the Vulkan functions for getting the platform specific handle (e.g. `vkGetMemoryWin32HandleKHR` on Windows):
 
 ```cpp
 	std::vector<cl_mem_properties> mem_properties;
@@ -243,9 +241,34 @@ vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std
 vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
 ```
 
-// @todo: check if this is actually the correct order!
+Next up is work submission. As we're now submitting work to two different apis we need to make sure that they'll properly wait for and signal the semaphores. As noted above we have two semaphores:
 
-// @todo: explain submit (why do we need a first submit?)
+* `cl_update_vk_semaphore` - Is signalled by OpenCL and waited on by Vulkan
+* `vk_update_cl_semaphore` - Is signalled by Vulkan and waited by OpenCL
+
+Due to how basic semaphores in Vulkan work (we're not using timeline semaphores), we don't have a way of manually signalling them. So instead we differ between the first and consecutive command buffer submissions:
+
+```cpp
+if (first_submit)
+{
+	first_submit      = false;
+	wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	wait_semaphores   = {semaphores.acquired_image_ready};
+	signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+}
+else
+{
+	wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+	wait_semaphores   = {semaphores.acquired_image_ready, cl_update_vk_semaphore};
+	signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+}
+..
+VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, rendering_finished_fence));
+```
+
+The first submission won't wait on any OpenCL semaphore (because it's not signaled yet), and signals the Vulkan->OpenCL semaphore. So the OpenCl workload following the Vulkan queue submission will wait on it.
+
+On consecutive submits, the OpenCL code workload already has been submitted so we'll also wait for the OpenCL->vulkan semaphore. Additionally we also provide an additional pipeline stage to wait on to match OpenCL's workload.
 
 Now we move to the OpenCL side of things to update our image with an OpenCL kernel. The concepts here are similar to those in the Vulkan API.
 
@@ -282,4 +305,11 @@ CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, 
 After that we signal the OpenCL->Vulkan semaphore from the OpenCL side, so Vulkan can wait on this for the next frame:
 
 ```cpp
-CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));```
+CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
+```
+
+On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal work completion to Vulkan. This ensures that the Vulkan graphics queue won't access the image until OpenCL queue has finished work. 
+
+## Closing words
+
+And that's it! With the above steps we can share an image between OpenCL and Vulkan. As this requires code for two apis it's quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is vrey similar.
