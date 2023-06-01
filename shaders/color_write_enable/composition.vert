@@ -18,15 +18,15 @@
 
 precision mediump float;
 
-layout(location = 0) in vec3 in_color;
+layout (location = 0) out vec2 outUV;
 
-layout(location = 0) out vec4 out_color_r;
-layout(location = 1) out vec4 out_color_g;
-layout(location = 2) out vec4 out_color_b;
+out gl_PerVertex
+{
+        vec4 gl_Position;
+};
 
 void main()
 {
-       out_color_r = vec4(in_color, 1.0);
-       out_color_g = vec4(in_color, 1.0);
-       out_color_b = vec4(in_color, 1.0);
+        outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+        gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
 }

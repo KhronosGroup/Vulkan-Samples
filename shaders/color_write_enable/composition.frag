@@ -18,15 +18,15 @@
 
 precision mediump float;
 
-layout(location = 0) in vec3 in_color;
+layout (binding = 0) uniform sampler2D in_color_r;
+layout (binding = 1) uniform sampler2D in_color_g;
+layout (binding = 2) uniform sampler2D in_color_b;
 
-layout(location = 0) out vec4 out_color_r;
-layout(location = 1) out vec4 out_color_g;
-layout(location = 2) out vec4 out_color_b;
+layout (location = 0) in vec2 inUV;
+
+layout (location = 0) out vec4 outColor;
 
 void main()
 {
-       out_color_r = vec4(in_color, 1.0);
-       out_color_g = vec4(in_color, 1.0);
-       out_color_b = vec4(in_color, 1.0);
+        outColor = texture(in_color_r, inUV) + texture(in_color_g, inUV) + texture(in_color_b, inUV);
 }

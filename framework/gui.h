@@ -349,6 +349,9 @@ class Gui
 
 	bool is_debug_view_active() const;
 
+  protected:
+	uint32_t subpass = 0;
+
   private:
 	/**
 	 * @brief Block size of a buffer pool in kilobytes
