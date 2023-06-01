@@ -160,7 +160,6 @@ void OpenCLInterop::render(float delta_time)
 
 	ApiVulkanSample::prepare_frame();
 
-	// @todo: comment (esp. why first_submit is required)
 	std::vector<VkPipelineStageFlags> wait_stages{};
 	std::vector<VkSemaphore>          wait_semaphores{};
 	std::vector<VkSemaphore>          signal_semaphores{};
@@ -169,6 +168,9 @@ void OpenCLInterop::render(float delta_time)
 	submit_info.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 	submit_info.commandBufferCount = 1;
+
+	// As we have no way to manually signal the semaphores, we need to distinguish between the first and consecutive submits
+	// The first submit can't wait on the (yet) unsignaled OpenCL semaphore, so we only wait for that after the first submit
 
 	if (first_submit)
 	{
@@ -196,9 +198,9 @@ void OpenCLInterop::render(float delta_time)
 
 	// Update the image from OpenCL
 
-	// @todo: comment
-
+	// To make sure OpenCL won't start updating the image until Vulkan has finished rendering to it, we wait for the Vulkan->OpenCL semaphore
 	CL_CHECK(clEnqueueWaitSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.vk_update_cl_semaphore, nullptr, 0, nullptr, nullptr));
+	// We also need to acquire the image (resource) so we can update it with OpenCL
 	CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
 
 	std::array<size_t, 2> global_size = {shared_image.width, shared_image.height};
@@ -209,7 +211,9 @@ void OpenCLInterop::render(float delta_time)
 	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
 	CL_CHECK(clFinish(opencl_objects.command_queue));
 
+	// Release the image (resource) to Vulkan
 	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+	// Signal a semaphore that the next Vulkan frame can wait on (first_submit != false)
 	CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
 }
 
@@ -459,8 +463,9 @@ void OpenCLInterop::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
+// These functions wraps the platform specific functions to get platform handles for Vulkan memory objects (e.g. the memory backing the image) and semaphores
+
 #ifdef _WIN32
-// @todo: document
 HANDLE OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 {
 	HANDLE                        handle;
@@ -472,7 +477,6 @@ HANDLE OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 	return handle;
 }
 
-// @todo: document
 HANDLE OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 {
 	HANDLE                           handle;
@@ -495,7 +499,6 @@ int OpenCLInterop::get_vulkan_memory_handle(VkDeviceMemory memory)
 	return fd;
 }
 
-// @todo: document
 int OpenCLInterop::get_vulkan_semaphore_handle(VkSemaphore &sempahore)
 {
 	int fd;
@@ -537,7 +540,6 @@ void OpenCLInterop::prepare_shared_image()
 	image_create_info.extent            = {shared_image.width, shared_image.height, 1};
 	image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
-	// @todo: comment
 	VkExternalMemoryImageCreateInfo external_memory_image_info{};
 	external_memory_image_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
 	external_memory_image_info.handleTypes = external_handle_type;

@@ -102,7 +102,7 @@ As noted earlier, on Windows we need to pass additional process security related
 
 Once we created the image along with it's memory in Vulkan, we **switch over to OpenCL** where we'll import the image. Note that the OpenCL api looks very different from Vulkan. OpenCL e.g. often uses zero terminated property lists instead of explicit structures.
 
-For this property list we need to get the shareable Vulkan image memory handle. This is done with the ```get_vulkan_memory_handle``` function, which is a light wrapper around the Vulkan functions for getting the platform specific handle (e.g. `vkGetMemoryWin32HandleKHR` on Windows):
+For this property list we need to get a shareable handle for the Vulkan memory backing up our image, This is done with the ```get_vulkan_memory_handle``` function, which is a light wrapper around the Vulkan functions for getting the platform specific handle (e.g. `vkGetMemoryWin32HandleKHR` on Windows):
 
 ```cpp
 	std::vector<cl_mem_properties> mem_properties;
@@ -308,7 +308,7 @@ After that we signal the OpenCL->Vulkan semaphore from the OpenCL side, so Vulka
 CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
 ```
 
-On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal work completion to Vulkan. This ensures that the Vulkan graphics queue won't access the image until OpenCL queue has finished work. 
+On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal work completion to Vulkan for the next frame (where `first_submit` is false). This ensures that the Vulkan graphics queue won't start accessing the image until OpenCL queue has finished work. 
 
 ## Closing words
 
