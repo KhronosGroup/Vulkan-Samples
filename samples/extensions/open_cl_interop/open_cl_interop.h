@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
