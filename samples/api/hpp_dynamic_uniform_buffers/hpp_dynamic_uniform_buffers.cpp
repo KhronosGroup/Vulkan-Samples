@@ -94,12 +94,12 @@ bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 	generate_cube();
 	prepare_uniform_buffers();
 
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                        {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                        {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}};
-	descriptor_set_layout                                = vkb::common::create_descriptor_set_layout(device, bindings);
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
-	pipeline_layout = vkb::common::create_pipeline_layout(device, descriptor_set_layout);
+	descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
 
 	// create the rendering pipeline
 	// Load shaders
@@ -118,7 +118,7 @@ bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = true;
 	depth_stencil_state.depthWriteEnable = true;
@@ -131,16 +131,18 @@ bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 	                                                 vertex_input_state,
 	                                                 vk::PrimitiveTopology::eTriangleList,
 	                                                 vk::CullModeFlagBits::eNone,
+	                                                 vk::FrontFace::eCounterClockwise,
 	                                                 {blend_attachment_state},
 	                                                 depth_stencil_state,
 	                                                 pipeline_layout,
 	                                                 render_pass);
 
 	// Example uses one ubo, on dynamic ubo, and one combined image sampler
-	std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eUniformBuffer, 1},
-	                                                  {vk::DescriptorType::eUniformBufferDynamic, 1},
-	                                                  {vk::DescriptorType::eCombinedImageSampler, 1}};
-	descriptor_pool                                = vkb::common::create_descriptor_pool(device, 2, pool_sizes);
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
+	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
+	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
+
+	descriptor_pool = device.createDescriptorPool({{}, 2, pool_sizes});
 
 	descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
 	update_descriptor_set();
@@ -297,7 +299,7 @@ void HPPDynamicUniformBuffers::prepare_camera()
 	camera.set_position(glm::vec3(0.0f, 0.0f, -30.0f));
 	camera.set_rotation(glm::vec3(0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 256.0f, 0.1f);
 }
 

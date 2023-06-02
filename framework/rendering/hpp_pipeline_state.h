@@ -52,7 +52,7 @@ struct HPPDepthStencilState
 {
 	vk::Bool32     depth_test_enable        = true;
 	vk::Bool32     depth_write_enable       = true;
-	vk::CompareOp  depth_compare_op         = vk::CompareOp::eGreater;        // Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::CompareOp  depth_compare_op         = vk::CompareOp::eGreater;        // Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::Bool32     depth_bounds_test_enable = false;
 	vk::Bool32     stencil_test_enable      = false;
 	StencilOpState front;

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,6 +16,7 @@
 - limitations under the License.
 -
 -->
+
 ## Texture compression comparison
-This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows 
-the timing benefits of each.
+
+This sample demonstrates how to use different types of compressed GPU textures in a Vulkan application, and shows the timing benefits of each.

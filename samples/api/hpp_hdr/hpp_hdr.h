@@ -194,7 +194,6 @@ class HPPHDR : public HPPApiVulkanSample
 	FrameBufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
 	void                  create_bloom_pipelines();
 	void                  create_composition_pipeline();
-	vk::Framebuffer       create_framebuffer(vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent);
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::ImageView         create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image);
 	void                  create_models_pipelines();

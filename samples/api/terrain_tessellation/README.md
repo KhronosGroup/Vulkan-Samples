@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### Terrain Tessellation<br/>
+### Terrain Tessellation
+
 Uses a tessellation shader for rendering a terrain with dynamic level-of-detail and frustum culling.

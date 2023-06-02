@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, The Khronos Group
+- Copyright (c) 2019-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,5 +16,6 @@
 - limitations under the License.
 -
 -->
-### High dynamic range<br/>
+### High dynamic range
+
 Implements a high dynamic range rendering pipeline using 16/32 bit floating point precision for all calculations.

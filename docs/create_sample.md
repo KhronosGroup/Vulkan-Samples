@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019, Arm Limited and Contributors
+- Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -25,16 +25,17 @@ This document will explain how to create the necessary files to start working on
 - [Configuring](#configure)
 
 ## Create
-To create a new sample, run the `generate_sample` script that exists within `bldsys/scripts`. There is a batch script for Windows, and a shell script for Unix based systems. 
+To create a new sample, run the `generate_sample` script that exists within `bldsys/scripts`. There is a batch script for Windows, and a shell script for Unix based systems.
 
 #### Usage
 
 ```
-generate_sample <sample_id> <category> [<create_path>]
+generate_sample <sample_id> <category> <template_name> [<create_path>]
 ```
 
 * `<sample_id>` is the id tag that your sample will have (e.g. '`my_new_sample`')
 * `<category>` is the category this sample will be placed into (e.g. '`performance`')
+* `<template_name>` is the name of template which will be used to generate sample, two templates are provided *sample* (which uses VulkanSample class as a base) and *sample_api* (which uses ApiVulkanSample class as a base).
 * `<create_path>` is optional, for deciding *where* your sample gets created. This should generally be left blank as the script will automatically place your sample its category folder.
 
 #### Example

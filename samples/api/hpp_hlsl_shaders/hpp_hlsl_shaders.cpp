@@ -25,7 +25,7 @@
 
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/ResourceLimits.h>
+#include <glslang/Public/ResourceLimits.h>
 VKBP_ENABLE_WARNINGS()
 
 vk::PipelineShaderStageCreateInfo HPPHlslShaders::load_hlsl_shader(const std::string &file, vk::ShaderStageFlagBits stage)
@@ -63,7 +63,7 @@ vk::PipelineShaderStageCreateInfo HPPHlslShaders::load_hlsl_shader(const std::st
 	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
 	shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
 
-	if (!shader.parse(&glslang::DefaultTBuiltInResource, 100, false, messages))
+	if (!shader.parse(GetDefaultResources(), 100, false, messages))
 	{
 		LOGE("Failed to parse HLSL shader, Error: {}", std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()));
 		throw std::runtime_error("Failed to parse HLSL shader");
@@ -315,7 +315,7 @@ void HPPHlslShaders::prepare_pipelines()
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, true, true, vk::CompareOp::eGreater);
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
 

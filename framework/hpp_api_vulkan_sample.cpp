@@ -299,6 +299,11 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					case vkb::KeyCode::P:
 						paused = !paused;
 						break;
+					case vkb::KeyCode::F1:
+						if (gui)
+						{
+							gui->visible = !gui->visible;
+						}
 					default:
 						break;
 				}
@@ -450,17 +455,14 @@ void HPPApiVulkanSample::prepare_frame()
 		{
 			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
+		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
+		// Don't catch other failures here, they are propagated up the calling hierarchy
 		catch (vk::OutOfDateKHRError & /*err*/)
-		{
-			result = vk::Result::eErrorOutOfDateKHR;
-		}
-
-		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
-		// presentation (eSuboptimalKHR)
-		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
 		{
 			resize(extent.width, extent.height);
 		}
+		// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
+		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 	}
 }
 
@@ -680,16 +682,16 @@ void HPPApiVulkanSample::setup_render_pass()
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryRead;
-	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eNoneKHR;
+	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 	dependencies[1].srcSubpass      = 0;
 	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
 	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
 	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
@@ -744,16 +746,16 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	dependencies[0].srcSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[0].dstSubpass      = 0;
 	dependencies[0].srcStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
-	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eMemoryWrite;
-	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[0].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
+	dependencies[0].srcAccessMask   = vk::AccessFlagBits::eNoneKHR;
+	dependencies[0].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	dependencies[0].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 	dependencies[1].srcSubpass      = 0;
 	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
-	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput;
+	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
 	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
-	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite;
+	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
 	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 

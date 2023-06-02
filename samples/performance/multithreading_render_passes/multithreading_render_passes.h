@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ struct alignas(16) ShadowUniform
 
 /**
  * @brief Multithreading with Render Passes
- * This sample shows perfomance improvement when using multithreading with 
+ * This sample shows performance improvement when using multithreading with
  * multiple render passes and primary level command buffers.
  */
 class MultithreadingRenderPasses : public vkb::VulkanSample
@@ -56,16 +56,16 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 	void draw_gui() override;
 
 	/**
-     * @brief This subpass is responsible for rendering a shadowmap
-     */
+	 * @brief This subpass is responsible for rendering a shadowmap
+	 */
 	class ShadowSubpass : public vkb::GeometrySubpass
 	{
 	  public:
 		ShadowSubpass(vkb::RenderContext &render_context,
 		              vkb::ShaderSource &&vertex_source,
 		              vkb::ShaderSource &&fragment_source,
-		              vkb::sg::Scene &    scene,
-		              vkb::sg::Camera &   camera);
+		              vkb::sg::Scene     &scene,
+		              vkb::sg::Camera    &camera);
 
 	  protected:
 		virtual void prepare_pipeline_state(vkb::CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material) override;
@@ -76,18 +76,18 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 	};
 
 	/**
-     * @brief This subpass is responsible for rendering a Scene
-     *		  It implements a custom draw function which passes shadowmap and light matrix
-     */
+	 * @brief This subpass is responsible for rendering a Scene
+	 *		  It implements a custom draw function which passes shadowmap and light matrix
+	 */
 	class MainSubpass : public vkb::ForwardSubpass
 	{
 	  public:
-		MainSubpass(vkb::RenderContext &                             render_context,
-		            vkb::ShaderSource &&                             vertex_source,
-		            vkb::ShaderSource &&                             fragment_source,
-		            vkb::sg::Scene &                                 scene,
-		            vkb::sg::Camera &                                camera,
-		            vkb::sg::Camera &                                shadowmap_camera,
+		MainSubpass(vkb::RenderContext                              &render_context,
+		            vkb::ShaderSource                              &&vertex_source,
+		            vkb::ShaderSource                              &&fragment_source,
+		            vkb::sg::Scene                                  &scene,
+		            vkb::sg::Camera                                 &camera,
+		            vkb::sg::Camera                                 &shadowmap_camera,
 		            std::vector<std::unique_ptr<vkb::RenderTarget>> &shadow_render_targets);
 
 		virtual void prepare() override;
@@ -108,13 +108,13 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 	std::unique_ptr<vkb::RenderTarget> create_shadow_render_target(uint32_t size);
 
 	/**
-     * @return Shadow render pass which should run first
-     */
+	 * @return Shadow render pass which should run first
+	 */
 	std::unique_ptr<vkb::RenderPipeline> create_shadow_renderpass();
 
 	/**
-     * @return Main render pass which should run second
-     */
+	 * @return Main render pass which should run second
+	 */
 	std::unique_ptr<vkb::RenderPipeline> create_main_renderpass();
 
 	const uint32_t SHADOWMAP_RESOLUTION{1024};
@@ -127,12 +127,12 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 	std::unique_ptr<vkb::RenderPipeline> shadow_render_pipeline{};
 
 	/**
-	 * @brief Pipeline which uses shadowmap 
+	 * @brief Pipeline which uses shadowmap
 	 */
 	std::unique_ptr<vkb::RenderPipeline> main_render_pipeline{};
 
 	/**
-	 * @brief Subpass for shadowmap rendering  
+	 * @brief Subpass for shadowmap rendering
 	 */
 	ShadowSubpass *shadow_subpass{};
 
@@ -158,8 +158,8 @@ class MultithreadingRenderPasses : public vkb::VulkanSample
 
 	/**
 	 * @brief Record drawing commands using the chosen strategy
-     * @param main_command_buffer Already allocated command buffer for the main pass
-     * @return Single or multiple recorded command buffers
+	 * @param main_command_buffer Already allocated command buffer for the main pass
+	 * @return Single or multiple recorded command buffers
 	 */
 	std::vector<vkb::CommandBuffer *> record_command_buffers(vkb::CommandBuffer &main_command_buffer);
 

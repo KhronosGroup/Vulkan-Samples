@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -197,7 +197,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
-	 * @brief Laods in a ktx 2D texture array
+	 * @brief Loads in a ktx 2D texture array
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
 	 */

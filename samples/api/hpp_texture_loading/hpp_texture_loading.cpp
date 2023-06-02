@@ -103,7 +103,7 @@ void HPPTextureLoading::load_texture()
 	if (force_linear_tiling)
 	{
 		// Don't use linear if format is not supported for (linear) shader sampling
-		// Get device properites for the requested texture format
+		// Get device properties for the requested texture format
 		vk::FormatProperties format_properties = get_device()->get_gpu().get_handle().getFormatProperties(format);
 		use_staging                            = !(format_properties.linearTilingFeatures & vk::FormatFeatureFlagBits::eSampledImage);
 	}
@@ -170,7 +170,7 @@ void HPPTextureLoading::load_texture()
 		memory_allocate_info  = {memory_requirements.size,
 		                         get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal)};
 		texture.device_memory = get_device()->get_handle().allocateMemory(memory_allocate_info);
-		VK_CHECK(vkBindImageMemory(get_device()->get_handle(), texture.image, texture.device_memory, 0));
+		get_device()->get_handle().bindImageMemory(texture.image, texture.device_memory, 0);
 
 		vk::CommandBuffer copy_command = get_device()->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
@@ -199,8 +199,8 @@ void HPPTextureLoading::load_texture()
 		image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-		// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
-		// Destination pipeline stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+		// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
+		// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eTransfer, {}, nullptr, nullptr, image_memory_barrier);
 
 		// Copy mip levels from staging buffer
@@ -213,7 +213,7 @@ void HPPTextureLoading::load_texture()
 		image_memory_barrier.newLayout     = vk::ImageLayout::eShaderReadOnlyOptimal;
 
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-		// Source pipeline stage stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+		// Source pipeline stage stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, image_memory_barrier);
 
@@ -283,7 +283,7 @@ void HPPTextureLoading::load_texture()
 		image_memory_barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
 		// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-		// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
+		// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
 		// Destination pipeline stage fragment shader access (VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT)
 		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eHost, vk::PipelineStageFlagBits::eFragmentShader, {}, nullptr, nullptr, image_memory_barrier);
 
@@ -407,7 +407,7 @@ void HPPTextureLoading::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
 
 	// Submit to queue
@@ -515,7 +515,7 @@ void HPPTextureLoading::prepare_pipeline()
 
 	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = true;
 	depth_stencil_state.depthWriteEnable = true;
