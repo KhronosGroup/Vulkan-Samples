@@ -312,4 +312,4 @@ On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal wo
 
 ## Closing words
 
-And that's it! With the above steps we can share an image between OpenCL and Vulkan. As this requires code for two apis it's quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is vrey similar.
+And that's it! With the above steps we can share an image between OpenCL and Vulkan. As this requires code for two apis it's quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is very similar.
