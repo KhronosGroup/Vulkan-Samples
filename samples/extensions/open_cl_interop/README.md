@@ -310,6 +310,6 @@ CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_o
 
 On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal work completion to Vulkan for the next frame (where `first_submit` is false). This ensures that the Vulkan graphics queue won't start accessing the image until OpenCL queue has finished work. 
 
-## Closing words
+## Conclusion
 
-And that's it! With the above steps we can share an image between OpenCL and Vulkan. As this requires code for two apis it's quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is very similar.
+Doing cross api interoperability is a rather niche use case and quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is very similar to how we share images in this sample.
