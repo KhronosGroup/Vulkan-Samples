@@ -84,12 +84,12 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	vk::RenderPass             render_pass;                  // The renderpass description.
 	vk::PipelineLayout         pipeline_layout;              // The pipeline layout for resources.
 	vk::Pipeline               pipeline;                     // The graphics pipeline.
-	vk::DebugReportCallbackEXT debug_report_callback;        // The debug report callback.
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;        // The debug utils messenger.
 	std::vector<vk::Semaphore> recycled_semaphores;          // A set of semaphores that can be reused.
 	std::vector<FrameData>     per_frame_data;               // A set of per-frame data.
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info;
+	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
 #endif
 };
 

@@ -62,14 +62,14 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Uniform buffer object containing particle system parameters
 		uint32_t                              work_group_size = 128;
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			storage_buffer.reset();
 			uniform_buffer.reset();
 			device.destroyPipeline(pipeline_calculate);
 			device.destroyPipeline(pipeline_integrate);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
 			device.destroySemaphore(semaphore);
 			device.freeCommandBuffers(command_pool, command_buffer);
@@ -96,12 +96,12 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		GraphicsUBO                           ubo;
 		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Contains scene matrices
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			uniform_buffer.reset();
 			device.destroyPipeline(pipeline);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
 			device.destroySemaphore(semaphore);
 		}

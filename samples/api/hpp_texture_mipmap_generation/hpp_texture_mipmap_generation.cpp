@@ -276,8 +276,8 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	device->flush_command_buffer(copy_command, queue, true);
 
 	// Clean up staging resources
-	get_device()->get_handle().freeMemory(staging_memory);
 	get_device()->get_handle().destroyBuffer(staging_buffer);
+	get_device()->get_handle().freeMemory(staging_memory);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------

@@ -36,8 +36,8 @@ HPPComputeNBody::~HPPComputeNBody()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		compute.destroy(device, descriptor_pool);
-		graphics.destroy(device, descriptor_pool);
+		compute.destroy(device);
+		graphics.destroy(device);
 		textures.destroy(device);
 	}
 }

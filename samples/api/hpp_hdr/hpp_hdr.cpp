@@ -32,8 +32,8 @@ HPPHDR::~HPPHDR()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		bloom.destroy(device, descriptor_pool);
-		composition.destroy(device, descriptor_pool);
+		bloom.destroy(device);
+		composition.destroy(device);
 		filter_pass.destroy(device);
 		models.destroy(device, descriptor_pool);
 		offscreen.destroy(device);

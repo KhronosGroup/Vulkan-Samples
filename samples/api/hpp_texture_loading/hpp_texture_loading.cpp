@@ -223,8 +223,8 @@ void HPPTextureLoading::load_texture()
 		get_device()->flush_command_buffer(copy_command, queue, true);
 
 		// Clean up staging resources
-		get_device()->get_handle().freeMemory(staging_memory);
 		get_device()->get_handle().destroyBuffer(staging_buffer);
+		get_device()->get_handle().freeMemory(staging_memory);
 	}
 	else
 	{
