@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, Sascha Willems
+- Copyright (c) 2022-2023, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -27,7 +27,7 @@ The [VK_EXT_conditional_rendering](https://www.khronos.org/registry/vulkan/specs
 
 This sample demonstrates usage of this extension for conditionally toggling the visibility of sub-meshes of a complex glTF model. Instead of having to update command buffers, this is done by updating the aforementioned buffer.
 
-# Conditional buffer
+## Conditional buffer
 
 As mentioned in the introduction a buffer is used to conditionally execute rendering and dispatch commands (for compute, which is not done in this sample). The first step is setting up this buffer. 
 
@@ -55,7 +55,7 @@ conditional_visibility_buffer =
 
  With this we get a buffer that matches the size and layout of the host application. For simplicity we create a host visible buffer in this sample. Depending on the use-case a device local buffer would yield better performance but would also require a different update strategy
  
-# Conditional execution
+## Conditional execution
 
 The extension introduces two new functions that allow you to mark regions of a command buffer for conditional execution:
 

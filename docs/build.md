@@ -19,7 +19,7 @@
 
 # Build Guides <!-- omit in toc -->
 
-# Contents <!-- omit in toc -->
+## Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
   - [VKB\_<sample_name>](#vkb_sample_name)
@@ -47,11 +47,11 @@
   - [Dependencies](#dependencies-3)
   - [Build with Gradle](#build-with-gradle)
 
-# CMake Options
+## CMake Options
 
 The following options are used to change the build configuration
 
-## VKB\_<sample_name>
+### VKB\_<sample_name>
 
 Choose whether to include a sample at build time.
 
@@ -60,7 +60,7 @@ Choose whether to include a sample at build time.
 
 **Default:** `ON`
 
-## VKB_BUILD_SAMPLES
+### VKB_BUILD_SAMPLES
 
 Choose whether to build the samples.
 
@@ -69,7 +69,7 @@ Choose whether to build the samples.
 
 **Default:** `ON`
 
-## VKB_BUILD_TESTS
+### VKB_BUILD_TESTS
 
 Choose whether to build the tests
 
@@ -78,19 +78,19 @@ Choose whether to build the tests
 
 **Default:** `OFF`
 
-## VKB_VALIDATION_LAYERS
+### VKB_VALIDATION_LAYERS
 
 Enable Validation Layers
 
 **Default:** `OFF`
 
-#### VKB_VALIDATION_LAYERS_GPU_ASSISTED
+### VKB_VALIDATION_LAYERS_GPU_ASSISTED
 
 Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_indexing.
 
 **Default:** `OFF`
 
-#### VKB_VULKAN_DEBUG
+### VKB_VULKAN_DEBUG
 
 Enable VK_EXT_debug_utils or VK_EXT_debug_marker, if supported.
 This enables debug names for Vulkan objects, and markers/labels in command buffers.  
@@ -98,13 +98,13 @@ See the [debug utils sample](samples/extensions/debug_utils/debug_utils_tutorial
 
 **Default:** `ON`
 
-#### VKB_WARNINGS_AS_ERRORS
+### VKB_WARNINGS_AS_ERRORS
 
 Treat all warnings as errors
 
 **Default:** `ON`
 
-# Quality Assurance
+## Quality Assurance
 
 We use a small set of tools to provide a level of quality to the project. These tools are part of our CI/CD process. If your local environment does not have the same versions of the tools we use in the CI you may see some errors or warnings pop-up when pushing.
 
@@ -115,7 +115,7 @@ For up-to date version information please see the repositories for the individua
 - Snake Case Check [Snake Case Check Repository](https://github.com/KhronosGroupActions/snake-case-check)
 - Android NDK [Android NDK Repository](https://github.com/KhronosGroupActions/android-ndk-build)
 
-# 3D models
+## 3D models
 
 Most of the samples require 3D models downloaded from <https://github.com/KhronosGroup/Vulkan-Samples-Assets>.
 That repository is referenced as a git submodule by this project
@@ -131,7 +131,7 @@ adb push --sync assets /sdcard/Android/data/com.khronos.vulkan_samples/files/
 adb push --sync shaders /sdcard/Android/data/com.khronos.vulkan_samples/files/
 ```
 
-# Performance data
+## Performance data
 
 In order for performance data to be displayed, profiling needs to be enabled on the device. Some devices may disable it by default.
 
@@ -145,9 +145,9 @@ adb shell setprop security.perf_harden 0
 > For details on this project and how to integrate it in your pipeline,
 > visit: https://github.com/ARM-software/HWCPipe
 
-# Windows
+## Windows
 
-## Dependencies
+### Dependencies
 
 - CMake v3.12+
 - Python 3
@@ -155,13 +155,13 @@ adb shell setprop security.perf_harden 0
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
-## Clang Format and Visual Studio
+### Clang Format and Visual Studio
 
 Visual Studio comes with `clang-format-6` which is incompatible with some of the styles we use in our `.clang-format` file. It is recommended to point to a `clang-format-8.exe` binary within the in-built clang formatter, or disable it and use a third party extension that is more up to date.
 
 Go to the [LLVM downloads page](http://releases.llvm.org/download.html) to get clang.
 
-## Build with CMake
+### Build with CMake
 
 > Please make sure, when running any sample, that you either:
 >
@@ -201,9 +201,9 @@ cmake --build build/windows --config Release --target vulkan_samples
 build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 ```
 
-# Linux
+## Linux
 
-## Dependencies
+### Dependencies
 
 - CMake v3.12+
 - C++14 Compiler
@@ -214,7 +214,7 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 ```
 
-## Build with CMake
+### Build with CMake
 
 `Step 1.` The following command will generate the project
 
@@ -234,9 +234,9 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 ./build/linux/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
-# macOS
+## macOS
 
-## Dependencies
+### Dependencies
 
 - CMake v3.12+ (Apple Silicon requires at least 3.19.2)
 - XCode v12 for Apple Silicon
@@ -245,7 +245,7 @@ cmake --build build/linux --config Release --target vulkan_samples -- -j4
 - [CMake Options](#cmake-options)
 - [3D models](#3d-models)
 
-## Build with CMake
+### Build with CMake
 
 `Step 1.` The following command will generate the project
 
@@ -266,9 +266,9 @@ cmake --build build/mac --config Release --target vulkan_samples -- -j4
 ```
 
 
-# Android
+## Android
 
-## Dependencies
+### Dependencies
 
 For all dependencies set the following environment variables:
 
@@ -292,18 +292,18 @@ Android Studio uses the following plugins/tools to build samples:
 Their versions are configured in the [build.gradle.in](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/build.gradle.in) and [app.build.gradle.in files](https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/app.build.gradle.in); when updating these versions, refer to [the official documentation for the recommended combinations](https://developer.android.com/studio/projects/install-ndk#default-ndk-per-agp).
 
 
-## Build with Gradle
+### Build with Gradle
 
-### Generate the gradle project 
+#### Generate the gradle project 
 
 Use the provided script for the platform you are building on by running the following command:
-#### Windows <!-- omit in toc -->
+##### Windows <!-- omit in toc -->
 
 ```
 bldsys\scripts\generate_android_gradle.bat
 ```
 
-#### Linux <!-- omit in toc -->
+##### Linux <!-- omit in toc -->
 
 ```
 ./bldsys/scripts/generate_android_gradle.sh
@@ -311,7 +311,7 @@ bldsys\scripts\generate_android_gradle.bat
 
 A new folder will be created in the root directory at `build\android_gradle`
 
-### Install dependencies
+#### Install dependencies
 
 [Android Gradle Plugin](https://d.android.com/reference/tools/gradle-api) (used by Android Studio) may not auto install dependencies. You will need to install them if they have not been installed:
 
@@ -323,7 +323,7 @@ A new folder will be created in the root directory at `build\android_gradle`
    ${your-sdk}/cmdline-tools/latest/bin/sdkmanager --install "cmake;3.22.1" --channel=3
 ```
 
-### Build the project
+#### Build the project
 
 
 ```
@@ -344,7 +344,7 @@ For a debug build:
 gradle assembleDebug
 ``` 
 
-### Install the apk on the device
+#### Install the apk on the device
 
 You can now install the apk on a connected device using the Android Debug Bridge:
 
@@ -360,7 +360,7 @@ adb install app/build/outputs/apk/debug/vulkan_samples-debug.apk
 ```
 
 
-## Build with Android Studio
+### Build with Android Studio
 
 With [Android Studio](https://d.android.com/studio) you can open the `build/android_gradle/build.gradle` project, compile and run the project from here. The lastest Android Studio release is recommended.
 
