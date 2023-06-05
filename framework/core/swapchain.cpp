@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -277,63 +277,85 @@ inline VkImageUsageFlags composite_image_flags(std::set<VkImageUsageFlagBits> &i
 }        // namespace
 
 Swapchain::Swapchain(Swapchain &old_swapchain, const VkExtent2D &extent) :
-    Swapchain{old_swapchain, old_swapchain.device, old_swapchain.surface, extent, old_swapchain.properties.image_count, old_swapchain.properties.pre_transform, old_swapchain.properties.present_mode, old_swapchain.image_usage_flags}
-{
-	present_mode_priority_list   = old_swapchain.present_mode_priority_list;
-	surface_format_priority_list = old_swapchain.surface_format_priority_list;
-	create();
-}
+    Swapchain{old_swapchain,
+              old_swapchain.device,
+              old_swapchain.surface,
+              old_swapchain.properties.present_mode,
+              old_swapchain.present_mode_priority_list,
+              old_swapchain.surface_format_priority_list,
+              extent,
+              old_swapchain.properties.image_count,
+              old_swapchain.properties.pre_transform,
+              old_swapchain.image_usage_flags}
+{}
 
 Swapchain::Swapchain(Swapchain &old_swapchain, const uint32_t image_count) :
-    Swapchain{old_swapchain, old_swapchain.device, old_swapchain.surface, old_swapchain.properties.extent, image_count, old_swapchain.properties.pre_transform, old_swapchain.properties.present_mode, old_swapchain.image_usage_flags}
-{
-	present_mode_priority_list   = old_swapchain.present_mode_priority_list;
-	surface_format_priority_list = old_swapchain.surface_format_priority_list;
-	create();
-}
+    Swapchain{old_swapchain,
+              old_swapchain.device,
+              old_swapchain.surface,
+              old_swapchain.properties.present_mode,
+              old_swapchain.present_mode_priority_list,
+              old_swapchain.surface_format_priority_list,
+              old_swapchain.properties.extent,
+              image_count,
+              old_swapchain.properties.pre_transform,
+              old_swapchain.image_usage_flags}
+{}
 
 Swapchain::Swapchain(Swapchain &old_swapchain, const std::set<VkImageUsageFlagBits> &image_usage_flags) :
-    Swapchain{old_swapchain, old_swapchain.device, old_swapchain.surface, old_swapchain.properties.extent, old_swapchain.properties.image_count, old_swapchain.properties.pre_transform, old_swapchain.properties.present_mode, image_usage_flags}
-{
-	present_mode_priority_list   = old_swapchain.present_mode_priority_list;
-	surface_format_priority_list = old_swapchain.surface_format_priority_list;
-	create();
-}
+    Swapchain{old_swapchain,
+              old_swapchain.device,
+              old_swapchain.surface,
+              old_swapchain.properties.present_mode,
+              old_swapchain.present_mode_priority_list,
+              old_swapchain.surface_format_priority_list,
+              old_swapchain.properties.extent,
+              old_swapchain.properties.image_count,
+              old_swapchain.properties.pre_transform,
+              image_usage_flags}
+{}
 
 Swapchain::Swapchain(Swapchain &old_swapchain, const VkExtent2D &extent, const VkSurfaceTransformFlagBitsKHR transform) :
+    Swapchain{old_swapchain,
+              old_swapchain.device,
+              old_swapchain.surface,
+              old_swapchain.properties.present_mode,
+              old_swapchain.present_mode_priority_list,
+              old_swapchain.surface_format_priority_list,
+              extent,
+              old_swapchain.properties.image_count,
+              transform,
+              old_swapchain.image_usage_flags}
+{}
 
-    Swapchain{old_swapchain, old_swapchain.device, old_swapchain.surface, extent, old_swapchain.properties.image_count, transform, old_swapchain.properties.present_mode, old_swapchain.image_usage_flags}
-
+Swapchain::Swapchain(Device                                &device,
+                     VkSurfaceKHR                           surface,
+                     const VkPresentModeKHR                 present_mode,
+                     std::vector<VkPresentModeKHR> const   &present_mode_priority_list,
+                     const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list,
+                     const VkExtent2D                      &extent,
+                     const uint32_t                         image_count,
+                     const VkSurfaceTransformFlagBitsKHR    transform,
+                     const std::set<VkImageUsageFlagBits>  &image_usage_flags) :
+    Swapchain{*this, device, surface, present_mode, present_mode_priority_list, surface_format_priority_list, extent, image_count, transform, image_usage_flags}
 {
-	present_mode_priority_list   = old_swapchain.present_mode_priority_list;
-	surface_format_priority_list = old_swapchain.surface_format_priority_list;
-	create();
 }
 
-Swapchain::Swapchain(Device &                              device,
-                     VkSurfaceKHR                          surface,
-                     const VkExtent2D &                    extent,
-                     const uint32_t                        image_count,
-                     const VkSurfaceTransformFlagBitsKHR   transform,
-                     const VkPresentModeKHR                present_mode,
-                     const std::set<VkImageUsageFlagBits> &image_usage_flags) :
-    Swapchain{*this, device, surface, extent, image_count, transform, present_mode, image_usage_flags}
-{
-}
-
-Swapchain::Swapchain(Swapchain &                           old_swapchain,
-                     Device &                              device,
-                     VkSurfaceKHR                          surface,
-                     const VkExtent2D &                    extent,
-                     const uint32_t                        image_count,
-                     const VkSurfaceTransformFlagBitsKHR   transform,
-                     const VkPresentModeKHR                present_mode,
-                     const std::set<VkImageUsageFlagBits> &image_usage_flags) :
+Swapchain::Swapchain(Swapchain                             &old_swapchain,
+                     Device                                &device,
+                     VkSurfaceKHR                           surface,
+                     const VkPresentModeKHR                 present_mode,
+                     std::vector<VkPresentModeKHR> const   &present_mode_priority_list,
+                     const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list,
+                     const VkExtent2D                      &extent,
+                     const uint32_t                         image_count,
+                     const VkSurfaceTransformFlagBitsKHR    transform,
+                     const std::set<VkImageUsageFlagBits>  &image_usage_flags) :
     device{device},
     surface{surface}
 {
-	present_mode_priority_list   = old_swapchain.present_mode_priority_list;
-	surface_format_priority_list = old_swapchain.surface_format_priority_list;
+	this->present_mode_priority_list   = present_mode_priority_list;
+	this->surface_format_priority_list = surface_format_priority_list;
 
 	VkSurfaceCapabilitiesKHR surface_capabilities{};
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(this->device.get_gpu().get_handle(), surface, &surface_capabilities);
@@ -375,31 +397,7 @@ Swapchain::Swapchain(Swapchain &                           old_swapchain,
 	// Pass through defaults to the create function
 	properties.old_swapchain = old_swapchain.get_handle();
 	properties.present_mode  = present_mode;
-}
 
-Swapchain::~Swapchain()
-{
-	if (handle != VK_NULL_HANDLE)
-	{
-		vkDestroySwapchainKHR(device.get_handle(), handle, nullptr);
-	}
-}
-
-Swapchain::Swapchain(Swapchain &&other) :
-    device{other.device},
-    surface{other.surface},
-    handle{other.handle},
-    image_usage_flags{std::move(other.image_usage_flags)},
-    images{std::move(other.images)},
-    properties{std::move(other.properties)}
-{
-	other.handle  = VK_NULL_HANDLE;
-	other.surface = VK_NULL_HANDLE;
-}
-
-void Swapchain::create()
-{
-	// Revalidate the present mode and surface format
 	properties.present_mode   = choose_present_mode(properties.present_mode, present_modes, present_mode_priority_list);
 	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
 
@@ -429,7 +427,29 @@ void Swapchain::create()
 	images.resize(image_available);
 
 	VK_CHECK(vkGetSwapchainImagesKHR(device.get_handle(), handle, &image_available, images.data()));
-}        // namespace vkb
+}
+
+Swapchain::~Swapchain()
+{
+	if (handle != VK_NULL_HANDLE)
+	{
+		vkDestroySwapchainKHR(device.get_handle(), handle, nullptr);
+	}
+}
+
+Swapchain::Swapchain(Swapchain &&other) :
+    device{other.device},
+    surface{std::exchange(other.surface, VK_NULL_HANDLE)},
+    handle{std::exchange(other.handle, VK_NULL_HANDLE)},
+    images{std::exchange(other.images, {})},
+    surface_formats{std::exchange(other.surface_formats, {})},
+    present_modes{std::exchange(other.present_modes, {})},
+    properties{std::exchange(other.properties, {})},
+    present_mode_priority_list{std::exchange(other.present_mode_priority_list, {})},
+    surface_format_priority_list{std::exchange(other.surface_format_priority_list, {})},
+    image_usage_flags{std::move(other.image_usage_flags)}
+{
+}
 
 bool Swapchain::is_valid() const
 {
@@ -444,11 +464,6 @@ Device &Swapchain::get_device()
 VkSwapchainKHR Swapchain::get_handle() const
 {
 	return handle;
-}
-
-SwapchainProperties &Swapchain::get_properties()
-{
-	return properties;
 }
 
 VkResult Swapchain::acquire_next_image(uint32_t &image_index, VkSemaphore image_acquired_semaphore, VkFence fence) const
@@ -486,17 +501,6 @@ VkImageUsageFlags Swapchain::get_usage() const
 	return properties.image_usage;
 }
 
-void Swapchain::set_present_mode_priority(const std::vector<VkPresentModeKHR> &new_present_mode_priority_list)
-{
-	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
-	present_mode_priority_list = new_present_mode_priority_list;
-}
-
-void Swapchain::set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &new_surface_format_priority_list)
-{
-	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
-	surface_format_priority_list = new_surface_format_priority_list;
-}
 VkPresentModeKHR Swapchain::get_present_mode() const
 {
 	return properties.present_mode;
