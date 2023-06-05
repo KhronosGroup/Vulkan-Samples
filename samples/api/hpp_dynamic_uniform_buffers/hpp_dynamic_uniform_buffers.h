@@ -76,8 +76,9 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 
 	// from HPPApiVulkanSample
 	void render(float delta_time) override;
-
 	void build_command_buffers() override;
+
+	void create_pipeline();
 	void draw();
 	void generate_cube();
 	void prepare_camera();

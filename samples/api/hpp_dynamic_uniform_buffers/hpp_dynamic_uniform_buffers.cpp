@@ -97,54 +97,19 @@ bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
 	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
 	                                                           {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
 	                                                           {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+	descriptor_set_layout                                  = device.createDescriptorSetLayout({{}, bindings});
+	pipeline_layout                                        = device.createPipelineLayout({{}, descriptor_set_layout});
 
-	descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
-	pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
-
-	// create the rendering pipeline
-	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("dynamic_uniform_buffers/base.frag",
-	                                                                               vk::ShaderStageFlagBits::eFragment)}};
-
-	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
-	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)},            // Location 0 : Position
-	     {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)}}};        // Location 1 : Color
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
-
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
-	depth_stencil_state.depthTestEnable  = true;
-	depth_stencil_state.depthWriteEnable = true;
-	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
-	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
-
-	pipeline = vkb::common::create_graphics_pipeline(device,
-	                                                 pipeline_cache,
-	                                                 shader_stages,
-	                                                 vertex_input_state,
-	                                                 vk::PrimitiveTopology::eTriangleList,
-	                                                 vk::CullModeFlagBits::eNone,
-	                                                 vk::FrontFace::eCounterClockwise,
-	                                                 {blend_attachment_state},
-	                                                 depth_stencil_state,
-	                                                 pipeline_layout,
-	                                                 render_pass);
+	create_pipeline();
 
 	// Example uses one ubo, on dynamic ubo, and one combined image sampler
 	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
 	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
 	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
-
-	descriptor_pool = device.createDescriptorPool({{}, 2, pool_sizes});
+	descriptor_pool                                  = device.createDescriptorPool({{}, 2, pool_sizes});
 
 	descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+
 	update_descriptor_set();
 	build_command_buffers();
 	prepared = true;
@@ -213,6 +178,44 @@ void HPPDynamicUniformBuffers::render(float delta_time)
 	}
 }
 
+void HPPDynamicUniformBuffers::create_pipeline()
+{
+	// Load shaders
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                   load_shader("dynamic_uniform_buffers/base.frag",
+	                                                                               vk::ShaderStageFlagBits::eFragment)}};
+
+	// Vertex bindings and attributes
+	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
+	std::array<vk::VertexInputAttributeDescription, 2> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, pos)},            // Location 0 : Position
+	     {1, 0, vk::Format::eR32G32B32Sfloat, offsetof(Vertex, color)}}};        // Location 1 : Color
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthTestEnable  = true;
+	depth_stencil_state.depthWriteEnable = true;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
+
+	pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                 pipeline_cache,
+	                                                 shader_stages,
+	                                                 vertex_input_state,
+	                                                 vk::PrimitiveTopology::eTriangleList,
+	                                                 vk::CullModeFlagBits::eNone,
+	                                                 vk::FrontFace::eCounterClockwise,
+	                                                 {blend_attachment_state},
+	                                                 depth_stencil_state,
+	                                                 pipeline_layout,
+	                                                 render_pass);
+}
+
 void HPPDynamicUniformBuffers::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
@@ -238,44 +241,10 @@ void HPPDynamicUniformBuffers::generate_cube()
 	    {{-1.0f, 1.0f, -1.0f}, {0.0f, 0.0f, 0.0f}},
 	};
 
-	std::vector<uint32_t> indices = {
-	    0,
-	    1,
-	    2,
-	    2,
-	    3,
-	    0,
-	    1,
-	    5,
-	    6,
-	    6,
-	    2,
-	    1,
-	    7,
-	    6,
-	    5,
-	    5,
-	    4,
-	    7,
-	    4,
-	    0,
-	    3,
-	    3,
-	    7,
-	    4,
-	    4,
-	    5,
-	    1,
-	    1,
-	    0,
-	    4,
-	    3,
-	    2,
-	    6,
-	    6,
-	    7,
-	    3,
-	};
+	// clang-format off
+	std::vector<uint32_t> indices = { 0, 1, 2,		2, 3, 0,		1, 5, 6,		6, 2, 1,		7, 6, 5,		5, 4, 7,
+	                                  4, 0, 3,		3, 7, 4,		4, 5, 1,		1, 0, 4,		3, 2, 6,		6, 7, 3 };
+	// clang-format on
 
 	index_count = static_cast<uint32_t>(indices.size());
 
