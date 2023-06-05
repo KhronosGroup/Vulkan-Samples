@@ -186,30 +186,14 @@ std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, V
 {
 	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
 
-	auto context = std::make_unique<RenderContext>(device, surface, *window);
-
-	context->set_surface_format_priority(surface_format_priority);
-
-	context->request_image_format(surface_format_priority[0].format);
-
-	context->set_present_mode_priority({
+	VkPresentModeKHR              present_mode = (window_properties.vsync == Window::Vsync::ON) ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_MAILBOX_KHR;
+	std::vector<VkPresentModeKHR> present_mode_priority_list{
 	    VK_PRESENT_MODE_MAILBOX_KHR,
 	    VK_PRESENT_MODE_FIFO_KHR,
 	    VK_PRESENT_MODE_IMMEDIATE_KHR,
-	});
+	};
 
-	switch (window_properties.vsync)
-	{
-		case Window::Vsync::ON:
-			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
-			break;
-		case Window::Vsync::OFF:
-		default:
-			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
-			break;
-	}
-
-	return std::move(context);
+	return std::make_unique<RenderContext>(device, surface, *window, present_mode, present_mode_priority_list, surface_format_priority);
 }
 
 void Platform::terminate(ExitCode code)

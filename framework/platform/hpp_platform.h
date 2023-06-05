@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -42,26 +42,11 @@ class HPPPlatform : private vkb::Platform
 	{
 		assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
 
-		auto context = std::make_unique<vkb::rendering::HPPRenderContext>(device, surface, reinterpret_cast<vkb::platform::HPPWindow const &>(*window));
+		vk::PresentModeKHR              present_mode = (window_properties.vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+		std::vector<vk::PresentModeKHR> present_mode_priority{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate};
 
-		context->set_surface_format_priority(surface_format_priority);
-
-		context->request_image_format(surface_format_priority[0].format);
-
-		context->set_present_mode_priority({vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate});
-
-		switch (window_properties.vsync)
-		{
-			case Window::Vsync::ON:
-				context->request_present_mode(vk::PresentModeKHR::eFifo);
-				break;
-			case Window::Vsync::OFF:
-			default:
-				context->request_present_mode(vk::PresentModeKHR::eMailbox);
-				break;
-		}
-
-		return std::move(context);
+		return std::make_unique<vkb::rendering::HPPRenderContext>(
+		    device, surface, reinterpret_cast<vkb::platform::HPPWindow const &>(*window), present_mode, present_mode_priority, surface_format_priority);
 	}
 
 	vkb::platform::HPPWindow &get_window()
