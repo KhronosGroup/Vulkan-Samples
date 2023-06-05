@@ -22,7 +22,7 @@
 #include "scene_graph/components/camera.h"
 
 #define CL_FUNCTION_DEFINITIONS
-#include "../open_cl_common/open_cl_utils.h";
+#include "../open_cl_common/open_cl_utils.h"
 
 /// @brief Helper macro to test the result of OpenCL calls which can return an error.
 #define CL_CHECK(x)                                                                    \
