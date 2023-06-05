@@ -22,7 +22,7 @@
 #include "platform/filesystem.h"
 #include "platform/platform.h"
 
-#include <strstream>
+#include <sstream>
 
 #ifdef VK_USE_PLATFORM_WIN32_KHR
 #	include <aclapi.h>
@@ -739,18 +739,20 @@ void OpenCLInterop::prepare_opencl_resources()
 	}
 
 	// Vulkan/OpenCL interop also requires some extensions on the OpenCL side, so we fetch the list of available OpenCL extensions
-	size_t extensions_info_size = 0;
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extensions_info_size);
+	size_t extension_string_size = 0;
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extension_string_size);
 
-	std::vector<char> extensions_info(extensions_info_size, '\0');
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extensions_info_size, extensions_info.data(), nullptr);
+	std::string extension_string(extension_string_size, ' ');
+	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extension_string_size, &extension_string[0], nullptr);
 
-	std::istrstream          extensions_info_stream(extensions_info.data(), extensions_info.size());
-	std::vector<std::string> available_extensions = std::vector<std::string>(std::istream_iterator<std::string>{extensions_info_stream}, std::istream_iterator<std::string>());
-	// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
-	for (auto &extension : available_extensions)
+	std::vector<std::string> available_extensions{};
+	std::stringstream        extension_stream(extension_string);
+	std::string              extension;
+	while (std::getline(extension_stream, extension, ' '))
 	{
+		// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
 		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
+		available_extensions.push_back(extension);
 	}
 
 	// Now check support for the OpenCL extensions required by this sample
