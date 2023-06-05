@@ -47,16 +47,16 @@ vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format f
 vk::Instance create_instance(std::vector<const char *> const &requested_validation_layers, std::vector<const char *> const &active_instance_extensions
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                              ,
-                             vk::DebugReportCallbackCreateInfoEXT const &debug_report_callback_create_info
+                             vk::DebugUtilsMessengerCreateInfoEXT const &debug_utils_messenger_create_info
 #endif
 )
 {
-	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", VK_MAKE_VERSION(1, 0, 0));
+	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", {}, VK_MAKE_VERSION(1, 0, 0));
 
 	vk::InstanceCreateInfo instance_info({}, &app, requested_validation_layers, active_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	instance_info.pNext = &debug_report_callback_create_info;
+	instance_info.pNext = &debug_utils_messenger_create_info;
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -211,25 +211,18 @@ vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk:
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-                                                     uint64_t object, size_t location, int32_t message_code,
-                                                     const char *layer_prefix, const char *message, void *user_data)
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                              void                                       *user_data)
 {
-	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	// Log debug message
+	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
-	}
-	else
-	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	return VK_FALSE;
 }
@@ -374,9 +367,9 @@ HPPHelloTriangle::~HPPHelloTriangle()
 		device.destroy();
 	}
 
-	if (debug_report_callback)
+	if (debug_utils_messenger)
 	{
-		instance.destroyDebugReportCallbackEXT(debug_report_callback);
+		instance.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
 	}
 
 	instance.destroy();
@@ -590,7 +583,7 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 	std::vector<const char *> active_instance_extensions(required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -645,13 +638,17 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 	}
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_report_callback_create_info = vk::DebugReportCallbackCreateInfoEXT(vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning, debug_callback);
+	debug_utils_create_info =
+	    vk::DebugUtilsMessengerCreateInfoEXT({},
+	                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                         debug_utils_messenger_callback);
 #endif
 
 	instance = create_instance(requested_validation_layers, active_instance_extensions
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	                           ,
-	                           debug_report_callback_create_info
+	                           debug_utils_create_info
 #endif
 	);
 	// initialize function pointers for instance
@@ -667,7 +664,7 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 #endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_report_callback = instance.createDebugReportCallbackEXT(debug_report_callback_create_info);
+	debug_utils_messenger = instance.createDebugUtilsMessengerEXT(debug_utils_create_info);
 #endif
 }
 
