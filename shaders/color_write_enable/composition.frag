@@ -1,4 +1,4 @@
-#version 320 es
+#version 450
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -18,15 +18,18 @@
 
 precision mediump float;
 
-layout (binding = 0) uniform sampler2D in_color_r;
-layout (binding = 1) uniform sampler2D in_color_g;
-layout (binding = 2) uniform sampler2D in_color_b;
+layout (input_attachment_index = 0, binding = 0) uniform subpassInput in_color_r;
+layout (input_attachment_index = 1, binding = 1) uniform subpassInput in_color_g;
+layout (input_attachment_index = 2, binding = 2) uniform subpassInput in_color_b;
 
 layout (location = 0) in vec2 inUV;
-
 layout (location = 0) out vec4 outColor;
 
 void main()
 {
-        outColor = texture(in_color_r, inUV) + texture(in_color_g, inUV) + texture(in_color_b, inUV);
+    vec4 color_r = subpassLoad(in_color_r);
+    vec4 color_g = subpassLoad(in_color_g);
+    vec4 color_b = subpassLoad(in_color_b);
+
+    outColor = color_r + color_g + color_b;
 }

@@ -256,7 +256,7 @@ void ColorWriteEnable::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> poolSizes =
 	    {
-	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 3)};
+	        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 3)};
 
 	VkDescriptorPoolCreateInfo descriptorPoolInfo =
 	    vkb::initializers::descriptor_pool_create_info(
@@ -271,9 +271,9 @@ void ColorWriteEnable::setup_descriptor_pool()
 void ColorWriteEnable::setup_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 0),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 1),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, VK_SHADER_STAGE_FRAGMENT_BIT, 2)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info =
 	    vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
@@ -292,9 +292,9 @@ void ColorWriteEnable::setup_descriptor_set()
 	VkDescriptorImageInfo blue  = vkb::initializers::descriptor_image_info(samplers.blue, attachments.blue.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &red),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &green),
-	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &blue),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &red),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &green),
+	    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &blue),
 
 	};
 
@@ -371,7 +371,7 @@ void ColorWriteEnable::setup_render_pass()
 	dependencies[1].srcStageMask    = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 	dependencies[1].dstStageMask    = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	dependencies[1].srcAccessMask   = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-	dependencies[1].dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
+	dependencies[1].dstAccessMask   = VK_ACCESS_INPUT_ATTACHMENT_READ_BIT;
 	dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
 	// Composition pass to external.
@@ -433,9 +433,9 @@ void ColorWriteEnable::setup_framebuffer()
 		VkDescriptorImageInfo blue  = vkb::initializers::descriptor_image_info(samplers.blue, attachments.blue.view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
-		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &red),
-		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, &green),
-		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2, &blue),
+		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 0, &red),
+		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1, &green),
+		    vkb::initializers::write_descriptor_set(descriptor_sets.composition, VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 2, &blue),
 		};
 
 		vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, NULL);
