@@ -79,7 +79,7 @@ execute_process(
   OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT "${ret_var}" STREQUAL "0")
- message(FATAL_ERROR "Could not copy ${FOLDER_DIR} to final dir:\n${ret_msg}")
+ message(WARNING "Could not copy ${FOLDER_DIR} to final dir:\n${ret_msg}")
 else()
  message(STATUS "Copied ${TEMP_DIR} to ${DIR_PATH}:\n${ret_msg}")
 endif()
