@@ -692,7 +692,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 				core::Buffer buffer{device,
 				                    vertex_data.size(),
 				                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-				                    VMA_MEMORY_USAGE_GPU_TO_CPU};
+				                    VMA_MEMORY_USAGE_CPU_TO_GPU};
 				buffer.update(vertex_data);
 				buffer.set_debug_name(fmt::format("'{}' mesh, primitive #{}: '{}' vertex buffer",
 				                                  gltf_mesh.name, i_primitive, attrib_name));
