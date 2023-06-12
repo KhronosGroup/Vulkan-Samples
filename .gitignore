@@ -8,3 +8,8 @@ tests/system_test/artifacts
 tests/system_test/tmp
 output/*
 .mypy_cache
+
+# vim backup and temp files
+*~
+.*.sw*
+.sw*
