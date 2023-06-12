@@ -769,6 +769,7 @@ void SubgroupsOperations::create_pipelines()
 	        dynamic_state_enables.data(),
 	        static_cast<uint32_t>(dynamic_state_enables.size()),
 	        0u);
+
 	VkPipelineTessellationStateCreateInfo tessellation_state = vkb::initializers::pipeline_tessellation_state_create_info(3u);
 
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages = {
