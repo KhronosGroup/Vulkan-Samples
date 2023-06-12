@@ -19,6 +19,12 @@
 
 #include "api_vulkan_sample.h"
 
+struct TextureQuadVertex
+{
+	glm::vec3 pos;
+	glm::vec2 uv;
+};
+
 class SubgroupsOperations : public ApiVulkanSample
 {
   public:
@@ -36,6 +42,14 @@ class SubgroupsOperations : public ApiVulkanSample
 	void draw();
 	void load_assets();
 
+	void generate_quad();
+	void setup_descriptor_pool();
+	void setup_descriptor_set_layout();
+	void setup_descriptor_set();
+	void setup_pipelines();
+	void create_semaphore();
+	void prepare_uniform_buffers();
+
 	void prepare_compute();
 	void create_compute_queue();
 	void create_compute_command_pool();
@@ -44,9 +58,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	void build_compute_command_buffer();
 
 	void generate_plane();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void create_semaphore();
 	void create_descriptor_set_layout();
 	void create_descriptor_set();
 	void create_pipelines();
@@ -74,7 +85,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	};
 
 	struct GridBuffers
-	{
+		{
 		std::unique_ptr<vkb::core::BufferC> vertex      = {VK_NULL_HANDLE};
 		std::unique_ptr<vkb::core::BufferC> index       = {VK_NULL_HANDLE};
 		uint32_t                           index_count = {0u};
@@ -236,8 +247,8 @@ class SubgroupsOperations : public ApiVulkanSample
 		Pipeline              pipeline;	// fft_invert.comp
 	} fft_inversion;
 
-	struct
-	{
+		struct
+		{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;	// fft_normal_map.comp

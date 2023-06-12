@@ -58,35 +58,38 @@ set(ORDER_LIST
         "terrain_tessellation"
         "hlsl"
 
-        #Extension Samples
-        "dynamic_rendering"
-        "conservative_rasterization"
-        "fragment_shading_rate"
-        "fragment_shading_rate_dynamic"
-        "full_screen_exclusive"
-        "calibrated_timestamps"
-        "graphics_pipeline_library"
-        "memory_budget"
-        "mesh_shader_culling"
-        "push_descriptors"
-        "ray_queries"
-        "ray_tracing_basic"
-        "ray_tracing_extended"
-        "ray_tracing_reflection"
-        "timeline_semaphore"
-        "shader_object"
-        "synchronization_2"
-        "buffer_device_address"
-        "descriptor_indexing"
-        "portability"
-        "vertex_dynamic_state"
-        "extended_dynamic_state2"
-        "logic_op_dynamic_state"
-        "patch_control_points"
-        "fragment_shader_barycentric"
-        "gshader_to_mshader"
-        "color_write_enable"
-        "subgroups_operations"
+    #Extension Samples
+    "dynamic_rendering"
+    "conservative_rasterization"
+    "fragment_shading_rate"
+    "fragment_shading_rate_dynamic"
+    "full_screen_exclusive"
+    "calibrated_timestamps"
+    "graphics_pipeline_library"
+    "memory_budget"
+    "mesh_shader_culling"
+    "push_descriptors"
+    "ray_queries"
+    "ray_tracing_basic"
+    "ray_tracing_extended"
+    "ray_tracing_reflection"
+    "timeline_semaphore"
+    "shader_object"
+    "shader_debugprintf"
+    "synchronization_2"
+    "buffer_device_address"
+    "descriptor_indexing"
+    "portability"
+    "vertex_dynamic_state"
+    "extended_dynamic_state2"
+    "logic_op_dynamic_state"
+    "patch_control_points"
+    "fragment_shader_barycentric"
+    "gshader_to_mshader"
+    "color_write_enable"
+    "sparse_image"
+    "dynamic_primitive_clipping"
+    "subgroups_operations"
 
         #Performance Samples
         "swapchain_images"
@@ -113,25 +116,30 @@ set(ORDER_LIST
         #Tooling samples
         "profiles"
 
-        #HPP API Samples
-        "hpp_compute_nbody"
-        "hpp_dynamic_uniform_buffers"
-        "hpp_hdr"
-        "hpp_hello_triangle"
-        "hpp_hlsl_shaders"
-        "hpp_instancing"
-        "hpp_separate_image_sampler"
-        "hpp_terrain_tessellation"
-        "hpp_texture_loading"
-        "hpp_texture_mipmap_generation"
+    #HPP API Samples
+    "hpp_compute_nbody"
+	"hpp_dynamic_uniform_buffers"
+	"hpp_hdr"
+    "hpp_hello_triangle"
+	"hpp_hlsl_shaders"
+	"hpp_instancing"
+	"hpp_oit_depth_peeling"
+	"hpp_oit_linked_lists"
+	"hpp_separate_image_sampler"
+	"hpp_terrain_tessellation"
+	"hpp_texture_loading"
+	"hpp_texture_mipmap_generation"
+	
+	#HPP Extension Samples
+	"hpp_mesh_shading"
 
-        #HPP Performance Samples
-        "hpp_pipeline_cache"
-        "hpp_swapchain_images"
-	    "hpp_texture_compression_comparison"
+    #HPP Performance Samples
+    "hpp_pipeline_cache"
+    "hpp_swapchain_images"
+	"hpp_texture_compression_comparison"
 
-        #General Samples
-        "mobile_nerf")
+    #General Samples
+    "mobile_nerf")
 
 # Orders the sample ids by the order list above
 set(ORDERED_LIST)

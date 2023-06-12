@@ -24,19 +24,21 @@ void SubgroupsOperations::Pipeline::destroy(VkDevice device) const
 {
 	if (pipeline != VK_NULL_HANDLE)
 	{
-		vkDestroyPipeline(device, pipeline, nullptr);
+	vkDestroyPipeline(device, pipeline, nullptr);
 	}
 
 	if (pipeline_layout != VK_NULL_HANDLE)
 	{
-		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-	}
+	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+}
 }
 
 SubgroupsOperations::SubgroupsOperations()
 {
 	// SPIRV 1.4 requires Vulkan 1.1
 	set_api_version(VK_API_VERSION_1_1);
+	title       = "Subgroups operations";
+	camera.type = vkb::CameraType::LookAt;
 
 	// Subgroup size control extensions required by this sample
 	add_device_extension(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
@@ -163,6 +165,7 @@ void SubgroupsOperations::prepare_compute()
 	create_compute_queue();
 	create_compute_command_pool();
 	create_compute_command_buffer();
+
 }
 
 void SubgroupsOperations::create_compute_queue()
@@ -207,7 +210,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
-	}	
+	}
 
 	// butterfly texture
 	{
@@ -215,7 +218,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline_layout, 0u, 1u, &precompute.descriptor_set, 0u, nullptr);
 
 		vkCmdDispatch(compute.command_buffer, 1u, grid_size, 1u);
-		
+
 		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
 		img_barrier.image                           = butterfly_precomp.image;
 		img_barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -225,8 +228,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_GENERAL;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+		img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
@@ -243,15 +246,16 @@ void SubgroupsOperations::build_compute_command_buffer()
 			memory_barrier.offset                = 0u;
 			memory_barrier.size                  = fft_buffers.fft_input_random->get_size();
 			memory_barrier.srcAccessMask         = VK_ACCESS_MEMORY_WRITE_BIT;
-			memory_barrier.dstAccessMask         = VK_ACCESS_MEMORY_READ_BIT;;
+			memory_barrier.dstAccessMask         = VK_ACCESS_MEMORY_READ_BIT;
+			;
 
 			vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 		}
 
 		{
 			VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
-			memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-			memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+			memory_barrier.srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
+			memory_barrier.dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
 
 			vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
 		}
@@ -273,8 +277,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.subresourceRange.layerCount     = 1u;
 		img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 		img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-		img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-		img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+		img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+		img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
@@ -286,15 +290,15 @@ void SubgroupsOperations::build_compute_command_buffer()
 	// layout (binding = 2, rgba32f) uniform image2D u_pingpong1;	-> image_descriptor_tilde_axis_y
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr); // tutaj
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr);        // tutaj
 
 		for (uint32_t i = 0; i < log_2_N; ++i)
 		{
 			vkCmdPushConstants(compute.command_buffer, fft.pipelines.horizontal.pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(uint32_t), &i);
 			vkCmdDispatch(compute.command_buffer, grid_size / 32u, grid_size, 1u);
-			
+
 			{
-				VkImageMemoryBarrier img_barrier[2]            = {vkb::initializers::image_memory_barrier(),vkb::initializers::image_memory_barrier()};
+				VkImageMemoryBarrier img_barrier[2]            = {vkb::initializers::image_memory_barrier(), vkb::initializers::image_memory_barrier()};
 				img_barrier[0].image                           = fft_buffers.fft_tilde_h_kt_dy->image;
 				img_barrier[0].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 				img_barrier[0].subresourceRange.baseMipLevel   = 0u;
@@ -303,8 +307,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier[0].subresourceRange.layerCount     = 1u;
 				img_barrier[0].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier[0].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier[0].srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier[0].dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier[0].srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier[0].dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				img_barrier[1].image                           = fft.tilde_axis_y->image;
 				img_barrier[1].subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
@@ -314,8 +318,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier[1].subresourceRange.layerCount     = 1u;
 				img_barrier[1].oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier[1].newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier[1].srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier[1].dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier[1].srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier[1].dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 2u, img_barrier);
 			}
@@ -353,7 +357,9 @@ void SubgroupsOperations::build_compute_command_buffer()
 
 					vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 				}
-			} else {
+			}
+			else
+			{
 				{
 					VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
 					img_barrier.image                           = fft.tilde_axis_x->image;
@@ -393,8 +399,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -408,8 +414,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -436,8 +442,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -451,8 +457,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -479,8 +485,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -494,8 +500,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -522,8 +528,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -537,8 +543,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 				img_barrier.subresourceRange.layerCount     = 1u;
 				img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 				img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-				img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-				img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+				img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+				img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 				vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 			}
@@ -547,8 +553,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 
 	{
 		VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
-		memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		memory_barrier.srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
 	}
@@ -568,8 +574,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 			img_barrier.subresourceRange.layerCount     = 1u;
 			img_barrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 			img_barrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
-			img_barrier.srcAccessMask					= VK_ACCESS_MEMORY_WRITE_BIT;
-			img_barrier.dstAccessMask					= VK_ACCESS_MEMORY_READ_BIT;
+			img_barrier.srcAccessMask                   = VK_ACCESS_MEMORY_WRITE_BIT;
+			img_barrier.dstAccessMask                   = VK_ACCESS_MEMORY_READ_BIT;
 
 			vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 		}
@@ -577,8 +583,8 @@ void SubgroupsOperations::build_compute_command_buffer()
 
 	{
 		VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
-		memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		memory_barrier.srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.dstAccessMask   = VK_ACCESS_SHADER_READ_BIT;
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 1u, &memory_barrier, 0u, nullptr, 0u, nullptr);
 	}
@@ -589,7 +595,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_normal_map.pipeline.pipeline_layout, 0u, 1u, &fft_normal_map.descriptor_set, 0u, nullptr);
 		vkCmdDispatch(compute.command_buffer, grid_size / 32u, grid_size, 1u);
 	}
-	if(ocean.graphics_queue_family_index != compute.queue_family_index)
+	if (ocean.graphics_queue_family_index != compute.queue_family_index)
 	{
 		VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
 		img_barrier.image                           = fft_buffers.fft_normal_map->image;
@@ -603,9 +609,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		img_barrier.srcQueueFamilyIndex             = compute.queue_family_index;
 		img_barrier.dstQueueFamilyIndex             = ocean.graphics_queue_family_index;
 		img_barrier.srcAccessMask                   = VK_ACCESS_SHADER_WRITE_BIT;
-		img_barrier.dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;;
+		img_barrier.dstAccessMask                   = VK_ACCESS_SHADER_READ_BIT;
+		;
 
-	 	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0u, 0u, nullptr, 0u, nullptr, 1u, &img_barrier);
 	}
 
 	vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0u, 0u, nullptr, 0u, nullptr, 0u, nullptr);
@@ -639,13 +646,13 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
 
-    subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
-    subgroups_properties.pNext = VK_NULL_HANDLE;
+	subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
+	subgroups_properties.pNext = VK_NULL_HANDLE;
 
-    VkPhysicalDeviceProperties2 device_properties2 = {};
-    device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-    device_properties2.pNext                       = &subgroups_properties;
-    vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+	VkPhysicalDeviceProperties2 device_properties2 = {};
+	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties2.pNext                       = &subgroups_properties;
+	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 
 }
 
@@ -819,7 +826,7 @@ void SubgroupsOperations::generate_plane()
 	auto                  half_grid_size = static_cast<int32_t>(dim_gird / 2);
 
 	for (int32_t z = -half_grid_size; z <= half_grid_size; ++z)
-	{
+	    {
 		for (int32_t x = -half_grid_size; x <= half_grid_size; ++x)
 		{
 			float  u = static_cast<float>(x) / static_cast<float>(dim_gird) + 0.5f;
@@ -854,14 +861,14 @@ void SubgroupsOperations::generate_plane()
 	ocean.grid.index_count  = vkb::to_u32(indices.size());
 
 	ocean.grid.vertex = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+                                                                        vertex_buffer_size,
+                                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.index = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                       index_buffer_size,
-	                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                                   index_buffer_size,
+	                                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.vertex->update(plane_vertices.data(), vertex_buffer_size);
 	ocean.grid.index->update(indices.data(), index_buffer_size);
@@ -1026,14 +1033,14 @@ void SubgroupsOperations::create_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines._default.pipeline));
 
 	if (get_device().get_gpu().get_features().fillModeNonSolid)
-	{
+{
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines.wireframe.pipeline));
 	}
 }
 
 void SubgroupsOperations::create_skybox()
-{
+	    {
 	// descriptors
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0u),
@@ -1061,7 +1068,7 @@ void SubgroupsOperations::create_skybox()
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	        0u,
+	            0u,
 	        VK_FALSE);
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(
@@ -1075,7 +1082,7 @@ void SubgroupsOperations::create_skybox()
 	        VK_FALSE);
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
-	        1u,
+	            1u,
 	        &blend_attachment_state);
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
@@ -1278,6 +1285,7 @@ void SubgroupsOperations::build_command_buffers()
 void SubgroupsOperations::draw()
 {
 	VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
 	// Submit compute commands
 	VkSubmitInfo compute_submit_info         = vkb::initializers::submit_info();
 	compute_submit_info.commandBufferCount   = 1;
@@ -1377,6 +1385,7 @@ bool SubgroupsOperations::resize(const uint32_t width, const uint32_t height)
 	update_uniform_buffers();
 	build_compute_command_buffer();
 	build_command_buffers();
+	update_uniform_buffers();
 	return true;
 }
 
@@ -1706,13 +1715,13 @@ void SubgroupsOperations::create_fft_normal_map()
 }
 
 VkDescriptorImageInfo SubgroupsOperations::create_ia_descriptor(ImageAttachment &attachment)
-{
+	{
 	VkDescriptorImageInfo image_descriptor = {};
 	image_descriptor.imageView             = attachment.view;
 	image_descriptor.imageLayout           = VK_IMAGE_LAYOUT_GENERAL;
 	image_descriptor.sampler               = attachment.sampler;
 	return image_descriptor;
-}
+	}
 
 void SubgroupsOperations::Wind::recalc()
 {
