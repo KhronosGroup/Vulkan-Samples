@@ -48,7 +48,7 @@ endforeach ()
 
 # Order of the sample ids
 set(ORDER_LIST
-        #API Samples
+  #API Samples
         "hello_triangle"
         "dynamic_uniform_buffers"
         "texture_loading"
