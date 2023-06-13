@@ -378,6 +378,11 @@ HPPHelloTriangle::~HPPHelloTriangle()
 
 bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
+	if (!Application::prepare(options))
+	{
+		return false;
+	}
+
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 	select_physical_device_and_surface();
 
