@@ -52,7 +52,7 @@ const float specular_scale = 0.75;
 const float dyna_range = 0.8f;
 const vec3 ocean_dark = vec3(0.03, 0.06, 0.135);
 
-void main()
+void main() 
 {
     vec3 result = vec3(0.0f);
     ivec2 normal_texture_size = textureSize(fft_normal_map, 0);

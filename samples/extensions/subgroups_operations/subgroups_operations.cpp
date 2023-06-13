@@ -24,21 +24,19 @@ void SubgroupsOperations::Pipeline::destroy(VkDevice device) const
 {
 	if (pipeline != VK_NULL_HANDLE)
 	{
-	vkDestroyPipeline(device, pipeline, nullptr);
+		vkDestroyPipeline(device, pipeline, nullptr);
 	}
 
 	if (pipeline_layout != VK_NULL_HANDLE)
 	{
-	vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
-}
+		vkDestroyPipelineLayout(device, pipeline_layout, nullptr);
+	}
 }
 
 SubgroupsOperations::SubgroupsOperations()
 {
 	// SPIRV 1.4 requires Vulkan 1.1
 	set_api_version(VK_API_VERSION_1_1);
-	title       = "Subgroups operations";
-	camera.type = vkb::CameraType::LookAt;
 
 	// Subgroup size control extensions required by this sample
 	add_device_extension(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
@@ -122,7 +120,7 @@ bool SubgroupsOperations::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	//ocean.graphics_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
+	// ocean.graphics_queue_family_index = get_device().get_queue_family_index(VK_QUEUE_GRAPHICS_BIT);
 	ocean.graphics_queue_family_index = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
 
 	load_assets();
@@ -165,7 +163,6 @@ void SubgroupsOperations::prepare_compute()
 	create_compute_queue();
 	create_compute_command_pool();
 	create_compute_command_buffer();
-
 }
 
 void SubgroupsOperations::create_compute_queue()
@@ -653,7 +650,6 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
 	device_properties2.pNext                       = &subgroups_properties;
 	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
-
 }
 
 void SubgroupsOperations::create_initial_tides()
@@ -776,9 +772,9 @@ void SubgroupsOperations::load_assets()
 
 	auto input_random_size       = static_cast<VkDeviceSize>(input_random.size() * sizeof(glm::vec4));
 	fft_buffers.fft_input_random = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   input_random_size,
-	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                                    input_random_size,
+	                                                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	fft_buffers.fft_input_random->update(input_random.data(), input_random_size);
 }
@@ -826,14 +822,14 @@ void SubgroupsOperations::generate_plane()
 	auto                  half_grid_size = static_cast<int32_t>(dim_gird / 2);
 
 	for (int32_t z = -half_grid_size; z <= half_grid_size; ++z)
-	    {
+	{
 		for (int32_t x = -half_grid_size; x <= half_grid_size; ++x)
 		{
 			float  u = static_cast<float>(x) / static_cast<float>(dim_gird) + 0.5f;
 			float  v = static_cast<float>(z) / static_cast<float>(dim_gird) + 0.5f;
 			Vertex vert;
-			vert.pos = glm::vec3(float(x), 0.0f, float(z));
-			vert.uv  = glm::vec2(u, v) * tex_coord_scale;
+			vert.pos    = glm::vec3(float(x), 0.0f, float(z));
+			vert.uv     = glm::vec2(u, v) * tex_coord_scale;
 			vert.normal = glm::vec3(0.0f);
 
 			plane_vertices.push_back(vert);
@@ -861,14 +857,14 @@ void SubgroupsOperations::generate_plane()
 	ocean.grid.index_count  = vkb::to_u32(indices.size());
 
 	ocean.grid.vertex = std::make_unique<vkb::core::BufferC>(get_device(),
-                                                                        vertex_buffer_size,
-                                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                         vertex_buffer_size,
+	                                                         VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.index = std::make_unique<vkb::core::BufferC>(get_device(),
-	                                                                   index_buffer_size,
-	                                                                   VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                        index_buffer_size,
+	                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.vertex->update(plane_vertices.data(), vertex_buffer_size);
 	ocean.grid.index->update(indices.data(), index_buffer_size);
@@ -974,7 +970,7 @@ void SubgroupsOperations::create_pipelines()
 	    vkb::initializers::pipeline_color_blend_attachment_state(
 	        0xf,
 	        VK_FALSE);
-	
+
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
 	        1u,
@@ -1033,14 +1029,14 @@ void SubgroupsOperations::create_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines._default.pipeline));
 
 	if (get_device().get_gpu().get_features().fillModeNonSolid)
-{
+	{
 		rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
 		VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines.wireframe.pipeline));
 	}
 }
 
 void SubgroupsOperations::create_skybox()
-	    {
+{
 	// descriptors
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0u),
@@ -1068,7 +1064,7 @@ void SubgroupsOperations::create_skybox()
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
-	            0u,
+	        0u,
 	        VK_FALSE);
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
 	    vkb::initializers::pipeline_rasterization_state_create_info(
@@ -1082,7 +1078,7 @@ void SubgroupsOperations::create_skybox()
 	        VK_FALSE);
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(
-	            1u,
+	        1u,
 	        &blend_attachment_state);
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
@@ -1208,8 +1204,8 @@ void SubgroupsOperations::build_command_buffers()
 		if (ocean.graphics_queue_family_index != compute.queue_family_index)
 		{
 			VkMemoryBarrier memory_barrier = vkb::initializers::memory_barrier();
-			memory_barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-			memory_barrier.dstAccessMask = VK_ACCESS_INDEX_READ_BIT;
+			memory_barrier.srcAccessMask   = VK_ACCESS_SHADER_WRITE_BIT;
+			memory_barrier.dstAccessMask   = VK_ACCESS_INDEX_READ_BIT;
 
 			VkImageMemoryBarrier img_barrier            = vkb::initializers::image_memory_barrier();
 			img_barrier.image                           = fft_buffers.fft_normal_map->image;
@@ -1285,7 +1281,6 @@ void SubgroupsOperations::build_command_buffers()
 void SubgroupsOperations::draw()
 {
 	VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
-
 	// Submit compute commands
 	VkSubmitInfo compute_submit_info         = vkb::initializers::submit_info();
 	compute_submit_info.commandBufferCount   = 1;
@@ -1312,7 +1307,7 @@ void SubgroupsOperations::draw()
 	submit_info.pSignalSemaphores    = graphics_signal_semaphores;
 
 	VK_CHECK(vkQueueSubmit(queue, 1u, &submit_info, VK_NULL_HANDLE));
-	
+
 	ApiVulkanSample::submit_frame();
 }
 
@@ -1385,7 +1380,6 @@ bool SubgroupsOperations::resize(const uint32_t width, const uint32_t height)
 	update_uniform_buffers();
 	build_compute_command_buffer();
 	build_command_buffers();
-	update_uniform_buffers();
 	return true;
 }
 
@@ -1715,13 +1709,13 @@ void SubgroupsOperations::create_fft_normal_map()
 }
 
 VkDescriptorImageInfo SubgroupsOperations::create_ia_descriptor(ImageAttachment &attachment)
-	{
+{
 	VkDescriptorImageInfo image_descriptor = {};
 	image_descriptor.imageView             = attachment.view;
 	image_descriptor.imageLayout           = VK_IMAGE_LAYOUT_GENERAL;
 	image_descriptor.sampler               = attachment.sampler;
 	return image_descriptor;
-	}
+}
 
 void SubgroupsOperations::Wind::recalc()
 {
@@ -1740,6 +1734,6 @@ void SubgroupsOperations::create_command_pool()
 	VkCommandPoolCreateInfo command_pool_info = {};
 	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_info.queueFamilyIndex        = get_device().get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
-	command_pool_info.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	command_pool_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }

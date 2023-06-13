@@ -19,12 +19,6 @@
 
 #include "api_vulkan_sample.h"
 
-struct TextureQuadVertex
-{
-	glm::vec3 pos;
-	glm::vec2 uv;
-};
-
 class SubgroupsOperations : public ApiVulkanSample
 {
   public:
@@ -42,14 +36,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	void draw();
 	void load_assets();
 
-	void generate_quad();
-	void setup_descriptor_pool();
-	void setup_descriptor_set_layout();
-	void setup_descriptor_set();
-	void setup_pipelines();
-	void create_semaphore();
-	void prepare_uniform_buffers();
-
 	void prepare_compute();
 	void create_compute_queue();
 	void create_compute_command_pool();
@@ -58,6 +44,9 @@ class SubgroupsOperations : public ApiVulkanSample
 	void build_compute_command_buffer();
 
 	void generate_plane();
+	void prepare_uniform_buffers();
+	void setup_descriptor_pool();
+	void create_semaphore();
 	void create_descriptor_set_layout();
 	void create_descriptor_set();
 	void create_pipelines();
@@ -75,7 +64,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	static glm::vec2 rndGaussian();
 	uint32_t         grid_size;
 
-
 	struct Pipeline
 	{
 		void destroy(VkDevice device) const;
@@ -85,10 +73,10 @@ class SubgroupsOperations : public ApiVulkanSample
 	};
 
 	struct GridBuffers
-		{
+	{
 		std::unique_ptr<vkb::core::BufferC> vertex      = {VK_NULL_HANDLE};
 		std::unique_ptr<vkb::core::BufferC> index       = {VK_NULL_HANDLE};
-		uint32_t                           index_count = {0u};
+		uint32_t                            index_count = {0u};
 	};
 
 	struct CameraUbo
@@ -203,8 +191,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct
 	{
 		std::unique_ptr<vkb::core::BufferC> fft_input_random;
-		std::unique_ptr<ImageAttachment>   fft_input_htilde0;
-		std::unique_ptr<ImageAttachment>   fft_input_htilde0_conj;
+		std::unique_ptr<ImageAttachment>    fft_input_htilde0;
+		std::unique_ptr<ImageAttachment>    fft_input_htilde0_conj;
 
 		std::unique_ptr<ImageAttachment> fft_tilde_h_kt_dx;
 		std::unique_ptr<ImageAttachment> fft_tilde_h_kt_dy;
@@ -231,8 +219,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 		struct
 		{
-			Pipeline horizontal;	// fft.comp
-			Pipeline vertical;		// fft.comp
+			Pipeline horizontal;        // fft.comp
+			Pipeline vertical;          // fft.comp
 		} pipelines;
 
 		std::unique_ptr<ImageAttachment> tilde_axis_y = {VK_NULL_HANDLE};
@@ -244,35 +232,35 @@ class SubgroupsOperations : public ApiVulkanSample
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;	// fft_invert.comp
+		Pipeline              pipeline;        // fft_invert.comp
 	} fft_inversion;
 
-		struct
-		{
+	struct
+	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;	// fft_normal_map.comp
+		Pipeline              pipeline;        // fft_normal_map.comp
 	} fft_normal_map;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;	// fft_tilde_h0.comp
+		Pipeline              pipeline;        // fft_tilde_h0.comp
 	} initial_tildes;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;	// fft_tilde_h.comp
+		Pipeline              pipeline;        // fft_tilde_h.comp
 	} tildes;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		Pipeline              pipeline;	// butterfly_precomp.comp
+		Pipeline              pipeline;        // butterfly_precomp.comp
 	} precompute;
 
 	struct
@@ -285,8 +273,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 		struct
 		{
-			Pipeline _default;	// ocean.*
-			Pipeline wireframe;	// ocean.*
+			Pipeline _default;         // ocean.*
+			Pipeline wireframe;        // ocean.*
 		} pipelines;
 	} ocean;
 
@@ -300,7 +288,7 @@ class SubgroupsOperations : public ApiVulkanSample
 			skybox_shape.reset();
 		}
 
-		Pipeline              pipeline;	// skybox.vert / skybox.frag
+		Pipeline              pipeline;        // skybox.vert / skybox.frag
 		VkDescriptorSetLayout descriptor_set_layout;
 		VkDescriptorSet       descriptor_set;
 
