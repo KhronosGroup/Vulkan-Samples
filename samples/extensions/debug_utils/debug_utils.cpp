@@ -1055,9 +1055,9 @@ void DebugUtils::draw()
 	queue_end_label(queue);
 }
 
-bool DebugUtils::prepare(vkb::Platform &platform)
+bool DebugUtils::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

@@ -327,9 +327,6 @@ set(PLATFORM_FILES
     platform/headless_window.h
     platform/plugins/plugin.h
     platform/plugins/plugin_base.h
-    platform/hpp_application.h
-    platform/hpp_platform.h
-    platform/hpp_window.h
 
     # Source Files
     platform/headless_window.cpp

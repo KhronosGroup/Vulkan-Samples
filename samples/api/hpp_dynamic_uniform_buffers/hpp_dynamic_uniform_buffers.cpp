@@ -81,9 +81,9 @@ void HPPDynamicUniformBuffers::aligned_free(void *data)
 #endif
 }
 
-bool HPPDynamicUniformBuffers::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -304,7 +304,7 @@ void HPPDynamicUniformBuffers::prepare_uniform_buffers()
 	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), buffer_size, vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine      rnd_engine(is_benchmark_mode ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{

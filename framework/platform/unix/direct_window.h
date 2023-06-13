@@ -51,12 +51,14 @@ class DirectWindow : public Window
 
 	float get_dpi_factor() const override;
 
+	std::vector<const char *> get_required_surface_extensions() const override;
+
   private:
 	void poll_terminal();
 
   private:
 	mutable bool   keep_running = true;
-	Platform *     platform     = nullptr;
+	Platform      *platform     = nullptr;
 	float          dpi;
 	int            tty_fd;
 	struct termios termio;

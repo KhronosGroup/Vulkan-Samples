@@ -835,9 +835,9 @@ void Portability::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool Portability::prepare(vkb::Platform &platform)
+bool Portability::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

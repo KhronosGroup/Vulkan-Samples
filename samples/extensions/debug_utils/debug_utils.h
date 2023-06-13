@@ -149,7 +149,7 @@ class DebugUtils : public ApiVulkanSample
 	void                            prepare_uniform_buffers();
 	void                            update_uniform_buffers();
 	void                            draw();
-	bool                            prepare(vkb::Platform &platform) override;
+	bool                            prepare(const vkb::ApplicationOptions &options) override;
 	virtual void                    render(float delta_time) override;
 	virtual void                    on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool                    resize(const uint32_t width, const uint32_t height) override;

@@ -32,7 +32,7 @@ class LayoutTransitions : public vkb::VulkanSample
 
 	virtual ~LayoutTransitions() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
   private:
 	enum LayoutTransitionType : int

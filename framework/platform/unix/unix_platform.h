@@ -34,8 +34,6 @@ class UnixPlatform : public Platform
 
 	virtual ~UnixPlatform() = default;
 
-	virtual const char *get_surface_extension() override;
-
   protected:
 	virtual void create_window(const Window::Properties &properties) override;
 

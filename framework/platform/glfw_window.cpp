@@ -279,15 +279,17 @@ GlfwWindow::GlfwWindow(Platform *platform, const Window::Properties &properties)
 
 	switch (properties.mode)
 	{
-		case Window::Mode::Fullscreen: {
-			auto *      monitor = glfwGetPrimaryMonitor();
+		case Window::Mode::Fullscreen:
+		{
+			auto       *monitor = glfwGetPrimaryMonitor();
 			const auto *mode    = glfwGetVideoMode(monitor);
 			handle              = glfwCreateWindow(mode->width, mode->height, properties.title.c_str(), monitor, NULL);
 			break;
 		}
 
-		case Window::Mode::FullscreenBorderless: {
-			auto *      monitor = glfwGetPrimaryMonitor();
+		case Window::Mode::FullscreenBorderless:
+		{
+			auto       *monitor = glfwGetPrimaryMonitor();
 			const auto *mode    = glfwGetVideoMode(monitor);
 			glfwWindowHint(GLFW_RED_BITS, mode->redBits);
 			glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
@@ -297,7 +299,8 @@ GlfwWindow::GlfwWindow(Platform *platform, const Window::Properties &properties)
 			break;
 		}
 
-		case Window::Mode::FullscreenStretch: {
+		case Window::Mode::FullscreenStretch:
+		{
 			throw std::runtime_error("Cannot support stretch mode on this platform.");
 			break;
 		}
@@ -401,6 +404,13 @@ float GlfwWindow::get_content_scale_factor() const
 	// but non-uniform scaling is very unlikely, and would
 	// require significantly more changes in the IMGUI integration
 	return static_cast<float>(fb_width) / win_width;
+}
+
+std::vector<const char *> GlfwWindow::get_required_surface_extensions() const
+{
+	uint32_t     glfw_extension_count{0};
+	const char **names = glfwGetRequiredInstanceExtensions(&glfw_extension_count);
+	return {names, names + glfw_extension_count};
 }
 
 }        // namespace vkb

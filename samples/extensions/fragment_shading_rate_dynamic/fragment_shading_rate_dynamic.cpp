@@ -1134,9 +1134,9 @@ void FragmentShadingRateDynamic::draw()
 	submit_info.pWaitDstStageMask    = start_submit.pWaitDstStageMask;
 }
 
-bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
+bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

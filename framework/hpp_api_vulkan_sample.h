@@ -22,7 +22,6 @@
 #include <camera.h>
 #include <common/hpp_error.h>
 #include <hpp_gui.h>
-#include <platform/hpp_platform.h>
 #include <scene_graph/components/hpp_image.h>
 #include <scene_graph/components/hpp_sub_mesh.h>
 
@@ -68,7 +67,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	virtual ~HPPApiVulkanSample();
 
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void input_event(const vkb::InputEvent &input_event) override;
 
@@ -87,7 +86,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<HPPSwapchainBuffer> swapchain_buffers;
 
-	void create_render_context(vkb::platform::HPPPlatform const &platform) override;
+	void create_render_context() override;
 	void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to

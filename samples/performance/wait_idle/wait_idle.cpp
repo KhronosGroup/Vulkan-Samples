@@ -21,13 +21,9 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
 
 WaitIdle::WaitIdle()
 {
@@ -37,11 +33,9 @@ WaitIdle::WaitIdle()
 	config.insert<vkb::IntSetting>(1, wait_idle_enabled, 1);
 }
 
-bool WaitIdle::prepare(vkb::Platform &plat)
+bool WaitIdle::prepare(const vkb::ApplicationOptions &options)
 {
-	platform = &plat;
-
-	if (!VulkanSample::prepare(plat))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -63,7 +57,7 @@ bool WaitIdle::prepare(vkb::Platform &plat)
 
 	// Add a GUI with the stats you want to monitor
 	stats->request_stats({vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*this, plat.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }
@@ -71,7 +65,7 @@ bool WaitIdle::prepare(vkb::Platform &plat)
 void WaitIdle::prepare_render_context()
 {
 	render_context.reset();
-	render_context = std::make_unique<CustomRenderContext>(get_device(), get_surface(), platform->get_window(), wait_idle_enabled);
+	render_context = std::make_unique<CustomRenderContext>(get_device(), get_surface(), *window, wait_idle_enabled);
 	VulkanSample::prepare_render_context();
 }
 

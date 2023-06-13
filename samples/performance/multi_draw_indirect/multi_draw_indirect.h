@@ -29,7 +29,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 
 	~MultiDrawIndirect() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
 

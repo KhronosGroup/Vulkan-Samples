@@ -68,7 +68,7 @@ class VertexDynamicState : public ApiVulkanSample
 
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
 	void prepare_uniform_buffers();

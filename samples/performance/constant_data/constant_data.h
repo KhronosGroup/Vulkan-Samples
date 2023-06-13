@@ -97,7 +97,7 @@ class ConstantData : public vkb::VulkanSample
 
 	virtual ~ConstantData() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	/**
 	 * @brief The base subpass to help prepare the shader variants and store the push constant limit

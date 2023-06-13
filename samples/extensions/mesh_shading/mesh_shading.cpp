@@ -104,9 +104,9 @@ void MeshShading::build_command_buffers()
 	}
 }
 
-bool MeshShading::prepare(vkb::Platform &platform)
+bool MeshShading::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

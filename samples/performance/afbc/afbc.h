@@ -32,7 +32,7 @@ class AFBCSample : public vkb::VulkanSample
 
 	virtual ~AFBCSample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
 

@@ -29,7 +29,7 @@ class WaitIdle : public vkb::VulkanSample
 
 	virtual ~WaitIdle() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	/**
 	 * @brief This RenderContext is responsible containing the scene's RenderFrames
@@ -49,8 +49,6 @@ class WaitIdle : public vkb::VulkanSample
 	virtual void prepare_render_context() override;
 
   private:
-	vkb::Platform *platform;
-
 	vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	virtual void draw_gui() override;

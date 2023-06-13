@@ -50,6 +50,8 @@ class GlfwWindow : public Window
 
 	float get_content_scale_factor() const override;
 
+	std::vector<const char *> get_required_surface_extensions() const override;
+
   private:
 	GLFWwindow *handle = nullptr;
 };

@@ -19,7 +19,7 @@
 
 #include <core/hpp_device.h>
 #include <core/hpp_swapchain.h>
-#include <platform/hpp_window.h>
+#include <platform/window.h>
 #include <rendering/hpp_render_frame.h>
 
 namespace vkb
@@ -27,10 +27,10 @@ namespace vkb
 namespace rendering
 {
 /**
-* @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
-* 
-* See vkb::RenderContext for documentation
-*/
+ * @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
+ *
+ * See vkb::RenderContext for documentation
+ */
 class HPPRenderContext
 {
   public:
@@ -48,7 +48,7 @@ class HPPRenderContext
 	 */
 	HPPRenderContext(vkb::core::HPPDevice                    &device,
 	                 vk::SurfaceKHR                           surface,
-	                 const vkb::platform::HPPWindow          &window,
+	                 const vkb::Window                       &window,
 	                 vk::PresentModeKHR                       present_mode                 = vk::PresentModeKHR::eFifo,
 	                 std::vector<vk::PresentModeKHR> const   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
 	                 std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list = {
@@ -136,7 +136,7 @@ class HPPRenderContext
 	 */
 	void begin_frame();
 
-	vk::Semaphore submit(const vkb::core::HPPQueue &                       queue,
+	vk::Semaphore submit(const vkb::core::HPPQueue                        &queue,
 	                     const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
 	                     vk::Semaphore                                     wait_semaphore,
 	                     vk::PipelineStageFlags                            wait_pipeline_stage);
@@ -210,7 +210,7 @@ class HPPRenderContext
   private:
 	vkb::core::HPPDevice &device;
 
-	const vkb::platform::HPPWindow &window;
+	const vkb::Window &window;
 
 	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
 	const vkb::core::HPPQueue &queue;

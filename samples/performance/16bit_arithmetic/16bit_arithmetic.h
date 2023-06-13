@@ -30,7 +30,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 
 	virtual ~KHR16BitArithmeticSample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 

@@ -461,9 +461,9 @@ void GraphicsPipelineLibrary::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool GraphicsPipelineLibrary::prepare(vkb::Platform &platform)
+bool GraphicsPipelineLibrary::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

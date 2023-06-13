@@ -29,7 +29,6 @@ VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/type_ptr.hpp>
 VKBP_ENABLE_WARNINGS()
 
-#include "api_vulkan_sample.h"
 #include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
@@ -52,6 +51,15 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/scripts/animation.h"
 
 #include <ctpl_stl.h>
+
+struct Vertex
+{
+	glm::vec3 pos;
+	glm::vec3 normal;
+	glm::vec2 uv;
+	glm::vec4 joint0;
+	glm::vec4 weight0;
+};
 
 namespace vkb
 {

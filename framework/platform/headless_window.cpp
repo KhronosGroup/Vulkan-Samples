@@ -49,4 +49,9 @@ float HeadlessWindow::get_dpi_factor() const
 	// This factor is used for scaling UI elements, so return 1.0f (1 x n = n)
 	return 1.0f;
 }
+
+std::vector<const char *> HeadlessWindow::get_required_surface_extensions() const
+{
+	return {};
+}
 }        // namespace vkb

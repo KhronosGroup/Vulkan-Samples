@@ -33,7 +33,7 @@ class Subpasses : public vkb::VulkanSample
   public:
 	Subpasses();
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void update(float delta_time) override;
 

@@ -29,7 +29,7 @@ class FragmentShadingRateDynamic : public ApiVulkanSample
   public:
 	FragmentShadingRateDynamic();
 	~FragmentShadingRateDynamic() override;
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(uint32_t new_width, uint32_t new_height) override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;

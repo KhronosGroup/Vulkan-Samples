@@ -499,11 +499,6 @@ void AndroidPlatform::terminate(ExitCode code)
 	Platform::terminate(code);
 }
 
-const char *AndroidPlatform::get_surface_extension()
-{
-	return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
-}
-
 void AndroidPlatform::send_notification(const std::string &message)
 {
 	JNIEnv *env;
@@ -527,18 +522,6 @@ GameActivity *AndroidPlatform::get_activity()
 android_app *AndroidPlatform::get_android_app()
 {
 	return app;
-}
-
-std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
-{
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
-
-	VkPresentModeKHR              present_mode = (window_properties.vsync == Window::Vsync::OFF) ? VK_PRESENT_MODE_MAILBOX_KHR : VK_PRESENT_MODE_FIFO_KHR;
-	std::vector<VkPresentModeKHR> present_mode_priority_list{VK_PRESENT_MODE_FIFO_KHR,
-	                                                         VK_PRESENT_MODE_MAILBOX_KHR,
-	                                                         VK_PRESENT_MODE_IMMEDIATE_KHR};
-
-	return std::make_unique<RenderContext>(device, surface, *window, present_mode, present_mode_priority_list, surface_format_priority);
 }
 
 std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()

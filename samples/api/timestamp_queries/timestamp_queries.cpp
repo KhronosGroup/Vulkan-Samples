@@ -930,9 +930,9 @@ void TimestampQueries::draw()
 	get_time_stamp_results();
 }
 
-bool TimestampQueries::prepare(vkb::Platform &platform)
+bool TimestampQueries::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

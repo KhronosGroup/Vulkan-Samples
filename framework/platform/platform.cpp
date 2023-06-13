@@ -30,9 +30,16 @@
 
 #include "common/logging.h"
 #include "force_close/force_close.h"
+#include "hpp_vulkan_sample.h"
 #include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
+#include "vulkan_sample.h"
+
+namespace plugins
+{
+class BenchmarkMode;
+}
 
 namespace vkb
 {
@@ -179,21 +186,16 @@ void Platform::update()
 		}
 
 		active_app->update(delta_time);
+
+		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
+		{
+			on_post_draw(app->get_render_context());
+		}
+		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
+		{
+			on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+		}
 	}
-}
-
-std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
-{
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
-
-	VkPresentModeKHR              present_mode = (window_properties.vsync == Window::Vsync::ON) ? VK_PRESENT_MODE_FIFO_KHR : VK_PRESENT_MODE_MAILBOX_KHR;
-	std::vector<VkPresentModeKHR> present_mode_priority_list{
-	    VK_PRESENT_MODE_MAILBOX_KHR,
-	    VK_PRESENT_MODE_FIFO_KHR,
-	    VK_PRESENT_MODE_IMMEDIATE_KHR,
-	};
-
-	return std::make_unique<RenderContext>(device, surface, *window, present_mode, present_mode_priority_list, surface_format_priority);
 }
 
 void Platform::terminate(ExitCode code)
@@ -360,7 +362,7 @@ bool Platform::start_app()
 		return false;
 	}
 
-	if (!active_app->prepare(*this))
+	if (!active_app->prepare({false, window.get()}))
 	{
 		LOGE("Failed to prepare vulkan app.");
 		return false;

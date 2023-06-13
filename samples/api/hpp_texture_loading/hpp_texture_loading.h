@@ -82,7 +82,7 @@ class HPPTextureLoading : public HPPApiVulkanSample
 	void         prepare_pipeline();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
-	bool         prepare(vkb::platform::HPPPlatform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;

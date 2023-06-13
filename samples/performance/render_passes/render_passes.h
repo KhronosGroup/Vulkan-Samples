@@ -31,7 +31,7 @@ class RenderPassesSample : public vkb::VulkanSample
   public:
 	RenderPassesSample();
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void draw_gui() override;
 

@@ -32,7 +32,7 @@ class PipelineBarriers : public vkb::VulkanSample
 
 	virtual ~PipelineBarriers() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
   private:
 	enum DependencyType : int

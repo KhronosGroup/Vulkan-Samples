@@ -43,7 +43,7 @@ class RayQueries : public ApiVulkanSample
 	~RayQueries() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
   private:
 	struct GlobalUniform

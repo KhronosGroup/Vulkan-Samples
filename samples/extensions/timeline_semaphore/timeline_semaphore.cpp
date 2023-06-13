@@ -604,9 +604,9 @@ void TimelineSemaphore::create_pipelines()
 	create_graphics_pipeline();
 }
 
-bool TimelineSemaphore::prepare(vkb::Platform &platform)
+bool TimelineSemaphore::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

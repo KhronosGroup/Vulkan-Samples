@@ -99,7 +99,7 @@ class RaytracingBasic : public ApiVulkanSample
 	void          build_command_buffers() override;
 	void          update_uniform_buffers();
 	void          draw();
-	bool          prepare(vkb::Platform &platform) override;
+	bool          prepare(const vkb::ApplicationOptions &options) override;
 	virtual void  render(float delta_time) override;
 };
 

@@ -26,7 +26,7 @@ class DescriptorManagement : public vkb::VulkanSample
   public:
 	DescriptorManagement();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual ~DescriptorManagement() = default;
 

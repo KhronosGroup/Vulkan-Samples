@@ -81,7 +81,7 @@ class DescriptorBufferBasic : public ApiVulkanSample
 	void         update_uniform_buffers();
 	void         update_cube_uniform_buffers(float delta_time);
 	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	void         render(float delta_time) override;
 	void         on_update_ui_overlay(vkb::Drawer &drawer) override;
 };

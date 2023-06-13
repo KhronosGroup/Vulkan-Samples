@@ -23,7 +23,8 @@
 #include "core/device.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+#include "platform/window.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/node.h"
 #include "stats/stats.h"
@@ -58,9 +59,9 @@ PipelineCache::~PipelineCache()
 	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
 }
 
-bool PipelineCache::prepare(vkb::Platform &platform)
+bool PipelineCache::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -106,12 +107,12 @@ bool PipelineCache::prepare(vkb::Platform &platform)
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 
-	float dpi_factor = platform.get_window().get_dpi_factor();
+	float dpi_factor = window->get_dpi_factor();
 
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

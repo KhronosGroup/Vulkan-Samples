@@ -27,7 +27,12 @@
 namespace vkb
 {
 class Window;
-class Platform;
+
+struct ApplicationOptions
+{
+	bool    benchmark_enabled{false};
+	Window *window{nullptr};
+};
 
 class Application
 {
@@ -38,9 +43,8 @@ class Application
 
 	/**
 	 * @brief Prepares the application for execution
-	 * @param platform The platform the application is being run on
 	 */
-	virtual bool prepare(Platform &platform);
+	virtual bool prepare(const ApplicationOptions &options);
 
 	/**
 	 * @brief Updates the application
@@ -81,7 +85,9 @@ class Application
 
 	uint32_t last_frame_count{0};
 
-	Platform *platform;
+	bool is_benchmark_mode{false};
+
+	Window *window{nullptr};
 
   private:
 	std::string name{};

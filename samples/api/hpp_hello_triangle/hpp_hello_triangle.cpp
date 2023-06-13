@@ -18,8 +18,11 @@
 #include "hpp_hello_triangle.h"
 
 #include <common/hpp_error.h>
+#include <common/hpp_vk_common.h>
 #include <common/logging.h>
 #include <hpp_glsl_compiler.h>
+#include <platform/filesystem.h>
+#include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -373,12 +376,12 @@ HPPHelloTriangle::~HPPHelloTriangle()
 	instance.destroy();
 }
 
-bool HPPHelloTriangle::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
-	select_physical_device_and_surface(platform);
+	select_physical_device_and_surface();
 
-	const vkb::Window::Extent &extent = platform.get_window().get_extent();
+	const vkb::Window::Extent &extent = options.window->get_extent();
 	swapchain_data.extent.width       = extent.width;
 	swapchain_data.extent.height      = extent.height;
 
@@ -841,10 +844,8 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 
 /**
  * @brief Select a physical device.
- *
- * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlatform &platform)
+void HPPHelloTriangle::select_physical_device_and_surface()
 {
 	std::vector<vk::PhysicalDevice> gpus = instance.enumeratePhysicalDevices();
 
@@ -864,7 +865,7 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
 		{
 			instance.destroySurfaceKHR(surface);
 		}
-		surface = platform.get_window().create_surface(instance, gpu);
+		surface = window->create_surface(instance, gpu);
 		if (!surface)
 		{
 			throw std::runtime_error("Failed to create window surface.");

@@ -31,7 +31,7 @@ class @SAMPLE_NAME@ : public ApiVulkanSample
 	// Override basic framework functionality
 	void build_command_buffers() override;
 	void render(float delta_time) override;
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
   private:
 	// Sample specific data

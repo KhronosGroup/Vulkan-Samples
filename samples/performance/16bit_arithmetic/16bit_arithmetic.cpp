@@ -16,7 +16,7 @@
  */
 
 #include "16bit_arithmetic.h"
-#include "platform/platform.h"
+
 #include "stats/stats.h"
 #include <random>
 #include <scene_graph/components/camera.h>
@@ -45,9 +45,9 @@ KHR16BitArithmeticSample::KHR16BitArithmeticSample()
 	config.insert<vkb::BoolSetting>(1, khr_16bit_arith_enabled, true);
 }
 
-bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
+bool KHR16BitArithmeticSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -55,7 +55,7 @@ bool KHR16BitArithmeticSample::prepare(vkb::Platform &platform)
 	// Normally, we should see the immediate effect on frame times,
 	// but if we're somehow hitting 60 FPS, GPU cycles / s should go down while hitting vsync.
 	stats->request_stats({vkb::StatIndex::gpu_cycles, vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	// Set up some structs for the (color, depth) attachments in the default render pass.
 	load_store_infos.resize(2);

@@ -27,7 +27,7 @@ vk::Format HPPRenderContext::DEFAULT_VK_FORMAT = vk::Format::eR8G8B8A8Srgb;
 
 HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice                    &device,
                                    vk::SurfaceKHR                           surface,
-                                   const vkb::platform::HPPWindow          &window,
+                                   const vkb::Window                       &window,
                                    vk::PresentModeKHR                       present_mode,
                                    std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
                                    std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list) :

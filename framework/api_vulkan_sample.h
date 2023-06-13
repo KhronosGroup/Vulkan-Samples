@@ -85,7 +85,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual ~ApiVulkanSample();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void input_event(const vkb::InputEvent &input_event) override;
 
@@ -106,7 +106,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::Platform &platform) override;
+	virtual void create_render_context() override;
 	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
@@ -159,14 +159,14 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<VkFence> wait_fences;
 
 	/**
-	 * @brief Populates the swapchain_buffers vector with the image and imageviews 
+	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
 
 	/**
 	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
 	 * @param image_usage_flags The usage flags the new swapchain images will have
- 	 */
+	 */
 	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
 
 	/**
@@ -312,7 +312,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
 
 	/**
-	 * @brief Updates the overlay 
+	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */
 	void update_overlay(float delta_time);
@@ -324,7 +324,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	void draw_ui(const VkCommandBuffer command_buffer);
 
 	/**
-	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and 
+	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
 	 */
 	void prepare_frame();

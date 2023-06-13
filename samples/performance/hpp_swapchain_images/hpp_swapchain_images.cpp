@@ -29,9 +29,9 @@ HPPSwapchainImages::HPPSwapchainImages()
 	config.insert<vkb::IntSetting>(1, swapchain_image_count, 2);
 }
 
-bool HPPSwapchainImages::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPSwapchainImages::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPVulkanSample::prepare(platform))
+	if (!HPPVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -52,7 +52,7 @@ bool HPPSwapchainImages::prepare(vkb::platform::HPPPlatform &platform)
 	set_render_pipeline(std::move(render_pipeline));
 
 	stats->request_stats({vkb::StatIndex::frame_times});
-	gui = std::make_unique<vkb::HPPGui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::HPPGui>(*this, *window, stats.get());
 
 	return true;
 }

@@ -49,6 +49,8 @@ class HeadlessWindow : public Window
 
 	float get_dpi_factor() const override;
 
+	std::vector<const char *> get_required_surface_extensions() const override;
+
   private:
 	bool closed{false};
 };

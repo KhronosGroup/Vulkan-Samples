@@ -19,7 +19,7 @@
 
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
@@ -904,21 +904,18 @@ void FullScreenExclusive::initialize_windows()
 	GetWindowPlacement(HWND_application_window, &wpc);
 }
 
-bool FullScreenExclusive::prepare(vkb::Platform &platform)
+bool FullScreenExclusive::prepare(const vkb::ApplicationOptions &options)
 {
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
-	context.surface = platform.get_window().create_surface(*vk_instance);
+	context.surface = window->create_surface(*vk_instance);
 	if (!context.surface)
 		throw std::runtime_error("Failed to create window surface.");
-	auto &extent                        = platform.get_window().get_extent();
+	auto &extent                        = window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
-
-	// This is to sync the platform with the class variable, so one may gain direct access to it
-	this->platform = &platform;
 
 	// As application is running on a Windows platform, then the following TWO device extension are also needed:
 	init_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME, VK_EXT_FULL_SCREEN_EXCLUSIVE_EXTENSION_NAME});

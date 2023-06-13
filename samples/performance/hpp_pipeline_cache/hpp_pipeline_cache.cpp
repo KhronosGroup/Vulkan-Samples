@@ -46,9 +46,9 @@ HPPPipelineCache::~HPPPipelineCache()
 	vkb::fs::write_temp(device->get_resource_cache().serialize(), "cache.data");
 }
 
-bool HPPPipelineCache::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPPipelineCache::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPVulkanSample::prepare(platform))
+	if (!HPPVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -95,12 +95,12 @@ bool HPPPipelineCache::prepare(vkb::platform::HPPPlatform &platform)
 
 	stats->request_stats({vkb::StatIndex::frame_times});
 
-	float dpi_factor = platform.get_window().get_dpi_factor();
+	float dpi_factor = window->get_dpi_factor();
 
 	button_size.x = button_size.x * dpi_factor;
 	button_size.y = button_size.y * dpi_factor;
 
-	gui = std::make_unique<vkb::HPPGui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::HPPGui>(*this, *window, stats.get());
 
 	load_scene("scenes/sponza/Sponza01.gltf");
 

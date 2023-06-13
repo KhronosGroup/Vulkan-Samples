@@ -43,7 +43,7 @@ class SpecializationConstants : public vkb::VulkanSample
 
 	virtual ~SpecializationConstants() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	/**
 	 * @brief This subpass is responsible for rendering a Scene
