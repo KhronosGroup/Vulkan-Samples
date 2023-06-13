@@ -35,7 +35,7 @@ bool Application::prepare(const ApplicationOptions &options)
 	_debug_info.insert<field::MinMax, float>("fps", fps);
 	_debug_info.insert<field::MinMax, float>("frame_time", frame_time);
 
-	is_benchmark_mode = options.benchmark_enabled;
+	lock_simulation_speed = options.benchmark_enabled;
 	window            = options.window;
 
 	return true;

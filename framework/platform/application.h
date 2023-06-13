@@ -85,7 +85,7 @@ class Application
 
 	uint32_t last_frame_count{0};
 
-	bool is_benchmark_mode{false};
+	bool lock_simulation_speed{false};
 
 	Window *window{nullptr};
 
