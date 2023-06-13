@@ -19,12 +19,6 @@
 
 #include "api_vulkan_sample.h"
 
-struct TextureQuadVertex
-{
-	glm::vec3 pos;
-	glm::vec2 uv;
-};
-
 class SubgroupsOperations : public ApiVulkanSample
 {
   public:
@@ -41,16 +35,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	void draw();
 	void load_assets();
 
-	void prepare_graphics();
-	void generate_quad();
-	void setup_descriptor_pool();
-	void setup_descriptor_set_layout();
-	void setup_descriptor_set();
-	void setup_pipelines();
-	void create_semaphore();
-	void prepare_uniform_buffers();
-	void update_uniform_buffers();
-
 	void prepare_compute();
 	void create_compute_queue();
 	void create_compute_command_pool();
@@ -63,16 +47,17 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void build_compute_command_buffer();
 
-	struct GuiSettings
-	{
-		int32_t                         selected_filtr = 0;
-		static std::vector<std::string> init_filters_name()
-		{
-			std::vector<std::string> filtrs = {
-			    {"Blur"}, {"Sharpen"}, {"Edge detection"}, {"Custom"}};
-			return filtrs;
-		}
-	} gui_settings;
+	///////////////////////////////////////////////
+	void generate_grid();
+	void prepare_uniform_buffers();
+	void setup_descriptor_pool();
+	void create_descriptor_set_layout();
+	void create_descriptor_set();
+	void create_pipelines();
+
+	void update_uniform_buffers();
+
+
 
 	struct Pipeline
 	{
@@ -82,35 +67,25 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkPipelineLayout pipeline_layout;
 	};
 
-	struct
+	struct GridBuffers
 	{
-		VkSemaphore           semaphore;
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-		Pipeline              pipeline;
-		Texture               texture;
+		std::unique_ptr<vkb::core::Buffer> vertex;
+		std::unique_ptr<vkb::core::Buffer> index;
+		uint32_t                           index_count = {0u};
+	};
 
-		struct
-		{
-			std::unique_ptr<vkb::core::Buffer> vertex;
-			std::unique_ptr<vkb::core::Buffer> index;
-			uint32_t                           index_count = {0u};
-		} buffers;
-	} texture_object;
-
-	struct
+	struct CameraUbo
 	{
-		glm::mat3 kernel;
-	} kernel_ubo;
+		alignas(16) glm::mat4 projection;
+		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 model;
+	};
 
-	std::unique_ptr<vkb::core::Buffer> texture_uniform_buffer;
+	GridBuffers init_grid;        // input buffer for compute shader
 
-	struct
-	{
-		glm::mat4 projection;
-		glm::mat4 view;
-		glm::mat4 model;
-	} texture_ubo;
+	uint32_t grid_size = {128u};
+
+	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 
 	struct
 	{
@@ -127,6 +102,18 @@ class SubgroupsOperations : public ApiVulkanSample
 			Pipeline _default;
 		} pipelines;
 	} compute;
+
+	struct
+	{
+		GridBuffers grid;        // output (result) buffer for compute shader
+
+		VkDescriptorSetLayout descriptor_set_layout;
+		VkDescriptorSet       descriptor_set;
+		struct
+		{
+			Pipeline _default;
+		} pipelines;
+	} ocean;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
 };
