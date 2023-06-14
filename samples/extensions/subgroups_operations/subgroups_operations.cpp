@@ -16,6 +16,7 @@
  */
 
 #include "subgroups_operations.h"
+#include <chrono>
 
 void SubgroupsOperations::Pipeline::destroy(VkDevice device)
 {
@@ -37,6 +38,7 @@ SubgroupsOperations::SubgroupsOperations()
 
     camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
     camera.set_position({0.0f, 0.0f, -2.0f});
+    add_device_extension(VK_KHR_SPIRV_1_4_EXTENSION_NAME);
     add_device_extension(VK_EXT_SUBGROUP_SIZE_CONTROL_EXTENSION_NAME);
     add_device_extension(VK_EXT_SHADER_SUBGROUP_BALLOT_EXTENSION_NAME);        // is needed???
     add_device_extension(VK_EXT_SHADER_SUBGROUP_VOTE_EXTENSION_NAME);          // is needed???
@@ -46,10 +48,10 @@ SubgroupsOperations::~SubgroupsOperations()
 {
     if (device)
     {
-        // compute.pipelines._default.destroy(get_device().get_handle());
-        // vkDestroyDescriptorSetLayout(get_device().get_handle(), compute.descriptor_set_layout, nullptr);
-        // vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
-        // vkDestroyCommandPool(get_device().get_handle(), compute.command_pool, nullptr);
+         compute.pipelines._default.destroy(get_device().get_handle());
+         vkDestroyDescriptorSetLayout(get_device().get_handle(), compute.descriptor_set_layout, nullptr);
+         vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
+         vkDestroyCommandPool(get_device().get_handle(), compute.command_pool, nullptr);
 
         ocean.pipelines._default.destroy(get_device().get_handle());
         ocean.pipelines.wireframe.destroy(get_device().get_handle());
@@ -65,12 +67,11 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
     }
 
     load_assets();
-    //	prepare_compute();
-
-    // graphics pipeline
-    generate_grid();
-    prepare_uniform_buffers();
     setup_descriptor_pool();
+    prepare_uniform_buffers();
+    prepare_compute();
+
+    // grpahics pipeline
     create_descriptor_set_layout();
     create_descriptor_set();
     create_pipelines();
@@ -90,7 +91,7 @@ void SubgroupsOperations::prepare_compute()
     create_compute_descriptor_set();
     preapre_compute_pipeline_layout();
     prepare_compute_pipeline();
-    // build_compute_command_buffer();
+    build_compute_command_buffer();
 }
 
 void SubgroupsOperations::create_compute_queue()
@@ -128,21 +129,30 @@ void SubgroupsOperations::create_compute_command_buffer()
 
 void SubgroupsOperations::create_compute_descriptor_set_layout()
 {
-    // std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
-    //     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0), // input image
-    //     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1), // result image
-    //     vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2) // kernel matrix
-    //	};
-    // VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+     std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0u), // time ubo
+         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u), // input vertex
+         vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u) // output vertex
+        };
+     VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 
-    // VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
+     VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
 }
 
 void SubgroupsOperations::create_compute_descriptor_set()
 {
-    VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &compute.descriptor_set_layout, 1);
+    VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &compute.descriptor_set_layout, 1u);
+    VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
 
-    // VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
+    VkDescriptorBufferInfo time_ubo_buffer = create_descriptor(*time_ubo);
+    VkDescriptorBufferInfo input_vertices_buffer = create_descriptor(*init_grid.vertex);
+    VkDescriptorBufferInfo output_vertices_buffer = create_descriptor(*init_grid.vertex); // TODO: change on output buffer (temporary solution)
+    std::vector<VkWriteDescriptorSet> wirte_descriptor_sets = {
+        vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &time_ubo_buffer),
+        vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &input_vertices_buffer),
+        vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u, &output_vertices_buffer)
+    };
+    vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(wirte_descriptor_sets.size()), wirte_descriptor_sets.data(), 0u, nullptr);
 }
 
 void SubgroupsOperations::preapre_compute_pipeline_layout()
@@ -160,7 +170,7 @@ void SubgroupsOperations::prepare_compute_pipeline()
     VkComputePipelineCreateInfo computeInfo = {};
     computeInfo.sType                       = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
     computeInfo.layout                      = compute.pipelines._default.pipeline_layout;
-    computeInfo.stage                       = load_shader("subgroups_operations/blur.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+    computeInfo.stage                       = load_shader("subgroups_operations/ocean_horizontal.comp", VK_SHADER_STAGE_COMPUTE_BIT);
 
     VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &compute.pipelines._default.pipeline));
 }
@@ -178,7 +188,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 
     vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipelines._default.pipeline);
     vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, compute.pipelines._default.pipeline_layout, 0u, 1u, &compute.descriptor_set, 0u, nullptr);
-    // vkCmdDispatch(compute.command_buffer, texture_object.texture.image->get_extent().width / 32u, texture_object.texture.image->get_extent().height / 32u, 1u);
+    vkCmdDispatch(compute.command_buffer, grid_size / 16u, grid_size / 16u, 1u);
 
     VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 }
@@ -189,6 +199,12 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
     {
         gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
     }
+
+    if (gpu.get_features().fillModeNonSolid)
+    {
+        gpu.get_mutable_requested_features().fillModeNonSolid = VK_TRUE;
+    }
+
     subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
     subgroups_properties.pNext = VK_NULL_HANDLE;
 
@@ -206,6 +222,7 @@ void SubgroupsOperations::load_assets()
 void SubgroupsOperations::prepare_uniform_buffers()
 {
     camera_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    time_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
     update_uniform_buffers();
 }
 
@@ -241,7 +258,7 @@ void SubgroupsOperations::generate_grid()
         }
     }
 
-    init_grid.index_count   = static_cast<uint32_t>(grid_indices.size());
+    ocean.grid.index_count   = static_cast<uint32_t>(grid_indices.size());
     auto vertex_buffer_size = vkb::to_u32(grid_vertices.size() * sizeof(Vertex));
     auto index_buffer_size  = vkb::to_u32(grid_indices.size() * sizeof(uint32_t));
     init_grid.vertex        = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -250,17 +267,18 @@ void SubgroupsOperations::generate_grid()
                                                            VMA_MEMORY_USAGE_CPU_TO_GPU);
     init_grid.vertex->update(grid_vertices.data(), vertex_buffer_size);
 
-    init_grid.index = std::make_unique<vkb::core::Buffer>(get_device(),
+    ocean.grid.index = std::make_unique<vkb::core::Buffer>(get_device(),
                                                           index_buffer_size,
                                                           VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
-    init_grid.index->update(grid_indices.data(), index_buffer_size);
+    ocean.grid.index->update(grid_indices.data(), index_buffer_size);
 }
 
 void SubgroupsOperations::setup_descriptor_pool()
 {
     std::vector<VkDescriptorPoolSize> pool_sizes = {
-        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1u)};
+        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u),
+         vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u)};
     VkDescriptorPoolCreateInfo descriptor_pool_create_info =
         vkb::initializers::descriptor_pool_create_info(
             static_cast<uint32_t>(pool_sizes.size()),
@@ -369,12 +387,12 @@ void SubgroupsOperations::create_pipelines()
     {
         rasterization_state.polygonMode = VK_POLYGON_MODE_LINE;
         VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines.wireframe.pipeline));
-
     }
 }
 
 void SubgroupsOperations::update_uniform_buffers()
 {
+    auto t1 = std::chrono::high_resolution_clock::now();
     CameraUbo ubo;
     ubo.model      = glm::mat4(1.0f);
     ubo.model      = glm::translate(ubo.model, glm::vec3(0.0f));
@@ -382,6 +400,13 @@ void SubgroupsOperations::update_uniform_buffers()
     ubo.projection = camera.matrices.perspective;
 
     camera_ubo->convert_and_update(ubo);
+
+    TimeUbo t;
+    auto t2 = std::chrono::high_resolution_clock::now();
+
+    std::chrono::duration<float> float_time = t1 - t2; // dummy time
+    t.time = float_time.count();
+    time_ubo->convert_and_update(t);
 }
 
 void SubgroupsOperations::build_command_buffers()
@@ -421,9 +446,9 @@ void SubgroupsOperations::build_command_buffers()
 
             VkDeviceSize offset[] = {0};
             vkCmdBindVertexBuffers(cmd_buff, 0u, 1u, init_grid.vertex->get(), offset);
-            vkCmdBindIndexBuffer(cmd_buff, init_grid.index->get_handle(), VkDeviceSize(0), VK_INDEX_TYPE_UINT32);
+            vkCmdBindIndexBuffer(cmd_buff,  ocean.grid.index->get_handle(), VkDeviceSize(0), VK_INDEX_TYPE_UINT32);
 
-            vkCmdDrawIndexed(cmd_buff, init_grid.index_count, 1u, 0u, 0u, 0u);
+            vkCmdDrawIndexed(cmd_buff, ocean.grid.index_count, 1u, 0u, 0u, 0u);
         }
 
         draw_ui(cmd_buff);
@@ -443,11 +468,11 @@ void SubgroupsOperations::draw()
     ApiVulkanSample::prepare_frame();
     submit_info.commandBufferCount = 1;
     submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-    // submit_info.waitSemaphoreCount   = 2;
-    // submit_info.pWaitSemaphores      = graphics_wait_semaphores;
-    // submit_info.pWaitDstStageMask    = graphics_wait_stage_masks;
-    // submit_info.signalSemaphoreCount = 2;
-    // submit_info.pSignalSemaphores    = graphics_signal_semaphores;
+//    submit_info.waitSemaphoreCount   = 2;
+//    submit_info.pWaitSemaphores      = graphics_wait_semaphores;
+//    submit_info.pWaitDstStageMask    = graphics_wait_stage_masks;
+//    submit_info.signalSemaphoreCount = 2;
+//    submit_info.pSignalSemaphores    = graphics_signal_semaphores;
     VK_CHECK(vkQueueSubmit(queue, 1u, &submit_info, VK_NULL_HANDLE));
     ApiVulkanSample::submit_frame();
 
@@ -458,13 +483,13 @@ void SubgroupsOperations::draw()
     VkSubmitInfo compute_submit_info       = vkb::initializers::submit_info();
     compute_submit_info.commandBufferCount = 1u;
     compute_submit_info.pCommandBuffers    = &compute.command_buffer;
-    compute_submit_info.waitSemaphoreCount = 1u;
+//    compute_submit_info.waitSemaphoreCount = 1u;
 
-    compute_submit_info.pWaitDstStageMask    = &wait_stage_mask;
-    compute_submit_info.signalSemaphoreCount = 1u;
-    compute_submit_info.pSignalSemaphores    = &compute.semaphore;
+//    compute_submit_info.pWaitDstStageMask    = &wait_stage_mask;
+//    compute_submit_info.signalSemaphoreCount = 1u;
+//    compute_submit_info.pSignalSemaphores    = &compute.semaphore;
 
-    // VK_CHECK(vkQueueSubmit(compute.queue, 1u, &compute_submit_info, VK_NULL_HANDLE));
+    VK_CHECK(vkQueueSubmit(compute.queue, 1u, &compute_submit_info, VK_NULL_HANDLE));
 }
 
 void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -485,7 +510,7 @@ bool SubgroupsOperations::resize(const uint32_t width, const uint32_t height)
 {
     if (!ApiVulkanSample::resize(width, height))
         return false;
-    // build_compute_command_buffer();
+    build_compute_command_buffer();
     build_command_buffers();
     return true;
 }

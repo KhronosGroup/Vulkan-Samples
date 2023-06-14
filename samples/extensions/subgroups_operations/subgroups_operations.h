@@ -81,6 +81,11 @@ class SubgroupsOperations : public ApiVulkanSample
         alignas(16) glm::mat4 model;
     };
 
+    struct TimeUbo
+    {
+        alignas(4) float time;
+    };
+
     struct GuiConfig
     {
         bool wireframe = {false};
@@ -91,6 +96,7 @@ class SubgroupsOperations : public ApiVulkanSample
     uint32_t grid_size = {128u};
 
     std::unique_ptr<vkb::core::Buffer> camera_ubo;
+    std::unique_ptr<vkb::core::Buffer> time_ubo;
 
     struct
     {
