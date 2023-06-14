@@ -870,7 +870,8 @@ void HPPHelloTriangle::select_physical_device_and_surface()
 		{
 			instance.destroySurfaceKHR(surface);
 		}
-		surface = window->create_surface(instance, gpu);
+
+		surface = static_cast<vk::SurfaceKHR>(window->create_surface(static_cast<VkInstance>(instance), static_cast<VkPhysicalDevice>(gpu)));
 		if (!surface)
 		{
 			throw std::runtime_error("Failed to create window surface.");

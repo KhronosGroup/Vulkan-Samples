@@ -106,7 +106,7 @@ bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	instance = std::make_unique<vkb::core::HPPInstance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
 	// Getting a valid vulkan surface from the platform
-	surface = window->create_surface(*instance);
+	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::Instance &>(*instance)));
 	if (!surface)
 	{
 		throw std::runtime_error("Failed to create window surface.");

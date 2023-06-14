@@ -46,7 +46,6 @@ class HPPHlslShaders : public HPPApiVulkanSample
 	};
 
   private:
-
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample

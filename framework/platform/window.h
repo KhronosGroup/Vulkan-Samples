@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,8 +20,6 @@
 #include "common/optional.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
-#include "core/hpp_instance.h"
-#include "vulkan/vulkan.hpp"
 
 namespace vkb
 {
@@ -154,21 +152,6 @@ class Window
 	inline const Properties &get_properties() const
 	{
 		return properties;
-	}
-
-	inline vk::SurfaceKHR create_surface(vkb::core::HPPInstance &instance)
-	{
-		return static_cast<vk::SurfaceKHR>(create_surface(reinterpret_cast<vkb::Instance &>(instance)));
-	}
-
-	inline vk::SurfaceKHR create_surface(vk::Instance instance, vk::PhysicalDevice physical_device)
-	{
-		return static_cast<vk::SurfaceKHR>(create_surface(static_cast<VkInstance>(instance), static_cast<VkPhysicalDevice>(physical_device)));
-	}
-
-	inline bool get_display_present_info(vk::DisplayPresentInfoKHR *info, uint32_t src_width, uint32_t src_height) const
-	{
-		return get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(info), src_width, src_height);
 	}
 
   protected:

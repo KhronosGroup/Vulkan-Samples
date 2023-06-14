@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,10 +51,10 @@ class SurfaceRotation : public vkb::VulkanSample
 	bool last_pre_rotate = false;
 
 	/*
-	* @brief Returns the preTransform value to use when recreating
-	*        the swapchain, which depends on whether or not the
-	*        application is implementing pre-rotation
-	*/
+	 * @brief Returns the preTransform value to use when recreating
+	 *        the swapchain, which depends on whether or not the
+	 *        application is implementing pre-rotation
+	 */
 	VkSurfaceTransformFlagBitsKHR select_pre_transform();
 
 	/* @brief 180 degree rotations do not trigger a resize, but

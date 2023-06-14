@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Holochip Corporation
+/* Copyright (c) 2021-2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,7 +124,7 @@ class MultiDrawIndirect : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> device_address_buffer{nullptr};
 
 	std::vector<vkb::CommandBuffer> compute_command_buffers{};
-	const vkb::Queue *              compute_queue{nullptr};
+	const vkb::Queue               *compute_queue{nullptr};
 	std::vector<uint32_t>           queue_families;
 
 	// CPU Draw Calls

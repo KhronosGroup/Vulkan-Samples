@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -22,12 +22,12 @@
 #include "vulkan_sample.h"
 
 /**
-  * @brief The Subpasses sample shows how a significant amount of bandwidth
-  *        (L2 cache ext reads and writes) can be saved, by using sub-passes instead
-  *        of multiple render passes. In order to highlight the difference, it
-  *        implements deferred rendering with and without sub-passes, giving the
-  *        user the possibility to change some key settings.
-  */
+ * @brief The Subpasses sample shows how a significant amount of bandwidth
+ *        (L2 cache ext reads and writes) can be saved, by using sub-passes instead
+ *        of multiple render passes. In order to highlight the difference, it
+ *        implements deferred rendering with and without sub-passes, giving the
+ *        user the possibility to change some key settings.
+ */
 class Subpasses : public vkb::VulkanSample
 {
   public:

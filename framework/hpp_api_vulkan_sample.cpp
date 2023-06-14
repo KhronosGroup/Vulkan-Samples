@@ -481,7 +481,7 @@ void HPPApiVulkanSample::submit_frame()
 
 		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    window->get_display_present_info(&disp_present_info, extent.width, extent.height))
+		    window->get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), extent.width, extent.height))
 		{
 			// Add display present info if supported and wanted
 			present_info.setPNext(&disp_present_info);

@@ -149,6 +149,13 @@ ExitCode Platform::main_loop()
 
 			update();
 
+			if (active_app && active_app->should_close())
+			{
+				std::string id = active_app->get_name();
+				on_app_close(id);
+				active_app->finish();
+			}
+
 			window->process_events();
 		}
 		catch (std::exception &e)
@@ -212,9 +219,7 @@ void Platform::terminate(ExitCode code)
 	if (active_app)
 	{
 		std::string id = active_app->get_name();
-
 		on_app_close(id);
-
 		active_app->finish();
 	}
 

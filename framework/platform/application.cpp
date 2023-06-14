@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -36,7 +36,7 @@ bool Application::prepare(const ApplicationOptions &options)
 	_debug_info.insert<field::MinMax, float>("frame_time", frame_time);
 
 	lock_simulation_speed = options.benchmark_enabled;
-	window            = options.window;
+	window                = options.window;
 
 	return true;
 }

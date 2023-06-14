@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,6 +76,18 @@ class Application
 
 	DebugInfo &get_debug_info();
 
+	inline bool should_close() const
+	{
+		return requested_close;
+	}
+
+	// request the app to close
+	// does not guarantee that the app will close immediately
+	inline void close()
+	{
+		requested_close = true;
+	}
+
   protected:
 	float fps{0.0f};
 
@@ -94,5 +106,7 @@ class Application
 
 	// The debug info of the app
 	DebugInfo debug_info{};
+
+	bool requested_close{false};
 };
 }        // namespace vkb

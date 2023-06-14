@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2021-2023, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,11 +35,11 @@ class TextureCompressionComparison : public vkb::VulkanSample
 	struct CompressedTexture_t
 	{
 		VkBool32 VkPhysicalDeviceFeatures::*feature_ptr{nullptr};
-		const char *                        extension_name   = "";
+		const char                         *extension_name   = "";
 		VkFormat                            format           = VK_FORMAT_MAX_ENUM;
 		ktx_transcode_fmt_e                 ktx_format       = KTX_TTF_NOSELECTION;
-		const char *                        format_name      = "";
-		const char *                        short_name       = "";
+		const char                         *format_name      = "";
+		const char                         *short_name       = "";
 		bool                                always_supported = false;
 	};
 
@@ -65,7 +65,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
 	};
 
   private:
-	static const std::vector<CompressedTexture_t> &              get_texture_formats();
+	static const std::vector<CompressedTexture_t>               &get_texture_formats();
 	bool                                                         is_texture_format_supported(const CompressedTexture_t &format);
 	void                                                         get_available_texture_formats();
 	void                                                         load_assets();
@@ -78,7 +78,7 @@ class TextureCompressionComparison : public vkb::VulkanSample
 	std::vector<CompressedTexture_t>                             available_texture_formats = {};
 	std::unordered_map<std::string, SampleTexture>               texture_raw_data;
 	std::vector<std::pair<vkb::sg::Texture *, std::string>>      textures;
-	vkb::sg::Camera *                                            camera{VK_NULL_HANDLE};
+	vkb::sg::Camera                                             *camera{VK_NULL_HANDLE};
 	TextureBenchmark                                             current_benchmark{};
 	int                                                          current_format = 0, current_gui_format = 0;
 	bool                                                         require_redraw = true;

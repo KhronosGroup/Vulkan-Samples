@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
 
 #include "common/vk_common.h"
 #include "platform/platform.h"

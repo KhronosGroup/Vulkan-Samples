@@ -54,7 +54,7 @@ bool HPPHDR::prepare(const vkb::ApplicationOptions &options)
 	prepare_offscreen_buffer();
 
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	descriptor_pool = get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
+	descriptor_pool                                  = get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
 
 	setup_bloom();
 	setup_composition();

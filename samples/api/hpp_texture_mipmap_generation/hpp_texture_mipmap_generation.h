@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -49,7 +49,6 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	};
 
   private:
-
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample

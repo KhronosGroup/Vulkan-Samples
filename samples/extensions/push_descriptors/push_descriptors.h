@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,9 +20,9 @@
  *
  * Note: Requires a device that supports the VK_KHR_push_descriptor extension
  *
- * Push descriptors apply the push constants concept to descriptor sets. So instead of creating 
- * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects, 
- * this example uses push descriptors to pass descriptor sets for per-model textures and matrices 
+ * Push descriptors apply the push constants concept to descriptor sets. So instead of creating
+ * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects,
+ * this example uses push descriptors to pass descriptor sets for per-model textures and matrices
  * at command buffer creation time.
  */
 

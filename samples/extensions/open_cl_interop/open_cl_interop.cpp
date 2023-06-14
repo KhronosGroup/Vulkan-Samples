@@ -21,7 +21,6 @@
 #include "gui.h"
 #include "platform/filesystem.h"
 
-
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
 #include <strstream>

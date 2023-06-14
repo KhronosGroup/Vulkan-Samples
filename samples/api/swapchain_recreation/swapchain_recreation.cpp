@@ -22,7 +22,6 @@
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
 
-
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();
 
 void SwapchainRecreation::get_queue()

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -82,7 +82,7 @@ class SpecializationConstants : public vkb::VulkanSample
 				if (lights.size() < light_count)
 				{
 					const auto &properties = scene_light->get_properties();
-					auto &      transform  = scene_light->get_node()->get_transform();
+					auto       &transform  = scene_light->get_node()->get_transform();
 
 					vkb::Light light{{transform.get_translation(), static_cast<float>(scene_light->get_light_type())},
 					                 {properties.color, properties.intensity},
@@ -95,7 +95,7 @@ class SpecializationConstants : public vkb::VulkanSample
 
 			std::copy(lights.begin(), lights.end(), light_info.lights);
 
-			auto &                render_frame = get_render_context().get_active_frame();
+			auto                 &render_frame = get_render_context().get_active_frame();
 			vkb::BufferAllocation light_buffer = render_frame.allocate_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, sizeof(T));
 			light_buffer.update(light_info);
 

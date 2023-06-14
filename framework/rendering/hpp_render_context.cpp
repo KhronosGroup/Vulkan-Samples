@@ -380,7 +380,7 @@ void HPPRenderContext::end_frame(vk::Semaphore semaphore)
 
 		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    window.get_display_present_info(&disp_present_info, surface_extent.width, surface_extent.height))
+		    window.get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), surface_extent.width, surface_extent.height))
 		{
 			// Add display present info if supported and wanted
 			present_info.pNext = &disp_present_info;
