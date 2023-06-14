@@ -174,11 +174,11 @@ void SubgroupsOperations::create_compute_queue()
 
 void SubgroupsOperations::create_compute_command_pool()
 {
-	VkCommandPoolCreateInfo command_pool_create_info = {};
-	command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	command_pool_create_info.queueFamilyIndex        = compute.queue_family_index;
-	command_pool_create_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
+    VkCommandPoolCreateInfo command_pool_create_info = {};
+    command_pool_create_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    command_pool_create_info.queueFamilyIndex        = compute.queue_family_index;
+    command_pool_create_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VK_CHECK(vkCreateCommandPool(get_device().get_handle(), &command_pool_create_info, nullptr, &compute.command_pool));
 }
 
 void SubgroupsOperations::create_compute_command_buffer()
@@ -646,10 +646,10 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
 	subgroups_properties.pNext = VK_NULL_HANDLE;
 
-	VkPhysicalDeviceProperties2 device_properties2 = {};
-	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
-	device_properties2.pNext                       = &subgroups_properties;
-	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+    VkPhysicalDeviceProperties2 device_properties2 = {};
+    device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+    device_properties2.pNext                       = &subgroups_properties;
+    vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 }
 
 void SubgroupsOperations::create_initial_tides()
@@ -921,17 +921,17 @@ void SubgroupsOperations::create_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
 	        6u)};
 
-	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
-	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
+    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
+    VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
 
-	VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&ocean.descriptor_set_layout);
-	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &ocean.pipelines._default.pipeline_layout));
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&ocean.descriptor_set_layout);
+    VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &ocean.pipelines._default.pipeline_layout));
 }
 
 void SubgroupsOperations::create_descriptor_set()
 {
-	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &ocean.descriptor_set_layout, 1u);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &ocean.descriptor_set));
+    VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &ocean.descriptor_set_layout, 1u);
+    VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &ocean.descriptor_set));
 
 	VkDescriptorBufferInfo buffer_descriptor              = create_descriptor(*camera_ubo);
 	VkDescriptorImageInfo  displacement_descriptor        = create_ia_descriptor(*fft_buffers.fft_displacement);
@@ -950,7 +950,7 @@ void SubgroupsOperations::create_descriptor_set()
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &ocean_params_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6u, &skybox_cubemap_descriptor)};
 
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+    vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
 
 void SubgroupsOperations::create_pipelines()
@@ -1181,25 +1181,25 @@ void SubgroupsOperations::update_uniform_buffers()
 
 void SubgroupsOperations::build_command_buffers()
 {
-	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+    VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	std::array<VkClearValue, 2> clear_values = {};
 	clear_values[0].color                    = {{0.0f, 0.0f, 0.0f, 0.0f}};
 	clear_values[1].depthStencil             = {0.0f, 0u};
 
-	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
-	render_pass_begin_info.renderPass               = render_pass;
-	render_pass_begin_info.renderArea.extent.width  = width;
-	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
-	render_pass_begin_info.pClearValues             = clear_values.data();
+    VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+    render_pass_begin_info.renderPass               = render_pass;
+    render_pass_begin_info.renderArea.extent.width  = width;
+    render_pass_begin_info.renderArea.extent.height = height;
+    render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
+    render_pass_begin_info.pClearValues             = clear_values.data();
 
-	for (uint32_t i = 0u; i < draw_cmd_buffers.size(); ++i)
-	{
-		render_pass_begin_info.framebuffer = framebuffers[i];
-		auto &cmd_buff                     = draw_cmd_buffers[i];
+    for (uint32_t i = 0u; i < draw_cmd_buffers.size(); ++i)
+    {
+        render_pass_begin_info.framebuffer = framebuffers[i];
+        auto &cmd_buff                     = draw_cmd_buffers[i];
 
-		VK_CHECK(vkBeginCommandBuffer(cmd_buff, &command_buffer_begin_info));
+        VK_CHECK(vkBeginCommandBuffer(cmd_buff, &command_buffer_begin_info));
 
 		if (ocean.graphics_queue_family_index != compute.queue_family_index)
 		{
@@ -1226,8 +1226,8 @@ void SubgroupsOperations::build_command_buffers()
 
 		vkCmdBeginRenderPass(cmd_buff, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-		vkCmdSetViewport(cmd_buff, 0u, 1u, &viewport);
+        VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+        vkCmdSetViewport(cmd_buff, 0u, 1u, &viewport);
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(cmd_buff, 0u, 1u, &scissor);
@@ -1251,9 +1251,9 @@ void SubgroupsOperations::build_command_buffers()
 			vkCmdDrawIndexed(cmd_buff, ocean.grid.index_count, 1u, 0u, 0u, 0u);
 		}
 
-		draw_ui(cmd_buff);
+        draw_ui(cmd_buff);
 
-		vkCmdEndRenderPass(cmd_buff);
+        vkCmdEndRenderPass(cmd_buff);
 
 		if (ocean.graphics_queue_family_index != compute.queue_family_index)
 		{
@@ -1726,7 +1726,7 @@ void SubgroupsOperations::Wind::recalc()
 
 std::unique_ptr<vkb::VulkanSampleC> create_subgroups_operations()
 {
-	return std::make_unique<SubgroupsOperations>();
+    return std::make_unique<SubgroupsOperations>();
 }
 
 void SubgroupsOperations::create_command_pool()
