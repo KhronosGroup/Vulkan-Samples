@@ -22,100 +22,106 @@
 class SubgroupsOperations : public ApiVulkanSample
 {
   public:
-	SubgroupsOperations();
-	~SubgroupsOperations();
+    SubgroupsOperations();
+    ~SubgroupsOperations();
 
-	bool prepare(vkb::Platform &platform) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
-	void build_command_buffers() override;
-	void render(float delta_time) override;
-	bool resize(const uint32_t width, const uint32_t height) override;
-	void on_update_ui_overlay(vkb::Drawer &drawer) override;
+    bool prepare(vkb::Platform &platform) override;
+    void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+    void build_command_buffers() override;
+    void render(float delta_time) override;
+    bool resize(const uint32_t width, const uint32_t height) override;
+    void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
-	void draw();
-	void load_assets();
+    void draw();
+    void load_assets();
 
-	void prepare_compute();
-	void create_compute_queue();
-	void create_compute_command_pool();
-	void create_compute_command_buffer();
-	void create_compute_descriptor_set_layout();
-	void create_compute_descriptor_set();
+    void prepare_compute();
+    void create_compute_queue();
+    void create_compute_command_pool();
+    void create_compute_command_buffer();
+    void create_compute_descriptor_set_layout();
+    void create_compute_descriptor_set();
 
-	void preapre_compute_pipeline_layout();
-	void prepare_compute_pipeline();
+    void preapre_compute_pipeline_layout();
+    void prepare_compute_pipeline();
 
-	void build_compute_command_buffer();
+    void build_compute_command_buffer();
 
-	///////////////////////////////////////////////
-	void generate_grid();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void create_descriptor_set_layout();
-	void create_descriptor_set();
-	void create_pipelines();
+    ///////////////////////////////////////////////
+    void generate_grid();
+    void prepare_uniform_buffers();
+    void setup_descriptor_pool();
+    void create_descriptor_set_layout();
+    void create_descriptor_set();
+    void create_pipelines();
 
-	void update_uniform_buffers();
+    void update_uniform_buffers();
 
 
 
-	struct Pipeline
-	{
-		void destroy(VkDevice device);
+    struct Pipeline
+    {
+        void destroy(VkDevice device);
 
-		VkPipeline       pipeline;
-		VkPipelineLayout pipeline_layout;
-	};
+        VkPipeline       pipeline;
+        VkPipelineLayout pipeline_layout;
+    };
 
-	struct GridBuffers
-	{
-		std::unique_ptr<vkb::core::Buffer> vertex;
-		std::unique_ptr<vkb::core::Buffer> index;
-		uint32_t                           index_count = {0u};
-	};
+    struct GridBuffers
+    {
+        std::unique_ptr<vkb::core::Buffer> vertex;
+        std::unique_ptr<vkb::core::Buffer> index;
+        uint32_t                           index_count = {0u};
+    };
 
-	struct CameraUbo
-	{
-		alignas(16) glm::mat4 projection;
-		alignas(16) glm::mat4 view;
-		alignas(16) glm::mat4 model;
-	};
+    struct CameraUbo
+    {
+        alignas(16) glm::mat4 projection;
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 model;
+    };
 
-	GridBuffers init_grid;        // input buffer for compute shader
+    struct GuiConfig
+    {
+        bool wireframe = {false};
+    } ui;
 
-	uint32_t grid_size = {128u};
+    GridBuffers init_grid;        // input buffer for compute shader
 
-	std::unique_ptr<vkb::core::Buffer> camera_ubo;
+    uint32_t grid_size = {128u};
 
-	struct
-	{
-		VkQueue               queue;
-		VkCommandPool         command_pool;
-		VkCommandBuffer       command_buffer;
-		VkSemaphore           semaphore;
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-		uint32_t              queue_family_index;
+    std::unique_ptr<vkb::core::Buffer> camera_ubo;
 
-		struct
-		{
-			Pipeline _default;
-		} pipelines;
-	} compute;
+    struct
+    {
+        VkQueue               queue;
+        VkCommandPool         command_pool;
+        VkCommandBuffer       command_buffer;
+        VkSemaphore           semaphore;
+        VkDescriptorSetLayout descriptor_set_layout;
+        VkDescriptorSet       descriptor_set;
+        uint32_t              queue_family_index;
 
-	struct
-	{
-		GridBuffers grid;        // output (result) buffer for compute shader
+        struct
+        {
+            Pipeline _default;
+        } pipelines;
+    } compute;
 
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-		struct
-		{
-			Pipeline _default;
-		} pipelines;
-	} ocean;
+    struct
+    {
+        GridBuffers grid;        // output (result) buffer for compute shader
 
-	VkPhysicalDeviceSubgroupProperties subgroups_properties;
+        VkDescriptorSetLayout descriptor_set_layout;
+        VkDescriptorSet       descriptor_set;
+        struct
+        {
+            Pipeline _default;
+            Pipeline wireframe;
+        } pipelines;
+    } ocean;
+
+    VkPhysicalDeviceSubgroupProperties subgroups_properties;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
