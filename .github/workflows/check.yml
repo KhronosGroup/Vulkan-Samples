@@ -66,5 +66,6 @@ jobs:
       with:
         submodules: "recursive"
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
+    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - run: /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet framework/* samples/* app/* tests/*
+    - run: /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet $(echo $(git diff -U0 --no-color $TARGET_BRANCH))
