@@ -22,14 +22,13 @@
 ## Contents <!-- omit in toc -->
 
 - [CMake Options](#cmake-options)
-  - [VKB\_<sample_name>](#vkb_sample_name)
-  - [VKB_BUILD_SAMPLES](#vkb_build_samples)
-  - [VKB_BUILD_TESTS](#vkb_build_tests)
-  - [VKB_VALIDATION_LAYERS](#vkb_validation_layers)
-      - [VKB_VALIDATION_LAYERS_GPU_ASSISTED](#vkb_validation_layers_gpu_assisted)
-      - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
-  - [VKB_VULKAN_DEBUG](#vkb_vulkan_debug)
-  - [VKB_WARNINGS_AS_ERRORS](#vkb_warnings_as_errors)
+  - [VKB\_\<sample\_name\>](#vkb_sample_name)
+  - [VKB\_BUILD\_SAMPLES](#vkb_build_samples)
+  - [VKB\_BUILD\_TESTS](#vkb_build_tests)
+  - [VKB\_VALIDATION\_LAYERS](#vkb_validation_layers)
+  - [VKB\_VALIDATION\_LAYERS\_GPU\_ASSISTED](#vkb_validation_layers_gpu_assisted)
+  - [VKB\_VULKAN\_DEBUG](#vkb_vulkan_debug)
+  - [VKB\_WARNINGS\_AS\_ERRORS](#vkb_warnings_as_errors)
 - [Quality Assurance](#quality-assurance)
 - [3D models](#3d-models)
 - [Performance data](#performance-data)
@@ -46,6 +45,11 @@
 - [Android](#android)
   - [Dependencies](#dependencies-3)
   - [Build with Gradle](#build-with-gradle)
+    - [Generate the gradle project](#generate-the-gradle-project)
+    - [Install dependencies](#install-dependencies)
+    - [Build the project](#build-the-project)
+    - [Install the apk on the device](#install-the-apk-on-the-device)
+  - [Build with Android Studio](#build-with-android-studio)
 
 ## CMake Options
 
@@ -296,17 +300,10 @@ Their versions are configured in the [build.gradle.in](https://github.com/Khrono
 
 #### Generate the gradle project 
 
-Use the provided script for the platform you are building on by running the following command:
-##### Windows <!-- omit in toc -->
+To generate the gradle project, run the following command:
 
 ```
-bldsys\scripts\generate_android_gradle.bat
-```
-
-##### Linux <!-- omit in toc -->
-
-```
-./bldsys/scripts/generate_android_gradle.sh
+./scripts/generate.sh android
 ```
 
 A new folder will be created in the root directory at `build\android_gradle`
