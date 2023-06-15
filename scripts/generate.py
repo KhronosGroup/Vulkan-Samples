@@ -88,13 +88,13 @@ def generate_android_gradle(args):
         ]
     )
 
-def generate_sample_help(subparsers):
+def generate_sample_help(subparsers, template):
     parser = subparsers.add_parser(
-        "sample",
+        template,
         help="Generate sample project",
     )
 
-    parser.set_defaults(func=generate_sample)
+    parser.set_defaults(func=generate_sample(template))
 
     parser.add_argument(
         "--name",
@@ -111,13 +111,6 @@ def generate_sample_help(subparsers):
     )
 
     parser.add_argument(
-        "--template",
-        type=str,
-        help="Which template to use",
-        default="sample",
-    )
-
-    parser.add_argument(
         "--output-dir",
         type=str,
         help="Output Directory: <project_dir>/samples/<category>",
@@ -125,34 +118,37 @@ def generate_sample_help(subparsers):
     )
 
 
-def generate_sample(args):
-    output_dir = (
-        args.output_dir
-        if args.output_dir
-        else os.path.join(ROOT_DIR, "samples", args.category)
-    )
+def generate_sample(template):
+    def func(args):
+        output_dir = (
+            args.output_dir
+            if args.output_dir
+            else os.path.join(ROOT_DIR, "samples", args.category)
+        )
 
-    if not which("cmake"):
-        print("Missing cmake")
-        sys.exit(1)
+        if not which("cmake"):
+            print("Missing cmake")
+            sys.exit(1)
 
-    print(
-        terminal_colors.INFO
-        + "Generating sample project "
-        + args.name
-        + terminal_colors.END
-    )
+        print(
+            terminal_colors.INFO
+            + "Generating sample project "
+            + args.name
+            + terminal_colors.END
+        )
 
-    check_output(
-        [
-            "cmake",
-            "-DSAMPLE_NAME={}".format(args.name),
-            "-DTEMPLATE_NAME={}".format(args.template),
-            "-DOUTPUT_DIR={}".format(output_dir),
-            "-P",
-            os.path.join(ROOT_DIR, "bldsys", "cmake", "create_sample_project.cmake"),
-        ]
-    )
+        check_output(
+            [
+                "cmake",
+                "-DSAMPLE_NAME={}".format(args.name),
+                "-DTEMPLATE_NAME={}".format(template),
+                "-DOUTPUT_DIR={}".format(output_dir),
+                "-P",
+                os.path.join(ROOT_DIR, "bldsys", "cmake", "create_sample_project.cmake"),
+            ]
+        )
+
+    return func
 
 
 if __name__ == "__main__":
@@ -163,7 +159,8 @@ if __name__ == "__main__":
     )
 
     generate_android_gradle_help(subparsers)
-    generate_sample_help(subparsers)
+    generate_sample_help(subparsers, "sample")
+    generate_sample_help(subparsers, "sample_api")
 
     args = argument_parser.parse_args()
 

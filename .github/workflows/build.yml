@@ -81,7 +81,7 @@ jobs:
           cache: gradle
 
       - name: "Run generate script"
-        run: ./bldsys/scripts/generate_android_gradle.sh
+        run: ./scripts/generate.py android
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
