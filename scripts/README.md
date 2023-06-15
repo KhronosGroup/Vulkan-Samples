@@ -44,7 +44,31 @@ samples/category/my_sample/sample_name.h
 A new class will also be generated
 
 ```cpp
-class SampleName ... {
+class SampleName : public VulkanSample {
+...
+};
+```
+
+### Generate API Sample
+
+API samples can be generated using the following command:
+
+```bash
+./scripts/generate.py sample_api --name <SampleName> --category <category> --output-dir <output_dir>
+```
+
+Running the above line will generate the following files:
+
+```bash
+samples/category/my_sample/CMakeLists.txt
+samples/category/my_sample/sample_name.cpp
+samples/category/my_sample/sample_name.h
+```
+
+A new class will also be generated
+
+```cpp
+class SampleName :public ApiVulkanSample {
 ...
 };
 ```
