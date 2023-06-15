@@ -72,4 +72,9 @@ DebugInfo &Application::get_debug_info()
 {
 	return debug_info;
 }
+
+std::weak_ptr<Gui> Application::get_Gui()
+{
+	return gui;
+}
 }        // namespace vkb

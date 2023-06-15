@@ -20,6 +20,7 @@
 #include <string>
 
 #include "debug_info.h"
+#include "gui.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
 #include "timer.h"
@@ -72,6 +73,8 @@ class Application
 
 	DebugInfo &get_debug_info();
 
+	std::weak_ptr<Gui> get_Gui();
+
   protected:
 	float fps{0.0f};
 
@@ -82,6 +85,8 @@ class Application
 	uint32_t last_frame_count{0};
 
 	Platform *platform;
+
+	std::shared_ptr<Gui> gui{nullptr};
 
   private:
 	std::string name{};

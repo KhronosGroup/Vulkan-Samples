@@ -154,13 +154,15 @@ class Platform
 
 	std::unique_ptr<Window> window{nullptr};
 
+	std::weak_ptr<Gui> gui;
+
 	std::unique_ptr<Application> active_app{nullptr};
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
 	/**
 	 * @brief Handles the creation of the window
-	 * 
+	 *
 	 * @param properties Preferred window configuration
 	 */
 	virtual void create_window(const Window::Properties &properties) = 0;
@@ -170,6 +172,7 @@ class Platform
 	void on_app_start(const std::string &app_id);
 	void on_app_close(const std::string &app_id);
 	void on_platform_close();
+	void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	Window::Properties window_properties;              /* Source of truth for window state */
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */

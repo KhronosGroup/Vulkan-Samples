@@ -20,7 +20,6 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
-#include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
@@ -113,13 +112,13 @@ class VulkanSample : public Application
 
 	/**
 	 * @brief Create the Vulkan device used by this sample
-	 * @note Can be overridden to implement custom device creation 
+	 * @note Can be overridden to implement custom device creation
 	 */
 	virtual void create_device();
 
 	/**
 	 * @brief Create the Vulkan instance used by this sample
-	 * @note Can be overridden to implement custom instance creation 
+	 * @note Can be overridden to implement custom instance creation
 	 */
 	virtual void create_instance();
 
@@ -134,7 +133,7 @@ class VulkanSample : public Application
 
 	void finish() override;
 
-	/** 
+	/**
 	 * @brief Loads the scene
 	 *
 	 * @param path The path of the glTF file
@@ -182,8 +181,6 @@ class VulkanSample : public Application
 	 * @brief Holds all scene information
 	 */
 	std::unique_ptr<sg::Scene> scene{nullptr};
-
-	std::unique_ptr<Gui> gui{nullptr};
 
 	std::unique_ptr<Stats> stats{nullptr};
 
@@ -270,12 +267,12 @@ class VulkanSample : public Application
 	 */
 	virtual void request_gpu_features(PhysicalDevice &gpu);
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the render_context
 	 */
 	virtual void create_render_context(Platform &platform);
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
 	virtual void prepare_render_context();

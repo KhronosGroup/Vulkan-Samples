@@ -33,6 +33,7 @@
 #include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
+#include "stats/stats.h"
 
 namespace vkb
 {
@@ -171,6 +172,11 @@ void Platform::update()
 
 	if (focused)
 	{
+		if (gui.lock())
+		{
+			// on_update_ui_overlay(gui.lock()->get_drawer());
+		}
+
 		on_update(delta_time);
 
 		if (fixed_simulation_fps)
@@ -382,6 +388,7 @@ bool Platform::start_app()
 		return false;
 	}
 
+	gui = active_app->get_Gui();
 	on_app_start(requested_app_info->id);
 
 	return true;
@@ -458,6 +465,11 @@ void Platform::on_app_close(const std::string &app_id)
 void Platform::on_platform_close()
 {
 	HOOK(Hook::OnPlatformClose, on_platform_close());
+}
+
+void Platform::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	HOOK(Hook::OnUpdateUi, on_update_ui_overlay(drawer));
 }
 
 #undef HOOK
