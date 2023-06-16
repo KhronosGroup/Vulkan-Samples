@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-if(NOT CMAKE_C_COMPILER_LAUNCHER)
+if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER)
 find_program(CCACHE_FOUND ccache)
 find_program(SCCACHE_FOUND sccache)
 if(CCACHE_FOUND)
