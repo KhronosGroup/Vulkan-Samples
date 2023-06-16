@@ -31,6 +31,7 @@ jobs:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
         name: Configure
+        shell: pwsh
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=sccache -D CMAKE_CXX_COMPILER_LAUNCHER=sccache
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure
@@ -79,10 +80,14 @@ jobs:
           java-version: "11"
           distribution: "temurin"
           cache: gradle
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
 
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew app:assemble${{ matrix.build_type }} --info
+        run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
