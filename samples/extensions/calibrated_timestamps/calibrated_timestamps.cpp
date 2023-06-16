@@ -17,7 +17,6 @@
 
 #include "calibrated_timestamps.h"
 
-
 std::string time_domain_to_string(VkTimeDomainEXT input_time_domain)
 {
 	switch (input_time_domain)
