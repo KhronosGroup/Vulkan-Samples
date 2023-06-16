@@ -25,7 +25,7 @@ jobs:
         id: changes
         # Set outputs using the command.
         run: |
-          echo "::set-output name=all::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -v -e .github -e third_party | xargs)"
+          echo "::set-output name=all::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -v -e .github -e third_party -e .in$ | xargs)"
 
   doxygen:
     name: Doxygen Syntax Check
