@@ -40,7 +40,7 @@ jobs:
         name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --config ${{ matrix.build_type }} ${{ env.PARALLEL }} -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache --build "build/${{ matrix.platform }}" --target vulkan_samples
+        run: cmake --config ${{ matrix.build_type }} ${{ env.PARALLEL }} --build "build/${{ matrix.platform }}" --target vulkan_samples
 
 
   build_d2d:
