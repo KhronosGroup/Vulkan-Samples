@@ -24,10 +24,11 @@ struct Vertex {
 	vec3 position;
 };
 
-layout (binding = 0) uniform TimeUbo
+layout (binding = 0) uniform Ubo
 {
+	uint grid_size;
 	float time;
-} uboTime;
+} ubo;
 
 layout (std140, binding = 1) readonly buffer VertexInBuffer
 {
@@ -41,10 +42,10 @@ layout (std140, binding = 2) buffer VertexOutBuffer
 
 void main()
 {
-	uint idx = gl_GlobalInvocationID.x + gl_GlobalInvocationID.y;
+	uint idx = gl_LocalInvocationIndex; // gl_GlobalInvocationID.x  + gl_GlobalInvocationID.y * ubo.grid_size;
 	Vertex inVertex = verticesIn[idx];
-	inVertex.position.x = inVertex.position.x * sin(uboTime.time);
-	// subgroupBarrier();
+	// inVertex.position.y = sin(inVertex.position.x * inVertex.position.y); // * sin(uboTime.time);
+	//subgroupBarrier();
 	verticesOut[idx].position = inVertex.position;
 	
 }
