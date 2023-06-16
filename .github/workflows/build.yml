@@ -29,7 +29,7 @@ jobs:
         name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
       - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2.4
+        uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
@@ -37,16 +37,11 @@ jobs:
         shell: bash
         run: |
           choco install ccache
-          echo "=============="
-          ccache --version
-          echo "=============="
           choco install ninja
-          echo "=============="
-          ninja --version
       - if: ${{ matrix.platform == 'windows' }}
         name: Configure
         shell: bash
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
@@ -95,7 +90,7 @@ jobs:
           distribution: "temurin"
           cache: gradle
       - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
 
