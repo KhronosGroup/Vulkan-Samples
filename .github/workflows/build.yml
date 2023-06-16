@@ -28,19 +28,19 @@ jobs:
       - if: ${{ matrix.platform == 'windows' }}
         name: Setup MSVC
         uses: ilammy/msvc-dev-cmd@v1
-      - name: ccache
+      - if: ${{ matrix.platform == 'windows' }}
+        name: sccache
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
-      - if: ${{ matrix.platform == 'windows' }}
-        name: Configure and build
-        shell: bash
-        run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
-        
+          variant: sccache
       - if: ${{ matrix.platform != 'windows' }}
-        name: Configure and build
+        name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+      - name: Configure and build
+        shell: bash
         run: |
           cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
