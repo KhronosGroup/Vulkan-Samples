@@ -40,16 +40,17 @@ jobs:
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
-        name: Configure
+        name: Configure and build
         shell: bash
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+        run: |
+          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=sccache -DCMAKE_CXX_COMPILER_LAUNCHER=sccache
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+        
       - if: ${{ matrix.platform != 'windows' }}
-        name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-      - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        shell: bash
-        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
-
+        name: Configure and build
+        run: |
+          cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
     name: "Build Ubuntu with Direct To Display"
