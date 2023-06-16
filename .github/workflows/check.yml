@@ -11,7 +11,7 @@ env:
 jobs:
   changed-files:
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
-    runs-on: alpine-latest
+    runs-on: ubuntu-latest
     # Map a step output to a job output
     outputs:
       all: ${{ steps.changes.outputs.all}}
@@ -78,7 +78,7 @@ jobs:
   clang_tidy:
     name: Clang Tidy Check
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
-    runs-on: alpine-latest
+    runs-on: ubuntu-latest
     needs: changed-files
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
     steps:
