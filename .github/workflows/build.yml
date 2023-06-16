@@ -25,14 +25,28 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install xorg-dev libglu1-mesa-dev
+      - if: ${{ matrix.platform == 'windows' }}
+        name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
       - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+        uses: hendrikmuhs/ccache-action@v1.2.4
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
+        name: update ccache and ninja
+        shell: bash
+        run: |
+          choco install ccache
+          echo "=============="
+          ccache --version
+          echo "=============="
+          choco install ninja
+          echo "=============="
+          ninja --version
+      - if: ${{ matrix.platform == 'windows' }}
         name: Configure
-        shell: pwsh
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=sccache -D CMAKE_CXX_COMPILER_LAUNCHER=sccache
+        shell: bash
+        run: cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=ccache -D CMAKE_CXX_COMPILER_LAUNCHER=ccache
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
