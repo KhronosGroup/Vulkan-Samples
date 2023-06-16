@@ -33,12 +33,6 @@ jobs:
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
-        name: update ccache and ninja
-        shell: bash
-        run: |
-          choco install ccache
-          choco install ninja
-      - if: ${{ matrix.platform == 'windows' }}
         name: Configure
         shell: bash
         run: cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
@@ -46,7 +40,7 @@ jobs:
         name: Configure
         run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
       - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
+        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }} -DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache
 
 
   build_d2d:
