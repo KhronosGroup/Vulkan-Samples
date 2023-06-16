@@ -1,6 +1,7 @@
 name: Quality Checks
 
 on:
+  workflow_dispatch:
   pull_request:
     branches: [main]
 
@@ -8,6 +9,24 @@ env:
   TARGET_BRANCH: main
 
 jobs:
+  changed-files:
+    container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
+    runs-on: alpine-latest
+    # Map a step output to a job output
+    outputs:
+      all: ${{ steps.changes.outputs.all}}
+    steps:
+      # Make sure we have some code to diff.
+      - name: Checkout repository
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 2
+      - name: Get changed files
+        id: changes
+        # Set outputs using the command.
+        run: |
+          echo "::set-output name=all::$(git diff --name-only --diff-filter=ACMRT ${{ github.event.pull_request.base.sha }} ${{ github.sha }} | grep -v -e .github -e third_party | xargs)"
+
   doxygen:
     name: Doxygen Syntax Check
     container: ghcr.io/khronosgroupactions/doxygen:1.9.5
@@ -59,13 +78,14 @@ jobs:
   clang_tidy:
     name: Clang Tidy Check
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0
-    runs-on: ubuntu-latest
-    continue-on-error: true # we currently dont track clang-tidy warnings as errors. in the future this will change 
+    runs-on: alpine-latest
+    needs: changed-files
+    continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
     steps:
     - uses: actions/checkout@v3
       with:
         submodules: "recursive"
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-    - run: git fetch origin $TARGET_BRANCH:$TARGET_BRANCH
     - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
-    - run: /usr/bin/run-clang-tidy -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ git diff -U0 --no-color $TARGET_BRANCH }}
+    - run: |
+        /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
