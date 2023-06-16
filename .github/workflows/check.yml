@@ -81,6 +81,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: changed-files
     continue-on-error: true # we currently don't track clang-tidy warnings as errors. in the future this will change
+    if: ${{needs.changed-files.outputs.all}}
     steps:
     - uses: actions/checkout@v3
       with:
