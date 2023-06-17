@@ -43,7 +43,7 @@ jobs:
         name: Configure and build
         shell: bash
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
           cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
