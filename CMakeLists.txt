@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-if(NOT WIN32)
+
 if(NOT DEFINED CMAKE_C_COMPILER_LAUNCHER AND NOT DEFINED CMAKE_CXX_COMPILER_LAUNCHER)
 find_program(CCACHE_FOUND ccache)
 find_program(SCCACHE_FOUND sccache)
@@ -37,7 +37,6 @@ elseif(SCCACHE_FOUND AND NOT CCACHE_FOUND)
         endif()
     endif()
 endif(CCACHE_FOUND AND NOT SCCACHE_FOUND)
-endif()
 endif()
 
 cmake_minimum_required(VERSION 3.16)
