@@ -82,6 +82,7 @@ set(ORDER_LIST
     "extended_dynamic_state2"
     "logic_op_dynamic_state"
     "fragment_shader_barycentric"
+    "subgroups_operations"
 
     #Performance Samples
     "swapchain_images"
