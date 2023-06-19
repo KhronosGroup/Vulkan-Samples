@@ -317,6 +317,7 @@ set_target_properties(astc PROPERTIES FOLDER "ThirdParty" POSITION_INDEPENDENT_C
 target_link_libraries(astc PUBLIC stb)
 
 if(WIN32 AND CMAKE_GENERATOR STREQUAL "Ninja")
+    message("Should set correctly")
     target_include_directories(astc PUBLIC "c:/msys64/usr/include/")
 endif ()
 
