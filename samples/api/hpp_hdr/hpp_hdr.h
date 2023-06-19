@@ -178,8 +178,7 @@ class HPPHDR : public HPPApiVulkanSample
 	};
 
   private:
-	// from platform::HPPApplication
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from HPPVulkanSample

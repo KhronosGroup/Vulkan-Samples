@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 
 	virtual ~KHR16BitArithmeticSample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
@@ -52,8 +52,8 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 	std::unique_ptr<vkb::core::Image>     image;
 	std::unique_ptr<vkb::core::ImageView> image_view;
 	std::unique_ptr<vkb::core::Sampler>   sampler;
-	vkb::PipelineLayout *                 compute_layout{nullptr};
-	vkb::PipelineLayout *                 compute_layout_fp16{nullptr};
+	vkb::PipelineLayout                  *compute_layout{nullptr};
+	vkb::PipelineLayout                  *compute_layout_fp16{nullptr};
 
 	unsigned frame_count{0};
 
@@ -63,9 +63,9 @@ class KHR16BitArithmeticSample : public vkb::VulkanSample
 		virtual void prepare() override;
 		virtual void draw(vkb::CommandBuffer &command_buffer) override;
 
-		vkb::PipelineLayout *       layout{nullptr};
+		vkb::PipelineLayout        *layout{nullptr};
 		const vkb::core::ImageView *view{nullptr};
-		const vkb::core::Sampler *  sampler{nullptr};
+		const vkb::core::Sampler   *sampler{nullptr};
 	};
 };
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,8 +28,6 @@ class WindowsPlatform : public Platform
 	                PSTR lpCmdLine, INT nCmdShow);
 
 	virtual ~WindowsPlatform() = default;
-
-	virtual const char *get_surface_extension() override;
 
   protected:
 	virtual void create_window(const Window::Properties &properties) override;

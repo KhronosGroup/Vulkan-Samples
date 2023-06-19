@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -71,10 +71,5 @@ void UnixD2DPlatform::create_window(const Window::Properties &properties)
 	{
 		window = std::make_unique<DirectWindow>(this, properties);
 	}
-}
-
-const char *UnixD2DPlatform::get_surface_extension()
-{
-	return VK_KHR_DISPLAY_EXTENSION_NAME;
 }
 }        // namespace vkb

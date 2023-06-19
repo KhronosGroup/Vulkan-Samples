@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -124,25 +124,25 @@ class HelloTriangle : public vkb::Application
 
 	virtual ~HelloTriangle();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
 
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	bool validate_extensions(const std::vector<const char *> &         required,
+	bool validate_extensions(const std::vector<const char *>          &required,
 	                         const std::vector<VkExtensionProperties> &available);
 
-	bool validate_layers(const std::vector<const char *> &     required,
+	bool validate_layers(const std::vector<const char *>      &required,
 	                     const std::vector<VkLayerProperties> &available);
 
 	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
 
-	void init_instance(Context &                        context,
+	void init_instance(Context                         &context,
 	                   const std::vector<const char *> &required_instance_extensions,
 	                   const std::vector<const char *> &required_validation_layers);
 
-	void init_device(Context &                        context,
+	void init_device(Context                         &context,
 	                 const std::vector<const char *> &required_device_extensions);
 
 	void init_per_frame(Context &context, PerFrame &per_frame);

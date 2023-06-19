@@ -574,9 +574,9 @@ void ConservativeRasterization::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool ConservativeRasterization::prepare(vkb::Platform &platform)
+bool ConservativeRasterization::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

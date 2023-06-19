@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -76,7 +76,7 @@ class SeparateImageSampler : public ApiVulkanSample
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void view_changed() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;

@@ -98,11 +98,11 @@ class SwapchainRecreation : public vkb::VulkanSample
 
 	~SwapchainRecreation() override;
 
-	void create_render_context(vkb::Platform &platform) override;
+	void create_render_context() override;
 
 	void prepare_render_context() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void update(float delta_time) override;
 

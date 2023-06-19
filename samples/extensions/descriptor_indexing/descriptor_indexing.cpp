@@ -494,9 +494,9 @@ void DescriptorIndexing::create_images()
 	}
 }
 
-bool DescriptorIndexing::prepare(vkb::Platform &platform)
+bool DescriptorIndexing::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

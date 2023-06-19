@@ -25,9 +25,9 @@
 #include "scene_graph/components/sub_mesh.h"
 #include "scene_graph/components/texture.h"
 
-bool ApiVulkanSample::prepare(vkb::Platform &platform)
+bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -49,7 +49,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	submit_info                   = vkb::initializers::submit_info();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (platform.get_window().get_window_mode() != vkb::Window::Mode::Headless)
+	if (window->get_window_mode() != vkb::Window::Mode::Headless)
 	{
 		submit_info.waitSemaphoreCount   = 1;
 		submit_info.pWaitSemaphores      = &semaphores.acquired_image_ready;
@@ -71,7 +71,7 @@ bool ApiVulkanSample::prepare(vkb::Platform &platform)
 	width  = get_render_context().get_surface_extent().width;
 	height = get_render_context().get_surface_extent().height;
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
+	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache, render_pass,
 	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
 	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
@@ -95,8 +95,6 @@ void ApiVulkanSample::update(float delta_time)
 	{
 		view_updated = true;
 	}
-
-	platform->on_post_draw(get_render_context());
 }
 
 bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
@@ -169,14 +167,14 @@ vkb::Device &ApiVulkanSample::get_device()
 	return *device;
 }
 
-void ApiVulkanSample::create_render_context(vkb::Platform &platform)
+void ApiVulkanSample::create_render_context()
 {
 	// We always want an sRGB surface to match the display.
 	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
 	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{{VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
 	                                                             {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
-	render_context = platform.create_render_context(*device.get(), surface, surface_priority_list);
+	VulkanSample::create_render_context(surface_priority_list);
 }
 
 void ApiVulkanSample::prepare_render_context()
@@ -510,7 +508,7 @@ void ApiVulkanSample::submit_frame()
 
 		VkDisplayPresentInfoKHR disp_present_info{};
 		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    platform->get_window().get_display_present_info(&disp_present_info, width, height))
+		    window->get_display_present_info(&disp_present_info, width, height))
 		{
 			// Add display present info if supported and wanted
 			present_info.pNext = &disp_present_info;

@@ -258,9 +258,9 @@ void MultiDrawIndirect::create_sampler()
 	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &sampler));
 }
 
-bool MultiDrawIndirect::prepare(vkb::Platform &platform)
+bool MultiDrawIndirect::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

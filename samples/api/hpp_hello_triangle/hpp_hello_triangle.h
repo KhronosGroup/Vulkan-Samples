@@ -17,14 +17,15 @@
 
 #pragma once
 
-#include <platform/hpp_application.h>
-#include <platform/hpp_platform.h>
+#include <vulkan/vulkan.hpp>
+
+#include <platform/application.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates
  * the rendering of a triangle
  */
-class HPPHelloTriangle : public vkb::platform::HPPApplication
+class HPPHelloTriangle : public vkb::Application
 {
 	/**
 	 * @brief Swapchain data
@@ -55,8 +56,7 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	virtual ~HPPHelloTriangle();
 
   private:
-	// from platform::HPPApplication
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void update(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -69,7 +69,7 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	void                            init_pipeline();
 	void                            init_swapchain();
 	void                            render_triangle(uint32_t swapchain_index);
-	void                            select_physical_device_and_surface(vkb::platform::HPPPlatform &platform);
+	void                            select_physical_device_and_surface();
 	void                            teardown_framebuffers();
 	void                            teardown_per_frame(FrameData &per_frame_data);
 

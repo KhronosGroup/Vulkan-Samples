@@ -33,7 +33,7 @@ class ConditionalRendering : public ApiVulkanSample
 	struct SceneNode
 	{
 		std::string       name;
-		vkb::sg::Node *   node;
+		vkb::sg::Node    *node;
 		vkb::sg::SubMesh *sub_mesh;
 	};
 	std::vector<SceneNode> linear_scene_nodes;
@@ -73,7 +73,7 @@ class ConditionalRendering : public ApiVulkanSample
 	void         prepare_visibility_buffer();
 	void         update_visibility_buffer();
 	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;

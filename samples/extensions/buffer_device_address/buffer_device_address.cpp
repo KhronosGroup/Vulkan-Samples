@@ -59,9 +59,9 @@ void BufferDeviceAddress::on_update_ui_overlay(vkb::Drawer &)
 {
 }
 
-bool BufferDeviceAddress::prepare(vkb::Platform &platform)
+bool BufferDeviceAddress::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

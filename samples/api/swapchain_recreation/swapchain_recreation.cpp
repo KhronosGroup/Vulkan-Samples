@@ -21,7 +21,6 @@
 #include "common/vk_common.h"
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
 
 static constexpr uint32_t INVALID_IMAGE_INDEX = std::numeric_limits<uint32_t>::max();
 
@@ -837,9 +836,9 @@ SwapchainRecreation::~SwapchainRecreation()
 	}
 }
 
-bool SwapchainRecreation::prepare(vkb::Platform &platform)
+bool SwapchainRecreation::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -851,7 +850,7 @@ bool SwapchainRecreation::prepare(vkb::Platform &platform)
 	return true;
 }
 
-void SwapchainRecreation::create_render_context(vkb::Platform &platform)
+void SwapchainRecreation::create_render_context()
 {
 	get_queue();
 	query_surface_format();
