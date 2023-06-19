@@ -1273,11 +1273,11 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	return texture;
 }
 
-std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index)
+std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string &file, uint32_t index, bool storage_buffer)
 {
 	vkb::GLTFLoader loader{*device};
 
-	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file(file, index);
+	std::unique_ptr<vkb::sg::SubMesh> model = loader.read_model_from_file(file, index, storage_buffer);
 
 	if (!model)
 	{

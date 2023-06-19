@@ -330,6 +330,11 @@ Demonstrate how to use fragment shader barycentric feature, which allows accessi
 
 Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
 
+### [Geometry shader to mesh shader](./extensions/gshader_to_mshader)
+**Extension:** [```VK_EXT_mesh_shader```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_mesh_shader.html)<br/>
+Demonstrates how a mesh shader can be used to achieve the same results as with geometry shader, it loads model from a file and visualizes its normals.
+
+
 ## Tooling Samples
 
 The goal of these samples is to demonstrate usage of tooling functions and libraries that are not directly part of the api.
