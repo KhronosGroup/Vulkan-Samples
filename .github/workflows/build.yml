@@ -33,7 +33,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
-#          variant: sccache
+          variant: sccache
       - if: ${{ matrix.platform != 'windows' }}
         name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.9
@@ -43,8 +43,8 @@ jobs:
         name: Configure and build
         shell: bash
         run: |
-          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
+          cmake -H"." -B"build/${{ matrix.platform }}" -GNinja -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}
       - if: ${{ matrix.platform != 'windows' }}
         name: Configure and build
         run: |
