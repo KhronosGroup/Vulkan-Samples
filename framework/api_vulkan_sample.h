@@ -74,6 +74,27 @@ struct Vertex
 };
 
 /**
+ * @brief The structure of a vertex for storage buffer
+ * Simplified to position and normal for easier alignment
+ */
+struct AlignedVertex
+{
+	glm::vec4 pos;
+	glm::vec4 normal;
+};
+
+/**
+ * @brief The structure of a meshlet for mesh shader
+ */
+struct Meshlet
+{
+	uint32_t vertices[64];
+	uint32_t indices[126];
+	uint32_t vertex_count;
+	uint32_t index_count;
+};
+
+/**
  * @brief Sascha Willems base class for use in his ported samples into the framework
  *
  * See vkb::VulkanSample for documentation
@@ -214,8 +235,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Loads in a single model from a GLTF file
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
+	 * @param storage_buffer Set true to store model in SSBO
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer

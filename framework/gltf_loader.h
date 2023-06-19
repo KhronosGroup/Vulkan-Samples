@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,8 +51,8 @@ class Texture;
 /**
  * @brief Helper Function to change array type T to array type Y
  * Create a struct that can be used with std::transform so that we do not need to recreate lambda functions
- * @param T 
- * @param Y 
+ * @param T
+ * @param Y
  */
 template <class T, class Y>
 struct TypeCast
@@ -79,7 +79,7 @@ class GLTFLoader
 	 * @brief Loads the first model from a GLTF file for use in simpler samples
 	 *        makes use of the Vertex struct in vulkan_example_base.h
 	 */
-	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index);
+	std::unique_ptr<sg::SubMesh> read_model_from_file(const std::string &file_name, uint32_t index, bool storage_buffer = false);
 
   protected:
 	virtual std::unique_ptr<sg::Node> parse_node(const tinygltf::Node &gltf_node, size_t index) const;
@@ -134,6 +134,6 @@ class GLTFLoader
   private:
 	sg::Scene load_scene(int scene_index = -1);
 
-	std::unique_ptr<sg::SubMesh> load_model(uint32_t index);
+	std::unique_ptr<sg::SubMesh> load_model(uint32_t index, bool storage_buffer = false);
 };
 }        // namespace vkb
