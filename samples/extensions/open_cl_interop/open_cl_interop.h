@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ class OpenCLInterop : public ApiVulkanSample
 	OpenCLInterop();
 	~OpenCLInterop() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
 	void view_changed() override;

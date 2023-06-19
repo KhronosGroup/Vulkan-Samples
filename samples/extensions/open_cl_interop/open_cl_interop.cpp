@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
 
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
@@ -82,9 +81,9 @@ OpenCLInterop::~OpenCLInterop()
 	unload_opencl();
 }
 
-bool OpenCLInterop::prepare(vkb::Platform &platform)
+bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

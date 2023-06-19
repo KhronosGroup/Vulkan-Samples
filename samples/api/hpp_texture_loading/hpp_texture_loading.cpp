@@ -588,9 +588,9 @@ void HPPTextureLoading::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool HPPTextureLoading::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

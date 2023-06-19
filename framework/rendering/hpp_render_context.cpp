@@ -27,7 +27,7 @@ vk::Format HPPRenderContext::DEFAULT_VK_FORMAT = vk::Format::eR8G8B8A8Srgb;
 
 HPPRenderContext::HPPRenderContext(vkb::core::HPPDevice                    &device,
                                    vk::SurfaceKHR                           surface,
-                                   const vkb::platform::HPPWindow          &window,
+                                   const vkb::Window                       &window,
                                    vk::PresentModeKHR                       present_mode,
                                    std::vector<vk::PresentModeKHR> const   &present_mode_priority_list,
                                    std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list) :
@@ -380,7 +380,7 @@ void HPPRenderContext::end_frame(vk::Semaphore semaphore)
 
 		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device.is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    window.get_display_present_info(&disp_present_info, surface_extent.width, surface_extent.height))
+		    window.get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), surface_extent.width, surface_extent.height))
 		{
 			// Add display present info if supported and wanted
 			present_info.pNext = &disp_present_info;

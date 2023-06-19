@@ -63,6 +63,8 @@ class AndroidWindow : public Window
 
 	virtual float get_dpi_factor() const override;
 
+	std::vector<const char *> get_required_surface_extensions() const override;
+
   private:
 	AndroidPlatform *platform;
 

@@ -139,7 +139,11 @@ void Profiles::create_instance()
 	// Even when using profiles we still need to provide the platform specific surface extension
 	std::vector<const char *> enabled_extensions;
 	enabled_extensions.push_back(VK_KHR_SURFACE_EXTENSION_NAME);
-	enabled_extensions.push_back(platform->get_surface_extension());
+
+	for (const char *extension_name : window->get_required_surface_extensions())
+	{
+		enabled_extensions.push_back(extension_name);
+	}
 
 	VkInstanceCreateInfo create_info{};
 	create_info.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -662,9 +666,9 @@ void Profiles::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool Profiles::prepare(vkb::Platform &platform)
+bool Profiles::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

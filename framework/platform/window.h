@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -84,14 +84,14 @@ class Window
 	virtual ~Window() = default;
 
 	/**
-	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @brief Gets a handle from the platform's Vulkan surface
 	 * @param instance A Vulkan instance
 	 * @returns A VkSurfaceKHR handle, for use by the application
 	 */
 	virtual VkSurfaceKHR create_surface(Instance &instance) = 0;
 
 	/**
-	 * @brief Gets a handle from the platform's Vulkan surface 
+	 * @brief Gets a handle from the platform's Vulkan surface
 	 * @param instance A Vulkan instance
 	 * @param physical_device A Vulkan PhysicalDevice
 	 * @returns A VkSurfaceKHR handle, for use by the application
@@ -119,13 +119,13 @@ class Window
 	virtual float get_dpi_factor() const = 0;
 
 	/**
-     * @return The scale factor for systems with heterogeneous window and pixel coordinates
-     */
+	 * @return The scale factor for systems with heterogeneous window and pixel coordinates
+	 */
 	virtual float get_content_scale_factor() const;
 
 	/**
 	 * @brief Attempt to resize the window - not guaranteed to change
-	 * 
+	 *
 	 * @param extent The preferred window extent
 	 * @return Extent The new window extent
 	 */
@@ -143,9 +143,16 @@ class Window
 	virtual bool get_display_present_info(VkDisplayPresentInfoKHR *info,
 	                                      uint32_t src_width, uint32_t src_height) const;
 
+	virtual std::vector<const char *> get_required_surface_extensions() const = 0;
+
 	const Extent &get_extent() const;
 
 	Mode get_window_mode() const;
+
+	inline const Properties &get_properties() const
+	{
+		return properties;
+	}
 
   protected:
 	Properties properties;

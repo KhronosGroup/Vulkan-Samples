@@ -366,7 +366,7 @@ void Instancing::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(INSTANCE_COUNT);
 
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -484,9 +484,9 @@ void Instancing::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool Instancing::prepare(vkb::Platform &platform)
+bool Instancing::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

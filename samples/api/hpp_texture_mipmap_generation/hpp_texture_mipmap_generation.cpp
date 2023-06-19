@@ -49,9 +49,9 @@ HPPTextureMipMapGeneration::~HPPTextureMipMapGeneration()
 	}
 }
 
-bool HPPTextureMipMapGeneration::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPTextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -33,7 +33,7 @@ class AsyncComputeSample : public vkb::VulkanSample
 
 	virtual ~AsyncComputeSample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
 
@@ -96,8 +96,8 @@ class AsyncComputeSample : public vkb::VulkanSample
 		virtual void draw(vkb::CommandBuffer &command_buffer) override;
 
 		const vkb::core::ImageView *shadow_view{nullptr};
-		const vkb::core::Sampler *  shadow_sampler{nullptr};
-		vkb::sg::Camera &           shadow_camera;
+		const vkb::core::Sampler   *shadow_sampler{nullptr};
+		vkb::sg::Camera            &shadow_camera;
 	};
 
 	struct CompositeSubpass : vkb::Subpass
@@ -111,8 +111,8 @@ class AsyncComputeSample : public vkb::VulkanSample
 
 		const vkb::core::ImageView *hdr_view{nullptr};
 		const vkb::core::ImageView *bloom_view{nullptr};
-		const vkb::core::Sampler *  sampler{nullptr};
-		vkb::PipelineLayout *       layout{nullptr};
+		const vkb::core::Sampler   *sampler{nullptr};
+		vkb::PipelineLayout        *layout{nullptr};
 	};
 
 	vkb::RenderTarget &get_current_forward_render_target();

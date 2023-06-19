@@ -51,9 +51,9 @@ HPPHlslShaders::~HPPHlslShaders()
 	}
 }
 
-bool HPPHlslShaders::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

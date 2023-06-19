@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -16,7 +16,7 @@
  */
 
 #include "16bit_storage_input_output.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/pbr_material.h"
@@ -166,9 +166,9 @@ void KHR16BitStorageInputOutputSample::update_pipeline()
 	set_render_pipeline(std::move(render_pipeline));
 }
 
-bool KHR16BitStorageInputOutputSample::prepare(vkb::Platform &platform)
+bool KHR16BitStorageInputOutputSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -186,7 +186,7 @@ bool KHR16BitStorageInputOutputSample::prepare(vkb::Platform &platform)
 
 	stats->request_stats({vkb::StatIndex::gpu_ext_read_bytes, vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

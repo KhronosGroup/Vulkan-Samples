@@ -41,9 +41,9 @@ HPPHDR::~HPPHDR()
 	}
 }
 
-bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPHDR::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -54,7 +54,7 @@ bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
 	prepare_offscreen_buffer();
 
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
-	descriptor_pool = get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
+	descriptor_pool                                  = get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
 
 	setup_bloom();
 	setup_composition();

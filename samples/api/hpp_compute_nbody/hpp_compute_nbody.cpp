@@ -42,9 +42,9 @@ HPPComputeNBody::~HPPComputeNBody()
 	}
 }
 
-bool HPPComputeNBody::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPComputeNBody::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -454,7 +454,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
 
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)

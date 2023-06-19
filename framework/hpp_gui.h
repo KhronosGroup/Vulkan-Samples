@@ -217,11 +217,11 @@ class HPPGui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	HPPGui(HPPVulkanSample                &sample,
-	       const vkb::platform::HPPWindow &window,
-	       const vkb::stats::HPPStats     *stats           = nullptr,
-	       float                           font_size       = 21.0f,
-	       bool                            explicit_update = false);
+	HPPGui(HPPVulkanSample            &sample,
+	       const vkb::Window          &window,
+	       const vkb::stats::HPPStats *stats           = nullptr,
+	       float                       font_size       = 21.0f,
+	       bool                        explicit_update = false);
 
 	/**
 	 * @brief Destroys the HPPGui

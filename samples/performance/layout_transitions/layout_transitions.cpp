@@ -23,7 +23,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/components/material.h"
@@ -38,9 +38,9 @@ LayoutTransitions::LayoutTransitions()
 	config.insert<vkb::IntSetting>(1, reinterpret_cast<int &>(layout_transition_type), LayoutTransitionType::LAST_LAYOUT);
 }
 
-bool LayoutTransitions::prepare(vkb::Platform &platform)
+bool LayoutTransitions::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -69,7 +69,7 @@ bool LayoutTransitions::prepare(vkb::Platform &platform)
 	stats->request_stats({vkb::StatIndex::gpu_killed_tiles,
 	                      vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

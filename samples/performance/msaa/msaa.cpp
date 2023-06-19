@@ -21,7 +21,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/postprocessing_renderpass.h"
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
@@ -91,9 +91,9 @@ MSAASample::MSAASample()
 	config.insert<vkb::BoolSetting>(1, gui_run_postprocessing, true);
 }
 
-bool MSAASample::prepare(vkb::Platform &platform)
+bool MSAASample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -128,7 +128,7 @@ bool MSAASample::prepare(vkb::Platform &platform)
 	                      vkb::StatIndex::gpu_ext_read_bytes,
 	                      vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

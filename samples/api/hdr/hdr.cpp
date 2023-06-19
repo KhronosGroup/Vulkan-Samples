@@ -888,9 +888,9 @@ void HDR::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool HDR::prepare(vkb::Platform &platform)
+bool HDR::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

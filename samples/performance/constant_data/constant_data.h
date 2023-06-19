@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: MIT
  *
@@ -49,7 +49,7 @@ struct alignas(16) MVPUniform
  * @brief Constant Data sample
  *
  * This sample is designed to show the different ways in which Vulkan can push constant data to the
- * shaders. 
+ * shaders.
  *
  * The current ways that are supported are:
  *     - Push Constants
@@ -60,7 +60,7 @@ struct alignas(16) MVPUniform
  *
  * The sample also shows the performance implications that these different methods would have on your
  * application or game. These performance deltas may differ between platforms and vendors.
- * 
+ *
  * The data structure used will be pushed in its entirety if 256 bytes of push constants
  * are supported by the physical device, otherwise it will be trimmed to 128 bytes
  * (i.e. only "model" and "camera_view_proj" will be pushed)
@@ -71,7 +71,7 @@ class ConstantData : public vkb::VulkanSample
 {
   public:
 	/**
-	 * @brief The sample supported methods of using constant data in shaders 
+	 * @brief The sample supported methods of using constant data in shaders
 	 */
 	enum Method
 	{
@@ -97,7 +97,7 @@ class ConstantData : public vkb::VulkanSample
 
 	virtual ~ConstantData() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	/**
 	 * @brief The base subpass to help prepare the shader variants and store the push constant limit
@@ -245,7 +245,7 @@ class ConstantData : public vkb::VulkanSample
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
 	/**
-	 * @brief Helper function to determine the constant data method that is selected and supported by the sample 
+	 * @brief Helper function to determine the constant data method that is selected and supported by the sample
 	 * @returns The method that is selected, otherwise push constants
 	 */
 	inline Method get_active_method();

@@ -593,9 +593,9 @@ void TextureMipMapGeneration::update_uniform_buffers(float delta_time)
 	uniform_buffer->convert_and_update(ubo);
 }
 
-bool TextureMipMapGeneration::prepare(vkb::Platform &platform)
+bool TextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

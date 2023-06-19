@@ -26,7 +26,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "stats/stats.h"
 
 CommandBufferUsage::CommandBufferUsage()
@@ -50,9 +50,9 @@ CommandBufferUsage::CommandBufferUsage()
 	config.insert<vkb::IntSetting>(3, gui_command_buffer_reset_mode, 2);
 }
 
-bool CommandBufferUsage::prepare(vkb::Platform &platform)
+bool CommandBufferUsage::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -73,7 +73,7 @@ bool CommandBufferUsage::prepare(vkb::Platform &platform)
 
 	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	// Adjust the maximum number of secondary command buffers
 	// In this sample, only the recording of opaque meshes will be multi-threaded

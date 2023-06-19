@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,5 +48,10 @@ float HeadlessWindow::get_dpi_factor() const
 {
 	// This factor is used for scaling UI elements, so return 1.0f (1 x n = n)
 	return 1.0f;
+}
+
+std::vector<const char *> HeadlessWindow::get_required_surface_extensions() const
+{
+	return {};
 }
 }        // namespace vkb

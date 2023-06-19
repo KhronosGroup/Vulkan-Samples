@@ -71,4 +71,9 @@ float AndroidWindow::get_dpi_factor() const
 {
 	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
+
+std::vector<const char *> AndroidWindow::get_required_surface_extensions() const
+{
+	return {VK_KHR_ANDROID_SURFACE_EXTENSION_NAME};
+}
 }        // namespace vkb

@@ -43,12 +43,12 @@ FragmentShaderBarycentric::~FragmentShaderBarycentric()
 	}
 }
 /**
- * 	@fn bool FragmentShaderBarycentric::prepare(vkb::Platform &platform)
+ * 	@fn bool FragmentShaderBarycentric::prepare(const vkb::ApplicationOptions &options)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
-bool FragmentShaderBarycentric::prepare(vkb::Platform &platform)
+bool FragmentShaderBarycentric::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,7 +21,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
 
@@ -41,9 +41,9 @@ AFBCSample::AFBCSample()
 	config.insert<vkb::BoolSetting>(1, afbc_enabled, true);
 }
 
-bool AFBCSample::prepare(vkb::Platform &platform)
+bool AFBCSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -68,7 +68,7 @@ bool AFBCSample::prepare(vkb::Platform &platform)
 
 	stats->request_stats({vkb::StatIndex::gpu_ext_write_bytes});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	// Store the start time to calculate rotation
 	start_time = std::chrono::system_clock::now();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -18,7 +18,6 @@
 #include "application.h"
 
 #include "common/logging.h"
-#include "platform/platform.h"
 #include "platform/window.h"
 
 namespace vkb
@@ -28,13 +27,16 @@ Application::Application() :
 {
 }
 
-bool Application::prepare(Platform &_platform)
+bool Application::prepare(const ApplicationOptions &options)
 {
+	assert(options.window != nullptr && "Window must be valid");
+
 	auto &_debug_info = get_debug_info();
 	_debug_info.insert<field::MinMax, float>("fps", fps);
 	_debug_info.insert<field::MinMax, float>("frame_time", frame_time);
 
-	this->platform = &_platform;
+	lock_simulation_speed = options.benchmark_enabled;
+	window                = options.window;
 
 	return true;
 }
