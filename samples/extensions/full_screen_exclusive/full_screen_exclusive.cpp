@@ -17,9 +17,10 @@
 
 #include "full_screen_exclusive.h"
 
-#include "glsl_compiler.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
+#include "shader_compiler.h"
+
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
@@ -552,7 +553,7 @@ void FullScreenExclusive::init_render_pass()
 
 VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 {
-	vkb::GLSLCompiler glsl_compiler;
+	vkb::ShaderCompiler shader_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
@@ -563,7 +564,7 @@ VkShaderModule FullScreenExclusive::load_shader_module(const char *path) const
 	std::vector<uint32_t> spirv;
 	std::string           info_log;
 
-	if (!glsl_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	if (!shader_compiler.compile_to_spirv(find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str())
 		return VK_NULL_HANDLE;

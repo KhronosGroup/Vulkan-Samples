@@ -28,6 +28,189 @@
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
 
+vk::Device create_device(vk::PhysicalDevice gpu, uint32_t graphics_queue_index, const std::vector<const char *> &required_device_extensions)
+{
+	// Create a device with one queue
+	float                     queue_priority = 1.0f;
+	vk::DeviceQueueCreateInfo queue_info({}, graphics_queue_index, 1, &queue_priority);
+	vk::DeviceCreateInfo      device_info({}, queue_info, {}, required_device_extensions);
+	return gpu.createDevice(device_info);
+}
+
+vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format format)
+{
+	vk::ImageViewCreateInfo image_view_create_info({},
+	                                               image,
+	                                               vk::ImageViewType::e2D,
+	                                               format,
+	                                               {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA},
+	                                               {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
+	return device.createImageView(image_view_create_info);
+}
+
+vk::Instance create_instance(std::vector<const char *> const &requested_validation_layers, std::vector<const char *> const &active_instance_extensions
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+                             ,
+                             vk::DebugUtilsMessengerCreateInfoEXT const &debug_utils_messenger_create_info
+#endif
+)
+{
+	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", {}, VK_MAKE_VERSION(1, 0, 0));
+
+	vk::InstanceCreateInfo instance_info({}, &app, requested_validation_layers, active_instance_extensions);
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	instance_info.pNext = &debug_utils_messenger_create_info;
+#endif
+
+#if (defined(VKB_ENABLE_PORTABILITY))
+	instance_info.flags |= vk::InstanceCreateFlagBits::eEnumeratePortabilityKHR;
+#endif
+
+	// Create the Vulkan instance
+	return vk::createInstance(instance_info);
+}
+
+vk::RenderPass create_render_pass(vk::Device device, vk::Format backbuffer_format)
+{
+	vk::AttachmentDescription attachment({},
+	                                     backbuffer_format,                      // Backbuffer format
+	                                     vk::SampleCountFlagBits::e1,            // Not multisampled
+	                                     vk::AttachmentLoadOp::eClear,           // When starting the frame, we want tiles to be cleared
+	                                     vk::AttachmentStoreOp::eStore,          // When ending the frame, we want tiles to be written out
+	                                     vk::AttachmentLoadOp::eDontCare,        // Don't care about stencil since we're not using it
+	                                     vk::AttachmentStoreOp::eDontCare,
+	                                     vk::ImageLayout::eUndefined,             // The image layout will be undefined when the render pass begins
+	                                     vk::ImageLayout::ePresentSrcKHR);        // After the render pass is complete, we will transition to ePresentSrcKHR layout
+
+	// We have one subpass. This subpass has one color attachment.
+	// While executing this subpass, the attachment will be in attachment optimal layout.
+	vk::AttachmentReference color_ref(0, vk::ImageLayout::eColorAttachmentOptimal);
+
+	// We will end up with two transitions.
+	// The first one happens right before we start subpass #0, where
+	// eUndefined is transitioned into eColorAttachmentOptimal.
+	// The final layout in the render pass attachment states ePresentSrcKHR, so we
+	// will get a final transition from eColorAttachmentOptimal to ePresetSrcKHR.
+	vk::SubpassDescription subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_ref);
+
+	// Create a dependency to external events.
+	// We need to wait for the WSI semaphore to signal.
+	// Only pipeline stages which depend on eColorAttachmentOutput will
+	// actually wait for the semaphore, so we must also wait for that pipeline stage.
+	vk::SubpassDependency dependency(/*srcSubpass   */ VK_SUBPASS_EXTERNAL,
+	                                 /*dstSubpass   */ 0,
+	                                 /*srcStageMask */ vk::PipelineStageFlagBits::eColorAttachmentOutput,
+	                                 /*dstStageMask */ vk::PipelineStageFlagBits::eColorAttachmentOutput,
+	                                 // Since we changed the image layout, we need to make the memory visible to
+	                                 // color attachment to modify.
+	                                 /*srcAccessMask*/ {},
+	                                 /*dstAccessMask*/ vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite);
+
+	// Finally, create the renderpass.
+	vk::RenderPassCreateInfo rp_info({}, attachment, subpass, dependency);
+	return device.createRenderPass(rp_info);
+}
+
+/**
+ * @brief Helper function to load a shader module.
+ * @param path The path for the shader (relative to the assets directory).
+ * @returns A vk::ShaderModule handle. Aborts execution if shader creation fails.
+ */
+vk::ShaderModule create_shader_module(vk::Device device, const char *path)
+{
+	static const std::map<std::string, vk::ShaderStageFlagBits> shader_stage_map = {{"comp", vk::ShaderStageFlagBits::eCompute},
+	                                                                                {"frag", vk::ShaderStageFlagBits::eFragment},
+	                                                                                {"geom", vk::ShaderStageFlagBits::eGeometry},
+	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
+	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
+	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
+	vkb::HPPShaderCompiler                                      shader_compiler;
+
+	auto buffer = vkb::fs::read_shader_binary(path);
+
+	std::string file_ext = path;
+
+	// Extract extension name from the shader file
+	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
+
+	std::vector<uint32_t> spirvCode;
+	std::string           info_log;
+
+	// Compile the shader source
+	auto stageIt = shader_stage_map.find(file_ext);
+	if (stageIt == shader_stage_map.end())
+	{
+		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
+	}
+	if (!shader_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
+	{
+		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
+		return nullptr;
+	}
+
+	return device.createShaderModule({{}, spirvCode});
+}
+
+vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk::SurfaceKHR surface, vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
+{
+	vk::SurfaceCapabilitiesKHR surface_properties = gpu.getSurfaceCapabilitiesKHR(surface);
+
+	// Determine the number of vk::Image's to use in the swapchain.
+	// Ideally, we desire to own 1 image at a time, the rest of the images can
+	// either be rendered to and/or being queued up for display.
+	uint32_t desired_swapchain_images = surface_properties.minImageCount + 1;
+	if ((surface_properties.maxImageCount > 0) && (desired_swapchain_images > surface_properties.maxImageCount))
+	{
+		// Application must settle for fewer images than desired.
+		desired_swapchain_images = surface_properties.maxImageCount;
+	}
+
+	// Figure out a suitable surface transform.
+	vk::SurfaceTransformFlagBitsKHR pre_transform =
+	    (surface_properties.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity) ? vk::SurfaceTransformFlagBitsKHR::eIdentity : surface_properties.currentTransform;
+
+	// Find a supported composite type.
+	vk::CompositeAlphaFlagBitsKHR composite = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+	if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eOpaque)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::eInherit)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::eInherit;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePreMultiplied)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::ePreMultiplied;
+	}
+	else if (surface_properties.supportedCompositeAlpha & vk::CompositeAlphaFlagBitsKHR::ePostMultiplied)
+	{
+		composite = vk::CompositeAlphaFlagBitsKHR::ePostMultiplied;
+	}
+
+	// FIFO must be supported by all implementations.
+	vk::PresentModeKHR swapchain_present_mode = vk::PresentModeKHR::eFifo;
+
+	vk::SwapchainCreateInfoKHR swapchain_create_info;
+	swapchain_create_info.surface            = surface;
+	swapchain_create_info.minImageCount      = desired_swapchain_images;
+	swapchain_create_info.imageFormat        = surface_format.format;
+	swapchain_create_info.imageColorSpace    = surface_format.colorSpace;
+	swapchain_create_info.imageExtent.width  = swapchain_extent.width;
+	swapchain_create_info.imageExtent.height = swapchain_extent.height;
+	swapchain_create_info.imageArrayLayers   = 1;
+	swapchain_create_info.imageUsage         = vk::ImageUsageFlagBits::eColorAttachment;
+	swapchain_create_info.imageSharingMode   = vk::SharingMode::eExclusive;
+	swapchain_create_info.preTransform       = pre_transform;
+	swapchain_create_info.compositeAlpha     = composite;
+	swapchain_create_info.presentMode        = swapchain_present_mode;
+	swapchain_create_info.clipped            = true;
+	swapchain_create_info.oldSwapchain       = old_swapchain;
+
+	return device.createSwapchainKHR(swapchain_create_info);
+}
+
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
