@@ -59,7 +59,7 @@ class GshaderToMshader : public ApiVulkanSample
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	void         prepare_pipelines();
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
