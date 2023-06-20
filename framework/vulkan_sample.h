@@ -20,7 +20,6 @@
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/instance.h"
-#include "gui.h"
 #include "platform/application.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
@@ -128,6 +127,19 @@ class VulkanSample : public Application
 	 */
 	void update(float delta_time) override;
 
+	/**
+	 * @brief Main loop sample overlay events
+	 */
+	virtual void update_overlay(float delta_time, const std::function<void()>& additionalUI =  [](){}) override;
+
+	/**
+	 * @brief Indicates that the plugin wants to change the shader in the sample
+	 * 
+	 * @param shader_language language the shader uses
+	 * @param shaders_path sample type and path to it
+	 */
+	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path) override;
+	
 	bool resize(uint32_t width, uint32_t height) override;
 
 	void input_event(const InputEvent &input_event) override;
@@ -187,8 +199,6 @@ class VulkanSample : public Application
 	 * @brief Holds all scene information
 	 */
 	std::unique_ptr<sg::Scene> scene{nullptr};
-
-	std::unique_ptr<Gui> gui{nullptr};
 
 	std::unique_ptr<Stats> stats{nullptr};
 

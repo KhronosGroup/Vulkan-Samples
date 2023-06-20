@@ -48,6 +48,7 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 	virtual void on_platform_close() override{};
 	virtual void on_post_draw(RenderContext &context) override{};
 	virtual void on_app_error(const std::string &app_id) override{};
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override{};
 
   private:
 	Tag<TAGS...> *tags = reinterpret_cast<Tag<TAGS...> *>(this);

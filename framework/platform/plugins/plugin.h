@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "common/tags.h"
+#include "gui.h"
 #include "platform/parser.h"
 
 namespace vkb
@@ -75,7 +76,8 @@ enum class Hook
 	OnAppClose,
 	OnAppError,
 	OnPlatformClose,
-	PostDraw
+	PostDraw,
+	OnUpdateUi
 };
 
 /**
@@ -146,6 +148,13 @@ class Plugin
 	 * @brief Post Draw
 	 */
 	virtual void on_post_draw(RenderContext &context) = 0;
+
+	/**
+	 * @brief Allows to add a UI to a sample
+	 * 
+	 * @param drawer The object that is responsible for drawing the overlay
+	 */
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) = 0;
 
 	const std::string &          get_name() const;
 	const std::string &          get_description() const;

@@ -507,6 +507,10 @@ bool DynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
+	store_shader(vkb::ShaderSourceLanguage::VK_GLSL, {
+		{vkb::ShaderType::VERT, "dynamic_uniform_buffers/base.vert"},
+		{vkb::ShaderType::FRAG, "dynamic_uniform_buffers/base.frag"},
+	} );
 	prepared = true;
 	return true;
 }
@@ -516,6 +520,11 @@ bool DynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 	ApiVulkanSample::resize(width, height);
 	update_uniform_buffers();
 	return true;
+}
+
+void DynamicUniformBuffers::change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path)
+{
+
 }
 
 void DynamicUniformBuffers::render(float delta_time)

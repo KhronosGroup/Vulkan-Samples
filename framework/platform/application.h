@@ -20,6 +20,7 @@
 #include <string>
 
 #include "debug_info.h"
+#include "gui.h"
 #include "platform/configuration.h"
 #include "platform/input_events.h"
 #include "timer.h"
@@ -53,6 +54,18 @@ class Application
 	virtual void update(float delta_time);
 
 	/**
+	 * @brief Main loop sample overlay events
+	 */
+	virtual void update_overlay(float delta_time, const std::function<void()>& additionalUI =  [](){});
+
+	/**
+	 * @brief Indicates that the plugin wants to change the shader in the sample
+	 * 
+	 * @param shader_language language the shader uses
+	 * @param shaders_path sample type and path to it
+	 */
+	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path);
+	/**
 	 * @brief Handles cleaning up the application
 	 */
 	virtual void finish();
@@ -76,6 +89,7 @@ class Application
 
 	DebugInfo &get_debug_info();
 
+<<<<<<< HEAD
 	inline bool should_close() const
 	{
 		return requested_close;
@@ -87,6 +101,9 @@ class Application
 	{
 		requested_close = true;
 	}
+=======
+	std::weak_ptr<Gui> get_gui();
+>>>>>>> 4768884 (Add new plugin real time shader selection)
 
   protected:
 	float fps{0.0f};
@@ -100,6 +117,8 @@ class Application
 	bool lock_simulation_speed{false};
 
 	Window *window{nullptr};
+
+	std::shared_ptr<Gui> gui{nullptr};
 
   private:
 	std::string name{};

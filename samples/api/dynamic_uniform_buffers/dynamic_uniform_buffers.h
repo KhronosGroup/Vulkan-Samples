@@ -96,6 +96,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
+	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path) override;
 };
 
 std::unique_ptr<vkb::Application> create_dynamic_uniform_buffers();

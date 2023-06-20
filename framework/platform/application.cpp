@@ -60,6 +60,17 @@ void Application::update(float delta_time)
 	frame_time = delta_time * 1000.0f;
 }
 
+
+void Application::update_overlay(float delta_time, const std::function<void()>& additionalUI)
+{
+
+}
+
+void Application::change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path)
+{
+	
+}
+
 const std::string &Application::get_name() const
 {
 	return name;
@@ -73,5 +84,10 @@ void Application::set_name(const std::string &name_)
 DebugInfo &Application::get_debug_info()
 {
 	return debug_info;
+}
+
+std::weak_ptr<Gui> Application::get_gui()
+{
+	return gui;
 }
 }        // namespace vkb

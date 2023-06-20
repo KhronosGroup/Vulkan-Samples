@@ -287,7 +287,7 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */
-	void update_overlay(float delta_time);
+	void update_overlay(float delta_time, const std::function<void()>& additionalUI);
 
 	/**
 	 * @brief If the gui is enabled, then record the drawing commands to a command buffer

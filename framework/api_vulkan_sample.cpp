@@ -92,13 +92,30 @@ void ApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	update_overlay(delta_time);
-
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
 	{
 		view_updated = true;
+	}
+}
+
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additionalUI)
+{
+	if (gui)
+	{
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additionalUI]() {
+			on_update_ui_overlay(gui->get_drawer());
+			additionalUI();
+		});
+
+		gui->update(delta_time);
+
+		if (gui->update_buffers() || gui->get_drawer().is_dirty())
+		{
+			build_command_buffers();
+			gui->get_drawer().clear();
+		}
 	}
 }
 
@@ -442,24 +459,6 @@ VkPipelineShaderStageCreateInfo ApiVulkanSample::load_shader(const std::string &
 	assert(shader_stage.module != VK_NULL_HANDLE);
 	shader_modules.push_back(shader_stage.module);
 	return shader_stage;
-}
-
-void ApiVulkanSample::update_overlay(float delta_time)
-{
-	if (gui)
-	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() {
-			on_update_ui_overlay(gui->get_drawer());
-		});
-
-		gui->update(delta_time);
-
-		if (gui->update_buffers() || gui->get_drawer().is_dirty())
-		{
-			build_command_buffers();
-			gui->get_drawer().clear();
-		}
-	}
 }
 
 void ApiVulkanSample::draw_ui(const VkCommandBuffer command_buffer)
@@ -860,6 +859,11 @@ void ApiVulkanSample::update_render_pass_flags(uint32_t flags)
 
 void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
+
+void ApiVulkanSample::store_shader(const vkb::ShaderSourceLanguage& shaderLanguage, const std::vector<std::pair<vkb::ShaderType, std::string>>& listOfShader)
+{
+	platform->get_available_shaders().insert({shaderLanguage, listOfShader});
+}
 
 void ApiVulkanSample::create_swapchain_buffers()
 {

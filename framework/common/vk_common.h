@@ -90,6 +90,28 @@ bool is_buffer_descriptor_type(VkDescriptorType descriptor_type);
  */
 int32_t get_bits_per_pixel(VkFormat format);
 
+typedef enum ShaderSourceLanguage
+{
+	VK_GLSL,
+	VK_HLSL,
+	VK_SPV,
+} ShaderSourceLanguage;
+
+enum class ShaderType
+{
+  VERT,
+  FRAG,
+  COMP,
+  GEOM,
+  TESC,
+  TESE,
+  MESH,
+  TASK,
+  RGEN,
+  RCHIT,
+  RMISS
+};
+
 /**
  * @brief Helper function to create a VkShaderModule
  * @param filename The shader location

@@ -20,6 +20,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 
 #include <core/platform/context.hpp>
 
@@ -131,6 +132,8 @@ class Platform
 
 	void on_post_draw(RenderContext &context);
 
+	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& get_available_shaders();
+
 	static const uint32_t MIN_WINDOW_WIDTH;
 	static const uint32_t MIN_WINDOW_HEIGHT;
 
@@ -144,6 +147,8 @@ class Platform
 	std::unique_ptr<Window> window{nullptr};
 
 	std::unique_ptr<Application> active_app{nullptr};
+
+	std::weak_ptr<Gui> gui;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 
@@ -159,6 +164,7 @@ class Platform
 	void on_app_start(const std::string &app_id);
 	void on_app_close(const std::string &app_id);
 	void on_platform_close();
+	void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	Window::Properties window_properties;              /* Source of truth for window state */
 	bool               fixed_simulation_fps{false};    /* Delta time should be fixed with a fabricated value */
@@ -173,6 +179,11 @@ class Platform
 	const apps::AppInfo *requested_app{nullptr};
 
 	std::vector<Plugin *> plugins;
+	
+	/**
+	 * @brief stores the names of the shaders the sample uses
+	 */
+	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>> available_shaders;
 
 	std::vector<std::string> arguments;
 

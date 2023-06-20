@@ -198,6 +198,9 @@ void Platform::update()
 			delta_time = simulation_frame_time;
 		}
 
+		active_app->update_overlay(delta_time, [=]() {
+			on_update_ui_overlay(gui.lock()->get_drawer());
+		});
 		active_app->update(delta_time);
 
 		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
@@ -289,6 +292,11 @@ void Platform::set_window_properties(const Window::OptionalProperties &propertie
 	window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : window_properties.extent.height;
 }
 
+std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& Platform::get_available_shaders()
+{
+	return available_shaders;
+}
+
 const std::string &Platform::get_external_storage_directory()
 {
 	return external_storage_directory;
@@ -370,6 +378,7 @@ bool Platform::start_app()
 		return false;
 	}
 
+	gui = active_app->get_gui();
 	on_app_start(requested_app_info->id);
 
 	return true;
@@ -446,6 +455,11 @@ void Platform::on_app_close(const std::string &app_id)
 void Platform::on_platform_close()
 {
 	HOOK(Hook::OnPlatformClose, on_platform_close());
+}
+
+void Platform::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	HOOK(Hook::OnUpdateUi, on_update_ui_overlay(drawer));
 }
 
 #undef HOOK

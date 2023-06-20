@@ -88,8 +88,6 @@ void HPPApiVulkanSample::update(float delta_time)
 		view_changed();
 	}
 
-	update_overlay(delta_time);
-
 	render(delta_time);
 	camera.update(delta_time);
 	if (camera.moving())
@@ -419,11 +417,11 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPApiVulkanSample::update_overlay(float delta_time)
+void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additionalUI)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this]() { on_update_ui_overlay(gui->get_drawer()); });
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additionalUI]() { on_update_ui_overlay(gui->get_drawer()); additionalUI(); });
 
 		gui->update(delta_time);
 
