@@ -46,9 +46,9 @@ GshaderToMshader::~GshaderToMshader()
 	}
 }
 
-bool GshaderToMshader::prepare(vkb::Platform &platform)
+bool GshaderToMshader::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
