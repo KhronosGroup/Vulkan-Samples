@@ -29,6 +29,7 @@ VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/type_ptr.hpp>
 VKBP_ENABLE_WARNINGS()
 
+#include "api_vulkan_sample.h"
 #include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
@@ -51,15 +52,6 @@ VKBP_ENABLE_WARNINGS()
 #include "scene_graph/scripts/animation.h"
 
 #include <ctpl_stl.h>
-
-struct Vertex
-{
-	glm::vec3 pos;
-	glm::vec3 normal;
-	glm::vec2 uv;
-	glm::vec4 joint0;
-	glm::vec4 weight0;
-};
 
 namespace vkb
 {
@@ -341,6 +333,7 @@ inline void upload_image_to_gpu(CommandBuffer &command_buffer, core::Buffer &sta
 		command_buffer.image_memory_barrier(image.get_vk_image_view(), memory_barrier);
 	}
 }
+
 inline void prepare_meshlets(std::vector<Meshlet> &meshlets, std::unique_ptr<vkb::sg::SubMesh> &submesh, std::vector<unsigned char> &index_data)
 {
 	Meshlet meshlet;
