@@ -311,6 +311,7 @@ set(CORE_FILES
     core/hpp_physical_device.cpp
     core/hpp_pipeline_layout.cpp
     core/hpp_queue.cpp
+    core/hpp_sampler.cpp
     core/hpp_swapchain.cpp
     core/hpp_vulkan_resource.cpp
 )

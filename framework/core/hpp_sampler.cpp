@@ -15,36 +15,29 @@
  * limitations under the License.
  */
 
-#pragma once
+#include "hpp_sampler.h"
 
-#include "core/hpp_vulkan_resource.h"
+#include "hpp_device.h"
 
 namespace vkb
 {
 namespace core
 {
-/**
- * @brief Represents a Vulkan Sampler, using Vulkan-Hpp
- */
-class HPPSampler : public vkb::core::HPPVulkanResource<vk::Sampler>
+HPPSampler::HPPSampler(vkb::core::HPPDevice &device, const vk::SamplerCreateInfo &info) :
+    HPPVulkanResource{device.get_handle().createSampler(info), &device}
+{}
+
+HPPSampler::HPPSampler(HPPSampler &&other) :
+    HPPVulkanResource(std::move(other))
+{}
+
+HPPSampler::~HPPSampler()
 {
-  public:
-	/**
-	 * @brief Creates a Vulkan HPPSampler
-	 * @param device The device to use
-	 * @param info Creation details
-	 */
-	HPPSampler(vkb::core::HPPDevice &device, const vk::SamplerCreateInfo &info);
+	if (get_handle())
+	{
+		get_device().get_handle().destroySampler(get_handle());
+	}
+}
 
-	HPPSampler(const HPPSampler &) = delete;
-
-	HPPSampler(HPPSampler &&sampler);
-
-	~HPPSampler();
-
-	HPPSampler &operator=(const HPPSampler &) = delete;
-
-	HPPSampler &operator=(HPPSampler &&) = delete;
-};
 }        // namespace core
 }        // namespace vkb
