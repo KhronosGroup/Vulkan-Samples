@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -215,6 +215,11 @@ bool CLI11CommandParser::parse(const std::vector<Command *> &commands)
 
 	return cli11_parse(_cli11.get());
 }
+
+// A header is defining success as a macro, which is causing a conflict with CLI11
+#ifdef Success
+#	undef Success
+#endif
 
 bool CLI11CommandParser::cli11_parse(CLI::App *app)
 {

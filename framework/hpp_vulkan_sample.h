@@ -72,6 +72,11 @@ class HPPVulkanSample : public vkb::Application
 
 	std::unique_ptr<vkb::core::HPPDevice> const &get_device() const;
 
+	inline bool has_render_context() const
+	{
+		return render_context != nullptr;
+	}
+
 	vkb::rendering::HPPRenderContext &get_render_context();
 
 	void set_render_pipeline(vkb::rendering::HPPRenderPipeline &&render_pipeline);

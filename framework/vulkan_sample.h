@@ -145,6 +145,11 @@ class VulkanSample : public Application
 
 	Device &get_device();
 
+	inline bool has_render_context() const
+	{
+		return render_context != nullptr;
+	}
+
 	RenderContext &get_render_context();
 
 	void set_render_pipeline(RenderPipeline &&render_pipeline);
