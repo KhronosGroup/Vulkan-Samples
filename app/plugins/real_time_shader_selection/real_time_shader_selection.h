@@ -58,5 +58,6 @@ private:
 	std::map<vkb::ShaderSourceLanguage, std::vector<std::pair<vkb::ShaderType, std::string>>> availableShaders;
 	std::vector<std::string> shaderName;
 	int activeShader;
+	static const int min_size_for_shaders = 2;
 };
 }        // namespace plugins

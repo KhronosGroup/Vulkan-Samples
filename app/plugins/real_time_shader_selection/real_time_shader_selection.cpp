@@ -41,9 +41,10 @@ void RealTimeShaderSelection::init(const vkb::CommandParser &parser)
 
 void RealTimeShaderSelection::on_app_start(const std::string &app_info)
 {
-	if (platform->get_available_shaders().empty())
+	if (platform->get_available_shaders().size() < min_size_for_shaders)
 	{
-		LOGE("Sample doesn't support RealTimeShaderSelection plugin, sample should add available shaders please see ApiVulkanSample::store_shader");
+		LOGE("Sample doesn't support RealTimeShaderSelection plugin, sample should add available shaders please see ApiVulkanSample::store_shader.");
+		LOGE("Sample, defined {} shaders, minimum number of defined shaders is {}", platform->get_available_shaders().size(), min_size_for_shaders);
 		return;
 	}
 	availableShaders = platform->get_available_shaders();
@@ -66,7 +67,7 @@ void RealTimeShaderSelection::on_app_start(const std::string &app_info)
 
 void RealTimeShaderSelection::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (!availableShaders.empty())
+	if (availableShaders.size() >= min_size_for_shaders)
 	{
 		if (drawer.header("Real Time Shader Selection"))
 		{

@@ -511,6 +511,10 @@ bool DynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		{vkb::ShaderType::VERT, "dynamic_uniform_buffers/base.vert"},
 		{vkb::ShaderType::FRAG, "dynamic_uniform_buffers/base.frag"},
 	} );
+	store_shader(vkb::ShaderSourceLanguage::VK_SPV, {
+		{vkb::ShaderType::VERT, "dynamic_uniform_buffers/base.vert.spv"},
+		{vkb::ShaderType::FRAG, "dynamic_uniform_buffers/base.frag.spv"},
+	} );
 	prepared = true;
 	return true;
 }
