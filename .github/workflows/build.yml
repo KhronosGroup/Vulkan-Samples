@@ -25,19 +25,31 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt install xorg-dev libglu1-mesa-dev
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2
+      - if: ${{ matrix.platform == 'windows' }}
+        name: Setup MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+      - if: ${{ matrix.platform == 'windows' }}
+        name: sccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+          variant: sccache
+      - if: ${{ matrix.platform != 'windows' }}
+        name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
         with:
           key: ${{ github.job }}-${{ matrix.os }}
       - if: ${{ matrix.platform == 'windows' }}
-        name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -D CMAKE_C_COMPILER_LAUNCHER=sccache -D CMAKE_CXX_COMPILER_LAUNCHER=sccache
+        name: Configure and build
+        shell: pwsh
+        run: |
+          cmake -H"." -B"build/${{ matrix.platform }}" -G"NMake Makefiles" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -DCMAKE_C_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache -DCMAKE_CXX_COMPILER_LAUNCHER=C:\\Users\\runneradmin\\.cargo\\bin\\sccache
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }}  -j 1
       - if: ${{ matrix.platform != 'windows' }}
-        name: Configure
-        run: cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
-      - name: "Build ${{ matrix.platform }} in ${{ matrix.build_type }}"
-        run: cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
-
+        name: Configure and build
+        run: |
+          cmake -H"." -B"build/${{ matrix.platform }}" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON
+          cmake --build "build/${{ matrix.platform }}" --target vulkan_samples --config ${{ matrix.build_type }} ${{ env.PARALLEL }}
 
   build_d2d:
     name: "Build Ubuntu with Direct To Display"
@@ -79,10 +91,14 @@ jobs:
           java-version: "11"
           distribution: "temurin"
           cache: gradle
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
 
       - name: "Run generate script"
         run: ./bldsys/scripts/generate_android_gradle.sh
 
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
-        run: ./gradlew app:assemble${{ matrix.build_type }} --info
+        run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
