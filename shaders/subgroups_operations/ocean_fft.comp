@@ -18,34 +18,44 @@
  * limitations under the License.
  */
 
-layout (local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
-struct Vertex {
+#define PI 3.141592f
+
+struct Vertex
+{
 	vec3 position;
 };
 
-layout (binding = 0) uniform Ubo
+layout (set = 0, binding = 0) uniform Ubo
 {
 	uint grid_size;
 	float time;
 } ubo;
 
-layout (std140, binding = 1) readonly buffer VertexInBuffer
+layout (std140, set = 0, binding = 1) readonly buffer VertexInBuffer
 {
 	Vertex verticesIn[];
 };
 
-layout (std140, binding = 2) buffer VertexOutBuffer
+layout (std140, set = 0, binding = 2) buffer VertexOutBuffer
 {
 	Vertex verticesOut[];
 };
 
 void main()
 {
-	uint idx = gl_LocalInvocationIndex; // gl_GlobalInvocationID.x  + gl_GlobalInvocationID.y * ubo.grid_size;
+	float amplitude = 1.5f;
+	float wave_length = 25.0f;
+	float speed = 15.0f;
+	float k = 2.0f * PI / wave_length;
+	uint idx = gl_GlobalInvocationID.x * gl_SubgroupInvocationID + gl_GlobalInvocationID.y * gl_SubgroupInvocationID +  gl_GlobalInvocationID.z * gl_SubgroupInvocationID;
+
+ 	subgroupMemoryBarrierBuffer();
+
 	Vertex inVertex = verticesIn[idx];
-	// inVertex.position.y = sin(inVertex.position.x * inVertex.position.y); // * sin(uboTime.time);
-	//subgroupBarrier();
-	verticesOut[idx].position = inVertex.position;
-	
+
+ 	inVertex.position.y = amplitude * sin(k * (inVertex.position.x - (speed * ubo.time))) * cos(k * (inVertex.position.z - (speed * ubo.time)));
+ 	
+	verticesOut[idx] = inVertex;
 }

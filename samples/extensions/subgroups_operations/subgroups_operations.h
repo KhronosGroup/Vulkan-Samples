@@ -50,11 +50,13 @@ class SubgroupsOperations : public ApiVulkanSample
 	void generate_grid();
 	void prepare_uniform_buffers();
 	void setup_descriptor_pool();
+	void create_semaphore();
 	void create_descriptor_set_layout();
 	void create_descriptor_set();
 	void create_pipelines();
 
 	void update_uniform_buffers();
+	void update_compute_descriptor();
 
 	struct Pipeline
 	{
@@ -86,19 +88,11 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct GuiConfig
 	{
-		GuiConfig()
-		{
-			grid_sizes = {
-			    "16", "32", "64", "128", "256"};
-		}
-		bool    wireframe     = {false};
-		int32_t grid_size_idx = {0};
-
-		std::vector<std::string> grid_sizes;
+		bool wireframe = {false};
 	} ui;
 
 	GridBuffers                        input_grid;        // input buffer for compute shader
-	uint32_t                           grid_size;
+	uint32_t                           grid_size = {32u};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> compute_ubo;
 
@@ -120,10 +114,11 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct
 	{
-		GridBuffers grid;        // output (result) buffer for compute shader
-
+		GridBuffers           grid;        // output (result) buffer for compute shader
+		uint32_t              graphics_queue_family_index;
 		VkDescriptorSetLayout descriptor_set_layout;
 		VkDescriptorSet       descriptor_set;
+		VkSemaphore           semaphore;
 		struct
 		{
 			Pipeline _default;
@@ -132,6 +127,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	} ocean;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
+	vkb::Timer                         timer;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
