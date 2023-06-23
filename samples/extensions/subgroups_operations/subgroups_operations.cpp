@@ -64,6 +64,7 @@ SubgroupsOperations::SubgroupsOperations()
 
 	grid_size = 256U;
 }
+
 SubgroupsOperations::~SubgroupsOperations()
 {
 	if (has_device())
