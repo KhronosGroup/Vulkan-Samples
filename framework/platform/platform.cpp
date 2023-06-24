@@ -196,11 +196,17 @@ void Platform::update()
 
 		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
 		{
-			on_post_draw(app->get_render_context());
+			if (app->has_render_context())
+			{
+				on_post_draw(app->get_render_context());
+			}
 		}
 		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
 		{
-			on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+			if (app->has_render_context())
+			{
+				on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+			}
 		}
 	}
 }
