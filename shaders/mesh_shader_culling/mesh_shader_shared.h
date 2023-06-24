@@ -29,6 +29,6 @@ const uint numMeshInvocationsY = 2;
 struct SharedData
 {
 	vec2 position;
-	vec2 offsets[numTaskInvocationsX * numTaskInvocationsX];
+	vec2 offsets[numTaskInvocationsX * numTaskInvocationsY];
 	vec2 size;
 };
