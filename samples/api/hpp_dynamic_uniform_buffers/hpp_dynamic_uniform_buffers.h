@@ -70,6 +70,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	static void  aligned_free(void *data);
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -77,14 +78,16 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 
-	void create_pipeline();
-	void draw();
-	void generate_cube();
-	void prepare_camera();
-	void prepare_uniform_buffers();
-	void update_descriptor_set();
-	void update_dynamic_uniform_buffer(float delta_time, bool force = false);
-	void update_uniform_buffers();
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_descriptor_set_layout();
+	vk::Pipeline            create_pipeline();
+	void                    draw();
+	void                    generate_cube();
+	void                    prepare_camera();
+	void                    prepare_uniform_buffers();
+	void                    update_descriptor_set();
+	void                    update_dynamic_uniform_buffer(float delta_time, bool force = false);
+	void                    update_uniform_buffers();
 
   private:
 	float                                 animation_timer = 0.0f;
