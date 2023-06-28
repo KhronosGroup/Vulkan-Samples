@@ -39,7 +39,7 @@ cl_platform_id load_opencl()
 	bool openCLAvailable = false;
 
 #if defined(__ANDROID__)
-	// Try to find the OepenCL library on one of the following paths
+	// Try to find the OpenCL library on one of the following paths
 	static const char *libraryPaths[] = {
 	    // Generic
 	    "/system/vendor/lib64/libOpenCL.so",
@@ -65,7 +65,7 @@ cl_platform_id load_opencl()
 		}
 	}
 #elif defined(__linux__)
-	// Try to find the OepenCL library on one of the following paths
+	// Try to find the OpenCL library on one of the following paths
 	static const char *libraryPaths[] = {
 	    "libOpenCL.so",
 	    "/usr/lib/libOpenCL.so",

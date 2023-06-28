@@ -243,7 +243,7 @@ Render a procedural image using OpenGL and incorporate that rendered content int
 ### [OpenCL interoperability](./extensions/open_cl_interop)
 **Extensions**: [```VK_KHR_external_memory```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory.html),[```VK_KHR_external_semaphore```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore.html)
 
-This sample shows how to do Vulkan and OpenCL interoperability using cross vendor extensions in both extensions. The sample uses OpenCL to update an image that is then displayed in Vulkan. This is done by sharing the memory for that image across the two apis. The sample also shares semaphores for doing cross api synchronization.
+This sample shows how to do Vulkan and OpenCL interoperability using cross vendor extensions in both apis. The sample uses OpenCL to update an image that is then displayed in Vulkan. This is done by sharing the memory for that image across the two apis. The sample also shares semaphores for doing cross api synchronization.
 
 ### [Arm OpenCL interoperability](./extensions/open_cl_interop_arm)
 **Extensions**: [```VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_ANDROID_external_memory_android_hardware_buffer.html)
