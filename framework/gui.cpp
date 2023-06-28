@@ -750,6 +750,11 @@ bool Gui::is_debug_view_active() const
 	return debug_view.active;
 }
 
+void Gui::set_subpass(const uint32_t subpass)
+{
+	this->subpass = subpass;
+}
+
 Gui::StatsView::StatsView(const Stats *stats)
 {
 	if (stats == nullptr)

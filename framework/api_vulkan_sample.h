@@ -365,7 +365,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/**
 	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
 	 */
-    virtual void prepare_gui();
+	virtual void prepare_gui();
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */

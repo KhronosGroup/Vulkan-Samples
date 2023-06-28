@@ -28,7 +28,7 @@ To use this feature, the device extension VK_EXT_COLOR_WRITE_ENABLE_EXTENSION_NA
 Support of this feature can be queried by extending the struct VkPhysicalDeviceFeatures2 in the vkGetPhysicalDeviceFeatures2 call by a VkPhysicalDeviceColorWriteEnableFeaturesEXT struct.
 `VkPipelineColorWriteCreateInfoEXT` contains an array of Boolean values that serve as toggles for the corresponding `VkPipelineColorBlendAttachmentState`. This array can be overwritten dynamically with the `vkCmdSetColorWriteEnableEXT` function. 
 
-Two subpasses are prerformed in the sample. In the first subpass, three attachments are used. Each attachment has only one color component bit enabled - R, G and B. Triangle is drawn on each of them separately.
+Two subpasses are performed in the sample. In the first subpass, three attachments are used. Each attachment has only one color component bit enabled - R, G and B. A triangle is drawn on each of them separately.
 The second subpass combines three images created in the previous pass. Checkboxes are used to toggle the `vkCmdSetColorWriteEnableEXT` function disabling each attachment. As a result of its disabling, the value of a given channel is set as the value of that channel in the background color. Sliders are used to set the background color.
 
 ## The sample

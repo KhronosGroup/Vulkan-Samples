@@ -16,10 +16,6 @@
  * limitations under the License.
  */
 
-precision mediump float;
-
-layout (location = 0) out vec2 outUV;
-
 out gl_PerVertex
 {
         vec4 gl_Position;
@@ -27,6 +23,6 @@ out gl_PerVertex
 
 void main()
 {
-        outUV = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
-        gl_Position = vec4(outUV * 2.0f - 1.0f, 0.0f, 1.0f);
+        vec2 uv = vec2((gl_VertexIndex << 1) & 2, gl_VertexIndex & 2);
+        gl_Position = vec4(uv * 2.0f - 1.0f, 0.0f, 1.0f);
 }

@@ -16,13 +16,10 @@
  * limitations under the License.
  */
 
-precision mediump float;
-
 layout (input_attachment_index = 0, binding = 0) uniform subpassInput in_color_r;
 layout (input_attachment_index = 1, binding = 1) uniform subpassInput in_color_g;
 layout (input_attachment_index = 2, binding = 2) uniform subpassInput in_color_b;
 
-layout (location = 0) in vec2 inUV;
 layout (location = 0) out vec4 outColor;
 
 void main()

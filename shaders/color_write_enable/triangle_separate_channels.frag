@@ -1,4 +1,4 @@
-#version 320 es
+#version 450
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,17 +16,18 @@
  * limitations under the License.
  */
 
-precision mediump float;
-
 layout(location = 0) in vec3 in_color;
 
 layout(location = 0) out vec4 out_color_r;
 layout(location = 1) out vec4 out_color_g;
 layout(location = 2) out vec4 out_color_b;
 
+// The full color is copied to individual attachments.
+// Each attachment has a single component bit (R, G, B) enabled
+// via the blend_attachment in ColorWriteEnable::prepare_pipelines.
 void main()
 {
-       out_color_r = vec4(in_color, 1.0);
-       out_color_g = vec4(in_color, 1.0);
-       out_color_b = vec4(in_color, 1.0);
+       out_color_r = vec4(in_color, 1.0f);
+       out_color_g = vec4(in_color, 1.0f);
+       out_color_b = vec4(in_color, 1.0f);
 }

@@ -17,13 +17,6 @@
 
 #include "color_write_enable.h"
 
-// Create subclassed UI which will be displayed in subpass 1
-GuiInSubpass1::GuiInSubpass1(vkb::VulkanSample &sample_, const vkb::Window &window, const vkb::Stats *stats, const float font_size, bool explicit_update) :
-    vkb::Gui(sample_, window, stats, font_size, explicit_update)
-{
-	subpass = 1;
-}
-
 ColorWriteEnable::ColorWriteEnable()
 {
 	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
@@ -56,13 +49,13 @@ ColorWriteEnable::~ColorWriteEnable()
 
 bool ColorWriteEnable::prepare(const vkb::ApplicationOptions &options)
 {
-    if (!ApiVulkanSample::prepare(options))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
 	setup_descriptor_set_layout();
-    prepare_pipelines();
+	prepare_pipelines();
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
@@ -72,8 +65,11 @@ bool ColorWriteEnable::prepare(const vkb::ApplicationOptions &options)
 
 void ColorWriteEnable::prepare_gui()
 {
-    gui = std::make_unique<GuiInSubpass1>(*this, *window, /*stats=*/nullptr, 15.0f, true);
-	gui->prepare(pipeline_cache, render_pass, {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT), load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
+	gui->set_subpass(1);
+	gui->prepare(pipeline_cache, render_pass,
+	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
+	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ColorWriteEnable::prepare_pipelines()
@@ -454,13 +450,14 @@ void ColorWriteEnable::setup_framebuffer()
 	framebuffer_create_info.layers                  = 1;
 
 	// Set attachments to the corresponding framebuffers.
+	attachments[1] = this->attachments.red.view;
+	attachments[2] = this->attachments.green.view;
+	attachments[3] = this->attachments.blue.view;
+
 	framebuffers.resize(render_context->get_render_frames().size());
 	for (uint32_t i = 0; i < framebuffers.size(); i++)
 	{
 		attachments[0] = swapchain_buffers[i].view;
-		attachments[1] = this->attachments.red.view;
-		attachments[2] = this->attachments.green.view;
-		attachments[3] = this->attachments.blue.view;
 		VK_CHECK(vkCreateFramebuffer(device->get_handle(), &framebuffer_create_info, nullptr, &framebuffers[i]));
 	}
 }

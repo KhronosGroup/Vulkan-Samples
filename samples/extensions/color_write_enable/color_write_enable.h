@@ -23,12 +23,6 @@
  * @brief Color generation toggle using VK_EXT_color_write_enable
  */
 
-class GuiInSubpass1 : public vkb::Gui
-{
-  public:
-	GuiInSubpass1(vkb::VulkanSample &sample_, const vkb::Window &window, const vkb::Stats *stats, const float font_size, bool explicit_update);
-};
-
 class ColorWriteEnable : public ApiVulkanSample
 {
   public:
@@ -36,17 +30,17 @@ class ColorWriteEnable : public ApiVulkanSample
 	virtual ~ColorWriteEnable();
 
 	// Create pipeline
-    void prepare_pipelines();
+	void prepare_pipelines();
 
 	// Override basic framework functionality
 	void build_command_buffers() override;
 	void render(float delta_time) override;
-    bool prepare(const vkb::ApplicationOptions &options) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void setup_render_pass() override;
 	void setup_framebuffer() override;
-    void prepare_gui() override;
+	void prepare_gui() override;
 
   private:
 	struct FrameBufferAttachment
