@@ -89,11 +89,6 @@ cl_platform_id load_opencl()
 	}
 #elif defined(_WIN32)
 	handle = LoadLibraryA("OpenCL.dll");
-	if (handle)
-	{
-		char libPath[MAX_PATH] = {0};
-		GetModuleFileNameA(static_cast<HMODULE>(handle), libPath, sizeof(libPath));
-	}
 #endif
 
 	if (handle == nullptr)
