@@ -102,18 +102,8 @@ bool ShaderCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
                                       const std::string          &entry_point,
                                       const ShaderVariant        &shader_variant,
                                       std::vector<std::uint32_t> &spirv,
-                                      std::string                &info_log)
-{
-	return compile_to_spirv(stage, vkb::ShaderSourceLanguage::VK_GLSL, shader_source, entry_point, shader_variant, spirv, info_log);
-}
-
-bool ShaderCompiler::compile_to_spirv(VkShaderStageFlagBits       stage,
-                                      vkb::ShaderSourceLanguage   src_language,
-                                      const std::vector<uint8_t> &shader_source,
-                                      const std::string          &entry_point,
-                                      const ShaderVariant        &shader_variant,
-                                      std::vector<std::uint32_t> &spirv,
-                                      std::string                &info_log)
+                                      std::string                &info_log,
+                                      vkb::ShaderSourceLanguage   src_language)
 {
 	// Initialize glslang library.
 	glslang::InitializeProcess();

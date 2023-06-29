@@ -373,7 +373,7 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 		vkb::ShaderCompiler shader_compiler;
 		// Extract extension name from the shader file
 		file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), src_language, buffer, "main", {}, spirv, info_log))
+		if (!shader_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log, src_language))
 		{
 			LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 			return VK_NULL_HANDLE;

@@ -56,8 +56,11 @@ def get_ext(file_path):
 def query_files(files):
     failed_queries = {}
     queries = {}
+    
+    print("\n lrm query_files")
 
     for filename in files:
+        print("\n lrm filename %s", filename)
         with io.open(filename, "r+", encoding="utf-8") as f:
             queries[filename] = None
             file_contents = f.read()
@@ -76,6 +79,7 @@ def query_files(files):
 def check_files(check_files):
     queries, failures = query_files(check_files)
 
+    print("\n lrm check files")
     current_year = datetime.datetime.now().year
 
     missing = []
@@ -181,7 +185,7 @@ if __name__ == "__main__":
         pass
 
     out = check_output(["git", "diff", args.branch, "--name-only"])
-
+ 
     files = out.decode("utf-8").split("\n")
 
     files_to_check = list(

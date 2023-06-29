@@ -35,9 +35,10 @@ class HPPShaderCompiler : private vkb::ShaderCompiler
 	                             const std::string          &entry_point,
 	                             const ShaderVariant        &shader_variant,
 	                             std::vector<std::uint32_t> &spirv,
-	                             std::string                &info_log)
+	                             std::string                &info_log,
+                               	 vkb::ShaderSourceLanguage  src_language = vkb::ShaderSourceLanguage::VK_GLSL)
 	{
-		return vkb::ShaderCompiler::compile_to_spirv(static_cast<VkShaderStageFlagBits>(stage), shader_source, entry_point, shader_variant, spirv, info_log);
+		return vkb::ShaderCompiler::compile_to_spirv(static_cast<VkShaderStageFlagBits>(stage), shader_source, entry_point, shader_variant, spirv, info_log, src_language);
 	}
 };
 }        // namespace vkb

@@ -290,8 +290,9 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 * @brief Load a SPIR-V shader
 	 * @param file The file location of the shader relative to the shaders folder
 	 * @param stage The shader stage
+	 * @param src_language The shader language
 	 */
-	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage);
+	vk::PipelineShaderStageCreateInfo load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language = vkb::ShaderSourceLanguage::VK_GLSL);
 
 	/**
 	 * @brief Updates the overlay

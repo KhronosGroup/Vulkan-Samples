@@ -56,26 +56,20 @@ class ShaderCompiler
 	/**
 	 * @brief Compiles GLSL/HLSL to SPIRV code
 	 * @param stage The Vulkan shader stage flag
-	 * @param src_language The language of source code
 	 * @param shader_source The source code to be compiled
 	 * @param entry_point The entrypoint function name of the shader stage
 	 * @param shader_variant The shader variant
 	 * @param[out] spirv The generated SPIRV code
 	 * @param[out] info_log Stores any log messages during the compilation process
+	 * @param src_language The language of source code
 	 */
 	bool compile_to_spirv(VkShaderStageFlagBits       stage,
-	                      vkb::ShaderSourceLanguage   src_language,
 	                      const std::vector<uint8_t> &shader_source,
 	                      const std::string          &entry_point,
 	                      const ShaderVariant        &shader_variant,
 	                      std::vector<std::uint32_t> &spirv,
-	                      std::string                &info_log);
+	                      std::string                &info_log,
+	                      vkb::ShaderSourceLanguage   src_language = vkb::ShaderSourceLanguage::VK_GLSL);
 
-	bool compile_to_spirv(VkShaderStageFlagBits       stage,
-	                      const std::vector<uint8_t> &shader_source,
-	                      const std::string          &entry_point,
-	                      const ShaderVariant        &shader_variant,
-	                      std::vector<std::uint32_t> &spirv,
-	                      std::string                &info_log);
 };
 }        // namespace vkb

@@ -408,9 +408,9 @@ void HPPApiVulkanSample::create_pipeline_cache()
 	pipeline_cache = get_device()->get_handle().createPipelineCache({});
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage, src_language));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
@@ -759,9 +759,9 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	dependencies[1].srcSubpass      = 0;
 	dependencies[1].dstSubpass      = VK_SUBPASS_EXTERNAL;
 	dependencies[1].srcStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
-	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eBottomOfPipe;
+	dependencies[1].dstStageMask    = vk::PipelineStageFlagBits::eColorAttachmentOutput | vk::PipelineStageFlagBits::eEarlyFragmentTests | vk::PipelineStageFlagBits::eLateFragmentTests;
 	dependencies[1].srcAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
-	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eMemoryRead;
+	dependencies[1].dstAccessMask   = vk::AccessFlagBits::eColorAttachmentRead | vk::AccessFlagBits::eColorAttachmentWrite | vk::AccessFlagBits::eDepthStencilAttachmentRead | vk::AccessFlagBits::eDepthStencilAttachmentWrite;
 	dependencies[1].dependencyFlags = vk::DependencyFlagBits::eByRegion;
 
 	vk::RenderPassCreateInfo render_pass_create_info({}, attachments, subpass_description, dependencies);
