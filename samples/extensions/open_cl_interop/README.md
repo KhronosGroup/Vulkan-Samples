@@ -189,7 +189,7 @@ VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr
 
 We once again select the handle type based on the platform we're compiling on and if it's a Windows system we set the required security access information before creating two semaphores with `vkCreateSemaphore`.
 
-With the Vulkan part done, we again **switch over** to OpenCL, where we'll import the Vulkan semaphores. The `get_vulkan_semaphore_handle` function is a convenient wrapper for getting a platform specific handle to a Vulkan semaphore. It'll use `vkGetSemaphoreWin32HandleKHR` on windows, and `vkGetMemoryFdKHR` on all other platforms:
+With the Vulkan part done, we again **switch over** to OpenCL, where we'll import the Vulkan semaphores. The `get_vulkan_semaphore_handle` function is a convenient wrapper for getting a platform specific handle to a Vulkan semaphore. It'll use `vkGetSemaphoreWin32HandleKHR` on windows, and `vkGetSemaphoreFdKHR` on all other platforms:
 
 ```cpp
 std::vector<cl_semaphore_properties_khr> semaphore_properties{

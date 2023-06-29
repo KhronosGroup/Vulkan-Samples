@@ -52,8 +52,8 @@ WinSecurityAttributes::WinSecurityAttributes()
 
 	InitializeSecurityDescriptor(security_descriptor, SECURITY_DESCRIPTOR_REVISION);
 
-	SID_IDENTIFIER_AUTHORITY sidIdentifierAuthority = SECURITY_WORLD_SID_AUTHORITY;
-	AllocateAndInitializeSid(&sidIdentifierAuthority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, ppSID);
+	SID_IDENTIFIER_AUTHORITY sid_identifier_authority = SECURITY_WORLD_SID_AUTHORITY;
+	AllocateAndInitializeSid(&sid_identifier_authority, 1, SECURITY_WORLD_RID, 0, 0, 0, 0, 0, 0, 0, ppSID);
 
 	EXPLICIT_ACCESS explicit_access{};
 	ZeroMemory(&explicit_access, sizeof(EXPLICIT_ACCESS));
@@ -207,7 +207,6 @@ void OpenCLInterop::render(float delta_time)
 	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
 	CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
 	CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
-	CL_CHECK(clFinish(opencl_objects.command_queue));
 
 	// Release the image (resource) to Vulkan
 	CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
