@@ -876,9 +876,9 @@ void OpenCLInterop::prepare_opencl_resources()
 	CL_CHECK(cl_result);
 }
 
-bool OpenCLInterop::prepare(vkb::Platform &platform)
+bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

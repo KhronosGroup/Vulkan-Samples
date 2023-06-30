@@ -42,7 +42,7 @@ class OpenCLInterop : public ApiVulkanSample
 	OpenCLInterop();
 	~OpenCLInterop() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
 	void view_changed() override;
