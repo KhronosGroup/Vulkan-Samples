@@ -728,33 +728,29 @@ void OpenCLInterop::prepare_sync_objects()
 
 void OpenCLInterop::prepare_opencl_resources()
 {
-	cl_platform_id platform_id = load_opencl();
-	if (platform_id == nullptr)
-	{
-		LOGE("Could not load OpenCL library");
-		throw std::runtime_error("Could not load OpenCL library");
-	}
+	load_opencl();
 
-	// Vulkan/OpenCL interop also requires some extensions on the OpenCL side, so we fetch the list of available OpenCL extensions
-	size_t extension_string_size = 0;
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extension_string_size);
+	// We need to ensure that we get the same device in OpenCL as we got in Vulkan
+	// To do this, we compare the unique device identifier of the current Vulkan implementation with the list of available
+	// devices in OpenCL and then select the OpenCL platform that matches
+	// See https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkPhysicalDeviceIDProperties.html
 
-	std::string extension_string(extension_string_size, ' ');
-	clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extension_string_size, &extension_string[0], nullptr);
+	// Get the UUID of the current Vulkan device
+	VkPhysicalDeviceIDPropertiesKHR physical_device_id_propreties{};
+	physical_device_id_propreties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+	VkPhysicalDeviceProperties2 physical_device_properties_2{};
+	physical_device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+	physical_device_properties_2.pNext = &physical_device_id_propreties;
+	vkGetPhysicalDeviceProperties2KHR(device->get_gpu().get_handle(), &physical_device_properties_2);
 
-	std::vector<std::string> available_extensions{};
-	std::stringstream        extension_stream(extension_string);
-	std::string              extension;
-	while (std::getline(extension_stream, extension, ' '))
-	{
-		// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
-		extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
-		available_extensions.push_back(extension);
-	}
-
-	// Now check support for the OpenCL extensions required by this sample
-	// Platform independent OpenCL extensions for interop
-	std::vector<std::string> required_extensions{"cl_khr_external_memory", "cl_khr_external_semaphore"};
+	// We also need to make sure the OpenCL platform/device supports all the extensions required in this sample
+	std::vector<std::string> required_extensions{
+	    // Platform independent OpenCL extensions for interop and for getting the device
+	    "cl_khr_external_memory", 
+		"cl_khr_external_semaphore",
+		// Extension required to read the uuid of a device (see below for more information on why this is required)
+	    "cl_khr_device_uuid"
+	};
 	// Platform specific OpenCL extensions for interop
 #if defined(_WIN32)
 	required_extensions.push_back("cl_khr_external_memory_win32");
@@ -763,17 +759,102 @@ void OpenCLInterop::prepare_opencl_resources()
 	required_extensions.push_back("cl_khr_external_memory_opaque_fd");
 	required_extensions.push_back("cl_khr_external_semaphore_opaque_fd");
 #endif
-	for (auto extension : required_extensions)
+
+	// Iterate over all available OpenCL platforms and find the first that fits our requirements (extensions, device UUID)
+
+	cl_uint num_platforms;
+	clGetPlatformIDs_ptr(0, nullptr, &num_platforms);
+
+	std::vector<cl_platform_id> platform_ids(num_platforms);
+	clGetPlatformIDs_ptr(num_platforms, platform_ids.data(), nullptr);
+
+	cl_platform_id selected_platform_id{nullptr};
+	cl_device_id   selected_device_id{nullptr};
+
+	for (auto &platform_id : platform_ids)
 	{
-		if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+		cl_uint        num_devices;
+		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
+		std::vector<cl_device_id> device_ids(num_devices);
+		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr);
+
+		// Check if this platform supports all required extensions
+		size_t extension_string_size = 0;
+		clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, 0, nullptr, &extension_string_size);
+
+		std::string extension_string(extension_string_size, ' ');
+		clGetPlatformInfo(platform_id, CL_PLATFORM_EXTENSIONS, extension_string_size, &extension_string[0], nullptr);
+
+		std::vector<std::string> available_extensions{};
+		std::stringstream        extension_stream(extension_string);
+		std::string              extension;
+		while (std::getline(extension_stream, extension, ' '))
 		{
-			LOGE("Required OpenCL extension {} is not supported by the selected device", extension);
-			throw std::runtime_error("Required OpenCL extension " + extension + "is not supported by the selected device");
+			// Remove trailing zeroes from all extensions (which otherwise may make support checks fail)
+			extension.erase(std::find(extension.begin(), extension.end(), '\0'), extension.end());
+			available_extensions.push_back(extension);
+		}
+
+		bool extensions_present = true;
+
+		for (auto extension : required_extensions)
+		{
+			if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
+			{
+				extensions_present = false;
+				break;
+			}
+		}
+
+		if (!extensions_present)
+		{
+			continue;
+		}	
+
+		// Check every device of this platform and see if it matches our Vulkan device UUID
+		selected_device_id = nullptr;
+		for (auto &device_id : device_ids)
+		{
+			cl_uchar uuid[CL_UUID_SIZE_KHR];
+			clGetDeviceInfo_ptr(device_id, CL_DEVICE_UUID_KHR, sizeof(uuid), &uuid, nullptr);
+
+			bool device_uuid_match = true;
+
+			for (uint32_t i = 0; i < CL_UUID_SIZE_KHR; i++)
+			{
+				if (uuid[i] != physical_device_id_propreties.deviceUUID[i])
+				{
+					device_uuid_match = false;
+					break;
+				}
+			}
+
+			if (!device_uuid_match)
+			{
+				continue;
+			}
+
+			// We found a device with a matching UUID, so use it
+			selected_device_id = device_id;
+			break;
+		}
+
+		// We found a platform that supportes the required extensions and has a device with a matching UUID
+		if (selected_device_id)
+		{
+			selected_platform_id = platform_id;
+			break;
 		}
 	}
 
-	cl_uint num_devices;
-	clGetDeviceIDs(platform_id, CL_DEVICE_TYPE_DEFAULT, 1, &opencl_objects.device_id, &num_devices);
+	if ((selected_platform_id == nullptr) || (selected_device_id == nullptr))
+	{
+		const std::string message{"Could not find an OpenCL platform + device that matches the required extensions and also matches the Vulkan device UUID "};
+		LOGE(message);
+		throw std::runtime_error(message);
+	}
+
+	opencl_objects.device_id = selected_device_id;
 
 	cl_int cl_result;
 

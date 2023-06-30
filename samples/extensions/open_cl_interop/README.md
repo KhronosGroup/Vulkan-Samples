@@ -33,7 +33,76 @@ Both Vulkan and OpenCL offer extensions for so called external objects. An exter
 
 For **sharing the memory** backing up the image, in **Vulkan** we need to enable [```VK_KHR_external_memory_capabilities```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_capabilities.html) at instance level and [```VK_KHR_external_memory```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory.html) at device level. We also need to enable specific extensions based on the platform we're running on. For Windows that's [```VK_KHR_external_memory_win32```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_win32.html) and for all Unix based platforms we need to enable [```VK_KHR_external_memory_fd```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_fd.html). The OpenCl equivalents to these extensions are [```cl_khr_external_memory```](https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Ext.html#cl_khr_external_memory), ```cl_khr_external_memory_win32``` (Windows) and ```cl_khr_external_memory_opaque_fd``` (Unix based platforms).
 
-For **sharing the semaphores** used to sync image access between the apis, in **Vulkan** we need enable [```VK_KHR_external_semaphore_capabilities```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_capabilities.html) at the instance level and [```VK_KHR_external_semaphore```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore.html) at the device level. The platform specific extension to enable are [```VK_KHR_external_semaphore_win32```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_win32.html) for Windows and [```VK_KHR_external_semaphore_fd```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_fd.html) for Unix based platforms. The **OpenCL equivalents** to these are [```cl_khr_external_semaphore```](https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Ext.html#cl_khr_external_semaphore), ```cl_khr_external_semaphore_win32``` (Windows) and ```cl_khr_external_semaphore_opaque_fd``` (Unix based platforms).
+For **sharing the semaphores** used to sync image access between the apis, in **Vulkan** we need to enable [```VK_KHR_external_semaphore_capabilities```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_capabilities.html) at the instance level and [```VK_KHR_external_semaphore```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore.html) at the device level. The platform specific extension to enable are [```VK_KHR_external_semaphore_win32```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_win32.html) for Windows and [```VK_KHR_external_semaphore_fd```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_fd.html) for Unix based platforms. The **OpenCL equivalents** to these are [```cl_khr_external_semaphore```](https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Ext.html#cl_khr_external_semaphore), ```cl_khr_external_semaphore_win32``` (Windows) and ```cl_khr_external_semaphore_opaque_fd``` (Unix based platforms).
+
+We also need to match devices between Vulkan and OpenCL. In Vulkan this functionality is provided e.g. by the [```VK_KHR_external_memory_capabilities```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_capabilities.html) extension, in OpenCL this requires the ```cl_khr_device_uuid```. More on this later.
+
+## Matching devices
+
+For the type of external objects we are going to share between Vulkan and OpenCL in this sample, we must make sure that we use the same device in Vulkan and OpenCL. See [this chapter of the spec](https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap48.html#capabilities) as to why this is required and to what types of external objects this applies. Esp. on desktop systems you may have multiple Vulkan and/or OpenCL implementations, and they may be reported by both apis in different orders. So just assuming that the first Vulkan device is also the first OpenCL device may not work.
+
+For that, both apis expose universally unique (device) identifiers (uuid) that we can use to match the devices between the apis. This is done in the `prepare_opencl_resources` function. Since this is a Vulkan sample we'll try to find the OpenCL device that matches the UUID of our Vulkan sample:
+
+```cpp
+// Get the UUID of the current Vulkan device
+VkPhysicalDeviceIDPropertiesKHR physical_device_id_propreties{};
+physical_device_id_propreties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+VkPhysicalDeviceProperties2 physical_device_properties_2{};
+physical_device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+physical_device_properties_2.pNext = &physical_device_id_propreties;
+vkGetPhysicalDeviceProperties2KHR(device->get_gpu().get_handle(), &physical_device_properties_2);
+
+// Iterate over all available OpenCL platforms and find the first that fits our requirements (extensions, device UUID)
+cl_uint num_platforms;
+clGetPlatformIDs_ptr(0, nullptr, &num_platforms);
+
+std::vector<cl_platform_id> platform_ids(num_platforms);
+clGetPlatformIDs_ptr(num_platforms, platform_ids.data(), nullptr);
+
+cl_platform_id selected_platform_id{nullptr};
+cl_device_id   selected_device_id{nullptr};
+
+// Iterate over all available OpenCL platforms
+for (auto &platform_id : platform_ids)
+{
+	cl_uint        num_devices;
+	clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
+	std::vector<cl_device_id> device_ids(num_devices);
+	clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr);
+
+	...
+
+	// Check every device of this platform and see if it matches our Vulkan device UUID
+	selected_device_id = nullptr;
+	for (auto &device_id : device_ids)
+	{
+		cl_uchar uuid[CL_UUID_SIZE_KHR];
+		clGetDeviceInfo_ptr(device_id, CL_DEVICE_UUID_KHR, sizeof(uuid), &uuid, nullptr);
+
+		bool device_uuid_match = true;
+
+		for (uint32_t i = 0; i < CL_UUID_SIZE_KHR; i++)
+		{
+			if (uuid[i] != physical_device_id_propreties.deviceUUID[i])
+			{
+				device_uuid_match = false;
+				break;
+			}
+		}
+
+		if (!device_uuid_match)
+		{
+			continue;
+		}
+
+		// We found a device with a matching UUID, so use it
+		selected_device_id = device_id;
+		break;
+	}
+
+	...
+}
+```
 
 ## A note on Windows security
 
@@ -293,10 +362,9 @@ std::array<size_t, 2> local_size  = {16, 16};
 CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
 CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
 CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
-CL_CHECK(clFinish(opencl_objects.command_queue));
 ```
 
-The call to `clFinish` will wait until the kernel is finished executing, so after this command we can return ownership of the image back to Vulkan by releasing it on the OpenCL side:
+After this command we can return ownership of the image back to Vulkan by releasing it on the OpenCL side:
 
 ```cpp
 CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));

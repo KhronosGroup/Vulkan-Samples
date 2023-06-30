@@ -38,6 +38,7 @@ OPENCL_EXPORTED_FUNCTION(clReleaseContext);
 OPENCL_EXPORTED_FUNCTION(clGetPlatformInfo);
 OPENCL_EXPORTED_FUNCTION(clGetExtensionFunctionAddressForPlatform);
 OPENCL_EXPORTED_FUNCTION(clCreateImageWithProperties);
+OPENCL_EXPORTED_FUNCTION(clGetDeviceInfo);
 
 #undef OPENCL_EXPORTED_FUNCTION
 

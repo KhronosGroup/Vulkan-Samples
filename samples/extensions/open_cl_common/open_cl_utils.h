@@ -59,5 +59,6 @@ void           unload_opencl();
 #	define clEnqueueReleaseExternalMemObjectsKHR clEnqueueReleaseExternalMemObjectsKHR_ptr
 #	define clCreateSemaphoreWithPropertiesKHR clCreateSemaphoreWithPropertiesKHR_ptr
 #	define clReleaseSemaphoreKHR clReleaseSemaphoreKHR_ptr
+#	define clGetDeviceInfo clGetDeviceInfo_ptr
 
 #endif
