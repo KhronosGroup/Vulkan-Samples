@@ -223,7 +223,7 @@ void OpenCLInterop::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
-	VkClearValue clear_values[2];
+	VkClearValue clear_values[2]{};
 	clear_values[0].color        = default_clear_color;
 	clear_values[1].depthStencil = {0.0f, 0};
 
@@ -335,7 +335,7 @@ void OpenCLInterop::setup_descriptor_set()
 	VkDescriptorBufferInfo buffer_descriptor = create_descriptor(*uniform_buffer_vs);
 
 	// Setup a descriptor image info for the current texture to be used as a combined image sampler
-	VkDescriptorImageInfo image_descriptor;
+	VkDescriptorImageInfo image_descriptor{};
 	image_descriptor.imageView   = shared_image.view;
 	image_descriptor.sampler     = shared_image.sampler;
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -746,11 +746,10 @@ void OpenCLInterop::prepare_opencl_resources()
 	// We also need to make sure the OpenCL platform/device supports all the extensions required in this sample
 	std::vector<std::string> required_extensions{
 	    // Platform independent OpenCL extensions for interop and for getting the device
-	    "cl_khr_external_memory", 
-		"cl_khr_external_semaphore",
-		// Extension required to read the uuid of a device (see below for more information on why this is required)
-	    "cl_khr_device_uuid"
-	};
+	    "cl_khr_external_memory",
+	    "cl_khr_external_semaphore",
+	    // Extension required to read the uuid of a device (see below for more information on why this is required)
+	    "cl_khr_device_uuid"};
 	// Platform specific OpenCL extensions for interop
 #if defined(_WIN32)
 	required_extensions.push_back("cl_khr_external_memory_win32");
@@ -773,7 +772,7 @@ void OpenCLInterop::prepare_opencl_resources()
 
 	for (auto &platform_id : platform_ids)
 	{
-		cl_uint        num_devices;
+		cl_uint num_devices;
 		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
 		std::vector<cl_device_id> device_ids(num_devices);
 		clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr);
@@ -797,7 +796,7 @@ void OpenCLInterop::prepare_opencl_resources()
 
 		bool extensions_present = true;
 
-		for (auto extension : required_extensions)
+		for (auto &extension : required_extensions)
 		{
 			if (std::find(available_extensions.begin(), available_extensions.end(), extension) == available_extensions.end())
 			{
@@ -809,7 +808,7 @@ void OpenCLInterop::prepare_opencl_resources()
 		if (!extensions_present)
 		{
 			continue;
-		}	
+		}
 
 		// Check every device of this platform and see if it matches our Vulkan device UUID
 		selected_device_id = nullptr;
