@@ -44,12 +44,12 @@ VertexDynamicState::~VertexDynamicState()
 }
 
 /**
- * 	@fn bool VertexDynamicState::prepare(vkb::Platform &platform)
+ * 	@fn bool VertexDynamicState::prepare(const vkb::ApplicationOptions &options)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
-bool VertexDynamicState::prepare(vkb::Platform &platform)
+bool VertexDynamicState::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

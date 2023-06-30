@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,6 +19,7 @@
 
 #include <termios.h>
 #include <unistd.h>
+#include <vector>
 
 #include "common/vk_common.h"
 #include "platform/platform.h"
@@ -51,12 +52,14 @@ class DirectWindow : public Window
 
 	float get_dpi_factor() const override;
 
+	std::vector<const char *> get_required_surface_extensions() const override;
+
   private:
 	void poll_terminal();
 
   private:
 	mutable bool   keep_running = true;
-	Platform *     platform     = nullptr;
+	Platform      *platform     = nullptr;
 	float          dpi;
 	int            tty_fd;
 	struct termios termio;

@@ -89,7 +89,7 @@ extern "C"
 
 		for (int i = 0; i < env->GetArrayLength(arg_strings); i++)
 		{
-			jstring arg_string = (jstring)(env->GetObjectArrayElement(arg_strings, i));
+			jstring arg_string = (jstring) (env->GetObjectArrayElement(arg_strings, i));
 
 			const char *arg = env->GetStringUTFChars(arg_string, 0);
 
@@ -316,24 +316,28 @@ void on_app_cmd(android_app *app, int32_t cmd)
 
 	switch (cmd)
 	{
-		case APP_CMD_INIT_WINDOW: {
+		case APP_CMD_INIT_WINDOW:
+		{
 			platform->resize(ANativeWindow_getWidth(app->window),
 			                 ANativeWindow_getHeight(app->window));
 			platform->set_surface_ready();
 			break;
 		}
-		case APP_CMD_CONTENT_RECT_CHANGED: {
+		case APP_CMD_CONTENT_RECT_CHANGED:
+		{
 			// Get the new size
 			auto width  = app->contentRect.right - app->contentRect.left;
 			auto height = app->contentRect.bottom - app->contentRect.top;
 			platform->resize(width, height);
 			break;
 		}
-		case APP_CMD_GAINED_FOCUS: {
+		case APP_CMD_GAINED_FOCUS:
+		{
 			platform->set_focus(true);
 			break;
 		}
-		case APP_CMD_LOST_FOCUS: {
+		case APP_CMD_LOST_FOCUS:
+		{
 			platform->set_focus(false);
 			break;
 		}
@@ -495,11 +499,6 @@ void AndroidPlatform::terminate(ExitCode code)
 	Platform::terminate(code);
 }
 
-const char *AndroidPlatform::get_surface_extension()
-{
-	return VK_KHR_ANDROID_SURFACE_EXTENSION_NAME;
-}
-
 void AndroidPlatform::send_notification(const std::string &message)
 {
 	JNIEnv *env;
@@ -523,28 +522,6 @@ GameActivity *AndroidPlatform::get_activity()
 android_app *AndroidPlatform::get_android_app()
 {
 	return app;
-}
-
-std::unique_ptr<RenderContext> AndroidPlatform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
-{
-	auto context = Platform::create_render_context(device, surface, surface_format_priority);
-
-	context->set_present_mode_priority({VK_PRESENT_MODE_FIFO_KHR,
-	                                    VK_PRESENT_MODE_MAILBOX_KHR,
-	                                    VK_PRESENT_MODE_IMMEDIATE_KHR});
-
-	switch (window_properties.vsync)
-	{
-		case Window::Vsync::OFF:
-			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
-			break;
-		case Window::Vsync::ON:
-		default:
-			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
-			break;
-	}
-
-	return std::move(context);
 }
 
 std::vector<spdlog::sink_ptr> AndroidPlatform::get_platform_sinks()

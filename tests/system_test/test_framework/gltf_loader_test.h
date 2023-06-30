@@ -1,4 +1,4 @@
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ class GLTFLoaderTest : public VulkanTest
 
 	virtual ~GLTFLoaderTest() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
   protected:
 	std::string scene_path{};

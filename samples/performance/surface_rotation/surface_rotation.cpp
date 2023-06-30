@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -30,7 +30,7 @@ VKBP_ENABLE_WARNINGS()
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/pbr_material.h"
@@ -44,9 +44,9 @@ SurfaceRotation::SurfaceRotation()
 	config.insert<vkb::BoolSetting>(1, pre_rotate, true);
 }
 
-bool SurfaceRotation::prepare(vkb::Platform &platform)
+bool SurfaceRotation::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -73,7 +73,7 @@ bool SurfaceRotation::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -95,13 +95,6 @@ class Platform
 	 */
 	static const std::string &get_temp_directory();
 
-	/**
-	 * @return The VkInstance extension name for the platform
-	 */
-	virtual const char *get_surface_extension() = 0;
-
-	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const;
-
 	virtual void resize(uint32_t width, uint32_t height);
 
 	virtual void input_event(const InputEvent &input_event);
@@ -160,7 +153,7 @@ class Platform
 
 	/**
 	 * @brief Handles the creation of the window
-	 * 
+	 *
 	 * @param properties Preferred window configuration
 	 */
 	virtual void create_window(const Window::Properties &properties) = 0;

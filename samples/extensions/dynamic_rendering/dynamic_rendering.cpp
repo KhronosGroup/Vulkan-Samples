@@ -47,9 +47,9 @@ DynamicRendering::~DynamicRendering()
 	}
 }
 
-bool DynamicRendering::prepare(vkb::Platform &platform)
+bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

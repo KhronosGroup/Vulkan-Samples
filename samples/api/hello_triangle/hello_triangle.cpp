@@ -21,7 +21,7 @@
 #include "common/vk_common.h"
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+#include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
@@ -1063,14 +1063,16 @@ HelloTriangle::~HelloTriangle()
 	teardown(context);
 }
 
-bool HelloTriangle::prepare(vkb::Platform &platform)
+bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
+	assert(options.window != nullptr);
+
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
-	context.surface                     = platform.get_window().create_surface(*vk_instance);
-	auto &extent                        = platform.get_window().get_extent();
+	context.surface                     = options.window->create_surface(*vk_instance);
+	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
 

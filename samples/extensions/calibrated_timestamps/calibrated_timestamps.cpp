@@ -740,9 +740,9 @@ void CalibratedTimestamps::draw()
 	timestamps_end("draw");
 }
 
-bool CalibratedTimestamps::prepare(vkb::Platform &platform)
+bool CalibratedTimestamps::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

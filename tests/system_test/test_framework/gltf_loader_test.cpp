@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -39,9 +39,9 @@ GLTFLoaderTest::GLTFLoaderTest(const std::string &scene_path) :
 {
 }
 
-bool GLTFLoaderTest::prepare(vkb::Platform &platform)
+bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanTest::prepare(platform))
+	if (!VulkanTest::prepare(options))
 	{
 		return false;
 	}

@@ -23,7 +23,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "rendering/subpasses/lighting_subpass.h"
 #include "scene_graph/components/material.h"
@@ -40,9 +40,9 @@ PipelineBarriers::PipelineBarriers()
 	config.insert<vkb::IntSetting>(2, reinterpret_cast<int &>(dependency_type), DependencyType::FRAG_TO_FRAG);
 }
 
-bool PipelineBarriers::prepare(vkb::Platform &platform)
+bool PipelineBarriers::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -105,7 +105,7 @@ bool PipelineBarriers::prepare(vkb::Platform &platform)
 	                      vkb::StatIndex::gpu_fragment_cycles},
 	                     vkb::CounterSamplingConfig{vkb::CounterSamplingMode::Continuous});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

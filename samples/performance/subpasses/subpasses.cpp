@@ -18,7 +18,7 @@
 #include "subpasses.h"
 
 #include "common/vk_common.h"
-#include "platform/platform.h"
+
 #include "rendering/pipeline_state.h"
 #include "rendering/render_context.h"
 #include "rendering/render_pipeline.h"
@@ -102,9 +102,9 @@ void Subpasses::prepare_render_context()
 	get_render_context().prepare(1, [this](vkb::core::Image &&swapchain_image) { return create_render_target(std::move(swapchain_image)); });
 }
 
-bool Subpasses::prepare(vkb::Platform &platform)
+bool Subpasses::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -162,7 +162,7 @@ bool Subpasses::prepare(vkb::Platform &platform)
 	                      vkb::StatIndex::gpu_ext_write_bytes});
 
 	// Enable gui
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

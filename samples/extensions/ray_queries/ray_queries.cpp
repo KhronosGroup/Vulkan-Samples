@@ -18,7 +18,7 @@
 #include "ray_queries.h"
 #include "gltf_loader.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
@@ -177,9 +177,9 @@ void RayQueries::build_command_buffers()
 	}
 }
 
-bool RayQueries::prepare(vkb::Platform &platform)
+bool RayQueries::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

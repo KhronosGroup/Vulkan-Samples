@@ -223,8 +223,8 @@ void HPPTextureLoading::load_texture()
 		get_device()->flush_command_buffer(copy_command, queue, true);
 
 		// Clean up staging resources
-		get_device()->get_handle().freeMemory(staging_memory);
 		get_device()->get_handle().destroyBuffer(staging_buffer);
+		get_device()->get_handle().freeMemory(staging_memory);
 	}
 	else
 	{
@@ -588,9 +588,9 @@ void HPPTextureLoading::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool HPPTextureLoading::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPTextureLoading::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

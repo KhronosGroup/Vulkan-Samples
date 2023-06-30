@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,9 +20,9 @@
  *
  * Note: Requires a device that supports the VK_KHR_push_descriptor extension
  *
- * Push descriptors apply the push constants concept to descriptor sets. So instead of creating 
- * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects, 
- * this example uses push descriptors to pass descriptor sets for per-model textures and matrices 
+ * Push descriptors apply the push constants concept to descriptor sets. So instead of creating
+ * per-model descriptor sets (along with a pool for each descriptor type) for rendering multiple objects,
+ * this example uses push descriptors to pass descriptor sets for per-model textures and matrices
  * at command buffer creation time.
  */
 
@@ -78,7 +78,7 @@ class PushDescriptors : public ApiVulkanSample
 	void         update_uniform_buffers();
 	void         update_cube_uniform_buffers(float delta_time);
 	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };

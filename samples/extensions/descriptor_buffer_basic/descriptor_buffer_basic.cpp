@@ -393,9 +393,9 @@ inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
-bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
+bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

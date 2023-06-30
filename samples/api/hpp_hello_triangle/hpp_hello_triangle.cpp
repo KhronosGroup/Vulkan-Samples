@@ -18,8 +18,11 @@
 #include "hpp_hello_triangle.h"
 
 #include <common/hpp_error.h>
+#include <common/hpp_vk_common.h>
 #include <common/logging.h>
 #include <hpp_glsl_compiler.h>
+#include <platform/filesystem.h>
+#include <platform/window.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -47,16 +50,16 @@ vk::ImageView create_image_view(vk::Device device, vk::Image image, vk::Format f
 vk::Instance create_instance(std::vector<const char *> const &requested_validation_layers, std::vector<const char *> const &active_instance_extensions
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
                              ,
-                             vk::DebugReportCallbackCreateInfoEXT const &debug_report_callback_create_info
+                             vk::DebugUtilsMessengerCreateInfoEXT const &debug_utils_messenger_create_info
 #endif
 )
 {
-	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", VK_MAKE_VERSION(1, 0, 0));
+	vk::ApplicationInfo app("HPP Hello Triangle", {}, "Vulkan Samples", {}, VK_MAKE_VERSION(1, 0, 0));
 
 	vk::InstanceCreateInfo instance_info({}, &app, requested_validation_layers, active_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	instance_info.pNext = &debug_report_callback_create_info;
+	instance_info.pNext = &debug_utils_messenger_create_info;
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -130,7 +133,7 @@ vk::ShaderModule create_shader_module(vk::Device device, const char *path)
 	// Extract extension name from the glsl shader file
 	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
 
-	std::vector<uint32_t> spirv;
+	std::vector<uint32_t> spirvCode;
 	std::string           info_log;
 
 	// Compile the GLSL source
@@ -139,15 +142,13 @@ vk::ShaderModule create_shader_module(vk::Device device, const char *path)
 	{
 		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
 	}
-	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirv, info_log))
+	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;
 	}
 
-	vk::ShaderModuleCreateInfo module_info({}, spirv);
-
-	return device.createShaderModule(module_info);
+	return device.createShaderModule({{}, spirvCode});
 }
 
 vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk::SurfaceKHR surface, vk::Extent2D const &swapchain_extent, vk::SurfaceFormatKHR surface_format, vk::SwapchainKHR old_swapchain)
@@ -211,25 +212,18 @@ vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk:
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
-static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags, VkDebugReportObjectTypeEXT type,
-                                                     uint64_t object, size_t location, int32_t message_code,
-                                                     const char *layer_prefix, const char *message, void *user_data)
+VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
+                                                              const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
+                                                              void                                       *user_data)
 {
-	if (flags & VK_DEBUG_REPORT_ERROR_BIT_EXT)
+	// Log debug message
+	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-		LOGE("Validation Layer: Error: {}: {}", layer_prefix, message);
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
-	else if (flags & VK_DEBUG_REPORT_WARNING_BIT_EXT)
+	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-		LOGE("Validation Layer: Warning: {}: {}", layer_prefix, message);
-	}
-	else if (flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT)
-	{
-		LOGI("Validation Layer: Performance warning: {}: {}", layer_prefix, message);
-	}
-	else
-	{
-		LOGI("Validation Layer: Information: {}: {}", layer_prefix, message);
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	return VK_FALSE;
 }
@@ -374,20 +368,25 @@ HPPHelloTriangle::~HPPHelloTriangle()
 		device.destroy();
 	}
 
-	if (debug_report_callback)
+	if (debug_utils_messenger)
 	{
-		instance.destroyDebugReportCallbackEXT(debug_report_callback);
+		instance.destroyDebugUtilsMessengerEXT(debug_utils_messenger);
 	}
 
 	instance.destroy();
 }
 
-bool HPPHelloTriangle::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
-	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
-	select_physical_device_and_surface(platform);
+	if (!Application::prepare(options))
+	{
+		return false;
+	}
 
-	const vkb::Window::Extent &extent = platform.get_window().get_extent();
+	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
+	select_physical_device_and_surface();
+
+	const vkb::Window::Extent &extent = options.window->get_extent();
 	swapchain_data.extent.width       = extent.width;
 	swapchain_data.extent.height      = extent.height;
 
@@ -590,7 +589,7 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 	std::vector<const char *> active_instance_extensions(required_instance_extensions);
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	active_instance_extensions.push_back(VK_EXT_DEBUG_REPORT_EXTENSION_NAME);
+	active_instance_extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 #endif
 
 #if (defined(VKB_ENABLE_PORTABILITY))
@@ -645,13 +644,17 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 	}
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_report_callback_create_info = vk::DebugReportCallbackCreateInfoEXT(vk::DebugReportFlagBitsEXT::eError | vk::DebugReportFlagBitsEXT::eWarning, debug_callback);
+	debug_utils_create_info =
+	    vk::DebugUtilsMessengerCreateInfoEXT({},
+	                                         vk::DebugUtilsMessageSeverityFlagBitsEXT::eError | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning,
+	                                         vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+	                                         debug_utils_messenger_callback);
 #endif
 
 	instance = create_instance(requested_validation_layers, active_instance_extensions
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 	                           ,
-	                           debug_report_callback_create_info
+	                           debug_utils_create_info
 #endif
 	);
 	// initialize function pointers for instance
@@ -667,7 +670,7 @@ void HPPHelloTriangle::init_instance(const std::vector<const char *> &required_i
 #endif
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_report_callback = instance.createDebugReportCallbackEXT(debug_report_callback_create_info);
+	debug_utils_messenger = instance.createDebugUtilsMessengerEXT(debug_utils_create_info);
 #endif
 }
 
@@ -846,10 +849,8 @@ void HPPHelloTriangle::render_triangle(uint32_t swapchain_index)
 
 /**
  * @brief Select a physical device.
- *
- * @param platform The platform the application is being run on
  */
-void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlatform &platform)
+void HPPHelloTriangle::select_physical_device_and_surface()
 {
 	std::vector<vk::PhysicalDevice> gpus = instance.enumeratePhysicalDevices();
 
@@ -869,7 +870,8 @@ void HPPHelloTriangle::select_physical_device_and_surface(vkb::platform::HPPPlat
 		{
 			instance.destroySurfaceKHR(surface);
 		}
-		surface = platform.get_window().create_surface(instance, gpu);
+
+		surface = static_cast<vk::SurfaceKHR>(window->create_surface(static_cast<VkInstance>(instance), static_cast<VkPhysicalDevice>(gpu)));
 		if (!surface)
 		{
 			throw std::runtime_error("Failed to create window surface.");

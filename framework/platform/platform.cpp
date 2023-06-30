@@ -30,9 +30,16 @@
 
 #include "common/logging.h"
 #include "force_close/force_close.h"
+#include "hpp_vulkan_sample.h"
 #include "platform/filesystem.h"
 #include "platform/parsers/CLI11.h"
 #include "platform/plugins/plugin.h"
+#include "vulkan_sample.h"
+
+namespace plugins
+{
+class BenchmarkMode;
+}
 
 namespace vkb
 {
@@ -142,6 +149,13 @@ ExitCode Platform::main_loop()
 
 			update();
 
+			if (active_app && active_app->should_close())
+			{
+				std::string id = active_app->get_name();
+				on_app_close(id);
+				active_app->finish();
+			}
+
 			window->process_events();
 		}
 		catch (std::exception &e)
@@ -179,37 +193,16 @@ void Platform::update()
 		}
 
 		active_app->update(delta_time);
+
+		if (auto *app = dynamic_cast<VulkanSample *>(active_app.get()))
+		{
+			on_post_draw(app->get_render_context());
+		}
+		else if (auto *app = dynamic_cast<HPPVulkanSample *>(active_app.get()))
+		{
+			on_post_draw(reinterpret_cast<vkb::RenderContext &>(app->get_render_context()));
+		}
 	}
-}
-
-std::unique_ptr<RenderContext> Platform::create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const
-{
-	assert(!surface_format_priority.empty() && "Surface format priority list must contain at least one preferred surface format");
-
-	auto context = std::make_unique<RenderContext>(device, surface, *window);
-
-	context->set_surface_format_priority(surface_format_priority);
-
-	context->request_image_format(surface_format_priority[0].format);
-
-	context->set_present_mode_priority({
-	    VK_PRESENT_MODE_MAILBOX_KHR,
-	    VK_PRESENT_MODE_FIFO_KHR,
-	    VK_PRESENT_MODE_IMMEDIATE_KHR,
-	});
-
-	switch (window_properties.vsync)
-	{
-		case Window::Vsync::ON:
-			context->request_present_mode(VK_PRESENT_MODE_FIFO_KHR);
-			break;
-		case Window::Vsync::OFF:
-		default:
-			context->request_present_mode(VK_PRESENT_MODE_MAILBOX_KHR);
-			break;
-	}
-
-	return std::move(context);
 }
 
 void Platform::terminate(ExitCode code)
@@ -226,9 +219,7 @@ void Platform::terminate(ExitCode code)
 	if (active_app)
 	{
 		std::string id = active_app->get_name();
-
 		on_app_close(id);
-
 		active_app->finish();
 	}
 
@@ -376,7 +367,7 @@ bool Platform::start_app()
 		return false;
 	}
 
-	if (!active_app->prepare(*this))
+	if (!active_app->prepare({false, window.get()}))
 	{
 		LOGE("Failed to prepare vulkan app.");
 		return false;

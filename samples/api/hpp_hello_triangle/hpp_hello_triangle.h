@@ -17,14 +17,15 @@
 
 #pragma once
 
-#include <platform/hpp_application.h>
-#include <platform/hpp_platform.h>
+#include <vulkan/vulkan.hpp>
+
+#include <platform/application.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates
  * the rendering of a triangle
  */
-class HPPHelloTriangle : public vkb::platform::HPPApplication
+class HPPHelloTriangle : public vkb::Application
 {
 	/**
 	 * @brief Swapchain data
@@ -55,8 +56,7 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	virtual ~HPPHelloTriangle();
 
   private:
-	// from platform::HPPApplication
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void update(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -69,7 +69,7 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	void                            init_pipeline();
 	void                            init_swapchain();
 	void                            render_triangle(uint32_t swapchain_index);
-	void                            select_physical_device_and_surface(vkb::platform::HPPPlatform &platform);
+	void                            select_physical_device_and_surface();
 	void                            teardown_framebuffers();
 	void                            teardown_per_frame(FrameData &per_frame_data);
 
@@ -84,12 +84,12 @@ class HPPHelloTriangle : public vkb::platform::HPPApplication
 	vk::RenderPass             render_pass;                  // The renderpass description.
 	vk::PipelineLayout         pipeline_layout;              // The pipeline layout for resources.
 	vk::Pipeline               pipeline;                     // The graphics pipeline.
-	vk::DebugReportCallbackEXT debug_report_callback;        // The debug report callback.
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;        // The debug utils messenger.
 	std::vector<vk::Semaphore> recycled_semaphores;          // A set of semaphores that can be reused.
 	std::vector<FrameData>     per_frame_data;               // A set of per-frame data.
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	vk::DebugReportCallbackCreateInfoEXT debug_report_callback_create_info;
+	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
 #endif
 };
 

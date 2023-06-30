@@ -298,9 +298,9 @@ void MeshShaderCulling::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool MeshShaderCulling::prepare(vkb::Platform &platform)
+bool MeshShaderCulling::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

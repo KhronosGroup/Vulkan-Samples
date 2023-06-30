@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -65,8 +65,18 @@ class RenderContext
 	 * @param device A valid device
 	 * @param surface A surface, VK_NULL_HANDLE if in headless mode
 	 * @param window The window where the surface was created
+	 * @param present_mode Requests to set the present mode of the swapchain
+	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
+	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
 	 */
-	RenderContext(Device &device, VkSurfaceKHR surface, const Window &window);
+	RenderContext(Device                                &device,
+	              VkSurfaceKHR                           surface,
+	              const Window                          &window,
+	              VkPresentModeKHR                       present_mode                 = VK_PRESENT_MODE_FIFO_KHR,
+	              const std::vector<VkPresentModeKHR>   &present_mode_priority_list   = {VK_PRESENT_MODE_FIFO_KHR, VK_PRESENT_MODE_MAILBOX_KHR},
+	              const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list = {
+	                  {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
+	                  {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}});
 
 	RenderContext(const RenderContext &) = delete;
 
@@ -77,26 +87,6 @@ class RenderContext
 	RenderContext &operator=(const RenderContext &) = delete;
 
 	RenderContext &operator=(RenderContext &&) = delete;
-
-	/**
-	 * @brief Requests to set the present mode of the swapchain, must be called before prepare
-	 */
-	void request_present_mode(const VkPresentModeKHR present_mode);
-
-	/**
-	 * @brief Requests to set a specific image format for the swapchain
-	 */
-	void request_image_format(const VkFormat format);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
-	 */
-	void set_present_mode_priority(const std::vector<VkPresentModeKHR> &present_mode_priority_list);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its surface format
-	 */
-	void set_surface_format_priority(const std::vector<VkSurfaceFormatKHR> &surface_format_priority_list);
 
 	/**
 	 * @brief Prepares the RenderFrames for rendering
@@ -249,16 +239,6 @@ class RenderContext
 	std::unique_ptr<Swapchain> swapchain;
 
 	SwapchainProperties swapchain_properties;
-
-	// A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<VkPresentModeKHR> present_mode_priority_list = {
-	    VK_PRESENT_MODE_FIFO_KHR,
-	    VK_PRESENT_MODE_MAILBOX_KHR};
-
-	// A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<VkSurfaceFormatKHR> surface_format_priority_list = {
-	    {VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR},
-	    {VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR}};
 
 	std::vector<std::unique_ptr<RenderFrame>> frames;
 

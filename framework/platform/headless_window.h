@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2022, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,6 +48,8 @@ class HeadlessWindow : public Window
 	void close() override;
 
 	float get_dpi_factor() const override;
+
+	std::vector<const char *> get_required_surface_extensions() const override;
 
   private:
 	bool closed{false};

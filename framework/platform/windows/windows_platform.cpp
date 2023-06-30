@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -119,11 +119,6 @@ WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
 
 	Platform::set_arguments(get_args());
 	Platform::set_temp_directory(get_temp_path_from_environment());
-}
-
-const char *WindowsPlatform::get_surface_extension()
-{
-	return VK_KHR_WIN32_SURFACE_EXTENSION_NAME;
 }
 
 void WindowsPlatform::create_window(const Window::Properties &properties)

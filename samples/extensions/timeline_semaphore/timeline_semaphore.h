@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2021-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,7 @@ class TimelineSemaphore : public ApiVulkanSample
 	virtual void render(float delta_time) override;
 	virtual void build_command_buffers() override;
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void finish() override;
 
 	void create_resources();

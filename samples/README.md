@@ -174,6 +174,9 @@ Converts High Level Shading Language (HLSL) shaders to Vulkan-compatible SPIR-V.
 ### [Timestamp queries](./api/timestamp_queries/)
 Using timestamp queries for profiling GPU workloads.
 
+### [Swapchain recreation](./api/swapchain_recreation/)<br/>
+A sample that implements best practices in handling swapchain recreation, for example due to window resizing or present mode changes.
+
 ## Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
@@ -331,6 +334,11 @@ Demonstrate how to use fragment shader barycentric feature, which allows accessi
 **Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)
 
 Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
+
+### [Geometry shader to mesh shader](./extensions/gshader_to_mshader)
+**Extension:** [```VK_EXT_mesh_shader```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_mesh_shader.html)<br/>
+Demonstrates how a mesh shader can be used to achieve the same results as with geometry shader, it loads model from a file and visualizes its normals.
+
 
 ## Tooling Samples
 

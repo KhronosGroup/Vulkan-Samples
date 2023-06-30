@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Sascha Willems
+/* Copyright (c) 2021-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -112,7 +112,7 @@ class Synchronization2 : public ApiVulkanSample
 	void         update_compute_uniform_buffers(float delta_time);
 	void         update_graphics_uniform_buffers();
 	void         draw();
-	bool         prepare(vkb::Platform &platform) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 };

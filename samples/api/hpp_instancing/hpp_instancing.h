@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -94,8 +94,7 @@ class HPPInstancing : public HPPApiVulkanSample
 	};
 
   private:
-	// from platform::HPPApplication
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from HPPVulkanSample

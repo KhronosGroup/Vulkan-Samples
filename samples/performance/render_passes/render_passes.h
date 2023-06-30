@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class RenderPassesSample : public vkb::VulkanSample
   public:
 	RenderPassesSample();
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void draw_gui() override;
 

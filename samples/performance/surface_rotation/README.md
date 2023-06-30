@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Arm Limited and Contributors
+- Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -182,7 +182,7 @@ This is done to preserve the dimensions of the swapchain images, since we are pl
 
 The framework then takes care to re-create the framebuffers.
 
-# Rotating the scene
+## Rotating the scene
 
 When rotating our geometry, normally all we need to do is adjust the Model View Projection (MVP) matrix that we
 provide to the vertex shader every frame. In this case we want to rotate the scene just before applying the
@@ -238,7 +238,7 @@ void main(void)
 }
 ```
 
-# Performance impact
+## Performance impact
 
 The `surface_rotation` Vulkan sample allows you to toggle between pre-rotation mode and compositor mode.
 Below is a screenshot of the sample running on a device that does not support native (DPU) rotation, but

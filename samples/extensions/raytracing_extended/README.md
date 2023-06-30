@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2019-2021, Holochip Corporation
+- Copyright (c) 2019-2023, Holochip Corporation
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,12 +17,12 @@
 -
 -->
 
-## Ray-tracing: Extended features and dynamic objects
+# Ray-tracing: Extended features and dynamic objects
 
 This code sample demonstrates how to incorporate animations into a ray-traced scene, and shows how to incorporate
 different types of changing objects within the acceleration structures.
 
-# Acceleration structures
+## Acceleration structures
 
 The ray tracing acceleration structures are separated into two types: bottom-level acceleration structures (BLAS) and
 top-level acceleration structures (TLAS). The BLAS contains information about each object's geometry within its own
@@ -32,7 +32,7 @@ information about each instance of the geometry and its transformation (i.e. sca
 Each object must be represented in the BLAS, but can have any number of instances, each with its own transformation.
 This allows objects to be replicated without creating an acceleration structure for each instance.
 
-# Objects: Static, moving, and changing
+## Objects: Static, moving, and changing
 
 There are three categories of objects to consider when building acceleration structures: static, moving, and changing
 geometry. Static geometry includes scene data. In this code sample, the Sponza scene has a single, non-moving instance.
@@ -55,7 +55,7 @@ uses host-visible memory. However, because host-visible memory can incur a perfo
 models use a staging buffer to copy to device-exclusive memory. An alternative method would be to use a "compute shader"
 to generate the refraction model each frame, but that is outside the scope of this tutorial.
 
-# Reference Object Data from a Closest-Hit Shader
+## Reference Object Data from a Closest-Hit Shader
 
 Though the ray-tracing pipeline uses an acceleration structure to traverse the scene's geometry, the acceleration
 structures themselves do not store user-defined information about the geometry and instead give the developer the
@@ -96,7 +96,7 @@ acceleration_structure_geometry.geometry.triangles.transformData = transform_mat
 
 This technique allows the closest-hit shader to access pre-calculated vertex information.
 
-# Texture Binding and Shaders
+## Texture Binding and Shaders
 
 In a traditional raster pipeline, it is possible to render each object separately and bind its appropriate texture
 images during that pass. However, in a ray-tracing pipeline, each ray during a render pass could intersect with many
@@ -104,7 +104,7 @@ objects within the scene, and thus all textures must be available to the shader.
 textures (`Sampler2D[]`) is bound, and each object is associated with a given texture index. The texture ID information
 is stored in the object data.
 
-# Ambient Occlusion and Ray-Traced Shadows
+## Ambient Occlusion and Ray-Traced Shadows
 
 This code sample explores two different ways to calculate lighting: ray-traced shadows and ambient occlusion, both of
 which are updated each frame and are triggered when a primary ray intersects a scene object (i.e. an element of the

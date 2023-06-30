@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -417,7 +417,7 @@ VkSurfaceKHR DirectWindow::create_surface(VkInstance instance, VkPhysicalDevice 
 		// Normal and stretch options create a surface at the requested width & height
 		// clamped to the plane capabilities in play
 		image_extent.width  = std::min(best.caps.maxSrcExtent.width,
-                                      std::max(properties.extent.width, best.caps.minSrcExtent.width));
+		                               std::max(properties.extent.width, best.caps.minSrcExtent.width));
 		image_extent.height = std::min(best.caps.maxSrcExtent.height,
 		                               std::max(properties.extent.height, best.caps.minSrcExtent.height));
 	}
@@ -506,6 +506,11 @@ bool DirectWindow::get_display_present_info(VkDisplayPresentInfoKHR *info,
 	info->persistent = false;
 
 	return true;
+}
+
+std::vector<const char *> DirectWindow::get_required_surface_extensions() const
+{
+	return {VK_KHR_DISPLAY_EXTENSION_NAME};
 }
 
 }        // namespace vkb

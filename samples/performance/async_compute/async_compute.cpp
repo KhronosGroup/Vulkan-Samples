@@ -22,7 +22,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "scene_graph/components/orthographic_camera.h"
 #include "stats/stats.h"
 
@@ -206,12 +206,12 @@ void AsyncComputeSample::setup_queues()
 	}
 }
 
-bool AsyncComputeSample::prepare(vkb::Platform &platform)
+bool AsyncComputeSample::prepare(const vkb::ApplicationOptions &options)
 {
 	// Set setup_queues() for details.
 	set_high_priority_graphics_queue_enable(true);
 
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -287,7 +287,7 @@ bool AsyncComputeSample::prepare(vkb::Platform &platform)
 	                     },
 	                     config);
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	// Store the start time to calculate rotation
 	start_time = std::chrono::system_clock::now();

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -32,7 +32,7 @@ class HPPSwapchainImages : public vkb::HPPVulkanSample
   private:
 	// from vkb::HPPVulkanSample
 	virtual void draw_gui() override;
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void update(float delta_time) override;
 
   private:

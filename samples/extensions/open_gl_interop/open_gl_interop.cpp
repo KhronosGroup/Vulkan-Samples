@@ -22,12 +22,8 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
-#include "rendering/subpasses/forward_subpass.h"
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
+#include "rendering/subpasses/forward_subpass.h"
 
 #include "offscreen_context.h"
 
@@ -200,7 +196,11 @@ void OpenGLInterop::prepare_shared_resources()
 
 	{
 		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+#if WIN32
+		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
 		VkImageCreateInfo imageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 		imageCreateInfo.pNext         = &external_memory_image_create_info;
 		imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
@@ -539,9 +539,9 @@ void OpenGLInterop::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool OpenGLInterop::prepare(vkb::Platform &platform)
+bool OpenGLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

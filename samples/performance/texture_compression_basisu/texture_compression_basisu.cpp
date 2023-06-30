@@ -625,9 +625,9 @@ void TextureCompressionBasisu::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool TextureCompressionBasisu::prepare(vkb::Platform &platform)
+bool TextureCompressionBasisu::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
