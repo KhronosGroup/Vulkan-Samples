@@ -1,0 +1,481 @@
+/* Copyright (c) 2023, Mobica
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * Licensed under the Apache License, Version 2.0 the "License";
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+#include "dynamic_blending.h"
+
+#include "common/vk_common.h"
+#include "gui.h"
+
+DynamicBlending::DynamicBlending()
+{
+    add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+    add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
+    add_device_extension(VK_EXT_BLEND_OPERATION_ADVANCED_EXTENSION_NAME);
+    add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
+    add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
+
+    title       = "Dynamic blending";
+}
+
+DynamicBlending::~DynamicBlending()
+{
+    if (device)
+    {
+        // NYI
+    }
+}
+
+bool DynamicBlending::prepare(const vkb::ApplicationOptions &options)
+{
+    if (!ApiVulkanSample::prepare(options))
+    {
+        return false;
+    }
+
+    camera.type = vkb::CameraType::LookAt;
+    camera.set_position({0.0f, 0.0f, -5.0f});
+    camera.set_rotation({-15.0f, 15.0f, 0.0f});
+    camera.set_perspective(45.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
+
+    prepare_uniform_buffers();
+    prepare_scene();
+    setup_descriptor_pool();
+    create_descriptor_set_layout();
+    create_descriptor_set();
+    create_pipelines();
+    build_command_buffers();
+
+    prepared = true;
+
+    return true;
+}
+
+void DynamicBlending::prepare_scene() {
+    vertices = {
+        {{-1.0f, -1.0f, 1.0f}, {0.0f, 0.0f}},
+        {{1.0f, -1.0f, 1.0f},  {1.0f, 0.0f}},
+        {{1.0f, 1.0f, 1.0f},   {1.0f, 1.0f}},
+        {{-1.0f, 1.0f, 1.0f},  {0.0f, 1.0f}},
+
+        {{-1.0f, -1.0f, -1.0f},{0.0f, 0.0f}},
+        {{1.0f, -1.0f, -1.0f}, {1.0f, 0.0f}},
+        {{1.0f, 1.0f, -1.0f},  {1.0f, 1.0f}},
+        {{-1.0f, 1.0f, -1.0f}, {0.0f, 1.0f}},
+    };
+
+    std::vector<uint32_t> indices = {
+        6, 5, 4, 4, 7, 6,
+        0, 1, 2, 2, 3, 0
+    };
+
+    index_count = static_cast<uint32_t>(indices.size());
+
+    vertex_buffer_size = vertices.size() * sizeof(Vertex);
+    auto index_buffer_size  = indices.size() * sizeof(uint32_t);
+
+    vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                        vertex_buffer_size,
+                                                        VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+                                                        VMA_MEMORY_USAGE_GPU_TO_CPU);
+    vertex_buffer->update(vertices.data(), vertex_buffer_size);
+
+    index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                       index_buffer_size,
+                                                       VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+                                                       VMA_MEMORY_USAGE_GPU_TO_CPU);
+    index_buffer->update(indices.data(), index_buffer_size);
+
+    face_preferences[0].index_offset = 0;
+    face_preferences[0].index_count = index_count / 2;
+    face_preferences[0].color_bit_enabled = {true, true, true, true};
+    face_preferences[0].color = {{
+                                     {1.0f, 0.0f, 0.0f, 1.0f},
+                                     {0.0f, 1.0f, 0.0f, 1.0f},
+                                     {0.0f, 0.0f, 1.0f, 1.0f},
+                                     {0.0f, 0.0f, 0.0f, 1.0f}
+                                 }};
+
+    face_preferences[1].index_offset = index_count / 2;
+    face_preferences[1].index_count = index_count / 2;
+    face_preferences[1].color_bit_enabled = {true, true, true, true};
+    face_preferences[1].color = {{
+                                     {0.0f, 1.0f, 1.0f, 1.0f},
+                                     {1.0f, 0.0f, 1.0f, 1.0f},
+                                     {1.0f, 1.0f, 0.0f, 1.0f},
+                                     {1.0f, 1.0f, 1.0f, 1.0f}
+                                 }};
+
+}
+
+void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+    {
+        auto &features = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
+        features.extendedDynamicState3ColorWriteMask = VK_TRUE;
+        features.extendedDynamicState3ColorBlendEnable = VK_TRUE;
+        features.extendedDynamicState3ColorBlendAdvanced = VK_TRUE;
+        features.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+    }
+    {
+        blend_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_PROPERTIES_EXT;
+        blend_properties.pNext = VK_NULL_HANDLE;
+
+        VkPhysicalDeviceProperties2 device_properties2 = {};
+        device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+        device_properties2.pNext                       = &blend_properties;
+        vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
+
+    }
+}
+
+void DynamicBlending::prepare_uniform_buffers() {
+    camera_ubo  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    color_ubo  = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ColorUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+}
+
+void DynamicBlending::update_uniform_buffers() {
+    CameraUbo cam;
+    cam.model      = glm::mat4(1.0f);
+    cam.model      = glm::translate(cam.model, glm::vec3(0.0f));
+    cam.view       = camera.matrices.view;
+    cam.projection = camera.matrices.perspective;
+
+    camera_ubo->convert_and_update(cam);
+
+    update_color();
+
+    glm::mat4 invView = glm::inverse(camera.matrices.view);
+    glm::vec4 plane0(vertices[0].pos[0], vertices[0].pos[1], vertices[0].pos[2], 1.0f);
+    glm::vec4 plane1(vertices[4].pos[0], vertices[4].pos[1], vertices[4].pos[2], 1.0f);
+
+    plane0 = invView * plane0;
+    plane1 = invView * plane1;
+
+    reverse = plane0.z < plane1.z;
+
+    build_command_buffers();
+}
+
+
+void DynamicBlending::setup_descriptor_pool() {
+    std::vector<VkDescriptorPoolSize> pool_sizes = {
+        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u),
+    };
+
+    VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+            vkb::initializers::descriptor_pool_create_info(
+                static_cast<uint32_t>(pool_sizes.size()),
+                pool_sizes.data(),
+                pool_sizes.size());
+    VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+}
+
+void DynamicBlending::create_descriptor_set_layout() {
+    std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 1u)
+    };
+
+    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
+    VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &descriptor_set_layout));
+
+    VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout);
+    VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+}
+
+void DynamicBlending::create_descriptor_set() {
+    VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1u);
+    VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+
+    VkDescriptorBufferInfo            buffer_descriptor     = create_descriptor(*camera_ubo);
+    VkDescriptorBufferInfo            color_descriptor     = create_descriptor(*color_ubo);
+
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1u, &color_descriptor),
+    };
+
+    vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+}
+
+void DynamicBlending::create_pipelines() {
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+            vkb::initializers::pipeline_input_assembly_state_create_info(
+                VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+                0,
+                VK_FALSE);
+
+    VkPipelineRasterizationStateCreateInfo rasterization_state =
+            vkb::initializers::pipeline_rasterization_state_create_info(
+                VK_POLYGON_MODE_FILL,
+                VK_CULL_MODE_NONE,
+                VK_FRONT_FACE_COUNTER_CLOCKWISE,
+                0);
+
+    VkPipelineColorBlendAttachmentState blend_attachment_state =
+            vkb::initializers::pipeline_color_blend_attachment_state(
+                VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT,
+                VK_TRUE);
+
+    blend_attachment_state.blendEnable = VK_TRUE;
+    blend_attachment_state.colorBlendOp        = VK_BLEND_OP_ADD;
+    blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    blend_attachment_state.alphaBlendOp        = VK_BLEND_OP_ADD;
+    blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+
+    VkPipelineColorBlendAdvancedStateCreateInfoEXT blendAdvancedEXT{};
+    blendAdvancedEXT.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_ADVANCED_STATE_CREATE_INFO_EXT;
+    blendAdvancedEXT.blendOverlap = VK_BLEND_OVERLAP_UNCORRELATED_EXT;
+
+    VkPipelineColorBlendStateCreateInfo color_blend_state =
+            vkb::initializers::pipeline_color_blend_state_create_info(
+                1,
+                &blend_attachment_state);
+
+    color_blend_state.logicOpEnable = VK_FALSE;
+    color_blend_state.pNext = &blendAdvancedEXT;
+
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+            vkb::initializers::pipeline_depth_stencil_state_create_info(
+                VK_TRUE,
+                VK_TRUE,
+                VK_COMPARE_OP_GREATER);
+
+    VkPipelineViewportStateCreateInfo viewport_state =
+            vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+    VkPipelineMultisampleStateCreateInfo multisample_state =
+            vkb::initializers::pipeline_multisample_state_create_info(
+                VK_SAMPLE_COUNT_1_BIT,
+                0);
+
+    std::vector<VkDynamicState> dynamic_state_enables = {
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR,
+        VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
+        // NYI
+        // VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
+        // VK_DYNAMIC_STATE_COLOR_BLEND_ADVANCED_EXT,
+        // VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT
+    };
+
+    VkPipelineDynamicStateCreateInfo dynamic_state =
+            vkb::initializers::pipeline_dynamic_state_create_info(
+                dynamic_state_enables.data(),
+                static_cast<uint32_t>(dynamic_state_enables.size()),
+                0);
+
+
+    const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+        vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+    };
+    const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+        vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+        vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv)),
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+    vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+    vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+    vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+    vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+
+    std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+    shader_stages[0] = load_shader("dynamic_blending/blending.vert", VK_SHADER_STAGE_VERTEX_BIT);
+    shader_stages[1] = load_shader("dynamic_blending/blending.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+    VkGraphicsPipelineCreateInfo graphics_create{VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO};
+    graphics_create.pNext               = VK_NULL_HANDLE;
+    graphics_create.renderPass          = render_pass;
+    graphics_create.pInputAssemblyState = &input_assembly_state;
+    graphics_create.pRasterizationState = &rasterization_state;
+    graphics_create.pColorBlendState    = &color_blend_state;
+    graphics_create.pMultisampleState   = &multisample_state;
+    graphics_create.pViewportState      = &viewport_state;
+    graphics_create.pDepthStencilState  = &depth_stencil_state;
+    graphics_create.pDynamicState       = &dynamic_state;
+    graphics_create.pVertexInputState   = &vertex_input_state;
+    graphics_create.pTessellationState  = VK_NULL_HANDLE;
+    graphics_create.stageCount          = 2;
+    graphics_create.pStages             = shader_stages.data();
+    graphics_create.layout              = pipeline_layout;
+
+    VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(),
+                                       pipeline_cache,
+                                       1,
+                                       &graphics_create,
+                                       VK_NULL_HANDLE,
+                                       &pipeline));
+}
+
+void DynamicBlending::update_color() {
+    for(uint32_t face = 0; face < 2; ++face)
+        for(uint32_t vertex = 0; vertex < 4; ++vertex) {
+            auto &input_color = face_preferences[face].color[vertex];
+            color.data[face * 4 + vertex] = glm::vec4(input_color[0], input_color[1], input_color[2], input_color[3]);
+        }
+    color_ubo->convert_and_update(color);
+}
+
+void DynamicBlending::update_color_uniform() {
+    update_color();
+    build_command_buffers();
+}
+
+void DynamicBlending::build_command_buffers()
+{
+    VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+
+    std::array<VkClearValue, 2> clear_values;
+    clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 1.0f}};
+    clear_values[1].depthStencil = {0.0f, 0u};
+
+    VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+    render_pass_begin_info.renderPass               = render_pass;
+    render_pass_begin_info.renderArea.extent.width  = width;
+    render_pass_begin_info.renderArea.extent.height = height;
+    render_pass_begin_info.clearValueCount          = static_cast<uint32_t>(clear_values.size());
+    render_pass_begin_info.pClearValues             = clear_values.data();
+
+    for (uint32_t i = 0u; i < draw_cmd_buffers.size(); ++i)
+    {
+        render_pass_begin_info.framebuffer = framebuffers[i];
+        auto &cmd_buff                     = draw_cmd_buffers[i];
+
+        VK_CHECK(vkBeginCommandBuffer(cmd_buff, &command_buffer_begin_info));
+
+        vkCmdBeginRenderPass(cmd_buff, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+        VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+        vkCmdSetViewport(cmd_buff, 0u, 1u, &viewport);
+
+        VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+        vkCmdSetScissor(cmd_buff, 0u, 1u, &scissor);
+
+        {
+            vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0u, 1u, &descriptor_set, 0u, nullptr);
+            vkCmdBindPipeline(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+
+            VkDeviceSize offsets[1] = {0};
+            vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
+            vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
+
+            if(reverse) {
+                build_command_buffer_for_plane(cmd_buff, face_preferences[1]);
+                build_command_buffer_for_plane(cmd_buff, face_preferences[0]);
+            }
+            else {
+                build_command_buffer_for_plane(cmd_buff, face_preferences[0]);
+                build_command_buffer_for_plane(cmd_buff, face_preferences[1]);
+            }
+        }
+
+        draw_ui(cmd_buff);
+
+
+        vkCmdEndRenderPass(cmd_buff);
+
+        VK_CHECK(vkEndCommandBuffer(cmd_buff));
+    }
+}
+
+void DynamicBlending::build_command_buffer_for_plane(VkCommandBuffer &command_buffer, FacePreferences preferences) {
+    std::array<VkColorComponentFlags, 1> color_bit = {
+        (preferences.color_bit_enabled[0] ? VK_COLOR_COMPONENT_R_BIT : 0u) |
+        (preferences.color_bit_enabled[1] ? VK_COLOR_COMPONENT_G_BIT : 0u) |
+        (preferences.color_bit_enabled[2] ? VK_COLOR_COMPONENT_B_BIT : 0u) |
+        (preferences.color_bit_enabled[3] ? VK_COLOR_COMPONENT_A_BIT : 0u)
+    };
+    vkCmdSetColorWriteMaskEXT(command_buffer, 0, 1, color_bit.data());
+    vkCmdDrawIndexed(command_buffer, preferences.index_count, 1, preferences.index_offset, 0, 0);
+}
+
+
+void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+    FacePreferences &current_plane = face_preferences[current_face_index];
+    if (drawer.button("Switch face")) {
+
+        current_face_index = current_face_index == 0 ? 1 : 0;
+        on_update_ui_overlay(drawer);
+    }
+    if (drawer.header(current_face_index == 0 ? "Far face" : "Close face"))
+    {
+        if (drawer.color_picker("Top left", current_plane.color[0], ImGuiColorEditFlags_None, 200))
+        {
+            update_color_uniform();
+        }
+        if (drawer.color_picker("Top right", current_plane.color[1], ImGuiColorEditFlags_None, 200))
+        {
+            update_color_uniform();
+        }
+        if (drawer.color_picker("Bottom left", current_plane.color[2], ImGuiColorEditFlags_None, 200))
+        {
+            update_color_uniform();
+        }
+        if (drawer.color_picker("Bottom right", current_plane.color[3], ImGuiColorEditFlags_None, 200))
+        {
+            update_color_uniform();
+        }
+        if (drawer.checkbox("Red", &current_plane.color_bit_enabled[0]))
+        {
+            update_color_uniform();
+        }
+        if (drawer.checkbox("Green",&current_plane.color_bit_enabled[1]))
+        {
+            update_color_uniform();
+        }
+        if (drawer.checkbox("Blue", &current_plane.color_bit_enabled[2]))
+        {
+            update_color_uniform();
+        }
+    }
+}
+
+void DynamicBlending::render(float delta_time)
+{
+    if (!prepared)
+    {
+        return;
+    }
+    draw();
+    if (camera.updated)
+    {
+        update_uniform_buffers();
+    }
+}
+
+void DynamicBlending::draw()
+{
+    ApiVulkanSample::prepare_frame();
+    submit_info.commandBufferCount = 1;
+    submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+
+    VK_CHECK(vkQueueSubmit(queue, 1u, &submit_info, VK_NULL_HANDLE));
+    ApiVulkanSample::submit_frame();
+
+    VkPipelineStageFlags wait_stage_mask = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+}
+
+
+std::unique_ptr<vkb::VulkanSample> create_dynamic_blending()
+{
+    return std::make_unique<DynamicBlending>();
+}

@@ -1229,4 +1229,5 @@ bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 4>(const char *caption, float 
 	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
+
 }        // namespace vkb
