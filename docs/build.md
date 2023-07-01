@@ -94,6 +94,16 @@ Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_inde
 
 **Default:** `OFF`
 
+**Note:** Only works with `VKB_VALIDATION_LAYERS` enabled
+
+### VKB_VALIDATION_LAYERS_BEST_PRACTICES
+
+Enable [best practices Validation Layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/best_practices.md).
+
+**Default:** `OFF`
+
+**Note:** Only works with `VKB_VALIDATION_LAYERS` enabled
+
 ### VKB_VULKAN_DEBUG
 
 Enable VK_EXT_debug_utils or VK_EXT_debug_marker, if supported.

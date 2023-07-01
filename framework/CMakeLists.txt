@@ -486,6 +486,10 @@ if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
     endif()
 endif()
 
+if(${VKB_VALIDATION_LAYERS_BEST_PRACTICES})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+endif()
+
 if(${VKB_VULKAN_DEBUG})
     target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VULKAN_DEBUG)
 endif()
