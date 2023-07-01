@@ -320,17 +320,17 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 #endif
 
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
-	vk::ValidationFeaturesEXT validation_features_info;
+	vk::ValidationFeaturesEXT                   validation_features_info;
 	std::vector<vk::ValidationFeatureEnableEXT> enable_features{};
 	if (validation_features)
 	{
-#if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
 		enable_features.push_back(vk::ValidationFeatureEnableEXT::eGpuAssistedReserveBindingSlot);
 		enable_features.push_back(vk::ValidationFeatureEnableEXT::eGpuAssisted);
-#endif
-#if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+#	endif
+#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
 		enable_features.push_back(vk::ValidationFeatureEnableEXT::eBestPractices);
-#endif
+#	endif
 		validation_features_info.setEnabledValidationFeatures(enable_features);
 		validation_features_info.pNext = instance_info.pNext;
 		instance_info.pNext            = &validation_features_info;

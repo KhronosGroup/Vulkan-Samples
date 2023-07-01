@@ -344,17 +344,17 @@ Instance::Instance(const std::string                            &application_nam
 
 	// If GPU assisted validation or best practices validation are enabled, we need to pass additional information to instance creation
 #if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
-	VkValidationFeaturesEXT validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	VkValidationFeaturesEXT                   validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
 	std::vector<VkValidationFeatureEnableEXT> enable_features{};
 	if (validation_features)
 	{
-#if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
 		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
 		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
-#endif
-#if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+#	endif
+#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
 		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
-#endif
+#	endif
 		validation_features_info.enabledValidationFeatureCount = static_cast<uint32_t>(enable_features.size());
 		validation_features_info.pEnabledValidationFeatures    = enable_features.data();
 		validation_features_info.pNext                         = instance_info.pNext;
