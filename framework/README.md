@@ -39,7 +39,7 @@ See [vulkan_sample.h](./vulkan_sample.h) and [vulkan_sample.cpp](./vulkan_sample
 
 This base class uses less abstraction, letting you work more explicitly with the api. 
 
-See [api_vulkan_sample.h](./api_vulkan_sample.h) and [vulkan_sample.cpp](./api_vulkan_sample.cpp).
+See [api_vulkan_sample.h](./api_vulkan_sample.h) and [api_vulkan_sample.cpp](./api_vulkan_sample.cpp).
 
 ### Support for Vulkan-Hpp
 
