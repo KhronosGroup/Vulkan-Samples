@@ -168,7 +168,7 @@ void MyApiSample::build_command_buffers()
 The framework supports the [KTX](https://www.khronos.org/ktx/) GPU container format and includes a loader for this format. As a container format, KTX supports different image formats ranging from basic RGBA images to compressed formats.
 
 ```cpp
-    texture = load_texture("rgba_texture.ktx", vkb::sg::Image::Color);
+texture = load_texture("rgba_texture.ktx", vkb::sg::Image::Color);
 ```
 
 Images (textures) loaded like this can then be used as descriptors later on:
@@ -194,7 +194,7 @@ render_pipeline.add_subpass(std::move(scene_subpass));
 set_render_pipeline(std::move(render_pipeline));
 ```
 
-While in the api base class, this is again done more explicit by creating shader modules used at pipeline creation time:
+While in the api base class, this is again more explicitly by creating shader modules used at pipeline creation time:
 
 ```cpp
 std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
