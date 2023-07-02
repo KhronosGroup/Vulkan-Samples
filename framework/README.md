@@ -177,7 +177,7 @@ Images (textures) loaded like this can then be used as descriptors later on:
 VkDescriptorImageInfo  image_descriptor = create_descriptor(texture);
 ```
 
-## Loading shaders
+### Loading shaders
 
 The framework supports loading textual GLSL shaders. These shaders are then compiled to [SPIR-V](https://registry.khronos.org/SPIR-V/specs/unified1/SPIRV.html) at runtime so Vulkan can ingest them.
 
