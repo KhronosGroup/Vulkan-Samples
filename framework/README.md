@@ -45,7 +45,7 @@ See [api_vulkan_sample.h](./api_vulkan_sample.h) and [api_vulkan_sample.cpp](./a
 
 While the framework itself primarily uses the C-Interface for Vulkan, both the high level and the API sample base class also come with [Vulkan-Hpp](https://github.com/KhronosGroup/Vulkan-Hpp) variants, letting you write samples using the C++ Vulkan language bindings instead.
 
-See [hpp_vulkan_sample.h](./hpp_vulkan_sample.h) / [hpp_vulkan_sample.cpp](./hpp_vulkan_sample.cpp) and [hpp_api_vulkan_sample.h](./hpp_api_vulkan_sample.h) / [hpp_vulkan_sample.cpp](./hpp_api_vulkan_sample.cpp).
+See [hpp_vulkan_sample.h](./hpp_vulkan_sample.h) / [hpp_vulkan_sample.cpp](./hpp_vulkan_sample.cpp) and [hpp_api_vulkan_sample.h](./hpp_api_vulkan_sample.h) / [hpp_api_vulkan_sample.cpp](./hpp_api_vulkan_sample.cpp).
 
 ## Commonly used framework concepts
 
