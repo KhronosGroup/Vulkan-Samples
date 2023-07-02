@@ -79,7 +79,7 @@ MySample::MySample()
 Most extensions also require enabling accompanying. This can be done by overriding the `request_gpu_features` function of the base class:
 
 ```cpp
-void MySampl::request_gpu_features(vkb::PhysicalDevice &gpu)
+void MySample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
     // Get a reference to the feature structure required for an extension
 	auto &requested_extension_feature = gpu
