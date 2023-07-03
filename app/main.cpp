@@ -49,7 +49,7 @@ CUSTOM_MAIN(context)
 #	error "Platform not supported"
 #endif
 
-auto code = platform.initialize(plugins::get_all());
+	auto code = platform.initialize(plugins::get_all());
 
 	if (code == vkb::ExitCode::Success)
 	{

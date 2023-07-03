@@ -174,11 +174,12 @@ class Platform
 
 	std::vector<Plugin *> plugins;
 
-	/// Static so can be set via JNI code in android_platform.cpp
 	std::vector<std::string> arguments;
 
+	// static so can be references from vkb::fs
 	static std::string external_storage_directory;
 
+	// static so can be references from vkb::fs
 	static std::string temp_directory;
 };
 

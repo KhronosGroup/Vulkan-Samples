@@ -18,11 +18,15 @@
 #pragma once
 
 #include <memory>
-#include <string_view>
+#include <string>
 #include <vector>
 
 namespace vkb
 {
+class UnixPlatformContext;
+class WindowsPlatformContext;
+class AndroidPlatformContext;
+
 /**
  * @brief A platform context contains abstract platform specific operations
  *
@@ -34,14 +38,34 @@ namespace vkb
  */
 class PlatformContext
 {
+	// only allow platform contexts to be created by the platform specific implementations
+	friend class UnixPlatformContext;
+	friend class WindowsPlatformContext;
+	friend class AndroidPlatformContext;
+
   public:
-	PlatformContext()          = default;
 	virtual ~PlatformContext() = default;
 
-	virtual std::vector<std::string> arguments() const = 0;
+	virtual const std::vector<std::string> &arguments() const
+	{
+		return _arguments;
+	}
 
-	virtual std::string external_storage_directory() const = 0;
+	virtual const std::string &external_storage_directory() const
+	{
+		return _external_storage_directory;
+	}
 
-	virtual std::string temp_directory() const = 0;
+	virtual const std::string &temp_directory() const
+	{
+		return _temp_directory;
+	}
+
+  protected:
+	std::vector<std::string> _arguments;
+	std::string              _external_storage_directory;
+	std::string              _temp_directory;
+
+	PlatformContext() = default;
 };
 }        // namespace vkb

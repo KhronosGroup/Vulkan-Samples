@@ -80,36 +80,23 @@ inline std::vector<std::string> get_args()
 	return args;
 }
 
-WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow)
+WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) :
+    PlatformContext{}
 {
-	_temp_directory = get_temp_path_from_environment();
-	_arguments      = get_args();
+	_external_storage_directory = "";
+	_temp_directory             = get_temp_path_from_environment();
+	_arguments                  = get_args();
 
 	// allocate a console for this app
 	// TODO: do we really need to do this?
-	if (!AllocConsole())
-	{
-		throw std::runtime_error{"AllocConsole error"};
-	}
+	// if (!AllocConsole())
+	// {
+	// 	throw std::runtime_error{"AllocConsole error"};
+	// }
 
-	FILE *fp;
-	freopen_s(&fp, "conin$", "r", stdin);
-	freopen_s(&fp, "conout$", "w", stdout);
-	freopen_s(&fp, "conout$", "w", stderr);
-}
-
-std::vector<std::string> WindowsPlatformContext::arguments() const
-{
-	return _arguments;
-}
-
-std::string WindowsPlatformContext::external_storage_directory() const
-{
-	return _external_storage_directory;
-}
-
-std::string WindowsPlatformContext::temp_directory() const
-{
-	return _temp_directory;
+	// FILE *fp;
+	// freopen_s(&fp, "conin$", "r", stdin);
+	// freopen_s(&fp, "conout$", "w", stdout);
+	// freopen_s(&fp, "conout$", "w", stderr);
 }
 }        // namespace vkb

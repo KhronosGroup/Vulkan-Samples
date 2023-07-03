@@ -27,9 +27,9 @@
 namespace vkb
 {
 /**
- * @brief MS Windows platform context
+ * @brief Android platform context
  *
- * @warning Use in extreme circumstances with code guarded by the PLATFORM__WINDOWS define
+ * @warning Use in extreme circumstances with code guarded by the PLATFORM__ANDROID define
  */
 class AndroidPlatformContext final : public PlatformContext
 {
@@ -37,14 +37,10 @@ class AndroidPlatformContext final : public PlatformContext
 	AndroidPlatformContext(android_app *app);
 	~AndroidPlatformContext() override = default;
 
-	std::vector<std::string> arguments() const override;
-	std::string              external_storage_directory() const override;
-	std::string              temp_directory() const override;
-
 	android_app *app{nullptr};
 
-	static std::string              _external_storage_directory;
-	static std::string              _temp_directory;
-	static std::vector<std::string> _arguments;
+	static std::string              android_external_storage_directory;
+	static std::string              android_temp_directory;
+	static std::vector<std::string> android_arguments;
 };
 }        // namespace vkb

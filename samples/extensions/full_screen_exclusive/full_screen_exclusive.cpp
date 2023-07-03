@@ -906,7 +906,7 @@ void FullScreenExclusive::initialize_windows()
 
 bool FullScreenExclusive::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!Application::prepare(options))
+	if (!vkb::Application::prepare(options))
 	{
 		return false;
 	}

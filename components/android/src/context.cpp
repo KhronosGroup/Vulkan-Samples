@@ -24,12 +24,12 @@ extern "C"
 	JNIEXPORT void JNICALL
 	    Java_com_khronos_vulkan_1samples_SampleLauncherActivity_initFilePath(JNIEnv *env, jobject thiz, jstring external_dir, jstring temp_dir)
 	{
-		const char *external_dir_cstr                            = env->GetStringUTFChars(external_dir, 0);
-		vkb::AndroidPlatformContext::_external_storage_directory = std::string(external_dir_cstr) + "/";
+		const char *external_dir_cstr                                   = env->GetStringUTFChars(external_dir, 0);
+		vkb::AndroidPlatformContext::android_external_storage_directory = std::string(external_dir_cstr) + "/";
 		env->ReleaseStringUTFChars(external_dir, external_dir_cstr);
 
-		const char *temp_dir_cstr                    = env->GetStringUTFChars(temp_dir, 0);
-		vkb::AndroidPlatformContext::_temp_directory = std::string(temp_dir_cstr) + "/";
+		const char *temp_dir_cstr                           = env->GetStringUTFChars(temp_dir, 0);
+		vkb::AndroidPlatformContext::android_temp_directory = std::string(temp_dir_cstr) + "/";
 		env->ReleaseStringUTFChars(temp_dir, temp_dir_cstr);
 	}
 
@@ -49,38 +49,21 @@ extern "C"
 			env->ReleaseStringUTFChars(arg_string, arg);
 		}
 
-		vkb::AndroidPlatformContext::_arguments = args;
+		vkb::AndroidPlatformContext::android_arguments = args;
 	}
 }
 
 namespace vkb
 {
-std::string              AndroidPlatformContext::_external_storage_directory = {};
-std::string              AndroidPlatformContext::_temp_directory             = {};
-std::vector<std::string> AndroidPlatformContext::_arguments                  = {};
+std::string              AndroidPlatformContext::android_external_storage_directory = {};
+std::string              AndroidPlatformContext::android_temp_directory             = {};
+std::vector<std::string> AndroidPlatformContext::android_arguments                  = {};
 
 AndroidPlatformContext::AndroidPlatformContext(android_app *app) :
-    app{app}
+    PlatformContext{}, app{app}
 {
-}
-
-std::vector<std::string> AndroidPlatformContext::arguments() const
-{
-	std::vector<std::string> args;
-	for (auto &arg : _arguments)
-	{
-		args.push_back(arg);
-	}
-	return args;
-}
-
-std::string AndroidPlatformContext::external_storage_directory() const
-{
-	return _external_storage_directory;
-}
-
-std::string AndroidPlatformContext::temp_directory() const
-{
-	return _temp_directory;
+	_external_storage_directory = android_external_storage_directory;
+	_temp_directory             = android_temp_directory;
+	_arguments                  = android_arguments;
 }
 }        // namespace vkb

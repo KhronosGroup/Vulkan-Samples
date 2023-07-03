@@ -20,7 +20,8 @@
 namespace vkb
 {
 
-UnixPlatformContext::UnixPlatformContext(int argc, char **argv)
+UnixPlatformContext::UnixPlatformContext(int argc, char **argv) :
+    PlatformContext{}
 {
 	_arguments.reserve(argc);
 	for (int i = 1; i < argc; ++i)
@@ -28,22 +29,8 @@ UnixPlatformContext::UnixPlatformContext(int argc, char **argv)
 		_arguments.emplace_back(argv[i]);
 	}
 
-	const char *env_temp_dir = std::getenv("TMPDIR");
-	_temp_directory          = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
-}
-
-std::vector<std::string> UnixPlatformContext::arguments() const
-{
-	return _arguments;
-}
-
-std::string UnixPlatformContext::external_storage_directory() const
-{
-	return _external_storage_directory;
-}
-
-std::string UnixPlatformContext::temp_directory() const
-{
-	return _temp_directory;
+	const char *env_temp_dir    = std::getenv("TMPDIR");
+	_temp_directory             = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
+	_external_storage_directory = "";
 }
 }        // namespace vkb

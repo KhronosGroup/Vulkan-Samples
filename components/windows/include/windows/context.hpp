@@ -34,14 +34,5 @@ class WindowsPlatformContext final : public PlatformContext
   public:
 	WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow);
 	~WindowsPlatformContext() override = default;
-
-	std::vector<std::string> arguments() const override;
-	std::string              external_storage_directory() const override;
-	std::string              temp_directory() const override;
-
-  private:
-	std::vector<std::string> _arguments;
-	std::string              _external_storage_directory;
-	std::string              _temp_directory;
 };
 }        // namespace vkb
