@@ -37,9 +37,9 @@ class AndroidPlatformContext final : public PlatformContext
 	AndroidPlatformContext(android_app *app);
 	~AndroidPlatformContext() override = default;
 
-	std::vector<std::string_view> arguments() const override;
-	std::string_view              external_storage_directory() const override;
-	std::string_view              temp_directory() const override;
+	std::vector<std::string> arguments() const override;
+	std::string              external_storage_directory() const override;
+	std::string              temp_directory() const override;
 
 	android_app *app{nullptr};
 

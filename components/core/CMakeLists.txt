@@ -36,7 +36,6 @@ vkb__register_tests(
 )
 
 if(ANDROID)
-    message(STATUS "android")
     target_compile_definitions(vkb__core PUBLIC VK_USE_PLATFORM_ANDROID_KHR PLATFORM__ANDROID)
 elseif(WIN32)
     target_compile_definitions(vkb__core PUBLIC VK_USE_PLATFORM_WIN32_KHR PLATFORM__WINDOWS)

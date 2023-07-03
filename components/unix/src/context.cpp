@@ -32,17 +32,17 @@ UnixPlatformContext::UnixPlatformContext(int argc, char **argv)
 	_temp_directory          = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
 }
 
-std::vector<std::string_view> UnixPlatformContext::arguments() const
+std::vector<std::string> UnixPlatformContext::arguments() const
 {
 	return _arguments;
 }
 
-std::string_view UnixPlatformContext::external_storage_directory() const
+std::string UnixPlatformContext::external_storage_directory() const
 {
 	return _external_storage_directory;
 }
 
-std::string_view UnixPlatformContext::temp_directory() const
+std::string UnixPlatformContext::temp_directory() const
 {
 	return _temp_directory;
 }

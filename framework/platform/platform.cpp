@@ -52,9 +52,7 @@ std::string Platform::temp_directory = "";
 
 Platform::Platform(const PlatformContext &context)
 {
-	const auto &args = context.arguments();
-	arguments.reserve(args.size());
-	std::transform(args.begin(), args.end(), std::back_inserter(arguments), [](const std::string_view &arg) -> std::string { return {arg.data()}; });
+	arguments = context.arguments();
 
 	external_storage_directory = context.external_storage_directory();
 	temp_directory             = context.temp_directory();

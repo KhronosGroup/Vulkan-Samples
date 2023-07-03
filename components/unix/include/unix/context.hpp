@@ -24,9 +24,9 @@
 namespace vkb
 {
 /**
- * @brief MS Windows platform context
+ * @brief Unix platform context
  *
- * @warning Use in extreme circumstances with code guarded by the PLATFORM__WINDOWS define
+ * @warning Use in extreme circumstances with code guarded by the PLATFORM__UNIX define
  */
 class UnixPlatformContext final : public PlatformContext
 {
@@ -34,12 +34,12 @@ class UnixPlatformContext final : public PlatformContext
 	UnixPlatformContext(int argc, char **argv);
 	~UnixPlatformContext() override = default;
 
-	std::vector<std::string_view> arguments() const override;
-	std::string_view              external_storage_directory() const override;
-	std::string_view              temp_directory() const override;
+	std::vector<std::string> arguments() const override;
+	std::string              external_storage_directory() const override;
+	std::string              temp_directory() const override;
 
   private:
-	std::vector<std::string_view> _arguments{};
+	std::vector<std::string> _arguments{};
 	std::string                   _external_storage_directory{""};
 	std::string                   _temp_directory{""};
 };

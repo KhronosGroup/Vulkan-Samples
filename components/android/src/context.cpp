@@ -64,9 +64,9 @@ AndroidPlatformContext::AndroidPlatformContext(android_app *app) :
 {
 }
 
-std::vector<std::string_view> AndroidPlatformContext::arguments() const
+std::vector<std::string> AndroidPlatformContext::arguments() const
 {
-	std::vector<std::string_view> args;
+	std::vector<std::string> args;
 	for (auto &arg : _arguments)
 	{
 		args.push_back(arg);
@@ -74,12 +74,12 @@ std::vector<std::string_view> AndroidPlatformContext::arguments() const
 	return args;
 }
 
-std::string_view AndroidPlatformContext::external_storage_directory() const
+std::string AndroidPlatformContext::external_storage_directory() const
 {
 	return _external_storage_directory;
 }
 
-std::string_view AndroidPlatformContext::temp_directory() const
+std::string AndroidPlatformContext::temp_directory() const
 {
 	return _temp_directory;
 }

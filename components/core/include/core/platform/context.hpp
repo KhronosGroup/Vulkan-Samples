@@ -38,10 +38,10 @@ class PlatformContext
 	PlatformContext()          = default;
 	virtual ~PlatformContext() = default;
 
-	virtual std::vector<std::string_view> arguments() const = 0;
+	virtual std::vector<std::string> arguments() const = 0;
 
-	virtual std::string_view external_storage_directory() const = 0;
+	virtual std::string external_storage_directory() const = 0;
 
-	virtual std::string_view temp_directory() const = 0;
+	virtual std::string temp_directory() const = 0;
 };
 }        // namespace vkb

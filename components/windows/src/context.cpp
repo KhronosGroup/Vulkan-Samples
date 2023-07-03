@@ -98,22 +98,17 @@ WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hP
 	freopen_s(&fp, "conout$", "w", stderr);
 }
 
-std::vector<std::string_view> WindowsPlatformContext::arguments() const
+std::vector<std::string> WindowsPlatformContext::arguments() const
 {
-	std::vector<std::string_view> args;
-	for (auto &arg : _arguments)
-	{
-		args.push_back(arg);
-	}
-	return args;
+	return _arguments;
 }
 
-std::string_view WindowsPlatformContext::external_storage_directory() const
+std::string WindowsPlatformContext::external_storage_directory() const
 {
 	return _external_storage_directory;
 }
 
-std::string_view WindowsPlatformContext::temp_directory() const
+std::string WindowsPlatformContext::temp_directory() const
 {
 	return _temp_directory;
 }

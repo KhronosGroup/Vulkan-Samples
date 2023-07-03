@@ -29,6 +29,8 @@
 #	include "platform/unix/unix_d2d_platform.h"
 #elif defined(PLATFORM__LINUX) || defined(PLATFORM__MACOS)
 #	include "platform/unix/unix_platform.h"
+#else
+#	error "Platform not supported"
 #endif
 
 CUSTOM_MAIN(context)
@@ -43,9 +45,11 @@ CUSTOM_MAIN(context)
 	vkb::UnixPlatform platform{context, vkb::UnixType::Linux};
 #elif defined(PLATFORM__MACOS)
 	vkb::UnixPlatform platform{context, vkb::UnixType::Mac};
+#else
+#	error "Platform not supported"
 #endif
 
-	auto code = platform.initialize(plugins::get_all());
+auto code = platform.initialize(plugins::get_all());
 
 	if (code == vkb::ExitCode::Success)
 	{
