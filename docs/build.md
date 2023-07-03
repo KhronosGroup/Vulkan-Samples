@@ -303,7 +303,7 @@ Their versions are configured in the [build.gradle.in](https://github.com/Khrono
 To generate the gradle project, run the following command:
 
 ```
-./scripts/generate.sh android
+./scripts/generate.py android
 ```
 
 A new folder will be created in the root directory at `build\android_gradle`
