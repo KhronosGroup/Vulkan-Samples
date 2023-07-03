@@ -21,11 +21,10 @@
 #include "platform/window.h"
 #include "shader_compiler.h"
 
-
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                      const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                     void                                       *user_data)
+                                                     void *                                      user_data)
 {
 	(void) user_data;
 

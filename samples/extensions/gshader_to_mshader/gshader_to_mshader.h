@@ -18,8 +18,8 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "shader_compiler.h"
 #include "gltf_loader.h"
+#include "shader_compiler.h"
 
 class GshaderToMshader : public ApiVulkanSample
 {

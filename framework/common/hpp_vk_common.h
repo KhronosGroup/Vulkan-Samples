@@ -184,7 +184,7 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
                                              vk::CullModeFlags                                         cull_mode,
                                              vk::FrontFace                                             front_face,
                                              std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
-                                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
+                                             vk::PipelineDepthStencilStateCreateInfo const &           depth_stencil_state,
                                              vk::PipelineLayout                                        pipeline_layout,
                                              vk::RenderPass                                            render_pass)
 {

@@ -86,8 +86,8 @@ class RaytracingBasic : public ApiVulkanSample
 	{
 		int                            selected_language = 0; /* GLSL default */
 		const std::vector<std::string> shader_language   = {"GLSL",
-		                                                    "HLSL (not avaialble)",
-		                                                    "SPV"};
+                                                          "HLSL (not avaialble)",
+                                                          "SPV"};
 	} gui_settings;
 
 	RaytracingBasic();

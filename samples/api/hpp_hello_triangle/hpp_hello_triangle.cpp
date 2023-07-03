@@ -23,7 +23,6 @@
 #include <hpp_shader_compiler.h>
 #include <platform/filesystem.h>
 #include <platform/window.h>
-#include <hpp_shader_compiler.h>
 
 // Note: the default dispatcher is instantiated in hpp_api_vulkan_sample.cpp.
 //			 Even though, that file is not part of this sample, it's part of the sample-project!
@@ -215,7 +214,7 @@ vk::SwapchainKHR create_swapchain(vk::PhysicalDevice gpu, vk::Device device, vk:
 /// @brief A debug callback called from Vulkan validation layers.
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
-                                                              void                                       *user_data)
+                                                              void *                                      user_data)
 {
 	// Log debug message
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
@@ -238,7 +237,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessag
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool validate_extensions(const std::vector<const char *>            &required,
+bool validate_extensions(const std::vector<const char *> &           required,
                          const std::vector<vk::ExtensionProperties> &available)
 {
 	// inner find_if gives true if the extension was not found
@@ -254,7 +253,7 @@ bool validate_extensions(const std::vector<const char *>            &required,
 	                    }) == required.end();
 }
 
-bool validate_layers(const std::vector<const char *>        &required,
+bool validate_layers(const std::vector<const char *> &       required,
                      const std::vector<vk::LayerProperties> &available)
 {
 	// inner find_if returns true if the layer was not found

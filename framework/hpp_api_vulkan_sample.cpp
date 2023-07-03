@@ -947,7 +947,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
 
-	auto       &mipmaps = texture.image->get_mipmaps();
+	auto &      mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1031,7 +1031,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	// Setup buffer copy regions for each mip level
 	std::vector<vk::BufferImageCopy> buffer_copy_regions;
 
-	auto       &mipmaps = texture.image->get_mipmaps();
+	auto &      mipmaps = texture.image->get_mipmaps();
 	const auto &layers  = texture.image->get_layers();
 
 	auto &offsets = texture.image->get_offsets();
@@ -1117,7 +1117,7 @@ void HPPApiVulkanSample::draw_model(std::unique_ptr<vkb::scene_graph::components
 	vk::DeviceSize offset = 0;
 
 	const auto &vertex_buffer = model->get_vertex_buffer("vertex_buffer");
-	auto       &index_buffer  = model->get_index_buffer();
+	auto &      index_buffer  = model->get_index_buffer();
 
 	command_buffer.bindVertexBuffers(0, vertex_buffer.get_handle(), offset);
 	command_buffer.bindIndexBuffer(index_buffer.get_handle(), 0, model->get_index_type());
