@@ -57,7 +57,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_extensions(const std::vector<const char *> &         required,
+bool HelloTriangle::validate_extensions(const std::vector<const char *>          &required,
                                         const std::vector<VkExtensionProperties> &available)
 {
 	for (auto extension : required)
@@ -89,7 +89,7 @@ bool HelloTriangle::validate_extensions(const std::vector<const char *> &       
  * @return true if all required extensions are available
  * @return false otherwise
  */
-bool HelloTriangle::validate_layers(const std::vector<const char *> &     required,
+bool HelloTriangle::validate_layers(const std::vector<const char *>      &required,
                                     const std::vector<VkLayerProperties> &available)
 {
 	for (auto extension : required)
@@ -156,7 +156,7 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
  * @param required_instance_extensions The required Vulkan instance extensions.
  * @param required_validation_layers The required Vulkan validation layers
  */
-void HelloTriangle::init_instance(Context &                        context,
+void HelloTriangle::init_instance(Context                         &context,
                                   const std::vector<const char *> &required_instance_extensions,
                                   const std::vector<const char *> &required_validation_layers)
 {
@@ -274,7 +274,7 @@ void HelloTriangle::init_instance(Context &                        context,
  * @param context A Vulkan context with an instance already set up.
  * @param required_device_extensions The required Vulkan device extensions.
  */
-void HelloTriangle::init_device(Context &                        context,
+void HelloTriangle::init_device(Context                         &context,
                                 const std::vector<const char *> &required_device_extensions)
 {
 	LOGI("Initializing vulkan device.");

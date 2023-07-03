@@ -32,7 +32,7 @@ namespace
 struct QuickTimer
 {
 	using clock = std::chrono::high_resolution_clock;
-	const char *            name;
+	const char             *name;
 	const clock::time_point start;
 	bool                    print_on_exit;
 	explicit QuickTimer(const char *name_, bool print_on_exit_ = true) :
@@ -224,11 +224,11 @@ void RaytracingExtended::create_flame_model()
 {
 	flame_texture                   = load_texture("textures/generated_flame.ktx", vkb::sg::Image::Color);
 	std::vector<glm::vec3> pts_     = {{0, 0, 0},
-                                   {1, 0, 0},
-                                   {1, 1, 0},
-                                   {0, 1, 0}};
+	                                   {1, 0, 0},
+	                                   {1, 1, 0},
+	                                   {0, 1, 0}};
 	std::vector<Triangle>  indices_ = {{0, 1, 2},
-                                      {0, 2, 3}};
+	                                   {0, 2, 3}};
 
 	std::vector<NewVertex> vertices;
 	for (auto &pt : pts_)
@@ -525,9 +525,9 @@ void RaytracingExtended::create_bottom_level_acceleration_structure(bool is_upda
 
 		// Get the bottom acceleration structure's handle, which will be used during the top level acceleration build
 		VkAccelerationStructureDeviceAddressInfoKHR acceleration_device_address_info{};
-		acceleration_device_address_info.sType                 = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
-		acceleration_device_address_info.accelerationStructure = bottom_level_acceleration_structure.handle;
-		bottom_level_acceleration_structure.device_address     = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
+		acceleration_device_address_info.sType                         = VK_STRUCTURE_TYPE_ACCELERATION_STRUCTURE_DEVICE_ADDRESS_INFO_KHR;
+		acceleration_device_address_info.accelerationStructure         = bottom_level_acceleration_structure.handle;
+		bottom_level_acceleration_structure.device_address             = vkGetAccelerationStructureDeviceAddressKHR(device->get_handle(), &acceleration_device_address_info);
 #endif
 	}
 }
@@ -623,7 +623,7 @@ void RaytracingExtended::create_top_level_acceleration_structure(bool print_time
             return model_buffer.object_type == ObjectType::OBJECT_FLAME;
         });
 		ASSERT_LOG(iter != model_buffers.cend(), "Can't find flame object.")
-		auto &   model_buffer = *iter;
+		auto    &model_buffer = *iter;
 		uint32_t index        = std::distance(model_buffers.begin(), iter);
 		for (auto &&particle : flame_generator.particles)
 		{
@@ -784,7 +784,7 @@ struct CopyBuffer
 		{
 			return {};
 		}
-		auto &         buffer = iter->second;
+		auto          &buffer = iter->second;
 		std::vector<T> out;
 
 		const size_t sz = buffer.get_size();
@@ -957,8 +957,8 @@ void RaytracingExtended::create_dynamic_object_buffers(float time)
 			const float lateral_scale                     = std::min(std::min(std::min(std::min(x, 1 - x), y), 1 - y), 0.2f) * 5.f;
 			refraction_model[grid_size * i + j].normal    = {0.f, 0.f, 0.f};
 			refraction_model[grid_size * i + j].pos       = {y - 0.5f,
-                                                       2 * x - 1.f,
-                                                       lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
+			                                                 2 * x - 1.f,
+			                                                 lateral_scale * 0.025f * cos(2 * 3.14159 * (4 * x + time / 2))};
 			refraction_model[grid_size * i + j].tex_coord = glm::vec2{x, y};
 
 			if (i + 1 < grid_size && j + 1 < grid_size)
@@ -1495,7 +1495,7 @@ RaytracingExtended::RaytracingScene::RaytracingScene(vkb::Device &device, const 
 			for (auto &&sub_mesh : mesh->get_submeshes())
 			{
 				auto   material        = sub_mesh->get_material();
-				auto & textures        = material->textures;
+				auto  &textures        = material->textures;
 				size_t textureIndex    = std::numeric_limits<size_t>::max();
 				auto   baseTextureIter = textures.find("base_color_texture");
 				bool   is_vase         = false;
