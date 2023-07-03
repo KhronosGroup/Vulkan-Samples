@@ -83,6 +83,7 @@ set(ORDER_LIST
     "logic_op_dynamic_state"
     "fragment_shader_barycentric"
     "gshader_to_mshader"
+    "color_write_enable"
 
     #Performance Samples
     "swapchain_images"
