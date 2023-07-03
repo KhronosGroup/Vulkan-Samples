@@ -349,6 +349,8 @@ class Gui
 
 	bool is_debug_view_active() const;
 
+	void set_subpass(const uint32_t subpass);
+
   private:
 	/**
 	 * @brief Block size of a buffer pool in kilobytes
@@ -421,6 +423,8 @@ class Gui
 	bool two_finger_tap = false;
 
 	bool show_graph_file_output = false;
+
+	uint32_t subpass = 0;
 };
 
 void Gui::new_frame()

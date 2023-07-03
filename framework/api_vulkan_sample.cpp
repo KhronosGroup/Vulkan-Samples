@@ -71,12 +71,17 @@ bool ApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 	width  = get_render_context().get_surface_extent().width;
 	height = get_render_context().get_surface_extent().height;
 
+	prepare_gui();
+
+	return true;
+}
+
+void ApiVulkanSample::prepare_gui()
+{
 	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache, render_pass,
 	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
 	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
-
-	return true;
 }
 
 void ApiVulkanSample::update(float delta_time)

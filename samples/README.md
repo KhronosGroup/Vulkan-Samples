@@ -329,6 +329,10 @@ Demonstrate how to use fragment shader barycentric feature, which allows accessi
 **Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)
 
 Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
+### [Color write enable](./extensions/color_write_enable)<br/>
+**Extension**: [```VK_EXT_color_write_enable```](https://https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_color_write_enable.html)<br/>
+
+Demonstrate how to create multiple color blend attachments and then toggle them dynamically.
 
 ### [Geometry shader to mesh shader](./extensions/gshader_to_mshader)
 **Extension:** [```VK_EXT_mesh_shader```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_mesh_shader.html)<br/>
