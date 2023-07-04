@@ -112,7 +112,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual void update(float delta_time) override;
 
-	virtual void update_overlay(float delta_time, const std::function<void()>& additionalUI) override;
+	virtual void update_overlay(float delta_time, const std::function<void()>& additional_ui) override;
 
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -365,18 +365,17 @@ class ApiVulkanSample : public vkb::VulkanSample
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
 
 	/**
-<<<<<<< HEAD
 	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
 	 */
 	virtual void prepare_gui();
-=======
+
+	/**
 	 * @brief Stores a list of shaders for the active sample, used by plugins to dynamically change the shader
 	 * 
 	 * @param shaderLanguage The shader language for which the shader list will be provided
 	 * @param listOfShader The shader list, where paths and shader types are provided
 	 */
 	void store_shader(const vkb::ShaderSourceLanguage& shaderLanguage, const std::vector<std::pair<vkb::ShaderType, std::string>>& listOfShader);
->>>>>>> 4768884 (Add new plugin real time shader selection)
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */

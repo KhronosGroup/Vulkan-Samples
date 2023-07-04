@@ -61,7 +61,7 @@ void Application::update(float delta_time)
 }
 
 
-void Application::update_overlay(float delta_time, const std::function<void()>& additionalUI)
+void Application::update_overlay(float delta_time, const std::function<void()>& additional_ui)
 {
 
 }

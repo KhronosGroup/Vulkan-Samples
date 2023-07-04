@@ -333,7 +333,7 @@ void VulkanSample::update(float delta_time)
 	render_context->submit(command_buffer);
 }
 
-void VulkanSample::update_overlay(float delta_time, const std::function<void()>& additionalUI) 
+void VulkanSample::update_overlay(float delta_time, const std::function<void()>& additional_ui) 
 {
 }
 

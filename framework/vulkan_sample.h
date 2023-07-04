@@ -129,8 +129,10 @@ class VulkanSample : public Application
 
 	/**
 	 * @brief Main loop sample overlay events
+	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
-	virtual void update_overlay(float delta_time, const std::function<void()>& additionalUI =  [](){}) override;
+	virtual void update_overlay(float delta_time, const std::function<void()>& additional_ui =  [](){}) override;
 
 	/**
 	 * @brief Indicates that the plugin wants to change the shader in the sample

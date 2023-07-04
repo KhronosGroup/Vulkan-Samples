@@ -55,8 +55,10 @@ class Application
 
 	/**
 	 * @brief Main loop sample overlay events
+	 * @param delta_time The time taken since the last frame
+	 * @param additional_ui Function that implements an additional Gui
 	 */
-	virtual void update_overlay(float delta_time, const std::function<void()>& additionalUI =  [](){});
+	virtual void update_overlay(float delta_time, const std::function<void()>& additional_ui =  [](){});
 
 	/**
 	 * @brief Indicates that the plugin wants to change the shader in the sample
@@ -89,7 +91,6 @@ class Application
 
 	DebugInfo &get_debug_info();
 
-<<<<<<< HEAD
 	inline bool should_close() const
 	{
 		return requested_close;
@@ -101,9 +102,8 @@ class Application
 	{
 		requested_close = true;
 	}
-=======
+
 	std::weak_ptr<Gui> get_gui();
->>>>>>> 4768884 (Add new plugin real time shader selection)
 
   protected:
 	float fps{0.0f};

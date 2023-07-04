@@ -417,11 +417,11 @@ vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::str
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additionalUI)
+void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additionalUI]() { on_update_ui_overlay(gui->get_drawer()); additionalUI(); });
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() { on_update_ui_overlay(gui->get_drawer()); additional_ui(); });
 
 		gui->update(delta_time);
 

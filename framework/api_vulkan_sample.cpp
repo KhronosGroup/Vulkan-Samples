@@ -100,13 +100,13 @@ void ApiVulkanSample::update(float delta_time)
 	}
 }
 
-void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additionalUI)
+void ApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additional_ui)
 {
 	if (gui)
 	{
-		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additionalUI]() {
+		gui->show_simple_window(get_name(), vkb::to_u32(1.0f / delta_time), [this, additional_ui]() {
 			on_update_ui_overlay(gui->get_drawer());
-			additionalUI();
+			additional_ui();
 		});
 
 		gui->update(delta_time);
@@ -862,7 +862,7 @@ void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void ApiVulkanSample::store_shader(const vkb::ShaderSourceLanguage& shaderLanguage, const std::vector<std::pair<vkb::ShaderType, std::string>>& listOfShader)
 {
-	platform->get_available_shaders().insert({shaderLanguage, listOfShader});
+	// platform->get_available_shaders().insert({shaderLanguage, listOfShader});
 }
 
 void ApiVulkanSample::create_swapchain_buffers()
