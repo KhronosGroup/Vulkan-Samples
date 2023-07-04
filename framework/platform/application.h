@@ -105,6 +105,8 @@ class Application
 
 	std::weak_ptr<Gui> get_gui();
 
+	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& get_available_shaders();
+
   protected:
 	float fps{0.0f};
 
@@ -122,6 +124,11 @@ class Application
 
   private:
 	std::string name{};
+
+	/**
+	 * @brief stores the names of the shaders the sample uses
+	 */
+	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>> available_shaders;
 
 	// The debug info of the app
 	DebugInfo debug_info{};

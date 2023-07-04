@@ -90,4 +90,9 @@ std::weak_ptr<Gui> Application::get_gui()
 {
 	return gui;
 }
+
+std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& Application::get_available_shaders()
+{
+	return available_shaders;
+}
 }        // namespace vkb

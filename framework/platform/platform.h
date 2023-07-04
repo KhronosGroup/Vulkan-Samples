@@ -179,11 +179,6 @@ class Platform
 	const apps::AppInfo *requested_app{nullptr};
 
 	std::vector<Plugin *> plugins;
-	
-	/**
-	 * @brief stores the names of the shaders the sample uses
-	 */
-	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>> available_shaders;
 
 	std::vector<std::string> arguments;
 

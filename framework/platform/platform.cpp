@@ -294,7 +294,7 @@ void Platform::set_window_properties(const Window::OptionalProperties &propertie
 
 std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& Platform::get_available_shaders()
 {
-	return available_shaders;
+	return get_app().get_available_shaders();
 }
 
 const std::string &Platform::get_external_storage_directory()

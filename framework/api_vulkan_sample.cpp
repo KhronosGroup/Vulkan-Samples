@@ -862,7 +862,7 @@ void ApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 
 void ApiVulkanSample::store_shader(const vkb::ShaderSourceLanguage& shaderLanguage, const std::vector<std::pair<vkb::ShaderType, std::string>>& listOfShader)
 {
-	// platform->get_available_shaders().insert({shaderLanguage, listOfShader});
+	Application::get_available_shaders().insert({shaderLanguage, listOfShader});
 }
 
 void ApiVulkanSample::create_swapchain_buffers()
