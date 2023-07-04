@@ -51,9 +51,9 @@ PatchControlPoints::~PatchControlPoints()
  * 	@fn bool PatchControlPoints::prepare(vkb::Platform &platform)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
-bool PatchControlPoints::prepare(vkb::Platform &platform)
+bool PatchControlPoints::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
