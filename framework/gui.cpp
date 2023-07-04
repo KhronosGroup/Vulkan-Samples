@@ -1245,4 +1245,26 @@ void Drawer::text(const char *formatstr, ...)
 	va_end(args);
 }
 
+bool Drawer::color_picker(const char *caption, const char channel_count, float *color, uint16_t width, ImGuiColorEditFlags flags)
+{
+	assert((channel_count == 3 || channel_count == 4) && "Channel count value must be 3 or 4");
+	bool res;
+	if (width)
+		ImGui::PushItemWidth(width);
+	switch (channel_count)
+	{
+		case 3:
+			res = ImGui::ColorPicker3(caption, color, flags);
+			break;
+		case 4:
+			res = ImGui::ColorPicker4(caption, color, flags);
+			break;
+	}
+	if (res)
+	{
+		dirty = true;
+	};
+	return res;
+}
+
 }        // namespace vkb

@@ -173,6 +173,16 @@ class Drawer
 	 */
 	void text(const char *formatstr, ...);
 
+	/**
+	 * @brief Adds a color picker to the gui
+	 * @param caption The text to display
+	 * @param channel_count Number of channels. Must be 3 or 4.
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_picker(const char *caption, const char channel_count, float *color, uint16_t width = 0, ImGuiColorEditFlags flags = 0);
+
   private:
 	bool dirty{false};
 };

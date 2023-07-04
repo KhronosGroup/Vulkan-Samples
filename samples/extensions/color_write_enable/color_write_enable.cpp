@@ -469,9 +469,9 @@ void ColorWriteEnable::build_command_buffers()
 	// Clear color values.
 	std::array<VkClearValue, 4> clear_values = {};
 	clear_values[0].color                    = {0.0f, 0.0f, 0.0f, 0.0f};
-	clear_values[1].color                    = {background_r_value, 0.0f, 0.0f, 0.0f};
-	clear_values[2].color                    = {0.0f, background_g_value, 0.0f, 0.0f};
-	clear_values[3].color                    = {0.0f, 0.0f, background_b_value, 0.0f};
+	clear_values[1].color                    = {background_color[0], 0.0f, 0.0f, 0.0f};
+	clear_values[2].color                    = {0.0f, background_color[1], 0.0f, 0.0f};
+	clear_values[3].color                    = {0.0f, 0.0f, background_color[2], 0.0f};
 
 	// Begin the render pass.
 	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
@@ -539,15 +539,11 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Background color"))
 	{
-		if (drawer.slider_float("Red", &background_r_value, 0.0f, 1.0f))
-		{
-			build_command_buffers();
-		}
-		if (drawer.slider_float("Green", &background_g_value, 0.0f, 1.0f))
-		{
-			build_command_buffers();
-		}
-		if (drawer.slider_float("Blue", &background_b_value, 0.0f, 1.0f))
+		if (drawer.color_picker("", 3, background_color.data(), 200,
+		                        ImGuiColorEditFlags_NoSidePreview |
+		                            ImGuiColorEditFlags_NoSmallPreview |
+		                            ImGuiColorEditFlags_Float |
+		                            ImGuiColorEditFlags_RGB))
 		{
 			build_command_buffers();
 		}
