@@ -58,15 +58,9 @@ class Application
 	 * @param delta_time The time taken since the last frame
 	 * @param additional_ui Function that implements an additional Gui
 	 */
-	virtual void update_overlay(float delta_time, const std::function<void()>& additional_ui =  [](){});
+	virtual void update_overlay(
+	    float delta_time, const std::function<void()> &additional_ui = []() {});
 
-	/**
-	 * @brief Indicates that the plugin wants to change the shader in the sample
-	 * 
-	 * @param shader_language language the shader uses
-	 * @param shaders_path sample type and path to it
-	 */
-	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path);
 	/**
 	 * @brief Handles cleaning up the application
 	 */
@@ -84,6 +78,11 @@ class Application
 	 * @param input_event The input event object
 	 */
 	virtual void input_event(const InputEvent &input_event);
+
+	/**
+	 * @brief Returns the drawer object for the sample
+	 */
+	virtual Drawer *get_drawer();
 
 	const std::string &get_name() const;
 
@@ -103,11 +102,25 @@ class Application
 		requested_close = true;
 	}
 
-	std::weak_ptr<Gui> get_gui();
+	/**
+	 * @brief Indicates that the plugin wants to change the shader in the sample
+	 * @param shader_language language the shader uses
+	 */
+	virtual void change_shader(const vkb::ShaderSourceLanguage &shader_language);
 
-	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& get_available_shaders();
+	/**
+	 * @brief Returns stored shaders by sample
+	 */
+	const std::map<ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>> &get_available_shaders() const;
 
   protected:
+	/**
+	 * @brief Stores a list of shaders for the active sample, used by plugins to dynamically change the shader
+	 * @param shader_language The shader language for which the shader list will be provided
+	 * @param list_of_shaders The shader list, where paths and shader types are provided
+	 */
+	void store_shaders(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders);
+
 	float fps{0.0f};
 
 	float frame_time{0.0f};        // In ms
@@ -120,15 +133,13 @@ class Application
 
 	Window *window{nullptr};
 
-	std::shared_ptr<Gui> gui{nullptr};
-
   private:
 	std::string name{};
 
 	/**
 	 * @brief stores the names of the shaders the sample uses
 	 */
-	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>> available_shaders;
+	std::map<ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>> available_shaders;
 
 	// The debug info of the app
 	DebugInfo debug_info{};

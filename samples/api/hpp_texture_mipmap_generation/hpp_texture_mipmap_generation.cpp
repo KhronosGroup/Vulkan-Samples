@@ -117,7 +117,7 @@ void HPPTextureMipMapGeneration::build_command_buffers()
 	}
 }
 
-void HPPTextureMipMapGeneration::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPTextureMipMapGeneration::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

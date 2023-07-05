@@ -333,7 +333,7 @@ void VulkanSample::update(float delta_time)
 	render_context->submit(command_buffer);
 }
 
-void VulkanSample::update_overlay(float delta_time, const std::function<void()>& additional_ui) 
+void VulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 }
 
@@ -470,6 +470,13 @@ void VulkanSample::input_event(const InputEvent &input_event)
 	}
 }
 
+Drawer *VulkanSample::get_drawer()
+{
+	if (nullptr == gui)
+		return nullptr;
+	return &gui->get_drawer();
+}
+
 void VulkanSample::finish()
 {
 	Application::finish();
@@ -488,11 +495,6 @@ Device &VulkanSample::get_device()
 Configuration &VulkanSample::get_configuration()
 {
 	return configuration;
-}
-
-void VulkanSample::change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path)
-{
-	LOGE("Not implemented by sample");
 }
 
 void VulkanSample::draw_gui()

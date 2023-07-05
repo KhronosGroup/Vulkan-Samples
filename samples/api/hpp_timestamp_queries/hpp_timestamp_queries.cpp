@@ -264,7 +264,7 @@ void HPPTimestampQueries::build_command_buffers()
 	}
 }
 
-void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPTimestampQueries::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

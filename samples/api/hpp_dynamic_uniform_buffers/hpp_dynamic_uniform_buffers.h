@@ -73,6 +73,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
+	void change_shader(const vkb::ShaderSourceLanguage &shader_language) override;
 
 	// from HPPApiVulkanSample
 	void render(float delta_time) override;
@@ -80,7 +81,7 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 
 	vk::DescriptorPool      create_descriptor_pool();
 	vk::DescriptorSetLayout create_descriptor_set_layout();
-	vk::Pipeline            create_pipeline();
+	vk::Pipeline            create_pipeline(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<vk::ShaderStageFlagBits, std::string>> &list_of_shaders);
 	void                    draw();
 	void                    generate_cube();
 	void                    prepare_camera();

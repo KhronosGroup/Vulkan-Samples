@@ -22,6 +22,7 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
+    drawer.h
     glsl_compiler.h
     spirv_reflection.h
     gltf_loader.h
@@ -51,6 +52,7 @@ set(FRAMEWORK_FILES
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
+    drawer.cpp
     glsl_compiler.cpp
     spirv_reflection.cpp
     gltf_loader.cpp

@@ -26,3 +26,4 @@ khrplatform.h
 clang_format.py
 run-clang-tidy.py
 package-list.txt
+.spv

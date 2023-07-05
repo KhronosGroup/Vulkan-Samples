@@ -172,7 +172,7 @@ void HPPInstancing::build_command_buffers()
 	}
 }
 
-void HPPInstancing::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPInstancing::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Statistics"))
 	{

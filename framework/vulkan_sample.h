@@ -132,19 +132,17 @@ class VulkanSample : public Application
 	 * @param delta_time The time taken since the last frame
 	 * @param additional_ui Function that implements an additional Gui
 	 */
-	virtual void update_overlay(float delta_time, const std::function<void()>& additional_ui =  [](){}) override;
+	virtual void update_overlay(
+	    float delta_time, const std::function<void()> &additional_ui = []() {}) override;
 
-	/**
-	 * @brief Indicates that the plugin wants to change the shader in the sample
-	 * 
-	 * @param shader_language language the shader uses
-	 * @param shaders_path sample type and path to it
-	 */
-	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path) override;
-	
 	bool resize(uint32_t width, uint32_t height) override;
 
 	void input_event(const InputEvent &input_event) override;
+
+	/**
+	 * @brief Returns the drawer object for the sample
+	 */
+	vkb::Drawer *get_drawer() override;
 
 	void finish() override;
 
@@ -201,6 +199,8 @@ class VulkanSample : public Application
 	 * @brief Holds all scene information
 	 */
 	std::unique_ptr<sg::Scene> scene{nullptr};
+
+	std::unique_ptr<Gui> gui{nullptr};
 
 	std::unique_ptr<Stats> stats{nullptr};
 

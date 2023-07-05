@@ -26,7 +26,8 @@ RealTimeShaderSelection::RealTimeShaderSelection() :
                                 "Enable dynamic shader selection for samples.",
                                 {vkb::Hook::OnAppStart, vkb::Hook::OnUpdateUi},
                                 {&realtimeshaderselection_flag}),
-	activeShader(0)
+    active_shader(0),
+    min_size_for_shaders(2)
 {
 }
 
@@ -41,59 +42,62 @@ void RealTimeShaderSelection::init(const vkb::CommandParser &parser)
 
 void RealTimeShaderSelection::on_app_start(const std::string &app_info)
 {
-	if (platform->get_available_shaders().size() < min_size_for_shaders)
+	if (platform->get_app().get_available_shaders().size() < min_size_for_shaders)
 	{
-		LOGE("Sample doesn't support RealTimeShaderSelection plugin, sample should add available shaders please see ApiVulkanSample::store_shader.");
-		LOGE("Sample, defined {} shaders, minimum number of defined shaders is {}", platform->get_available_shaders().size(), min_size_for_shaders);
+		LOGE("Sample doesn't support RealTimeShaderSelection plugin, sample should add available shaders please see Application::store_shaders.");
+		LOGE("Sample, defined {} shaders, minimum number of defined shaders is {}", platform->get_app().get_available_shaders().size(), min_size_for_shaders);
 		return;
 	}
-	availableShaders = platform->get_available_shaders();
-	for (auto const& shader : availableShaders)
+
+	for (auto const &shader : platform->get_app().get_available_shaders())
 	{
-		switch(shader.first)
+		switch (shader.first)
 		{
-			case vkb::ShaderSourceLanguage::VK_GLSL:
-				shaderName.emplace_back("GLSL");
-			break;
-			case vkb::ShaderSourceLanguage::VK_HLSL:
-				shaderName.emplace_back("HLSL");
-			break;
-			case vkb::ShaderSourceLanguage::VK_SPV:
-				shaderName.emplace_back("SPV");
-			break;
+			case vkb::ShaderSourceLanguage::GLSL:
+				language_names.emplace_back("GLSL");
+				break;
+			case vkb::ShaderSourceLanguage::HLSL:
+				language_names.emplace_back("HLSL");
+				break;
+			case vkb::ShaderSourceLanguage::SPV:
+				language_names.emplace_back("SPV");
+				break;
+			default:
+				LOGE("Not supported shader language");
+				assert(false);
 		}
 	}
 }
 
 void RealTimeShaderSelection::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	if (availableShaders.size() >= min_size_for_shaders)
+	if (platform->get_app().get_available_shaders().size() >= min_size_for_shaders)
 	{
 		if (drawer.header("Real Time Shader Selection"))
 		{
-			if (drawer.combo_box("Shader language", &activeShader, shaderName))
+			if (drawer.combo_box("Shader language", &active_shader, language_names))
 			{
-				std::string selectedShader = shaderName[activeShader];
-				vkb::ShaderSourceLanguage shaderType = vkb::ShaderSourceLanguage::VK_GLSL;
+				std::string               selectedShader = language_names[active_shader];
+				vkb::ShaderSourceLanguage shaderType     = vkb::ShaderSourceLanguage::GLSL;
 				if (selectedShader == "GLSL")
 				{
-					shaderType = vkb::ShaderSourceLanguage::VK_GLSL;
+					shaderType = vkb::ShaderSourceLanguage::GLSL;
 				}
 				else if (selectedShader == "HLSL")
 				{
-					shaderType = vkb::ShaderSourceLanguage::VK_HLSL;
+					shaderType = vkb::ShaderSourceLanguage::HLSL;
 				}
 				else if (selectedShader == "SPV")
 				{
-					shaderType = vkb::ShaderSourceLanguage::VK_SPV;
+					shaderType = vkb::ShaderSourceLanguage::SPV;
 				}
 				else
 				{
-					return;
+					LOGE("Not supported shader language");
+					assert(false);
 				}
-				auto it = availableShaders.find(shaderType);
-				auto app = &platform->get_app();
-				app->change_shader(it->first, it->second);
+				auto it = platform->get_app().get_available_shaders().find(shaderType);
+				platform->get_app().change_shader(it->first);
 			}
 		}
 	}

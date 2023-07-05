@@ -199,7 +199,7 @@ void Platform::update()
 		}
 
 		active_app->update_overlay(delta_time, [=]() {
-			on_update_ui_overlay(gui.lock()->get_drawer());
+			on_update_ui_overlay(*active_app->get_drawer());
 		});
 		active_app->update(delta_time);
 
@@ -292,11 +292,6 @@ void Platform::set_window_properties(const Window::OptionalProperties &propertie
 	window_properties.extent.height = properties.extent.height.has_value() ? properties.extent.height.value() : window_properties.extent.height;
 }
 
-std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& Platform::get_available_shaders()
-{
-	return get_app().get_available_shaders();
-}
-
 const std::string &Platform::get_external_storage_directory()
 {
 	return external_storage_directory;
@@ -378,7 +373,6 @@ bool Platform::start_app()
 		return false;
 	}
 
-	gui = active_app->get_gui();
 	on_app_start(requested_app_info->id);
 
 	return true;

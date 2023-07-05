@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
+ * Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -35,10 +36,10 @@ class Plugin;
  * @brief Tags are used to define a plugins behaviour. This is useful to dictate which plugins will work together
  * 	      and which will not without directly specifying an exclusion or inclusion list. Tags are struct types so that they can
  * 		  be used in the tagging system (See plugin implementation).
- *		  
+ *
  * Entrypoint - An entrypoint is a starting point for the application that will load a vkb::Application (see start_app)
  * FullControl - The plugin wants full control over how the application executes. Stopping plugins will be ignored (see batch_mode)
- * Stopping - The plugin will stop the app through its own mechanism (see stop_after)	
+ * Stopping - The plugin will stop the app through its own mechanism (see stop_after)
  * Passive - These plugins provide non intrusive behaviour (see fps_logger)
  */
 namespace tags
@@ -55,7 +56,7 @@ struct Passive
 
 /**
  * @brief Associate how plugins can interact with each other. This interoperability is decided by comparing tags of different plugins. The plugins inclusion and exclusion lists are populated by this function
- * 
+ *
  * @param plugins A list of plugins which are used together
  * @return std::vector<Plugin *> A list of plugins which are used together
  */
@@ -63,7 +64,7 @@ std::vector<Plugin *> associate_plugins(const std::vector<Plugin *> &plugins);
 
 /**
  * @brief Hooks are points in the project that an plugin can subscribe too. These can be expanded on to implement more behaviour in the future
- * 
+ *
  * Update - Executed at each update() loop
  * OnAppStart - Executed when an app starts
  * OnAppClose - Executed when an app closes
@@ -93,7 +94,7 @@ class Plugin
 
 	/**
 	 * @brief Conducts the process of activating and initializing an plugin
-	 * 
+	 *
 	 * @param platform The platform
 	 * @param parser The parser used to check if the plugins flags are present
 	 * @param force_activation Force a plugin to be activated, not advised unless the plugin works without inputs
@@ -106,35 +107,35 @@ class Plugin
 
 	/**
 	 * @brief Return a list of hooks that an plugin wants to subscribe to
-	 * 
+	 *
 	 * @return Hooks that the plugin wants to use
 	 */
 	virtual const std::vector<Hook> &get_hooks() const = 0;
 
 	/**
 	 * @brief Called when an application has been updated
-	 * 
+	 *
 	 * @param delta_time The time taken to compute a frame
 	 */
 	virtual void on_update(float delta_time) = 0;
 
 	/**
 	 * @brief Called when an app has started
-	 * 
+	 *
 	 * @param app_id The ID of the app
 	 */
 	virtual void on_app_start(const std::string &app_id) = 0;
 
 	/**
 	 * @brief Called when an app has been closed
-	 * 
+	 *
 	 * @param app_id The ID of the app
 	 */
 	virtual void on_app_close(const std::string &app_id) = 0;
 
 	/**
 	 * @brief Handle when an application errors
-	 * 
+	 *
 	 * @param app_id The ID of the app which errored
 	 */
 	virtual void on_app_error(const std::string &app_id) = 0;
@@ -151,13 +152,13 @@ class Plugin
 
 	/**
 	 * @brief Allows to add a UI to a sample
-	 * 
+	 *
 	 * @param drawer The object that is responsible for drawing the overlay
 	 */
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer) = 0;
 
-	const std::string &          get_name() const;
-	const std::string &          get_description() const;
+	const std::string           &get_name() const;
+	const std::string           &get_description() const;
 	void                         excludes(Plugin *plugin);
 	const std::vector<Plugin *> &get_exclusions() const;
 	void                         includes(Plugin *plugin);
@@ -165,7 +166,7 @@ class Plugin
 
 	/**
 	 * @brief Test whether the plugin contains a given tag
-	 * 
+	 *
 	 * @tparam C the tag to check for
 	 * @return true tag present
 	 * @return false tag not present
@@ -178,7 +179,7 @@ class Plugin
 
 	/**
 	 * @brief Tests whether the plugins contains multiple tags
-	 * 
+	 *
 	 * @tparam C A set of tags
 	 * @return true Contains all tags
 	 * @return false Does not contain all tags
@@ -197,7 +198,7 @@ class Plugin
 
 	/**
 	 * @brief Implemented by plugin base to return if the plugin contains a tag
-	 * 
+	 *
 	 * @param id The tag id of a tag
 	 * @return true contains tag
 	 * @return false does not contain tag
@@ -207,7 +208,7 @@ class Plugin
   protected:
 	/**
 	 * @brief An plugin will override this method so that it can check if it will be activated
-	 * 
+	 *
 	 * @param parser A parser that has parsed the command line arguments when the app starts
 	 * @return true If the plugin should be activated
 	 * @return false If the plugin should be ignored
@@ -216,7 +217,7 @@ class Plugin
 
 	/**
 	 * @brief Sets up an plugin by using values from the parser
-	 * 
+	 *
 	 * @param parser The parser
 	 */
 	virtual void init(const CommandParser &parser) = 0;
@@ -239,7 +240,7 @@ namespace plugins
 /**
  * @brief Get all plugins with tags
  * 		  Plugin must include one or more tags
- * 
+ *
  * @tparam TAGS Tags that an plugin must contain
  * @param domain The list of plugins to query
  * @return const std::vector<Plugin *> A list of plugins containing one or more TAGS
@@ -271,7 +272,7 @@ const std::vector<Plugin *> with_tags(const std::vector<Plugin *> &domain = {})
  * @brief Get all plugins without the given tags
  * 		  Plugin must not include one or more tags
  * 		  Essentially the opoposite of plugins::with_tags<...TAGS>()
- * 
+ *
  * @tparam TAGS Tags that an plugin must not contain
  * @param domain The list of plugins to query
  * @return const std::vector<Plugin *> A list of plugins containing one or more TAGS

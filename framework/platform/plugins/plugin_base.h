@@ -1,4 +1,5 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
+ * Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,7 +28,7 @@ namespace vkb
 {
 /**
  * @brief PluginBase is the base class that plugins inherit from. The class enforces the use of tags when creating new plugins.
- * 		  For method information see Plugin  
+ * 		  For method information see Plugin
  */
 template <typename... TAGS>
 class PluginBase : public Plugin, public Tag<TAGS...>
@@ -38,7 +39,7 @@ class PluginBase : public Plugin, public Tag<TAGS...>
 	virtual ~PluginBase() = default;
 
 	virtual const std::vector<Command *> &get_cli_commands() const override;
-	virtual const std::vector<Hook> &     get_hooks() const override;
+	virtual const std::vector<Hook>      &get_hooks() const override;
 	virtual bool                          has_tag(TagID id) const override;
 
 	// hooks that can be implemented by plugins

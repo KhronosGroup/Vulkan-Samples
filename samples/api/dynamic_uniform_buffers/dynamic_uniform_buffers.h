@@ -88,7 +88,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
 	void         setup_descriptor_set();
-	void         prepare_pipelines();
+	void         prepare_pipelines(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders);
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	void         update_dynamic_uniform_buffer(float delta_time, bool force = false);
@@ -96,7 +96,7 @@ class DynamicUniformBuffers : public ApiVulkanSample
 	bool         prepare(const vkb::ApplicationOptions &options) override;
 	virtual void render(float delta_time) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
-	virtual void change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path) override;
+	virtual void change_shader(const vkb::ShaderSourceLanguage &shader_language) override;
 };
 
 std::unique_ptr<vkb::Application> create_dynamic_uniform_buffers();

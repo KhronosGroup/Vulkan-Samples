@@ -122,7 +122,7 @@ void HPPSeparateImageSampler::build_command_buffers()
 	}
 }
 
-void HPPSeparateImageSampler::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPSeparateImageSampler::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

@@ -17,10 +17,10 @@
 
 #pragma once
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <map>
 
 #include <core/platform/context.hpp>
 
@@ -132,8 +132,6 @@ class Platform
 
 	void on_post_draw(RenderContext &context);
 
-	std::map<ShaderSourceLanguage, std::vector<std::pair<ShaderType, std::string>>>& get_available_shaders();
-
 	static const uint32_t MIN_WINDOW_WIDTH;
 	static const uint32_t MIN_WINDOW_HEIGHT;
 
@@ -147,8 +145,6 @@ class Platform
 	std::unique_ptr<Window> window{nullptr};
 
 	std::unique_ptr<Application> active_app{nullptr};
-
-	std::weak_ptr<Gui> gui;
 
 	virtual std::vector<spdlog::sink_ptr> get_platform_sinks();
 

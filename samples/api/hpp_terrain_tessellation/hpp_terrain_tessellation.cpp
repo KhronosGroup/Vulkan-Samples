@@ -175,7 +175,7 @@ void HPPTerrainTessellation::build_command_buffers()
 	}
 }
 
-void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPTerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

@@ -289,7 +289,7 @@ void DynamicUniformBuffers::setup_descriptor_set()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
-void DynamicUniformBuffers::prepare_pipelines()
+void DynamicUniformBuffers::prepare_pipelines(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<VkShaderStageFlagBits, std::string>> &list_of_shaders)
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
@@ -339,10 +339,11 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        0);
 
 	// Load shaders
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-
-	shader_stages[0] = load_shader("dynamic_uniform_buffers/base.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("dynamic_uniform_buffers/base.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	std::vector<VkPipelineShaderStageCreateInfo> shader_stages;
+	for (auto &shader : list_of_shaders)
+	{
+		shader_stages.emplace_back(load_shader(shader.second, shader.first, shader_language));
+	}
 
 	// Vertex bindings and attributes
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -500,21 +501,29 @@ bool DynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
+	std::vector<std::pair<vkb::ShaderSourceLanguage, std::vector<std::pair<VkShaderStageFlagBits, std::string>>>> supported_shaders{
+	    {vkb::ShaderSourceLanguage::GLSL, {
+	                                          {VK_SHADER_STAGE_VERTEX_BIT, "dynamic_uniform_buffers/base.vert"},
+	                                          {VK_SHADER_STAGE_FRAGMENT_BIT, "dynamic_uniform_buffers/base.frag"},
+	                                      }},
+
+	    {vkb::ShaderSourceLanguage::SPV, {
+	                                         {VK_SHADER_STAGE_VERTEX_BIT, "dynamic_uniform_buffers/base.vert.spv"},
+	                                         {VK_SHADER_STAGE_FRAGMENT_BIT, "dynamic_uniform_buffers/base.frag.spv"},
+	                                     }}};
+	for (auto &shader : supported_shaders)
+	{
+		store_shaders(shader.first, shader.second);
+	}
+
 	generate_cube();
 	prepare_uniform_buffers();
 	setup_descriptor_set_layout();
-	prepare_pipelines();
+	prepare_pipelines(supported_shaders.begin()->first, supported_shaders.begin()->second);
 	setup_descriptor_pool();
 	setup_descriptor_set();
 	build_command_buffers();
-	store_shader(vkb::ShaderSourceLanguage::VK_GLSL, {
-		{vkb::ShaderType::VERT, "dynamic_uniform_buffers/base.vert"},
-		{vkb::ShaderType::FRAG, "dynamic_uniform_buffers/base.frag"},
-	} );
-	store_shader(vkb::ShaderSourceLanguage::VK_SPV, {
-		{vkb::ShaderType::VERT, "dynamic_uniform_buffers/base.vert.spv"},
-		{vkb::ShaderType::FRAG, "dynamic_uniform_buffers/base.frag.spv"},
-	} );
+
 	prepared = true;
 	return true;
 }
@@ -526,9 +535,10 @@ bool DynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
 	return true;
 }
 
-void DynamicUniformBuffers::change_shader(const vkb::ShaderSourceLanguage& shader_language, const std::vector<std::pair<vkb::ShaderType, std::string>>& shaders_path)
+void DynamicUniformBuffers::change_shader(const vkb::ShaderSourceLanguage &shader_language)
 {
-
+	vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+	prepare_pipelines(shader_language, get_available_shaders().find(shader_language)->second);
 }
 
 void DynamicUniformBuffers::render(float delta_time)

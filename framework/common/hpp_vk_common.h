@@ -90,9 +90,9 @@ inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type
 	return vkb::is_dynamic_buffer_descriptor_type(static_cast<VkDescriptorType>(descriptor_type));
 }
 
-inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage)
+inline vk::ShaderModule load_shader(const std::string &filename, vk::Device device, vk::ShaderStageFlagBits stage, ShaderSourceLanguage src_language = ShaderSourceLanguage::GLSL)
 {
-	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
+	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage), src_language));
 }
 
 inline void set_image_layout(vk::CommandBuffer         command_buffer,
@@ -135,17 +135,17 @@ inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass rend
 	return device.createFramebuffer(framebuffer_create_info);
 }
 
-inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
-                                             vk::PipelineCache                                         pipeline_cache,
-                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const   &shader_stages,
-                                             vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
-                                             vk::PrimitiveTopology                                     primitive_topology,
-                                             vk::CullModeFlags                                         cull_mode,
-                                             vk::FrontFace                                             front_face,
-                                             std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
-                                             vk::PipelineDepthStencilStateCreateInfo const            &depth_stencil_state,
-                                             vk::PipelineLayout                                        pipeline_layout,
-                                             vk::RenderPass                                            render_pass)
+inline vk::Pipeline create_graphics_pipeline(vk::Device                                                                  device,
+                                             vk::PipelineCache                                                           pipeline_cache,
+                                             vk::ArrayProxyNoTemporaries<const vk::PipelineShaderStageCreateInfo> const &shader_stages,
+                                             vk::PipelineVertexInputStateCreateInfo const                               &vertex_input_state,
+                                             vk::PrimitiveTopology                                                       primitive_topology,
+                                             vk::CullModeFlags                                                           cull_mode,
+                                             vk::FrontFace                                                               front_face,
+                                             std::vector<vk::PipelineColorBlendAttachmentState> const                   &blend_attachment_states,
+                                             vk::PipelineDepthStencilStateCreateInfo const                              &depth_stencil_state,
+                                             vk::PipelineLayout                                                          pipeline_layout,
+                                             vk::RenderPass                                                              render_pass)
 {
 	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
 

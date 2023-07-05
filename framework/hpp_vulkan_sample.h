@@ -57,6 +57,11 @@ class HPPVulkanSample : public vkb::Application
 
 	void input_event(const InputEvent &input_event) override;
 
+	/**
+	 * @brief Returns the drawer object for the sample
+	 */
+	vkb::Drawer *get_drawer() override;
+
 	void finish() override;
 
 	/**
@@ -228,6 +233,18 @@ class HPPVulkanSample : public vkb::Application
 	 * @brief Updates the debug window, samples can override this to insert their own data elements
 	 */
 	virtual void update_debug_window();
+
+	/**
+	 * @brief Returns stored shaders by sample
+	 */
+	const std::map<ShaderSourceLanguage, std::vector<std::pair<vk::ShaderStageFlagBits, std::string>>> &get_available_shaders() const;
+
+	/**
+	 * @brief Stores a list of shaders for the active sample, used by plugins to dynamically change the shader
+	 * @param shader_language The shader language for which the shader list will be provided
+	 * @param list_of_shaders The shader list, where paths and shader types are provided
+	 */
+	void store_shaders(const vkb::ShaderSourceLanguage &shader_language, const std::vector<std::pair<vk::ShaderStageFlagBits, std::string>> &list_of_shaders);
 
 	/**
 	 * @brief Set viewport and scissor state in command buffer for a given extent

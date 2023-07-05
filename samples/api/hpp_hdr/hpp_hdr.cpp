@@ -184,7 +184,7 @@ void HPPHDR::build_command_buffers()
 	}
 }
 
-void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPHDR::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{

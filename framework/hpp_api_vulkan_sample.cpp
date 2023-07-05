@@ -410,14 +410,14 @@ void HPPApiVulkanSample::create_pipeline_cache()
 	pipeline_cache = get_device()->get_handle().createPipelineCache({});
 }
 
-vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage)
+vk::PipelineShaderStageCreateInfo HPPApiVulkanSample::load_shader(const std::string &file, vk::ShaderStageFlagBits stage, vkb::ShaderSourceLanguage src_language)
 {
-	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage));
+	shader_modules.push_back(vkb::common::load_shader(file.c_str(), get_device()->get_handle(), stage, src_language));
 	assert(shader_modules.back());
 	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()>& additional_ui)
+void HPPApiVulkanSample::update_overlay(float delta_time, const std::function<void()> &additional_ui)
 {
 	if (gui)
 	{
@@ -765,7 +765,7 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 	render_pass = get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
-void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
+void HPPApiVulkanSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {}
 
 void HPPApiVulkanSample::create_swapchain_buffers()

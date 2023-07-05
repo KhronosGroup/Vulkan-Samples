@@ -57,7 +57,7 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 
 	// from HPPApiVulkanSample
 	void build_command_buffers() override;
-	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void render(float delta_time) override;
 	void view_changed() override;
 
