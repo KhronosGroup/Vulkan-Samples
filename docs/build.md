@@ -161,7 +161,7 @@ adb shell setprop security.perf_harden 0
 
 ### Clang Format and Visual Studio
 
-Visual Studio comes with `clang-format-6` which is incompatible with some of the styles we use in our `.clang-format` file. It is recommended to point to a `clang-format-8.exe` binary within the in-built clang formatter, or disable it and use a third party extension that is more up to date.
+Visual Studio comes with `clang-format-6` which is incompatible with some of the styles we use in our `.clang-format` file. It is recommended to point to a `clang-format-9.exe` binary within the in-built clang formatter, or disable it and use a third party extension that is more up to date.
 
 Go to the [LLVM downloads page](http://releases.llvm.org/download.html) to get clang.
 
