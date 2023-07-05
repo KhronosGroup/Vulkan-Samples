@@ -17,6 +17,7 @@
  */
 
 layout (location = 0) in vec3 inPos;
+layout (location = 1) in vec3 inNormal;
 
 layout (binding = 0) uniform Ubo 
 {
@@ -25,7 +26,10 @@ layout (binding = 0) uniform Ubo
 	mat4 model;
 } ubo;
 
+layout (location = 0) out vec3 outNormal;
+
 void main() 
 {
 	gl_Position = ubo.projection * ubo.view * ubo.model *  vec4(inPos.xyz, 1.0f);
+	outNormal = inNormal;
 }

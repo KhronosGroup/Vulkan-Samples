@@ -21,6 +21,13 @@
 
 class SubgroupsOperations : public ApiVulkanSample
 {
+
+	struct OceanVertex
+	{
+		glm::vec3 position;
+		glm::vec3 normal;
+	};
+
   public:
 	SubgroupsOperations();
 	~SubgroupsOperations();
@@ -86,39 +93,54 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(4) float time;
 	};
 
+	struct FFTParametersUbo
+	{
+		alignas(4) float amplitude;
+		alignas(4) float length;
+		alignas(8) glm::vec2 wind;
+		alignas(4) uint32_t grid_size;
+	};
+
 	struct GuiConfig
 	{
-		bool wireframe = {false};
+		bool      wireframe = {false};
+		float     amplitude = {0.005f};
+		float     length    = {16.0f};
+		glm::vec2 wind      = {16.0f, 0.0f};
 	} ui;
 
 	GridBuffers                        input_grid;        // input buffer for compute shader
 	uint32_t                           grid_size = {32u};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> compute_ubo;
+	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
+
+	std::unique_ptr<vkb::core::Buffer> fft_input_buffer;        // TODO: change name
 
 	struct
 	{
-		VkQueue               queue;
-		VkCommandPool         command_pool;
-		VkCommandBuffer       command_buffer;
-		VkSemaphore           semaphore;
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-		uint32_t              queue_family_index;
+		VkQueue               queue                 = {VK_NULL_HANDLE};
+		VkCommandPool         command_pool          = {VK_NULL_HANDLE};
+		VkCommandBuffer       command_buffer        = {VK_NULL_HANDLE};
+		VkSemaphore           semaphore             = {VK_NULL_HANDLE};
+		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
+		uint32_t              queue_family_index    = {-1u};
 
 		struct
 		{
 			Pipeline _default;
+			Pipeline fft_input;
 		} pipelines;
 	} compute;
 
 	struct
 	{
 		GridBuffers           grid;        // output (result) buffer for compute shader
-		uint32_t              graphics_queue_family_index;
-		VkDescriptorSetLayout descriptor_set_layout;
-		VkDescriptorSet       descriptor_set;
-		VkSemaphore           semaphore;
+		uint32_t              graphics_queue_family_index = {-1u};
+		VkDescriptorSetLayout descriptor_set_layout       = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set              = {VK_NULL_HANDLE};
+		VkSemaphore           semaphore                   = {VK_NULL_HANDLE};
 		struct
 		{
 			Pipeline _default;

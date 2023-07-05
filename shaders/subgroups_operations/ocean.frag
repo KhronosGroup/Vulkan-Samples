@@ -16,10 +16,12 @@
  * limitations under the License.
  */
 
+ layout (location = 0) in vec3 inNormal;
 
-layout (location = 0) out vec4 outFragColor;
+ layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
-	outFragColor = vec4(0.0f, 0.5f, 1.0f, 1.0f); // should be blue
+	vec3 ocean_color = vec3(0.0f, 0.5f, 1.0f) + inNormal;
+	outFragColor = vec4(ocean_color, 1.0f);
 }
