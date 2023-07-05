@@ -60,7 +60,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_fft_normal_map();
 
 	void update_uniform_buffers();
-	void update_compute_descriptor();
 
 	static glm::vec2 rndGaussian();
 	uint32_t         grid_size;

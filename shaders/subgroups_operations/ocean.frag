@@ -19,7 +19,7 @@
 layout (location = 0) in vec4 in_pos;
 layout (location = 1) in vec2 in_uv;
 
-layout (location = 0) out vec4 outFragColor;
+ layout (location = 0) out vec4 outFragColor;
 
 layout (binding = 0) uniform Ubo
 {
