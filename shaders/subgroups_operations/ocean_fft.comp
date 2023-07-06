@@ -1,4 +1,4 @@
-#version 450
+	#version 450
 #extension GL_KHR_shader_subgroup_basic : enable
 
 /* Copyright (c) 2023, Mobica Limited
@@ -21,6 +21,8 @@
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 #define PI 3.141592f
+#define PI2 6.283184
+#define GRAVITY 9.81f
 
 struct Vertex
 {
@@ -40,22 +42,77 @@ struct FFTInputData
 	Complex tilde_conj;
 };
 
-
-layout (set = 0, binding = 0) uniform Ubo
+Complex complexMultiplication(Complex a, float scalar)
 {
-	uint grid_size;
-	float time;
-} ubo;
+	Complex res;
+	res.real = scalar * a.real;
+	res.imag = scalar * a.imag;
+	return res;
+}
 
-layout (std140, set = 0, binding = 2) readonly buffer FFTInputDataBuffer
+Complex conjugate(Complex a)
+{
+	Complex res;
+	res.real = a.real;
+	res.imag = -a.imag;
+	return res;
+}
+
+layout (set = 0, binding = 0) uniform FFTParametersUbo
+{
+	float amplitude;
+	float len;
+	vec2  wind;
+	uint  grid_size;
+} fftUbo;
+
+layout (std140, set = 0, binding = 1) readonly buffer FFTInputDataBuffer
 {
 	FFTInputData data[];
 };
 
-layout (std140, set = 0, binding = 1) buffer VertexOutBuffer
+layout (std140, set = 0, binding = 2) buffer VertexOutBuffer
 {
 	Vertex verticesOut[];
 };
+
+
+// Add another FFTInputData buffer to store the results of the hTilde calculation
+// Add 3'th FFTInputData buffer to store fft calculation results - final values
+
+float dispersion(uint n, uint m)
+{
+	float w0 = 2.0f * PI / 50.0f;
+	float x = PI * (2.0f * n - fftUbo.grid_size) / fftUbo.len;
+	float z = PI * (2.0f * m - fftUbo.grid_size) / fftUbo.len;
+	return floor(sqrt(GRAVITY * sqrt(x * x + z * z)) / w0) *w0;
+}
+
+
+Complex hTilde(float t, uint n, uint m)
+{
+	uint idx = gl_GlobalInvocationID.x * gl_SubgroupInvocationID + gl_GlobalInvocationID.y * gl_SubgroupInvocationID +  gl_GlobalInvocationID.z * gl_SubgroupInvocationID;
+	Complex tilde0 = data[idx].tilde
+	Complex tilde0_conj = data[idx].tilde_conj;
+	
+	float omega = dispersion(n, m);
+	
+	float _sin = sin(omega);
+	float _cos = cos(omega);
+	
+	Complex c0;
+	c0.real = _cos;
+	c0.imag = _sin;
+	
+	Complex c1 = conjugate(c0);
+
+	return (tilde0 * c0) + (tilde0_conj * c1); // TODO add a multiply and add functions for Complex struct
+}
+
+void fft()
+{
+
+}
 
 void main()
 {
@@ -65,6 +122,6 @@ void main()
 
 	FFTInputData inData = data[idx];
 
-
+	verticesOut[idx].position = vec3(0.0f);
 	verticesOut[idx].normal = vec3(0.0f); 
 }
