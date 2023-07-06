@@ -87,12 +87,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::mat4 model;
 	};
 
-	struct ComputeUbo
-	{
-		alignas(4) uint32_t grid_size;
-		alignas(4) float time;
-	};
-
 	struct FFTParametersUbo
 	{
 		alignas(4) float amplitude;
@@ -112,9 +106,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	GridBuffers                        input_grid;        // input buffer for compute shader
 	uint32_t                           grid_size = {32u};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
-	std::unique_ptr<vkb::core::Buffer> compute_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
-
 	std::unique_ptr<vkb::core::Buffer> fft_input_buffer;        // TODO: change name
 
 	struct
@@ -149,7 +141,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	} ocean;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
-	vkb::Timer                         timer;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();

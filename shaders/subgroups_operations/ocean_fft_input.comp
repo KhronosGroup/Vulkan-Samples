@@ -21,6 +21,7 @@
 layout (local_size_x = 32, local_size_y = 32, local_size_z = 1) in;
 
 #define PI 3.141592f
+#define PI2 6.283184
 #define GRAVITY 9.81f
 
 struct Complex
@@ -43,7 +44,7 @@ layout (set = 0, binding = 0) uniform FFTParametersUbo
 	uint  grid_size;
 } fftUbo;
 
-layout (std140, set = 0, binding = 2) buffer FFTInputDataBuffer
+layout (std140, set = 0, binding = 1) buffer FFTInputDataBuffer
 {
 	FFTInputData data[];
 };
@@ -91,19 +92,20 @@ float phillips_spectrum(uint n, uint m)
 // source: https://stackoverflow.com/a/74419913
 float random(vec2 st)
 {
-    return fract(sin(dot(st.xy, vec2(12.9898f, 78.233f))) * 43758.5453123f);
+    float rndVal = fract(sin(dot(st, vec2(12.9898f, 78.233f))) * 43758.5453123f);
+    if (rndVal < 0.000001f) return 0.000001f;
+    return rndVal;
 }
 
 Complex gaussionRndVal(vec2 seed)
 {
-	float x1, x2, w;
-	do 
-	{
-		x1 = 2.0f * random(seed) - 1.0f;
-		x2 = 2.0f * random(seed) - 1.0f;
-		w = x1 * x1 + x2 * x2;
-	} while (w >= 1.0f);
-	w = sqrt((-2.0f * log(w)) / w);
+	float x1, x2, w, w2;
+	x1 = random(seed);
+	x1 = -2.0f * log(x1);
+	x2 = random(seed) * PI2;
+
+	w = sqrt(x1) * cos(x2);
+
 	Complex res;
 	res.real = x1 * w;
 	res.imag = x2 * w;
@@ -112,7 +114,7 @@ Complex gaussionRndVal(vec2 seed)
 
 Complex hTilde(uint n, uint m)
 {
-	Complex rnd = gaussionRndVal(vec2(n, m));
+	Complex rnd = gaussionRndVal(vec2(abs(n), abs(m)));
 	return complexMultiplication(rnd, sqrt(phillips_spectrum(n, m) / 2.0f));
 }
 
@@ -120,8 +122,10 @@ void main()
 {
 	uint idx = gl_GlobalInvocationID.x * gl_SubgroupInvocationID + gl_GlobalInvocationID.y * gl_SubgroupInvocationID +  gl_GlobalInvocationID.z * gl_SubgroupInvocationID;
 	subgroupMemoryBarrierBuffer();
-	uint n = gl_GlobalInvocationID.x * gl_SubgroupInvocationID;
-	uint m = gl_GlobalInvocationID.y * gl_SubgroupInvocationID;
+	uint n = gl_GlobalInvocationID.x;
+	uint m = gl_GlobalInvocationID.y;
+
+
 	data[idx].tilde = hTilde(n, m); // possible issue
-	data[idx].tilde_conj = conjugate(hTilde(-n, -m));
+	data[idx].tilde_conj = conjugate(data[idx].tilde);
 }
