@@ -19,7 +19,7 @@
 
 # Framework <!-- omit in toc -->
 
-This folder contains the base framework used by the samples. It offers sample base classes, encapsulates common functionality for e.g. loading assets (images, models, shaders), wraps common Vulkan objects and implements frequently used concepts like a caches and a scene graph. The framework also implements platform support for Windows, Linux, MacOS and Android.
+This folder contains the base framework used by the samples. It offers sample base classes, encapsulates common functionality for e.g. loading assets (images, models, shaders), wraps common Vulkan objects and implements frequently used concepts like a cache and a scene graph. The framework also implements platform support for Windows, Linux, MacOS and Android.
 
 It can be used as a guideline for writing advanced Vulkan applications.
 
@@ -57,7 +57,7 @@ Vulkan is an extensible api. New features are usually exposed through either ins
 MySample::MySample()
 {
     add_instance_extension(VK_SOME_INSTANCE_EXTENSION_NAME);
-	add_device_extension(VK_SOME_DEVICE_EXTENSION_NAME);
+    add_device_extension(VK_SOME_DEVICE_EXTENSION_NAME);
 }
 ```
 
@@ -76,17 +76,17 @@ MySample::MySample()
 
 ### Requesting GPU features
 
-Most extensions also require enabling accompanying. This can be done by overriding the `request_gpu_features` function of the base class:
+Most extensions also require enabling corresponding feature flags. This can be done by overriding the `request_gpu_features` function of the base class:
 
 ```cpp
 void MySample::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
     // Get a reference to the feature structure required for an extension
-	auto &requested_extension_feature = gpu
+    auto &requested_extension_feature = gpu
     request_extension_features<VkPhysicalDeviceSomeExtensionFeaturesKHR>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SOME_EXTENSION_FEATURES_KHR);
 
     // Enable a selected feature
-	requested_extension_feature.featureName = VK_TRUE;
+    requested_extension_feature.featureName = VK_TRUE;
 }
 ```
 
@@ -113,10 +113,10 @@ Samples based on the api base class need to override the `on_update_ui_overlay` 
 ```cpp
 void MyApiSample::on_update_ui_overlay(vkb::Drawer &drawer)
 {
- 	if (drawer.checkbox("Enable option", &option_enabled))
-	{
+     if (drawer.checkbox("Enable option", &option_enabled))
+    {
         ...
-	}
+    }
 }
 ```
 
