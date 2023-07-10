@@ -605,7 +605,7 @@ sg::Scene GLTFLoader::load_scene(int scene_index)
 
 		command_buffer.end();
 
-		auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+		auto &queue = device.get_queue_by_flags(VK_QUEUE_TRANSFER_BIT, 0);
 
 		queue.submit(command_buffer, device.request_fence());
 
@@ -1077,7 +1077,7 @@ std::unique_ptr<sg::SubMesh> GLTFLoader::load_model(uint32_t index, bool storage
 
 	std::vector<core::Buffer> transient_buffers;
 
-	auto &queue = device.get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
+	auto &queue = device.get_queue_by_flags(VK_QUEUE_TRANSFER_BIT, 0);
 
 	auto &command_buffer = device.request_command_buffer();
 
