@@ -838,6 +838,7 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	{
 		case vk::DescriptorType::eCombinedImageSampler:
 		case vk::DescriptorType::eInputAttachment:
+			assert(!vkb::common::is_depth_stencil_format(format) || !vkb::common::is_depth_format(format));
 			return vkb::common::is_depth_stencil_format(format) ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
 		case vk::DescriptorType::eStorageImage:
 			return vk::ImageLayout::eGeneral;

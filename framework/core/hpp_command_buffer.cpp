@@ -701,7 +701,9 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 										image_info.imageLayout = vk::ImageLayout::eShaderReadOnlyOptimal;
 										break;
 									case vk::DescriptorType::eInputAttachment:
-										image_info.imageLayout = vkb::common::is_depth_stencil_format(image_view->get_format()) ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
+										assert(!vkb::common::is_depth_stencil_format(image_view->get_format()) || !vkb::common::is_depth_format(image_view->get_format()));
+										image_info.imageLayout =
+										    vkb::common::is_depth_stencil_format(image_view->get_format()) ? vk::ImageLayout::eDepthStencilReadOnlyOptimal : vk::ImageLayout::eShaderReadOnlyOptimal;
 										break;
 									case vk::DescriptorType::eStorageImage:
 										image_info.imageLayout = vk::ImageLayout::eGeneral;

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -48,11 +48,18 @@ namespace vkb
 bool is_depth_only_format(VkFormat format);
 
 /**
- * @brief Helper function to determine if a Vulkan format is depth or stencil.
+ * @brief Helper function to determine if a Vulkan format is depth with stencil.
  * @param format Vulkan format to check.
- * @return True if format is a depth or stencil, false otherwise.
+ * @return True if format is a depth with stencil, false otherwise.
  */
 bool is_depth_stencil_format(VkFormat format);
+
+/**
+ * @brief Helper function to determine if a Vulkan format is depth.
+ * @param format Vulkan format to check.
+ * @return True if format is a depth, false otherwise.
+ */
+bool is_depth_format(VkFormat format);
 
 /**
  * @brief Helper function to determine a suitable supported depth format based on a priority list

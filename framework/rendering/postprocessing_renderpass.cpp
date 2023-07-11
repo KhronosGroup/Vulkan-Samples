@@ -411,9 +411,10 @@ void PostProcessingRenderPass::transition_attachments(
 	for (uint32_t output : output_attachments)
 	{
 		assert(output < views.size());
-		const VkFormat      attachment_format = views[output].get_format();
-		const bool          is_depth_stencil  = vkb::is_depth_only_format(attachment_format) || vkb::is_depth_stencil_format(attachment_format);
-		const VkImageLayout output_layout     = is_depth_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		const VkFormat attachment_format = views[output].get_format();
+		assert(!vkb::is_depth_stencil_format(attachment_format) || !vkb::is_depth_format(attachment_format));
+		const bool          is_depth_stencil = vkb::is_depth_stencil_format(attachment_format);
+		const VkImageLayout output_layout    = is_depth_stencil ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		if (render_target.get_layout(output) == output_layout)
 		{
 			// No-op
