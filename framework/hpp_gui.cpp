@@ -1173,4 +1173,46 @@ void HPPDrawer::text(const char *formatstr, ...)
 	va_end(args);
 }
 
+bool HPPDrawer::color_picker(const char *caption, std::array<float, 3> &color, float width, ImGuiColorEditFlags flags)
+{
+	bool res;
+	ImGui::PushItemWidth(width);
+	res = ImGui::ColorPicker3(caption, color.data(), flags);
+	ImGui::PopItemWidth();
+	if (res)
+		dirty = true;
+	return res;
+}
+
+bool HPPDrawer::color_picker(const char *caption, std::array<float, 4> &color, float width, ImGuiColorEditFlags flags)
+{
+	bool res;
+	ImGui::PushItemWidth(width);
+	res = ImGui::ColorPicker4(caption, color.data(), flags);
+	ImGui::PopItemWidth();
+	if (res)
+		dirty = true;
+	return res;
+}
+
+bool HPPDrawer::color_edit(const char *caption, std::array<float, 3> &color, float width, ImGuiColorEditFlags flags)
+{
+	bool res;
+	ImGui::PushItemWidth(width);
+	res = ImGui::ColorEdit3(caption, color.data(), flags);
+	ImGui::PopItemWidth();
+	if (res)
+		dirty = true;
+	return res;
+}
+
+bool HPPDrawer::color_edit(const char *caption, std::array<float, 4> &color, float width, ImGuiColorEditFlags flags)
+{
+	bool res;
+	res = ImGui::ColorEdit4(caption, color.data(), flags);
+	if (res)
+		dirty = true;
+	return res;
+}
+
 }        // namespace vkb

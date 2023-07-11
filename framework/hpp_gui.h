@@ -161,6 +161,42 @@ class HPPDrawer
 	 */
 	void text(const char *formatstr, ...);
 
+	/**
+	 * @brief Adds a color picker to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_picker(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color picker to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_picker(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color edit to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_edit(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color edit to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_edit(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
   private:
 	bool dirty = false;
 };
