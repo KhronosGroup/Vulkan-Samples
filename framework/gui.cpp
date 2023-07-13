@@ -883,46 +883,6 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
-	static Timer       timer;
-	static const char *message;
-
-	if (sample.has_scene())
-	{
-		if (ImGui::Button("Save Debug Graphs"))
-		{
-			if (graphs::generate_all(sample.get_render_context(), sample.get_scene()))
-			{
-				message = "Graphs Saved!";
-			}
-			else
-			{
-				message = "Error outputting graphs!";
-			}
-
-			if (timer.is_running())
-			{
-				timer.lap();
-			}
-			else
-			{
-				timer.start();
-			}
-		}
-	}
-
-	if (timer.is_running())
-	{
-		if (timer.elapsed() > 2.0)
-		{
-			timer.stop();
-		}
-		else
-		{
-			ImGui::SameLine();
-			ImGui::Text("%s", message);
-		}
-	}
-
 	ImGui::PopFont();
 	ImGui::End();
 }
