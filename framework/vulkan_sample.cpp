@@ -463,14 +463,6 @@ void VulkanSample::input_event(const InputEvent &input_event)
 		{
 			screenshot(*render_context, "screenshot-" + get_name());
 		}
-
-		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
-		{
-			if (!graphs::generate_all(get_render_context(), *scene))
-			{
-				LOGE("Failed to save Graphs");
-			}
-		}
 	}
 }
 
