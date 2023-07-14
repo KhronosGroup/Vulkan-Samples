@@ -127,6 +127,8 @@ class Drawer
 	 */
 	bool checkbox(const char *caption, int32_t *value);
 
+	bool radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption);
+
 	/**
 	 * @brief Adds a number input field to the gui
 	 * @param caption The text to display
@@ -179,6 +181,7 @@ class Drawer
 	 */
 	void text(const char *formatstr, ...);
 
+<<<<<<< HEAD
     /**
      * @brief Adds a color picker to the gui
      * @param caption The text to display
@@ -186,6 +189,43 @@ class Drawer
      * @param flags Flags for modifying the appearance and behavior of the element. A zero value will result in a width determined by ImGui.
      */
     bool color_picker(const char *caption, float *color, ImGuiColorEditFlags flags, uint16_t width = 0);
+=======
+	/**
+	 * @brief Adds a color picker to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_picker(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color picker to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_picker(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color edit to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_edit(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+
+	/**
+	 * @brief Adds a color edit to the gui
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	bool color_edit(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+>>>>>>> 0d71460 (Update dynamic blending sample)
 
   private:
 	template <ColorOp OP, size_t N>
