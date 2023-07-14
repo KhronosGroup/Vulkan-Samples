@@ -539,11 +539,11 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	if (drawer.header("Background color"))
 	{
-		if (drawer.color_picker("", background_color, 300,
-		                        ImGuiColorEditFlags_NoSidePreview |
-		                            ImGuiColorEditFlags_NoSmallPreview |
-		                            ImGuiColorEditFlags_Float |
-		                            ImGuiColorEditFlags_RGB))
+		if (drawer.color_op<vkb::Drawer::ColorOp::Pick>("", background_color, 0,
+		                                                ImGuiColorEditFlags_NoSidePreview |
+		                                                    ImGuiColorEditFlags_NoSmallPreview |
+		                                                    ImGuiColorEditFlags_Float |
+		                                                    ImGuiColorEditFlags_RGB))
 		{
 			build_command_buffers();
 		}

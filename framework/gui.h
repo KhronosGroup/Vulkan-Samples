@@ -81,6 +81,12 @@ struct Font
 class Drawer
 {
   public:
+	enum class ColorOp
+	{
+		Edit,
+		Pick
+	};
+
 	Drawer() = default;
 
 	/**
@@ -202,16 +208,48 @@ class Drawer
 
 	/**
 	 * @brief Adds a color edit to the gui
+	 * @tparam OP Mode of the color element.
+	 * @tparam N Color channel count. Must be 3 or 4.
 	 * @param caption The text to display
 	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
 	 * @param width Element width. Zero is a special value for the default element width.
 	 * @param flags Flags to modify the appearance and behavior of the element.
 	 */
-	bool color_edit(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+	template <ColorOp OP, size_t N>
+	bool color_op(const std::string &caption, std::array<float, N> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0)
+	{
+		static_assert((N == 3) || (N == 4), "The channel count must be 3 or 4.");
+
+		ImGui::PushItemWidth(width);
+		bool res = color_op_impl<OP, N>(caption.c_str(), color.data(), flags);
+		ImGui::PopItemWidth();
+		if (res)
+			dirty = true;
+		return res;
+	}
 
   private:
+	template <ColorOp OP, size_t N>
+	inline bool color_op_impl(const char *caption, float *colors, ImGuiColorEditFlags flags)
+	{
+		assert(false);
+		return false;
+	}
+
 	bool dirty{false};
 };
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags);
 
 class VulkanSample;
 
