@@ -90,19 +90,21 @@ Enable Validation Layers
 
 ### VKB_VALIDATION_LAYERS_GPU_ASSISTED
 
-Enable GPU assisted Validation Layers, used primarily for VK_EXT_descriptor_indexing.
+Enable [GPU assisted validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/gpu_validation.md), used primarily for VK_EXT_descriptor_indexing.
 
 **Default:** `OFF`
-
-**Note:** Only works with `VKB_VALIDATION_LAYERS` enabled
 
 ### VKB_VALIDATION_LAYERS_BEST_PRACTICES
 
-Enable [best practices Validation Layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/best_practices.md).
+Enable [best practices validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/best_practices.md).
 
 **Default:** `OFF`
 
-**Note:** Only works with `VKB_VALIDATION_LAYERS` enabled
+### VKB_VALIDATION_LAYERS_SYNCHRONIZATION
+
+Enable [synchronization validation layers](https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/main/docs/synchronization_usage.md).
+
+**Default:** `OFF`
 
 ### VKB_VULKAN_DEBUG
 
