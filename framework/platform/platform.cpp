@@ -46,13 +46,19 @@ namespace vkb
 const uint32_t Platform::MIN_WINDOW_WIDTH  = 420;
 const uint32_t Platform::MIN_WINDOW_HEIGHT = 320;
 
-std::vector<std::string> Platform::arguments = {};
-
 std::string Platform::external_storage_directory = "";
 
 std::string Platform::temp_directory = "";
 
-ExitCode Platform::initialize(const std::vector<Plugin *> &plugins = {})
+Platform::Platform(const PlatformContext &context)
+{
+	arguments = context.arguments();
+
+	external_storage_directory = context.external_storage_directory();
+	temp_directory             = context.temp_directory();
+}
+
+ExitCode Platform::initialize(const std::vector<Plugin *> &plugins)
 {
 	auto sinks = get_platform_sinks();
 
@@ -310,24 +316,9 @@ Window &Platform::get_window()
 	return *window;
 }
 
-std::vector<std::string> &Platform::get_arguments()
-{
-	return Platform::arguments;
-}
-
-void Platform::set_arguments(const std::vector<std::string> &args)
-{
-	arguments = args;
-}
-
 void Platform::set_external_storage_directory(const std::string &dir)
 {
 	external_storage_directory = dir;
-}
-
-void Platform::set_temp_directory(const std::string &dir)
-{
-	temp_directory = dir;
 }
 
 std::vector<spdlog::sink_ptr> Platform::get_platform_sinks()

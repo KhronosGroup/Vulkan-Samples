@@ -21,6 +21,8 @@
 #include <string>
 #include <vector>
 
+#include <core/platform/context.hpp>
+
 #include "apps.h"
 #include "common/optional.h"
 #include "common/utils.h"
@@ -49,7 +51,7 @@ enum class ExitCode
 class Platform
 {
   public:
-	Platform() = default;
+	Platform(const PlatformContext &context);
 
 	virtual ~Platform() = default;
 
@@ -105,13 +107,7 @@ class Platform
 
 	Application &get_app();
 
-	std::vector<std::string> &get_arguments();
-
-	static void set_arguments(const std::vector<std::string> &args);
-
 	static void set_external_storage_directory(const std::string &dir);
-
-	static void set_temp_directory(const std::string &dir);
 
 	template <class T>
 	T *get_plugin() const;
@@ -178,11 +174,12 @@ class Platform
 
 	std::vector<Plugin *> plugins;
 
-	/// Static so can be set via JNI code in android_platform.cpp
-	static std::vector<std::string> arguments;
+	std::vector<std::string> arguments;
 
+	// static so can be references from vkb::fs
 	static std::string external_storage_directory;
 
+	// static so can be references from vkb::fs
 	static std::string temp_directory;
 };
 

@@ -499,7 +499,7 @@ std::pair<vk::Result, uint32_t> HPPHelloTriangle::acquire_next_image()
 	// since we're waiting for old frames to have been completed, but just in case.
 	if (per_frame_data[image].queue_submit_fence)
 	{
-		device.waitForFences(per_frame_data[image].queue_submit_fence, true, UINT64_MAX);
+		(void) device.waitForFences(per_frame_data[image].queue_submit_fence, true, UINT64_MAX);
 		device.resetFences(per_frame_data[image].queue_submit_fence);
 	}
 

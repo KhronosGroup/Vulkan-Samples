@@ -508,6 +508,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
+    vkb__core
     volk
     ktx
     stb
