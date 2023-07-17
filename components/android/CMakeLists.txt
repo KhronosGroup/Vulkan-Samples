@@ -14,14 +14,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(core)
+vkb__register_component(
+    NAME android_platform
+    HEADERS
+        include/android/context.hpp
+    SRC
+        src/context.cpp
+        src/entrypoint.cpp
+    LINK_LIBS
+        vkb__core
+)
 
-if(ANDROID)
-    add_subdirectory(android)
-elseif(WIN32)
-    add_subdirectory(windows)
-elseif(APPLE OR UNIX)
-    add_subdirectory(unix)
-else()
-    message(FATAL_ERROR "Unsupported platform")
-endif()
+add_definitions(-DVULKAN_HPP_TYPESAFE_CONVERSION=1)
+
+# Import game-activity static lib inside the game-activity_static prefab module.
+find_package(game-activity REQUIRED CONFIG)
+target_link_libraries(vkb__android_platform PUBLIC log android game-activity::game-activity_static)
+
+# attach to core
+target_link_libraries(vkb__core INTERFACE vkb__android_platform)

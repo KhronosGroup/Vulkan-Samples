@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,27 +17,21 @@
 
 #pragma once
 
-#include "platform/platform.h"
+#include <string>
+
+#include <core/platform/context.hpp>
 
 namespace vkb
 {
-enum UnixType
-{
-	Mac,
-	Linux
-};
-
-class UnixPlatform : public Platform
+/**
+ * @brief Unix platform context
+ *
+ * @warning Use in extreme circumstances with code guarded by the PLATFORM__UNIX define
+ */
+class UnixPlatformContext final : public PlatformContext
 {
   public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
+	UnixPlatformContext(int argc, char **argv);
+	~UnixPlatformContext() override = default;
 };
 }        // namespace vkb

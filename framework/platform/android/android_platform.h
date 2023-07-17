@@ -26,7 +26,7 @@ namespace vkb
 class AndroidPlatform : public Platform
 {
   public:
-	AndroidPlatform(android_app *app);
+	AndroidPlatform(const PlatformContext &context);
 
 	virtual ~AndroidPlatform() = default;
 

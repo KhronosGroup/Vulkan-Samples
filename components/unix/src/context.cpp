@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,29 +15,22 @@
  * limitations under the License.
  */
 
-#pragma once
-
-#include "platform/platform.h"
+#include "unix/context.hpp"
 
 namespace vkb
 {
-enum UnixType
+
+UnixPlatformContext::UnixPlatformContext(int argc, char **argv) :
+    PlatformContext{}
 {
-	Mac,
-	Linux
-};
+	_arguments.reserve(argc);
+	for (int i = 1; i < argc; ++i)
+	{
+		_arguments.emplace_back(argv[i]);
+	}
 
-class UnixPlatform : public Platform
-{
-  public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
-};
+	const char *env_temp_dir    = std::getenv("TMPDIR");
+	_temp_directory             = env_temp_dir ? std::string(env_temp_dir) + "/" : "/tmp/";
+	_external_storage_directory = "";
+}
 }        // namespace vkb

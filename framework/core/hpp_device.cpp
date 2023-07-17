@@ -34,7 +34,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
     gpu{gpu},
     resource_cache{*this}
 {
-	LOGI("Selected GPU: {}", gpu.get_properties().deviceName);
+	LOGI("Selected GPU: {}", gpu.get_properties().deviceName.data());
 
 	// Prepare the device queues
 	std::vector<vk::QueueFamilyProperties> queue_family_properties = gpu.get_queue_family_properties();
@@ -83,7 +83,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 		LOGD("HPPDevice supports the following extensions:");
 		for (auto &extension : device_extensions)
 		{
-			LOGD("  \t{}", extension.extensionName);
+			LOGD("  \t{}", extension.extensionName.data());
 		}
 	}
 

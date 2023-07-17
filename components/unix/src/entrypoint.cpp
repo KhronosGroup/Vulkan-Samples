@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Thomas Atkinson
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,29 +15,11 @@
  * limitations under the License.
  */
 
-#pragma once
+#include <core/platform/entrypoint.hpp>
 
-#include "platform/platform.h"
+#include "unix/context.hpp"
 
-namespace vkb
+std::unique_ptr<vkb::PlatformContext> create_platform_context(int argc, char **argv)
 {
-enum UnixType
-{
-	Mac,
-	Linux
-};
-
-class UnixPlatform : public Platform
-{
-  public:
-	UnixPlatform(const PlatformContext &context, const UnixType &type);
-
-	virtual ~UnixPlatform() = default;
-
-  protected:
-	virtual void create_window(const Window::Properties &properties) override;
-
-  private:
-	UnixType type;
-};
-}        // namespace vkb
+	return std::make_unique<vkb::UnixPlatformContext>(argc, argv);
+}
