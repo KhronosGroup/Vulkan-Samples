@@ -240,7 +240,7 @@ void Platform::terminate(ExitCode code)
 	if (code != ExitCode::Success && !using_plugin<::plugins::ForceClose>())
 	{
 #ifndef ANDROID
-		std::cout << "Press any key to continue";
+		std::cout << "Press return to continue";
 		std::cin.get();
 #endif
 	}
