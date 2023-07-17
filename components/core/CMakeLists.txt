@@ -24,11 +24,14 @@ vkb__register_component(
         include/core/util/error.hpp
         include/core/util/hash.hpp
         include/core/util/logging.hpp
+        include/core/util/profiling.hpp
     SRC
         src/strings.cpp
         src/logging.cpp
+        src/profiling.cpp
     LINK_LIBS
         spdlog::spdlog
+        TracyClient
 )
 
 vkb__register_tests(
