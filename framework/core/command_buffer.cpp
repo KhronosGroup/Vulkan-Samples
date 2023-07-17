@@ -679,13 +679,12 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 										break;
 									case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-										if (is_depth_stencil_format(image_view->get_format()))
+										if (is_depth_format(image_view->get_format()))
 										{
 											image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 										}
 										else
 										{
-											assert(!vkb::is_depth_format(image_view->get_format()));
 											image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 										}
 										break;

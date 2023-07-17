@@ -120,9 +120,8 @@ std::vector<T> get_attachment_descriptions(const std::vector<Attachment> &attach
 		attachment.format        = attachments[i].format;
 		attachment.samples       = attachments[i].samples;
 		attachment.initialLayout = attachments[i].initial_layout;
-		assert(!vkb::is_depth_stencil_format(attachment.format) || !vkb::is_depth_format(attachment.format));
 		attachment.finalLayout =
-		    vkb::is_depth_stencil_format(attachment.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		    vkb::is_depth_format(attachment.format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL : VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 		if (i < load_store_infos.size())
 		{
@@ -215,9 +214,7 @@ void set_attachment_layouts(std::vector<T_SubpassDescription> &subpass_descripti
 			attachment_descriptions[reference.attachment].finalLayout = reference.layout;
 
 			// Do not use depth attachment if used as input
-			assert(!vkb::is_depth_stencil_format(attachment_descriptions[reference.attachment].format) ||
-			       !vkb::is_depth_format(attachment_descriptions[reference.attachment].format));
-			if (vkb::is_depth_stencil_format(attachment_descriptions[reference.attachment].format))
+			if (vkb::is_depth_format(attachment_descriptions[reference.attachment].format))
 			{
 				subpass.pDepthStencilAttachment = nullptr;
 			}
@@ -324,9 +321,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 		// Fill input attachments references
 		for (auto i_attachment : subpass.input_attachments)
 		{
-			assert(!vkb::is_depth_stencil_format(attachment_descriptions[i_attachment].format) ||
-			       !vkb::is_depth_format(attachment_descriptions[i_attachment].format));
-			auto default_layout = vkb::is_depth_stencil_format(attachment_descriptions[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			auto default_layout = vkb::is_depth_format(attachment_descriptions[i_attachment].format) ? VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL : VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			auto initial_layout = attachments[i_attachment].initial_layout == VK_IMAGE_LAYOUT_UNDEFINED ? default_layout : attachments[i_attachment].initial_layout;
 			input_attachments[i].push_back(get_attachment_reference<T_AttachmentReference>(i_attachment, initial_layout));
 		}
@@ -411,8 +406,7 @@ void RenderPass::create_renderpass(const std::vector<Attachment> &attachments, c
 
 		for (uint32_t k = 0U; k < to_u32(attachment_descriptions.size()); ++k)
 		{
-			assert(!vkb::is_depth_stencil_format(attachments[k].format) || !vkb::is_depth_format(attachments[k].format));
-			if (vkb::is_depth_stencil_format(attachments[k].format))
+			if (vkb::is_depth_format(attachments[k].format))
 			{
 				if (default_depth_stencil_attachment == VK_ATTACHMENT_UNUSED)
 				{
