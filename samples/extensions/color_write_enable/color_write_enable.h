@@ -94,12 +94,11 @@ class ColorWriteEnable : public ApiVulkanSample
 	void setup_descriptor_set_layout();
 	void setup_descriptor_set();
 
-	bool  r_bit_enabled      = true;
-	bool  g_bit_enabled      = true;
-	bool  b_bit_enabled      = true;
-	float background_r_value = 0.5f;
-	float background_g_value = 0.5f;
-	float background_b_value = 0.5f;
+	bool r_bit_enabled = true;
+	bool g_bit_enabled = true;
+	bool b_bit_enabled = true;
+
+	std::array<float, 3> background_color = {0.5f, 0.5f, 0.5f};
 };
 
 std::unique_ptr<vkb::Application> create_color_write_enable();
