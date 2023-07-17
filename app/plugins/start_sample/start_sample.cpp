@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,13 +24,15 @@ namespace plugins
 StartSample::StartSample() :
     StartSampleTags("Apps",
                     "A collection of flags to samples and apps.",
-                    {}, {&sample_subcmd, &samples_subcmd})
+                    {}, {&sample_subcmd, &samples_subcmd, &samples_oneline_subcmd})
 {
 }
 
 bool StartSample::is_active(const vkb::CommandParser &parser)
 {
-	return parser.contains(&sample_cmd) || parser.contains(&samples_subcmd);
+	return parser.contains(&sample_cmd) ||
+	       parser.contains(&samples_subcmd) ||
+	       parser.contains(&samples_oneline_subcmd);
 }
 
 void StartSample::init(const vkb::CommandParser &parser)
@@ -48,7 +50,7 @@ void StartSample::init(const vkb::CommandParser &parser)
 			platform->request_application(sample);
 		}
 	}
-	else if (parser.contains(&samples_subcmd))
+	else if (parser.contains(&samples_subcmd) || parser.contains(&samples_oneline_subcmd))
 	{
 		// List samples
 
@@ -61,10 +63,17 @@ void StartSample::init(const vkb::CommandParser &parser)
 		for (auto *app : samples)
 		{
 			auto sample = reinterpret_cast<apps::SampleInfo *>(app);
-			LOGI("{}", sample->name.c_str());
-			LOGI("\tid: {}", sample->id.c_str());
-			LOGI("\tdescription: {}", sample->description.c_str());
-			LOGI("");
+			if (parser.contains(&samples_subcmd))
+			{
+				LOGI("{}", sample->name.c_str());
+				LOGI("\tid: {}", sample->id.c_str());
+				LOGI("\tdescription: {}", sample->description.c_str());
+				LOGI("");
+			}
+			else
+			{
+				LOGI("{}", sample->id.c_str());
+			}
 		}
 
 		platform->close();
