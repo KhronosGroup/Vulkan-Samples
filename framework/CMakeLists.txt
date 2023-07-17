@@ -530,6 +530,7 @@ target_link_libraries(${PROJECT_NAME} PUBLIC
     glslang
     SPIRV
     vma
+    hwcpipe
     spirv-cross-glsl
     glslang-default-resource-limits
     spdlog
