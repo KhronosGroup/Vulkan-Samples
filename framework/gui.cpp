@@ -1245,4 +1245,28 @@ void Drawer::text(const char *formatstr, ...)
 	va_end(args);
 }
 
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit4(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker4(caption, colors, flags);
+}
+
 }        // namespace vkb
