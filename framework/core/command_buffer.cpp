@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -59,19 +59,19 @@ CommandBuffer::~CommandBuffer()
 }
 
 CommandBuffer::CommandBuffer(CommandBuffer &&other) :
-    VulkanResource{std::move(other)},
-    command_pool{other.command_pool},
-    level{other.level},
-    state{other.state},
-    update_after_bind{other.update_after_bind}
-{
-	other.state = State::Invalid;
-}
-
-bool CommandBuffer::is_recording() const
-{
-	return state == State::Recording;
-}
+    VulkanResource(std::move(other)),
+    level(other.level),
+    command_pool(other.command_pool),
+    current_render_pass(std::exchange(other.current_render_pass, {})),
+    pipeline_state(std::exchange(other.pipeline_state, {})),
+    resource_binding_state(std::exchange(other.resource_binding_state, {})),
+    stored_push_constants(std::exchange(other.stored_push_constants, {})),
+    max_push_constants_size(std::exchange(other.max_push_constants_size, {})),
+    last_framebuffer_extent(std::exchange(other.last_framebuffer_extent, {})),
+    last_render_area_extent(std::exchange(other.last_render_area_extent, {})),
+    update_after_bind(std::exchange(other.update_after_bind, {})),
+    descriptor_set_layout_binding_state(std::exchange(other.descriptor_set_layout_binding_state, {}))
+{}
 
 void CommandBuffer::clear(VkClearAttachment attachment, VkClearRect rect)
 {
@@ -93,15 +93,6 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, CommandBuffer *pr
 
 VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, const RenderPass *render_pass, const Framebuffer *framebuffer, uint32_t subpass_index)
 {
-	assert(!is_recording() && "Command buffer is already recording, please call end before beginning again");
-
-	if (is_recording())
-	{
-		return VK_NOT_READY;
-	}
-
-	state = State::Recording;
-
 	// Reset state
 	pipeline_state.reset();
 	resource_binding_state.reset();
@@ -131,16 +122,7 @@ VkResult CommandBuffer::begin(VkCommandBufferUsageFlags flags, const RenderPass 
 
 VkResult CommandBuffer::end()
 {
-	assert(is_recording() && "Command buffer is not recording, please call begin before end");
-
-	if (!is_recording())
-	{
-		return VK_NOT_READY;
-	}
-
 	vkEndCommandBuffer(get_handle());
-
-	state = State::Executable;
 
 	return VK_SUCCESS;
 }
@@ -596,7 +578,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 		for (auto &resource_set_it : resource_binding_state.get_resource_sets())
 		{
 			uint32_t descriptor_set_id = resource_set_it.first;
-			auto &   resource_set      = resource_set_it.second;
+			auto    &resource_set      = resource_set_it.second;
 
 			// Don't update resource set if it's not in the update list OR its state hasn't changed
 			if (!resource_set.is_dirty() && (update_descriptor_sets.find(descriptor_set_id) == update_descriptor_sets.end()))
@@ -749,11 +731,6 @@ void CommandBuffer::flush_push_constants()
 	stored_push_constants.clear();
 }
 
-const CommandBuffer::State CommandBuffer::get_state() const
-{
-	return state;
-}
-
 void CommandBuffer::set_update_after_bind(bool update_after_bind_)
 {
 	update_after_bind = update_after_bind_;
@@ -804,8 +781,6 @@ VkResult CommandBuffer::reset(ResetMode reset_mode)
 	VkResult result = VK_SUCCESS;
 
 	assert(reset_mode == command_pool.get_reset_mode() && "Command buffer reset mode must match the one used by the pool to allocate it");
-
-	state = State::Initial;
 
 	if (reset_mode == ResetMode::ResetIndividually)
 	{
