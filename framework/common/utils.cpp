@@ -20,8 +20,6 @@
 #include <queue>
 #include <stdexcept>
 
-#include "graphing/framework_graph.h"
-#include "graphing/scene_graph.h"
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/perspective_camera.h"
 #include "scene_graph/components/sub_mesh.h"
@@ -288,24 +286,5 @@ sg::Node &add_free_camera(sg::Scene &scene, const std::string &node_name, VkExte
 
 	return *camera_node;
 }
-
-namespace graphs
-{
-bool generate_all(RenderContext &context, sg::Scene &scene)
-{
-	bool success = true;
-	if (!graphing::framework_graph::generate(context))
-	{
-		LOGE("Failed to save render context graph");
-		success = false;
-	}
-	if (!graphing::scene_graph::generate(scene))
-	{
-		LOGE("Failed to save scene graph");
-		success = false;
-	}
-	return success;
-}
-}        // namespace graphs
 
 }        // namespace vkb
