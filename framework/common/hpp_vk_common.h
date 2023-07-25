@@ -95,6 +95,26 @@ inline vk::ShaderModule load_shader(const std::string &filename, vk::Device devi
 	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
+inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
+                                                  vk::SurfaceKHR                 surface,
+                                                  std::vector<vk::Format> const &preferred_formats = {
+                                                      vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32})
+{
+	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
+	assert(!supported_surface_formats.empty());
+
+	auto it = std::find_if(supported_surface_formats.begin(),
+	                       supported_surface_formats.end(),
+	                       [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		                       return std::any_of(preferred_formats.begin(),
+		                                          preferred_formats.end(),
+		                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
+	                       });
+
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
 inline void set_image_layout(vk::CommandBuffer         command_buffer,
                              vk::Image                 image,
                              vk::ImageLayout           old_layout,
