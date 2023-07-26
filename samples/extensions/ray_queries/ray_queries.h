@@ -50,14 +50,14 @@ class RayQueries : public ApiVulkanSample
 	{
 		glm::mat4x4 view;
 		glm::mat4x4 proj;
-		alignas(4) glm::vec3 camera_position;
-		alignas(4) glm::vec3 light_position;
+		alignas(16) glm::vec3 camera_position;
+		alignas(16) glm::vec3 light_position;
 	} global_uniform;
 
 	struct Vertex
 	{
-		alignas(4) glm::vec3 position;
-		alignas(4) glm::vec3 normal;
+		alignas(16) glm::vec3 position;
+		alignas(16) glm::vec3 normal;
 	};
 
 	struct Model
