@@ -39,7 +39,6 @@ HPPCommandBuffer::HPPCommandBuffer(vkb::core::HPPCommandPool &command_pool, vk::
 HPPCommandBuffer::HPPCommandBuffer(HPPCommandBuffer &&other) :
     HPPVulkanResource(std::move(other)),
     level(other.level),
-    state(std::exchange(other.state, State::Invalid)),
     command_pool(other.command_pool),
     current_render_pass(std::exchange(other.current_render_pass, {})),
     pipeline_state(std::exchange(other.pipeline_state, {})),
@@ -77,14 +76,6 @@ vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, HPPCommand
 
 vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, const vkb::core::HPPRenderPass *render_pass, const vkb::core::HPPFramebuffer *framebuffer, uint32_t subpass_index)
 {
-	if (is_recording())
-	{
-		assert("Command buffer is already recording, please call end before beginning again");
-		return vk::Result::eNotReady;
-	}
-
-	state = State::Recording;
-
 	// Reset state
 	pipeline_state.reset();
 	resource_binding_state.reset();
@@ -114,7 +105,6 @@ vk::Result HPPCommandBuffer::begin(vk::CommandBufferUsageFlags flags, const vkb:
 
 void HPPCommandBuffer::begin_query(const vkb::core::HPPQueryPool &query_pool, uint32_t query, vk::QueryControlFlags flags)
 {
-	assert(is_recording());
 	get_handle().beginQuery(query_pool.get_handle(), query, flags);
 }
 
@@ -141,7 +131,6 @@ void HPPCommandBuffer::begin_render_pass(const vkb::rendering::HPPRenderTarget &
                                          const std::vector<vk::ClearValue>     &clear_values,
                                          vk::SubpassContents                    contents)
 {
-	assert(is_recording());
 	current_render_pass.render_pass = &render_pass;
 	current_render_pass.framebuffer = &framebuffer;
 
@@ -191,7 +180,6 @@ void HPPCommandBuffer::bind_image(const vkb::core::HPPImageView &image_view, uin
 
 void HPPCommandBuffer::bind_index_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, vk::IndexType index_type)
 {
-	assert(is_recording());
 	get_handle().bindIndexBuffer(buffer.get_handle(), offset, index_type);
 }
 
@@ -218,7 +206,6 @@ void HPPCommandBuffer::bind_vertex_buffers(uint32_t                             
                                            const std::vector<std::reference_wrapper<const vkb::core::HPPBuffer>> &buffers,
                                            const std::vector<vk::DeviceSize>                                     &offsets)
 {
-	assert(is_recording());
 	std::vector<vk::Buffer> buffer_handles(buffers.size(), nullptr);
 	std::transform(buffers.begin(), buffers.end(), buffer_handles.begin(), [](const vkb::core::HPPBuffer &buffer) { return buffer.get_handle(); });
 	get_handle().bindVertexBuffers(first_binding, buffer_handles, offsets);
@@ -226,7 +213,6 @@ void HPPCommandBuffer::bind_vertex_buffers(uint32_t                             
 
 void HPPCommandBuffer::blit_image(const vkb::core::HPPImage &src_img, const vkb::core::HPPImage &dst_img, const std::vector<vk::ImageBlit> &regions)
 {
-	assert(is_recording());
 	get_handle().blitImage(
 	    src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions, vk::Filter::eNearest);
 }
@@ -236,7 +222,6 @@ void HPPCommandBuffer::buffer_memory_barrier(const vkb::core::HPPBuffer         
                                              vk::DeviceSize                             size,
                                              const vkb::common::HPPBufferMemoryBarrier &memory_barrier)
 {
-	assert(is_recording());
 	vk::BufferMemoryBarrier buffer_memory_barrier(memory_barrier.src_access_mask, memory_barrier.dst_access_mask, {}, {}, buffer.get_handle(), offset, size);
 
 	vk::PipelineStageFlags src_stage_mask = memory_barrier.src_stage_mask;
@@ -247,13 +232,11 @@ void HPPCommandBuffer::buffer_memory_barrier(const vkb::core::HPPBuffer         
 
 void HPPCommandBuffer::clear(vk::ClearAttachment attachment, vk::ClearRect rect)
 {
-	assert(is_recording());
 	get_handle().clearAttachments(attachment, rect);
 }
 
 void HPPCommandBuffer::copy_buffer(const vkb::core::HPPBuffer &src_buffer, const vkb::core::HPPBuffer &dst_buffer, vk::DeviceSize size)
 {
-	assert(is_recording());
 	vk::BufferCopy copy_region({}, {}, size);
 	get_handle().copyBuffer(src_buffer.get_handle(), dst_buffer.get_handle(), copy_region);
 }
@@ -262,13 +245,11 @@ void HPPCommandBuffer::copy_buffer_to_image(const vkb::core::HPPBuffer          
                                             const vkb::core::HPPImage              &image,
                                             const std::vector<vk::BufferImageCopy> &regions)
 {
-	assert(is_recording());
 	get_handle().copyBufferToImage(buffer.get_handle(), image.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions);
 }
 
 void HPPCommandBuffer::copy_image(const vkb::core::HPPImage &src_img, const vkb::core::HPPImage &dst_img, const std::vector<vk::ImageCopy> &regions)
 {
-	assert(is_recording());
 	get_handle().copyImage(src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions);
 }
 
@@ -277,82 +258,63 @@ void HPPCommandBuffer::copy_image_to_buffer(const vkb::core::HPPImage           
                                             const vkb::core::HPPBuffer             &buffer,
                                             const std::vector<vk::BufferImageCopy> &regions)
 {
-	assert(is_recording());
 	get_handle().copyImageToBuffer(image.get_handle(), image_layout, buffer.get_handle(), regions);
 }
 
 void HPPCommandBuffer::dispatch(uint32_t group_count_x, uint32_t group_count_y, uint32_t group_count_z)
 {
-	assert(is_recording());
 	flush(vk::PipelineBindPoint::eCompute);
 	get_handle().dispatch(group_count_x, group_count_y, group_count_z);
 }
 
 void HPPCommandBuffer::dispatch_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset)
 {
-	assert(is_recording());
 	flush(vk::PipelineBindPoint::eCompute);
 	get_handle().dispatchIndirect(buffer.get_handle(), offset);
 }
 
 void HPPCommandBuffer::draw(uint32_t vertex_count, uint32_t instance_count, uint32_t first_vertex, uint32_t first_instance)
 {
-	assert(is_recording());
 	flush(vk::PipelineBindPoint::eGraphics);
 	get_handle().draw(vertex_count, instance_count, first_vertex, first_instance);
 }
 
 void HPPCommandBuffer::draw_indexed(uint32_t index_count, uint32_t instance_count, uint32_t first_index, int32_t vertex_offset, uint32_t first_instance)
 {
-	assert(is_recording());
 	flush(vk::PipelineBindPoint::eGraphics);
 	get_handle().drawIndexed(index_count, instance_count, first_index, vertex_offset, first_instance);
 }
 
 void HPPCommandBuffer::draw_indexed_indirect(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, uint32_t draw_count, uint32_t stride)
 {
-	assert(is_recording());
 	flush(vk::PipelineBindPoint::eGraphics);
 	get_handle().drawIndexedIndirect(buffer.get_handle(), offset, draw_count, stride);
 }
 
 vk::Result HPPCommandBuffer::end()
 {
-	assert(is_recording() && "Command buffer is not recording, please call begin before end");
-
-	if (!is_recording())
-	{
-		return vk::Result::eNotReady;
-	}
-
 	get_handle().end();
-
-	state = State::Executable;
 
 	return vk::Result::eSuccess;
 }
 
 void HPPCommandBuffer::end_query(const vkb::core::HPPQueryPool &query_pool, uint32_t query)
 {
-	assert(is_recording());
 	get_handle().endQuery(query_pool.get_handle(), query);
 }
 
 void HPPCommandBuffer::end_render_pass()
 {
-	assert(is_recording());
 	get_handle().endRenderPass();
 }
 
 void HPPCommandBuffer::execute_commands(HPPCommandBuffer &secondary_command_buffer)
 {
-	assert(is_recording());
 	get_handle().executeCommands(secondary_command_buffer.get_handle());
 }
 
 void HPPCommandBuffer::execute_commands(std::vector<HPPCommandBuffer *> &secondary_command_buffers)
 {
-	assert(is_recording());
 	std::vector<vk::CommandBuffer> sec_cmd_buf_handles(secondary_command_buffers.size(), nullptr);
 	std::transform(secondary_command_buffers.begin(),
 	               secondary_command_buffers.end(),
@@ -388,7 +350,6 @@ vkb::core::HPPRenderPass &HPPCommandBuffer::get_render_pass(const vkb::rendering
 
 void HPPCommandBuffer::image_memory_barrier(const vkb::core::HPPImageView &image_view, const vkb::common::HPPImageMemoryBarrier &memory_barrier) const
 {
-	assert(is_recording());
 	// Adjust barrier's subresource range for depth images
 	auto subresource_range = image_view.get_subresource_range();
 	auto format            = image_view.get_format();
@@ -418,7 +379,6 @@ void HPPCommandBuffer::image_memory_barrier(const vkb::core::HPPImageView &image
 
 void HPPCommandBuffer::next_subpass()
 {
-	assert(is_recording());
 	// Increment subpass index
 	pipeline_state.set_subpass_index(pipeline_state.get_subpass_index() + 1);
 
@@ -456,8 +416,6 @@ vk::Result HPPCommandBuffer::reset(ResetMode reset_mode)
 {
 	assert(reset_mode == command_pool.get_reset_mode() && "Command buffer reset mode must match the one used by the pool to allocate it");
 
-	state = State::Initial;
-
 	if (reset_mode == ResetMode::ResetIndividually)
 	{
 		get_handle().reset(vk::CommandBufferResetFlagBits::eReleaseResources);
@@ -468,19 +426,16 @@ vk::Result HPPCommandBuffer::reset(ResetMode reset_mode)
 
 void HPPCommandBuffer::reset_query_pool(const vkb::core::HPPQueryPool &query_pool, uint32_t first_query, uint32_t query_count)
 {
-	assert(is_recording());
 	get_handle().resetQueryPool(query_pool.get_handle(), first_query, query_count);
 }
 
 void HPPCommandBuffer::resolve_image(const vkb::core::HPPImage &src_img, const vkb::core::HPPImage &dst_img, const std::vector<vk::ImageResolve> &regions)
 {
-	assert(is_recording());
 	get_handle().resolveImage(src_img.get_handle(), vk::ImageLayout::eTransferSrcOptimal, dst_img.get_handle(), vk::ImageLayout::eTransferDstOptimal, regions);
 }
 
 void HPPCommandBuffer::set_blend_constants(const std::array<float, 4> &blend_constants)
 {
-	assert(is_recording());
 	get_handle().setBlendConstants(blend_constants.data());
 }
 
@@ -491,13 +446,11 @@ void HPPCommandBuffer::set_color_blend_state(const vkb::rendering::HPPColorBlend
 
 void HPPCommandBuffer::set_depth_bias(float depth_bias_constant_factor, float depth_bias_clamp, float depth_bias_slope_factor)
 {
-	assert(is_recording());
 	get_handle().setDepthBias(depth_bias_constant_factor, depth_bias_clamp, depth_bias_slope_factor);
 }
 
 void HPPCommandBuffer::set_depth_bounds(float min_depth_bounds, float max_depth_bounds)
 {
-	assert(is_recording());
 	get_handle().setDepthBounds(min_depth_bounds, max_depth_bounds);
 }
 
@@ -513,7 +466,6 @@ void HPPCommandBuffer::set_input_assembly_state(const vkb::rendering::HPPInputAs
 
 void HPPCommandBuffer::set_line_width(float line_width)
 {
-	assert(is_recording());
 	get_handle().setLineWidth(line_width);
 }
 
@@ -529,7 +481,6 @@ void HPPCommandBuffer::set_rasterization_state(const vkb::rendering::HPPRasteriz
 
 void HPPCommandBuffer::set_scissor(uint32_t first_scissor, const std::vector<vk::Rect2D> &scissors)
 {
-	assert(is_recording());
 	get_handle().setScissor(first_scissor, scissors);
 }
 
@@ -550,7 +501,6 @@ void HPPCommandBuffer::set_vertex_input_state(const vkb::rendering::HPPVertexInp
 
 void HPPCommandBuffer::set_viewport(uint32_t first_viewport, const std::vector<vk::Viewport> &viewports)
 {
-	assert(is_recording());
 	get_handle().setViewport(first_viewport, viewports);
 }
 
@@ -561,13 +511,11 @@ void HPPCommandBuffer::set_viewport_state(const vkb::rendering::HPPViewportState
 
 void HPPCommandBuffer::update_buffer(const vkb::core::HPPBuffer &buffer, vk::DeviceSize offset, const std::vector<uint8_t> &data)
 {
-	assert(is_recording());
 	get_handle().updateBuffer<uint8_t>(buffer.get_handle(), offset, data);
 }
 
 void HPPCommandBuffer::write_timestamp(vk::PipelineStageFlagBits pipeline_stage, const vkb::core::HPPQueryPool &query_pool, uint32_t query)
 {
-	assert(is_recording());
 	get_handle().writeTimestamp(pipeline_stage, query_pool.get_handle(), query);
 }
 
@@ -725,7 +673,6 @@ void HPPCommandBuffer::flush_descriptor_state(vk::PipelineBindPoint pipeline_bin
 			    descriptor_set_layout, buffer_infos, image_infos, update_after_bind, command_pool.get_thread_index());
 
 			// Bind descriptor set
-			assert(is_recording());
 			get_handle().bindDescriptorSets(pipeline_bind_point, pipeline_layout.get_handle(), descriptor_set_id, descriptor_set_handle, dynamic_offsets);
 		}
 	}
@@ -747,14 +694,12 @@ void HPPCommandBuffer::flush_pipeline_state(vk::PipelineBindPoint pipeline_bind_
 		pipeline_state.set_render_pass(*current_render_pass.render_pass);
 		auto &pipeline = get_device().get_resource_cache().request_graphics_pipeline(pipeline_state);
 
-		assert(is_recording());
 		get_handle().bindPipeline(pipeline_bind_point, pipeline.get_handle());
 	}
 	else if (pipeline_bind_point == vk::PipelineBindPoint::eCompute)
 	{
 		auto &pipeline = get_device().get_resource_cache().request_compute_pipeline(pipeline_state);
 
-		assert(is_recording());
 		get_handle().bindPipeline(pipeline_bind_point, pipeline.get_handle());
 	}
 	else
@@ -776,7 +721,6 @@ void HPPCommandBuffer::flush_push_constants()
 
 	if (shader_stage)
 	{
-		assert(is_recording());
 		get_handle().pushConstants<uint8_t>(pipeline_layout.get_handle(), shader_stage, 0, stored_push_constants);
 	}
 	else
@@ -795,16 +739,6 @@ const HPPCommandBuffer::RenderPassBinding &HPPCommandBuffer::get_current_render_
 const uint32_t HPPCommandBuffer::get_current_subpass_index() const
 {
 	return pipeline_state.get_subpass_index();
-}
-
-const HPPCommandBuffer::State HPPCommandBuffer::get_state() const
-{
-	return state;
-}
-
-bool HPPCommandBuffer::is_recording() const
-{
-	return state == State::Recording;
 }
 
 const bool HPPCommandBuffer::is_render_size_optimal(const vk::Extent2D &framebuffer_extent, const vk::Rect2D &render_area)

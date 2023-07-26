@@ -57,14 +57,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 		AlwaysAllocate,
 	};
 
-	enum class State
-	{
-		Invalid,
-		Initial,
-		Recording,
-		Executable,
-	};
-
 	/**
 	 * @brief Helper structure used to track render pass state
 	 */
@@ -86,8 +78,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	CommandBuffer &operator=(const CommandBuffer &) = delete;
 
 	CommandBuffer &operator=(CommandBuffer &&) = delete;
-
-	bool is_recording() const;
 
 	/**
 	 * @brief Flushes the command buffer, pushing the new changes
@@ -230,8 +220,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
-	const State get_state() const;
-
 	void set_update_after_bind(bool update_after_bind_);
 
 	void reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count);
@@ -253,8 +241,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	const VkCommandBufferLevel level;
 
   private:
-	State state{State::Initial};
-
 	CommandPool &command_pool;
 
 	RenderPassBinding current_render_pass;
