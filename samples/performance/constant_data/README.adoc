@@ -430,7 +430,7 @@ A few different stats are affected in the Mali GPU by using this, but the main t
 * The https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html[Vulkan 1.2 spec]
 * "Writing an efficient Vulkan renderer" by Arseny Kapoulkine https://zeux.io/2020/02/27/writing-an-efficient-vulkan-renderer/
 * Alexander Overvoorde's https://vulkan-tutorial.com/Uniform_buffers/Descriptor_layout_and_buffer[Vulkan Tutorial on Descriptors] guide
-* Vulkan Fast Paths http://32ipi028l5q82yhj72224m8j-wpengine.netdna-ssl.com/wp-content/uploads/2016/03/VulkanFastPaths.pdf
+* Vulkan Fast Paths https://gpuopen.com/wp-content/uploads/2016/03/VulkanFastPaths.pdf
 
 == *Best practice summary*
 
