@@ -78,7 +78,7 @@ They are more advanced but also contain a detailed tutorial with more in-detail 
 * *Project Basics*
  ** link:./docs/misc.adoc#controls[Controls]
  ** link:./docs/misc.adoc#debug-window[Debug window]
- ** xref:./docs/create_sample.adoc[Create a Sample]
+ ** xref:./scripts/README.adoc[Create a Sample]
 * *Vulkan Essentials*
  ** xref:./samples/vulkan_basics.adoc[How does Vulkan compare to OpenGL ES?
 What should you expect when targeting Vulkan?]
