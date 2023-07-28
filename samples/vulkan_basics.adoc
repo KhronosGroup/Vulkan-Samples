@@ -1,0 +1,205 @@
+////
+- Copyright (c) 2019-2021, Arm Limited and Contributors
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+= Vulkan essentials
+// omit in toc
+
+== Contents
+// omit in toc
+
+* <<low-level-graphics-for-power-users,Low level graphics for power users>>
+* <<opengl-es-vs-vulkan,OpenGL ES vs.
+Vulkan>>
+ ** <<state-management,State management>>
+ ** <<api-execution-model,API execution model>>
+ ** <<api-threading-model,API threading model>>
+ ** <<api-error-checking,API error checking>>
+ ** <<render-pass-abstraction,Render pass abstraction>>
+ ** <<memory-allocation,Memory allocation>>
+ ** <<memory-usage,Memory usage>>
+* <<what-to-expect,What to expect>>
+ ** <<neutral,Neutral>>
+ ** <<advantages,Advantages>>
+ ** <<disadvantages,Disadvantages>>
+* <<conclusions,Conclusions>>
+
+== Low level graphics for power users
+
+Vulkan is the latest 3D rendering API from the Khronos Group.
+It is a low-level API that is designed to expose the GPU to application developers with a minimal level of abstraction provided by the device driver.
+This enables Vulkan applications to benefit from lower CPU overhead, lower memory footprint, and a higher degree of performance stability.
+However, the reduced level of abstraction compared to OpenGL ES pushes more responsibilities on to the application developer.
+
+This article compares OpenGL ES and Vulkan, and outlines what developers should (and should not) expect when targeting Vulkan.
+
+== OpenGL ES vs. Vulkan
+
+The two API choices for an Android mobile developer are either OpenGL ES or Vulkan, so it is a useful exercise to start by comparing the two APIs to see where the major differences lie.
+The table below gives a summary, and each feature is explored in more detail beneath the table.
+
+|===
+| Feature | OpenGL ES | Vulkan
+
+| State management
+| Global state
+| State objects
+
+| API execution model
+| Synchronous
+| Asynchronous
+
+| API threading model
+| Single threaded
+| Multi-threaded
+
+| API error checking
+| Extensive runtime checks
+| Only via layers
+
+| Render pass abstraction
+| Inferred render passes
+| Explicit render passes
+
+| Memory allocation
+| Client-server pools
+| Shared memory pool
+
+| Memory usage
+| Typed allocations
+| Typed views
+|===
+
+=== State management
+
+OpenGL ES uses a single global state, and must recreate the necessary render state and resource binding tables for every draw call that is made.
+The used state combinations are only known at draw time, meaning that some optimizations are difficult and/or expensive to apply.
+
+Vulkan uses object-based states -- known as descriptors -- allowing the application to prepackage combinations of used states ahead of time.
+Compiled pipeline objects combine all relevant state, allowing shader-based optimizations to be applied more predictably for lower run-time cost.
+
+The impact of these changes is to significantly reduce the CPU overhead of the graphics drivers, at the expense of requiring the application to determine the states it will need up front in order to build the state objects and benefit from the reduced overhead.
+
+=== API execution model
+
+OpenGL ES uses a synchronous rendering model, which means that an API call must behave as if all earlier API calls have already been processed.
+In reality no modern GPU works this way, rendering workloads are processed asynchronously and the synchronous model is an elaborate illusion maintained by the device driver.
+To maintain this illusion the driver must track which resources are read or written by each rendering operation in the queue, ensure that workloads run in a legal order to avoid rendering corruption, and ensure that API calls which need a data resource block and wait until that resource is safely available.
+
+Vulkan uses an asynchronous rendering model, reflecting how the modern GPUs work.
+Applications queue rendering commands into a queue, use explict scheduling dependencies to control workload execution order, and use explicit synchronization primitives to align dependent CPU and GPU processing.
+
+The impact of these changes is to significantly reduce the CPU overhead of the graphics drivers, at the expense of requiring the application to handle dependency management and synchronization.
+
+=== API threading model
+
+OpenGL ES uses a single-threaded rendering model, which severely limits the ability of an application to use multiple CPU cores in the main rendering pipeline.
+
+Vulkan uses a multi-threaded rendering model, which allows an application to parallelize rendering operations across multiple CPU cores.
+
+The impact of these changes is to allow applications to benefit from multi-core systems.
+It is worth noting that Arm-based systems generally implement a heterogenous multi-core technology, called "big.LITTLE", which combines "big" high performance CPU cores with slower but more efficient "LITTLE" CPU cores for lighter workloads.
+Splitting a workload over multiple cores reduces the per-core load, and may allow a workload to migrate from a single "big" core to multiple "LITTLE" cores.
+This can significantly reduce system power consumption, and free up thermal budget which can be reallocated to useful rendering workloads.
+
+=== API error checking
+
+OpenGL ES is a tightly specified API with extensive run-time error checking.
+Many errors result from programming mistakes which will only occur during development, and which cannot be usefully handled at runtime, but the run-time checking must still occur which increases driver overheads in release builds of all applications.
+
+Vulkan is tightly specified by the core specification but does not require the driver to implement runtime error checking.
+Invalid use of the API may cause rendering corruption, or even crash the application.
+As an alternative to always-on error checking, Vulkan provides a framework which allows layer drivers to be inserted between the application and the native Vulkan driver.
+These layers can implement error checking and other debugging functionality, and have the major advantage that they can be removed when not required.
+
+The impact of these changes is to reduce driver CPU load, at the expense of making many errors undetectable unless a layer driver is used.
+
+=== Render pass abstraction
+
+The OpenGL ES API has no concept of a render pass object, but they are critical to the basic function of a tile-based renderer such as Mali.
+The driver must therefore infer which rendering commands form a single pass on the fly, a task which takes some processing time and relies on heuristics which can be inaccurate.
+
+The Vulkan API is built around the concept of render passes, and additionally includes the concept of subpasses within a single pass which can be automatically translated into in-tile shading operations in a tile-based renderer.
+This explict encoding removes the need for heuristics and further reduces driver load as render pass structures can be built up-front.
+
+=== Memory allocation
+
+OpenGL ES uses a client-server memory model.
+This model explicitly demarcates resources which are accessible on the client (CPU) and the server (GPU), and provides transfer functions which move data between the two.
+This has two main side-effects:
+
+* Firstly the application cannot directly allocate or manage the memory backing server-side resources.
+The driver will manage all of these resources individually using internal memory allocators, unaware of any higher-level relationships which could be exploited to reduce cost.
+* Secondly there is a cost of synchronizing resources between client and server, in particular in cases where there is a conflict between the synchronous rendering requirement of the API and the asynchronous processing reality.
+
+Vulkan is designed for modern hardware and assumes some level of hardware-backed memory coherency between the CPU and the GPU-visible memory device.
+This allows the API to give the application more direct control over memory resources, how they are allocated, and how they are updated.
+Memory coherency support allows buffers to remain persistently mapped in the application address space, avoiding the continuous map-unmap cycle OpenGL ES requires to inject manual coherency operations.
+
+The impact of these changes is to reduce driver CPU load and give the application more control over memory management.
+The application can reduce CPU load even further, for example by grouping objects with the same lifetime into a single allocation and tracking that rather than tracking them all separately.
+
+=== Memory usage
+
+OpenGL ES uses a heavily typed object model, which tightly couples a logical resource with the physical memory which backs it.
+This is very simple to use, but means that a lot of intermediate storage (e.g.
+for framebuffer attachments) is only in use for a subset of a frame.
+
+Vulkan separates the concept of a resource, such as an image, from the physical memory which backs it.
+This makes it possible to reuse the same physical memory for multiple different resources at different points in the rendering pipeline.
+
+The ability to alias memory resources can be used to reduce the total memory footprint of the application by recycling the same physical memory for multiple uses at different points in a frame.
+Aliasing and memory mutability can place some restrictions on driver-side optimizations, in particular optimizations which can change the memory layout such as framebuffer compression.
+
+== What to expect
+
+Vulkan is a low-level API which gives the application a lot of power to optimize things, but in return it also pushes a lot of responsibility on to the application to do things the right way.
+Before embarking on your Vulkan journey it can be worth considering what benefits it brings and the price you will have to pay in return;
+it is an expert power-user API and it isn't always the right choice for every project.
+
+=== Neutral
+
+The most important thing to remember with Vulkan is that it is not necessarily going to give you a performance boost.
+The GPU hardware is the same and the rendering functionality exposed by Vulkan is almost identical to that found in OpenGL ES.
+If your application is limited by GPU rendering performance then it is unlikely that Vulkan will give you better performance.
+
+NOTE: {blank} + Reducing CPU load can free up thermal budget for the GPU, which may allow higher GPU frequencies to be used, so an indirect performance increase may be possible on some platforms.
+
+=== Advantages
+
+The biggest advantage that Vulkan brings is reduced CPU load in the drivers and application rendering logic.
+This is achieved through the streamlining of the API interface and the ability to multi-thread the application.
+This can increase performance for CPU-limited applications, and improve overall system energy efficiency.
+
+The second advantage is a reduction in the memory footprint requirements of an application, due to intra-frame recycling of intermediate memory resources.
+While this is rarely a problem in high-end devices, it can enable new use cases in mass-market devices with smaller RAMs attached.
+
+=== Disadvantages
+
+The main disadvantage of Vulkan is that it pushes a lot of responsibilities on to the application, including memory allocation, workload dependency management, and CPU-GPU synchronization.
+While this enables a high degree of control and fine tuning, it also adds risk that the application does something suboptimal and loses performance.
+
+It is also worth noting that the thinner level of abstraction means that Vulkan can be more sensitive to differences in the underlying GPU hardware, reducing performance portability because the drivers cannot help hide hardware differences.
+For example, OpenGL ES dependencies are entirely handed by the device driver, so that can be assumed to do the right thing, but for Vulkan they are controlled by the application.
+There are render pass dependencies which will work well on a traditional immediate mode renderer that are too conservative for a tile-base renderer, and so cause scheduling bubbles where parts of the GPU go idle.
+
+== Conclusions
+
+Vulkan is a low-level API which hands the application a high degree of control and responsibility, and in return provides access to the GPU hardware and graphics resources via a thin abstraction with very low CPU overhead.
+Applications which use it well can benefit from reduced CPU load and memory footprint, as well as smoother rendering with fewer hitches caused by thicker driver abstractions second-guessing the application.
+It should be noted that Vulkan rarely improves GPU rendering performance;
+the hardware is the same as that underneath OpenGL ES after all ...
