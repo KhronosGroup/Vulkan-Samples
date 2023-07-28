@@ -76,14 +76,14 @@ They are more advanced but also contain a detailed tutorial with more in-detail 
 == General information
 
 * *Project Basics*
- ** link:./docs/misc.md#controls[Controls]
- ** link:./docs/misc.md#debug-window[Debug window]
+ ** link:./docs/misc.adoc#controls[Controls]
+ ** link:./docs/misc.adoc#debug-window[Debug window]
  ** xref:./docs/create_sample.adoc[Create a Sample]
 * *Vulkan Essentials*
  ** xref:./samples/vulkan_basics.adoc[How does Vulkan compare to OpenGL ES?
 What should you expect when targeting Vulkan?]
 * *Misc*
- ** link:./docs/misc.md#driver-version[Driver version]
+ ** link:./docs/misc.adoc#driver-version[Driver version]
  ** xref:./docs/memory_limits.adoc[Memory limits]
 
 == Setup
@@ -103,10 +103,10 @@ Follow build instructions for your platform below.
 
 === Supported Platforms
 
-* Windows - link:./docs/build.md#windows[Build Guide]
-* Linux - link:./docs/build.md#linux[Build Guide]
-* macOS - link:./docs/build.md#macos[Build Guide]
-* Android - link:./docs/build.md#android[Build Guide]
+* Windows - link:./docs/build.adoc#windows[Build Guide]
+* Linux - link:./docs/build.adoc#linux[Build Guide]
+* macOS - link:./docs/build.adoc#macos[Build Guide]
+* Android - link:./docs/build.adoc#android[Build Guide]
 
 == Usage
 
@@ -137,8 +137,8 @@ adb shell am start-activity -n com.khronos.vulkan_samples/com.khronos.vulkan_sam
 
 == Tests
 
-* System Test - link:docs/testing.md#system-test[Usage Guide]
-* Generate Sample - link:docs/testing.md#generate-sample-test[Usage Guide]
+* System Test - link:docs/testing.adoc#system-test[Usage Guide]
+* Generate Sample - link:docs/testing.adoc#generate-sample-test[Usage Guide]
 
 == License
 

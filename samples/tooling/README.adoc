@@ -21,4 +21,4 @@
 The goal of these samples is to demonstrate how to use tooling features that are not directly part of Vulkan, but e.g.
 provided by the LunarG Vulkan SDK.
 
-A list of all tooling samples can be found link:../README.md#tooling-samples[here].
+A list of all tooling samples can be found link:../README.adoc#tooling-samples[here].

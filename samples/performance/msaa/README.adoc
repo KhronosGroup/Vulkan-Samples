@@ -56,13 +56,13 @@ As stated earlier for MSAA we do _not_ want to set http://khronos.org/registry/v
 
 == Color resolve
 
-4x MSAA can be particularly efficient in link:../pipeline_barriers/README.md#tile-based-rendering[tiler architectures], where the multi-sampled attachment is resolved in tile memory and can therefore be transient.
-This is typically the case of the link:../render_passes/README.md#depth-attachment-store-operation[depth buffer] as shown below:
+4x MSAA can be particularly efficient in link:../pipeline_barriers/README.adoc#tile-based-rendering[tiler architectures], where the multi-sampled attachment is resolved in tile memory and can therefore be transient.
+This is typically the case of the link:../render_passes/README.adoc#depth-attachment-store-operation[depth buffer] as shown below:
 
 image:images/no_msaa.png[No MSAA diagram] image:images/screenshot_no_msaa.jpg[No MSAA sample]
 
 It is important to avoid writing multisampled attachments back to main memory if they are not going to be needed after rendering the scene.
-This means that the multisampled attachment must use `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` and `usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`, and allocate the image with the `LAZILY_ALLOCATED` memory property, as explained in the link:../render_passes/README.md#depth-attachment-store-operation[Render Passes tutorial].
+This means that the multisampled attachment must use `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` and `usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`, and allocate the image with the `LAZILY_ALLOCATED` memory property, as explained in the link:../render_passes/README.adoc#depth-attachment-store-operation[Render Passes tutorial].
 
 ----
 // Multisampled attachment is transient
@@ -129,7 +129,7 @@ image::images/streamline_writeback_separate.png[Streamline write-back resolve fo
 == Depth resolve
 
 In all of the cases shown above the depth buffer has remained transient, regardless of MSAA.
-This is because once the color is calculated and written out to the swapchain for presentation to the display, the depth can be discarded and therefore we recommend to link:../render_passes/README.md#depth-attachment-store-operation[configure load/store operations to avoid writing it out].
+This is because once the color is calculated and written out to the swapchain for presentation to the display, the depth can be discarded and therefore we recommend to link:../render_passes/README.adoc#depth-attachment-store-operation[configure load/store operations to avoid writing it out].
 
 There are cases where we might need to save the depth attachment.
 Consider a simple post-processing pass that samples both color and depth (bound as textures) in order to compute a screen-based effect such as https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion[SSAO]:

@@ -57,7 +57,7 @@ Another approach is to use secondary level command buffers.
 First, both of the passes are recorded into two separate secondary command buffers using two threads.
 Then, we can just reference them in the primary command buffer via `vkCmdExecuteCommands`.
 
-When using both of these methods for multi-threading, general recommendations should still be taken into account (see https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/README.md#Multi-threaded-recording[Multi-threaded-recording]).
+When using both of these methods for multi-threading, general recommendations should still be taken into account (see https://github.com/KhronosGroup/Vulkan-Samples/blob/master/samples/performance/command_buffer_usage/README.adoc#Multi-threaded-recording[Multi-threaded-recording]).
 
 This sample shows the difference between recording both render passes into a single command buffer in one thread and using the methods described above.
 

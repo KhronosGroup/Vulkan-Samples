@@ -21,4 +21,4 @@
 The goal of these samples is to demonstrate how to use certain features and functions to achieve optimal performance.
 To visualize this, they also include real-time profiling information.
 
-A list of all performance samples can be found link:../README.md#performance-samples[here].
+A list of all performance samples can be found link:../README.adoc#performance-samples[here].

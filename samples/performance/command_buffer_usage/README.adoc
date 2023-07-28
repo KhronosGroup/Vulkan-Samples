@@ -68,7 +68,7 @@ Similarly having more threads than buffers may have a performance impact.
 To keep all threads busy, the sample resizes the thread pool for low number of buffers.
 The sample slider can help illustrate these trade-offs and their impact on performance, as shown by the performance graphs.
 
-In this case, a scene with a high number of draw calls (~1800, this number may be found in the link:../../../docs/misc.md#debug-window[debug window]) shows a 15% improvement in performance when dividing the workload among 8 buffers across 8 threads:
+In this case, a scene with a high number of draw calls (~1800, this number may be found in the link:../../../docs/misc.adoc#debug-window[debug window]) shows a 15% improvement in performance when dividing the workload among 8 buffers across 8 threads:
 
 image::images/single_threading.png[Single-threaded]
 
