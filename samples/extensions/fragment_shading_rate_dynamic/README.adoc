@@ -49,7 +49,7 @@ image::frequency.png[Frequency information]
 == Encoding the Shading Rate
 
 Shading rates are encoded using 8-bit unsigned integers.
-For instance, the lowest shading rate of a 4x4 texel is given by: `(4>>1) | (4<<1)`, and the general case of a `rate_x` x `rate_y` texel is `(rate_x>>1)|(rate_y<<1)`.
+For instance, the lowest shading rate of a 4x4 texel is given by: `(4>>1) | (4+++<<+++1)`, and the general case of a `rate_x` x `rate_y` texel is `(rate_x>>1)|(rate_y+++<<+++1)`.
 Although devices vary in their supported texel sizes, the maximum texel size is guaranteed to be no larger than 4x4.
 
 The image below shows the shading rate image, where lighter colors indicate areas that will have a high sample density.
