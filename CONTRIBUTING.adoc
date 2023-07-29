@@ -138,7 +138,7 @@ If you cannot verify on all these target platforms, please note platform restric
 
 == Creating a Pull Request
 
-When you create your pull request, ensure the description is created with xref:docs/pull_request_template.adoc[this template], and then fill out the relative information.
+When you create your pull request, ensure the description is created with xref:docs/pull_request_template.md[this template], and then fill out the relative information.
 
 == Code Reviews
 
