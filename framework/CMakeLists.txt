@@ -541,7 +541,7 @@ else()
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     else()
         if (IOS)
-            find_package(Vulkan REQUIRED)
+            find_package(Vulkan REQUIRED PATHS ~/VulkanSDK/)
             target_link_libraries(${PROJECT_NAME} PRIVATE "-framework UIKit"
                     "-framework Foundation" Vulkan::MoltenVK)
         else()
