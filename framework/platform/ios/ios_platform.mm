@@ -77,9 +77,6 @@ void create_directory(const std::string &path)
 IosPlatform::IosPlatform(const PlatformContext &context)
     : Platform{context}
 {
-//	Platform::set_arguments({argv + 1, argv + argc});
-//	Platform::set_temp_directory(get_temp_path_from_environment());
-	return VK_EXT_METAL_SURFACE_EXTENSION_NAME;
 }
 
 const char *IosPlatform::get_surface_extension()
