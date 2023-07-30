@@ -863,9 +863,9 @@ void OpenCLInterop::prepare_opencl_resources()
 	opencl_objects.command_queue = clCreateCommandQueue(opencl_objects.context, opencl_objects.device_id, 0, &cl_result);
 	CL_CHECK(cl_result);
 
-	auto   kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
-	auto   kernel_source_data = kernel_source.data();
-	size_t kernel_source_size = kernel_source.size();
+	std::string kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
+	auto        kernel_source_data = kernel_source.c_str();
+	size_t      kernel_source_size = kernel_source.size();
 
 	opencl_objects.program = clCreateProgramWithSource(opencl_objects.context, 1, &kernel_source_data, &kernel_source_size, &cl_result);
 	CL_CHECK(cl_result);
