@@ -38,27 +38,29 @@ class IosWindow : public Window
 	 */
 	IosWindow(IosPlatform *platform, const Window::Properties &properties);
 
-	virtual ~IosWindow() = default;
+	~IosWindow() override = default;
 
 	/**
 	 * @brief Creates a Vulkan surface to the native window
 	 *        If headless, this will return VK_NULL_HANDLE
 	 */
-	virtual VkSurfaceKHR create_surface(Instance &instance) override;
+	VkSurfaceKHR create_surface(Instance &instance) override;
 
 	/**
 	 * @brief Creates a Vulkan surface to the native window
 	 *        If headless, this will return nullptr
 	 */
-	virtual VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
+	VkSurfaceKHR create_surface(VkInstance instance, VkPhysicalDevice physical_device) override;
 
-	virtual void process_events() override;
+	void process_events() override;
 
-	virtual bool should_close() override;
+	bool should_close() override;
 
-	virtual void close() override;
+	void close() override;
 
-	virtual float get_dpi_factor() const override;
+	float get_dpi_factor() const override;
+
+	std::vector<const char *> get_required_surface_extensions() const override;
 
   private:
 	IosPlatform *platform;

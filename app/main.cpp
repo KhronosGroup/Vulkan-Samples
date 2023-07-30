@@ -21,7 +21,7 @@
 
 #include <core/platform/entrypoint.hpp>
 
-#if defined(VK_USE_PLATFORM_METAL_EXT)
+#if defined(PLATFORM__MACOS)
 #	include <TargetConditionals.h>
 #endif
 
@@ -31,9 +31,9 @@
 #	include "platform/windows/windows_platform.h"
 #elif defined(PLATFORM__LINUX_D2D)
 #	include "platform/unix/unix_d2d_platform.h"
-#elif defined(PLATFORM__LINUX) || defined(PLATFORM__MACOS)
+#elif defined(PLATFORM__LINUX) || defined(PLATFORM__MACOS) && !(TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #	include "platform/unix/unix_platform.h"
-#elif defined(VK_USE_PLATFORM_METAL_EXT) && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
+#elif defined(PLATFORM__MACOS) && (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 #	include "platform/ios/ios_platform.h"
 #else
 #	error "Platform not supported"
@@ -52,7 +52,7 @@ CUSTOM_MAIN(context)
 #elif defined(PLATFORM__MACOS) && !(TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
 	vkb::UnixPlatform platform{context, vkb::UnixType::Mac};
 #elif (TARGET_IPHONE_SIMULATOR || TARGET_OS_IPHONE)
-	vkb::IosPlatform platform(argc, argv);
+	vkb::IosPlatform platform{context};
 #else
 #	error "Platform not supported"
 #endif

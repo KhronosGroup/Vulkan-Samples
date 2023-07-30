@@ -25,11 +25,11 @@ namespace vkb
 class IosPlatform : public Platform
 {
   public:
-	IosPlatform(int argc, char **argv);
+	IosPlatform(const PlatformContext &context);
 
 	virtual ~IosPlatform() = default;
 
-	virtual const char *get_surface_extension() override;
+	virtual const char *get_surface_extension();
 
   protected:
 	virtual void create_window(const Window::Properties &properties) override;

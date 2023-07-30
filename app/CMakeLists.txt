@@ -81,3 +81,16 @@ if(MSVC)
         set_target_properties(${PROJECT_NAME} PROPERTIES ARCHIVE_OUTPUT_DIRECTORY_${SUFFIX} ${CMAKE_CURRENT_BINARY_DIR}/lib/${CONFIG_DIR}/${TARGET_ARCH})
     endforeach()
 endif()
+
+# Enable building from XCode for IOS
+if(IOS)
+    set(CMAKE_MACOSX_BUNDLE YES)
+    set(MACOSX_BUNDLE_GUI_IDENTIFIER com.khronos.vulkan_samples)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+            BUNDLE_IDENTIFIER com.khronos.vulkan_samples
+            XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO" # not CODE_SIGNING_REQUIRED anymore
+            XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic" # already default value
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
+#            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "SOME_VALID_ID"
+            )
+endif ()

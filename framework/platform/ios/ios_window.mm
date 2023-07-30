@@ -76,4 +76,9 @@ float IosWindow::get_dpi_factor() const
 {
 	//	return AConfiguration_getDensity(platform->get_android_app()->config) / static_cast<float>(ACONFIGURATION_DENSITY_MEDIUM);
 }
+
+std::vector<const char *> IosWindow::get_required_surface_extensions() const
+{
+	return {};
+}
 }        // namespace vkb
