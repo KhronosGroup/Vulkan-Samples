@@ -91,6 +91,8 @@ if(IOS)
             XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO" # not CODE_SIGNING_REQUIRED anymore
             XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic" # already default value
             XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "iPhone Developer"
-#            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "SOME_VALID_ID"
+            MACOSX_BUNDLE_SHORT_VERSION_STRING 1.0.0
+            MACOSX_BUNDLE_BUNDLE_VERSION 1.0.0
+            #            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "SOME_VALID_ID"
             )
 endif ()

@@ -991,6 +991,8 @@ void HelloTriangle::teardown_framebuffers(Context &context)
 void HelloTriangle::teardown(Context &context)
 {
 	// Don't release anything until the GPU is completely idle.
+    if(context.device == VK_NULL_HANDLE)
+        return;
 	vkDeviceWaitIdle(context.device);
 
 	teardown_framebuffers(context);
