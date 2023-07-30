@@ -102,3 +102,25 @@ jobs:
       - name: "Build Android using gradlew."
         working-directory: build/android_gradle
         run: NDK_CCACHE=1 NDK_CCACHE_BIN=ccache ./gradlew app:assemble${{ matrix.build_type }} --info
+
+  build_ios:
+    name: "Build ios in ${{ matrix.build_type }}"
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        build_type: [Debug]
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: "recursive"
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.9
+        with:
+          key: ${{ github.job }}-${{ matrix.os }}
+
+      - name: build_ios
+        run: |
+          cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+          cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -sdk iphonesimulator -allowProvisioningUpdates
