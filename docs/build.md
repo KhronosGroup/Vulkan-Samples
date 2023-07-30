@@ -269,6 +269,57 @@ cmake --build build/mac --config Release --target vulkan_samples -j4
 ./build/mac/app/bin/Release/x86_64/vulkan_samples --help
 ```
 
+## iOS
+
+### Dependencies
+
+- CMake v3.19+
+- XCode v12 for Apple Silicon
+- Command Line Tools (CLT) for Xcode `xcode-select --install`
+- [Vulkan SDK](https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html) `./install_vulkan.py`
+- [CMake Options](#cmake-options)
+- [3D models](#3d-models)
+
+### Build with CMake
+
+`Step 1.` The following command will generate the project
+
+```
+cmake -H. -Bbuild/ios -DCMAKE_BUILD_TYPE=Release -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
+```
+
+`Step 2.` Build the project
+
+```
+cmake --build build/ios --config Release --target 
+vulkan_samples -j4 -sdk iphonesimulator -allowProvisioningUpdates
+```
+
+NB: The above creates a bundle.  It is possible to build 
+with other generators however, to change between 
+simulator and device, switch the value of 
+iphonesimulator with the ios.  It is easier to use XCode 
+toolset to build from a GUI.
+
+`Step 3.` Run the **Vulkan Samples** application to display the help message
+
+To run the samples on an iOS simulator, from XCode, 
+select the Product menu then select Scheme then Edit 
+Scheme.  A GUI will pop up with Arguments passed on 
+launch.  Hit the '+' button and enter the sample you 
+wish to see.  For example, to see the hello_triangle 
+sample place this in the arguments field:
+
+```
+sample hello_triangle
+```
+
+`Step 4.` Running on a device might or might not require 
+code signing depending upon version of iOS.  The default 
+is to not require code signing.  To sign the code, set 
+the proper values in the app/CMakeLists.txt.  Running on 
+a simulator should not require code signing.
+
 
 ## Android
 
