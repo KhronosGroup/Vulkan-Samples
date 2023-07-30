@@ -123,4 +123,4 @@ jobs:
       - name: build_ios
         run: |
           cmake -H"." -B"build/ios" -DVKB_BUILD_TESTS=ON -DVKB_BUILD_SAMPLES=ON -G Xcode -DCMAKE_SYSTEM_NAME=iOS -DCMAKE_OSX_DEPLOYMENT_TARGET=11.0
-          cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -sdk iphonesimulator -allowProvisioningUpdates
+          cmake --build "build/ios" --target vulkan_samples --config ${{ matrix.build_type }} -- -sdk iphonesimulator -allowProvisioningUpdates
