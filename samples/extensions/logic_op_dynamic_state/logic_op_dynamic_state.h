@@ -119,7 +119,7 @@ class LogicOpDynamicState : public ApiVulkanSample
 	LogicOpDynamicState();
 	~LogicOpDynamicState() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
@@ -137,7 +137,7 @@ class LogicOpDynamicState : public ApiVulkanSample
 	void draw_created_model(VkCommandBuffer commandBuffer);
 
   protected:
-	void create_render_context(vkb::Platform &platform) override;
+	void create_render_context() override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_logic_op_dynamic_state();

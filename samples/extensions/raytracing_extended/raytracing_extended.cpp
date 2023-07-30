@@ -1336,9 +1336,9 @@ void RaytracingExtended::update_uniform_buffers()
 	ubo->convert_and_update(uniform_data);
 }
 
-bool RaytracingExtended::prepare(vkb::Platform &platform)
+bool RaytracingExtended::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

@@ -47,9 +47,9 @@ DynamicRendering::~DynamicRendering()
 	}
 }
 
-bool DynamicRendering::prepare(vkb::Platform &platform)
+bool DynamicRendering::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -207,7 +207,7 @@ void DynamicRendering::create_pipeline()
 	color_blend_state.attachmentCount = 1;
 	color_blend_state.pAttachments    = &color_attachment_state;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,

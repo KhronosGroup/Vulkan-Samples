@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,6 +20,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+#include <core/platform/context.hpp>
 
 #include "apps.h"
 #include "common/optional.h"
@@ -49,7 +51,7 @@ enum class ExitCode
 class Platform
 {
   public:
-	Platform() = default;
+	Platform(const PlatformContext &context);
 
 	virtual ~Platform() = default;
 
@@ -95,13 +97,6 @@ class Platform
 	 */
 	static const std::string &get_temp_directory();
 
-	/**
-	 * @return The VkInstance extension name for the platform
-	 */
-	virtual const char *get_surface_extension() = 0;
-
-	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const;
-
 	virtual void resize(uint32_t width, uint32_t height);
 
 	virtual void input_event(const InputEvent &input_event);
@@ -112,13 +107,7 @@ class Platform
 
 	Application &get_app();
 
-	std::vector<std::string> &get_arguments();
-
-	static void set_arguments(const std::vector<std::string> &args);
-
 	static void set_external_storage_directory(const std::string &dir);
-
-	static void set_temp_directory(const std::string &dir);
 
 	template <class T>
 	T *get_plugin() const;
@@ -160,7 +149,7 @@ class Platform
 
 	/**
 	 * @brief Handles the creation of the window
-	 * 
+	 *
 	 * @param properties Preferred window configuration
 	 */
 	virtual void create_window(const Window::Properties &properties) = 0;
@@ -185,11 +174,12 @@ class Platform
 
 	std::vector<Plugin *> plugins;
 
-	/// Static so can be set via JNI code in android_platform.cpp
-	static std::vector<std::string> arguments;
+	std::vector<std::string> arguments;
 
+	// static so can be references from vkb::fs
 	static std::string external_storage_directory;
 
+	// static so can be references from vkb::fs
 	static std::string temp_directory;
 };
 

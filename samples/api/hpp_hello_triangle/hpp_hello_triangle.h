@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2021-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,159 +17,80 @@
 
 #pragma once
 
-#include <platform/hpp_application.h>
+#include <vulkan/vulkan.hpp>
 
-#include <platform/hpp_platform.h>
+#include <platform/application.h>
 
 /**
  * @brief A self-contained (minimal use of framework) sample that illustrates
  * the rendering of a triangle
  */
-class HPPHelloTriangle : public vkb::platform::HPPApplication
+class HPPHelloTriangle : public vkb::Application
 {
 	/**
-	 * @brief Swapchain state
+	 * @brief Swapchain data
 	 */
-	struct SwapchainDimensions
+	struct SwapchainData
 	{
-		/// Width of the swapchain.
-		uint32_t width = 0;
-
-		/// Height of the swapchain.
-		uint32_t height = 0;
-
-		/// Pixel format of the swapchain.
-		vk::Format format = vk::Format::eUndefined;
+		vk::Extent2D                 extent;                                 // The swapchain extent
+		vk::Format                   format = vk::Format::eUndefined;        // Pixel format of the swapchain.
+		vk::SwapchainKHR             swapchain;                              // The swapchain.
+		std::vector<vk::ImageView>   image_views;                            // The image view for each swapchain image.
+		std::vector<vk::Framebuffer> framebuffers;                           // The framebuffer for each swapchain image view.
 	};
 
 	/**
 	 * @brief Per-frame data
 	 */
-	struct PerFrame
+	struct FrameData
 	{
-		vk::Device device;
-
-		vk::Fence queue_submit_fence;
-
-		vk::CommandPool primary_command_pool;
-
+		vk::Fence         queue_submit_fence;
+		vk::CommandPool   primary_command_pool;
 		vk::CommandBuffer primary_command_buffer;
-
-		vk::Semaphore swapchain_acquire_semaphore;
-
-		vk::Semaphore swapchain_release_semaphore;
-
-		int32_t queue_index;
-	};
-
-	/**
-	 * @brief Vulkan objects and global state
-	 */
-	struct Context
-	{
-		/// The Vulkan instance.
-		vk::Instance instance;
-
-		/// The Vulkan physical device.
-		vk::PhysicalDevice gpu;
-
-		/// The Vulkan device.
-		vk::Device device;
-
-		/// The Vulkan device queue.
-		vk::Queue queue;
-
-		/// The swapchain.
-		vk::SwapchainKHR swapchain;
-
-		/// The swapchain dimensions.
-		SwapchainDimensions swapchain_dimensions;
-
-		/// The surface we will render to.
-		vk::SurfaceKHR surface;
-
-		/// The queue family index where graphics work will be submitted.
-		int32_t graphics_queue_index = -1;
-
-		/// The image view for each swapchain image.
-		std::vector<vk::ImageView> swapchain_image_views;
-
-		/// The framebuffer for each swapchain image view.
-		std::vector<vk::Framebuffer> swapchain_framebuffers;
-
-		/// The renderpass description.
-		vk::RenderPass render_pass;
-
-		/// The graphics pipeline.
-		vk::Pipeline pipeline;
-
-		/**
-		 * The pipeline layout for resources.
-		 * Not used in this sample, but we still need to provide a dummy one.
-		 */
-		vk::PipelineLayout pipeline_layout;
-
-		/// The debug report callback.
-		vk::DebugReportCallbackEXT debug_callback;
-
-		/// A set of semaphores that can be reused.
-		std::vector<vk::Semaphore> recycled_semaphores;
-
-		/// A set of per-frame data.
-		std::vector<PerFrame> per_frame;
+		vk::Semaphore     swapchain_acquire_semaphore;
+		vk::Semaphore     swapchain_release_semaphore;
 	};
 
   public:
 	HPPHelloTriangle();
-
 	virtual ~HPPHelloTriangle();
 
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
-
+  private:
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void update(float delta_time) override;
-
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
-	bool validate_extensions(const std::vector<const char *> &           required,
-	                         const std::vector<vk::ExtensionProperties> &available);
-
-	VkShaderStageFlagBits find_shader_stage(const std::string &ext);
-
-	void init_instance(Context &                        context,
-	                   const std::vector<const char *> &required_instance_extensions,
-	                   const std::vector<const char *> &required_validation_layers);
-
-	void select_physical_device_and_surface(vkb::platform::HPPPlatform &platform);
-
-	void init_device(Context &                        context,
-	                 const std::vector<const char *> &required_device_extensions);
-
-	void init_per_frame(Context &context, PerFrame &per_frame);
-
-	void teardown_per_frame(Context &context, PerFrame &per_frame);
-
-	void init_swapchain(Context &context);
-
-	void init_render_pass(Context &context);
-
-	vk::ShaderModule load_shader_module(Context &context, const char *path);
-
-	void init_pipeline(Context &context);
-
-	vk::Result acquire_next_image(Context &context, uint32_t *image);
-
-	void render_triangle(Context &context, uint32_t swapchain_index);
-
-	vk::Result present_image(Context &context, uint32_t index);
-
-	void init_framebuffers(Context &context);
-
-	void teardown_framebuffers(Context &context);
-
-	void teardown(Context &context);
+	std::pair<vk::Result, uint32_t> acquire_next_image();
+	void                            init_device(const std::vector<const char *> &required_device_extensions);
+	void                            init_frame(size_t frame);
+	void                            init_framebuffers();
+	void                            init_instance(const std::vector<const char *> &required_instance_extensions,
+	                                              const std::vector<const char *> &required_validation_layers);
+	void                            init_pipeline();
+	void                            init_swapchain();
+	void                            render_triangle(uint32_t swapchain_index);
+	void                            select_physical_device_and_surface();
+	void                            teardown_framebuffers();
+	void                            teardown_per_frame(FrameData &per_frame_data);
 
   private:
-	Context context;
+	vk::Instance               instance;                     // The Vulkan instance.
+	vk::PhysicalDevice         gpu;                          // The Vulkan physical device.
+	vk::Device                 device;                       // The Vulkan device.
+	vk::Queue                  queue;                        // The Vulkan device queue.
+	SwapchainData              swapchain_data;               // The swapchain state.
+	vk::SurfaceKHR             surface;                      // The surface we will render to.
+	uint32_t                   graphics_queue_index;         // The queue family index where graphics work will be submitted.
+	vk::RenderPass             render_pass;                  // The renderpass description.
+	vk::PipelineLayout         pipeline_layout;              // The pipeline layout for resources.
+	vk::Pipeline               pipeline;                     // The graphics pipeline.
+	vk::DebugUtilsMessengerEXT debug_utils_messenger;        // The debug utils messenger.
+	std::vector<vk::Semaphore> recycled_semaphores;          // A set of semaphores that can be reused.
+	std::vector<FrameData>     per_frame_data;               // A set of per-frame data.
+
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
+	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
+#endif
 };
 
 std::unique_ptr<vkb::Application> create_hpp_hello_triangle();

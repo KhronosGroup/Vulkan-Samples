@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,12 +24,9 @@ namespace vkb
 class WindowsPlatform : public Platform
 {
   public:
-	WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-	                PSTR lpCmdLine, INT nCmdShow);
+	WindowsPlatform(const PlatformContext &context);
 
 	virtual ~WindowsPlatform() = default;
-
-	virtual const char *get_surface_extension() override;
 
   protected:
 	virtual void create_window(const Window::Properties &properties) override;

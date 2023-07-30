@@ -59,12 +59,12 @@ LogicOpDynamicState::~LogicOpDynamicState()
 }
 
 /**
- * 	@fn bool LogicOpDynamicState::prepare(vkb::Platform &platform)
+ * 	@fn bool LogicOpDynamicState::prepare(const vkb::ApplicationOptions &options)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
-bool LogicOpDynamicState::prepare(vkb::Platform &platform)
+bool LogicOpDynamicState::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -89,16 +89,15 @@ bool LogicOpDynamicState::prepare(vkb::Platform &platform)
 }
 
 /**
- * 	@fn void LogicOpDynamicState::create_render_context(vkb::Platform &platform)
  * 	@brief Setting custom surface format priority list to required VK_FORMAT_B8G8R8A8_UNORM format
  */
-void LogicOpDynamicState::create_render_context(vkb::Platform &platform)
+void LogicOpDynamicState::create_render_context()
 {
 	/* UNORM surface is required for logic operations */
 	auto surface_priority_list = std::vector<VkSurfaceFormatKHR>{
 	    {VK_FORMAT_B8G8R8A8_UNORM, VK_COLORSPACE_SRGB_NONLINEAR_KHR},
 	};
-	render_context = platform.create_render_context(get_device(), surface, surface_priority_list);
+	VulkanSample::create_render_context(surface_priority_list);
 }
 
 /**
@@ -278,7 +277,7 @@ void LogicOpDynamicState::create_pipeline()
 	/* Enable logic operations */
 	color_blend_state.logicOpEnable = VK_TRUE;
 
-	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
+	/* Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,

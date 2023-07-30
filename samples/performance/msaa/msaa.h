@@ -1,4 +1,4 @@
-/* Copyright (c) 2020, Arm Limited and Contributors
+/* Copyright (c) 2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -54,7 +54,7 @@
  * consumed by the postprocessing renderpass.
  *
  * As with unresolved color, writing out unresolved depth attachments is very
- * bandwith intensive and therefore depth-based postprocessing was
+ * bandwidth intensive and therefore depth-based postprocessing was
  * usually avoided on mobile platforms.
  *
  * This sample shows how to use the extension to also resolve the depth
@@ -67,7 +67,7 @@ class MSAASample : public vkb::VulkanSample
 
 	virtual ~MSAASample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
 

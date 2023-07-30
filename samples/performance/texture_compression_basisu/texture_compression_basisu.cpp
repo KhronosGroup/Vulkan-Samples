@@ -384,7 +384,7 @@ void TextureCompressionBasisu::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -535,7 +535,7 @@ void TextureCompressionBasisu::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -625,9 +625,9 @@ void TextureCompressionBasisu::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool TextureCompressionBasisu::prepare(vkb::Platform &platform)
+bool TextureCompressionBasisu::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

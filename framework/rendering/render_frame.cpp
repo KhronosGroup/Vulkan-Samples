@@ -275,14 +275,6 @@ BufferAllocation RenderFrame::allocate_buffer(const VkBufferUsageFlags usage, co
 {
 	assert(thread_index < thread_count && "Thread index is out of bounds");
 
-	uint32_t block_multiplier = supported_usage_map.at(usage);
-
-	if (size > BUFFER_POOL_BLOCK_SIZE * 1024 * block_multiplier)
-	{
-		LOGE("Trying to allocate {} buffer of size {}KB which is larger than the buffer pool block size ({} KB)!", buffer_usage_to_string(usage), size / 1024, BUFFER_POOL_BLOCK_SIZE * block_multiplier);
-		throw std::runtime_error("Couldn't allocate render frame buffer.");
-	}
-
 	// Find a pool for this usage
 	auto buffer_pool_it = buffer_pools.find(usage);
 	if (buffer_pool_it == buffer_pools.end())

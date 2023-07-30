@@ -1,5 +1,5 @@
 #version 320 es
-/* Copyright (c) 2019, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,7 +34,7 @@ vec3 triangle_colors[3] = vec3[](
 
 void main()
 {
-    gl_Position = vec4(triangle_positions[gl_VertexIndex], 0.0, 1.0);
+    gl_Position = vec4(triangle_positions[gl_VertexIndex], 0.5, 1.0);
 
     out_color = triangle_colors[gl_VertexIndex];
 }

@@ -22,16 +22,12 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
-#include "rendering/subpasses/forward_subpass.h"
 
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
+#include "rendering/subpasses/forward_subpass.h"
 
 #include "offscreen_context.h"
 
-constexpr const char *OPENG_VERTEX_SHADER =
+constexpr const char *OPENGL_VERTEX_SHADER =
     R"SHADER(
 const vec4 VERTICES[] = vec4[](
     vec4(-1.0, -1.0, 0.0, 1.0), 
@@ -200,7 +196,11 @@ void OpenGLInterop::prepare_shared_resources()
 
 	{
 		VkExternalMemoryImageCreateInfo external_memory_image_create_info{VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO};
+#if WIN32
+		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR;
+#else
 		external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR;
+#endif
 		VkImageCreateInfo imageCreateInfo{VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO};
 		imageCreateInfo.pNext         = &external_memory_image_create_info;
 		imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
@@ -437,7 +437,7 @@ void OpenGLInterop::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -539,9 +539,9 @@ void OpenGLInterop::update_uniform_buffers()
 	uniform_buffer_vs->convert_and_update(ubo_vs);
 }
 
-bool OpenGLInterop::prepare(vkb::Platform &platform)
+bool OpenGLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -552,7 +552,7 @@ bool OpenGLInterop::prepare(vkb::Platform &platform)
 
 	prepare_shared_resources();
 
-	gl_data->program = gl_context->build_program(OPENG_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
+	gl_data->program = gl_context->build_program(OPENGL_VERTEX_SHADER, OPENGL_FRAGMENT_SHADER);
 
 	timer.start();
 
@@ -649,7 +649,7 @@ void OpenGLInterop::render(float)
 	std::array<VkSemaphore, 2>          waitSemaphores{{semaphores.acquired_image_ready, sharedSemaphores.gl_complete}};
 
 	std::array<VkSemaphore, 2> signalSemaphores{{semaphores.render_complete, sharedSemaphores.gl_ready}};
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.waitSemaphoreCount   = vkb::to_u32(waitSemaphores.size());
 	submit_info.pWaitSemaphores      = waitSemaphores.data();
 	submit_info.pWaitDstStageMask    = waitStages.data();
@@ -758,8 +758,8 @@ void OpenGLInterop::build_command_buffers()
 			subresource_range.layerCount               = 1;
 
 			// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-			// Source pipeline stage is host write/read exection (VK_PIPELINE_STAGE_HOST_BIT)
-			// Destination pipeline stage is copy command exection (VK_PIPELINE_STAGE_TRANSFER_BIT)
+			// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
+			// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
 			vkCmdPipelineBarrier(
 			    draw_cmd_buffers[i],
 			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,

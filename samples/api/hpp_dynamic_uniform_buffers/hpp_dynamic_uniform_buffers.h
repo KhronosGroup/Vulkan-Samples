@@ -70,14 +70,14 @@ class HPPDynamicUniformBuffers : public HPPApiVulkanSample
 	static void  aligned_free(void *data);
 
   private:
-	// from platform::HPPApplication
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from HPPApiVulkanSample
 	void render(float delta_time) override;
-
 	void build_command_buffers() override;
+
+	void create_pipeline();
 	void draw();
 	void generate_cube();
 	void prepare_camera();

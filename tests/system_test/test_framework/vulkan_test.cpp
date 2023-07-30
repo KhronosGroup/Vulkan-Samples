@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -27,14 +27,12 @@
 
 namespace vkbtest
 {
-bool VulkanTest::prepare(vkb::Platform &platform)
+bool VulkanTest::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!vkb::VulkanSample::prepare(platform))
+	if (!vkb::VulkanSample::prepare(options))
 	{
 		return false;
 	}
-
-	this->platform = &platform;
 
 	return true;
 }
@@ -45,12 +43,6 @@ void VulkanTest::update(float delta_time)
 
 	screenshot(get_render_context(), get_name());
 
-	end();
-}
-
-void VulkanTest::end()
-{
-	platform->close();
-	exit(0);
+	close();
 }
 }        // namespace vkbtest

@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2021, Sascha Willems
+- Copyright (c) 2021-2023, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -54,11 +54,13 @@ for (auto &available_extension : available_instance_extensions)
 
 **Note**: Validation setup is done inside the framework, see the ```Instance``` class in ```instance.cpp``` for details.
 
-After creating your instance with the ```VK_EXT_debug_utils``` extension enabled, you'll be able to use the debug functions that have been introduced with it.
+After creating your instance with the ```VK_EXT_debug_utils``` extension enabled, you'll be able to use the debug functions that it provides.
+
+### Setting Up
 
 **Note**: Depending on the implementation and loader you're using you may need to manually get the function pointers for these via ```vkGetInstanceProcAddr``` before you can use these. 
 
-Setting up the debug messenger callback that is triggered by the validation layers is done via ```vkCreateDebugUtilsMessengerEXT```:
+```vkCreateDebugUtilsMessengerEXT``` is used for setting up the debug messenger callback that is triggered by the validation layers:
 
 ```cpp
 VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
@@ -68,7 +70,7 @@ debug_utils_create_info.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION
 debug_utils_create_info.pfnUserCallback = debug_utils_messenger_callback;
 ```
 
-We then pass this to the ```pNext``` member of our instance creation structure, enabling validation for isntance creation and destruction:
+We then pass this to the ```pNext``` member of our instance creation structure, enabling validation for instance creation and destruction:
 
 ```cpp
 VkInstanceCreateInfo instance_create_info = {VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO};
@@ -105,11 +107,11 @@ VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(
 {
 	if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
 	{
-        std::cout << "Warning: " << callback_data->messageIdNumber << ":" << callback_data->pMessageIdName << ":" <<  callback_data->pMessage << std::endl;
+		LOGW("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage)
 	}
 	else if (message_severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
 	{
-        std::cerr << "Error: " << callback_data->messageIdNumber << ":" << callback_data->pMessageIdName << ":" <<  callback_data->pMessage << std::endl;
+		LOGE("{} - {}: {}", callback_data->messageIdNumber, callback_data->pMessageIdName, callback_data->pMessage);
 	}
 	return VK_FALSE;
 }

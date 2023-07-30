@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -96,14 +96,14 @@ class HPPPhysicalDevice
 	 *        VulkanSample::request_gpu_features(vkb::HPPPhysicalDevice &gpu).
 	 *
 	 *        If the feature extension requires you to ask for certain features to be enabled, you can
-	 *        modify the struct returned by this function, it will propegate the changes to the logical
+	 *        modify the struct returned by this function, it will propagate the changes to the logical
 	 *        device.
 	 * @returns The extension feature struct
 	 */
 	template <typename HPPStructureType>
 	HPPStructureType &request_extension_features()
 	{
-		// We cannot request extension features if the physical device properties 2 instance extension isnt enabled
+		// We cannot request extension features if the physical device properties 2 instance extension isn't enabled
 		if (!instance.is_enabled(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME))
 		{
 			throw std::runtime_error("Couldn't request feature from device as " + std::string(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME) + " isn't enabled!");

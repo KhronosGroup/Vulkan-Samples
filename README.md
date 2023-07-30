@@ -62,7 +62,7 @@ Additionally you may find the following links useful:
 ### Goals
 - Create a collection of resources that demonstrate best-practice recommendations in Vulkan
 - Create tutorials that explain the implementation of best-practices and include performance analysis guides
-- Create a framework that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
+- Create a [framework](framework/README.md) that can be used as reference material and also as a sandbox for advanced experimentation with Vulkan
 
 ## Samples
 - [Listing of all samples available in this repository ](./samples/README.md)

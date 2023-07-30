@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -24,11 +24,9 @@ namespace vkb
 class UnixD2DPlatform : public Platform
 {
   public:
-	UnixD2DPlatform(int argc, char **argv);
+	UnixD2DPlatform(const PlatformContext &context);
 
 	virtual ~UnixD2DPlatform() = default;
-
-	virtual const char *get_surface_extension() override;
 
   protected:
 	virtual void create_window(const Window::Properties &properties) override;

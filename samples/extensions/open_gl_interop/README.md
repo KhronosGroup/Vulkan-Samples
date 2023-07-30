@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2020-2021, The Khronos Group
+- Copyright (c) 2020-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,7 +16,8 @@
 - limitations under the License.
 -
 -->
+### OpenGL interoperability
 
-### OpenGL interoperability<br/>
-**Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)<br/>
+**Extensions**: [```VK_KHR_external_memory```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_memory.html), [```VK_KHR_external_semaphore```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_KHR_external_semaphore.html)
+
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.  Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.

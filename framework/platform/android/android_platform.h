@@ -26,15 +26,13 @@ namespace vkb
 class AndroidPlatform : public Platform
 {
   public:
-	AndroidPlatform(android_app *app);
+	AndroidPlatform(const PlatformContext &context);
 
 	virtual ~AndroidPlatform() = default;
 
 	virtual ExitCode initialize(const std::vector<Plugin *> &plugins) override;
 
 	virtual void terminate(ExitCode code) override;
-
-	virtual const char *get_surface_extension() override;
 
 	/**
 	 * @brief Sends a notification in the task bar
@@ -51,8 +49,6 @@ class AndroidPlatform : public Platform
 	android_app *get_android_app();
 
 	GameActivity *get_activity();
-
-	virtual std::unique_ptr<RenderContext> create_render_context(Device &device, VkSurfaceKHR surface, const std::vector<VkSurfaceFormatKHR> &surface_format_priority) const override;
 
 	void set_surface_ready();
 

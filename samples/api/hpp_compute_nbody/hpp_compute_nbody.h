@@ -62,14 +62,14 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Uniform buffer object containing particle system parameters
 		uint32_t                              work_group_size = 128;
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			storage_buffer.reset();
 			uniform_buffer.reset();
 			device.destroyPipeline(pipeline_calculate);
 			device.destroyPipeline(pipeline_integrate);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
 			device.destroySemaphore(semaphore);
 			device.freeCommandBuffers(command_pool, command_buffer);
@@ -96,12 +96,12 @@ class HPPComputeNBody : public HPPApiVulkanSample
 		GraphicsUBO                           ubo;
 		std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer;        // Contains scene matrices
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			uniform_buffer.reset();
 			device.destroyPipeline(pipeline);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
 			device.destroySemaphore(semaphore);
 		}
@@ -127,8 +127,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	};
 
   private:
-	// from platform::HPPApplication
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from HPPVulkanSample
@@ -138,23 +137,20 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	void build_command_buffers() override;
 	void render(float delta_time) override;
 
-	vk::CommandBuffer allocate_command_buffer(vk::CommandPool command_pool);
-	void              build_compute_command_buffer();
-	void              build_compute_transfer_command_buffer(vk::CommandBuffer command_buffer) const;
-	void              build_copy_command_buffer(vk::CommandBuffer command_buffer, vk::Buffer staging_buffer, vk::DeviceSize buffer_size) const;
-	vk::CommandPool   create_command_pool(uint32_t queue_family_index);
-	vk::Pipeline      create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout);
-	vk::Semaphore     create_semaphore();
-	void              draw();
-	void              initializeCamera();
-	void              load_assets();
-	void              prepare_compute();
-	void              prepare_compute_storage_buffers();
-	void              prepare_graphics();
-	void              update_compute_descriptor_set();
-	void              update_compute_uniform_buffers(float delta_time);
-	void              update_graphics_descriptor_set();
-	void              update_graphics_uniform_buffers();
+	void         build_compute_command_buffer();
+	void         build_compute_transfer_command_buffer(vk::CommandBuffer command_buffer) const;
+	void         build_copy_command_buffer(vk::CommandBuffer command_buffer, vk::Buffer staging_buffer, vk::DeviceSize buffer_size) const;
+	vk::Pipeline create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout);
+	void         draw();
+	void         initializeCamera();
+	void         load_assets();
+	void         prepare_compute();
+	void         prepare_compute_storage_buffers();
+	void         prepare_graphics();
+	void         update_compute_descriptor_set();
+	void         update_compute_uniform_buffers(float delta_time);
+	void         update_graphics_descriptor_set();
+	void         update_graphics_uniform_buffers();
 
   private:
 	Compute  compute;

@@ -20,6 +20,7 @@
 #include <common/hpp_utils.h>
 #include <hpp_gltf_loader.h>
 #include <hpp_gui.h>
+#include <rendering/hpp_render_context.h>
 #include <scene_graph/components/camera.h>
 #include <scene_graph/scripts/animation.h>
 
@@ -57,9 +58,9 @@ vkb::rendering::HPPRenderPipeline const &HPPVulkanSample::get_render_pipeline() 
 	return *render_pipeline;
 }
 
-bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!vkb::platform::HPPApplication::prepare(platform))
+	if (!vkb::Application::prepare(options))
 	{
 		return false;
 	}
@@ -77,10 +78,13 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 		throw VulkanException(result, "Failed to initialize volk.");
 	}
 
-	bool headless = platform.get_window().get_window_mode() == Window::Mode::Headless;
+	bool headless = window->get_window_mode() == Window::Mode::Headless;
 
 	// Creating the vulkan instance
-	add_instance_extension(platform.get_surface_extension());
+	for (const char *extension_name : window->get_required_surface_extensions())
+	{
+		add_instance_extension(extension_name);
+	}
 
 	std::unique_ptr<vkb::core::HPPDebugUtils> debug_utils;
 #ifdef VKB_VULKAN_DEBUG
@@ -102,7 +106,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	instance = std::make_unique<vkb::core::HPPInstance>(get_name(), get_instance_extensions(), get_validation_layers(), headless, api_version);
 
 	// Getting a valid vulkan surface from the platform
-	surface = platform.get_window().create_surface(*instance);
+	surface = static_cast<vk::SurfaceKHR>(window->create_surface(reinterpret_cast<vkb::Instance &>(*instance)));
 	if (!surface)
 	{
 		throw std::runtime_error("Failed to create window surface.");
@@ -162,7 +166,7 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	VULKAN_HPP_DEFAULT_DISPATCHER.init(get_device()->get_handle());
 
-	create_render_context(platform);
+	create_render_context();
 	prepare_render_context();
 
 	stats = std::make_unique<vkb::stats::HPPStats>(*render_context);
@@ -173,12 +177,25 @@ bool HPPVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	return true;
 }
 
-void HPPVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
+void HPPVulkanSample::create_render_context()
 {
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
-	render_context = platform.create_render_context(*device, surface, surface_priority_list);
+	create_render_context(surface_priority_list);
+}
+
+void HPPVulkanSample::create_render_context(const std::vector<vk::SurfaceFormatKHR> &surface_priority_list)
+{
+#ifdef VK_USE_PLATFORM_ANDROID_KHR
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::OFF) ? vk::PresentModeKHR::eMailbox : vk::PresentModeKHR::eFifo;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eImmediate};
+#else
+	vk::PresentModeKHR              present_mode = (window->get_properties().vsync == Window::Vsync::ON) ? vk::PresentModeKHR::eFifo : vk::PresentModeKHR::eMailbox;
+	std::vector<vk::PresentModeKHR> present_mode_priority_list{vk::PresentModeKHR::eMailbox, vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eImmediate};
+#endif
+
+	render_context = std::make_unique<vkb::rendering::HPPRenderContext>(*get_device(), surface, *window, present_mode, present_mode_priority_list, surface_priority_list);
 }
 
 void HPPVulkanSample::prepare_render_context()
@@ -272,8 +289,6 @@ void HPPVulkanSample::update(float delta_time)
 	command_buffer.end();
 
 	render_context->submit(command_buffer);
-
-	get_platform().on_post_draw(get_render_context());
 }
 
 void HPPVulkanSample::draw(vkb::core::HPPCommandBuffer &command_buffer, vkb::rendering::HPPRenderTarget const &render_target) const
@@ -349,7 +364,7 @@ void HPPVulkanSample::render(vkb::core::HPPCommandBuffer &command_buffer) const
 
 bool HPPVulkanSample::resize(uint32_t width, uint32_t height)
 {
-	if (!vkb::platform::HPPApplication::resize(width, height))
+	if (!vkb::Application::resize(width, height))
 	{
 		return false;
 	}
@@ -378,7 +393,7 @@ bool HPPVulkanSample::resize(uint32_t width, uint32_t height)
 
 void HPPVulkanSample::input_event(const InputEvent &input_event)
 {
-	vkb::platform::HPPApplication::input_event(input_event);
+	vkb::Application::input_event(input_event);
 
 	bool gui_captures_event = false;
 
@@ -408,20 +423,12 @@ void HPPVulkanSample::input_event(const InputEvent &input_event)
 		{
 			vkb::common::screenshot(*render_context, "screenshot-" + get_name());
 		}
-
-		if (key_event.get_code() == KeyCode::F6 && key_event.get_action() == KeyAction::Down)
-		{
-			if (!vkb::common::graphs::generate_all(get_render_context(), *scene))
-			{
-				LOGE("Failed to save Graphs");
-			}
-		}
 	}
 }
 
 void HPPVulkanSample::finish()
 {
-	vkb::platform::HPPApplication::finish();
+	vkb::Application::finish();
 
 	if (device)
 	{

@@ -252,7 +252,7 @@ void Instancing::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -316,7 +316,7 @@ void Instancing::prepare_pipelines()
 	//	...
 	//	layout (location = 4) in vec3 instancePos;	Per-Instance
 	attribute_descriptions = {
-	    // Per-vertex attributees
+	    // Per-vertex attributes
 	    // These are advanced for each vertex fetched by the vertex shader
 	    vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, 0),                        // Location 0: Position
 	    vkb::initializers::vertex_input_attribute_description(0, 1, VK_FORMAT_R32G32B32_SFLOAT, sizeof(float) * 3),        // Location 1: Normal
@@ -366,7 +366,7 @@ void Instancing::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(INSTANCE_COUNT);
 
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -474,7 +474,7 @@ void Instancing::draw()
 {
 	ApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
 
@@ -484,14 +484,14 @@ void Instancing::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool Instancing::prepare(vkb::Platform &platform)
+bool Instancing::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));

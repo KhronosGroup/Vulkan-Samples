@@ -27,7 +27,7 @@ Synchronization2::Synchronization2()
 	title       = "Compute shader N-body simulation using VK_KHR_synchronization2";
 	camera.type = vkb::CameraType::LookAt;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(0.0f, 0.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
@@ -265,7 +265,7 @@ void Synchronization2::prepare_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(num_particles);
 
-	std::default_random_engine      rnd_engine(platform->get_window().get_window_mode() == vkb::Window::Mode::Headless ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine      rnd_engine(window->get_window_mode() == vkb::Window::Mode::Headless ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -818,9 +818,9 @@ void Synchronization2::draw()
 	VK_CHECK(vkQueueSubmit2KHR(compute.queue, 1, &compute_submit_info, VK_NULL_HANDLE));
 }
 
-bool Synchronization2::prepare(vkb::Platform &platform)
+bool Synchronization2::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

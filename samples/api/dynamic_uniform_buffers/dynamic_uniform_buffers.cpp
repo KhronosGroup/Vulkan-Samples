@@ -314,7 +314,7 @@ void DynamicUniformBuffers::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -414,7 +414,7 @@ void DynamicUniformBuffers::prepare_uniform_buffers()
 	                                                              VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Prepare per-object matrices with offsets and random rotations
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : static_cast<unsigned>(time(nullptr)));
+	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::normal_distribution<float> rnd_dist(-1.0f, 1.0f);
 	for (uint32_t i = 0; i < OBJECT_INSTANCES; i++)
 	{
@@ -486,9 +486,9 @@ void DynamicUniformBuffers::update_dynamic_uniform_buffer(float delta_time, bool
 	uniform_buffers.dynamic->flush();
 }
 
-bool DynamicUniformBuffers::prepare(vkb::Platform &platform)
+bool DynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

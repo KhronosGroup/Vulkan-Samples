@@ -75,6 +75,8 @@ inline void reset_graph_max_value(StatGraphData &graph_data)
 }
 }        // namespace
 
+bool Gui::visible = true;
+
 const double Gui::press_time_ms = 200.0f;
 
 const float Gui::overlay_alpha = 0.3f;
@@ -337,7 +339,7 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
-	pipeline_create_info.subpass             = 0;
+	pipeline_create_info.subpass             = subpass;
 
 	// Vertex bindings an attributes based on ImGui vertex definition
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -748,6 +750,11 @@ bool Gui::is_debug_view_active() const
 	return debug_view.active;
 }
 
+void Gui::set_subpass(const uint32_t subpass)
+{
+	this->subpass = subpass;
+}
+
 Gui::StatsView::StatsView(const Stats *stats)
 {
 	if (stats == nullptr)
@@ -875,46 +882,6 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	}
 	ImGui::Columns(1);
 	ImGui::EndChild();
-
-	static Timer       timer;
-	static const char *message;
-
-	if (sample.has_scene())
-	{
-		if (ImGui::Button("Save Debug Graphs"))
-		{
-			if (graphs::generate_all(sample.get_render_context(), sample.get_scene()))
-			{
-				message = "Graphs Saved!";
-			}
-			else
-			{
-				message = "Error outputting graphs!";
-			}
-
-			if (timer.is_running())
-			{
-				timer.lap();
-			}
-			else
-			{
-				timer.start();
-			}
-		}
-	}
-
-	if (timer.is_running())
-	{
-		if (timer.elapsed() > 2.0)
-		{
-			timer.stop();
-		}
-		else
-		{
-			ImGui::SameLine();
-			ImGui::Text("%s", message);
-		}
-	}
 
 	ImGui::PopFont();
 	ImGui::End();
@@ -1077,7 +1044,7 @@ bool Gui::input_event(const InputEvent &input_event)
 		}
 	}
 
-	// Toggle GUI elements when tap or clicking outside the GUI windows
+	// Toggle debug UI view when tap or clicking outside the GUI windows
 	if (!io.WantCaptureMouse)
 	{
 		bool press_down = (input_event.get_source() == EventSource::Mouse && static_cast<const MouseButtonInputEvent &>(input_event).get_action() == MouseAction::Down) || (input_event.get_source() == EventSource::Touchscreen && static_cast<const TouchInputEvent &>(input_event).get_action() == TouchAction::Down);
@@ -1103,11 +1070,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				if (input_event.get_source() == EventSource::Mouse)
 				{
 					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
-					if (mouse_button.get_button() == MouseButton::Left)
-					{
-						visible = !visible;
-					}
-					else if (mouse_button.get_button() == MouseButton::Right)
+					if (mouse_button.get_button() == MouseButton::Right)
 					{
 						debug_view.active = !debug_view.active;
 					}
@@ -1115,11 +1078,7 @@ bool Gui::input_event(const InputEvent &input_event)
 				else if (input_event.get_source() == EventSource::Touchscreen)
 				{
 					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
-					if (!two_finger_tap && touch_event.get_touch_points() == 1)
-					{
-						visible = !visible;
-					}
-					else if (two_finger_tap && touch_event.get_touch_points() == 2)
+					if (two_finger_tap && touch_event.get_touch_points() == 2)
 					{
 						debug_view.active = !debug_view.active;
 					}
@@ -1244,6 +1203,30 @@ void Drawer::text(const char *formatstr, ...)
 	va_start(args, formatstr);
 	ImGui::TextV(formatstr, args);
 	va_end(args);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit4(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
 }        // namespace vkb

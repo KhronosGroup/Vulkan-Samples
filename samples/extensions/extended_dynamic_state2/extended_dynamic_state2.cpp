@@ -59,12 +59,12 @@ ExtendedDynamicState2::~ExtendedDynamicState2()
 }
 
 /**
- * 	@fn bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
+ * 	@fn bool ExtendedDynamicState2::prepare(const vkb::ApplicationOptions &options)
  * 	@brief Configuring all sample specific settings, creating descriptor sets/pool, pipelines, generating or loading models etc.
  */
-bool ExtendedDynamicState2::prepare(vkb::Platform &platform)
+bool ExtendedDynamicState2::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -249,7 +249,7 @@ void ExtendedDynamicState2::create_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	/* Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept */
+	/* Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept */
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,

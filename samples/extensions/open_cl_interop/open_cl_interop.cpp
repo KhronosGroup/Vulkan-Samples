@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Arm Limited and Contributors
+/* Copyright (c) 2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -20,7 +20,6 @@
 #include "common/vk_common.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
 
 #define CL_FUNCTION_DEFINITIONS
 #include <open_cl_utils.h>
@@ -82,9 +81,9 @@ OpenCLInterop::~OpenCLInterop()
 	unload_opencl();
 }
 
-bool OpenCLInterop::prepare(vkb::Platform &platform)
+bool OpenCLInterop::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -336,7 +335,7 @@ void OpenCLInterop::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -613,9 +612,9 @@ void OpenCLInterop::prepare_open_cl_resources()
 
 	cl_data->command_queue = clCreateCommandQueue(cl_data->context, cl_data->device_id, 0, &result);
 
-	auto   kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
-	auto   kernel_source_data = kernel_source.data();
-	size_t kernel_source_size = kernel_source.size();
+	auto        kernel_source      = vkb::fs::read_shader("open_cl_interop/procedural_texture.cl");
+	const char *kernel_source_data = kernel_source.data();
+	size_t      kernel_source_size = kernel_source.size();
 
 	cl_data->program = clCreateProgramWithSource(cl_data->context, 1, &kernel_source_data, &kernel_source_size, &result);
 	clBuildProgram(cl_data->program, 1, &cl_data->device_id, NULL, NULL, NULL);

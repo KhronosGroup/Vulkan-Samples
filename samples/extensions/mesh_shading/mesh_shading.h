@@ -41,7 +41,7 @@ class MeshShading : public ApiVulkanSample
 	void prepare_pipelines();
 	void build_command_buffers() override;
 	void draw();
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	void render(float delta_time) override;
 };
 

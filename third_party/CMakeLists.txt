@@ -361,3 +361,8 @@ add_library(opencl INTERFACE)
 set(OPENCL_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/opencl)
 target_sources(opencl INTERFACE ${OPENCL_INCLUDE_DIR}/CL/opencl.h)
 target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
+
+# Catch2
+add_subdirectory(catch2)
+set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
+set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")

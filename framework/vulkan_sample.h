@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -109,17 +109,17 @@ class VulkanSample : public Application
 	/**
 	 * @brief Additional sample initialization
 	 */
-	bool prepare(Platform &platform) override;
+	bool prepare(const ApplicationOptions &options) override;
 
 	/**
 	 * @brief Create the Vulkan device used by this sample
-	 * @note Can be overridden to implement custom device creation 
+	 * @note Can be overridden to implement custom device creation
 	 */
 	virtual void create_device();
 
 	/**
 	 * @brief Create the Vulkan instance used by this sample
-	 * @note Can be overridden to implement custom instance creation 
+	 * @note Can be overridden to implement custom instance creation
 	 */
 	virtual void create_instance();
 
@@ -134,7 +134,7 @@ class VulkanSample : public Application
 
 	void finish() override;
 
-	/** 
+	/**
 	 * @brief Loads the scene
 	 *
 	 * @param path The path of the glTF file
@@ -144,6 +144,11 @@ class VulkanSample : public Application
 	VkSurfaceKHR get_surface();
 
 	Device &get_device();
+
+	inline bool has_render_context() const
+	{
+		return render_context != nullptr;
+	}
 
 	RenderContext &get_render_context();
 
@@ -270,12 +275,12 @@ class VulkanSample : public Application
 	 */
 	virtual void request_gpu_features(PhysicalDevice &gpu);
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the render_context
 	 */
-	virtual void create_render_context(Platform &platform);
+	virtual void create_render_context();
 
-	/** 
+	/**
 	 * @brief Override this to customise the creation of the swapchain and render_context
 	 */
 	virtual void prepare_render_context();
@@ -325,6 +330,11 @@ class VulkanSample : public Application
 	{
 		high_priority_graphics_queue = enable;
 	}
+
+	/**
+	 * @brief A helper to create a render context
+	 */
+	void create_render_context(const std::vector<VkSurfaceFormatKHR> &surface_formats);
 
   private:
 	/** @brief Set of device extensions to be enabled for this example and whether they are optional (must be set in the derived constructor) */

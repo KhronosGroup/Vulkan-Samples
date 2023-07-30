@@ -49,9 +49,9 @@ HPPTextureMipMapGeneration::~HPPTextureMipMapGeneration()
 	}
 }
 
-bool HPPTextureMipMapGeneration::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPTextureMipMapGeneration::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -155,7 +155,7 @@ void HPPTextureMipMapGeneration::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
 
-	// Command buffer to be sumitted to the queue
+	// Command buffer to be submitted to the queue
 	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
 
 	// Submit to queue
@@ -193,7 +193,7 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	// numLevels = 1 + floor(log2(max(w, h, d)))
 	texture.mip_levels = static_cast<uint32_t>(floor(log2(std::max(texture.extent.width, texture.extent.height))) + 1);
 
-	// Get device properites for the requested texture format
+	// Get device properties for the requested texture format
 	// Check if the selected format supports blit source and destination, which is required for generating the mip levels
 	// If this is not supported you could implement a fallback via compute shader image writes and stores
 	vk::FormatProperties formatProperties = get_device()->get_gpu().get_handle().getFormatProperties(format);
@@ -276,8 +276,8 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	device->flush_command_buffer(copy_command, queue, true);
 
 	// Clean up staging resources
-	get_device()->get_handle().freeMemory(staging_memory);
 	get_device()->get_handle().destroyBuffer(staging_buffer);
+	get_device()->get_handle().freeMemory(staging_memory);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------

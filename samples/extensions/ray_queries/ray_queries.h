@@ -1,4 +1,4 @@
-/* Copyright (c) 2021, Holochip Corporation
+/* Copyright (c) 2021-2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,21 +43,21 @@ class RayQueries : public ApiVulkanSample
 	~RayQueries() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void render(float delta_time) override;
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
   private:
 	struct GlobalUniform
 	{
 		glm::mat4x4 view;
 		glm::mat4x4 proj;
-		alignas(4) glm::vec3 camera_position;
-		alignas(4) glm::vec3 light_position;
+		alignas(16) glm::vec3 camera_position;
+		alignas(16) glm::vec3 light_position;
 	} global_uniform;
 
 	struct Vertex
 	{
-		alignas(4) glm::vec3 position;
-		alignas(4) glm::vec3 normal;
+		alignas(16) glm::vec3 position;
+		alignas(16) glm::vec3 normal;
 	};
 
 	struct Model

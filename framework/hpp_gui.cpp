@@ -52,6 +52,7 @@ void reset_graph_max_value(StatGraphData &graph_data)
 }
 }        // namespace
 
+bool                   HPPGui::visible       = true;
 const double           HPPGui::press_time_ms = 200.0f;
 const float            HPPGui::overlay_alpha = 0.3f;
 const std::string      HPPGui::default_font  = "Roboto-Regular";
@@ -65,7 +66,7 @@ const ImGuiWindowFlags HPPGui::common_flags  = ImGuiWindowFlags_NoMove |
 const ImGuiWindowFlags HPPGui::options_flags = HPPGui::common_flags;
 const ImGuiWindowFlags HPPGui::info_flags    = HPPGui::common_flags | ImGuiWindowFlags_NoInputs;
 
-HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::platform::HPPWindow &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
+HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::stats::HPPStats *stats, float font_size, bool explicit_update) :
     sample{sample_}, content_scale_factor{window.get_content_scale_factor()}, dpi_factor{window.get_dpi_factor() * content_scale_factor}, explicit_update{explicit_update}, stats_view(stats)
 {
 	ImGui::CreateContext();
@@ -810,46 +811,6 @@ void HPPGui::show_debug_window(const DebugInfo &debug_info, const ImVec2 &positi
 	ImGui::Columns(1);
 	ImGui::EndChild();
 
-	static Timer       timer;
-	static const char *message;
-
-	if (sample.has_scene())
-	{
-		if (ImGui::Button("Save Debug Graphs"))
-		{
-			if (vkb::common::graphs::generate_all(sample.get_render_context(), sample.get_scene()))
-			{
-				message = "Graphs Saved!";
-			}
-			else
-			{
-				message = "Error outputting graphs!";
-			}
-
-			if (timer.is_running())
-			{
-				timer.lap();
-			}
-			else
-			{
-				timer.start();
-			}
-		}
-	}
-
-	if (timer.is_running())
-	{
-		if (timer.elapsed() > 2.0)
-		{
-			timer.stop();
-		}
-		else
-		{
-			ImGui::SameLine();
-			ImGui::Text("%s", message);
-		}
-	}
-
 	ImGui::PopFont();
 	ImGui::End();
 }
@@ -1037,11 +998,7 @@ bool HPPGui::input_event(const InputEvent &input_event)
 				if (input_event.get_source() == EventSource::Mouse)
 				{
 					const auto &mouse_button = static_cast<const MouseButtonInputEvent &>(input_event);
-					if (mouse_button.get_button() == MouseButton::Left)
-					{
-						visible = !visible;
-					}
-					else if (mouse_button.get_button() == MouseButton::Right)
+					if (mouse_button.get_button() == MouseButton::Right)
 					{
 						debug_view.active = !debug_view.active;
 					}
@@ -1049,11 +1006,7 @@ bool HPPGui::input_event(const InputEvent &input_event)
 				else if (input_event.get_source() == EventSource::Touchscreen)
 				{
 					const auto &touch_event = static_cast<const TouchInputEvent &>(input_event);
-					if (!two_finger_tap && touch_event.get_touch_points() == 1)
-					{
-						visible = !visible;
-					}
-					else if (two_finger_tap && touch_event.get_touch_points() == 2)
+					if (two_finger_tap && touch_event.get_touch_points() == 2)
 					{
 						debug_view.active = !debug_view.active;
 					}
@@ -1178,6 +1131,30 @@ void HPPDrawer::text(const char *formatstr, ...)
 	va_start(args, formatstr);
 	ImGui::TextV(formatstr, args);
 	va_end(args);
+}
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit3(caption, colors, flags);
+}
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit4(caption, colors, flags);
+}
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker3(caption, colors, flags);
+}
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
 }        // namespace vkb

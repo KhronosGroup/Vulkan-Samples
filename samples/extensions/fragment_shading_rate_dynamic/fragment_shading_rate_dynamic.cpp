@@ -965,7 +965,7 @@ void FragmentShadingRateDynamic::prepare_pipelines()
 	        blend_attachment_state.size(),
 	        blend_attachment_state.data());
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
@@ -1134,9 +1134,9 @@ void FragmentShadingRateDynamic::draw()
 	submit_info.pWaitDstStageMask    = start_submit.pWaitDstStageMask;
 }
 
-bool FragmentShadingRateDynamic::prepare(vkb::Platform &platform)
+bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

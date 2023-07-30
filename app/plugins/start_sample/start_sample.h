@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -43,8 +43,9 @@ class StartSample : public StartSampleTags
 
 	virtual void init(const vkb::CommandParser &parser) override;
 
-	vkb::PositionalCommand sample_cmd     = {"sample_id", "ID of the sample to run"};
-	vkb::SubCommand        sample_subcmd  = {"sample", "Run a specific sample", {&sample_cmd}};
-	vkb::SubCommand        samples_subcmd = {"samples", "List available samples", {}};
+	vkb::PositionalCommand sample_cmd             = {"sample_id", "ID of the sample to run"};
+	vkb::SubCommand        sample_subcmd          = {"sample", "Run a specific sample", {&sample_cmd}};
+	vkb::SubCommand        samples_subcmd         = {"samples", "List available samples with descriptions", {}};
+	vkb::SubCommand        samples_oneline_subcmd = {"samples-oneline", "List available samples, one per line", {}};
 };
 }        // namespace plugins

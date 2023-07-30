@@ -69,6 +69,12 @@ struct HPPFont
 class HPPDrawer
 {
   public:
+	enum class ColorOp
+	{
+		Edit,
+		Pick
+	};
+
 	HPPDrawer() = default;
 
 	/**
@@ -161,9 +167,50 @@ class HPPDrawer
 	 */
 	void text(const char *formatstr, ...);
 
+	/**
+	 * @brief Adds a color edit to the gui
+	 * @tparam OP Mode of the color element.
+	 * @tparam N Color channel count. Must be 3 or 4.
+	 * @param caption The text to display
+	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
+	 * @param width Element width. Zero is a special value for the default element width.
+	 * @param flags Flags to modify the appearance and behavior of the element.
+	 */
+	template <ColorOp OP, size_t N>
+	bool color_op(const std::string &caption, std::array<float, N> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0)
+	{
+		static_assert((N == 3) || (N == 4), "The channel count must be 3 or 4.");
+
+		ImGui::PushItemWidth(width);
+		bool res = color_op_impl<OP, N>(caption.c_str(), color.data(), flags);
+		ImGui::PopItemWidth();
+		if (res)
+			dirty = true;
+		return res;
+	}
+
   private:
+	template <ColorOp OP, size_t N>
+	inline bool color_op_impl(const char *caption, float *colors, ImGuiColorEditFlags flags)
+	{
+		assert(false);
+		return false;
+	}
+
 	bool dirty = false;
 };
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags);
+
+template <>
+bool HPPDrawer::color_op_impl<HPPDrawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags);
 
 class HPPVulkanSample;
 
@@ -205,6 +252,8 @@ class HPPGui
   public:
 	// The name of the default font file to use
 	static const std::string default_font;
+	// Used to show/hide the GUI
+	static bool visible;
 
   public:
 	/**
@@ -215,11 +264,11 @@ class HPPGui
 	 * @param font_size The font size
 	 * @param explicit_update If true, update buffers every frame
 	 */
-	HPPGui(HPPVulkanSample                &sample,
-	       const vkb::platform::HPPWindow &window,
-	       const vkb::stats::HPPStats     *stats           = nullptr,
-	       float                           font_size       = 21.0f,
-	       bool                            explicit_update = false);
+	HPPGui(HPPVulkanSample            &sample,
+	       const vkb::Window          &window,
+	       const vkb::stats::HPPStats *stats           = nullptr,
+	       float                       font_size       = 21.0f,
+	       bool                        explicit_update = false);
 
 	/**
 	 * @brief Destroys the HPPGui
@@ -376,8 +425,7 @@ class HPPGui
 	vk::DescriptorSetLayout                  descriptor_set_layout = nullptr;
 	vk::DescriptorSet                        descriptor_set        = nullptr;
 	vk::Pipeline                             pipeline              = nullptr;
-	Timer                                    timer;                                // Used to measure duration of input events
-	bool                                     visible                = true;        // Used to show/hide the GUI
+	Timer                                    timer;        // Used to measure duration of input events
 	bool                                     prev_visible           = true;
 	bool                                     two_finger_tap         = false;        // Whether or not the GUI has detected a multi touch gesture
 	bool                                     show_graph_file_output = false;

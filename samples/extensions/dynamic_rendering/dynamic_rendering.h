@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2021, Holochip Corporation
+ * Copyright (c) 2021-2023, Holochip Corporation
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -26,7 +26,7 @@ class DynamicRendering : public ApiVulkanSample
 	DynamicRendering();
 	~DynamicRendering() override;
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	void render(float delta_time) override;
 	void build_command_buffers() override;

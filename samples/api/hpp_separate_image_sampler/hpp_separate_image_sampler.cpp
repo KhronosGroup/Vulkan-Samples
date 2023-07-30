@@ -50,9 +50,9 @@ HPPSeparateImageSampler::~HPPSeparateImageSampler()
 	}
 }
 
-bool HPPSeparateImageSampler::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPSeparateImageSampler::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -215,7 +215,7 @@ void HPPSeparateImageSampler::prepare_pipelines()
 
 	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, {}, {}, blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthTestEnable  = true;
 	depth_stencil_state.depthWriteEnable = true;

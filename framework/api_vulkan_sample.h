@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -74,6 +74,27 @@ struct Vertex
 };
 
 /**
+ * @brief The structure of a vertex for storage buffer
+ * Simplified to position and normal for easier alignment
+ */
+struct AlignedVertex
+{
+	glm::vec4 pos;
+	glm::vec4 normal;
+};
+
+/**
+ * @brief The structure of a meshlet for mesh shader
+ */
+struct Meshlet
+{
+	uint32_t vertices[64];
+	uint32_t indices[126];
+	uint32_t vertex_count;
+	uint32_t index_count;
+};
+
+/**
  * @brief Sascha Willems base class for use in his ported samples into the framework
  *
  * See vkb::VulkanSample for documentation
@@ -85,7 +106,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	virtual ~ApiVulkanSample();
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void input_event(const vkb::InputEvent &input_event) override;
 
@@ -106,7 +127,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	/// Stores the swapchain image buffers
 	std::vector<SwapchainBuffer> swapchain_buffers;
 
-	virtual void create_render_context(vkb::Platform &platform) override;
+	virtual void create_render_context() override;
 	virtual void prepare_render_context() override;
 
 	// Handle to the device graphics queue that command buffers are submitted to
@@ -159,14 +180,14 @@ class ApiVulkanSample : public vkb::VulkanSample
 	std::vector<VkFence> wait_fences;
 
 	/**
-	 * @brief Populates the swapchain_buffers vector with the image and imageviews 
+	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();
 
 	/**
 	 * @brief Updates the swapchains image usage, if a swapchain exists and recreates all resources based on swapchain images
 	 * @param image_usage_flags The usage flags the new swapchain images will have
- 	 */
+	 */
 	void update_swapchain_image_usage_flags(std::set<VkImageUsageFlagBits> image_usage_flags);
 
 	/**
@@ -197,7 +218,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	Texture load_texture(const std::string &file, vkb::sg::Image::ContentType content_type);
 
 	/**
-	 * @brief Laods in a ktx 2D texture array
+	 * @brief Loads in a ktx 2D texture array
 	 * @param file The filename of the texture to load
 	 * @param content_type The type of content in the image file
 	 */
@@ -214,8 +235,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Loads in a single model from a GLTF file
 	 * @param file The filename of the model to load
 	 * @param index The index of the model to load from the GLTF file (default: 0)
+	 * @param storage_buffer Set true to store model in SSBO
 	 */
-	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0);
+	std::unique_ptr<vkb::sg::SubMesh> load_model(const std::string &file, uint32_t index = 0, bool storage_buffer = false);
 
 	/**
 	 * @brief Records the necessary drawing commands to a command buffer
@@ -312,7 +334,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	VkPipelineShaderStageCreateInfo load_shader(const std::string &file, VkShaderStageFlagBits stage);
 
 	/**
-	 * @brief Updates the overlay 
+	 * @brief Updates the overlay
 	 * @param delta_time The time taken since the last frame
 	 */
 	void update_overlay(float delta_time);
@@ -324,7 +346,7 @@ class ApiVulkanSample : public vkb::VulkanSample
 	void draw_ui(const VkCommandBuffer command_buffer);
 
 	/**
-	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and 
+	 * @brief Prepare the frame for workload submission, acquires the next image from the swap chain and
 	 *        sets the default wait and signal semaphores
 	 */
 	void prepare_frame();
@@ -339,6 +361,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @param drawer The drawer from the gui to draw certain elements
 	 */
 	virtual void on_update_ui_overlay(vkb::Drawer &drawer);
+
+	/**
+	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
+	 */
+	virtual void prepare_gui();
 
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */

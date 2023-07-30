@@ -24,9 +24,9 @@
 // Instantiate the default dispatcher
 VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
 
-bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPVulkanSample::prepare(platform))
+	if (!HPPVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -47,7 +47,7 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 	submit_info                   = vk::SubmitInfo();
 	submit_info.pWaitDstStageMask = &submit_pipeline_stages;
 
-	if (platform.get_window().get_window_mode() != vkb::Window::Mode::Headless)
+	if (window->get_window_mode() != vkb::Window::Mode::Headless)
 	{
 		submit_info.setWaitSemaphores(semaphores.acquired_image_ready);
 		submit_info.setSignalSemaphores(semaphores.render_complete);
@@ -66,13 +66,18 @@ bool HPPApiVulkanSample::prepare(vkb::platform::HPPPlatform &platform)
 
 	extent = get_render_context().get_surface_extent();
 
-	gui = std::make_unique<vkb::HPPGui>(*this, platform.get_window(), /*stats=*/nullptr, 15.0f, true);
+	prepare_gui();
+
+	return true;
+}
+
+void HPPApiVulkanSample::prepare_gui()
+{
+	gui = std::make_unique<vkb::HPPGui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache,
 	             render_pass,
 	             {static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex)),
 	              static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment))});
-
-	return true;
 }
 
 void HPPApiVulkanSample::update(float delta_time)
@@ -91,8 +96,6 @@ void HPPApiVulkanSample::update(float delta_time)
 	{
 		view_updated = true;
 	}
-
-	get_platform().on_post_draw(get_render_context());
 }
 
 bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
@@ -156,14 +159,14 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 	return true;
 }
 
-void HPPApiVulkanSample::create_render_context(vkb::platform::HPPPlatform const &platform)
+void HPPApiVulkanSample::create_render_context()
 {
 	// We always want an sRGB surface to match the display.
 	// If we used a UNORM surface, we'd have to do the conversion to sRGB ourselves at the end of our fragment shaders.
 	auto surface_priority_list = std::vector<vk::SurfaceFormatKHR>{{vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
 	                                                               {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
-	render_context = platform.create_render_context(*device, surface, surface_priority_list);
+	HPPVulkanSample::create_render_context(surface_priority_list);
 }
 
 void HPPApiVulkanSample::prepare_render_context()
@@ -299,6 +302,11 @@ void HPPApiVulkanSample::input_event(const vkb::InputEvent &input_event)
 					case vkb::KeyCode::P:
 						paused = !paused;
 						break;
+					case vkb::KeyCode::F1:
+						if (gui)
+						{
+							gui->visible = !gui->visible;
+						}
 					default:
 						break;
 				}
@@ -450,17 +458,14 @@ void HPPApiVulkanSample::prepare_frame()
 		{
 			std::tie(result, current_buffer) = get_render_context().get_swapchain().acquire_next_image(semaphores.acquired_image_ready);
 		}
+		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR)
+		// Don't catch other failures here, they are propagated up the calling hierarchy
 		catch (vk::OutOfDateKHRError & /*err*/)
-		{
-			result = vk::Result::eErrorOutOfDateKHR;
-		}
-
-		// Recreate the swapchain if it's no longer compatible with the surface (eErrorOutOfDateKHR) or no longer optimal for
-		// presentation (eSuboptimalKHR)
-		if ((result == vk::Result::eErrorOutOfDateKHR) || (result == vk::Result::eSuboptimalKHR))
 		{
 			resize(extent.width, extent.height);
 		}
+		// VK_SUBOPTIMAL_KHR is a success code and means that acquire was successful and semaphore is signaled but image is suboptimal
+		// allow rendering frame to suboptimal swapchain as otherwise we would have to manually unsignal semaphore and acquire image again
 	}
 }
 
@@ -481,7 +486,7 @@ void HPPApiVulkanSample::submit_frame()
 
 		vk::DisplayPresentInfoKHR disp_present_info;
 		if (device->is_extension_supported(VK_KHR_DISPLAY_SWAPCHAIN_EXTENSION_NAME) &&
-		    get_platform().get_window().get_display_present_info(&disp_present_info, extent.width, extent.height))
+		    window->get_display_present_info(reinterpret_cast<VkDisplayPresentInfoKHR *>(&disp_present_info), extent.width, extent.height))
 		{
 			// Add display present info if supported and wanted
 			present_info.setPNext(&disp_present_info);

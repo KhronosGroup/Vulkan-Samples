@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -21,14 +21,7 @@
 
 #pragma once
 
-#include <ktx.h>
-
-#include <glslang/Public/ShaderLang.h>
-
-#include "common/vk_common.h"
-#include "core/shader_module.h"
-
-#include "hpp_api_vulkan_sample.h"
+#include <hpp_api_vulkan_sample.h>
 
 class HPPHlslShaders : public HPPApiVulkanSample
 {
@@ -53,8 +46,7 @@ class HPPHlslShaders : public HPPApiVulkanSample
 	};
 
   private:
-	// from platform::HPPApplication
-	bool prepare(vkb::platform::HPPPlatform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample
 	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
@@ -64,15 +56,14 @@ class HPPHlslShaders : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void view_changed() override;
 
+	void                              create_base_descriptor_set_layout();
+	void                              create_pipeline();
+	void                              create_sampler_descriptor_set_layout();
 	void                              draw();
 	void                              generate_quad();
 	void                              load_assets();
 	vk::PipelineShaderStageCreateInfo load_hlsl_shader(const std::string &file, vk::ShaderStageFlagBits stage);
-	void                              prepare_pipelines();
-	void                              prepare_uniform_buffers();
-	void                              setup_descriptor_pool();
-	void                              setup_descriptor_set();
-	void                              setup_descriptor_set_layout();
+	void                              update_descriptor_sets();
 	void                              update_uniform_buffers();
 
   private:

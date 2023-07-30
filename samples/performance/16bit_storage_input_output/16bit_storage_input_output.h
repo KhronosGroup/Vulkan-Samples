@@ -1,4 +1,4 @@
-/* Copyright (c) 2020-2021, Arm Limited and Contributors
+/* Copyright (c) 2020-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,7 +29,7 @@ class KHR16BitStorageInputOutputSample : public vkb::VulkanSample
 
 	virtual ~KHR16BitStorageInputOutputSample() = default;
 
-	virtual bool prepare(vkb::Platform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 
 	virtual void update(float delta_time) override;
 

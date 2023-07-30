@@ -31,11 +31,9 @@ enum UnixType
 class UnixPlatform : public Platform
 {
   public:
-	UnixPlatform(const UnixType &type, int argc, char **argv);
+	UnixPlatform(const PlatformContext &context, const UnixType &type);
 
 	virtual ~UnixPlatform() = default;
-
-	virtual const char *get_surface_extension() override;
 
   protected:
 	virtual void create_window(const Window::Properties &properties) override;

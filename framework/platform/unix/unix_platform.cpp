@@ -49,20 +49,6 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-namespace
-{
-inline const std::string get_temp_path_from_environment()
-{
-	std::string temp_path = "/tmp/";
-
-	if (const char *env_ptr = std::getenv("TMPDIR"))
-	{
-		temp_path = std::string(env_ptr) + "/";
-	}
-
-	return temp_path;
-}
-}        // namespace
 
 namespace fs
 {
@@ -75,14 +61,8 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-UnixPlatform::UnixPlatform(const UnixType &type, int argc, char **argv) :
-    type{type}
-{
-	Platform::set_arguments({argv + 1, argv + argc});
-	Platform::set_temp_directory(get_temp_path_from_environment());
-}
-
-const char *UnixPlatform::get_surface_extension()
+UnixPlatform::UnixPlatform(const PlatformContext &context, const UnixType &type) :
+    Platform{context}, type{type}
 {
 	if (type == UnixType::Mac || type == UnixType::Ios)
 	{

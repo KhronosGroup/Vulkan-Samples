@@ -99,7 +99,7 @@ class FullScreenExclusive : public vkb::Application
 	FullScreenExclusive() = default;
 	~FullScreenExclusive() override;
 	void                         initialize_windows();
-	bool                         prepare(vkb::Platform &platform) override;        // This syncs all required extensions and booleans is a Windows platform is detected
+	bool                         prepare(const vkb::ApplicationOptions &options) override;        // This syncs all required extensions and booleans is a Windows platform is detected
 	void                         update(float delta_time) override;
 	bool                         resize(uint32_t width, uint32_t height) override;
 	static bool                  validate_extensions(const std::vector<const char *> &required, const std::vector<VkExtensionProperties> &available);

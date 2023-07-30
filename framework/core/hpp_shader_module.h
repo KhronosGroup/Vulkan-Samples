@@ -24,11 +24,58 @@ namespace vkb
 {
 namespace core
 {
+class HPPDevice;
 /**
  * @brief facade class around vkb::ShaderModule, providing a vulkan.hpp-based interface
  *
  * See vkb::ShaderModule for documentation
  */
+
+/// Types of shader resources
+enum class HPPShaderResourceType
+{
+	Input,
+	InputAttachment,
+	Output,
+	Image,
+	ImageSampler,
+	ImageStorage,
+	Sampler,
+	BufferUniform,
+	BufferStorage,
+	PushConstant,
+	SpecializationConstant,
+	All
+};
+
+/// This determines the type and method of how descriptor set should be created and bound
+enum class HPPShaderResourceMode
+{
+	Static,
+	Dynamic,
+	UpdateAfterBind
+};
+
+/// Store shader resource data.
+/// Used by the shader module.
+struct HPPShaderResource
+{
+	vk::ShaderStageFlags  stages;
+	HPPShaderResourceType type;
+	HPPShaderResourceMode mode;
+	uint32_t              set;
+	uint32_t              binding;
+	uint32_t              location;
+	uint32_t              input_attachment_index;
+	uint32_t              vec_size;
+	uint32_t              columns;
+	uint32_t              array_size;
+	uint32_t              offset;
+	uint32_t              size;
+	uint32_t              constant_id;
+	uint32_t              qualifiers;
+	std::string           name;
+};
 
 class HPPShaderSource : private vkb::ShaderSource
 {
@@ -58,52 +105,11 @@ class HPPShaderModule : private vkb::ShaderModule
 	                      entry_point,
 	                      reinterpret_cast<vkb::ShaderVariant const &>(shader_variant))
 	{}
-};
 
-/// This determines the type and method of how descriptor set should be created and bound
-enum class HPPShaderResourceMode
-{
-	Static,
-	Dynamic,
-	UpdateAfterBind
-};
-
-/// Types of shader resources
-enum class HPPShaderResourceType
-{
-	Input,
-	InputAttachment,
-	Output,
-	Image,
-	ImageSampler,
-	ImageStorage,
-	Sampler,
-	BufferUniform,
-	BufferStorage,
-	PushConstant,
-	SpecializationConstant,
-	All
-};
-
-/// Store shader resource data.
-/// Used by the shader module.
-struct HPPShaderResource
-{
-	vk::ShaderStageFlags  stages;
-	HPPShaderResourceType type;
-	HPPShaderResourceMode mode;
-	uint32_t              set;
-	uint32_t              binding;
-	uint32_t              location;
-	uint32_t              input_attachment_index;
-	uint32_t              vec_size;
-	uint32_t              columns;
-	uint32_t              array_size;
-	uint32_t              offset;
-	uint32_t              size;
-	uint32_t              constant_id;
-	uint32_t              qualifiers;
-	std::string           name;
+	const std::vector<vkb::core::HPPShaderResource> &get_resources() const
+	{
+		return reinterpret_cast<std::vector<vkb::core::HPPShaderResource> const &>(vkb::ShaderModule::get_resources());
+	}
 };
 
 }        // namespace core

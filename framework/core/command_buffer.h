@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -57,14 +57,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 		AlwaysAllocate,
 	};
 
-	enum class State
-	{
-		Invalid,
-		Initial,
-		Recording,
-		Executable,
-	};
-
 	/**
 	 * @brief Helper structure used to track render pass state
 	 */
@@ -87,8 +79,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 
 	CommandBuffer &operator=(CommandBuffer &&) = delete;
 
-	bool is_recording() const;
-
 	/**
 	 * @brief Flushes the command buffer, pushing the new changes
 	 * @param pipeline_bind_point The type of pipeline we want to flush
@@ -101,7 +91,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	 *        primary command buffer it inherits from must be provided
 	 * @param flags Usage behavior for the command buffer
 	 * @param primary_cmd_buf (optional)
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, CommandBuffer *primary_cmd_buf = nullptr);
 
@@ -113,7 +103,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	 * @param render_pass
 	 * @param framebuffer
 	 * @param subpass_index
-	 * @return Whether it succeded or not
+	 * @return Whether it succeeded or not
 	 */
 	VkResult begin(VkCommandBufferUsageFlags flags, const RenderPass *render_pass, const Framebuffer *framebuffer, uint32_t subpass_index);
 
@@ -230,8 +220,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 
 	void buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier);
 
-	const State get_state() const;
-
 	void set_update_after_bind(bool update_after_bind_);
 
 	void reset_query_pool(const QueryPool &query_pool, uint32_t first_query, uint32_t query_count);
@@ -253,8 +241,6 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	const VkCommandBufferLevel level;
 
   private:
-	State state{State::Initial};
-
 	CommandPool &command_pool;
 
 	RenderPassBinding current_render_pass;
@@ -287,7 +273,7 @@ class CommandBuffer : public core::VulkanResource<VkCommandBuffer, VK_OBJECT_TYP
 	const bool is_render_size_optimal(const VkExtent2D &extent, const VkRect2D &render_area);
 
 	/**
-	 * @brief Flush the piplines state
+	 * @brief Flush the pipeline state
 	 */
 	void flush_pipeline_state(VkPipelineBindPoint pipeline_bind_point);
 

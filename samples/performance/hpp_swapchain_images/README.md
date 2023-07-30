@@ -1,5 +1,5 @@
 <!--
-- Copyright (c) 2022, The Khronos Group
+- Copyright (c) 2022-2023, The Khronos Group
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -17,7 +17,7 @@
 -
 -->
 
-### HPP Swapchain Images<br/>
+### HPP Swapchain Images
 A transcoded version of the performance sample [Swapchain Images](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/swapchain_images) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 # Choosing the right number of swapchain images

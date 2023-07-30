@@ -34,7 +34,7 @@ class HPPPipelineCache : public vkb::HPPVulkanSample
   private:
 	// from vkb::HPPVulkanSample
 	virtual void draw_gui() override;
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual void update(float delta_time) override;
 
   private:

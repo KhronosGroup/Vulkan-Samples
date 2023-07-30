@@ -207,7 +207,7 @@ void DescriptorBufferBasic::prepare_pipelines()
 	VkPipelineColorBlendStateCreateInfo color_blend_state =
 	    vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_TRUE, VK_COMPARE_OP_GREATER);
 
@@ -393,9 +393,9 @@ inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
 	return (value + alignment - 1) & ~(alignment - 1);
 }
 
-bool DescriptorBufferBasic::prepare(vkb::Platform &platform)
+bool DescriptorBufferBasic::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

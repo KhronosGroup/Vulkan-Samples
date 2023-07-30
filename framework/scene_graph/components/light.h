@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2020, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -40,7 +40,7 @@ enum LightType
 	Directional = 0,
 	Point       = 1,
 	Spot        = 2,
-	// Insert new lightype here
+	// Insert new light type here
 	Max
 };
 

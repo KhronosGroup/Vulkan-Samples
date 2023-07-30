@@ -36,25 +36,26 @@ HPPComputeNBody::~HPPComputeNBody()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		compute.destroy(device, descriptor_pool);
-		graphics.destroy(device, descriptor_pool);
+		compute.destroy(device);
+		graphics.destroy(device);
 		textures.destroy(device);
 	}
 }
 
-bool HPPComputeNBody::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPComputeNBody::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
 	load_assets();
 
-	std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eUniformBuffer, 2},
-	                                                  {vk::DescriptorType::eStorageBuffer, 1},
-	                                                  {vk::DescriptorType::eCombinedImageSampler, 2}};
-	descriptor_pool                                = vkb::common::create_descriptor_pool(get_device()->get_handle(), 2, pool_sizes);
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2},
+	                                                     {vk::DescriptorType::eStorageBuffer, 1},
+	                                                     {vk::DescriptorType::eCombinedImageSampler, 2}}};
+
+	descriptor_pool = get_device()->get_handle().createDescriptorPool({{}, 2, pool_sizes});
 
 	prepare_graphics();
 	prepare_compute();
@@ -156,13 +157,6 @@ void HPPComputeNBody::render(float delta_time)
 	{
 		update_graphics_uniform_buffers();
 	}
-}
-
-vk::CommandBuffer HPPComputeNBody::allocate_command_buffer(vk::CommandPool command_pool)
-{
-	vk::CommandBufferAllocateInfo command_buffer_allocate_info(command_pool, vk::CommandBufferLevel::ePrimary, 1);
-
-	return get_device()->get_handle().allocateCommandBuffers(command_buffer_allocate_info).front();
 }
 
 void HPPComputeNBody::build_compute_command_buffer()
@@ -274,12 +268,6 @@ void HPPComputeNBody::build_copy_command_buffer(vk::CommandBuffer command_buffer
 	command_buffer.end();
 }
 
-vk::CommandPool HPPComputeNBody::create_command_pool(uint32_t queue_family_index)
-{
-	vk::CommandPoolCreateInfo command_pool_create_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index);
-	return get_device()->get_handle().createCommandPool(command_pool_create_info);
-}
-
 vk::Pipeline HPPComputeNBody::create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout)
 {
 	vk::ComputePipelineCreateInfo compute_pipeline_create_info({}, stage, layout);
@@ -290,13 +278,6 @@ vk::Pipeline HPPComputeNBody::create_compute_pipeline(vk::PipelineCache pipeline
 	assert(result == vk::Result::eSuccess);
 
 	return pipeline;
-}
-
-vk::Semaphore HPPComputeNBody::create_semaphore()
-{
-	vk::SemaphoreCreateInfo semaphore_create_info;
-
-	return get_device()->get_handle().createSemaphore(semaphore_create_info);
 }
 
 void HPPComputeNBody::draw()
@@ -327,7 +308,7 @@ void HPPComputeNBody::initializeCamera()
 {
 	camera.type = vkb::CameraType::LookAt;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Z-Near and Z-Far are flipped
 	camera.set_perspective(60.0f, (float) extent.width / (float) extent.height, 512.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-26.0f, 75.0f, 0.0f));
 	camera.set_translation(glm::vec3(0.0f, 0.0f, -14.0f));
@@ -363,14 +344,14 @@ void HPPComputeNBody::prepare_compute()
 	// Compute pipelines are created separate from graphics pipelines even if they use the same queue (family index)
 	compute.queue = device.getQueue(compute.queue_family_index, 0);
 
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute},
-	                                                        {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute}};
-	compute.descriptor_set_layout                        = vkb::common::create_descriptor_set_layout(device, bindings);
+	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eStorageBuffer, 1, vk::ShaderStageFlagBits::eCompute},
+	                                                           {1, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eCompute}}};
+
+	compute.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
 
 	compute.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, compute.descriptor_set_layout);
 	update_compute_descriptor_set();
-
-	compute.pipeline_layout = vkb::common::create_pipeline_layout(device, compute.descriptor_set_layout);
+	compute.pipeline_layout = device.createPipelineLayout({{}, compute.descriptor_set_layout});
 
 	// create the compute pipelines
 	// 1st pass - Particle movement calculations
@@ -418,13 +399,13 @@ void HPPComputeNBody::prepare_compute()
 	}
 
 	// Separate command pool as queue family for compute may be different than graphics
-	compute.command_pool = create_command_pool(compute.queue_family_index);
+	compute.command_pool = device.createCommandPool({vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index});
 
 	// Create a command buffer for compute operations
-	compute.command_buffer = allocate_command_buffer(compute.command_pool);
+	compute.command_buffer = vkb::common::allocate_command_buffer(device, compute.command_pool);
 
 	// Semaphore for compute & graphics sync
-	compute.semaphore = create_semaphore();
+	compute.semaphore = device.createSemaphore({});
 
 	// Signal the semaphore
 	vkb::common::submit_and_wait(device, queue, {}, {compute.semaphore});
@@ -437,7 +418,7 @@ void HPPComputeNBody::prepare_compute()
 	if (graphics.queue_family_index != compute.queue_family_index)
 	{
 		// Create a transient command buffer for setting up the initial buffer transfer state
-		vk::CommandBuffer transfer_command = allocate_command_buffer(compute.command_pool);
+		vk::CommandBuffer transfer_command = vkb::common::allocate_command_buffer(device, compute.command_pool);
 
 		build_compute_transfer_command_buffer(transfer_command);
 
@@ -473,7 +454,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// Initial particle positions
 	std::vector<Particle> particle_buffer(compute.ubo.particle_count);
 
-	std::default_random_engine      rnd_engine(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine      rnd_engine(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
 	std::normal_distribution<float> rnd_distribution(0.0f, 1.0f);
 
 	for (uint32_t i = 0; i < static_cast<uint32_t>(attractors.size()); i++)
@@ -527,7 +508,7 @@ void HPPComputeNBody::prepare_compute_storage_buffers()
 	// Copy from staging buffer to storage buffer
 	vk::Device device = get_device()->get_handle();
 
-	vk::CommandBuffer copy_command = allocate_command_buffer(get_device()->get_command_pool().get_handle());
+	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(get_device()->get_handle(), get_device()->get_command_pool().get_handle());
 
 	build_copy_command_buffer(copy_command, staging_buffer.get_handle(), storage_buffer_size);
 
@@ -547,15 +528,14 @@ void HPPComputeNBody::prepare_graphics()
 	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(graphics.ubo), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_graphics_uniform_buffers();
 
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                        {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}};
-	graphics.descriptor_set_layout                       = vkb::common::create_descriptor_set_layout(device, bindings);
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex}}};
 
-	graphics.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, graphics.descriptor_set_layout);
+	graphics.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	graphics.descriptor_set        = vkb::common::allocate_descriptor_set(device, descriptor_pool, graphics.descriptor_set_layout);
 	update_graphics_descriptor_set();
-
-	graphics.pipeline_layout = vkb::common::create_pipeline_layout(device, graphics.descriptor_set_layout);
+	graphics.pipeline_layout = device.createPipelineLayout({{}, graphics.descriptor_set_layout});
 
 	// create the rendering pipeline
 	// Load shaders
@@ -593,13 +573,14 @@ void HPPComputeNBody::prepare_graphics()
 	                                                          vertex_input_state,
 	                                                          vk::PrimitiveTopology::ePointList,
 	                                                          vk::CullModeFlagBits::eNone,
+	                                                          vk::FrontFace::eCounterClockwise,
 	                                                          {blend_attachment_state},
 	                                                          depth_stencil_state,
 	                                                          graphics.pipeline_layout,
 	                                                          render_pass);
 
 	// Semaphore for compute & graphics sync
-	graphics.semaphore = create_semaphore();
+	graphics.semaphore = device.createSemaphore({});
 }
 
 void HPPComputeNBody::update_compute_descriptor_set()

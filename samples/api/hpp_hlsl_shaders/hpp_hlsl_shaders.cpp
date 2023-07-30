@@ -21,104 +21,17 @@
 
 #include "hpp_hlsl_shaders.h"
 
-#include "common/vk_initializers.h"
-
 VKBP_DISABLE_WARNINGS()
 #include <SPIRV/GlslangToSpv.h>
-#include <StandAlone/ResourceLimits.h>
+#include <glslang/Public/ResourceLimits.h>
 VKBP_ENABLE_WARNINGS()
-
-vk::PipelineShaderStageCreateInfo HPPHlslShaders::load_hlsl_shader(const std::string &file, vk::ShaderStageFlagBits stage)
-{
-	std::string info_log;
-
-	// Compile HLSL to SPIR-V
-
-	// Initialize glslang library
-	glslang::InitializeProcess();
-
-	auto messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
-
-	EShLanguage language{};
-	switch (stage)
-	{
-		case vk::ShaderStageFlagBits::eVertex:
-			language = EShLangVertex;
-			break;
-		case vk::ShaderStageFlagBits::eFragment:
-			language = EShLangFragment;
-			break;
-		default:
-			assert(false);
-	}
-
-	std::string source        = vkb::fs::read_shader(file);
-	const char *shader_source = source.data();
-
-	glslang::TShader shader(language);
-	shader.setStringsWithLengths(&shader_source, nullptr, 1);
-	shader.setEnvInput(glslang::EShSourceHlsl, language, glslang::EShClientVulkan, 1);
-	shader.setEntryPoint("main");
-	shader.setSourceEntryPoint("main");
-	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
-	shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
-
-	if (!shader.parse(&glslang::DefaultTBuiltInResource, 100, false, messages))
-	{
-		LOGE("Failed to parse HLSL shader, Error: {}", std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()));
-		throw std::runtime_error("Failed to parse HLSL shader");
-	}
-
-	// Add shader to new program object
-	glslang::TProgram program;
-	program.addShader(&shader);
-
-	// Link program
-	if (!program.link(messages))
-	{
-		LOGE("Failed to compile HLSL shader, Error: {}", std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog()));
-		throw std::runtime_error("Failed to compile HLSL shader");
-	}
-
-	if (shader.getInfoLog())
-	{
-		info_log += std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()) + "\n";
-	}
-	if (program.getInfoLog())
-	{
-		info_log += std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog());
-	}
-
-	// Translate to SPIRV
-	glslang::TIntermediate *intermediate = program.getIntermediate(language);
-	if (!intermediate)
-	{
-		LOGE("Failed to get shared intermediate code.");
-		throw std::runtime_error("Failed to compile HLSL shader");
-	}
-
-	spv::SpvBuildLogger logger;
-
-	std::vector<uint32_t> spirvCode;
-	glslang::GlslangToSpv(*intermediate, spirvCode, &logger);
-
-	info_log += logger.getAllMessages() + "\n";
-
-	glslang::FinalizeProcess();
-
-	// Create shader module from generated SPIR-V
-	vk::ShaderModuleCreateInfo module_create_info({}, spirvCode);
-	vk::ShaderModule           shader_module = get_device()->get_handle().createShaderModule(module_create_info);
-	shader_modules.push_back(shader_module);
-
-	return vk::PipelineShaderStageCreateInfo({}, stage, shader_module, "main");
-}
 
 HPPHlslShaders::HPPHlslShaders()
 {
+	title = "HPP HLSL shaders";
+
 	zoom     = -2.0f;
 	rotation = {0.0f, 0.0f, 0.0f};
-	title    = "HPP HLSL shaders";
 }
 
 HPPHlslShaders::~HPPHlslShaders()
@@ -136,6 +49,45 @@ HPPHlslShaders::~HPPHlslShaders()
 		// Delete the implicitly created sampler for the texture loaded via the framework
 		device.destroySampler(texture.sampler);
 	}
+}
+
+bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
+{
+	if (!HPPApiVulkanSample::prepare(options))
+	{
+		return false;
+	}
+	load_assets();
+	generate_quad();
+
+	// Vertex shader uniform buffer block
+	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+	                                                           sizeof(ubo_vs),
+	                                                           vk::BufferUsageFlagBits::eUniformBuffer,
+	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+	update_uniform_buffers();
+
+	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
+	create_base_descriptor_set_layout();
+	create_sampler_descriptor_set_layout();
+
+	// Pipeline layout
+	// Set layout for the base descriptors in set 0 and set layout for the sampler descriptors in set 1
+	std::array<vk::DescriptorSetLayout, 2> set_layouts = {{base_descriptor_set_layout, sampler_descriptor_set_layout}};
+	pipeline_layout                                    = get_device()->get_handle().createPipelineLayout({{}, set_layouts});
+
+	create_pipeline();
+
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {
+	    {{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}, {vk::DescriptorType::eSampler, 2}}};
+	descriptor_pool = get_device()->get_handle().createDescriptorPool({{}, 3, pool_sizes});
+
+	base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
+	update_descriptor_sets();
+
+	build_command_buffers();
+	prepared = true;
+	return true;
 }
 
 // Enable physical device features required for this example
@@ -190,9 +142,69 @@ void HPPHlslShaders::build_command_buffers()
 	}
 }
 
-void HPPHlslShaders::load_assets()
+void HPPHlslShaders::render(float delta_time)
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	if (!prepared)
+	{
+		return;
+	}
+	draw();
+}
+
+void HPPHlslShaders::view_changed()
+{
+	update_uniform_buffers();
+}
+
+void HPPHlslShaders::create_base_descriptor_set_layout()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 2> base_set_layout_bindings = {
+	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},                   // Binding 0 : Vertex shader uniform buffer
+	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};        // Binding 1 : Fragment shader combined sampler
+
+	base_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout({{}, base_set_layout_bindings});
+}
+
+void HPPHlslShaders::create_pipeline()
+{
+	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
+	    load_hlsl_shader("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_hlsl_shader("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	// Vertex bindings and attributes
+	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
+	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
+	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, pos)},             // Location 0 : Position
+	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1: Texture Coordinates
+	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, normal)}}};        // Location 2 : Normal
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, true, true, vk::CompareOp::eGreater);
+	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
+
+	pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                                 pipeline_cache,
+	                                                 shader_stages,
+	                                                 vertex_input_state,
+	                                                 vk::PrimitiveTopology::eTriangleList,
+	                                                 vk::CullModeFlagBits::eNone,
+	                                                 vk::FrontFace::eCounterClockwise,
+	                                                 {blend_attachment_state},
+	                                                 depth_stencil_state,
+	                                                 pipeline_layout,
+	                                                 render_pass);
+}
+
+void HPPHlslShaders::create_sampler_descriptor_set_layout()
+{
+	vk::DescriptorSetLayoutBinding sampler_set_layout_binding(0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment);        // Binding 0: Fragment shader sampler
+
+	sampler_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout({{}, sampler_set_layout_binding});
 }
 
 void HPPHlslShaders::draw()
@@ -241,47 +253,97 @@ void HPPHlslShaders::generate_quad()
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 
-void HPPHlslShaders::setup_descriptor_pool()
+void HPPHlslShaders::load_assets()
 {
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1}, {vk::DescriptorType::eCombinedImageSampler, 1}, {vk::DescriptorType::eSampler, 2}}};
-
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 3, pool_sizes);
-	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
 }
 
-void HPPHlslShaders::setup_descriptor_set_layout()
+vk::PipelineShaderStageCreateInfo HPPHlslShaders::load_hlsl_shader(const std::string &file, vk::ShaderStageFlagBits stage)
 {
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	std::array<vk::DescriptorSetLayoutBinding, 2> base_set_layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},                   // Binding 0 : Vertex shader uniform buffer
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};        // Binding 1 : Fragment shader combined sampler
+	std::string info_log;
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, base_set_layout_bindings);
+	// Compile HLSL to SPIR-V
 
-	base_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	// Initialize glslang library
+	glslang::InitializeProcess();
 
-	// Set layout for the samplers
-	vk::DescriptorSetLayoutBinding sampler_set_layout_binding(0, vk::DescriptorType::eSampler, 1, vk::ShaderStageFlagBits::eFragment);        // Binding 0: Fragment shader sampler
-	descriptor_layout_create_info.setBindings(sampler_set_layout_binding);
-	sampler_descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
+	auto messages = static_cast<EShMessages>(EShMsgReadHlsl | EShMsgDefault | EShMsgVulkanRules | EShMsgSpvRules);
 
-	// Pipeline layout
-	// Set layout for the base descriptors in set 0 and set layout for the sampler descriptors in set 1
-	std::array<vk::DescriptorSetLayout, 2> set_layouts = {{base_descriptor_set_layout, sampler_descriptor_set_layout}};
-	vk::PipelineLayoutCreateInfo           pipeline_layout_create_info({}, set_layouts);
-	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+	EShLanguage language{};
+	switch (stage)
+	{
+		case vk::ShaderStageFlagBits::eVertex:
+			language = EShLangVertex;
+			break;
+		case vk::ShaderStageFlagBits::eFragment:
+			language = EShLangFragment;
+			break;
+		default:
+			assert(false);
+	}
+
+	std::string source        = vkb::fs::read_shader(file);
+	const char *shader_source = source.data();
+
+	glslang::TShader shader(language);
+	shader.setStringsWithLengths(&shader_source, nullptr, 1);
+	shader.setEnvInput(glslang::EShSourceHlsl, language, glslang::EShClientVulkan, 1);
+	shader.setEntryPoint("main");
+	shader.setSourceEntryPoint("main");
+	shader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_0);
+	shader.setEnvTarget(glslang::EshTargetSpv, glslang::EShTargetSpv_1_0);
+
+	if (!shader.parse(GetDefaultResources(), 100, false, messages))
+	{
+		LOGE("Failed to parse HLSL shader, Error: {}", std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()));
+		throw std::runtime_error("Failed to parse HLSL shader");
+	}
+
+	// Add shader to new program object
+	glslang::TProgram program;
+	program.addShader(&shader);
+
+	// Link program
+	if (!program.link(messages))
+	{
+		LOGE("Failed to compile HLSL shader, Error: {}", std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog()));
+		throw std::runtime_error("Failed to compile HLSL shader");
+	}
+
+	if (shader.getInfoLog())
+	{
+		info_log += std::string(shader.getInfoLog()) + "\n" + std::string(shader.getInfoDebugLog()) + "\n";
+	}
+	if (program.getInfoLog())
+	{
+		info_log += std::string(program.getInfoLog()) + "\n" + std::string(program.getInfoDebugLog());
+	}
+
+	// Translate to SPIRV
+	glslang::TIntermediate *intermediate = program.getIntermediate(language);
+	if (!intermediate)
+	{
+		LOGE("Failed to get shared intermediate code.");
+		throw std::runtime_error("Failed to compile HLSL shader");
+	}
+
+	spv::SpvBuildLogger logger;
+
+	std::vector<uint32_t> spirvCode;
+	glslang::GlslangToSpv(*intermediate, spirvCode, &logger);
+
+	info_log += logger.getAllMessages() + "\n";
+
+	glslang::FinalizeProcess();
+
+	// Create shader module from generated SPIR-V
+	shader_modules.push_back(get_device()->get_handle().createShaderModule({{}, spirvCode}));
+
+	return vk::PipelineShaderStageCreateInfo({}, stage, shader_modules.back(), "main");
 }
 
-void HPPHlslShaders::setup_descriptor_set()
+void HPPHlslShaders::update_descriptor_sets()
 {
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, 1, &base_descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, base_descriptor_set_layout);
-#endif
-	base_descriptor_set = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
-
 	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffer_vs->get_handle(), 0, VK_WHOLE_SIZE);
 
 	// Combined image descriptor for the texture
@@ -295,79 +357,6 @@ void HPPHlslShaders::setup_descriptor_set()
 	     {base_descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
 
 	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
-}
-
-void HPPHlslShaders::prepare_pipelines()
-{
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_hlsl_shader("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_hlsl_shader("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment)};
-
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::eTriangleList, false);
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	rasterization_state.cullMode    = vk::CullModeFlagBits::eNone;
-	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
-	rasterization_state.lineWidth   = 1.0f;
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
-
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, true, true, vk::CompareOp::eGreater);
-	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
-
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_state);
-
-	std::array<vk::DynamicState, 2>    dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	// Vertex bindings and attributes
-	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {
-	    {{0, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, pos)},             // Location 0 : Position
-	     {1, 0, vk::Format::eR32G32Sfloat, offsetof(VertexStructure, uv)},                 // Location 1: Texture Coordinates
-	     {2, 0, vk::Format::eR32G32B32Sfloat, offsetof(VertexStructure, normal)}}};        // Location 2 : Normal
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_binding, vertex_input_attributes);
-
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    {},
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, pipeline) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-}
-
-// Prepare and initialize uniform buffer containing shader uniforms
-void HPPHlslShaders::prepare_uniform_buffers()
-{
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
-	                                                           sizeof(ubo_vs),
-	                                                           vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	update_uniform_buffers();
 }
 
 void HPPHlslShaders::update_uniform_buffers()
@@ -384,38 +373,6 @@ void HPPHlslShaders::update_uniform_buffers()
 	ubo_vs.view_pos = glm::vec4(0.0f, 0.0f, -zoom, 0.0f);
 
 	uniform_buffer_vs->convert_and_update(ubo_vs);
-}
-
-bool HPPHlslShaders::prepare(vkb::platform::HPPPlatform &platform)
-{
-	if (!HPPApiVulkanSample::prepare(platform))
-	{
-		return false;
-	}
-	load_assets();
-	generate_quad();
-	prepare_uniform_buffers();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_set();
-	build_command_buffers();
-	prepared = true;
-	return true;
-}
-
-void HPPHlslShaders::render(float delta_time)
-{
-	if (!prepared)
-	{
-		return;
-	}
-	draw();
-}
-
-void HPPHlslShaders::view_changed()
-{
-	update_uniform_buffers();
 }
 
 std::unique_ptr<vkb::Application> create_hpp_hlsl_shaders()

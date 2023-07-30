@@ -21,7 +21,7 @@
 #include "common/vk_common.h"
 #include "glsl_compiler.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+#include "platform/window.h"
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 /// @brief A debug callback called from Vulkan validation layers.
@@ -440,7 +440,7 @@ void HelloTriangle::init_swapchain(Context &context)
 	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
 	vkGetPhysicalDeviceSurfaceFormatsKHR(context.gpu, context.surface, &surface_format_count, supported_surface_formats.data());
 
-	// We want to get an SRGB image format that matches our list of preferred format candiates
+	// We want to get an SRGB image format that matches our list of preferred format candidates
 	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
 	VkSurfaceFormatKHR format                = supported_surface_formats[0];
 	auto               preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};
@@ -1063,14 +1063,16 @@ HelloTriangle::~HelloTriangle()
 	teardown(context);
 }
 
-bool HelloTriangle::prepare(vkb::Platform &platform)
+bool HelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
+	assert(options.window != nullptr);
+
 	init_instance(context, {VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);
 
-	context.surface                     = platform.get_window().create_surface(*vk_instance);
-	auto &extent                        = platform.get_window().get_extent();
+	context.surface                     = options.window->create_surface(*vk_instance);
+	auto &extent                        = options.window->get_extent();
 	context.swapchain_dimensions.width  = extent.width;
 	context.swapchain_dimensions.height = extent.height;
 

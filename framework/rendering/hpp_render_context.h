@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -19,7 +19,7 @@
 
 #include <core/hpp_device.h>
 #include <core/hpp_swapchain.h>
-#include <platform/hpp_window.h>
+#include <platform/window.h>
 #include <rendering/hpp_render_frame.h>
 
 namespace vkb
@@ -27,10 +27,10 @@ namespace vkb
 namespace rendering
 {
 /**
-* @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
-* 
-* See vkb::RenderContext for documentation
-*/
+ * @brief HPPRenderContext is a transcoded version of vkb::RenderContext from vulkan to vulkan-hpp.
+ *
+ * See vkb::RenderContext for documentation
+ */
 class HPPRenderContext
 {
   public:
@@ -42,8 +42,17 @@ class HPPRenderContext
 	 * @param device A valid device
 	 * @param surface A surface, nullptr if in headless mode
 	 * @param window The window where the surface was created
+	 * @param present_mode Requests to set the present mode of the swapchain
+	 * @param present_mode_priority_list The order in which the swapchain prioritizes selecting its present mode
+	 * @param surface_format_priority_list The order in which the swapchain prioritizes selecting its surface format
 	 */
-	HPPRenderContext(vkb::core::HPPDevice &device, vk::SurfaceKHR surface, const vkb::platform::HPPWindow &window);
+	HPPRenderContext(vkb::core::HPPDevice                    &device,
+	                 vk::SurfaceKHR                           surface,
+	                 const vkb::Window                       &window,
+	                 vk::PresentModeKHR                       present_mode                 = vk::PresentModeKHR::eFifo,
+	                 std::vector<vk::PresentModeKHR> const   &present_mode_priority_list   = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox},
+	                 std::vector<vk::SurfaceFormatKHR> const &surface_format_priority_list = {
+	                     {vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}, {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}});
 
 	HPPRenderContext(const HPPRenderContext &) = delete;
 
@@ -54,26 +63,6 @@ class HPPRenderContext
 	HPPRenderContext &operator=(const HPPRenderContext &) = delete;
 
 	HPPRenderContext &operator=(HPPRenderContext &&) = delete;
-
-	/**
-	 * @brief Requests to set the present mode of the swapchain, must be called before prepare
-	 */
-	void request_present_mode(const vk::PresentModeKHR present_mode);
-
-	/**
-	 * @brief Requests to set a specific image format for the swapchain
-	 */
-	void request_image_format(const vk::Format format);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its present mode
-	 */
-	void set_present_mode_priority(const std::vector<vk::PresentModeKHR> &present_mode_priority_list);
-
-	/**
-	 * @brief Sets the order in which the swapchain prioritizes selecting its surface format
-	 */
-	void set_surface_format_priority(const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list);
 
 	/**
 	 * @brief Prepares the RenderFrames for rendering
@@ -147,7 +136,7 @@ class HPPRenderContext
 	 */
 	void begin_frame();
 
-	vk::Semaphore submit(const vkb::core::HPPQueue &                       queue,
+	vk::Semaphore submit(const vkb::core::HPPQueue                        &queue,
 	                     const std::vector<vkb::core::HPPCommandBuffer *> &command_buffers,
 	                     vk::Semaphore                                     wait_semaphore,
 	                     vk::PipelineStageFlags                            wait_pipeline_stage);
@@ -221,7 +210,7 @@ class HPPRenderContext
   private:
 	vkb::core::HPPDevice &device;
 
-	const vkb::platform::HPPWindow &window;
+	const vkb::Window &window;
 
 	/// If swapchain exists, then this will be a present supported queue, else a graphics queue
 	const vkb::core::HPPQueue &queue;
@@ -229,13 +218,6 @@ class HPPRenderContext
 	std::unique_ptr<vkb::core::HPPSwapchain> swapchain;
 
 	vkb::core::HPPSwapchainProperties swapchain_properties;
-
-	// A list of present modes in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<vk::PresentModeKHR> present_mode_priority_list = {vk::PresentModeKHR::eFifo, vk::PresentModeKHR::eMailbox};
-
-	// A list of surface formats in order of priority (vector[0] has high priority, vector[size-1] has low priority)
-	std::vector<vk::SurfaceFormatKHR> surface_format_priority_list = {{vk::Format::eR8G8B8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear},
-	                                                                  {vk::Format::eB8G8R8A8Srgb, vk::ColorSpaceKHR::eSrgbNonlinear}};
 
 	std::vector<std::unique_ptr<HPPRenderFrame>> frames;
 

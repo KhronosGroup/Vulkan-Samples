@@ -323,7 +323,7 @@ void MemoryBudget::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
@@ -437,7 +437,7 @@ void MemoryBudget::prepare_instance_data()
 	std::vector<InstanceData> instance_data;
 	instance_data.resize(MESH_DENSITY);
 
-	std::default_random_engine              rnd_generator(platform->using_plugin<::plugins::BenchmarkMode>() ? 0 : (unsigned) time(nullptr));
+	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : (unsigned) time(nullptr));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
 	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
 
@@ -555,14 +555,14 @@ void MemoryBudget::draw()
 	ApiVulkanSample::submit_frame();
 }
 
-bool MemoryBudget::prepare(vkb::Platform &platform)
+bool MemoryBudget::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
-	// Note: Using Reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Z-near and Z-far are flipped
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_perspective(60.0f, (float) width / (float) height, 256.0f, 0.1f);
 	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));

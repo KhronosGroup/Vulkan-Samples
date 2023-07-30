@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -227,72 +227,64 @@ namespace core
 HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::Extent2D &extent) :
     HPPSwapchain{old_swapchain.device,
                  old_swapchain.surface,
+                 old_swapchain.properties.present_mode,
+                 old_swapchain.present_mode_priority_list,
+                 old_swapchain.surface_format_priority_list,
                  extent,
                  old_swapchain.properties.image_count,
                  old_swapchain.properties.pre_transform,
-                 old_swapchain.properties.present_mode,
                  old_swapchain.image_usage_flags,
-                 old_swapchain.present_mode_priority_list,
-                 old_swapchain.surface_format_priority_list,
                  old_swapchain.get_handle()}
-{
-	create();
-}
+{}
 
 HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const uint32_t image_count) :
     HPPSwapchain{old_swapchain.device,
                  old_swapchain.surface,
+                 old_swapchain.properties.present_mode,
+                 old_swapchain.present_mode_priority_list,
+                 old_swapchain.surface_format_priority_list,
                  old_swapchain.properties.extent,
                  image_count,
                  old_swapchain.properties.pre_transform,
-                 old_swapchain.properties.present_mode,
                  old_swapchain.image_usage_flags,
-                 old_swapchain.present_mode_priority_list,
-                 old_swapchain.surface_format_priority_list,
                  old_swapchain.get_handle()}
-{
-	create();
-}
+{}
 
 HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const std::set<vk::ImageUsageFlagBits> &image_usage_flags) :
     HPPSwapchain{old_swapchain.device,
                  old_swapchain.surface,
+                 old_swapchain.properties.present_mode,
+                 old_swapchain.present_mode_priority_list,
+                 old_swapchain.surface_format_priority_list,
                  old_swapchain.properties.extent,
                  old_swapchain.properties.image_count,
                  old_swapchain.properties.pre_transform,
-                 old_swapchain.properties.present_mode,
                  image_usage_flags,
-                 old_swapchain.present_mode_priority_list,
-                 old_swapchain.surface_format_priority_list,
                  old_swapchain.get_handle()}
-{
-	create();
-}
+{}
 
 HPPSwapchain::HPPSwapchain(HPPSwapchain &old_swapchain, const vk::Extent2D &extent, const vk::SurfaceTransformFlagBitsKHR transform) :
     HPPSwapchain{old_swapchain.device,
                  old_swapchain.surface,
+                 old_swapchain.properties.present_mode,
+                 old_swapchain.present_mode_priority_list,
+                 old_swapchain.surface_format_priority_list,
                  extent,
                  old_swapchain.properties.image_count,
                  transform,
-                 old_swapchain.properties.present_mode,
                  old_swapchain.image_usage_flags,
-                 old_swapchain.present_mode_priority_list,
-                 old_swapchain.surface_format_priority_list,
                  old_swapchain.get_handle()}
-{
-	create();
-}
+{}
 
-HPPSwapchain::HPPSwapchain(HPPDevice &                              device,
+HPPSwapchain::HPPSwapchain(HPPDevice                               &device,
                            vk::SurfaceKHR                           surface,
-                           const vk::Extent2D &                     extent,
+                           const vk::PresentModeKHR                 present_mode,
+                           const std::vector<vk::PresentModeKHR>   &present_mode_priority_list,
+                           const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list,
+                           const vk::Extent2D                      &extent,
                            const uint32_t                           image_count,
                            const vk::SurfaceTransformFlagBitsKHR    transform,
-                           const vk::PresentModeKHR                 present_mode,
-                           const std::set<vk::ImageUsageFlagBits> & image_usage_flags,
-                           const std::vector<vk::PresentModeKHR> &  present_mode_priority_list,
-                           const std::vector<vk::SurfaceFormatKHR> &surface_format_priority_list,
+                           const std::set<vk::ImageUsageFlagBits>  &image_usage_flags,
                            vk::SwapchainKHR                         old_swapchain) :
     device{device},
     surface{surface}
@@ -321,7 +313,7 @@ HPPSwapchain::HPPSwapchain(HPPDevice &                              device,
 	this->image_usage_flags                      = choose_image_usage(image_usage_flags, surface_capabilities.supportedUsageFlags, format_properties.optimalTilingFeatures);
 
 	properties.image_count     = clamp(image_count,
-                                   surface_capabilities.minImageCount,
+	                                   surface_capabilities.minImageCount,
                                    surface_capabilities.maxImageCount ? surface_capabilities.maxImageCount : std::numeric_limits<uint32_t>::max());
 	properties.extent          = choose_extent(extent, surface_capabilities.minImageExtent, surface_capabilities.maxImageExtent, surface_capabilities.currentExtent);
 	properties.array_layers    = 1;
@@ -330,30 +322,9 @@ HPPSwapchain::HPPSwapchain(HPPDevice &                              device,
 	properties.pre_transform   = choose_transform(transform, surface_capabilities.supportedTransforms, surface_capabilities.currentTransform);
 	properties.composite_alpha = choose_composite_alpha(vk::CompositeAlphaFlagBitsKHR::eInherit, surface_capabilities.supportedCompositeAlpha);
 
-	// Pass through defaults to the create function
 	properties.old_swapchain = old_swapchain;
 	properties.present_mode  = present_mode;
-}
 
-HPPSwapchain::~HPPSwapchain()
-{
-	if (handle)
-	{
-		device.get_handle().destroySwapchainKHR(handle);
-	}
-}
-
-HPPSwapchain::HPPSwapchain(HPPSwapchain &&other) :
-    device{other.device},
-    surface{std::exchange(other.surface, nullptr)},
-    handle{std::exchange(other.handle, nullptr)},
-    image_usage_flags{std::move(other.image_usage_flags)},
-    images{std::move(other.images)},
-    properties{std::move(other.properties)}
-{}
-
-void HPPSwapchain::create()
-{
 	// Revalidate the present mode and surface format
 	properties.present_mode   = choose_present_mode(properties.present_mode, present_modes, present_mode_priority_list);
 	properties.surface_format = choose_surface_format(properties.surface_format, surface_formats, surface_format_priority_list);
@@ -378,6 +349,27 @@ void HPPSwapchain::create()
 
 	images = device.get_handle().getSwapchainImagesKHR(handle);
 }
+
+HPPSwapchain::~HPPSwapchain()
+{
+	if (handle)
+	{
+		device.get_handle().destroySwapchainKHR(handle);
+	}
+}
+
+HPPSwapchain::HPPSwapchain(HPPSwapchain &&other) :
+    device{other.device},
+    surface{std::exchange(other.surface, nullptr)},
+    handle{std::exchange(other.handle, nullptr)},
+    images{std::exchange(other.images, {})},
+    surface_formats{std::exchange(other.surface_formats, {})},
+    present_modes{std::exchange(other.present_modes, {})},
+    properties{std::exchange(other.properties, {})},
+    present_mode_priority_list{std::exchange(other.present_mode_priority_list, {})},
+    surface_format_priority_list{std::exchange(other.surface_format_priority_list, {})},
+    image_usage_flags{std::move(other.image_usage_flags)}
+{}
 
 bool HPPSwapchain::is_valid() const
 {
@@ -410,11 +402,6 @@ vk::Format HPPSwapchain::get_format() const
 	return properties.surface_format.format;
 }
 
-void HPPSwapchain::set_format(vk::Format format)
-{
-	properties.surface_format.format = format;
-}
-
 const std::vector<vk::Image> &HPPSwapchain::get_images() const
 {
 	return images;
@@ -435,26 +422,9 @@ vk::ImageUsageFlags HPPSwapchain::get_usage() const
 	return properties.image_usage;
 }
 
-void HPPSwapchain::set_present_mode_priority(const std::vector<vk::PresentModeKHR> &new_present_mode_priority_list)
-{
-	assert(!new_present_mode_priority_list.empty() && "Priority list must not be empty");
-	present_mode_priority_list = new_present_mode_priority_list;
-}
-
-void HPPSwapchain::set_surface_format_priority(const std::vector<vk::SurfaceFormatKHR> &new_surface_format_priority_list)
-{
-	assert(!new_surface_format_priority_list.empty() && "Priority list must not be empty");
-	surface_format_priority_list = new_surface_format_priority_list;
-}
-
 vk::PresentModeKHR HPPSwapchain::get_present_mode() const
 {
 	return properties.present_mode;
-}
-
-void HPPSwapchain::set_present_mode(vk::PresentModeKHR present_mode)
-{
-	properties.present_mode = present_mode;
 }
 }        // namespace core
 }        // namespace vkb

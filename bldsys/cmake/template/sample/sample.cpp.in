@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -29,9 +29,9 @@
 {
 }
 
-bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
+bool @SAMPLE_NAME@::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -53,7 +53,7 @@ bool @SAMPLE_NAME@::prepare(vkb::Platform &platform)
 
 	// Add a GUI with the stats you want to monitor
 	stats->request_stats({/*stats you require*/});
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

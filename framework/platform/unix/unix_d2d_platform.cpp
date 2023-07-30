@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -55,10 +55,9 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-UnixD2DPlatform::UnixD2DPlatform(int argc, char **argv)
+UnixD2DPlatform::UnixD2DPlatform(const PlatformContext &context) :
+    Platform{context}
 {
-	Platform::set_arguments({argv + 1, argv + argc});
-	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 void UnixD2DPlatform::create_window(const Window::Properties &properties)
@@ -71,10 +70,5 @@ void UnixD2DPlatform::create_window(const Window::Properties &properties)
 	{
 		window = std::make_unique<DirectWindow>(this, properties);
 	}
-}
-
-const char *UnixD2DPlatform::get_surface_extension()
-{
-	return VK_KHR_DISPLAY_EXTENSION_NAME;
 }
 }        // namespace vkb

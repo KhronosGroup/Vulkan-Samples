@@ -706,7 +706,7 @@ void TimestampQueries::prepare_pipelines()
 	        1,
 	        &blend_attachment_state);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_FALSE,
@@ -930,9 +930,9 @@ void TimestampQueries::draw()
 	get_time_stamp_results();
 }
 
-bool TimestampQueries::prepare(vkb::Platform &platform)
+bool TimestampQueries::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}

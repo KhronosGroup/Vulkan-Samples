@@ -32,8 +32,8 @@ HPPHDR::~HPPHDR()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		bloom.destroy(device, descriptor_pool);
-		composition.destroy(device, descriptor_pool);
+		bloom.destroy(device);
+		composition.destroy(device);
 		filter_pass.destroy(device);
 		models.destroy(device, descriptor_pool);
 		offscreen.destroy(device);
@@ -41,9 +41,9 @@ HPPHDR::~HPPHDR()
 	}
 }
 
-bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPHDR::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -53,8 +53,8 @@ bool HPPHDR::prepare(vkb::platform::HPPPlatform &platform)
 	prepare_uniform_buffers();
 	prepare_offscreen_buffer();
 
-	std::vector<vk::DescriptorPoolSize> pool_sizes = {{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}};
-	descriptor_pool                                = vkb::common::create_descriptor_pool(get_device()->get_handle(), 4, pool_sizes);
+	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 4}, {vk::DescriptorType::eCombinedImageSampler, 6}}};
+	descriptor_pool                                  = get_device()->get_handle().createDescriptorPool({{}, 4, pool_sizes});
 
 	setup_bloom();
 	setup_composition();
@@ -267,7 +267,7 @@ void HPPHDR::create_bloom_pipelines()
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -280,6 +280,7 @@ void HPPHDR::create_bloom_pipelines()
 	                                                           {},
 	                                                           vk::PrimitiveTopology::eTriangleList,
 	                                                           vk::CullModeFlagBits::eFront,
+	                                                           vk::FrontFace::eCounterClockwise,
 	                                                           {blend_attachment_state},
 	                                                           depth_stencil_state,
 	                                                           bloom.pipeline_layout,
@@ -292,6 +293,7 @@ void HPPHDR::create_bloom_pipelines()
 	                                                           {},
 	                                                           vk::PrimitiveTopology::eTriangleList,
 	                                                           vk::CullModeFlagBits::eFront,
+	                                                           vk::FrontFace::eCounterClockwise,
 	                                                           {blend_attachment_state},
 	                                                           depth_stencil_state,
 	                                                           bloom.pipeline_layout,
@@ -307,7 +309,7 @@ void HPPHDR::create_composition_pipeline()
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -320,17 +322,11 @@ void HPPHDR::create_composition_pipeline()
 	                                                             {},
 	                                                             vk::PrimitiveTopology::eTriangleList,
 	                                                             vk::CullModeFlagBits::eFront,
+	                                                             vk::FrontFace::eCounterClockwise,
 	                                                             {blend_attachment_state},
 	                                                             depth_stencil_state,
 	                                                             composition.pipeline_layout,
 	                                                             render_pass);
-}
-
-vk::Framebuffer HPPHDR::create_framebuffer(vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent)
-{
-	vk::FramebufferCreateInfo framebuffer_create_info({}, render_pass, attachments, extent.width, extent.height, 1);
-
-	return get_device()->get_handle().createFramebuffer(framebuffer_create_info);
 }
 
 vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
@@ -387,7 +383,7 @@ void HPPHDR::create_models_pipelines()
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 	blend_attachment_states[1].colorWriteMask = blend_attachment_states[0].colorWriteMask;
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
 	depth_stencil_state.depthCompareOp = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp = vk::CompareOp::eAlways;
@@ -399,6 +395,7 @@ void HPPHDR::create_models_pipelines()
 	                                                               vertex_input_state,
 	                                                               vk::PrimitiveTopology::eTriangleList,
 	                                                               vk::CullModeFlagBits::eBack,
+	                                                               vk::FrontFace::eCounterClockwise,
 	                                                               blend_attachment_states,
 	                                                               depth_stencil_state,
 	                                                               models.pipeline_layout,
@@ -418,6 +415,7 @@ void HPPHDR::create_models_pipelines()
 	                                                                vertex_input_state,
 	                                                                vk::PrimitiveTopology::eTriangleList,
 	                                                                vk::CullModeFlagBits::eFront,
+	                                                                vk::FrontFace::eCounterClockwise,
 	                                                                blend_attachment_states,
 	                                                                depth_stencil_state,
 	                                                                models.pipeline_layout,
@@ -426,7 +424,7 @@ void HPPHDR::create_models_pipelines()
 
 vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description)
 {
-	// Use subpass dependencies for attachment layput transitions
+	// Use subpass dependencies for attachment layout transitions
 	std::array<vk::SubpassDependency, 2> subpass_dependencies;
 
 	subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -516,7 +514,7 @@ void HPPHDR::prepare_camera()
 	camera.set_position(glm::vec3(0.0f, 0.0f, -4.0f));
 	camera.set_rotation(glm::vec3(0.0f, 180.0f, 0.0f));
 
-	// Note: Using Revsered depth-buffer for increased precision, so Znear and Zfar are flipped
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
@@ -545,13 +543,13 @@ void HPPHDR::prepare_offscreen_buffer()
 		// Color attachments
 
 		// We are using two 128-Bit RGBA floating point color buffers for this sample
-		// In a performance or bandwith-limited scenario you should consider using a format with lower precision
+		// In a performance or bandwidth-limited scenario you should consider using a format with lower precision
 		offscreen.color[0] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		offscreen.color[1] = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		// Depth attachment
 		offscreen.depth = create_attachment(depth_format, vk::ImageUsageFlagBits::eDepthStencilAttachment);
 
-		// Set up separate renderpass with references to the colorand depth attachments
+		// Set up separate renderpass with references to the color and depth attachments
 		std::vector<vk::AttachmentDescription> attachment_descriptions(3);
 
 		// Init attachment properties
@@ -582,7 +580,7 @@ void HPPHDR::prepare_offscreen_buffer()
 		offscreen.render_pass = create_render_pass(attachment_descriptions, subpass);
 
 		std::vector<vk::ImageView> attachments = {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view};
-		offscreen.framebuffer                  = create_framebuffer(offscreen.render_pass, attachments, offscreen.extent);
+		offscreen.framebuffer                  = vkb::common::create_framebuffer(get_device()->get_handle(), offscreen.render_pass, attachments, offscreen.extent);
 
 		// Create sampler to sample from the color attachments
 		offscreen.sampler = create_sampler();
@@ -612,7 +610,7 @@ void HPPHDR::prepare_offscreen_buffer()
 		vk::SubpassDescription  subpass({}, vk::PipelineBindPoint::eGraphics, {}, color_reference);
 
 		filter_pass.render_pass = create_render_pass({attachment_description}, subpass);
-		filter_pass.framebuffer = create_framebuffer(filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
+		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
 		filter_pass.sampler     = create_sampler();
 	}
 }
@@ -638,12 +636,12 @@ void HPPHDR::prepare_uniform_buffers()
 
 void HPPHDR::setup_bloom()
 {
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}};
+	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::Device device           = get_device()->get_handle();
-	bloom.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
-	bloom.pipeline_layout       = vkb::common::create_pipeline_layout(device, bloom.descriptor_set_layout);
+	bloom.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	bloom.pipeline_layout       = device.createPipelineLayout({{}, bloom.descriptor_set_layout});
 	create_bloom_pipelines();
 	bloom.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, bloom.descriptor_set_layout);
 	update_bloom_descriptor_set();
@@ -651,12 +649,12 @@ void HPPHDR::setup_bloom()
 
 void HPPHDR::setup_composition()
 {
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}};
+	std::array<vk::DescriptorSetLayoutBinding, 2> bindings = {{{0, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::Device device                 = get_device()->get_handle();
-	composition.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
-	composition.pipeline_layout       = vkb::common::create_pipeline_layout(device, composition.descriptor_set_layout);
+	composition.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	composition.pipeline_layout       = device.createPipelineLayout({{}, composition.descriptor_set_layout});
 	create_composition_pipeline();
 	composition.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, composition.descriptor_set_layout);
 	update_composition_descriptor_set();
@@ -664,13 +662,13 @@ void HPPHDR::setup_composition()
 
 void HPPHDR::setup_models()
 {
-	std::vector<vk::DescriptorSetLayoutBinding> bindings = {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                        {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
-	                                                        {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}};
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment},
+	                                                           {2, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eFragment}}};
 
 	vk::Device device            = get_device()->get_handle();
-	models.descriptor_set_layout = vkb::common::create_descriptor_set_layout(device, bindings);
-	models.pipeline_layout       = vkb::common::create_pipeline_layout(device, models.descriptor_set_layout);
+	models.descriptor_set_layout = device.createDescriptorSetLayout({{}, bindings});
+	models.pipeline_layout       = device.createPipelineLayout({{}, models.descriptor_set_layout});
 	create_models_pipelines();
 
 	// Objects descriptor set

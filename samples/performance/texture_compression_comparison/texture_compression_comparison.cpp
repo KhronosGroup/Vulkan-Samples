@@ -1,4 +1,4 @@
-/* Copyright (c) 2021-2022, Holochip
+/* Copyright (c) 2021-2023, Holochip
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -64,9 +64,9 @@ std::string get_sponza_texture_filename(const std::string &short_name)
 		}                                                                                         \
 	} while (0)
 
-bool TextureCompressionComparison::prepare(vkb::Platform &platform)
+bool TextureCompressionComparison::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -79,7 +79,7 @@ bool TextureCompressionComparison::prepare(vkb::Platform &platform)
 	create_subpass();
 
 	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::gpu_ext_read_bytes});
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

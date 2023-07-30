@@ -70,9 +70,9 @@ HPPTimestampQueries::~HPPTimestampQueries()
 	}
 }
 
-bool HPPTimestampQueries::prepare(vkb::platform::HPPPlatform &platform)
+bool HPPTimestampQueries::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(platform))
+	if (!HPPApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -193,13 +193,12 @@ void HPPTimestampQueries::build_command_buffers()
 		*/
 		if (bloom)
 		{
-			std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}})),
-			                                               vk::ClearDepthStencilValue(0.0f, 0)}};
+			vk::ClearValue clear_value{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 0.0f}}))};
 
 			// Bloom filter
 			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, time_stamps_query_pool, 2);
 
-			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_values);
+			vk::RenderPassBeginInfo render_pass_begin_info(filter_pass.render_pass, filter_pass.framebuffer, {{0, 0}, filter_pass.extent}, clear_value);
 			command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 			vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(filter_pass.extent.width), static_cast<float>(filter_pass.extent.height), 0.0f, 1.0f);
@@ -298,6 +297,7 @@ void HPPTimestampQueries::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 		if (bloom)
 		{
 			drawer.text("Pass 3: Second bloom pass %.3f ms", float(time_stamps[5] - time_stamps[4]) * timestampFrequency / 1000000.0f);
+			drawer.set_dirty(true);
 		}
 	}
 }
@@ -311,7 +311,7 @@ void HPPTimestampQueries::render(float delta_time)
 		update_uniform_buffers();
 }
 
-void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachement *attachment)
+void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFlagBits usage, FramebufferAttachment *attachment)
 {
 	attachment->format = format;
 
@@ -767,7 +767,7 @@ void HPPTimestampQueries::prepare_pipelines()
 
 	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
 
-	// Note: Using Reversed depth-buffer for increased precision, so Greater depth values are kept
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state({}, false, false, vk::CompareOp::eGreater, {}, {}, {}, {{}, {}, {}, vk::CompareOp::eAlways});
 
 	vk::PipelineColorBlendStateCreateInfo color_blend_state;

@@ -21,7 +21,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "scene_graph/components/material.h"
 #include "scene_graph/components/mesh.h"
 #include "scene_graph/components/orthographic_camera.h"
@@ -39,9 +39,9 @@ MultithreadingRenderPasses::MultithreadingRenderPasses()
 	config.insert<vkb::IntSetting>(2, multithreading_mode, 2);
 }
 
-bool MultithreadingRenderPasses::prepare(vkb::Platform &platform)
+bool MultithreadingRenderPasses::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -75,7 +75,7 @@ bool MultithreadingRenderPasses::prepare(vkb::Platform &platform)
 
 	// Add a GUI with the stats you want to monitor
 	stats->request_stats({vkb::StatIndex::frame_times, vkb::StatIndex::cpu_cycles});
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }
@@ -500,7 +500,7 @@ MultithreadingRenderPasses::ShadowSubpass::ShadowSubpass(vkb::RenderContext &ren
 void MultithreadingRenderPasses::ShadowSubpass::prepare_pipeline_state(vkb::CommandBuffer &command_buffer, VkFrontFace front_face, bool double_sided_material)
 {
 	// Enabling depth bias to get rid of self-shadowing artifacts
-	// Depth bias leterally "pushes" slightly all the primitives further away from the camera taking their slope into account
+	// Depth bias literally "pushes" slightly all the primitives further away from the camera taking their slope into account
 	// It helps to avoid precision related problems while doing depth comparisons in the final pass
 	vkb::RasterizationState rasterization_state{};
 	rasterization_state.front_face        = front_face;

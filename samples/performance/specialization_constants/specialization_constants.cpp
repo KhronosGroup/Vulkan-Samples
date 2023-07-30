@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2020, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -23,7 +23,7 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "stats/stats.h"
 
 SpecializationConstants::SpecializationConstants()
@@ -40,9 +40,9 @@ SpecializationConstants::ForwardSubpassCustomLights::ForwardSubpassCustomLights(
 {
 }
 
-bool SpecializationConstants::prepare(vkb::Platform &platform)
+bool SpecializationConstants::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -57,7 +57,7 @@ bool SpecializationConstants::prepare(vkb::Platform &platform)
 
 	stats->request_stats({vkb::StatIndex::gpu_fragment_cycles});
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

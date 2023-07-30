@@ -21,13 +21,9 @@
 #include "gltf_loader.h"
 #include "gui.h"
 #include "platform/filesystem.h"
-#include "platform/platform.h"
+
 #include "rendering/subpasses/forward_subpass.h"
 #include "stats/stats.h"
-
-#if defined(VK_USE_PLATFORM_ANDROID_KHR)
-#	include "platform/android/android_platform.h"
-#endif
 
 RenderPassesSample::RenderPassesSample()
 {
@@ -102,9 +98,9 @@ void RenderPassesSample::draw_gui()
 	    /* lines = */ vkb::to_u32(lines));
 }
 
-bool RenderPassesSample::prepare(vkb::Platform &platform)
+bool RenderPassesSample::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!VulkanSample::prepare(platform))
+	if (!VulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -127,7 +123,7 @@ bool RenderPassesSample::prepare(vkb::Platform &platform)
 
 	set_render_pipeline(std::move(render_pipeline));
 
-	gui = std::make_unique<vkb::Gui>(*this, platform.get_window(), stats.get());
+	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
 
 	return true;
 }

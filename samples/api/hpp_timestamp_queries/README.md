@@ -17,7 +17,7 @@
 -
 -->
 
-### HPP timestamp queries<br/>
+### HPP timestamp queries
 A transcoded version of the API sample [Timestamp queries](https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/timestamp_queries) that illustrates the usage of the C++ bindings of vulkan provided by vulkan.hpp.
 
 # Timestamp queries

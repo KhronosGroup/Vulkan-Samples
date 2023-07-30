@@ -285,14 +285,11 @@ struct HPPRecordHelper
 {
 	size_t record(HPPResourceRecord & /*recorder*/, A &.../*args*/)
 	{
-		assert(false);
 		return 0;
 	}
 
 	void index(HPPResourceRecord & /*recorder*/, size_t /*index*/, T & /*resource*/)
-	{
-		assert(false);
-	}
+	{}
 };
 
 template <class... A>

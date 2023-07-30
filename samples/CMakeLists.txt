@@ -67,6 +67,7 @@ set(ORDER_LIST
     "calibrated_timestamps"
     "graphics_pipeline_library"
     "memory_budget"
+    "mesh_shader_culling"
     "push_descriptors"
     "ray_queries"
     "raytracing_basic"
@@ -80,7 +81,10 @@ set(ORDER_LIST
     "vertex_dynamic_state"
     "extended_dynamic_state2"
     "logic_op_dynamic_state"
+    "patch_control_points"
     "fragment_shader_barycentric"
+    "gshader_to_mshader"
+    "color_write_enable"
 
     #Performance Samples
     "swapchain_images"

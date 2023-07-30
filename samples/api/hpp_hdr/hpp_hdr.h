@@ -38,13 +38,13 @@ class HPPHDR : public HPPApiVulkanSample
 		vk::PipelineLayout      pipeline_layout;
 		vk::Pipeline            pipelines[2];
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			device.destroyPipeline(pipelines[0]);
 			device.destroyPipeline(pipelines[1]);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 		}
 	};
 
@@ -55,12 +55,12 @@ class HPPHDR : public HPPApiVulkanSample
 		vk::PipelineLayout      pipeline_layout       = {};
 		vk::Pipeline            pipeline              = {};
 
-		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
+		void destroy(vk::Device device)
 		{
 			device.destroyPipeline(pipeline);
 			device.destroyPipelineLayout(pipeline_layout);
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
 			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 		}
 	};
 
@@ -105,7 +105,7 @@ class HPPHDR : public HPPApiVulkanSample
 
 		void destroy(vk::Device device, vk::DescriptorPool descriptor_pool)
 		{
-			device.freeDescriptorSets(descriptor_pool, descriptor_set);
+			// no need to free the descriptor_set, as it's implicitly free'd with the descriptor_pool
 			device.destroyPipeline(pipeline);
 		}
 	};
@@ -178,8 +178,7 @@ class HPPHDR : public HPPApiVulkanSample
 	};
 
   private:
-	// from platform::HPPApplication
-	virtual bool prepare(vkb::platform::HPPPlatform &platform) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
 	// from HPPVulkanSample
@@ -194,7 +193,6 @@ class HPPHDR : public HPPApiVulkanSample
 	FrameBufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
 	void                  create_bloom_pipelines();
 	void                  create_composition_pipeline();
-	vk::Framebuffer       create_framebuffer(vk::RenderPass render_pass, std::vector<vk::ImageView> const &attachments, vk::Extent2D const &extent);
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::ImageView         create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image);
 	void                  create_models_pipelines();
