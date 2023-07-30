@@ -229,6 +229,9 @@ set(ENABLE_HLSL ON)
 option(ENABLE_OPT OFF)
 option(BUILD_TESTING OFF)
 option(BUILD_EXTERNAL OFF)
+if(IOS)
+    option(ENABLE_PCH OFF)
+endif ()
 
 add_subdirectory(glslang)
 
