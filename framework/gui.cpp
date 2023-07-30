@@ -339,7 +339,7 @@ void Gui::prepare(const VkPipelineCache pipeline_cache, const VkRenderPass rende
 	pipeline_create_info.pDynamicState       = &dynamic_state;
 	pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages             = shader_stages.data();
-	pipeline_create_info.subpass             = 0;
+	pipeline_create_info.subpass             = subpass;
 
 	// Vertex bindings an attributes based on ImGui vertex definition
 	std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
@@ -750,6 +750,11 @@ bool Gui::is_debug_view_active() const
 	return debug_view.active;
 }
 
+void Gui::set_subpass(const uint32_t subpass)
+{
+	this->subpass = subpass;
+}
+
 Gui::StatsView::StatsView(const Stats *stats)
 {
 	if (stats == nullptr)
@@ -877,46 +882,6 @@ void Gui::show_debug_window(DebugInfo &debug_info, const ImVec2 &position)
 	}
 	ImGui::Columns(1);
 	ImGui::EndChild();
-
-	static Timer       timer;
-	static const char *message;
-
-	if (sample.has_scene())
-	{
-		if (ImGui::Button("Save Debug Graphs"))
-		{
-			if (graphs::generate_all(sample.get_render_context(), sample.get_scene()))
-			{
-				message = "Graphs Saved!";
-			}
-			else
-			{
-				message = "Error outputting graphs!";
-			}
-
-			if (timer.is_running())
-			{
-				timer.lap();
-			}
-			else
-			{
-				timer.start();
-			}
-		}
-	}
-
-	if (timer.is_running())
-	{
-		if (timer.elapsed() > 2.0)
-		{
-			timer.stop();
-		}
-		else
-		{
-			ImGui::SameLine();
-			ImGui::Text("%s", message);
-		}
-	}
 
 	ImGui::PopFont();
 	ImGui::End();
@@ -1238,6 +1203,30 @@ void Drawer::text(const char *formatstr, ...)
 	va_start(args, formatstr);
 	ImGui::TextV(formatstr, args);
 	va_end(args);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Edit, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorEdit4(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 3>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker3(caption, colors, flags);
+}
+
+template <>
+bool Drawer::color_op_impl<Drawer::ColorOp::Pick, 4>(const char *caption, float *colors, ImGuiColorEditFlags flags)
+{
+	return ImGui::ColorPicker4(caption, colors, flags);
 }
 
 }        // namespace vkb

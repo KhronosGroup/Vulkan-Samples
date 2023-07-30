@@ -325,6 +325,11 @@ Demonstrate how to use depth bias, primitive restart, rasterizer discard and pat
 
 Demonstrate how to use logical operations dynamically, which can reduce the number of pipeline objects that are needed to be created or allow to change the pipeline state dynamically (change type of the logical operation).
 
+### [Patch control points](./extensions/patch_control_points)
+**Extension**: [```VK_EXT_extended_dynamic_state2```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state2.html)
+<br/>
+Demonstrate how to use patch control points dynamically, which can reduce the number of pipeline objects that are needed to be created.
+
 ### [Fragment shader barycentric](./extensions/fragment_shader_barycentric)
 **Extension**: [```VK_KHR_fragment_shader_barycentric```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_fragment_shader_barycentric.html)
 
@@ -334,6 +339,10 @@ Demonstrate how to use fragment shader barycentric feature, which allows accessi
 **Extension**: [```VK_EXT_descriptor_buffer```](https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_ext_descriptor_buffer)
 
 Demonstrate how to use the new extension to replace descriptor sets with resource descriptor buffers
+### [Color write enable](./extensions/color_write_enable)<br/>
+**Extension**: [```VK_EXT_color_write_enable```](https://https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_color_write_enable.html)<br/>
+
+Demonstrate how to create multiple color blend attachments and then toggle them dynamically.
 
 ### [Geometry shader to mesh shader](./extensions/gshader_to_mshader)
 **Extension:** [```VK_EXT_mesh_shader```](https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_mesh_shader.html)<br/>

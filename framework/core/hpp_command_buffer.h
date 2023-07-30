@@ -52,14 +52,6 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 		AlwaysAllocate,
 	};
 
-	enum class State
-	{
-		Invalid,
-		Initial,
-		Recording,
-		Executable,
-	};
-
   public:
 	HPPCommandBuffer(vkb::core::HPPCommandPool &command_pool, vk::CommandBufferLevel level);
 	HPPCommandBuffer(HPPCommandBuffer &&other);
@@ -217,8 +209,6 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 
 	const RenderPassBinding &get_current_render_pass() const;
 	const uint32_t           get_current_subpass_index() const;
-	const State              get_state() const;
-	bool                     is_recording() const;
 
 	/**
 	 * @brief Check that the render area is an optimal size by comparing to the render area granularity
@@ -227,7 +217,6 @@ class HPPCommandBuffer : public core::HPPVulkanResource<vk::CommandBuffer>
 
   private:
 	const vk::CommandBufferLevel     level = {};
-	State                            state = State::Initial;
 	vkb::core::HPPCommandPool       &command_pool;
 	RenderPassBinding                current_render_pass     = {};
 	vkb::rendering::HPPPipelineState pipeline_state          = {};

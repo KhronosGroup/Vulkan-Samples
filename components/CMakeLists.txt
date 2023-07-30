@@ -13,6 +13,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#
 
 add_subdirectory(core)
+
+if(ANDROID)
+    add_subdirectory(android)
+elseif(WIN32)
+    add_subdirectory(windows)
+elseif(APPLE OR UNIX)
+    add_subdirectory(unix)
+else()
+    message(FATAL_ERROR "Unsupported platform")
+endif()

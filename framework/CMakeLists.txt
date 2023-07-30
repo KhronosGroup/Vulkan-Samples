@@ -355,19 +355,6 @@ set(PARSER_FILES
     platform/parsers/help_formatter.cpp
 )
 
-set(GRAPHING_FILES
-    # Header Files
-    graphing/graph.h
-    graphing/graph_node.h
-    graphing/scene_graph.h
-    graphing/framework_graph.h
-
-    # Source Files
-    graphing/graph.cpp
-    graphing/graph_node.cpp
-    graphing/scene_graph.cpp
-    graphing/framework_graph.cpp)
-
 set(ANDROID_FILES
     # Header Files
     platform/android/android_platform.h
@@ -413,7 +400,6 @@ source_group("scene_graph\\" FILES ${SCENE_GRAPH_FILES})
 source_group("scene_graph\\components\\" FILES ${SCENE_GRAPH_COMPONENT_FILES})
 source_group("scene_graph\\scripts\\" FILES ${SCENE_GRAPH_SCRIPTS_FILES})
 source_group("stats\\" FILES ${STATS_FILES})
-source_group("graphing\\" FILES ${GRAPHING_FILES})
 
 set(PROJECT_FILES
     ${PLATFORM_FILES}
@@ -427,8 +413,7 @@ set(PROJECT_FILES
     ${SCENE_GRAPH_FILES}
     ${SCENE_GRAPH_COMPONENT_FILES}
     ${SCENE_GRAPH_SCRIPTS_FILES}
-    ${STATS_FILES}
-    ${GRAPHING_FILES})
+    ${STATS_FILES})
 
 # No need for explicit casts from vk::HandleType to VkHandleType on ANDROID
 if(ANDROID)
@@ -508,6 +493,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
+    vkb__core
     volk
     ktx
     stb

@@ -312,6 +312,11 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	 */
 	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer);
 
+	/**
+	 * @brief Initializes the UI. Can be overridden to customize the way it is displayed.
+	 */
+	virtual void prepare_gui();
+
   private:
 	/** brief Indicates that the view (position, rotation) has changed and buffers containing camera matrices need to be updated */
 	bool view_updated = false;

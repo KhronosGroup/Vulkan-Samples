@@ -30,7 +30,7 @@ enum UnixType
 class UnixPlatform : public Platform
 {
   public:
-	UnixPlatform(const UnixType &type, int argc, char **argv);
+	UnixPlatform(const PlatformContext &context, const UnixType &type);
 
 	virtual ~UnixPlatform() = default;
 

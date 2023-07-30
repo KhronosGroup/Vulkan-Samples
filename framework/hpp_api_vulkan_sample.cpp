@@ -66,13 +66,18 @@ bool HPPApiVulkanSample::prepare(const vkb::ApplicationOptions &options)
 
 	extent = get_render_context().get_surface_extent();
 
+	prepare_gui();
+
+	return true;
+}
+
+void HPPApiVulkanSample::prepare_gui()
+{
 	gui = std::make_unique<vkb::HPPGui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache,
 	             render_pass,
 	             {static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.vert", vk::ShaderStageFlagBits::eVertex)),
 	              static_cast<VkPipelineShaderStageCreateInfo>(load_shader("uioverlay/uioverlay.frag", vk::ShaderStageFlagBits::eFragment))});
-
-	return true;
 }
 
 void HPPApiVulkanSample::update(float delta_time)

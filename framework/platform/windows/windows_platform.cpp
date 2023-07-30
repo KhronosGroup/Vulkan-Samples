@@ -104,21 +104,9 @@ void create_directory(const std::string &path)
 }
 }        // namespace fs
 
-WindowsPlatform::WindowsPlatform(HINSTANCE hInstance, HINSTANCE hPrevInstance,
-                                 PSTR lpCmdLine, INT nCmdShow)
+WindowsPlatform::WindowsPlatform(const PlatformContext &context) :
+    Platform(context)
 {
-	if (!AllocConsole())
-	{
-		throw std::runtime_error{"AllocConsole error"};
-	}
-
-	FILE *fp;
-	freopen_s(&fp, "conin$", "r", stdin);
-	freopen_s(&fp, "conout$", "w", stdout);
-	freopen_s(&fp, "conout$", "w", stderr);
-
-	Platform::set_arguments(get_args());
-	Platform::set_temp_directory(get_temp_path_from_environment());
 }
 
 void WindowsPlatform::create_window(const Window::Properties &properties)

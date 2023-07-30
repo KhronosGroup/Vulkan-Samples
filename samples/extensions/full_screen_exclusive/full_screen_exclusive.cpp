@@ -906,6 +906,11 @@ void FullScreenExclusive::initialize_windows()
 
 bool FullScreenExclusive::prepare(const vkb::ApplicationOptions &options)
 {
+	if (!vkb::Application::prepare(options))
+	{
+		return false;
+	}
+
 	init_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 
 	vk_instance = std::make_unique<vkb::Instance>(context.instance);

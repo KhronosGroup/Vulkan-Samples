@@ -41,7 +41,7 @@ else()
     add_executable(${PROJECT_NAME} WIN32 ${SRC})
 endif()
 
-target_link_libraries(${PROJECT_NAME} PUBLIC apps plugins)
+target_link_libraries(${PROJECT_NAME} PRIVATE vkb__core apps plugins)
 
 # Create android project
 if(ANDROID)

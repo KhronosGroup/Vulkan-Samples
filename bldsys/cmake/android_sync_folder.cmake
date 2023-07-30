@@ -1,5 +1,5 @@
 #[[
- Copyright (c) 2019, Arm Limited and Contributors
+ Copyright (c) 2019-2023, Arm Limited and Contributors
 
  SPDX-License-Identifier: Apache-2.0
 
@@ -18,36 +18,80 @@
  ]]
 
 set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    ${CMAKE_MODULE_PATH}/module)
+  ${CMAKE_MODULE_PATH}
+  ${CMAKE_MODULE_PATH}/module)
 set(FOLDER_DIR ${FOLDER_DIR})
 set(DEVICE_DIR ${DEVICE_DIR})
 
 find_package(Adb 1.0.39 REQUIRED)
 
+# Sync files to temporary directory
+get_filename_component(DIR_PATH "${FOLDER_DIR}" DIRECTORY)
+get_filename_component(DIR_NAME "${DIR_PATH}" NAME)
+set(TEMP_DIR "/data/local/tmp/${DIR_NAME}")
+
 # Ensure that directory exists in the target
 
-set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${DEVICE_DIR})
+set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${TEMP_DIR})
 
 execute_process(
-     COMMAND
-     ${ADB_COMMAND})
+  COMMAND
+  ${ADB_COMMAND})
 
-# Sync files
-
-set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${FOLDER_DIR} ${DEVICE_DIR})
+set(ADB_COMMAND ${ADB_EXECUTABLE} push --sync ${FOLDER_DIR} ${TEMP_DIR})
 
 execute_process(
-     COMMAND
-     ${ADB_COMMAND}
-     RESULT_VARIABLE
-     ret_var
-     OUTPUT_VARIABLE
-     ret_msg
-     OUTPUT_STRIP_TRAILING_WHITESPACE)
+  COMMAND
+  ${ADB_COMMAND}
+  RESULT_VARIABLE
+  ret_var
+  OUTPUT_VARIABLE
+  ret_msg
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
 
 if(NOT "${ret_var}" STREQUAL "0")
-    message(WARNING "Could not sync ${FOLDER_DIR} to device:\n${ret_msg}")
+ message(WARNING "Could not sync ${FOLDER_DIR} to temp dir:\n${ret_msg}")
 else()
-    message(STATUS "Updating ${FOLDER_DIR}:\n${ret_msg}")
+ message(STATUS "Updated ${FOLDER_DIR} to ${TEMP_DIR}:\n${ret_msg}")
 endif()
+
+# Copy to final device destination
+
+get_filename_component(DIR_PATH "${DEVICE_DIR}" DIRECTORY)
+
+# Ensure that directory exists in the target
+
+set(ADB_COMMAND ${ADB_EXECUTABLE} shell mkdir -p ${DIR_PATH})
+
+execute_process(
+  COMMAND
+  ${ADB_COMMAND})
+
+set(ADB_COMMAND ${ADB_EXECUTABLE} shell cp -r ${TEMP_DIR} ${DIR_PATH})
+
+execute_process(
+  COMMAND
+  ${ADB_COMMAND}
+  RESULT_VARIABLE
+  ret_var
+  OUTPUT_VARIABLE
+  ret_msg
+  OUTPUT_STRIP_TRAILING_WHITESPACE)
+
+if(NOT "${ret_var}" STREQUAL "0")
+ message(WARNING "Could not copy ${FOLDER_DIR} to final dir:\n${ret_msg}")
+else()
+ message(STATUS "Copied ${TEMP_DIR} to ${DIR_PATH}:\n${ret_msg}")
+endif()
+
+execute_process(
+  COMMAND
+  ${ADB_COMMAND})
+
+# Ensure file permissions
+
+set(ADB_COMMAND ${ADB_EXECUTABLE} shell chmod 777 -R ${DIR_PATH})
+
+execute_process(
+  COMMAND
+  ${ADB_COMMAND})

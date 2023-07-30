@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ HPPPhysicalDevice::HPPPhysicalDevice(HPPInstance &instance, vk::PhysicalDevice p
 	properties        = physical_device.getProperties();
 	memory_properties = physical_device.getMemoryProperties();
 
-	LOGI("Found GPU: {}", properties.deviceName);
+	LOGI("Found GPU: {}", properties.deviceName.data());
 
 	queue_family_properties = physical_device.getQueueFamilyProperties();
 }
