@@ -149,6 +149,10 @@ VkShaderStageFlagBits HelloTriangle::find_shader_stage(const std::string &ext)
 	throw std::runtime_error("No Vulkan shader stage found for the file extension name.");
 };
 
+#if __APPLE__
+    #include "TargetConditionals.h"
+#endif
+
 /**
  * @brief Initializes the Vulkan instance.
  *
@@ -162,10 +166,17 @@ void HelloTriangle::init_instance(Context                         &context,
 {
 	LOGI("Initializing vulkan instance.");
 
-	if (volkInitialize())
-	{
-		throw std::runtime_error("Failed to initialize volk.");
-	}
+    bool useLoader = true;
+#if TARGET_OS_IPHONE
+    useLoader = false;
+#endif
+  
+    if(useLoader) {
+        if (volkInitialize())
+        {
+            throw std::runtime_error("Failed to initialize volk.");
+        }
+    }
 
 	uint32_t instance_extension_count;
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, nullptr));
