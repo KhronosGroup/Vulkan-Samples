@@ -208,7 +208,7 @@ Instance::Instance(const std::string                            &application_nam
 	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS))
 	bool validation_features = false;
 	{
 		uint32_t layer_instance_extension_count;
@@ -342,16 +342,24 @@ Instance::Instance(const std::string                            &application_nam
 	instance_info.flags |= VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
-	VkValidationFeaturesEXT validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	// Some of the specialized layers need to be enabled explicitly
+#if (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
+	VkValidationFeaturesEXT                   validation_features_info = {VK_STRUCTURE_TYPE_VALIDATION_FEATURES_EXT};
+	std::vector<VkValidationFeatureEnableEXT> enable_features{};
 	if (validation_features)
 	{
-		static const VkValidationFeatureEnableEXT enable_features[2] = {
-		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT,
-		    VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT,
-		};
-		validation_features_info.enabledValidationFeatureCount = 2;
-		validation_features_info.pEnabledValidationFeatures    = enable_features;
+#	if defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED)
+		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_RESERVE_BINDING_SLOT_EXT);
+		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_GPU_ASSISTED_EXT);
+#	endif
+#	if defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_BEST_PRACTICES_EXT);
+#	endif
+#	if defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
+		enable_features.push_back(VK_VALIDATION_FEATURE_ENABLE_SYNCHRONIZATION_VALIDATION_EXT);
+#	endif
+		validation_features_info.enabledValidationFeatureCount = static_cast<uint32_t>(enable_features.size());
+		validation_features_info.pEnabledValidationFeatures    = enable_features.data();
 		validation_features_info.pNext                         = instance_info.pNext;
 		instance_info.pNext                                    = &validation_features_info;
 	}
