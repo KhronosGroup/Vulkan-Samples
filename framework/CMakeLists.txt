@@ -66,7 +66,7 @@ set(FRAMEWORK_FILES
     vulkan_sample.cpp
     api_vulkan_sample.cpp
     timer.cpp
-        camera_core.cpp
+    camera_core.cpp
     hpp_gui.cpp
     hpp_api_vulkan_sample.cpp
     hpp_resource_cache.cpp
@@ -277,7 +277,7 @@ set(CORE_FILES
     core/physical_device.cpp
     core/device.cpp
     core/debug.cpp
-        core/image_core.cpp
+    core/image_core.cpp
     core/shader_module.cpp
     core/pipeline_layout.cpp
     core/pipeline.cpp
@@ -289,11 +289,11 @@ set(CORE_FILES
     core/swapchain.cpp
     core/command_buffer.cpp
     core/buffer.cpp
-        core/image_core.cpp
+    core/image_core.cpp
     core/image_view.cpp
     core/sampled_image.cpp
     core/instance.cpp
-        core/sampler_core.cpp
+    core/sampler_core.cpp
     core/framebuffer.cpp
     core/render_pass.cpp
     core/query_pool.cpp
@@ -540,14 +540,7 @@ else()
     if (DIRECT_TO_DISPLAY)
         target_link_libraries(${PROJECT_NAME} PRIVATE dl)
     else()
-        if (IOS)
-            if(DEFINED ENV{VULKAN_SDK})
-                find_library(moltenVK MoltenVK "$ENV{VULKAN_SDK}/MoltenVK/dylib/iOS")
-                target_link_libraries(${PROJECT_NAME} PUBLIC ${MoltenVK})
-            endif ()
-            target_link_libraries(${PROJECT_NAME} PRIVATE "-framework UIKit"
-                    "-framework Foundation")
-        else()
+        if (NOT IOS)
             target_link_libraries(${PROJECT_NAME} PRIVATE glfw)
         endif ()
     endif()
