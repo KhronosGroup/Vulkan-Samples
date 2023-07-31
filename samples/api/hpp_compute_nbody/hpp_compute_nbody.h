@@ -127,6 +127,7 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	};
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -137,20 +138,24 @@ class HPPComputeNBody : public HPPApiVulkanSample
 	void build_command_buffers() override;
 	void render(float delta_time) override;
 
-	void         build_compute_command_buffer();
-	void         build_compute_transfer_command_buffer(vk::CommandBuffer command_buffer) const;
-	void         build_copy_command_buffer(vk::CommandBuffer command_buffer, vk::Buffer staging_buffer, vk::DeviceSize buffer_size) const;
-	vk::Pipeline create_compute_pipeline(vk::PipelineCache pipeline_cache, vk::PipelineShaderStageCreateInfo const &stage, vk::PipelineLayout layout);
-	void         draw();
-	void         initializeCamera();
-	void         load_assets();
-	void         prepare_compute();
-	void         prepare_compute_storage_buffers();
-	void         prepare_graphics();
-	void         update_compute_descriptor_set();
-	void         update_compute_uniform_buffers(float delta_time);
-	void         update_graphics_descriptor_set();
-	void         update_graphics_uniform_buffers();
+	void                    build_compute_command_buffer();
+	void                    build_compute_transfer_command_buffer(vk::CommandBuffer command_buffer) const;
+	void                    build_copy_command_buffer(vk::CommandBuffer command_buffer, vk::Buffer staging_buffer, vk::DeviceSize buffer_size) const;
+	vk::DescriptorSetLayout create_compute_descriptor_set_layout();
+	vk::Pipeline            create_compute_pipeline(vk::PipelineShaderStageCreateInfo const &stage);
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_graphics_descriptor_set_layout();
+	vk::Pipeline            create_graphics_pipeline();
+	void                    draw();
+	void                    initializeCamera();
+	void                    load_assets();
+	void                    prepare_compute();
+	void                    prepare_compute_storage_buffers();
+	void                    prepare_graphics();
+	void                    update_compute_descriptor_set();
+	void                    update_compute_uniform_buffers(float delta_time);
+	void                    update_graphics_descriptor_set();
+	void                    update_graphics_uniform_buffers();
 
   private:
 	Compute  compute;
