@@ -181,4 +181,3 @@ Also see xref:CONTRIBUTING.adoc[CONTRIBUTING] for contribution guidelines.
 == Related resources
 
 * https://developer.arm.com/documentation/101897/latest/[Mali GPU Best Practices]: A document with recommendations for efficient API usage
-* https://github.com/ARM-software/perfdoc[PerfDoc]: A Vulkan layer which aims to validate applications against Mali GPU Best Practices
