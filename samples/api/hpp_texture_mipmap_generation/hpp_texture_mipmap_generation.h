@@ -49,6 +49,7 @@ class HPPTextureMipMapGeneration : public HPPApiVulkanSample
 	};
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample

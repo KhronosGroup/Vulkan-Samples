@@ -178,6 +178,7 @@ class HPPHDR : public HPPApiVulkanSample
 	};
 
   private:
+	// from vkb::Application
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
 	virtual bool resize(const uint32_t width, const uint32_t height) override;
 
@@ -191,11 +192,14 @@ class HPPHDR : public HPPApiVulkanSample
 
 	vk::DeviceMemory      allocate_memory(vk::Image image);
 	FrameBufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
-	void                  create_bloom_pipelines();
-	void                  create_composition_pipeline();
+	vk::DescriptorPool    create_descriptor_pool();
+	vk::Pipeline          create_bloom_pipeline(uint32_t direction);
+	vk::Pipeline          create_composition_pipeline();
+	vk::RenderPass        create_filter_render_pass();
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::ImageView         create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image);
-	void                  create_models_pipelines();
+	vk::Pipeline          create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite);
+	vk::RenderPass        create_offscreen_render_pass();
 	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
 	vk::Sampler           create_sampler();
 	void                  draw();
