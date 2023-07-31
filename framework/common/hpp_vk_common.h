@@ -107,6 +107,30 @@ inline vk::ShaderModule load_shader(const std::string &filename, vk::Device devi
 	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
+inline void image_layout_transition(vk::CommandBuffer command_buffer,
+                                    vk::Image         image,
+                                    vk::ImageLayout   old_layout,
+                                    vk::ImageLayout   new_layout)
+{
+	vkb::image_layout_transition(command_buffer,
+	                             static_cast<VkImage>(image),
+	                             static_cast<VkImageLayout>(old_layout),
+	                             static_cast<VkImageLayout>(new_layout));
+}
+
+inline void image_layout_transition(vk::CommandBuffer         command_buffer,
+                                    vk::Image                 image,
+                                    vk::ImageLayout           old_layout,
+                                    vk::ImageLayout           new_layout,
+                                    vk::ImageSubresourceRange subresource_range)
+{
+	vkb::image_layout_transition(command_buffer,
+	                             static_cast<VkImage>(image),
+	                             static_cast<VkImageLayout>(old_layout),
+	                             static_cast<VkImageLayout>(new_layout),
+	                             static_cast<VkImageSubresourceRange>(subresource_range));
+}
+
 inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
                                                   vk::SurfaceKHR                 surface,
                                                   std::vector<vk::Format> const &preferred_formats = {
@@ -125,23 +149,6 @@ inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice            
 
 	// We use the first supported format as a fallback in case none of the preferred formats is available
 	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
-}
-
-inline void set_image_layout(vk::CommandBuffer         command_buffer,
-                             vk::Image                 image,
-                             vk::ImageLayout           old_layout,
-                             vk::ImageLayout           new_layout,
-                             vk::ImageSubresourceRange subresource_range,
-                             vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
-                             vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
-{
-	vkb::set_image_layout(command_buffer,
-	                      static_cast<VkImage>(image),
-	                      static_cast<VkImageLayout>(old_layout),
-	                      static_cast<VkImageLayout>(new_layout),
-	                      static_cast<VkImageSubresourceRange>(subresource_range),
-	                      static_cast<VkPipelineStageFlags>(src_mask),
-	                      static_cast<VkPipelineStageFlags>(dst_mask));
 }
 
 // helper functions not backed by vk_common.h
