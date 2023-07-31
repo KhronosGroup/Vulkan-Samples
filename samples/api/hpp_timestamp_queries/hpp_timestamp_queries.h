@@ -128,6 +128,7 @@ class HPPTimestampQueries : public HPPApiVulkanSample
 	~HPPTimestampQueries();
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	bool resize(const uint32_t width, const uint32_t height) override;
 
