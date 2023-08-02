@@ -46,7 +46,7 @@ This approach will require all fragments shaded to touch the working sets which 
 At high framebuffer resolutions the bandwidth can be exceptionally high, with multiple read-modify-write operations per fragment.
 Even if caching can mitigate this slightly, there is still a need for specialized high-frequency memory with a wide memory interface with lots of pins which are all particularly energy intensive.
 
-image::images/immediate_mode_rendering.png[Traditional Approach]
+image::./images/immediate_mode_rendering.png[Traditional Approach]
 
 Tile-based GPUs are designed to minimize the amount of power hungry external memory accesses which are needed during rendering, using a two-pass rendering algorithm for each render target.
 They first process all the geometry, then execute all the per-fragment work.
@@ -62,12 +62,12 @@ for each ( tile )
 
 Mali GPUs break up the screen into small 16x16 pixel tiles which makes it possible to keep the entire working set in a fast RAM which is tightly coupled with the GPU shader core.
 
-image::images/tile_based_rendering.png[Tile-based Approach]
+image::./images/tile_based_rendering.png[Tile-based Approach]
 
 Mali GPUs queue their work in a pair of internal slots, one for vertex/compute workloads and one for fragment workloads.
 The workloads from both slots can be processed by the GPU at the same time, so vertex processing and fragment processing for different frames or render passes can be run in parallel.
 
-image::images/mali_three_stage_pipeline.png[Mali's three stage pipeline]
+image::./images/mali_three_stage_pipeline.png[Mali's three stage pipeline]
 
 == Choosing pipeline stages
 
@@ -102,7 +102,7 @@ see xref:../subpasses/README.adoc[the subpasses tutorial] for more detail.
 The base case is with the most conservative barrier (`BOTTOM_OF_PIPE_BIT` → `TOP_OF_PIPE_BIT`).
 As the graphs show, vertex and fragment work are serialized, as they never happen at the same time.
 
-image::images/sample_bot_to_top.jpg[Sample - Bottom to Top]
+image::./images/sample_bot_to_top.jpg[Sample - Bottom to Top]
 
 A second case is with a slightly more relaxed barrier (`COLOR_ATTACHMENT_OUTPUT_BIT` → `VERTEX_SHADER_BIT`).
 This is most commonly used by developers as a "default" barrier, to ensure that the image is available by vertex shading in the next render pass, in case it is needed.
@@ -110,14 +110,14 @@ This is most commonly used by developers as a "default" barrier, to ensure that 
 While this is ok if the image is actually needed during vertex shading, there is a potential for optimization if the image is only needed for fragment shading, as discussed before.
 As shown in the graph, the work is still serialized and there is no performance improvement from the previous case.
 
-image::images/sample_frag_to_vert.jpg[Sample - Frag to vert]
+image::./images/sample_frag_to_vert.jpg[Sample - Frag to vert]
 
 The third case is with the most efficient barrier for this case (`COLOR_ATTACHMENT_OUTPUT_BIT` → `FRAGMENT_SHADER_BIT`), further relaxed from the previous one.
 
 This time fragment shading keeps happening throughout, with vertex shading running in parallel to it.
 Pipeline bubbles have disappeared and frame time has improved by 13%.
 
-image::images/sample_frag_to_frag.jpg[Sample - Frag to frag]
+image::./images/sample_frag_to_frag.jpg[Sample - Frag to frag]
 
 == Best practice summary
 

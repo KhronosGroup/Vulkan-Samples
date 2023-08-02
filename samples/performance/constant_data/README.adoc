@@ -188,7 +188,7 @@ If the GPU doesn't support at least 256 bytes of push constants, it will instead
 
 A performance graph is displayed at the top with two charts, one showing frame time, and one showing the load/store cycles.
 
-image::images/graph_data.jpg[graph]
+image::./images/graph_data.jpg[graph]
 
 These two counters will show the CPU and GPU cost respectively, so when you go to toggle the different method you can see how it changes.
 
@@ -196,7 +196,7 @@ These two counters will show the CPU and GPU cost respectively, so when you go t
 
 The options presented to the user lets them change the method by which we push the MVP data.
 
-image::images/controls.png[sample]
+image::./images/controls.png[sample]
 
 It is important to note that the configuration adapts to the device and GPU.
 This is so if an extension isn't supported, the related option will no longer show.
@@ -246,7 +246,7 @@ void vkCmdPushConstants(
 
 === *Performance*
 
-image::images/push_constants_performance.jpg[push constants]
+image::./images/push_constants_performance.jpg[push constants]
 
 In early implementations of Vulkan on Arm Mali, this was usually the fastest way of pushing data to your shaders.
 In more recent times, we have observed on Mali devices that _overall_ they can be slower.
@@ -297,7 +297,7 @@ These map to the shader `<storage>` type ``uniform``s and ``buffer``s respective
 
 === *Performance*
 
-image::images/descriptor_set_performance.jpg[single ubo]
+image::./images/descriptor_set_performance.jpg[single ubo]
 
 While it is not straightforward to perform a 1:1 comparison between push constants and descriptor sets, the sample does show static descriptor sets outperforming push constants.
 
@@ -319,7 +319,7 @@ One case in which this can be useful is:
 
 === *Performance*
 
-image::images/dynamic_descriptor_set_performance.jpg[dynamic ubo]
+image::./images/dynamic_descriptor_set_performance.jpg[dynamic ubo]
 
 In the screenshot above (taken on an S10 with a Mali G76 GPU) we can see the load/store cycles stay roughly the same compared to <<uniform-buffer-objects,static uniform buffer objects>>.
 However, the frame time goes up from 16.7 ms to 20.9 ms.
@@ -421,7 +421,7 @@ Pilot shaders are a technique that allows us to determine what calculations can 
 
 To show this here is a Streamline capture of a Mali G76, showing the read cycles for using a single descriptor set per mesh against the pre allocated buffer array:
 
-image::images/loadcycles.png[loadcycles]
+image::./images/loadcycles.png[loadcycles]
 
 A few different stats are affected in the Mali GPU by using this, but the main thing is the *full read* in the *Mali Core Load/Store Cycles*.
 

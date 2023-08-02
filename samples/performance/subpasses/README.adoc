@@ -62,7 +62,7 @@ vec3 world   = world_w.xyz / world_w.w;
 
 In order to highlight the benefit of subpasses over multiple render passes, the sample allows the user to switch between two different techniques at run-time.
 
-image::images/render-passes.jpg[Render passes]
+image::./images/render-passes.jpg[Render passes]
 
 One of the techniques uses two render passes, running one after another.
 The first render pass generates the G-buffer, and the second uses it in the lighting stage to generate our final image.
@@ -78,7 +78,7 @@ The first thing that you may notice from the https://developer.arm.com/tools-and
 * On the left, from `0s` to `3.6s`, the benefit of the subpasses technique is clear, as it is able to store the G-buffer on tile memory.
 * On the right, from `3.7s`, is highlighted the two render passes technique, which writes lots of data back to the external memory, as the first render pass needs to store the G-buffer in order to be read by the second render pass.
 
-image::images/subpasses-renderpasses-trace.jpg[Subpasses vs render passes trace]
+image::./images/subpasses-renderpasses-trace.jpg[Subpasses vs render passes trace]
 
 == Merging
 
@@ -100,7 +100,7 @@ Note that depth/stencil does not count towards this limit.
 On Mali devices in order to be merged, subpasses are required to use at most 128-bit per pixel of _tile buffer color storage_, although some of the more recent GPUs such as Mali-G72 increase this to up to 256-bits per pixel.
 G-buffers requiring more color storage than this can be used at the expense of needing smaller tiles during fragment shading, which can reduce overall throughput and increase bandwidth reading tile lists.
 
-image::images/good-practice.jpg[Good practice]
+image::./images/good-practice.jpg[Good practice]
 
 The best way to verify whether two subpasses are merged or not is to compare the physical tiles (`PTILES`) counter by switching between the subpasses and the render passes techniques.
 When we compare the screenshots of the two render techniques on a `Mali-G76`, we can see that there is approximately a `55%` reduction in the number of tiles used (`262.2k/s` vs `614.7k/s`), and therefore a `55%` reduction in bandwidth.
@@ -113,7 +113,7 @@ To get the tiles every second, we multiply this number by the FPS (this can vary
 It is important to note that by using a `VkImageFormat` that requires more bits, it is most likely that the G-buffer will no longer fit the drivers budget, denying the possibility to merge the subpasses.
 The following picture shows how the number of physical tiles used almost doubles to `409.6k/s`, indicating that subpasses are not merged.
 
-image::images/gbuffer-size.jpg[G-buffer size]
+image::./images/gbuffer-size.jpg[G-buffer size]
 
 == Transient attachments
 
@@ -121,7 +121,7 @@ Some framebuffer attachments in the sample (such as _depth_, _albedo_, and _norm
 If the GPU has enough memory available to store them on tile memory, there is no need to write them back to external memory.
 Actually, there is not even a need to allocate them at all.
 
-image::images/transient-attachments.jpg[Non-transient attachments]
+image::./images/transient-attachments.jpg[Non-transient attachments]
 
 In practice, their https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkImageUsageFlagBits.html[image usage] needs to be specified as `TRANSIENT` and their https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkMemoryPropertyFlagBits.html[memory] needs to be `LAZILY_ALLOCATED`.
 Failing to set these flags properly will lead to an increase of https://community.arm.com/developer/tools-software/graphics/b/blog/posts/mali-bifrost-family-performance-counters[fragment jobs] as the GPU will need to write them back to external memory.

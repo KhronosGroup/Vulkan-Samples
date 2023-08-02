@@ -62,11 +62,11 @@ Not only do we not use its content during this render-pass, it will cost us more
 
 Below is a screenshot showing a scene rendered using `LOAD_OP_LOAD`:
 
-image::images/load_store.jpg[Using LOAD_OP_LOAD]
+image::./images/load_store.jpg[Using LOAD_OP_LOAD]
 
 Comparing the read bandwidth values (_External Read Bytes_ graph), we observe a difference of `1533.9 - 933.7 = 600.2 MiB/s` if we select `LOAD_OP_CLEAR`
 
-image::images/clear_store.jpg[Using LOAD_OP_CLEAR]
+image::./images/clear_store.jpg[Using LOAD_OP_CLEAR]
 
 We can estimate the bandwidth cost of loading/storing an uncompressed attachment as `width * height * bpp/8 * FPS [MiB/s]`.
 We calculate an estimate of `2220 * 1080 * (32/8) * ~60 = ~575 MiB/s`.
@@ -92,7 +92,7 @@ VmaAllocationCreateInfo depth_alloc = {};
 depth_alloc.preferredFlags = VK_MEMORY_PROPERTY_LAZILY_ALLOCATED_BIT;
 ----
 
-image::images/clear_dont_care.jpg[Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE]
+image::./images/clear_dont_care.jpg[Using LOAD_OP_CLEAR and STORE_OP_DONT_CARE]
 
 In this case the write transactions were reduced by `986.3 - 431.5 = 554.8 MiB/s`, again what we would roughly expect from storing the size of an uncompressed image at ~60 FPS.
 
@@ -100,14 +100,14 @@ The streamline trace shows us a more in-depth analysis of what is going on in th
 The delta between `LOAD_OP_LOAD` and `LOAD_OP_CLEAR` is evident at 10.4s having consistently less external reads.
 The delta between `STORE_OP_STORE` and `STORE_OP_DONT_CARE` is clear at 18.1s with the external write graphs plunging down.
 
-image::images/render_passes_streamline.png[Streamline]
+image::./images/render_passes_streamline.png[Streamline]
 
 == `vkCmdClear*` functions
 
 Using the `vkCmdClear*` to clear the attachments is not needed as you can get the same result by using `LOAD_OP_CLEAR`.
 The following screenshot shows that by using that command the GPU will need ~6 million more fragment cycles per second.
 
-image::images/vk_cmd_clear.png[vkCmdClear]
+image::./images/vk_cmd_clear.png[vkCmdClear]
 
 While the `vkCmdClear*` functions can be used to clear images explicitly, on certain mobile devices this will result in a per-fragment clear shader which results in the additional workload demonstrated in the above screenshot.
 Despite this, the `vkCmdClear*` functions do have uses which are not covered by the loadOp operations, for example the `vkCmdClearAttachments` function can be used to clear a specific region within an attachment during a render pass.

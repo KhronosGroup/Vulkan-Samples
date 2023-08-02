@@ -44,7 +44,7 @@ This method allows the CPU to continue dispatching work to GPU while it executes
 
 Below is a screenshot of the sample running on a phone with a Mali G76 GPU:
 
-image::images/wait_idle_sample.png[Wait Idle Sample]
+image::./images/wait_idle_sample.png[Wait Idle Sample]
 
 When `WaitIdle` is used the average frame time is 72ms, yet it decreases by 22% to 56ms when `Fences` is enabled.
 
@@ -52,11 +52,11 @@ The performance increase is also clearly demonstrated when using https://develop
 
 The graph below shows the Job Manager Cycles and stall in a single frame when `WaitIdle` is used.
 
-image::images/wait_idle_graph.png[Wait Idle Graph]
+image::./images/wait_idle_graph.png[Wait Idle Graph]
 
 While, the following graph shows the Job Manager Cycles for a frame when `Fences` are used.
 
-image::images/fences_graph.png[Fences Graph]
+image::./images/fences_graph.png[Fences Graph]
 
 This output clearly shows that `WaitIdle` forces the GPU to drain of all work which results in the GPU idling causing higher frame times.
 

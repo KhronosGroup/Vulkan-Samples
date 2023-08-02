@@ -36,7 +36,7 @@ When the light calculation is performed in the fragment shader, the depth value 
 
 The diagram below shows this two step process:
 
-image::images/render_passes_diagram.png[Render Passes Diagram]
+image::./images/render_passes_diagram.png[Render Passes Diagram]
 
 Note that there is a dependency because the second pass is using the output of the first.
 Since these are two separate render passes we cannot use a `VkSubpassDependency` for synchronization.
@@ -63,15 +63,15 @@ This sample shows the difference between recording both render passes into a sin
 
 Below are screenshots of the sample running on a phone with a Mali G72 GPU:
 
-image::images/no_multi_threading.png[Single Thread]
+image::./images/no_multi_threading.png[Single Thread]
 
 Using two threads gives a 10ms frame time improvement and CPU cycles show an increase in CPU utilization:
 
-image::images/primary_command_buffers.png[Primary Command Buffers]
+image::./images/primary_command_buffers.png[Primary Command Buffers]
 
 With secondary command buffers you can see a further drop in frame time.
 
-image::images/secondary_command_buffers.png[Secondary Command Buffers]
+image::./images/secondary_command_buffers.png[Secondary Command Buffers]
 
 == Profiling
 

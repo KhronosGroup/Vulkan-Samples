@@ -23,13 +23,13 @@ In graphics this means computing the color of a pixel at a resolution that resul
 Multisample anti-aliasing (MSAA) is an efficient technique that reduces pixel sampling error.
 In the figure below, the frame on the left was rendered with no anti-aliasing, whereas the same scene on the right uses 4X MSAA.
 
-image::images/example_comparison.png[No anti-aliasing (left) vs 4X MSAA (right)]
+image::./images/example_comparison.png[No anti-aliasing (left) vs 4X MSAA (right)]
 
 When computing the color of a pixel, the GPU will evaluate the color of a given primitive if it covers the centre coordinate of the pixel (and passes the depth test).
 As shown in the figure below, with no anti-aliasing the fragment shader is evaluated for those pixels that pass this test, and they are shaded accordingly.
 Depending on the pixel density, this single-sampled procedure may result in aliasing.
 
-image::images/steps_no_msaa.png[No anti-aliasing]
+image::./images/steps_no_msaa.png[No anti-aliasing]
 
 With multisample anti-aliasing, more than one location is tested within a pixel.
 In the figure below there are four samples, so it is denoted 4X MSAA.
@@ -40,7 +40,7 @@ The final value for the pixel is calculated as the average of all samples.
 This is known as the resolving step.
 This results in different shades of primitive color at the edges, which reduces the aliasing effect.
 
-image::images/steps_msaa.png[4X MSAA]
+image::./images/steps_msaa.png[4X MSAA]
 
 In the figure above the samples within the pixel are positioned in a rotated grid.
 Sampling coordinates are defined by the https://www.khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap24.html#primsrast-multisampling[spec].
@@ -124,7 +124,7 @@ Considering that in a mobile device such as this the external DDR bandwidth cost
 
 These counters can also be recorded with a profiler such as https://developer.arm.com/tools-and-software/graphics-and-gaming/arm-mobile-studio/components/streamline-performance-analyzer[Streamline], showing color resolve on write-back followed by separate resolve pass:
 
-image::images/streamline_writeback_separate.png[Streamline write-back resolve followed by separate resolve]
+image::./images/streamline_writeback_separate.png[Streamline write-back resolve followed by separate resolve]
 
 == Depth resolve
 

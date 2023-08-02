@@ -45,17 +45,17 @@ When specialization constants are used the compiler is able to statically unroll
 
 Below is a screenshot of the sample running on a phone with a Mali G76 GPU:
 
-image::images/specialization_constants_sample.png[Specialization Constants Samples]
+image::./images/specialization_constants_sample.png[Specialization Constants Samples]
 
 The performance increase is best displayed when using https://developer.arm.com/products/software-development-tools/arm-development-studio/components/streamline-performance-analyzer[Streamline Performance Analyzer].
 
 The graph below shows the number of fragment cycles in one second of execution time when UBOs are used.
 
-image::images/UBOs_graph.png[UBOs Graph]
+image::./images/UBOs_graph.png[UBOs Graph]
 
 Alternatively, the graph below also shows the number of fragment cycles in one second of execution time, but this time specialization constants are used.
 
-image::images/specialization_constants_graph.png[Specialization Constants Graph]
+image::./images/specialization_constants_graph.png[Specialization Constants Graph]
 
 As you can see from the graphs, changing to use specialization constants provides a 4.4% performance increase even when used in an extremely simple sample.
 In more complex use cases such as a SSAO shader which has a more complex loop for each sample taken by the shader a greater performance difference can be seen, there is a blog available online https://blogs.igalia.com/itoral/2018/03/20/improving-shader-performance-with-vulkans-specialization-constants/[here] detailing this.

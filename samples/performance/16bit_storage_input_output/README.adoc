@@ -131,7 +131,7 @@ For each unique vertex that is visible on screen, we must assume 52 bytes of mem
 
 The shading itself is somewhat contrived, it is mostly there to show something being rendered.
 
-image::images/fp16_input_output_disable.jpg[16bit-storage InputOutput off]
+image::./images/fp16_input_output_disable.jpg[16bit-storage InputOutput off]
 
 In the unoptimized case, we observe ~1.67 GB/s write bandwidth and ~1.16 GB/s read bandwidth on the specific device we tested (see screenshot).
 We can estimate what is going on here using intuition.
@@ -144,7 +144,7 @@ VSync is approximately 60 FPS on the test device in the screenshots, so ~21.5M u
 For each vertex, we have 16 bytes for `gl_Position` and 36 bytes for output variables, meaning this data accounts for at least ~1.11 GB/s here.
 That's about 2/3 of the total write bandwidth we are measuring here.
 
-image::images/fp16_input_output_enable.jpg[16bit-storage InputOutput on]
+image::./images/fp16_input_output_enable.jpg[16bit-storage InputOutput on]
 
 Here, we simply replace the vertex outputs and fragment inputs to be fp16.
 This should theoretically save 18 bytes per vertex, or ~21.5 M/s * 18 B = 387 MB / s of pure write bandwidth, and that seems to be almost spot-on with observed results.

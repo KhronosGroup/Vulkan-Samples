@@ -41,7 +41,7 @@ This approach will consist of a https://www.khronos.org/registry/vulkan/specs/1.
 The issue is that these calls can add a significant overhead to the CPU frame time, especially on mobile.
 In the worst cases, for example calling https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkUpdateDescriptorSets.html[vkUpdateDescriptorSets()] for each draw call, the time it takes to update descriptors can be longer than the time of the draws themselves.
 
-image::images/bonza_no_caching_multiple_buf.jpg[Basic descriptor set management]
+image::./images/bonza_no_caching_multiple_buf.jpg[Basic descriptor set management]
 
 The sample highlights the issue with a draw-call intensive scene.
 Frame time is around 44 ms (on a 2019 high-end mobile phone), corresponding to 23 FPS, with the simplest descriptor management scheme.
@@ -60,14 +60,14 @@ It is possible to remove another level of indirection by storing descriptor sets
 
 Caching descriptor sets has a dramatic effect on frame time for our CPU-heavy scene:
 
-image::images/bonza_caching_multiple_buf.jpg[Descriptor set caching]
+image::./images/bonza_caching_multiple_buf.jpg[Descriptor set caching]
 
 The frame time is now around 27 ms, corresponding to 37 FPS.
 This is a 38% decrease in frame time.
 
 We can confirm this behavior using https://developer.arm.com/tools-and-software/graphics-and-gaming/arm-mobile-studio/components/streamline-performance-analyzer[Streamline Performance Analyzer].
 
-image::images/streamline_desc_caching.png[Streamline analysis]
+image::./images/streamline_desc_caching.png[Streamline analysis]
 
 The first part of the trace until the marker is without descriptor set caching.
 We can see that the app is CPU bound, since the GPU is idling between frames while the CPU is fully utilized.
@@ -110,7 +110,7 @@ The buffer will be cleared at the beginning of the frame, then each object will 
 With this approach we will need less descriptor sets, as more objects can share the same one: they will all reference the same `VkBuffer`, but at different dynamic offsets.
 Furthermore, we can control the memory layout within the buffer.
 
-image::images/bonza_no_caching_single_buf.jpg[Using one large VkBuffer]
+image::./images/bonza_no_caching_single_buf.jpg[Using one large VkBuffer]
 
 Using a single large `VkBuffer` in this case shows a performance improvement similar to descriptor set caching.
 

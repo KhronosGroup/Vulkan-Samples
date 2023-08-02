@@ -70,9 +70,9 @@ The sample slider can help illustrate these trade-offs and their impact on perfo
 
 In this case, a scene with a high number of draw calls (~1800, this number may be found in the link:../../../docs/misc.adoc#debug-window[debug window]) shows a 15% improvement in performance when dividing the workload among 8 buffers across 8 threads:
 
-image::images/single_threading.png[Single-threaded]
+image::./images/single_threading.png[Single-threaded]
 
-image::images/multi_threading.png[Multi-threaded]
+image::./images/multi_threading.png[Multi-threaded]
 
 To test the sample, make sure to build it in release mode and without validation layers.
 Both these factors can significantly affect the results.
@@ -99,7 +99,7 @@ This flag however will force separate internal allocators to be used for each co
 This is the worst-performing method of managing command buffers as it involves a significant CPU overhead for allocating and freeing memory frequently.
 The sample shows how to use the framework to follow this approach and profile its performance.
 
-image::images/allocate_and_free.jpg[Allocate and Free]
+image::./images/allocate_and_free.jpg[Allocate and Free]
 
 Rather than freeing and re-allocating the memory used by a command buffer, it is more efficient to recycle it for recording new commands.
 There are two ways of resetting a command buffer: individually, with https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkResetCommandBuffer.html[vkResetCommandBuffer], or indirectly by resetting the command pool with https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkResetCommandPool.html[vkResetCommandPool].
@@ -111,7 +111,7 @@ The buffer will then return to a recordable state and the command pool can reuse
 
 However frequent calls to https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/vkResetCommandBuffer.html[vkResetCommandBuffer] are more expensive than a command pool reset.
 
-image::images/reset_buffers.jpg[Reset Buffers]
+image::./images/reset_buffers.jpg[Reset Buffers]
 
 === Resetting the command pool
 
@@ -120,7 +120,7 @@ Doing this periodically will allow the pool to reuse the memory allocated for co
 
 To reset the pool the flag https://www.khronos.org/registry/vulkan/specs/1.1-extensions/man/html/VkCommandPoolCreateFlagBits.html[RESET_COMMAND_BUFFER_BIT] is _not_ required, and it is actually better to avoid it since it prevents it from using a single large allocator for all buffers in the pool thus increasing memory overhead.
 
-image::images/reset_pool.jpg[Reset Pool]
+image::./images/reset_pool.jpg[Reset Pool]
 
 === Relative performance
 
