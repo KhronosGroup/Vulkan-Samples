@@ -59,7 +59,7 @@ As stated earlier for MSAA we do _not_ want to set http://khronos.org/registry/v
 4x MSAA can be particularly efficient in link:../pipeline_barriers/README.adoc#tile-based-rendering[tiler architectures], where the multi-sampled attachment is resolved in tile memory and can therefore be transient.
 This is typically the case of the link:../render_passes/README.adoc#depth-attachment-store-operation[depth buffer] as shown below:
 
-image:images/no_msaa.png[No MSAA diagram] image:images/screenshot_no_msaa.jpg[No MSAA sample]
+image:./images/no_msaa.png[No MSAA diagram] image:./images/screenshot_no_msaa.jpg[No MSAA sample]
 
 It is important to avoid writing multisampled attachments back to main memory if they are not going to be needed after rendering the scene.
 This means that the multisampled attachment must use `storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE` and `usage |= VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT`, and allocate the image with the `LAZILY_ALLOCATED` memory property, as explained in the link:../render_passes/README.adoc#depth-attachment-store-operation[Render Passes tutorial].
@@ -79,7 +79,7 @@ To resolve color on write-back as shown below, configure the subpass so that htt
 subpass->set_color_resolve_attachments({i_swapchain});
 ----
 
-image:images/msaa_good.png[MSAA with write-back color resolve] image:images/screenshot_color_writeback.jpg[MSAA with write-back color resolve sample]
+image:./images/msaa_good.png[MSAA with write-back color resolve] image:./images/screenshot_color_writeback.jpg[MSAA with write-back color resolve sample]
 
 With 4X MSAA enabled, we are rendering to a larger color attachment storing 4 color values for each pixel.
 If this attachment remains in tile memory, the impact on performance remains minimal (3% bandwidth increase shown in the screenshots above) while the aliasing is considerably reduced at the edges.
@@ -100,7 +100,7 @@ vkCmdResolveImage(cmd_buf.get_handle(),
 
 However this path requires storing the multisampled attachment (which in this case is 4 times larger than the framebuffer) at the end of the subpass and then read it back to the GPU in order to resolve it:
 
-image:images/msaa_bad.png[MSAA with color resolve in separate pass] image:images/screenshot_color_separate.jpg[MSAA with separate color resolve sample]
+image:./images/msaa_bad.png[MSAA with color resolve in separate pass] image:./images/screenshot_color_separate.jpg[MSAA with separate color resolve sample]
 
 This consumes much more bandwidth and is therefore not recommended if the same result can be achieved by using http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap7.html#VkSubpassDescription[`pResolveAttachments`] to resolve color on write-back.
 To illustrate this the sample allows to toggle between resolving on write-back as opposed to in a separate pass, and to monitor the impact on bandwidth as a result.
@@ -134,12 +134,12 @@ This is because once the color is calculated and written out to the swapchain fo
 There are cases where we might need to save the depth attachment.
 Consider a simple post-processing pass that samples both color and depth (bound as textures) in order to compute a screen-based effect such as https://en.wikipedia.org/wiki/Screen_space_ambient_occlusion[SSAO]:
 
-image:images/no_msaa_postprocessing.png[Postprocessing] image:images/screenshot_no_msaa_postprocessing.jpg[Postprocessing sample]
+image:./images/no_msaa_postprocessing.png[Postprocessing] image:./images/screenshot_no_msaa_postprocessing.jpg[Postprocessing sample]
 
 In this case the increase in bandwidth corresponds to that of writing out 2 full-screen attachments, as expected.
 With 4X MSAA the cost once again remains almost the same, as long as we remember to resolve both color and depth on write-back:
 
-image:images/msaa_good_postprocessing.png[Postprocessing with MSAA and write-back resolve of color and depth] image:images/screenshot_color_depth_writeback.jpg[Postprocessing with MSAA and write-back resolve sample]
+image:./images/msaa_good_postprocessing.png[Postprocessing with MSAA and write-back resolve of color and depth] image:./images/screenshot_color_depth_writeback.jpg[Postprocessing with MSAA and write-back resolve sample]
 
 To resolve depth on write-back, http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap40.html#VK_KHR_depth_stencil_resolve[`VK_KHR_depth_stencil_resolve`] (promoted in http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap39.html#versions-1.2[Vulkan 1.2]) is required.
 To configure the subpass, we must use a http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap7.html#VkSubpassDescription2[`VkSubpassDescription2`] and make `pNext` to point to a http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap7.html#VkSubpassDescriptionDepthStencilResolve[`VkSubpassDescriptionDepthStencilResolve`] structure.
@@ -172,7 +172,7 @@ typedef enum VkResolveModeFlagBits {
 In contrast to color, Vulkan does not offer an alternative way to resolve depth attachments (http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap18.html#vkCmdResolveImage[`vkCmdResolveImage`] does not support depth).
 Therefore if http://khronos.org/registry/vulkan/specs/1.2-khr-extensions/html/chap40.html#VK_KHR_depth_stencil_resolve[`VK_KHR_depth_stencil_resolve`] is not supported or properly configured, this pipeline will require an additional read-back of the multisampled depth attachment to carry out the post-processing effect:
 
-image:images/msaa_bad_postprocessing.png[Postprocessing with MSAA and color resolve in separate pass, no depth resolve] image:images/screenshot_color_depth_separate.jpg[Postprocessing with MSAA no write-back resolve sample]
+image:./images/msaa_bad_postprocessing.png[Postprocessing with MSAA and color resolve in separate pass, no depth resolve] image:./images/screenshot_color_depth_separate.jpg[Postprocessing with MSAA no write-back resolve sample]
 
 In the worst possible scenario shown above, where both multisampled depth and color are written out to main memory, the read bandwidth increases 2366 MiB/s (close to the bandwidth of a 4X attachment as calculated above) due to the color re-read required for separate resolve.
 The write bandwidth increases 3951 MiB/s, which roughly corresponds to the difference between a 4X (2247 MiB/s) and a 1X (562 MiB/s) depth attachment (in this case depth is also 32bpp) i.e.

@@ -141,7 +141,7 @@ Since the application is CPU bound, the https://developer.android.com/studio/pro
 As expected, most of the time goes into the https://github.com/ARM-software/vulkan_best_practice_for_mobile_developers/blob/master/framework/core/command_pool.cpp[command pool framework functions]: `request_command_buffer` and `reset`.
 These handle the different modes of operation exposed by this sample.
 
-image:images/android_profiler_allocate_and_free.png[Android Profiler: Allocate and Free] _Android Profiler capture: use the Flame Chart to visualize which functions take the most time in the capture.
+image:./images/android_profiler_allocate_and_free.png[Android Profiler: Allocate and Free] _Android Profiler capture: use the Flame Chart to visualize which functions take the most time in the capture.
 Filter for command buffer functions, and use the tooltips to find out how much time out of the overall capture was used by each function._
 
 Capturing the C{pp} calls this way allows us to determine how much each function contributed to the overall running time.

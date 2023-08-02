@@ -88,7 +88,7 @@ The bandwidth has dropped from 788.0 MiB/s to 528.6 MiB/s, this is approximately
 You can also confirm these numbers in Streamline.
 Here are some screenshots:
 
-image:./images/streamline_disabled.png[Streamline AFBC Off] image:images/streamline_enabled.png[Streamline AFBC On]
+image:./images/streamline_disabled.png[Streamline AFBC Off] image:./images/streamline_enabled.png[Streamline AFBC On]
 
 == Format Support
 

@@ -79,11 +79,11 @@ A profiling tool, such as Android Profiler, can help to see how threads are util
 Flame Chart shows how much time was spent for each function execution during a particular timeframe.
 In this particular example total contribution of command buffers recording in the main thread is 9.94 seconds within a 10 seconds capture with multi-threading disabled.
 
-image:images/android_studio_capture_no_multithreading.png[Profiler Capture No Multithreading] _Multithreading is disabled_
+image:./images/android_studio_capture_no_multithreading.png[Profiler Capture No Multithreading] _Multithreading is disabled_
 
 With multi-threading enabled it remains almost the same (9.92s), but in the second thread 5.7s was spent for shadow pass recording.
 
-image:images/android_studio_capture_secondary_buffers.png[Profiler Capture Secondary Command Buffers] _Multithreading is enabled and the timeline shows how both threads are used_
+image:-/images/android_studio_capture_secondary_buffers.png[Profiler Capture Secondary Command Buffers] _Multithreading is enabled and the timeline shows how both threads are used_
 
 That means, two threads perform the same amount of work in 10s as one thread in more than 15.7 seconds and we should expect approximately 1.57 times better performance.
 
