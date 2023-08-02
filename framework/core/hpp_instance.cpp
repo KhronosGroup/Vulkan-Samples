@@ -204,18 +204,26 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	enable_extension(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME, available_instance_extensions, enabled_extensions);
 #endif
 
-#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
+	std::vector<const char *> requested_validation_layers(required_validation_layers);
+
+#if (defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS))
 	bool validation_features = false;
 	{
 		std::vector<vk::ExtensionProperties> available_layer_instance_extensions = vk::enumerateInstanceExtensionProperties(std::string("VK_LAYER_KHRONOS_validation"));
 
-		for (auto &available_extension : available_layer_instance_extensions)
+		if (std::any_of(available_layer_instance_extensions.begin(),
+		                available_layer_instance_extensions.end(),
+		                [](vk::ExtensionProperties const &ep) { return strcmp(ep.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0; }))
 		{
-			if (strcmp(available_extension.extensionName, VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME) == 0)
+			validation_features = true;
+			LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+			enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+
+			if (std::none_of(requested_validation_layers.begin(),
+			                 requested_validation_layers.end(),
+			                 [](char const *layer) { return strcmp(layer, "VK_LAYER_KHRONOS_validation") == 0; }))
 			{
-				validation_features = true;
-				LOGI("{} is available, enabling it", VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
-				enabled_extensions.push_back(VK_EXT_VALIDATION_FEATURES_EXTENSION_NAME);
+				requested_validation_layers.push_back("VK_LAYER_KHRONOS_validation");
 			}
 		}
 	}
@@ -267,8 +275,6 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	}
 
 	std::vector<vk::LayerProperties> supported_validation_layers = vk::enumerateInstanceLayerProperties();
-
-	std::vector<const char *> requested_validation_layers(required_validation_layers);
 
 #ifdef VKB_VALIDATION_LAYERS
 	// Determine the optimal validation layers to enable that are necessary for useful debugging
