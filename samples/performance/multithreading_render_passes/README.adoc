@@ -83,7 +83,7 @@ image:./images/android_studio_capture_no_multithreading.png[Profiler Capture No 
 
 With multi-threading enabled it remains almost the same (9.92s), but in the second thread 5.7s was spent for shadow pass recording.
 
-image:-/images/android_studio_capture_secondary_buffers.png[Profiler Capture Secondary Command Buffers] _Multithreading is enabled and the timeline shows how both threads are used_
+image:./images/android_studio_capture_secondary_buffers.png[Profiler Capture Secondary Command Buffers] _Multithreading is enabled and the timeline shows how both threads are used_
 
 That means, two threads perform the same amount of work in 10s as one thread in more than 15.7 seconds and we should expect approximately 1.57 times better performance.
 
