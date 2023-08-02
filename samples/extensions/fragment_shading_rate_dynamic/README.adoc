@@ -29,7 +29,7 @@ This sample demonstrates the attachment capability, in which the render pass dir
 The image below shows the scene from this sample.
 Note the areas of high image variation in the center of each cube face, and the areas of low image variation in the sky and plain corners of each cube face.
 
-image::rendered.png[Rendered image]
+image::./rendered.png[Rendered image]
 
 == Shading Rate Image
 
@@ -44,7 +44,7 @@ A separate compute shader then processes all the pixels within the texel of the 
 
 The frequency information is visualized below and can be accessed by selecting "Frequency" in the data visualization dropdown in the sample GUI.
 
-image::frequency.png[Frequency information]
+image::./frequency.png[Frequency information]
 
 == Encoding the Shading Rate
 
@@ -55,7 +55,7 @@ Although devices vary in their supported texel sizes, the maximum texel size is 
 The image below shows the shading rate image, where lighter colors indicate areas that will have a high sample density.
 This visualization can be selected by choosing the "Shading Rates" dropdown selection in the sample GUI.
 
-image::shading_rate.png[Shading rate image]
+image::./shading_rate.png[Shading rate image]
 
 == Implementation Details
 
@@ -80,7 +80,7 @@ However, their content is identical, and after the "compute shader" has complete
 
 == Calculating Frequency Information in a Separate Renderpass
 
-image::diagram.png[Diagram of renderpass]
+image::./diagram.png[Diagram of renderpass]
 
 One problem with calculating the frequency information during the render pass is that each frame is using the previous frame's shading rate, which results in a feedback loop that lead to unstable or "stutter" in the calculated frequency information.
 To prevent this problem, this sample introduces a separate renderpass that calculates the frequency information without using the shading rate attachment.

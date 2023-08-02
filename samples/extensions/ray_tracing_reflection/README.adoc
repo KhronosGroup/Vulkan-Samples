@@ -18,7 +18,7 @@
 ////
 = Ray tracing - reflection
 
-image::img1.png[]
+image::./img1.png[]
 
 == Overview
 
@@ -110,7 +110,7 @@ We see this in `create_scene()`, the same BLAS id is reused with different matri
 
 Note, the BLAS id will be identified by the `gl_InstanceCustomIndexEXT` in the shader.
 
-image::img2.png[]
+image::./img2.png[]
 
 == Ray tracing pipeline
 
@@ -176,7 +176,7 @@ NOTE: we could add a test on the attenuation and exist the loop if the value is 
 
 == Diagram of the ray pipeline
 
-image::img3.png[]
+image::./img3.png[]
 
 == Other Tutorial
 
