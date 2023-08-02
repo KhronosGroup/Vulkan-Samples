@@ -69,12 +69,12 @@ see xref:../subpasses/README.adoc[the subpasses tutorial] for more detail.
 
 The base case is with all color images being transitioned from `UNDEFINED`, as shown in the image below.
 
-image::images/undefined_layout.jpg[Undefined layout transitions]
+image::./images/undefined_layout.jpg[Undefined layout transitions]
 
 When we switch to using the last known layout as `oldLayout` in the pipeline barriers, transaction elimination can take place.
 This is highlighted in the counters showing about double the amount of tiles killed by CRC match, along with ~10% reduction in write bandwidth.
 
-image::images/last_layout.jpg[Last layout transitions]
+image::./images/last_layout.jpg[Last layout transitions]
 
 A reduction in memory bandwidth will reduce the power consumption of the device, resulting in less overheating and longer battery life.
 Additionally, this may improve performance on games that are bandwidth limited.
