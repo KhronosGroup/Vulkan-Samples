@@ -142,7 +142,7 @@ Pipelines are created in a background thread and once they're created, command b
 == Additional resources
 
 * https://www.khronos.org/blog/reducing-draw-time-hitching-with-vk-ext-graphics-pipeline-library[Reducing Draw Time Hitching with VK_EXT_graphics_pipeline_library]
-* https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_graphics_pipeline_library.asciidoc[Extension proposal]
+* https://github.com/KhronosGroup/Vulkan-Docs/blob/main/proposals/VK_EXT_graphics_pipeline_library.adoc[Extension proposal]
 
 == Conclusion
 
