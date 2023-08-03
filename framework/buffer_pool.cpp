@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,21 +50,29 @@ BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags u
 	}
 }
 
-BufferAllocation BufferBlock::allocate(const uint32_t allocate_size)
+VkDeviceSize BufferBlock::aligned_offset() const
 {
-	assert(allocate_size > 0 && "Allocation size must be greater than zero");
+	return (offset + alignment - 1) & ~(alignment - 1);
+}
 
-	auto aligned_offset = (offset + alignment - 1) & ~(alignment - 1);
+bool BufferBlock::can_allocate(VkDeviceSize size) const
+{
+	assert(size > 0 && "Allocation size must be greater than zero");
+	return (aligned_offset() + size <= buffer.get_size());
+}
 
-	if (aligned_offset + allocate_size > buffer.get_size())
+BufferAllocation BufferBlock::allocate(VkDeviceSize size)
+{
+	if (can_allocate(size))
 	{
-		// No more space available from the underlying buffer, return empty allocation
-		return BufferAllocation{};
+		// Move the current offset and return an allocation
+		auto aligned = aligned_offset();
+		offset       = aligned + size;
+		return BufferAllocation{buffer, size, aligned};
 	}
 
-	// Move the current offset and return an allocation
-	offset = aligned_offset + allocate_size;
-	return BufferAllocation{buffer, allocate_size, aligned_offset};
+	// No more space available from the underlying buffer, return empty allocation
+	return BufferAllocation{};
 }
 
 VkDeviceSize BufferBlock::get_size() const
