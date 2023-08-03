@@ -36,19 +36,17 @@ To detect this, check for queue families with only the  `VK_QUEUE_TRANSFER_BIT` 
 
 == Comparison
 
-(Click to enlarge images)
-
 Without mip mapping:
 
-link:./images/mip_mapping_off.jpg[image:./images/mip_mapping_off.jpg[,512px\]]
+image::./images/mip_mapping_off.jpg[Off,512px]
 
 Using mip mapping with a bilinear filter:
 
-link:./images/mip_mapping_bilinear.jpg[image:./images/mip_mapping_bilinear.jpg[,512px\]]
+image:./images/mip_mapping_bilinear.jpg[Bilinear,512px]
 
 Using mip mapping with an anisotropic filter:
 
-link:./images/mip_mapping_anisotropic.jpg[image:./images/mip_mapping_anisotropic.jpg[,512px\]]
+image:./images/mip_mapping_anisotropic.jpg[Anisotropic,512px]
 
 == Requirements
 
