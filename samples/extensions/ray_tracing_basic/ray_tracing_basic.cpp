@@ -19,7 +19,7 @@
  * Basic example for hardware accelerated ray tracing using VK_KHR_ray_tracing_pipeline and VK_KHR_acceleration_structure
  */
 
-#include "raytracing_basic.h"
+#include "ray_tracing_basic.h"
 
 RaytracingBasic::RaytracingBasic()
 {
@@ -877,7 +877,7 @@ void RaytracingBasic::render(float delta_time)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_raytracing_basic()
+std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic()
 {
 	return std::make_unique<RaytracingBasic>();
 }

@@ -103,4 +103,4 @@ class RaytracingBasic : public ApiVulkanSample
 	virtual void  render(float delta_time) override;
 };
 
-std::unique_ptr<vkb::VulkanSample> create_raytracing_basic();
+std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic();
