@@ -147,11 +147,7 @@ bool ApiVulkanSample::resize(const uint32_t _width, const uint32_t _height)
 		}
 	}
 
-	// Command buffers need to be recreated as they may store
-	// references to the recreated frame buffer
-	destroy_command_buffers();
-	create_command_buffers();
-	build_command_buffers();
+	rebuild_command_buffers();
 
 	device->wait_idle();
 
@@ -456,7 +452,7 @@ void ApiVulkanSample::update_overlay(float delta_time)
 
 		if (gui->update_buffers() || gui->get_drawer().is_dirty())
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 			gui->get_drawer().clear();
 		}
 	}
@@ -601,6 +597,12 @@ void ApiVulkanSample::view_changed()
 void ApiVulkanSample::build_command_buffers()
 {}
 
+void ApiVulkanSample::rebuild_command_buffers()
+{
+	vkResetCommandPool(device->get_handle(), cmd_pool, 0);
+	build_command_buffers();
+}
+
 void ApiVulkanSample::create_synchronization_primitives()
 {
 	// Wait fences to sync command buffer access
@@ -617,7 +619,6 @@ void ApiVulkanSample::create_command_pool()
 	VkCommandPoolCreateInfo command_pool_info = {};
 	command_pool_info.sType                   = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	command_pool_info.queueFamilyIndex        = device->get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT, 0).get_family_index();
-	command_pool_info.flags                   = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	VK_CHECK(vkCreateCommandPool(device->get_handle(), &command_pool_info, nullptr, &cmd_pool));
 }
 

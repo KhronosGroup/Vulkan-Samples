@@ -603,6 +603,9 @@ void FragmentShadingRateDynamic::build_command_buffers()
 		VK_CHECK(vkEndCommandBuffer(render_target._command_buffer));
 	};
 
+	// small_command_buffers are not controlled by ApiVulkanSample, that is we need to explicitly reset them here!
+	vkResetCommandPool(get_device().get_handle(), command_pool, 0);
+
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		assert(subpass_extent.width > 0 && subpass_extent.width <= width && subpass_extent.height > 0 &&
@@ -1153,10 +1156,7 @@ bool FragmentShadingRateDynamic::prepare(const vkb::ApplicationOptions &options)
 	// Note: Using Revered depth-buffer for increased precision, so Znear and Zfar are flipped
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-	// VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT
-	auto command_pool_create  = vkb::initializers::command_pool_create_info();
-	command_pool_create.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	command_pool_create.pNext = VK_NULL_HANDLE;
+	auto command_pool_create = vkb::initializers::command_pool_create_info();
 	vkCreateCommandPool(get_device().get_handle(), &command_pool_create, VK_NULL_HANDLE, &command_pool);
 
 	load_assets();
@@ -1190,7 +1190,7 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Enable attachment shading rate", &enable_attachment_shading_rate))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 
 		static const std::vector<std::string> frequency_decimation_rates = {"1", "2", "4", "8", "16"};
@@ -1212,7 +1212,7 @@ void FragmentShadingRateDynamic::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		if (drawer.checkbox("sky-sphere", &display_sky_sphere))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }
@@ -1228,7 +1228,7 @@ bool FragmentShadingRateDynamic::resize(const uint32_t new_width, const uint32_t
 	create_compute_pipeline();
 	setup_framebuffer();
 	setup_descriptor_sets();
-	build_command_buffers();
+	rebuild_command_buffers();
 	update_uniform_buffers();
 	return true;
 }

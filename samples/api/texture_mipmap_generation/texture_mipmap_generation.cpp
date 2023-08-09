@@ -179,8 +179,8 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	device->flush_command_buffer(copy_command, queue, true);
 
 	// Clean up staging resources
-	vkFreeMemory(device->get_handle(), staging_memory, nullptr);
 	vkDestroyBuffer(device->get_handle(), staging_buffer, nullptr);
+	vkFreeMemory(device->get_handle(), staging_memory, nullptr);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------

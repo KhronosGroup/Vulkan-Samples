@@ -786,7 +786,7 @@ void TerrainTessellation::on_update_ui_overlay(vkb::Drawer &drawer)
 		{
 			if (drawer.checkbox("Wireframe", &wireframe))
 			{
-				build_command_buffers();
+				rebuild_command_buffers();
 			}
 		}
 	}

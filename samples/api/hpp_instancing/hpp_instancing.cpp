@@ -83,7 +83,7 @@ bool HPPInstancing::prepare(const vkb::ApplicationOptions &options)
 bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
 {
 	HPPApiVulkanSample::resize(width, height);
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 

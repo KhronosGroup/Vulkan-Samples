@@ -629,7 +629,7 @@ void MemoryBudget::on_update_ui_overlay(vkb::Drawer &drawer)
 bool MemoryBudget::resize(uint32_t width, uint32_t height)
 {
 	bool resizeResults = ApiVulkanSample::resize(width, height);
-	build_command_buffers();
+	rebuild_command_buffers();
 	return resizeResults;
 }
 
