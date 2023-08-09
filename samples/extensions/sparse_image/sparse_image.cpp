@@ -18,12 +18,13 @@
 #include "sparse_image.h"
 #include <iomanip>
 
-sparse_image::sparse_image()
+SparseImage::SparseImage()
 {
 	title = "Sparse Image";
+	setup_camera();
 }
 
-sparse_image::~sparse_image()
+SparseImage::~SparseImage()
 {
 	if (device)
 	{
@@ -31,24 +32,9 @@ sparse_image::~sparse_image()
 		vkDestroyPipelineLayout(get_device().get_handle(), sample_pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	}
-
-	cleanup_simple_buffer(vertex_buffer);
-	cleanup_simple_buffer(index_buffer);
-	cleanup_simple_buffer(mvp_buffer);
-	cleanup_simple_buffer(virtual_texture.single_page_buffer);
 }
 
-void sparse_image::cleanup_simple_buffer(struct SimpleBuffer& simple_buffer)
-{
-	if (simple_buffer.mapped_memory != nullptr)
-	{
-		vkUnmapMemory(get_device().get_handle(), simple_buffer.memory);
-	}
-	vkDestroyBuffer(get_device().get_handle(), simple_buffer.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), simple_buffer.memory, nullptr);
-}
-
-void sparse_image::load_assets()
+void SparseImage::load_assets()
 {
 	virtual_texture.row_data_image = vkb::sg::Image::load("clay_terrain.jpg", "clay_terrain.jpg", vkb::sg::Image::ContentType::Color);
 
@@ -59,14 +45,13 @@ void sparse_image::load_assets()
 	virtual_texture.height    = tex_extent.height;
 }
 
-bool sparse_image::prepare(const vkb::ApplicationOptions &options)
+bool SparseImage::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
 
-	setup_camera();
 	load_assets();
 
 	create_descriptor_set_layout();
@@ -88,7 +73,7 @@ bool sparse_image::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
-void sparse_image::prepare_pipelines()
+void SparseImage::prepare_pipelines()
 {
 	// Create a blank pipeline layout.
 	VkPipelineLayoutCreateInfo layout_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
@@ -139,8 +124,8 @@ void sparse_image::prepare_pipelines()
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 
 	// Vertex stage of the pipeline
-	shader_stages[0] = load_shader("sparse_image/shader.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("sparse_image/shader.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[0] = load_shader("sparse_image/sparse.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("sparse_image/sparse.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
 	// We need to specify the pipeline layout and the render pass description up front as well.
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(sample_pipeline_layout, render_pass);
@@ -158,7 +143,7 @@ void sparse_image::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &sample_pipeline));
 }
 
-void sparse_image::setup_camera()
+void SparseImage::setup_camera()
 {
 	camera.type = vkb::CameraType::FirstPerson;
 	camera.set_perspective(fov_degrees, static_cast<float>(width) / static_cast<float>(height), 0.1f, 512.0f);
@@ -167,47 +152,9 @@ void sparse_image::setup_camera()
 	camera.translation_speed = 1.0f;
 }
 
-
-VkCommandBuffer sparse_image::begin_single_time_command()
+void SparseImage::generate_mips()
 {
-	VkCommandBufferAllocateInfo alloc_info{};
-	alloc_info.sType             = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	alloc_info.level             = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	alloc_info.commandPool       = cmd_pool;
-	alloc_info.commandBufferCount = 1;
-
-	VkCommandBuffer command_buffer;
-	vkAllocateCommandBuffers(device->get_handle(), &alloc_info, &command_buffer);
-
-	VkCommandBufferBeginInfo begin_info{};
-	begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-	vkBeginCommandBuffer(command_buffer, &begin_info);
-
-	return command_buffer;
-}
-
-
-void sparse_image::end_single_time_commands(VkCommandBuffer command_buffer)
-{
-	vkEndCommandBuffer(command_buffer);
-
-	VkSubmitInfo submitInfo{};
-	submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers    = &command_buffer;
-
-	vkQueueSubmit(queue, 1, &submitInfo, VK_NULL_HANDLE);
-	vkQueueWaitIdle(queue);
-
-	vkFreeCommandBuffers(device->get_handle(), cmd_pool, 1, &command_buffer);
-}
-
-
-void sparse_image::generate_mips()
-{
-	VkCommandBuffer command_buffer = begin_single_time_command();
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageMemoryBarrier barrier{};
 	barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -215,9 +162,9 @@ void sparse_image::generate_mips()
 	barrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
 	barrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
 	barrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount     = 1;
-	barrier.subresourceRange.levelCount     = 1;
+	barrier.subresourceRange.baseArrayLayer = 0U;
+	barrier.subresourceRange.layerCount     = 1U;
+	barrier.subresourceRange.levelCount     = 1U;
 
 	int32_t mip_width  = virtual_texture.width;
 	int32_t mip_height = virtual_texture.height;
@@ -284,13 +231,13 @@ void sparse_image::generate_mips()
 	                     0, nullptr,
 	                     1, &barrier);
 
-    end_single_time_commands(command_buffer);
+    device->flush_command_buffer(command_buffer, queue, true);
 }
 
 
-void sparse_image::transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout)
+void SparseImage::transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout)
 {
-	VkCommandBuffer command_buffer = begin_single_time_command();
+	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkImageMemoryBarrier barrier{};
 	barrier.sType                           = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -339,12 +286,12 @@ void sparse_image::transitionImageLayout(VkImage image, VkImageLayout old_layout
 
 	vkCmdPipelineBarrier(command_buffer, source_stage, destination_stage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-	end_single_time_commands(command_buffer);
+	device->flush_command_buffer(command_buffer, queue, true);
 }
 
 
 
-void sparse_image::process_camera_change()
+void SparseImage::process_camera_change()
 {
 	// Update MVP + new mip block calculations
 	struct MVP mvp_ubo = {};
@@ -352,19 +299,12 @@ void sparse_image::process_camera_change()
 	mvp_ubo.view       = camera.matrices.view;
 	mvp_ubo.proj       = camera.matrices.perspective;
 
-	memcpy(mvp_buffer.mapped_memory, &mvp_ubo, sizeof(mvp_ubo));
+	mvp_buffer->update(&mvp_ubo, sizeof(mvp_ubo));
 
 	glm::mat4 mvp_transform = mvp_ubo.proj * mvp_ubo.view * mvp_ubo.model;
 
-	glm::vec4 resultA = mvp_transform * glm::vec4(-1.0f, -1.0f, 0.0f, 1.0f);
-	glm::vec4 resultB = mvp_transform * glm::vec4(-1.0f,  1.0f, 0.0f, 1.0f);
-	glm::vec4 resultC = mvp_transform * glm::vec4( 1.0f,  1.0f, 0.0f, 1.0f);
-	glm::vec4 resultD = mvp_transform * glm::vec4( 1.0f, -1.0f, 0.0f, 1.0f);
-
-	std::array<glm::vec4, 4> vertices = {resultA, resultB, resultC, resultD};
-
 	// Generate a mesh and calculate required mip level for each texture block
-	calculate_mips_table(vertices, on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks, virtual_texture.new_mip_table);
+	calculate_mips_table(mvp_transform, on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks, virtual_texture.new_mip_table);
 
 	// Compare new on-screen-present mip block set with the previous one, put into an update list if the difference is greater than 0.1
 	compare_mips_table();
@@ -409,7 +349,7 @@ void sparse_image::process_camera_change()
 
 		for (size_t i = 0U; i < virtual_texture.mip_properties[1].block_base_index; i++)
 		{
-			if ((virtual_texture.page_table[i].gen_mip_required || virtual_texture.page_table[i].render_required_list.empty() == false))
+			if (((virtual_texture.page_table[i].gen_mip_required || virtual_texture.page_table[i].render_required_list.empty() == false)) /*TODO && virtual_texture.page_table[i].bound == true && virtual_texture.page_table[i].written != true*/)
 			{
 				size_t row    = i / virtual_texture.mip_properties[0].num_columns;
 				size_t column = i % virtual_texture.mip_properties[0].num_columns;
@@ -427,17 +367,17 @@ void sparse_image::process_camera_change()
 
 				separate_single_row_data_block(temp_buffer.data(), block_extent, block_offset, virtual_texture.width * 4U);
 				
-				memcpy(virtual_texture.single_page_buffer.mapped_memory, temp_buffer.data(), temp_buffer.size());
+				virtual_texture.single_page_buffer->update(temp_buffer, 0U);
 
 				VkMappedMemoryRange mapped_range{};
 				mapped_range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-				mapped_range.memory = virtual_texture.single_page_buffer.memory;
+				mapped_range.memory = virtual_texture.single_page_buffer->get_memory();
 				mapped_range.offset = 0;
 				mapped_range.size   = virtual_texture.page_size;
 				vkFlushMappedMemoryRanges(device->get_handle(), 1, &mapped_range);
 
 
-			    VkCommandBuffer command_buffer = begin_single_time_command();
+			    VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 				VkBufferImageCopy region{};
 				region.bufferOffset      = 0;
@@ -452,9 +392,9 @@ void sparse_image::process_camera_change()
 				region.imageOffset = VkOffset3D({block_offset.x, block_offset.y, 0});
 				region.imageExtent = VkExtent3D({block_extent.width, block_extent.height, 1});
 
-				vkCmdCopyBufferToImage(command_buffer, virtual_texture.single_page_buffer.buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+				vkCmdCopyBufferToImage(command_buffer, virtual_texture.single_page_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
 
-				end_single_time_commands(command_buffer);
+				device->flush_command_buffer(command_buffer, queue, true);
 			}
 		}
 
@@ -478,7 +418,7 @@ void sparse_image::process_camera_change()
 	}
 }
 
-void sparse_image::separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride)
+void SparseImage::separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride)
 {
 	for (size_t row = 0U; row < blockDim.height; row++)
 	{
@@ -494,7 +434,7 @@ void sparse_image::separate_single_row_data_block(uint8_t buffer[], const VkExte
 }
 
 
-void sparse_image::bind_sparse_image()
+void SparseImage::bind_sparse_image()
 {
 	std::vector<VkSparseImageMemoryBind> sparse_image_memory_bind;
 
@@ -573,7 +513,7 @@ void sparse_image::bind_sparse_image()
 }
 
 
-uint32_t sparse_image::get_mip_level(size_t page_index)
+uint32_t SparseImage::get_mip_level(size_t page_index)
 {
 	uint32_t mip_level = 0;
 	if (virtual_texture.mip_levels == 1U)
@@ -592,7 +532,7 @@ uint32_t sparse_image::get_mip_level(size_t page_index)
 	return mip_level;
 }
 
-void sparse_image::calculate_required_memory_layout()
+void SparseImage::calculate_required_memory_layout()
 {
 	while (virtual_texture.texture_block_update_list.empty() != true)
 	{
@@ -602,7 +542,7 @@ void sparse_image::calculate_required_memory_layout()
 	}
 }
 
-void sparse_image::get_associated_memory_blocks(const TextureBlock &texture_block)
+void SparseImage::get_associated_memory_blocks(const TextureBlock &texture_block)
 {
 	std::list<size_t> memory_index_list;
 
@@ -689,7 +629,7 @@ void sparse_image::get_associated_memory_blocks(const TextureBlock &texture_bloc
 	}
 }
 
-struct sparse_image::MemPageDescription sparse_image::get_mem_page_description(size_t memory_index)
+struct SparseImage::MemPageDescription SparseImage::get_mem_page_description(size_t memory_index)
 {
 	struct MemPageDescription mem_page_description = {};
 	uint8_t                   mip_level            = virtual_texture.mip_levels - 1U;
@@ -707,7 +647,7 @@ struct sparse_image::MemPageDescription sparse_image::get_mem_page_description(s
 }
 
 
-void sparse_image::check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mem_page_description)
+void SparseImage::check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mem_page_description)
 {
 	if (mem_page_description.mip_level == 0)
 	{
@@ -734,7 +674,7 @@ void sparse_image::check_mip_page_requirements(std::list<MemPageDescription> &mi
 
 
 // add memory indexes to the list
-void sparse_image::get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level, std::list<size_t> &index_list)
+void SparseImage::get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level, std::list<size_t> &index_list)
 {
 	double height_on_screen_divider = 1.0 / on_screen_num_vertical_blocks;
 	double width_on_screen_divider  = 1.0 / on_screen_num_horizontal_blocks;
@@ -770,7 +710,7 @@ void sparse_image::get_memory_dependency_for_the_block(size_t column, size_t row
 	}
 }
 
-void sparse_image::compare_mips_table()
+void SparseImage::compare_mips_table()
 {
 	if (virtual_texture.texture_block_update_list.empty() != true)
 	{
@@ -798,7 +738,7 @@ void sparse_image::compare_mips_table()
 }
 
 
-void sparse_image::build_command_buffers()
+void SparseImage::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
@@ -843,9 +783,9 @@ void sparse_image::build_command_buffers()
 		vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, sample_pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
 		VkDeviceSize offsets[1] = {0};
-		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, &vertex_buffer.buffer, offsets);
-		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer.buffer, 0, VK_INDEX_TYPE_UINT16);
-		vkCmdDrawIndexed(draw_cmd_buffers[i], index_buffer.num_elements, 1, 0, 0, 0);
+		vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, &vertex_buffer->get_handle(), offsets);
+		vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT16);
+		vkCmdDrawIndexed(draw_cmd_buffers[i], index_count, 1, 0, 0, 0);
 
 		// Draw user interface.
 		draw_ui(draw_cmd_buffers[i]);
@@ -859,13 +799,16 @@ void sparse_image::build_command_buffers()
 }
 
 
-void sparse_image::render(float delta_time)
+void SparseImage::render(float delta_time)
 {
 	if (!prepared)
 	{
 		return;
 	}
-	process_camera_change();
+	if (camera.updated)
+	{
+		process_camera_change();
+	}
 	ApiVulkanSample::prepare_frame();
 	submit_info.commandBufferCount = 1;
 	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
@@ -875,309 +818,94 @@ void sparse_image::render(float delta_time)
 
 std::unique_ptr<vkb::VulkanSample> create_sparse_image()
 {
-	return std::make_unique<sparse_image>();
+	return std::make_unique<SparseImage>();
 }
 
 
-
-sparse_image::CalculateEdgeData::CalculateEdgeData(bool is_vertical, uint32_t num_blocks, VkExtent2D extent_2D, glm::vec4 A, glm::vec4 B)
+void SparseImage::calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable)
 {
-	this->is_vertical = is_vertical;
-	vertices[0]      = A;
-	vertices[1]      = B;
-
-	xy_extent[0] = extent_2D.width;
-	xy_extent[1] = extent_2D.height;
-
-	xy_num_blocks = num_blocks;
-	xy_edge_coords.resize(xy_num_blocks + 1U);
-}
-
-
-
-
-/*!
- *  Function:   CalculateEdgeData::calculate_edge_coordinates()
- *  Desc:       This function works based on the two vertices data (named A and B) which create a rectangular's edge on the screen.
- *				What this function does, is calculates the on-screen coordinates corresponding to on-texture coordinates.
- *				The goal of this function is to prepare the required prior to creating a mesh.
- *				
- *				The idea here is that:
- *					1. We divide the texture into (ON_SCREEN_VERTICAL_BLOCKS x ON_SCREEN_HORIZONTAL_BLOCKS) blocks.
- *					2. Because each block is of the same and known size, this will make further miplevel-related calculations possible.
- *					3. For the miplevel-related calculations we need the information on how this on-texture block, correlates to what we see on the screen
- *					   (For example, the regions far away from the camera are scaled down, but those close to the observed are stretched) 
- * 
- * 
- *				There are several calculations included to get the right coordinates but the major scheme can be represented as:
- *				_________________________________________________________________
- *					('P.0)	      ('P.1)   ('P.2)  ('P.3)('P.4)('P.5)
- *															 (B)
- *														  _/(P.5)
- *														_/ 
- *													  _/(P.4)
- *													_/
- *												  _/(P.3)
- *												_/
- *											  _/(P.2)
- *											_/
- *										  _/(P.1)
- *									 (A) /
- *									    (P.0)
- *						   
- *						  
- *											(Observer)
- *				_________________________________________________________________
- * 
- *				('P.X) points are those visible on the screen by the viewer. (P.X) points corresponds to on-texture blocks in the way, that the distance between them is constant.
- *				
- *				When the calculations are finished, what we end up with are on-edge (x,y) coordinates corresponding to same-sized edge-blocks of the texture.
- */
-
-void sparse_image::CalculateEdgeData::calculate_edge_coordinates()
-{
-	double cameraMAXDist = xy_extent[1] / 2.0 / tan(glm::radians(FOV_DEGREES / 2.0f));
-
-	bool z_Inverted  = false;
-	bool xy_Inverted = false;
-
-	double A[2], B[2];
-	A[1] = xy_extent[1] / 2.0 * (vertices[0][1] / vertices[0][3]);
-	B[1] = xy_extent[1] / 2.0 * (vertices[1][1] / vertices[1][3]);
-
-	A[0] = xy_extent[0] / 2.0 * (vertices[0][0] / vertices[0][3]);
-	B[0] = xy_extent[0] / 2.0 * (vertices[1][0] / vertices[1][3]);
-
-	if (abs(vertices[0][2]) > abs(vertices[1][2]))
-	{
-		z_Inverted = true;
-	}
-
-	for (uint8_t xy = 0U; xy < 2U; xy++)
-	{
-		double baseOffset = A[xy];
-		if (z_Inverted == true)
-		{
-			baseOffset = B[xy];
-			if (B[xy] > A[xy])	{	xy_Inverted = true;  }
-			else				{	xy_Inverted = false; }
-		}
-		else
-		{
-			baseOffset = A[xy];
-			if (A[xy] > B[xy])	{	xy_Inverted = true;  }
-			else				{	xy_Inverted = false; }
-		}
-
-		double zFar   = std::max(abs(cameraMAXDist * (vertices[0][2])), abs(cameraMAXDist * (vertices[1][2])));
-		double zClose = std::min(abs(cameraMAXDist * (vertices[0][2])), abs(cameraMAXDist * (vertices[1][2])));
-		double zDiff  = abs(zFar - zClose);
-		if (zDiff < 0.01)
-			zDiff = 0.0;
-
-		double a = sqrt(pow(A[xy], 2) + pow(zFar, 2));
-		double b = sqrt(pow(B[xy], 2) + pow(zFar, 2));
-
-		double beta, theta;
-		double l, p;
-		double x;
-		double fi;
-
-		if (abs(A[xy] - B[xy]) < 0.01)
-		{
-			beta  = glm::radians(90.0);
-			theta = glm::radians(90.0);
-			p     = 0.0;
-			l     = 0.0;
-			x     = 0.0;
-			fi    = glm::radians(90.0);
-		}
-		else
-		{
-			beta  = acos((pow(b, 2) - pow(A[xy] - B[xy], 2) - pow(a, 2)) / (-2 * a * abs(A[xy] - B[xy])));
-			theta = acos((pow(a, 2) - pow(A[xy] - B[xy], 2) - pow(b, 2)) / (-2 * b * abs(A[xy] - B[xy])));
-			p     = zDiff / tan(theta);
-			l     = zDiff / tan(beta);
-
-			x  = sqrt(pow(zDiff, 2) + pow(abs(A[xy] - B[xy]) - l, 2));
-			fi = asin(abs(A[xy] - B[xy]) * sin(beta) / x);
-
-			if (zDiff < 0.01)
-			{
-				beta  = glm::radians(90.0);
-				theta = 0.0;
-				p     = 0.0;
-				l     = 0.0;
-				fi    = glm::radians(90.0);
-				x     = abs(A[xy] - B[xy]);
-			}
-		}
-
-		double alfa = glm::radians(180.0) - beta - theta;
-
-		double f       = sqrt(pow(l, 2) + pow(abs(zFar - zClose), 2));
-		double epsilon = x / xy_num_blocks;
-
-		if (abs(A[xy] - B[xy]) > sqrt(pow(f, 2) + pow(x, 2)))
-		{
-			fi = glm::radians(180.0) - fi;
-		}
-
-		double eps = glm::radians(180.0) - beta - fi;
-
-		uint32_t stepCount = 0U;
-		for (double step = 0.0; stepCount < this->xy_edge_coords.size(); step += epsilon, stepCount++)
-		{
-			double c = sqrt(pow(step, 2) + pow(a - f, 2) - 2 * step * (a - f) * cos(glm::radians(180.0) - fi));
-
-			double alfa_step = asin(step * sin(glm::radians(180.0) - fi) / c);
-			if (step > sqrt(pow(a - f, 2) + pow(c, 2)))
-			{
-				alfa_step = glm::radians(180.0) - alfa_step;
-			}
-
-			double gamma = glm::radians(180.0) - beta - alfa_step;
-
-			double h = sin(alfa_step) * a / sin(gamma);
-
-			if (xy == 0)
-			{
-				xy_edge_coords[z_Inverted == true ? this->xy_edge_coords.size() - stepCount - 1U : stepCount].x = baseOffset + (xy_Inverted == true ? -h : h);
-			}
-			else
-			{
-				xy_edge_coords[z_Inverted == true ? this->xy_edge_coords.size() - stepCount - 1U : stepCount].y = baseOffset + (xy_Inverted == true ? -h : h);
-			}
-		}
-	}
-}
-
-void sparse_image::calculate_mips_table(std::array<glm::vec4, 4> vertices, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable)
-{
-	std::array<struct CalculateEdgeData, 4U> verticesData = {
-	    CalculateEdgeData(
-	        true,
-	        numVerticalBlocks,
-	        {width, height},
-	        vertices[0],
-	        vertices[1]),
-	    CalculateEdgeData(
-	        false,
-	        numHorizontalBlocks,
-	        {width, height},
-	        vertices[1],
-	        vertices[2]),
-	    CalculateEdgeData(
-	        true,
-	        numVerticalBlocks,
-	        {width, height},
-	        vertices[3],
-	        vertices[2]),
-	    CalculateEdgeData(
-	        false,
-	        numHorizontalBlocks,
-	        {width, height},
-	        vertices[0],
-	        vertices[3]),
-	};
-
-	struct CalculateMipLevelData meshData = CalculateMipLevelData(verticesData, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}));
+	struct CalculateMipLevelData meshData(mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}) , on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks);
+	
 	meshData.calculate_mesh_coordinates();
 	meshData.calculate_mip_levels();
 
 	mipTable = meshData.mip_table;
 }
 
-sparse_image::CalculateMipLevelData::CalculateMipLevelData(std::array<struct CalculateEdgeData, 4U> &edge_data, VkExtent2D texture_base_dim) :
-    edge_data(edge_data), texture_base_dim(texture_base_dim), mesh{0}
-{}
-
-
-/*!
- *  Function:   CalculateMipLevelData::calculate_mesh_coordinates()
- *  Desc:       This function works based on the data from CalculateEdgeData::calculate_edge_coordinates().
- *				What this function does, is calculates the general equation of the straight line, that links two corresponding edge-points.
- *				The calculations are performed for 2 vertical and 2 horizontal edges. Points on the screen-plane where the horizontal straight equals the vertical one, are the nodes of the mesh. 
- *
- *				With mesh calculated, it is now possible to calculate what mip-level of the particular on-texture block (all of the same size), should be used on the screen.
- *				It is done by comparing the texel lenght of the particular block (which we know because they are same and fixed sized) with what we see on the screen (which is now possible because we have a mesh). 
- */
-void sparse_image::CalculateMipLevelData::calculate_mesh_coordinates()
+SparseImage::CalculateMipLevelData::CalculateMipLevelData(glm::mat4 mvp_transform, VkExtent2D texture_base_dim, VkExtent2D screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks) :
+    mvp_transform(mvp_transform), texture_base_dim(texture_base_dim), screen_base_dim(screen_base_dim), mesh{0}, vertical_num_blocks(vertical_num_blocks), horizontal_num_blocks(horizontal_num_blocks)
 {
-	edge_data[0].calculate_edge_coordinates();
-	edge_data[1].calculate_edge_coordinates();
-	edge_data[2].calculate_edge_coordinates();
-	edge_data[3].calculate_edge_coordinates();
-
-	//std::ofstream meshTableFile;
-	//meshTableFile.open("C:\\MAIN\\projects\\meshTable.txt", std::ios::out || std::ios::trunc);
-
-	std::vector<struct CalculateEdgeData *> vertical_edges;
-	std::vector<struct CalculateEdgeData *> horizontal_edges;
-
-	for (auto &edge : edge_data)
+	mesh.resize(vertical_num_blocks + 1U);
+	for (auto& row : mesh)
 	{
-		if (edge.is_vertical == true)
+		row.resize(horizontal_num_blocks + 1U);
+	}
+
+	ax_vertical.resize(horizontal_num_blocks + 1U);
+	ax_horizontal.resize(vertical_num_blocks + 1U);
+}
+
+
+void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
+{
+	// Assuming it is a rectangle
+	glm::vec4 top_left(-10.0f, -10.0f, 0.0f, 1.0f);
+	glm::vec4 top_right(10.0f, -10.0f, 0.0f, 1.0f);
+	glm::vec4 bottom_left(-10.0f, 10.0f, 0.0f, 1.0f);
+	glm::vec4 bottom_right(10.0f, 10.0f, 0.0f, 1.0f);
+
+	float h_interval = (top_right[0] - top_left[0]) / horizontal_num_blocks;
+	float v_interval = (bottom_left[1] - top_left[1]) / vertical_num_blocks;
+
+	std::ofstream meshTableFile;
+	meshTableFile.open("C:\\MAIN\\projects\\meshTable.txt", std::ios::out || std::ios::trunc);
+
+
+	for (size_t v_index = 0U; v_index < vertical_num_blocks + 1U; v_index++)
+	{
+		for (size_t h_index = 0U; h_index < horizontal_num_blocks + 1U; h_index++)
 		{
-			vertical_edges.push_back(&edge);
+			float x_norm = top_left[0] + h_index * h_interval;
+			float y_norm = top_left[1] + v_index * v_interval;
+
+			glm::vec4 result = mvp_transform * glm::vec4(x_norm, y_norm, 0.0f, 1.0f);
+
+			double x = 0.5 * screen_base_dim.width * result[0] / abs(result[3]);
+			double y = 0.5 * screen_base_dim.height * result[1] / abs(result[3]);
+
+			mesh[v_index][h_index].x = x;
+			mesh[v_index][h_index].y = y;
+
+			mesh[v_index][h_index].on_screen = (x < (screen_base_dim.width / (-2.0))) || (x > (screen_base_dim.width / 2.0)) || (y < (screen_base_dim.height / (-2.0))) || (y > (screen_base_dim.height / 2.0)) ? false : true;
+			meshTableFile << std::setw(4) << floor(mesh[v_index][h_index].on_screen) << '\t';
+		}
+		meshTableFile << std::endl;
+	}
+	meshTableFile.close();
+
+	for (size_t v_index = 0U; v_index < ax_horizontal.size(); v_index++)
+	{
+		if (abs(mesh[v_index][0].x - mesh[v_index][1].x) < 0.01)
+		{
+			ax_horizontal[v_index] = 1000.0;
 		}
 		else
 		{
-			horizontal_edges.push_back(&edge);
+			ax_horizontal[v_index] = (mesh[v_index][0].y - mesh[v_index][1].y) / (mesh[v_index][0].x - mesh[v_index][1].x);
 		}
 	}
 
-	mesh.resize(vertical_edges.front()->xy_edge_coords.size());
-	for (size_t i = 0U; i < mesh.size(); i++)
+	for (size_t h_index = 0U; h_index < ax_vertical.size(); h_index++)
 	{
-		mesh[i].resize(horizontal_edges.front()->xy_edge_coords.size());
-	}
-
-	ax_horizontal.resize(vertical_edges.front()->xy_edge_coords.size());
-	ax_vertical.resize(horizontal_edges.front()->xy_edge_coords.size());
-
-	int x_extent = vertical_edges[0]->xy_extent[0];
-	int y_extent = vertical_edges[0]->xy_extent[1];
-
-	for (size_t vIndex = 0U; vIndex < vertical_edges.front()->xy_edge_coords.size(); vIndex++)
-	{
-		double a;
-		if (abs(vertical_edges[0]->xy_edge_coords[vIndex].x - vertical_edges[1]->xy_edge_coords[vIndex].x) < 0.001)
+		if (abs(mesh[0][h_index].x - mesh[1][h_index].x) < 0.01)
 		{
-			a = (vertical_edges[0]->xy_edge_coords[vIndex].y - vertical_edges[1]->xy_edge_coords[vIndex].y) / 0.001;
+			ax_vertical[h_index] = 1000.0;
 		}
 		else
 		{
-			a = (vertical_edges[0]->xy_edge_coords[vIndex].y - vertical_edges[1]->xy_edge_coords[vIndex].y) / (vertical_edges[0]->xy_edge_coords[vIndex].x - vertical_edges[1]->xy_edge_coords[vIndex].x);
+			ax_vertical[h_index] = (mesh[0][h_index].y - mesh[1][h_index].y) / (mesh[0][h_index].x - mesh[1][h_index].x);
 		}
-		ax_horizontal[vIndex] = a;
-
-		for (size_t hIndex = 0U; hIndex < horizontal_edges.front()->xy_edge_coords.size(); hIndex++)
-		{
-			double b;
-			if (abs((horizontal_edges[0]->xy_edge_coords[hIndex].x - horizontal_edges[1]->xy_edge_coords[hIndex].x)) < 0.001)
-			{
-				b = (horizontal_edges[0]->xy_edge_coords[hIndex].y - horizontal_edges[1]->xy_edge_coords[hIndex].y) / 0.001;
-			}
-			else
-			{
-				b = (horizontal_edges[0]->xy_edge_coords[hIndex].y - horizontal_edges[1]->xy_edge_coords[hIndex].y) / (horizontal_edges[0]->xy_edge_coords[hIndex].x - horizontal_edges[1]->xy_edge_coords[hIndex].x);
-			}
-
-			double x             = (horizontal_edges[0]->xy_edge_coords[hIndex].y - vertical_edges[0]->xy_edge_coords[vIndex].y - b * (horizontal_edges[0]->xy_edge_coords[hIndex].x) + a * (vertical_edges[0]->xy_edge_coords[vIndex].x)) / (a - b);
-			double y             = a * (x - vertical_edges[0]->xy_edge_coords[vIndex].x) + vertical_edges[0]->xy_edge_coords[vIndex].y;
-			ax_vertical[hIndex]   = b;
-			
-			mesh[vIndex][hIndex].x = x;
-			mesh[vIndex][hIndex].y = y;
-
-			mesh[vIndex][hIndex].on_screen = (x < (x_extent / (-2))) || (x > (x_extent / 2)) || (y < (y_extent / (-2))) || (y > (y_extent / 2)) ? false : true;
-
-			//meshTableFile << std::setw(4) << floor(y) << '\t';
-		}
-		//meshTableFile << std::endl;
 	}
-	//meshTableFile.close();
 }
 
 
@@ -1218,10 +946,10 @@ void sparse_image::CalculateMipLevelData::calculate_mesh_coordinates()
  *                              and compare it to the x or y step of vertical/horizontal step in pixels on-screen.
  *
  */
-void sparse_image::CalculateMipLevelData::calculate_mip_levels()
+void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 {
-	//std::ofstream mipTableFile;
-	//mipTableFile.open("C:\\MAIN\\projects\\mipTable.txt", std::ios::out || std::ios::trunc);
+	std::ofstream mipTableFile;
+	mipTableFile.open("C:\\MAIN\\projects\\mipTable.txt", std::ios::out || std::ios::trunc);
 
 	size_t num_rows    = mesh.size() - 1;
 	size_t num_columns = mesh[0].size() - 1;
@@ -1304,32 +1032,34 @@ void sparse_image::CalculateMipLevelData::calculate_mip_levels()
 
 			mip_table[row][column].mip_level = static_cast<double>(mip_level);
 			mip_table[row][column].on_screen = mesh[row][column].on_screen && mesh[row + 1][column].on_screen && mesh[row][column + 1].on_screen;
-			//mipTableFile << std::left << std::setprecision(3) << std::setw(4) << std::setfill('0') << mip_level << "\t";
+			mipTableFile << std::left << std::setprecision(3) << std::setw(4) << std::setfill('0') << mip_level << "\t";
 		}
-		//mipTableFile << std::endl;
+		mipTableFile << std::endl;
 	}
-	//mipTableFile.close();
+	mipTableFile.close();
 }
 
 
-void sparse_image::create_vertex_buffer()
+void SparseImage::create_vertex_buffer()
 {
 	std::array<struct SimpleVertex, 4> vertices;
-	size_t                             vertices_size = sizeof(vertices[0]) * vertices.size();
+	VkDeviceSize                       vertices_size = sizeof(vertices[0]) * vertices.size();
 
-	vertices[0].norm = {-1.0f, -1.0f};
-	vertices[1].norm = { 1.0f, -1.0f};
-	vertices[2].norm = { 1.0f,  1.0f};
-	vertices[3].norm = {-1.0f,  1.0f};
+	vertices[0].norm = {-10.0f, -10.0f};
+	vertices[1].norm = { 10.0f, -10.0f};
+	vertices[2].norm = { 10.0f,  10.0f};
+	vertices[3].norm = {-10.0f,  10.0f};
 
 	vertices[0].uv   = {0.0f, 0.0f};
 	vertices[1].uv   = {1.0f, 0.0f};
 	vertices[2].uv   = {1.0f, 1.0f};
 	vertices[3].uv   = {0.0f, 1.0f};
 
-	struct SimpleBuffer staging_buffer {};
-	staging_buffer.buffer = get_device().create_buffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, vertices_size, &staging_buffer.memory, vertices.data());
-	vertex_buffer.buffer  = get_device().create_buffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertices_size, &vertex_buffer.memory, nullptr);
+	std::unique_ptr<vkb::core::Buffer> staging_buffer;
+	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+		
+	staging_buffer->update(vertices.data(), vertices_size);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
@@ -1338,24 +1068,22 @@ void sparse_image::create_vertex_buffer()
 	copy_buffer_info.dstOffset = 0;
 	copy_buffer_info.size      = vertices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer.buffer, vertex_buffer.buffer, 1, &copy_buffer_info);
+	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), vertex_buffer->get_handle(), 1, &copy_buffer_info);
 	device->flush_command_buffer(command_buffer, queue, true);
-	
-	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
 }
 
-void sparse_image::create_index_buffer()
+void SparseImage::create_index_buffer()
 {
 	std::array<uint16_t, 6> indices      = {0, 1, 2, 2, 3, 0};
-	size_t                  indices_size = sizeof(indices[0]) * indices.size();
+	VkDeviceSize            indices_size = sizeof(indices[0]) * indices.size();
+	index_count                          = indices.size();
 
-	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	std::unique_ptr<vkb::core::Buffer> staging_buffer;
+	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_buffer   = std::make_unique<vkb::core::Buffer>(get_device(), indices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
-	struct SimpleBuffer staging_buffer {};
-	staging_buffer.buffer          = get_device().create_buffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, indices_size, &staging_buffer.memory, indices.data());
-	index_buffer.buffer            = get_device().create_buffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indices_size, &index_buffer.memory, nullptr);
-	index_buffer.num_elements      = indices.size();
+	staging_buffer->update(indices.data(), indices_size);
+
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 	VkBufferCopy copy_buffer_info{};
@@ -1363,11 +1091,8 @@ void sparse_image::create_index_buffer()
 	copy_buffer_info.dstOffset = 0;
 	copy_buffer_info.size      = indices_size;
 
-	vkCmdCopyBuffer(command_buffer, staging_buffer.buffer, index_buffer.buffer, 1, &copy_buffer_info);
+	vkCmdCopyBuffer(command_buffer, staging_buffer->get_handle(), index_buffer->get_handle(), 1, &copy_buffer_info);
 	device->flush_command_buffer(command_buffer, queue, true);
-
-	vkDestroyBuffer(get_device().get_handle(), staging_buffer.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), staging_buffer.memory, nullptr);
 }
 
 
@@ -1375,7 +1100,7 @@ void sparse_image::create_index_buffer()
  * 	@fn void sparse_image::create_descriptor_pool()
  * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
  */
-void sparse_image::create_descriptor_pool()
+void SparseImage::create_descriptor_pool()
 {
 	std::array<VkDescriptorPoolSize, 2> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1),
@@ -1395,7 +1120,7 @@ void sparse_image::create_descriptor_pool()
  * 	@fn void sparse_image::setup_descriptor_set_layout()
  * 	@brief Creating layout for descriptor sets
  */
-void sparse_image::create_descriptor_set_layout()
+void SparseImage::create_descriptor_set_layout()
 {
 	std::array<VkDescriptorSetLayoutBinding, 2> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(
@@ -1420,7 +1145,7 @@ void sparse_image::create_descriptor_set_layout()
  * 		   1. Uniform buffer
  * 		   2. Image sampler
  */
-void sparse_image::create_descriptor_sets()
+void SparseImage::create_descriptor_sets()
 {
 	VkDescriptorSetAllocateInfo set_alloc_info =
 	    vkb::initializers::descriptor_set_allocate_info(
@@ -1430,10 +1155,7 @@ void sparse_image::create_descriptor_sets()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &set_alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo descriptor_buffer_info{};
-	descriptor_buffer_info.buffer = mvp_buffer.buffer;
-	descriptor_buffer_info.offset = 0;
-	descriptor_buffer_info.range  = sizeof(struct MVP);
+	VkDescriptorBufferInfo descriptor_buffer_info = create_descriptor(*mvp_buffer);
 
 	VkDescriptorImageInfo image_info{};
 	image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -1458,14 +1180,13 @@ void sparse_image::create_descriptor_sets()
 }
 
 
-void sparse_image::create_uniform_buffer()
+void SparseImage::create_uniform_buffer()
 {
 	VkDeviceSize buffer_size = sizeof(struct MVP);
-	mvp_buffer.buffer        = get_device().create_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, buffer_size, &mvp_buffer.memory, nullptr);
-	vkMapMemory(get_device().get_handle(), mvp_buffer.memory, 0, buffer_size, 0, &mvp_buffer.mapped_memory);
+	mvp_buffer               = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
-void sparse_image::create_texture_sampler()
+void SparseImage::create_texture_sampler()
 {
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
 
@@ -1497,7 +1218,7 @@ void sparse_image::create_texture_sampler()
  * @fn void sparse_image::request_gpu_features(vkb::PhysicalDevice &gpu)
  * @brief Enabling features
  */
-void sparse_image::request_gpu_features(vkb::PhysicalDevice &gpu)
+void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
 	gpu.get_mutable_requested_features().samplerAnisotropy      = VK_TRUE;
 	gpu.get_mutable_requested_features().sparseBinding          = VK_TRUE;
@@ -1505,7 +1226,7 @@ void sparse_image::request_gpu_features(vkb::PhysicalDevice &gpu)
 }
 
 
-void sparse_image::create_sparse_texture_image()
+void SparseImage::create_sparse_texture_image()
 {
 	// Creating an Image
 	VkImageCreateInfo sparse_image_create_info = vkb::initializers::image_create_info();
@@ -1555,9 +1276,8 @@ void sparse_image::create_sparse_texture_image()
 	virtual_texture.memory_sparse_requirements = sparse_image_memory_requirements[0];
 	virtual_texture.mem_requirements           = mem_requirements;
 
-	virtual_texture.page_size                 = virtual_texture.format_properties.imageGranularity.height * virtual_texture.format_properties.imageGranularity.width * 4U;
-	virtual_texture.single_page_buffer.buffer = get_device().create_buffer(VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, virtual_texture.page_size, &virtual_texture.single_page_buffer.memory, nullptr);
-	vkMapMemory(get_device().get_handle(), virtual_texture.single_page_buffer.memory, 0, virtual_texture.page_size, 0, &virtual_texture.single_page_buffer.mapped_memory);
+	virtual_texture.page_size          = virtual_texture.format_properties.imageGranularity.height * virtual_texture.format_properties.imageGranularity.width * 4U;
+	virtual_texture.single_page_buffer = std::make_unique<vkb::core::Buffer>(get_device(), virtual_texture.page_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 
 	// calculate page size
 	virtual_texture.page_size = sparse_image_format_properties[0].imageGranularity.depth * sparse_image_format_properties[0].imageGranularity.height * sparse_image_format_properties[0].imageGranularity.width * 4U;
@@ -1655,7 +1375,7 @@ void sparse_image::create_sparse_texture_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &virtual_texture.texture_image_view));
 }
 
-void sparse_image::view_changed()
+void SparseImage::view_changed()
 {
 	//process_camera_change();
 }

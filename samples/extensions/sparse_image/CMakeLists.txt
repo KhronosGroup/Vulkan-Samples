@@ -24,7 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Mobica"
     NAME "sparse_image"
-    DESCRIPTION "Sample description"
+    DESCRIPTION "This sample is showcasing the potential usage of the sparse-image-binding and sparse-image-residency features. It works with the concept of Virtual Textures, allowing textures to be rendered without being entirely allocated in the memory."
     SHADER_FILES_GLSL
-        "shader.vert"
-        "shader.frag")
+        "sparse_image/sparse.vert"
+        "sparse_image/sparse.frag")

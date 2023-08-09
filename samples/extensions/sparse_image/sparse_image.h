@@ -19,12 +19,12 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 100;
-size_t const ON_SCREEN_VERTICAL_BLOCKS   = 80;
+size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 10;
+size_t const ON_SCREEN_VERTICAL_BLOCKS   = 6;
 double const FOV_DEGREES                 = 60.0;
 double const MIP_LEVEL_MARGIN            = 0.3;
 
-class sparse_image : public ApiVulkanSample
+class SparseImage : public ApiVulkanSample
 {
   public:
 
@@ -78,7 +78,8 @@ class sparse_image : public ApiVulkanSample
 
 	struct PageTable
 	{
-		bool                                 bound;                 
+		bool                                 bound;             
+		bool                                 written;
 		bool                                 gen_mip_required;        
 		size_t                               memory_index;
 		std::list<std::pair<size_t, size_t>> render_required_list;
@@ -105,8 +106,7 @@ class sparse_image : public ApiVulkanSample
 
 		std::unique_ptr<vkb::sg::Image> row_data_image;
 
-		struct SimpleBuffer single_page_buffer;
-
+		std::unique_ptr<vkb::core::Buffer> single_page_buffer;
 
 		std::list<size_t> available_memory_index_list;
 
@@ -145,42 +145,35 @@ class sparse_image : public ApiVulkanSample
 	};
 
 
-
-
-	struct CalculateEdgeData
-	{
-		std::array<glm::vec4, 2> vertices;
-		bool                     is_vertical;
-
-		uint32_t xy_num_blocks;
-		uint32_t xy_extent[2];
-
-		std::vector<Point> xy_edge_coords;
-
-		CalculateEdgeData(bool is_Vertical, uint32_t num_blocks, VkExtent2D extent_2D, glm::vec4 A, glm::vec4 B);
-		void calculate_edge_coordinates();
-	};
-
     struct CalculateMipLevelData
 	{
-		std::array<struct CalculateEdgeData, 4U> edge_data;
 		std::vector<std::vector<Point>>          mesh;
 		std::vector<std::vector<MipBlock>>       mip_table;
+
+		uint32_t vertical_num_blocks;
+		uint32_t horizontal_num_blocks;
+
 		std::vector<float>                       ax_vertical;
 		std::vector<float>                       ax_horizontal;
 
-		VkExtent2D texture_base_dim;
+		glm::mat4  mvp_transform;
 
-		CalculateMipLevelData(std::array<struct CalculateEdgeData, 4U> &edge_data, VkExtent2D texture_base_dim);
+		VkExtent2D texture_base_dim;
+		VkExtent2D screen_base_dim;
+
+		CalculateMipLevelData(glm::mat4 mvp_transform, VkExtent2D texture_base_dim, VkExtent2D screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks);
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();
 	};
 
 	struct VirtualTexture virtual_texture;
 
-	struct SimpleBuffer vertex_buffer;
-	struct SimpleBuffer index_buffer;
-	struct SimpleBuffer mvp_buffer;
+	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
+
+	std::unique_ptr<vkb::core::Buffer> index_buffer;
+	size_t                             index_count;
+
+	std::unique_ptr<vkb::core::Buffer> mvp_buffer;
 
 	VkPipeline       sample_pipeline{};
 	VkPipelineLayout sample_pipeline_layout{};
@@ -195,9 +188,8 @@ class sparse_image : public ApiVulkanSample
 	double mip_level_margin                = MIP_LEVEL_MARGIN;
 
 
-	sparse_image();
-	virtual ~sparse_image();
-	void cleanup_simple_buffer(struct SimpleBuffer &simple_buffer);
+	SparseImage();
+	virtual ~SparseImage();
 
 	void setup_camera();
 	void load_assets();
@@ -218,7 +210,7 @@ class sparse_image : public ApiVulkanSample
 	void create_sparse_texture_image();
 
 	struct MemPageDescription get_mem_page_description(size_t memory_index);
-	void                      calculate_mips_table(std::array<glm::vec4, 4> vertices, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
+	void                      calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
 	void                      compare_mips_table();
 	void                      calculate_required_memory_layout();
 	void                      get_associated_memory_blocks(const TextureBlock &on_screen_block);
@@ -226,8 +218,6 @@ class sparse_image : public ApiVulkanSample
 	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
 	void                      separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
-	void                      end_single_time_commands(VkCommandBuffer command_buffer);
-	VkCommandBuffer           begin_single_time_command();
 	void                      generate_mips();
 	void                      transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
 
