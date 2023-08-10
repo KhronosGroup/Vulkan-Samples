@@ -87,16 +87,19 @@ WindowsPlatformContext::WindowsPlatformContext(HINSTANCE hInstance, HINSTANCE hP
 	_temp_directory             = get_temp_path_from_environment();
 	_arguments                  = get_args();
 
-	// allocate a console for this app
-	// TODO: do we really need to do this?
-	// if (!AllocConsole())
-	// {
-	// 	throw std::runtime_error{"AllocConsole error"};
-	// }
+	// Attempt to attach to the parent process console if it exists
+	if (!AttachConsole(ATTACH_PARENT_PROCESS))
+	{
+		// No parent console, allocate a new one for this process
+		if (!AllocConsole())
+		{
+			throw std::runtime_error{"AllocConsole error"};
+		}
+	}
 
-	// FILE *fp;
-	// freopen_s(&fp, "conin$", "r", stdin);
-	// freopen_s(&fp, "conout$", "w", stdout);
-	// freopen_s(&fp, "conout$", "w", stderr);
+	FILE *fp;
+	freopen_s(&fp, "conin$", "r", stdin);
+	freopen_s(&fp, "conout$", "w", stdout);
+	freopen_s(&fp, "conout$", "w", stderr);
 }
 }        // namespace vkb
