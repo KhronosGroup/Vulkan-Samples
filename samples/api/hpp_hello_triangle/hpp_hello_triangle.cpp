@@ -685,20 +685,7 @@ void HPPHelloTriangle::init_swapchain()
 
 	vk::Extent2D swapchain_extent = (surface_properties.currentExtent.width == 0xFFFFFFFF) ? swapchain_data.extent : surface_properties.currentExtent;
 
-	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
-	assert(!supported_surface_formats.empty());
-
-	// We want to get an SRGB image format that matches our list of preferred format candidates
-	auto preferred_format_list = std::vector<vk::Format>{vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32};
-
-	// Look for the first supported format in our list of preferred formats
-	auto formatIt =
-	    std::find_if(supported_surface_formats.begin(),
-	                 supported_surface_formats.end(),
-	                 [&preferred_format_list](vk::SurfaceFormatKHR const &candidate) { return std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end(); });
-
-	// We use the first supported format as a fallback in case none of the preferred formats is available
-	vk::SurfaceFormatKHR surface_format = (formatIt == supported_surface_formats.end()) ? supported_surface_formats[0] : formatIt->format;
+	vk::SurfaceFormatKHR surface_format = vkb::common::select_surface_format(gpu, surface);
 
 	vk::SwapchainKHR old_swapchain = swapchain_data.swapchain;
 

@@ -1,5 +1,5 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
- * Copyright (c) 2019-2021, Sascha Willems
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -100,6 +100,18 @@ int32_t get_bits_per_pixel(VkFormat format);
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage);
 
 /**
+ * @brief Helper function to select a VkSurfaceFormatKHR
+ * @param gpu The VkPhysicalDevice to select a format for.
+ * @param surface The VkSurfaceKHR to select a format for.
+ * @param preferred_formats List of preferred VkFormats to use.
+ * @return The preferred VkSurfaceFormatKHR.
+ */
+VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice             gpu,
+                                         VkSurfaceKHR                 surface,
+                                         std::vector<VkFormat> const &preferred_formats = {
+                                             VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32});
+
+/**
  * @brief Image memory barrier structure used to define
  *        memory access for an image view during command recording.
  */
@@ -123,9 +135,9 @@ struct ImageMemoryBarrier
 };
 
 /**
-* @brief Buffer memory barrier structure used to define
-*        memory access for a buffer during command recording.
-*/
+ * @brief Buffer memory barrier structure used to define
+ *        memory access for a buffer during command recording.
+ */
 struct BufferMemoryBarrier
 {
 	VkPipelineStageFlags src_stage_mask{VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT};
@@ -138,8 +150,8 @@ struct BufferMemoryBarrier
 };
 
 /**
-* @brief Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
-*/
+ * @brief Put an image memory barrier for setting an image layout on the sub resource into the given command buffer
+ */
 void set_image_layout(
     VkCommandBuffer         command_buffer,
     VkImage                 image,
@@ -150,8 +162,8 @@ void set_image_layout(
     VkPipelineStageFlags    dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 /**
-* @brief Uses a fixed sub resource layout with first mip level and layer
-*/
+ * @brief Uses a fixed sub resource layout with first mip level and layer
+ */
 void set_image_layout(
     VkCommandBuffer      command_buffer,
     VkImage              image,
@@ -162,8 +174,8 @@ void set_image_layout(
     VkPipelineStageFlags dst_mask = VK_PIPELINE_STAGE_ALL_COMMANDS_BIT);
 
 /**
-* @brief Insert an image memory barrier into the command buffer
-*/
+ * @brief Insert an image memory barrier into the command buffer
+ */
 void insert_image_memory_barrier(
     VkCommandBuffer         command_buffer,
     VkImage                 image,
@@ -188,23 +200,23 @@ struct LoadStoreInfo
 namespace gbuffer
 {
 /**
-  * @return Load store info to load all and store only the swapchain
-  */
+ * @return Load store info to load all and store only the swapchain
+ */
 std::vector<LoadStoreInfo> get_load_all_store_swapchain();
 
 /**
-  * @return Load store info to clear all and store only the swapchain
-  */
+ * @return Load store info to clear all and store only the swapchain
+ */
 std::vector<LoadStoreInfo> get_clear_all_store_swapchain();
 
 /**
-  * @return Load store info to clear and store all images
-  */
+ * @return Load store info to clear and store all images
+ */
 std::vector<LoadStoreInfo> get_clear_store_all();
 
 /**
-  * @return Default clear values for the G-buffer
-  */
+ * @return Default clear values for the G-buffer
+ */
 std::vector<VkClearValue> get_clear_value();
 }        // namespace gbuffer
 
