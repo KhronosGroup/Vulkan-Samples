@@ -130,6 +130,7 @@ VkShaderStageFlagBits find_shader_stage(const std::string &ext)
 	throw std::runtime_error("File extension `" + ext + "` does not have a vulkan shader stage.");
 }
 }        // namespace
+
 bool is_depth_only_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM ||
@@ -140,8 +141,12 @@ bool is_depth_stencil_format(VkFormat format)
 {
 	return format == VK_FORMAT_D16_UNORM_S8_UINT ||
 	       format == VK_FORMAT_D24_UNORM_S8_UINT ||
-	       format == VK_FORMAT_D32_SFLOAT_S8_UINT ||
-	       is_depth_only_format(format);
+	       format == VK_FORMAT_D32_SFLOAT_S8_UINT;
+}
+
+bool is_depth_format(VkFormat format)
+{
+	return is_depth_only_format(format) || is_depth_stencil_format(format);
 }
 
 VkFormat get_suitable_depth_format(VkPhysicalDevice physical_device, bool depth_only, const std::vector<VkFormat> &depth_format_priority_list)
