@@ -388,6 +388,26 @@ VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShade
 	return shader_module;
 }
 
+VkSurfaceFormatKHR select_surface_format(VkPhysicalDevice gpu, VkSurfaceKHR surface, std::vector<VkFormat> const &preferred_formats)
+{
+	uint32_t surface_format_count;
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, nullptr);
+	assert(0 < surface_format_count);
+	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
+	vkGetPhysicalDeviceSurfaceFormatsKHR(gpu, surface, &surface_format_count, supported_surface_formats.data());
+
+	auto it = std::find_if(supported_surface_formats.begin(),
+	                       supported_surface_formats.end(),
+	                       [&preferred_formats](VkSurfaceFormatKHR surface_format) {
+		                       return std::any_of(preferred_formats.begin(),
+		                                          preferred_formats.end(),
+		                                          [&surface_format](VkFormat format) { return format == surface_format.format; });
+	                       });
+
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
+}
+
 // Create an image memory barrier for changing the layout of
 // an image and put it into an active command buffer
 // See chapter 11.4 "Image Layout" for details

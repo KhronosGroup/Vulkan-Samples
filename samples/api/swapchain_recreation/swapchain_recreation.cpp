@@ -42,24 +42,7 @@ void SwapchainRecreation::get_queue()
 
 void SwapchainRecreation::query_surface_format()
 {
-	uint32_t surface_format_count;
-	vkGetPhysicalDeviceSurfaceFormatsKHR(get_gpu_handle(), get_surface(), &surface_format_count, nullptr);
-	std::vector<VkSurfaceFormatKHR> supported_surface_formats(surface_format_count);
-	vkGetPhysicalDeviceSurfaceFormatsKHR(get_gpu_handle(), get_surface(), &surface_format_count, supported_surface_formats.data());
-
-	// We want to get an SRGB image format that matches our list of preferred format candiates
-	// We initialize to the first supported format, which will be the fallback in case none of the preferred formats is available
-	surface_format             = supported_surface_formats[0];
-	auto preferred_format_list = std::vector<VkFormat>{VK_FORMAT_R8G8B8A8_SRGB, VK_FORMAT_B8G8R8A8_SRGB, VK_FORMAT_A8B8G8R8_SRGB_PACK32};
-
-	for (auto &candidate : supported_surface_formats)
-	{
-		if (std::find(preferred_format_list.begin(), preferred_format_list.end(), candidate.format) != preferred_format_list.end())
-		{
-			surface_format = candidate;
-			break;
-		}
-	}
+	surface_format = vkb::select_surface_format(get_gpu_handle(), get_surface());
 }
 
 void SwapchainRecreation::query_present_modes()
