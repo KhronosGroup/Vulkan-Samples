@@ -20,6 +20,8 @@
  */
 
 #include "hpp_texture_mipmap_generation.h"
+
+#include <common/hpp_vk_common.h>
 #include <common/vk_initializers.h>
 
 HPPTextureMipMapGeneration::HPPTextureMipMapGeneration()
@@ -248,30 +250,14 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
 	// Optimal image will be used as destination for the copy, so we must transfer from our initial undefined image layout to the transfer destination layout
-	vk::ImageMemoryBarrier image_memory_barrier({},
-	                                            vk::AccessFlagBits::eTransferWrite,
-	                                            vk::ImageLayout::eUndefined,
-	                                            vk::ImageLayout::eTransferDstOptimal,
-	                                            VK_QUEUE_FAMILY_IGNORED,
-	                                            VK_QUEUE_FAMILY_IGNORED,
-	                                            texture.image,
-	                                            {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-	copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, image_memory_barrier);
+	vkb::common::image_layout_transition(copy_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal);
 
 	// Copy the first mip of the chain, remaining mips will be generated
 	vk::BufferImageCopy buffer_copy_region({}, {}, {}, {vk::ImageAspectFlagBits::eColor, 0, 0, 1}, {}, vk::Extent3D(texture.extent, 1));
 	copy_command.copyBufferToImage(staging_buffer, texture.image, vk::ImageLayout::eTransferDstOptimal, buffer_copy_region);
 
 	// Transition first mip level to transfer source so we can blit(read) from it
-	image_memory_barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eTransferWrite,
-	                                              vk::AccessFlagBits::eTransferRead,
-	                                              vk::ImageLayout::eTransferDstOptimal,
-	                                              vk::ImageLayout::eTransferSrcOptimal,
-	                                              VK_QUEUE_FAMILY_IGNORED,
-	                                              VK_QUEUE_FAMILY_IGNORED,
-	                                              texture.image,
-	                                              {vk::ImageAspectFlagBits::eColor, 0, 1, 0, 1});
-	copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, image_memory_barrier);
+	vkb::common::image_layout_transition(copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
 	device->flush_command_buffer(copy_command, queue, true);
 
@@ -294,41 +280,24 @@ void HPPTextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_
 		                         {{{}, {static_cast<int32_t>(texture.extent.width >> i), static_cast<int32_t>(texture.extent.height >> i), static_cast<int32_t>(1)}}});
 
 		// Prepare current mip level as image blit destination
-		image_memory_barrier = vk::ImageMemoryBarrier({},
-		                                              vk::AccessFlagBits::eTransferWrite,
-		                                              vk::ImageLayout::eUndefined,
-		                                              vk::ImageLayout::eTransferDstOptimal,
-		                                              VK_QUEUE_FAMILY_IGNORED,
-		                                              VK_QUEUE_FAMILY_IGNORED,
-		                                              texture.image,
-		                                              {vk::ImageAspectFlagBits::eColor, i, 1, 0, 1});
-		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, image_memory_barrier);
+		vk::ImageSubresourceRange image_subresource_range(vk::ImageAspectFlagBits::eColor, i, 1, 0, 1);
+		vkb::common::image_layout_transition(
+		    copy_command, texture.image, vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, image_subresource_range);
 
 		// Blit from previous level
 		blit_command.blitImage(texture.image, vk::ImageLayout::eTransferSrcOptimal, texture.image, vk::ImageLayout::eTransferDstOptimal, image_blit, vk::Filter::eLinear);
 
 		// Prepare current mip level as image blit source for next level
-		image_memory_barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eTransferWrite,
-		                                              vk::AccessFlagBits::eTransferRead,
-		                                              vk::ImageLayout::eTransferDstOptimal,
-		                                              vk::ImageLayout::eTransferSrcOptimal,
-		                                              VK_QUEUE_FAMILY_IGNORED,
-		                                              VK_QUEUE_FAMILY_IGNORED,
-		                                              texture.image,
-		                                              {vk::ImageAspectFlagBits::eColor, i, 1, 0, 1});
-		copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eTransfer, {}, {}, {}, image_memory_barrier);
+		vkb::common::image_layout_transition(
+		    copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal, image_subresource_range);
 	}
 
 	// After the loop, all mip layers are in TRANSFER_SRC layout, so transition all to SHADER_READ
-	image_memory_barrier = vk::ImageMemoryBarrier(vk::AccessFlagBits::eTransferRead,
-	                                              vk::AccessFlagBits::eShaderRead,
-	                                              vk::ImageLayout::eTransferSrcOptimal,
-	                                              vk::ImageLayout::eShaderReadOnlyOptimal,
-	                                              VK_QUEUE_FAMILY_IGNORED,
-	                                              VK_QUEUE_FAMILY_IGNORED,
-	                                              texture.image,
-	                                              {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
-	copy_command.pipelineBarrier(vk::PipelineStageFlagBits::eTransfer, vk::PipelineStageFlagBits::eFragmentShader, {}, {}, {}, image_memory_barrier);
+	vkb::common::image_layout_transition(copy_command,
+	                                     texture.image,
+	                                     vk::ImageLayout::eTransferSrcOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
 
 	device->flush_command_buffer(blit_command, queue, true);
 	// ---------------------------------------------------------------

@@ -885,7 +885,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::set_image_layout(
+	vkb::common::image_layout_transition(
 	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
@@ -893,11 +893,11 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, bufferCopyRegions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::set_image_layout(command_buffer,
-	                              texture.image->get_vk_image().get_handle(),
-	                              vk::ImageLayout::eTransferDstOptimal,
-	                              vk::ImageLayout::eShaderReadOnlyOptimal,
-	                              subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -972,7 +972,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::set_image_layout(
+	vkb::common::image_layout_transition(
 	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
@@ -980,11 +980,11 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, buffer_copy_regions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::set_image_layout(command_buffer,
-	                              texture.image->get_vk_image().get_handle(),
-	                              vk::ImageLayout::eTransferDstOptimal,
-	                              vk::ImageLayout::eShaderReadOnlyOptimal,
-	                              subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1056,7 +1056,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::common::set_image_layout(
+	vkb::common::image_layout_transition(
 	    command_buffer, texture.image->get_vk_image().get_handle(), vk::ImageLayout::eUndefined, vk::ImageLayout::eTransferDstOptimal, subresource_range);
 
 	// Copy mip levels from staging buffer
@@ -1064,11 +1064,11 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 	    stage_buffer.get_handle(), texture.image->get_vk_image().get_handle(), vk::ImageLayout::eTransferDstOptimal, buffer_copy_regions);
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::common::set_image_layout(command_buffer,
-	                              texture.image->get_vk_image().get_handle(),
-	                              vk::ImageLayout::eTransferDstOptimal,
-	                              vk::ImageLayout::eShaderReadOnlyOptimal,
-	                              subresource_range);
+	vkb::common::image_layout_transition(command_buffer,
+	                                     texture.image->get_vk_image().get_handle(),
+	                                     vk::ImageLayout::eTransferDstOptimal,
+	                                     vk::ImageLayout::eShaderReadOnlyOptimal,
+	                                     subresource_range);
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
