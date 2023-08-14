@@ -21,6 +21,7 @@
 
 #include "common/logging.h"
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_format_traits.hpp"
 
 namespace vkb
 {
@@ -77,12 +78,23 @@ inline bool is_buffer_descriptor_type(vk::DescriptorType descriptor_type)
 
 inline bool is_depth_only_format(vk::Format format)
 {
+	assert(vkb::is_depth_only_format(static_cast<VkFormat>(format)) ==
+	       ((vk::componentCount(format) == 1) && (std::string(vk::componentName(format, 0)) == "D")));
 	return vkb::is_depth_only_format(static_cast<VkFormat>(format));
 }
 
 inline bool is_depth_stencil_format(vk::Format format)
 {
+	assert(vkb::is_depth_stencil_format(static_cast<VkFormat>(format)) ==
+	       ((vk::componentCount(format) == 2) && (std::string(vk::componentName(format, 0)) == "D") &&
+	        (std::string(vk::componentName(format, 1)) == "S")));
 	return vkb::is_depth_stencil_format(static_cast<VkFormat>(format));
+}
+
+inline bool is_depth_format(vk::Format format)
+{
+	assert(vkb::is_depth_format(static_cast<VkFormat>(format)) == (std::string(vk::componentName(format, 0)) == "D"));
+	return vkb::is_depth_format(static_cast<VkFormat>(format));
 }
 
 inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type)
@@ -216,12 +228,14 @@ inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage,
 	switch (usage)
 	{
 		case vk::ImageUsageFlagBits::eColorAttachment:
+			assert(!vkb::common::is_depth_format(format));
 			image_aspect_flags = vk::ImageAspectFlagBits::eColor;
 			break;
 		case vk::ImageUsageFlagBits::eDepthStencilAttachment:
+			assert(vkb::common::is_depth_format(format));
 			image_aspect_flags = vk::ImageAspectFlagBits::eDepth;
 			// Stencil aspect should only be set on depth + stencil formats
-			if (vkb::common::is_depth_stencil_format(format) && !vkb::common::is_depth_only_format(format))
+			if (vkb::common::is_depth_stencil_format(format))
 			{
 				image_aspect_flags |= vk::ImageAspectFlagBits::eStencil;
 			}

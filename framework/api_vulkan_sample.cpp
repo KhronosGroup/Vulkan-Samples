@@ -964,6 +964,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 			}
 			else
 			{
+				assert(!vkb::is_depth_format(texture.image->get_vk_image_view().get_format()));
 				descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 			break;
