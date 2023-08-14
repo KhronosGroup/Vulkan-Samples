@@ -117,10 +117,15 @@ void RaytracingBasic::create_storage_image()
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &color_image_view, nullptr, &storage_image.view));
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
-	vkb::set_image_layout(command_buffer, storage_image.image,
-	                      VK_IMAGE_LAYOUT_UNDEFINED,
-	                      VK_IMAGE_LAYOUT_GENERAL,
-	                      {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
+	vkb::image_layout_transition(command_buffer,
+	                             storage_image.image,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+	                             {},
+	                             {},
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_GENERAL,
+	                             {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1});
 	get_device().flush_command_buffer(command_buffer, queue);
 }
 
@@ -741,20 +746,21 @@ void RaytracingBasic::build_command_buffers()
 		*/
 
 		// Prepare current swap chain image as transfer destination
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    get_render_context().get_swapchain().get_images()[i],
-		    VK_IMAGE_LAYOUT_UNDEFINED,
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_IMAGE_LAYOUT_UNDEFINED,
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
 		// Prepare ray tracing output image as transfer source
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    storage_image.image,
-		    VK_IMAGE_LAYOUT_GENERAL,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             storage_image.image,
+		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             {},
+		                             VK_ACCESS_TRANSFER_READ_BIT,
+		                             VK_IMAGE_LAYOUT_GENERAL,
+		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                             subresource_range);
 
 		VkImageCopy copy_region{};
 		copy_region.srcSubresource = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 0, 1};
@@ -766,20 +772,21 @@ void RaytracingBasic::build_command_buffers()
 		               get_render_context().get_swapchain().get_images()[i], VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region);
 
 		// Transition swap chain image back for presentation
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    get_render_context().get_swapchain().get_images()[i],
-		    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		    VK_IMAGE_LAYOUT_PRESENT_SRC_KHR,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             get_render_context().get_swapchain().get_images()[i],
+		                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_PRESENT_SRC_KHR);
 
 		// Transition ray tracing output image back to general layout
-		vkb::set_image_layout(
-		    draw_cmd_buffers[i],
-		    storage_image.image,
-		    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-		    VK_IMAGE_LAYOUT_GENERAL,
-		    subresource_range);
+		vkb::image_layout_transition(draw_cmd_buffers[i],
+		                             storage_image.image,
+		                             VK_PIPELINE_STAGE_TRANSFER_BIT,
+		                             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+		                             VK_ACCESS_TRANSFER_READ_BIT,
+		                             {},
+		                             VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+		                             VK_IMAGE_LAYOUT_GENERAL,
+		                             subresource_range);
 
 		/*
 		    Start a new render pass to draw the UI overlay on top of the ray traced image
