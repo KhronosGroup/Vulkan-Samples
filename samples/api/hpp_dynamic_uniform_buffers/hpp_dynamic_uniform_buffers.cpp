@@ -95,8 +95,9 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 	descriptor_set_layout = create_descriptor_set_layout();
 	pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
 	pipeline              = create_pipeline();
-	descriptor_pool       = create_descriptor_pool();
-	descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
+
+	descriptor_pool = create_descriptor_pool();
+	descriptor_set  = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
 
 	update_descriptor_set();
 	build_command_buffers();
@@ -186,9 +187,8 @@ vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
 vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 {
 	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("dynamic_uniform_buffers/base.frag",
-	                                                                               vk::ShaderStageFlagBits::eFragment)}};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("dynamic_uniform_buffers/base.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
@@ -213,6 +213,8 @@ vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eNone,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},

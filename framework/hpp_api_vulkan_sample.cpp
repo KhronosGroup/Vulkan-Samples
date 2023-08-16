@@ -846,7 +846,7 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode)
 {
 	HPPTexture texture;
 
@@ -906,9 +906,9 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 	sampler_create_info.magFilter    = vk::Filter::eLinear;
 	sampler_create_info.minFilter    = vk::Filter::eLinear;
 	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeV = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeW = vk::SamplerAddressMode::eRepeat;
+	sampler_create_info.addressModeU = address_mode;
+	sampler_create_info.addressModeV = address_mode;
+	sampler_create_info.addressModeW = address_mode;
 	sampler_create_info.mipLodBias   = 0.0f;
 	sampler_create_info.compareOp    = vk::CompareOp::eNever;
 	sampler_create_info.minLod       = 0.0f;
@@ -927,7 +927,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode)
 {
 	HPPTexture texture{};
 
@@ -993,9 +993,9 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 	sampler_create_info.magFilter    = vk::Filter::eLinear;
 	sampler_create_info.minFilter    = vk::Filter::eLinear;
 	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeV = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeW = vk::SamplerAddressMode::eClampToEdge;
+	sampler_create_info.addressModeU = address_mode;
+	sampler_create_info.addressModeV = address_mode;
+	sampler_create_info.addressModeW = address_mode;
 	sampler_create_info.mipLodBias   = 0.0f;
 	sampler_create_info.compareOp    = vk::CompareOp::eNever;
 	sampler_create_info.minLod       = 0.0f;
