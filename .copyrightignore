@@ -8,6 +8,7 @@
 .ttf
 .github
 .jar
+.json
 doxyfile
 download_vvl.gradle
 build.gradle.in
