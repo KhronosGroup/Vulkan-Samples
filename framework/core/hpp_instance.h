@@ -31,7 +31,7 @@ class HPPPhysicalDevice;
  *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
  * @param supported_instance_layers A list of validation layers to check against
  */
-std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers);
+std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers);
 
 /**
  * @brief A wrapper class for vk::Instance
@@ -53,7 +53,7 @@ class HPPInstance
 	 */
 	HPPInstance(const std::string &                           application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
-	            const std::vector<const char *> &             required_validation_layers = {},
+	            const std::unordered_map<const char *, bool> &             required_validation_layers = {},
 	            bool                                          headless                   = false,
 	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 

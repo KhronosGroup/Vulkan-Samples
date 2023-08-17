@@ -561,7 +561,7 @@ RenderContext &VulkanSample::get_render_context()
 	return *render_context;
 }
 
-const std::vector<const char *> VulkanSample::get_validation_layers()
+const std::unordered_map<const char *, bool> VulkanSample::get_validation_layers()
 {
 	return {};
 }

@@ -235,7 +235,7 @@ class VulkanSample : public Application
 	 *
 	 * @return Vector of additional instance layers. Default is empty vector.
 	 */
-	virtual const std::vector<const char *> get_validation_layers();
+	virtual const std::unordered_map<const char *, bool> get_validation_layers();
 
 	/**
 	 * @brief Get sample-specific instance extensions.
