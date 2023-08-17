@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,9 +51,9 @@ class HPPInstance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	HPPInstance(const std::string &                           application_name,
+	HPPInstance(const std::string                            &application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
-	            const std::unordered_map<const char *, bool> &             required_validation_layers = {},
+	            const std::unordered_map<const char *, bool> &required_validation_layers = {},
 	            bool                                          headless                   = false,
 	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
