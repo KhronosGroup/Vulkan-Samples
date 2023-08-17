@@ -231,7 +231,8 @@ void ShaderObject::setup_framebuffer()
 void ShaderObject::setup_render_pass()
 {
 	// delete existing render pass
-	if(render_pass != VK_NULL_HANDLE) {
+	if (render_pass != VK_NULL_HANDLE)
+	{
 		vkDestroyRenderPass(device->get_handle(), render_pass, VK_NULL_HANDLE);
 	}
 	VkAttachmentDescription color_attachment{};
@@ -1969,7 +1970,7 @@ void ShaderObject::build_linked_shaders(VkDevice device, ShaderObject::Shader *v
 		shader_create.flags |= VK_SHADER_CREATE_LINK_STAGE_BIT_EXT;
 	}
 
-	VkShaderEXT shaderEXTs[2] =  {VK_NULL_HANDLE, VK_NULL_HANDLE};
+	VkShaderEXT shaderEXTs[2] = {VK_NULL_HANDLE, VK_NULL_HANDLE};
 
 	// Create the shader objects
 	VkResult result = vkCreateShadersEXT(device,

@@ -66,10 +66,10 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL debug_callback(VkDebugReportFlagsEXT flags
 }
 #endif
 
-bool validate_layers(std::unordered_map<const char *, bool>        &required,
+bool validate_layers(std::unordered_map<const char *, bool> &required,
                      const std::vector<vk::LayerProperties> &available)
 {
-	std::vector<const char*> remove_vec;
+	std::vector<const char *> remove_vec;
 	for (auto layer : required)
 	{
 		bool found = false;
@@ -84,7 +84,8 @@ bool validate_layers(std::unordered_map<const char *, bool>        &required,
 
 		if (!found)
 		{
-			if(!layer.second) {
+			if (!layer.second)
+			{
 				LOGW("Optional Layer {} not found, removing it", layer.first)
 				remove_vec.push_back(layer.first);
 				continue;
@@ -93,7 +94,7 @@ bool validate_layers(std::unordered_map<const char *, bool>        &required,
 			return false;
 		}
 	}
-	for(auto & rem : remove_vec)
+	for (auto &rem : remove_vec)
 	{
 		required.erase(rem);
 	}
@@ -109,22 +110,22 @@ std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::
 	std::vector<std::unordered_map<const char *, bool>> validation_layer_priority_list =
 	    {
 	        // The preferred validation layer is "VK_LAYER_KHRONOS_validation"
-	        {{ "VK_LAYER_KHRONOS_validation", true }},
+	        {{"VK_LAYER_KHRONOS_validation", true}},
 
 	        // Otherwise we fallback to using the LunarG meta layer
-	        {{ "VK_LAYER_LUNARG_standard_validation", true }},
+	        {{"VK_LAYER_LUNARG_standard_validation", true}},
 
 	        // Otherwise we attempt to enable the individual layers that compose the LunarG meta layer since it doesn't exist
 	        {
-		    	{ "VK_LAYER_GOOGLE_threading", true },
-		    	{ "VK_LAYER_LUNARG_parameter_validation", true },
-	            { "VK_LAYER_LUNARG_object_tracker", true },
-			    { "VK_LAYER_LUNARG_core_validation", true },
-	            { "VK_LAYER_GOOGLE_unique_objects", true },
+	            {"VK_LAYER_GOOGLE_threading", true},
+	            {"VK_LAYER_LUNARG_parameter_validation", true},
+	            {"VK_LAYER_LUNARG_object_tracker", true},
+	            {"VK_LAYER_LUNARG_core_validation", true},
+	            {"VK_LAYER_GOOGLE_unique_objects", true},
 	        },
 
 	        // Otherwise as a last resort we fallback to attempting to enable the LunarG core layer
-	        {{ "VK_LAYER_LUNARG_core_validation", true }}};
+	        {{"VK_LAYER_LUNARG_core_validation", true}}};
 
 	for (auto &validation_layers : validation_layer_priority_list)
 	{
@@ -185,7 +186,7 @@ bool enable_all_extensions(const std::vector<const char *>             required_
 
 HPPInstance::HPPInstance(const std::string                            &application_name,
                          const std::unordered_map<const char *, bool> &required_extensions,
-                         const std::unordered_map<const char *, bool>              &required_validation_layers,
+                         const std::unordered_map<const char *, bool> &required_validation_layers,
                          bool                                          headless,
                          uint32_t                                      api_version)
 {
@@ -299,9 +300,10 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 		throw std::runtime_error("Required validation layers are missing.");
 	}
 
-	std::vector<const char*> final_validation_layers;
+	std::vector<const char *> final_validation_layers;
 	final_validation_layers.reserve(requested_validation_layers.size());
-	for(auto layer : requested_validation_layers) {
+	for (auto layer : requested_validation_layers)
+	{
 		final_validation_layers.push_back(layer.first);
 	}
 
