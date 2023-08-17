@@ -48,7 +48,7 @@ class Instance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	Instance(const std::string                            &application_name,
+	Instance(const std::string &                           application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
 	         const std::unordered_map<const char *, bool> &required_validation_layers = {},
 	         bool                                          headless                   = false,
@@ -99,17 +99,17 @@ class Instance
 	const std::vector<const char *> &get_extensions();
 
 	/**
-	 * @brief Returns a const ref to the properties of all requested layers in this instance
-	 * @returns The VkLayerProperties for all requested layers in this instance
-	 */
+	* @brief Returns a const ref to the properties of all requested layers in this instance
+	* @returns The VkLayerProperties for all requested layers in this instance
+	*/
 	const std::vector<VkLayerProperties> &get_layer_properties();
 
 	/**
-	 * @brief Finds layer properties for the layer with the given name
-	 * @param layerName The layer to search for
-	 * @param properties A reference to a VkLayerProperties struct to populate
-	 * @returns True if the layer was found and populated, false otherwise
-	 */
+	* @brief Finds layer properties for the layer with the given name
+	* @param layerName The layer to search for
+	* @param properties A reference to a VkLayerProperties struct to populate
+	* @returns True if the layer was found and populated, false otherwise
+	*/
 	bool get_layer_properties(const char *layerName, VkLayerProperties &properties);
 
   private:
