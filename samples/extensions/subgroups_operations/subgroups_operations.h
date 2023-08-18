@@ -18,10 +18,10 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
+#include <complex>
 
 class SubgroupsOperations : public ApiVulkanSample
 {
-
 	struct OceanVertex
 	{
 		glm::vec3 position;
@@ -65,6 +65,12 @@ class SubgroupsOperations : public ApiVulkanSample
 	void update_uniform_buffers();
 	void update_compute_descriptor();
 
+	// ocean stuff
+	float phillips_spectrum(int32_t n, int32_t m);
+	std::complex<float> hTilde_0(uint32_t n, uint32_t m);
+	std::complex<float> rndGaussian();
+
+
 	struct Pipeline
 	{
 		void destroy(VkDevice device);
@@ -91,8 +97,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	{
 		alignas(4) float amplitude;
 		alignas(4) float length;
-		alignas(8) glm::vec2 wind;
 		alignas(4) uint32_t grid_size;
+		alignas(8) glm::vec2 wind;
 	};
 
 	struct GuiConfig
@@ -109,6 +115,15 @@ class SubgroupsOperations : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_input_buffer;        // TODO: change name
 
+	std::vector<std::complex<float>> h_tilde_0;
+	std::vector<std::complex<float>> h_hilde_0_conj;
+
+	struct
+	{
+		std::unique_ptr<vkb::core::Buffer> buffer1;
+		std::unique_ptr<vkb::core::Buffer> W;
+	} helpBuffers;
+
 	struct
 	{
 		VkQueue               queue                 = {VK_NULL_HANDLE};
@@ -122,7 +137,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		struct
 		{
 			Pipeline _default;
-			Pipeline fft_input;
 		} pipelines;
 	} compute;
 
