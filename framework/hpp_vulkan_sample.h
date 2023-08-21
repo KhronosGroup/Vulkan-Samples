@@ -162,7 +162,7 @@ class HPPVulkanSample : public vkb::Application
 	 *
 	 * @return Vector of additional instance layers. Default is empty vector.
 	 */
-	virtual std::vector<const char *> const &get_validation_layers() const;
+	virtual std::unordered_map<const char *, bool> const &get_validation_layers() const;
 
 	/**
 	 * @brief Get sample-specific instance extensions.

@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -31,7 +31,7 @@ class HPPPhysicalDevice;
  *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
  * @param supported_instance_layers A list of validation layers to check against
  */
-std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers);
+std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::vector<vk::LayerProperties> &supported_instance_layers);
 
 /**
  * @brief A wrapper class for vk::Instance
@@ -51,9 +51,9 @@ class HPPInstance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	HPPInstance(const std::string &                           application_name,
+	HPPInstance(const std::string                            &application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
-	            const std::vector<const char *> &             required_validation_layers = {},
+	            const std::unordered_map<const char *, bool> &required_validation_layers = {},
 	            bool                                          headless                   = false,
 	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 

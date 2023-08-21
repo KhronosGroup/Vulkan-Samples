@@ -514,9 +514,9 @@ vkb::rendering::HPPRenderContext &HPPVulkanSample::get_render_context()
 	return *render_context;
 }
 
-std::vector<const char *> const &HPPVulkanSample::get_validation_layers() const
+std::unordered_map<const char *, bool> const &HPPVulkanSample::get_validation_layers() const
 {
-	static std::vector<const char *> validation_layers;
+	static std::unordered_map<const char *, bool> validation_layers;
 	return validation_layers;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright (c) 2018-2021, Arm Limited and Contributors
+/* Copyright (c) 2018-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,7 @@ class PhysicalDevice;
  *        Attempting to enable them in order of preference, starting with later Vulkan SDK versions
  * @param supported_instance_layers A list of validation layers to check against
  */
-std::vector<const char *> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
+std::unordered_map<const char *, bool> get_optimal_validation_layers(const std::vector<VkLayerProperties> &supported_instance_layers);
 
 /**
  * @brief A wrapper class for VkInstance
@@ -48,9 +48,9 @@ class Instance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	Instance(const std::string &                           application_name,
+	Instance(const std::string                            &application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
-	         const std::vector<const char *> &             required_validation_layers = {},
+	         const std::unordered_map<const char *, bool> &required_validation_layers = {},
 	         bool                                          headless                   = false,
 	         uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
@@ -99,17 +99,17 @@ class Instance
 	const std::vector<const char *> &get_extensions();
 
 	/**
-	* @brief Returns a const ref to the properties of all requested layers in this instance
-	* @returns The VkLayerProperties for all requested layers in this instance
-	*/
+	 * @brief Returns a const ref to the properties of all requested layers in this instance
+	 * @returns The VkLayerProperties for all requested layers in this instance
+	 */
 	const std::vector<VkLayerProperties> &get_layer_properties();
 
 	/**
-	* @brief Finds layer properties for the layer with the given name
-	* @param layerName The layer to search for
-	* @param properties A reference to a VkLayerProperties struct to populate
-	* @returns True if the layer was found and populated, false otherwise
-	*/
+	 * @brief Finds layer properties for the layer with the given name
+	 * @param layerName The layer to search for
+	 * @param properties A reference to a VkLayerProperties struct to populate
+	 * @returns True if the layer was found and populated, false otherwise
+	 */
 	bool get_layer_properties(const char *layerName, VkLayerProperties &properties);
 
   private:
