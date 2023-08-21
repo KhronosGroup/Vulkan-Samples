@@ -127,6 +127,13 @@ class Drawer
 	 */
 	bool checkbox(const char *caption, int32_t *value);
 
+	/**
+	 * @brief Adds a radio button to the gui
+	 * @param caption The text to display
+	 * @param selectedOption The pointer to the variable set using the radio button.
+	 * @param elementOption Value set to the selectedOption when the button is selected.
+	 * @returns True if adding item was successful
+	 */
 	bool radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption);
 
 	/**
@@ -181,51 +188,27 @@ class Drawer
 	 */
 	void text(const char *formatstr, ...);
 
-<<<<<<< HEAD
-    /**
-     * @brief Adds a color picker to the gui
-     * @param caption The text to display
-     * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-     * @param flags Flags for modifying the appearance and behavior of the element. A zero value will result in a width determined by ImGui.
-     */
-    bool color_picker(const char *caption, float *color, ImGuiColorEditFlags flags, uint16_t width = 0);
-=======
-	/**
-	 * @brief Adds a color picker to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_picker(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
-
-	/**
-	 * @brief Adds a color picker to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_picker(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
-
 	/**
 	 * @brief Adds a color edit to the gui
+	 * @tparam OP Mode of the color element.
+	 * @tparam N Color channel count. Must be 3 or 4.
 	 * @param caption The text to display
 	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
 	 * @param width Element width. Zero is a special value for the default element width.
 	 * @param flags Flags to modify the appearance and behavior of the element.
 	 */
-	bool color_edit(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
+	template <ColorOp OP, size_t N>
+	bool color_op(const std::string &caption, std::array<float, N> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0)
+	{
+		static_assert((N == 3) || (N == 4), "The channel count must be 3 or 4.");
 
-	/**
-	 * @brief Adds a color edit to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_edit(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
->>>>>>> 0d71460 (Update dynamic blending sample)
+		ImGui::PushItemWidth(width);
+		bool res = color_op_impl<OP, N>(caption.c_str(), color.data(), flags);
+		ImGui::PopItemWidth();
+		if (res)
+			dirty = true;
+		return res;
+	}
 
   private:
 	template <ColorOp OP, size_t N>

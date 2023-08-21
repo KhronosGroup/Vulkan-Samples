@@ -202,7 +202,7 @@ void DynamicBlending::setup_descriptor_pool()
 	    vkb::initializers::descriptor_pool_create_info(
 	        static_cast<uint32_t>(pool_sizes.size()),
 	        pool_sizes.data(),
-	        pool_sizes.size());
+	        static_cast<uint32_t>(pool_sizes.size()));
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -477,7 +477,8 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 		ImGuiColorEditFlags flags            = ImGuiColorEditFlags_None | ImGuiColorEditFlags_Float;
 		float               color_edit_width = 200;
 		ImGui::PushID(++item_id);
-		if (drawer.color_edit(caption, color, color_edit_width, flags))
+		if (drawer.color_op<vkb::Drawer::ColorOp::Edit>(caption, color, color_edit_width, flags))
+		// if (drawer.color_edit(caption, color, color_edit_width, flags))
 		{
 			update_color_uniform();
 		}

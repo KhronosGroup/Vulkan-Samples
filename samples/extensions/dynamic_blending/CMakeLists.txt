@@ -1,4 +1,4 @@
-# Copyright (c) 2019, Arm Limited and Contributors
+# Copyright (c) 2023, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -24,7 +24,7 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Khronos"
     NAME "dynamic_blending"
-    DESCRIPTION "Sample description"
+    DESCRIPTION "Dynamic blending options available in the VK_EXT_extended_dynamic_state3 extension."
     SHADER_FILES_GLSL
     "dynamic_blending/blending.vert"
     "dynamic_blending/blending.frag"
