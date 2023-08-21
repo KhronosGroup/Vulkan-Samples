@@ -22,7 +22,7 @@
 #include <algorithm>
 #include <functional>
 
-#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS) || (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES))
+#if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
 #	define USE_VALIDATION_LAYERS 1
 #endif
 
