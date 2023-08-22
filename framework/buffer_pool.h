@@ -145,8 +145,5 @@ class BufferPool
 	VkBufferUsageFlags usage{};
 
 	VmaMemoryUsage memory_usage{};
-
-	/// Numbers of active blocks from the start of buffer_blocks
-	uint32_t active_buffer_block_count{0};
 };
 }        // namespace vkb

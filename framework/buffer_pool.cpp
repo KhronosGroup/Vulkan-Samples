@@ -95,28 +95,25 @@ BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFla
 
 BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size, bool minimal)
 {
-	// Find the first block in the range of the inactive blocks
-	// which can fit the minimum size
-	auto it = std::upper_bound(buffer_blocks.begin() + active_buffer_block_count, buffer_blocks.end(), minimum_size,
-	                           [](const VkDeviceSize &a, const std::unique_ptr<BufferBlock> &b) -> bool { return a <= b->get_size(); });
+	// Find a block in the range of the blocks which can fit the minimum size
+	auto it = minimal ? std::find_if(buffer_blocks.begin(),
+	                                 buffer_blocks.end(),
+	                                 [&minimum_size](const std::unique_ptr<BufferBlock> &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
+	                    std::find_if(buffer_blocks.begin(),
+	                                 buffer_blocks.end(),
+	                                 [&minimum_size](const std::unique_ptr<BufferBlock> &buffer_block) { return buffer_block->can_allocate(minimum_size); });
 
-	if (it != buffer_blocks.end())
+	if (it == buffer_blocks.end())
 	{
-		// Recycle inactive block
-		active_buffer_block_count++;
-		return *it->get();
+		LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
+
+		VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
+
+		// Create a new block and get the iterator on it
+		it = buffer_blocks.emplace(buffer_blocks.end(), std::make_unique<BufferBlock>(device, new_block_size, usage, memory_usage));
 	}
 
-	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
-
-	VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
-
-	// Create a new block, store and return it
-	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, new_block_size, usage, memory_usage));
-
-	auto &block = buffer_blocks[active_buffer_block_count++];
-
-	return *block.get();
+	return *it->get();
 }
 
 void BufferPool::reset()
@@ -125,8 +122,6 @@ void BufferPool::reset()
 	{
 		buffer_block->reset();
 	}
-
-	active_buffer_block_count = 0;
 }
 
 BufferAllocation::BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :
