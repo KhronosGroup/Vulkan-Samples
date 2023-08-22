@@ -24,4 +24,8 @@ add_sample_with_tags(
     CATEGORY ${CATEGORY_NAME}
     AUTHOR "Holochip Corporation"
     NAME "Ray tracing extended"
-    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO.")
+    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO."
+    SHADER_FILES_GLSL
+        "khr_ray_tracing_extended/raygen.rgen"
+        "khr_ray_tracing_extended/miss.rmiss"
+        "khr_ray_tracing_extended/closesthit.rchit")
