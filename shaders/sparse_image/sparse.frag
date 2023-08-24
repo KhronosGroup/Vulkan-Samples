@@ -15,47 +15,41 @@
  * limitations under the License.
  */
  
- #version 450
+#version 450
+#extension GL_ARB_sparse_texture2 : enable
+#extension GL_ARB_sparse_texture_clamp : enable
 
 layout(binding = 1) uniform sampler2D texSampler;
 
 layout(location = 0) in vec2 fragTexCoord;
 
-layout(location = 0) out vec4 outColor;
+layout(location = 0) out vec4 fragOutColor;
 
-float getMipLevel(in vec2 texCoord)
-{
-    vec2  dT_dx        	= dFdxFine(texCoord);
-    vec2  dT_dy        	= dFdyFine(texCoord);
-    float delta 		= 0.5 * max(sqrt(pow(dT_dx[0],2) + pow(dT_dx[1],2)), sqrt(pow(dT_dy[0],2) + pow(dT_dy[1],2)));
-    float mipLevel 		= log2(delta);
-    return max( 0, mipLevel );
-}
 
 void main() {
 
-    float mipLevel = getMipLevel(fragTexCoord * textureSize(texSampler, 0)) - 0.5;
-    
-    outColor = textureLod(texSampler, fragTexCoord, mipLevel);
-    //outColor = texture(texSampler, fragTexCoord);
-    if (mipLevel < 0.5f) {
-        outColor.r = 1.0f;
-    } else if (mipLevel < 1.5f) {
-        outColor.g = 1.0f;
-    } else if (mipLevel < 2.5f) {
-        outColor.r = 1.0f;
-        outColor.g = 1.0f;
-    } else if (mipLevel < 3.5f) {
-        outColor.b = 1.0f;
-    } else if (mipLevel < 4.5f) {
-        outColor.b = 1.0f;
-        outColor.r = 1.0f;
-    } else if (mipLevel < 5.5f) {
-        outColor.b = 1.0f;
-        outColor.g = 1.0f;
-    } else if (mipLevel < 6.5f) {
-        outColor.b = 1.0f;
-        outColor.g = 1.0f;
-        outColor.r = 1.0f;
-    }
+    vec4 color = vec4(0.0);
+
+	float minLOD = 0.0f;
+	float maxLOD = 5.0f;
+
+	int residencyCode = 1;
+
+	int lod = 0;
+	for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
+	{
+		residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
+		color.x = color.x / (lod + lod + 1);
+		color.y = color.y / (lod + lod + 1);
+		color.z = color.z / (lod + lod + 1);
+	}
+
+	bool texelResident = sparseTexelsResidentARB(residencyCode);
+
+	if (!texelResident)
+	{
+		color = vec4(1.0, 1.0, 1.0, 0.0);
+	}
+
+	fragOutColor = color;
 }

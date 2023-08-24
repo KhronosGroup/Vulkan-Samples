@@ -19,14 +19,27 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 10;
-size_t const ON_SCREEN_VERTICAL_BLOCKS   = 6;
+size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 23;
+size_t const ON_SCREEN_VERTICAL_BLOCKS   = 13;
 double const FOV_DEGREES                 = 60.0;
-double const MIP_LEVEL_MARGIN            = 0.3;
+double const MIP_LEVEL_MARGIN            = 0.2;
 
 class SparseImage : public ApiVulkanSample
 {
   public:
+
+	enum Stages
+	{
+		SPARSE_IMAGE_IDLE_STAGE,
+		SPARSE_IMAGE_CALCULATE_MESH_STAGE,
+		SPARSE_IMAGE_REQUIRED_MEMORY_LAYOUT_STAGE,
+		SPARSE_IMAGE_BIND_PAGES_PRE_MIP_GEN_STAGE,
+		SPARSE_IMAGE_UPDATE_LEVEL0_STAGE,
+		SPARSE_IMAGE_GENERATE_MIPS_STAGE,
+		SPARSE_IMAGE_BIND_PAGES_POST_MIP_GEN_STAGE,
+		SPARSE_IMAGE_FREE_MEMORY_STAGE,
+		SPARSE_IMAGE_NUM_STAGES,
+	};
 
 	struct MVP
 	{
@@ -78,8 +91,8 @@ class SparseImage : public ApiVulkanSample
 
 	struct PageTable
 	{
-		bool                                 bound;             
-		bool                                 written;
+		bool                                 bound;
+		bool                                 valid;
 		bool                                 gen_mip_required;        
 		size_t                               memory_index;
 		std::list<std::pair<size_t, size_t>> render_required_list;
@@ -103,6 +116,8 @@ class SparseImage : public ApiVulkanSample
 		VkImage        texture_image;
 		VkImageView    texture_image_view;
 		VkDeviceMemory texture_memory;        
+		
+		std::vector<VkSparseImageMemoryBind> sparse_image_memory_bind;
 
 		std::unique_ptr<vkb::sg::Image> row_data_image;
 
@@ -123,6 +138,9 @@ class SparseImage : public ApiVulkanSample
 
 		// list containing information which pages from the virtual should be bound
 		std::list<size_t> bind_list;
+
+		// list containing information which pages from the virtual should be updated
+		std::list<size_t> update_list;
 
 		// list containing information which pages should be freed (present but not required or required for mip generation)
 		std::list<size_t> free_list;
@@ -153,6 +171,8 @@ class SparseImage : public ApiVulkanSample
 		uint32_t vertical_num_blocks;
 		uint32_t horizontal_num_blocks;
 
+		uint8_t mip_levels;
+
 		std::vector<float>                       ax_vertical;
 		std::vector<float>                       ax_horizontal;
 
@@ -161,12 +181,17 @@ class SparseImage : public ApiVulkanSample
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
 
-		CalculateMipLevelData(glm::mat4 mvp_transform, VkExtent2D texture_base_dim, VkExtent2D screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks);
+		CalculateMipLevelData(glm::mat4 mvp_transform, VkExtent2D texture_base_dim, VkExtent2D screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels);
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();
 	};
 
+	enum Stages           next_stage;
+
 	struct VirtualTexture virtual_texture;
+
+	VkQueue sparse_queue;
+	size_t  sparse_queue_family_index;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 
@@ -174,6 +199,8 @@ class SparseImage : public ApiVulkanSample
 	size_t                             index_count;
 
 	std::unique_ptr<vkb::core::Buffer> mvp_buffer;
+
+	glm::mat4 current_mvp_transform;
 
 	VkPipeline       sample_pipeline{};
 	VkPipelineLayout sample_pipeline_layout{};
@@ -193,9 +220,10 @@ class SparseImage : public ApiVulkanSample
 
 	void setup_camera();
 	void load_assets();
-	void process_camera_change();
 
 	void prepare_pipelines();
+
+	void create_sparse_bind_queue();
 
 	void create_vertex_buffer();
 	void create_index_buffer();
@@ -218,8 +246,7 @@ class SparseImage : public ApiVulkanSample
 	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
 	void                      separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
-	void                      generate_mips();
-	void                      transitionImageLayout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout);
+	void                      transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint8_t mip_level);
 
 	uint32_t                  get_mip_level(size_t page_index);
 
