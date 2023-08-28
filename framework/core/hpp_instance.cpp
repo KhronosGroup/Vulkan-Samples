@@ -22,22 +22,18 @@
 #include <volk.h>
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-#	define USE_VALIDATION_LAYERS 1
+#	define USE_VALIDATION_LAYERS
 #endif
 
 #if defined(USE_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
-#	define USE_VALIDATION_LAYER_FEATURES 1
-#endif
-
-#ifdef USE_VALIDATION_LAYERS
-#	define USE_VULKAN_LOGGER
+#	define USE_VALIDATION_LAYER_FEATURES
 #endif
 
 namespace vkb
 {
 namespace
 {
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
                                                               void                                       *user_data)
@@ -193,7 +189,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 {
 	std::vector<vk::ExtensionProperties> available_instance_extensions = vk::enumerateInstanceExtensionProperties();
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
 	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 	                                               available_instance_extensions, enabled_extensions);
@@ -305,7 +301,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 
 	vk::InstanceCreateInfo instance_info({}, &app_info, requested_validation_layers, enabled_extensions);
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	vk::DebugUtilsMessengerCreateInfoEXT debug_utils_create_info;
 	vk::DebugReportCallbackCreateInfoEXT debug_report_create_info;
 	if (has_debug_utils)
@@ -358,7 +354,7 @@ HPPInstance::HPPInstance(const std::string                            &applicati
 	// Need to load volk for all the not-yet Vulkan-Hpp calls
 	volkLoadInstance(handle);
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	if (has_debug_utils)
 	{
 		debug_utils_messenger = handle.createDebugUtilsMessengerEXT(debug_utils_create_info);
@@ -387,7 +383,7 @@ HPPInstance::HPPInstance(vk::Instance instance) :
 
 HPPInstance::~HPPInstance()
 {
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	if (debug_utils_messenger)
 	{
 		handle.destroyDebugUtilsMessengerEXT(debug_utils_messenger);

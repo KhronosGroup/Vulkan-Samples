@@ -23,22 +23,18 @@
 #include <functional>
 
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-#	define USE_VALIDATION_LAYERS 1
+#	define USE_VALIDATION_LAYERS
 #endif
 
 #if defined(USE_VALIDATION_LAYERS) && (defined(VKB_VALIDATION_LAYERS_GPU_ASSISTED) || defined(VKB_VALIDATION_LAYERS_BEST_PRACTICES) || defined(VKB_VALIDATION_LAYERS_SYNCHRONIZATION))
-#	define USE_VALIDATION_LAYER_FEATURES 1
-#endif
-
-#ifdef USE_VALIDATION_LAYERS
-#	define USE_VULKAN_LOGGER
+#	define USE_VALIDATION_LAYER_FEATURES
 #endif
 
 namespace vkb
 {
 namespace
 {
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 
 VKAPI_ATTR VkBool32 VKAPI_CALL debug_utils_messenger_callback(VkDebugUtilsMessageSeverityFlagBitsEXT message_severity, VkDebugUtilsMessageTypeFlagsEXT message_type,
                                                               const VkDebugUtilsMessengerCallbackDataEXT *callback_data,
@@ -197,7 +193,7 @@ Instance::Instance(const std::string                            &application_nam
 	std::vector<VkExtensionProperties> available_instance_extensions(instance_extension_count);
 	VK_CHECK(vkEnumerateInstanceExtensionProperties(nullptr, &instance_extension_count, available_instance_extensions.data()));
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	// Check if VK_EXT_debug_utils is supported, which supersedes VK_EXT_Debug_Report
 	const bool has_debug_utils  = enable_extension(VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
 	                                               available_instance_extensions, enabled_extensions);
@@ -331,7 +327,7 @@ Instance::Instance(const std::string                            &application_nam
 	instance_info.enabledLayerCount   = to_u32(requested_validation_layers.size());
 	instance_info.ppEnabledLayerNames = requested_validation_layers.data();
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	VkDebugUtilsMessengerCreateInfoEXT debug_utils_create_info  = {VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT};
 	VkDebugReportCallbackCreateInfoEXT debug_report_create_info = {VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT};
 	if (has_debug_utils)
@@ -388,7 +384,7 @@ Instance::Instance(const std::string                            &application_nam
 
 	volkLoadInstance(handle);
 
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	if (has_debug_utils)
 	{
 		result = vkCreateDebugUtilsMessengerEXT(handle, &debug_utils_create_info, nullptr, &debug_utils_messenger);
@@ -425,7 +421,7 @@ Instance::Instance(VkInstance instance) :
 
 Instance::~Instance()
 {
-#ifdef USE_VULKAN_LOGGER
+#ifdef USE_VALIDATION_LAYERS
 	if (debug_utils_messenger != VK_NULL_HANDLE)
 	{
 		vkDestroyDebugUtilsMessengerEXT(handle, debug_utils_messenger, nullptr);
