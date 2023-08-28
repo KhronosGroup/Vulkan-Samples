@@ -4,10 +4,9 @@
 name: samples
 title: Vulkan Samples
 version: latest
-# Set {chapters} and {images} to empty strings
+start_page: README.adoc
 asciidoc:
   attributes:
-    chapters: ''
-    images: ''
-nav:
-- modules/ROOT/nav.adoc
+    source-language: asciidoc@
+    table-caption: false
+    github-repo-url: https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/
