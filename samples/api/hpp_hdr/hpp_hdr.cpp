@@ -249,9 +249,8 @@ vk::DescriptorPool HPPHDR::create_descriptor_pool()
 
 vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/bloom.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/bloom.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -282,6 +281,8 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 	                                             shader_stages,
 	                                             {},
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eFront,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
@@ -292,8 +293,8 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                               load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/composition.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/composition.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
@@ -311,6 +312,8 @@ vk::Pipeline HPPHDR::create_composition_pipeline()
 	                                             shader_stages,
 	                                             {},
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eFront,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},
@@ -364,9 +367,8 @@ vk::ImageView HPPHDR::create_image_view(vk::Format format, vk::ImageUsageFlagBit
 
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("hdr/gbuffer.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Set constant parameters via specialization constants
 	vk::SpecializationMapEntry specialization_map_entry(0, 0, sizeof(uint32_t));
@@ -404,6 +406,8 @@ vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFla
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             cullMode,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             blend_attachment_states,
