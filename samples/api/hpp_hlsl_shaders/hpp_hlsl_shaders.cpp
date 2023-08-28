@@ -169,9 +169,9 @@ vk::DescriptorPool HPPHlslShaders::create_descriptor_pool()
 
 vk::Pipeline HPPHlslShaders::create_pipeline()
 {
-	size_t                                           vertex_shader_index = shader_modules.size() - 2;
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{{{{}, vk::ShaderStageFlagBits::eVertex, shader_modules[vertex_shader_index], "main"},
-	                                                                {{}, vk::ShaderStageFlagBits::eFragment, shader_modules[vertex_shader_index + 1], "main"}}};
+	size_t                                         vertex_shader_index = shader_modules.size() - 2;
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{{{}, vk::ShaderStageFlagBits::eVertex, shader_modules[vertex_shader_index], "main"},
+	                                                             {{}, vk::ShaderStageFlagBits::eFragment, shader_modules[vertex_shader_index + 1], "main"}};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(VertexStructure), vk::VertexInputRate::eVertex);
@@ -194,6 +194,8 @@ vk::Pipeline HPPHlslShaders::create_pipeline()
 	                                             shader_stages,
 	                                             vertex_input_state,
 	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
 	                                             vk::CullModeFlagBits::eNone,
 	                                             vk::FrontFace::eCounterClockwise,
 	                                             {blend_attachment_state},

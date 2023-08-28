@@ -376,7 +376,7 @@ vk::Device HPPHelloTriangle::create_device(const std::vector<const char *> &requ
 vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 {
 	// Load our SPIR-V shaders.
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{
 	    vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eVertex, create_shader_module("triangle.vert"), "main"),
 	    vk::PipelineShaderStageCreateInfo({}, vk::ShaderStageFlagBits::eFragment, create_shader_module("triangle.frag"), "main")};
 
@@ -394,6 +394,8 @@ vk::Pipeline HPPHelloTriangle::create_graphics_pipeline()
 	                                                              shader_stages,
 	                                                              vertex_input,
 	                                                              vk::PrimitiveTopology::eTriangleList,        // We will use triangle lists to draw geometry.
+	                                                              0,
+	                                                              vk::PolygonMode::eFill,
 	                                                              vk::CullModeFlagBits::eBack,
 	                                                              vk::FrontFace::eClockwise,
 	                                                              {blend_attachment},
