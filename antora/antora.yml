@@ -9,4 +9,5 @@ asciidoc:
   attributes:
     source-language: asciidoc@
     table-caption: false
-    github-repo-url: https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/
+nav:
+  - modules/ROOT/nav.adoc

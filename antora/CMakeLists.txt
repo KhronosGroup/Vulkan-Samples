@@ -48,6 +48,6 @@ function(gatherAntoraAssets)
     endforeach ()
 endfunction()
 
-if(CMAKE_BUILD_TYPE MATCHES "Debug")
+if(VKB_GENERATE_ANTORA_SITE)
     gatherAntoraAssets()
 endif()
