@@ -757,7 +757,7 @@ vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 	                                                                                {"tesc", vk::ShaderStageFlagBits::eTessellationControl},
 	                                                                                {"tese", vk::ShaderStageFlagBits::eTessellationEvaluation},
 	                                                                                {"vert", vk::ShaderStageFlagBits::eVertex}};
-	vkb::HPPGLSLCompiler                                        glsl_compiler;
+	vkb::HPPShaderCompiler shader_compiler;
 
 	auto buffer = vkb::fs::read_shader_binary(path);
 
@@ -775,7 +775,7 @@ vk::ShaderModule HPPHelloTriangle::create_shader_module(const char *path)
 	{
 		throw std::runtime_error("File extension `" + file_ext + "` does not have a vulkan shader stage.");
 	}
-	if (!glsl_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
+	if (!shader_compiler.compile_to_spirv(stageIt->second, buffer, "main", {}, spirvCode, info_log))
 	{
 		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
 		return nullptr;

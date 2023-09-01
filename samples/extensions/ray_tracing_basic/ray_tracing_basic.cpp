@@ -905,7 +905,7 @@ void RaytracingBasic::on_update_ui_overlay(vkb::Drawer &drawer)
 	}
 }
 
-std::unique_ptr<vkb::VulkanSample> create_raytracing_basic()
+std::unique_ptr<vkb::VulkanSample> create_ray_tracing_basic()
 {
 	return std::make_unique<RaytracingBasic>();
 }
