@@ -46,27 +46,25 @@ HPPTerrainTessellation::~HPPTerrainTessellation()
 
 bool HPPTerrainTessellation::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		prepare_camera();
+		load_assets();
+		generate_terrain();
+		prepare_uniform_buffers();
+		descriptor_pool = create_descriptor_pool();
+		prepare_sky_sphere();
+		prepare_terrain();
+		prepare_wireframe();
+		prepare_statistics();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	prepare_camera();
-	load_assets();
-	generate_terrain();
-	prepare_uniform_buffers();
-
-	descriptor_pool = create_descriptor_pool();
-
-	prepare_sky_sphere();
-	prepare_terrain();
-	prepare_wireframe();
-
-	prepare_statistics();
-
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 void HPPTerrainTessellation::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
@@ -188,11 +186,10 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 
 void HPPTerrainTessellation::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
+		draw();
 	}
-	draw();
 }
 
 void HPPTerrainTessellation::view_changed()

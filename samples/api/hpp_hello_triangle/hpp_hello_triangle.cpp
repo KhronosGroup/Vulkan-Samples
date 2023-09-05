@@ -195,40 +195,38 @@ HPPHelloTriangle::~HPPHelloTriangle()
 
 bool HPPHelloTriangle::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!Application::prepare(options))
+	if (Application::prepare(options))
 	{
-		return false;
-	}
-
-	instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
+		instance = create_instance({VK_KHR_SURFACE_EXTENSION_NAME}, {});
 #if defined(VKB_DEBUG) || defined(VKB_VALIDATION_LAYERS)
-	debug_utils_messenger = instance.createDebugUtilsMessengerEXT(debug_utils_create_info);
+		debug_utils_messenger = instance.createDebugUtilsMessengerEXT(debug_utils_create_info);
 #endif
 
-	select_physical_device_and_surface();
+		select_physical_device_and_surface();
 
-	const vkb::Window::Extent &extent = options.window->get_extent();
-	swapchain_data.extent.width       = extent.width;
-	swapchain_data.extent.height      = extent.height;
+		const vkb::Window::Extent &extent = options.window->get_extent();
+		swapchain_data.extent.width       = extent.width;
+		swapchain_data.extent.height      = extent.height;
 
-	// create a device
-	device = create_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME});
+		// create a device
+		device = create_device({VK_KHR_SWAPCHAIN_EXTENSION_NAME});
 
-	// get the (graphics) queue
-	queue = device.getQueue(graphics_queue_index, 0);
+		// get the (graphics) queue
+		queue = device.getQueue(graphics_queue_index, 0);
 
-	init_swapchain();
+		init_swapchain();
 
-	// Create the necessary objects for rendering.
-	render_pass = create_render_pass();
+		// Create the necessary objects for rendering.
+		render_pass = create_render_pass();
 
-	// Create a blank pipeline layout.
-	// We are not binding any resources to the pipeline in this first sample.
-	pipeline_layout = device.createPipelineLayout({});
+		// Create a blank pipeline layout.
+		// We are not binding any resources to the pipeline in this first sample.
+		pipeline_layout = device.createPipelineLayout({});
 
-	pipeline = create_graphics_pipeline();
+		pipeline = create_graphics_pipeline();
 
-	init_framebuffers();
+		init_framebuffers();
+	}
 
 	return true;
 }
