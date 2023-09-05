@@ -121,19 +121,19 @@ void DynamicLineRasterization::prepare_scene()
 	vertex_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                    vertex_buffer_size,
 	                                                    VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-	                                                    VMA_MEMORY_USAGE_GPU_TO_CPU);
+	                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
 	cube_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                        cube_index_buffer_size,
 	                                                        VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_GPU_TO_CPU);
+	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 	cube_index_buffer->update(cube_indices.data(), cube_index_buffer_size);
 
 	edges_index_buffer = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                         edges_index_buffer_size,
 	                                                         VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-	                                                         VMA_MEMORY_USAGE_GPU_TO_CPU);
+	                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
 	edges_index_buffer->update(edges_indices.data(), edges_index_buffer_size);
 
 	fill_color = glm::vec4(0.957f, 0.384f, 0.024f, 0.1f);

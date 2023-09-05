@@ -19,6 +19,8 @@
 
 = Dynamic line rasterization
 
+image::screenshot.png[]
+
 == Overview
 
 This sample demonstrates functions from various extensions related to dynamic line rasterization. These functions can be useful for developing CAD applications.
