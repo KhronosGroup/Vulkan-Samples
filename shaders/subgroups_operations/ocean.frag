@@ -19,7 +19,7 @@
 layout (location = 0) in vec4 in_pos;
 layout (location = 1) in vec2 in_uv;
 
- layout (location = 0) out vec4 outFragColor;
+layout (location = 0) out vec4 outFragColor;
 
 layout (binding = 0) uniform Ubo
 {
@@ -52,7 +52,7 @@ const float specular_scale = 0.75;
 const float dyna_range = 0.8f;
 const vec3 ocean_dark = vec3(0.03, 0.06, 0.135);
 
-void main() 
+void main()
 {
     vec3 result = vec3(0.0f);
     ivec2 normal_texture_size = textureSize(fft_normal_map, 0);

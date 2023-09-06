@@ -18,7 +18,7 @@
  * limitations under the License.
  */
 
-layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 4, local_size_y = 4, local_size_z = 2) in;
 
 #define PI 3.141592f
 #define GRAVITY 9.81f
@@ -26,19 +26,13 @@ layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 struct Vertex
 {
 	vec3 position;
-	vec3 normal;
+//	vec3 normal;
 };
 
 struct Complex
 {
 	float real;
 	float imag;
-};
-
-struct FFTInputData
-{
-	Complex tilde;
-	Complex tilde_conj;
 };
 
 Complex complexMultiplicationByScalar(Complex a, float scalar)
@@ -81,15 +75,24 @@ layout (set = 0, binding = 0) uniform FFTParametersUbo
 	vec2  wind;
 } fftUbo;
 
-layout (std140, set = 0, binding = 1) readonly buffer FFTInputDataBuffer
+layout (std140, set = 0, binding = 1) readonly buffer FFTInputHTilda0_DataBuffer
 {
-	FFTInputData data[];
+	Complex htilde0[];
 };
 
-layout (std140, set = 0, binding = 2) buffer VertexOutBuffer
+
+layout (std140, set = 0, binding = 2) readonly buffer FFTInputHTilda0Conj_DataBuffer
 {
-	Vertex verticesOut[];
+	Complex htilde0_conj[];
 };
+
+layout (std140, set = 0, binding = 3) readonly buffer FFTInputWeight_DataBuffer
+{
+	Complex weight[];
+};
+
+
+layout (binding = 4, rgba32f) writeonly uniform image2D result_texture;
 
 // Add another FFTInputData buffer to store the results of the hTilde calculation
 // Add 3'th FFTInputData buffer to store fft calculation results - final values
@@ -105,8 +108,8 @@ float dispersion(uint n, uint m)
 Complex hTilde(float t, uint n, uint m)
 {
 	uint idx = gl_GlobalInvocationID.x * gl_SubgroupInvocationID + gl_GlobalInvocationID.y * gl_SubgroupInvocationID +  gl_GlobalInvocationID.z * gl_SubgroupInvocationID;
-	Complex tilde0 = data[idx].tilde;
-	Complex tilde0_conj = data[idx].tilde_conj;
+	Complex tilde0 ; //= data[idx].tilde;
+	Complex tilde0_conj; // = data[idx].tilde_conj;
 	
 	float omega = dispersion(n, m);
 	
@@ -130,8 +133,4 @@ void main()
 
  	subgroupMemoryBarrierBuffer();
 
-	FFTInputData inData = data[idx];
-
-	verticesOut[idx].position = vec3(0.0f);
-	verticesOut[idx].normal = vec3(0.0f); 
 }
