@@ -157,10 +157,11 @@ void SubgroupsOperations::create_compute_command_buffer()
 void SubgroupsOperations::create_compute_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0u),        // FFTParametersUbo
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),        // Vertex data
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u)         // FFTInputData fft data
-	};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 3u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_COMPUTE_BIT, 4u)};
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &compute.descriptor_set_layout));
@@ -176,14 +177,20 @@ void SubgroupsOperations::create_compute_descriptor_set()
 
 void SubgroupsOperations::update_compute_descriptor()
 {
-	VkDescriptorBufferInfo fft_params_ubo_buffer  = create_descriptor(*fft_params_ubo);
-	VkDescriptorBufferInfo input_fft_data_buffer  = create_descriptor(*fft_input_buffer);
-	VkDescriptorBufferInfo output_vertices_buffer = create_descriptor(*ocean.grid.vertex);
+	VkDescriptorBufferInfo fft_params_ubo_buffer               = create_descriptor(*fft_params_ubo);
+	VkDescriptorBufferInfo fft_input_h_tilde0_data_buffer      = create_descriptor(*fft_buffers.fft_input_htilde0);
+	VkDescriptorBufferInfo fft_input_h_tilde0_conj_data_buffer = create_descriptor(*fft_buffers.fft_input_htilde0_conj);
+	VkDescriptorBufferInfo fft_input_weight_data_buffer        = create_descriptor(*fft_buffers.fft_input_weight);
+	//	VkDescriptorBufferInfo fft_input_image                     = create_descriptor(*fft_buffers.fft_height_map_image->get_vk_image());
 
 	std::vector<VkWriteDescriptorSet> wirte_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &fft_params_ubo_buffer),
-	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &input_fft_data_buffer),
-	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u, &output_vertices_buffer)};
+	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &fft_input_h_tilde0_data_buffer),
+	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u, &fft_input_h_tilde0_conj_data_buffer),
+	    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3u, &fft_input_weight_data_buffer),
+	    //    vkb::initializers::write_descriptor_set(compute.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4u, &fft_input_image)
+
+	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(wirte_descriptor_sets.size()), wirte_descriptor_sets.data(), 0u, nullptr);
 }
 
@@ -220,9 +227,9 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
 		memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
 		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
-		memory_barrier.buffer                = fft_input_buffer->get_handle();
+		memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
 		memory_barrier.offset                = 0u;
-		memory_barrier.size                  = fft_input_buffer->get_size();
+		memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 	}
@@ -241,9 +248,9 @@ void SubgroupsOperations::build_compute_command_buffer()
 		memory_barrier.dstAccessMask         = 0u;
 		memory_barrier.srcQueueFamilyIndex   = compute.queue_family_index;
 		memory_barrier.dstQueueFamilyIndex   = ocean.graphics_queue_family_index;
-		memory_barrier.buffer                = fft_input_buffer->get_handle();
+		memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
 		memory_barrier.offset                = 0u;
-		memory_barrier.size                  = fft_input_buffer->get_size();
+		memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
 
 		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 	}
@@ -258,6 +265,15 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 		gpu.get_mutable_requested_features().fillModeNonSolid = VK_TRUE;
 	}
 
+	if (gpu.get_features().tessellationShader)
+	{
+		gpu.get_mutable_requested_features().tessellationShader = VK_TRUE;
+	}
+	else
+	{
+		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
+	}
+
 	subgroups_properties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBGROUP_PROPERTIES;
 	subgroups_properties.pNext = VK_NULL_HANDLE;
 
@@ -269,32 +285,52 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void SubgroupsOperations::load_assets()
 {
-	//	generate_grid();
-	auto input_buffer_size  = static_cast<VkDeviceSize>(grid_size * grid_size * (sizeof(float) * 4u));        // max grid size * max grid size * sizeof(std::complex) - real: float; imag: float
-	fft_input_buffer        = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                           input_buffer_size,
-                                                           VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                                           VMA_MEMORY_USAGE_GPU_ONLY);
-	auto vertex_buffer_size = grid_size * grid_size * sizeof(OceanVertex);
-	ocean.grid.vertex       = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                            vertex_buffer_size,
-                                                            VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                                                            VMA_MEMORY_USAGE_GPU_ONLY);
-	size_t log_2_n          = log(grid_size) / log(2);
-	auto   helpBuffer1Size  = VkDeviceSize(log_2_n * (sizeof(float) * 4) * grid_size);
-	helpBuffers.buffer1     = std::make_unique<vkb::core::Buffer>(get_device(), helpBuffer1Size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                                              VMA_MEMORY_USAGE_GPU_ONLY);
+	generate_plane();
 
+	// generate fft inputs
 	h_tilde_0.clear();
-	h_hilde_0_conj.clear();
+	h_tilde_0_conj.clear();
 	for (uint32_t m = 0; m < grid_size + 1U; ++m)
 	{
 		for (uint32_t n = 0; n < grid_size + 1U; ++n)
 		{
 			h_tilde_0.push_back(hTilde_0(n, m));
-			h_hilde_0_conj.push_back(std::conj(hTilde_0(-n, -m)));
+			h_tilde_0_conj.push_back(std::conj(hTilde_0(-n, -m)));
 		}
 	}
+
+	// calculate weights
+	auto     log_2_N = glm::log(grid_size) / glm::log(2.0f);
+	uint32_t pow2    = 1U;
+	for (uint32_t i = 0U; i < log_2_N; ++i)
+	{
+		for (uint32_t j = 0U; j < pow2; ++j)
+		{
+			weights.push_back(calculate_weight(j, pow2 * 2));
+		}
+		pow2 *= 2;
+	}
+
+	auto fft_input_htilde0_size      = static_cast<VkDeviceSize>(h_tilde_0.size() * sizeof(std::complex<float>));
+	fft_buffers.fft_input_htilde0    = std::make_unique<vkb::core::Buffer>(get_device(),
+                                                                        fft_input_htilde0_size,
+                                                                        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	auto fft_input_htilde0_conj_size = static_cast<VkDeviceSize>(h_tilde_0_conj.size() * sizeof(std::complex<float>));
+
+	fft_buffers.fft_input_htilde0_conj = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                         fft_input_htilde0_conj_size,
+	                                                                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	auto fft_input_weights_size  = static_cast<VkDeviceSize>(weights.size() * sizeof(std::complex<float>));
+	fft_buffers.fft_input_weight = std::make_unique<vkb::core::Buffer>(get_device(), fft_input_weights_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	fft_buffers.fft_input_htilde0->update(h_tilde_0.data(), h_tilde_0.size());
+	fft_buffers.fft_input_htilde0_conj->update(h_tilde_0_conj.data(), h_tilde_0_conj.size());
+	fft_buffers.fft_input_weight->update(weights.data(), weights.size());
+
+	// fft_buffers.fft_height_map_image = std::make_unique<vkb::sg::Image>(grid_size * grid_size);
 }
 
 float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m)
@@ -319,6 +355,13 @@ float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m)
 	float l2      = L2 * damping * damping;
 
 	return ui.amplitude * glm::exp(-1.0f / (k_len2 * L2)) / k_len4 * k_dot_w2 * glm::exp(-k_len2 * l2);
+}
+
+std::complex<float> SubgroupsOperations::calculate_weight(uint32_t x, uint32_t n)
+{
+	const auto pi2 = glm::pi<float>() * 2.0f;
+	return {
+	    glm::cos(pi2 * x / n), glm::sin(pi2 * x / n)};
 }
 
 std::complex<float> SubgroupsOperations::rndGaussian()
@@ -354,58 +397,35 @@ void SubgroupsOperations::prepare_uniform_buffers()
 	update_uniform_buffers();
 }
 
-void SubgroupsOperations::generate_grid()
+void SubgroupsOperations::generate_plane()
 {
-	std::vector<Vertex>   grid_vertices;
-	std::vector<uint32_t> grid_indices;
+	std::vector<Vertex> plane_vertices;
 
-	for (uint32_t z = 0u; z <= grid_size; ++z)
-	{
-		for (uint32_t x = 0u; x <= grid_size; ++x)
-		{
-			Vertex point = {};
-			point.pos.x  = static_cast<float>((static_cast<float>(x) / static_cast<float>(grid_size - 1) * 2 - 1) * (grid_size / 2.0f));
-			point.pos.z  = static_cast<float>((static_cast<float>(z) / static_cast<float>(grid_size - 1) * 2 - 1) * (grid_size / 2.0f));
-			point.pos.y  = 0.0f;
-			point.normal = glm::vec3(0.0f, 1.0f, 0.0);
-			grid_vertices.push_back(point);
-		}
-	}
+	Vertex v;
+	v.pos = {10.0f, 10.0f, 0.0f};
+	plane_vertices.push_back(v);
+	v.pos = {-10.0f, 10.0f, 0.0f};
+	plane_vertices.push_back(v);
+	v.pos = {-10.0f, -10.0f, 0.0f};
+	plane_vertices.push_back(v);
+	v.pos = {10.0f, -10.0f, 0.0f};
+	plane_vertices.push_back(v);
 
-	for (uint32_t z = 0u; z < grid_size; ++z)
-	{
-		for (uint32_t x = 0u; x < grid_size; ++x)
-		{
-			uint32_t i0 = z * (grid_size + 1u) + x;
-			uint32_t i1 = i0 + 1u;
-			uint32_t i2 = i0 + (grid_size + 1u);
-			uint32_t i3 = i2 + 1u;
+	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
 
-			grid_indices.push_back(i0);
-			grid_indices.push_back(i2);
-			grid_indices.push_back(i1);
+	auto vertex_buffer_size = vkb::to_u32(plane_vertices.size() * sizeof(Vertex));
+	auto index_buffer_size  = vkb::to_u32(indices.size() * sizeof(uint32_t));
+	ocean.grid.index_count  = vkb::to_u32(indices.size());
 
-			grid_indices.push_back(i1);
-			grid_indices.push_back(i2);
-			grid_indices.push_back(i3);
-		}
-	}
-
-	auto vertex_buffer_size = vkb::to_u32(grid_vertices.size() * sizeof(Vertex));
-	auto index_buffer_size  = vkb::to_u32(grid_indices.size() * sizeof(uint32_t));
-	ocean.grid.index_count  = vkb::to_u32(grid_indices.size());
-
-	input_grid.vertex = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                        vertex_buffer_size,
-	                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
-	input_grid.vertex->update(grid_vertices.data(), vertex_buffer_size);
+	ocean.grid.vertex = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.index = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       index_buffer_size,
 	                                                       VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
 	                                                       VMA_MEMORY_USAGE_CPU_TO_GPU);
-	ocean.grid.index->update(grid_indices.data(), index_buffer_size);
+
+	ocean.grid.vertex->update(plane_vertices.data(), vertex_buffer_size);
+	ocean.grid.index->update(indices.data(), index_buffer_size);
 }
 
 void SubgroupsOperations::create_semaphore()
@@ -489,14 +509,18 @@ void SubgroupsOperations::create_pipelines()
 	        dynamic_state_enables.data(),
 	        static_cast<uint32_t>(dynamic_state_enables.size()),
 	        0u);
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
-	shader_stages[0]                                                         = load_shader("subgroups_operations/ocean.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1]                                                         = load_shader("subgroups_operations/ocean.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	VkPipelineTessellationStateCreateInfo tessellation_state = vkb::initializers::pipeline_tessellation_state_create_info(4);
+
+	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages;
+	shader_stages[0] = load_shader("subgroups_operations/ocean.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("subgroups_operations/ocean.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	shader_stages[2] = load_shader("subgroups_operations/ocean.tesc", VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT);
+	shader_stages[3] = load_shader("subgroups_operations/ocean.tese", VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT);
+
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0u, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0u, 0u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
-	    vkb::initializers::vertex_input_attribute_description(0u, 1u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, normal))};
+	    vkb::initializers::vertex_input_attribute_description(0u, 0u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
@@ -512,6 +536,7 @@ void SubgroupsOperations::create_pipelines()
 	pipeline_create_info.pViewportState               = &viewport_state;
 	pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
 	pipeline_create_info.pDynamicState                = &dynamic_state;
+	pipeline_create_info.pTessellationState           = &tessellation_state;
 	pipeline_create_info.stageCount                   = static_cast<uint32_t>(shader_stages.size());
 	pipeline_create_info.pStages                      = shader_stages.data();
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &ocean.pipelines._default.pipeline));
@@ -585,16 +610,16 @@ void SubgroupsOperations::build_command_buffers()
 		vkCmdSetScissor(cmd_buff, 0u, 1u, &scissor);
 
 		// draw ocean
-		/*{
-		    vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, ocean.pipelines._default.pipeline_layout, 0u, 1u, &ocean.descriptor_set, 0u, nullptr);
-		    vkCmdBindPipeline(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, ui.wireframe ? ocean.pipelines.wireframe.pipeline : ocean.pipelines._default.pipeline);
+		{
+			vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, ocean.pipelines._default.pipeline_layout, 0u, 1u, &ocean.descriptor_set, 0u, nullptr);
+			vkCmdBindPipeline(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, ui.wireframe ? ocean.pipelines.wireframe.pipeline : ocean.pipelines._default.pipeline);
 
-		    VkDeviceSize offset[] = {0u};
-		    vkCmdBindVertexBuffers(cmd_buff, 0u, 1u, ocean.grid.vertex->get(), offset);
-		    vkCmdBindIndexBuffer(cmd_buff, ocean.grid.index->get_handle(), VkDeviceSize(0), VK_INDEX_TYPE_UINT32);
+			VkDeviceSize offset[] = {0u};
+			vkCmdBindVertexBuffers(cmd_buff, 0u, 1u, ocean.grid.vertex->get(), offset);
+			vkCmdBindIndexBuffer(cmd_buff, ocean.grid.index->get_handle(), VkDeviceSize(0), VK_INDEX_TYPE_UINT32);
 
-		    vkCmdDrawIndexed(cmd_buff, ocean.grid.index_count, 1u, 0u, 0u, 0u);
-		}*/
+			vkCmdDrawIndexed(cmd_buff, ocean.grid.index_count, 1u, 0u, 0u, 0u);
+		}
 
 		draw_ui(cmd_buff);
 

@@ -1,4 +1,5 @@
 #version 450
+
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -15,12 +16,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+ layout(quads, equal_spacing, cw) in;
 
-
- layout (location = 0) out vec4 outFragColor;
-
-void main() 
-{
-	vec3 ocean_color = vec3(0.0f, 0.5f, 1.0f);
-	outFragColor = vec4(ocean_color, 1.0f);
-}
+ void main()
+ {
+ }

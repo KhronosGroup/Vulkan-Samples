@@ -1,4 +1,5 @@
 #version 450
+
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,11 +17,11 @@
  * limitations under the License.
  */
 
+ layout (vertices = 4) out;
 
- layout (location = 0) out vec4 outFragColor;
 
-void main() 
-{
-	vec3 ocean_color = vec3(0.0f, 0.5f, 1.0f);
-	outFragColor = vec4(ocean_color, 1.0f);
-}
+ void main()
+ {
+ 	gl_out[gl_InvocationID].gl_Position =  gl_in[gl_InvocationID].gl_Position;
+
+ }

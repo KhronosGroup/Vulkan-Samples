@@ -25,7 +25,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct OceanVertex
 	{
 		glm::vec3 position;
-		glm::vec3 normal;
 	};
 
   public:
@@ -54,7 +53,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void build_compute_command_buffer();
 
-	void generate_grid();
+	void generate_plane();
 	void prepare_uniform_buffers();
 	void setup_descriptor_pool();
 	void create_semaphore();
@@ -66,10 +65,10 @@ class SubgroupsOperations : public ApiVulkanSample
 	void update_compute_descriptor();
 
 	// ocean stuff
-	float phillips_spectrum(int32_t n, int32_t m);
+	float               phillips_spectrum(int32_t n, int32_t m);
 	std::complex<float> hTilde_0(uint32_t n, uint32_t m);
 	std::complex<float> rndGaussian();
-
+	std::complex<float> calculate_weight(uint32_t x, uint32_t n);
 
 	struct Pipeline
 	{
@@ -109,20 +108,21 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec2 wind      = {16.0f, 0.0f};
 	} ui;
 
-	GridBuffers                        input_grid;        // input buffer for compute shader
-	uint32_t                           grid_size = {32u};
+	uint32_t                           grid_size = {128u};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
-	std::unique_ptr<vkb::core::Buffer> fft_input_buffer;        // TODO: change name
 
 	std::vector<std::complex<float>> h_tilde_0;
-	std::vector<std::complex<float>> h_hilde_0_conj;
+	std::vector<std::complex<float>> h_tilde_0_conj;
+	std::vector<std::complex<float>> weights;
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> buffer1;
-		std::unique_ptr<vkb::core::Buffer> W;
-	} helpBuffers;
+		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0;
+		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj;
+		std::unique_ptr<vkb::core::Buffer> fft_input_weight;
+		std::unique_ptr<vkb::sg::Image>    fft_height_map_image;
+	} fft_buffers;
 
 	struct
 	{
@@ -142,7 +142,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct
 	{
-		GridBuffers           grid;        // output (result) buffer for compute shader
+		GridBuffers           grid;
 		uint32_t              graphics_queue_family_index = {-1u};
 		VkDescriptorSetLayout descriptor_set_layout       = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set              = {VK_NULL_HANDLE};
