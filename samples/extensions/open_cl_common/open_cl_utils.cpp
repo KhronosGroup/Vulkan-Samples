@@ -15,8 +15,6 @@
  * limitations under the License.
  */
 
-// @todo: move to sample unit
-
 #include "open_cl_utils.h"
 
 #if defined(__linux__)
