@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -50,21 +50,29 @@ BufferBlock::BufferBlock(Device &device, VkDeviceSize size, VkBufferUsageFlags u
 	}
 }
 
-BufferAllocation BufferBlock::allocate(const uint32_t allocate_size)
+VkDeviceSize BufferBlock::aligned_offset() const
 {
-	assert(allocate_size > 0 && "Allocation size must be greater than zero");
+	return (offset + alignment - 1) & ~(alignment - 1);
+}
 
-	auto aligned_offset = (offset + alignment - 1) & ~(alignment - 1);
+bool BufferBlock::can_allocate(VkDeviceSize size) const
+{
+	assert(size > 0 && "Allocation size must be greater than zero");
+	return (aligned_offset() + size <= buffer.get_size());
+}
 
-	if (aligned_offset + allocate_size > buffer.get_size())
+BufferAllocation BufferBlock::allocate(VkDeviceSize size)
+{
+	if (can_allocate(size))
 	{
-		// No more space available from the underlying buffer, return empty allocation
-		return BufferAllocation{};
+		// Move the current offset and return an allocation
+		auto aligned = aligned_offset();
+		offset       = aligned + size;
+		return BufferAllocation{buffer, size, aligned};
 	}
 
-	// Move the current offset and return an allocation
-	offset = aligned_offset + allocate_size;
-	return BufferAllocation{buffer, allocate_size, aligned_offset};
+	// No more space available from the underlying buffer, return empty allocation
+	return BufferAllocation{};
 }
 
 VkDeviceSize BufferBlock::get_size() const
@@ -87,28 +95,25 @@ BufferPool::BufferPool(Device &device, VkDeviceSize block_size, VkBufferUsageFla
 
 BufferBlock &BufferPool::request_buffer_block(const VkDeviceSize minimum_size, bool minimal)
 {
-	// Find the first block in the range of the inactive blocks
-	// which can fit the minimum size
-	auto it = std::upper_bound(buffer_blocks.begin() + active_buffer_block_count, buffer_blocks.end(), minimum_size,
-	                           [](const VkDeviceSize &a, const std::unique_ptr<BufferBlock> &b) -> bool { return a <= b->get_size(); });
+	// Find a block in the range of the blocks which can fit the minimum size
+	auto it = minimal ? std::find_if(buffer_blocks.begin(),
+	                                 buffer_blocks.end(),
+	                                 [&minimum_size](const std::unique_ptr<BufferBlock> &buffer_block) { return (buffer_block->get_size() == minimum_size) && buffer_block->can_allocate(minimum_size); }) :
+	                    std::find_if(buffer_blocks.begin(),
+	                                 buffer_blocks.end(),
+	                                 [&minimum_size](const std::unique_ptr<BufferBlock> &buffer_block) { return buffer_block->can_allocate(minimum_size); });
 
-	if (it != buffer_blocks.end())
+	if (it == buffer_blocks.end())
 	{
-		// Recycle inactive block
-		active_buffer_block_count++;
-		return *it->get();
+		LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
+
+		VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
+
+		// Create a new block and get the iterator on it
+		it = buffer_blocks.emplace(buffer_blocks.end(), std::make_unique<BufferBlock>(device, new_block_size, usage, memory_usage));
 	}
 
-	LOGD("Building #{} buffer block ({})", buffer_blocks.size(), usage);
-
-	VkDeviceSize new_block_size = minimal ? minimum_size : std::max(block_size, minimum_size);
-
-	// Create a new block, store and return it
-	buffer_blocks.emplace_back(std::make_unique<BufferBlock>(device, new_block_size, usage, memory_usage));
-
-	auto &block = buffer_blocks[active_buffer_block_count++];
-
-	return *block.get();
+	return *it->get();
 }
 
 void BufferPool::reset()
@@ -117,8 +122,6 @@ void BufferPool::reset()
 	{
 		buffer_block->reset();
 	}
-
-	active_buffer_block_count = 0;
 }
 
 BufferAllocation::BufferAllocation(core::Buffer &buffer, VkDeviceSize size, VkDeviceSize offset) :

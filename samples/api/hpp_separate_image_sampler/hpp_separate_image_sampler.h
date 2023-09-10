@@ -46,6 +46,7 @@ class HPPSeparateImageSampler : public HPPApiVulkanSample
 	};
 
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample
@@ -57,16 +58,19 @@ class HPPSeparateImageSampler : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void view_changed() override;
 
-	void draw();
-	void generate_quad();
-	void load_assets();
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_set();
-	void setup_descriptor_set_layout();
-	void setup_samplers();
-	void update_uniform_buffers();
+	vk::DescriptorSetLayout create_base_descriptor_set_layout();
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::Pipeline            create_graphics_pipeline();
+	vk::PipelineLayout      create_pipeline_layout(std::vector<vk::DescriptorSetLayout> const &descriptor_set_layouts);
+	vk::Sampler             create_sampler(vk::Filter filter);
+	vk::DescriptorSetLayout create_sampler_descriptor_set_layout();
+	void                    draw();
+	void                    generate_quad();
+	void                    load_assets();
+	void                    prepare_uniform_buffers();
+	void                    update_base_descriptor_set();
+	void                    update_sampler_descriptor_set(size_t index);
+	void                    update_uniform_buffers();
 
   private:
 	vk::DescriptorSet                     base_descriptor_set;

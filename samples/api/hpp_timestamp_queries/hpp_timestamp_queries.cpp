@@ -319,12 +319,14 @@ void HPPTimestampQueries::create_attachment(vk::Format format, vk::ImageUsageFla
 	switch (usage)
 	{
 		case vk::ImageUsageFlagBits::eColorAttachment:
+			assert(!vkb::common::is_depth_format(format));
 			aspect_mask = vk::ImageAspectFlagBits::eColor;
 			break;
 		case vk::ImageUsageFlagBits::eDepthStencilAttachment:
+			assert(vkb::common::is_depth_format(format));
 			aspect_mask = vk::ImageAspectFlagBits::eDepth;
 			// Stencil aspect should only be set on depth + stencil formats
-			if (vkb::common::is_depth_stencil_format(format) && !vkb::common::is_depth_only_format(format))
+			if (vkb::common::is_depth_stencil_format(format))
 			{
 				aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 			}

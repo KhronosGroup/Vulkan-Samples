@@ -21,6 +21,7 @@
 
 #include "common/logging.h"
 #include "vulkan/vulkan.hpp"
+#include "vulkan/vulkan_format_traits.hpp"
 
 namespace vkb
 {
@@ -77,12 +78,23 @@ inline bool is_buffer_descriptor_type(vk::DescriptorType descriptor_type)
 
 inline bool is_depth_only_format(vk::Format format)
 {
+	assert(vkb::is_depth_only_format(static_cast<VkFormat>(format)) ==
+	       ((vk::componentCount(format) == 1) && (std::string(vk::componentName(format, 0)) == "D")));
 	return vkb::is_depth_only_format(static_cast<VkFormat>(format));
 }
 
 inline bool is_depth_stencil_format(vk::Format format)
 {
+	assert(vkb::is_depth_stencil_format(static_cast<VkFormat>(format)) ==
+	       ((vk::componentCount(format) == 2) && (std::string(vk::componentName(format, 0)) == "D") &&
+	        (std::string(vk::componentName(format, 1)) == "S")));
 	return vkb::is_depth_stencil_format(static_cast<VkFormat>(format));
+}
+
+inline bool is_depth_format(vk::Format format)
+{
+	assert(vkb::is_depth_format(static_cast<VkFormat>(format)) == (std::string(vk::componentName(format, 0)) == "D"));
+	return vkb::is_depth_format(static_cast<VkFormat>(format));
 }
 
 inline bool is_dynamic_buffer_descriptor_type(vk::DescriptorType descriptor_type)
@@ -95,21 +107,48 @@ inline vk::ShaderModule load_shader(const std::string &filename, vk::Device devi
 	return static_cast<vk::ShaderModule>(vkb::load_shader(filename, device, static_cast<VkShaderStageFlagBits>(stage)));
 }
 
-inline void set_image_layout(vk::CommandBuffer         command_buffer,
-                             vk::Image                 image,
-                             vk::ImageLayout           old_layout,
-                             vk::ImageLayout           new_layout,
-                             vk::ImageSubresourceRange subresource_range,
-                             vk::PipelineStageFlags    src_mask = vk::PipelineStageFlagBits::eAllCommands,
-                             vk::PipelineStageFlags    dst_mask = vk::PipelineStageFlagBits::eAllCommands)
+inline void image_layout_transition(vk::CommandBuffer command_buffer,
+                                    vk::Image         image,
+                                    vk::ImageLayout   old_layout,
+                                    vk::ImageLayout   new_layout)
 {
-	vkb::set_image_layout(command_buffer,
-	                      static_cast<VkImage>(image),
-	                      static_cast<VkImageLayout>(old_layout),
-	                      static_cast<VkImageLayout>(new_layout),
-	                      static_cast<VkImageSubresourceRange>(subresource_range),
-	                      static_cast<VkPipelineStageFlags>(src_mask),
-	                      static_cast<VkPipelineStageFlags>(dst_mask));
+	vkb::image_layout_transition(command_buffer,
+	                             static_cast<VkImage>(image),
+	                             static_cast<VkImageLayout>(old_layout),
+	                             static_cast<VkImageLayout>(new_layout));
+}
+
+inline void image_layout_transition(vk::CommandBuffer         command_buffer,
+                                    vk::Image                 image,
+                                    vk::ImageLayout           old_layout,
+                                    vk::ImageLayout           new_layout,
+                                    vk::ImageSubresourceRange subresource_range)
+{
+	vkb::image_layout_transition(command_buffer,
+	                             static_cast<VkImage>(image),
+	                             static_cast<VkImageLayout>(old_layout),
+	                             static_cast<VkImageLayout>(new_layout),
+	                             static_cast<VkImageSubresourceRange>(subresource_range));
+}
+
+inline vk::SurfaceFormatKHR select_surface_format(vk::PhysicalDevice             gpu,
+                                                  vk::SurfaceKHR                 surface,
+                                                  std::vector<vk::Format> const &preferred_formats = {
+                                                      vk::Format::eR8G8B8A8Srgb, vk::Format::eB8G8R8A8Srgb, vk::Format::eA8B8G8R8SrgbPack32})
+{
+	std::vector<vk::SurfaceFormatKHR> supported_surface_formats = gpu.getSurfaceFormatsKHR(surface);
+	assert(!supported_surface_formats.empty());
+
+	auto it = std::find_if(supported_surface_formats.begin(),
+	                       supported_surface_formats.end(),
+	                       [&preferred_formats](vk::SurfaceFormatKHR surface_format) {
+		                       return std::any_of(preferred_formats.begin(),
+		                                          preferred_formats.end(),
+		                                          [&surface_format](vk::Format format) { return format == surface_format.format; });
+	                       });
+
+	// We use the first supported format as a fallback in case none of the preferred formats is available
+	return it != supported_surface_formats.end() ? *it : supported_surface_formats[0];
 }
 
 // helper functions not backed by vk_common.h
@@ -137,9 +176,11 @@ inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass rend
 
 inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
                                              vk::PipelineCache                                         pipeline_cache,
-                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const   &shader_stages,
+                                             std::vector<vk::PipelineShaderStageCreateInfo> const     &shader_stages,
                                              vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
                                              vk::PrimitiveTopology                                     primitive_topology,
+                                             uint32_t                                                  patch_control_points,
+                                             vk::PolygonMode                                           polygon_mode,
                                              vk::CullModeFlags                                         cull_mode,
                                              vk::FrontFace                                             front_face,
                                              std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
@@ -149,10 +190,12 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 {
 	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
 
+	vk::PipelineTessellationStateCreateInfo tessellation_state({}, patch_control_points);
+
 	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
 
 	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
+	rasterization_state.polygonMode = polygon_mode;
 	rasterization_state.cullMode    = cull_mode;
 	rasterization_state.frontFace   = front_face;
 	rasterization_state.lineWidth   = 1.0f;
@@ -169,7 +212,7 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 	                                                    shader_stages,
 	                                                    &vertex_input_state,
 	                                                    &input_assembly_state,
-	                                                    {},
+	                                                    &tessellation_state,
 	                                                    &viewport_state,
 	                                                    &rasterization_state,
 	                                                    &multisample_state,
@@ -196,12 +239,14 @@ inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage,
 	switch (usage)
 	{
 		case vk::ImageUsageFlagBits::eColorAttachment:
+			assert(!vkb::common::is_depth_format(format));
 			image_aspect_flags = vk::ImageAspectFlagBits::eColor;
 			break;
 		case vk::ImageUsageFlagBits::eDepthStencilAttachment:
+			assert(vkb::common::is_depth_format(format));
 			image_aspect_flags = vk::ImageAspectFlagBits::eDepth;
 			// Stencil aspect should only be set on depth + stencil formats
-			if (vkb::common::is_depth_stencil_format(format) && !vkb::common::is_depth_only_format(format))
+			if (vkb::common::is_depth_stencil_format(format))
 			{
 				image_aspect_flags |= vk::ImageAspectFlagBits::eStencil;
 			}

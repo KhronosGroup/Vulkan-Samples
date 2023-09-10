@@ -311,6 +311,7 @@ set(CORE_FILES
     core/hpp_physical_device.cpp
     core/hpp_pipeline_layout.cpp
     core/hpp_queue.cpp
+    core/hpp_sampler.cpp
     core/hpp_swapchain.cpp
     core/hpp_vulkan_resource.cpp
 )
@@ -467,8 +468,19 @@ if(${VKB_VALIDATION_LAYERS_GPU_ASSISTED})
     if (APPLE)
         message(WARNING "GPU assisted validation layers are not currently available on macOS.")
     else()
+        target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
         target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_GPU_ASSISTED)
     endif()
+endif()
+
+if(${VKB_VALIDATION_LAYERS_BEST_PRACTICES})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_BEST_PRACTICES)
+endif()
+
+if(${VKB_VALIDATION_LAYERS_SYNCHRONIZATION})
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC VKB_VALIDATION_LAYERS_SYNCHRONIZATION)
 endif()
 
 if(${VKB_VULKAN_DEBUG})

@@ -451,28 +451,15 @@ void CommandBuffer::image_memory_barrier(const core::ImageView &image_view, cons
 		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT | VK_IMAGE_ASPECT_STENCIL_BIT;
 	}
 
-	VkImageMemoryBarrier image_memory_barrier{VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER};
-	image_memory_barrier.oldLayout           = memory_barrier.old_layout;
-	image_memory_barrier.newLayout           = memory_barrier.new_layout;
-	image_memory_barrier.image               = image_view.get_image().get_handle();
-	image_memory_barrier.subresourceRange    = subresource_range;
-	image_memory_barrier.srcAccessMask       = memory_barrier.src_access_mask;
-	image_memory_barrier.dstAccessMask       = memory_barrier.dst_access_mask;
-	image_memory_barrier.srcQueueFamilyIndex = memory_barrier.old_queue_family;
-	image_memory_barrier.dstQueueFamilyIndex = memory_barrier.new_queue_family;
-
-	VkPipelineStageFlags src_stage_mask = memory_barrier.src_stage_mask;
-	VkPipelineStageFlags dst_stage_mask = memory_barrier.dst_stage_mask;
-
-	vkCmdPipelineBarrier(
-	    get_handle(),
-	    src_stage_mask,
-	    dst_stage_mask,
-	    0,
-	    0, nullptr,
-	    0, nullptr,
-	    1,
-	    &image_memory_barrier);
+	vkb::image_layout_transition(get_handle(),
+	                             image_view.get_image().get_handle(),
+	                             memory_barrier.src_stage_mask,
+	                             memory_barrier.dst_stage_mask,
+	                             memory_barrier.src_access_mask,
+	                             memory_barrier.dst_access_mask,
+	                             memory_barrier.old_layout,
+	                             memory_barrier.new_layout,
+	                             subresource_range);
 }
 
 void CommandBuffer::buffer_memory_barrier(const core::Buffer &buffer, VkDeviceSize offset, VkDeviceSize size, const BufferMemoryBarrier &memory_barrier)
@@ -661,7 +648,7 @@ void CommandBuffer::flush_descriptor_state(VkPipelineBindPoint pipeline_bind_poi
 										image_info.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 										break;
 									case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-										if (is_depth_stencil_format(image_view->get_format()))
+										if (is_depth_format(image_view->get_format()))
 										{
 											image_info.imageLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 										}

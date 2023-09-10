@@ -260,28 +260,9 @@ void OpenGLInterop::prepare_shared_resources()
 		                                                          0, 1};
 		vkCreateImageView(deviceHandle, &viewCreateInfo, nullptr, &sharedTexture.view);
 
-		with_command_buffer([&](VkCommandBuffer image_command_buffer) {
-			VkImageMemoryBarrier image_memory_barrier  = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                 = sharedTexture.image;
-			image_memory_barrier.srcAccessMask         = 0;
-			image_memory_barrier.dstAccessMask         = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.oldLayout             = VK_IMAGE_LAYOUT_UNDEFINED;
-			image_memory_barrier.newLayout             = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-
-			vkCmdPipelineBarrier(
-			    image_command_buffer,
-			    VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    0,
-			    0, nullptr,
-			    0, nullptr,
-			    1, &image_memory_barrier);
-		},
-		                    sharedSemaphores.gl_ready);
+		with_command_buffer(
+		    [&](VkCommandBuffer image_command_buffer) { vkb::image_layout_transition(image_command_buffer, sharedTexture.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL); },
+		    sharedSemaphores.gl_ready);
 	}
 }
 
@@ -700,24 +681,7 @@ void OpenGLInterop::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 
-		{
-			VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                = sharedTexture.image;
-			image_memory_barrier.srcAccessMask        = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.dstAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-			image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-			image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-			vkCmdPipelineBarrier(
-			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-			    0, nullptr, 0, nullptr, 1, &image_memory_barrier);
-		}
+		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info,
 		                     VK_SUBPASS_CONTENTS_INLINE);
@@ -744,31 +708,8 @@ void OpenGLInterop::build_command_buffers()
 
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
-		{
-			VkImageMemoryBarrier image_memory_barrier = vkb::initializers::image_memory_barrier();
-			image_memory_barrier.image                = sharedTexture.image;
-			image_memory_barrier.srcAccessMask        = VK_ACCESS_SHADER_READ_BIT;
-			image_memory_barrier.dstAccessMask        = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-			image_memory_barrier.oldLayout            = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			image_memory_barrier.newLayout            = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+		vkb::image_layout_transition(draw_cmd_buffers[i], sharedTexture.image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL);
 
-			VkImageSubresourceRange &subresource_range = image_memory_barrier.subresourceRange;
-			subresource_range.aspectMask               = VK_IMAGE_ASPECT_COLOR_BIT;
-			subresource_range.levelCount               = 1;
-			subresource_range.layerCount               = 1;
-
-			// Insert a memory dependency at the proper pipeline stages that will execute the image layout transition
-			// Source pipeline stage is host write/read execution (VK_PIPELINE_STAGE_HOST_BIT)
-			// Destination pipeline stage is copy command execution (VK_PIPELINE_STAGE_TRANSFER_BIT)
-			vkCmdPipelineBarrier(
-			    draw_cmd_buffers[i],
-			    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-			    VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT,
-			    0,
-			    0, nullptr,
-			    0, nullptr,
-			    1, &image_memory_barrier);
-		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
 }

@@ -8,6 +8,10 @@ on:
 env:
   TARGET_BRANCH: main
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   changed-files:
     container: ghcr.io/khronosgroupactions/clang-tools:15.0.0

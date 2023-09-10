@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -41,7 +41,7 @@ ImageView::ImageView(Image &img, VkImageViewType view_type, VkFormat format,
 	subresource_range.levelCount     = n_mip_levels == 0 ? image->get_subresource().mipLevel : n_mip_levels;
 	subresource_range.layerCount     = n_array_layers == 0 ? image->get_subresource().arrayLayer : n_array_layers;
 
-	if (is_depth_stencil_format(format))
+	if (is_depth_format(format))
 	{
 		subresource_range.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
 	}

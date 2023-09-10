@@ -88,27 +88,16 @@ bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 		return false;
 	}
 
-	vk::Device device = get_device()->get_handle();
-
 	prepare_camera();
 	generate_cube();
 	prepare_uniform_buffers();
 
-	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                           {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
-	                                                           {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-	descriptor_set_layout                                  = device.createDescriptorSetLayout({{}, bindings});
-	pipeline_layout                                        = device.createPipelineLayout({{}, descriptor_set_layout});
+	descriptor_set_layout = create_descriptor_set_layout();
+	pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
+	pipeline              = create_pipeline();
 
-	create_pipeline();
-
-	// Example uses one ubo, on dynamic ubo, and one combined image sampler
-	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
-	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
-	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
-	descriptor_pool                                  = device.createDescriptorPool({{}, 2, pool_sizes});
-
-	descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+	descriptor_pool = create_descriptor_pool();
+	descriptor_set  = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
 
 	update_descriptor_set();
 	build_command_buffers();
@@ -178,12 +167,28 @@ void HPPDynamicUniformBuffers::render(float delta_time)
 	}
 }
 
-void HPPDynamicUniformBuffers::create_pipeline()
+vk::DescriptorPool HPPDynamicUniformBuffers::create_descriptor_pool()
+{
+	// Example uses one ubo, on dynamic ubo, and one combined image sampler
+	std::array<vk::DescriptorPoolSize, 3> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 1},
+	                                                     {vk::DescriptorType::eUniformBufferDynamic, 1},
+	                                                     {vk::DescriptorType::eCombinedImageSampler, 1}}};
+	return get_device()->get_handle().createDescriptorPool({{}, 2, pool_sizes});
+}
+
+vk::DescriptorSetLayout HPPDynamicUniformBuffers::create_descriptor_set_layout()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 3> bindings = {{{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {1, vk::DescriptorType::eUniformBufferDynamic, 1, vk::ShaderStageFlagBits::eVertex},
+	                                                           {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+	return get_device()->get_handle().createDescriptorSetLayout({{}, bindings});
+}
+
+vk::Pipeline HPPDynamicUniformBuffers::create_pipeline()
 {
 	// Load shaders
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages = {{load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                   load_shader("dynamic_uniform_buffers/base.frag",
-	                                                                               vk::ShaderStageFlagBits::eFragment)}};
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("dynamic_uniform_buffers/base.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("dynamic_uniform_buffers/base.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex bindings and attributes
 	vk::VertexInputBindingDescription                  vertex_input_binding(0, sizeof(Vertex), vk::VertexInputRate::eVertex);
@@ -203,17 +208,19 @@ void HPPDynamicUniformBuffers::create_pipeline()
 	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
 
-	pipeline = vkb::common::create_graphics_pipeline(get_device()->get_handle(),
-	                                                 pipeline_cache,
-	                                                 shader_stages,
-	                                                 vertex_input_state,
-	                                                 vk::PrimitiveTopology::eTriangleList,
-	                                                 vk::CullModeFlagBits::eNone,
-	                                                 vk::FrontFace::eCounterClockwise,
-	                                                 {blend_attachment_state},
-	                                                 depth_stencil_state,
-	                                                 pipeline_layout,
-	                                                 render_pass);
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPDynamicUniformBuffers::draw()
@@ -255,10 +262,10 @@ void HPPDynamicUniformBuffers::generate_cube()
 	// For the sake of simplicity we won't stage the vertex data to the gpu memory
 	// Vertex buffer
 	vertex_buffer =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), vertex_buffer_size, vk::BufferUsageFlagBits::eVertexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer->update(vertices.data(), vertex_buffer_size);
 
-	index_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_GPU_TO_CPU);
+	index_buffer = std::make_unique<vkb::core::HPPBuffer>(*get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	index_buffer->update(indices.data(), index_buffer_size);
 }
 

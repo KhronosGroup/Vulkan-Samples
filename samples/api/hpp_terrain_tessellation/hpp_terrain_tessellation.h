@@ -32,60 +32,49 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 	~HPPTerrainTessellation();
 
   private:
-	struct DescriptorSetLayouts
+	struct SkySphere
 	{
-		vk::DescriptorSetLayout terrain;
-		vk::DescriptorSetLayout skysphere;
+		vk::DescriptorSet       descriptor_set;
+		vk::DescriptorSetLayout descriptor_set_layout;
+		vk::PipelineLayout      pipeline_layout;
+		vk::Pipeline            pipeline;
+
+		std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> geometry;
+
+		HPPTexture texture;
+
+		glm::mat4                             transform;
+		std::unique_ptr<vkb::core::HPPBuffer> transform_buffer;
+
+		void destroy(vk::Device device)
+		{
+			device.destroyPipeline(pipeline);
+			device.destroyPipelineLayout(pipeline_layout);
+			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// the descriptor_set is implicitly freed by destroying its DescriptorPool
+			device.destroySampler(texture.sampler);
+		}
 	};
 
-	struct DescriptorSets
+	struct Statistics
 	{
-		vk::DescriptorSet terrain;
-		vk::DescriptorSet skysphere;
-	};
+		bool query_supported = false;
 
-	struct PipelineLayouts
-	{
-		vk::PipelineLayout terrain;
-		vk::PipelineLayout skysphere;
-	};
+		vk::QueryPool query_pool;
 
-	struct Pipelines
-	{
-		vk::Pipeline terrain;
-		vk::Pipeline wireframe = nullptr;
-		vk::Pipeline skysphere;
-	};
+		std::array<uint64_t, 2> results = {{0}};
 
-	// Pipeline statistics
-	struct QueryResults
-	{
-		vk::Buffer       buffer;
-		vk::DeviceMemory memory;
-	};
-
-	// Skysphere vertex shader stage
-	struct SkySphereUBO
-	{
-		glm::mat4 mvp;
-	};
-
-	struct Textures
-	{
-		HPPTexture heightmap;
-		HPPTexture skysphere;
-		HPPTexture terrain_array;
-	};
-
-	struct Terrain
-	{
-		std::unique_ptr<vkb::core::HPPBuffer> vertices;
-		std::unique_ptr<vkb::core::HPPBuffer> indices;
-		uint32_t                              index_count;
+		void destroy(vk::Device device)
+		{
+			if (query_supported)
+			{
+				device.destroyQueryPool(query_pool);
+			}
+		}
 	};
 
 	// Shared values for tessellation control and evaluation stages
-	struct TessellationUBO
+	struct Tessellation
 	{
 		glm::mat4 projection;
 		glm::mat4 modelview;
@@ -98,10 +87,37 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 		float tessellated_edge_size = 20.0f;
 	};
 
-	struct UniformBuffers
+	struct Terrain
 	{
-		std::unique_ptr<vkb::core::HPPBuffer> terrain_tessellation;
-		std::unique_ptr<vkb::core::HPPBuffer> skysphere_vertex;
+		vk::DescriptorSet       descriptor_set;
+		vk::DescriptorSetLayout descriptor_set_layout;
+		vk::PipelineLayout      pipeline_layout;
+		vk::Pipeline            pipeline;
+
+		std::unique_ptr<vkb::core::HPPBuffer> vertices;
+		std::unique_ptr<vkb::core::HPPBuffer> indices;
+		uint32_t                              index_count;
+
+		HPPTexture height_map;
+		HPPTexture terrain_array;
+
+		bool sampler_anisotropy_supported = false;
+
+		std::vector<vk::PipelineShaderStageCreateInfo> shader_stages;
+
+		Tessellation                          tessellation;
+		std::unique_ptr<vkb::core::HPPBuffer> tessellation_buffer;
+		bool                                  tessellation_enabled = true;
+
+		void destroy(vk::Device device)
+		{
+			device.destroyPipeline(pipeline);
+			device.destroyPipelineLayout(pipeline_layout);
+			device.destroyDescriptorSetLayout(descriptor_set_layout);
+			// the descriptor_set is implicitly freed by destroying its DescriptorPool
+			device.destroySampler(height_map.sampler);
+			device.destroySampler(terrain_array.sampler);
+		}
 	};
 
 	struct Vertex
@@ -111,7 +127,21 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 		glm::vec2 uv;
 	};
 
+	struct Wireframe
+	{
+		bool supported = false;
+		bool enabled   = false;
+
+		vk::Pipeline pipeline;
+
+		void destroy(vk::Device device)
+		{
+			device.destroyPipeline(pipeline);
+		}
+	};
+
   private:
+	// from vkb::Application
 	bool prepare(const vkb::ApplicationOptions &options) override;
 
 	// from HPPVulkanSample
@@ -123,34 +153,30 @@ class HPPTerrainTessellation : public HPPApiVulkanSample
 	void render(float delta_time) override;
 	void view_changed() override;
 
-	void draw();
-	void generate_terrain();
-	void load_assets();
-	void prepare_pipelines();
-	void prepare_uniform_buffers();
-	void setup_descriptor_pool();
-	void setup_descriptor_set_layouts();
-	void setup_descriptor_sets();
-	void setup_query_result_buffer();
-	void update_uniform_buffers();
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_sky_sphere_descriptor_set_layout();
+	vk::Pipeline            create_sky_sphere_pipeline();
+	vk::DescriptorSetLayout create_terrain_descriptor_set_layout();
+	vk::Pipeline            create_terrain_pipeline(vk::PolygonMode polygon_mode);
+	void                    draw();
+	void                    generate_terrain();
+	void                    load_assets();
+	void                    prepare_camera();
+	void                    prepare_sky_sphere();
+	void                    prepare_statistics();
+	void                    prepare_terrain();
+	void                    prepare_uniform_buffers();
+	void                    prepare_wireframe();
+	void                    update_uniform_buffers();
+	void                    update_sky_sphere_descriptor_set();
+	void                    update_terrain_descriptor_set();
 
   private:
-	DescriptorSetLayouts                                      descriptor_set_layouts;
-	DescriptorSets                                            descriptor_sets;
-	vkb::Frustum                                              frustum;        // View frustum passed to tessellation control shader for culling
-	PipelineLayouts                                           pipeline_layouts;
-	std::array<uint64_t, 2>                                   pipeline_stats = {{0}};
-	Pipelines                                                 pipelines;
-	vk::QueryPool                                             query_pool = nullptr;
-	QueryResults                                              query_result;
-	std::unique_ptr<vkb::scene_graph::components::HPPSubMesh> skysphere;
-	bool                                                      tessellation = true;
-	Textures                                                  textures;
-	Terrain                                                   terrain;
-	TessellationUBO                                           ubo_tess;
-	SkySphereUBO                                              ubo_vs;
-	UniformBuffers                                            uniform_buffers;
-	bool                                                      wireframe = false;
+	vkb::Frustum frustum;        // View frustum passed to tessellation control shader for culling
+	SkySphere    sky_sphere;
+	Statistics   statistics;
+	Terrain      terrain;
+	Wireframe    wireframe;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_terrain_tessellation();

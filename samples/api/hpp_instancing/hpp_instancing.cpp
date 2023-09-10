@@ -35,16 +35,56 @@ HPPInstancing::~HPPInstancing()
 	{
 		vk::Device device = get_device()->get_handle();
 
-		device.destroyPipeline(pipelines.instanced_rocks);
-		device.destroyPipeline(pipelines.planet);
-		device.destroyPipeline(pipelines.starfield);
+		planet.destroy(device);
+		rocks.destroy(device);
+		device.destroyPipeline(starfield_pipeline);
 		device.destroyPipelineLayout(pipeline_layout);
 		device.destroyDescriptorSetLayout(descriptor_set_layout);
-		device.destroyBuffer(instance_buffer.buffer);
-		device.freeMemory(instance_buffer.memory);
-		device.destroySampler(textures.rocks.sampler);
-		device.destroySampler(textures.planet.sampler);
+		instance_buffer.destroy(device);
 	}
+}
+
+bool HPPInstancing::prepare(const vkb::ApplicationOptions &options)
+{
+	if (!HPPApiVulkanSample::prepare(options))
+	{
+		return false;
+	}
+
+	initialize_camera();
+	load_assets();
+	prepare_instance_data();
+	prepare_uniform_buffers();
+
+	vk::Device device = get_device()->get_handle();
+
+	descriptor_set_layout = create_descriptor_set_layout();
+	pipeline_layout       = device.createPipelineLayout({{}, descriptor_set_layout});
+	descriptor_pool       = create_descriptor_pool();
+
+	// setup planet
+	planet.pipeline       = create_planet_pipeline();
+	planet.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+	update_planet_descriptor_set();
+
+	// setup rocks
+	rocks.pipeline       = create_rocks_pipeline();
+	rocks.descriptor_set = vkb::common::allocate_descriptor_set(device, descriptor_pool, descriptor_set_layout);
+	update_rocks_descriptor_set();
+
+	// setup starfield
+	starfield_pipeline = create_starfield_pipeline();
+
+	build_command_buffers();
+	prepared = true;
+	return true;
+}
+
+bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
+{
+	HPPApiVulkanSample::resize(width, height);
+	build_command_buffers();
+	return true;
 }
 
 void HPPInstancing::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
@@ -101,27 +141,28 @@ void HPPInstancing::build_command_buffers()
 		vk::DeviceSize offset = 0;
 
 		// Star field
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_sets.planet, {});
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.starfield);
+		// the star field uses the same descriptor_set as planet !
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, planet.descriptor_set, {});
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, starfield_pipeline);
 		command_buffer.draw(4, 1, 0, 0);
 
 		// Planet
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_sets.planet, {});
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.planet);
-		command_buffer.bindVertexBuffers(0, models.planet->get_vertex_buffer("vertex_buffer").get_handle(), offset);
-		command_buffer.bindIndexBuffer(models.planet->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
-		command_buffer.drawIndexed(models.planet->vertex_indices, 1, 0, 0, 0);
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, planet.descriptor_set, {});
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, planet.pipeline);
+		command_buffer.bindVertexBuffers(0, planet.mesh->get_vertex_buffer("vertex_buffer").get_handle(), offset);
+		command_buffer.bindIndexBuffer(planet.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
+		command_buffer.drawIndexed(planet.mesh->vertex_indices, 1, 0, 0, 0);
 
 		// Instanced rocks
-		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, descriptor_sets.instanced_rocks, {});
-		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.instanced_rocks);
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layout, 0, rocks.descriptor_set, {});
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, rocks.pipeline);
 		// Binding point 0 : Mesh vertex buffer
-		command_buffer.bindVertexBuffers(0, models.rock->get_vertex_buffer("vertex_buffer").get_handle(), offset);
+		command_buffer.bindVertexBuffers(0, rocks.mesh->get_vertex_buffer("vertex_buffer").get_handle(), offset);
 		// Binding point 1 : Instance data buffer
 		command_buffer.bindVertexBuffers(1, instance_buffer.buffer, offset);
-		command_buffer.bindIndexBuffer(models.rock->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
+		command_buffer.bindIndexBuffer(rocks.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
 		// Render instances
-		command_buffer.drawIndexed(models.rock->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
+		command_buffer.drawIndexed(rocks.mesh->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
 
 		draw_ui(command_buffer);
 
@@ -131,82 +172,95 @@ void HPPInstancing::build_command_buffers()
 	}
 }
 
-void HPPInstancing::load_assets()
+void HPPInstancing::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 {
-	models.rock   = load_model("scenes/rock.gltf");
-	models.planet = load_model("scenes/planet.gltf");
-
-	textures.rocks  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
-	textures.planet = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
+	if (drawer.header("Statistics"))
+	{
+		drawer.text("Instances: %d", INSTANCE_COUNT);
+	}
 }
 
-void HPPInstancing::setup_descriptor_pool()
+void HPPInstancing::render(float delta_time)
+{
+	if (prepared)
+	{
+		draw();
+		if (!paused || camera.updated)
+		{
+			update_uniform_buffer(delta_time);
+		}
+	}
+}
+
+vk::DescriptorPool HPPInstancing::create_descriptor_pool()
 {
 	// Example uses one ubo
 	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 2}, {vk::DescriptorType::eCombinedImageSampler, 2}}};
 
 	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
-	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
+	return get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
 }
 
-void HPPInstancing::setup_descriptor_set_layout()
+vk::DescriptorSetLayout HPPInstancing::create_descriptor_set_layout()
 {
 	std::array<vk::DescriptorSetLayoutBinding, 2> set_layout_bindings = {
 	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},                   // Binding 0 : Vertex shader uniform buffer
 	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};        // Binding 1 : Fragment shader combined sampler
 
-	vk::DescriptorSetLayoutCreateInfo descriptor_layout_create_info({}, set_layout_bindings);
-
-	descriptor_set_layout = get_device()->get_handle().createDescriptorSetLayout(descriptor_layout_create_info);
-
-#if defined(ANDROID)
-	vk::PipelineLayoutCreateInfo pipeline_layout_create_info({}, 1, &descriptor_set_layout);
-#else
-	vk::PipelineLayoutCreateInfo  pipeline_layout_create_info({}, descriptor_set_layout);
-#endif
-
-	pipeline_layout = get_device()->get_handle().createPipelineLayout(pipeline_layout_create_info);
+	return get_device()->get_handle().createDescriptorSetLayout({{}, set_layout_bindings});
 }
 
-void HPPInstancing::setup_descriptor_set()
+vk::Pipeline HPPInstancing::create_planet_pipeline()
 {
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, 1, &descriptor_set_layout);
-#else
-	vk::DescriptorSetAllocateInfo descriptor_set_alloc_info(descriptor_pool, descriptor_set_layout);
-#endif
+	// Planet rendering pipeline
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
 
-	// Instanced rocks
-	descriptor_sets.instanced_rocks = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
-	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorImageInfo  image_descriptor(
-        textures.rocks.sampler,
-        textures.rocks.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.rocks.image->get_vk_image_view().get_format()));
-	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
-	    {{descriptor_sets.instanced_rocks, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
-	     {descriptor_sets.instanced_rocks, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	// Vertex input bindings
+	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
 
-	// Planet
-	descriptor_sets.planet = get_device()->get_handle().allocateDescriptorSets(descriptor_set_alloc_info).front();
-	image_descriptor       = {textures.planet.sampler,
-	                          textures.planet.image->get_vk_image_view().get_handle(),
-	                          descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.planet.image->get_vk_image_view().get_format())};
-	write_descriptor_sets  = {
-        {{descriptor_sets.planet, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
-	      {descriptor_sets.planet, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
-	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
+	// Vertex attribute bindings
+	std::array<vk::VertexInputAttributeDescription, 3> attribute_descriptions = {
+	    {                                                                // Per-vertex attributes
+	                                                                     // These are advanced for each vertex fetched by the vertex shader
+	     {0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Location 0: Position
+	     {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 1: Normal
+	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)}}};         // Location 2: Texture coordinates
+
+	// Use all input bindings and attribute descriptions
+	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_description, attribute_descriptions);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.depthTestEnable  = true;
+	depth_stencil_state.depthWriteEnable = true;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
+	depth_stencil_state.front            = depth_stencil_state.back;
+
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
 }
 
-void HPPInstancing::prepare_pipelines()
+vk::Pipeline HPPInstancing::create_rocks_pipeline()
 {
-	// Load shaders: Instancing pipeline
-	std::array<vk::PipelineShaderStageCreateInfo, 2> shader_stages{
-	    load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
-	    load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
-
-	// This example uses two different input states, one for the instanced part and one for non-instanced rendering
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("instancing/instancing.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                             load_shader("instancing/instancing.frag", vk::ShaderStageFlagBits::eFragment)};
 
 	// Vertex input bindings
 	// The instancing pipeline uses a vertex input state with two bindings
@@ -236,17 +290,9 @@ void HPPInstancing::prepare_pipelines()
 	// Use all input bindings and attribute descriptions
 	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_descriptions, attribute_descriptions);
 
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::eTriangleList, false);
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	rasterization_state.cullMode    = vk::CullModeFlagBits::eBack;
-	rasterization_state.frontFace   = vk::FrontFace::eClockwise;
-	rasterization_state.lineWidth   = 1.0f;
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
 	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
 	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
@@ -256,60 +302,98 @@ void HPPInstancing::prepare_pipelines()
 	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
 	depth_stencil_state.front            = depth_stencil_state.back;
 
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
+}
+
+vk::Pipeline HPPInstancing::create_starfield_pipeline()
+{
+	// Starfield rendering pipeline
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
+	                                                                load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	// Vertex input bindings
+	vk::VertexInputBindingDescription binding_description(0, sizeof(HPPVertex), vk::VertexInputRate::eVertex);
+
+	// Vertex attribute bindings
+	std::array<vk::VertexInputAttributeDescription, 3> attribute_descriptions = {
+	    {                                                                // Per-vertex attributes
+	                                                                     // These are advanced for each vertex fetched by the vertex shader
+	     {0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Location 0: Position
+	     {1, 0, vk::Format::eR32G32B32Sfloat, 3 * sizeof(float)},        // Location 1: Normal
+	     {2, 0, vk::Format::eR32G32Sfloat, 6 * sizeof(float)}}};         // Location 2: Texture coordinates
+
+	// Use all input bindings and attribute descriptions
+	vk::PipelineVertexInputStateCreateInfo input_state({}, binding_description, attribute_descriptions);
+
 	vk::PipelineColorBlendAttachmentState blend_attachment_state;
 	blend_attachment_state.colorWriteMask =
 	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
 
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_state);
-
-	std::array<vk::DynamicState, 2> dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor};
-
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    shader_stages,
-	                                                    &input_state,
-	                                                    &input_assembly_state,
-	                                                    {},
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layout,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, pipelines.instanced_rocks) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Planet rendering pipeline
-	shader_stages = {load_shader("instancing/planet.vert", vk::ShaderStageFlagBits::eVertex),
-	                 load_shader("instancing/planet.frag", vk::ShaderStageFlagBits::eFragment)};
-	// Only use the non-instanced input bindings and attribute descriptions
-	input_state.vertexBindingDescriptionCount   = 1;
-	input_state.vertexAttributeDescriptionCount = 3;
-
-	std::tie(result, pipelines.planet) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Star field pipeline
-	rasterization_state.cullMode         = vk::CullModeFlagBits::eNone;
-	depth_stencil_state.depthWriteEnable = false;
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
 	depth_stencil_state.depthTestEnable  = false;
+	depth_stencil_state.depthWriteEnable = false;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eAlways;
+	depth_stencil_state.front            = depth_stencil_state.back;
 
-	shader_stages = {load_shader("instancing/starfield.vert", vk::ShaderStageFlagBits::eVertex),
-	                 load_shader("instancing/starfield.frag", vk::ShaderStageFlagBits::eFragment)};
-	// Vertices are generated in the vertex shader
-	input_state.vertexBindingDescriptionCount   = 0;
-	input_state.vertexAttributeDescriptionCount = 0;
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             {},        // Vertices are generated in the vertex shader
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eNone,
+	                                             vk::FrontFace::eClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             pipeline_layout,
+	                                             render_pass);
+}
 
-	std::tie(result, pipelines.starfield) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
+void HPPInstancing::draw()
+{
+	HPPApiVulkanSample::prepare_frame();
+
+	// Command buffer to be submitted to the queue
+	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
+
+	// Submit to queue
+	queue.submit(submit_info);
+
+	HPPApiVulkanSample::submit_frame();
+}
+
+void HPPInstancing::load_assets()
+{
+	rocks.mesh  = load_model("scenes/rock.gltf");
+	planet.mesh = load_model("scenes/planet.gltf");
+
+	rocks.texture  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
+	planet.texture = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
+}
+
+void HPPInstancing::initialize_camera()
+{
+	camera.type = vkb::CameraType::LookAt;
+	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
+	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
+
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
 }
 
 void HPPInstancing::prepare_instance_data()
@@ -319,14 +403,13 @@ void HPPInstancing::prepare_instance_data()
 
 	std::default_random_engine              rnd_generator(lock_simulation_speed ? 0 : static_cast<unsigned>(time(nullptr)));
 	std::uniform_real_distribution<float>   uniform_dist(0.0, 1.0);
-	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, textures.rocks.image->get_vk_image().get_array_layer_count());
+	std::uniform_int_distribution<uint32_t> rnd_texture_index(0, rocks.texture.image->get_vk_image().get_array_layer_count());
 
 	// Distribute rocks randomly on two different rings
-	for (auto i = 0; i < INSTANCE_COUNT / 2; i++)
+	glm::vec2 ring0{7.0f, 11.0f};
+	glm::vec2 ring1{14.0f, 18.0f};
+	for (auto i = 0, j = INSTANCE_COUNT / 2; i < INSTANCE_COUNT / 2; i++, j++)
 	{
-		glm::vec2 ring0{7.0f, 11.0f};
-		glm::vec2 ring1{14.0f, 18.0f};
-
 		float rho, theta;
 
 		// Inner ring
@@ -339,13 +422,13 @@ void HPPInstancing::prepare_instance_data()
 		instance_data[i].scale *= 0.75f;
 
 		// Outer ring
-		rho                                                                 = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
-		theta                                                               = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].texIndex = rnd_texture_index(rnd_generator);
-		instance_data[static_cast<size_t>(i + INSTANCE_COUNT / 2)].scale *= 0.75f;
+		rho                       = sqrt((pow(ring1[1], 2.0f) - pow(ring1[0], 2.0f)) * uniform_dist(rnd_generator) + pow(ring1[0], 2.0f));
+		theta                     = 2.0f * glm::pi<float>() * uniform_dist(rnd_generator);
+		instance_data[j].pos      = glm::vec3(rho * cos(theta), uniform_dist(rnd_generator) * 0.5f - 0.25f, rho * sin(theta));
+		instance_data[j].rot      = glm::vec3(glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator), glm::pi<float>() * uniform_dist(rnd_generator));
+		instance_data[j].scale    = 1.5f + uniform_dist(rnd_generator) - uniform_dist(rnd_generator);
+		instance_data[j].texIndex = rnd_texture_index(rnd_generator);
+		instance_data[j].scale *= 0.75f;
 	}
 
 	instance_buffer.size = instance_data.size() * sizeof(InstanceData);
@@ -361,16 +444,18 @@ void HPPInstancing::prepare_instance_data()
 		vk::Buffer       buffer;
 	} staging_buffer;
 
+	auto const &device = get_device();
+
 	std::tie(staging_buffer.buffer, staging_buffer.memory) =
-	    get_device()->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
-	                                vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-	                                instance_buffer.size,
-	                                instance_data.data());
+	    device->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
+	                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
+	                          instance_buffer.size,
+	                          instance_data.data());
 
 	std::tie(instance_buffer.buffer, instance_buffer.memory) =
-	    get_device()->create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-	                                vk::MemoryPropertyFlagBits::eDeviceLocal,
-	                                instance_buffer.size);
+	    device->create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
+	                          vk::MemoryPropertyFlagBits::eDeviceLocal,
+	                          instance_buffer.size);
 
 	// Copy to staging buffer
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
@@ -385,8 +470,8 @@ void HPPInstancing::prepare_instance_data()
 	instance_buffer.descriptor.offset = 0;
 
 	// Destroy staging resources
-	get_device()->get_handle().destroyBuffer(staging_buffer.buffer);
-	get_device()->get_handle().freeMemory(staging_buffer.memory);
+	device->get_handle().destroyBuffer(staging_buffer.buffer);
+	device->get_handle().freeMemory(staging_buffer.memory);
 }
 
 void HPPInstancing::prepare_uniform_buffers()
@@ -411,69 +496,30 @@ void HPPInstancing::update_uniform_buffer(float delta_time)
 	uniform_buffers.scene->convert_and_update(ubo_vs);
 }
 
-void HPPInstancing::draw()
+void HPPInstancing::update_planet_descriptor_set()
 {
-	HPPApiVulkanSample::prepare_frame();
-
-	// Command buffer to be submitted to the queue
-	submit_info.setCommandBuffers(draw_cmd_buffers[current_buffer]);
-
-	// Submit to queue
-	queue.submit(submit_info);
-
-	HPPApiVulkanSample::submit_frame();
+	vk::DescriptorBufferInfo              buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorImageInfo               image_descriptor{planet.texture.sampler,
+                                             planet.texture.image->get_vk_image_view().get_handle(),
+                                             descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler,
+	                                                                                       planet.texture.image->get_vk_image_view().get_format())};
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
+	    {{planet.descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
+	     {planet.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
-bool HPPInstancing::prepare(const vkb::ApplicationOptions &options)
+void HPPInstancing::update_rocks_descriptor_set()
 {
-	if (!HPPApiVulkanSample::prepare(options))
-	{
-		return false;
-	}
-
-	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.type = vkb::CameraType::LookAt;
-	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 256.0f, 0.1f);
-	camera.set_rotation(glm::vec3(-17.2f, -4.7f, 0.0f));
-	camera.set_translation(glm::vec3(5.5f, -1.85f, -18.5f));
-
-	load_assets();
-	prepare_instance_data();
-	prepare_uniform_buffers();
-	setup_descriptor_set_layout();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_set();
-	build_command_buffers();
-	prepared = true;
-	return true;
-}
-
-void HPPInstancing::render(float delta_time)
-{
-	if (prepared)
-	{
-		draw();
-		if (!paused || camera.updated)
-		{
-			update_uniform_buffer(delta_time);
-		}
-	}
-}
-
-void HPPInstancing::on_update_ui_overlay(vkb::HPPDrawer &drawer)
-{
-	if (drawer.header("Statistics"))
-	{
-		drawer.text("Instances: %d", INSTANCE_COUNT);
-	}
-}
-
-bool HPPInstancing::resize(const uint32_t width, const uint32_t height)
-{
-	HPPApiVulkanSample::resize(width, height);
-	build_command_buffers();
-	return true;
+	vk::DescriptorBufferInfo buffer_descriptor(uniform_buffers.scene->get_handle(), 0, VK_WHOLE_SIZE);
+	vk::DescriptorImageInfo  image_descriptor(
+        rocks.texture.sampler,
+        rocks.texture.image->get_vk_image_view().get_handle(),
+        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, rocks.texture.image->get_vk_image_view().get_format()));
+	std::array<vk::WriteDescriptorSet, 2> write_descriptor_sets = {
+	    {{rocks.descriptor_set, 0, 0, vk::DescriptorType::eUniformBuffer, {}, buffer_descriptor},            // Binding 0 : Vertex shader uniform buffer
+	     {rocks.descriptor_set, 1, 0, vk::DescriptorType::eCombinedImageSampler, image_descriptor}}};        // Binding 1 : Color map
+	get_device()->get_handle().updateDescriptorSets(write_descriptor_sets, {});
 }
 
 std::unique_ptr<vkb::Application> create_hpp_instancing()

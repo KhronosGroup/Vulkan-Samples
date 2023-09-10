@@ -964,6 +964,7 @@ VkDescriptorImageInfo ApiVulkanSample::create_descriptor(Texture &texture, VkDes
 			}
 			else
 			{
+				assert(!vkb::is_depth_format(texture.image->get_vk_image_view().get_format()));
 				descriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 			}
 			break;
@@ -1024,12 +1025,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1041,12 +1041,11 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	    bufferCopyRegions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
 	device->flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1128,12 +1127,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1145,12 +1143,11 @@ Texture ApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Im
 	    buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
 	device->flush_command_buffer(command_buffer, queue.get_handle());
 
@@ -1229,12 +1226,11 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 
 	// Image barrier for optimal image (target)
 	// Optimal image will be used as destination for the copy
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_UNDEFINED,
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_UNDEFINED,
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             subresource_range);
 
 	// Copy mip levels from staging buffer
 	vkCmdCopyBufferToImage(
@@ -1246,12 +1242,11 @@ Texture ApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::
 	    buffer_copy_regions.data());
 
 	// Change texture image layout to shader read after all mip levels have been copied
-	vkb::set_image_layout(
-	    command_buffer,
-	    texture.image->get_vk_image().get_handle(),
-	    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-	    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-	    subresource_range);
+	vkb::image_layout_transition(command_buffer,
+	                             texture.image->get_vk_image().get_handle(),
+	                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+	                             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+	                             subresource_range);
 
 	device->flush_command_buffer(command_buffer, queue.get_handle());
 
