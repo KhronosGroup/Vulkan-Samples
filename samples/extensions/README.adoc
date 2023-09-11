@@ -18,11 +18,6 @@
 ////
 = Extension samples
 
-ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions[Khronos Vulkan samples github repository].
-endif::[]
-
-
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.
 
 A list of all extension samples can be found link:../README.adoc#extension-samples[here].

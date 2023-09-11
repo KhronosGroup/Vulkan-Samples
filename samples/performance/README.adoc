@@ -18,11 +18,6 @@
 ////
 = Performance samples
 
-ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance[Khronos Vulkan samples github repository].
-endif::[]
-
-
 The goal of these samples is to demonstrate how to use certain features and functions to achieve optimal performance.
 To visualize this, they also include real-time profiling information.
 
