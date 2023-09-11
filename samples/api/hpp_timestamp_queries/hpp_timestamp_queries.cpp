@@ -214,7 +214,7 @@ void HPPTimestampQueries::build_command_buffers()
 
 			command_buffer.endRenderPass();
 
-			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eTopOfPipe, time_stamps_query_pool, 3);
+			command_buffer.writeTimestamp(vk::PipelineStageFlagBits::eBottomOfPipe, time_stamps_query_pool, 3);
 		}
 
 		/*
