@@ -19,4 +19,9 @@
 
 === Dynamic Uniform buffers
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/dynamic_uniform_buffers[Khronos Vulkan samples github repository].
+endif::[]
+
+
 Dynamic uniform buffers are used for rendering multiple objects with separate matrices stored in a single uniform buffer object, that are addressed dynamically.

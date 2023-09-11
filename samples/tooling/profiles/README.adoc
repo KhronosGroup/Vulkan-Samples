@@ -18,6 +18,11 @@
 ////
 = Using Vulkan profiles
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/tooling/profiles[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This sample demonstrates the usage of the https://github.com/KhronosGroup/Vulkan-Profiles[Vulkan Profiles Library].
 Profiles define a common requirement baseline of properties, features, extensions, etc.
 to make Vulkan applications more portable.

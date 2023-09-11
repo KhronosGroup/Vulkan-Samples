@@ -18,6 +18,11 @@
 ////
 = Vulkan Debug Utilities Extension
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/debug_utils[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This tutorial, along with the accompanying example code, demonstrates the use of the https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_debug_utils[VK_EXT_debug_utils] extension to setup a validation layer messenger callback and pass additional debugging information to debuggers like https://renderdoc.org/[RenderDoc].
@@ -285,5 +290,8 @@ After setting these up press (4) to start the application from within RenderDoc.
 Once the sample application is running, press F12 do capture the current frame, close the application and then select the capture in RenderDoc.
 
 Once loaded you should be able to see a trace of a whole frame from that sample application along with labels and named Vulkan objects:
+
+image:./images/renderdoc_final.jpg[]
+s and named Vulkan objects:
 
 image:./images/renderdoc_final.jpg[]

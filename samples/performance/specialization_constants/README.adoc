@@ -18,6 +18,11 @@
 ////
 = Utilizing Specialization Constants
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/specialization_constants[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Vulkan exposes a number of methods for setting values within shader code during run-time, this includes UBOs and Specialization Constants.

@@ -18,6 +18,11 @@
 ////
 = OpenCL interoperability
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/open_cl_interop[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 In certain scenarios OpenCL is used for compute, while another API is used for graphics, and interoperability between two APIs becomes important in this case.

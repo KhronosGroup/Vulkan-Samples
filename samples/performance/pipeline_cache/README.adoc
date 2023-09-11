@@ -18,6 +18,11 @@
 ////
 = Pipeline Management
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/pipeline_cache[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Vulkan gives applications the ability to save internal representation of a pipeline (graphics or compute) to enable recreating the same pipeline later.

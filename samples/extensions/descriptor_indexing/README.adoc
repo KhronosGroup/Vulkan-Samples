@@ -18,6 +18,11 @@
 ////
 = Descriptor indexing
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/descriptor_indexing[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Descriptor indexing is an extension which adds a *lot* of flexibility to how resources are accessed.
@@ -436,6 +441,11 @@ We end up with:
 ----
 
 Adding debug symbols to the SPIR-V helps here, but that's another topic.
+
+== Conclusion
+
+Descriptor indexing is a highly potent extension, but with great power comes great responsibility to use all debug tools available to you.
+s to the SPIR-V helps here, but that's another topic.
 
 == Conclusion
 

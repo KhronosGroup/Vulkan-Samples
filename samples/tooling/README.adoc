@@ -18,6 +18,11 @@
 ////
 = Tooling samples
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/tooling[Khronos Vulkan samples github repository].
+endif::[]
+
+
 The goal of these samples is to demonstrate how to use tooling features that are not directly part of Vulkan, but e.g.
 provided by the LunarG Vulkan SDK.
 

@@ -18,6 +18,11 @@
 ////
 = Patch control point
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/patch_control_points[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/patch_control_point_screenshot.png[Sample]
 
 == Overview

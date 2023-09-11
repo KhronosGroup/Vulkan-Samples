@@ -21,6 +21,11 @@
 
 === HPP Texture mipmap generation
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_texture_mipmap_generation[Khronos Vulkan samples github repository].
+endif::[]
+
+
 A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/texture_mipmap_generation[Texture mipmap generation] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 = Run-time mip-map generation
@@ -230,3 +235,4 @@ vk::ImageViewCreateInfo image_view_create_info({},
                                                {vk::ImageAspectFlagBits::eColor, 0, texture.mip_levels, 0, 1});
 texture.view = get_device()->get_handle().createImageView(image_view_create_info);
 ----
+
