@@ -25,67 +25,84 @@
 
 #include <ktx.h>
 
-// Vertex layout for this example
-struct HPPTextureLoadingVertexStructure
-{
-	float pos[3];
-	float uv[2];
-	float normal[3];
-};
-
 class HPPTextureLoading : public HPPApiVulkanSample
 {
   public:
+	HPPTextureLoading();
+	~HPPTextureLoading();
+
+  private:
 	// Contains all Vulkan objects that are required to store and use a texture
 	// Note that this repository contains a texture class (vulkan_texture.h) that encapsulates texture loading functionality in a class that is used in subsequent demos
 	struct Texture
 	{
-		vk::Sampler      sampler;
+		vk::DeviceMemory device_memory;
 		vk::Image        image;
 		vk::ImageLayout  image_layout;
-		vk::DeviceMemory device_memory;
-		vk::ImageView    view;
+		vk::ImageView    image_view;
+		vk::Sampler      sampler;
 		vk::Extent2D     extent;
 		uint32_t         mip_levels;
-	} texture;
 
-	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
-	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
-	uint32_t                              index_count;
+		void destroy(vk::Device device)
+		{
+			device.destroyImageView(image_view);
+			device.destroyImage(image);
+			device.destroySampler(sampler);
+			device.freeMemory(device_memory);
+		}
+	};
 
-	std::unique_ptr<vkb::core::HPPBuffer> uniform_buffer_vs;
+	// Vertex layout for this example
+	struct Vertex
+	{
+		float pos[3];
+		float uv[2];
+		float normal[3];
+	};
 
-	struct
+	struct VertexShaderData
 	{
 		glm::mat4 projection;
 		glm::mat4 model;
 		glm::vec4 view_pos;
 		float     lod_bias = 0.0f;
-	} ubo_vs;
+	};
 
-	vk::Pipeline            pipeline;
-	vk::PipelineLayout      pipeline_layout;
-	vk::DescriptorSet       descriptor_set;
-	vk::DescriptorSetLayout descriptor_set_layout;
+  private:
+	// from vkb::Application
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	HPPTextureLoading();
-	~HPPTextureLoading();
-	virtual void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
-	void         load_texture();
-	void         destroy_texture(Texture texture);
-	void         build_command_buffers() override;
-	void         draw();
-	void         generate_quad();
-	void         setup_descriptor_pool();
-	void         setup_descriptor_set_layout();
-	void         setup_descriptor_set();
-	void         prepare_pipeline();
-	void         prepare_uniform_buffers();
-	void         update_uniform_buffers();
-	bool         prepare(const vkb::ApplicationOptions &options) override;
-	virtual void render(float delta_time) override;
-	virtual void view_changed() override;
-	virtual void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	// from HPPVulkanSample
+	void request_gpu_features(vkb::core::HPPPhysicalDevice &gpu) override;
+
+	// from HPPApiVulkanSample
+	void build_command_buffers() override;
+	void on_update_ui_overlay(vkb::HPPDrawer &drawer) override;
+	void render(float delta_time) override;
+	void view_changed() override;
+
+	vk::DescriptorPool      create_descriptor_pool();
+	vk::DescriptorSetLayout create_descriptor_set_layout();
+	vk::Pipeline            create_pipeline();
+	void                    draw();
+	void                    generate_quad();
+	void                    load_texture();
+	void                    prepare_uniform_buffers();
+	void                    update_descriptor_set();
+	void                    update_uniform_buffers();
+
+  private:
+	vk::DescriptorSet                     descriptor_set;
+	vk::DescriptorSetLayout               descriptor_set_layout;
+	std::unique_ptr<vkb::core::HPPBuffer> index_buffer;
+	uint32_t                              index_count;
+	vk::Pipeline                          pipeline;
+	vk::PipelineLayout                    pipeline_layout;
+	Texture                               texture;
+	std::unique_ptr<vkb::core::HPPBuffer> vertex_buffer;
+	VertexShaderData                      vertex_shader_data;
+	std::unique_ptr<vkb::core::HPPBuffer> vertex_shader_data_buffer;
 };
 
 std::unique_ptr<vkb::Application> create_hpp_texture_loading();

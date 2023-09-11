@@ -83,26 +83,25 @@ void HPPDynamicUniformBuffers::aligned_free(void *data)
 
 bool HPPDynamicUniformBuffers::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		prepare_camera();
+		generate_cube();
+		prepare_uniform_buffers();
+		descriptor_set_layout = create_descriptor_set_layout();
+		pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
+		pipeline              = create_pipeline();
+		descriptor_pool       = create_descriptor_pool();
+		descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
+		update_descriptor_set();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	prepare_camera();
-	generate_cube();
-	prepare_uniform_buffers();
-
-	descriptor_set_layout = create_descriptor_set_layout();
-	pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, descriptor_set_layout});
-	pipeline              = create_pipeline();
-
-	descriptor_pool = create_descriptor_pool();
-	descriptor_set  = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, descriptor_set_layout);
-
-	update_descriptor_set();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 bool HPPDynamicUniformBuffers::resize(const uint32_t width, const uint32_t height)
@@ -152,18 +151,17 @@ void HPPDynamicUniformBuffers::build_command_buffers()
 
 void HPPDynamicUniformBuffers::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
-	}
-	draw();
-	if (!paused)
-	{
-		update_dynamic_uniform_buffer(delta_time);
-	}
-	if (camera.updated)
-	{
-		update_uniform_buffers();
+		draw();
+		if (!paused)
+		{
+			update_dynamic_uniform_buffer(delta_time);
+		}
+		if (camera.updated)
+		{
+			update_uniform_buffers();
+		}
 	}
 }
 
