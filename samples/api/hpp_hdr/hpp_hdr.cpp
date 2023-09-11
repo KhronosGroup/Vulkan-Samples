@@ -43,23 +43,23 @@ HPPHDR::~HPPHDR()
 
 bool HPPHDR::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		prepare_camera();
+		load_assets();
+		prepare_uniform_buffers();
+		prepare_offscreen_buffer();
+		descriptor_pool = create_descriptor_pool();
+		setup_bloom();
+		setup_composition();
+		setup_models();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	prepare_camera();
-	load_assets();
-	prepare_uniform_buffers();
-	prepare_offscreen_buffer();
-
-	descriptor_pool = create_descriptor_pool();
-	setup_bloom();
-	setup_composition();
-	setup_models();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 bool HPPHDR::resize(const uint32_t width, const uint32_t height)
@@ -210,14 +210,13 @@ void HPPHDR::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 
 void HPPHDR::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
-	}
-	draw();
-	if (camera.updated)
-	{
-		update_uniform_buffers();
+		draw();
+		if (camera.updated)
+		{
+			update_uniform_buffers();
+		}
 	}
 }
 
