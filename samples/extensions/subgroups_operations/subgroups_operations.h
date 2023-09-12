@@ -116,6 +116,21 @@ class SubgroupsOperations : public ApiVulkanSample
 	std::vector<std::complex<float>> h_tilde_0_conj;
 	std::vector<std::complex<float>> weights;
 
+    struct FBAttachment
+    {
+        VkImage image;
+        VkDeviceMemory memory;
+        VkImageView view;
+        VkFormat format;
+        void destroy(VkDevice device)
+        {
+            vkDestroyImageView(device, view, nullptr);
+            vkDestroyImage(device, image, nullptr);
+            vkFreeMemory(device, memory, nullptr);
+        };
+    };
+    void createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment *result);
+
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0;

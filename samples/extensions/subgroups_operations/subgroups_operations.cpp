@@ -736,3 +736,41 @@ std::unique_ptr<vkb::VulkanSample> create_subgroups_operations()
 {
 	return std::make_unique<SubgroupsOperations>();
 }
+
+void SubgroupsOperations::createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment *attachment) {
+    attachment->format = format;
+
+    VkImageCreateInfo image = vkb::initializers::image_create_info();
+    image.imageType         = VK_IMAGE_TYPE_2D;
+    image.format            = format;
+    image.extent.width      = width;
+    image.extent.height     = height;
+    image.extent.depth      = 1;
+    image.mipLevels         = 1;
+    image.arrayLayers       = 1;
+    image.samples           = VK_SAMPLE_COUNT_1_BIT;
+    image.tiling            = VK_IMAGE_TILING_OPTIMAL;
+    image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+
+    VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
+    VkMemoryRequirements memory_requirements;
+
+    VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
+    vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
+    memory_allocate_info.allocationSize  = memory_requirements.size;
+    memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->memory));
+    VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->memory, 0));
+
+    VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
+    image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_create_info.format                          = format;
+    image_view_create_info.subresourceRange                = {};
+    image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_create_info.subresourceRange.baseMipLevel   = 0;
+    image_view_create_info.subresourceRange.levelCount     = 1;
+    image_view_create_info.subresourceRange.baseArrayLayer = 0;
+    image_view_create_info.subresourceRange.layerCount     = 1;
+    image_view_create_info.image                           = attachment->image;
+    VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
+}
