@@ -1,4 +1,4 @@
-# Copyright (c) 2021-2023 Holochip Corporation
+# Copyright (c) 2023, Mobica Limited
 #
 # SPDX-License-Identifier: Apache-2.0
 #
@@ -14,18 +14,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
-
+ 
 get_filename_component(FOLDER_NAME ${CMAKE_CURRENT_LIST_DIR} NAME)
 get_filename_component(PARENT_DIR ${CMAKE_CURRENT_LIST_DIR} PATH)
 get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 
-add_sample_with_tags(
+add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Holochip Corporation"
-    NAME "Ray tracing extended"
-    DESCRIPTION "Extended example of Ray Tracing highlighting the Bottom and Top Level Acceleration Structure rebuild and AO."
+    AUTHOR "Khronos"
+    NAME "dynamic_line_rasterization"
+    DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "khr_ray_tracing_extended/raygen.rgen"
-        "khr_ray_tracing_extended/miss.rmiss"
-        "khr_ray_tracing_extended/closesthit.rchit")
+        "dynamic_line_rasterization/base.vert"
+        "dynamic_line_rasterization/base.frag"
+        "dynamic_line_rasterization/grid.vert"
+        "dynamic_line_rasterization/grid.frag"
+    )

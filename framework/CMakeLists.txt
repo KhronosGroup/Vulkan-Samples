@@ -304,6 +304,7 @@ set(CORE_FILES
     core/hpp_buffer.cpp
     core/hpp_command_buffer.cpp
     core/hpp_command_pool.cpp
+    core/hpp_debug.cpp
     core/hpp_device.cpp
     core/hpp_image.cpp
     core/hpp_image_view.cpp
@@ -313,7 +314,6 @@ set(CORE_FILES
     core/hpp_queue.cpp
     core/hpp_sampler.cpp
     core/hpp_swapchain.cpp
-    core/hpp_vulkan_resource.cpp
 )
 
 set(PLATFORM_FILES

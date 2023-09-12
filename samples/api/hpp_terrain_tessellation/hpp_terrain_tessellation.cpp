@@ -21,6 +21,7 @@
 
 #include "hpp_terrain_tessellation.h"
 
+#include <core/hpp_command_pool.h>
 #include <heightmap.h>
 
 HPPTerrainTessellation::HPPTerrainTessellation()
@@ -36,66 +37,41 @@ HPPTerrainTessellation::~HPPTerrainTessellation()
 
 		// Clean up used Vulkan resources
 		// Note : Inherited destructor cleans up resources stored in base class
-		device.destroyPipeline(pipelines.skysphere);
-		device.destroyPipeline(pipelines.terrain);
-		if (pipelines.wireframe)
-		{
-			device.destroyPipeline(pipelines.wireframe);
-		}
-
-		device.destroyPipelineLayout(pipeline_layouts.skysphere);
-		device.destroyPipelineLayout(pipeline_layouts.terrain);
-
-		device.destroyDescriptorSetLayout(descriptor_set_layouts.skysphere);
-		device.destroyDescriptorSetLayout(descriptor_set_layouts.terrain);
-
-		device.destroySampler(textures.heightmap.sampler);
-		device.destroySampler(textures.skysphere.sampler);
-		device.destroySampler(textures.terrain_array.sampler);
-
-		if (query_pool)
-		{
-			device.destroyQueryPool(query_pool);
-			device.destroyBuffer(query_result.buffer);
-			device.freeMemory(query_result.memory);
-		}
+		sky_sphere.destroy(device);
+		terrain.destroy(device);
+		wireframe.destroy(device);
+		statistics.destroy(device);
 	}
 }
 
 bool HPPTerrainTessellation::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		prepare_camera();
+		load_assets();
+		generate_terrain();
+		prepare_uniform_buffers();
+		descriptor_pool = create_descriptor_pool();
+		prepare_sky_sphere();
+		prepare_terrain();
+		prepare_wireframe();
+		prepare_statistics();
+		build_command_buffers();
+
+		prepared = true;
 	}
 
-	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
-	camera.type = vkb::CameraType::FirstPerson;
-	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 512.0f, 0.1f);
-	camera.set_rotation(glm::vec3(-12.0f, 159.0f, 0.0f));
-	camera.set_translation(glm::vec3(18.0f, 22.5f, 57.5f));
-	camera.translation_speed = 7.5f;
-
-	load_assets();
-	generate_terrain();
-	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
-	{
-		setup_query_result_buffer();
-	}
-	prepare_uniform_buffers();
-	setup_descriptor_set_layouts();
-	prepare_pipelines();
-	setup_descriptor_pool();
-	setup_descriptor_sets();
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 void HPPTerrainTessellation::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 {
 	// Tessellation shader support is required for this example
-	if (!gpu.get_features().tessellationShader)
+	auto &available_features = gpu.get_features();
+	if (!available_features.tessellationShader)
 	{
 		throw vkb::VulkanException(VK_ERROR_FEATURE_NOT_PRESENT, "Selected GPU does not support tessellation shaders!");
 	}
@@ -105,13 +81,16 @@ void HPPTerrainTessellation::request_gpu_features(vkb::core::HPPPhysicalDevice &
 	requested_features.tessellationShader = true;
 
 	// Fill mode non solid is required for wireframe display
-	requested_features.fillModeNonSolid = gpu.get_features().fillModeNonSolid;
+	requested_features.fillModeNonSolid = available_features.fillModeNonSolid;
+	wireframe.supported                 = available_features.fillModeNonSolid;
 
 	// Pipeline statistics
-	requested_features.pipelineStatisticsQuery = gpu.get_features().pipelineStatisticsQuery;
+	requested_features.pipelineStatisticsQuery = available_features.pipelineStatisticsQuery;
+	statistics.query_supported                 = available_features.pipelineStatisticsQuery;
 
 	// Enable anisotropic filtering if supported
-	requested_features.samplerAnisotropy = gpu.get_features().samplerAnisotropy;
+	requested_features.samplerAnisotropy = available_features.samplerAnisotropy;
+	terrain.sampler_anisotropy_supported = available_features.samplerAnisotropy;
 }
 
 void HPPTerrainTessellation::build_command_buffers()
@@ -123,55 +102,55 @@ void HPPTerrainTessellation::build_command_buffers()
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
-		draw_cmd_buffers[i].begin(command_buffer_begin_info);
+		auto command_buffer = draw_cmd_buffers[i];
+		command_buffer.begin(command_buffer_begin_info);
 
-		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+		if (statistics.query_supported)
 		{
-			draw_cmd_buffers[i].resetQueryPool(query_pool, 0, 2);
+			command_buffer.resetQueryPool(statistics.query_pool, 0, 2);
 		}
 
 		render_pass_begin_info.framebuffer = framebuffers[i];
-		draw_cmd_buffers[i].beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
+		command_buffer.beginRenderPass(render_pass_begin_info, vk::SubpassContents::eInline);
 
 		vk::Viewport viewport(0.0f, 0.0f, static_cast<float>(extent.width), static_cast<float>(extent.height), 0.0f, 1.0f);
-		draw_cmd_buffers[i].setViewport(0, viewport);
+		command_buffer.setViewport(0, viewport);
 
 		vk::Rect2D scissor({0, 0}, extent);
-		draw_cmd_buffers[i].setScissor(0, scissor);
-
-		draw_cmd_buffers[i].setLineWidth(1.0f);
+		command_buffer.setScissor(0, scissor);
 
 		vk::DeviceSize offset = 0;
 
 		// Skysphere
-		draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, pipelines.skysphere);
-		draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.skysphere, 0, descriptor_sets.skysphere, {});
-		draw_model(skysphere, draw_cmd_buffers[i]);
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline);
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, sky_sphere.pipeline_layout, 0, sky_sphere.descriptor_set, {});
+		draw_model(sky_sphere.geometry, command_buffer);
 
 		// Terrain
-		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+		if (statistics.query_supported)
 		{
 			// Begin pipeline statistics query
-			draw_cmd_buffers[i].beginQuery(query_pool, 0, {});
+			command_buffer.beginQuery(statistics.query_pool, 0, {});
 		}
 
 		// Render
-		draw_cmd_buffers[i].bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe ? pipelines.wireframe : pipelines.terrain);
-		draw_cmd_buffers[i].bindDescriptorSets(vk::PipelineBindPoint::eGraphics, pipeline_layouts.terrain, 0, descriptor_sets.terrain, {});
-		draw_cmd_buffers[i].bindVertexBuffers(0, terrain.vertices->get_handle(), offset);
-		draw_cmd_buffers[i].bindIndexBuffer(terrain.indices->get_handle(), 0, vk::IndexType::eUint32);
-		draw_cmd_buffers[i].drawIndexed(terrain.index_count, 1, 0, 0, 0);
-		if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+		command_buffer.bindPipeline(vk::PipelineBindPoint::eGraphics, wireframe.enabled ? wireframe.pipeline : terrain.pipeline);
+		command_buffer.bindDescriptorSets(vk::PipelineBindPoint::eGraphics, terrain.pipeline_layout, 0, terrain.descriptor_set, {});
+		command_buffer.bindVertexBuffers(0, terrain.vertices->get_handle(), offset);
+		command_buffer.bindIndexBuffer(terrain.indices->get_handle(), 0, vk::IndexType::eUint32);
+		command_buffer.drawIndexed(terrain.index_count, 1, 0, 0, 0);
+
+		if (statistics.query_supported)
 		{
 			// End pipeline statistics query
-			draw_cmd_buffers[i].endQuery(query_pool, 0);
+			command_buffer.endQuery(statistics.query_pool, 0);
 		}
 
-		draw_ui(draw_cmd_buffers[i]);
+		draw_ui(command_buffer);
 
-		draw_cmd_buffers[i].endRenderPass();
+		command_buffer.endRenderPass();
 
-		draw_cmd_buffers[i].end();
+		command_buffer.end();
 	}
 }
 
@@ -179,44 +158,160 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 {
 	if (drawer.header("Settings"))
 	{
-		if (drawer.checkbox("Tessellation", &tessellation))
+		if (drawer.checkbox("Tessellation", &terrain.tessellation_enabled))
 		{
 			update_uniform_buffers();
 		}
-		if (drawer.input_float("Factor", &ubo_tess.tessellation_factor, 0.05f, 2))
+		if (drawer.input_float("Factor", &terrain.tessellation.tessellation_factor, 0.05f, 2))
 		{
 			update_uniform_buffers();
 		}
-		if (get_device()->get_gpu().get_features().fillModeNonSolid)
+		if (wireframe.supported)
 		{
-			if (drawer.checkbox("Wireframe", &wireframe))
+			if (drawer.checkbox("Wireframe", &wireframe.enabled))
 			{
 				build_command_buffers();
 			}
 		}
 	}
-	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+	if (statistics.query_supported)
 	{
 		if (drawer.header("Pipeline statistics"))
 		{
-			drawer.text("VS invocations: %d", pipeline_stats[0]);
-			drawer.text("TE invocations: %d", pipeline_stats[1]);
+			drawer.text("VS invocations: %d", statistics.results[0]);
+			drawer.text("TE invocations: %d", statistics.results[1]);
 		}
 	}
 }
 
 void HPPTerrainTessellation::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
+		draw();
 	}
-	draw();
 }
 
 void HPPTerrainTessellation::view_changed()
 {
 	update_uniform_buffers();
+}
+
+vk::DescriptorPool HPPTerrainTessellation::create_descriptor_pool()
+{
+	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 3}, {vk::DescriptorType::eCombinedImageSampler, 3}}};
+	return get_device()->get_handle().createDescriptorPool({{}, 2, pool_sizes});
+}
+
+vk::DescriptorSetLayout HPPTerrainTessellation::create_sky_sphere_descriptor_set_layout()
+{
+	std::array<vk::DescriptorSetLayoutBinding, 2> layout_bindings = {
+	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
+	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+
+	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout({}, layout_bindings);
+	return get_device()->get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
+}
+
+vk::Pipeline HPPTerrainTessellation::create_sky_sphere_pipeline()
+{
+	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages = {
+	    load_shader("terrain_tessellation/skysphere.vert", vk::ShaderStageFlagBits::eVertex),
+	    load_shader("terrain_tessellation/skysphere.frag", vk::ShaderStageFlagBits::eFragment)};
+
+	// Vertex bindings an attributes
+	// Binding description
+	std::array<vk::VertexInputBindingDescription, 1> vertex_input_bindings = {{{0, sizeof(HPPVertex), vk::VertexInputRate::eVertex}}};
+
+	// Attribute descriptions
+	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Position
+	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3},        // Normal
+	                                                                               {2, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6}}};         // UV
+
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.depthTestEnable  = true;
+	depth_stencil_state.depthWriteEnable = false;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.front            = depth_stencil_state.back;
+
+	// For the sky_sphere use triangle list topology
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::eTriangleList,
+	                                             0,
+	                                             vk::PolygonMode::eFill,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             sky_sphere.pipeline_layout,
+	                                             render_pass);
+}
+
+vk::DescriptorSetLayout HPPTerrainTessellation::create_terrain_descriptor_set_layout()
+{
+	// Terrain
+	std::array<vk::DescriptorSetLayoutBinding, 3> layout_bindings = {
+	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eTessellationControl | vk::ShaderStageFlagBits::eTessellationEvaluation},
+	     {1,
+	      vk::DescriptorType::eCombinedImageSampler,
+	      1,
+	      vk::ShaderStageFlagBits::eTessellationControl | vk::ShaderStageFlagBits::eTessellationEvaluation | vk::ShaderStageFlagBits::eFragment},
+	     {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
+
+	vk::DescriptorSetLayoutCreateInfo terrain_descriptor_layout({}, layout_bindings);
+	return get_device()->get_handle().createDescriptorSetLayout(terrain_descriptor_layout);
+}
+
+vk::Pipeline HPPTerrainTessellation::create_terrain_pipeline(vk::PolygonMode polygon_mode)
+{
+	// Vertex bindings an attributes
+	// Binding description
+	std::array<vk::VertexInputBindingDescription, 1> vertex_input_bindings = {
+	    {{0, sizeof(HPPTerrainTessellation::Vertex), vk::VertexInputRate::eVertex}}};
+
+	// Attribute descriptions
+	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Position
+	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3},        // Normal
+	                                                                               {2, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6}}};         // UV
+
+	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
+
+	vk::PipelineColorBlendAttachmentState blend_attachment_state;
+	blend_attachment_state.colorWriteMask =
+	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
+
+	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
+	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
+	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.depthTestEnable  = true;
+	depth_stencil_state.depthWriteEnable = true;
+	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
+	depth_stencil_state.front            = depth_stencil_state.back;
+
+	return vkb::common::create_graphics_pipeline(get_device()->get_handle(),
+	                                             pipeline_cache,
+	                                             terrain.shader_stages,
+	                                             vertex_input_state,
+	                                             vk::PrimitiveTopology::ePatchList,
+	                                             4,        // we render the terrain as a grid of quad patches
+	                                             polygon_mode,
+	                                             vk::CullModeFlagBits::eBack,
+	                                             vk::FrontFace::eCounterClockwise,
+	                                             {blend_attachment_state},
+	                                             depth_stencil_state,
+	                                             terrain.pipeline_layout,
+	                                             render_pass);
 }
 
 void HPPTerrainTessellation::draw()
@@ -229,11 +324,11 @@ void HPPTerrainTessellation::draw()
 	// Submit to queue
 	queue.submit(submit_info);
 
-	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+	if (statistics.query_supported)
 	{
 		// Read query results for displaying in next frame
-		pipeline_stats =
-		    get_device()->get_handle().getQueryPoolResult<std::array<uint64_t, 2>>(query_pool, 0, 1, sizeof(pipeline_stats), vk::QueryResultFlagBits::e64).value;
+		statistics.results =
+		    get_device()->get_handle().getQueryPoolResult<std::array<uint64_t, 2>>(statistics.query_pool, 0, 1, sizeof(statistics.results), vk::QueryResultFlagBits::e64).value;
 	}
 
 	HPPApiVulkanSample::submit_frame();
@@ -248,23 +343,20 @@ void HPPTerrainTessellation::generate_terrain()
 	std::vector<Vertex> vertices;
 	vertices.resize(vertex_count);
 
-	const float wx = 2.0f;
-	const float wy = 2.0f;
-
 	for (auto x = 0; x < patch_size; x++)
 	{
 		for (auto y = 0; y < patch_size; y++)
 		{
 			uint32_t index         = (x + y * patch_size);
-			vertices[index].pos[0] = x * wx + wx / 2.0f - static_cast<float>(patch_size) * wx / 2.0f;
+			vertices[index].pos[0] = 2.0f * x + 1.0f - patch_size;
 			vertices[index].pos[1] = 0.0f;
-			vertices[index].pos[2] = y * wy + wy / 2.0f - static_cast<float>(patch_size) * wy / 2.0f;
+			vertices[index].pos[2] = 2.0f * y * 1.0f - patch_size;
 			vertices[index].uv     = glm::vec2(static_cast<float>(x) / patch_size, static_cast<float>(y) / patch_size) * uv_scale;
 		}
 	}
 
 	// Calculate normals from height map using a sobel filter
-	vkb::HeightMap heightmap("textures/terrain_heightmap_r16.ktx", patch_size);
+	vkb::HeightMap height_map("textures/terrain_heightmap_r16.ktx", patch_size);
 	for (auto x = 0; x < patch_size; x++)
 	{
 		for (auto y = 0; y < patch_size; y++)
@@ -275,7 +367,7 @@ void HPPTerrainTessellation::generate_terrain()
 			{
 				for (auto hy = -1; hy <= 1; hy++)
 				{
-					heights[hx + 1][hy + 1] = heightmap.get_height(x + hx, y + hy);
+					heights[hx + 1][hy + 1] = height_map.get_height(x + hx, y + hy);
 				}
 			}
 
@@ -334,318 +426,169 @@ void HPPTerrainTessellation::generate_terrain()
 	terrain.indices = std::make_unique<vkb::core::HPPBuffer>(
 	    *get_device(), index_buffer_size, vk::BufferUsageFlagBits::eIndexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
+	vk::Device vkDevice = get_device()->get_handle();
+
 	// Copy from staging buffers
-	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
-
+	vk::CommandBuffer copy_command = vkb::common::allocate_command_buffer(vkDevice, device->get_command_pool().get_handle());
+	copy_command.begin(vk::CommandBufferBeginInfo());
 	copy_command.copyBuffer(vertex_staging.buffer, terrain.vertices->get_handle(), {{0, 0, vertex_buffer_size}});
-
 	copy_command.copyBuffer(index_staging.buffer, terrain.indices->get_handle(), {{0, 0, index_buffer_size}});
+	get_device()->flush_command_buffer(copy_command, queue, true);
 
-	device->flush_command_buffer(copy_command, queue, true);
-
-	get_device()->get_handle().destroyBuffer(vertex_staging.buffer);
-	get_device()->get_handle().freeMemory(vertex_staging.memory);
-	get_device()->get_handle().destroyBuffer(index_staging.buffer);
-	get_device()->get_handle().freeMemory(index_staging.memory);
+	vkDevice.destroyBuffer(vertex_staging.buffer);
+	vkDevice.freeMemory(vertex_staging.memory);
+	vkDevice.destroyBuffer(index_staging.buffer);
+	vkDevice.freeMemory(index_staging.memory);
 }
 
 void HPPTerrainTessellation::load_assets()
 {
-	skysphere = load_model("scenes/geosphere.gltf");
+	sky_sphere.geometry = load_model("scenes/geosphere.gltf");
+	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 
-	textures.skysphere = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
-	// Terrain textures are stored in a texture array with layers corresponding to terrain height
-	textures.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color);
+	// Terrain textures are stored in a texture array with layers corresponding to terrain height; create a repeating sampler
+	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color, vk::SamplerAddressMode::eRepeat);
 
-	// Height data is stored in a one-channel texture
-	textures.heightmap = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other);
-
-	// Setup a mirroring sampler for the height map
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter     = vk::Filter::eLinear;
-	sampler_create_info.minFilter     = vk::Filter::eLinear;
-	sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU  = vk::SamplerAddressMode::eMirroredRepeat;
-	sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
-	sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
-	sampler_create_info.maxAnisotropy = 1.0f;
-	sampler_create_info.compareOp     = vk::CompareOp::eNever;
-	sampler_create_info.minLod        = 0.0f;
-	sampler_create_info.maxLod        = static_cast<float>(textures.heightmap.image->get_mipmaps().size());
-	sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-	get_device()->get_handle().destroySampler(textures.heightmap.sampler);
-	textures.heightmap.sampler = get_device()->get_handle().createSampler(sampler_create_info);
-
-	// Setup a repeating sampler for the terrain texture layers
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eRepeat;
-	sampler_create_info.addressModeV = sampler_create_info.addressModeU;
-	sampler_create_info.addressModeW = sampler_create_info.addressModeU;
-	sampler_create_info.maxLod       = static_cast<float>(textures.terrain_array.image->get_mipmaps().size());
-	if (get_device()->get_gpu().get_features().samplerAnisotropy)
-	{
-		sampler_create_info.maxAnisotropy    = 4.0f;
-		sampler_create_info.anisotropyEnable = true;
-	}
-	get_device()->get_handle().destroySampler(textures.terrain_array.sampler);
-	textures.terrain_array.sampler = get_device()->get_handle().createSampler(sampler_create_info);
+	// Height data is stored in a one-channel texture; create a mirroring sampler
+	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other, vk::SamplerAddressMode::eMirroredRepeat);
 }
 
-void HPPTerrainTessellation::prepare_pipelines()
+void HPPTerrainTessellation::prepare_camera()
 {
-	std::array<vk::PipelineShaderStageCreateInfo, 4> terrain_shader_stages = {{load_shader("terrain_tessellation/terrain.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                           load_shader("terrain_tessellation/terrain.frag", vk::ShaderStageFlagBits::eFragment),
-	                                                                           load_shader("terrain_tessellation/terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
-	                                                                           load_shader("terrain_tessellation/terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)}};
+	// Note: Using reversed depth-buffer for increased precision, so Znear and Zfar are flipped
+	camera.type = vkb::CameraType::FirstPerson;
+	camera.set_perspective(60.0f, static_cast<float>(extent.width) / static_cast<float>(extent.height), 512.0f, 0.1f);
+	camera.set_rotation(glm::vec3(-12.0f, 159.0f, 0.0f));
+	camera.set_translation(glm::vec3(18.0f, 22.5f, 57.5f));
+	camera.translation_speed = 7.5f;
+}
 
-	// Vertex bindings an attributes
-	// Binding description
-	std::array<vk::VertexInputBindingDescription, 1> vertex_input_bindings = {{{0, sizeof(HPPTerrainTessellation::Vertex), vk::VertexInputRate::eVertex}}};
+void HPPTerrainTessellation::prepare_sky_sphere()
+{
+	sky_sphere.descriptor_set_layout = create_sky_sphere_descriptor_set_layout();
+	sky_sphere.pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, sky_sphere.descriptor_set_layout});
+	sky_sphere.pipeline              = create_sky_sphere_pipeline();
+	sky_sphere.descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, {sky_sphere.descriptor_set_layout});
+	update_sky_sphere_descriptor_set();
+}
 
-	// Attribute descriptions
-	std::array<vk::VertexInputAttributeDescription, 3> vertex_input_attributes = {{{0, 0, vk::Format::eR32G32B32Sfloat, 0},                        // Position
-	                                                                               {1, 0, vk::Format::eR32G32B32Sfloat, sizeof(float) * 3},        // Normal
-	                                                                               {2, 0, vk::Format::eR32G32Sfloat, sizeof(float) * 6}}};         // UV
-
-	vk::PipelineVertexInputStateCreateInfo vertex_input_state({}, vertex_input_bindings, vertex_input_attributes);
-
-	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, vk::PrimitiveTopology::ePatchList, false);
-
-	// We render the terrain as a grid of quad patches
-	vk::PipelineTessellationStateCreateInfo tessellation_state({}, 4);
-
-	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
-
-	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	rasterization_state.cullMode    = vk::CullModeFlagBits::eBack;
-	rasterization_state.frontFace   = vk::FrontFace::eCounterClockwise;
-	rasterization_state.lineWidth   = 1.0f;
-
-	vk::PipelineMultisampleStateCreateInfo multisample_state({}, vk::SampleCountFlagBits::e1);
-
-	// Note: Using reversed depth-buffer for increased precision, so Greater depth values are kept
-	vk::PipelineDepthStencilStateCreateInfo depth_stencil_state;
-	depth_stencil_state.depthCompareOp   = vk::CompareOp::eGreater;
-	depth_stencil_state.depthTestEnable  = true;
-	depth_stencil_state.depthWriteEnable = true;
-	depth_stencil_state.back.compareOp   = vk::CompareOp::eGreater;
-	depth_stencil_state.front            = depth_stencil_state.back;
-
-	vk::PipelineColorBlendAttachmentState blend_attachment_state;
-	blend_attachment_state.colorWriteMask =
-	    vk::ColorComponentFlagBits::eR | vk::ColorComponentFlagBits::eG | vk::ColorComponentFlagBits::eB | vk::ColorComponentFlagBits::eA;
-
-	vk::PipelineColorBlendStateCreateInfo color_blend_state({}, false, {}, blend_attachment_state);
-
-	std::array<vk::DynamicState, 3> dynamic_state_enables = {vk::DynamicState::eViewport, vk::DynamicState::eScissor, vk::DynamicState::eLineWidth};
-
-	vk::PipelineDynamicStateCreateInfo dynamic_state({}, dynamic_state_enables);
-
-	vk::GraphicsPipelineCreateInfo pipeline_create_info({},
-	                                                    terrain_shader_stages,
-	                                                    &vertex_input_state,
-	                                                    &input_assembly_state,
-	                                                    &tessellation_state,
-	                                                    &viewport_state,
-	                                                    &rasterization_state,
-	                                                    &multisample_state,
-	                                                    &depth_stencil_state,
-	                                                    &color_blend_state,
-	                                                    &dynamic_state,
-	                                                    pipeline_layouts.terrain,
-	                                                    render_pass,
-	                                                    {},
-	                                                    {},
-	                                                    -1);
-
-	vk::Result result;
-	std::tie(result, pipelines.terrain) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
-
-	// Terrain wireframe pipeline
-	if (get_device()->get_gpu().get_features().fillModeNonSolid)
+void HPPTerrainTessellation::prepare_statistics()
+{
+	if (statistics.query_supported)
 	{
-		rasterization_state.polygonMode       = vk::PolygonMode::eLine;
-		std::tie(result, pipelines.wireframe) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-		assert(result == vk::Result::eSuccess);
-	};
+		// Create query pool
+		vk::QueryPoolCreateInfo query_pool_info({},
+		                                        vk::QueryType::ePipelineStatistics,
+		                                        2,
+		                                        vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
+		                                            vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
+		statistics.query_pool = get_device()->get_handle().createQueryPool(query_pool_info);
+	}
+}
 
-	// Skysphere pipeline
+void HPPTerrainTessellation::prepare_terrain()
+{
+	terrain.shader_stages = {load_shader("terrain_tessellation/terrain.vert", vk::ShaderStageFlagBits::eVertex),
+	                         load_shader("terrain_tessellation/terrain.frag", vk::ShaderStageFlagBits::eFragment),
+	                         load_shader("terrain_tessellation/terrain.tesc", vk::ShaderStageFlagBits::eTessellationControl),
+	                         load_shader("terrain_tessellation/terrain.tese", vk::ShaderStageFlagBits::eTessellationEvaluation)};
 
-	// Stride from glTF model vertex layout
-	vertex_input_bindings[0].stride = sizeof(HPPVertex);
-
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
-	// Revert to triangle list topology
-	input_assembly_state.topology = vk::PrimitiveTopology::eTriangleList;
-	// Reset tessellation state
-	pipeline_create_info.pTessellationState = nullptr;
-	// Don't write to depth buffer
-	depth_stencil_state.depthWriteEnable                                     = false;
-	pipeline_create_info.layout                                              = pipeline_layouts.skysphere;
-	std::array<vk::PipelineShaderStageCreateInfo, 2> skysphere_shader_stages = {{load_shader("terrain_tessellation/skysphere.vert", vk::ShaderStageFlagBits::eVertex),
-	                                                                             load_shader("terrain_tessellation/skysphere.frag", vk::ShaderStageFlagBits::eFragment)}};
-	pipeline_create_info.setStages(skysphere_shader_stages);
-
-	std::tie(result, pipelines.skysphere) = get_device()->get_handle().createGraphicsPipeline(pipeline_cache, pipeline_create_info);
-	assert(result == vk::Result::eSuccess);
+	terrain.descriptor_set_layout = create_terrain_descriptor_set_layout();
+	terrain.pipeline_layout       = get_device()->get_handle().createPipelineLayout({{}, terrain.descriptor_set_layout});
+	terrain.pipeline              = create_terrain_pipeline(vk::PolygonMode::eFill);
+	terrain.descriptor_set        = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, {terrain.descriptor_set_layout});
+	update_terrain_descriptor_set();
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms
 void HPPTerrainTessellation::prepare_uniform_buffers()
 {
 	// Shared tessellation shader stages uniform buffer
-	uniform_buffers.terrain_tessellation =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_tess), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	terrain.tessellation_buffer =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(terrain.tessellation), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	// Skysphere vertex shader uniform buffer
-	uniform_buffers.skysphere_vertex =
-	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(ubo_vs), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	sky_sphere.transform_buffer =
+	    std::make_unique<vkb::core::HPPBuffer>(*get_device(), sizeof(sky_sphere.transform), vk::BufferUsageFlagBits::eUniformBuffer, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
 
-void HPPTerrainTessellation::setup_descriptor_pool()
+void HPPTerrainTessellation::prepare_wireframe()
 {
-	std::array<vk::DescriptorPoolSize, 2> pool_sizes = {{{vk::DescriptorType::eUniformBuffer, 3}, {vk::DescriptorType::eCombinedImageSampler, 3}}};
-
-	vk::DescriptorPoolCreateInfo descriptor_pool_create_info({}, 2, pool_sizes);
-
-	descriptor_pool = get_device()->get_handle().createDescriptorPool(descriptor_pool_create_info);
-}
-
-void HPPTerrainTessellation::setup_descriptor_set_layouts()
-{
-	// Terrain
-	std::array<vk::DescriptorSetLayoutBinding, 3> terrain_layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eTessellationControl | vk::ShaderStageFlagBits::eTessellationEvaluation},
-	     {1,
-	      vk::DescriptorType::eCombinedImageSampler,
-	      1,
-	      vk::ShaderStageFlagBits::eTessellationControl | vk::ShaderStageFlagBits::eTessellationEvaluation | vk::ShaderStageFlagBits::eFragment},
-	     {2, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-
-	vk::DescriptorSetLayoutCreateInfo terrain_descriptor_layout({}, terrain_layout_bindings);
-	descriptor_set_layouts.terrain = get_device()->get_handle().createDescriptorSetLayout(terrain_descriptor_layout);
-#if defined(ANDROID)
-	vk::PipelineLayoutCreateInfo terrain_pipeline_layout_create_info({}, 1, &descriptor_set_layouts.terrain);
-#else
-	vk::PipelineLayoutCreateInfo  terrain_pipeline_layout_create_info({}, descriptor_set_layouts.terrain);
-#endif
-	pipeline_layouts.terrain = get_device()->get_handle().createPipelineLayout(terrain_pipeline_layout_create_info);
-
-	// Skysphere
-	std::array<vk::DescriptorSetLayoutBinding, 2> skysphere_layout_bindings = {
-	    {{0, vk::DescriptorType::eUniformBuffer, 1, vk::ShaderStageFlagBits::eVertex},
-	     {1, vk::DescriptorType::eCombinedImageSampler, 1, vk::ShaderStageFlagBits::eFragment}}};
-
-	vk::DescriptorSetLayoutCreateInfo skysphere_descriptor_layout({}, skysphere_layout_bindings);
-	descriptor_set_layouts.skysphere = get_device()->get_handle().createDescriptorSetLayout(skysphere_descriptor_layout);
-#if defined(ANDROID)
-	vk::PipelineLayoutCreateInfo skysphere_pipeline_layout_create_info({}, 1, &descriptor_set_layouts.skysphere);
-#else
-	vk::PipelineLayoutCreateInfo  skysphere_pipeline_layout_create_info({}, descriptor_set_layouts.skysphere);
-#endif
-	pipeline_layouts.skysphere = get_device()->get_handle().createPipelineLayout(skysphere_pipeline_layout_create_info);
-}
-
-void HPPTerrainTessellation::setup_descriptor_sets()
-{
-	// Terrain
-#if defined(ANDROID)
-	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, 1, &descriptor_set_layouts.terrain);
-#else
-	vk::DescriptorSetAllocateInfo alloc_info(descriptor_pool, descriptor_set_layouts.terrain);
-#endif
-	descriptor_sets.terrain = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
-
-	vk::DescriptorBufferInfo terrain_buffer_descriptor(uniform_buffers.terrain_tessellation->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorImageInfo  heightmap_image_descriptor(
-        textures.heightmap.sampler,
-        textures.heightmap.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.heightmap.image->get_vk_image_view().get_format()));
-	vk::DescriptorImageInfo terrainmap_image_descriptor(
-	    textures.terrain_array.sampler,
-	    textures.terrain_array.image->get_vk_image_view().get_handle(),
-	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.terrain_array.image->get_vk_image_view().get_format()));
-	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {
-	    {{descriptor_sets.terrain, 0, {}, vk::DescriptorType::eUniformBuffer, {}, terrain_buffer_descriptor},
-	     {descriptor_sets.terrain, 1, {}, vk::DescriptorType::eCombinedImageSampler, heightmap_image_descriptor},
-	     {descriptor_sets.terrain, 2, {}, vk::DescriptorType::eCombinedImageSampler, terrainmap_image_descriptor}}};
-	get_device()->get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
-
-	// Skysphere
-	alloc_info.setSetLayouts(descriptor_set_layouts.skysphere);
-	descriptor_sets.skysphere = get_device()->get_handle().allocateDescriptorSets(alloc_info).front();
-
-	vk::DescriptorBufferInfo skysphere_buffer_descriptor(uniform_buffers.skysphere_vertex->get_handle(), 0, VK_WHOLE_SIZE);
-	vk::DescriptorImageInfo  skysphere_image_descriptor(
-        textures.skysphere.sampler,
-        textures.skysphere.image->get_vk_image_view().get_handle(),
-        descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, textures.skysphere.image->get_vk_image_view().get_format()));
-	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {
-	    {{descriptor_sets.skysphere, 0, {}, vk::DescriptorType::eUniformBuffer, {}, skysphere_buffer_descriptor},
-	     {descriptor_sets.skysphere, 1, {}, vk::DescriptorType::eCombinedImageSampler, skysphere_image_descriptor}}};
-	get_device()->get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
-}
-
-// Setup pool and buffer for storing pipeline statistics results
-void HPPTerrainTessellation::setup_query_result_buffer()
-{
-	const uint32_t buffer_size = 2 * sizeof(uint64_t);
-
-	vk::BufferCreateInfo buffer_create_info({}, buffer_size, vk::BufferUsageFlagBits::eUniformBuffer | vk::BufferUsageFlagBits::eTransferDst);
-
-	// Results are saved in a host visible buffer for easy access by the application
-	query_result.buffer                        = get_device()->get_handle().createBuffer(buffer_create_info);
-	vk::MemoryRequirements memory_requirements = get_device()->get_handle().getBufferMemoryRequirements(query_result.buffer);
-	vk::MemoryAllocateInfo memory_allocation(
-	    memory_requirements.size,
-	    get_device()->get_gpu().get_memory_type(memory_requirements.memoryTypeBits,
-	                                            vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent));
-	query_result.memory = get_device()->get_handle().allocateMemory(memory_allocation);
-	get_device()->get_handle().bindBufferMemory(query_result.buffer, query_result.memory, 0);
-
-	// Create query pool
-	if (get_device()->get_gpu().get_features().pipelineStatisticsQuery)
+	if (wireframe.supported)
 	{
-		vk::QueryPoolCreateInfo query_pool_info({},
-		                                        vk::QueryType::ePipelineStatistics,
-		                                        2,
-		                                        vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
-		                                            vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
-		query_pool = get_device()->get_handle().createQueryPool(query_pool_info);
-	}
+		// wireframe mode uses nearly the same settings as the terrain mode... just vk::PolygonMode::eLine, instead of vk::PolygonMode::eFill
+		wireframe.pipeline = create_terrain_pipeline(vk::PolygonMode::eLine);
+	};
 }
 
 void HPPTerrainTessellation::update_uniform_buffers()
 {
 	// Tessellation
-	ubo_tess.projection   = camera.matrices.perspective;
-	ubo_tess.modelview    = camera.matrices.view * glm::mat4(1.0f);
-	ubo_tess.light_pos.y  = -0.5f - ubo_tess.displacement_factor;        // todo: Not used yet
-	ubo_tess.viewport_dim = glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height));
+	terrain.tessellation.projection   = camera.matrices.perspective;
+	terrain.tessellation.modelview    = camera.matrices.view * glm::mat4(1.0f);
+	terrain.tessellation.light_pos.y  = -0.5f - terrain.tessellation.displacement_factor;        // todo: Not used yet
+	terrain.tessellation.viewport_dim = glm::vec2(static_cast<float>(extent.width), static_cast<float>(extent.height));
 
-	frustum.update(ubo_tess.projection * ubo_tess.modelview);
-	memcpy(ubo_tess.frustum_planes, frustum.get_planes().data(), sizeof(glm::vec4) * 6);
+	frustum.update(terrain.tessellation.projection * terrain.tessellation.modelview);
+	memcpy(terrain.tessellation.frustum_planes, frustum.get_planes().data(), sizeof(glm::vec4) * 6);
 
-	float saved_factor = ubo_tess.tessellation_factor;
-	if (!tessellation)
+	float saved_factor = terrain.tessellation.tessellation_factor;
+	if (!terrain.tessellation_enabled)
 	{
 		// Setting this to zero sets all tessellation factors to 1.0 in the shader
-		ubo_tess.tessellation_factor = 0.0f;
+		terrain.tessellation.tessellation_factor = 0.0f;
 	}
 
-	uniform_buffers.terrain_tessellation->convert_and_update(ubo_tess);
+	terrain.tessellation_buffer->convert_and_update(terrain.tessellation);
 
-	if (!tessellation)
+	if (!terrain.tessellation_enabled)
 	{
-		ubo_tess.tessellation_factor = saved_factor;
+		terrain.tessellation.tessellation_factor = saved_factor;
 	}
 
 	// Skysphere vertex shader
-	ubo_vs.mvp = camera.matrices.perspective * glm::mat4(glm::mat3(camera.matrices.view));
-	uniform_buffers.skysphere_vertex->convert_and_update(ubo_vs.mvp);
+	sky_sphere.transform = camera.matrices.perspective * glm::mat4(glm::mat3(camera.matrices.view));
+	sky_sphere.transform_buffer->convert_and_update(sky_sphere.transform);
+}
+
+void HPPTerrainTessellation::update_sky_sphere_descriptor_set()
+{
+	vk::DescriptorBufferInfo skysphere_buffer_descriptor(sky_sphere.transform_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+
+	vk::DescriptorImageInfo skysphere_image_descriptor(
+	    sky_sphere.texture.sampler,
+	    sky_sphere.texture.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, sky_sphere.texture.image->get_vk_image_view().get_format()));
+
+	std::array<vk::WriteDescriptorSet, 2> skysphere_write_descriptor_sets = {
+	    {{sky_sphere.descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, skysphere_buffer_descriptor},
+	     {sky_sphere.descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, skysphere_image_descriptor}}};
+
+	get_device()->get_handle().updateDescriptorSets(skysphere_write_descriptor_sets, {});
+}
+
+void HPPTerrainTessellation::update_terrain_descriptor_set()
+{
+	vk::DescriptorBufferInfo terrain_buffer_descriptor(terrain.tessellation_buffer->get_handle(), 0, VK_WHOLE_SIZE);
+
+	vk::DescriptorImageInfo heightmap_image_descriptor(
+	    terrain.height_map.sampler,
+	    terrain.height_map.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.height_map.image->get_vk_image_view().get_format()));
+
+	vk::DescriptorImageInfo terrainmap_image_descriptor(
+	    terrain.terrain_array.sampler,
+	    terrain.terrain_array.image->get_vk_image_view().get_handle(),
+	    descriptor_type_to_image_layout(vk::DescriptorType::eCombinedImageSampler, terrain.terrain_array.image->get_vk_image_view().get_format()));
+
+	std::array<vk::WriteDescriptorSet, 3> terrain_write_descriptor_sets = {
+	    {{terrain.descriptor_set, 0, {}, vk::DescriptorType::eUniformBuffer, {}, terrain_buffer_descriptor},
+	     {terrain.descriptor_set, 1, {}, vk::DescriptorType::eCombinedImageSampler, heightmap_image_descriptor},
+	     {terrain.descriptor_set, 2, {}, vk::DescriptorType::eCombinedImageSampler, terrainmap_image_descriptor}}};
+
+	get_device()->get_handle().updateDescriptorSets(terrain_write_descriptor_sets, {});
 }
 
 std::unique_ptr<vkb::Application> create_hpp_terrain_tessellation()

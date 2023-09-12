@@ -176,9 +176,11 @@ inline vk::Framebuffer create_framebuffer(vk::Device device, vk::RenderPass rend
 
 inline vk::Pipeline create_graphics_pipeline(vk::Device                                                device,
                                              vk::PipelineCache                                         pipeline_cache,
-                                             std::array<vk::PipelineShaderStageCreateInfo, 2> const   &shader_stages,
+                                             std::vector<vk::PipelineShaderStageCreateInfo> const     &shader_stages,
                                              vk::PipelineVertexInputStateCreateInfo const             &vertex_input_state,
                                              vk::PrimitiveTopology                                     primitive_topology,
+                                             uint32_t                                                  patch_control_points,
+                                             vk::PolygonMode                                           polygon_mode,
                                              vk::CullModeFlags                                         cull_mode,
                                              vk::FrontFace                                             front_face,
                                              std::vector<vk::PipelineColorBlendAttachmentState> const &blend_attachment_states,
@@ -188,10 +190,12 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 {
 	vk::PipelineInputAssemblyStateCreateInfo input_assembly_state({}, primitive_topology, false);
 
+	vk::PipelineTessellationStateCreateInfo tessellation_state({}, patch_control_points);
+
 	vk::PipelineViewportStateCreateInfo viewport_state({}, 1, nullptr, 1, nullptr);
 
 	vk::PipelineRasterizationStateCreateInfo rasterization_state;
-	rasterization_state.polygonMode = vk::PolygonMode::eFill;
+	rasterization_state.polygonMode = polygon_mode;
 	rasterization_state.cullMode    = cull_mode;
 	rasterization_state.frontFace   = front_face;
 	rasterization_state.lineWidth   = 1.0f;
@@ -208,7 +212,7 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 	                                                    shader_stages,
 	                                                    &vertex_input_state,
 	                                                    &input_assembly_state,
-	                                                    {},
+	                                                    &tessellation_state,
 	                                                    &viewport_state,
 	                                                    &rasterization_state,
 	                                                    &multisample_state,
