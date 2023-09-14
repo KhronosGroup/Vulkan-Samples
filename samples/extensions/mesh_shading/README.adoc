@@ -19,6 +19,11 @@
 
 == Mesh shading
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/mesh_shading[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This code sample demonstrates how to create the absolute most basic mesh shading example.
 It creates a single  triangle in a mesh shader.
 There is no vertex shader, there is only a mesh shader and a fragment shader.

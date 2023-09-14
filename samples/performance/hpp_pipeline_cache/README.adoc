@@ -17,6 +17,11 @@
 -
 ////
 = HPP Pipeline Management
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/hpp_pipeline_cache[Khronos Vulkan samples github repository].
+endif::[]
+
 :pp: {plus}{plus}
 
 A transcoded version of the performance sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/pipeline_cache[Pipeline Cache] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.

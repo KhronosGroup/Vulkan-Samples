@@ -18,6 +18,11 @@
 ////
 = Descriptor and buffer management
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/descriptor_management[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 An application using Vulkan will have to implement a system to manage descriptor pools and sets.

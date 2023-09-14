@@ -18,6 +18,11 @@
 ////
 = Subpasses
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/subpasses[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Vulkan introduces the concept of _subpasses_ to subdivide a single xref:../render_passes/README.adoc[render pass] into separate logical phases.

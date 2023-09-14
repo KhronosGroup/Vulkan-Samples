@@ -17,6 +17,11 @@
 -
 ////
 = *Constant data in Vulkan*
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/constant_data[Khronos Vulkan samples github repository].
+endif::[]
+
 :pp: {plus}{plus}
 
 == *Overview*
@@ -447,5 +452,8 @@ A few different stats are affected in the Mali GPU by using this, but the main t
 *Impact*
 
 * Failing to use the correct method of constant data will negatively impact performance, causing either reduced FPS and/or increased BW and load/store activity.
+* On Mali, register mapped uniforms are effectively free.
+Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.
+ reduced FPS and/or increased BW and load/store activity.
 * On Mali, register mapped uniforms are effectively free.
 Any spilling to buffers in memory will increase load/store cache accesses to the per thread uniform fetches.

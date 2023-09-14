@@ -18,6 +18,11 @@
 ////
 = Vertex input dynamic state
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/vertex_dynamic_state[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/sample.png[Sample]
 
 == Overview

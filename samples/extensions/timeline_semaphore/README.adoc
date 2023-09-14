@@ -18,6 +18,11 @@
 ////
 = Timeline semaphore
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/timeline_semaphore[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 In Vulkan 1.0, we were introduced to `VkSemaphore` which is able to synchronize work between Vulkan queues.
@@ -359,6 +364,10 @@ ApiVulkanSample::submit_frame();
 
 Timeline semaphores grants a lot of flexibility to applications.
 With modern approaches of task graphs, many threads and free flowing synchronization, timeline semaphores simplify a lot of things and removes the need for emulating a similar concept with binary semaphores and fences.
+
+Be careful with out-of-order submissions.
+There are various pitfalls with this approach which have been outlined in this sample.
+s.
 
 Be careful with out-of-order submissions.
 There are various pitfalls with this approach which have been outlined in this sample.

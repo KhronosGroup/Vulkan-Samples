@@ -18,6 +18,11 @@
 ////
 = Ray-tracing: Extended features and dynamic objects
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/raytracing_extended[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This code sample demonstrates how to incorporate animations into a ray-traced scene, and shows how to incorporate different types of changing objects within the acceleration structures.
 
 == Acceleration structures

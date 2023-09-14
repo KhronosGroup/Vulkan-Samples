@@ -18,6 +18,11 @@
 ////
 = Run-time mip-map generation
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/texture_mipmap_generation[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Generates a complete texture mip-chain at runtime from a base image using image blits and proper image barriers.
@@ -258,4 +263,6 @@ This is specified in the `VkImageViewCreateInfo.subresourceRange.levelCount` fie
 	view.subresourceRange.layerCount     = 1;
 	view.subresourceRange.levelCount     = texture.mip_levels;
 	VK_CHECK(vkCreateImageView(device->get_handle(), &view, nullptr, &texture.view));
+----
+ nullptr, &texture.view));
 ----
