@@ -18,6 +18,11 @@
 ////
 = Appropriate use of surface rotation
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/surface_rotation[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Mobile devices can be rotated, therefore the logical orientation of the application window and the physical orientation of the display may not match.
@@ -300,3 +305,4 @@ This may require use of the GPU or a dedicated 2D block on some systems which ca
 *Debugging*
 
 * You may use a system profiler such as Streamline to spot extra memory loads in the GPU counters, either as a direct effect (GPU composition) or as a side-effect (memory pressure).
+s a direct effect (GPU composition) or as a side-effect (memory pressure).

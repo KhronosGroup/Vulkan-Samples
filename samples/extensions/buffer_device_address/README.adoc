@@ -18,6 +18,11 @@
 ////
 = Buffer device address
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/buffer_device_address[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Buffer device address is a very powerful and unique feature to Vulkan which is not present in any other modern graphics API.
@@ -294,3 +299,4 @@ If the `bufferDeviceAddressCaptureReplay` is not present however, tools like Ren
 == Conclusion
 
 Buffer device address is an extremely powerful feature which enables various use cases which were either impossible or very impractical before.
+e cases which were either impossible or very impractical before.

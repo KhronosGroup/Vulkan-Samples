@@ -18,6 +18,11 @@
 ////
 = Multi-threaded recording with multiple render passes
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/multithreading_render_passes[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Ideally you render all stages of your frame in a single render pass.

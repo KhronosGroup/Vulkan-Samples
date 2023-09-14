@@ -15,6 +15,11 @@
 ////
 = Shader Object
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/shader_object[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/shader_object_screenshot.png[Sample]
 
 == Overview
@@ -462,3 +467,4 @@ Because of this the layer's files will always need to be somewhere accessible to
 Shader objects can be an invaluable tool for simplifying shader and state management in highly dynamic application architectures which don't lend themselves to practical implementation using pipelines.
 
 With increasingly widespread driver support augmented by the emulation layer, applications best suited to this kind of architecture can be designed around shader objects instead of pipelines with high confidence that they will achieve a user experience as good or better than what a pipeline based implementation could realistically achieve.
+d to this kind of architecture can be designed around shader objects instead of pipelines with high confidence that they will achieve a user experience as good or better than what a pipeline based implementation could realistically achieve.

@@ -20,4 +20,9 @@
 
 === HPP Compute shader N-Body simulation
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_compute_nbody[Khronos Vulkan samples github repository].
+endif::[]
+
+
 A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/compute_nbody[Compute N-Body] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.

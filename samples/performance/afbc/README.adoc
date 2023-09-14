@@ -18,6 +18,11 @@
 ////
 = Enabling AFBC in your Vulkan Application
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/afbc[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 AFBC (Arm Frame Buffer Compression) is a real-time lossless compression algorithm found in Arm Mali GPUs, designed to tackle the ever-growing demand for higher resolution graphics.

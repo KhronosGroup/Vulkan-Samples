@@ -17,6 +17,11 @@
 -
 ////
 = Command buffer usage and multi-threaded recording
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/command_buffer_usage[Khronos Vulkan samples github repository].
+endif::[]
+
 :pp: {plus}{plus}
 
 == Overview

@@ -18,6 +18,11 @@
 ////
 = Using async compute to saturate GPU
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/async_compute[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Most Vulkan implementations expose multiple Vulkan queues which the application can make use of at any one time.
