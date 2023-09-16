@@ -87,3 +87,5 @@ endif()
 
 # Add vulkan app (runs all samples)
 add_subdirectory(app)
+
+add_subdirectory(antora)

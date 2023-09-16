@@ -18,6 +18,11 @@
 ////
 = Color write enable
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/color_write_enable[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This sample demonstrates how to use the `VK_EXT_color_write_enable` extension.

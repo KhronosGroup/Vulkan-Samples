@@ -1,4 +1,5 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+#version 450
+/* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -15,27 +16,20 @@
  * limitations under the License.
  */
 
-#include <core/hpp_vulkan_resource.h>
+layout (location = 0) in vec3 inPos;
 
-#include <core/hpp_device.h>
+layout (binding = 0) uniform Ubo
+{
+    mat4 projection;
+    mat4 view;
+    mat4 model;
+} ubo;
 
-namespace vkb
-{
-namespace core
-{
-namespace detail
-{
-void set_debug_name(const HPPDevice *device, vk::ObjectType object_type, uint64_t handle, const char *debug_name)
-{
-	if (!debug_name || *debug_name == '\0' || !device)
-	{
-		// Can't set name, or no point in setting an empty name
-		return;
-	}
 
-	device->get_debug_utils().set_debug_name(device->get_handle(), object_type, handle, debug_name);
+out gl_PerVertex {
+    vec4 gl_Position;
+};
+
+void main() {
+    gl_Position = ubo.projection * ubo.view * ubo.model * vec4(inPos.xyz - vec3(0.0f, 1.0f, 0.0f), 1.0f);
 }
-
-}        // namespace detail
-}        // namespace core
-}        // namespace vkb

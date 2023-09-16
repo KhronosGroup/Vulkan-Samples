@@ -19,6 +19,11 @@
 
 === Conservative Rasterization
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/conservative_rasterization[Khronos Vulkan samples github repository].
+endif::[]
+
+
 *Extension*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VK_EXT_conservative_rasterization[`VK_EXT_conservative_rasterization`]
 
 Uses conservative rasterization to change the way fragments are generated.

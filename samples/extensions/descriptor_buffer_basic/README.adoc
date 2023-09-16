@@ -18,6 +18,11 @@
 ////
 = Descriptor buffers
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/descriptor_buffer_basic[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Binding and managing descriptors in Vulkan can become pretty complex, both for the application and the driver.
@@ -253,3 +258,4 @@ vkCmdSetDescriptorBufferOffsetsEXT(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_G
 
 With descriptor set and pipeline layouts, Vulkan decouples the shader interfaces from the application.
 And since we don't change these but only the way how we provide descriptors to the GPU, *no changes to the shaders are required*.
+haders are required*.

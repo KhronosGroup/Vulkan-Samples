@@ -17,6 +17,11 @@
 -
 ////
 = Conditional rendering
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/conditional_rendering[Khronos Vulkan samples github repository].
+endif::[]
+
 :pp: {plus}{plus}
 
 image::./images/sample.png[Sample]

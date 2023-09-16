@@ -18,6 +18,11 @@
 ////
 = Using HLSL shaders in Vulkan with Vulkan-Hpp
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_hlsl_shaders[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This tutorial, along with the accompanying example code, shows how to use shaders written in the High Level Shading Language (HLSL) in Vulkan at runtime, using Vulkan-Hpp.
 
 Vulkan does not directly consume shaders in a human-readable text format, but instead uses SPIR-V as an intermediate representation.

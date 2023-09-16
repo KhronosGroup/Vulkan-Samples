@@ -21,6 +21,11 @@
 
 === HPP timestamp queries
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_timestamp_queries[Khronos Vulkan samples github repository].
+endif::[]
+
+
 A transcoded version of the API sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/api/timestamp_queries[Timestamp queries] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 = Timestamp queries
@@ -280,3 +285,4 @@ This is pretty much the same as the `vk::CommandBuffer::writeTimestamp` function
 == Verdict
 
 Even though timestamp queries are limited due to how a GPU works, they can still be useful for profiling and finding performance GPU bottlenecks.
+ul for profiling and finding performance GPU bottlenecks.

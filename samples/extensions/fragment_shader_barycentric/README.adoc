@@ -18,6 +18,11 @@
 ////
 = Fragment shader barycentric
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/fragment_shader_barycentric[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/fragment_shader_barycentric_screenshot.png[fragment_shader_barycentric]
 
 Fragment shader barycentric feature provides support for accessing the barycentric coordinates (linear and perspective) in the fragment shader and vertex attribute with the `pervertexEXT` decoration.

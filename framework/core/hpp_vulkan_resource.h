@@ -26,11 +26,6 @@ namespace core
 {
 class HPPDevice;
 
-namespace detail
-{
-void set_debug_name(const HPPDevice *device, vk::ObjectType object_type, uint64_t handle, const char *debug_name);
-}
-
 /// Inherit this for any Vulkan object with a handle of type `HPPHandle`.
 ///
 /// This allows the derived class to store a Vulkan handle, and also a pointer to the parent vkb::core::Device.
@@ -114,7 +109,11 @@ class HPPVulkanResource
 	inline void set_debug_name(const std::string &name)
 	{
 		debug_name = name;
-		detail::set_debug_name(device, HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+
+		if (device && !debug_name.empty())
+		{
+			device->get_debug_utils().set_debug_name(device->get_handle(), HPPHandle::objectType, get_handle_u64(), debug_name.c_str());
+		}
 	}
 
   private:

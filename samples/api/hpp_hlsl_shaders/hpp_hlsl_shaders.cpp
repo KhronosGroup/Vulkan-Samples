@@ -53,36 +53,37 @@ HPPHlslShaders::~HPPHlslShaders()
 
 bool HPPHlslShaders::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!HPPApiVulkanSample::prepare(options))
+	assert(!prepared);
+
+	if (HPPApiVulkanSample::prepare(options))
 	{
-		return false;
+		load_assets();
+		generate_quad();
+
+		// Vertex shader uniform buffer block
+		uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
+		                                                           sizeof(ubo_vs),
+		                                                           vk::BufferUsageFlagBits::eUniformBuffer,
+		                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
+		update_uniform_buffers();
+
+		// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
+		base_descriptor_set_layout    = create_base_descriptor_set_layout();
+		sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
+
+		pipeline_layout     = create_pipeline_layout();
+		shader_modules      = {create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex),
+		                       create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment)};
+		pipeline            = create_pipeline();
+		descriptor_pool     = create_descriptor_pool();
+		base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
+		update_descriptor_sets();
+		build_command_buffers();
+
+		prepared = true;
 	}
-	load_assets();
-	generate_quad();
 
-	// Vertex shader uniform buffer block
-	uniform_buffer_vs = std::make_unique<vkb::core::HPPBuffer>(*get_device(),
-	                                                           sizeof(ubo_vs),
-	                                                           vk::BufferUsageFlagBits::eUniformBuffer,
-	                                                           VMA_MEMORY_USAGE_CPU_TO_GPU);
-	update_uniform_buffers();
-
-	// We separate the descriptor sets for the uniform buffer + image and samplers, so we don't need to duplicate the descriptors for the former
-	base_descriptor_set_layout    = create_base_descriptor_set_layout();
-	sampler_descriptor_set_layout = create_sampler_descriptor_set_layout();
-
-	pipeline_layout = create_pipeline_layout();
-	shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.vert", vk::ShaderStageFlagBits::eVertex));
-	shader_modules.push_back(create_shader_module("hlsl_shaders/hlsl_shader.frag", vk::ShaderStageFlagBits::eFragment));
-	pipeline = create_pipeline();
-
-	descriptor_pool     = create_descriptor_pool();
-	base_descriptor_set = vkb::common::allocate_descriptor_set(get_device()->get_handle(), descriptor_pool, base_descriptor_set_layout);
-	update_descriptor_sets();
-
-	build_command_buffers();
-	prepared = true;
-	return true;
+	return prepared;
 }
 
 // Enable physical device features required for this example
@@ -139,11 +140,10 @@ void HPPHlslShaders::build_command_buffers()
 
 void HPPHlslShaders::render(float delta_time)
 {
-	if (!prepared)
+	if (prepared)
 	{
-		return;
+		draw();
 	}
-	draw();
 }
 
 void HPPHlslShaders::view_changed()

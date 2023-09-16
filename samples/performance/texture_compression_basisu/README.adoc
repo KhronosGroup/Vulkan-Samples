@@ -18,6 +18,11 @@
 ////
 = Using Basis Universal supercompressed GPU texture codec with Vulkan
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/texture_compression_basisu[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This tutorial, along with the accompanying example code, demonstrates how to use Basis universal supercompressed GPU textures in a Vulkan application.
@@ -260,3 +265,4 @@ You can also zoom in and rotate the image to see the effect of different input a
 
 NOTE: Transcoding speed suffers a lot in debug builds.
 For best performance, running a release build is advised.
+elease build is advised.
