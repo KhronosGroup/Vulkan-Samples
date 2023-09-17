@@ -1,0 +1,55 @@
+= Differences Between Offline Shader Compilation and Online Shader Compilation
+
+== Compilation Approaches
+
+Offline Shader Compilation and Online Shader Compilation are two approaches used to compile shaders in graphics programming. Below are some key differences between the two:
+
+=== Offline Shader Compilation:
+
+* *Pre-Compilation*: Shaders are compiled before the application is run, often as a separate build step.
+* *Error Checking*: Compilation errors are detected before the application runs, making it easier to debug and fix issues.
+* *Binary Format*: The shaders are often compiled into a binary format that is quicker to load.
+* *Portability*: May require re-compilation for different hardware or driver versions, which can be a disadvantage in terms of portability.
+* *Start-Up Time*: Generally results in a faster application start-up time because the shaders are already compiled.
+* *Limited Flexibility*: Harder to dynamically generate or alter shaders at runtime, as they are pre-compiled.
+* *Security*: Pre-compiled binary shaders can offer a level of obfuscation, making it slightly more difficult to reverse engineer them.
+
+=== Online Shader Compilation:
+
+* *Just-In-Time Compilation*: Shaders are compiled during application runtime.
+* *Error Checking*: Errors are detected at runtime, which can make debugging more challenging as we need to wait for the application to run.
+* *Text Format*: Shaders are often in text format, making them easier to modify but slower to load.
+* *Portability*: Easier to adapt to different hardware and driver versions without re-compilation.
+* *Start-Up Time*: May result in a slower application start-up time due to the need for compilation.
+* *High Flexibility*: Easier to dynamically generate or modify shaders during runtime.
+* *Security*: Shaders in text format are easier to reverse engineer, offering less obfuscation.
+
+In summary, offline shader compilation generally offers better performance and easier debugging at the cost of flexibility and portability. Online shader compilation, on the other hand, offers greater flexibility and portability but may come with performance costs and more challenging debugging scenarios.
+
+== Vulkan Samples Chosen Approach
+
+Vulkan Samples has chosen to compile shaders (offline|online) for the following reasons:
+
+* Agree on why we chose to compile shaders offline or online
+
+=== Compiling Shaders
+
+==== Offline Shader Compilation
+
+* Configure CMake
+
+[bash]
+....
+    cmake -B build -S .
+....
+
+* Build the shaders
+
+[bash]
+....
+    cmake --build build --target shaders
+....
+
+==== Online Shader Compilation
+
+* TODO: Steps for online compilation
