@@ -17,11 +17,16 @@
 vkb__register_component(
     NAME core
     HEADERS
+        include/core/platform/context.hpp
+        include/core/platform/entrypoint.hpp
+
         include/core/util/strings.hpp
         include/core/util/error.hpp
         include/core/util/hash.hpp
+        include/core/util/logging.hpp
     SRC
         src/strings.cpp
+        src/logging.cpp
     LINK_LIBS
         spdlog
         fmt

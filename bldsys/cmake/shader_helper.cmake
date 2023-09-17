@@ -33,22 +33,26 @@ function(configure_shader)
         message(FATAL_ERROR "No valid shader language specified. Valid values are: ${TARGET_LANGUAGE_VALUES}")
     endif()
 
-    set(SHADER_SPIRV ${CMAKE_BINARY_DIR}/generated/${TARGET_OUTPUT})
-
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/generated)
-
     string(TOUPPER ${TARGET_LANGUAGE} CAPITALIZED_LANGAUGE)
     
-    add_custom_command(
-        OUTPUT ${SHADER_SPIRV}
+    set(SHADER_TARGET_NAME ${CAPITALIZED_LANGAUGE}__${TARGET_NAME})
+    message(STATUS "Shader ${SHADER_TARGET_NAME}")
+
+    set(SHADER_SPIRV ${CMAKE_SOURCE_DIR}/generated/${TARGET_LANGUAGE}/${TARGET_OUTPUT})
+
+    add_custom_target(
+        ${SHADER_TARGET_NAME}
         COMMAND ${PYTHON_EXECUTABLE} ${SHADER_COMPILER_SCRIPT} ${TARGET_SOURCE} ${SHADER_SPIRV} --language ${TARGET_LANGUAGE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
         DEPENDS ${TARGET_SOURCE}
         COMMENT "Compiling shader ${SOURCE_NAME}"
     )
 
-    set(SHADER_TARGET_NAME ${CAPITALIZED_LANGAUGE}__${TARGET_NAME})
-    add_custom_target(${SHADER_TARGET_NAME} DEPENDS ${SHADER_SPIRV})
-    message(STATUS "Shader ${SHADER_TARGET_NAME}")
-    add_dependencies(shaders ${SHADER_TARGET_NAME})
+    add_custom_target(
+        ${SHADER_TARGET_NAME}_reflection
+        COMMAND shader_reflector ${SHADER_SPIRV} ${CMAKE_SOURCE_DIR}/generated/${TARGET_LANGUAGE}/${TARGET_NAME}.json
+        DEPENDS ${SHADER_TARGET_NAME} shader_reflector
+    )
+
+    add_dependencies(shaders ${SHADER_TARGET_NAME} ${SHADER_TARGET_NAME}_reflection)
 endfunction(configure_shader)

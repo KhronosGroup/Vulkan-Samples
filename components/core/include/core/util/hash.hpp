@@ -38,4 +38,29 @@ inline void hash_combine(size_t &seed, const T &v)
 
 	hash_combine(seed, hasher(v));
 }
+
+class HashBuilder
+{
+  public:
+	HashBuilder(size_t seed = 0) :
+	    seed{seed}
+	{}
+
+	virtual ~HashBuilder() = default;
+
+	template <class T>
+	HashBuilder &with(const T &v)
+	{
+		hash_combine(seed, v);
+		return *this;
+	}
+
+	size_t build() const
+	{
+		return seed;
+	}
+
+  private:
+	size_t seed{0};
+};
 }        // namespace vkb

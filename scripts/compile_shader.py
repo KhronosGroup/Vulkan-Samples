@@ -28,6 +28,11 @@ SPIRV_VALIDATOR_EXECUTABLE = "spirv-val"
 
 SUPPORTED_GLSL_EXTENSIONS = [".vert", ".tesc", ".tese", ".geom", ".frag", ".comp", ".rchit", ".rahit", ".rmiss", ".rint", ".rcall", ".rgen", ".task", ".mesh"]
 
+def make_dir_if_not_exists(file):
+    dir = os.path.dirname(file)
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+
 def check_required_executables():
     execs = [GLSL_COMPILER_EXECUTABLE, HLSL_COMPILER_EXECUTABLE, SPIRV_VALIDATOR_EXECUTABLE]
     for exec in execs:
@@ -95,10 +100,7 @@ if __name__ == "__main__":
         print("ERROR: input file does not exist")
         sys.exit(1)
 
-    # check that the output file does not exist
-    if os.path.isfile(args.output_file):
-        print("ERROR: output file already exists")
-        sys.exit(1)
+    make_dir_if_not_exists(args.output_file)
 
     if args.language == "hlsl":
         process_hlsl_shader(args)

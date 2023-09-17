@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#define PLATFORM_LINUX
 #include <core/platform/entrypoint.hpp>
 
 #include <windows/context.hpp>

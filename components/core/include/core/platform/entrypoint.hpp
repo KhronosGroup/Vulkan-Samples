@@ -18,6 +18,7 @@
 #pragma once
 
 #include "core/platform/context.hpp"
+#include "core/util/logging.hpp"
 
 // Platform specific entrypoint definitions
 // Applications should use CUSTOM_MAIN to define their own main function
@@ -31,6 +32,7 @@ extern std::unique_ptr<vkb::PlatformContext> create_platform_context(android_app
 		int  platform_main(const vkb::PlatformContext &);  \
 		void android_main(android_app *state)              \
 		{                                                  \
+			vkb::logging::init();                          \
 			auto context = create_platform_context(state); \
 			platform_main(*context);                       \
 		}                                                  \
@@ -43,6 +45,7 @@ extern std::unique_ptr<vkb::PlatformContext> create_platform_context(HINSTANCE h
 		int          platform_main(const vkb::PlatformContext &);                                        \
 		int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PSTR lpCmdLine, INT nCmdShow) \
 		{                                                                                                \
+			vkb::logging::init();                                                                        \
 			auto context = create_platform_context(hInstance, hPrevInstance, lpCmdLine, nCmdShow);       \
 			return platform_main(*context);                                                              \
 		}                                                                                                \
@@ -54,6 +57,7 @@ extern std::unique_ptr<vkb::PlatformContext> create_platform_context(int argc, c
 		int platform_main(const vkb::PlatformContext &);        \
 		int main(int argc, char *argv[])                        \
 		{                                                       \
+			vkb::logging::init();                               \
 			auto context = create_platform_context(argc, argv); \
 			return platform_main(*context);                     \
 		}                                                       \

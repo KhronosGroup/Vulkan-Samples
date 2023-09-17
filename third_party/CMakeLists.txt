@@ -392,3 +392,15 @@ target_include_directories(opencl INTERFACE ${OPENCL_INCLUDE_DIR})
 add_subdirectory(catch2)
 set_property(TARGET Catch2 PROPERTY FOLDER "ThirdParty")
 set_property(TARGET Catch2WithMain PROPERTY FOLDER "ThirdParty")
+
+# SPIRV-Reflect
+set(SPIRV_REFLECT_EXECUTABLE OFF)
+set(SPIRV_REFLECT_STATIC_LIB ON)
+set(SPIRV_REFLECT_BUILD_TESTS OFF)
+set(SPIRV_REFLECT_ENABLE_ASSERTS OFF)
+set(SPIRV_REFLECT_ENABLE_ASAN OFF)
+add_subdirectory(spirv-reflect)
+set_property(TARGET spirv-reflect-static PROPERTY FOLDER "ThirdParty")
+
+# Json
+add_subdirectory(json)

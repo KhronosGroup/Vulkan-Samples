@@ -23,7 +23,6 @@ set(FRAMEWORK_FILES
     # Header Files
     gui.h
     glsl_compiler.h
-    spirv_reflection.h
     gltf_loader.h
     buffer_pool.h
     debug_info.h
@@ -53,7 +52,6 @@ set(FRAMEWORK_FILES
     # Source Files
     gui.cpp
     glsl_compiler.cpp
-    spirv_reflection.cpp
     gltf_loader.cpp
     debug_info.cpp
     buffer_pool.cpp

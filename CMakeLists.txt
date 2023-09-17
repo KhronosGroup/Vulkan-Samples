@@ -70,6 +70,9 @@ add_subdirectory(components)
 # Add vulkan framework
 add_subdirectory(framework)
 
+# A collection of command line tools
+add_subdirectory(cmd)
+
 add_subdirectory(shaders)
 
 if(VKB_BUILD_TESTS)
