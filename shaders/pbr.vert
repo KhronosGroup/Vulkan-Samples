@@ -16,8 +16,6 @@
  * limitations under the License.
  */
 
-#define MAX_FORWARD_LIGHT_COUNT 16
-
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;
@@ -29,19 +27,6 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 	vec3 camera_position;
 }
 global_uniform;
-
-struct Light
-{
-	vec4 position;
-	vec4 color;
-};
-
-layout(set = 0, binding = 4) uniform LightsInfo
-{
-	uint  count;
-	Light lights[MAX_FORWARD_LIGHT_COUNT];
-}
-lights;
 
 layout(location = 0) out vec3 o_pos;
 layout(location = 1) out vec2 o_uv;

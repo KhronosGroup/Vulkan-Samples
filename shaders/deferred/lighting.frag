@@ -17,6 +17,8 @@
  */
 precision highp float;
 
+#extension GL_GOOGLE_include_directive : enable
+
 layout(input_attachment_index = 0, binding = 0) uniform subpassInput i_depth;
 layout(input_attachment_index = 1, binding = 1) uniform subpassInput i_albedo;
 layout(input_attachment_index = 2, binding = 2) uniform subpassInput i_normal;
@@ -31,7 +33,7 @@ layout(set = 0, binding = 3) uniform GlobalUniform
 }
 global_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

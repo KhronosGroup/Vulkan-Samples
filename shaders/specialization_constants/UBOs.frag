@@ -18,6 +18,10 @@
 
 precision highp float;
 
+#extension GL_GOOGLE_include_directive : enable
+
+#include "../lighting.h"
+
 #ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
 #endif
@@ -35,14 +39,6 @@ layout(set = 0, binding = 1) uniform GlobalUniform
 	vec3 camera_position;
 }
 global_uniform;
-
-struct Light
-{
-	vec4 position;         // position.w represents type of light
-	vec4 color;            // color.w represents light intensity
-	vec4 direction;        // direction.w represents range
-	vec2 info;             // (only used for spot lights) info.x represents light inner cone angle, info.y represents light outer cone angle
-};
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

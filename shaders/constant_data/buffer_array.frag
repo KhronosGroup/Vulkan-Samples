@@ -18,6 +18,10 @@
 
 precision highp float;
 
+#extension GL_GOOGLE_include_directive : enable
+
+#define SCENE_MESH_COUNT 245
+
 #ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
 #endif
@@ -44,7 +48,7 @@ layout(set = 0, binding = 1) buffer MVPUniformArray
 	MVPUniform uniform_data[SCENE_MESH_COUNT];
 } mvp_array;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

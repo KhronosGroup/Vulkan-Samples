@@ -16,6 +16,7 @@
  * limitations under the License.
  */
 #extension GL_EXT_shader_explicit_arithmetic_types_float16 : require
+#extension GL_GOOGLE_include_directive : enable
 
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -40,7 +41,7 @@ layout(push_constant, std430) uniform PBRMaterialUniform
 }
 pbr_material_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

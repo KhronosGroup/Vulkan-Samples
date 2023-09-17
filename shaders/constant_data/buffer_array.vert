@@ -16,6 +16,8 @@
  * limitations under the License.
  */
 
+ #define SCENE_MESH_COUNT 245
+
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec2 texcoord_0;
 layout(location = 2) in vec3 normal;

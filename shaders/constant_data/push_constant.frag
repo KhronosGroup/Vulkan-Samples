@@ -18,6 +18,8 @@
 
 precision highp float;
 
+#extension GL_GOOGLE_include_directive : enable
+
 #ifdef HAS_BASE_COLOR_TEXTURE
 layout(set = 0, binding = 0) uniform sampler2D base_color_texture;
 #endif
@@ -39,7 +41,7 @@ layout(push_constant, std430) uniform MVPUniform
 #endif
 } mvp_uniform;
 
-#include "lighting.h"
+#include "../lighting.h"
 
 layout(set = 0, binding = 4) uniform LightsInfo
 {

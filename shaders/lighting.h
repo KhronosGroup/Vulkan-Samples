@@ -15,6 +15,13 @@
  * limitations under the License.
  */
 
+#define MAX_LIGHT_COUNT 16
+#define MAX_FORWARD_LIGHT_COUNT 16
+
+#define DIRECTIONAL_LIGHT 0.0
+#define POINT_LIGHT 1.0
+#define SPOT_LIGHT 2.0
+
 struct Light
 {
 	vec4 position;         // position.w represents type of light
