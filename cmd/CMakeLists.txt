@@ -1,1 +1,2 @@
 add_subdirectory(shader_reflector)
+add_subdirectory(variant_reflector)

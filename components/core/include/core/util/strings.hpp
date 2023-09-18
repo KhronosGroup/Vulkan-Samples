@@ -41,4 +41,19 @@ std::string trim_left(const std::string &str, const std::string &chars = " ");
  * @brief Split a string into a vector of strings.
  */
 std::vector<std::string> split(const std::string &str, const std::string &delim = " ");
+
+/**
+ * @brief Converts a string to snake_case
+ */
+std::string to_snake_case(const std::string &text);
+
+/**
+ * @brief Convert a string to upper case
+ */
+std::string to_upper_case(const std::string &text);
+
+/**
+ * @brief Check that the string ends with the given suffix
+ */
+bool ends_with(const std::string &str, const std::string &suffix, bool case_sensitive = true);
 }        // namespace vkb

@@ -121,8 +121,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", help="path to the shader source file")
     parser.add_argument("output_file", help="path to the compiled shader file")
-    parser.add_argument("--language", help="shader language", choices=["glsl", "hlsl"], default="glsl")
+    parser.add_argument("--language", help="shader language", choices=["glsl", "hlsl"], default="glsl", required=True)
+    parser.add_argument("--variants", help="path to the shader variants file", required=True)
+    parser.add_argument("--atlas", help="path to the atlas file", required=True)
     args = parser.parse_args()
+
+    if not os.path.isfile(args.variants):
+        print("ERROR: shader variants file does not exist")
+        sys.exit(1)
+
+    if not os.path.isfile(args.atlas):
+        print("WARN: atlas file does not exist - creating empty atlas file")
+        make_dir_if_not_exists(args.atlas)
+        open(args.atlas, 'a').close()
+        
     
     # check that the input file exists
     if not os.path.isfile(args.input_file):

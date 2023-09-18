@@ -1,0 +1,21 @@
+= Variant Reflector
+
+Vulkan Samples uses multiple assets. Vulkan Samples also has many shaders. Some of these shaders depend on assets containing specific features such as normal textures or metalic roughness textures. As we offline compile the shaders, we need to know which assets can be used with each shader.
+
+This executable will process a list of assets and create a variant list for each asset.
+
+== Variant Schema
+
+[source,json]
+----
+{
+    "variants": [
+        {
+            "defines": [
+                "DEFINE=VALUE",
+                "DEFINE=VALUE"
+            ]
+        }
+    ]
+}
+----

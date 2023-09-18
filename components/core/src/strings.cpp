@@ -17,6 +17,10 @@
 
 #include <core/util/strings.hpp>
 
+#include <algorithm>
+#include <cctype>
+#include <sstream>
+
 namespace vkb
 {
 std::string replace_all(std::string str, const std::string &from, const std::string &to)
@@ -59,5 +63,65 @@ std::vector<std::string> split(const std::string &str, const std::string &delim)
 	result.push_back(str.substr(start));
 
 	return result;
+}
+
+std::string to_snake_case(const std::string &text)
+{
+	std::stringstream result;
+
+	for (auto i = 0; i < text.size(); i++)
+	{
+		const auto ch = text[i];
+
+		if (!std::isalpha(ch))
+		{
+			result << ch;
+			continue;
+		}
+
+		if (std::isspace(ch))
+		{
+			result << "_";
+			continue;
+		}
+
+		if (std::isupper(ch) && i > 0)
+		{
+			bool lower_before = std::islower(text[i - 1]);
+			bool lower_after  = i < text.size() ? std::islower(text[i + 1]) : false;
+			if (lower_before || lower_after)
+			{
+				result << "_";
+			}
+		}
+
+		result << static_cast<char>(std::tolower(ch));
+	}
+
+	return result.str();
+}
+
+std::string to_upper_case(const std::string &text)
+{
+	std::string result = text;
+	std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+	return result;
+}
+
+bool ends_with(const std::string &str, const std::string &suffix, bool case_sensitive)
+{
+	if (str.length() < suffix.length())
+	{
+		return false;
+	}
+
+	if (case_sensitive)
+	{
+		return (0 == str.compare(str.length() - suffix.length(), suffix.length(), suffix));
+	}
+
+	std::string str_upper    = to_upper_case(str);
+	std::string suffix_upper = to_upper_case(suffix);
+	return (0 == str_upper.compare(str_upper.length() - suffix_upper.length(), suffix_upper.length(), suffix_upper));
 }
 }        // namespace vkb

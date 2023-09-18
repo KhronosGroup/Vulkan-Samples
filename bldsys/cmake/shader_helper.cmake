@@ -1,4 +1,7 @@
 add_custom_target(shaders)
+add_custom_target(shader_reflections)
+add_custom_target(shaders_full)
+add_dependencies(shaders_full shaders shader_reflections)
 
 # Require Python 3 for calling shader compile script
 find_package(PythonInterp 3 REQUIRED)
@@ -7,6 +10,16 @@ find_package(PythonInterp 3 REQUIRED)
 set(TARGET_LANGUAGE_VALUES glsl hlsl)
 
 set(SHADER_COMPILER_SCRIPT ${CMAKE_SOURCE_DIR}/scripts/compile_shader.py)
+set(SHADER_VARIANT_FILE ${CMAKE_SOURCE_DIR}/generated/shader_variants.json)
+set(SHADER_ATLAS_FILE ${CMAKE_SOURCE_DIR}/generated/shader_atlas.json)
+set(SHADER_DIR ${CMAKE_SOURCE_DIR}/shaders)
+set(ASSET_DIR ${CMAKE_SOURCE_DIR}/assets)
+
+add_custom_target(
+    generate_shader_variants
+    COMMAND variant_reflector --output ${SHADER_VARIANT_FILE} --shader-dir ${SHADER_DIR} --asset-dir ${ASSET_DIR}
+    COMMAND_EXPAND_LISTS
+)
 
 # configure_shader(
 #   NAME <target_name>
@@ -50,9 +63,9 @@ function(configure_shader)
 
     add_custom_target(
         ${SHADER_TARGET_NAME}
-        COMMAND ${PYTHON_EXECUTABLE} ${SHADER_COMPILER_SCRIPT} ${TARGET_SOURCE} ${SHADER_SPIRV} --language ${LANGUAGE}
+        COMMAND ${PYTHON_EXECUTABLE} ${SHADER_COMPILER_SCRIPT} ${TARGET_SOURCE} ${SHADER_SPIRV} --language ${LANGUAGE} --variants ${SHADER_VARIANT_FILE} --atlas ${SHADER_ATLAS_FILE}
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-        DEPENDS ${TARGET_SOURCE}
+        DEPENDS ${TARGET_SOURCE} generate_shader_variants
         COMMENT "Compiling shader ${SOURCE_NAME}"
     )
 
@@ -63,5 +76,6 @@ function(configure_shader)
         COMMENT "Generating shader reflection for ${SHADER_SPIRV}"
     )
 
-    add_dependencies(shaders ${SHADER_TARGET_NAME}_reflection)
+    add_dependencies(shaders ${SHADER_TARGET_NAME})
+    add_dependencies(shader_reflections ${SHADER_TARGET_NAME}_reflection)
 endfunction(configure_shader)

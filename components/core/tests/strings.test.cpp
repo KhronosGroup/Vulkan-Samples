@@ -25,13 +25,13 @@ VKBP_ENABLE_WARNINGS()
 
 using namespace vkb;
 
-TEST_CASE("vkb::replace_all", "[common]")
+TEST_CASE("vkb::replace_all", "[core]")
 {
 	REQUIRE(replace_all("/././", "./", "/") == "///");
 	REQUIRE(replace_all("vulkanvulkanvulkan", "vulkan", "kan") == "kankankan");
 }
 
-TEST_CASE("vkb::trim_right", "[common]")
+TEST_CASE("vkb::trim_right", "[core]")
 {
 	REQUIRE(trim_right("hello   ") == "hello");        // default case
 	REQUIRE(trim_right("hello   ", " ") == "hello");
@@ -39,7 +39,7 @@ TEST_CASE("vkb::trim_right", "[common]")
 	REQUIRE(trim_right("hellocomplex", "complex") == "h");        // remember we are trimming a set
 }
 
-TEST_CASE("vkb::trim_left", "[common]")
+TEST_CASE("vkb::trim_left", "[core]")
 {
 	REQUIRE(trim_left("   hello") == "hello");        // default case
 	REQUIRE(trim_left("   hello", " ") == "hello");
@@ -47,10 +47,33 @@ TEST_CASE("vkb::trim_left", "[common]")
 	REQUIRE(trim_left("complexhello", "complex") == "hello");        // remember we are trimming a set until the first non-match
 }
 
-TEST_CASE("vkb::split", "[common]")
+TEST_CASE("vkb::split", "[core]")
 {
 	REQUIRE(split("hello world") == std::vector<std::string>{"hello", "world"});
 	REQUIRE(split("hello world", " ") == std::vector<std::string>{"hello", "world"});
 	REQUIRE(split("hello world", "world") == std::vector<std::string>{"hello ", ""});
 	REQUIRE(split("hello_world", "_") == std::vector<std::string>{"hello", "world"});
+}
+
+TEST_CASE("vkb::to_snake_case", "[core]")
+{
+	REQUIRE(to_snake_case("HelloWorld") == "hello_world");
+
+	// continuous upper case is not split into multiple words
+	REQUIRE(to_snake_case("ABC") == "abc");
+	REQUIRE(to_snake_case("ABCDef") == "abc_def");
+}
+
+TEST_CASE("vkb::to_upper_case", "[core]")
+{
+	REQUIRE(to_upper_case("ABC") == "ABC");
+	REQUIRE(to_upper_case("ABCDef") == "ABCDEF");
+	REQUIRE(to_upper_case("abc") == "ABC");
+}
+
+TEST_CASE("vkb::ends_with", "[core]")
+{
+	REQUIRE(ends_with("hello world", "world") == true);
+	REQUIRE(ends_with("hello world", "WORLD") == false);
+	REQUIRE(ends_with("hello world", "WORLD", false) == true);
 }
