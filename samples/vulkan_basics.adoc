@@ -19,24 +19,9 @@
 = Vulkan essentials
 // omit in toc
 
-== Contents
-// omit in toc
-
-* <<low-level-graphics-for-power-users,Low level graphics for power users>>
-* <<opengl-es-vs-vulkan,OpenGL ES vs.
-Vulkan>>
- ** <<state-management,State management>>
- ** <<api-execution-model,API execution model>>
- ** <<api-threading-model,API threading model>>
- ** <<api-error-checking,API error checking>>
- ** <<render-pass-abstraction,Render pass abstraction>>
- ** <<memory-allocation,Memory allocation>>
- ** <<memory-usage,Memory usage>>
-* <<what-to-expect,What to expect>>
- ** <<neutral,Neutral>>
- ** <<advantages,Advantages>>
- ** <<disadvantages,Disadvantages>>
-* <<conclusions,Conclusions>>
+ifndef::site-gen-antora[]
+:toc:
+endif::[]
 
 == Low level graphics for power users
 
