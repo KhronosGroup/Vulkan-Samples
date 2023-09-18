@@ -252,17 +252,15 @@ This is specified in the `VkImageViewCreateInfo.subresourceRange.levelCount` fie
 
 [,cpp]
 ----
-	VkImageViewCreateInfo view           = vkb::initializers::image_view_create_info();
-	view.image                           = texture.image;
-	view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-	view.format                          = format;
-	view.components                      = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
-	view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-	view.subresourceRange.baseMipLevel   = 0;
-	view.subresourceRange.baseArrayLayer = 0;
-	view.subresourceRange.layerCount     = 1;
-	view.subresourceRange.levelCount     = texture.mip_levels;
-	VK_CHECK(vkCreateImageView(device->get_handle(), &view, nullptr, &texture.view));
-----
- nullptr, &texture.view));
+VkImageViewCreateInfo view           = vkb::initializers::image_view_create_info();
+view.image                           = texture.image;
+view.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+view.format                          = format;
+view.components                      = {VK_COMPONENT_SWIZZLE_R, VK_COMPONENT_SWIZZLE_G, VK_COMPONENT_SWIZZLE_B, VK_COMPONENT_SWIZZLE_A};
+view.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+view.subresourceRange.baseMipLevel   = 0;
+view.subresourceRange.baseArrayLayer = 0;
+view.subresourceRange.layerCount     = 1;
+view.subresourceRange.levelCount     = texture.mip_levels;
+VK_CHECK(vkCreateImageView(device->get_handle(), &view, nullptr, &texture.view));
 ----

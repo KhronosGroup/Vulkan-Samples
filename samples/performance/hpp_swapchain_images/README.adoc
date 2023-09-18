@@ -19,16 +19,13 @@
 :doctype: book
 :pp: {plus}{plus}
 
-=== HPP Swapchain Images
+= Choosing the right number of swapchain images Vulkan-Hpp
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/hpp_swapchain_images[Khronos Vulkan samples github repository].
 endif::[]
 
-
-A transcoded version of the performance sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/swapchain_images[Swapchain Images] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
-
-= Choosing the right number of swapchain images
+NOTE: A transcoded version of the performance sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/swapchain_images[Swapchain Images] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 == Overview
 
