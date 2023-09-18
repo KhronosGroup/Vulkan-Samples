@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./extended_dynamic_state2_tess_frag_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "frag"
+}

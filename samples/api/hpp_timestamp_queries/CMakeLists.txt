@@ -26,9 +26,9 @@ add_sample_with_tags(
     NAME "HPP Timestamp queries"
     DESCRIPTION "Using timestamp queries to fetch timing information from the GPU, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "hdr/composition.vert"
-        "hdr/composition.frag"
-        "hdr/bloom.vert"
-        "hdr/bloom.frag"
-        "hdr/gbuffer.vert"
-        "hdr/gbuffer.frag")
+        "hdr/composition.vert.glsl"
+        "hdr/composition.frag.glsl"
+        "hdr/bloom.vert.glsl"
+        "hdr/bloom.frag.glsl"
+        "hdr/gbuffer.vert.glsl"
+        "hdr/gbuffer.frag.glsl")

@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Separating image and sampler"
     DESCRIPTION "Displays a texture with a separated image and sampler"
     SHADER_FILES_GLSL
-        "separate_image_sampler/separate_image_sampler.vert"
-        "separate_image_sampler/separate_image_sampler.frag")
+        "separate_image_sampler/separate_image_sampler.vert.glsl"
+        "separate_image_sampler/separate_image_sampler.frag.glsl")

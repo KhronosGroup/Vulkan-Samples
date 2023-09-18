@@ -26,7 +26,7 @@ add_sample_with_tags(
     NAME "HPP Compute N-Body simulation"
     DESCRIPTION "Multi-pass compute dispatch N-Body particle simulation, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "compute_nbody/particle.vert"
-        "compute_nbody/particle.frag"
-        "compute_nbody/particle_calculate.comp"
-        "compute_nbody/particle_integrate.comp")
+        "compute_nbody/particle.vert.glsl"
+        "compute_nbody/particle.frag.glsl"
+        "compute_nbody/particle_calculate.comp.glsl"
+        "compute_nbody/particle_integrate.comp.glsl")

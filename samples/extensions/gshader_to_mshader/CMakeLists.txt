@@ -26,10 +26,10 @@ add_sample(
     NAME "gshader_to_mshader"
     DESCRIPTION "Sample shows migration from geometry shader pipeline to mesh shader one"
     SHADER_FILES_GLSL
-        "gshader_to_mshader/gshader_to_mshader.vert"
-        "gshader_to_mshader/gshader_to_mshader.frag"
-        "gshader_to_mshader/gshader_to_mshader.geom"
-        "gshader_to_mshader/gshader_to_mshader.mesh"
-        "gshader_to_mshader/gshader_to_mshader_base.frag"
-        "gshader_to_mshader/gshader_to_mshader_base.vert"
-        "gshader_to_mshader/gshader_to_mshader_mesh.frag")
+        "gshader_to_mshader/gshader_to_mshader.vert.glsl"
+        "gshader_to_mshader/gshader_to_mshader.frag.glsl"
+        "gshader_to_mshader/gshader_to_mshader.geom.glsl"
+        "gshader_to_mshader/gshader_to_mshader.mesh.glsl"
+        "gshader_to_mshader/gshader_to_mshader_base.frag.glsl"
+        "gshader_to_mshader/gshader_to_mshader_base.vert.glsl"
+        "gshader_to_mshader/gshader_to_mshader_mesh.frag.glsl")

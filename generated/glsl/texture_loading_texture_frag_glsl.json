@@ -1,0 +1,85 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./texture_loading_texture_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 34,
+                "input_attachment_index": 327685,
+                "location": 0,
+                "name": "inUV",
+                "offset": 25445,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 196613,
+                "type": "input",
+                "vec_size": 2
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 34,
+                "input_attachment_index": 327685,
+                "location": 1,
+                "name": "inLodBias",
+                "offset": 25445,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 196613,
+                "type": "input",
+                "vec_size": 0
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 34,
+                "input_attachment_index": 327685,
+                "location": 2,
+                "name": "inNormal",
+                "offset": 25445,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 196613,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 4,
+                "columns": 0,
+                "constant_id": 34,
+                "input_attachment_index": 327685,
+                "location": 4,
+                "name": "inLightVec",
+                "offset": 25445,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 196613,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": 0,
+                "constant_id": 34,
+                "input_attachment_index": 327685,
+                "location": 3,
+                "name": "inViewVec",
+                "offset": 25445,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 196613,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

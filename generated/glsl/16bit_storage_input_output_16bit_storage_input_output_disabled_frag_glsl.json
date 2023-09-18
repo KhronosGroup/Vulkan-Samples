@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./16bit_storage_input_output_16bit_storage_input_output_disabled_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1600482425,
+                "input_attachment_index": 1634562671,
+                "location": 1,
+                "name": "in_normal",
+                "offset": 1885560645,
+                "qualifiers": 4294967295,
+                "set": 327685,
+                "size": 1953718128,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1600482425,
+                "input_attachment_index": 1634562671,
+                "location": 0,
+                "name": "in_color",
+                "offset": 1885560645,
+                "qualifiers": 4294967295,
+                "set": 327685,
+                "size": 1953718128,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 1600482425,
+                "input_attachment_index": 1634562671,
+                "location": 2,
+                "name": "in_delta_pos",
+                "offset": 1885560645,
+                "qualifiers": 4294967295,
+                "set": 327685,
+                "size": 1953718128,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

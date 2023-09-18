@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./mesh_shader_culling_mesh_shader_culling_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": 0,
+                "constant_id": 4,
+                "input_attachment_index": 0,
+                "location": 3,
+                "name": "inColor",
+                "offset": 1919904879,
+                "qualifiers": 4294967295,
+                "set": 262149,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./specialization_constants_UBOs_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 123404295,
+                "input_attachment_index": 0,
+                "location": 2,
+                "name": "in_normal",
+                "offset": 1526728539,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1291867143,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 123404295,
+                "input_attachment_index": 0,
+                "location": 0,
+                "name": "in_pos",
+                "offset": 1526728539,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1291867143,
+                "type": "input",
+                "vec_size": 4
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 123404295,
+                "input_attachment_index": 0,
+                "location": 1,
+                "name": "in_uv",
+                "offset": 1526728539,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1291867143,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

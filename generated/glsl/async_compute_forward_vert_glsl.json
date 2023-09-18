@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./async_compute_forward_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 0,
+                "name": "position",
+                "offset": 1314586702,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 1,
+                "name": "texcoord_0",
+                "offset": 1314586702,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 2
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 2,
+                "name": "normal",
+                "offset": 1314586702,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

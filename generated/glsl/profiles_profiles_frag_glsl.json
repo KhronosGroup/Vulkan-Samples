@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./profiles_profiles_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1885560645,
+                "input_attachment_index": 14,
+                "location": 1,
+                "name": "inTexIndex",
+                "offset": 1197427783,
+                "qualifiers": 4294967295,
+                "set": 1919904879,
+                "size": 1279741775,
+                "type": "input",
+                "vec_size": 0
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1885560645,
+                "input_attachment_index": 14,
+                "location": 0,
+                "name": "inUV",
+                "offset": 1197427783,
+                "qualifiers": 4294967295,
+                "set": 1919904879,
+                "size": 1279741775,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

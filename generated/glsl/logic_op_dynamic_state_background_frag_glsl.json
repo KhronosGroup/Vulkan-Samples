@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./logic_op_dynamic_state_background_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 262149,
+                "input_attachment_index": 0,
+                "location": 0,
+                "name": "inUVW",
+                "offset": 1836216174,
+                "qualifiers": 4294967295,
+                "set": 262215,
+                "size": 27745,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

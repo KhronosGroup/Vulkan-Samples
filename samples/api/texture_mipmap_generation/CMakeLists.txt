@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Texture mipmap generation"
     DESCRIPTION "Generate mipmaps for a texture"
     SHADER_FILES_GLSL
-        "texture_mipmap_generation/texture.vert"
-        "texture_mipmap_generation/texture.frag")
+        "texture_mipmap_generation/texture.vert.glsl"
+        "texture_mipmap_generation/texture.frag.glsl")

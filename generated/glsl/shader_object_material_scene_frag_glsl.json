@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shader_object_material_scene_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 18,
+                "input_attachment_index": 393222,
+                "location": 0,
+                "name": "vertex_in",
+                "offset": 27745,
+                "qualifiers": 4294967295,
+                "set": 196613,
+                "size": 393222,
+                "type": "input",
+                "vec_size": 0
+            }
+        ]
+    },
+    "stage": "frag"
+}

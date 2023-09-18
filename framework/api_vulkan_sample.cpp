@@ -80,8 +80,8 @@ void ApiVulkanSample::prepare_gui()
 {
 	gui = std::make_unique<vkb::Gui>(*this, *window, /*stats=*/nullptr, 15.0f, true);
 	gui->prepare(pipeline_cache, render_pass,
-	             {load_shader("uioverlay/uioverlay.vert", VK_SHADER_STAGE_VERTEX_BIT),
-	              load_shader("uioverlay/uioverlay.frag", VK_SHADER_STAGE_FRAGMENT_BIT)});
+	             {load_shader("uioverlay/uioverlay.vert.glsl", VK_SHADER_STAGE_VERTEX_BIT),
+	              load_shader("uioverlay/uioverlay.frag.glsl", VK_SHADER_STAGE_FRAGMENT_BIT)});
 }
 
 void ApiVulkanSample::update(float delta_time)

@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./ray_tracing_reflection_miss_rmiss_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "rmiss"
+}

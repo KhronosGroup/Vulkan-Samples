@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./async_compute_shadow_frag_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "frag"
+}

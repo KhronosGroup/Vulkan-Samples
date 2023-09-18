@@ -26,5 +26,5 @@ add_sample(
     NAME "Vertex Dynamic State"
     DESCRIPTION "Demonstrates the Vertex Input Dynamic State extension which can reduce number of pipelines by dynamically change vertex input bindings and attribute descriptions"
     SHADER_FILES_GLSL
-    "vertex_dynamic_state/gbuffer.vert"
-    "vertex_dynamic_state/gbuffer.frag")
+    "vertex_dynamic_state/gbuffer.vert.glsl"
+    "vertex_dynamic_state/gbuffer.frag.glsl")

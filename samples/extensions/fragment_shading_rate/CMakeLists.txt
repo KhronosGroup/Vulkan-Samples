@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Fragment shading rate"
     DESCRIPTION "Using variable fragment shading rate patterns via VK_KHR_fragment_shading_rate"
     SHADER_FILES_GLSL
-        "fragment_shading_rate/scene.vert"
-        "fragment_shading_rate/scene.frag")
+        "fragment_shading_rate/scene.vert.glsl"
+        "fragment_shading_rate/scene.frag.glsl")

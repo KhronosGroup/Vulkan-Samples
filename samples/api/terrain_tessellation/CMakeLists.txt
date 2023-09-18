@@ -26,9 +26,9 @@ add_sample_with_tags(
     NAME "Terrain tessellation"
     DESCRIPTION "Using tessellation shaders for dynamic terrain level-of-detail"
     SHADER_FILES_GLSL
-        "terrain_tessellation/terrain.vert"
-        "terrain_tessellation/terrain.frag"
-        "terrain_tessellation/terrain.tesc"
-        "terrain_tessellation/terrain.tese"
-        "terrain_tessellation/skysphere.vert"
-        "terrain_tessellation/skysphere.frag")
+        "terrain_tessellation/terrain.vert.glsl"
+        "terrain_tessellation/terrain.frag.glsl"
+        "terrain_tessellation/terrain.tesc.glsl"
+        "terrain_tessellation/terrain.tese.glsl"
+        "terrain_tessellation/skysphere.vert.glsl"
+        "terrain_tessellation/skysphere.frag.glsl")

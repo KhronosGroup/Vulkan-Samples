@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./hdr_gbuffer_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1314586702,
+                "location": 0,
+                "name": "inPos",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1291867143,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1314586702,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1291867143,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

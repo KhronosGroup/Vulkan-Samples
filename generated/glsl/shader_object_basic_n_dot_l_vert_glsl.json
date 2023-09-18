@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shader_object_basic_n_dot_l_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1852399429,
+                "input_attachment_index": 14,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 31,
+                "qualifiers": 4294967295,
+                "set": 1701080941,
+                "size": 1867411049,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1852399429,
+                "input_attachment_index": 14,
+                "location": 0,
+                "name": "inPos",
+                "offset": 31,
+                "qualifiers": 4294967295,
+                "set": 1701080941,
+                "size": 1867411049,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 1852399429,
+                "input_attachment_index": 14,
+                "location": 2,
+                "name": "inUV",
+                "offset": 31,
+                "qualifiers": 4294967295,
+                "set": 1701080941,
+                "size": 1867411049,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "vert"
+}

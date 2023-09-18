@@ -26,5 +26,5 @@ add_sample(
     NAME "Surface Rotation"
     DESCRIPTION "The benefits of pre rotating your scene."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "base.vert.glsl"
+        "base.frag.glsl")

@@ -1,0 +1,70 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./gshader_to_mshader_gshader_to_mshader_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 655364,
+                "input_attachment_index": 196624,
+                "location": 0,
+                "name": "inNormal",
+                "offset": 2,
+                "qualifiers": 4294967295,
+                "set": 8,
+                "size": 450,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": 0,
+                "constant_id": 655364,
+                "input_attachment_index": 196624,
+                "location": 3,
+                "name": "inLightVec",
+                "offset": 2,
+                "qualifiers": 4294967295,
+                "set": 8,
+                "size": 450,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 655364,
+                "input_attachment_index": 196624,
+                "location": 2,
+                "name": "inViewVec",
+                "offset": 2,
+                "qualifiers": 4294967295,
+                "set": 8,
+                "size": 450,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 655364,
+                "input_attachment_index": 196624,
+                "location": 1,
+                "name": "inColor",
+                "offset": 2,
+                "qualifiers": 4294967295,
+                "set": 8,
+                "size": 450,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

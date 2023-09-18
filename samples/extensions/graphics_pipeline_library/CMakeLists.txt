@@ -26,5 +26,5 @@ add_sample(
     NAME "VK_EXT_graphics_pipeline_library"
     DESCRIPTION "Demonstrates the use of the graphics pipeline library extension for splitting up pipeline creation into logical parts"
     SHADER_FILES_GLSL
-        "graphics_pipeline_library/shared.vert"
-        "graphics_pipeline_library/uber.frag")
+        "graphics_pipeline_library/shared.vert.glsl"
+        "graphics_pipeline_library/uber.frag.glsl")

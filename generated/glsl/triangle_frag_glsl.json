@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./triangle_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 9,
+                "input_attachment_index": 6649449,
+                "location": 0,
+                "name": "in_color",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1685417059,
+                "size": 327685,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

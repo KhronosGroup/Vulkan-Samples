@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./descriptor_buffer_basic_cube_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 196611,
+                "input_attachment_index": 9,
+                "location": 2,
+                "name": "inUV",
+                "offset": 11,
+                "qualifiers": 4294967295,
+                "set": 1852399981,
+                "size": 1448439401,
+                "type": "input",
+                "vec_size": 2
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 196611,
+                "input_attachment_index": 9,
+                "location": 0,
+                "name": "inPos",
+                "offset": 11,
+                "qualifiers": 4294967295,
+                "set": 1852399981,
+                "size": 1448439401,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 196611,
+                "input_attachment_index": 9,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 11,
+                "qualifiers": 4294967295,
+                "set": 1852399981,
+                "size": 1448439401,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

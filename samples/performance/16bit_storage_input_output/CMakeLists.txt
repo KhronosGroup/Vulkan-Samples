@@ -28,7 +28,7 @@ add_sample_with_tags(
         TAGS
         "arm"
         SHADER_FILES_GLSL
-                "16bit_storage_input_output/16bit_storage_input_output_enabled.vert"
-                "16bit_storage_input_output/16bit_storage_input_output_enabled.frag"
-                "16bit_storage_input_output/16bit_storage_input_output_disabled.vert"
-                "16bit_storage_input_output/16bit_storage_input_output_disabled.frag")
+                "16bit_storage_input_output/16bit_storage_input_output_enabled.vert.glsl"
+                "16bit_storage_input_output/16bit_storage_input_output_enabled.frag.glsl"
+                "16bit_storage_input_output/16bit_storage_input_output_disabled.vert.glsl"
+                "16bit_storage_input_output/16bit_storage_input_output_disabled.frag.glsl")

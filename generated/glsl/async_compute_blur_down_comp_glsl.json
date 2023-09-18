@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./async_compute_blur_down_comp_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 4294967295,
+                "name": "gl_GlobalInvocationID",
+                "offset": 0,
+                "qualifiers": 28,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "comp"
+}

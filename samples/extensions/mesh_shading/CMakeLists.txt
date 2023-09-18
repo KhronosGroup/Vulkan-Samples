@@ -26,6 +26,6 @@ add_sample_with_tags(
     NAME "Mesh shader sample"
     DESCRIPTION "Example showing how to utilize the EXT_MESH_SHADER pipeline."
     SHADER_FILES_GLSL
-        "mesh_shading/ms.mesh"
-        "mesh_shading/ps.frag"
+        "mesh_shading/ms.mesh.glsl"
+        "mesh_shading/ps.frag.glsl"
 )

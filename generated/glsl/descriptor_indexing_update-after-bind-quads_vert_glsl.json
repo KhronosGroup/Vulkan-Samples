@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./descriptor_indexing_update-after-bind-quads_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 4294967295,
+                "name": "gl_VertexIndex",
+                "offset": 0,
+                "qualifiers": 42,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 0
+            },
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 4294967295,
+                "name": "gl_InstanceIndex",
+                "offset": 0,
+                "qualifiers": 43,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 0
+            }
+        ]
+    },
+    "stage": "vert"
+}

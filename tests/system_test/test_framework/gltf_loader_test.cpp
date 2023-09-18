@@ -63,8 +63,8 @@ bool GLTFLoaderTest::prepare(const vkb::ApplicationOptions &options)
 
 	auto &camera = camera_node->get_component<vkb::sg::Camera>();
 
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
+	vkb::ShaderSource vert_shader("base.vert.glsl");
+	vkb::ShaderSource frag_shader("base.frag.glsl");
 
 	auto scene_subpass = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, camera);
 

@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shader_object_basic_n_dot_l_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 2,
+                "input_attachment_index": 13,
+                "location": 0,
+                "name": "inNormal",
+                "offset": 262167,
+                "qualifiers": 4294967295,
+                "set": 1060439283,
+                "size": 14,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

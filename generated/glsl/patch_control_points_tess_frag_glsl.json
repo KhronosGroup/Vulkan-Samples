@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./patch_control_points_tess_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 83886080,
+                "input_attachment_index": 83886080,
+                "location": 0,
+                "name": "inColor",
+                "offset": 1866688353,
+                "qualifiers": 4294967295,
+                "set": 67109888,
+                "size": 7499628,
+                "type": "input",
+                "vec_size": 4
+            }
+        ]
+    },
+    "stage": "frag"
+}

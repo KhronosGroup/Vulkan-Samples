@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shadows_shadowmap_frag_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "frag"
+}

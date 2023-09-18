@@ -24,5 +24,18 @@ FileSystemPtr get_filesystem()
 	static auto fs = std::make_shared<StdFileSystem>();
 	return fs;
 }
+
+std::string filename(const std::string &path)
+{
+	auto pos = path.find_last_of("/\\");
+	if (pos == std::string::npos)
+	{
+		return path;
+	}
+	else
+	{
+		return path.substr(pos + 1);
+	}
+}
 }        // namespace fs
 }        // namespace vkb

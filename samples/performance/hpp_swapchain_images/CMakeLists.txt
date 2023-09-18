@@ -26,5 +26,5 @@ add_sample(
     NAME "HPP Swapchain Images"
     DESCRIPTION "Using triple buffering over double buffering, using Vulkan-Hpp."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "base.vert.glsl"
+        "base.frag.glsl")

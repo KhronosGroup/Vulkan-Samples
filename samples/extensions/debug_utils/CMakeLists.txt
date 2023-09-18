@@ -26,9 +26,9 @@ add_sample(
     NAME "VK_EXT_Debug_Utils"
     DESCRIPTION "Demonstrates the use of the debug utils extension for tagging and labeling Vulkan objects for debugging applications like RenderDoc"
     SHADER_FILES_GLSL
-        "debug_utils/composition.vert"
-        "debug_utils/composition.frag"
-        "debug_utils/bloom.vert"
-        "debug_utils/bloom.frag"
-        "debug_utils/gbuffer.vert"
-        "debug_utils/gbuffer.frag")
+        "debug_utils/composition.vert.glsl"
+        "debug_utils/composition.frag.glsl"
+        "debug_utils/bloom.vert.glsl"
+        "debug_utils/bloom.frag.glsl"
+        "debug_utils/gbuffer.vert.glsl"
+        "debug_utils/gbuffer.frag.glsl")

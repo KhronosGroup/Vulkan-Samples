@@ -27,7 +27,7 @@
 
 CUSTOM_MAIN(context)
 {
-	auto fs = vkb::fs::get_filesystem(context);
+	auto fs = vkb::fs::get_filesystem();
 	EXPECT_TRUE(fs, "Filesystem is not null");
 
 	std::string DIR = "./components/fs";

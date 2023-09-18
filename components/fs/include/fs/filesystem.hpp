@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "core/platform/context.hpp"
+#include "core/util/logging.hpp"
 
 namespace vkb
 {
@@ -43,7 +44,7 @@ class FileSystem
 		static_assert(std::is_arithmetic<T>::value, "T must be an arithmetic type");
 		auto stat   = stat_file(path);
 		auto binary = read_chunk(path, 0, stat.size);
-		return std::vector<T>(binary.begin(), binary.end());
+		return std::vector<T>(binary.data(), binary.data() + binary.size() / sizeof(T));
 	}
 };
 
@@ -52,5 +53,7 @@ using FileSystemPtr = std::shared_ptr<FileSystem>;
 void init(const PlatformContext &context);
 
 FileSystemPtr get_filesystem();
+
+std::string filename(const std::string &path);
 }        // namespace fs
 }        // namespace vkb

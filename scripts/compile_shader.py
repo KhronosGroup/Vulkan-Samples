@@ -26,7 +26,21 @@ GLSL_COMPILER_EXECUTABLE = "glslc"
 HLSL_COMPILER_EXECUTABLE = "dxc"
 SPIRV_VALIDATOR_EXECUTABLE = "spirv-val"
 
-SUPPORTED_GLSL_EXTENSIONS = [".vert", ".tesc", ".tese", ".geom", ".frag", ".comp", ".rchit", ".rahit", ".rmiss", ".rint", ".rcall", ".rgen", ".task", ".mesh"]
+SUPPORTED_SHADER_STAGES = [
+    "vert",
+    "tesc",
+    "tese",
+    "geom",
+    "frag",
+    "comp",
+    "rchit",
+    "rahit",
+    "rmiss",
+    "rint",
+    "rcall",
+    "rgen",
+    "task", 
+    "mesh"]
 
 def make_dir_if_not_exists(file):
     dir = os.path.dirname(file)
@@ -56,15 +70,20 @@ def process_hlsl_shader(args):
 
 def process_glsl_shader(args):
     # get the file extension of the input file
-    input_file_ext = os.path.splitext(args.input_file)[1]
+    file = os.path.split(args.input_file)[1]
+    parts = file.split(".")
+
+    if len(parts) != 3:
+        print("ERROR: input file name is not valid (must be <name>.<stage>.<ext>)")
+        sys.exit(1)
 
     # check that the input file extension is supported
-    if input_file_ext not in SUPPORTED_GLSL_EXTENSIONS:
+    if parts[1] not in SUPPORTED_SHADER_STAGES:
         print("ERROR: input file extension not supported")
         sys.exit(1)
 
     # compile the shader
-    res = subprocess.run([GLSL_COMPILER_PATH, args.input_file, "--target-env=vulkan1.3", "-o", args.output_file])
+    res = subprocess.run([GLSL_COMPILER_PATH, "-fshader-stage={}".format(parts[1]), args.input_file, "--target-env=vulkan1.3", "-o", args.output_file])
 
     if res.returncode != 0:
         print("ERROR: shader compilation failed")

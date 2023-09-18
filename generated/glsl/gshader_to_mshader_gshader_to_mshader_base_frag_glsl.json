@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./gshader_to_mshader_gshader_to_mshader_base_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 450,
+                "input_attachment_index": 12,
+                "location": 0,
+                "name": "inColor",
+                "offset": 196611,
+                "qualifiers": 4294967295,
+                "set": 393221,
+                "size": 2,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./16bit_arithmetic_visualize_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 17,
+                "input_attachment_index": 1,
+                "location": 0,
+                "name": "in_uv",
+                "offset": 1,
+                "qualifiers": 4294967295,
+                "set": 589849,
+                "size": 0,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

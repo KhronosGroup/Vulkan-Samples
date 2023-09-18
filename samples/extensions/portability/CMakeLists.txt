@@ -26,9 +26,9 @@ add_sample(
     NAME "VK_KHR_portability_subset"
     DESCRIPTION "Demonstrates the use of the portability extension for determining support on portability platforms."
     SHADER_FILES_GLSL
-        "debug_utils/composition.vert"
-        "debug_utils/composition.frag"
-        "debug_utils/bloom.vert"
-        "debug_utils/bloom.frag"
-        "debug_utils/gbuffer.vert"
-        "debug_utils/gbuffer.frag")
+        "debug_utils/composition.vert.glsl"
+        "debug_utils/composition.frag.glsl"
+        "debug_utils/bloom.vert.glsl"
+        "debug_utils/bloom.frag.glsl"
+        "debug_utils/gbuffer.vert.glsl"
+        "debug_utils/gbuffer.frag.glsl")

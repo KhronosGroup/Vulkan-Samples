@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./color_write_enable_composition_frag_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "frag"
+}

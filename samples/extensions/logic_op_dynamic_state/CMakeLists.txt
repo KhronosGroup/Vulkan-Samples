@@ -26,7 +26,7 @@ add_sample(
     NAME "Logic operations dynamic state"
     DESCRIPTION "Demonstrate how to use logic operations dynamically, which can reduce the number of pipeline objects that are needed to be created."
     SHADER_FILES_GLSL
-    "logic_op_dynamic_state/background.vert"
-    "logic_op_dynamic_state/background.frag"
-    "logic_op_dynamic_state/baseline.vert"
-    "logic_op_dynamic_state/baseline.frag")
+    "logic_op_dynamic_state/background.vert.glsl"
+    "logic_op_dynamic_state/background.frag.glsl"
+    "logic_op_dynamic_state/baseline.vert.glsl"
+    "logic_op_dynamic_state/baseline.frag.glsl")

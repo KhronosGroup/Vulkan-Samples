@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "HPP Texture loading and mapping"
     DESCRIPTION "Loading a texture and displaying it on a simple object, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "texture_loading/texture.vert"
-        "texture_loading/texture.frag")
+        "texture_loading/texture.vert.glsl"
+        "texture_loading/texture.frag.glsl")

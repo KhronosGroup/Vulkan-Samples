@@ -26,7 +26,7 @@ add_sample(
     NAME "fragment_shader_barycentric"
     DESCRIPTION "Demonstrate how to use fragment shader barycentric feature, which allows accessing barycentric coordinates for each processed fragment."
     SHADER_FILES_GLSL
-    "fragment_shader_barycentric/object.vert"
-    "fragment_shader_barycentric/object.frag"
-    "fragment_shader_barycentric/skybox.vert"
-    "fragment_shader_barycentric/skybox.frag")
+    "fragment_shader_barycentric/object.vert.glsl"
+    "fragment_shader_barycentric/object.frag.glsl"
+    "fragment_shader_barycentric/skybox.vert.glsl"
+    "fragment_shader_barycentric/skybox.frag.glsl")

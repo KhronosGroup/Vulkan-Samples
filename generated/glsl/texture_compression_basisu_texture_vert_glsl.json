@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./texture_compression_basisu_texture_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1348430951,
+                "input_attachment_index": 1700164197,
+                "location": 1,
+                "name": "inUV",
+                "offset": 17,
+                "qualifiers": 4294967295,
+                "set": 6644590,
+                "size": 0,
+                "type": "input",
+                "vec_size": 2
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1348430951,
+                "input_attachment_index": 1700164197,
+                "location": 0,
+                "name": "inPos",
+                "offset": 17,
+                "qualifiers": 4294967295,
+                "set": 6644590,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

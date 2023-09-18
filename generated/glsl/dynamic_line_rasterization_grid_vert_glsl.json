@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./dynamic_line_rasterization_grid_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 4294967295,
+                "name": "gl_VertexIndex",
+                "offset": 1314586702,
+                "qualifiers": 42,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 0
+            }
+        ]
+    },
+    "stage": "vert"
+}

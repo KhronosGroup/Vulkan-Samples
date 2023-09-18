@@ -26,7 +26,7 @@ add_sample(
     NAME "Pipeline Barriers"
     DESCRIPTION "Using pipeline barriers efficiently."
     SHADER_FILES_GLSL
-        "deferred/geometry.vert"
-        "deferred/geometry.frag"
-        "deferred/lighting.vert"
-        "deferred/lighting.frag")
+        "deferred/geometry.vert.glsl"
+        "deferred/geometry.frag.glsl"
+        "deferred/lighting.vert.glsl"
+        "deferred/lighting.frag.glsl")

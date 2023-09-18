@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./dynamic_uniform_buffers_base_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1685417059,
+                "input_attachment_index": 393222,
+                "location": 1,
+                "name": "inColor",
+                "offset": 1769235301,
+                "qualifiers": 4294967295,
+                "set": 17,
+                "size": 28271,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1685417059,
+                "input_attachment_index": 393222,
+                "location": 0,
+                "name": "inPos",
+                "offset": 1769235301,
+                "qualifiers": 4294967295,
+                "set": 17,
+                "size": 28271,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

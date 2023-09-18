@@ -26,5 +26,5 @@ add_sample(
     NAME "Conditional rendering"
     DESCRIPTION "Demonstrates usage of VK_EXT_conditional_rendering for conditionally toggling the visibility of sub-meshes of a complex glTF model."
     SHADER_FILES_GLSL
-        "conditional_rendering/model.vert"
-        "conditional_rendering/model.frag")
+        "conditional_rendering/model.vert.glsl"
+        "conditional_rendering/model.frag.glsl")

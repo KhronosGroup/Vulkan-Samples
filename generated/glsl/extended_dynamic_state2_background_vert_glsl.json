@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./extended_dynamic_state2_background_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 14,
+                "input_attachment_index": 2003134838,
+                "location": 0,
+                "name": "inPos",
+                "offset": 7299701,
+                "qualifiers": 4294967295,
+                "set": 327686,
+                "size": 327685,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 14,
+                "input_attachment_index": 2003134838,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 7299701,
+                "qualifiers": 4294967295,
+                "set": 327686,
+                "size": 327685,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

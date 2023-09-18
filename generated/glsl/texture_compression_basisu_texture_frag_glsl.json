@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./texture_compression_basisu_texture_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1919904879,
+                "input_attachment_index": 1852399981,
+                "location": 0,
+                "name": "inUV",
+                "offset": 1182037359,
+                "qualifiers": 4294967295,
+                "set": 6649449,
+                "size": 1130848626,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./deferred_lighting_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 1600482425,
+                "input_attachment_index": 30821,
+                "location": 4294967295,
+                "name": "gl_VertexIndex",
+                "offset": 1885560645,
+                "qualifiers": 42,
+                "set": 1449094247,
+                "size": 1953718128,
+                "type": "input",
+                "vec_size": 0
+            }
+        ]
+    },
+    "stage": "vert"
+}

@@ -43,4 +43,21 @@ std::string trim_left(const std::string &str, const std::string &chars)
 	result.erase(0, str.find_first_not_of(chars));
 	return result;
 }
+
+std::vector<std::string> split(const std::string &str, const std::string &delim)
+{
+	std::vector<std::string> result;
+	size_t                   start = 0;
+	size_t                   end   = 0;
+
+	while ((end = str.find(delim, start)) != std::string::npos)
+	{
+		result.push_back(str.substr(start, end - start));
+		start = end + delim.length();
+	}
+
+	result.push_back(str.substr(start));
+
+	return result;
+}
 }        // namespace vkb

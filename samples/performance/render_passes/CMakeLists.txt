@@ -26,5 +26,5 @@ add_sample(
     NAME "Render Passes"
     DESCRIPTION "Appropriate use of render pass attachments."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "base.vert.glsl"
+        "base.frag.glsl")

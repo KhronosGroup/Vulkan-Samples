@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shadows_shadowmap_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1197427783,
+                "input_attachment_index": 1651469383,
+                "location": 0,
+                "name": "position",
+                "offset": 327686,
+                "qualifiers": 4294967295,
+                "set": 7565168,
+                "size": 12,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

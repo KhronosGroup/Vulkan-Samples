@@ -26,9 +26,9 @@ add_sample_with_tags(
     NAME "HPP Instancing"
     DESCRIPTION "Instanced mesh rendering, uses a separate vertex buffer for instanced data, using vulkan.hpp"
     SHADER_FILES_GLSL
-        "instancing/instancing.vert"
-        "instancing/instancing.frag"
-        "instancing/planet.vert"
-        "instancing/planet.frag"
-        "instancing/starfield.vert"
-        "instancing/starfield.frag")
+        "instancing/instancing.vert.glsl"
+        "instancing/instancing.frag.glsl"
+        "instancing/planet.vert.glsl"
+        "instancing/planet.frag.glsl"
+        "instancing/starfield.vert.glsl"
+        "instancing/starfield.frag.glsl")

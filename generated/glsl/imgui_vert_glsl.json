@@ -1,0 +1,55 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./imgui_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 6649449,
+                "input_attachment_index": 1197427783,
+                "location": 1,
+                "name": "inUV",
+                "offset": 1768185701,
+                "qualifiers": 4294967295,
+                "set": 19,
+                "size": 1952671090,
+                "type": "input",
+                "vec_size": 2
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 6649449,
+                "input_attachment_index": 1197427783,
+                "location": 2,
+                "name": "inColor",
+                "offset": 1768185701,
+                "qualifiers": 4294967295,
+                "set": 19,
+                "size": 1952671090,
+                "type": "input",
+                "vec_size": 4
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 6649449,
+                "input_attachment_index": 1197427783,
+                "location": 0,
+                "name": "inPos",
+                "offset": 1768185701,
+                "qualifiers": 4294967295,
+                "set": 19,
+                "size": 1952671090,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "vert"
+}

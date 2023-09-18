@@ -1,0 +1,70 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./conditional_rendering_model_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1450469479,
+                "input_attachment_index": 196613,
+                "location": 0,
+                "name": "inNormal",
+                "offset": 15,
+                "qualifiers": 4294967295,
+                "set": 1667592307,
+                "size": 1766616681,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": 0,
+                "constant_id": 1450469479,
+                "input_attachment_index": 196613,
+                "location": 3,
+                "name": "inLightVec",
+                "offset": 15,
+                "qualifiers": 4294967295,
+                "set": 1667592307,
+                "size": 1766616681,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 1450469479,
+                "input_attachment_index": 196613,
+                "location": 2,
+                "name": "inViewVec",
+                "offset": 15,
+                "qualifiers": 4294967295,
+                "set": 1667592307,
+                "size": 1766616681,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1450469479,
+                "input_attachment_index": 196613,
+                "location": 1,
+                "name": "inColor",
+                "offset": 15,
+                "qualifiers": 4294967295,
+                "set": 1667592307,
+                "size": 1766616681,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

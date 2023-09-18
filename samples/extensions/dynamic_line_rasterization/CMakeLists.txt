@@ -26,8 +26,8 @@ add_sample(
     NAME "dynamic_line_rasterization"
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "dynamic_line_rasterization/base.vert"
-        "dynamic_line_rasterization/base.frag"
-        "dynamic_line_rasterization/grid.vert"
-        "dynamic_line_rasterization/grid.frag"
+        "dynamic_line_rasterization/base.vert.glsl"
+        "dynamic_line_rasterization/base.frag.glsl"
+        "dynamic_line_rasterization/grid.vert.glsl"
+        "dynamic_line_rasterization/grid.frag.glsl"
     )

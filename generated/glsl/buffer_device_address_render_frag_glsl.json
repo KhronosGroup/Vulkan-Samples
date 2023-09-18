@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./buffer_device_address_render_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1191182336,
+                "input_attachment_index": 1919904879,
+                "location": 0,
+                "name": "in_color",
+                "offset": 1868783470,
+                "qualifiers": 4294967295,
+                "set": 150996224,
+                "size": 7499628,
+                "type": "input",
+                "vec_size": 4
+            }
+        ]
+    },
+    "stage": "frag"
+}

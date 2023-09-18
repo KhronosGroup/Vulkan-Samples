@@ -26,6 +26,6 @@ add_sample_with_tags(
     NAME "Ray tracing basic"
     DESCRIPTION "Basic example for hardware accelerated ray tracing"
     SHADER_FILES_GLSL
-        "khr_ray_tracing_basic/raygen.rgen"
-        "khr_ray_tracing_basic/miss.rmiss"
-        "khr_ray_tracing_basic/closesthit.rchit")
+        "khr_ray_tracing_basic/raygen.rgen.glsl"
+        "khr_ray_tracing_basic/miss.rmiss.glsl"
+        "khr_ray_tracing_basic/closesthit.rchit.glsl")

@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shader_object_basic_uv_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 262167,
+                "input_attachment_index": 3,
+                "location": 0,
+                "name": "inColor",
+                "offset": 9,
+                "qualifiers": 4294967295,
+                "set": 262205,
+                "size": 3,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}

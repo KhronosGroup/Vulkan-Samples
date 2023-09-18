@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./conservative_rasterization_triangleoverlay_frag_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "frag"
+}

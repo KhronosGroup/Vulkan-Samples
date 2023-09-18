@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./patch_control_points_tess_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1953718128,
+                "input_attachment_index": 2019914866,
+                "location": 0,
+                "name": "inPos",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 33,
+                "size": 1348430951,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

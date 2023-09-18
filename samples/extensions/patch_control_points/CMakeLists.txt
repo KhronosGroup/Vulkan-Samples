@@ -26,7 +26,7 @@ add_sample(
     NAME "Patch Control Points"
     DESCRIPTION "Demonstrate how to use patch control points dynamically, which can reduce the number of pipeline objects that are need to be created."
     SHADER_FILES_GLSL
-    "patch_control_points/tess.frag"
-    "patch_control_points/tess.tesc"
-    "patch_control_points/tess.tese"
-    "patch_control_points/tess.vert")
+    "patch_control_points/tess.frag.glsl"
+    "patch_control_points/tess.tesc.glsl"
+    "patch_control_points/tess.tese.glsl"
+    "patch_control_points/tess.vert.glsl")

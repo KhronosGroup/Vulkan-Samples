@@ -26,11 +26,11 @@ add_sample(
     NAME "Extended Dynamic State 2"
     DESCRIPTION "Demonstrate how to use depth bias, primitive restart, rasterizer discard and patch control points dynamically, which can reduce the number of pipeline objects that are need to be created."
     SHADER_FILES_GLSL
-    "extended_dynamic_state2/baseline.vert"
-    "extended_dynamic_state2/baseline.frag"
-    "extended_dynamic_state2/tess.vert"
-    "extended_dynamic_state2/tess.tese"
-    "extended_dynamic_state2/tess.tesc"
-    "extended_dynamic_state2/tess.frag"
-    "extended_dynamic_state2/background.vert"
-    "extended_dynamic_state2/background.frag")
+    "extended_dynamic_state2/baseline.vert.glsl"
+    "extended_dynamic_state2/baseline.frag.glsl"
+    "extended_dynamic_state2/tess.vert.glsl"
+    "extended_dynamic_state2/tess.tese.glsl"
+    "extended_dynamic_state2/tess.tesc.glsl"
+    "extended_dynamic_state2/tess.frag.glsl"
+    "extended_dynamic_state2/background.vert.glsl"
+    "extended_dynamic_state2/background.frag.glsl")

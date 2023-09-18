@@ -26,5 +26,5 @@ add_sample(
     NAME "Swapchain Images"
     DESCRIPTION "Using triple buffering over double buffering."
     SHADER_FILES_GLSL
-        "base.vert"
-        "base.frag")
+        "base.vert.glsl"
+        "base.frag.glsl")

@@ -1,59 +1,59 @@
 {
     "skybox":
     {
-        "vert":"skybox.vert",
-        "frag":"skybox.frag"
+        "vert":"skybox.vert.glsl",
+        "frag":"skybox.frag.glsl"
     },
     "terrain":
     {
-        "vert":"terrain.vert",
-        "frag":"terrain.frag"
+        "vert":"terrain.vert.glsl",
+        "frag":"terrain.frag.glsl"
     },
     "basic":
     {
         "normals":
         {
-            "vert":"basic_normals.vert",
-            "frag":"basic_normals.frag"
+            "vert":"basic_normals.vert.glsl",
+            "frag":"basic_normals.frag.glsl"
         },
         "positions":
         {
-            "vert":"basic_pos.vert",
-            "frag":"basic_pos.frag"
+            "vert":"basic_pos.vert.glsl",
+            "frag":"basic_pos.frag.glsl"
         },
         "tex coords":
         {
-            "vert":"basic_uv.vert",
-            "frag":"basic_uv.frag"
+            "vert":"basic_uv.vert.glsl",
+            "frag":"basic_uv.frag.glsl"
         },
         "simple n dot l":
         {
-            "vert":"basic_n_dot_l.vert",
-            "frag":"basic_n_dot_l.frag"
+            "vert":"basic_n_dot_l.vert.glsl",
+            "frag":"basic_n_dot_l.frag.glsl"
         }
     },
     "post_process":
     {
-        "vert":"post_process_FSQ.vert",
+        "vert":"post_process_FSQ.vert.glsl",
         "frag":
         [
-            "post_process_brighten.frag",
-            "post_process_invert.frag",
-            "post_process_grayscale.frag",
-            "post_process_quantize.frag",
-            "post_process_edge_detection.frag",
-            "post_process_color_cycle.frag"
+            "post_process_brighten.frag.glsl",
+            "post_process_invert.frag.glsl",
+            "post_process_grayscale.frag.glsl",
+            "post_process_quantize.frag.glsl",
+            "post_process_edge_detection.frag.glsl",
+            "post_process_color_cycle.frag.glsl"
         ]
     },
     "material":
     {
         "vert":
         [
-            "material_scene.vert",
-            "material_rotates.vert",
-            "material_wave_x.vert",
-            "material_wave_y.vert",
-            "material_wave_z.vert"
+            "material_scene.vert.glsl",
+            "material_rotates.vert.glsl",
+            "material_wave_x.vert.glsl",
+            "material_wave_y.vert.glsl",
+            "material_wave_z.vert.glsl"
         ],
         "geo":
         [
@@ -63,10 +63,10 @@
         ],
         "frag":
         [
-            "material_normals.frag",
-            "material_texture.frag",
-            "material_reflective.frag",
-            "material_n_dot_l.frag"
+            "material_normals.frag.glsl",
+            "material_texture.frag.glsl",
+            "material_reflective.frag.glsl",
+            "material_n_dot_l.frag.glsl"
         ]
     }
 }

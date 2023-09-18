@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./compute_nbody_particle_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 100,
+                "input_attachment_index": 7364941,
+                "location": 0,
+                "name": "inGradientPos",
+                "offset": 1953393007,
+                "qualifiers": 4294967295,
+                "set": 33,
+                "size": 1919905603,
+                "type": "input",
+                "vec_size": 0
+            },
+            {
+                "array_size": 0,
+                "binding": 4294967295,
+                "columns": 0,
+                "constant_id": 100,
+                "input_attachment_index": 7364941,
+                "location": 4294967295,
+                "name": "gl_PointCoord",
+                "offset": 1953393007,
+                "qualifiers": 16,
+                "set": 33,
+                "size": 1919905603,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

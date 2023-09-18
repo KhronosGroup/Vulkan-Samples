@@ -26,7 +26,7 @@ add_sample_with_tags(
         NAME "Mesh Shader Culling"
         DESCRIPTION "Demonstrate and showcase a sample application using mesh shader culling functionality"
         SHADER_FILES_GLSL
-        "mesh_shader_culling/mesh_shader_culling.task"
-        "mesh_shader_culling/mesh_shader_culling.mesh"
-        "mesh_shader_culling/mesh_shader_culling.frag"
+        "mesh_shader_culling/mesh_shader_culling.task.glsl"
+        "mesh_shader_culling/mesh_shader_culling.mesh.glsl"
+        "mesh_shader_culling/mesh_shader_culling.frag.glsl"
         "mesh_shader_culling/mesh_shader_shared.h")

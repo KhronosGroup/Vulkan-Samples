@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Descriptor buffers"
     DESCRIPTION "Using VK_KHR_descriptor_buffer"
     SHADER_FILES_GLSL
-        "descriptor_buffer_basic/cube.vert"
-        "descriptor_buffer_basic/cube.frag")
+        "descriptor_buffer_basic/cube.vert.glsl"
+        "descriptor_buffer_basic/cube.frag.glsl")

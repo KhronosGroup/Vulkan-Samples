@@ -26,5 +26,5 @@ add_sample(
     NAME "Hello Triangle"
     DESCRIPTION "An introduction into Vulkan and its respective objects."
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "triangle.vert.glsl"
+        "triangle.frag.glsl")

@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Push descriptors"
     DESCRIPTION "Using VK_KHR_push_descriptor for push constant like use of descriptors"
     SHADER_FILES_GLSL
-        "push_descriptors/cube.vert"
-        "push_descriptors/cube.frag")
+        "push_descriptors/cube.vert.glsl"
+        "push_descriptors/cube.frag.glsl")

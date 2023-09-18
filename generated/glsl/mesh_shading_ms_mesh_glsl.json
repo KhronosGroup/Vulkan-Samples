@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./mesh_shading_ms_mesh_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "mesh"
+}

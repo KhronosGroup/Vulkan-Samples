@@ -26,7 +26,7 @@ add_sample(
     NAME "RP Multithreading"
     DESCRIPTION "Multithreading with multiple render passes."
     SHADER_FILES_GLSL
-        "shadows/shadowmap.vert"
-        "shadows/shadowmap.frag"
-        "shadows/main.vert"
-        "shadows/main.frag")
+        "shadows/shadowmap.vert.glsl"
+        "shadows/shadowmap.frag.glsl"
+        "shadows/main.vert.glsl"
+        "shadows/main.frag.glsl")

@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./shader_object_post_process_brighten_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1919904879,
+                "input_attachment_index": 0,
+                "location": 0,
+                "name": "inUV",
+                "offset": 3,
+                "qualifiers": 4294967295,
+                "set": 262215,
+                "size": 2,
+                "type": "input",
+                "vec_size": 2
+            }
+        ]
+    },
+    "stage": "frag"
+}

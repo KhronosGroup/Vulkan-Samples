@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./extended_dynamic_state2_tess_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 262149,
+                "input_attachment_index": 1130327143,
+                "location": 0,
+                "name": "inPos",
+                "offset": 1952671090,
+                "qualifiers": 4294967295,
+                "set": 458758,
+                "size": 6649449,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 262149,
+                "input_attachment_index": 1130327143,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 1952671090,
+                "qualifiers": 4294967295,
+                "set": 458758,
+                "size": 6649449,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

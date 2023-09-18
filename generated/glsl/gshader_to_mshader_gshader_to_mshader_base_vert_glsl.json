@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./gshader_to_mshader_gshader_to_mshader_base_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1953718128,
+                "input_attachment_index": 2,
+                "location": 1,
+                "name": "inNormal",
+                "offset": 1279741775,
+                "qualifiers": 4294967295,
+                "set": 19,
+                "size": 1885560645,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1953718128,
+                "input_attachment_index": 2,
+                "location": 0,
+                "name": "inPos",
+                "offset": 1279741775,
+                "qualifiers": 4294967295,
+                "set": 19,
+                "size": 1885560645,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

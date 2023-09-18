@@ -26,8 +26,8 @@ add_sample_with_tags(
     NAME "Conservative rasterization"
     DESCRIPTION "Uses an offscreen buffer with lower resolution to demonstrate the effect of conservative rasterization (VK_EXT_conservative_rasterization)"
     SHADER_FILES_GLSL
-        "conservative_rasterization/fullscreen.vert"
-        "conservative_rasterization/fullscreen.frag"        
-        "conservative_rasterization/triangle.vert"
-        "conservative_rasterization/triangle.frag"
-        "conservative_rasterization/triangleoverlay.frag")
+        "conservative_rasterization/fullscreen.vert.glsl"
+        "conservative_rasterization/fullscreen.frag.glsl"        
+        "conservative_rasterization/triangle.vert.glsl"
+        "conservative_rasterization/triangle.frag.glsl"
+        "conservative_rasterization/triangleoverlay.frag.glsl")

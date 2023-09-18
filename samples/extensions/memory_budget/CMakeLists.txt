@@ -27,9 +27,9 @@ add_sample_with_tags(
         NAME "Memory Budget"
         DESCRIPTION "Modifications were created by Holochip Corporation. Physical device memory usage/budget are displayed using memory budget extension features."
         SHADER_FILES_GLSL
-        "instancing/instancing.vert"
-        "instancing/instancing.frag"
-        "instancing/planet.vert"
-        "instancing/planet.frag"
-        "instancing/starfield.vert"
-        "instancing/starfield.frag")
+        "instancing/instancing.vert.glsl"
+        "instancing/instancing.frag.glsl"
+        "instancing/planet.vert.glsl"
+        "instancing/planet.frag.glsl"
+        "instancing/starfield.vert.glsl"
+        "instancing/starfield.frag.glsl")

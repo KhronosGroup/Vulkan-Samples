@@ -18,6 +18,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 
 namespace vkb
 {
@@ -35,4 +36,9 @@ std::string trim_right(const std::string &str, const std::string &chars = " ");
  * @brief Removes all occurrences of a set of characters from the beginning of a string.
  */
 std::string trim_left(const std::string &str, const std::string &chars = " ");
+
+/**
+ * @brief Split a string into a vector of strings.
+ */
+std::vector<std::string> split(const std::string &str, const std::string &delim = " ");
 }        // namespace vkb

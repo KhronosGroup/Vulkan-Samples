@@ -1,0 +1,25 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./async_compute_shadow_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 5,
+                "location": 0,
+                "name": "position",
+                "offset": 35,
+                "qualifiers": 4294967295,
+                "set": 262216,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "vert"
+}

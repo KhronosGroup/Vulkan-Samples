@@ -26,9 +26,9 @@ add_sample(
     NAME "Constant Data"
     DESCRIPTION "Comparing the various ways of specifying shader constants."
     SHADER_FILES_GLSL
-        "constant_data/push_constant.vert"
-        "constant_data/push_constant.frag"
-        "constant_data/ubo.vert"
-        "constant_data/ubo.frag"
-        "constant_data/buffer_array.vert"
-        "constant_data/buffer_array.frag")
+        "constant_data/push_constant.vert.glsl"
+        "constant_data/push_constant.frag.glsl"
+        "constant_data/ubo.vert.glsl"
+        "constant_data/ubo.frag.glsl"
+        "constant_data/buffer_array.vert.glsl"
+        "constant_data/buffer_array.frag.glsl")

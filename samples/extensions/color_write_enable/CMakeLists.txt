@@ -26,8 +26,8 @@ add_sample(
     NAME "ColorWriteEnableEXT sample"
     DESCRIPTION "Dynamic toggle of a color blend attachment display."
     SHADER_FILES_GLSL
-        "color_write_enable/triangle_separate_channels.vert"
-        "color_write_enable/triangle_separate_channels.frag"
-        "color_write_enable/composition.vert"
-        "color_write_enable/composition.frag"
+        "color_write_enable/triangle_separate_channels.vert.glsl"
+        "color_write_enable/triangle_separate_channels.frag.glsl"
+        "color_write_enable/composition.vert.glsl"
+        "color_write_enable/composition.frag.glsl"
     )

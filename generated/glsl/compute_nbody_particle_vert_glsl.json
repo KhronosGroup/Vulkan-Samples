@@ -1,0 +1,40 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./compute_nbody_particle_vert_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 0,
+                "name": "inPos",
+                "offset": 1314586702,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 4
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 0,
+                "input_attachment_index": 1526728539,
+                "location": 1,
+                "name": "inVel",
+                "offset": 1314586702,
+                "qualifiers": 4294967295,
+                "set": 0,
+                "size": 1313669204,
+                "type": "input",
+                "vec_size": 4
+            }
+        ]
+    },
+    "stage": "vert"
+}

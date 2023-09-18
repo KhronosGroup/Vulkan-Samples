@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Texture loading and mapping"
     DESCRIPTION "Loading a texture and displaying it on a simple object"
     SHADER_FILES_GLSL
-        "texture_loading/texture.vert"
-        "texture_loading/texture.frag")
+        "texture_loading/texture.vert.glsl"
+        "texture_loading/texture.frag.glsl")

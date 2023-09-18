@@ -26,6 +26,6 @@ add_sample_with_tags(
         NAME "Buffer device address"
         DESCRIPTION "Demonstrates use of buffer device address for flexible vertex attribute fetch"
         SHADER_FILES_GLSL
-                "buffer_device_address/update_vbo.comp"
-                "buffer_device_address/render.vert"
-                "buffer_device_address/render.frag")
+                "buffer_device_address/update_vbo.comp.glsl"
+                "buffer_device_address/render.vert.glsl"
+                "buffer_device_address/render.frag.glsl")

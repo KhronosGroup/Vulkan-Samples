@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Using Vulkan profiles"
     DESCRIPTION "Shows how to use a Vulkan profile to simplify device creation"
     SHADER_FILES_GLSL
-        "profiles/profiles.vert"
-        "profiles/profiles.frag")
+        "profiles/profiles.vert.glsl"
+        "profiles/profiles.frag.glsl")

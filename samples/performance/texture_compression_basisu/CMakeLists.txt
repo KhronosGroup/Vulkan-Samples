@@ -26,5 +26,5 @@ add_sample_with_tags(
     NAME "Basis Universal texture compression"
     DESCRIPTION "Loading and displaying a Basis Universal compressed texture from KTX2"
     SHADER_FILES_GLSL
-        "texture_compression_basisu/texture.vert"
-        "texture_compression_basisu/texture.frag")
+        "texture_compression_basisu/texture.vert.glsl"
+        "texture_compression_basisu/texture.frag.glsl")

@@ -1,0 +1,9 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./khr_ray_tracing_basic_closesthit_rchit_glsl.spv",
+    "resources": {
+        "input": []
+    },
+    "stage": "rchit"
+}

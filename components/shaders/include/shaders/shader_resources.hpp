@@ -47,35 +47,20 @@ struct ShaderResourceQualifiers
 /// Used by the shader module.
 struct ShaderResource
 {
-	vk::ShaderStageFlagBits stages;
-
+	std::string        name;
 	ShaderResourceType type;
 
-	ShaderResourceMode mode;
-
 	uint32_t set;
-
 	uint32_t binding;
-
 	uint32_t location;
-
 	uint32_t input_attachment_index;
-
 	uint32_t vec_size;
-
 	uint32_t columns;
-
 	uint32_t array_size;
-
 	uint32_t offset;
-
 	uint32_t size;
-
 	uint32_t constant_id;
-
 	uint32_t qualifiers;
-
-	std::string name;
 };
 
 class ShaderResourceSet

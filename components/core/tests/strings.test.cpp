@@ -46,3 +46,11 @@ TEST_CASE("vkb::trim_left", "[common]")
 	REQUIRE(trim_left("ignore   hello", " ") == "ignore   hello");
 	REQUIRE(trim_left("complexhello", "complex") == "hello");        // remember we are trimming a set until the first non-match
 }
+
+TEST_CASE("vkb::split", "[common]")
+{
+	REQUIRE(split("hello world") == std::vector<std::string>{"hello", "world"});
+	REQUIRE(split("hello world", " ") == std::vector<std::string>{"hello", "world"});
+	REQUIRE(split("hello world", "world") == std::vector<std::string>{"hello ", ""});
+	REQUIRE(split("hello_world", "_") == std::vector<std::string>{"hello", "world"});
+}

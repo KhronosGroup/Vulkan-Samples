@@ -1,0 +1,100 @@
+{
+    "defines": [],
+    "entry": "main",
+    "file": "./hdr_gbuffer_frag_glsl.spv",
+    "resources": {
+        "input": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 0,
+                "name": "inUVW",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 5,
+                "columns": 4,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 5,
+                "name": "inInvModelView",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 4
+            },
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 3,
+                "name": "inViewVec",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 2,
+                "name": "inNormal",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 4,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 4,
+                "name": "inLightVec",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            },
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": 0,
+                "constant_id": 1309101312,
+                "input_attachment_index": 0,
+                "location": 1,
+                "name": "inPos",
+                "offset": 0,
+                "qualifiers": 4294967295,
+                "set": 1650524280,
+                "size": 0,
+                "type": "input",
+                "vec_size": 3
+            }
+        ]
+    },
+    "stage": "frag"
+}
