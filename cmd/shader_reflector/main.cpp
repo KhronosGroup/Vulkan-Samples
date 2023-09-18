@@ -8,6 +8,20 @@
 #include <vulkan/vulkan.hpp>
 using namespace nlohmann;
 
+const std::vector<vkb::ShaderResourceType> REFLECTED_TYPES = {
+    vkb::ShaderResourceType::Input,
+    vkb::ShaderResourceType::InputAttachment,
+    vkb::ShaderResourceType::Output,
+    vkb::ShaderResourceType::Image,
+    vkb::ShaderResourceType::ImageSampler,
+    vkb::ShaderResourceType::ImageStorage,
+    vkb::ShaderResourceType::Sampler,
+    vkb::ShaderResourceType::BufferUniform,
+    vkb::ShaderResourceType::BufferStorage,
+    vkb::ShaderResourceType::PushConstant,
+    vkb::ShaderResourceType::SpecializationConstant,
+};
+
 CUSTOM_MAIN(context)
 {
 	CLI::App app{"Shader Reflector"};
@@ -49,30 +63,13 @@ CUSTOM_MAIN(context)
 
 	json resources;
 
+	for (auto type : REFLECTED_TYPES)
 	{
-		auto inputs = resource_set.get_resources(vkb::ShaderResourceType::Input);
-
+		auto              res = resource_set.get_resources(type);
 		std::vector<json> shader_resources;
-
-		for (auto &input : inputs)
-		{
-			json resource;
-			resource["name"]                   = input.name;
-			resource["type"]                   = "input";
-			resource["location"]               = input.location;
-			resource["input_attachment_index"] = input.input_attachment_index;
-			resource["vec_size"]               = input.vec_size;
-			resource["columns"]                = input.columns;
-			resource["array_size"]             = input.array_size;
-			resource["offset"]                 = input.offset;
-			resource["size"]                   = input.size;
-			resource["constant_id"]            = input.constant_id;
-			resource["qualifiers"]             = input.qualifiers;
-
-			shader_resources.push_back(resource);
-		}
-
-		resources["input"] = shader_resources;
+		std::transform(res.begin(), res.end(), std::back_inserter(shader_resources),
+		               [](const vkb::ShaderResource &input) { return input.to_json(); });
+		resources[vkb::to_string(type)] = shader_resources;
 	}
 
 	reflection["resources"] = resources;

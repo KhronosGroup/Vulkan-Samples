@@ -42,6 +42,23 @@ SUPPORTED_SHADER_STAGES = [
     "task", 
     "mesh"]
 
+def deduce_hlsl_profile(stage):
+    if stage == "vert":
+        return "vs_6_0"
+    elif stage == "tesc":
+        return "hs_6_0"
+    elif stage == "tese":
+        return "ds_6_0"
+    elif stage == "geom":
+        return "gs_6_0"
+    elif stage == "frag":
+        return "ps_6_0"
+    elif stage == "comp":
+        return "cs_6_0"
+    else:
+        print("ERROR: unsupported shader stage")
+        sys.exit(1)
+
 def make_dir_if_not_exists(file):
     dir = os.path.dirname(file)
     if not os.path.exists(dir):
@@ -64,26 +81,19 @@ def check_required_executables():
     SPIRV_VALIDATOR_PATH = which(SPIRV_VALIDATOR_EXECUTABLE)
     
 
-def process_hlsl_shader(args):
-    print("ERROR: HLSL shader compilation not supported - yet")
-    sys.exit(1)
+def process_hlsl_shader(args, stage):
+    res = subprocess.run([HLSL_COMPILER_EXECUTABLE, "-fspv-target-env=vulkan1.3", "-T", deduce_hlsl_profile(stage), "-E", "main", "-Fo", args.output_file, "-spirv", args.input_file])
 
-def process_glsl_shader(args):
-    # get the file extension of the input file
-    file = os.path.split(args.input_file)[1]
-    parts = file.split(".")
-
-    if len(parts) != 3:
-        print("ERROR: input file name is not valid (must be <name>.<stage>.<ext>)")
+    if res.returncode != 0:
+        print("ERROR: shader compilation failed")
         sys.exit(1)
 
-    # check that the input file extension is supported
-    if parts[1] not in SUPPORTED_SHADER_STAGES:
-        print("ERROR: input file extension not supported")
-        sys.exit(1)
+    # exit with success
+    sys.exit(0)
 
+def process_glsl_shader(args, stage):
     # compile the shader
-    res = subprocess.run([GLSL_COMPILER_PATH, "-fshader-stage={}".format(parts[1]), args.input_file, "--target-env=vulkan1.3", "-o", args.output_file])
+    res = subprocess.run([GLSL_COMPILER_PATH, "-fshader-stage={}".format(stage), args.input_file, "--target-env=vulkan1.3", "-o", args.output_file])
 
     if res.returncode != 0:
         print("ERROR: shader compilation failed")
@@ -121,10 +131,30 @@ if __name__ == "__main__":
 
     make_dir_if_not_exists(args.output_file)
 
+     # get the file extension of the input file
+    file = os.path.split(args.input_file)[1]
+    parts = file.split(".")
+
+    if len(parts) != 3:
+        print("ERROR: input file name is not valid (must be <name>.<stage>.<langauge>)")
+        sys.exit(1)
+
+    stage = parts[1]
+    langauge = parts[2]
+
+    # check that the input file extension is supported
+    if stage not in SUPPORTED_SHADER_STAGES:
+        print("ERROR: input file extension not supported")
+        sys.exit(1)
+
+    if args.language != langauge:
+        print("ERROR: input file extension does not match language")
+        sys.exit(1)
+
     if args.language == "hlsl":
-        process_hlsl_shader(args)
+        process_hlsl_shader(args, stage)
     elif args.language == "glsl":
-        process_glsl_shader(args)
+        process_glsl_shader(args, stage)
     else:
         print("ERROR: shader language not supported")
         sys.exit(1)

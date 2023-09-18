@@ -32,8 +32,10 @@ vkb__register_component(
         include/shaders/shader_handle.hpp
         include/shaders/shader_resources.hpp
     SRC
+        src/shader_resources.cpp
         src/reflectors/spirv_reflector.cpp
     LINK_LIBS
         vkb__core
         spirv-reflect-static
+        nlohmann_json::nlohmann_json
 )

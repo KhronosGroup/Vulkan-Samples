@@ -3,23 +3,68 @@
     "entry": "main",
     "file": "./conservative_rasterization_fullscreen_frag_glsl.spv",
     "resources": {
-        "input": [
+        "BufferStorage": [],
+        "BufferUniform": [],
+        "Image": [],
+        "ImageSampler": [
+            {
+                "array_size": 0,
+                "binding": 1,
+                "columns": null,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Static",
+                "name": "samplerColor",
+                "offset": null,
+                "qualifiers": 1,
+                "set": 0,
+                "size": null,
+                "type": "ImageSampler",
+                "vec_size": null
+            }
+        ],
+        "ImageStorage": [],
+        "Input": [
             {
                 "array_size": 0,
                 "binding": 0,
                 "columns": 0,
-                "constant_id": 524292,
-                "input_attachment_index": 1448439401,
+                "constant_id": null,
+                "input_attachment_index": null,
                 "location": 0,
+                "mode": "Unknown",
                 "name": "inUV",
-                "offset": 30,
-                "qualifiers": 4294967295,
-                "set": 0,
-                "size": 0,
-                "type": "input",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Input",
                 "vec_size": 2
             }
-        ]
+        ],
+        "InputAttachment": [],
+        "Output": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": 0,
+                "mode": "Unknown",
+                "name": "outFragColor",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Output",
+                "vec_size": 4
+            }
+        ],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "frag"
 }

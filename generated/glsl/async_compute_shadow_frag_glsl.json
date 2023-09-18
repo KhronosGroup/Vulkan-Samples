@@ -3,7 +3,17 @@
     "entry": "main",
     "file": "./async_compute_shadow_frag_glsl.spv",
     "resources": {
-        "input": []
+        "BufferStorage": [],
+        "BufferUniform": [],
+        "Image": [],
+        "ImageSampler": [],
+        "ImageStorage": [],
+        "Input": [],
+        "InputAttachment": [],
+        "Output": [],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "frag"
 }

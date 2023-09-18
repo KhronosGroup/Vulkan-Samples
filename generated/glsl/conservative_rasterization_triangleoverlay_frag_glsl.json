@@ -3,7 +3,34 @@
     "entry": "main",
     "file": "./conservative_rasterization_triangleoverlay_frag_glsl.spv",
     "resources": {
-        "input": []
+        "BufferStorage": [],
+        "BufferUniform": [],
+        "Image": [],
+        "ImageSampler": [],
+        "ImageStorage": [],
+        "Input": [],
+        "InputAttachment": [],
+        "Output": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": 0,
+                "mode": "Unknown",
+                "name": "outFragColor",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Output",
+                "vec_size": 4
+            }
+        ],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "frag"
 }

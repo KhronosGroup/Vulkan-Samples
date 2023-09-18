@@ -3,23 +3,84 @@
     "entry": "main",
     "file": "./multi_draw_indirect_cull_comp_glsl.spv",
     "resources": {
-        "input": [
+        "BufferStorage": [
             {
                 "array_size": 0,
-                "binding": 4294967295,
-                "columns": 0,
-                "constant_id": 0,
-                "input_attachment_index": 0,
-                "location": 4294967295,
-                "name": "gl_GlobalInvocationID",
-                "offset": 0,
-                "qualifiers": 28,
+                "binding": 0,
+                "columns": null,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Static",
+                "name": "model_buffer",
+                "offset": null,
+                "qualifiers": 7,
                 "set": 0,
-                "size": 0,
-                "type": "input",
+                "size": null,
+                "type": "BufferStorage",
+                "vec_size": null
+            },
+            {
+                "array_size": 0,
+                "binding": 3,
+                "columns": null,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Static",
+                "name": "command_buffer",
+                "offset": null,
+                "qualifiers": 7,
+                "set": 0,
+                "size": null,
+                "type": "BufferStorage",
+                "vec_size": null
+            }
+        ],
+        "BufferUniform": [
+            {
+                "array_size": 0,
+                "binding": 2,
+                "columns": null,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Static",
+                "name": "global_uniform",
+                "offset": null,
+                "qualifiers": 6,
+                "set": 0,
+                "size": null,
+                "type": "BufferUniform",
+                "vec_size": null
+            }
+        ],
+        "Image": [],
+        "ImageSampler": [],
+        "ImageStorage": [],
+        "Input": [
+            {
+                "array_size": 0,
+                "binding": null,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Static",
+                "name": "gl_GlobalInvocationID",
+                "offset": null,
+                "qualifiers": 28,
+                "set": null,
+                "size": null,
+                "type": "Input",
                 "vec_size": 3
             }
-        ]
+        ],
+        "InputAttachment": [],
+        "Output": [],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "comp"
 }

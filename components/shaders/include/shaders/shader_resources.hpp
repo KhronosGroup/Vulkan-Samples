@@ -1,5 +1,6 @@
 #pragma once
 
+#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 #include <vulkan/vulkan.hpp>
@@ -24,6 +25,8 @@ enum class ShaderResourceType
 	All
 };
 
+std::string to_string(const ShaderResourceType &type);
+
 /// This determines the type and method of how descriptor set should be created and bound
 enum class ShaderResourceMode
 {
@@ -31,6 +34,8 @@ enum class ShaderResourceMode
 	Dynamic,
 	UpdateAfterBind
 };
+
+std::string to_string(const ShaderResourceMode &mode);
 
 /// A bitmask of qualifiers applied to a resource
 struct ShaderResourceQualifiers
@@ -49,19 +54,22 @@ struct ShaderResource
 {
 	std::string        name;
 	ShaderResourceType type;
+	ShaderResourceMode mode;
 
-	uint32_t set;
-	uint32_t binding;
-	uint32_t location;
-	uint32_t input_attachment_index;
-	uint32_t vec_size;
-	uint32_t columns;
-	uint32_t array_size;
-	uint32_t offset;
-	uint32_t size;
-	uint32_t constant_id;
-	uint32_t qualifiers;
-};
+	uint32_t set                    = UINT32_MAX;
+	uint32_t binding                = UINT32_MAX;
+	uint32_t location               = UINT32_MAX;
+	uint32_t input_attachment_index = UINT32_MAX;
+	uint32_t vec_size               = UINT32_MAX;
+	uint32_t columns                = UINT32_MAX;
+	uint32_t array_size             = UINT32_MAX;
+	uint32_t offset                 = UINT32_MAX;
+	uint32_t size                   = UINT32_MAX;
+	uint32_t constant_id            = UINT32_MAX;
+	uint32_t qualifiers             = UINT32_MAX;
+
+	nlohmann::json to_json() const;
+};        // namespace vkb
 
 class ShaderResourceSet
 {

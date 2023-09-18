@@ -3,23 +3,51 @@
     "entry": "main",
     "file": "./gshader_to_mshader_gshader_to_mshader_base_frag_glsl.spv",
     "resources": {
-        "input": [
+        "BufferStorage": [],
+        "BufferUniform": [],
+        "Image": [],
+        "ImageSampler": [],
+        "ImageStorage": [],
+        "Input": [
             {
                 "array_size": 0,
                 "binding": 0,
                 "columns": 0,
-                "constant_id": 450,
-                "input_attachment_index": 12,
+                "constant_id": null,
+                "input_attachment_index": null,
                 "location": 0,
+                "mode": "Unknown",
                 "name": "inColor",
-                "offset": 196611,
-                "qualifiers": 4294967295,
-                "set": 393221,
-                "size": 2,
-                "type": "input",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Input",
                 "vec_size": 3
             }
-        ]
+        ],
+        "InputAttachment": [],
+        "Output": [
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": 0,
+                "mode": "Unknown",
+                "name": "outFragColor",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Output",
+                "vec_size": 4
+            }
+        ],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "frag"
 }

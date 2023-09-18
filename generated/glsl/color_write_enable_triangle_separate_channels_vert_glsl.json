@@ -3,23 +3,67 @@
     "entry": "main",
     "file": "./color_write_enable_triangle_separate_channels_vert_glsl.spv",
     "resources": {
-        "input": [
+        "BufferStorage": [],
+        "BufferUniform": [],
+        "Image": [],
+        "ImageSampler": [],
+        "ImageStorage": [],
+        "Input": [
             {
                 "array_size": 0,
-                "binding": 4294967295,
+                "binding": null,
                 "columns": 0,
-                "constant_id": 1953393007,
-                "input_attachment_index": 1953067887,
-                "location": 4294967295,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Unknown",
                 "name": "gl_VertexIndex",
-                "offset": 1,
+                "offset": null,
                 "qualifiers": 42,
-                "set": 1702130277,
-                "size": 1348430951,
-                "type": "input",
+                "set": null,
+                "size": null,
+                "type": "Input",
                 "vec_size": 0
             }
-        ]
+        ],
+        "InputAttachment": [],
+        "Output": [
+            {
+                "array_size": 0,
+                "binding": null,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": null,
+                "mode": "Unknown",
+                "name": "",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Output",
+                "vec_size": 0
+            },
+            {
+                "array_size": 0,
+                "binding": 0,
+                "columns": 0,
+                "constant_id": null,
+                "input_attachment_index": null,
+                "location": 0,
+                "mode": "Unknown",
+                "name": "out_color",
+                "offset": null,
+                "qualifiers": null,
+                "set": null,
+                "size": null,
+                "type": "Output",
+                "vec_size": 3
+            }
+        ],
+        "PushConstant": [],
+        "Sampler": [],
+        "SpecializationConstant": []
     },
     "stage": "vert"
 }

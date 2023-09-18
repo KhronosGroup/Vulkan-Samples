@@ -44,19 +44,71 @@ std::vector<ShaderResource> SpirvReflector::reflect_output_variables(const SpvRe
 
 	for (const auto *output : output_variables)
 	{
+		if (!output)
+		{
+			continue;
+		}
+
 		ShaderResource resource;
 		resource.array_size = output->array.dims_count;
 		resource.binding    = output->location;
 		resource.columns    = output->numeric.matrix.column_count;
 		resource.vec_size   = output->numeric.vector.component_count;
 		resource.location   = output->location;
-		resource.name       = output->name;
+		resource.name       = output->name ? output->name : "";
 		resource.qualifiers = output->built_in;
 		resource.type       = ShaderResourceType::Output;
 		resources.push_back(resource);
 	}
 
 	return resources;
+}
+
+ShaderResourceType to_shader_resource_type(SpvReflectDescriptorType type)
+{
+	switch (type)
+	{
+		case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLER:
+			return ShaderResourceType::Sampler;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+			return ShaderResourceType::ImageSampler;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+			return ShaderResourceType::Image;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+			return ShaderResourceType::ImageStorage;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+			return ShaderResourceType::BufferUniform;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+			return ShaderResourceType::BufferStorage;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+			return ShaderResourceType::BufferUniform;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+			return ShaderResourceType::BufferStorage;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+			return ShaderResourceType::BufferUniform;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+			return ShaderResourceType::BufferStorage;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+			return ShaderResourceType::InputAttachment;
+		case SPV_REFLECT_DESCRIPTOR_TYPE_ACCELERATION_STRUCTURE_KHR:
+			return ShaderResourceType::BufferStorage;
+
+		default:
+			LOGE("Unknown descriptor type");
+			return ShaderResourceType::All;
+	}
+}
+
+ShaderResourceMode to_shader_resource_mode(SpvReflectDescriptorType type)
+{
+	switch (type)
+	{
+		case SPV_REFLECT_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+		case SPV_REFLECT_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+			return ShaderResourceMode::Dynamic;
+		default:
+			return ShaderResourceMode::Static;
+	}
 }
 
 std::vector<ShaderResource> SpirvReflector::reflect_descriptor_bindings(const SpvReflectShaderModule &module) const
@@ -71,12 +123,13 @@ std::vector<ShaderResource> SpirvReflector::reflect_descriptor_bindings(const Sp
 	for (const auto *desc_binding : descriptor_bindings)
 	{
 		ShaderResource resource;
+		resource.mode       = to_shader_resource_mode(desc_binding->descriptor_type);
 		resource.array_size = desc_binding->array.dims_count;
 		resource.binding    = desc_binding->binding;
 		resource.name       = desc_binding->name;
 		resource.qualifiers = desc_binding->descriptor_type;
 		resource.set        = desc_binding->set;
-		resource.type       = ShaderResourceType::BufferUniform;
+		resource.type       = to_shader_resource_type(desc_binding->descriptor_type);
 		resources.push_back(resource);
 	}
 
