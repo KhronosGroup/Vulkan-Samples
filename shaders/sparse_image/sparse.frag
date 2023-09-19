@@ -39,9 +39,9 @@ void main() {
 	for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
 	{
 		residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-		color.x = color.x / (lod + lod + 1);
-		color.y = color.y / (lod + lod + 1);
-		color.z = color.z / (lod + lod + 1);
+		color.x = color.x / (lod * 5 + 1);
+		color.y = color.y / (lod * 5 + 1);
+		color.z = color.z / (lod * 5 + 1);
 	}
 
 	bool texelResident = sparseTexelsResidentARB(residencyCode);

@@ -19,8 +19,8 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 23;
-size_t const ON_SCREEN_VERTICAL_BLOCKS   = 13;
+size_t const ON_SCREEN_HORIZONTAL_BLOCKS = 50;
+size_t const ON_SCREEN_VERTICAL_BLOCKS   = 30;
 double const FOV_DEGREES                 = 60.0;
 double const MIP_LEVEL_MARGIN            = 0.2;
 
@@ -67,8 +67,8 @@ class SparseImage : public ApiVulkanSample
 	{
 		size_t num_rows;
 		size_t num_columns;
-		size_t num_blocks;
-		size_t block_base_index;        
+		size_t mip_num_pages;
+		size_t mip_base_page_index;        
 		size_t width;
 		size_t height;
 	};
@@ -77,8 +77,8 @@ class SparseImage : public ApiVulkanSample
 	{
 		uint32_t row;
 		uint32_t column;
-		double   old_mip_level;
-		double   new_mip_level;
+		uint8_t  old_mip_level;
+		uint8_t  new_mip_level;
 		bool     on_screen;
 	};
 
@@ -93,7 +93,8 @@ class SparseImage : public ApiVulkanSample
 	{
 		bool                                 bound;
 		bool                                 valid;
-		bool                                 gen_mip_required;        
+		bool                                 gen_mip_required;   
+		bool                                 fixed;
 		size_t                               memory_index;
 		std::list<std::pair<size_t, size_t>> render_required_list;
 	};
@@ -107,8 +108,8 @@ class SparseImage : public ApiVulkanSample
 
 	struct MipBlock
 	{
-		double mip_level;
-		bool   on_screen;
+		uint8_t mip_level;
+		bool    on_screen;
 	};
 
 	struct VirtualTexture
@@ -237,19 +238,19 @@ class SparseImage : public ApiVulkanSample
 
 	void create_sparse_texture_image();
 
+	void                      update_mvp();
 	struct MemPageDescription get_mem_page_description(size_t memory_index);
 	void                      calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
 	void                      compare_mips_table();
 	void                      calculate_required_memory_layout();
-	void                      get_associated_memory_blocks(const TextureBlock &on_screen_block);
+	void                      process_texture_block(const TextureBlock &on_screen_block);
 	void                      get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level, std::list<size_t> &index_list);
 	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
 	void                      separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
 	void                      transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint8_t mip_level);
-
-	uint32_t                  get_mip_level(size_t page_index);
-
+	uint8_t                   get_mip_level(size_t page_index);
+	size_t                    get_memory_index(struct MemPageDescription mem_page_desc);
 
 	// Override basic framework functionality
 	void build_command_buffers() override;
