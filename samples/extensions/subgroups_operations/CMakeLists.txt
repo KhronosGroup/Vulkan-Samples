@@ -28,4 +28,5 @@ add_sample(
     SHADER_FILES_GLSL
     "subgroups_operations/ocean.vert"
     "subgroups_operations/ocean.frag"
-    "subgroups_operations/ocean_fft.comp")
+    "subgroups_operations/ocean_fft.comp"
+    "subgroups_operations/butterfly_precomp.comp")

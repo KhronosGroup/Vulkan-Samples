@@ -21,6 +21,7 @@
 #include <random>
 
 #define GRAVITY 9.81f
+#define DISPLACEMENT_MAP_DIM 256
 
 void SubgroupsOperations::Pipeline::destroy(VkDevice device)
 {
@@ -98,6 +99,8 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	create_descriptor_set_layout();
 	create_descriptor_set();
 	create_pipelines();
+
+	create_butterfly_texture();
 
 	build_command_buffers();
 
@@ -287,6 +290,8 @@ void SubgroupsOperations::load_assets()
 {
 	generate_plane();
 
+	log_2_N = log(DISPLACEMENT_MAP_DIM) / log(2);
+
 	// generate fft inputs
 	h_tilde_0.clear();
 	h_tilde_0_conj.clear();
@@ -439,9 +444,11 @@ void SubgroupsOperations::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u),        // FFTParametersUbo, CameraUbo, ComputeUbo
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u),
+	};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2u);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 3u);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -737,40 +744,113 @@ std::unique_ptr<vkb::VulkanSample> create_subgroups_operations()
 	return std::make_unique<SubgroupsOperations>();
 }
 
-void SubgroupsOperations::createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment *attachment) {
-    attachment->format = format;
+// TODO: move out usage to the function arguments
+void SubgroupsOperations::createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment &attachment)
+{
+	attachment.format = format;
 
-    VkImageCreateInfo image = vkb::initializers::image_create_info();
-    image.imageType         = VK_IMAGE_TYPE_2D;
-    image.format            = format;
-    image.extent.width      = width;
-    image.extent.height     = height;
-    image.extent.depth      = 1;
-    image.mipLevels         = 1;
-    image.arrayLayers       = 1;
-    image.samples           = VK_SAMPLE_COUNT_1_BIT;
-    image.tiling            = VK_IMAGE_TILING_OPTIMAL;
-    image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
+	VkImageCreateInfo image = vkb::initializers::image_create_info();
+	image.imageType         = VK_IMAGE_TYPE_2D;
+	image.format            = format;
+	image.extent.width      = width;
+	image.extent.height     = height;
+	image.extent.depth      = 1;
+	image.mipLevels         = 1;
+	image.arrayLayers       = 1;
+	image.samples           = VK_SAMPLE_COUNT_1_BIT;
+	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
+	image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
 
-    VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
-    VkMemoryRequirements memory_requirements;
+	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
+	VkMemoryRequirements memory_requirements;
 
-    VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment->image));
-    vkGetImageMemoryRequirements(get_device().get_handle(), attachment->image, &memory_requirements);
-    memory_allocate_info.allocationSize  = memory_requirements.size;
-    memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment->memory));
-    VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment->image, attachment->memory, 0));
+	VK_CHECK(vkCreateImage(get_device().get_handle(), &image, nullptr, &attachment.image));
+	vkGetImageMemoryRequirements(get_device().get_handle(), attachment.image, &memory_requirements);
+	memory_allocate_info.allocationSize  = memory_requirements.size;
+	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	VK_CHECK(vkAllocateMemory(get_device().get_handle(), &memory_allocate_info, nullptr, &attachment.memory));
+	VK_CHECK(vkBindImageMemory(get_device().get_handle(), attachment.image, attachment.memory, 0));
 
-    VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
-    image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_create_info.format                          = format;
-    image_view_create_info.subresourceRange                = {};
-    image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_create_info.subresourceRange.baseMipLevel   = 0;
-    image_view_create_info.subresourceRange.levelCount     = 1;
-    image_view_create_info.subresourceRange.baseArrayLayer = 0;
-    image_view_create_info.subresourceRange.layerCount     = 1;
-    image_view_create_info.image                           = attachment->image;
-    VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment->view));
+	VkImageViewCreateInfo image_view_create_info           = vkb::initializers::image_view_create_info();
+	image_view_create_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+	image_view_create_info.format                          = format;
+	image_view_create_info.subresourceRange                = {};
+	image_view_create_info.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	image_view_create_info.subresourceRange.baseMipLevel   = 0;
+	image_view_create_info.subresourceRange.levelCount     = 1;
+	image_view_create_info.subresourceRange.baseArrayLayer = 0;
+	image_view_create_info.subresourceRange.layerCount     = 1;
+	image_view_create_info.image                           = attachment.image;
+	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment.view));
+}
+
+uint32_t SubgroupsOperations::reverse(uint32_t i)
+{
+	uint32_t res = 0;
+	for (int j = 0; j < log_2_N; j++)
+	{
+		res = (res << 1) + (i & 1);
+		i >>= 1;
+	}
+	return res;
+}
+
+void SubgroupsOperations::create_butterfly_texture()
+{
+	VkCommandPool   commandPool    = compute.command_pool;
+	VkCommandBuffer command_buffer = compute.command_buffer;
+
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u)};
+	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &precompute.descriptor_set_layout));
+
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &precompute.descriptor_set_layout, 1u);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &precompute.descriptor_set));
+
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
+	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	compute_pipeline_layout_info.setLayoutCount             = 1u;
+	compute_pipeline_layout_info.pSetLayouts                = &precompute.descriptor_set_layout;
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &precompute.pipeline.pipeline_layout));
+
+	VkComputePipelineCreateInfo computeInfo = {};
+	computeInfo.sType                       = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computeInfo.layout                      = precompute.pipeline.pipeline_layout;
+	computeInfo.stage                       = load_shader("subgroups_operations/butterfly_precomp.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+
+	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &precompute.pipeline.pipeline));
+
+	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, log_2_N, DISPLACEMENT_MAP_DIM, butterfly_precomp);
+
+	std::array<uint32_t, DISPLACEMENT_MAP_DIM> bit_reverse_arr;
+	for (uint32_t i = 0; i < DISPLACEMENT_MAP_DIM; ++i)
+		bit_reverse_arr[i] = reverse(i);
+
+	bit_reverse_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(uint32_t) * bit_reverse_arr.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
+	bit_reverse_buffer->convert_and_update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
+
+	VkDescriptorImageInfo image_descriptor{};
+	image_descriptor.imageView   = butterfly_precomp.view;
+	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	image_descriptor.sampler     = nullptr;
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),
+	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &bit_reverse_descriptor)};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+
+	VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
+	VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
+
+	vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline);
+	vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline_layout, 0u, 1u, &precompute.descriptor_set, 0u, nullptr);
+
+	vkCmdDispatch(command_buffer, 32u, 32u, 1u);
+
+	VK_CHECK(vkEndCommandBuffer(command_buffer));
 }

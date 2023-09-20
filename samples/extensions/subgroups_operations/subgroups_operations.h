@@ -61,6 +61,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_descriptor_set();
 	void create_pipelines();
 
+	void create_butterfly_texture();
+
 	void update_uniform_buffers();
 	void update_compute_descriptor();
 
@@ -116,20 +118,25 @@ class SubgroupsOperations : public ApiVulkanSample
 	std::vector<std::complex<float>> h_tilde_0_conj;
 	std::vector<std::complex<float>> weights;
 
-    struct FBAttachment
-    {
-        VkImage image;
-        VkDeviceMemory memory;
-        VkImageView view;
-        VkFormat format;
-        void destroy(VkDevice device)
-        {
-            vkDestroyImageView(device, view, nullptr);
-            vkDestroyImage(device, image, nullptr);
-            vkFreeMemory(device, memory, nullptr);
-        };
-    };
-    void createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment *result);
+	struct FBAttachment
+	{
+		VkImage        image;
+		VkDeviceMemory memory;
+		VkImageView    view;
+		VkFormat       format;
+		void           destroy(VkDevice device)
+		{
+			vkDestroyImageView(device, view, nullptr);
+			vkDestroyImage(device, image, nullptr);
+			vkFreeMemory(device, memory, nullptr);
+		};
+	} butterfly_precomp;
+
+	uint32_t log_2_N;
+
+	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer;
+
+	void createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment &result);
 
 	struct
 	{
@@ -152,8 +159,16 @@ class SubgroupsOperations : public ApiVulkanSample
 		struct
 		{
 			Pipeline _default;
+
 		} pipelines;
 	} compute;
+
+	struct
+	{
+		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
+		Pipeline              pipeline;
+	} precompute;
 
 	struct
 	{
@@ -170,6 +185,9 @@ class SubgroupsOperations : public ApiVulkanSample
 	} ocean;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
+
+  private:
+	uint32_t reverse(uint32_t i);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
