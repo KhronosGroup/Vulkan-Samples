@@ -17,57 +17,69 @@
 -
 -->
 
-<!-- NOTE: Remove the following comment block for the actual readme of your sample -->
+# Sparse image
 
-<!--
-This is a template for the sample's readme. Every new sample should come with a readme that contains at least a short tutorial that accompanies the code of the example.
-
-Readmes are written in Markdown (see https://en.wikipedia.org/wiki/Markdown).
-
-You can freely choose how to structure it, but it should always contain an overview and conclusion paragraph.
-
-The readme can (and most often should) show code from along with an explanation. Code in markdown can be rendered using three backticks and can be formatted using a language specifier, e.g.:
-
-```cpp
-void main() {
-    std::cout << "Hello World";
-}
-```
-
-or
-
-```glsl
-void main() {
-    gl_color = vec4(1.0f);
-}
-```
-
-Ideally it also contains an image of how the sample is supposed to look.
-
-For an example you can take a look at the readme's of existing samples, e.g. https://raw.githubusercontent.com/SaschaWillems/Vulkan-Samples/main/samples/extensions/descriptor_indexing/README.md
--->
+![Sample](./images/sparse_image_screenshot.png)
 
 # Overview
 
-<!-- 
-This chapter should contain an overview of what this sample is trying to achieve. If extensions are used, this chapter should also list those.
--->
+The usage of [Sparse Resources](https://registry.khronos.org/vulkan/site/spec/latest/chapters/sparsemem.html) allows for less restrict memory binding in comparison to a standard resource.
 
-<!-- 
-The following chapters get into the details on how the sample is working, what features are used, etc. 
+The key differences between standard and sparse resources, showcased in this sample are:
+- Sparse resources can be bound non-contiguously to one or more VkDeviceMemory allocations;
+- Sparse resources can be re-bound to different memory allocations over the lifetime of the resource;
 
-The chapter itself can be structured by using sub paragraphs, e.g.:
+The sample demonstrates usage of the Sparse Image feature by rendering a high-resolution texture with only a fraction of the total image size ACTUALLY allocated on the device's memory.
+This is possible by dynamically loading required memory areas, generating mip levels for outer parts, removing unused memory and finally: binding an image in the real-time. 
 
-# Feature description
+# Enabling features
+
+There are 3 features to be enabled:
+- sparseBinding;
+- sparseResidencyImage2D;
+- shaderResourceResidency;
+
+First two, are the key features required for the usage of the sparse image resources.
+The last one - shaderResourceResidency, is required for the fragment shader to be able to detect which parts of the image are allocated in the memory.
+
+```C++
+void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
+	{
+		gpu.get_mutable_requested_features().sparseBinding           = VK_TRUE;
+		gpu.get_mutable_requested_features().sparseResidencyImage2D  = VK_TRUE;
+		gpu.get_mutable_requested_features().shaderResourceResidency = VK_TRUE;
+	}
+```
 
 # Enabling extensions
 
-# etc.
+There is a single extensions used in this sample:
+- GL_ARB_sparse_texture2;
 
--->
+This extension is used only by the fragment shader, but requires shaderResourceResidency feature to be enabled first.
+What this extension does, is allowing the fragment to check if the memory for the particular fragment is actually allocated or not.
+Because of this extension, it is possible to keep checking the residency from the fragment shader, and basically use the most detailed data available.
+
+```
+#extension GL_ARB_sparse_texture2 : enable
+```
+
+```
+lod += 1;
+for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
+{
+	residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
+	...
+}
+```
 
 # Conclusion
 
-<!--
-The tutorial should end with a conclusion chapter that recaps the tutorial and (if applicable) talks about pros and cons of the features demonstrated in this sample
->
+The primary usage of the sparse image feature is generally speaking dedicated for cases where too much device's memory is occupied.
+Keeping a low-detailed mip-level constantly in the memory and dynamically loading required areas when the camera changes, is the way to handle terrain megatextures.
+
+The downside of these solution is that there is a possibility of a bottleneck problem when constantly transfering required mmemory chunks from the CPU to the device.
+The other downside is that since the application decides what memory is going to be allocated, it must take care of the calculations such as: "what level of detail is required?". 
+This creates an unwanted CPU overhead.

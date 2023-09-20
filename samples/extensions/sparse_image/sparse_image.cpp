@@ -36,7 +36,7 @@ SparseImage::~SparseImage()
 
 void SparseImage::load_assets()
 {
-	virtual_texture.row_data_image = vkb::sg::Image::load("clay_terrain.jpg", "clay_terrain.jpg", vkb::sg::Image::ContentType::Color);
+	virtual_texture.row_data_image = vkb::sg::Image::load("/textures/vulkan_logo_full.ktx", "/textures/vulkan_logo_full.ktx", vkb::sg::Image::ContentType::Color);
 
 	VkExtent3D   tex_extent = virtual_texture.row_data_image->get_extent();
 	VkDeviceSize image_size = tex_extent.width * tex_extent.height * 4U;
@@ -78,7 +78,7 @@ bool SparseImage::prepare(const vkb::ApplicationOptions &options)
 
 	update_mvp();
 
-	next_stage = SPARSE_IMAGE_REQUIRED_MEMORY_LAYOUT_STAGE;
+	next_stage = SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE;
 
 	prepared = true;
 	return true;
@@ -368,7 +368,7 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 
 			if (virtual_texture.page_table[memory_index].fixed != true)
 			{
-				virtual_texture.page_table[memory_index].render_required_list.remove({texture_block.column, texture_block.row});
+				virtual_texture.page_table[memory_index].render_required_list.remove({texture_block.old_mip_level, texture_block.column, texture_block.row});
 			}
 		}
 	}
@@ -386,8 +386,8 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 		size_t memory_index = memory_index_list.front();
 		memory_index_list.pop_front();
 
-		virtual_texture.page_table[memory_index].render_required_list.remove({texture_block.column, texture_block.row});
-		virtual_texture.page_table[memory_index].render_required_list.push_front({texture_block.column, texture_block.row});
+		virtual_texture.page_table[memory_index].render_required_list.remove({texture_block.new_mip_level, texture_block.column, texture_block.row});
+		virtual_texture.page_table[memory_index].render_required_list.push_front({texture_block.new_mip_level, texture_block.column, texture_block.row});
 
 		if (virtual_texture.page_table[memory_index].valid == false)
 		{
@@ -689,25 +689,25 @@ void SparseImage::render(float delta_time)
 
 	switch (next_stage)
 	{
-		case SPARSE_IMAGE_CALCULATE_MESH_STAGE:
+		case SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE:
 			calculate_mips_table(current_mvp_transform, on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks, virtual_texture.new_mip_table);
-			next_stage = SPARSE_IMAGE_REQUIRED_MEMORY_LAYOUT_STAGE;
+			next_stage = SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE;
 			break;
 
-		case SPARSE_IMAGE_REQUIRED_MEMORY_LAYOUT_STAGE:
+		case SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE:
 			compare_mips_table();
 			if (virtual_texture.update_required == true)
 			{
-				next_stage = SPARSE_IMAGE_BIND_PAGES_PRE_MIP_GEN_STAGE;
+				next_stage = SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE;
 			}
 			else
 			{
-				next_stage = SPARSE_IMAGE_CALCULATE_MESH_STAGE;
+				next_stage = SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE;
 			}
 			frame_counter = 0;
 			break;
 
-		case SPARSE_IMAGE_BIND_PAGES_PRE_MIP_GEN_STAGE:
+		case SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE:
 			uint8_t block_counter;
 			block_counter = 5;
 			frame_counter++;
@@ -740,10 +740,10 @@ void SparseImage::render(float delta_time)
 			}
 			
 			virtual_texture.update_list.sort();
-			next_stage = SPARSE_IMAGE_UPDATE_LEVEL0_STAGE;
+			next_stage = SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE;
 			break;
 
-		case SPARSE_IMAGE_UPDATE_LEVEL0_STAGE: //TODO name
+		case SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE: //TODO name
 			bind_sparse_image();
 			while (virtual_texture.update_list.empty() == false)
 			{
@@ -884,17 +884,17 @@ void SparseImage::render(float delta_time)
 
 			if (transfer_finished == false)
 			{
-				next_stage = SPARSE_IMAGE_BIND_PAGES_PRE_MIP_GEN_STAGE;
+				next_stage = SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE;
 			}
 			else
 			{
 				virtual_texture.update_required = false;
-				next_stage                      = SPARSE_IMAGE_CALCULATE_MESH_STAGE;
+				next_stage                      = SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE;
 			}
 
 			if (init_transfer_finished && frame_counter > 10)
 			{
-				next_stage = SPARSE_IMAGE_CALCULATE_MESH_STAGE;
+				next_stage = SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE;
 			}
 			break;
 		
@@ -994,43 +994,44 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
 	}
 }
 
-
-/*!
- *  Function:   CalculateMipLevelData::calculate_mip_levels()
- *  Desc:       This is the very core function for calculating what level of detail is required for a particular block.
- *              Number of vertical and horizontal blocks is described by the global constants ON_SCREEN_VERTICAL_BLOCKS and ON_SCREEN_HORIZONTAL_BLOCKS.
- *              These constants are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
+/**
+ * @brief This is the very core function. It is responsible for calculating what level of detail is required for a particular BLOCK.
+ *  
+ * BLOCKS are just the abstraction units used to describe the texture on-screen. Each block is the same size.
+ * Number of vertical and horizontal blocks is described by the global constants ON_SCREEN_VERTICAL_BLOCKS and ON_SCREEN_HORIZONTAL_BLOCKS.
+ * These constants are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
  *
- *              What this function does, is based on the mesh data created in calculateMeshCoordinates(), for each node within a mesh it calculates:
- *              "What is the ratio between x/y movement on the screen to the u/v movement on the texture?".
- *              The idea is, that if we move pixel-by-pixel along the x or y axis on screen, if the small, on-screen step causes a significant step on-texture, then the high level of detail is required.
- *              The formula used for those calculations is the very same as the one used the shader side:
- *                  LOD = log2 (max(dT / dx, dT / dy)); where:
- *                      - dT is an on-texture step in texels,
- *                      - dx, dy are on-screen steps in pixels.
+ * What this function does, is based on the mesh data created in calculate_mesh_coordinates(), for each node within a mesh it calculates:
+ * "What is the ratio between x/y movement on the screen to the u/v movement on the texture?".
+ * 
+ * The idea is, that when moving pixel-by-pixel along the x or y axis on-screen, if the small on-screen step causes a significant step on-texture, then the area is far away from the observer and less-detailed mip-level is required.
+ * The formula used for those calculations is:
  *
- *              One thing that makes these calculations complicated is that with the data provided by the mesh we move from one node to the other. But those steps (either horizontal or vertical) does not neccesarily
- *              go along the x and y axis. Because of that each vertical and horizontal step needs to be digested into x and y movement. Given that fact, for each rectangular...ish block that holds information on LOD required,
- *              there need to be 4 movements calculated and compared with their counterparts on the texture side.
+ *	LOD = log2 (max(dT / dx, dT / dy)); where:
+ *			- dT is an on-texture-step in texels,
+ *			- dx, dy are on-screen-steps in pixels.
  *
- *              Naming convention explained and method:
- *              - first mentioning of either "..Vertical.." or "..Horizontal.." in the variable name means that this variable is used in calculations related to moving one node down (vertical) or right (horizontal) from the current position.
- *                Calculations are handled from the top-left corner of the texture, so we are moving aither bottom or right (on the texture, not neccessarily on the screen).
- *              - Ph stands for "Point h". It is a point from which the vertical or horizontal step is splitted into x and y step.
- *              - A is a vertice we start calculations from. From A we move to either bottom node (which is B) or to the right node (which is C).
+ * One thing that makes these calculations complicated is that with the data provided by the mesh we move from one node to the other. But those steps (either horizontal or vertical) does not neccesarily
+ * go along the x and y axis. Because of that each vertical and horizontal step needs to be digested into x and y movement. Given that fact, for each "rectangularish" block that holds information on LOD required,
+ * there need to be 4 movements calculated and compared with their counterparts on the texture side.
  *
- *              - IMPORTANT:    I assume that:
- *                                  - each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture to) the more accurate this statement is.
- *                                  - the image is not "stretched'  within a single block, which has the same rules as stated above.
- *                              With those assumption, I'm providing a parralel lines from the Ph point to the corresponding edges. This creates an another parrallelogram.
+ * Naming convention explained and method:
+ * - first mentioning of either "..vertical.." or "..horizontal.." in the variable name means that this variable is used in calculations related to moving one node down (vertical) or right (horizontal) from the current position.
+ *   Calculations are handled from the top-left corner of the texture, so we are moving either to bottom or right (on the texture, not neccessarily on the screen).
+ * - pH stands for "point H". It is a separate point for the vertical and horizontal step, from which the step is splitted into x and y on-screen axis.
+ * - A is a vertice we start calculations from. From A we move to either bottom node (which is B) or to the right node (which is C).
  *
- *                              Variables named: ..verticalVertical.. or ..verticalHorizontalTop.. should be understood as: This relates to the vertical step (from A --> B) and
- *                                               describes the edge from Ph to the vertical edge / describes the edge from the Ph to the horizontal top edge.
+ * - IMPORTANT:    I assume that:
+ *						- each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture into) the more accurate this statement is.
+ *                      - the image is not "stretched' within a single block, which has the same rules as stated above.
+ *                              
+ *					With those assumption, I'm providing a parralel lines from the Ph point to the corresponding edges. This creates an another parrallelogram.
  *
- *                              Assuming that the image is not stretched within a single block, I calculate the ratio of for example (verticalVertical / AtoB) or (verticalHorizontalTop / AtoC).
- *                              I know, that each parrallelogram on-screen corresponds to the fixed-size rectangular on-texture. Given the ratio I calculated I can just get calculate the on-texture step in texels from the right-triangle property
- *                              and compare it to the x or y step of vertical/horizontal step in pixels on-screen.
+ * Variables named: ..vertical_vertical.. or ..vertical_horizontal_top.. should be understood as: 
+ * This relates to the vertical step (from A --> B) and describes (the edge from pH to the corresponding vertical edge) or (describes the edge from the pH to the corresponding horizontal-top edge).
  *
+ * Assuming that the image is not stretched within a single block, I calculate the ratio of for example (...vertical_vertical... / AB_vertical) or (...vertical_horizontal_top... / AC_horizontal).
+ * I know, that each parrallelogram on-screen corresponds to the fixed-size rectangular on-texture. Given the ratio I calculated I can just get calculate the on-texture step in texels from the right-triangle property and compare it to the x or y step of vertical/horizontal step in pixels on-screen.
  */
 void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 {
@@ -1043,37 +1044,42 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 		row.resize(num_columns);
 	}
 
+	// Single, on-texture step in texels
+	double dTu = texture_base_dim.width / (num_columns);
+	double dTv = texture_base_dim.height / (num_rows);
+	
 	for (size_t row = 0U; row < num_rows; row += 1U)
 	{
 		for (size_t column = 0U; column < num_columns; column += 1U)
 		{
-			double dTx = texture_base_dim.width / (num_columns);
-			double dTy = texture_base_dim.height / (num_rows);
-
+			// Single, on-screen step in pixels
 			double dIx_vertical = mesh[row][column].x - mesh[row + 1][column].x;
 			double dIy_vertical = mesh[row][column].y - mesh[row + 1][column].y;
 
 			double dIx_horizontal = mesh[row][column].x - mesh[row][column + 1].x;
 			double dIy_horizontal = mesh[row][column].y - mesh[row][column + 1].y;
 
+			// On-screen distance between starting node (A) and the enxt horizontal (C) or vertical (B) one
 			double AB_vertical   = sqrt(pow(dIx_vertical, 2) + pow(dIy_vertical, 2));
 			double AC_horizontal = sqrt(pow(dIx_horizontal, 2) + pow(dIy_horizontal, 2));
 
-			double pH_vertical_x, pH_vertical_y, pH_horizontal_x, pH_horizontal_y;
+			// Coordinates of point H
+			double pH_vertical_x = mesh[row][column].x;
+			double pH_vertical_y  = mesh[row + 1][column].y;
+			double pH_horizontal_x = mesh[row][column + 1].x;
+			double pH_horizontal_y  = mesh[row][column].y;
 
-			pH_vertical_x   = mesh[row][column].x;
-			pH_vertical_y   = mesh[row + 1][column].y;
-			pH_horizontal_x = mesh[row][column + 1].x;
-			pH_horizontal_y = mesh[row][column].y;
-
+			// Distance from horizontal and vertical point H, to A and C
 			double pH_vertical_to_A   = sqrt(pow(mesh[row][column].x - pH_vertical_x, 2) + pow(mesh[row][column].y - pH_vertical_y, 2));
 			double pH_vertical_to_B   = sqrt(pow(mesh[row + 1][column].x - pH_vertical_x, 2) + pow(mesh[row + 1][column].y - pH_vertical_y, 2));
 			double pH_horizontal_to_A = sqrt(pow(mesh[row][column].x - pH_horizontal_x, 2) + pow(mesh[row][column].y - pH_horizontal_y, 2));
 			double pH_horizontal_to_C = sqrt(pow(mesh[row][column + 1].x - pH_horizontal_x, 2) + pow(mesh[row][column + 1].y - pH_horizontal_y, 2));
 
+			// 'a' coefficient of the linear equation ax + b = y
 			double a_vertical   = ax_vertical[column];
 			double a_horizontal = ax_horizontal[row];
 
+			// Coordinates of the point which is the common point of two lines: 1) AtoB or AtoC; 2) The line going through point H, parallel to AtoC or AtoB
 			double x_vertical_vertical = (a_vertical * mesh[row][column].x + pH_vertical_y - (pH_vertical_x * a_horizontal) - mesh[row][column].y) / (a_vertical - a_horizontal);
 			double y_vertical_vertical = (x_vertical_vertical - mesh[row][column].x) * a_vertical + mesh[row][column].y;
 
@@ -1090,6 +1096,7 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double x_horizontal_vertical_right = (a_vertical * mesh[row][column + 1].x + pH_horizontal_y - (pH_horizontal_x * a_horizontal) - mesh[row][column + 1].y) / (a_vertical - a_horizontal);
 			double y_horizontal_vertical_right = (x_horizontal_vertical_right - mesh[row][column + 1].x) * a_vertical + mesh[row][column + 1].y;
 
+			// On-screen distances from point H (vertical and horizontal) to the corresponding points calculated above
 			double on_screen_pH_vertical_vertical          = sqrt(pow(pH_vertical_x - x_vertical_vertical, 2) + pow(pH_vertical_y - y_vertical_vertical, 2));
 			double on_screen_pH_vertical_horizontal_top    = sqrt(pow(pH_vertical_x - x_vertical_horizontal_top, 2) + pow(pH_vertical_y - y_vertical_horizontal_top, 2));
 			double on_screen_pH_vertical_horizontal_bottom = sqrt(pow(pH_vertical_x - x_vertical_horizontal_bottom, 2) + pow(pH_vertical_y - y_vertical_horizontal_bottom, 2));
@@ -1097,18 +1104,21 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double on_screen_pH_horizontal_vertical_left   = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_left, 2) + pow(pH_horizontal_y - y_horizontal_vertical_left, 2));
 			double on_screen_pH_horizontal_vertical_right  = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_right, 2) + pow(pH_horizontal_y - y_horizontal_vertical_right, 2));
 
-			double on_texture_pH_vertical_vertical          = on_screen_pH_vertical_vertical / AC_horizontal * dTx;
-			double on_texture_pH_vertical_horizontal_top    = on_screen_pH_vertical_horizontal_top / AB_vertical * dTy;
-			double on_texture_pH_vertical_horizontal_bottom = on_screen_pH_vertical_horizontal_bottom / AB_vertical * dTy;
-			double on_texture_pH_horizontal_horizontal      = on_screen_pH_horizontal_horizontal / AB_vertical * dTy;
-			double on_texture_pH_horizontal_vertical_left   = on_screen_pH_horizontal_vertical_left / AC_horizontal * dTx;
-			double on_texture_pH_horizontal_vertical_right  = on_screen_pH_horizontal_vertical_right / AC_horizontal * dTx;
+			// On-texture counterparts of distances above 
+			double on_texture_pH_vertical_vertical          = on_screen_pH_vertical_vertical / AC_horizontal * dTu;
+			double on_texture_pH_vertical_horizontal_top    = on_screen_pH_vertical_horizontal_top / AB_vertical * dTv;
+			double on_texture_pH_vertical_horizontal_bottom = on_screen_pH_vertical_horizontal_bottom / AB_vertical * dTv;
+			double on_texture_pH_horizontal_horizontal      = on_screen_pH_horizontal_horizontal / AB_vertical * dTv;
+			double on_texture_pH_horizontal_vertical_left   = on_screen_pH_horizontal_vertical_left / AC_horizontal * dTu;
+			double on_texture_pH_horizontal_vertical_right  = on_screen_pH_horizontal_vertical_right / AC_horizontal * dTu;
 
+			// Texel-to-pixel ratios
 			double x_texture_to_screen_vertical_ratio   = abs(pH_vertical_to_A) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_top, 2)) / abs(pH_vertical_to_A);
 			double y_texture_to_screen_vertical_ratio   = abs(pH_vertical_to_B) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_vertical_vertical, 2) + pow(on_texture_pH_vertical_horizontal_bottom, 2)) / abs(pH_vertical_to_B);
 			double x_texture_to_screen_horizontal_ratio = abs(pH_horizontal_to_A) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_left, 2)) / abs(pH_horizontal_to_A);
 			double y_texture_to_screen_horizontal_ratio = abs(pH_horizontal_to_C) < 1.0 ? 0.0 : sqrt(pow(on_texture_pH_horizontal_horizontal, 2) + pow(on_texture_pH_horizontal_vertical_right, 2)) / abs(pH_horizontal_to_C);
 
+			// Using the log2 formula to calculate required mip level
 			double delta     = 1.0 * std::max(std::max(x_texture_to_screen_horizontal_ratio, y_texture_to_screen_horizontal_ratio), std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
 			double mip_level = std::min(static_cast<double>(mip_levels - 1U), std::max(log2(delta), 0.0));
 
@@ -1217,7 +1227,6 @@ void SparseImage::create_descriptor_set_layout()
 }
 
 /**
- * 	@fn void sparse_image::create_descriptor_sets()
  * 	@brief Creating both descriptor set:
  * 		   1. Uniform buffer
  * 		   2. Image sampler
@@ -1292,17 +1301,10 @@ void SparseImage::create_texture_sampler()
 
 
 /**
- * @fn void sparse_image::request_gpu_features(vkb::PhysicalDevice &gpu)
  * @brief Enabling features
  */
 void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	// Enable anisotropic filtering if supported
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	}
-	// Enable anisotropic filtering if supported
 	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
 	{
 		gpu.get_mutable_requested_features().sparseBinding           = VK_TRUE;
@@ -1316,9 +1318,9 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 }
 
-
 void SparseImage::create_sparse_texture_image()
 {
+	//==================================================================================================
 	// Creating an Image
 	VkImageCreateInfo sparse_image_create_info = vkb::initializers::image_create_info();
 	sparse_image_create_info.imageType = VK_IMAGE_TYPE_2D;
@@ -1419,7 +1421,6 @@ void SparseImage::create_sparse_texture_image()
 	virtual_texture.current_mip_table.resize(on_screen_num_vertical_blocks);
 	virtual_texture.new_mip_table.resize(on_screen_num_vertical_blocks);
 
-
 	for (size_t y = 0U; y < on_screen_num_vertical_blocks; y++)
 	{
 		virtual_texture.current_mip_table[y].resize(on_screen_num_horizontal_blocks);
@@ -1440,6 +1441,7 @@ void SparseImage::create_sparse_texture_image()
 
 	virtual_texture.sparse_image_memory_bind.resize(virtual_texture.num_pages);
 
+	// Setting the least detailed mip level to be constantly present in the memory (to avoid black spots on the screen)
 	size_t start_index = virtual_texture.mip_properties[virtual_texture.mip_levels - 1].mip_base_page_index;
 	size_t num_pages   = virtual_texture.mip_properties[virtual_texture.mip_levels - 1].mip_num_pages;
 
@@ -1448,6 +1450,7 @@ void SparseImage::create_sparse_texture_image()
 		virtual_texture.page_table[page].fixed = true;
 	}
 
+	// Setting the data constant data for memory page binding via vkQueueBindSparse()
 	for (size_t page_index = 0U; page_index < virtual_texture.num_pages; page_index++)
 	{
 		uint32_t mipLevel = get_mip_level(page_index);
@@ -1467,12 +1470,15 @@ void SparseImage::create_sparse_texture_image()
 	
 	}
 
+	//==================================================================================================
+	// Allocating memory
+
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 3; //TODO
+	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 2; //TODO: what is the minimum memory required
 	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(virtual_texture.mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 3); i++)
+	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 2); i++) //TODO: what is the minimum memory required
 	{
 		virtual_texture.available_memory_index_list.push_back(i);
 	}
@@ -1493,9 +1499,4 @@ void SparseImage::create_sparse_texture_image()
 	view_info.subresourceRange.layerCount     = 1;
 
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &virtual_texture.texture_image_view));
-}
-
-void SparseImage::view_changed()
-{
-	//process_camera_change();
 }

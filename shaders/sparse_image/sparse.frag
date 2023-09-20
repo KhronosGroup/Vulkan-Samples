@@ -17,7 +17,6 @@
  
 #version 450
 #extension GL_ARB_sparse_texture2 : enable
-#extension GL_ARB_sparse_texture_clamp : enable
 
 layout(binding = 1) uniform sampler2D texSampler;
 
@@ -31,24 +30,21 @@ void main() {
     vec4 color = vec4(0.0);
 
 	float minLOD = 0.0f;
-	float maxLOD = 5.0f;
-
-	int residencyCode = 1;
-
+	float maxLOD = 4.0f;
+	
 	int lod = 0;
-	for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
-	{
-		residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-		color.x = color.x / (lod * 5 + 1);
-		color.y = color.y / (lod * 5 + 1);
-		color.z = color.z / (lod * 5 + 1);
-	}
+	int residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
 
-	bool texelResident = sparseTexelsResidentARB(residencyCode);
-
-	if (!texelResident)
+	if (!sparseTexelsResidentARB(residencyCode))
 	{
-		color = vec4(1.0, 1.0, 1.0, 0.0);
+		lod += 1;
+		for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
+		{
+			residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
+			color.x = color.x / (lod * 5 + 1);
+			color.y = color.y / (lod * 5 + 1);
+			color.z = color.z / (lod * 5 + 1);
+		}	
 	}
 
 	fragOutColor = color;
