@@ -188,21 +188,6 @@ class SubgroupsOperations : public ApiVulkanSample
 	uint32_t   log_2_N{};
 	vkb::Timer timer;
 
-    struct FBAttachment
-    {
-        VkImage image;
-        VkDeviceMemory memory;
-        VkImageView view;
-        VkFormat format;
-        void destroy(VkDevice device)
-        {
-            vkDestroyImageView(device, view, nullptr);
-            vkDestroyImage(device, image, nullptr);
-            vkFreeMemory(device, memory, nullptr);
-        };
-    };
-    void createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment *result);
-
 	struct
 	{
 		std::unique_ptr<vkb::core::BufferC> fft_input_random;
