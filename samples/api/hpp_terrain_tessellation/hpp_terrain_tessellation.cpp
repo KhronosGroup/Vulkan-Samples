@@ -444,13 +444,13 @@ void HPPTerrainTessellation::generate_terrain()
 void HPPTerrainTessellation::load_assets()
 {
 	sky_sphere.geometry = load_model("scenes/geosphere.gltf");
-	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
+	sky_sphere.texture  = load_texture("textures/skysphere_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 
 	// Terrain textures are stored in a texture array with layers corresponding to terrain height; create a repeating sampler
-	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::sg::Image::Color, vk::SamplerAddressMode::eRepeat);
+	terrain.terrain_array = load_texture_array("textures/terrain_texturearray_rgba.ktx", vkb::scene_graph::components::HPPImage::Color, vk::SamplerAddressMode::eRepeat);
 
 	// Height data is stored in a one-channel texture; create a mirroring sampler
-	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::sg::Image::Other, vk::SamplerAddressMode::eMirroredRepeat);
+	terrain.height_map = load_texture("textures/terrain_heightmap_r16.ktx", vkb::scene_graph::components::HPPImage::Other, vk::SamplerAddressMode::eMirroredRepeat);
 }
 
 void HPPTerrainTessellation::prepare_camera()

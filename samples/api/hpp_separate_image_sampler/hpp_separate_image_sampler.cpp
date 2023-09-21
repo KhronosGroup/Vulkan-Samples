@@ -332,7 +332,7 @@ void HPPSeparateImageSampler::generate_quad()
 
 void HPPSeparateImageSampler::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 // Prepare and initialize uniform buffer containing shader uniforms

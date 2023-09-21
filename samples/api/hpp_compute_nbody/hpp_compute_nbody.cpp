@@ -386,8 +386,8 @@ void HPPComputeNBody::initializeCamera()
 
 void HPPComputeNBody::load_assets()
 {
-	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::sg::Image::Color);
-	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::sg::Image::Color);
+	textures.particle = load_texture("textures/particle_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
+	textures.gradient = load_texture("textures/particle_gradient_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPComputeNBody::prepare_compute()

@@ -382,8 +382,8 @@ void HPPInstancing::load_assets()
 	rocks.mesh  = load_model("scenes/rock.gltf");
 	planet.mesh = load_model("scenes/planet.gltf");
 
-	rocks.texture  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::sg::Image::Color);
-	planet.texture = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::sg::Image::Color);
+	rocks.texture  = load_texture_array("textures/texturearray_rocks_color_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
+	planet.texture = load_texture("textures/lavaplanet_color_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPInstancing::initialize_camera()

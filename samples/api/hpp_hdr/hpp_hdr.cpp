@@ -531,7 +531,7 @@ void HPPHDR::load_assets()
 	models.transforms.push_back(torus_matrix);
 
 	// Load HDR cube map
-	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	textures.envmap = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPHDR::prepare_camera()
