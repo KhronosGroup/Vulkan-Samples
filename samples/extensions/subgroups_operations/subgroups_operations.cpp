@@ -68,6 +68,9 @@ SubgroupsOperations::~SubgroupsOperations()
 {
 	if (device)
 	{
+        precompute.pipeline.destroy(get_device().get_handle());
+        tildas.pipeline.destroy(get_device().get_handle());
+
 		compute.pipelines._default.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), compute.descriptor_set_layout, nullptr);
 		vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
@@ -100,7 +103,8 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	create_descriptor_set();
 	create_pipelines();
 
-	create_butterfly_texture();
+    create_tildas();
+    //create_butterfly_texture();
 
 	build_command_buffers();
 
@@ -120,11 +124,11 @@ void SubgroupsOperations::prepare_compute()
 	create_compute_queue();
 	create_compute_command_pool();
 	create_compute_command_buffer();
-	create_compute_descriptor_set_layout();
-	create_compute_descriptor_set();
-	preapre_compute_pipeline_layout();
-	prepare_compute_pipeline();
-	build_compute_command_buffer();
+//	create_compute_descriptor_set_layout();
+//	create_compute_descriptor_set();
+//	preapre_compute_pipeline_layout();
+//	prepare_compute_pipeline();
+//	build_compute_command_buffer();
 }
 
 void SubgroupsOperations::create_compute_queue()
@@ -175,7 +179,7 @@ void SubgroupsOperations::create_compute_descriptor_set()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &compute.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &compute.descriptor_set));
 
-	update_compute_descriptor();
+    // update_compute_descriptor();
 }
 
 void SubgroupsOperations::update_compute_descriptor()
@@ -286,6 +290,94 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 }
 
+void SubgroupsOperations::create_tildas()
+{
+    fft_buffers.fft_tilde_h_kt_dx = std::make_unique<FBAttachment>();
+    fft_buffers.fft_tilde_h_kt_dy = std::make_unique<FBAttachment>();
+    fft_buffers.fft_tilde_h_kt_dz = std::make_unique<FBAttachment>();
+
+    createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, DISPLACEMENT_MAP_DIM, DISPLACEMENT_MAP_DIM, *fft_buffers.fft_tilde_h_kt_dx);
+    createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, DISPLACEMENT_MAP_DIM, DISPLACEMENT_MAP_DIM, *fft_buffers.fft_tilde_h_kt_dy);
+    createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, DISPLACEMENT_MAP_DIM, DISPLACEMENT_MAP_DIM, *fft_buffers.fft_tilde_h_kt_dz);
+
+
+    std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 3u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
+        vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)
+
+    };
+    VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+    VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &tildas.descriptor_set_layout));
+
+    VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &tildas.descriptor_set_layout, 1u);
+    VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &tildas.descriptor_set));
+
+    VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
+    compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    compute_pipeline_layout_info.setLayoutCount             = 1u;
+    compute_pipeline_layout_info.pSetLayouts                = &tildas.descriptor_set_layout;
+
+    VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &tildas.pipeline.pipeline_layout));
+
+    VkComputePipelineCreateInfo computeInfo = vkb::initializers::compute_pipeline_create_info(tildas.pipeline.pipeline_layout);
+    computeInfo.stage                       = load_shader("subgroups_operations/fft_tilde_h.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+
+    VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &tildas.pipeline.pipeline));
+
+    // update descriptor set
+
+    auto htilde_0_descriptor = create_descriptor(*fft_buffers.fft_input_htilde0);
+    auto htilde_conj_0_descriptor = create_descriptor(*fft_buffers.fft_input_htilde0_conj);
+
+    VkDescriptorImageInfo image_dx_descriptor{};
+    image_dx_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dx->view;
+    image_dx_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_dx_descriptor.sampler     = nullptr;
+
+    VkDescriptorImageInfo image_dy_descriptor{};
+    image_dy_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dy->view;
+    image_dy_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_dy_descriptor.sampler     = nullptr;
+
+    VkDescriptorImageInfo image_dz_descriptor{};
+    image_dz_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dz->view;
+    image_dz_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    image_dz_descriptor.sampler     = nullptr;
+
+    VkDescriptorBufferInfo fft_params_ubo_buffer               = create_descriptor(*fft_params_ubo);
+    VkDescriptorBufferInfo fft_time_ubo_buffer = create_descriptor(*fft_time_ubo);
+
+    std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0u, &htilde_0_descriptor),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &htilde_conj_0_descriptor),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_dx_descriptor),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3u, &image_dy_descriptor),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &image_dz_descriptor),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &fft_params_ubo_buffer),
+        vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6u, &fft_time_ubo_buffer)
+    };
+    vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+
+
+
+    VkCommandBuffer command_buffer = compute.command_buffer;
+
+    VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
+    VK_CHECK(vkBeginCommandBuffer(command_buffer, &begin_info));
+
+    vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildas.pipeline.pipeline);
+    vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildas.pipeline.pipeline_layout, 0u, 1u, &tildas.descriptor_set, 0u, nullptr);
+
+    vkCmdDispatch(command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+
+    VK_CHECK(vkEndCommandBuffer(command_buffer));
+}
+
 void SubgroupsOperations::load_assets()
 {
 	generate_plane();
@@ -331,9 +423,9 @@ void SubgroupsOperations::load_assets()
 	auto fft_input_weights_size  = static_cast<VkDeviceSize>(weights.size() * sizeof(std::complex<float>));
 	fft_buffers.fft_input_weight = std::make_unique<vkb::core::Buffer>(get_device(), fft_input_weights_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	fft_buffers.fft_input_htilde0->update(h_tilde_0.data(), h_tilde_0.size());
-	fft_buffers.fft_input_htilde0_conj->update(h_tilde_0_conj.data(), h_tilde_0_conj.size());
-	fft_buffers.fft_input_weight->update(weights.data(), weights.size());
+    fft_buffers.fft_input_htilde0->convert_and_update(h_tilde_0.data());
+    fft_buffers.fft_input_htilde0_conj->convert_and_update(h_tilde_0_conj.data());
+    fft_buffers.fft_input_weight->convert_and_update(weights.data());
 
 	// fft_buffers.fft_height_map_image = std::make_unique<vkb::sg::Image>(grid_size * grid_size);
 }
@@ -398,6 +490,7 @@ void SubgroupsOperations::prepare_uniform_buffers()
 {
 	camera_ubo     = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	fft_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+    fft_time_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -443,12 +536,12 @@ void SubgroupsOperations::create_semaphore()
 void SubgroupsOperations::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u),        // FFTParametersUbo, CameraUbo, ComputeUbo
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3u),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u),
+        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 10u),        // FFTParametersUbo, CameraUbo, ComputeUbo
+        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 10u),
+        vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u)
 	};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 3u);
+        vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 4u);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -571,6 +664,11 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_ubo.length    = ui.length;
 	fft_ubo.wind      = ui.wind;
 	fft_params_ubo->convert_and_update(fft_ubo);
+
+    TimeUbo t;
+    t.time = 0.36541365841351354135135f;
+
+    fft_time_ubo->convert_and_update(t);
 }
 
 void SubgroupsOperations::build_command_buffers()

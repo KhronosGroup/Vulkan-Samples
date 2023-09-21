@@ -61,6 +61,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_descriptor_set();
 	void create_pipelines();
 
+    void create_tildas();
 	void create_butterfly_texture();
 
 	void update_uniform_buffers();
@@ -102,17 +103,23 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(8) glm::vec2 wind;
 	};
 
+    struct TimeUbo
+    {
+        alignas(4) float time;
+    };
+
 	struct GuiConfig
 	{
 		bool      wireframe = {false};
-		float     amplitude = {0.005f};
-		float     length    = {16.0f};
-		glm::vec2 wind      = {16.0f, 0.0f};
+        float     amplitude = {4.0f};
+        float     length    = {1000.0f};
+        glm::vec2 wind      = {10.0f, 10.0f};
 	} ui;
 
-	uint32_t                           grid_size = {128u};
+    uint32_t                           grid_size = {256u};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
+    std::unique_ptr<vkb::core::Buffer> fft_time_ubo;
 
 	std::vector<std::complex<float>> h_tilde_0;
 	std::vector<std::complex<float>> h_tilde_0_conj;
@@ -144,6 +151,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj;
 		std::unique_ptr<vkb::core::Buffer> fft_input_weight;
 		std::unique_ptr<vkb::sg::Image>    fft_height_map_image;
+        std::unique_ptr<FBAttachment>    fft_tilde_h_kt_dx;
+        std::unique_ptr<FBAttachment>    fft_tilde_h_kt_dy;
+        std::unique_ptr<FBAttachment>    fft_tilde_h_kt_dz;
 	} fft_buffers;
 
 	struct
@@ -162,6 +172,13 @@ class SubgroupsOperations : public ApiVulkanSample
 
 		} pipelines;
 	} compute;
+
+    struct
+    {
+        VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+        VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
+        Pipeline              pipeline;
+    } tildas;
 
 	struct
 	{
