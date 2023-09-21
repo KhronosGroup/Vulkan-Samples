@@ -19,8 +19,8 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const SPARSE_IMAGE_ON_SCREEN_HORIZONTAL_BLOCKS = 50;
-size_t const SPARSE_IMAGE_ON_SCREEN_VERTICAL_BLOCKS   = 30;
+size_t const SPARSE_IMAGE_ON_SCREEN_HORIZONTAL_BLOCKS = 50U;
+size_t const SPARSE_IMAGE_ON_SCREEN_VERTICAL_BLOCKS   = 30U;
 double const SPARSE_IMAGE_FOV_DEGREES                 = 60.0;
 
 class SparseImage : public ApiVulkanSample
@@ -34,7 +34,7 @@ class SparseImage : public ApiVulkanSample
 		SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE,
 		SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE,
 		SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE,
-		SPARSE_IMAGE_FREE_MEMORY_STAGE,
+		SPARSE_IMAGE_FREE_UNUSED_MEMORY_STAGE,
 		SPARSE_IMAGE_NUM_STAGES,
 	};
 
@@ -177,7 +177,10 @@ class SparseImage : public ApiVulkanSample
 		void calculate_mip_levels();
 	};
 
-	enum Stages next_stage;
+	bool        transfer_finished      = false;
+	bool        init_transfer_finished = false;
+	uint8_t     frame_counter          = 0U;
+	enum Stages next_stage             = SPARSE_IMAGE_IDLE_STAGE;
 
 	struct VirtualTexture virtual_texture;
 
@@ -228,6 +231,10 @@ class SparseImage : public ApiVulkanSample
 	void create_sparse_texture_image();
 
 	void                      update_mvp();
+	void                      process_stage(enum Stages next_stage);
+	void                      free_unused_memory();
+	void                      update_and_generate();
+	void                      process_texture_blocks();
 	struct MemPageDescription get_mem_page_description(size_t memory_index);
 	void                      calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
 	void                      compare_mips_table();
@@ -236,7 +243,7 @@ class SparseImage : public ApiVulkanSample
 	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
 	void                      separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
-	void                      transition_image_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint8_t mip_level);
+	void                      transition_mip_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint8_t mip_level);
 	uint8_t                   get_mip_level(size_t page_index);
 	size_t                    get_memory_index(struct MemPageDescription mem_page_desc);
 

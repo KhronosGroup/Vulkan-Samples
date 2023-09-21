@@ -25,13 +25,22 @@ layout(location = 0) in vec2 fragTexCoord;
 layout(location = 0) out vec4 fragOutColor;
 
 
+float minLOD = 0.0f;	//TODO: these should not be hardcoded
+float maxLOD = 4.0f;
+
+vec3 color_blend_table[5] = 
+{
+	{1.00, 1.00, 1.00},
+	{0.80, 0.60, 0.40},
+	{0.60, 0.80, 0.60},
+	{0.40, 0.60, 0.80},
+	{0.20, 0.20, 0.20},
+};
+
 void main() {
 
-    vec4 color = vec4(0.0);
+	vec4 color = vec4(0.0);
 
-	float minLOD = 0.0f;
-	float maxLOD = 4.0f;
-	
 	int lod = 0;
 	int residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
 
@@ -41,9 +50,7 @@ void main() {
 		for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
 		{
 			residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-			color.x = color.x / (lod * 5 + 1);
-			color.y = color.y / (lod * 5 + 1);
-			color.z = color.z / (lod * 5 + 1);
+			color.xyz = (color.xyz * color_blend_table[lod]);
 		}	
 	}
 
