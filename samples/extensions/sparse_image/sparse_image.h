@@ -63,8 +63,8 @@ class SparseImage : public ApiVulkanSample
 
 	struct TextureBlock
 	{
-		uint32_t row;
-		uint32_t column;
+		size_t row;
+		size_t   column;
 		uint8_t  old_mip_level;
 		uint8_t  new_mip_level;
 		bool     on_screen;

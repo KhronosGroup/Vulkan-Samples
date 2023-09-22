@@ -16,7 +16,6 @@
  */
 
 #include "sparse_image.h"
-#include <iomanip>
 
 SparseImage::SparseImage()
 {
@@ -349,7 +348,7 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 {
 	std::list<size_t> memory_index_list;
 
-	if (texture_block.old_mip_level < virtual_texture.mip_levels)	//TODO: This condition seems to be completely redundant but for some reason app is crashing with vector subscript being out of range.
+	if (texture_block.old_mip_level < virtual_texture.mip_levels)	// TODO(GS): This condition seems to be completely redundant but for some reason app is crashing with vector subscript being out of range.
 	{
 		// Old value calculations and removal from the render required list
 		get_memory_dependency_for_the_block(texture_block.column, texture_block.row, texture_block.old_mip_level, memory_index_list);
@@ -415,7 +414,7 @@ struct SparseImage::MemPageDescription SparseImage::get_mem_page_description(siz
 	struct MemPageDescription mem_page_description = {};
 	uint8_t                   mip_level            = virtual_texture.mip_levels - 1U;
 
-	//TODO: use get_mip_level() instead
+	// TODO(GS): use get_mip_level() instead
 	while (memory_index < virtual_texture.mip_properties[mip_level].mip_base_page_index && mip_level > virtual_texture.base_mip_level)
 	{
 		mip_level--;
@@ -527,7 +526,7 @@ void SparseImage::compare_mips_table()
 				process_texture_block(texture_block);
 				virtual_texture.current_mip_table[y][x] = virtual_texture.new_mip_table[y][x];
 			}
-			//TODO: code multiplication
+			// TODO(GS): code multiplication
 			else if ((virtual_texture.new_mip_table[y][x].mip_level != virtual_texture.current_mip_table[y][x].mip_level) && (virtual_texture.new_mip_table[y][x].on_screen == true))
 			{
 				TextureBlock texture_block = {y, x, virtual_texture.current_mip_table[y][x].mip_level, virtual_texture.new_mip_table[y][x].mip_level, true};
@@ -543,7 +542,7 @@ void SparseImage::compare_mips_table()
 					{
 						if ((it->new_mip_level >= texture_block.new_mip_level) || (it == virtual_texture.texture_block_update_list.end()))
 						{
-							virtual_texture.texture_block_update_list.insert(it, texture_block);		//TODO: change mip level to double-type for a better block-priority results
+							virtual_texture.texture_block_update_list.insert(it, texture_block);		// TODO(GS): change mip level to double-type for a better block-priority results
 							break;
 						}
 						if (it != virtual_texture.texture_block_update_list.end())
@@ -553,7 +552,7 @@ void SparseImage::compare_mips_table()
 					}
 				}
 			}
-			// TODO: code multiplication
+			// TODO(GS): code multiplication
 			else if (virtual_texture.new_mip_table[y][x].on_screen == true && virtual_texture.current_mip_table[y][x].on_screen == false)
 			{
 				TextureBlock texture_block = {y, x, virtual_texture.current_mip_table[y][x].mip_level, virtual_texture.new_mip_table[y][x].mip_level, true};
@@ -705,7 +704,7 @@ void SparseImage::update_and_generate()
 	bind_sparse_image();
 	while (virtual_texture.update_list.empty() == false)
 	{
-		uint8_t current_mip_level = 0xFF;        // TODO possible problem with get_mip_level()
+		uint8_t current_mip_level = 0xFF;        // TODO(GS): possible problem with get_mip_level()
 
 		size_t memory_index = virtual_texture.update_list.front();
 		virtual_texture.update_list.pop_front();
@@ -779,13 +778,13 @@ void SparseImage::update_and_generate()
 
 				VkImageBlit blit_cmd{};
 				blit_cmd.srcOffsets[0]                 = {(block_offset.x) * 2, (block_offset.y) * 2, 0};
-				blit_cmd.srcOffsets[1]                 = {(block_offset.x + static_cast<int>(block_extent.width)) * 2, (block_offset.y + static_cast<int>(block_extent.height)) * 2, 1};        // TODO 1x1 mip
+				blit_cmd.srcOffsets[1]                 = {(block_offset.x + static_cast<int>(block_extent.width)) * 2, (block_offset.y + static_cast<int>(block_extent.height)) * 2, 1};        // TODO(GS): 1x1 mip
 				blit_cmd.srcSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 				blit_cmd.srcSubresource.mipLevel       = mip_level - 1U;
 				blit_cmd.srcSubresource.baseArrayLayer = 0U;
 				blit_cmd.srcSubresource.layerCount     = 1U;
 				blit_cmd.dstOffsets[0]                 = {block_offset.x, block_offset.y, 0};
-				blit_cmd.dstOffsets[1]                 = {block_offset.x + static_cast<int>(block_extent.width), block_offset.y + static_cast<int>(block_extent.height), 1};        // TODO 1x1 mip
+				blit_cmd.dstOffsets[1]                 = {block_offset.x + static_cast<int>(block_extent.width), block_offset.y + static_cast<int>(block_extent.height), 1};        // TODO(GS): 1x1 mip
 				blit_cmd.dstSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
 				blit_cmd.dstSubresource.mipLevel       = mip_level;
 				blit_cmd.dstSubresource.baseArrayLayer = 0U;
@@ -1476,10 +1475,10 @@ void SparseImage::create_sparse_texture_image()
 
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 2U; //TODO: what is the minimum memory required
+	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 2U; // TODO(GS): what is the minimum memory required
 	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(virtual_texture.mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 2U); i++) //TODO: what is the minimum memory required
+	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 2U); i++) // TODO(GS): what is the minimum memory required
 	{
 		virtual_texture.available_memory_index_list.push_back(i);
 	}
