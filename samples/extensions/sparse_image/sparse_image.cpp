@@ -40,8 +40,8 @@ void SparseImage::load_assets()
 	VkExtent3D   tex_extent = virtual_texture.row_data_image->get_extent();
 	VkDeviceSize image_size = tex_extent.width * tex_extent.height * 4U;
 
-	virtual_texture.width     = tex_extent.width;
-	virtual_texture.height    = tex_extent.height;
+	virtual_texture.width  = tex_extent.width;
+	virtual_texture.height = tex_extent.height;
 }
 
 void SparseImage::create_sparse_bind_queue()
@@ -105,7 +105,6 @@ void SparseImage::prepare_pipelines()
 	vertex_input.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
 	vertex_input.pVertexBindingDescriptions      = vertex_input_bindings.data();
 
-
 	// Specify we will use triangle lists to draw geometry.
 	VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0U, VK_FALSE);
 
@@ -127,7 +126,7 @@ void SparseImage::prepare_pipelines()
 	VkPipelineMultisampleStateCreateInfo multisample = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
 
 	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
-	std::array<VkDynamicState, 2U>    dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	std::array<VkDynamicState, 2U>   dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 	VkPipelineDynamicStateCreateInfo dynamic = vkb::initializers::pipeline_dynamic_state_create_info(dynamics.data(), vkb::to_u32(dynamics.size()));
 
 	// Load our SPIR-V shaders.
@@ -190,7 +189,7 @@ void SparseImage::transition_mip_layout(VkImage image, VkImageLayout old_layout,
 		barrier.srcAccessMask = 0U;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 
-		source_stage     = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
 	else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
@@ -198,7 +197,7 @@ void SparseImage::transition_mip_layout(VkImage image, VkImageLayout old_layout,
 		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-		source_stage     = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		source_stage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
@@ -214,7 +213,7 @@ void SparseImage::transition_mip_layout(VkImage image, VkImageLayout old_layout,
 		barrier.srcAccessMask = 0U;
 		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
 
-		source_stage     = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+		source_stage      = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
 		destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 	}
 	else if (old_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
@@ -261,7 +260,7 @@ void SparseImage::bind_sparse_image()
 		if ((virtual_texture.bind_list.empty() == true) || (count != page_index))
 		{
 			virtual_texture.sparse_image_memory_bind[count].subresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			virtual_texture.sparse_image_memory_bind[count].memory = VK_NULL_HANDLE;
+			virtual_texture.sparse_image_memory_bind[count].memory                 = VK_NULL_HANDLE;
 			continue;
 		}
 
@@ -348,7 +347,7 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 {
 	std::list<size_t> memory_index_list;
 
-	if (texture_block.old_mip_level < virtual_texture.mip_levels)	// TODO(GS): This condition seems to be completely redundant but for some reason app is crashing with vector subscript being out of range.
+	if (texture_block.old_mip_level < virtual_texture.mip_levels)        // TODO(GS): This condition seems to be completely redundant but for some reason app is crashing with vector subscript being out of range.
 	{
 		// Old value calculations and removal from the render required list
 		get_memory_dependency_for_the_block(texture_block.column, texture_block.row, texture_block.old_mip_level, memory_index_list);
@@ -365,9 +364,9 @@ void SparseImage::process_texture_block(const TextureBlock &texture_block)
 		}
 	}
 
-	if (texture_block.on_screen == false) 
-	{ 
-		return; 
+	if (texture_block.on_screen == false)
+	{
+		return;
 	}
 
 	// New value calculations and placing into update and render_required lists
@@ -530,7 +529,7 @@ void SparseImage::compare_mips_table()
 			else if ((virtual_texture.new_mip_table[y][x].mip_level != virtual_texture.current_mip_table[y][x].mip_level) && (virtual_texture.new_mip_table[y][x].on_screen == true))
 			{
 				TextureBlock texture_block = {y, x, virtual_texture.current_mip_table[y][x].mip_level, virtual_texture.new_mip_table[y][x].mip_level, true};
-				
+
 				if (virtual_texture.texture_block_update_list.empty())
 				{
 					virtual_texture.texture_block_update_list.push_front(texture_block);
@@ -542,7 +541,7 @@ void SparseImage::compare_mips_table()
 					{
 						if ((it->new_mip_level >= texture_block.new_mip_level) || (it == virtual_texture.texture_block_update_list.end()))
 						{
-							virtual_texture.texture_block_update_list.insert(it, texture_block);		// TODO(GS): change mip level to double-type for a better block-priority results
+							virtual_texture.texture_block_update_list.insert(it, texture_block);        // TODO(GS): change mip level to double-type for a better block-priority results
 							break;
 						}
 						if (it != virtual_texture.texture_block_update_list.end())
@@ -923,8 +922,8 @@ std::unique_ptr<vkb::VulkanSample> create_sparse_image()
  */
 void SparseImage::calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable)
 {
-	struct CalculateMipLevelData meshData(mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}) , on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks, virtual_texture.mip_levels);
-	
+	struct CalculateMipLevelData meshData(mvp_transform, VkExtent2D({static_cast<uint32_t>(virtual_texture.width), static_cast<uint32_t>(virtual_texture.height)}), VkExtent2D({static_cast<uint32_t>(width), static_cast<uint32_t>(height)}), on_screen_num_vertical_blocks, on_screen_num_horizontal_blocks, virtual_texture.mip_levels);
+
 	meshData.calculate_mesh_coordinates();
 	meshData.calculate_mip_levels();
 
@@ -935,7 +934,7 @@ SparseImage::CalculateMipLevelData::CalculateMipLevelData(glm::mat4 mvp_transfor
     mvp_transform(mvp_transform), texture_base_dim(texture_base_dim), screen_base_dim(screen_base_dim), mesh{0}, vertical_num_blocks(vertical_num_blocks), horizontal_num_blocks(horizontal_num_blocks), mip_levels(mip_levels)
 {
 	mesh.resize(vertical_num_blocks + 1U);
-	for (auto& row : mesh)
+	for (auto &row : mesh)
 	{
 		row.resize(horizontal_num_blocks + 1U);
 	}
@@ -1000,14 +999,14 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
 
 /**
  * @brief This is the very core function. It is responsible for calculating what level of detail is required for a particular BLOCK.
- *  
+ *
  * BLOCKS are just the abstraction units used to describe the texture on-screen. Each block is the same size.
  * Number of vertical and horizontal blocks is described by the global constants ON_SCREEN_VERTICAL_BLOCKS and ON_SCREEN_HORIZONTAL_BLOCKS.
  * These constants are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
  *
  * What this function does, is based on the mesh data created in calculate_mesh_coordinates(), for each node within a mesh it calculates:
  * "What is the ratio between x/y movement on the screen to the u/v movement on the texture?".
- * 
+ *
  * The idea is, that when moving pixel-by-pixel along the x or y axis on-screen, if the small on-screen step causes a significant step on-texture, then the area is far away from the observer and less-detailed mip-level is required.
  * The formula used for those calculations is:
  *
@@ -1028,10 +1027,10 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
  * - IMPORTANT:    I assume that:
  *						- each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture into) the more accurate this statement is.
  *                      - the image is not "stretched' within a single block, which has the same rules as stated above.
- *                              
+ *
  *					With those assumption, I'm providing a parralel lines from the Ph point to the corresponding edges. This creates an another parrallelogram.
  *
- * Variables named: ..vertical_vertical.. or ..vertical_horizontal_top.. should be understood as: 
+ * Variables named: ..vertical_vertical.. or ..vertical_horizontal_top.. should be understood as:
  * This relates to the vertical step (from A --> B) and describes (the edge from pH to the corresponding vertical edge) or (describes the edge from the pH to the corresponding horizontal-top edge).
  *
  * Assuming that the image is not stretched within a single block, I calculate the ratio of for example (...vertical_vertical... / AB_vertical) or (...vertical_horizontal_top... / AC_horizontal).
@@ -1051,7 +1050,7 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 	// Single, on-texture step in texels
 	double dTu = texture_base_dim.width / (num_columns);
 	double dTv = texture_base_dim.height / (num_rows);
-	
+
 	for (size_t row = 0U; row < num_rows; row += 1U)
 	{
 		for (size_t column = 0U; column < num_columns; column += 1U)
@@ -1068,10 +1067,10 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double AC_horizontal = sqrt(pow(dIx_horizontal, 2) + pow(dIy_horizontal, 2));
 
 			// Coordinates of point H
-			double pH_vertical_x = mesh[row][column].x;
-			double pH_vertical_y  = mesh[row + 1][column].y;
+			double pH_vertical_x   = mesh[row][column].x;
+			double pH_vertical_y   = mesh[row + 1][column].y;
 			double pH_horizontal_x = mesh[row][column + 1].x;
-			double pH_horizontal_y  = mesh[row][column].y;
+			double pH_horizontal_y = mesh[row][column].y;
 
 			// Distance from horizontal and vertical point H, to A and C
 			double pH_vertical_to_A   = sqrt(pow(mesh[row][column].x - pH_vertical_x, 2) + pow(mesh[row][column].y - pH_vertical_y, 2));
@@ -1108,7 +1107,7 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double on_screen_pH_horizontal_vertical_left   = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_left, 2) + pow(pH_horizontal_y - y_horizontal_vertical_left, 2));
 			double on_screen_pH_horizontal_vertical_right  = sqrt(pow(pH_horizontal_x - x_horizontal_vertical_right, 2) + pow(pH_horizontal_y - y_horizontal_vertical_right, 2));
 
-			// On-texture counterparts of distances above 
+			// On-texture counterparts of distances above
 			double on_texture_pH_vertical_vertical          = on_screen_pH_vertical_vertical / AC_horizontal * dTu;
 			double on_texture_pH_vertical_horizontal_top    = on_screen_pH_vertical_horizontal_top / AB_vertical * dTv;
 			double on_texture_pH_vertical_horizontal_bottom = on_screen_pH_vertical_horizontal_bottom / AB_vertical * dTv;
@@ -1126,7 +1125,7 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 			double delta     = 1.0 * std::max(std::max(x_texture_to_screen_horizontal_ratio, y_texture_to_screen_horizontal_ratio), std::max(x_texture_to_screen_vertical_ratio, y_texture_to_screen_vertical_ratio));
 			double mip_level = std::min(static_cast<double>(mip_levels - 1U), std::max(log2(delta), 0.0));
 
-			mip_table[row][column].mip_level = static_cast<uint8_t>(mip_level); 
+			mip_table[row][column].mip_level = static_cast<uint8_t>(mip_level);
 			mip_table[row][column].on_screen = mesh[row][column].on_screen || mesh[row + 1][column].on_screen || mesh[row][column + 1].on_screen || mesh[row + 1][column + 1].on_screen;
 		}
 	}
@@ -1138,19 +1137,19 @@ void SparseImage::create_vertex_buffer()
 	VkDeviceSize                       vertices_size = sizeof(vertices[0]) * vertices.size();
 
 	vertices[0].norm = {-100.0f, -100.0f};
-	vertices[1].norm = { 100.0f, -100.0f};
-	vertices[2].norm = { 100.0f,  100.0f};
-	vertices[3].norm = {-100.0f,  100.0f};
+	vertices[1].norm = {100.0f, -100.0f};
+	vertices[2].norm = {100.0f, 100.0f};
+	vertices[3].norm = {-100.0f, 100.0f};
 
-	vertices[0].uv   = {0.0f, 0.0f};
-	vertices[1].uv   = {1.0f, 0.0f};
-	vertices[2].uv   = {1.0f, 1.0f};
-	vertices[3].uv   = {0.0f, 1.0f};
+	vertices[0].uv = {0.0f, 0.0f};
+	vertices[1].uv = {1.0f, 0.0f};
+	vertices[2].uv = {1.0f, 1.0f};
+	vertices[3].uv = {0.0f, 1.0f};
 
 	std::unique_ptr<vkb::core::Buffer> staging_buffer;
 	staging_buffer = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	vertex_buffer  = std::make_unique<vkb::core::Buffer>(get_device(), vertices_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
-		
+
 	staging_buffer->update(vertices.data(), vertices_size);
 
 	VkCommandBuffer command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -1315,7 +1314,6 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		throw std::runtime_error("Sparse binding not supported");
 	}
-
 }
 
 void SparseImage::create_sparse_texture_image()
@@ -1323,14 +1321,14 @@ void SparseImage::create_sparse_texture_image()
 	//==================================================================================================
 	// Creating an Image
 	VkImageCreateInfo sparse_image_create_info = vkb::initializers::image_create_info();
-	sparse_image_create_info.imageType = VK_IMAGE_TYPE_2D;
+	sparse_image_create_info.imageType         = VK_IMAGE_TYPE_2D;
 
 	sparse_image_create_info.extent.width  = static_cast<uint32_t>(virtual_texture.width);
 	sparse_image_create_info.extent.height = static_cast<uint32_t>(virtual_texture.height);
 	sparse_image_create_info.extent.depth  = 1U;
 
-	virtual_texture.base_mip_level       = 0U;
-	virtual_texture.mip_levels           = 5U;
+	virtual_texture.base_mip_level = 0U;
+	virtual_texture.mip_levels     = 5U;
 
 	sparse_image_create_info.mipLevels   = virtual_texture.mip_levels;
 	sparse_image_create_info.arrayLayers = 1U;
@@ -1464,10 +1462,9 @@ void SparseImage::create_sparse_texture_image()
 		virtual_texture.sparse_image_memory_bind[page_index].offset.y = ((page_index - virtual_texture.mip_properties[mipLevel].mip_base_page_index) / virtual_texture.mip_properties[mipLevel].num_columns) * virtual_texture.format_properties.imageGranularity.height;
 		virtual_texture.sparse_image_memory_bind[page_index].offset.z = 0;
 
-		virtual_texture.sparse_image_memory_bind[page_index].extent.depth = virtual_texture.format_properties.imageGranularity.depth;
+		virtual_texture.sparse_image_memory_bind[page_index].extent.depth  = virtual_texture.format_properties.imageGranularity.depth;
 		virtual_texture.sparse_image_memory_bind[page_index].extent.width  = (virtual_texture.mip_properties[mipLevel].width - virtual_texture.sparse_image_memory_bind[page_index].offset.x < virtual_texture.format_properties.imageGranularity.width) ? virtual_texture.mip_properties[mipLevel].width - virtual_texture.sparse_image_memory_bind[page_index].offset.x : virtual_texture.format_properties.imageGranularity.width;
 		virtual_texture.sparse_image_memory_bind[page_index].extent.height = (virtual_texture.mip_properties[mipLevel].height - virtual_texture.sparse_image_memory_bind[page_index].offset.y < virtual_texture.format_properties.imageGranularity.height) ? virtual_texture.mip_properties[mipLevel].height - virtual_texture.sparse_image_memory_bind[page_index].offset.y : virtual_texture.format_properties.imageGranularity.height;
-	
 	}
 
 	//==================================================================================================
@@ -1475,10 +1472,10 @@ void SparseImage::create_sparse_texture_image()
 
 	VkMemoryAllocateInfo memory_allocate_info{};
 	memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 2U; // TODO(GS): what is the minimum memory required
+	memory_allocate_info.allocationSize  = virtual_texture.page_size * virtual_texture.mip_properties[0].mip_num_pages / 2U;        // TODO(GS): what is the minimum memory required
 	memory_allocate_info.memoryTypeIndex = get_device().get_memory_type(virtual_texture.mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 2U); i++) // TODO(GS): what is the minimum memory required
+	for (size_t i = 0U; i < (virtual_texture.mip_properties[0].mip_num_pages / 2U); i++)        // TODO(GS): what is the minimum memory required
 	{
 		virtual_texture.available_memory_index_list.push_back(i);
 	}
@@ -1488,7 +1485,7 @@ void SparseImage::create_sparse_texture_image()
 	//==================================================================================================
 	// Creating texture image view
 
-	VkImageViewCreateInfo view_info = vkb::initializers::image_view_create_info();
+	VkImageViewCreateInfo view_info           = vkb::initializers::image_view_create_info();
 	view_info.image                           = virtual_texture.texture_image;
 	view_info.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 	view_info.format                          = VK_FORMAT_R8G8B8A8_SRGB;

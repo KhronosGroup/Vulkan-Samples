@@ -26,7 +26,6 @@ double const SPARSE_IMAGE_FOV_DEGREES                 = 60.0;
 class SparseImage : public ApiVulkanSample
 {
   public:
-
 	enum Stages
 	{
 		SPARSE_IMAGE_IDLE_STAGE,
@@ -56,18 +55,18 @@ class SparseImage : public ApiVulkanSample
 		size_t num_rows;
 		size_t num_columns;
 		size_t mip_num_pages;
-		size_t mip_base_page_index;        
+		size_t mip_base_page_index;
 		size_t width;
 		size_t height;
 	};
 
 	struct TextureBlock
 	{
-		size_t row;
-		size_t   column;
-		uint8_t  old_mip_level;
-		uint8_t  new_mip_level;
-		bool     on_screen;
+		size_t  row;
+		size_t  column;
+		uint8_t old_mip_level;
+		uint8_t new_mip_level;
+		bool    on_screen;
 	};
 
 	struct MemPageDescription
@@ -79,13 +78,13 @@ class SparseImage : public ApiVulkanSample
 
 	struct PageTable
 	{
-		bool    bound;              // bound via vkQueueBindSparse()
-		bool    valid;              // bound and contains valid data
-		bool    gen_mip_required;	// required for the mip generation
-		bool    fixed;              // not freed from the memory at any cases
-		size_t  memory_index;       // index from available_memory_index_list corresponding to this page
+		bool   bound;                   // bound via vkQueueBindSparse()
+		bool   valid;                   // bound and contains valid data
+		bool   gen_mip_required;        // required for the mip generation
+		bool   fixed;                   // not freed from the memory at any cases
+		size_t memory_index;            // index from available_memory_index_list corresponding to this page
 
-		std::list<std::tuple<uint8_t, size_t, size_t>> render_required_list;	// list holding information on what BLOCKS require this particular memory page to be valid for rendering
+		std::list<std::tuple<uint8_t, size_t, size_t>> render_required_list;        // list holding information on what BLOCKS require this particular memory page to be valid for rendering
 	};
 
 	struct Point
@@ -105,8 +104,8 @@ class SparseImage : public ApiVulkanSample
 	{
 		VkImage        texture_image;
 		VkImageView    texture_image_view;
-		VkDeviceMemory texture_memory;        
-		
+		VkDeviceMemory texture_memory;
+
 		// Dimensions
 		size_t width;
 		size_t height;
@@ -115,8 +114,8 @@ class SparseImage : public ApiVulkanSample
 		size_t num_pages;
 		size_t page_size;
 
-		uint8_t base_mip_level;
-		uint8_t mip_levels;
+		uint8_t                           base_mip_level;
+		uint8_t                           mip_levels;
 		std::vector<struct MipProperties> mip_properties;
 
 		std::vector<std::vector<MipBlock>> current_mip_table;
@@ -154,7 +153,7 @@ class SparseImage : public ApiVulkanSample
 		std::vector<VkSparseImageMemoryBind> sparse_image_memory_bind;
 	};
 
-    struct CalculateMipLevelData
+	struct CalculateMipLevelData
 	{
 		std::vector<std::vector<Point>>    mesh;
 		std::vector<std::vector<MipBlock>> mip_table;
@@ -167,7 +166,7 @@ class SparseImage : public ApiVulkanSample
 		std::vector<float> ax_vertical;
 		std::vector<float> ax_horizontal;
 
-		glm::mat4  mvp_transform;
+		glm::mat4 mvp_transform;
 
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
@@ -198,7 +197,7 @@ class SparseImage : public ApiVulkanSample
 
 	VkPipeline       sample_pipeline{};
 	VkPipelineLayout sample_pipeline_layout{};
-	
+
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkDescriptorSet       descriptor_set;
 	VkSampler             texture_sampler;
