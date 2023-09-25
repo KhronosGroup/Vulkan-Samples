@@ -23,8 +23,6 @@
 
 #include <hpp_api_vulkan_sample.h>
 
-#include <ktx.h>
-
 class HPPTextureLoading : public HPPApiVulkanSample
 {
   public:

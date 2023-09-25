@@ -197,11 +197,9 @@ class HPPHDR : public HPPApiVulkanSample
 	vk::Pipeline          create_composition_pipeline();
 	vk::RenderPass        create_filter_render_pass();
 	vk::Image             create_image(vk::Format format, vk::ImageUsageFlagBits usage);
-	vk::ImageView         create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image);
 	vk::Pipeline          create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite);
 	vk::RenderPass        create_offscreen_render_pass();
 	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
-	vk::Sampler           create_sampler();
 	void                  draw();
 	void                  load_assets();
 	void                  prepare_camera();

@@ -591,38 +591,17 @@ void HPPApiVulkanSample::create_command_pool()
 
 void HPPApiVulkanSample::setup_depth_stencil()
 {
-	vk::ImageCreateInfo image_create_info;
-	image_create_info.imageType   = vk::ImageType::e2D;
-	image_create_info.format      = depth_format;
-	image_create_info.extent      = vk::Extent3D(get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1);
-	image_create_info.mipLevels   = 1;
-	image_create_info.arrayLayers = 1;
-	image_create_info.samples     = vk::SampleCountFlagBits::e1;
-	image_create_info.tiling      = vk::ImageTiling::eOptimal;
-	image_create_info.usage       = vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc;
+	std::tie(depth_stencil.image, depth_stencil.mem) = get_device()->create_image(depth_format, get_render_context().get_surface_extent(), 1, vk::ImageUsageFlagBits::eDepthStencilAttachment | vk::ImageUsageFlagBits::eTransferSrc, vk::MemoryPropertyFlagBits::eDeviceLocal);
 
-	depth_stencil.image            = get_device()->get_handle().createImage(image_create_info);
-	vk::MemoryRequirements memReqs = get_device()->get_handle().getImageMemoryRequirements(depth_stencil.image);
-
-	vk::MemoryAllocateInfo memory_allocation(memReqs.size, get_device()->get_gpu().get_memory_type(memReqs.memoryTypeBits, vk::MemoryPropertyFlagBits::eDeviceLocal));
-	depth_stencil.mem = get_device()->get_handle().allocateMemory(memory_allocation);
-	get_device()->get_handle().bindImageMemory(depth_stencil.image, depth_stencil.mem, 0);
-
-	vk::ImageViewCreateInfo image_view_create_info;
-	image_view_create_info.viewType                        = vk::ImageViewType::e2D;
-	image_view_create_info.image                           = depth_stencil.image;
-	image_view_create_info.format                          = depth_format;
-	image_view_create_info.subresourceRange.baseMipLevel   = 0;
-	image_view_create_info.subresourceRange.levelCount     = 1;
-	image_view_create_info.subresourceRange.baseArrayLayer = 0;
-	image_view_create_info.subresourceRange.layerCount     = 1;
-	image_view_create_info.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eDepth;
-	// Stencil aspect should only be set on depth + stencil formats (vk::Format::eD16UnormS8Uint..vk::Format::eD32SfloatS8Uint
-	if (vk::Format::eD16UnormS8Uint <= depth_format)
+	vk::ImageAspectFlags aspect_mask = vk::ImageAspectFlagBits::eDepth;
+	// Stencil aspect should only be set on depth + stencil formats
+	if ((vk::componentCount(depth_format) == 2) && (strcmp(vk::componentName(depth_format, 0), "D") == 0) &&
+	    (strcmp(vk::componentName(depth_format, 1), "S") == 0))
 	{
-		image_view_create_info.subresourceRange.aspectMask |= vk::ImageAspectFlagBits::eStencil;
+		aspect_mask |= vk::ImageAspectFlagBits::eStencil;
 	}
-	depth_stencil.view = get_device()->get_handle().createImageView(image_view_create_info);
+
+	depth_stencil.view = vkb::common::create_image_view(get_device()->get_handle(), depth_stencil.image, vk::ImageViewType::e2D, depth_format, aspect_mask);
 }
 
 void HPPApiVulkanSample::setup_framebuffer()
@@ -770,6 +749,16 @@ void HPPApiVulkanSample::update_render_pass_flags(RenderPassCreateFlags flags)
 void HPPApiVulkanSample::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 {}
 
+vk::Sampler HPPApiVulkanSample::create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count)
+{
+	return vkb::common::create_sampler(
+	    get_device()->get_handle(),
+	    vk::Filter::eLinear,
+	    address_mode,
+	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f,
+	    static_cast<float>(mipmaps_count));
+}
+
 void HPPApiVulkanSample::create_swapchain_buffers()
 {
 	if (get_render_context().has_swapchain())
@@ -785,18 +774,8 @@ void HPPApiVulkanSample::create_swapchain_buffers()
 		swapchain_buffers.reserve(images.size());
 		for (auto &image : images)
 		{
-			vk::ImageViewCreateInfo color_attachment_view;
-			color_attachment_view.image                           = image;
-			color_attachment_view.viewType                        = vk::ImageViewType::e2D;
-			color_attachment_view.format                          = get_render_context().get_swapchain().get_format();
-			color_attachment_view.components                      = {vk::ComponentSwizzle::eR, vk::ComponentSwizzle::eG, vk::ComponentSwizzle::eB, vk::ComponentSwizzle::eA};
-			color_attachment_view.subresourceRange.aspectMask     = vk::ImageAspectFlagBits::eColor;
-			color_attachment_view.subresourceRange.baseMipLevel   = 0;
-			color_attachment_view.subresourceRange.levelCount     = 1;
-			color_attachment_view.subresourceRange.baseArrayLayer = 0;
-			color_attachment_view.subresourceRange.layerCount     = 1;
-
-			swapchain_buffers.push_back({image, get_device()->get_handle().createImageView(color_attachment_view)});
+			swapchain_buffers.push_back(
+			    {image, vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, get_render_context().get_swapchain().get_format())});
 		}
 	}
 	else
@@ -901,28 +880,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	// Create a defaultsampler
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter    = vk::Filter::eLinear;
-	sampler_create_info.minFilter    = vk::Filter::eLinear;
-	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = address_mode;
-	sampler_create_info.addressModeV = address_mode;
-	sampler_create_info.addressModeW = address_mode;
-	sampler_create_info.mipLodBias   = 0.0f;
-	sampler_create_info.compareOp    = vk::CompareOp::eNever;
-	sampler_create_info.minLod       = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the device
-	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
-	// This may have an impact on performance, esp. on lower-specced devices
-	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy =
-	    get_device()->get_gpu().get_features().samplerAnisotropy ? (get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
+	texture.sampler = create_default_sampler(address_mode, mipmaps.size());
 
 	return texture;
 }
@@ -988,25 +946,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	// Create a defaultsampler
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter    = vk::Filter::eLinear;
-	sampler_create_info.minFilter    = vk::Filter::eLinear;
-	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = address_mode;
-	sampler_create_info.addressModeV = address_mode;
-	sampler_create_info.addressModeW = address_mode;
-	sampler_create_info.mipLodBias   = 0.0f;
-	sampler_create_info.compareOp    = vk::CompareOp::eNever;
-	sampler_create_info.minLod       = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy =
-	    get_device()->get_gpu().get_features().samplerAnisotropy ? get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
+	texture.sampler = create_default_sampler(address_mode, mipmaps.size());
 
 	return texture;
 }
@@ -1072,25 +1012,7 @@ HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb
 
 	get_device()->flush_command_buffer(command_buffer, queue.get_handle());
 
-	// Create a defaultsampler
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter    = vk::Filter::eLinear;
-	sampler_create_info.minFilter    = vk::Filter::eLinear;
-	sampler_create_info.mipmapMode   = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeV = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeW = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.mipLodBias   = 0.0f;
-	sampler_create_info.compareOp    = vk::CompareOp::eNever;
-	sampler_create_info.minLod       = 0.0f;
-	// Max level-of-detail should match mip level count
-	sampler_create_info.maxLod = static_cast<float>(mipmaps.size());
-	// Only enable anisotropic filtering if enabled on the devicec
-	sampler_create_info.maxAnisotropy =
-	    get_device()->get_gpu().get_features().samplerAnisotropy ? get_device()->get_gpu().get_properties().limits.maxSamplerAnisotropy : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device()->get_gpu().get_features().samplerAnisotropy;
-	sampler_create_info.borderColor      = vk::BorderColor::eFloatOpaqueWhite;
-	texture.sampler                      = get_device()->get_handle().createSampler(sampler_create_info);
+	texture.sampler = create_default_sampler(vk::SamplerAddressMode::eClampToEdge, mipmaps.size());
 
 	return texture;
 }

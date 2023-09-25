@@ -139,6 +139,14 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	std::vector<vk::Fence> wait_fences;
 
 	/**
+	 * @brief Creates a vulkan sampler
+	 * @param address_mode The samplers address mode
+	 * @param mipmaps_count The samplers mipmaps count
+	 * @returns A valid vk::Sampler
+	 */
+	vk::Sampler create_default_sampler(vk::SamplerAddressMode address_mode, size_t mipmaps_count);
+
+	/**
 	 * @brief Populates the swapchain_buffers vector with the image and imageviews
 	 */
 	void create_swapchain_buffers();

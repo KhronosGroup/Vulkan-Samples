@@ -235,7 +235,8 @@ HPPHDR::FrameBufferAttachment HPPHDR::create_attachment(vk::Format format, vk::I
 	vk::Image        image  = create_image(format, usage);
 	vk::DeviceMemory memory = allocate_memory(image);
 	get_device()->get_handle().bindImageMemory(image, memory, 0);
-	vk::ImageView view = create_image_view(format, usage, image);
+	vk::ImageView view =
+	    vkb::common::create_image_view(get_device()->get_handle(), image, vk::ImageViewType::e2D, format, vkb::common::get_image_aspect_flags(usage, format));
 
 	return {format, image, memory, view};
 }
@@ -355,15 +356,6 @@ vk::Image HPPHDR::create_image(vk::Format format, vk::ImageUsageFlagBits usage)
 	return get_device()->get_handle().createImage(image_create_info);
 }
 
-vk::ImageView HPPHDR::create_image_view(vk::Format format, vk::ImageUsageFlagBits usage, vk::Image image)
-{
-	vk::ImageAspectFlags aspect_mask = vkb::common::get_image_aspect_flags(usage, format);
-
-	vk::ImageViewCreateInfo image_view_create_info({}, image, vk::ImageViewType::e2D, format, {}, {aspect_mask, 0, 1, 0, 1});
-
-	return get_device()->get_handle().createImageView(image_view_create_info);
-}
-
 vk::Pipeline HPPHDR::create_models_pipeline(uint32_t shaderType, vk::CullModeFlagBits cullMode, bool depthTestAndWrite)
 {
 	std::vector<vk::PipelineShaderStageCreateInfo> shader_stages{load_shader("hdr/gbuffer.vert", vk::ShaderStageFlagBits::eVertex),
@@ -479,24 +471,6 @@ vk::RenderPass HPPHDR::create_render_pass(std::vector<vk::AttachmentDescription>
 	return get_device()->get_handle().createRenderPass(render_pass_create_info);
 }
 
-vk::Sampler HPPHDR::create_sampler()
-{
-	vk::SamplerCreateInfo sampler_create_info;
-	sampler_create_info.magFilter     = vk::Filter::eNearest;
-	sampler_create_info.minFilter     = vk::Filter::eNearest;
-	sampler_create_info.mipmapMode    = vk::SamplerMipmapMode::eLinear;
-	sampler_create_info.addressModeU  = vk::SamplerAddressMode::eClampToEdge;
-	sampler_create_info.addressModeV  = sampler_create_info.addressModeU;
-	sampler_create_info.addressModeW  = sampler_create_info.addressModeU;
-	sampler_create_info.mipLodBias    = 0.0f;
-	sampler_create_info.maxAnisotropy = 1.0f;
-	sampler_create_info.minLod        = 0.0f;
-	sampler_create_info.maxLod        = 1.0f;
-	sampler_create_info.borderColor   = vk::BorderColor::eFloatOpaqueWhite;
-
-	return get_device()->get_handle().createSampler(sampler_create_info);
-}
-
 void HPPHDR::draw()
 {
 	HPPApiVulkanSample::prepare_frame();
@@ -581,7 +555,7 @@ void HPPHDR::prepare_offscreen_buffer()
 		    get_device()->get_handle(), offscreen.render_pass, {offscreen.color[0].view, offscreen.color[1].view, offscreen.depth.view}, offscreen.extent);
 
 		// Create sampler to sample from the color attachments
-		offscreen.sampler = create_sampler();
+		offscreen.sampler = vkb::common::create_sampler(get_device()->get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 
 	// Bloom separable filter pass
@@ -594,7 +568,7 @@ void HPPHDR::prepare_offscreen_buffer()
 		filter_pass.color       = create_attachment(color_format, vk::ImageUsageFlagBits::eColorAttachment);
 		filter_pass.render_pass = create_filter_render_pass();
 		filter_pass.framebuffer = vkb::common::create_framebuffer(get_device()->get_handle(), filter_pass.render_pass, {filter_pass.color.view}, filter_pass.extent);
-		filter_pass.sampler     = create_sampler();
+		filter_pass.sampler     = vkb::common::create_sampler(get_device()->get_handle(), vk::Filter::eNearest, vk::SamplerAddressMode::eClampToEdge, 1.0f, 1.0f);
 	}
 }
 

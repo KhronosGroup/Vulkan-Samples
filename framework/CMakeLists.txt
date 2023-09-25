@@ -74,6 +74,7 @@ set(FRAMEWORK_FILES
 
 set(COMMON_FILES
     # Header Files
+    common/ktx_common.h
     common/vk_common.h
     common/vk_initializers.h
     common/glm_common.h 
@@ -91,6 +92,7 @@ set(COMMON_FILES
     common/hpp_vk_common.h
     # Source Files
     common/error.cpp
+    common/ktx_common.cpp
     common/vk_common.cpp
     common/utils.cpp
     common/strings.cpp)

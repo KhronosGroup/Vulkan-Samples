@@ -340,6 +340,9 @@ void TextureLoading::load_texture()
 		device->flush_command_buffer(copy_command, queue, true);
 	}
 
+	// now, the ktx_texture can be destroyed
+	ktxTexture_Destroy(ktx_texture);
+
 	// Create a texture sampler
 	// In Vulkan textures are accessed by samplers
 	// This separates all the sampling information from the texture data. This means you could have multiple sampler objects for the same texture with different settings
