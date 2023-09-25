@@ -477,6 +477,12 @@ Demonstrates how a mesh shader can be used to achieve the same results as with g
 
 Demonstrate how to use shader objects.
 
+=== xref:./extensions/dynamic_blending[Dynamic blending]
+
+*Extension:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state.html[`VK_EXT_extended_dynamic_state3`]
+
+Demonstrate how to use the blending related functions available in the VK_EXT_extended_dynamic_state3 extension.
+
 === xref:./extensions/dynamic_line_rasterization/README.adoc[Dynamic line rasterization]
 
 *Extensions:* https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_line_rasterization.html[`VK_EXT_line_rasterization`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html[`VK_EXT_extended_dynamic_state3`]
