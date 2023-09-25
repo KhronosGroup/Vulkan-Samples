@@ -545,7 +545,7 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 		                                                    ImGuiColorEditFlags_Float |
 		                                                    ImGuiColorEditFlags_RGB))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 
@@ -553,15 +553,15 @@ void ColorWriteEnable::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Red bit", &r_bit_enabled))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Green bit", &g_bit_enabled))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Blue bit", &b_bit_enabled))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

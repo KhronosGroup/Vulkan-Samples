@@ -19,39 +19,9 @@
 = Build Guides
 // omit in toc
 :pp: {plus}{plus}
-
-== Contents
-// omit in toc
-
-* <<cmake-options,CMake Options>>
- ** <<vkb_sample_name,VKB_<sample_name>>>
- ** <<vkb_build_samples,VKB_BUILD_SAMPLES>>
- ** <<vkb_build_tests,VKB_BUILD_TESTS>>
- ** <<vkb_validation_layers,VKB_VALIDATION_LAYERS>>
- ** <<vkb_validation_layers_gpu_assisted,VKB_VALIDATION_LAYERS_GPU_ASSISTED>>
- ** <<vkb_vulkan_debug,VKB_VULKAN_DEBUG>>
- ** <<vkb_warnings_as_errors,VKB_WARNINGS_AS_ERRORS>>
-* <<quality-assurance,Quality Assurance>>
-* <<3d-models,3D models>>
-* <<performance-data,Performance data>>
-* <<windows,Windows>>
- ** <<dependencies,Dependencies>>
- ** <<clang-format-and-visual-studio,Clang Format and Visual Studio>>
- ** <<build-with-cmake,Build with CMake>>
-* <<linux,Linux>>
- ** <<dependencies-1,Dependencies>>
- ** <<build-with-cmake-1,Build with CMake>>
-* <<macos,macOS>>
- ** <<dependencies-2,Dependencies>>
- ** <<build-with-cmake-2,Build with CMake>>
-* <<android,Android>>
- ** <<dependencies-3,Dependencies>>
- ** <<build-with-gradle,Build with Gradle>>
-  *** <<generate-the-gradle-project,Generate the gradle project>>
-  *** <<install-dependencies,Install dependencies>>
-  *** <<build-the-project,Build the project>>
-  *** <<install-the-apk-on-the-device,Install the apk on the device>>
- ** <<build-with-android-studio,Build with Android Studio>>
+ifndef::site-gen-antora[]
+:toc:
+endif::[]
 
 == CMake Options
 

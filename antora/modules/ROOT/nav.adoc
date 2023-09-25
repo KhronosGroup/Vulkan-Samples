@@ -31,7 +31,7 @@
 ** xref:samples/api/hlsl_shaders/README.adoc[HLSL Shaders]
 *** xref:samples/api/hpp_hlsl_shaders/README.adoc[HLSL Shaders (Vulkan.hpp)]
 ** xref:samples/api/instancing/README.adoc[Instancing]
-*** xref:samples/api/hpp_instancing/README.adoc[Innstancing (Vulkan.hpp)]
+*** xref:samples/api/hpp_instancing/README.adoc[Instancing (Vulkan.hpp)]
 ** xref:samples/api/separate_image_sampler/README.adoc[Separate image sampler]
 *** xref:samples/api/hpp_separate_image_sampler/README.adoc[Separate image sampler (Vulkan.hpp)]
 ** xref:samples/api/terrain_tessellation/README.adoc[Terrain tessellation]

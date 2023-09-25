@@ -781,7 +781,7 @@ void MultiDrawIndirect::render(float delta_time)
 
 	if (m_requires_rebuild)
 	{
-		build_command_buffers();
+		rebuild_command_buffers();
 		m_requires_rebuild = false;
 	}
 

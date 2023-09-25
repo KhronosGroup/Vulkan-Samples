@@ -301,7 +301,7 @@ void SwapchainRecreation::setup_frame()
 		// Reset/recycle resources, they are no longer in use.
 		recycle_fence(frame.submit_fence);
 		recycle_semaphore(frame.acquire_semaphore);
-		vkResetCommandBuffer(frame.command_buffer, 0);
+		vkResetCommandPool(get_device_handle(), frame.command_pool, 0);
 
 		// Destroy any garbage that's associated with this submission.
 		for (SwapchainObjects &garbage : frame.swapchain_garbage)
@@ -328,7 +328,7 @@ void SwapchainRecreation::setup_frame()
 	if (frame.command_pool == VK_NULL_HANDLE)
 	{
 		VkCommandPoolCreateInfo cmd_pool_info{VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO};
-		cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT | VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		cmd_pool_info.flags            = VK_COMMAND_POOL_CREATE_TRANSIENT_BIT;
 		cmd_pool_info.queueFamilyIndex = queue->get_family_index();
 		VK_CHECK(vkCreateCommandPool(get_device_handle(), &cmd_pool_info, nullptr, &frame.command_pool));
 

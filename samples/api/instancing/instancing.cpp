@@ -533,7 +533,7 @@ void Instancing::on_update_ui_overlay(vkb::Drawer &drawer)
 bool Instancing::resize(const uint32_t width, const uint32_t height)
 {
 	ApiVulkanSample::resize(width, height);
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 

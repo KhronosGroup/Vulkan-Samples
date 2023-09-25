@@ -128,6 +128,15 @@ class Drawer
 	bool checkbox(const char *caption, int32_t *value);
 
 	/**
+	 * @brief Adds a radio button to the gui
+	 * @param caption The text to display
+	 * @param selectedOption The pointer to the variable set using the radio button.
+	 * @param elementOption Value set to the selectedOption when the button is selected.
+	 * @returns True if adding item was successful
+	 */
+	bool radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption);
+
+	/**
 	 * @brief Adds a number input field to the gui
 	 * @param caption The text to display
 	 * @param value The value to map to
@@ -178,33 +187,6 @@ class Drawer
 	 * @param formatstr The format string
 	 */
 	void text(const char *formatstr, ...);
-
-	/**
-	 * @brief Adds a color picker to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_picker(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
-
-	/**
-	 * @brief Adds a color picker to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_picker(const char *caption, std::array<float, 4> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
-
-	/**
-	 * @brief Adds a color edit to the gui
-	 * @param caption The text to display
-	 * @param color Color channel array on which the picker works. It contains values ranging from 0 to 1.
-	 * @param width Element width. Zero is a special value for the default element width.
-	 * @param flags Flags to modify the appearance and behavior of the element.
-	 */
-	bool color_edit(const char *caption, std::array<float, 3> &color, float width = 0.0f, ImGuiColorEditFlags flags = 0);
 
 	/**
 	 * @brief Adds a color edit to the gui
