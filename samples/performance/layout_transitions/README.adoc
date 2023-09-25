@@ -18,6 +18,11 @@
 ////
 = Layout transitions
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/layout_transitions[Khronos Vulkan samples github repository].
+endif::[]
+
+
 Vulkan requires the application to manage image layouts, so that all render pass attachments are in the correct layout when the render pass begins.
 This is usually done using pipeline barriers or the `initialLayout` and `finalLayout` parameters of the render pass.
 

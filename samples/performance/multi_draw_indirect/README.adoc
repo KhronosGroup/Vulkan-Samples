@@ -18,6 +18,11 @@
 ////
 = GPU Rendering and Multi-Draw Indirect
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/multi_draw_indirect[Khronos Vulkan samples github repository].
+endif::[]
+
+
 This sample demonstrates how to reduce CPU usage by offloading draw call generation and frustum culling to the GPU.
 
 == Draw Call Generation

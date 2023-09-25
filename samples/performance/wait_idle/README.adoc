@@ -18,6 +18,11 @@
 ////
 = Synchronizing the CPU and GPU
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/wait_idle[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 This sample compares two methods for synchronizing between the CPU and GPU, `WaitIdle` and `Fences` demonstrating which one is the best option in order to avoid stalling.

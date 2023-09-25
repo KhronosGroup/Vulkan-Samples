@@ -18,6 +18,11 @@
 ////
 = Using explicit 16-bit arithmetic in applications
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/16bit_arithmetic[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 In the world of mobile GPUs, `mediump` has long been used as a critical optimization for performance and bandwidth.

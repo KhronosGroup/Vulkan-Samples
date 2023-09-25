@@ -19,6 +19,11 @@
 
 = Dynamic line rasterization
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/dynamic_line_rasterization[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::screenshot.png[]
 
 == Overview

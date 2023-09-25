@@ -18,6 +18,11 @@
 ////
 = Logic operations dynamic state
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/logic_op_dynamic_state[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/logic_op_dynamic_state_screenshot.png[Sample]
 
 == Overview

@@ -18,6 +18,11 @@
 ////
 = Appropriate use of render pass attachments
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/render_passes[Khronos Vulkan samples github repository].
+endif::[]
+
+
 == Overview
 
 Vulkan render-passes use attachments to describe input and output render targets.

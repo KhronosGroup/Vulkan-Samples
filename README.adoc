@@ -19,36 +19,23 @@
 = Vulkan Samples
 // omit in toc
 :pp: {plus}{plus}
+ifndef::site-gen-antora[]
+:toc:
+endif::[]
 
 image::banner.jpg[Vulkan Samples banner]
 
-== Contents
-// omit in toc
-
-* <<renaming-default-branch,Renaming Default Branch>>
-* <<introduction,Introduction>>
- ** <<goals,Goals>>
-* <<samples,Samples>>
-* <<general-information,General information>>
-* <<setup,Setup>>
-* <<build,Build>>
- ** <<supported-platforms,Supported Platforms>>
-* <<usage,Usage>>
-* <<tests,Tests>>
-* <<license,License>>
- ** <<trademarks,Trademarks>>
-* <<contributions,Contributions>>
-* <<related-resources,Related resources>>
-
+ifndef::site-gen-antora[]
 == Renaming Default Branch
 
 We have recently transitioned the repository to use the `main` branch by default.
 All remote git usage is handled automatically.
 To update your local repository to use main please use the following commands
 
-____
+----
 git branch -m master main git fetch origin git branch -u origin/main main git remote set-head origin -a
-____
+----
+endif::[]
 
 == Introduction
 

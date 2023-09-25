@@ -18,6 +18,11 @@
 ////
 = Mesh Shader Culling
 
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/mesh_shader_culling[Khronos Vulkan samples github repository].
+endif::[]
+
+
 image::./images/mesh_shader_culling.png[Mesh Shader Culling]
 
 == Overview
