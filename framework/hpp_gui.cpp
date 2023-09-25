@@ -1064,6 +1064,15 @@ bool HPPDrawer::checkbox(const std::string &caption, int32_t *value)
 	return res;
 }
 
+bool HPPDrawer::radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption)
+{
+	bool res = ImGui::RadioButton(caption, selectedOption, elementOption);
+	if (res)
+		dirty = true;
+
+	return res;
+}
+
 bool HPPDrawer::input_float(const std::string &caption, float *value, float step, uint32_t precision)
 {
 	bool res = ImGui::InputFloat(caption.c_str(), value, step, step * 10.0f, precision);

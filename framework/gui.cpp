@@ -1136,6 +1136,15 @@ bool Drawer::checkbox(const char *caption, int32_t *value)
 	return res;
 }
 
+bool Drawer::radio_button(const char *caption, int32_t *selectedOption, const int32_t elementOption)
+{
+	bool res = ImGui::RadioButton(caption, selectedOption, elementOption);
+	if (res)
+		dirty = true;
+
+	return res;
+}
+
 bool Drawer::input_float(const char *caption, float *value, float step, uint32_t precision)
 {
 	bool res = ImGui::InputFloat(caption, value, step, step * 10.0f, precision);
