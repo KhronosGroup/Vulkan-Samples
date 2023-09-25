@@ -139,11 +139,7 @@ bool HPPApiVulkanSample::resize(const uint32_t, const uint32_t)
 		gui->resize(extent.width, extent.height);
 	}
 
-	// Command buffers need to be recreated as they may store
-	// references to the recreated frame buffer
-	destroy_command_buffers();
-	create_command_buffers();
-	build_command_buffers();
+	rebuild_command_buffers();
 
 	get_device()->get_handle().waitIdle();
 
@@ -429,7 +425,7 @@ void HPPApiVulkanSample::update_overlay(float delta_time)
 
 		if (gui->update_buffers() || gui->get_drawer().is_dirty())
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 			gui->get_drawer().clear();
 		}
 	}
@@ -571,6 +567,12 @@ void HPPApiVulkanSample::view_changed()
 void HPPApiVulkanSample::build_command_buffers()
 {}
 
+void HPPApiVulkanSample::rebuild_command_buffers()
+{
+	get_device()->get_handle().resetCommandPool(cmd_pool);
+	build_command_buffers();
+}
+
 void HPPApiVulkanSample::create_synchronization_primitives()
 {
 	// Wait fences to sync command buffer access
@@ -585,7 +587,7 @@ void HPPApiVulkanSample::create_synchronization_primitives()
 void HPPApiVulkanSample::create_command_pool()
 {
 	uint32_t                  queue_family_index = get_device()->get_queue_by_flags(vk::QueueFlagBits::eGraphics | vk::QueueFlagBits::eCompute, 0).get_family_index();
-	vk::CommandPoolCreateInfo command_pool_info(vk::CommandPoolCreateFlagBits::eResetCommandBuffer, queue_family_index);
+	vk::CommandPoolCreateInfo command_pool_info({}, queue_family_index);
 	cmd_pool = get_device()->get_handle().createCommandPool(command_pool_info);
 }
 

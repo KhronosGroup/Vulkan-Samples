@@ -377,7 +377,7 @@ void FragmentShaderBarycentric::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.combo_box("Effects", &gui_settings.selected_effect, gui_settings.effect_names))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

@@ -934,7 +934,7 @@ void HDR::on_update_ui_overlay(vkb::Drawer &drawer)
 		if (drawer.combo_box("Object type", &models.object_index, object_names))
 		{
 			update_uniform_buffers();
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.input_float("Exposure", &ubo_params.exposure, 0.025f, 3))
 		{
@@ -942,11 +942,11 @@ void HDR::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		if (drawer.checkbox("Bloom", &bloom))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Skybox", &display_skybox))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }
