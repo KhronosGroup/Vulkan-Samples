@@ -274,6 +274,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	virtual void build_command_buffers() = 0;
 
 	/**
+	 * @brief Rebuild the command buffers by first resetting the corresponding command pool and then building the command buffers.
+	 */
+	void rebuild_command_buffers();
+
+	/**
 	 * @brief Creates the fences for rendering
 	 */
 	void create_synchronization_primitives();

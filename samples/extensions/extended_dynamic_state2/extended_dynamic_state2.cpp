@@ -1141,7 +1141,7 @@ void ExtendedDynamicState2::cube_animation(float delta_time)
 		/* Write new position to object */
 		transform.set_translation(translation);
 		gui_settings.time_tick = true;
-		build_command_buffers();
+		rebuild_command_buffers();
 	}
 }
 

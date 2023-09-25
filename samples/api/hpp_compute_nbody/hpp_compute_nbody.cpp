@@ -78,13 +78,6 @@ void HPPComputeNBody::request_gpu_features(vkb::core::HPPPhysicalDevice &gpu)
 
 void HPPComputeNBody::build_command_buffers()
 {
-	// Destroy command buffers if already present
-	if (!check_command_buffers())
-	{
-		destroy_command_buffers();
-		create_command_buffers();
-	}
-
 	std::array<vk::ClearValue, 2> clear_values = {{vk::ClearColorValue(std::array<float, 4>({{0.0f, 0.0f, 0.0f, 1.0f}})),
 	                                               vk::ClearDepthStencilValue(0.0f, 0)}};
 
@@ -465,7 +458,7 @@ void HPPComputeNBody::prepare_compute()
 	}
 
 	// Separate command pool as queue family for compute may be different than graphics
-	compute.command_pool = device.createCommandPool({vk::CommandPoolCreateFlagBits::eResetCommandBuffer, compute.queue_family_index});
+	compute.command_pool = device.createCommandPool({{}, compute.queue_family_index});
 
 	// Create a command buffer for compute operations
 	compute.command_buffer = vkb::common::allocate_command_buffer(device, compute.command_pool);

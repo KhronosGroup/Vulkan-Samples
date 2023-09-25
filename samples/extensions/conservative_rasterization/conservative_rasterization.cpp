@@ -618,7 +618,7 @@ void ConservativeRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Conservative rasterization", &conservative_raster_enabled))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 	if (drawer.header("Device properties"))

@@ -1113,11 +1113,11 @@ void DebugUtils::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Bloom", &bloom))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("skysphere", &display_skysphere))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }

@@ -691,7 +691,6 @@ void RaytracingBasic::build_command_buffers()
 		image_descriptor.imageLayout            = VK_IMAGE_LAYOUT_GENERAL;
 		VkWriteDescriptorSet result_image_write = vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1, &image_descriptor);
 		vkUpdateDescriptorSets(get_device().get_handle(), 1, &result_image_write, 0, VK_NULL_HANDLE);
-		build_command_buffers();
 	}
 
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();

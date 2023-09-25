@@ -720,7 +720,7 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		if (drawer.checkbox("Enable attachment shading rate", &enable_attachment_shading_rate))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 		if (drawer.checkbox("Color shading rates", &color_shading_rate))
 		{
@@ -728,7 +728,7 @@ void FragmentShadingRate::on_update_ui_overlay(vkb::Drawer &drawer)
 		}
 		if (drawer.checkbox("skysphere", &display_skysphere))
 		{
-			build_command_buffers();
+			rebuild_command_buffers();
 		}
 	}
 }
@@ -741,7 +741,7 @@ bool FragmentShadingRate::resize(const uint32_t width, const uint32_t height)
 		setup_framebuffer();
 	}
 	update_uniform_buffers();
-	build_command_buffers();
+	rebuild_command_buffers();
 	return true;
 }
 

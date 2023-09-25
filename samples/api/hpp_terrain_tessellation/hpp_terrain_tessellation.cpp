@@ -170,7 +170,7 @@ void HPPTerrainTessellation::on_update_ui_overlay(vkb::HPPDrawer &drawer)
 		{
 			if (drawer.checkbox("Wireframe", &wireframe.enabled))
 			{
-				build_command_buffers();
+				rebuild_command_buffers();
 			}
 		}
 	}
