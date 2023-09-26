@@ -342,9 +342,15 @@ This replaces the vertex /  geometry shader standard pipeline.
 Render a procedural image using OpenGL and incorporate that rendered content into a Vulkan scene.
 Demonstrates using the same backing memory for a texture in both OpenGL and Vulkan and how to synchronize the APIs using shared semaphores and barriers.
 
-=== xref:./extensions/open_cl_interop/README.adoc[Arm OpenCL interoperability]
+=== xref:./extensions/open_cl_interop/README.adoc[OpenCL interoperability]
 
-*Extensions*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_ANDROID_external_memory_android_hardware_buffer.html[`VK_ANDROID_EXTERNAL_MEMORY_ANDROID_HARDWARE_BUFFER_EXTENSION_NAME`]
+**Extensions**: https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory.html[`VK_KHR_external_memory`], https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore.html[`VK_KHR_external_semaphore`]
+
+This sample shows how to do Vulkan and OpenCL interoperability using cross vendor extensions in both apis. The sample uses OpenCL to update an image that is then displayed in Vulkan. This is done by sharing the memory for that image across the two apis. The sample also shares semaphores for doing cross api synchronization.
+
+=== xref:./extensions/open_cl_interop_arm/README.adoc[OpenCL interoperability (Arm)]
+
+*Extensions*: https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_ANDROID_external_memory_android_hardware_buffer.html[`VK_ANDROID_external_memory_android_hardware_buffer`]
 
 This sample demonstrates usage of OpenCL extensions available on Arm devices.
 Fill a procedural texture using OpenCL and display it using Vulkan.
