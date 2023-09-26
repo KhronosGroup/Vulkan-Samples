@@ -287,7 +287,7 @@ vk::Pipeline HPPHDR::create_bloom_pipeline(uint32_t direction)
 	                                             {blend_attachment_state},
 	                                             depth_stencil_state,
 	                                             bloom.pipeline_layout,
-	                                             render_pass);
+	                                             direction == 1 ? render_pass : filter_pass.render_pass);
 }
 
 vk::Pipeline HPPHDR::create_composition_pipeline()
