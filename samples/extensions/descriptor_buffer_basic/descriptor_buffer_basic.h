@@ -39,8 +39,8 @@ class DescriptorBufferBasic : public ApiVulkanSample
 		VkDeviceSize                       size;
 		VkDeviceSize                       offset;
 	};
-	DescriptorData uniform_binging_descriptor;
-	DescriptorData image_binging_descriptor;
+	DescriptorData uniform_binding_descriptor;
+	DescriptorData image_binding_descriptor;
 
 	struct Cube
 	{
