@@ -21,7 +21,6 @@
 #include <random>
 
 #define GRAVITY 9.81f
-#define DISPLACEMENT_MAP_DIM 256
 
 void SubgroupsOperations::Pipeline::destroy(VkDevice device)
 {
@@ -328,8 +327,7 @@ void SubgroupsOperations::create_tildas()
 void SubgroupsOperations::load_assets()
 {
 	generate_plane();
-
-	log_2_N = log(DISPLACEMENT_MAP_DIM) / log(2);
+	log_2_N = glm::log(grid_size) / glm::log(2.0f);
 
 	// generate fft inputs
 	h_tilde_0.clear();
@@ -344,7 +342,6 @@ void SubgroupsOperations::load_assets()
 	}
 
 	// calculate weights
-	auto     log_2_N = glm::log(grid_size) / glm::log(2.0f);
 	uint32_t pow2    = 1U;
 	for (uint32_t i = 0U; i < log_2_N; ++i)
 	{
@@ -373,8 +370,6 @@ void SubgroupsOperations::load_assets()
 	fft_buffers.fft_input_htilde0->update(h_tilde_0.data(), fft_input_htilde0_size);
 	fft_buffers.fft_input_htilde0_conj->update(h_tilde_0_conj.data(), fft_input_htilde0_conj_size);
 	fft_buffers.fft_input_weight->update(weights.data(), fft_input_weights_size);
-
-	// fft_buffers.fft_height_map_image = std::make_unique<vkb::sg::Image>(grid_size * grid_size);
 }
 
 float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m)
@@ -423,14 +418,14 @@ std::complex<float> SubgroupsOperations::rndGaussian()
 		x2 = 2.0f * rndVal() - 1.0f;
 		w  = x1 * x1 + x2 * x2;
 	} while (w >= 1.0f);
-	w = std::sqrt((-2.0f * std::log(w)) / w);
+	w = glm::sqrt((-2.0f * glm::log(w)) / w);
 	return {x1 * w, x2 * w};
 }
 
 std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m)
 {
 	std::complex<float> rnd = rndGaussian();
-	return rnd * std::sqrt(phillips_spectrum(n, m) / 2.0f);
+	return rnd * glm::sqrt(phillips_spectrum(n, m) / 2.0f);
 }
 
 void SubgroupsOperations::prepare_uniform_buffers()
@@ -611,10 +606,7 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_ubo.wind      = ui.wind;
 	fft_params_ubo->convert_and_update(fft_ubo);
 
-	TimeUbo t;
-	t.time = 92340.36541365841351354135135f;
-
-	fft_time_ubo->convert_and_update(t);
+	fft_time_ubo->convert_and_update(fftTime);
 }
 
 void SubgroupsOperations::build_command_buffers()
@@ -778,7 +770,7 @@ void SubgroupsOperations::render(float delta_time)
 	{
 		return;
 	}
-
+	fftTime.time = delta_time;
 	update_uniform_buffers();
 	draw();
 }

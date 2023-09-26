@@ -20,6 +20,8 @@
 #include "api_vulkan_sample.h"
 #include <complex>
 
+#define DISPLACEMENT_MAP_DIM 256u
+
 class SubgroupsOperations : public ApiVulkanSample
 {
 	struct OceanVertex
@@ -100,8 +102,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct TimeUbo
 	{
-		alignas(4) float time;
-	};
+		alignas(4) float time = {0.0f};
+	} fftTime;
 
 	struct GuiConfig
 	{
@@ -111,7 +113,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec2 wind      = {100.0f, 0.0f};
 	} ui;
 
-	uint32_t                           grid_size = {256u};
+	uint32_t                           grid_size = {DISPLACEMENT_MAP_DIM};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_time_ubo;
