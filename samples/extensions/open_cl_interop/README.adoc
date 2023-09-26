@@ -1,5 +1,5 @@
 ////
-- Copyright (c) 2021-2023, Arm Limited and Contributors
+- Copyright (c) 2023, Sascha Willems
 -
 - SPDX-License-Identifier: Apache-2.0
 -
@@ -16,168 +16,392 @@
 - limitations under the License.
 -
 ////
-= OpenCL interoperability
+= Cross vendor OpenCL and Vulkan interoperability
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/open_cl_interop[Khronos Vulkan samples github repository].
 endif::[]
 
+== Background
 
-== Overview
-
-In certain scenarios OpenCL is used for compute, while another API is used for graphics, and interoperability between two APIs becomes important in this case.
-For example, in AR applications graphics rendering is often combined with machine learning workloads, which can be executed using OpenCL.
-In such cases we need zero-copy data sharing and efficient workload synchronization to achieve the best performance.
-
-While there are no dedicated extensions for direct Vulkan - OpenCL interoperability at the moment, both APIs provide generic sharing mechanism that can be used to achieve it.
-This sample demonstrates an approach for zero-copy data sharing using Android Hardware Buffers and corresponding extensions for Vulkan and OpenCL.
-
-== Data sharing
-
-Zero-copy assumes that both APIs use the same region of memory for an image or a buffer.
-In case of OpenCL and Vulkan we can use extensions to share data using:
-
-* Android Hardware Buffers
-* dma_buf
-* Host memory
-
-This sample covers one of these options, which is more relevant to mobile developers working with Vulkan: Android Hardware Buffers.
-
-== Android Hardware Buffers
-
-Native hardware buffers on Android represent a region of memory which can be bound to Vulkan, OpenGL ES or OpenCL primitives.
-This allows us to reuse it with two different APIs:
-
-image::./images/shared_hardware_buffer.png[Sample]
-
-=== Support by Vulkan API
-
-In Vulkan hardware buffers can be imported or exported using https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_ANDROID_external_memory_android_hardware_buffer.html[VK_ANDROID_external_memory_android_hardware_buffer] extension.
-AHardwareBuffer can be bound to a `VkDeviceMemory` object, which serves as an allocation for objects of type `VkImage` or `VkBuffer`.
-
-If we need to use an image backed by an AHardwareBuffer, we must specify while creating the image.
-It is done by assigning a pointer to the following structure to `pNext` field of `VkImageCreateInfo`:
-
-----
-VkExternalMemoryImageCreateInfo external_memory_image_create_info;
-external_memory_image_create_info.sType = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
-external_memory_image_create_info.pNext = nullptr;
-external_memory_image_create_info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
-----
-
-This image (or buffer) must be specified as target during memory allocation.
-Below you can see, how the image object which is supposed to be shared with OpenCL is assigned to the `image` field of `VkMemoryDedicatedAllocateInfo`, while `buffer` field is assigned with `VK_NULL_HANDLE`:
-
-----
-VkMemoryDedicatedAllocateInfo dedicated_allocate_info;
-dedicated_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_DEDICATED_ALLOCATE_INFO;
-dedicated_allocate_info.pNext = nullptr;
-dedicated_allocate_info.buffer = VK_NULL_HANDLE;
-dedicated_allocate_info.image = shared_image;
-----
-
-==== Export from Vulkan API
-
-A pointer to `dedicated_allocate_info` is provided as `pNext` of `VkExportMemoryAllocateInfo`.
-
-----
-VkExportMemoryAllocateInfo export_memory_allocate_Info;
-export_memory_allocate_Info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO;
-export_memory_allocate_Info.pNext = &dedicated_allocate_info;
-export_memory_allocate_Info.handleTypes = VK_EXTERNAL_MEMORY_HANDLE_TYPE_ANDROID_HARDWARE_BUFFER_BIT_ANDROID;
-----
-
-This is specified as `pNext` of `VkMemoryAllocateInfo`, while `allocationSize` is set to 0.
-You can find more info on this in the https://www.khronos.org/registry/vulkan/specs/1.2-extensions/html/vkspec.html#VkMemoryRequirements[specification].
-
-Once the memory is allocated *and* bound to the image (or buffer), we can export a handle of type `AHardwareBuffer`:
-
-----
-VkMemoryGetAndroidHardwareBufferInfoANDROID info;
-info.sType = VK_STRUCTURE_TYPE_MEMORY_GET_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
-info.pNext = nullptr;
-info.memory = shared_memory;
-vkGetMemoryAndroidHardwareBufferANDROID(device, &info, &hardware_buffer);
-----
-
-==== Import to Vulkan API
-
-In this case AHardwareBuffer is created first and then used for `VkDeviceMemory` allocation.
-
-NOTE: there are certain restrictions on image or buffer format and usage.
-You can find the list of Android Hardware Buffer formats and their Vulkan counterparts in this https://developer.android.com/ndk/reference/group/a-hardware-buffer#ahardwarebuffer_format[table].
-
-A pointer to `dedicated_allocate_info` is provided as `pNext` of `VkImportAndroidHardwareBufferInfoANDROID`.
-Also the hardware buffer we want to import must be provided during this stage:
-
-----
-VkImportAndroidHardwareBufferInfoANDROID import_info;
-import_info.sType = VK_STRUCTURE_TYPE_IMPORT_ANDROID_HARDWARE_BUFFER_INFO_ANDROID;
-import_info.pNext = &dedicated_allocate_info;
-import_info.buffer = hardware_buffer;
-----
-
-We need to specify this data as `pNext` in `VkMemoryAllocateInfo`.
-In case of import, `allocationSize` and `memoryTypeIndex` should be based on the results of `vkGetAndroidHardwareBufferPropertiesANDROID`:
-
-----
-VkAndroidHardwareBufferPropertiesANDROID buffer_properties;
-buffer_properties.sType = VK_STRUCTURE_TYPE_ANDROID_HARDWARE_BUFFER_PROPERTIES_ANDROID;
-buffer_properties.pNext = nullptr;
-vkGetAndroidHardwareBufferPropertiesANDROID(device, hardware_buffer, &buffer_properties);
-----
-
-Then the memory is allocated and bound to the image as usual.
-
-=== Support by OpenCL
-
-On Arm devices Android hardware buffers (as well as dma_buf and host memory) can be imported to OpenCL using https://www.khronos.org/registry/OpenCL/extensions/arm/cl_arm_import_memory.txt[cl_arm_import_memory] extension.
-
-`cl_mem` object is retrieved in the following way:
-
-----
-const cl_import_properties_arm import_properties[3] = {
-	    CL_IMPORT_TYPE_ARM, CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM,
-	    0};
-
-cl_int result = CL_SUCCESS;
-cl_mem shared_cl_mem = clImportMemoryARM(context,
-                                                    CL_MEM_READ_WRITE,
-                                                    import_properties,
-                                                    hardware_buffer,
-                                                    CL_IMPORT_MEMORY_WHOLE_ALLOCATION_ARM,
-                                                    &result);
-----
-
-In `cl_import_properties_arm` array the types and values of the properties are listed one by one with a 0 as a terminator in the end.
-
-We need to specify the type of the imported object in this list (in our case it's `CL_IMPORT_TYPE_ANDROID_HARDWARE_BUFFER_ARM`).
+Even though compute support in Vulkan is mandatory, there are still use-cases where the broader range of OpenCL's compute features may be required, e.g. for complex scientific computations or for re-using existing OpenCL kernels. For that both apis offer a set of vendor independent extensions that allow zero-copy sharing of objects known to both apis (known as "api interoperability"). Zero-copy means that both apis can access these objects without the need to duplicate and copy them between the apis. This allows for an efficient sharing of these objects between Vulkan and OpenCL.
 
 == The sample
 
-In this sample a simple OpenCL kernel is executed in the beginning of each frame to fill a `cl_mem` object backed by an `AHardwareBuffer` with a simple pattern (this pattern changes over time).
-This `AHardwareBuffer` is exported from a `VkDeviceMemory` object which is bound to a texture.
-After the OpenCL kernel is executed, the filled texture is displayed.
+image::./images/open_cl_interop.jpg[OpenCL interop sample]
 
-The texture is displayed as a quad using the approach and shaders from link:../../api/texture_loading[Texture Loading] sample.
+This sample demonstrates zero-copy sharing with an image that's updated using an OpenCL compute kernel and displayed as a texture on a quad inside Vulkan. To sync between the two apis the sample also makes use of shared semaphores.
 
-The sample uses only one shared texture for simplicity, but in real applications it's worth having as many shared textures as there are framebuffers.
-This way the OpenCL kernel would be executed for the current frame, while the previous frame is being rendered and displayed (double buffering).
+To fully understand how this sample works it's advised to have experience with both Vulkan and OpenCL. While both apis are maintained by Khronos, they differ greatly in their usage and concepts
 
-Synchronization between APIs is performed on host:
+== Required extensions
 
-* OpenCL queue is flushed before rendering
-* A `VkFence` object is used to make sure the rendering is finished
+Both Vulkan and OpenCL offer extensions for so called external objects. An external object is something that can be referenced in multiple apis. In this sample we share images and semaphores, so we need to enable related extensions on both apis.
 
-image::./images/sample.png[Sample]
+For *sharing the memory* backing up the image, in *Vulkan* we need to enable https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_capabilities.html[`VK_KHR_external_memory_capabilities`] at instance level and https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory.html[`VK_KHR_external_memory`] at device level. We also need to enable specific extensions based on the platform we're running on. For Windows that's https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_win32.html[`VK_KHR_external_memory_win32`] and for all Unix based platforms we need to enable https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_fd.html[`VK_KHR_external_memory_fd`]. The OpenCl equivalents to these extensions are https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Ext.html#cl_khr_external_memory[`cl_khr_external_memory`], `cl_khr_external_memory_win32` (Windows) and `cl_khr_external_memory_opaque_fd` (Unix based platforms).
+
+For *sharing the semaphores* used to sync image access between the apis, in *Vulkan* we need to enable https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_capabilities.html[`VK_KHR_external_semaphore_capabilities`] at the instance level and https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore.html[`VK_KHR_external_semaphore`] at the device level. The platform specific extension to enable are https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_win32.html[`VK_KHR_external_semaphore_win32`] for Windows and https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_semaphore_fd.html[`VK_KHR_external_semaphore_fd`] for Unix based platforms. The *OpenCL equivalents* to these are https://registry.khronos.org/OpenCL/specs/3.0-unified/html/OpenCL_Ext.html#cl_khr_external_semaphore[`cl_khr_external_semaphore`], `cl_khr_external_semaphore_win32` (Windows) and `cl_khr_external_semaphore_opaque_fd` (Unix based platforms).
+
+We also need to match devices between Vulkan and OpenCL. In Vulkan this functionality is provided e.g. by the https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_KHR_external_memory_capabilities.html[`VK_KHR_external_memory_capabilities`] extension, in OpenCL this requires the `cl_khr_device_uuid`. More on this later.
+
+== Matching devices
+
+For the type of external objects we are going to share between Vulkan and OpenCL in this sample, we must make sure that we use the same device in Vulkan and OpenCL. See https://registry.khronos.org/vulkan/specs/1.3-extensions/html/chap49.html#capabilities-image[this chapter of the spec] as to why this is required and to what types of external objects this applies. Esp. on desktop systems you may have multiple Vulkan and/or OpenCL implementations, and they may be reported by both apis in different orders. So just assuming that the first Vulkan device is also the first OpenCL device may not work.
+
+For that, both apis expose universally unique (device) identifiers (uuid) that we can use to match the devices between the apis. This is done in the `prepare_opencl_resources` function. Since this is a Vulkan sample we'll try to find the OpenCL device that matches the UUID of our Vulkan sample:
+
+[,cpp]
+----
+// Get the UUID of the current Vulkan device
+VkPhysicalDeviceIDPropertiesKHR physical_device_id_propreties{};
+physical_device_id_propreties.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES;
+VkPhysicalDeviceProperties2 physical_device_properties_2{};
+physical_device_properties_2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2_KHR;
+physical_device_properties_2.pNext = &physical_device_id_propreties;
+vkGetPhysicalDeviceProperties2KHR(device->get_gpu().get_handle(), &physical_device_properties_2);
+
+// Iterate over all available OpenCL platforms and find the first that fits our requirements (extensions, device UUID)
+cl_uint num_platforms;
+clGetPlatformIDs_ptr(0, nullptr, &num_platforms);
+
+std::vector<cl_platform_id> platform_ids(num_platforms);
+clGetPlatformIDs_ptr(num_platforms, platform_ids.data(), nullptr);
+
+cl_platform_id selected_platform_id{nullptr};
+cl_device_id   selected_device_id{nullptr};
+
+// Iterate over all available OpenCL platforms
+for (auto &platform_id : platform_ids)
+{
+	cl_uint        num_devices;
+	clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, 0, nullptr, &num_devices);
+	std::vector<cl_device_id> device_ids(num_devices);
+	clGetDeviceIDs_ptr(platform_id, CL_DEVICE_TYPE_ALL, num_devices, device_ids.data(), nullptr);
+
+	...
+
+	// Check every device of this platform and see if it matches our Vulkan device UUID
+	selected_device_id = nullptr;
+	for (auto &device_id : device_ids)
+	{
+		cl_uchar uuid[CL_UUID_SIZE_KHR];
+		clGetDeviceInfo_ptr(device_id, CL_DEVICE_UUID_KHR, sizeof(uuid), &uuid, nullptr);
+
+		bool device_uuid_match = true;
+
+		for (uint32_t i = 0; i < CL_UUID_SIZE_KHR; i++)
+		{
+			if (uuid[i] != physical_device_id_propreties.deviceUUID[i])
+			{
+				device_uuid_match = false;
+				break;
+			}
+		}
+
+		if (!device_uuid_match)
+		{
+			continue;
+		}
+
+		// We found a device with a matching UUID, so use it
+		selected_device_id = device_id;
+		break;
+	}
+
+	...
+}
+----
+
+== A note on Windows security
+
+On Windows we need to ensure read and write access to the shared memory for external handles (see https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VkExportMemoryWin32HandleInfoKHR.html#_description[spec]). This requires setting up security attributes using the Windows API. To simplify this, the sample implements that in the `WinSecurityAttributes` class. This is then used in all places where we share memory on Windows.
+
+== Creating and sharing the image
+
+The sample will update the contents of an image with OpenCL and displays that on a quad with Vulkan. So we first need to setup that image (and it's memory) in Vulkan just as any other image with the appropriate usage flags:
+
+[,cpp]
+----
+VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
+image_create_info.imageType         = VK_IMAGE_TYPE_2D;
+image_create_info.format            = VK_FORMAT_R8G8B8A8_UNORM;
+image_create_info.mipLevels         = 1;
+image_create_info.arrayLayers       = 1;
+image_create_info.samples           = VK_SAMPLE_COUNT_1_BIT;
+image_create_info.tiling            = VK_IMAGE_TILING_OPTIMAL;
+image_create_info.extent            = {shared_image.width, shared_image.height, shared_image.depth};
+image_create_info.usage             = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+----
+
+And mark it as external using `VkExternalMemoryImageCreateInfo` in the `pNext` chain of the image create info structure , so other apis (in our case OpenCL) will be able to access it:
+
+[,cpp]
+----
+VkExternalMemoryImageCreateInfo external_memory_image_info{};
+external_memory_image_info.sType       = VK_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMAGE_CREATE_INFO;
+external_memory_image_info.handleTypes = external_handle_type;
+
+image_create_info.pNext = &external_memory_image_info;
+VK_CHECK(vkCreateImage(get_device().get_handle(), &image_create_info, nullptr, &shared_image.image));
+----
+
+Just like the required extensions, the `handleTypes` are also platform specific. We need to use `VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_WIN32_BIT_KHR` for Windows and `VK_EXTERNAL_MEMORY_HANDLE_TYPE_OPAQUE_FD_BIT_KHR` for Unix based platforms (which also includes Android).
+
+We need to do the same with the memory backing up our image, as we also allocate it in the Vulkan part of our sample. We chain a `VkExportMemoryAllocateInfoKHR` structure into the memory allocation:
+
+[,cpp]
+----
+VkExportMemoryAllocateInfoKHR export_memory_allocate_info{};
+export_memory_allocate_info.sType = VK_STRUCTURE_TYPE_EXPORT_MEMORY_ALLOCATE_INFO_KHR;
+export_memory_allocate_info.handleTypes = external_handle_type;
+#ifdef _WIN32
+	export_memory_allocate_info.pNext = &export_memory_win32_handle_info;
+#endif
+
+VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
+memory_allocate_info.pNext                = &export_memory_allocate_info;
+memory_allocate_info.allocationSize       = memory_requirements.size;
+memory_allocate_info.memoryTypeIndex      = device->get_memory_type(memory_requirements.memoryTypeBits, 0);
+
+VK_CHECK(vkAllocateMemory(device_handle, &memory_allocate_info, nullptr, &shared_image.memory));
+VK_CHECK(vkBindImageMemory(device_handle, shared_image.image, shared_image.memory, 0));
+----
+
+As noted earlier, on Windows we need to pass additional process security related information using the `VkExportMemoryWin32HandleInfoKHR` structure:
+
+[,cpp]
+----
+#ifdef _WIN32
+	WinSecurityAttributes            win_security_attributes;
+	VkExportMemoryWin32HandleInfoKHR export_memory_win32_handle_info{};
+	export_memory_win32_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_MEMORY_WIN32_HANDLE_INFO_KHR;
+	export_memory_win32_handle_info.pAttributes = &win_security_attributes;
+	export_memory_win32_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+	export_memory_allocate_info.pNext           = &export_memory_win32_handle_info;
+#endif
+----
+
+Once we created the image along with it's memory in Vulkan, we *switch over to OpenCL* where we'll import the image. Note that the OpenCL api looks very different from Vulkan. OpenCL e.g. often uses zero terminated property lists instead of explicit structures.
+
+For this property list we need to get a shareable handle for the Vulkan memory backing up our image, This is done with the `get_vulkan_memory_handle` function, which is a light wrapper around the Vulkan functions for getting the platform specific handle (e.g. `vkGetMemoryWin32HandleKHR` on Windows):
+
+[,cpp]
+----
+	std::vector<cl_mem_properties> mem_properties;
+
+#ifdef _WIN32
+	HANDLE handle = get_vulkan_memory_handle(shared_image.memory);
+	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_WIN32_KHR);
+	mem_properties.push_back((cl_mem_properties) handle);
+#else
+	int fd = get_vulkan_memory_handle(shared_image.memory);
+	mem_properties.push_back((cl_mem_properties) CL_EXTERNAL_MEMORY_HANDLE_OPAQUE_FD_KHR);
+	mem_properties.push_back((cl_mem_properties) fd);
+#endif
+	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_KHR);
+	mem_properties.push_back((cl_mem_properties) opencl_objects.device_id);
+	mem_properties.push_back((cl_mem_properties) CL_DEVICE_HANDLE_LIST_END_KHR);
+	mem_properties.push_back(0);
+----
+
+And then create an OpenCL image using that handle:
+
+[,cpp]
+----
+cl_image_format cl_img_fmt{};
+cl_img_fmt.image_channel_order     = CL_RGBA;
+cl_img_fmt.image_channel_data_type = CL_UNSIGNED_INT8;
+
+cl_image_desc cl_img_desc{};
+cl_img_desc.image_width       = shared_image.width;
+cl_img_desc.image_height      = shared_image.height;
+cl_img_desc.image_type        = CL_MEM_OBJECT_IMAGE2D;
+cl_img_desc.image_slice_pitch = cl_img_desc.image_row_pitch * cl_img_desc.image_height;
+cl_img_desc.num_mip_levels    = 1;
+cl_img_desc.buffer            = nullptr;
+
+int cl_result;
+opencl_objects.image = clCreateImageWithProperties(opencl_objects.context,
+                                                    mem_properties.data(),
+                                                    CL_MEM_READ_WRITE,
+                                                    &cl_img_fmt,
+                                                    &cl_img_desc,
+                                                    NULL,
+                                                    &cl_result);
+CL_CHECK(cl_result);
+----
+
+The interesting part here is:
+
+[,cpp]
+----
+cl_img_desc.buffer            = nullptr;
+----
+
+This means that we don't allocate a buffer backing the image in OpenCL, but rather import it via the handle specified in the `mem_properties` property list.
+
+After the call to `clCreateImageWithProperties` we're ready to use the image in both apis.
+
+== Creating and sharing semaphores
+
+To sync work across Vulkan and OpenCL we'll be using semaphores. Once again we create these on the Vulkan side of our sample inside the `OpenCLInterop::prepare_sync_objects()` function. Sharing them is very similar to sharing any other object like e.g. the image:
+
+[,cpp]
+----
+VkExportSemaphoreCreateInfoKHR export_semaphore_create_info{};
+export_semaphore_create_info.sType = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_CREATE_INFO_KHR;
+
+#ifdef _WIN32
+WinSecurityAttributes               win_security_attributes;
+VkExportSemaphoreWin32HandleInfoKHR export_semaphore_handle_info{};
+export_semaphore_handle_info.sType       = VK_STRUCTURE_TYPE_EXPORT_SEMAPHORE_WIN32_HANDLE_INFO_KHR;
+export_semaphore_handle_info.pAttributes = &win_security_attributes;
+export_semaphore_handle_info.dwAccess    = DXGI_SHARED_RESOURCE_READ | DXGI_SHARED_RESOURCE_WRITE;
+
+export_semaphore_create_info.pNext       = &export_semaphore_handle_info;
+export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_WIN32_BIT;
+#else
+export_semaphore_create_info.handleTypes = VK_EXTERNAL_SEMAPHORE_HANDLE_TYPE_OPAQUE_FD_BIT;
+#endif
+
+VkSemaphoreCreateInfo semaphore_create_info{};
+semaphore_create_info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+semaphore_create_info.pNext = &export_semaphore_create_info;
+
+VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &cl_update_vk_semaphore));
+VK_CHECK(vkCreateSemaphore(device->get_handle(), &semaphore_create_info, nullptr, &vk_update_cl_semaphore));
+----
+
+We once again select the handle type based on the platform we're compiling on and if it's a Windows system we set the required security access information before creating two semaphores with `vkCreateSemaphore`.
+
+With the Vulkan part done, we again *switch over* to OpenCL, where we'll import the Vulkan semaphores. The `get_vulkan_semaphore_handle` function is a convenient wrapper for getting a platform specific handle to a Vulkan semaphore. It'll use `vkGetSemaphoreWin32HandleKHR` on windows, and `vkGetSemaphoreFdKHR` on all other platforms:
+
+[,cpp]
+----
+std::vector<cl_semaphore_properties_khr> semaphore_properties{
+    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_KHR,
+    (cl_semaphore_properties_khr) CL_SEMAPHORE_TYPE_BINARY_KHR,
+    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_KHR,
+    (cl_semaphore_properties_khr) opencl_objects.device_id,
+    (cl_semaphore_properties_khr) CL_DEVICE_HANDLE_LIST_END_KHR,
+};
+
+// CL to VK semaphore
+
+// We need to select the external handle type based on our target platform
+#ifdef _WIN32
+semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_WIN32_KHR);
+HANDLE handle = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+semaphore_properties.push_back((cl_semaphore_properties_khr) handle);
+#else
+semaphore_properties.push_back((cl_semaphore_properties_khr) CL_SEMAPHORE_HANDLE_OPAQUE_FD_KHR);
+int fd = get_vulkan_semaphore_handle(cl_update_vk_semaphore);
+semaphore_properties.push_back((cl_semaphore_properties_khr) fd);
+#endif
+semaphore_properties.push_back(0);
+
+cl_int cl_result;
+
+opencl_objects.cl_update_vk_semaphore = clCreateSemaphoreWithPropertiesKHR(opencl_objects.context, semaphore_properties.data(), &cl_result);
+CL_CHECK(cl_result);
+
+// Remove the last two entries so we can push the next handle and zero terminator to the properties list and re-use the other values
+semaphore_properties.pop_back();
+semaphore_properties.pop_back();
+
+// VK to CL semaphore
+// Code is the same, and not repeated here
+...
+----
+
+== Sharing data between the apis
+
+Now that all objects shared between Vulkan and OpenCL have been set up we can actually start sharing the images. Remember that we'll be using OpenCL to update the contents of an image that we'll then display in our Vulkan sample on a quad. This is done in the `OpenCLInterop::render()` function.
+
+This includes proper synchronization of the image access as well as acquiring and releasing the image between the two apis.
+
+First we need to ensure that the command buffer displaying our image has finished. This is done on the Vulkan side using a fence:
+
+[,cpp]
+----
+vkWaitForFences(device->get_handle(), 1, &rendering_finished_fence, VK_TRUE, std::numeric_limits<uint64_t>::max());
+vkResetFences(device->get_handle(), 1, &rendering_finished_fence);
+----
+
+Next up is work submission. As we're now submitting work to two different apis we need to make sure that they'll properly wait for and signal the semaphores. As noted above we have two semaphores:
+
+* `cl_update_vk_semaphore` - Is signalled by OpenCL and waited on by Vulkan
+* `vk_update_cl_semaphore` - Is signalled by Vulkan and waited by OpenCL
+
+Due to how basic semaphores in Vulkan work (we're not using timeline semaphores), we don't have a way of manually signalling them. So instead we differ between the first and consecutive command buffer submissions:
+
+[,cpp]
+----
+if (first_submit)
+{
+	first_submit      = false;
+	wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+	wait_semaphores   = {semaphores.acquired_image_ready};
+	signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+}
+else
+{
+	wait_stages       = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT};
+	wait_semaphores   = {semaphores.acquired_image_ready, cl_update_vk_semaphore};
+	signal_semaphores = {semaphores.render_complete, vk_update_cl_semaphore};
+}
+..
+VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, rendering_finished_fence));
+----
+
+The first submission won't wait on any OpenCL semaphore (because it's not signaled yet), and signals the Vulkan\->OpenCL semaphore. So the OpenCl workload following the Vulkan queue submission will wait on it.
+
+On consecutive submits, the OpenCL code workload already has been submitted so we'll also wait for the OpenCL\->vulkan semaphore. Additionally we also provide an additional pipeline stage to wait on to match OpenCL's workload.
+
+Now we move to the OpenCL side of things to update our image with an OpenCL kernel. The concepts here are similar to those in the Vulkan API.
+
+We first wait for the Vulkan\->OpenCL semaphore to ensure that the Vulkan side of the graphics queue is done before we start with the OpenCL update part:
+
+[,cpp]
+----
+CL_CHECK(clEnqueueWaitSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.vk_update_cl_semaphore, nullptr, 0, nullptr, nullptr));
+----
+
+We then need to acquire the image handle created from our image. In this case, the image is an external memory handle (to OpenCL) as it was created in Vulkan:
+
+[,cpp]
+----
+CL_CHECK(clEnqueueAcquireExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+----
+
+Once we have successfully acquired the image for use with OpenCL, we can run the kernel to update the image contents. An OpenCL kernel is similar to a Vulkan compute shader. This part of the sample isn't specific to api sharing, and just a basic example of how to run an OpenCL kernel on an image:
+
+[,cpp]
+----
+std::array<size_t, 2> global_size = {shared_image.width, shared_image.height};
+std::array<size_t, 2> local_size  = {16, 16};
+
+CL_CHECK(clSetKernelArg(opencl_objects.kernel, 0, sizeof(cl_mem), &opencl_objects.image));
+CL_CHECK(clSetKernelArg(opencl_objects.kernel, 1, sizeof(float), &total_time_passed));
+CL_CHECK(clEnqueueNDRangeKernel(opencl_objects.command_queue, opencl_objects.kernel, global_size.size(), nullptr, global_size.data(), local_size.data(), 0, nullptr, nullptr));
+----
+
+After this command we can return ownership of the image back to Vulkan by releasing it on the OpenCL side:
+
+[,cpp]
+----
+CL_CHECK(clEnqueueReleaseExternalMemObjectsKHR(opencl_objects.command_queue, 1, &opencl_objects.image, 0, nullptr, nullptr));
+----
+
+After that we signal the OpenCL\->Vulkan semaphore from the OpenCL side, so Vulkan can wait on this for the next frame:
+
+[,cpp]
+----
+CL_CHECK(clEnqueueSignalSemaphoresKHR(opencl_objects.command_queue, 1, &opencl_objects.cl_update_vk_semaphore, nullptr, 0, nullptr, nullptr));
+----
+
+On the OpenCL side we'll use the `cl_update_vk_semaphore` semaphore to signal work completion to Vulkan for the next frame (where `first_submit` is false). This ensures that the Vulkan graphics queue won't start accessing the image until OpenCL queue has finished work.
 
 == Conclusion
 
-Both OpenCL and Vulkan extensions allow us to import or export certain handle types, which represent a region of memory.
-These memory regions can be used to achieve zero-copy data sharing.
-In this sample one of such handle types is demonstrated: Android Hardware Buffers.
-
-The extensions used in this case are:
-
-* https://www.khronos.org/registry/vulkan/specs/1.2-extensions/man/html/VK_ANDROID_external_memory_android_hardware_buffer.html[VK_ANDROID_external_memory_android_hardware_buffer]
-* https://www.khronos.org/registry/OpenCL/extensions/arm/cl_arm_import_memory.txt[cl_arm_import_memory]
+Doing cross api interoperability is a rather niche use case and quite involved, but with both apis offering similar concepts and extensions it's not too hard to understand. Sharing other resources like buffers btw. is very similar to how we share images in this sample.
