@@ -25,13 +25,13 @@ layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
 layout (std140, binding = 0) readonly buffer TildeH0K
 {
-        vec2 data[];
+	vec2 data[];
 }
 tilde_h0_k;
 
 layout (std140, binding = 1) readonly buffer TildeH0MinusK
 {
-        vec2 data[];
+	vec2 data[];
 }
 tilde_h0_minus_k;
 
@@ -84,9 +84,9 @@ Complex complex_conj(Complex c)
 
 void main()
 {
-        float L = fftUbo.len;
+	float L = fftUbo.len;
 
-	vec2 uv = gl_GlobalInvocationID.xy;
+	vec2 uv = vec2(gl_GlobalInvocationID.xy) - (fftUbo.grid_size / 2.0f);
 
 	vec2 k = vec2( (2.0f * PI * uv.x) / L, (2.0f * PI * uv.y) / L);
 
@@ -97,26 +97,26 @@ void main()
 
 	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
-        uint idx =  pixel_pos.x + pixel_pos.y;
-        vec2 h0_k = tilde_h0_k.data[idx];
+	uint idx =  pixel_pos.x + pixel_pos.y;
+	vec2 h0_k = tilde_h0_k.data[idx];
 
 	Complex amp = Complex(h0_k.x, h0_k.y);
-        Complex exp_iwt = Complex(cos(w * t.time), sin(w * t.time));
+	Complex exp_iwt = Complex(cos(w * t.time), sin(w * t.time));
 
-        vec2 h0_minus_k = tilde_h0_minus_k.data[idx];
+	vec2 h0_minus_k = tilde_h0_minus_k.data[idx];
 
 	Complex amp_conj = Complex(h0_minus_k.x, h0_minus_k.y);
-        Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
+	Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
 
 
 	Complex h_k_t_dy = complex_add( complex_multiply(amp, exp_iwt), complex_multiply(amp_conj, exp_minus_iwt));
-        imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0f, 1.0f));
+	imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0f, 1.0f));
 
 	Complex dx = Complex(0.0f, -k.x / k_mag);
 	Complex h_k_t_dx = complex_multiply(dx, h_k_t_dy);
-        imageStore(tilde_h_kt_dx, pixel_pos, vec4(h_k_t_dx.real, h_k_t_dx.imag, 0.0f, 1.0f));
+	imageStore(tilde_h_kt_dx, pixel_pos, vec4(h_k_t_dx.real, h_k_t_dx.imag, 0.0f, 1.0f));
 
 	Complex dz = Complex(0.0f, -k.y / k_mag);
 	Complex h_k_t_dz = complex_multiply(dz, h_k_t_dy);
-        imageStore(tilde_h_kt_dz, pixel_pos, vec4(h_k_t_dz.real, h_k_t_dz.imag, 0.0f, 1.0f));
+	imageStore(tilde_h_kt_dz, pixel_pos, vec4(h_k_t_dz.real, h_k_t_dz.imag, 0.0f, 1.0f));
 }
