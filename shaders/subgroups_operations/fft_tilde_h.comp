@@ -96,8 +96,9 @@ void main()
 	float w = sqrt(GRAVITY * k_mag);
 
 	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+	uvec2 uv_idx =  uvec2(gl_GlobalInvocationID.xy * 0.5f);
 
-	uint idx =  pixel_pos.x + pixel_pos.y;
+	uint idx = uv_idx.x * uv_idx.y;
 	vec2 h0_k = tilde_h0_k.data[idx];
 
 	Complex amp = Complex(h0_k.x, h0_k.y);

@@ -332,9 +332,9 @@ void SubgroupsOperations::load_assets()
 	// generate fft inputs
 	h_tilde_0.clear();
 	h_tilde_0_conj.clear();
-	for (uint32_t m = 0; m < grid_size + 1U; ++m)
+	for (uint32_t m = 0; m < grid_size; ++m)
 	{
-		for (uint32_t n = 0; n < grid_size + 1U; ++n)
+		for (uint32_t n = 0; n < grid_size; ++n)
 		{
 			h_tilde_0.push_back(hTilde_0(n, m));
 			h_tilde_0_conj.push_back(std::conj(hTilde_0(-n, -m)));
@@ -342,7 +342,7 @@ void SubgroupsOperations::load_assets()
 	}
 
 	// calculate weights
-	uint32_t pow2    = 1U;
+	uint32_t pow2 = 1U;
 	for (uint32_t i = 0U; i < log_2_N; ++i)
 	{
 		for (uint32_t j = 0U; j < pow2; ++j)
