@@ -30,6 +30,10 @@ SparseImage::~SparseImage()
 		vkDestroyPipeline(get_device().get_handle(), sample_pipeline, nullptr);
 		vkDestroyPipelineLayout(get_device().get_handle(), sample_pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+		vkDestroyImageView(get_device().get_handle(), virtual_texture.texture_image_view, nullptr);
+		vkFreeMemory(get_device().get_handle(), virtual_texture.texture_memory, nullptr);
+		vkDestroyImage(get_device().get_handle(), virtual_texture.texture_image, nullptr);
+		vkDestroySampler(get_device().get_handle(), texture_sampler, nullptr);
 	}
 }
 
@@ -208,6 +212,14 @@ void SparseImage::transition_mip_layout(VkImage image, VkImageLayout old_layout,
 		source_stage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
 		destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 	}
+	else if (old_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+		source_stage      = VK_PIPELINE_STAGE_TRANSFER_BIT;
+		destination_stage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+	}
 	else if (old_layout == VK_IMAGE_LAYOUT_UNDEFINED && new_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
 	{
 		barrier.srcAccessMask = 0U;
@@ -220,6 +232,14 @@ void SparseImage::transition_mip_layout(VkImage image, VkImageLayout old_layout,
 	{
 		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
 		barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+		source_stage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+	}
+	else if (old_layout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL && new_layout == VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL)
+	{
+		barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
 
 		source_stage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
 		destination_stage = VK_PIPELINE_STAGE_TRANSFER_BIT;
@@ -701,10 +721,9 @@ void SparseImage::process_texture_blocks()
 void SparseImage::update_and_generate()
 {
 	bind_sparse_image();
+	uint8_t current_mip_level = 0xFF;        // TODO(GS): possible problem with get_mip_level()
 	while (virtual_texture.update_list.empty() == false)
 	{
-		uint8_t current_mip_level = 0xFF;        // TODO(GS): possible problem with get_mip_level()
-
 		size_t memory_index = virtual_texture.update_list.front();
 		virtual_texture.update_list.pop_front();
 
@@ -712,13 +731,23 @@ void SparseImage::update_and_generate()
 
 		if (current_mip_level != mip_level)
 		{
+			if (current_mip_level != 0xFF && current_mip_level != 0U)
+			{
+				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level);
+				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level - 1U);
+			}
+			else if (current_mip_level == 0U)
+			{
+				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level);
+			}
+
 			if (mip_level == 0U)
 			{
 				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_level);
 			}
 			else
 			{
-				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, mip_level - 1U);
+				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, mip_level - 1U);
 				transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mip_level);
 			}
 			current_mip_level = mip_level;
@@ -799,6 +828,15 @@ void SparseImage::update_and_generate()
 				virtual_texture.page_table[memory_index].valid = true;
 			}
 		}
+	}
+	if (current_mip_level != 0xFF && current_mip_level != 0U)
+	{
+		transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level);
+		transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level - 1U);
+	}
+	else if (current_mip_level == 0U)
+	{
+		transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, current_mip_level);
 	}
 }
 
@@ -1304,8 +1342,9 @@ void SparseImage::create_texture_sampler()
  */
 void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
-	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency)
+	if (gpu.get_features().sparseBinding && gpu.get_features().sparseResidencyImage2D && gpu.get_features().shaderResourceResidency && gpu.get_features().samplerAnisotropy)
 	{
+		gpu.get_mutable_requested_features().samplerAnisotropy       = VK_TRUE;
 		gpu.get_mutable_requested_features().sparseBinding           = VK_TRUE;
 		gpu.get_mutable_requested_features().sparseResidencyImage2D  = VK_TRUE;
 		gpu.get_mutable_requested_features().shaderResourceResidency = VK_TRUE;
@@ -1496,4 +1535,9 @@ void SparseImage::create_sparse_texture_image()
 	view_info.subresourceRange.layerCount     = 1U;
 
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &view_info, nullptr, &virtual_texture.texture_image_view));
+
+	for (uint8_t mip_level = 0U; mip_level <= virtual_texture.mip_levels - 1U; mip_level++)
+	{
+		transition_mip_layout(virtual_texture.texture_image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, mip_level);
+	}
 }

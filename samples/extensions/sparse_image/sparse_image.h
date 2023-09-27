@@ -121,7 +121,7 @@ class SparseImage : public ApiVulkanSample
 		std::vector<std::vector<MipBlock>> current_mip_table;
 		std::vector<std::vector<MipBlock>> new_mip_table;
 
-		// Image containing a single, most detailed mip, allocated in the CPU memory, coppied to VRAM via stagging buffer single_page_buffer
+		// Image containing a single, most detailed mip, allocated in the CPU memory, coppied to VRAM via staging buffer single_page_buffer
 		std::unique_ptr<vkb::sg::Image>    row_data_image;
 		std::unique_ptr<vkb::core::Buffer> single_page_buffer;
 
