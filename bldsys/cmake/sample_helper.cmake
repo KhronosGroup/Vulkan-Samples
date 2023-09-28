@@ -22,7 +22,7 @@ set(SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 function(add_sample)
     set(options)  
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL)
+    set(multiValueArgs FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})    
 
@@ -40,13 +40,15 @@ function(add_sample)
         LIBS
             ${TARGET_LIBS}
         SHADER_FILES_GLSL
-            ${TARGET_SHADER_FILES_GLSL})
+            ${TARGET_SHADER_FILES_GLSL}
+		SHADER_FILES_HLSL
+            ${TARGET_SHADER_FILES_HLSL})
 endfunction()
 
 function(add_sample_with_tags)
     set(options)
     set(oneValueArgs ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADER_FILES_GLSL SHADER_FILES_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -70,6 +72,14 @@ function(add_sample_with_tags)
         endforeach()        
     endif()
 
+    # Add HLSL shader files for this sample
+    if (TARGET_SHADER_FILES_HLSL)
+        list(APPEND SHADER_FILES_HLSL ${TARGET_SHADER_FILES_HLSL})
+        foreach(SHADER_FILE_HLSL ${SHADER_FILES_HLSL})
+            list(APPEND SHADERS_HLSL "${PROJECT_SOURCE_DIR}/shaders/${SHADER_FILE_HLSL}")
+        endforeach()
+    endif()
+
     add_project(
         TYPE "Sample"
         ID ${TARGET_ID}
@@ -84,7 +94,9 @@ function(add_sample_with_tags)
         LIBS
             ${TARGET_LIBS}
         SHADERS_GLSL
-            ${SHADERS_GLSL})
+            ${SHADERS_GLSL}
+		SHADERS_HLSL
+            ${SHADERS_HLSL})
 
 endfunction()
 
@@ -112,7 +124,7 @@ endfunction()
 function(add_project)
     set(options)  
     set(oneValueArgs TYPE ID CATEGORY AUTHOR NAME DESCRIPTION)
-    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL)
+    set(multiValueArgs TAGS FILES LIBS SHADERS_GLSL SHADERS_HLSL)
 
     cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
@@ -135,6 +147,11 @@ function(add_project)
     # Add shaders to project group
     if (SHADERS_GLSL)
         source_group("\\Shaders" FILES ${SHADERS_GLSL})
+    endif()
+
+    #Add shaders to project group
+    if (SHADERS_HLSL)
+        source_group("\\Shaders" FILES ${SHADERS_HLSL})
     endif()
 
     add_library(${PROJECT_NAME} OBJECT ${TARGET_FILES} ${SHADERS_GLSL})
@@ -173,5 +190,49 @@ function(add_project)
 
     if(VKB_DO_CLANG_TIDY)
         set_target_properties(${PROJECT_NAME} PROPERTIES CXX_CLANG_TIDY "${VKB_DO_CLANG_TIDY}")
+    endif()
+
+	compile_shaders(
+        TYPE "Test"
+        ID ${TARGET_ID}
+        CATEGORY "Tests"
+        AUTHOR " "
+        NAME ${TARGET_ID}
+        DESCRIPTION " "
+        VENDOR_TAG " "
+        LIBS test_framework
+        FILES
+            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/${TARGET_ID}.cpp
+    )
+endfunction()
+
+function(compile_shaders)
+
+    cmake_parse_arguments(TARGET "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
+
+    if(DEFINED SHADERS_HLSL)
+
+        set(FAKE_TARGET ${PROJECT_NAME}_hlsl_shaders)
+        add_custom_target(${FAKE_TARGET})
+        add_dependencies(${PROJECT_NAME} ${FAKE_TARGET})
+
+        foreach(SHADER_FILE_HLSL ${SHADERS_HLSL})
+
+            cmake_path(GET SHADER_FILE_HLSL EXTENSION LAST_ONLY SHADER_FILE_HLSL_EXTENSION)
+            cmake_path(GET SHADER_FILE_HLSL STEM LAST_ONLY SHADER_FILE_HLSL_NAME)
+
+            if(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".vert")
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T vs_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".frag")
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T ps_6_1 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rgen")
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rmiss")
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+            elseif(${SHADER_FILE_HLSL_EXTENSION} STREQUAL ".rchit")
+                add_custom_command(TARGET ${FAKE_TARGET} POST_BUILD COMMAND ${Vulkan_dxc_EXECUTABLE} ${SHADER_FILE_HLSL} /T lib_6_4 /E main /Fo ${SHADER_FILE_HLSL}.spv)
+            endif()
+        endforeach()
     endif()
 endfunction()

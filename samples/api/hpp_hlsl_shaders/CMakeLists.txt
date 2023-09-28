@@ -27,4 +27,8 @@ add_sample_with_tags(
     DESCRIPTION "Shows how to generate SPIR-V from HLSL shaders that can be used in Vulkan, using vulkan.hpp"
     SHADER_FILES_GLSL
         "hlsl_shaders/hlsl_shader.vert"
-        "hlsl_shaders/hlsl_shader.frag")
+        "hlsl_shaders/hlsl_shader.frag"
+    SHADER_FILES_HLSL
+        "hlsl_shaders/hlsl_shader.vert"
+        "hlsl_shaders/hlsl_shader.frag"
+	)

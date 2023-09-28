@@ -144,6 +144,7 @@ ____
 * Visual Studio 2017 or above
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
+* Vulkan SDK
 
 === Clang Format and Visual Studio
 
@@ -160,6 +161,8 @@ Please make sure, when running any sample, that you either:
 
 * Enable https://docs.microsoft.com/en-us/windows/uwp/get-started/enable-your-device-for-development[Developer Mode]
 * Run Command Prompt or Visual Studio as administrator
+
+Please make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK.
 ____
 
 `Step 1.` The following command will generate the VS project
@@ -208,12 +211,19 @@ build\windows\app\bin\Release\AMD64\vulkan_samples.exe
 * C{pp}14 Compiler
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
+* Vulkan SDK
 
 ----
 sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 ----
 
 === Build with CMake
+
+____
+
+Please make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK.
+
+____
 
 `Step 1.` The following command will generate the project
 
@@ -243,10 +253,17 @@ cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 * https://vulkan.lunarg.com/doc/sdk/latest/mac/getting_started.html[Vulkan SDK] `./install_vulkan.py`
 * <<cmake-options,CMake Options>>
 * <<3d-models,3D models>>
+* Vulkan SDK
 
 === Build with CMake
 
 `Step 1.` The following command will generate the project
+
+____
+
+Please make sure you have VULKAN_SDK variable set in the system and pointing to your installation of Vulkan SDK.
+
+____
 
 ----
 cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
