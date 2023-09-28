@@ -166,6 +166,11 @@ void DescriptorBufferBasic::load_assets()
 	cubes[1].texture = load_texture("textures/crate02_color_height_rgba.ktx", vkb::sg::Image::Color);
 }
 
+inline VkDeviceSize aligned_size(VkDeviceSize value, VkDeviceSize alignment)
+{
+	return (value + alignment - 1) & ~(alignment - 1);
+}
+
 void DescriptorBufferBasic::setup_descriptor_set_layout()
 {
 	// Using descriptor buffers still requires the creation of descriptor set layouts
@@ -195,6 +200,10 @@ void DescriptorBufferBasic::setup_descriptor_set_layout()
 	// Get set layout descriptor sizes.
 	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), uniform_binding_descriptor.layout, &uniform_binding_descriptor.size);
 	vkGetDescriptorSetLayoutSizeEXT(get_device().get_handle(), image_binding_descriptor.layout, &image_binding_descriptor.size);
+
+	// Adjust set layout sizes to alignment.
+	uniform_binding_descriptor.size = aligned_size(uniform_binding_descriptor.size, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
+	image_binding_descriptor.size   = aligned_size(image_binding_descriptor.size, descriptor_buffer_properties.descriptorBufferOffsetAlignment);
 
 	// Get descriptor bindings offsets as descriptors are placed inside set layout by those offsets.
 	vkGetDescriptorSetLayoutBindingOffsetEXT(get_device().get_handle(), uniform_binding_descriptor.layout, 0u, &uniform_binding_descriptor.offset);
