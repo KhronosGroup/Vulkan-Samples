@@ -60,9 +60,9 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void create_tildas();
 	void create_butterfly_texture();
+    void create_fft();
 
 	void update_uniform_buffers();
-	void update_compute_descriptor();
 
 	// ocean stuff
 	float               phillips_spectrum(int32_t n, int32_t m);
@@ -100,6 +100,11 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(8) glm::vec2 wind;
 	};
 
+    struct FFTPage
+    {
+        alignas(4) int32_t page = {0};
+    };
+
 	struct TimeUbo
 	{
 		alignas(4) float time = {0.0f};
@@ -117,6 +122,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> camera_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_time_ubo;
+    std::unique_ptr<vkb::core::Buffer> fft_page_ubo;
+
 
 	std::vector<std::complex<float>> h_tilde_0;
 	std::vector<std::complex<float>> h_tilde_0_conj;
@@ -147,7 +154,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0;
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj;
 		std::unique_ptr<vkb::core::Buffer> fft_input_weight;
-		std::unique_ptr<vkb::sg::Image>    fft_height_map_image;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz;
@@ -159,16 +165,25 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkCommandPool         command_pool          = {VK_NULL_HANDLE};
 		VkCommandBuffer       command_buffer        = {VK_NULL_HANDLE};
 		VkSemaphore           semaphore             = {VK_NULL_HANDLE};
-		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
-		uint32_t              queue_family_index    = {-1u};
-
-		struct
-		{
-			Pipeline _default;
-
-		} pipelines;
+        uint32_t              queue_family_index    = {-1u};
 	} compute;
+
+
+    struct
+    {
+        VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+        VkDescriptorSet       descriptor_set_axis_y = {VK_NULL_HANDLE};
+        VkDescriptorSet       descriptor_set_axis_x = {VK_NULL_HANDLE};
+        VkDescriptorSet       descriptor_set_axis_z = {VK_NULL_HANDLE};
+        struct
+        {
+            Pipeline              horizontal;
+            Pipeline              vertical;
+        } pipelines;
+        std::unique_ptr<FBAttachment>      tilde_axis_y;
+        std::unique_ptr<FBAttachment>      tilde_axis_x;
+        std::unique_ptr<FBAttachment>      tilde_axis_z;
+    } fft;
 
 	struct
 	{
