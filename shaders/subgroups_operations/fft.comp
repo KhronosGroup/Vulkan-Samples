@@ -28,7 +28,7 @@ layout (binding = 2, rgba32f) uniform image2D u_pingpong1;
 
 layout (binding = 3) uniform FftPage
 {
-    int page;
+    int pages;
 } fftUbo;
 
 struct Complex
@@ -64,9 +64,10 @@ Complex complex_conj(Complex c)
 
 void HorizontalButterflies(in ivec2 pixel_pos)
 {
-        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(fftUbo.page, pixel_pos.x));
-        bool type = bool(fftUbo.page % 2);
-        if (type == false)
+    for (int i = 0; i < fftUbo.pages; ++i)
+    {
+        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(i, pixel_pos.x));
+        if ((i % 2) == 0)
         {
                 vec2 a_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.z, pixel_pos.y)).rg;
                 vec2 b_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.w, pixel_pos.y)).rg;
@@ -77,7 +78,7 @@ void HorizontalButterflies(in ivec2 pixel_pos)
 
                 // Buttefly operation
                 Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-
+                subgroupMemoryBarrierImage();
                 imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
         }
         else
@@ -91,17 +92,19 @@ void HorizontalButterflies(in ivec2 pixel_pos)
 
                 // Buttefly operation
                 Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-
+                subgroupMemoryBarrierImage();
                 imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
         }
+    }
 }
 
 void VerticalButterfiles(in ivec2 pixel_pos)
 {
-        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(fftUbo.page, pixel_pos.y));
-        bool type = bool(fftUbo.page % 2);
+    for (int i = 0; i < fftUbo.pages; ++i)
+    {
+        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(i, pixel_pos.y));
 
-        if (type == false)
+        if ((i % 2) == 0)
         {
                 vec2 a_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.z)).rg;
                 vec2 b_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.w)).rg;
@@ -112,6 +115,7 @@ void VerticalButterfiles(in ivec2 pixel_pos)
 
                 // Buttefly operation
                 Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+                subgroupMemoryBarrierImage();
 
                 imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
         }
@@ -126,14 +130,16 @@ void VerticalButterfiles(in ivec2 pixel_pos)
 
                 // Buttefly operation
                 Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+                subgroupMemoryBarrierImage();
 
                 imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
         }
+    }
 }
 
 void main()
 {
-    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy * 0.5f);
     if (direction == 0) HorizontalButterflies(uv);
     else if (direction == 1) VerticalButterfiles(uv);
 }
