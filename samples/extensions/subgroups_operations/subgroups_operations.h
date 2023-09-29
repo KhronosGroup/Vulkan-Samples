@@ -61,6 +61,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_tildas();
 	void create_butterfly_texture();
 	void create_fft();
+	void create_fft_inversion();
 
 	void update_uniform_buffers();
 
@@ -105,6 +106,12 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(4) int32_t page = {0u};
 	};
 
+	struct FFTInvert
+	{
+		alignas(4) int32_t page_idx   = {-1};
+		alignas(4) uint32_t grid_size = {DISPLACEMENT_MAP_DIM};
+	};
+
 	struct TimeUbo
 	{
 		alignas(4) float time = {0.0f};
@@ -123,6 +130,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_time_ubo;
 	std::unique_ptr<vkb::core::Buffer> fft_page_ubo;
+	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo;
 
 	std::vector<std::complex<float>> h_tilde_0;
 	std::vector<std::complex<float>> h_tilde_0_conj;
@@ -156,6 +164,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz;
+		std::unique_ptr<FBAttachment>      fft_displacement_y;
+		std::unique_ptr<FBAttachment>      fft_displacement_x;
+		std::unique_ptr<FBAttachment>      fft_displacement_z;
+
 	} fft_buffers;
 
 	struct
@@ -182,6 +194,16 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<FBAttachment> tilde_axis_x;
 		std::unique_ptr<FBAttachment> tilde_axis_z;
 	} fft;
+
+	struct
+	{
+		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set_asix_y = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set_asix_x = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set_asix_z = {VK_NULL_HANDLE};
+
+		Pipeline pipeline;
+	} fft_inversion;
 
 	struct
 	{
