@@ -122,7 +122,7 @@ class SparseImage : public ApiVulkanSample
 		std::vector<std::vector<MipBlock>> new_mip_table;
 
 		// Image containing a single, most detailed mip, allocated in the CPU memory, coppied to VRAM via staging buffer single_page_buffer
-		std::unique_ptr<vkb::sg::Image>    row_data_image;
+		std::unique_ptr<vkb::sg::Image>    raw_data_image;
 		std::unique_ptr<vkb::core::Buffer> single_page_buffer;
 
 		// Key table that includes data on which page is allocated to what memory block from the textureMemory vector
@@ -176,10 +176,9 @@ class SparseImage : public ApiVulkanSample
 		void calculate_mip_levels();
 	};
 
-	bool        transfer_finished      = false;
-	bool        init_transfer_finished = false;
-	uint8_t     frame_counter          = 0U;
-	enum Stages next_stage             = SPARSE_IMAGE_IDLE_STAGE;
+	bool        transfer_finished = false;
+	uint8_t     frame_counter     = 0U;
+	enum Stages next_stage        = SPARSE_IMAGE_IDLE_STAGE;
 
 	struct VirtualTexture virtual_texture;
 
@@ -241,8 +240,9 @@ class SparseImage : public ApiVulkanSample
 	void                      get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level, std::list<size_t> &index_list);
 	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
-	void                      separate_single_row_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
-	void                      transition_mip_layout(VkImage image, VkImageLayout old_layout, VkImageLayout new_layout, uint8_t mip_level);
+	void                      copy_single_raw_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
+	void                      load_least_detailed_level();
+	void                      set_least_detailed_level();
 	uint8_t                   get_mip_level(size_t page_index);
 	size_t                    get_memory_index(struct MemPageDescription mem_page_desc);
 

@@ -42,9 +42,9 @@ the lifetime of the resource;
 
 The sample demonstrates usage of the Sparse Image feature by rendering a
 high-resolution texture with only a fraction of the total image size
-ACTUALLY allocated on the device’s memory. This is possible by
+actually allocated on the device’s memory. This is possible by
 dynamically loading required memory areas, generating mip levels for
-outer parts, removing unused memory and finally: binding an image in the
+outer parts, removing unused memory and finally: binding an image in
 real-time.
 
 == Enabling features
