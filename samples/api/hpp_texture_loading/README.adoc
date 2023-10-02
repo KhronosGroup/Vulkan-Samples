@@ -18,7 +18,7 @@
 ////
 :pp: {plus}{plus}
 
-=== Texture Loading with Vulkan-Hpp 
+= Texture Loading with Vulkan-Hpp 
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_texture_loading[Khronos Vulkan samples github repository].
