@@ -17,7 +17,7 @@
 -
 ////
 
-=== Basic hardware accelerated ray tracing
+= Basic hardware accelerated ray tracing
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/ray_tracing_basic[Khronos Vulkan samples github repository].
