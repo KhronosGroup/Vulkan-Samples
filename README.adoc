@@ -44,11 +44,15 @@ The Vulkan Samples is collection of resources to help you develop optimized Vulk
 If you are new to Vulkan the xref:samples/api/README.adoc[API samples] are the right place to start.
 Additionally you may find the following links useful:
 
+ifdef::site-gen-antora[]
 * xref:guide:ROOT:index.adoc[Vulkan Guide]
 * xref:tutorial:ROOT:00_Introduction.adoc[Get Started in Vulkan]
+endif::[]
 
+ifndef::site-gen-antora[]
 * https://github.com/KhronosGroup/Vulkan-Guide[Vulkan Guide]
 * https://vulkan-tutorial.com/[Get Started in Vulkan]
+endif::[]
 
 xref:samples/performance/README.adoc[Performance samples] show the recommended best practice together with real-time profiling information.
 They are more advanced but also contain a detailed tutorial with more in-detail explanations.
