@@ -26,6 +26,9 @@ double const SPARSE_IMAGE_FOV_DEGREES                 = 60.0;
 class SparseImage : public ApiVulkanSample
 {
   public:
+	bool color_highlight     = true;
+	bool color_highlight_mem = true;
+
 	enum Stages
 	{
 		SPARSE_IMAGE_IDLE_STAGE,
@@ -33,7 +36,6 @@ class SparseImage : public ApiVulkanSample
 		SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE,
 		SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE,
 		SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE,
-		SPARSE_IMAGE_FREE_UNUSED_MEMORY_STAGE,
 		SPARSE_IMAGE_NUM_STAGES,
 	};
 
@@ -42,6 +44,13 @@ class SparseImage : public ApiVulkanSample
 		alignas(16) glm::mat4 model;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 proj;
+	};
+
+	struct FragSettingsData
+	{
+		bool color_highlight;
+		int  minLOD;
+		int  maxLOD;
 	};
 
 	struct SimpleVertex
@@ -78,11 +87,11 @@ class SparseImage : public ApiVulkanSample
 
 	struct PageTable
 	{
-		bool   bound;                   // bound via vkQueueBindSparse()
-		bool   valid;                   // bound and contains valid data
+		bool   to_be_bound;             // to be bound vkQueueBindSparse()
+		bool   valid;                   // bound via vkQueueBindSparse() and contains valid data
 		bool   gen_mip_required;        // required for the mip generation
 		bool   fixed;                   // not freed from the memory at any cases
-		size_t memory_index;            // index from available_memory_index_list corresponding to this page
+		size_t memory_index;            // index from available_memory_indices corresponding to this page
 
 		std::list<std::tuple<uint8_t, size_t, size_t>> render_required_list;        // list holding information on what BLOCKS require this particular memory page to be valid for rendering
 	};
@@ -110,9 +119,9 @@ class SparseImage : public ApiVulkanSample
 		size_t width;
 		size_t height;
 
-		// Number of virtual pages (what if the total image was allocated)
-		size_t num_pages;
+		// Number of bytes per page
 		size_t page_size;
+		size_t pages_allocated;
 
 		uint8_t                           base_mip_level;
 		uint8_t                           mip_levels;
@@ -131,17 +140,11 @@ class SparseImage : public ApiVulkanSample
 		// List containing BLOCKS for which the required mip level has changed or/and its on-screen visibility changed
 		std::list<struct TextureBlock> texture_block_update_list;
 
-		// List containing information which pages from the page_table should be bound
-		std::list<size_t> bind_list;
-
 		// List containing information which pages from the page_table should be updated (either loaded from CPU memory or blitted)
 		std::list<size_t> update_list;
 
-		// List containing information which pages should be freed
-		std::list<size_t> free_list;
-
-		// List of available memory pages (whole memory page pool is statically allocated at the beginning)
-		std::list<size_t> available_memory_index_list;
+		// Vector of available memory pages (whole memory page pool is statically allocated at the beginning)
+		std::vector<size_t> available_memory_indices;
 
 		bool update_required = false;
 
@@ -177,6 +180,7 @@ class SparseImage : public ApiVulkanSample
 	};
 
 	bool        transfer_finished = false;
+	bool        update_frag       = false;
 	uint8_t     frame_counter     = 0U;
 	enum Stages next_stage        = SPARSE_IMAGE_IDLE_STAGE;
 
@@ -191,6 +195,7 @@ class SparseImage : public ApiVulkanSample
 	size_t                             index_count;
 
 	std::unique_ptr<vkb::core::Buffer> mvp_buffer;
+	std::unique_ptr<vkb::core::Buffer> frag_settings_data_buffer;
 
 	glm::mat4 current_mvp_transform;
 
@@ -219,7 +224,7 @@ class SparseImage : public ApiVulkanSample
 	void create_vertex_buffer();
 	void create_index_buffer();
 
-	void create_uniform_buffer();
+	void create_uniform_buffers();
 	void create_texture_sampler();
 
 	void create_descriptor_set_layout();
@@ -243,14 +248,16 @@ class SparseImage : public ApiVulkanSample
 	void                      copy_single_raw_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
 	void                      load_least_detailed_level();
 	void                      set_least_detailed_level();
+	void                      update_frag_settings();
 	uint8_t                   get_mip_level(size_t page_index);
 	size_t                    get_memory_index(struct MemPageDescription mem_page_desc);
 
 	// Override basic framework functionalities
-	void build_command_buffers() override;
-	void render(float delta_time) override;
-	bool prepare(const vkb::ApplicationOptions &options) override;
-	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void         build_command_buffers() override;
+	void         render(float delta_time) override;
+	bool         prepare(const vkb::ApplicationOptions &options) override;
+	void         request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_sparse_image();
