@@ -545,7 +545,9 @@ void SubgroupsOperations::setup_descriptor_pool()
 void SubgroupsOperations::create_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0u)};
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        0u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
@@ -570,7 +572,7 @@ void SubgroupsOperations::create_pipelines()
 {
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
-	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	        VK_PRIMITIVE_TOPOLOGY_PATCH_LIST,
 	        0u,
 	        VK_FALSE);
 	VkPipelineRasterizationStateCreateInfo rasterization_state =
@@ -860,6 +862,7 @@ void SubgroupsOperations::createFBAttachement(VkFormat format, uint32_t width, u
 	image.samples           = VK_SAMPLE_COUNT_1_BIT;
 	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
+	image.initialLayout     = VK_IMAGE_LAYOUT_UNDEFINED;
 
 	VkMemoryAllocateInfo memory_allocate_info = vkb::initializers::memory_allocate_info();
 	VkMemoryRequirements memory_requirements;
@@ -882,6 +885,27 @@ void SubgroupsOperations::createFBAttachement(VkFormat format, uint32_t width, u
 	image_view_create_info.subresourceRange.layerCount     = 1u;
 	image_view_create_info.image                           = attachment.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment.view));
+
+	VkImageMemoryBarrier imgMemBarrier            = vkb::initializers::image_memory_barrier();
+	imgMemBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
+	imgMemBarrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
+	imgMemBarrier.srcQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+	imgMemBarrier.dstQueueFamilyIndex             = VK_QUEUE_FAMILY_IGNORED;
+	imgMemBarrier.image                           = attachment.image;
+	imgMemBarrier.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+	imgMemBarrier.subresourceRange.baseArrayLayer = 0u;
+	imgMemBarrier.subresourceRange.levelCount     = 1u;
+	imgMemBarrier.subresourceRange.baseArrayLayer = 0u;
+	imgMemBarrier.subresourceRange.layerCount     = 1u;
+	imgMemBarrier.srcAccessMask                   = 0u;
+	imgMemBarrier.dstAccessMask                   = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+	VkPipelineStageFlagBits srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+	VkPipelineStageFlagBits dstStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
+
+	VkCommandBuffer cmd = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+	vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0u, 0u, nullptr, 0u, nullptr, 1u, &imgMemBarrier);
+	get_device().flush_command_buffer(cmd, queue, true);
 }
 
 uint32_t SubgroupsOperations::reverse(uint32_t i)
