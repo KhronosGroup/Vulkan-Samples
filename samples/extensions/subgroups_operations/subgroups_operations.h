@@ -65,8 +65,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void update_uniform_buffers();
 
-	float               phillips_spectrum(int32_t n, int32_t m);
-	std::complex<float> hTilde_0(uint32_t n, uint32_t m);
+	float               phillips_spectrum(int32_t n, int32_t m, float sign);
+	std::complex<float> hTilde_0(uint32_t n, uint32_t m, float sign);
 	std::complex<float> rndGaussian();
 	std::complex<float> calculate_weight(uint32_t x, uint32_t n);
 
@@ -121,7 +121,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		bool      wireframe = {false};
 		float     amplitude = {5.0f};
 		float     length    = {1000.0f};
-		glm::vec2 wind      = {100.0f, 0.0f};
+		glm::vec2 wind      = {100.0f, -100.0f};
 	} ui;
 
 	uint32_t                           grid_size = {DISPLACEMENT_MAP_DIM};

@@ -373,8 +373,8 @@ void SubgroupsOperations::load_assets()
 	{
 		for (uint32_t n = 0; n < grid_size; ++n)
 		{
-			h_tilde_0.push_back(hTilde_0(n, m));
-			h_tilde_0_conj.push_back(std::conj(hTilde_0(-n, -m)));
+			h_tilde_0.push_back(hTilde_0(n, m, 1));
+			h_tilde_0_conj.push_back(std::conj(hTilde_0(n, m, -1)));
 		}
 	}
 
@@ -409,9 +409,11 @@ void SubgroupsOperations::load_assets()
 	fft_buffers.fft_input_weight->update(weights.data(), fft_input_weights_size);
 }
 
-float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m)
+float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m, float sign)
 {
 	glm::vec2 k(glm::pi<float>() * (2.0f * n - grid_size) / ui.length, glm::pi<float>() * (2.0f * m - grid_size) / ui.length);
+
+	k = k * sign;
 
 	float k_len = glm::length(k);
 	if (k_len < 0.000001f)
@@ -459,10 +461,11 @@ std::complex<float> SubgroupsOperations::rndGaussian()
 	return {x1 * w, x2 * w};
 }
 
-std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m)
+std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m, float sign)
 {
 	std::complex<float> rnd = rndGaussian();
-	return rnd * glm::sqrt(phillips_spectrum(n, m) / 2.0f);
+
+	return rnd * glm::sqrt(phillips_spectrum(n, m, sign) / 2.0f);
 }
 
 void SubgroupsOperations::prepare_uniform_buffers()

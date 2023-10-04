@@ -139,7 +139,7 @@ void VerticalButterfiles(in ivec2 pixel_pos)
 
 void main()
 {
-    ivec2 uv = ivec2(gl_GlobalInvocationID.xy * 0.5f);
+    ivec2 uv = ivec2(gl_GlobalInvocationID.xy);
     if (direction == 0) HorizontalButterflies(uv);
     else if (direction == 1) VerticalButterfiles(uv);
 }

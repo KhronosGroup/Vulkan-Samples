@@ -96,9 +96,9 @@ void main()
 	float w = sqrt(GRAVITY * k_mag);
 
 	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-	uvec2 uv_idx =  uvec2(gl_GlobalInvocationID.xy * 0.5f);
+	uvec2 uv_idx =  uvec2(gl_GlobalInvocationID.xy * 0.5);
 
-	uint idx = uv_idx.x * uv_idx.y;
+	uint idx = uv_idx.x  + uv_idx.y * fftUbo.grid_size; 
 	vec2 h0_k = tilde_h0_k.data[idx];
 
 	Complex amp = Complex(h0_k.x, h0_k.y);
@@ -108,7 +108,6 @@ void main()
 
 	Complex amp_conj = Complex(h0_minus_k.x, h0_minus_k.y);
 	Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
-
 
 	Complex h_k_t_dy = complex_add( complex_multiply(amp, exp_iwt), complex_multiply(amp_conj, exp_minus_iwt));
 	imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0f, 1.0f));
