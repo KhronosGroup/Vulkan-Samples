@@ -70,6 +70,7 @@ SubgroupsOperations::~SubgroupsOperations()
 		fft_buffers.fft_tilde_h_kt_dx->destroy(get_device().get_handle());
 		fft_buffers.fft_tilde_h_kt_dy->destroy(get_device().get_handle());
 		fft_buffers.fft_tilde_h_kt_dz->destroy(get_device().get_handle());
+		fft_buffers.fft_displacement->destroy(get_device().get_handle());
 		butterfly_precomp.destroy(get_device().get_handle());
 
 		precompute.pipeline.destroy(get_device().get_handle());
@@ -78,6 +79,12 @@ SubgroupsOperations::~SubgroupsOperations()
 		tildas.pipeline.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), tildas.descriptor_set_layout, nullptr);
 
+		fft_inversion.pipeline.destroy(get_device().get_handle());
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), fft_inversion.descriptor_set_layout, nullptr);
+
+		fft.tilde_axis_x->destroy(get_device().get_handle());
+		fft.tilde_axis_y->destroy(get_device().get_handle());
+		fft.tilde_axis_z->destroy(get_device().get_handle());
 		fft.pipelines.horizontal.destroy(get_device().get_handle());
 		fft.pipelines.vertical.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), fft.descriptor_set_layout, nullptr);
@@ -246,22 +253,10 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
-	////////////////////////////////////// fft inverse
+	// fft inverse
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set_asix_y, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
-
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set_asix_x, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
-
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set_asix_z, 0u, nullptr);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
 		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
@@ -345,25 +340,12 @@ void SubgroupsOperations::create_tildas()
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &tildas.pipeline.pipeline));
 
-	// update descriptor set
-
 	VkDescriptorBufferInfo htilde_0_descriptor      = create_descriptor(*fft_buffers.fft_input_htilde0);
 	VkDescriptorBufferInfo htilde_conj_0_descriptor = create_descriptor(*fft_buffers.fft_input_htilde0_conj);
 
-	VkDescriptorImageInfo image_dx_descriptor{};
-	image_dx_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dx->view;
-	image_dx_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_dx_descriptor.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_dy_descriptor{};
-	image_dy_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dy->view;
-	image_dy_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_dy_descriptor.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_dz_descriptor{};
-	image_dz_descriptor.imageView   = fft_buffers.fft_tilde_h_kt_dz->view;
-	image_dz_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_dz_descriptor.sampler     = nullptr;
+	VkDescriptorImageInfo image_dx_descriptor = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dx);
+	VkDescriptorImageInfo image_dy_descriptor = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dy);
+	VkDescriptorImageInfo image_dz_descriptor = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dz);
 
 	VkDescriptorBufferInfo fft_params_ubo_buffer = create_descriptor(*fft_params_ubo);
 	VkDescriptorBufferInfo fft_time_ubo_buffer   = create_descriptor(*fft_time_ubo);
@@ -955,10 +937,7 @@ void SubgroupsOperations::create_butterfly_texture()
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
 	bit_reverse_buffer->convert_and_update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
-	VkDescriptorImageInfo image_descriptor{};
-	image_descriptor.imageView   = butterfly_precomp.view;
-	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor = create_fb_descriptor(butterfly_precomp);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),
@@ -1018,20 +997,9 @@ void SubgroupsOperations::create_fft()
 	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft.tilde_axis_x);
 	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft.tilde_axis_z);
 
-	VkDescriptorImageInfo image_descriptor_battlefly{};
-	image_descriptor_battlefly.imageView   = butterfly_precomp.view;
-	image_descriptor_battlefly.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_battlefly.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_tilda_y{};
-	image_descriptor_tilda_y.imageView   = fft_buffers.fft_tilde_h_kt_dy->view;
-	image_descriptor_tilda_y.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilda_y.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_tilde_axis_y{};
-	image_descriptor_tilde_axis_y.imageView   = fft.tilde_axis_y->view;
-	image_descriptor_tilde_axis_y.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilde_axis_y.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor_battlefly    = create_fb_descriptor(butterfly_precomp);
+	VkDescriptorImageInfo image_descriptor_tilda_y      = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dy);
+	VkDescriptorImageInfo image_descriptor_tilde_axis_y = create_fb_descriptor(*fft.tilde_axis_y);
 
 	auto fft_page_descriptor = create_descriptor(*fft_page_ubo);
 
@@ -1043,15 +1011,8 @@ void SubgroupsOperations::create_fft()
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_asix_y.size()), write_descriptor_sets_asix_y.data(), 0u, nullptr);
 
-	VkDescriptorImageInfo image_descriptor_tilda_x{};
-	image_descriptor_tilda_x.imageView   = fft_buffers.fft_tilde_h_kt_dx->view;
-	image_descriptor_tilda_x.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilda_x.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_tilde_axis_x{};
-	image_descriptor_tilde_axis_x.imageView   = fft.tilde_axis_x->view;
-	image_descriptor_tilde_axis_x.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilde_axis_x.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor_tilda_x      = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dx);
+	VkDescriptorImageInfo image_descriptor_tilde_axis_x = create_fb_descriptor(*fft.tilde_axis_x);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets_asix_x = {
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_battlefly),
@@ -1061,15 +1022,8 @@ void SubgroupsOperations::create_fft()
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_asix_x.size()), write_descriptor_sets_asix_x.data(), 0u, nullptr);
 
-	VkDescriptorImageInfo image_descriptor_tilda_z{};
-	image_descriptor_tilda_z.imageView   = fft_buffers.fft_tilde_h_kt_dz->view;
-	image_descriptor_tilda_z.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilda_z.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_tilde_axis_z{};
-	image_descriptor_tilde_axis_z.imageView   = fft.tilde_axis_z->view;
-	image_descriptor_tilde_axis_z.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_tilde_axis_z.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor_tilda_z      = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dz);
+	VkDescriptorImageInfo image_descriptor_tilde_axis_z = create_fb_descriptor(*fft.tilde_axis_z);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets_asix_z = {
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_battlefly),
@@ -1086,15 +1040,17 @@ void SubgroupsOperations::create_fft_inversion()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 3u)};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 3u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 6u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 7u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &fft_inversion.descriptor_set_layout));
 
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &fft_inversion.descriptor_set_layout, 1u);
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_inversion.descriptor_set_asix_y));
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_inversion.descriptor_set_asix_x));
-	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_inversion.descriptor_set_asix_z));
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_inversion.descriptor_set));
 
 	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
 	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -1110,78 +1066,37 @@ void SubgroupsOperations::create_fft_inversion()
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &fft_inversion.pipeline.pipeline));
 
-	fft_buffers.fft_displacement_y = std::make_unique<FBAttachment>();
-	fft_buffers.fft_displacement_x = std::make_unique<FBAttachment>();
-	fft_buffers.fft_displacement_z = std::make_unique<FBAttachment>();
-	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_displacement_y);
-	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_displacement_x);
-	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_displacement_z);
+	fft_buffers.fft_displacement = std::make_unique<FBAttachment>();
 
-	VkDescriptorImageInfo image_descriptor_displacment_axis_y{};
-	image_descriptor_displacment_axis_y.imageView   = fft_buffers.fft_displacement_y->view;
-	image_descriptor_displacment_axis_y.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_displacment_axis_y.sampler     = nullptr;
+	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_displacement);
 
-	VkDescriptorImageInfo image_descriptor_pingpong0_axis_y{};
-	image_descriptor_pingpong0_axis_y.imageView   = fft_buffers.fft_tilde_h_kt_dy->view;
-	image_descriptor_pingpong0_axis_y.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong0_axis_y.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_pingpong1_axis_y{};
-	image_descriptor_pingpong1_axis_y.imageView   = fft.tilde_axis_y->view;
-	image_descriptor_pingpong1_axis_y.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong1_axis_y.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor_displacment_axis = create_fb_descriptor(*fft_buffers.fft_displacement);
+	VkDescriptorImageInfo image_descriptor_pingpong0_axis_y = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dy);
+	VkDescriptorImageInfo image_descriptor_pingpong1_axis_y = create_fb_descriptor(*fft.tilde_axis_y);
+	VkDescriptorImageInfo image_descriptor_pingpong0_axis_x = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dx);
+	VkDescriptorImageInfo image_descriptor_pingpong1_axis_x = create_fb_descriptor(*fft.tilde_axis_x);
+	VkDescriptorImageInfo image_descriptor_pingpong0_axis_z = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dz);
+	VkDescriptorImageInfo image_descriptor_pingpong1_axis_z = create_fb_descriptor(*fft.tilde_axis_z);
 
 	auto fft_page_descriptor = create_descriptor(*invert_fft_ubo);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets_axis_y = {
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_displacment_axis_y),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_pingpong0_axis_y),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_pingpong1_axis_y),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_y, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_axis_y.size()), write_descriptor_sets_axis_y.data(), 0u, nullptr);
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_displacment_axis),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_pingpong0_axis_y),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_pingpong1_axis_y),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3u, &image_descriptor_pingpong0_axis_x),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &image_descriptor_pingpong1_axis_x),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 5u, &image_descriptor_pingpong0_axis_z),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 6u, &image_descriptor_pingpong1_axis_z),
+	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7u, &fft_page_descriptor)};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+}
 
-	VkDescriptorImageInfo image_descriptor_displacment_axis_x{};
-	image_descriptor_displacment_axis_x.imageView   = fft_buffers.fft_displacement_x->view;
-	image_descriptor_displacment_axis_x.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_displacment_axis_x.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_pingpong0_axis_x{};
-	image_descriptor_pingpong0_axis_x.imageView   = fft_buffers.fft_tilde_h_kt_dx->view;
-	image_descriptor_pingpong0_axis_x.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong0_axis_x.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_pingpong1_axis_x{};
-	image_descriptor_pingpong1_axis_x.imageView   = fft.tilde_axis_x->view;
-	image_descriptor_pingpong1_axis_x.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong1_axis_x.sampler     = nullptr;
-
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets_axis_x = {
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_displacment_axis_x),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_pingpong0_axis_x),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_pingpong1_axis_x),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_x, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_axis_x.size()), write_descriptor_sets_axis_x.data(), 0u, nullptr);
-
-	VkDescriptorImageInfo image_descriptor_displacment_axis_z{};
-	image_descriptor_displacment_axis_z.imageView   = fft_buffers.fft_displacement_z->view;
-	image_descriptor_displacment_axis_z.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_displacment_axis_z.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_pingpong0_axis_z{};
-	image_descriptor_pingpong0_axis_z.imageView   = fft_buffers.fft_tilde_h_kt_dz->view;
-	image_descriptor_pingpong0_axis_z.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong0_axis_z.sampler     = nullptr;
-
-	VkDescriptorImageInfo image_descriptor_pingpong1_axis_z{};
-	image_descriptor_pingpong1_axis_z.imageView   = fft.tilde_axis_z->view;
-	image_descriptor_pingpong1_axis_z.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor_pingpong1_axis_z.sampler     = nullptr;
-
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets_axis_z = {
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_displacment_axis_z),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_pingpong0_axis_z),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_pingpong1_axis_z),
-	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set_asix_z, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
-	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_axis_z.size()), write_descriptor_sets_axis_z.data(), 0u, nullptr);
+VkDescriptorImageInfo SubgroupsOperations::create_fb_descriptor(FBAttachment &attachment)
+{
+	VkDescriptorImageInfo image_descriptor{};
+	image_descriptor.imageView   = attachment.view;
+	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+	image_descriptor.sampler     = nullptr;
+	return image_descriptor;
 }

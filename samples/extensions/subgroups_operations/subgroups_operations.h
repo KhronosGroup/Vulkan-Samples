@@ -65,7 +65,6 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void update_uniform_buffers();
 
-	// ocean stuff
 	float               phillips_spectrum(int32_t n, int32_t m);
 	std::complex<float> hTilde_0(uint32_t n, uint32_t m);
 	std::complex<float> rndGaussian();
@@ -164,10 +163,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy;
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz;
-		std::unique_ptr<FBAttachment>      fft_displacement_y;
-		std::unique_ptr<FBAttachment>      fft_displacement_x;
-		std::unique_ptr<FBAttachment>      fft_displacement_z;
-
+		std::unique_ptr<FBAttachment>      fft_displacement;
 	} fft_buffers;
 
 	struct
@@ -198,10 +194,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set_asix_y = {VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set_asix_x = {VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set_asix_z = {VK_NULL_HANDLE};
-
+		VkDescriptorSet       descriptor_set = {VK_NULL_HANDLE};
 		Pipeline pipeline;
 	} fft_inversion;
 
@@ -237,6 +230,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
   private:
 	uint32_t reverse(uint32_t i);
+	VkDescriptorImageInfo create_fb_descriptor(FBAttachment &attachment);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();

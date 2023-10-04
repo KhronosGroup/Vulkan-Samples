@@ -16,10 +16,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- layout(quads, equal_spacing, ccw) in;
+layout(quads, equal_spacing, ccw) in;
 
-
- layout (binding = 0) uniform Ubo 
+layout (binding = 0) uniform Ubo 
 {
 	mat4 projection;
 	mat4 view;
@@ -27,8 +26,8 @@
 } ubo;
 
 
- void main()
- {
+void main()
+{
 	vec4 p00 = gl_in[0].gl_Position;
 	vec4 p01 = gl_in[1].gl_Position;
 	vec4 p10 = gl_in[2].gl_Position;
@@ -40,4 +39,4 @@
 	vec4 p = (p1 - p0) * gl_TessCoord.y + p0;
 
 	gl_Position = ubo.projection * ubo.view * ubo.model * p;
- }
+}

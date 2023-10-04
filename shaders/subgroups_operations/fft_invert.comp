@@ -25,13 +25,13 @@ layout (binding = 0, rgba32f) writeonly uniform image2D u_displacement;
 layout (binding = 1, rgba32f) readonly uniform image2D u_pingpong0_y;
 layout (binding = 2, rgba32f) readonly uniform image2D u_pingpong1_y;
 
-//layout (binding = 3, rgba32f) readonly uniform image2D u_pingpong0_x;
-//layout (binding = 4, rgba32f) readonly uniform image2D u_pingpong1_x;
-//
-//layout (binding = 5, rgba32f) readonly uniform image2D u_pingpong0_z;
-//layout (binding = 6, rgba32f) readonly uniform image2D u_pingpong1_z;
+layout (binding = 3, rgba32f) readonly uniform image2D u_pingpong0_x;
+layout (binding = 4, rgba32f) readonly uniform image2D u_pingpong1_x;
 
-layout (binding = 3) uniform InvertFft
+layout (binding = 5, rgba32f) readonly uniform image2D u_pingpong0_z;
+layout (binding = 6, rgba32f) readonly uniform image2D u_pingpong1_z;
+
+layout (binding = 7) uniform InvertFft
 {
     int pong_idx;
     uint grid_size;
@@ -51,14 +51,15 @@ void main()
 	if (pingpong_index == 0)
     {
         float h_y = imageLoad(u_pingpong0_y, pixel_pos).r;
-       // float h_x = imageLoad(u_pingpong0_x, pixel_pos).r;
-       // float h_z = imageLoad(u_pingpong0_z, pixel_pos).r;
-      //  imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), perm * (h_x / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
-       imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), 0.0f, 0.0f, 1.0f));
+        float h_x = imageLoad(u_pingpong0_x, pixel_pos).r;
+        float h_z = imageLoad(u_pingpong0_z, pixel_pos).r;
+       imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), perm * (h_x / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
     }
     else if (pingpong_index == 1)
     {
-        float h = imageLoad(u_pingpong1_y, pixel_pos).r;
-        imageStore(u_displacement, pixel_pos, vec4(perm * (h / float(N * N)), 0, 0, 1));
+        float h_y = imageLoad(u_pingpong1_y, pixel_pos).r;
+        float h_x = imageLoad(u_pingpong1_x, pixel_pos).r;
+        float h_z = imageLoad(u_pingpong1_z, pixel_pos).r;
+        imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), perm * (h_x / float(N * N)), perm * (h_z / float(N * N)), 1));
     }
 }
