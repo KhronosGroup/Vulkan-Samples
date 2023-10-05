@@ -71,11 +71,27 @@ class SparseImage : public ApiVulkanSample
 
 	struct TextureBlock
 	{
-		size_t  row;
-		size_t  column;
-		uint8_t old_mip_level;
-		uint8_t new_mip_level;
-		bool    on_screen;
+		bool operator<(TextureBlock const &other) const
+		{
+			if (this->new_mip_level == other.new_mip_level)
+			{
+				if (this->column == other.column)
+				{
+					return this->row < other.row;
+				}
+				else
+				{
+					return this->column < other.column;
+				}
+			}
+			return this->new_mip_level < other.new_mip_level;
+		};
+
+		size_t row;
+		size_t column;
+		double old_mip_level;
+		double new_mip_level;
+		bool   on_screen;
 	};
 
 	struct MemPageDescription
@@ -87,13 +103,12 @@ class SparseImage : public ApiVulkanSample
 
 	struct PageTable
 	{
-		bool   to_be_bound;             // to be bound vkQueueBindSparse()
 		bool   valid;                   // bound via vkQueueBindSparse() and contains valid data
 		bool   gen_mip_required;        // required for the mip generation
 		bool   fixed;                   // not freed from the memory at any cases
-		size_t memory_index;            // index from available_memory_indices corresponding to this page
+		size_t page_index;              // index from available_memory_page_indices corresponding to this page
 
-		std::list<std::tuple<uint8_t, size_t, size_t>> render_required_list;        // list holding information on what BLOCKS require this particular memory page to be valid for rendering
+		std::set<std::tuple<uint8_t, size_t, size_t>> render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
 	};
 
 	struct Point
@@ -105,8 +120,8 @@ class SparseImage : public ApiVulkanSample
 
 	struct MipBlock
 	{
-		uint8_t mip_level;
-		bool    on_screen;
+		double mip_level;
+		bool   on_screen;
 	};
 
 	struct VirtualTexture
@@ -123,9 +138,9 @@ class SparseImage : public ApiVulkanSample
 		size_t page_size;
 		size_t pages_allocated;
 
-		uint8_t                           base_mip_level;
-		uint8_t                           mip_levels;
-		std::vector<struct MipProperties> mip_properties;
+		uint8_t                    base_mip_level;
+		uint8_t                    mip_levels;
+		std::vector<MipProperties> mip_properties;
 
 		std::vector<std::vector<MipBlock>> current_mip_table;
 		std::vector<std::vector<MipBlock>> new_mip_table;
@@ -135,16 +150,16 @@ class SparseImage : public ApiVulkanSample
 		std::unique_ptr<vkb::core::Buffer> single_page_buffer;
 
 		// Key table that includes data on which page is allocated to what memory block from the textureMemory vector
-		std::vector<struct PageTable> page_table;
+		std::vector<PageTable> page_table;
 
-		// List containing BLOCKS for which the required mip level has changed or/and its on-screen visibility changed
-		std::list<struct TextureBlock> texture_block_update_list;
+		// Set containing BLOCKS for which the required mip level has changed or/and its on-screen visibility changed
+		std::set<TextureBlock> texture_block_update_set;
 
-		// List containing information which pages from the page_table should be updated (either loaded from CPU memory or blitted)
-		std::list<size_t> update_list;
+		// Set containing information which pages from the page_table should be updated (either loaded from CPU memory or blitted)
+		std::set<size_t> update_set;
 
 		// Vector of available memory pages (whole memory page pool is statically allocated at the beginning)
-		std::vector<size_t> available_memory_indices;
+		std::vector<size_t> available_memory_page_indices;
 
 		bool update_required = false;
 
@@ -184,7 +199,7 @@ class SparseImage : public ApiVulkanSample
 	uint8_t     frame_counter     = 0U;
 	enum Stages next_stage        = SPARSE_IMAGE_IDLE_STAGE;
 
-	struct VirtualTexture virtual_texture;
+	VirtualTexture virtual_texture;
 
 	VkQueue sparse_queue;
 	size_t  sparse_queue_family_index;
@@ -238,19 +253,19 @@ class SparseImage : public ApiVulkanSample
 	void                      free_unused_memory();
 	void                      update_and_generate();
 	void                      process_texture_blocks();
-	struct MemPageDescription get_mem_page_description(size_t memory_index);
+	struct MemPageDescription get_mem_page_description(size_t page_index);
 	void                      calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
 	void                      compare_mips_table();
 	void                      process_texture_block(const TextureBlock &on_screen_block);
-	void                      get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level, std::list<size_t> &index_list);
-	void                      check_mip_page_requirements(std::list<MemPageDescription> &mipgen_required_list, struct MemPageDescription mip_dependency);
+	std::vector<size_t>       get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level);
+	void                      check_mip_page_requirements(std::vector<MemPageDescription> &mipgen_required_vec, MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
 	void                      copy_single_raw_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
 	void                      load_least_detailed_level();
 	void                      set_least_detailed_level();
 	void                      update_frag_settings();
 	uint8_t                   get_mip_level(size_t page_index);
-	size_t                    get_memory_index(struct MemPageDescription mem_page_desc);
+	size_t                    get_page_index(MemPageDescription mem_page_desc);
 
 	// Override basic framework functionalities
 	void         build_command_buffers() override;
