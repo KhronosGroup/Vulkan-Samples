@@ -1,4 +1,448 @@
-////
+////นักพัฒนาซอฟต์แวร์ Android
+สิ่งจำเป็น
+มากกว่า
+การออกแบบและแผน
+พัฒนา
+Google Play
+ค้นหา
+
+ภาษาอังกฤษ
+แอนดรอยด์สตูดิโอ
+
+จันทร์มีณีพันธ์
+แพลตฟอร์ม
+ภาพรวม
+ข่าวประชาสัมพันธ์
+เทคโนโลยี
+การเรียนรู้ของเครื่อง
+กรอง
+
+นักพัฒนาซอฟต์แวร์ Android
+สิ่งจำเป็น
+ข่าวประชาสัมพันธ์
+ข้อมูลนี้มีประโยชน์ไหม
+
+แอนดรอยด์ 8 . 0 การเปลี่ยนแปลงพฤติกรรม
+
+bookmark_border
+
+
+นอกเหนือจากฟีเจอร์และความสามารถใหม่ๆ แล้ว Android 8.0 (API ระดับ 26) ยังรวมถึงระบบและการเปลี่ยนแปลงพฤติกรรม API ที่หลากหลาย เอกสารนี้เน้นย้ำถึงการเปลี่ยนแปลงสำคัญบางประการที่คุณควรทำความเข้าใจและคำนึงถึงในแอปของคุณ
+
+การเปลี่ยนแปลงเหล่านี้ส่วนใหญ่ส่งผลต่อแอปทั้งหมด ไม่ว่าแอปเหล่านั้นจะกำหนดเป้าหมายเวอร์ชันใดก็ตาม อย่างไรก็ตาม การเปลี่ยนแปลงหลายอย่างส่งผลต่อแอปที่กำหนดเป้าหมายเป็น Android 8.0 เท่านั้น เพื่อให้เกิดความชัดเจนสูงสุด หน้านี้จึงแบ่งออกเป็น สอง ส่วน: การเปลี่ยนแปลงสำหรับแอปทั้งหมดและการเปลี่ยนแปลงสำหรับแอปที่กำหนดเป้าหมายเป็น Android 8.0
+
+การเปลี่ยนแปลงสำหรับแอปทั้งหมด
+การเปลี่ยนแปลงลักษณะการทำงานเหล่านี้มีผลกับแอพทั้งหมดเมื่อทำงานบนแพลตฟอร์ม Android 8.0 (API ระดับ 26) ไม่ว่าเป้าหมายจะเป็นระดับ API ใดก็ตาม นักพัฒนาซอฟต์แวร์ทุกคนควรตรวจสอบการเปลี่ยนแปลงเหล่านี้และแก้ไขแอปของตนเพื่อรองรับการเปลี่ยนแปลงดังกล่าวอย่างเหมาะสม ในกรณีที่เกี่ยวข้องกับแอป
+
+ขีดจำกัดการดำเนินการเบื้องหลัง
+หนึ่งในการเปลี่ยนแปลงที่ Android 8.0 (API ระดับ 26) แนะนำเพื่อปรับปรุงอายุการใช้งานแบตเตอรี่ เมื่อแอปของคุณเข้าสู่สถานะ แคช โดยไม่มี ส่วนประกอบ ที่ใช้งาน อยู่ ระบบจะปล่อย Wakelock ใดๆ ที่แอปเก็บไว้
+
+นอกจากนี้ เพื่อปรับปรุงประสิทธิภาพของอุปกรณ์ ระบบจะจำกัดพฤติกรรมบางอย่างของแอปที่ไม่ได้ทำงานอยู่เบื้องหน้า โดยเฉพาะ:
+
+แอพที่ทำงานอยู่เบื้องหลังขณะนี้มีข้อจำกัดในการเข้าถึงบริการพื้นหลังได้อย่างอิสระ
+แอปไม่สามารถใช้ไฟล์ Manifest เพื่อลงทะเบียนสำหรับการออกอากาศโดยนัยส่วนใหญ่ได้ (นั่นคือ การออกอากาศที่ไม่ได้กำหนดเป้าหมายไปที่แอปโดยเฉพาะ)
+ตามค่าเริ่มต้น ข้อจำกัดเหล่านี้ใช้กับแอปที่กำหนดเป้าหมาย O เท่านั้น อย่างไรก็ตาม ผู้ใช้สามารถเปิดใช้งานข้อจำกัดเหล่านี้สำหรับแอปใดก็ได้จากหน้าจอการตั้งค่าแม้ว่าแอปจะไม่ได้กำหนดเป้าหมาย O ก็ตาม
+
+Android 8.0 (API ระดับ 26) ยังรวมถึงการเปลี่ยนแปลงต่อไปนี้ในวิธีการเฉพาะ:
+
+วิธีstartService()การนี้จะพ่น IllegalStateExceptionหากแอปที่กำหนดเป้าหมายเป็น Android 8.0 พยายามใช้วิธีการนั้นในสถานการณ์ที่ไม่ได้รับอนุญาตให้สร้างบริการพื้นหลัง
+วิธีการ ใหม่Context.startForegroundService()เริ่มบริการเบื้องหน้า ระบบอนุญาตให้แอปโทรได้Context.startForegroundService()แม้ในขณะที่แอปอยู่ในพื้นหลัง อย่างไรก็ตาม แอปจะต้องเรียกใช้startForeground()วิธีการของบริการนั้นภายในห้าวินาทีหลังจากสร้างบริการแล้ว
+สำหรับข้อมูลเพิ่มเติม โปรดดูที่ ขีดจำกัดการดำเนิน การ ในเบื้องหลัง
+
+ขีดจำกัดตำแหน่งพื้นหลังของ Android
+เพื่อรักษาแบตเตอรี่ ประสบการณ์ผู้ใช้ และสุขภาพของระบบ แอปพื้นหลังจะได้รับการอัปเดตตำแหน่งน้อยลงเมื่อใช้บนอุปกรณ์ที่ใช้ Android 8.0 การเปลี่ยนแปลงพฤติกรรมนี้ส่งผลต่อแอปทั้งหมดที่ได้รับการอัพเดตตำแหน่ง รวมถึงบริการ Google Play
+
+การเปลี่ยนแปลงเหล่านี้ส่งผลต่อ API ต่อไปนี้:
+
+ผู้ให้บริการตำแหน่งหลอมรวม (FLP)
+การจัดตำแหน่งทางภูมิศาสตร์
+การวัด GNSS
+ผู้จัดการสถานที่
+ตัวจัดการ Wi-Fi
+To ensure that your app runs as expected, complete the following steps:
+
+Review your app's logic and ensure that you're using the latest location APIs.
+Test that your app exhibits the behavior that you expect for each use case.
+Consider using the Fused Location Provider (FLP) or geofencing to handle the use cases that depend on the user's current location.
+For more information about these changes, see Background Location Limits.
+
+App shortcuts
+Android 8.0 (API level 26) includes the following changes to app shortcuts:
+
+The com.android.launcher.action.INSTALL_SHORTCUT broadcast no longer has any effect on your app, because it is now a private, implicit broadcast. Instead, you should create an app shortcut by using the requestPinShortcut() method from the ShortcutManager class.
+The ACTION_CREATE_SHORTCUT intent can now create app shortcuts that you manage using the ShortcutManager class. This intent can also create legacy launcher shortcuts that don't interact with ShortcutManager. Previously, this intent could create only legacy launcher shortcuts.
+Shortcuts created using requestPinShortcut() and shortcuts created in an activity that handles the ACTION_CREATE_SHORTCUT intent are now fully-fledged app shortcuts. As a result, apps can now update them using the methods in ShortcutManager.
+Legacy shortcuts retain their functionality from previous versions of Android, but you must convert them to app shortcuts manually in your app.
+To learn more about changes to app shortcuts, see the Pinning Shortcuts and Widgets feature guide.
+
+Locales and internationalization
+Android 7.0 (API level 24) introduced the concept of being able to specify a default Category Locale, but some APIs continued to use the generic Locale.getDefault() method, without arguments, when they should have instead used default DISPLAY category Locale. In Android 8.0 (API level 26), the following methods now use Locale.getDefault(Category.DISPLAY) instead of Locale.getDefault():
+
+Currency.getDisplayName()
+Currency.getSymbol()
+Locale.getDisplayScript()
+Locale.getDisplayScript(Locale) also falls back to Locale.getDefault() when the displayScript value specified for the Locale argument is not available.
+
+Additional locale and internationalization-related changes are as follows:
+
+Calling Currency.getDisplayName(null) throws a NullPointerException, matching the documented behavior.
+Time zone name parsing has changed. Previously, Android devices used the system clock value sampled at boot time to cache the time zone names used for parsing date times. As a result, parsing could be negatively affected if the system clock was wrong at boot time or in other, rarer cases.
+Now, in common cases the parsing logic uses ICU and the current system clock value when parsing time zone names. This change provides more correct results, which may differ from earlier Android versions when your app uses classes like SimpleDateFormat.
+
+Android 8.0 (API level 26) updates the version of ICU to version 58.
+หน้าต่างแจ้งเตือน
+If an app uses the SYSTEM_ALERT_WINDOW permission and uses one of the following window types to attempt to display alert windows above other apps and system windows:
+
+TYPE_PHONE
+TYPE_PRIORITY_PHONE
+TYPE_SYSTEM_ALERT
+TYPE_SYSTEM_OVERLAY
+TYPE_SYSTEM_ERROR
+...then these windows always appear beneath the windows that use the TYPE_APPLICATION_OVERLAY window type. If an app targets Android 8.0 (API level 26), the app uses the TYPE_APPLICATION_OVERLAY window type to display alert windows.
+
+For more information, see the Common window types for alert windows section within the behavior changes for Apps targeting Android 8.0.
+
+อินพุตและการนำทาง
+With the advent of Android apps on ChromeOS and other large form factors, such as tablets, we're seeing a resurgence of keyboard navigation use within Android apps. Within Android 8.0 (API level 26), we've re-addressed using the keyboard as a navigation input device, resulting in a more reliable, predictable model for arrow- and tab-based navigation.
+
+In particular, we've made the following changes to element focus behavior:
+
+If you haven't defined any focus state colors for a View object (either its foreground or background drawable), the framework now sets a default focus highlight color for the View. This focus highlight is a ripple drawable that's based on the activity's theme.
+
+หากคุณไม่ต้องการให้Viewออบเจ็กต์ใช้ไฮไลต์เริ่มต้นนี้เมื่อได้รับการโฟกัส ให้ตั้งค่า android:defaultFocusHighlightEnabledแอตทริบิวต์ falseในไฟล์ XML เลย์เอาต์ที่มี Viewหรือส่งผ่านfalseไปยัง setDefaultFocusHighlightEnabled()ตรรกะ UI ของแอปของคุณ
+
+หากต้องการทดสอบว่าการป้อนข้อมูลด้วยแป้นพิมพ์ส่งผลต่อโฟกัสองค์ประกอบ UI อย่างไร คุณสามารถเปิดใช้ งานตัวเลือก การวาดภาพ > แสดงขอบเขตเค้าโครงผู้พัฒนาได้ ใน Android 8.0 ตัวเลือกนี้จะแสดงไอคอน "X" เหนือองค์ประกอบที่มีโฟกัสอยู่ในปัจจุบัน
+นอกจากนี้ องค์ประกอบแถบเครื่องมือทั้งหมดใน Android 8.0 จะเป็น คลัสเตอร์การนำทางด้วยแป้นพิมพ์ โดยอัตโนมัติ ทำให้ผู้ใช้สามารถเข้าและออกจากแถบเครื่องมือโดยรวมได้ง่ายขึ้น
+
+หากต้องการเรียนรู้เพิ่มเติมเกี่ยวกับวิธีปรับปรุงการรองรับการนำทางด้วยแป้นพิมพ์ภายในแอปของคุณ โปรดอ่านคู่มือการสนับสนุนการนำทางด้วยแป้นพิมพ์
+
+กรอกแบบฟอร์มเว็บอัตโนมัติ
+ขณะนี้กรอบงานป้อนอัตโนมัติ ของ Android ให้การสนับสนุนฟังก์ชันป้อนอัตโนมัติในตัวแล้ว วิธีการต่อไปนี้ที่เกี่ยวข้องกับWebViewออบเจ็กต์ได้เปลี่ยนแปลงสำหรับแอปที่ติดตั้งบนอุปกรณ์ที่ใช้ Android 8.0 (API ระดับ 26):
+
+WebSettings
+getSaveFormData() ตอนนี้วิธีการส่ง falseคืน ก่อนหน้านี้วิธีนี้กลับคืนมา trueแทน
+การโทร setSaveFormData()ไม่มีผลอีกต่อไป
+WebViewDatabase
+การโทร clearFormData()ไม่มีผลอีกต่อไป
+hasFormData()ตอนนี้วิธีการส่ง falseคืน ก่อนหน้านี้ วิธีการนี้จะส่งคืน trueเมื่อฟอร์มมีข้อมูล
+การเข้าถึง
+Android 8.0 (API ระดับ 26) มีการเปลี่ยนแปลงต่อไปนี้ในการเข้าถึง:
+
+กรอบงานการเข้าถึงจะแปลงท่าทางการแตะสองครั้งทั้งหมดเป็น ACTION_CLICK กระทำ การเปลี่ยนแปลงนี้ทำให้ TalkBack ทำงานเหมือนกับบริการการเข้าถึงอื่นๆ ได้มากขึ้น
+
+หากออบเจ็กต์ของแอปViewใช้การจัดการระบบสัมผัสแบบกำหนดเอง คุณควรตรวจสอบว่าออบเจ็กต์เหล่านั้นยังคงใช้งานได้กับ TalkBack คุณอาจต้องลงทะเบียนตัวจัดการคลิกที่View ออบเจ็กต์ของคุณใช้ หาก TalkBack ยังคงไม่รู้จักท่าทางสัมผัสที่ทำกับ Viewวัตถุ เหล่านี้ ให้ performAccessibilityAction()แทนที่
+
+ขณะนี้บริการการเข้าถึงรับรู้ถึง ClickableSpanอินสแตนซ์ทั้งหมดภายใน TextViewออบเจ็กต์ของแอปของคุณแล้ว
+หากต้องการเรียนรู้เพิ่มเติมเกี่ยวกับวิธีทำให้แอปของคุณเข้าถึงได้มากขึ้น โปรดดู การเข้าถึง
+
+การเชื่อมต่อ เครือข่ายและHTTP( S)
+Android 8.0 (API ระดับ 26) มีการเปลี่ยนแปลงลักษณะการทำงานของเครือข่ายและการเชื่อมต่อ HTTP(S) ต่อไปนี้:
+
+คำขอ OPTIONS ที่ไม่มีเนื้อหาจะมีContent-Length: 0 ส่วนหัว ก่อนหน้านี้พวกเขาไม่มีContent-Lengthส่วนหัว
+HttpURLConnection ทำให้ URL ที่มีเส้นทางว่างเป็นปกติโดยการต่อท้ายเครื่องหมายทับหลังชื่อโฮสต์หรือผู้มีอำนาจด้วยเครื่องหมายทับ เช่น แปลงhttp://example.comเป็น http://example.com/.
+ตัวเลือกพร็อกซีแบบกำหนดเองที่ตั้งค่าผ่าน ProxySelector.setDefault() กำหนดเป้าหมายเฉพาะที่อยู่ (รูปแบบ โฮสต์ และพอร์ต) ของ URL ที่ร้องขอ ด้วยเหตุนี้ การเลือกพร็อกซีอาจขึ้นอยู่กับค่าเหล่านั้นเท่านั้น URL ที่ส่งผ่านไปยังตัวเลือกพร็อกซีแบบกำหนดเองไม่รวมเส้นทางของ URL ที่ร้องขอ พารามิเตอร์การค้นหา หรือส่วนย่อย
+URI ต้องไม่มีป้ายกำกับเปล่า
+ก่อนหน้านี้ แพลตฟอร์มดังกล่าวสนับสนุนวิธีแก้ปัญหาชั่วคราวเพื่อยอมรับป้ายกำกับว่างในชื่อโฮสต์ ซึ่งเป็นการใช้ URI ที่ผิดกฎหมาย วิธีแก้ปัญหานี้มีไว้สำหรับความเข้ากันได้กับ libcore ที่เก่ากว่า นักพัฒนาที่ใช้ API ไม่ถูกต้องจะเห็นข้อความ ADB: "URI example..com มีป้ายกำกับว่างในชื่อโฮสต์ ซึ่งมีรูปแบบไม่ถูกต้องและจะไม่ได้รับการยอมรับใน Android รุ่นต่อๆ ไป" Android 8.0 จะลบวิธีแก้ปัญหานี้ออก ระบบส่งคืนค่าว่างสำหรับ URI ที่มีรูปแบบไม่ถูกต้อง
+
+การใช้ HttpsURLConnection ของ Android 8.0 ไม่ได้ดำเนินการทางเลือกเวอร์ชันโปรโตคอล TLS/SSL ที่ไม่ปลอดภัย
+การจัดการการเชื่อมต่อ HTTP(S) แบบทันเนลมีการเปลี่ยนแปลงดังนี้:
+เมื่อทำการทันเนลการเชื่อมต่อ HTTPS ผ่านการเชื่อมต่อ ระบบจะวางหมายเลขพอร์ต (:443) ในบรรทัดโฮสต์อย่างถูกต้องเมื่อส่งข้อมูลนี้ไปยังเซิร์ฟเวอร์ระดับกลาง ก่อนหน้านี้ หมายเลขพอร์ตจะเกิดขึ้นเฉพาะในบรรทัด CONNECT เท่านั้น
+ระบบจะไม่ส่งส่วนหัวของตัวแทนผู้ใช้และการอนุญาตพร็อกซีจากคำขอทันเนลไปยังพร็อกซีเซิร์ฟเวอร์อีกต่อไป
+ระบบจะไม่ส่งส่วนหัวการอนุญาตพร็อกซีบน Http(s)URLConnection แบบช่องสัญญาณไปยังพร็อกซีอีกต่อไปเมื่อตั้งค่าช่องสัญญาณ แต่ระบบจะสร้างส่วนหัวการอนุญาตพร็อกซีแทน และส่งไปที่พร็อกซีเมื่อพร็อกซีนั้นส่ง HTTP 407 เพื่อตอบสนองต่อคำขอเริ่มต้น
+
+ในทำนองเดียวกัน ระบบจะไม่คัดลอกส่วนหัวของตัวแทนผู้ใช้จากคำขอทันเนลไปยังคำขอพร็อกซีที่ตั้งค่าทันเนลอีกต่อไป ไลบรารีจะสร้างส่วนหัวของตัวแทนผู้ใช้สำหรับคำขอนั้นแทน
+
+วิธีsend(java.net.DatagramPacket) การส่ง SocketException ถ้าวิธีการเชื่อมต่อ () ที่ดำเนินการก่อนหน้านี้ล้มเหลว
+DatagramSocket.connect() ตั้งค่า pendingSocketException หากมีข้อผิดพลาดภายใน ก่อน Android 8.0 การเรียก recv() ที่ตามมาจะทำให้เกิด SocketException แม้ว่าการเรียก send() จะสำเร็จก็ตาม เพื่อความสอดคล้อง ทั้งสองสายในขณะนี้โยน SocketException
+InetAddress.isReachable() พยายาม ICMP ก่อนที่จะถอยกลับไปเป็นโปรโตคอล TCP Echo
+โฮสต์บางแห่งที่บล็อกพอร์ต 7 (TCP Echo) เช่น google.com อาจสามารถเข้าถึงได้แล้วหากยอมรับโปรโตคอล ICMP Echo
+สำหรับโฮสต์ที่ไม่สามารถเข้าถึงได้อย่างแท้จริง การเปลี่ยนแปลงนี้หมายความว่าจะใช้เวลาเป็นสองเท่าก่อนที่จะโทรกลับ
+บลูทู ธ
+Android 8.0 (API ระดับ 26) ทำการเปลี่ยนแปลงต่อไปนี้กับความยาวของข้อมูลที่ScanRecord.getBytes() เมธอดดึงข้อมูล:
+
+วิธีการ นี้getBytes()ไม่มีข้อสันนิษฐานเกี่ยวกับจำนวนไบต์ที่ได้รับ ดังนั้นแอปไม่ควรพึ่งพาจำนวนไบต์ขั้นต่ำหรือสูงสุดที่ส่งคืน แต่ควรประเมินความยาวของอาร์เรย์ผลลัพธ์แทน
+อุปกรณ์ที่รองรับ Bluetooth 5 อาจส่งคืนความยาวข้อมูลที่เกินค่าสูงสุดก่อนหน้านี้ที่ ~60 ไบต์
+หากอุปกรณ์ระยะไกลไม่ตอบสนองการสแกน ระบบอาจส่งคืนข้อมูลน้อยกว่า 60 ไบต์เช่นกัน
+การเชื่อมต่อที่ไร้รอยต่อ
+Android 8.0 (API ระดับ 26) ทำการปรับปรุงหลายอย่างในการตั้งค่า Wi-Fi เพื่อให้ง่ายต่อการเลือกเครือข่าย Wi-Fi ที่ให้ประสบการณ์ผู้ใช้ที่ดีที่สุด การเปลี่ยนแปลงเฉพาะได้แก่:
+
+การปรับปรุงเสถียรภาพและความน่าเชื่อถือ
+UI ที่อ่านง่ายยิ่งขึ้น
+เมนูการตั้งค่า Wi-Fi ที่รวมไว้เพียงเมนูเดียว
+บนอุปกรณ์ที่รองรับ การเปิดใช้งาน Wi-Fi อัตโนมัติเมื่อมีเครือข่ายคุณภาพสูงที่บันทึกไว้อยู่ใกล้ๆ
+ความปลอดภัย
+Android 8.0 มีการเปลี่ยนแปลงที่เกี่ยวข้องกับความปลอดภัยดังต่อไปนี้:
+
+แพลตฟอร์มไม่รองรับ SSLv3 อีกต่อไป
+เมื่อสร้างการเชื่อมต่อ HTTPS ไปยังเซิร์ฟเวอร์ที่ใช้การเจรจาเวอร์ชันโปรโตคอล TLS อย่างไม่ถูกต้อง จะ HttpsURLConnectionไม่พยายามแก้ไขปัญหาชั่วคราวในการถอยกลับไปเป็นเวอร์ชันโปรโตคอล TLS ก่อนหน้าแล้วลองใหม่อีกครั้ง
+Android 8.0 (API ระดับ 26) ใช้ตัวกรอง Secure Computing (SECCOMP) กับแอปทั้งหมด รายการ syscalls ที่อนุญาตนั้นจำกัดไว้เฉพาะรายการที่ถูกเปิดเผยผ่านไบโอนิค แม้ว่าจะมี syscall อื่นๆ อีกหลายรายการสำหรับความเข้ากันได้แบบย้อนหลัง แต่เราขอแนะนำไม่ให้ใช้งาน
+ตอนนี้ออบเจ็กต์ ของแอปของคุณWebViewทำงานในโหมดหลายกระบวนการ เนื้อหาเว็บได้รับการจัดการในกระบวนการแยกต่างหากและแยกออกจากกระบวนการของแอปที่มีอยู่เพื่อเพิ่มความปลอดภัย
+คุณไม่สามารถสรุปได้ว่า APK อยู่ในไดเรกทอรีที่ชื่อลงท้ายด้วย -1 หรือ -2 แอปควรใช้ sourceDirเพื่อรับไดเร็กทอรี และไม่ต้องพึ่งพารูปแบบไดเร็กทอรีโดยตรง
+สำหรับข้อมูลเกี่ยวกับการปรับปรุงความปลอดภัยที่เกี่ยวข้องกับการใช้ไลบรารีดั้งเดิม โปรดดูที่Native Libraries
+นอกจากนี้ Android 8.0 (API ระดับ 26) ยังแนะนำการเปลี่ยนแปลงต่อไปนี้ที่เกี่ยวข้องกับการติดตั้งแอปที่ไม่รู้จักจากแหล่งที่ไม่รู้จัก:
+
+INSTALL_NON_MARKET_APPSตอนนี้ ค่าของการตั้งค่าแบบเดิม จะเป็น 1 เสมอ หากต้องการทราบว่าแหล่งที่มาที่ไม่รู้จักสามารถติดตั้งแอปโดยใช้ตัวติดตั้งแพ็คเกจได้หรือไม่ คุณควรใช้ค่าที่ส่งคืน canRequestPackageInstalls()เป็น
+หากคุณพยายามเปลี่ยนค่าของ INSTALL_NON_MARKET_APPSการใช้ setSecureSetting()จะUnsupportedOperationException มีการโยนทิ้ง เพื่อป้องกันไม่ให้ผู้ใช้ติดตั้งแอปที่ไม่รู้จักโดยใช้แหล่งที่ไม่รู้จัก คุณควรใช้ DISALLOW_INSTALL_UNKNOWN_SOURCESข้อจำกัดผู้ใช้ แทน
+โปรไฟล์ที่ได้รับการจัดการที่สร้างขึ้นบนอุปกรณ์ที่ใช้ Android 8.0 (API ระดับ 26) จะ DISALLOW_INSTALL_UNKNOWN_SOURCESเปิดใช้งานการจำกัดผู้ใช้ โดยอัตโนมัติ สำหรับโปรไฟล์ที่มีการจัดการที่มีอยู่ในอุปกรณ์ที่อัปเกรดเป็น Android 8.0 DISALLOW_INSTALL_UNKNOWN_SOURCESการจำกัดผู้ใช้จะถูกเปิดใช้งานโดยอัตโนมัติ เว้นแต่เจ้าของโปรไฟล์ได้ปิดใช้ข้อจำกัดนี้อย่างชัดเจน (ก่อนอัปเกรด) โดยตั้งค่า INSTALL_NON_MARKET_APPSเป็น 1
+สำหรับรายละเอียดเพิ่มเติมเกี่ยวกับการติดตั้งแอพที่ไม่รู้จัก โปรดดู คู่มือ สิทธิ์ในการติดตั้งแอพที่ไม่รู้จัก
+
+สำหรับหลักเกณฑ์เพิ่มเติมในการทำให้แอปของคุณปลอดภัยยิ่งขึ้น โปรดดูที่ การรักษาความปลอดภัยสำหรับนักพัฒนาซอฟต์แวร์ Android
+
+ความเป็นส่วนตัว
+Android 8.0 (API ระดับ 26) ทำการเปลี่ยนแปลงที่เกี่ยวข้องกับความเป็นส่วนตัวต่อไปนี้ในแพลตฟอร์ม
+
+ขณะนี้แพลตฟอร์มจัดการตัวระบุแตกต่างออกไป
+สำหรับแอปที่ติดตั้งก่อน OTA เป็นเวอร์ชัน Android 8.0 (API ระดับ 26) (API ระดับ 26) ค่าของจะ ANDROID_IDยังคงเหมือนเดิมเว้นแต่จะถอนการติดตั้งแล้วติดตั้งใหม่หลังจาก OTA เพื่อรักษาค่าในการถอนการติดตั้งหลังจาก OTA นักพัฒนาสามารถเชื่อมโยงค่าเก่าและใหม่ได้โดยใช้ การ สำรองข้อมูลคีย์/ค่า
+สำหรับแอปที่ติดตั้งในอุปกรณ์ที่ใช้ Android 8.0 ค่าของ ANDROID_IDจะมีการกำหนดขอบเขตตามคีย์ App Signing และต่อผู้ใช้ ค่าของ ANDROID_IDเป็นค่าที่ไม่ซ้ำกันสำหรับชุดค่าผสมของคีย์ App Signing ผู้ใช้ และอุปกรณ์แต่ละชุด ด้วยเหตุนี้ แอปที่มีคีย์การลงนามต่างกันที่ทำงานบนอุปกรณ์เดียวกันจะไม่เห็นรหัส Android เดียวกันอีกต่อไป (แม้แต่ผู้ใช้คนเดียวกันก็ตาม)
+ค่าของANDROID_ID ไม่เปลี่ยนแปลงในการถอนการติดตั้งแพ็คเกจหรือติดตั้งใหม่ ตราบใดที่คีย์การลงนามยังเหมือนเดิม (และไม่ได้ติดตั้งแอปก่อน OTA เป็นเวอร์ชัน Android 8.0)
+ค่าของANDROID_ID ไม่เปลี่ยนแปลงแม้ว่าการอัปเดตระบบจะทำให้คีย์การเซ็นชื่อแพ็คเกจเปลี่ยนแปลง
+บนอุปกรณ์ที่จัดส่งพร้อมบริการ Google Play และรหัสโฆษณา คุณต้องใช้ รหัสโฆษณา รหัสโฆษณาคือระบบมาตรฐานที่เรียบง่ายในการสร้างรายได้จากแอป โดยเป็นรหัสเฉพาะสำหรับการโฆษณาที่ผู้ใช้สามารถรีเซ็ตได้ มันให้บริการโดยบริการ Google Play
+ผู้ผลิตอุปกรณ์รายอื่นๆ ควรจัดหาต่อANDROID_IDไป
+
+การสอบถามnet.hostnameคุณสมบัติของระบบทำให้เกิดผลลัพธ์เป็นโมฆะ
+การบันทึกข้อยกเว้นที่ไม่ถูกตรวจจับ
+หากแอปติดตั้งThread.UncaughtExceptionHandlerที่ไม่ได้เรียกผ่านค่าเริ่มต้นThread.UncaughtExceptionHandlerระบบจะไม่ปิดแอปเมื่อมีข้อยกเว้นที่ไม่ถูกตรวจจับเกิดขึ้น เริ่มต้นจาก Android 8.0 (API ระดับ 26) ระบบจะบันทึกสแต็กเทรซข้อยกเว้นในสถานการณ์นี้ ในแพลตฟอร์มเวอร์ชันก่อนหน้า ระบบจะไม่บันทึกสแต็กเทรซข้อยกเว้น
+
+เราขอแนะนำให้Thread.UncaughtExceptionHandler การใช้งานแบบกำหนดเองเรียกใช้ผ่านตัวจัดการเริ่มต้นเสมอ แอพที่ปฏิบัติตามคำแนะนำนี้ไม่ได้รับผลกระทบจากการเปลี่ยนแปลงใน Android 8.0
+
+การเปลี่ยนแปลงลายเซ็น findViewById( )
+findViewById()ขณะนี้อินสแตนซ์ทั้งหมดของ วิธีการส่งคืน <T extends View> TแทนView. การเปลี่ยนแปลงนี้มีผลกระทบดังต่อไปนี้:
+
+ซึ่งอาจส่งผลให้โค้ดที่มีอยู่ในขณะนี้มีประเภทการส่งคืนที่ไม่ชัดเจน เช่น ถ้ามีทั้งสองอย่างsomeMethod(View)และ someMethod(TextView)ที่รับผลลัพธ์ของการเรียกไป findViewById()ที่
+เมื่อใช้ภาษาต้นฉบับ Java 8 จำเป็นต้องมีการส่งอย่างชัดเจน Viewเมื่อประเภทการส่งคืนไม่มีข้อจำกัด (เช่น assertNotNull(findViewById(...)).someViewMethod()).
+การแทนที่วิธีที่ไม่ใช่วิธีสุดท้ายfindViewById()(เช่นActivity.findViewById()) จะต้องได้รับการอัปเดตประเภทการคืนสินค้า
+สถิติการใช้งานของผู้ให้บริการรายชื่อติดต่อเปลี่ยนแปลง
+ใน Android เวอร์ชันก่อนหน้า คอมโพเนนต์ผู้ให้บริการรายชื่อติดต่อช่วยให้นักพัฒนาสามารถรับข้อมูลการใช้งานสำหรับรายชื่อติดต่อแต่ละรายการได้ ข้อมูลการใช้งานนี้เปิดเผยข้อมูลสำหรับที่อยู่อีเมลแต่ละอันและหมายเลขโทรศัพท์แต่ละหมายเลขที่เกี่ยวข้องกับผู้ติดต่อ รวมถึงจำนวนครั้งที่มีการติดต่อผู้ติดต่อและครั้งสุดท้ายที่มีการติดต่อผู้ติดต่อ แอปที่ขออนุญาต READ_CONTACTS สามารถอ่านข้อมูลนี้ได้
+
+แอปยังคงอ่านข้อมูลนี้ได้หากขอ READ_CONTACTS อนุญาต ใน Android 8.0 (API ระดับ 26) และสูงกว่า การสืบค้นข้อมูลการใช้งานจะส่งกลับค่าประมาณแทนที่จะเป็นค่าที่แน่นอน ระบบ Android จะรักษาค่าที่แน่นอนไว้ภายใน ดังนั้นการเปลี่ยนแปลงนี้จึงไม่ส่งผลต่อ API ที่เติมข้อความอัตโนมัติ
+
+การเปลี่ยนแปลงลักษณะการทำงานนี้ส่งผลต่อพารามิเตอร์แบบสอบถามต่อไปนี้:
+
+TIMES_CONTACTED
+TIMES_USED
+LAST_TIME_CONTACTED
+LAST_TIME_USED
+การจัดการคอลเลกชัน
+AbstractCollection.removeAll() และAbstractCollection.retainAll() ตอนนี้มักจะโยนNullPointerException; ก่อนหน้านี้ NullPointerExceptionไม่ถูกโยนทิ้งเมื่อคอลเลกชันว่างเปล่า การเปลี่ยนแปลงนี้ทำให้ลักษณะการทำงานสอดคล้องกับเอกสารประกอบ
+
+องค์กร Android
+Android 8.0 (API ระดับ 26) เปลี่ยนพฤติกรรมของ API และฟีเจอร์บางอย่างสำหรับแอประดับองค์กร รวมถึงตัวควบคุมนโยบายด้านอุปกรณ์ (DPC) การเปลี่ยนแปลงได้แก่:
+
+ลักษณะการทำงานใหม่ที่ช่วยให้แอปรองรับโปรไฟล์งานในอุปกรณ์ที่มีการจัดการเต็มรูปแบบ
+การเปลี่ยนแปลงการจัดการการอัปเดตระบบ การตรวจสอบแอป และการตรวจสอบสิทธิ์เพื่อเพิ่มความสมบูรณ์ของอุปกรณ์และระบบ
+การปรับปรุงประสบการณ์ผู้ใช้ในการจัดสรร การแจ้งเตือน หน้าจอล่าสุด และ VPN ที่เปิดตลอดเวลา
+หากต้องการดูการเปลี่ยนแปลงระดับองค์กรทั้งหมดใน Android 8.0 (API ระดับ 26) และเรียนรู้ว่าการเปลี่ยนแปลงเหล่านั้นอาจส่งผลต่อแอปของคุณอย่างไร โปรดอ่าน Android ใน Enterprise.
+
+แอปที่กำหนดเป้าหมายเป็น Android 8.0
+These behavior changes apply exclusively to apps that are targeting Android 8.0 (API level 26) or higher. Apps that compile against Android 8.0, or set targetSdkVersion to Android 8.0 or higher must modify their apps to support these behaviors properly, where applicable to the app.
+
+หน้าต่างแจ้งเตือน
+Apps that use the SYSTEM_ALERT_WINDOW permission can no longer use the following window types to display alert windows above other apps and system windows:
+
+TYPE_PHONE
+TYPE_PRIORITY_PHONE
+TYPE_SYSTEM_ALERT
+TYPE_SYSTEM_OVERLAY
+TYPE_SYSTEM_ERROR
+Instead, apps must use a new window type called TYPE_APPLICATION_OVERLAY.
+
+When using the TYPE_APPLICATION_OVERLAY window type to display alert windows for your app, keep the following characteristics of the new window type in mind:
+
+An app's alert windows always appear under critical system windows, such as the status bar and IMEs.
+The system can move or resize windows that use the TYPE_APPLICATION_OVERLAY window type to improve screen presentation.
+By opening the notification shade, users can access settings to block an app from displaying alert windows shown using the TYPE_APPLICATION_OVERLAY window type.
+การแจ้งเตือนการเปลี่ยนแปลงเนื้อหา
+Android 8.0 (API level 26) changes how ContentResolver.notifyChange() and registerContentObserver(Uri, boolean, ContentObserver) behave for apps targeting Android 8.0.
+
+These APIs now require that a valid ContentProvider is defined for the authority in all Uris. Defining a valid ContentProvider with relevant permissions will help defend your app against content changes from malicious apps, and prevent you from leaking potentially private data to malicious apps.
+
+ดูโฟกัส
+Clickable View objects are now also focusable by default. If you want a View object to be clickable but not focusable, set the android:focusable attribute to false in the layout XML file containing the View, or pass in false to setFocusable() in your app's UI logic.
+
+User-agent matching in browser detection
+Android 8.0 (API level 26) and higher include the build identifier string OPR. Some pattern matches may cause browser-detection logic to misidentify a non-Opera browser as Opera. An example of such a pattern match might be:
+
+if(p.match(/OPR/)){k="Opera";c=p.match(/OPR\/(\d+.\d+)/);n=new Ext.Version(c[1])}
+To avoid issues arising from such a misidentification, use a string other than OPR as a pattern-match for the Opera browser.
+
+Security
+The following changes affect security in Android 8.0 (API level 26):
+
+If your app's network security configuration opts out of supporting cleartext traffic, your app's WebView objects cannot access websites over HTTP. Each WebView object must use HTTPS instead.
+The Allow unknown sources system setting has been removed; in its place, the Install unknown apps permission manages unknown app installs from unknown sources. To learn more about this new permission, see the Unknown App Install Permissions guide.
+For additional guidelines on making your app more secure, see Security for Android Developers.
+
+Account access and discoverability
+In Android 8.0 (API level 26), apps can no longer get access to user accounts unless the authenticator owns the accounts or the user grants that access. The GET_ACCOUNTS permission is no longer sufficient. To be granted access to an account, apps should either use AccountManager.newChooseAccountIntent() or an authenticator-specific method. After getting access to accounts, an app can call AccountManager.getAccounts() to access them.
+
+Android 8.0 deprecates LOGIN_ACCOUNTS_CHANGED_ACTION. Apps should instead use addOnAccountsUpdatedListener() to get updates about accounts during runtime.
+
+For information about new APIs and methods added for account access and discoverability, see Account Access and Discoverability in the New APIs section of this document.
+
+Privacy
+The following changes affect privacy in Android 8.0 (API level 26).
+
+The system properties net.dns1, net.dns2, net.dns3, and net.dns4 are no longer available, a change that improves privacy on the platform.
+To obtain networking information such as DNS servers, apps with the ACCESS_NETWORK_STATE permission can register a NetworkRequest or NetworkCallback object. These classes are available in Android 5.0 (API level 21) and higher.
+Build.SERIAL is deprecated. Apps needing to know the hardware serial number should instead use the new Build.getSerial() method, which requires the READ_PHONE_STATE permission.
+The LauncherApps API no longer allows work profile apps to get information about the primary profile. When a user is in a work profile, the LauncherApps API behaves as if no apps are installed in other profiles within the same profile group. As before, attempts to access unrelated profiles causes SecurityExceptions.
+Permissions
+Prior to Android 8.0 (API level 26), if an app requested a permission at runtime and the permission was granted, the system also incorrectly granted the app the rest of the permissions that belonged to the same permission group, and that were registered in the manifest.
+
+For apps targeting Android 8.0, this behavior has been corrected. The app is granted only the permissions it has explicitly requested. However, once the user grants a permission to the app, all subsequent requests for permissions in that permission group are automatically granted.
+
+For example, suppose an app lists both READ_EXTERNAL_STORAGE and WRITE_EXTERNAL_STORAGE in its manifest. The app requests READ_EXTERNAL_STORAGE and the user grants it. If the app targets API level 25 or lower, the system also grants WRITE_EXTERNAL_STORAGE at the same time, because it belongs to the same STORAGE permission group and is also registered in the manifest. If the app targets Android 8.0 (API level 26), the system grants only READ_EXTERNAL_STORAGE at that time; however, if the app later requests WRITE_EXTERNAL_STORAGE, the system immediately grants that privilege without prompting the user.
+
+Media
+The framework can perform automatic audio ducking by itself. In this case, when another application requests focus with AUDIOFOCUS_GAIN_TRANSIENT_MAY_DUCK, the application that has focus reduces its volume but usually does not receive an onAudioFocusChange() callback and will not lose audio focus. New APIs are available to override this behavior for applications that need to pause instead of ducking.
+When the user takes a phone call, active media streams mute for the duration of the call.
+All audio-related APIs should use AudioAttributes rather than audio stream types to describe the audio playback use case. Continue to use audio stream types for volume controls only. Other uses of stream types still work (for example, the streamType argument to the deprecated AudioTrack constructor), but the system logs this as an error.
+When using an AudioTrack, if the application requests a large enough audio buffer, the framework will try to use the deep buffer output if it is available.
+In Android 8.0 (API level 26) the handling of media button events is different:
+The handling of media buttons in a UI activity has not changed: foreground activities still get priority in handling media button events.
+If the foreground activity does not handle the media button event, the system routes the event to the app that most recently played audio locally. The active status, flags, and playback state of a media session are not considered when determining which app receives media button events.
+If the app's media session has been released, the system sends the media button event to the app's MediaButtonReceiver if it has one.
+For every other case, the system discards the media button event.
+Native libraries
+In apps targeting Android 8.0 (API level 26), native libraries no longer load if they contain any load segment that is both writable and executable. Some apps might stop working because of this change if they have native libraries with incorrect load segments. This is a security-hardening measure.
+
+For more information, see Writable and Executable Segments.
+
+Linker changes are tied to the API level that an app targets. If there is a linker change at the targeted API level, the app cannot load the library. If you are targeting an API level lower than the API level where the linker change occurs, logcat shows a warning.
+
+Collection handling
+In Android 8.0 (API level 26), Collections.sort() is implemented on top of List.sort(). The reverse was true in Android 7.x (API levels 24 and 25): The default implementation of List.sort() called Collections.sort().
+
+This change allows Collections.sort() to take advantage of optimized List.sort() implementations, but has the following constraints:
+
+Implementations of List.sort() must not call Collections.sort(), because doing so would result in stack overflow due to infinite recursion. Instead, if you want the default behavior in your List implementation, you should avoid overriding sort().
+
+If a parent class implements sort() inappropriately, it’s usually fine to override List.sort() with an implementation built on top of List.toArray(), Arrays.sort(), and ListIterator.set(). For example:
+
+@Override
+public void sort(Comparator<? super E> c) {
+  Object[] elements = toArray();
+  Arrays.sort(elements, c);
+  ListIterator<E> iterator = (ListIterator<Object>) listIterator();
+  for (Object element : elements) {
+    iterator.next();
+    iterator.set((E) element);
+  }
+}
+In most cases, you can also override List.sort() with an implementation that delegates to different default implementations depending on API level. For example:
+
+@Override
+public void sort(Comparator<? super E> comparator) {
+  if (Build.VERSION.SDK_INT <= 25) {
+    Collections.sort(this);
+  } else {
+    super.sort(comparator);
+  }
+}
+If you’re doing the latter only because you want to have a sort() method available on all API levels, consider giving it a unique name, such as sortCompat(), instead of overriding sort().
+
+Collections.sort() now counts as a structural modification in List implementations that call sort(). For example, in versions of the platform prior to Android 8.0 (API level 26), iterating over an ArrayList and calling sort() on it partway through the iteration would have thrown a ConcurrentModificationException if the sorting was done by calling List.sort(). Collections.sort() did not throw an exception.
+
+This change makes the platform behavior more consistent: Either approach now results in a ConcurrentModificationException.
+
+Class-loading behavior
+Android 8.0 (API level 26) checks to make sure that class loaders do not break the assumptions of the runtime when loading new classes. These checks are performed whether the class is referenced from Java (from forName()), Dalvik bytecode, or JNI. The platform does not intercept direct calls from Java to the loadClass() method, nor does it check the results of such calls. This behavior should not affect the functioning of well-behaved class loaders.
+
+The platform checks that the descriptor of the class that the class loader returns matches the expected descriptor. If the returned descriptor does not match, the platform throws a NoClassDefFoundError error, and stores in the exception a detailed message noting the discrepancy.
+
+The platform also checks that the descriptors of the requested classes are valid. This check catches JNI calls that indirectly load classes such as GetFieldID(), passing invalid descriptors to those classes. For example, a field with signature java/lang/String is not found because that signature is invalid; it should be Ljava/lang/String;.
+
+This is different from a JNI call to FindClass() where java/lang/String is a valid fully-qualified name.
+
+Android 8.0 (API level 26) does not support having multiple class loaders try to define classes using the same DexFile object. An attempt to do so causes the Android runtime to throw an InternalError error with the message "Attempt to register dex file <filename> with multiple class loaders".
+
+DexFile API is now deprecated, and you are strongly encouraged to use one of the platform classloaders, including PathClassLoader or BaseDexClassLoader, instead.
+
+Note: You can create multiple class loaders that reference the same APK or JAR file container from the file system. Doing so normally does not result in much memory overhead: If DEX files in the container are stored instead of compressed, the platform can perform an mmap operation on them rather than directly extracting them. However, if the platform must extract the DEX file from the container, referencing a DEX file in this fashion may consume a lot of memory.
+
+ใน Android ตัวโหลดคลาสทั้งหมดถือว่ามีความสามารถแบบขนาน เมื่อเธรดหลายตัวแข่งขันกันเพื่อโหลดคลาสเดียวกันกับตัวโหลดคลาสเดียวกัน เธรดแรกที่จะเสร็จสิ้นการดำเนินการจะชนะ และผลลัพธ์จะถูกใช้สำหรับเธรดอื่น ลักษณะการทำงานนี้เกิดขึ้นไม่ว่าคลาสโหลดเดอร์จะส่งคืนคลาสเดียวกัน ส่งคืนคลาสอื่น หรือส่งข้อยกเว้น แพลตฟอร์มจะเพิกเฉยต่อข้อยกเว้นดังกล่าวอย่างเงียบๆ
+
+ข้อควรระวัง:ในเวอร์ชันของแพลตฟอร์มที่ต่ำกว่า Android 8.0 (API ระดับ 26) การฝ่าฝืนสมมติฐานเหล่านี้อาจนำไปสู่การกำหนดคลาสเดียวกันหลายครั้ง ความเสียหายของฮีปเนื่องจากความสับสนของคลาส และผลกระทบที่ไม่พึงประสงค์อื่นๆ
+
+ข้อมูลนี้มีประโยชน์ไหม
+
+แนะนำสำหรับคุณ
+
+คุณสมบัติและ API ของ Android 9
+ค้นพบเครื่องมือการพัฒนาแอปล่าสุด การอัปเดตแพลตฟอร์ม การฝึกอบรม และเอกสารประกอบสำหรับนักพัฒนาในอุปกรณ์ Android ทุกเครื่อง
+
+อัพเดตเมื่อ24 ก.ค. 2566
+เคล็ดลับของ JNI
+ชุดเครื่องมือที่ช่วยให้คุณสามารถปรับใช้บางส่วนของแอปด้วยโค้ดเนทีฟ โดยใช้ภาษาต่างๆ เช่น C และ C++
+
+อัพเดทเมื่อ6 เม.ย. 2566
+ระบบปฏิบัติการ Android 7.0 นูกัต
+ค้นพบเครื่องมือการพัฒนาแอปล่าสุด การอัปเดตแพลตฟอร์ม การฝึกอบรม และเอกสารประกอบสำหรับนักพัฒนาในอุปกรณ์ Android ทุกเครื่อง
+
+อัพเดตเมื่อ7 ต.ค. 2564
+เนื้อหาและตัวอย่างรหัสในหน้า นี้อยู่ภายใต้ใบอนุญาตที่อธิบายไว้ในใบอนุญาตเนื้อหา Java และ OpenJDK เป็นเครื่องหมายการค้าหรือเครื่องหมายการค้าจดทะเบียนของ Oracle และ/หรือบริษัทในเครือ
+
+อัปเดตล่าสุด 2023-07-24 UTC
+
+เอ็กซ์เอ็กซ์
+ติดตาม @AndroidDev บน X
+ยูทูบยูทูบ
+ดูนักพัฒนาซอฟต์แวร์ Android บน YouTube
+ลิงค์อินลิงค์อิน
+เชื่อมต่อกับชุมชนนักพัฒนา Android บน LinkedIn
+ระบบปฏิบัติการ ANDROID มากขึ้น
+หุ่นยนต์
+แอนดรอยด์สำหรับองค์กร
+ความปลอดภัย
+แหล่งที่มา
+ข่าว
+บล็อก
+พอดแคสต์
+ค้นพบ
+การเล่นเกม
+การเรียนรู้ของเครื่อง
+ความเป็นส่วนตัว
+5จี
+อุปกรณ์ ANDROID
+หน้าจอขนาดใหญ่
+สวม OS
+อุปกรณ์ ChromeOS
+แอนดรอยด์สำหรับรถยนต์
+สิ่งต่าง ๆ ของ Android
+แอนดรอยด์ทีวี
+ข่าวประชาสัมพันธ์
+แอนดรอยด์ 13
+แอนดรอยด์ 12
+แอนดรอยด์ 11
+แอนดรอยด์ 10
+พาย
+โอรีโอ
+ตังเม
+เอกสารและการดาวน์โหลด
+คู่มือ Android Studio
+คู่มือนักพัฒนา
+การอ้างอิง API
+ดาวน์โหลดสตูดิโอ
+ระบบปฏิบัติการ Android NDK
+สนับสนุน
+รายงานข้อผิดพลาดของแพลตฟอร์ม
+รายงานข้อบกพร่องของเอกสารประกอบ
+การสนับสนุนของ Google Play
+เข้าร่วมการศึกษาวิจัย
+นักพัฒนาซอฟต์แวร์ของ Google
+หุ่นยนต์
+โครเมียม
+ฐานไฟ
+แพลตฟอร์มคลาวด์ของ Google
+สินค้าทั้งหมด
+ความเป็นส่วนตัว
+ใบอนุญาต
+หลักเกณฑ์ของแบรนด์
+รับข่าวสารและเคล็ดลับทางอีเมล
+ติดตาม
+
+ภาษาอังกฤษ
+เพจใหม่โหลดแล้ว
 - Copyright (c) 2019-2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
