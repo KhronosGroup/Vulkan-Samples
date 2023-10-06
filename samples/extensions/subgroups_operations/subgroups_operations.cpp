@@ -364,7 +364,7 @@ void SubgroupsOperations::create_tildas()
 void SubgroupsOperations::load_assets()
 {
 	generate_plane();
-	log_2_N = glm::log(grid_size) / glm::log(2.0f);
+	log_2_N = glm::log2(static_cast<float>(grid_size));
 
 	// generate fft inputs
 	h_tilde_0.clear();
