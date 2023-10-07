@@ -33,3 +33,4 @@ If your PR contains a new or modified sample, these further checks must be carri
 - [ ] Any dependent assets have been merged and published in downstream modules
 - [ ] For new samples, I have added a paragraph with a summary to the appropriate chapter in the [samples readme](./../samples/README.md)
 - [ ] For new samples, I have added a tutorial README.md file to guide users through what they need to know to implement code using this feature. For example, see [conditional_rendering](./../samples/extensions/conditional_rendering)
+- [ ] For new samples, I have added a link to the [Antora navigation](./../antora/modules/ROOT/nav.adoc) so that the sample will be listed at the Vulkan documentation site
