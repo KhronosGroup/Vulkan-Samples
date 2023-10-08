@@ -22,6 +22,6 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-    AUTHOR "Khronos"
+	AUTHOR "Maximilien Dagois"
     NAME "oit_linked_lists"
-    DESCRIPTION "Sample description")
+	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists")
