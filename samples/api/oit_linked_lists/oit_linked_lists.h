@@ -19,16 +19,47 @@
 
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
-#include "vulkan_sample.h"
+#include "api_vulkan_sample.h"
 
-class oit_linked_lists : public vkb::VulkanSample
+class OITLinkedLists : public ApiVulkanSample
 {
   public:
-	oit_linked_lists();
+	OITLinkedLists();
+	~OITLinkedLists();
 
-	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 
-	virtual ~oit_linked_lists() = default;
+	void render(float delta_time) override;
+	void build_command_buffers() override;
+	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+
+  private:
+	void prepare_buffers();
+
+	void update_scene_constants();
+	void draw();
+
+  private:
+	enum
+	{
+		kObjectCount = 128,
+	};
+
+	struct SceneConstants
+	{
+		glm::mat4 projection;
+		glm::mat4 view;
+	};
+
+	struct ObjectDesc
+	{
+		glm::mat4 model;
+		glm::vec4 color;
+	};
+
+  private:
+	std::unique_ptr<vkb::core::Buffer> scene_constants_;
+	std::unique_ptr<vkb::core::Buffer> object_desc_;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

@@ -17,48 +17,84 @@
 
 #include "oit_linked_lists.h"
 
-#include "common/vk_common.h"
-#include "gltf_loader.h"
-#include "gui.h"
-#include "platform/filesystem.h"
-#include "platform/platform.h"
-#include "rendering/subpasses/forward_subpass.h"
-#include "stats/stats.h"
-
-oit_linked_lists::oit_linked_lists()
+OITLinkedLists::OITLinkedLists()
 {
 }
 
-bool oit_linked_lists::prepare(const vkb::ApplicationOptions &options)
+OITLinkedLists::~OITLinkedLists()
 {
-	if (!VulkanSample::prepare(options))
+	if (!device)
+	{
+		return;
+	}
+
+	object_desc_.reset();
+	scene_constants_.reset();
+}
+
+bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
+{
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
+	
+	camera.type = vkb::CameraType::LookAt;
+	camera.set_position({0.0f, 0.0f, -4.0f});
+	camera.set_rotation({0.0f, 180.0f, 0.0f});
+	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-	// Load a scene from the assets folder
-	load_scene("scenes/sponza/Sponza01.gltf");
-
-	// Attach a move script to the camera component in the scene
-	auto &camera_node = vkb::add_free_camera(*scene, "main_camera", get_render_context().get_surface_extent());
-	auto  camera      = &camera_node.get_component<vkb::sg::Camera>();
-
-	// Example Scene Render Pipeline
-	vkb::ShaderSource vert_shader("base.vert");
-	vkb::ShaderSource frag_shader("base.frag");
-	auto              scene_subpass   = std::make_unique<vkb::ForwardSubpass>(get_render_context(), std::move(vert_shader), std::move(frag_shader), *scene, *camera);
-	auto              render_pipeline = vkb::RenderPipeline();
-	render_pipeline.add_subpass(std::move(scene_subpass));
-	set_render_pipeline(std::move(render_pipeline));
-
-	// Add a GUI with the stats you want to monitor
-	stats->request_stats({/*stats you require*/});
-	gui = std::make_unique<vkb::Gui>(*this, *window, stats.get());
+	prepare_buffers();
+	update_scene_constants();
 
 	return true;
 }
 
+void OITLinkedLists::prepare_buffers()
+{
+	scene_constants_ = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	object_desc_ = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+}
+
+void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+}
+
+void OITLinkedLists::build_command_buffers()
+{
+}
+
+void OITLinkedLists::update_scene_constants()
+{
+	SceneConstants constants;
+	constants.projection       = camera.matrices.perspective;
+	constants.view             = camera.matrices.view * glm::mat4(1.f);
+	scene_constants_->convert_and_update(constants);
+}
+
+void OITLinkedLists::draw()
+{
+	ApiVulkanSample::prepare_frame();
+	submit_info.commandBufferCount = 1;
+	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	ApiVulkanSample::submit_frame();
+}
+
+void OITLinkedLists::render(float delta_time)
+{
+	if (!prepared)
+	{
+		return;
+	}
+	draw();
+	if (camera.updated)
+	{
+		update_scene_constants();
+	}
+}
+
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists()
 {
-	return std::make_unique<oit_linked_lists>();
+	return std::make_unique<OITLinkedLists>();
 }
