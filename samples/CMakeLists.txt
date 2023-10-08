@@ -57,6 +57,7 @@ set(ORDER_LIST
     "compute_nbody"
     "terrain_tessellation"
     "hlsl"
+    "oit_linked_lists"
 
     #Extension Samples
     "dynamic_rendering"
