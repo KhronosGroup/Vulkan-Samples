@@ -827,7 +827,7 @@ vk::ImageLayout HPPApiVulkanSample::descriptor_type_to_image_layout(vk::Descript
 	}
 }
 
-HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode)
 {
 	HPPTexture texture;
 
@@ -887,7 +887,7 @@ HPPTexture HPPApiVulkanSample::load_texture(const std::string &file, vkb::sg::Im
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::sg::Image::ContentType content_type, vk::SamplerAddressMode address_mode)
+HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type, vk::SamplerAddressMode address_mode)
 {
 	HPPTexture texture{};
 
@@ -953,7 +953,7 @@ HPPTexture HPPApiVulkanSample::load_texture_array(const std::string &file, vkb::
 	return texture;
 }
 
-HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::sg::Image::ContentType content_type)
+HPPTexture HPPApiVulkanSample::load_texture_cubemap(const std::string &file, vkb::scene_graph::components::HPPImage::ContentType content_type)
 {
 	HPPTexture texture{};
 

@@ -194,7 +194,8 @@ set(SCENE_GRAPH_COMPONENT_FILES
     scene_graph/components/transform.cpp
     scene_graph/components/image/astc.cpp
     scene_graph/components/image/ktx.cpp
-    scene_graph/components/image/stb.cpp)
+    scene_graph/components/image/stb.cpp
+    scene_graph/components/hpp_image.cpp)
 
 set(SCENE_GRAPH_SCRIPTS_FILES
     # Header Files

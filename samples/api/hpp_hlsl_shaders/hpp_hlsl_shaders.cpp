@@ -348,7 +348,7 @@ void HPPHlslShaders::generate_quad()
 
 void HPPHlslShaders::load_assets()
 {
-	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::sg::Image::Color);
+	texture = load_texture("textures/metalplate01_rgba.ktx", vkb::scene_graph::components::HPPImage::Color);
 }
 
 void HPPHlslShaders::update_descriptor_sets()
