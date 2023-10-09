@@ -46,6 +46,10 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 
 	prepare_buffers();
 
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+	shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
 	update_scene_constants();
 	fill_object_data();
 

@@ -24,4 +24,8 @@ add_sample(
     CATEGORY ${CATEGORY_NAME}
 	AUTHOR "Maximilien Dagois"
     NAME "oit_linked_lists"
-	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists")
+	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists"
+    SHADER_FILES_GLSL
+        "oit_linked_lists/gather.vert"
+        "oit_linked_lists/gather.frag")
+
