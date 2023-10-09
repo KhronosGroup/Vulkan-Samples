@@ -28,8 +28,10 @@ OITLinkedLists::~OITLinkedLists()
 		return;
 	}
 
+	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
 	object_desc.reset();
 	scene_constants.reset();
+	object.reset();
 }
 
 bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
@@ -44,7 +46,9 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	camera.set_rotation({0.0f, 180.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
+	load_assets();
 	prepare_buffers();
+	create_descriptor_pool();
 
 	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
 	shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -56,10 +60,26 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+void OITLinkedLists::load_assets()
+{
+	object = load_model("scenes/geosphere.gltf");
+}
+
 void OITLinkedLists::prepare_buffers()
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	object_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+}
+
+void OITLinkedLists::create_descriptor_pool()
+{
+	std::vector<VkDescriptorPoolSize> pool_sizes = {
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+	};
+	const uint32_t num_descriptor_sets = 1;
+	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
 void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -74,7 +94,7 @@ void OITLinkedLists::update_scene_constants()
 {
 	SceneConstants constants;
 	constants.projection       = camera.matrices.perspective;
-	constants.view             = camera.matrices.view * glm::mat4(1.f);
+	constants.view             = camera.matrices.view;
 	scene_constants->convert_and_update(constants);
 }
 

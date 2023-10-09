@@ -33,7 +33,9 @@ class OITLinkedLists : public ApiVulkanSample
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
   private:
+	void load_assets();
 	void prepare_buffers();
+	void create_descriptor_pool();
 	void update_scene_constants();
 	void fill_object_data();
 	void draw();
@@ -60,8 +62,10 @@ class OITLinkedLists : public ApiVulkanSample
 	};
 
   private:
+	std::unique_ptr<vkb::sg::SubMesh> object;
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
 	std::unique_ptr<vkb::core::Buffer> object_desc;
+	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
