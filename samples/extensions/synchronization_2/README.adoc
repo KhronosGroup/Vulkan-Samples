@@ -17,7 +17,7 @@
 -
 ////
 
-=== Synchronization2
+= Synchronization2
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/synchronization_2[Khronos Vulkan samples github repository].

@@ -17,7 +17,7 @@
 -
 ////
 
-=== Dynamic Uniform buffers
+= Dynamic Uniform buffers
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/dynamic_uniform_buffers[Khronos Vulkan samples github repository].
