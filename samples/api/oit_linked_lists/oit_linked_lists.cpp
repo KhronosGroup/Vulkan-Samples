@@ -28,8 +28,8 @@ OITLinkedLists::~OITLinkedLists()
 		return;
 	}
 
-	object_desc_.reset();
-	scene_constants_.reset();
+	object_desc.reset();
+	scene_constants.reset();
 }
 
 bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
@@ -45,15 +45,17 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	prepare_buffers();
+
 	update_scene_constants();
+	fill_object_data();
 
 	return true;
 }
 
 void OITLinkedLists::prepare_buffers()
 {
-	scene_constants_ = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	object_desc_ = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	object_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
 void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -69,7 +71,46 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants;
 	constants.projection       = camera.matrices.perspective;
 	constants.view             = camera.matrices.view * glm::mat4(1.f);
-	scene_constants_->convert_and_update(constants);
+	scene_constants->convert_and_update(constants);
+}
+
+void OITLinkedLists::fill_object_data()
+{
+	ObjectDesc desc[kObjectCount] = {};
+
+	auto get_random_float = []()
+	{
+		return static_cast<float>(rand()) / (RAND_MAX);
+	};
+
+	for (uint32_t l = 0; l < kObjectLayerCount; ++l)
+	{
+		for (uint32_t c = 0; c < kObjectColumnCount; ++c)
+		{
+			for (uint32_t r = 0; r < kObjectRowCount; ++r)
+			{
+				const uint32_t object_index =
+					(l * kObjectColumnCount * kObjectRowCount) +
+					(c * kObjectRowCount) + r;
+
+				const float x = static_cast<float>(r) - ((kObjectRowCount - 1) * 0.5f);
+				const float y = static_cast<float>(c) - ((kObjectColumnCount - 1) * 0.5f);
+				const float z = static_cast<float>(l) - ((kObjectLayerCount - 1) * 0.5f);
+				const float scale = 0.95f;
+				desc[object_index].model =
+					glm::scale(
+						glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)),
+						glm::vec3(scale));
+
+				desc[object_index].color.r = get_random_float();
+				desc[object_index].color.g = get_random_float();
+				desc[object_index].color.b = get_random_float();
+				desc[object_index].color.a = get_random_float() * 0.5f + 0.10f;
+			}
+		}
+	}
+
+	object_desc->convert_and_update(desc);
 }
 
 void OITLinkedLists::draw()

@@ -28,21 +28,23 @@ class OITLinkedLists : public ApiVulkanSample
 	~OITLinkedLists();
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
-
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 
   private:
 	void prepare_buffers();
-
 	void update_scene_constants();
+	void fill_object_data();
 	void draw();
 
   private:
 	enum
 	{
-		kObjectCount = 128,
+		kObjectRowCount = 4,
+		kObjectColumnCount = 4,
+		kObjectLayerCount = 4,
+		kObjectCount = kObjectRowCount * kObjectColumnCount * kObjectLayerCount,
 	};
 
 	struct SceneConstants
@@ -58,8 +60,8 @@ class OITLinkedLists : public ApiVulkanSample
 	};
 
   private:
-	std::unique_ptr<vkb::core::Buffer> scene_constants_;
-	std::unique_ptr<vkb::core::Buffer> object_desc_;
+	std::unique_ptr<vkb::core::Buffer> scene_constants;
+	std::unique_ptr<vkb::core::Buffer> object_desc;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
