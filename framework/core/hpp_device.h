@@ -98,6 +98,17 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	std::pair<vk::Buffer, vk::DeviceMemory> create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size, void *data = nullptr) const;
 
 	/**
+	 * @brief Creates a vulkan image and associated device memory
+	 * @param format The image format
+	 * @param extent The image extent
+	 * @param mip_levels The mip levels of the image
+	 * @param usage The image usage
+	 * @param properties The device memory property flags
+	 * @returns A valid vk::Image and a corresponding vk::DeviceMemory
+	 */
+	std::pair<vk::Image, vk::DeviceMemory> create_image(vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) const;
+
+	/**
 	 * @brief Copies a buffer from one to another
 	 * @param src The buffer to copy from
 	 * @param dst The buffer to copy to
