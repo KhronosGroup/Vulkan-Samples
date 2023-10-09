@@ -119,6 +119,9 @@ void TextureMipMapGeneration::load_texture_generate_mipmaps(std::string file_nam
 	memcpy(data, ktx_image_data, ktx_texture_size);
 	vkUnmapMemory(get_device().get_handle(), staging_memory);
 
+	// now, the ktx_texture can be destroyed
+	ktxTexture_Destroy(ktx_texture);
+
 	// Create optimal tiled target image on the device
 	VkImageCreateInfo image_create_info = vkb::initializers::image_create_info();
 	image_create_info.imageType         = VK_IMAGE_TYPE_2D;

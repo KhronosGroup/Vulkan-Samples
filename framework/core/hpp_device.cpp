@@ -388,33 +388,51 @@ vkb::core::HPPQueue const &HPPDevice::get_suitable_graphics_queue() const
 
 std::pair<vk::Buffer, vk::DeviceMemory> HPPDevice::create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size, void *data) const
 {
+	vk::Device device = get_handle();
+
 	// Create the buffer handle
 	vk::BufferCreateInfo buffer_create_info({}, size, usage, vk::SharingMode::eExclusive);
-	vk::Buffer           buffer = get_handle().createBuffer(buffer_create_info);
+	vk::Buffer           buffer = device.createBuffer(buffer_create_info);
 
 	// Create the memory backing up the buffer handle
-	vk::MemoryRequirements memory_requirements = get_handle().getBufferMemoryRequirements(buffer);
+	vk::MemoryRequirements memory_requirements = device.getBufferMemoryRequirements(buffer);
 	vk::MemoryAllocateInfo memory_allocation(memory_requirements.size, get_gpu().get_memory_type(memory_requirements.memoryTypeBits, properties));
-	vk::DeviceMemory       memory = get_handle().allocateMemory(memory_allocation);
+	vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
 
 	// If a pointer to the buffer data has been passed, map the buffer and copy over the
 	if (data != nullptr)
 	{
-		void *mapped = get_handle().mapMemory(memory, 0, size);
+		void *mapped = device.mapMemory(memory, 0, size);
 		memcpy(mapped, data, static_cast<size_t>(size));
 		// If host coherency hasn't been requested, do a manual flush to make writes visible
 		if (!(properties & vk::MemoryPropertyFlagBits::eHostCoherent))
 		{
 			vk::MappedMemoryRange mapped_range(memory, 0, size);
-			get_handle().flushMappedMemoryRanges(mapped_range);
+			device.flushMappedMemoryRanges(mapped_range);
 		}
-		get_handle().unmapMemory(memory);
+		device.unmapMemory(memory);
 	}
 
 	// Attach the memory to the buffer object
-	get_handle().bindBufferMemory(buffer, memory, 0);
+	device.bindBufferMemory(buffer, memory, 0);
 
 	return std::make_pair(buffer, memory);
+}
+
+std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) const
+{
+	vk::Device device = get_handle();
+
+	vk::ImageCreateInfo image_create_info({}, vk::ImageType::e2D, format, vk::Extent3D(extent, 1), mip_levels, 1, vk::SampleCountFlagBits::e1, vk::ImageTiling::eOptimal, usage);
+	vk::Image           image = device.createImage(image_create_info);
+
+	vk::MemoryRequirements memory_requirements = device.getImageMemoryRequirements(image);
+
+	vk::MemoryAllocateInfo memory_allocation(memory_requirements.size, get_gpu().get_memory_type(memory_requirements.memoryTypeBits, properties));
+	vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
+	device.bindImageMemory(image, memory, 0);
+
+	return std::make_pair(image, memory);
 }
 
 void HPPDevice::copy_buffer(vkb::core::HPPBuffer &src, vkb::core::HPPBuffer &dst, vk::Queue queue, vk::BufferCopy *copy_region) const

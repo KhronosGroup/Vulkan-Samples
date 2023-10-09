@@ -232,6 +232,49 @@ inline vk::Pipeline create_graphics_pipeline(vk::Device                         
 	return pipeline;
 }
 
+inline vk::ImageView create_image_view(vk::Device           device,
+                                       vk::Image            image,
+                                       vk::ImageViewType    view_type,
+                                       vk::Format           format,
+                                       vk::ImageAspectFlags aspect_mask      = vk::ImageAspectFlagBits::eColor,
+                                       uint32_t             base_mip_level   = 0,
+                                       uint32_t             level_count      = 1,
+                                       uint32_t             base_array_layer = 0,
+                                       uint32_t             layer_count      = 1)
+{
+	vk::ImageViewCreateInfo image_view_create_info;
+	image_view_create_info.image                           = image;
+	image_view_create_info.viewType                        = view_type;
+	image_view_create_info.format                          = format;
+	image_view_create_info.subresourceRange.aspectMask     = aspect_mask;
+	image_view_create_info.subresourceRange.baseMipLevel   = base_mip_level;
+	image_view_create_info.subresourceRange.levelCount     = level_count;
+	image_view_create_info.subresourceRange.baseArrayLayer = base_array_layer;
+	image_view_create_info.subresourceRange.layerCount     = layer_count;
+	return device.createImageView(image_view_create_info);
+}
+
+inline vk::Sampler create_sampler(vk::Device device, vk::Filter filter, vk::SamplerAddressMode sampler_address_mode, float max_anisotropy, float max_LOD)
+{
+	vk::SamplerCreateInfo sampler_create_info;
+	sampler_create_info.magFilter               = filter;
+	sampler_create_info.minFilter               = filter;
+	sampler_create_info.mipmapMode              = vk::SamplerMipmapMode::eLinear;
+	sampler_create_info.addressModeU            = sampler_address_mode;
+	sampler_create_info.addressModeV            = sampler_address_mode;
+	sampler_create_info.addressModeW            = sampler_address_mode;
+	sampler_create_info.mipLodBias              = 0.0f;
+	sampler_create_info.anisotropyEnable        = (1.0f < max_anisotropy);
+	sampler_create_info.maxAnisotropy           = max_anisotropy;
+	sampler_create_info.compareEnable           = false;
+	sampler_create_info.compareOp               = vk::CompareOp::eNever;
+	sampler_create_info.minLod                  = 0.0f;
+	sampler_create_info.maxLod                  = max_LOD;
+	sampler_create_info.borderColor             = vk::BorderColor::eFloatOpaqueWhite;
+	sampler_create_info.unnormalizedCoordinates = false;
+	return device.createSampler(sampler_create_info);
+}
+
 inline vk::ImageAspectFlags get_image_aspect_flags(vk::ImageUsageFlagBits usage, vk::Format format)
 {
 	vk::ImageAspectFlags image_aspect_flags;
