@@ -17,7 +17,7 @@
 -
 ////
 
-=== Basic ray queries
+= Basic ray queries
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/ray_queries[Khronos Vulkan samples github repository].

@@ -18,7 +18,7 @@
 ////
 :pp: {plus}{plus}
 
-=== HPP High dynamic range
+= HPP High dynamic range
 
 ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/api/hpp_hdr[Khronos Vulkan samples github repository].

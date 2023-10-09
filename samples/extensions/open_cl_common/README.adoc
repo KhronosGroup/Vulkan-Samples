@@ -1,4 +1,4 @@
-<!--
+////
 - Copyright (c) 2023, Arm Limited and Contributors
 -
 - SPDX-License-Identifier: Apache-2.0
@@ -15,8 +15,8 @@
 - See the License for the specific language governing permissions and
 - limitations under the License.
 -
--->
+////
 
-# OpenCL common source files
+= OpenCL common source files
 
 This folder does not contain a sample, but only OpenCL related units shared by the OpenCL interoperability samples in this repository.
