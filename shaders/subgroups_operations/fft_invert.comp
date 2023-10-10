@@ -41,7 +41,14 @@ void main()
 
     uint N = fftUbo.grid_size;
 
+<<<<<<< HEAD
 	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+=======
+        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+
+        //pixel_pos.y = N - pixel_pos.y - 1;
+
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 
 	float perms[2] = { 1.0, -1.0 };
 	int index = int(mod(pixel_pos.x + pixel_pos.y, 2));

@@ -1,5 +1,12 @@
 #version 450
 #extension GL_KHR_shader_subgroup_basic : enable
+<<<<<<< HEAD
+=======
+
+#define PI 3.14159265358979f
+#define GRAVITY 9.81f
+
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -22,17 +29,22 @@
 
 layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
+/*
 layout (std140, binding = 0) readonly buffer TildeH0K
 {
-	vec2 data[];
+        vec2 data[];
 }
 tilde_h0_k;
 
 layout (std140, binding = 1) readonly buffer TildeH0MinusK
 {
-	vec2 data[];
+        vec2 data[];
 }
 tilde_h0_minus_k;
+*/
+
+layout (binding = 0, rgba32f) readonly uniform image2D u_tilde_h0_k;
+layout (binding = 1, rgba32f) readonly uniform image2D u_tilde_h0_minus_k;
 
 layout (binding = 2, rgba32f) writeonly uniform image2D tilde_h_kt_dx;
 layout (binding = 3, rgba32f) writeonly uniform image2D tilde_h_kt_dy;
@@ -40,82 +52,125 @@ layout (binding = 4, rgba32f) writeonly uniform image2D tilde_h_kt_dz;
 
 layout (binding = 5) uniform FFTParametersUbo
 {
-	float amplitude;
-	float len;
-	uint  grid_size;
-	vec2  wind;
+        float amplitude;
+        float len;
+        uint  grid_size;
+        vec2  wind;
 } fftUbo;
 
 layout (binding = 6) uniform Time
 {
-	float time;
+        float time;
 } t;
 
 struct Complex
 {
-	float real;
-	float imag;
+        float real;
+        float imag;
 };
 
 Complex complex_add(Complex c1, Complex c2)
 {
-	Complex res;
-	res.real = c1.real + c2.real;
-	res.imag = c1.imag + c2.imag;
-	return res;
+        Complex res;
+        res.real = c1.real + c2.real;
+        res.imag = c1.imag + c2.imag;
+        return res;
 }
 
 Complex complex_multiply(Complex c1, Complex c2)
 {
-	Complex res;
-	res.real = c1.real * c2.real - c1.imag * c2.imag;
-	res.imag = c1.real * c2.imag + c1.imag * c2.real;
-	return res;
+        Complex res;
+        res.real = c1.real * c2.real - c1.imag * c2.imag;
+        res.imag = c1.real * c2.imag + c1.imag * c2.real;
+        return res;
 }
 
 Complex complex_conj(Complex c)
 {
-	Complex res;
-	res.real = c.real;
-	res.imag = -c.imag;
-	return res;
+        Complex res;
+        res.real = c.real;
+        res.imag = -c.imag;
+        return res;
 }
 
 void main()
 {
-	float L = fftUbo.len;
 
-	vec2 uv = vec2(gl_GlobalInvocationID.xy) - (fftUbo.grid_size / 2.0f);
+    int N = 256;
+    int L = 1000;
 
-	vec2 k = vec2( (2.0f * PI * uv.x) / L, (2.0f * PI * uv.y) / L);
+    vec2 pos = vec2(gl_GlobalInvocationID.xy) - (N / 2.0);
 
-	float k_mag = length(k);
-	if (k_mag < 0.00001f) k_mag = 0.00001f;
+    // Wavevector, Section 4.3, Eq 36
+    vec2 k = vec2((2.0 * PI * pos.x) / L, (2.0 * PI * pos.y) / L);
 
-	float w = sqrt(GRAVITY * k_mag);
+    float k_magnitude = length(k);
+    if (k_magnitude < 0.00001)	k_magnitude = 0.00001;
 
-	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-	uvec2 uv_idx =  uvec2(gl_GlobalInvocationID.xy * 0.5);
+    // Dispersion relation, Eq 31, Section 4.2
+    float w = sqrt(GRAVITY * k_magnitude);
 
-	uint idx = uv_idx.x  + uv_idx.y * fftUbo.grid_size; 
-	vec2 h0_k = tilde_h0_k.data[idx];
+    ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
-	Complex amp = Complex(h0_k.x, h0_k.y);
-	Complex exp_iwt = Complex(cos(w * t.time), sin(w * t.time));
+    // First term of Eq 43, Section 4.4
+    vec2 h0_k = imageLoad(u_tilde_h0_k, pixel_pos).xy;
+    Complex amp = Complex(h0_k.x, h0_k.y);
+    Complex exp_iwt = Complex(cos(w * t.time), sin(w * t.time));
 
-	vec2 h0_minus_k = tilde_h0_minus_k.data[idx];
+    // Second term of Eq 43, Section 4.4
+    vec2 h0_minus_k = imageLoad(u_tilde_h0_minus_k, pixel_pos).xy;
+    Complex amp_conj = complex_conj(Complex(h0_minus_k.x, h0_minus_k.y));
+    Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
 
-	Complex amp_conj = Complex(h0_minus_k.x, h0_minus_k.y);
-	Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
+    // Section 4.4, Eq 43
+    Complex h_k_t_dy = complex_add(complex_multiply(amp, exp_iwt), complex_multiply(amp_conj, exp_minus_iwt));
+    imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0, 1.0));
 
-	Complex h_k_t_dy = complex_add( complex_multiply(amp, exp_iwt), complex_multiply(amp_conj, exp_minus_iwt));
-	imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0f, 1.0f));
+    // Section 4.6, Eq 44
+    Complex dx = Complex(0.0, -k.x / k_magnitude);
+    Complex h_k_t_dx = complex_multiply(dx, h_k_t_dy);
+    imageStore(tilde_h_kt_dx, pixel_pos, vec4(h_k_t_dx.real, h_k_t_dx.imag, 0.0, 1.0));
 
-	Complex dx = Complex(0.0f, -k.x / k_mag);
-	Complex h_k_t_dx = complex_multiply(dx, h_k_t_dy);
-	imageStore(tilde_h_kt_dx, pixel_pos, vec4(h_k_t_dx.real, h_k_t_dx.imag, 0.0f, 1.0f));
+    // Section 4.6, Eq 44
+    Complex dz = Complex(0.0, -k.y / k_magnitude);
+    Complex h_k_t_dz = complex_multiply(dz, h_k_t_dy);
+    imageStore(tilde_h_kt_dz, pixel_pos, vec4(h_k_t_dz.real, h_k_t_dz.imag, 0.0, 1.0));
 
-	Complex dz = Complex(0.0f, -k.y / k_mag);
-	Complex h_k_t_dz = complex_multiply(dz, h_k_t_dy);
-	imageStore(tilde_h_kt_dz, pixel_pos, vec4(h_k_t_dz.real, h_k_t_dz.imag, 0.0f, 1.0f));
+/*
+        float L = fftUbo.len;
+
+        vec2 uv = vec2(gl_GlobalInvocationID.xy) - (fftUbo.grid_size / 2.0f);
+
+        vec2 k = vec2( (2.0f * PI * uv.x) / L, (2.0f * PI * uv.y) / L);
+
+        float k_mag = length(k);
+        if (k_mag < 0.00001f) k_mag = 0.00001f;
+
+        float w = sqrt(GRAVITY * k_mag);
+
+        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+        //uvec2 uv_idx =  uvec2(gl_GlobalInvocationID.xy * 0.5);
+
+        //uint idx = uv_idx.x  + uv_idx.y * fftUbo.grid_size;
+        vec2 h0_k = imageLoad(u_tilde_h0_k, pixel_pos).xy;
+
+        Complex amp = Complex(h0_k.x, h0_k.y);
+        Complex exp_iwt = Complex(cos(w * t.time), sin(w * t.time));
+
+        vec2 h0_minus_k = imageLoad(u_tilde_h0_minus_k, pixel_pos).xy;
+
+        Complex amp_conj = complex_conj(Complex(h0_minus_k.x, h0_minus_k.y));
+        Complex exp_minus_iwt = Complex(cos(w * t.time), -sin(w * t.time));
+
+        Complex h_k_t_dy = complex_add( complex_multiply(amp, exp_iwt), complex_multiply(amp_conj, exp_minus_iwt));
+        imageStore(tilde_h_kt_dy, pixel_pos, vec4(h_k_t_dy.real, h_k_t_dy.imag, 0.0f, 1.0f));
+
+        Complex dx = Complex(0.0f, -k.x / k_mag);
+        Complex h_k_t_dx = complex_multiply(dx, h_k_t_dy);
+        imageStore(tilde_h_kt_dx, pixel_pos, vec4(h_k_t_dx.real, h_k_t_dx.imag, 0.0f, 1.0f));
+
+        Complex dz = Complex(0.0f, -k.y / k_mag);
+        Complex h_k_t_dz = complex_multiply(dz, h_k_t_dy);
+        imageStore(tilde_h_kt_dz, pixel_pos, vec4(h_k_t_dz.real, h_k_t_dz.imag, 0.0f, 1.0f));
+*/
 }

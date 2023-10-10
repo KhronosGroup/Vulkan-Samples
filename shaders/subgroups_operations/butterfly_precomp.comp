@@ -53,7 +53,12 @@ void main()
 
     if ((mod(pos.y, pow(2, pos.x + 1))) < butterfly_span) butterfly_wing = 1;
 
+<<<<<<< HEAD
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+=======
+        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+        //pixel_pos.y = N - pixel_pos.y - 1;
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 
     vec4 result = vec4(0.0f);
     result.x = cos(2.f * PI_32F * k / float(N));	// Twiddle factor real part

@@ -119,6 +119,7 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	create_descriptor_set();
 	create_pipelines();
 
+	create_initial_tildas();
 	create_tildas();
 	create_butterfly_texture();
 	create_fft();
@@ -182,25 +183,40 @@ void SubgroupsOperations::build_compute_command_buffer()
 	VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
 
+	/*
 	if (compute.queue_family_index != ocean.graphics_queue_family_index)
 	{
-		VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-		memory_barrier.srcAccessMask         = 0u;
-		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
-		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
-		memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
-		memory_barrier.offset                = 0u;
-		memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
 
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+	    VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
+	    memory_barrier.srcAccessMask         = 0u;
+	    memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
+	    memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
+	    memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
+	    memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
+	    memory_barrier.offset                = 0u;
+	    memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
+
+	    vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 	}
+	*/
+
 	// buttle fly texture
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline);
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline_layout, 0u, 1u, &precompute.descriptor_set, 0u, nullptr);
 
 		vkCmdDispatch(compute.command_buffer, 1u, DISPLACEMENT_MAP_DIM, 1u);
+<<<<<<< HEAD
+=======
+	}
+
+	// initial tildas textures
+	{
+		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, initial_tildas.pipeline.pipeline);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, initial_tildas.pipeline.pipeline_layout, 0u, 1u, &initial_tildas.descriptor_set, 0u, nullptr);
+
+		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 	}
 
 	// tildas textures
@@ -208,7 +224,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildas.pipeline.pipeline);
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, tildas.pipeline.pipeline_layout, 0u, 1u, &tildas.descriptor_set, 0u, nullptr);
 
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 8u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
 	// fft horizontal; for Y axis
@@ -218,61 +234,64 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
-	// fft horizontal; for X axis
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_x, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	/*
+	    // fft horizontal; for X axis
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_x, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
 
-	// fft horizontal; for Z axis
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_z, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	    // fft horizontal; for Z axis
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.horizontal.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_z, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
 
-	// fft vertical; for Y axis
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	    // fft vertical; for Y axis
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_y, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
 
-	// fft vertical; for X axis
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_x, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	    // fft vertical; for X axis
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_x, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
 
-	// fft vertical; for Z axis
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_z, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	    // fft vertical; for Z axis
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft.pipelines.vertical.pipeline_layout, 0u, 1u, &fft.descriptor_set_axis_z, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
 
-	// fft inverse
-	{
-		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
-		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
-		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	}
+	    // fft inverse
+	    {
+	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
+	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
+	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	    }
+	*/
+	/*
+	    if (compute.queue_family_index != ocean.graphics_queue_family_index)
+	    {
+	        VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
+	        memory_barrier.srcAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
+	        memory_barrier.dstAccessMask         = 0u;
+	        memory_barrier.srcQueueFamilyIndex   = compute.queue_family_index;
+	        memory_barrier.dstQueueFamilyIndex   = ocean.graphics_queue_family_index;
+	        memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
+	        memory_barrier.offset                = 0u;
+	        memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
 
-	if (compute.queue_family_index != ocean.graphics_queue_family_index)
-	{
-		VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-		memory_barrier.srcAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.dstAccessMask         = 0u;
-		memory_barrier.srcQueueFamilyIndex   = compute.queue_family_index;
-		memory_barrier.dstQueueFamilyIndex   = ocean.graphics_queue_family_index;
-		memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
-		memory_barrier.offset                = 0u;
-		memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
-
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
-	}
+	        vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+	    }
+	*/
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 }
@@ -302,6 +321,47 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 }
 
+void SubgroupsOperations::create_initial_tildas()
+{
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &initial_tildas.descriptor_set_layout));
+
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &initial_tildas.descriptor_set_layout, 1u);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &initial_tildas.descriptor_set));
+
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
+	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	compute_pipeline_layout_info.setLayoutCount             = 1u;
+	compute_pipeline_layout_info.pSetLayouts                = &initial_tildas.descriptor_set_layout;
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &initial_tildas.pipeline.pipeline_layout));
+
+	VkComputePipelineCreateInfo computeInfo = vkb::initializers::compute_pipeline_create_info(initial_tildas.pipeline.pipeline_layout);
+	computeInfo.stage                       = load_shader("subgroups_operations/fft_tilde_h0.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+
+	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &initial_tildas.pipeline.pipeline));
+
+	fft_buffers.fft_input_htilde0      = std::make_unique<FBAttachment>();
+	fft_buffers.fft_input_htilde0_conj = std::make_unique<FBAttachment>();
+
+	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_input_htilde0);
+	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_input_htilde0_conj);
+
+	VkDescriptorImageInfo htilde_0_descriptor      = create_fb_descriptor(*fft_buffers.fft_input_htilde0);
+	VkDescriptorImageInfo htilde_conj_0_descriptor = create_fb_descriptor(*fft_buffers.fft_input_htilde0_conj);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &htilde_0_descriptor),
+	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &htilde_conj_0_descriptor),
+	};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+}
+
 void SubgroupsOperations::create_tildas()
 {
 	fft_buffers.fft_tilde_h_kt_dx = std::make_unique<FBAttachment>();
@@ -313,14 +373,17 @@ void SubgroupsOperations::create_tildas()
 	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_tilde_h_kt_dz);
 
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 3u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
+<<<<<<< HEAD
 
+=======
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &tildas.descriptor_set_layout));
 
@@ -339,8 +402,8 @@ void SubgroupsOperations::create_tildas()
 
 	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &tildas.pipeline.pipeline));
 
-	VkDescriptorBufferInfo htilde_0_descriptor      = create_descriptor(*fft_buffers.fft_input_htilde0);
-	VkDescriptorBufferInfo htilde_conj_0_descriptor = create_descriptor(*fft_buffers.fft_input_htilde0_conj);
+	VkDescriptorImageInfo htilde_0_descriptor      = create_fb_descriptor(*fft_buffers.fft_input_htilde0);
+	VkDescriptorImageInfo htilde_conj_0_descriptor = create_fb_descriptor(*fft_buffers.fft_input_htilde0_conj);
 
 	VkDescriptorImageInfo image_dx_descriptor = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dx);
 	VkDescriptorImageInfo image_dy_descriptor = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dy);
@@ -350,8 +413,8 @@ void SubgroupsOperations::create_tildas()
 	VkDescriptorBufferInfo fft_time_ubo_buffer   = create_descriptor(*fft_time_ubo);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 0u, &htilde_0_descriptor),
-	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &htilde_conj_0_descriptor),
+	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &htilde_0_descriptor),
+	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &htilde_conj_0_descriptor),
 	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_dx_descriptor),
 	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 3u, &image_dy_descriptor),
 	    vkb::initializers::write_descriptor_set(tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &image_dz_descriptor),
@@ -365,34 +428,36 @@ void SubgroupsOperations::load_assets()
 	generate_plane();
 	log_2_N = glm::log2(static_cast<float>(grid_size));
 
+	/*
+
 	// generate fft inputs
 	h_tilde_0.clear();
 	h_tilde_0_conj.clear();
 	for (uint32_t m = 0; m < grid_size; ++m)
 	{
-		for (uint32_t n = 0; n < grid_size; ++n)
-		{
-			h_tilde_0.push_back(hTilde_0(n, m, 1));
-			h_tilde_0_conj.push_back(std::conj(hTilde_0(n, m, -1)));
-		}
+	    for (uint32_t n = 0; n < grid_size; ++n)
+	    {
+	        h_tilde_0.push_back(hTilde_0(n, m, 1));
+	        h_tilde_0_conj.push_back(std::conj(hTilde_0(-n, -m, 1)));
+	    }
 	}
 
 	// calculate weights
 	uint32_t pow2 = 1U;
 	for (uint32_t i = 0U; i < log_2_N; ++i)
 	{
-		for (uint32_t j = 0U; j < pow2; ++j)
-		{
-			weights.push_back(calculate_weight(j, pow2 * 2));
-		}
-		pow2 *= 2;
+	    for (uint32_t j = 0U; j < pow2; ++j)
+	    {
+	        weights.push_back(calculate_weight(j, pow2 * 2));
+	    }
+	    pow2 *= 2;
 	}
 
 	auto fft_input_htilde0_size      = static_cast<VkDeviceSize>(h_tilde_0.size() * sizeof(std::complex<float>));
 	fft_buffers.fft_input_htilde0    = std::make_unique<vkb::core::Buffer>(get_device(),
-                                                                        fft_input_htilde0_size,
-                                                                        VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-                                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
+	                                                                    fft_input_htilde0_size,
+	                                                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
 	auto fft_input_htilde0_conj_size = static_cast<VkDeviceSize>(h_tilde_0_conj.size() * sizeof(std::complex<float>));
 
 	fft_buffers.fft_input_htilde0_conj = std::make_unique<vkb::core::Buffer>(get_device(),
@@ -406,6 +471,8 @@ void SubgroupsOperations::load_assets()
 	fft_buffers.fft_input_htilde0->update(h_tilde_0.data(), fft_input_htilde0_size);
 	fft_buffers.fft_input_htilde0_conj->update(h_tilde_0_conj.data(), fft_input_htilde0_conj_size);
 	fft_buffers.fft_input_weight->update(weights.data(), fft_input_weights_size);
+
+	*/
 }
 
 float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m, float sign)
@@ -462,7 +529,8 @@ std::complex<float> SubgroupsOperations::rndGaussian()
 
 std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m, float sign)
 {
-	std::complex<float> rnd = rndGaussian();
+	std::complex<float> rnd{1.0f, 1.0f};        // rndGaussian();
+	// std::complex<float> rnd = rndGaussian();
 
 	return rnd * glm::sqrt(phillips_spectrum(n, m, sign) / 2.0f);
 }
@@ -649,7 +717,8 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_ubo.wind      = ui.wind;
 
 	FFTPage pageSize;
-	pageSize.page = static_cast<int32_t>(log_2_N);
+	// pageSize.page = static_cast<int32_t>(log_2_N);
+	pageSize.page = 6;        // static_cast<int32_t>(log_2_N);
 
 	FFTInvert invertFft;
 	invertFft.grid_size = grid_size;
@@ -942,8 +1011,14 @@ void SubgroupsOperations::create_butterfly_texture()
 	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
+<<<<<<< HEAD
 	VkDescriptorImageInfo  image_descriptor       = create_fb_descriptor(butterfly_precomp);
 	VkDescriptorBufferInfo fft_params_ubo_buffer  = create_descriptor(*fft_params_ubo);
+=======
+	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
+
+	VkDescriptorImageInfo image_descriptor = create_fb_descriptor(butterfly_precomp);
+>>>>>>> e005a65 (Add tilde_h_0 shader)
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),
