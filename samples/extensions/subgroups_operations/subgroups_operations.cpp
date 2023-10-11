@@ -909,8 +909,9 @@ uint32_t SubgroupsOperations::reverse(uint32_t i)
 void SubgroupsOperations::create_butterfly_texture()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u)};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u)};
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &precompute.descriptor_set_layout));
 
@@ -942,10 +943,13 @@ void SubgroupsOperations::create_butterfly_texture()
 
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
 	VkDescriptorImageInfo  image_descriptor       = create_fb_descriptor(butterfly_precomp);
+	VkDescriptorBufferInfo fft_params_ubo_buffer  = create_descriptor(*fft_params_ubo);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),
-	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &bit_reverse_descriptor)};
+	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1u, &bit_reverse_descriptor),
+	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &fft_params_ubo_buffer),
+	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
 

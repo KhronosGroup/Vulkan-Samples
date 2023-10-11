@@ -26,8 +26,7 @@ void main()
        gl_TessLevelOuter[1] = 1.0f;
        gl_TessLevelOuter[2] = 1.0f;
 
-       gl_TessLevelInner[0] = 2.0f;
-       gl_TessLevelInner[1] = 1.0f;
+       gl_TessLevelInner[0] = 15.0f;
    }
 
    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;

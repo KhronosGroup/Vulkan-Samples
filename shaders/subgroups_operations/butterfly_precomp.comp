@@ -18,7 +18,6 @@
  */
 
 #define PI_32F 3.14159265358979f
-#define DISPLACEMENT_MAP_DIM 256
 
 layout (local_size_x = 8, local_size_y = 1) in;
 
@@ -29,12 +28,21 @@ layout (std430, binding = 1) buffer indices
     int data[];
 } bit_reversed_indices;
 
+layout (binding = 2) uniform FFTParametersUbo
+{
+	float amplitude;
+	float len;
+	uint  grid_size;
+	vec2  wind;
+} fftUbo;
+
+
 
 void main()
 {
     vec2 pos = gl_GlobalInvocationID.xy;
 
-    int N = DISPLACEMENT_MAP_DIM;
+    uint N = fftUbo.grid_size;
 
     // Twiddle factor exponent, Thesis, Section 4.2.6, Eq 4.6
     float k = mod(pos.y * (float(N) / pow(2, pos.x + 1)), N);
@@ -47,7 +55,7 @@ void main()
 
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
-    vec4 result;
+    vec4 result = vec4(0.0f);
     result.x = cos(2.f * PI_32F * k / float(N));	// Twiddle factor real part
     result.y = sin(2.f * PI_32F * k / float(N));	// Twiddle factor imaginary part
 
