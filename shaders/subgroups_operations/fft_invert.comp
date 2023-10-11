@@ -1,6 +1,5 @@
 #version 450
 #extension GL_KHR_shader_subgroup_basic : enable
-
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -42,7 +41,7 @@ void main()
 
     uint N = fftUbo.grid_size;
 
-	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy * 0.5f);
+	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
 	float perms[2] = { 1.0, -1.0 };
 	int index = int(mod(pixel_pos.x + pixel_pos.y, 2));
@@ -53,13 +52,13 @@ void main()
         float h_y = imageLoad(u_pingpong0_y, pixel_pos).r;
         float h_x = imageLoad(u_pingpong0_x, pixel_pos).r;
         float h_z = imageLoad(u_pingpong0_z, pixel_pos).r;
-       imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), perm * (h_x / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
+       imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
     }
     else if (pingpong_index == 1)
     {
         float h_y = imageLoad(u_pingpong1_y, pixel_pos).r;
         float h_x = imageLoad(u_pingpong1_x, pixel_pos).r;
         float h_z = imageLoad(u_pingpong1_z, pixel_pos).r;
-        imageStore(u_displacement, pixel_pos, vec4(perm * (h_y / float(N * N)), perm * (h_x / float(N * N)), perm * (h_z / float(N * N)), 1));
+        imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1));
     }
 }

@@ -80,8 +80,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct GridBuffers
 	{
-		std::unique_ptr<vkb::core::Buffer> vertex;
-		std::unique_ptr<vkb::core::Buffer> index;
+		std::unique_ptr<vkb::core::Buffer> vertex      = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::Buffer> index       = {VK_NULL_HANDLE};
 		uint32_t                           index_count = {0u};
 	};
 
@@ -124,12 +124,12 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec2 wind      = {100.0f, -100.0f};
 	} ui;
 
-	uint32_t                           grid_size = {DISPLACEMENT_MAP_DIM};
-	std::unique_ptr<vkb::core::Buffer> camera_ubo;
-	std::unique_ptr<vkb::core::Buffer> fft_params_ubo;
-	std::unique_ptr<vkb::core::Buffer> fft_time_ubo;
-	std::unique_ptr<vkb::core::Buffer> fft_page_ubo;
-	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo;
+	uint32_t                           grid_size      = {DISPLACEMENT_MAP_DIM};
+	std::unique_ptr<vkb::core::Buffer> camera_ubo     = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_params_ubo = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_time_ubo   = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_page_ubo   = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo = {VK_NULL_HANDLE};
 
 	std::vector<std::complex<float>> h_tilde_0;
 	std::vector<std::complex<float>> h_tilde_0_conj;
@@ -151,19 +151,17 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	uint32_t log_2_N;
 
-	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer;
-
-	void createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment &result);
+	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer = {VK_NULL_HANDLE};
 
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0;
-		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj;
-		std::unique_ptr<vkb::core::Buffer> fft_input_weight;
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx;
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy;
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz;
-		std::unique_ptr<FBAttachment>      fft_displacement;
+		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0      = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::Buffer> fft_input_weight       = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx      = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy      = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz      = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment>      fft_displacement       = {VK_NULL_HANDLE};
 	} fft_buffers;
 
 	struct
@@ -181,21 +179,23 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSet       descriptor_set_axis_y = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set_axis_x = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set_axis_z = {VK_NULL_HANDLE};
+
 		struct
 		{
 			Pipeline horizontal;
 			Pipeline vertical;
 		} pipelines;
-		std::unique_ptr<FBAttachment> tilde_axis_y;
-		std::unique_ptr<FBAttachment> tilde_axis_x;
-		std::unique_ptr<FBAttachment> tilde_axis_z;
+
+		std::unique_ptr<FBAttachment> tilde_axis_y = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment> tilde_axis_x = {VK_NULL_HANDLE};
+		std::unique_ptr<FBAttachment> tilde_axis_z = {VK_NULL_HANDLE};
 	} fft;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
-		VkDescriptorSet       descriptor_set = {VK_NULL_HANDLE};
-		Pipeline pipeline;
+		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
+		Pipeline              pipeline;
 	} fft_inversion;
 
 	struct
@@ -219,6 +219,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout       = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set              = {VK_NULL_HANDLE};
 		VkSemaphore           semaphore                   = {VK_NULL_HANDLE};
+
 		struct
 		{
 			Pipeline _default;
@@ -229,8 +230,9 @@ class SubgroupsOperations : public ApiVulkanSample
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
 
   private:
-	uint32_t reverse(uint32_t i);
+	uint32_t              reverse(uint32_t i);
 	VkDescriptorImageInfo create_fb_descriptor(FBAttachment &attachment);
+	void                  createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment &result);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();

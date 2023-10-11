@@ -1,5 +1,4 @@
 #version 450
-
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,7 +15,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-layout(quads, equal_spacing, ccw) in;
+
+layout(triangles) in;
 
 layout (binding = 0) uniform Ubo 
 {
@@ -33,10 +33,10 @@ void main()
 	vec4 p10 = gl_in[2].gl_Position;
 	vec4 p11 = gl_in[3].gl_Position;
 
-	vec4 p0 = (p01 - p00) * gl_TessCoord.x + p00;
-	vec4 p1 = (p11 - p10) * gl_TessCoord.x + p10;
+	vec4 p0 = mix(p00, p01, gl_TessCoord.x);
+	vec4 p1 = mix(p10, p11, gl_TessCoord.x);
 
-	vec4 p = (p1 - p0) * gl_TessCoord.y + p0;
+	vec4 p = mix(p0, p1, gl_TessCoord.y);
 
 	gl_Position = ubo.projection * ubo.view * ubo.model * p;
 }

@@ -200,7 +200,7 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline);
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline_layout, 0u, 1u, &precompute.descriptor_set, 0u, nullptr);
 
-		vkCmdDispatch(compute.command_buffer, 8u, DISPLACEMENT_MAP_DIM, 1u);
+		vkCmdDispatch(compute.command_buffer, 1u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
 	// tildas textures
@@ -319,9 +319,8 @@ void SubgroupsOperations::create_tildas()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 3u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
 
-	};
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &tildas.descriptor_set_layout));
 
@@ -492,13 +491,16 @@ void SubgroupsOperations::generate_plane()
 	v.pos = {10.0f, -10.0f, 0.0f};
 	plane_vertices.push_back(v);
 
-	std::vector<uint32_t> indices = {0, 1, 2, 2, 3, 0};
+	std::vector<uint32_t> indices = {0, 1, 3, 1, 2, 3};
 
 	auto vertex_buffer_size = vkb::to_u32(plane_vertices.size() * sizeof(Vertex));
 	auto index_buffer_size  = vkb::to_u32(indices.size() * sizeof(uint32_t));
 	ocean.grid.index_count  = vkb::to_u32(indices.size());
 
-	ocean.grid.vertex = std::make_unique<vkb::core::Buffer>(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ocean.grid.vertex = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                        vertex_buffer_size,
+	                                                        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+	                                                        VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	ocean.grid.index = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       index_buffer_size,
@@ -519,11 +521,11 @@ void SubgroupsOperations::create_semaphore()
 void SubgroupsOperations::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20u),        // FFTParametersUbo, CameraUbo, ComputeUbo
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 20u),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 20u)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 7u)};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 10u);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 7u);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -593,7 +595,7 @@ void SubgroupsOperations::create_pipelines()
 	        dynamic_state_enables.data(),
 	        static_cast<uint32_t>(dynamic_state_enables.size()),
 	        0u);
-	VkPipelineTessellationStateCreateInfo tessellation_state = vkb::initializers::pipeline_tessellation_state_create_info(4);
+	VkPipelineTessellationStateCreateInfo tessellation_state = vkb::initializers::pipeline_tessellation_state_create_info(3u);
 
 	std::array<VkPipelineShaderStageCreateInfo, 4> shader_stages;
 	shader_stages[0] = load_shader("subgroups_operations/ocean.vert", VK_SHADER_STAGE_VERTEX_BIT);
@@ -936,11 +938,10 @@ void SubgroupsOperations::create_butterfly_texture()
 		bit_reverse_arr[i] = reverse(i);
 
 	bit_reverse_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(uint32_t) * bit_reverse_arr.size(), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
-	bit_reverse_buffer->convert_and_update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
-
-	VkDescriptorImageInfo image_descriptor = create_fb_descriptor(butterfly_precomp);
+	VkDescriptorImageInfo  image_descriptor       = create_fb_descriptor(butterfly_precomp);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),

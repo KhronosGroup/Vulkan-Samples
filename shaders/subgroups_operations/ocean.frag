@@ -16,8 +16,7 @@
  * limitations under the License.
  */
 
-
- layout (location = 0) out vec4 outFragColor;
+layout (location = 0) out vec4 outFragColor;
 
 void main() 
 {
