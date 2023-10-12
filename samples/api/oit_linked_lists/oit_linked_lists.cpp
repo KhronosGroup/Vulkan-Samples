@@ -53,10 +53,12 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	create_resources();
 	create_descriptors();
     create_pipelines();
+	build_command_buffers();
 
 	update_scene_constants();
 	fill_object_data();
 
+	prepared = true;
 	return true;
 }
 
@@ -137,7 +139,7 @@ void OITLinkedLists::create_pipelines()
 
         VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
 
-        VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS);
+        VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_LESS);
 
         std::vector<VkDynamicState> dynamic_state_enables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
         VkPipelineDynamicStateCreateInfo dynamicState = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
@@ -169,6 +171,44 @@ void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void OITLinkedLists::build_command_buffers()
 {
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+
+	VkClearValue clear_values[2];
+	clear_values[0].color        = {{0.3f, 0.3f, 0.3f, 1.0f}};
+	clear_values[1].depthStencil = {0.0f, 0};
+
+	VkRenderPassBeginInfo render_pass_begin_info    = vkb::initializers::render_pass_begin_info();
+	render_pass_begin_info.renderPass               = render_pass;
+	render_pass_begin_info.renderArea.offset.x      = 0;
+	render_pass_begin_info.renderArea.offset.y      = 0;
+	render_pass_begin_info.renderArea.extent.width  = width;
+	render_pass_begin_info.renderArea.extent.height = height;
+	render_pass_begin_info.clearValueCount          = 2;
+	render_pass_begin_info.pClearValues             = clear_values;
+
+	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
+	{
+		render_pass_begin_info.framebuffer = framebuffers[i];
+		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
+        {
+            vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+            {
+                VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+                vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+
+                VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+                vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+
+                vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
+                vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+                draw_model(object, draw_cmd_buffers[i], kObjectCount);
+
+                draw_ui(draw_cmd_buffers[i]);
+            }
+            vkCmdEndRenderPass(draw_cmd_buffers[i]);
+        }
+		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+	}
 }
 
 void OITLinkedLists::update_scene_constants()
@@ -201,7 +241,7 @@ void OITLinkedLists::fill_object_data()
 				const float x = static_cast<float>(r) - ((kObjectRowCount - 1) * 0.5f);
 				const float y = static_cast<float>(c) - ((kObjectColumnCount - 1) * 0.5f);
 				const float z = static_cast<float>(l) - ((kObjectLayerCount - 1) * 0.5f);
-				const float scale = 0.95f;
+				const float scale = 0.02f;
 				desc[object_index].model =
 					glm::scale(
 						glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)),
