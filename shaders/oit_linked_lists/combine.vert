@@ -16,32 +16,14 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inPos;
-
-struct ObjectDesc
+void main()
 {
-	mat4 model;
-	vec4 color;
-};
-
-const uint kObjectCount = 64;
-
-layout(set = 0, binding = 0) uniform SceneConstants
-{
-	mat4 projection;
-	mat4 view;
-	uvec4 parameters;
-} sceneConstants;
-layout (binding = 1) uniform InstanceData
-{
-	ObjectDesc desc[kObjectCount];
-} instanceData;
-
-layout (location = 0) out vec4 outColor;
-
-void main() 
-{
-	const ObjectDesc desc = instanceData.desc[gl_InstanceIndex];
-	gl_Position = sceneConstants.projection * sceneConstants.view * desc.model * vec4(inPos, 1.0f);
-	outColor = desc.color;
+    const vec2 vertices[] =
+    {
+        vec2(-1.0f,  3.0f),
+        vec2(-1.0f, -1.0f),
+        vec2( 3.0f, -1.0f),
+    };
+    const vec2 vertex = vertices[gl_VertexIndex % 3];
+    gl_Position = vec4(vertex, 0.0f, 1.0f);
 }

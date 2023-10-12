@@ -16,11 +16,37 @@
  * limitations under the License.
  */
 
+layout(set = 0, binding = 0) uniform SceneConstants
+{
+	mat4 projection;
+	mat4 view;
+	uvec4 parameters;
+} sceneConstants;
+layout(set = 0, binding = 1, r32ui) uniform uimage2D linkedListHeadTex;
+layout(set = 0, binding = 2) buffer FragmentBuffer {
+	uvec4 data[];
+} fragmentBuffer;
+layout(set = 0, binding = 3) buffer AtomicCounter {
+	uint value;
+} atomicCounter;
+
 layout (location = 0) in vec4 inColor;
 
-layout (location = 0) out vec4 outFragColor;
-
-void main() 
+void main()
 {
-	outFragColor = inColor;
+    // Find the next fragment index
+    const uint nextFragmentIndex = atomicAdd(atomicCounter.value, 1U);
+
+    // Ignore the fragment if the fragment buffer is full
+    if(nextFragmentIndex >= sceneConstants.parameters.x)
+    {
+        discard;
+    }
+
+    // Update the linked list head
+    const uint previousFragmentIndex = imageAtomicExchange(linkedListHeadTex, ivec2(gl_FragCoord.xy), nextFragmentIndex);
+
+    // Add the fragment to the buffer
+    fragmentBuffer.data[nextFragmentIndex] = uvec4(packUnorm4x8(inColor), floatBitsToUint(gl_FragCoord.z), previousFragmentIndex, 0U);
 }
+
