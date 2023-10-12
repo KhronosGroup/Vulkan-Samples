@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2019, Sascha Willems
+/* Copyright (c) 2023, Maximilien Dagois
  *
  * SPDX-License-Identifier: Apache-2.0
  *

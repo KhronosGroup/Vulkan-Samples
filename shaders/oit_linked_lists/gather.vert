@@ -1,5 +1,5 @@
 #version 450
-/* Copyright (c) 2021, Holochip
+/* Copyright (c) 2023, Maximilien Dagois
  *
  * SPDX-License-Identifier: Apache-2.0
  *

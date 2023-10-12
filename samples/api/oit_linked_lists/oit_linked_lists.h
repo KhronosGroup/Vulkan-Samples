@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Maximilien Dagois
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -34,11 +34,12 @@ class OITLinkedLists : public ApiVulkanSample
 
   private:
 	void load_assets();
-	void prepare_buffers();
-	void create_descriptor_pool();
+	void create_resources();
+	void create_descriptors();
+	void create_pipelines();
+
 	void update_scene_constants();
 	void fill_object_data();
-	void draw();
 
   private:
 	enum
@@ -66,6 +67,10 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
 	std::unique_ptr<vkb::core::Buffer> object_desc;
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
+    VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+    VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+    VkPipelineLayout pipeline_layout;
+    VkPipeline combine_pipeline;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

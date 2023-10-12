@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2023, Arm Limited and Contributors
+/* Copyright (c) 2023, Maximilien Dagois
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -28,7 +28,10 @@ OITLinkedLists::~OITLinkedLists()
 		return;
 	}
 
+    vkDestroyPipeline(get_device().get_handle(), combine_pipeline, nullptr);
+    vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
+    vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	object_desc.reset();
 	scene_constants.reset();
 	object.reset();
@@ -40,19 +43,16 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	{
 		return false;
 	}
-	
+
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.0f, 0.0f, -4.0f});
 	camera.set_rotation({0.0f, 180.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
-	prepare_buffers();
-	create_descriptor_pool();
-
-	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-	shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
-	shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+	create_resources();
+	create_descriptors();
+    create_pipelines();
 
 	update_scene_constants();
 	fill_object_data();
@@ -65,21 +65,102 @@ void OITLinkedLists::load_assets()
 	object = load_model("scenes/geosphere.gltf");
 }
 
-void OITLinkedLists::prepare_buffers()
+void OITLinkedLists::create_resources()
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	object_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 }
 
-void OITLinkedLists::create_descriptor_pool()
+void OITLinkedLists::create_descriptors()
 {
-	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
-	};
-	const uint32_t num_descriptor_sets = 1;
-	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
-	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+    {
+        std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
+            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0),
+            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1),
+        };
+        VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
+        VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
+    }
+
+    {
+        std::vector<VkDescriptorPoolSize> pool_sizes = {
+            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+        };
+        const uint32_t num_descriptor_sets = 1;
+        VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
+        VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
+    }
+
+    {
+        VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &descriptor_set_layout, 1);
+        VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
+
+        VkDescriptorBufferInfo scene_constants_descriptor = create_descriptor(*scene_constants);
+        VkDescriptorBufferInfo object_desc_descriptor = create_descriptor(*object_desc);
+        std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &object_desc_descriptor),
+        };
+        vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
+    }
+}
+
+void OITLinkedLists::create_pipelines()
+{
+    {
+        VkPipelineLayoutCreateInfo pipeline_layout_create_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
+        VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_create_info, nullptr, &pipeline_layout));
+    }
+
+    {
+        const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+            vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+        };
+        const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+            vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+        };
+        VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+        vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+        vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+        vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+        vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+
+        VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
+
+        VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
+
+
+        VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
+        VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
+
+        VkPipelineMultisampleStateCreateInfo multisample_state = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT, 0);
+
+        VkPipelineViewportStateCreateInfo viewport_state = vkb::initializers::pipeline_viewport_state_create_info(1, 1, 0);
+
+        VkPipelineDepthStencilStateCreateInfo depth_stencil_state = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_TRUE, VK_FALSE, VK_COMPARE_OP_LESS);
+
+        std::vector<VkDynamicState> dynamic_state_enables = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+        VkPipelineDynamicStateCreateInfo dynamicState = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
+
+        std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+        shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
+        shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+        VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
+        pipeline_create_info.pVertexInputState   = &vertex_input_state;
+        pipeline_create_info.pInputAssemblyState = &input_assembly_state;
+        pipeline_create_info.pRasterizationState = &rasterization_state;
+        pipeline_create_info.pColorBlendState    = &color_blend_state;
+        pipeline_create_info.pMultisampleState   = &multisample_state;
+        pipeline_create_info.pViewportState      = &viewport_state;
+        pipeline_create_info.pDepthStencilState  = &depth_stencil_state;
+        pipeline_create_info.pDynamicState       = &dynamicState;
+        pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
+        pipeline_create_info.pStages             = shader_stages.data();
+        pipeline_create_info.renderPass          = render_pass;
+
+        VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &combine_pipeline));
+    }
 }
 
 void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
@@ -137,22 +218,19 @@ void OITLinkedLists::fill_object_data()
 	object_desc->convert_and_update(desc);
 }
 
-void OITLinkedLists::draw()
-{
-	ApiVulkanSample::prepare_frame();
-	submit_info.commandBufferCount = 1;
-	submit_info.pCommandBuffers    = &draw_cmd_buffers[current_buffer];
-	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
-	ApiVulkanSample::submit_frame();
-}
-
 void OITLinkedLists::render(float delta_time)
 {
 	if (!prepared)
 	{
 		return;
 	}
-	draw();
+
+	ApiVulkanSample::prepare_frame();
+	submit_info.commandBufferCount = 1;
+	submit_info.pCommandBuffers = &draw_cmd_buffers[current_buffer];
+	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+	ApiVulkanSample::submit_frame();
+
 	if (camera.updated)
 	{
 		update_scene_constants();
