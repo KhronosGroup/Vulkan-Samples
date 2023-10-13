@@ -40,16 +40,19 @@ class OITLinkedLists : public ApiVulkanSample
 
 	void update_scene_constants();
 	void fill_object_data();
+	void clear_resources();
 
   private:
-	enum
+	enum : uint32_t
 	{
 		kObjectRowCount = 4,
 		kObjectColumnCount = 4,
 		kObjectLayerCount = 4,
 		kObjectCount = kObjectRowCount * kObjectColumnCount * kObjectLayerCount,
 
-        kFragmentsPerPixelAverage = 8,
+        kFragmentsPerPixelAverage = 4,
+
+		kLinkedListEndSentinel = 0xFFFFFFFFU,
 	};
 
 	struct SceneConstants

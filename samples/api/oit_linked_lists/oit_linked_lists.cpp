@@ -62,6 +62,7 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 
 	update_scene_constants();
 	fill_object_data();
+	clear_resources();
 
 	prepared = true;
 	return true;
@@ -251,14 +252,6 @@ void OITLinkedLists::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
         {
-            VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
-            vkb::image_layout_transition(
-                draw_cmd_buffers[i], linked_list_head_image->get_handle(),
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
-                subresource_range);
-
             vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
             {
                 // Gather pass
@@ -349,6 +342,45 @@ void OITLinkedLists::fill_object_data()
 	}
 
 	object_desc->convert_and_update(desc);
+}
+
+void OITLinkedLists::clear_resources()
+{
+    VkCommandBuffer command_buffer;
+	VkCommandBufferAllocateInfo command_buffer_allocate_info = vkb::initializers::command_buffer_allocate_info(cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1);
+	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &command_buffer));
+
+	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
+	VK_CHECK(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
+	{
+		vkCmdFillBuffer(command_buffer, atomic_counter_buffer->get_handle(), 0, sizeof(glm::uint), 0);
+
+        VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+        vkb::image_layout_transition(
+            command_buffer, linked_list_head_image->get_handle(),
+            VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+            VK_ACCESS_MEMORY_WRITE_BIT, VK_ACCESS_TRANSFER_WRITE_BIT,
+            VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+            subresource_range);
+
+		VkClearColorValue linked_lists_clear_value;
+		linked_lists_clear_value.uint32[0] = kLinkedListEndSentinel;
+		linked_lists_clear_value.uint32[1] = kLinkedListEndSentinel;
+		linked_lists_clear_value.uint32[2] = kLinkedListEndSentinel;
+		linked_lists_clear_value.uint32[3] = kLinkedListEndSentinel;
+		vkCmdClearColorImage(command_buffer, linked_list_head_image->get_handle(), VK_IMAGE_LAYOUT_GENERAL, &linked_lists_clear_value, 1, &subresource_range);
+	}
+	VK_CHECK(vkEndCommandBuffer(command_buffer));
+
+	{
+		VkSubmitInfo submit_info = {VK_STRUCTURE_TYPE_SUBMIT_INFO};
+		submit_info.commandBufferCount = 1;
+		submit_info.pCommandBuffers = &command_buffer;
+		VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
+		VK_CHECK(vkQueueWaitIdle(queue));
+	}
+
+	vkFreeCommandBuffers(get_device().get_handle(), cmd_pool, 1, &command_buffer);
 }
 
 void OITLinkedLists::render(float delta_time)

@@ -16,8 +16,8 @@
  * limitations under the License.
  */
 
-#define BUFFER_LISTS_INVALID_INDEX				0xFFFFFFFFU
-#define BUFFER_LISTS_SORTED_FRAGMENT_MAX_COUNT	16U
+#define LINKED_LIST_END_SENTINEL	0xFFFFFFFFU
+#define SORTED_FRAGMENT_MAX_COUNT	16U
 
 layout(set = 0, binding = 0) uniform SceneConstants
 {
@@ -42,12 +42,12 @@ void main()
 
     // Get the first fragment index in the linked list
 	uint fragmentIndex = imageLoad(linkedListHeadTex, ivec2(gl_FragCoord.xy)).r;
-	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(BUFFER_LISTS_INVALID_INDEX, 0, 0, 0)); // Reset the list head for the next frame
+	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(LINKED_LIST_END_SENTINEL, 0, 0, 0)); // Reset the list head for the next frame
 
     // Copy the fragments into local memory for sorting
-    uvec2 sortedFragments[BUFFER_LISTS_SORTED_FRAGMENT_MAX_COUNT];
+    uvec2 sortedFragments[SORTED_FRAGMENT_MAX_COUNT];
     uint fragmentCount = 0U;
-    while(fragmentIndex != BUFFER_LISTS_INVALID_INDEX && fragmentCount < BUFFER_LISTS_SORTED_FRAGMENT_MAX_COUNT)
+    while(fragmentIndex != LINKED_LIST_END_SENTINEL && fragmentCount < SORTED_FRAGMENT_MAX_COUNT)
     {
         const uvec4 fragment = fragmentBuffer.data[fragmentIndex];
         fragmentIndex = fragment.z;
