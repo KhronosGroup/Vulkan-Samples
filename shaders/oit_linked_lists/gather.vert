@@ -18,30 +18,37 @@
 
 layout (location = 0) in vec3 inPos;
 
-struct ObjectDesc
-{
-	mat4 model;
-	vec4 color;
-};
-
-const uint kObjectCount = 64;
+////////////////////////////////////////
 
 layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec4 parameters;
+	uvec3 unused;
+	uint fragmentMaxCount;
 } sceneConstants;
+
+const uint kInstanceCount = 64;
+struct Instance
+{
+	mat4 model;
+	vec4 color;
+};
 layout (binding = 1) uniform InstanceData
 {
-	ObjectDesc desc[kObjectCount];
+	Instance instance[kInstanceCount];
 } instanceData;
+
+////////////////////////////////////////
 
 layout (location = 0) out vec4 outColor;
 
+////////////////////////////////////////
+
 void main()
 {
-	const ObjectDesc desc = instanceData.desc[gl_InstanceIndex];
-	gl_Position = sceneConstants.projection * sceneConstants.view * desc.model * vec4(inPos, 1.0f);
-	outColor = desc.color;
+	const Instance instance = instanceData.instance[gl_InstanceIndex];
+	gl_Position = sceneConstants.projection * sceneConstants.view * instance.model * vec4(inPos, 1.0f);
+	outColor = instance.color;
 }
+

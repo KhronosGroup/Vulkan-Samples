@@ -18,12 +18,13 @@
 
 void main()
 {
-    const vec2 vertices[] =
+    const vec2 fullscreen_triangle[] =
     {
         vec2(-1.0f,  3.0f),
         vec2(-1.0f, -1.0f),
         vec2( 3.0f, -1.0f),
     };
-    const vec2 vertex = vertices[gl_VertexIndex % 3];
+    const vec2 vertex = fullscreen_triangle[gl_VertexIndex % 3];
     gl_Position = vec4(vertex, 0.0f, 1.0f);
 }
+

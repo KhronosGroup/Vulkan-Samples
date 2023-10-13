@@ -39,7 +39,7 @@ OITLinkedLists::~OITLinkedLists()
     fragment_buffer.reset();
     linked_list_head_image_view.reset();
     linked_list_head_image.reset();
-	object_desc.reset();
+	instance_desc.reset();
 	scene_constants.reset();
 	object.reset();
 }
@@ -64,7 +64,7 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	build_command_buffers();
 
 	update_scene_constants();
-	fill_object_data();
+	fill_instance_data();
 	clear_resources();
 
 	prepared = true;
@@ -100,7 +100,7 @@ void OITLinkedLists::create_gather_render_pass()
 void OITLinkedLists::create_resources()
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	object_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
     {
         VkExtent3D image_extent = {};
@@ -112,7 +112,8 @@ void OITLinkedLists::create_resources()
         linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);;
     }
     {
-        fragment_buffer_size = sizeof(glm::uvec3) * width * height * kFragmentsPerPixelAverage;
+		fragment_max_count = width * height * kFragmentsPerPixelAverage;
+        const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
         fragment_buffer = std::make_unique<vkb::core::Buffer>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
     }
 	atomic_counter_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
@@ -148,13 +149,13 @@ void OITLinkedLists::create_descriptors()
         VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
         VkDescriptorBufferInfo scene_constants_descriptor = create_descriptor(*scene_constants);
-        VkDescriptorBufferInfo object_desc_descriptor = create_descriptor(*object_desc);
+        VkDescriptorBufferInfo instance_desc_descriptor = create_descriptor(*instance_desc);
         VkDescriptorImageInfo linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
         VkDescriptorBufferInfo fragment_buffer_descriptor = create_descriptor(*fragment_buffer);
         VkDescriptorBufferInfo atomic_counter_buffer_descriptor = create_descriptor(*atomic_counter_buffer);
         std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
-            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &object_desc_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_desc_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &atomic_counter_buffer_descriptor),
@@ -289,7 +290,7 @@ void OITLinkedLists::build_command_buffers()
 
                 vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
                 vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-                draw_model(object, draw_cmd_buffers[i], kObjectCount);
+                draw_model(object, draw_cmd_buffers[i], kInstanceCount);
             }
             vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
@@ -329,47 +330,48 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants = {};
 	constants.projection = camera.matrices.perspective;
 	constants.view = camera.matrices.view;
-    constants.parameters.x = fragment_buffer_size;
+    constants.fragment_max_count = fragment_max_count;
+    constants.unused = glm::uvec3(0);
 	scene_constants->convert_and_update(constants);
 }
 
-void OITLinkedLists::fill_object_data()
+void OITLinkedLists::fill_instance_data()
 {
-	ObjectDesc desc[kObjectCount] = {};
+	Instance instances[kInstanceCount] = {};
 
 	auto get_random_float = []()
 	{
 		return static_cast<float>(rand()) / (RAND_MAX);
 	};
 
-	for (uint32_t l = 0; l < kObjectLayerCount; ++l)
+	for (uint32_t l = 0; l < kInstanceLayerCount; ++l)
 	{
-		for (uint32_t c = 0; c < kObjectColumnCount; ++c)
+		for (uint32_t c = 0; c < kInstanceColumnCount; ++c)
 		{
-			for (uint32_t r = 0; r < kObjectRowCount; ++r)
+			for (uint32_t r = 0; r < kInstanceRowCount; ++r)
 			{
-				const uint32_t object_index =
-					(l * kObjectColumnCount * kObjectRowCount) +
-					(c * kObjectRowCount) + r;
+				const uint32_t instance_index =
+					(l * kInstanceColumnCount * kInstanceRowCount) +
+					(c * kInstanceRowCount) + r;
 
-				const float x = static_cast<float>(r) - ((kObjectRowCount - 1) * 0.5f);
-				const float y = static_cast<float>(c) - ((kObjectColumnCount - 1) * 0.5f);
-				const float z = static_cast<float>(l) - ((kObjectLayerCount - 1) * 0.5f);
+				const float x = static_cast<float>(r) - ((kInstanceRowCount - 1) * 0.5f);
+				const float y = static_cast<float>(c) - ((kInstanceColumnCount - 1) * 0.5f);
+				const float z = static_cast<float>(l) - ((kInstanceLayerCount - 1) * 0.5f);
 				const float scale = 0.02f;
-				desc[object_index].model =
+				instances[instance_index].model =
 					glm::scale(
 						glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z)),
 						glm::vec3(scale));
 
-				desc[object_index].color.r = get_random_float();
-				desc[object_index].color.g = get_random_float();
-				desc[object_index].color.b = get_random_float();
-				desc[object_index].color.a = get_random_float() * 0.8f + 0.2f;
+				instances[instance_index].color.r = get_random_float();
+				instances[instance_index].color.g = get_random_float();
+				instances[instance_index].color.b = get_random_float();
+				instances[instance_index].color.a = get_random_float() * 0.8f + 0.2f;
 			}
 		}
 	}
 
-	object_desc->convert_and_update(desc);
+	instance_desc->convert_and_update(instances);
 }
 
 void OITLinkedLists::clear_resources()

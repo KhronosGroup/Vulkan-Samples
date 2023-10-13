@@ -16,29 +16,37 @@
  * limitations under the License.
  */
 
+layout (location = 0) in vec4 inColor;
+
+////////////////////////////////////////
+
 layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec4 parameters;
+	uvec3 unused;
+	uint fragmentMaxCount;
 } sceneConstants;
+
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
+
 layout(set = 0, binding = 3) buffer FragmentBuffer {
 	uvec3 data[];
 } fragmentBuffer;
-layout(set = 0, binding = 4) buffer AtomicCounter {
-	uint value;
-} atomicCounter;
 
-layout (location = 0) in vec4 inColor;
+layout(set = 0, binding = 4) buffer FragmentCounter {
+	uint value;
+} fragmentCounter;
+
+////////////////////////////////////////
 
 void main()
 {
-    // Find the next fragment index
-    const uint nextFragmentIndex = atomicAdd(atomicCounter.value, 1U);
+    // Get the next fragment index
+    const uint nextFragmentIndex = atomicAdd(fragmentCounter.value, 1U);
 
     // Ignore the fragment if the fragment buffer is full
-    if(nextFragmentIndex >= sceneConstants.parameters.x)
+    if(nextFragmentIndex >= sceneConstants.fragmentMaxCount)
     {
         discard;
     }

@@ -40,16 +40,16 @@ class OITLinkedLists : public ApiVulkanSample
 	void create_pipelines();
 
 	void update_scene_constants();
-	void fill_object_data();
+	void fill_instance_data();
 	void clear_resources();
 
   private:
 	enum : uint32_t
 	{
-		kObjectRowCount = 4,
-		kObjectColumnCount = 4,
-		kObjectLayerCount = 4,
-		kObjectCount = kObjectRowCount * kObjectColumnCount * kObjectLayerCount,
+		kInstanceRowCount = 4,
+		kInstanceColumnCount = 4,
+		kInstanceLayerCount = 4,
+		kInstanceCount = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount,
 
         kFragmentsPerPixelAverage = 4,
 
@@ -60,10 +60,11 @@ class OITLinkedLists : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
-        glm::uvec4 parameters;
+        glm::uvec3 unused;
+        glm::uint fragment_max_count;
 	};
 
-	struct ObjectDesc
+	struct Instance
 	{
 		glm::mat4 model;
 		glm::vec4 color;
@@ -72,11 +73,11 @@ class OITLinkedLists : public ApiVulkanSample
   private:
 	std::unique_ptr<vkb::sg::SubMesh> object;
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
-	std::unique_ptr<vkb::core::Buffer> object_desc;
+	std::unique_ptr<vkb::core::Buffer> instance_desc;
     std::unique_ptr<vkb::core::Image> linked_list_head_image;
     std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
 	std::unique_ptr<vkb::core::Buffer> fragment_buffer;
-    glm::uint fragment_buffer_size = 0U;
+    glm::uint fragment_max_count = 0U;
 	std::unique_ptr<vkb::core::Buffer> atomic_counter_buffer;
 	VkRenderPass gather_render_pass = VK_NULL_HANDLE;
 	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;

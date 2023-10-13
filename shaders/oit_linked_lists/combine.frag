@@ -19,30 +19,41 @@
 #define LINKED_LIST_END_SENTINEL	0xFFFFFFFFU
 #define SORTED_FRAGMENT_MAX_COUNT	16U
 
+////////////////////////////////////////
+
 layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec4 parameters;
+	uvec3 unused;
+	uint fragmentMaxCount;
 } sceneConstants;
+
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
+
 layout(set = 0, binding = 3) buffer FragmentBuffer {
 	uvec3 data[];
 } fragmentBuffer;
-layout(set = 0, binding = 4) buffer AtomicCounter {
+
+layout(set = 0, binding = 4) buffer FragmentCounter {
 	uint value;
-} atomicCounter;
+} fragmentCounter;
+
+////////////////////////////////////////
 
 layout (location = 0) out vec4 outFragColor;
+
+////////////////////////////////////////
 
 void main()
 {
     // Reset the atomic counter for the next frame
-    atomicCounter.value = 0;
+    fragmentCounter.value = 0;
 
     // Get the first fragment index in the linked list
 	uint fragmentIndex = imageLoad(linkedListHeadTex, ivec2(gl_FragCoord.xy)).r;
-	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(LINKED_LIST_END_SENTINEL, 0, 0, 0)); // Reset the list head for the next frame
+	// Reset the list head for the next frame
+	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(LINKED_LIST_END_SENTINEL, 0, 0, 0));
 
     // Copy the fragments into local memory for sorting
     uvec2 sortedFragments[SORTED_FRAGMENT_MAX_COUNT];
@@ -89,3 +100,4 @@ void main()
     color.a = 1.0f - color.a;
     outFragColor = color;
 }
+
