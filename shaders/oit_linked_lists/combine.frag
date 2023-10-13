@@ -27,7 +27,7 @@ layout(set = 0, binding = 0) uniform SceneConstants
 } sceneConstants;
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
 layout(set = 0, binding = 3) buffer FragmentBuffer {
-	uvec4 data[];
+	uvec3 data[];
 } fragmentBuffer;
 layout(set = 0, binding = 4) buffer AtomicCounter {
 	uint value;
@@ -49,9 +49,9 @@ void main()
     uint fragmentCount = 0U;
     while(fragmentIndex != LINKED_LIST_END_SENTINEL && fragmentCount < SORTED_FRAGMENT_MAX_COUNT)
     {
-        const uvec4 fragment = fragmentBuffer.data[fragmentIndex];
-        fragmentIndex = fragment.z;
-        sortedFragments[fragmentCount] = fragment.xy;
+        const uvec3 fragment = fragmentBuffer.data[fragmentIndex];
+        fragmentIndex = fragment.x;
+        sortedFragments[fragmentCount] = fragment.yz;
         ++fragmentCount;
     }
 

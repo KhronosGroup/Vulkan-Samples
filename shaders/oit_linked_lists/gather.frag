@@ -24,7 +24,7 @@ layout(set = 0, binding = 0) uniform SceneConstants
 } sceneConstants;
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
 layout(set = 0, binding = 3) buffer FragmentBuffer {
-	uvec4 data[];
+	uvec3 data[];
 } fragmentBuffer;
 layout(set = 0, binding = 4) buffer AtomicCounter {
 	uint value;
@@ -47,6 +47,6 @@ void main()
     const uint previousFragmentIndex = imageAtomicExchange(linkedListHeadTex, ivec2(gl_FragCoord.xy), nextFragmentIndex);
 
     // Add the fragment to the buffer
-    fragmentBuffer.data[nextFragmentIndex] = uvec4(packUnorm4x8(inColor), floatBitsToUint(gl_FragCoord.z), previousFragmentIndex, 0U);
+    fragmentBuffer.data[nextFragmentIndex] = uvec3(previousFragmentIndex, packUnorm4x8(inColor), floatBitsToUint(gl_FragCoord.z));
 }
 

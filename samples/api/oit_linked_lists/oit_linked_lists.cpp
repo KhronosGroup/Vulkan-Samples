@@ -112,7 +112,7 @@ void OITLinkedLists::create_resources()
         linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);;
     }
     {
-        fragment_buffer_size = sizeof(glm::uvec4) * width * height * kFragmentsPerPixelAverage;
+        fragment_buffer_size = sizeof(glm::uvec3) * width * height * kFragmentsPerPixelAverage;
         fragment_buffer = std::make_unique<vkb::core::Buffer>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
     }
 	atomic_counter_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
