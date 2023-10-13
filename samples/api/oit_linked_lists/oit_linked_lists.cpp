@@ -53,7 +53,7 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position({0.0f, 0.0f, -4.0f});
-	camera.set_rotation({0.0f, 180.0f, 0.0f});
+	camera.set_rotation({0.0f, 0.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
