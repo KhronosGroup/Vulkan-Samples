@@ -196,8 +196,10 @@ void OITLinkedLists::create_pipelines()
         }
 
         {
-            vertex_input_state.vertexAttributeDescriptionCount      = 0;
-            vertex_input_state.pVertexAttributeDescriptions         = nullptr;
+            vertex_input_state.vertexBindingDescriptionCount = 0;
+            vertex_input_state.pVertexBindingDescriptions = nullptr;
+            vertex_input_state.vertexAttributeDescriptionCount = 0;
+            vertex_input_state.pVertexAttributeDescriptions = nullptr;
 
             blend_attachment_state.blendEnable = VK_TRUE;
             blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -207,7 +209,6 @@ void OITLinkedLists::create_pipelines()
             blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
             blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
 
-            std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
             shader_stages[0] = load_shader("oit_linked_lists/combine.vert", VK_SHADER_STAGE_VERTEX_BIT);
             shader_stages[1] = load_shader("oit_linked_lists/combine.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
@@ -218,6 +219,14 @@ void OITLinkedLists::create_pipelines()
 
 void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	if (gpu.get_features().fragmentStoresAndAtomics)
+	{
+		gpu.get_mutable_requested_features().fragmentStoresAndAtomics = VK_TRUE;
+	}
+    else
+    {
+		throw std::runtime_error("This sample requires support for buffers and images stores and atomic operations in the fragment shader stage");
+    }
 }
 
 void OITLinkedLists::build_command_buffers()
@@ -242,6 +251,14 @@ void OITLinkedLists::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
         {
+            VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+            vkb::image_layout_transition(
+                draw_cmd_buffers[i], linked_list_head_image->get_handle(),
+                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_GENERAL,
+                subresource_range);
+
             vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
             {
                 // Gather pass
@@ -256,6 +273,14 @@ void OITLinkedLists::build_command_buffers()
                     vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
                     draw_model(object, draw_cmd_buffers[i], kObjectCount);
                 }
+
+                //VkImageSubresourceRange subresource_range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+                //vkb::image_layout_transition(
+                //    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
+                //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                //    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                //    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+                //    subresource_range);
 
                 // Combine pass
                 {

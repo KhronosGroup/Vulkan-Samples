@@ -39,7 +39,7 @@ layout (binding = 1) uniform InstanceData
 
 layout (location = 0) out vec4 outColor;
 
-void main() 
+void main()
 {
 	const ObjectDesc desc = instanceData.desc[gl_InstanceIndex];
 	gl_Position = sceneConstants.projection * sceneConstants.view * desc.model * vec4(inPos, 1.0f);

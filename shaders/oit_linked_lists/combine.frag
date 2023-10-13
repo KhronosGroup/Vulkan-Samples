@@ -33,7 +33,6 @@ layout(set = 0, binding = 4) buffer AtomicCounter {
 	uint value;
 } atomicCounter;
 
-layout (location = 0) in vec4 inColor;
 layout (location = 0) out vec4 outFragColor;
 
 void main()
