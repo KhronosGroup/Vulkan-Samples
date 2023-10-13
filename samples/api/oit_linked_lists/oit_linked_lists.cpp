@@ -29,6 +29,7 @@ OITLinkedLists::~OITLinkedLists()
 	}
 
     vkDestroyPipeline(get_device().get_handle(), combine_pipeline, nullptr);
+    vkDestroyPipeline(get_device().get_handle(), gather_pipeline, nullptr);
     vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
     vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
@@ -161,7 +162,6 @@ void OITLinkedLists::create_pipelines()
 
         VkPipelineRasterizationStateCreateInfo rasterization_state = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, VK_FRONT_FACE_COUNTER_CLOCKWISE, 0);
 
-
         VkPipelineColorBlendAttachmentState blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(0xF, VK_FALSE);
         VkPipelineColorBlendStateCreateInfo color_blend_state = vkb::initializers::pipeline_color_blend_state_create_info(1, &blend_attachment_state);
 
@@ -191,7 +191,28 @@ void OITLinkedLists::create_pipelines()
         pipeline_create_info.pStages             = shader_stages.data();
         pipeline_create_info.renderPass          = render_pass;
 
-        VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &combine_pipeline));
+        {
+            VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gather_pipeline));
+        }
+
+        {
+            vertex_input_state.vertexAttributeDescriptionCount      = 0;
+            vertex_input_state.pVertexAttributeDescriptions         = nullptr;
+
+            blend_attachment_state.blendEnable = VK_TRUE;
+            blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+            blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+            blend_attachment_state.colorBlendOp = VK_BLEND_OP_ADD;
+            blend_attachment_state.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+            blend_attachment_state.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+            blend_attachment_state.alphaBlendOp = VK_BLEND_OP_ADD;
+
+            std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
+            shader_stages[0] = load_shader("oit_linked_lists/combine.vert", VK_SHADER_STAGE_VERTEX_BIT);
+            shader_stages[1] = load_shader("oit_linked_lists/combine.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+            VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &combine_pipeline));
+        }
     }
 }
 

@@ -78,6 +78,7 @@ class OITLinkedLists : public ApiVulkanSample
     VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
     VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
     VkPipelineLayout pipeline_layout;
+    VkPipeline gather_pipeline;
     VkPipeline combine_pipeline;
 };
 
