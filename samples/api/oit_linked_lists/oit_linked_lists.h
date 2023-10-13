@@ -62,7 +62,7 @@ class OITLinkedLists : public ApiVulkanSample
 		glm::mat4  projection;
 		glm::mat4  view;
 		glm::uvec2 unused;
-		glm::uint  sort_instances;
+		glm::uint  sort_fragments;
 		glm::uint  fragment_max_count;
 	};
 
@@ -95,7 +95,7 @@ class OITLinkedLists : public ApiVulkanSample
 	VkPipeline       gather_pipeline;
 	VkPipeline       combine_pipeline;
 
-	int32_t sort_instances = true;
+	int32_t sort_fragments = true;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

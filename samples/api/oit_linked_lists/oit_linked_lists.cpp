@@ -261,7 +261,7 @@ void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
 
 void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 {
-	drawer.checkbox("Sort instances", &sort_instances);
+	drawer.checkbox("Sort fragments", &sort_fragments);
 }
 
 void OITLinkedLists::build_command_buffers()
@@ -337,7 +337,7 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants     = {};
 	constants.projection         = camera.matrices.perspective;
 	constants.view               = camera.matrices.view;
-	constants.sort_instances     = sort_instances ? 1U : 0U;
+	constants.sort_fragments     = sort_fragments ? 1U : 0U;
 	constants.fragment_max_count = fragment_max_count;
 	constants.unused             = glm::uvec2(0);
 	scene_constants->convert_and_update(constants);

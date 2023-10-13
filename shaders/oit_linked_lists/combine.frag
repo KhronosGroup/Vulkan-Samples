@@ -26,7 +26,7 @@ layout(set = 0, binding = 0) uniform SceneConstants
 	mat4 projection;
 	mat4 view;
 	uvec2 unused;
-	uint sortInstances;
+	uint sortFragments;
 	uint fragmentMaxCount;
 } sceneConstants;
 
@@ -76,7 +76,7 @@ void main()
     }
 
     // Sort the fragments by depth (back to front)
-	if(sceneConstants.sortInstances == 1U)
+	if(sceneConstants.sortFragments == 1U)
     {
         for(int i = 0; i < fragmentCount - 1; ++i)
         {
