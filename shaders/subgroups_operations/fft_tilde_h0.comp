@@ -8,6 +8,27 @@ layout (local_size_x = 32, local_size_y = 32) in;
 layout (binding = 0, rgba32f) uniform image2D tilde_h0_k;
 layout (binding = 1, rgba32f) uniform image2D tilde_h0_minus_k;
 
+float nrand( vec2 n )
+{
+    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+}
+
+float n8rand( vec2 n )
+{
+    float t = 1; // fract( iTime );
+    float nrnd0 = nrand( n + 0.07*t );
+    float nrnd1 = nrand( n + 0.11*t );
+    float nrnd2 = nrand( n + 0.13*t );
+    float nrnd3 = nrand( n + 0.17*t );
+
+    float nrnd4 = nrand( n + 0.19*t );
+    float nrnd5 = nrand( n + 0.23*t );
+    float nrnd6 = nrand( n + 0.29*t );
+    float nrnd7 = nrand( n + 0.31*t );
+
+    return (nrnd0+nrnd1+nrnd2+nrnd3+nrnd4+nrnd5+nrnd6+nrnd7) / 8.0;
+}
+
 float SuppressionFactor(float k_magnitude_sq)
 {
         float u_SuppressLength = 0.1;
@@ -44,7 +65,8 @@ void main()
         float h0_k = clamp(sqrt(PhillipsSpectrum(k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
         float h0_minus_k = clamp(sqrt(PhillipsSpectrum(-k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
 
-        vec4 rnd = {1.0f, 1.0f, 1.0f, 1.0f}; //GaussianRandom();
+        //vec4 rnd = {1.0f, 1.0f, 1.0f, 1.0f}; //GaussianRandom();
+        vec4 rnd = {n8rand(pos), n8rand(pos), n8rand(pos), n8rand(pos)};
 
         ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
         imageStore(tilde_h0_k, pixel_pos, vec4(rnd.xy * h0_k, 0.0, 1.0));

@@ -38,6 +38,10 @@ layout (binding = 3) uniform FftPage
     int pages;
 } fftUbo;
 
+layout( push_constant ) uniform Push_Constants{
+    uint i;
+} step;
+
 struct Complex
 {
         float real;
@@ -62,84 +66,69 @@ Complex complex_multiply(Complex c1, Complex c2)
 
 void HorizontalButterflies(in ivec2 pixel_pos)
 {
-    for (int i = 0; i < fftUbo.pages; ++i)
+    vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(step.i, pixel_pos.x));
+    if ((step.i % 2) == 0)
     {
-        subgroupBarrier();
-        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(i, pixel_pos.x));
-        if ((i % 2) == 0)
-        {
-                vec2 a_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.z, pixel_pos.y)).rg;
-                vec2 b_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.w, pixel_pos.y)).rg;
+        vec2 a_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.z, pixel_pos.y)).rg;
+        vec2 b_ = imageLoad(u_pingpong0, ivec2(butterfly_precomp.w, pixel_pos.y)).rg;
 
-                Complex a = Complex(a_.x, a_.y);
-                Complex b = Complex(b_.x, b_.y);
-                Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
+        Complex a = Complex(a_.x, a_.y);
+        Complex b = Complex(b_.x, b_.y);
+        Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-                // Buttefly operation
-                Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-                subgroupMemoryBarrierImage();
-                imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
+        // Buttefly operation
+        Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+        subgroupMemoryBarrierImage();
+        imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
+    }
+    else
+    {
+        vec2 a_ = imageLoad(u_pingpong1, ivec2(butterfly_precomp.z, pixel_pos.y)).rg;
+        vec2 b_ = imageLoad(u_pingpong1, ivec2(butterfly_precomp.w, pixel_pos.y)).rg;
 
-                //if(i == 6)
-                //    debugPrintfEXT("[%i]   %.5f, %.5f", i, result.real, result.imag);
+        Complex a = Complex(a_.x, a_.y);
+        Complex b = Complex(b_.x, b_.y);
+        Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-        }
-        else
-        {
-                vec2 a_ = imageLoad(u_pingpong1, ivec2(butterfly_precomp.z, pixel_pos.y)).rg;
-                vec2 b_ = imageLoad(u_pingpong1, ivec2(butterfly_precomp.w, pixel_pos.y)).rg;
-
-                Complex a = Complex(a_.x, a_.y);
-                Complex b = Complex(b_.x, b_.y);
-                Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
-
-                // Buttefly operation
-                Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-                subgroupMemoryBarrierImage();
-                imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
-
-                if(i == 5)
-                    debugPrintfEXT("[%i]   %.5f, %.5f", i, result.real, result.imag);
-        }
+        // Buttefly operation
+        Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+        subgroupMemoryBarrierImage();
+        imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
     }
 }
 
 void VerticalButterfiles(in ivec2 pixel_pos)
 {
-    for (int i = 0; i < fftUbo.pages; ++i)
+    vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(step.i, pixel_pos.y));
+    if ((step.i % 2) == 0)
     {
-        vec4 butterfly_precomp = imageLoad(u_butterfly_precomp, ivec2(i, pixel_pos.y));
+        vec2 a_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.z)).rg;
+        vec2 b_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.w)).rg;
 
-        if ((i % 2) == 0)
-        {
-                vec2 a_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.z)).rg;
-                vec2 b_ = imageLoad(u_pingpong0, ivec2(pixel_pos.x, butterfly_precomp.w)).rg;
+        Complex a = Complex(a_.x, a_.y);
+        Complex b = Complex(b_.x, b_.y);
+        Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-                Complex a = Complex(a_.x, a_.y);
-                Complex b = Complex(b_.x, b_.y);
-                Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
+        // Buttefly operation
+        Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+        subgroupMemoryBarrierImage();
 
-                // Buttefly operation
-                Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-                subgroupMemoryBarrierImage();
+        imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
+    }
+    else
+    {
+        vec2 a_ = imageLoad(u_pingpong1, ivec2(pixel_pos.x, butterfly_precomp.z)).rg;
+        vec2 b_ = imageLoad(u_pingpong1, ivec2(pixel_pos.x, butterfly_precomp.w)).rg;
 
-                imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
-        }
-        else
-        {
-                vec2 a_ = imageLoad(u_pingpong1, ivec2(pixel_pos.x, butterfly_precomp.z)).rg;
-                vec2 b_ = imageLoad(u_pingpong1, ivec2(pixel_pos.x, butterfly_precomp.w)).rg;
+        Complex a = Complex(a_.x, a_.y);
+        Complex b = Complex(b_.x, b_.y);
+        Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-                Complex a = Complex(a_.x, a_.y);
-                Complex b = Complex(b_.x, b_.y);
-                Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
+        // Buttefly operation
+        Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
+        subgroupMemoryBarrierImage();
 
-                // Buttefly operation
-                Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
-                subgroupMemoryBarrierImage();
-
-                imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
-        }
+        imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
     }
 }
 

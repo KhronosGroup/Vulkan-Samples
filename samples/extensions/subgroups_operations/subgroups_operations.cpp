@@ -206,8 +206,6 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, precompute.pipeline.pipeline_layout, 0u, 1u, &precompute.descriptor_set, 0u, nullptr);
 
 		vkCmdDispatch(compute.command_buffer, 1u, DISPLACEMENT_MAP_DIM, 1u);
-<<<<<<< HEAD
-=======
 	}
 
 	// initial tildas textures
@@ -216,7 +214,6 @@ void SubgroupsOperations::build_compute_command_buffer()
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, initial_tildas.pipeline.pipeline_layout, 0u, 1u, &initial_tildas.descriptor_set, 0u, nullptr);
 
 		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
->>>>>>> e005a65 (Add tilde_h_0 shader)
 	}
 
 	// tildas textures
@@ -380,10 +377,8 @@ void SubgroupsOperations::create_tildas()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
-<<<<<<< HEAD
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
 
-=======
->>>>>>> e005a65 (Add tilde_h_0 shader)
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &tildas.descriptor_set_layout));
 
@@ -1011,14 +1006,11 @@ void SubgroupsOperations::create_butterfly_texture()
 	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
 	VkDescriptorBufferInfo bit_reverse_descriptor = create_descriptor(*bit_reverse_buffer);
-<<<<<<< HEAD
-	VkDescriptorImageInfo  image_descriptor       = create_fb_descriptor(butterfly_precomp);
-	VkDescriptorBufferInfo fft_params_ubo_buffer  = create_descriptor(*fft_params_ubo);
-=======
 	bit_reverse_buffer->update(bit_reverse_arr.data(), sizeof(uint32_t) * bit_reverse_arr.size());
 
 	VkDescriptorImageInfo image_descriptor = create_fb_descriptor(butterfly_precomp);
->>>>>>> e005a65 (Add tilde_h_0 shader)
+	VkDescriptorImageInfo  image_descriptor       = create_fb_descriptor(butterfly_precomp);
+	VkDescriptorBufferInfo fft_params_ubo_buffer  = create_descriptor(*fft_params_ubo);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(precompute.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor),
