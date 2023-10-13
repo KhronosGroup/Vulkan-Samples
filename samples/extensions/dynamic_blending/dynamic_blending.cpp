@@ -149,12 +149,22 @@ void DynamicBlending::prepare_scene()
 
 void DynamicBlending::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	// Query the extended dynamic state support
+	eds_feature_support       = {};
+	eds_feature_support.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+
+	VkPhysicalDeviceFeatures2 features2{};
+	features2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+	features2.pNext = &eds_feature_support;
+	vkGetPhysicalDeviceFeatures2(gpu.get_handle(), &features2);
+
 	{
+		// Only request the features that we support
 		auto &features                                   = gpu.request_extension_features<VkPhysicalDeviceExtendedDynamicState3FeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT);
-		features.extendedDynamicState3ColorWriteMask     = VK_TRUE;
-		features.extendedDynamicState3ColorBlendEnable   = VK_TRUE;
-		features.extendedDynamicState3ColorBlendAdvanced = VK_TRUE;
-		features.extendedDynamicState3ColorBlendEquation = VK_TRUE;
+		features.extendedDynamicState3ColorWriteMask     = eds_feature_support.extendedDynamicState3ColorWriteMask;
+		features.extendedDynamicState3ColorBlendEnable   = VK_TRUE;        // We must have this or the sample isn't useful
+		features.extendedDynamicState3ColorBlendAdvanced = eds_feature_support.extendedDynamicState3ColorBlendAdvanced;
+		features.extendedDynamicState3ColorBlendEquation = eds_feature_support.extendedDynamicState3ColorBlendEquation;
 	}
 	{
 		auto &features                           = gpu.request_extension_features<VkPhysicalDeviceBlendOperationAdvancedFeaturesEXT>(VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_BLEND_OPERATION_ADVANCED_FEATURES_EXT);
@@ -281,17 +291,24 @@ void DynamicBlending::create_pipelines()
 	std::vector<VkDynamicState> dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
 	    VK_DYNAMIC_STATE_SCISSOR,
-	    VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT,
-	    VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT,
 	};
+
+	if (eds_feature_support.extendedDynamicState3ColorWriteMask)
+		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_WRITE_MASK_EXT);
+
+	if (eds_feature_support.extendedDynamicState3ColorBlendEnable)
+		dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ENABLE_EXT);
 
 	switch (current_blend_option)
 	{
 		case 0:
-			dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT);
+			if (eds_feature_support.extendedDynamicState3ColorBlendEquation)
+				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_EQUATION_EXT);
 			break;
 		case 1:
-			dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ADVANCED_EXT);
+			if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
+				dynamic_state_enables.push_back(VK_DYNAMIC_STATE_COLOR_BLEND_ADVANCED_EXT);
+			break;
 	}
 
 	VkPipelineDynamicStateCreateInfo dynamic_state =
@@ -413,29 +430,38 @@ void DynamicBlending::build_command_buffers()
 			vkCmdBindVertexBuffers(draw_cmd_buffers[i], 0, 1, vertex_buffer->get(), offsets);
 			vkCmdBindIndexBuffer(draw_cmd_buffers[i], index_buffer->get_handle(), 0, VK_INDEX_TYPE_UINT32);
 
-			const VkBool32 blend_enable = this->blend_enable;
-			vkCmdSetColorBlendEnableEXT(cmd_buff, 0, 1, &blend_enable);
+			if (eds_feature_support.extendedDynamicState3ColorBlendEnable)
+			{
+				const VkBool32 blend_enable = this->blend_enable;
+				vkCmdSetColorBlendEnableEXT(cmd_buff, 0, 1, &blend_enable);
+			}
 
 			if (current_blend_option == 0)
 			{
-				VkColorBlendEquationEXT color_blend_equation;
-				color_blend_equation.colorBlendOp        = blend_operator.values[current_blend_color_operator_index];
-				color_blend_equation.srcColorBlendFactor = static_cast<VkBlendFactor>(current_src_color_blend_factor);
-				color_blend_equation.dstColorBlendFactor = static_cast<VkBlendFactor>(current_dst_color_blend_factor);
-				color_blend_equation.alphaBlendOp        = blend_operator.values[current_blend_alpha_operator_index];
-				color_blend_equation.srcAlphaBlendFactor = static_cast<VkBlendFactor>(current_src_alpha_blend_factor);
-				color_blend_equation.dstAlphaBlendFactor = static_cast<VkBlendFactor>(current_dst_alpha_blend_factor);
-				vkCmdSetColorBlendEquationEXT(cmd_buff, 0, 1, &color_blend_equation);
+				if (eds_feature_support.extendedDynamicState3ColorBlendEquation)
+				{
+					VkColorBlendEquationEXT color_blend_equation;
+					color_blend_equation.colorBlendOp        = blend_operator.values[current_blend_color_operator_index];
+					color_blend_equation.srcColorBlendFactor = static_cast<VkBlendFactor>(current_src_color_blend_factor);
+					color_blend_equation.dstColorBlendFactor = static_cast<VkBlendFactor>(current_dst_color_blend_factor);
+					color_blend_equation.alphaBlendOp        = blend_operator.values[current_blend_alpha_operator_index];
+					color_blend_equation.srcAlphaBlendFactor = static_cast<VkBlendFactor>(current_src_alpha_blend_factor);
+					color_blend_equation.dstAlphaBlendFactor = static_cast<VkBlendFactor>(current_dst_alpha_blend_factor);
+					vkCmdSetColorBlendEquationEXT(cmd_buff, 0, 1, &color_blend_equation);
+				}
 			}
 			else
 			{
-				VkColorBlendAdvancedEXT color_blend_advanced;
-				color_blend_advanced.advancedBlendOp  = advanced_blend_operator.values[current_advanced_blend_operator_index];
-				color_blend_advanced.srcPremultiplied = src_premultiplied;
-				color_blend_advanced.dstPremultiplied = dst_premultiplied;
-				color_blend_advanced.blendOverlap     = VK_BLEND_OVERLAP_CONJOINT_EXT;
-				color_blend_advanced.clampResults     = VK_TRUE;
-				vkCmdSetColorBlendAdvancedEXT(cmd_buff, 0, 1, &color_blend_advanced);
+				if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
+				{
+					VkColorBlendAdvancedEXT color_blend_advanced;
+					color_blend_advanced.advancedBlendOp  = advanced_blend_operator.values[current_advanced_blend_operator_index];
+					color_blend_advanced.srcPremultiplied = src_premultiplied;
+					color_blend_advanced.dstPremultiplied = dst_premultiplied;
+					color_blend_advanced.blendOverlap     = VK_BLEND_OVERLAP_CONJOINT_EXT;
+					color_blend_advanced.clampResults     = VK_TRUE;
+					vkCmdSetColorBlendAdvancedEXT(cmd_buff, 0, 1, &color_blend_advanced);
+				}
 			}
 
 			if (reverse)
@@ -536,57 +562,73 @@ void DynamicBlending::on_update_ui_overlay(vkb::Drawer &drawer)
 			}
 			ImGui::PopID();
 
-			drawer.text("Color write mask");
-			add_color_mask_checkbox("Red", current_face.color_bit_enabled[0]);
-			add_color_mask_checkbox("Green", current_face.color_bit_enabled[1]);
-			add_color_mask_checkbox("Blue", current_face.color_bit_enabled[2]);
-			add_color_mask_checkbox("Alpha", current_face.color_bit_enabled[3], false);
+			if (eds_feature_support.extendedDynamicState3ColorWriteMask)
+			{
+				drawer.text("Color write mask");
+				add_color_mask_checkbox("Red", current_face.color_bit_enabled[0]);
+				add_color_mask_checkbox("Green", current_face.color_bit_enabled[1]);
+				add_color_mask_checkbox("Blue", current_face.color_bit_enabled[2]);
+				add_color_mask_checkbox("Alpha", current_face.color_bit_enabled[3], false);
+			}
 		}
 	}
 
 	if (drawer.header("Blending"))
 	{
-		if (drawer.checkbox("Enabled", &blend_enable))
+		if (eds_feature_support.extendedDynamicState3ColorBlendEnable)
 		{
-			update_color_uniform();
+			if (drawer.checkbox("Enabled", &blend_enable))
+			{
+				update_color_uniform();
+			}
 		}
-		if (drawer.radio_button("BlendEquationEXT", &current_blend_option, 0))
+		if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
 		{
-			update_pipeline();
-			update_color_uniform();
-		}
-		if (drawer.radio_button("BlendAdvancedEXT", &current_blend_option, 1))
-		{
-			update_pipeline();
-			update_color_uniform();
+			if (drawer.radio_button("BlendEquationEXT", &current_blend_option, 0))
+			{
+				update_pipeline();
+				update_color_uniform();
+			}
+			if (drawer.radio_button("BlendAdvancedEXT", &current_blend_option, 1))
+			{
+				update_pipeline();
+				update_color_uniform();
+			}
 		}
 		switch (current_blend_option)
 		{
 			case 0:
-				if (drawer.header("BlendEquationEXT"))
+				if (eds_feature_support.extendedDynamicState3ColorBlendEquation)
 				{
-					add_combo_with_button("Color operator", current_blend_color_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-					add_combo_with_button("SrcColorBlendFactor", current_src_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
-					add_combo_with_button("DstColorBlendFactor", current_dst_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+					if (drawer.header("BlendEquationEXT"))
+					{
+						add_combo_with_button("Color operator", current_blend_color_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
+						add_combo_with_button("SrcColorBlendFactor", current_src_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+						add_combo_with_button("DstColorBlendFactor", current_dst_color_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
 
-					add_combo_with_button("Alpha operator", current_blend_alpha_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
-					add_combo_with_button("SrcAlphaBlendFactor", current_src_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
-					add_combo_with_button("DstAlphaBlendFactor", current_dst_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+						add_combo_with_button("Alpha operator", current_blend_alpha_operator_index, VK_BLEND_OP_ADD, VK_BLEND_OP_MAX, blend_operator.names);
+						add_combo_with_button("SrcAlphaBlendFactor", current_src_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+						add_combo_with_button("DstAlphaBlendFactor", current_dst_alpha_blend_factor, VK_BLEND_FACTOR_ZERO, VK_BLEND_FACTOR_SRC_ALPHA_SATURATE, blend_factor_names);
+					}
 				}
 				break;
 			case 1:
-				if (drawer.header("BlendAdvancedEXT"))
+				if (eds_feature_support.extendedDynamicState3ColorBlendAdvanced)
 				{
-					add_combo_with_button("Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT, advanced_blend_operator.names);
-					if (drawer.checkbox("Src premultiplied", &src_premultiplied))
+					if (drawer.header("BlendAdvancedEXT"))
 					{
-						update_color_uniform();
-					}
-					if (drawer.checkbox("Dst premultiplied", &dst_premultiplied))
-					{
-						update_color_uniform();
+						add_combo_with_button("Operator", current_advanced_blend_operator_index, VK_BLEND_OP_ZERO_EXT, VK_BLEND_OP_BLUE_EXT, advanced_blend_operator.names);
+						if (drawer.checkbox("Src premultiplied", &src_premultiplied))
+						{
+							update_color_uniform();
+						}
+						if (drawer.checkbox("Dst premultiplied", &dst_premultiplied))
+						{
+							update_color_uniform();
+						}
 					}
 				}
+				break;
 		}
 	}
 }
