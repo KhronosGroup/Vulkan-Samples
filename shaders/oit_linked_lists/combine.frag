@@ -68,7 +68,7 @@ void main()
         {
             for(int j = i + 1; j < fragmentCount; ++j)
             {
-                if(sortedFragments[j].y > sortedFragments[i].y)
+                if(sortedFragments[j].y < sortedFragments[i].y)
                 {
                     const uvec2 tmp = sortedFragments[i];
                     sortedFragments[i] = sortedFragments[j];
