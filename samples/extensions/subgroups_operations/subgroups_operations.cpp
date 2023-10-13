@@ -321,7 +321,7 @@ void SubgroupsOperations::create_initial_tildas()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
-	};
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 3u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &initial_tildas.descriptor_set_layout));
@@ -350,12 +350,13 @@ void SubgroupsOperations::create_initial_tildas()
 	VkDescriptorImageInfo  htilde_0_descriptor      = create_fb_descriptor(*fft_buffers.fft_input_htilde0);
 	VkDescriptorImageInfo  htilde_conj_0_descriptor = create_fb_descriptor(*fft_buffers.fft_input_htilde0_conj);
 	VkDescriptorBufferInfo input_random_descriptor  = create_descriptor(*fft_buffers.fft_input_random);
+	VkDescriptorBufferInfo fft_params_ubo_buffer    = create_descriptor(*fft_params_ubo);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &htilde_0_descriptor),
 	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &htilde_conj_0_descriptor),
 	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u, &input_random_descriptor),
-	};
+	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_params_ubo_buffer)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
 
@@ -470,39 +471,6 @@ void SubgroupsOperations::load_assets()
 	*/
 }
 
-float SubgroupsOperations::phillips_spectrum(int32_t n, int32_t m, float sign)
-{
-	glm::vec2 k(glm::pi<float>() * (2.0f * n - grid_size) / ui.length, glm::pi<float>() * (2.0f * m - grid_size) / ui.length);
-
-	k = k * sign;
-
-	float k_len = glm::length(k);
-	if (k_len < 0.000001f)
-		return 0.000001f;
-
-	float k_len2 = k_len * k_len;
-	float k_len4 = k_len2 * k_len2;
-
-	float k_dot_w  = glm::dot(glm::normalize(k), glm::normalize(ui.wind));
-	float k_dot_w2 = k_dot_w * k_dot_w;
-
-	float w_len = glm::length(ui.wind);
-	float L     = w_len * w_len / GRAVITY;
-	float L2    = L * L;
-
-	float damping = 0.001f;
-	float l2      = L2 * damping * damping;
-
-	return ui.amplitude * glm::exp(-1.0f / (k_len2 * L2)) / k_len4 * k_dot_w2 * glm::exp(-k_len2 * l2);
-}
-
-std::complex<float> SubgroupsOperations::calculate_weight(uint32_t x, uint32_t n)
-{
-	const auto pi2 = glm::pi<float>() * 2.0f;
-	return {
-	    glm::cos(pi2 * x / n), glm::sin(pi2 * x / n)};
-}
-
 glm::vec2 SubgroupsOperations::rndGaussian()
 {
 	float x1, x2, w;
@@ -522,20 +490,11 @@ glm::vec2 SubgroupsOperations::rndGaussian()
 	return glm::vec2{x1 * w, x2 * w};
 }
 
-std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m, float sign)
-{
-	std::complex<float> rnd{1.0f, 1.0f};        // rndGaussian();
-	// std::complex<float> rnd = rndGaussian();
-
-	// return rnd * glm::sqrt(phillips_spectrum(n, m, sign) / 2.0f);
-}
-
 void SubgroupsOperations::prepare_uniform_buffers()
 {
 	camera_ubo     = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	fft_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	fft_time_ubo   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	fft_page_ubo   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTPage), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	invert_fft_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTInvert), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	update_uniform_buffers();
 }
@@ -711,10 +670,6 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_ubo.length    = ui.length;
 	fft_ubo.wind      = ui.wind;
 
-	FFTPage pageSize;
-	// pageSize.page = static_cast<int32_t>(log_2_N);
-	pageSize.page = 6;        // static_cast<int32_t>(log_2_N);
-
 	FFTInvert invertFft;
 	invertFft.grid_size = grid_size;
 	invertFft.page_idx  = log_2_N % 2;
@@ -722,7 +677,6 @@ void SubgroupsOperations::update_uniform_buffers()
 	camera_ubo->convert_and_update(ubo);
 	fft_params_ubo->convert_and_update(fft_ubo);
 	fft_time_ubo->convert_and_update(fftTime);
-	fft_page_ubo->convert_and_update(pageSize);
 	invert_fft_ubo->convert_and_update(invertFft);
 }
 
@@ -1026,7 +980,7 @@ void SubgroupsOperations::create_fft()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 3u)};
+	};
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &fft.descriptor_set_layout));
 
@@ -1076,13 +1030,11 @@ void SubgroupsOperations::create_fft()
 	VkDescriptorImageInfo image_descriptor_tilda_y      = create_fb_descriptor(*fft_buffers.fft_tilde_h_kt_dy);
 	VkDescriptorImageInfo image_descriptor_tilde_axis_y = create_fb_descriptor(*fft.tilde_axis_y);
 
-	auto fft_page_descriptor = create_descriptor(*fft_page_ubo);
-
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets_asix_y = {
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_battlefly),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_tilda_y),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_y, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_tilde_axis_y),
-	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_y, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_asix_y.size()), write_descriptor_sets_asix_y.data(), 0u, nullptr);
 
@@ -1093,7 +1045,7 @@ void SubgroupsOperations::create_fft()
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_battlefly),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_tilda_x),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_x, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_tilde_axis_x),
-	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_x, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_asix_x.size()), write_descriptor_sets_asix_x.data(), 0u, nullptr);
 
@@ -1104,7 +1056,7 @@ void SubgroupsOperations::create_fft()
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_battlefly),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_tilda_z),
 	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_z, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2u, &image_descriptor_tilde_axis_z),
-	    vkb::initializers::write_descriptor_set(fft.descriptor_set_axis_z, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &fft_page_descriptor)};
+	};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets_asix_z.size()), write_descriptor_sets_asix_z.data(), 0u, nullptr);
 }

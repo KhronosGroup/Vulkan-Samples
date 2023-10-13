@@ -33,35 +33,30 @@ layout (binding = 0, rgba32f) readonly uniform image2D u_butterfly_precomp;
 layout (binding = 1, rgba32f) uniform image2D u_pingpong0;
 layout (binding = 2, rgba32f) uniform image2D u_pingpong1;
 
-layout (binding = 3) uniform FftPage
-{
-    int pages;
-} fftUbo;
-
 layout( push_constant ) uniform Push_Constants{
     uint i;
 } step;
 
 struct Complex
 {
-        float real;
-        float imag;
+    float real;
+    float imag;
 };
 
 Complex complex_add(Complex c1, Complex c2)
 {
-        Complex res;
-        res.real = c1.real + c2.real;
-        res.imag = c1.imag + c2.imag;
-        return res;
+    Complex res;
+    res.real = c1.real + c2.real;
+    res.imag = c1.imag + c2.imag;
+    return res;
 }
 
 Complex complex_multiply(Complex c1, Complex c2)
 {
-        Complex res;
-        res.real = c1.real * c2.real - c1.imag * c2.imag;
-        res.imag = c1.real * c2.imag + c1.imag * c2.real;
-        return res;
+    Complex res;
+    res.real = c1.real * c2.real - c1.imag * c2.imag;
+    res.imag = c1.real * c2.imag + c1.imag * c2.real;
+    return res;
 }
 
 void HorizontalButterflies(in ivec2 pixel_pos)
@@ -76,7 +71,6 @@ void HorizontalButterflies(in ivec2 pixel_pos)
         Complex b = Complex(b_.x, b_.y);
         Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-        // Buttefly operation
         Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
         subgroupMemoryBarrierImage();
         imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
@@ -90,7 +84,6 @@ void HorizontalButterflies(in ivec2 pixel_pos)
         Complex b = Complex(b_.x, b_.y);
         Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-        // Buttefly operation
         Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
         subgroupMemoryBarrierImage();
         imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
@@ -109,10 +102,8 @@ void VerticalButterfiles(in ivec2 pixel_pos)
         Complex b = Complex(b_.x, b_.y);
         Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-        // Buttefly operation
         Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
         subgroupMemoryBarrierImage();
-
         imageStore(u_pingpong1, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
     }
     else
@@ -124,10 +115,8 @@ void VerticalButterfiles(in ivec2 pixel_pos)
         Complex b = Complex(b_.x, b_.y);
         Complex twiddle_factor = Complex(butterfly_precomp.x, butterfly_precomp.y);
 
-        // Buttefly operation
         Complex result = complex_add(a, complex_multiply(twiddle_factor, b));
         subgroupMemoryBarrierImage();
-
         imageStore(u_pingpong0, pixel_pos, vec4(result.real, result.imag, 0.f, 1.f));
     }
 }

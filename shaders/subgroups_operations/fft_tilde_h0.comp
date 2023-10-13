@@ -1,7 +1,7 @@
 #version 460 core
 
 #define PI 3.14159265358979f
-#define g 9.81f
+#define GRAVITY 9.81f
 
 layout (local_size_x = 32, local_size_y = 32) in;
 
@@ -9,78 +9,56 @@ layout (binding = 0, rgba32f) uniform image2D tilde_h0_k;
 layout (binding = 1, rgba32f) uniform image2D tilde_h0_minus_k;
 layout (std140, binding = 2) readonly buffer InputRandom
 {
-        vec4 data[];
+    vec4 data[];
 }
 input_random;
 
-float nrand( vec2 n )
+layout (std140, binding = 3) uniform FFTParametersUbo
 {
-    return fract(sin(dot(n.xy, vec2(12.9898, 78.233)))* 43758.5453);
+    float amplitude;
+    float len;
+    uint  grid_size;
+    vec2  wind;
 }
-
-float n8rand( vec2 n )
-{
-    float t = 1; // fract( iTime );
-    float nrnd0 = nrand( n + 0.07*t );
-    float nrnd1 = nrand( n + 0.11*t );
-    float nrnd2 = nrand( n + 0.13*t );
-    float nrnd3 = nrand( n + 0.17*t );
-
-    float nrnd4 = nrand( n + 0.19*t );
-    float nrnd5 = nrand( n + 0.23*t );
-    float nrnd6 = nrand( n + 0.29*t );
-    float nrnd7 = nrand( n + 0.31*t );
-
-    return (nrnd0+nrnd1+nrnd2+nrnd3+nrnd4+nrnd5+nrnd6+nrnd7) / 8.0;
-}
+input_params;
 
 float SuppressionFactor(float k_magnitude_sq)
 {
-        float u_SuppressLength = 0.1;
-        return exp(-k_magnitude_sq * u_SuppressLength * u_SuppressLength);
+    float suppress_length = 0.1;
+    return exp(-k_magnitude_sq * suppress_length * suppress_length);
 }
 
-// Phillips Spectrum, Section 4.3, Eq 40
-float PhillipsSpectrum(vec2 k, float k_magnitude_sq, float L_phillips)
+float PhillipsSpectrum(vec2 k, float k_magnitude_sq, float l_phillips, vec2 wind_direction)
 {
-        float u_Amplitude = 2.0;
-        vec2 u_WindDirection = normalize(vec2(1.0, 1.0));
-        return u_Amplitude * ((exp(-1.0 / (k_magnitude_sq * L_phillips * L_phillips)) * pow(dot(normalize(k), u_WindDirection), 2))
-                * SuppressionFactor(k_magnitude_sq)) / (k_magnitude_sq * k_magnitude_sq);
+    return input_params.amplitude
+            * ((exp(-1.0 / (k_magnitude_sq * l_phillips * l_phillips))
+            * pow(dot(normalize(k), wind_direction), 2))
+            * SuppressionFactor(k_magnitude_sq))
+            / (k_magnitude_sq * k_magnitude_sq);
 }
 
 void main()
 {
-        int u_N = 256;
-        int u_L = 1000;
-        float u_WindSpeed = 80.0;
+    vec2 wind_direction = normalize(input_params.wind);
+    float wind_speed = length(input_params.wind);
 
-        vec2 pos = vec2(gl_GlobalInvocationID.xy) - (u_N / 2.0);
-        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+    vec2 pos = vec2(gl_GlobalInvocationID.xy) - (input_params.grid_size / 2.0);
+    ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
+    vec2 k = vec2((2.0 * PI * pos.x) / input_params.len, (2.0 * PI * pos.y) / input_params.len);
 
-        // Wavevector, Section 4.3, Eq 36
-        vec2 k = vec2((2.0 * PI * pos.x) / u_L, (2.0 * PI * pos.y) / u_L);
+    float k_magnitude = length(k);
+    if (k_magnitude < 0.00001)
+        k_magnitude = 0.00001;
 
-        float k_magnitude = length(k);
-        if (k_magnitude < 0.00001)	k_magnitude = 0.00001;
+    float l_phillips = (wind_speed * wind_speed) / GRAVITY;
 
-        // Largest possible waves arising from a continuous wind of speed wind_speed, Section 4.3, after Eq 40
-        float L_phillips = (u_WindSpeed * u_WindSpeed) / g;
+    uint idx = pixel_pos.x  + pixel_pos.y * input_params.grid_size;
+    vec4 rnd = input_random.data[idx];
 
-        //vec4 rnd = imageLoad(gaussian_random, pixel_pos);
-        uint idx = pixel_pos.x  + pixel_pos.y * u_N;
-        vec4 rnd = input_random.data[idx];
+    float h0_k = clamp(sqrt(PhillipsSpectrum(k, k_magnitude * k_magnitude, l_phillips, wind_direction) / 2.0), -4000.0, 4000.0);
+    float h0_minus_k = clamp(sqrt(PhillipsSpectrum(-k, k_magnitude * k_magnitude, l_phillips, wind_direction) / 2.0), -4000.0, 4000.0);
 
-
-        // Section 4.4, Eq 42
-        float h0_k = clamp(sqrt(PhillipsSpectrum(k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
-        float h0_minus_k = clamp(sqrt(PhillipsSpectrum(-k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
-
-        //vec4 rnd = {1.0f, 1.0f, 1.0f, 1.0f}; //GaussianRandom();
-        //vec4 rnd = {n8rand(pos), n8rand(pos), n8rand(pos), n8rand(pos)};
-
-
-        imageStore(tilde_h0_k, pixel_pos, vec4(rnd.xy * h0_k, 0.0, 1.0));
-        imageStore(tilde_h0_minus_k, pixel_pos, vec4(rnd.zw * h0_minus_k, 0.0, 1.0));
+    imageStore(tilde_h0_k, pixel_pos, vec4(rnd.xy * h0_k, 0.0, 1.0));
+    imageStore(tilde_h0_minus_k, pixel_pos, vec4(rnd.zw * h0_minus_k, 0.0, 1.0));
 }

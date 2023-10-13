@@ -66,10 +66,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void update_uniform_buffers();
 
-	float               phillips_spectrum(int32_t n, int32_t m, float sign);
-	std::complex<float> hTilde_0(uint32_t n, uint32_t m, float sign);
-	std::complex<float> rndGaussian();
-	std::complex<float> calculate_weight(uint32_t x, uint32_t n);
+	glm::vec2 rndGaussian();
 
 	struct Pipeline
 	{
@@ -101,11 +98,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(8) glm::vec2 wind;
 	};
 
-	struct FFTPage
-	{
-		alignas(4) int32_t page = {0u};
-	};
-
 	struct FFTInvert
 	{
 		alignas(4) int32_t page_idx   = {-1};
@@ -125,16 +117,14 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec2 wind      = {100.0f, -100.0f};
 	} ui;
 
-	uint32_t                           grid_size      = {DISPLACEMENT_MAP_DIM};
-	std::unique_ptr<vkb::core::Buffer> camera_ubo     = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_params_ubo = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_time_ubo   = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_page_ubo   = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo = {VK_NULL_HANDLE};
+	uint32_t                           grid_size          = {DISPLACEMENT_MAP_DIM};
+	std::unique_ptr<vkb::core::Buffer> camera_ubo         = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_params_ubo     = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_time_ubo       = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo     = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer = {VK_NULL_HANDLE};
 
-	std::vector<std::complex<float>> h_tilde_0;
-	std::vector<std::complex<float>> h_tilde_0_conj;
-	std::vector<std::complex<float>> weights;
+	std::vector<glm::vec4> input_random;
 
 	struct FBAttachment
 	{
@@ -152,17 +142,16 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	uint32_t log_2_N;
 
-	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer = {VK_NULL_HANDLE};
-
 	struct
 	{
-		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0      = {VK_NULL_HANDLE};
-		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj = {VK_NULL_HANDLE};
-		std::unique_ptr<vkb::core::Buffer> fft_input_weight       = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dx      = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy      = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz      = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment>      fft_displacement       = {VK_NULL_HANDLE};
+		std::unique_ptr<vkb::core::Buffer> fft_input_random;
+		std::unique_ptr<FBAttachment>      fft_input_htilde0;
+		std::unique_ptr<FBAttachment>      fft_input_htilde0_conj;
+
+		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dx;
+		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dy;
+		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dz;
+		std::unique_ptr<FBAttachment> fft_displacement;
 	} fft_buffers;
 
 	struct
