@@ -259,6 +259,11 @@ void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
     }
 }
 
+void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	drawer.checkbox("Sort instances", &sort_instances);
+}
+
 void OITLinkedLists::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -332,8 +337,9 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants = {};
 	constants.projection = camera.matrices.perspective;
 	constants.view = camera.matrices.view;
+	constants.sort_instances = sort_instances ? 1U : 0U;
     constants.fragment_max_count = fragment_max_count;
-    constants.unused = glm::uvec3(0);
+    constants.unused = glm::uvec2(0);
 	scene_constants->convert_and_update(constants);
 }
 
@@ -428,10 +434,7 @@ void OITLinkedLists::render(float delta_time)
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit_info, VK_NULL_HANDLE));
 	ApiVulkanSample::submit_frame();
 
-	if (camera.updated)
-	{
-		update_scene_constants();
-	}
+	update_scene_constants();
 }
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists()

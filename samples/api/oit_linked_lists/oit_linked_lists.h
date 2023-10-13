@@ -31,6 +31,7 @@ class OITLinkedLists : public ApiVulkanSample
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
 	void load_assets();
@@ -60,7 +61,8 @@ class OITLinkedLists : public ApiVulkanSample
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
-        glm::uvec3 unused;
+        glm::uvec2 unused;
+		glm::uint sort_instances;
         glm::uint fragment_max_count;
 	};
 
@@ -92,6 +94,8 @@ class OITLinkedLists : public ApiVulkanSample
     VkPipelineLayout pipeline_layout;
     VkPipeline gather_pipeline;
     VkPipeline combine_pipeline;
+
+	int32_t sort_instances = true;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

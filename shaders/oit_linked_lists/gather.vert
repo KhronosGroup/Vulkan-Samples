@@ -24,7 +24,8 @@ layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec3 unused;
+	uvec2 unused;
+	uint sortInstances;
 	uint fragmentMaxCount;
 } sceneConstants;
 
