@@ -7,6 +7,11 @@ layout (local_size_x = 32, local_size_y = 32) in;
 
 layout (binding = 0, rgba32f) uniform image2D tilde_h0_k;
 layout (binding = 1, rgba32f) uniform image2D tilde_h0_minus_k;
+layout (std140, binding = 2) readonly buffer InputRandom
+{
+        vec4 data[];
+}
+input_random;
 
 float nrand( vec2 n )
 {
@@ -51,6 +56,8 @@ void main()
         float u_WindSpeed = 80.0;
 
         vec2 pos = vec2(gl_GlobalInvocationID.xy) - (u_N / 2.0);
+        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+
 
         // Wavevector, Section 4.3, Eq 36
         vec2 k = vec2((2.0 * PI * pos.x) / u_L, (2.0 * PI * pos.y) / u_L);
@@ -61,14 +68,19 @@ void main()
         // Largest possible waves arising from a continuous wind of speed wind_speed, Section 4.3, after Eq 40
         float L_phillips = (u_WindSpeed * u_WindSpeed) / g;
 
+        //vec4 rnd = imageLoad(gaussian_random, pixel_pos);
+        uint idx = pixel_pos.x  + pixel_pos.y * u_N;
+        vec4 rnd = input_random.data[idx];
+
+
         // Section 4.4, Eq 42
         float h0_k = clamp(sqrt(PhillipsSpectrum(k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
         float h0_minus_k = clamp(sqrt(PhillipsSpectrum(-k, k_magnitude * k_magnitude, L_phillips) / 2.0), -4000.0, 4000.0);
 
         //vec4 rnd = {1.0f, 1.0f, 1.0f, 1.0f}; //GaussianRandom();
-        vec4 rnd = {n8rand(pos), n8rand(pos), n8rand(pos), n8rand(pos)};
+        //vec4 rnd = {n8rand(pos), n8rand(pos), n8rand(pos), n8rand(pos)};
 
-        ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+
         imageStore(tilde_h0_k, pixel_pos, vec4(rnd.xy * h0_k, 0.0, 1.0));
         imageStore(tilde_h0_minus_k, pixel_pos, vec4(rnd.zw * h0_minus_k, 0.0, 1.0));
 }

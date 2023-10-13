@@ -156,7 +156,6 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct
 	{
-<<<<<<< HEAD
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0      = {VK_NULL_HANDLE};
 		std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj = {VK_NULL_HANDLE};
 		std::unique_ptr<vkb::core::Buffer> fft_input_weight       = {VK_NULL_HANDLE};
@@ -164,19 +163,6 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dy      = {VK_NULL_HANDLE};
 		std::unique_ptr<FBAttachment>      fft_tilde_h_kt_dz      = {VK_NULL_HANDLE};
 		std::unique_ptr<FBAttachment>      fft_displacement       = {VK_NULL_HANDLE};
-=======
-		// std::unique_ptr<vkb::core::Buffer> fft_input_htilde0;
-		// std::unique_ptr<vkb::core::Buffer> fft_input_htilde0_conj;
-		// std::unique_ptr<vkb::core::Buffer> fft_input_weight;
-
-		std::unique_ptr<FBAttachment> fft_input_htilde0;
-		std::unique_ptr<FBAttachment> fft_input_htilde0_conj;
-
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dx;
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dy;
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dz;
-		std::unique_ptr<FBAttachment> fft_displacement;
->>>>>>> e005a65 (Add tilde_h_0 shader)
 	} fft_buffers;
 
 	struct

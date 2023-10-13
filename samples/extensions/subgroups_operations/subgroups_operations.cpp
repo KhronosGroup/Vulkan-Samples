@@ -183,22 +183,19 @@ void SubgroupsOperations::build_compute_command_buffer()
 	VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
 
-	/*
 	if (compute.queue_family_index != ocean.graphics_queue_family_index)
 	{
+		VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
+		memory_barrier.srcAccessMask         = 0u;
+		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
+		memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
+		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
+		memory_barrier.buffer                = fft_buffers.fft_input_random->get_handle();
+		memory_barrier.offset                = 0u;
+		memory_barrier.size                  = fft_buffers.fft_input_random->get_size();
 
-	    VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-	    memory_barrier.srcAccessMask         = 0u;
-	    memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
-	    memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
-	    memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
-	    memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
-	    memory_barrier.offset                = 0u;
-	    memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
-
-	    vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
+		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
 	}
-	*/
 
 	// buttle fly texture
 	{
@@ -323,6 +320,7 @@ void SubgroupsOperations::create_initial_tildas()
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u),
 	};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
@@ -349,12 +347,14 @@ void SubgroupsOperations::create_initial_tildas()
 	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_input_htilde0);
 	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_input_htilde0_conj);
 
-	VkDescriptorImageInfo htilde_0_descriptor      = create_fb_descriptor(*fft_buffers.fft_input_htilde0);
-	VkDescriptorImageInfo htilde_conj_0_descriptor = create_fb_descriptor(*fft_buffers.fft_input_htilde0_conj);
+	VkDescriptorImageInfo  htilde_0_descriptor      = create_fb_descriptor(*fft_buffers.fft_input_htilde0);
+	VkDescriptorImageInfo  htilde_conj_0_descriptor = create_fb_descriptor(*fft_buffers.fft_input_htilde0_conj);
+	VkDescriptorBufferInfo input_random_descriptor  = create_descriptor(*fft_buffers.fft_input_random);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &htilde_0_descriptor),
 	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &htilde_conj_0_descriptor),
+	    vkb::initializers::write_descriptor_set(initial_tildas.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2u, &input_random_descriptor),
 	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
@@ -503,7 +503,7 @@ std::complex<float> SubgroupsOperations::calculate_weight(uint32_t x, uint32_t n
 	    glm::cos(pi2 * x / n), glm::sin(pi2 * x / n)};
 }
 
-std::complex<float> SubgroupsOperations::rndGaussian()
+glm::vec2 SubgroupsOperations::rndGaussian()
 {
 	float x1, x2, w;
 	auto  rndVal = []() -> float {
@@ -519,7 +519,7 @@ std::complex<float> SubgroupsOperations::rndGaussian()
 		w  = x1 * x1 + x2 * x2;
 	} while (w >= 1.0f);
 	w = glm::sqrt((-2.0f * glm::log(w)) / w);
-	return {x1 * w, x2 * w};
+	return glm::vec2{x1 * w, x2 * w};
 }
 
 std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m, float sign)
@@ -527,7 +527,7 @@ std::complex<float> SubgroupsOperations::hTilde_0(uint32_t n, uint32_t m, float 
 	std::complex<float> rnd{1.0f, 1.0f};        // rndGaussian();
 	// std::complex<float> rnd = rndGaussian();
 
-	return rnd * glm::sqrt(phillips_spectrum(n, m, sign) / 2.0f);
+	// return rnd * glm::sqrt(phillips_spectrum(n, m, sign) / 2.0f);
 }
 
 void SubgroupsOperations::prepare_uniform_buffers()
