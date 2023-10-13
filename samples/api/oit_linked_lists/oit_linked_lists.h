@@ -34,6 +34,7 @@ class OITLinkedLists : public ApiVulkanSample
 
   private:
 	void load_assets();
+	void create_gather_render_pass();
 	void create_resources();
 	void create_descriptors();
 	void create_pipelines();
@@ -77,6 +78,8 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> fragment_buffer;
     glm::uint fragment_buffer_size = 0U;
 	std::unique_ptr<vkb::core::Buffer> atomic_counter_buffer;
+	VkRenderPass gather_render_pass = VK_NULL_HANDLE;
+	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
     VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
