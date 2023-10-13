@@ -274,13 +274,13 @@ void OITLinkedLists::build_command_buffers()
                     draw_model(object, draw_cmd_buffers[i], kObjectCount);
                 }
 
-                //VkImageSubresourceRange subresource_range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-                //vkb::image_layout_transition(
-                //    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
-                //    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                //    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                //    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
-                //    subresource_range);
+                VkImageSubresourceRange subresource_range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
+                vkb::image_layout_transition(
+                    draw_cmd_buffers[i], linked_list_head_image->get_handle(),
+                    VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                    VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                    VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_GENERAL,
+                    subresource_range);
 
                 // Combine pass
                 {
@@ -343,7 +343,7 @@ void OITLinkedLists::fill_object_data()
 				desc[object_index].color.r = get_random_float();
 				desc[object_index].color.g = get_random_float();
 				desc[object_index].color.b = get_random_float();
-				desc[object_index].color.a = get_random_float() * 0.5f + 0.10f;
+				desc[object_index].color.a = get_random_float() * 0.8f + 0.2f;
 			}
 		}
 	}
