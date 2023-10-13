@@ -17,9 +17,9 @@
 
 #pragma once
 
+#include "api_vulkan_sample.h"
 #include "rendering/render_pipeline.h"
 #include "scene_graph/components/camera.h"
-#include "api_vulkan_sample.h"
 
 class OITLinkedLists : public ApiVulkanSample
 {
@@ -47,23 +47,23 @@ class OITLinkedLists : public ApiVulkanSample
   private:
 	enum : uint32_t
 	{
-		kInstanceRowCount = 4,
+		kInstanceRowCount    = 4,
 		kInstanceColumnCount = 4,
-		kInstanceLayerCount = 4,
-		kInstanceCount = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount,
+		kInstanceLayerCount  = 4,
+		kInstanceCount       = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount,
 
-        kFragmentsPerPixelAverage = 4,
+		kFragmentsPerPixelAverage = 4,
 
 		kLinkedListEndSentinel = 0xFFFFFFFFU,
 	};
 
 	struct SceneConstants
 	{
-		glm::mat4 projection;
-		glm::mat4 view;
-        glm::uvec2 unused;
-		glm::uint sort_instances;
-        glm::uint fragment_max_count;
+		glm::mat4  projection;
+		glm::mat4  view;
+		glm::uvec2 unused;
+		glm::uint  sort_instances;
+		glm::uint  fragment_max_count;
 	};
 
 	struct Instance
@@ -78,25 +78,24 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
 	std::unique_ptr<vkb::core::Buffer> instance_data;
 
-    std::unique_ptr<vkb::core::Image> linked_list_head_image;
-    std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
-	std::unique_ptr<vkb::core::Buffer> fragment_buffer;
-    glm::uint fragment_max_count = 0U;
-	std::unique_ptr<vkb::core::Buffer> fragment_counter;
+	std::unique_ptr<vkb::core::Image>     linked_list_head_image;
+	std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
+	std::unique_ptr<vkb::core::Buffer>    fragment_buffer;
+	glm::uint                             fragment_max_count = 0U;
+	std::unique_ptr<vkb::core::Buffer>    fragment_counter;
 
-	VkRenderPass gather_render_pass = VK_NULL_HANDLE;
+	VkRenderPass  gather_render_pass = VK_NULL_HANDLE;
 	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;
 
-    VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
-	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
-    VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+	VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+	VkDescriptorPool      descriptor_pool       = VK_NULL_HANDLE;
+	VkDescriptorSet       descriptor_set        = VK_NULL_HANDLE;
 
-    VkPipelineLayout pipeline_layout;
-    VkPipeline gather_pipeline;
-    VkPipeline combine_pipeline;
+	VkPipelineLayout pipeline_layout;
+	VkPipeline       gather_pipeline;
+	VkPipeline       combine_pipeline;
 
 	int32_t sort_instances = true;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
-
