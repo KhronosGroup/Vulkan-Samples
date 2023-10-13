@@ -244,15 +244,31 @@ void OITLinkedLists::build_command_buffers()
         {
             vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
             {
-                VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-                vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+                // Gather pass
+                {
+                    VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+                    vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-                VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-                vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+                    VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+                    vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-                vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
-                vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
-                draw_model(object, draw_cmd_buffers[i], kObjectCount);
+                    vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
+                    vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+                    draw_model(object, draw_cmd_buffers[i], kObjectCount);
+                }
+
+                // Combine pass
+                {
+                    VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+                    vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+
+                    VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+                    vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+
+                    vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
+                    vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+                    vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+                }
 
                 draw_ui(draw_cmd_buffers[i]);
             }
