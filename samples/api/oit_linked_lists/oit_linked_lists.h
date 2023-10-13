@@ -34,7 +34,7 @@ class OITLinkedLists : public ApiVulkanSample
 
   private:
 	void load_assets();
-	void create_gather_render_pass();
+	void create_gather_pass_objects();
 	void create_resources();
 	void create_descriptors();
 	void create_pipelines();
@@ -72,21 +72,27 @@ class OITLinkedLists : public ApiVulkanSample
 
   private:
 	std::unique_ptr<vkb::sg::SubMesh> object;
+
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
-	std::unique_ptr<vkb::core::Buffer> instance_desc;
+	std::unique_ptr<vkb::core::Buffer> instance_data;
+
     std::unique_ptr<vkb::core::Image> linked_list_head_image;
     std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
 	std::unique_ptr<vkb::core::Buffer> fragment_buffer;
     glm::uint fragment_max_count = 0U;
-	std::unique_ptr<vkb::core::Buffer> atomic_counter_buffer;
+	std::unique_ptr<vkb::core::Buffer> fragment_counter;
+
 	VkRenderPass gather_render_pass = VK_NULL_HANDLE;
 	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;
-	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
+
     VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
+	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
     VkDescriptorSet descriptor_set = VK_NULL_HANDLE;
+
     VkPipelineLayout pipeline_layout;
     VkPipeline gather_pipeline;
     VkPipeline combine_pipeline;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
+

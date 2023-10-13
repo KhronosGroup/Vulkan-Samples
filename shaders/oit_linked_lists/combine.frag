@@ -48,6 +48,7 @@ layout (location = 0) out vec4 outFragColor;
 void main()
 {
     // Reset the atomic counter for the next frame
+	// Note that we don't care about atomicity here, as all threads will write the same value
     fragmentCounter.value = 0;
 
     // Get the first fragment index in the linked list

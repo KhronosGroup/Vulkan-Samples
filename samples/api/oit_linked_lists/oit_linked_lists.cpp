@@ -35,11 +35,11 @@ OITLinkedLists::~OITLinkedLists()
     vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	vkDestroyFramebuffer(get_device().get_handle(), gather_framebuffer, nullptr);
 	vkDestroyRenderPass(get_device().get_handle(), gather_render_pass, nullptr);
-    atomic_counter_buffer.reset();
+    fragment_counter.reset();
     fragment_buffer.reset();
     linked_list_head_image_view.reset();
     linked_list_head_image.reset();
-	instance_desc.reset();
+	instance_data.reset();
 	scene_constants.reset();
 	object.reset();
 }
@@ -57,12 +57,13 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
 	load_assets();
-	create_gather_render_pass();
+
+	create_gather_pass_objects();
 	create_resources();
 	create_descriptors();
     create_pipelines();
-	build_command_buffers();
 
+	build_command_buffers();
 	update_scene_constants();
 	fill_instance_data();
 	clear_resources();
@@ -76,7 +77,7 @@ void OITLinkedLists::load_assets()
 	object = load_model("scenes/geosphere.gltf");
 }
 
-void OITLinkedLists::create_gather_render_pass()
+void OITLinkedLists::create_gather_pass_objects()
 {
 	VkSubpassDescription subpass    = {};
 	subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -100,23 +101,21 @@ void OITLinkedLists::create_gather_render_pass()
 void OITLinkedLists::create_resources()
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	instance_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	instance_data = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
     {
-        VkExtent3D image_extent = {};
-        image_extent.width  = width;
-        image_extent.height = height;
-        image_extent.depth  = 1;
-
-        linked_list_head_image      = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
-        linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);;
+        const VkExtent3D image_extent = { width, height, 1 };
+        linked_list_head_image = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
+        linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
     }
+
     {
 		fragment_max_count = width * height * kFragmentsPerPixelAverage;
         const uint32_t fragment_buffer_size = sizeof(glm::uvec3) * fragment_max_count;
         fragment_buffer = std::make_unique<vkb::core::Buffer>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
     }
-	atomic_counter_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+
+	fragment_counter = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 
 void OITLinkedLists::create_descriptors()
@@ -149,16 +148,16 @@ void OITLinkedLists::create_descriptors()
         VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
         VkDescriptorBufferInfo scene_constants_descriptor = create_descriptor(*scene_constants);
-        VkDescriptorBufferInfo instance_desc_descriptor = create_descriptor(*instance_desc);
+        VkDescriptorBufferInfo instance_data_descriptor = create_descriptor(*instance_data);
         VkDescriptorImageInfo linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
         VkDescriptorBufferInfo fragment_buffer_descriptor = create_descriptor(*fragment_buffer);
-        VkDescriptorBufferInfo atomic_counter_buffer_descriptor = create_descriptor(*atomic_counter_buffer);
+        VkDescriptorBufferInfo fragment_counter_descriptor = create_descriptor(*fragment_counter);
         std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
-            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_desc_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_data_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
-            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &atomic_counter_buffer_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &fragment_counter_descriptor),
         };
         vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
     }
@@ -172,17 +171,7 @@ void OITLinkedLists::create_pipelines()
     }
 
     {
-        const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
-            vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
-        };
-        const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-            vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
-        };
         VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
-        vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
-        vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
-        vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
-        vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
 
         VkPipelineInputAssemblyStateCreateInfo input_assembly_state = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0, VK_FALSE);
 
@@ -201,8 +190,6 @@ void OITLinkedLists::create_pipelines()
         VkPipelineDynamicStateCreateInfo dynamicState = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_state_enables.data(), static_cast<uint32_t>(dynamic_state_enables.size()), 0);
 
         std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages{};
-        shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
-        shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
         VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(pipeline_layout, render_pass, 0);
         pipeline_create_info.pVertexInputState   = &vertex_input_state;
@@ -215,9 +202,24 @@ void OITLinkedLists::create_pipelines()
         pipeline_create_info.pDynamicState       = &dynamicState;
         pipeline_create_info.stageCount          = static_cast<uint32_t>(shader_stages.size());
         pipeline_create_info.pStages             = shader_stages.data();
-        pipeline_create_info.renderPass          = gather_render_pass;
 
         {
+			const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+				vkb::initializers::vertex_input_binding_description(0, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX),
+			};
+			const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+				vkb::initializers::vertex_input_attribute_description(0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+			};
+			vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+			vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+			vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+			vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+
+			shader_stages[0] = load_shader("oit_linked_lists/gather.vert", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_linked_lists/gather.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+			pipeline_create_info.renderPass          = gather_render_pass;
+
             VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &gather_pipeline));
         }
 
@@ -371,7 +373,7 @@ void OITLinkedLists::fill_instance_data()
 		}
 	}
 
-	instance_desc->convert_and_update(instances);
+	instance_data->convert_and_update(instances);
 }
 
 void OITLinkedLists::clear_resources()
@@ -383,7 +385,7 @@ void OITLinkedLists::clear_resources()
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(command_buffer, &command_buffer_begin_info));
 	{
-		vkCmdFillBuffer(command_buffer, atomic_counter_buffer->get_handle(), 0, sizeof(glm::uint), 0);
+		vkCmdFillBuffer(command_buffer, fragment_counter->get_handle(), 0, sizeof(glm::uint), 0);
 
         VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
         vkb::image_layout_transition(
@@ -436,3 +438,4 @@ std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists()
 {
 	return std::make_unique<OITLinkedLists>();
 }
+
