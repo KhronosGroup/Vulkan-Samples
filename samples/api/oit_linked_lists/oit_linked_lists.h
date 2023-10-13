@@ -48,12 +48,15 @@ class OITLinkedLists : public ApiVulkanSample
 		kObjectColumnCount = 4,
 		kObjectLayerCount = 4,
 		kObjectCount = kObjectRowCount * kObjectColumnCount * kObjectLayerCount,
+
+        kFragmentsPerPixelAverage = 8,
 	};
 
 	struct SceneConstants
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
+        glm::uvec4 parameters;
 	};
 
 	struct ObjectDesc
@@ -66,6 +69,11 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::sg::SubMesh> object;
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
 	std::unique_ptr<vkb::core::Buffer> object_desc;
+    std::unique_ptr<vkb::core::Image> linked_list_head_image;
+    std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
+	std::unique_ptr<vkb::core::Buffer> fragment_buffer;
+    glm::uint fragment_buffer_size = 0U;
+	std::unique_ptr<vkb::core::Buffer> atomic_counter_buffer;
 	VkDescriptorPool descriptor_pool = VK_NULL_HANDLE;
     VkDescriptorSetLayout descriptor_set_layout = VK_NULL_HANDLE;
     VkDescriptorSet descriptor_set = VK_NULL_HANDLE;

@@ -22,11 +22,11 @@ layout(set = 0, binding = 0) uniform SceneConstants
 	mat4 view;
 	uvec4 parameters;
 } sceneConstants;
-layout(set = 0, binding = 1, r32ui) uniform uimage2D linkedListHeadTex;
-layout(set = 0, binding = 2) buffer FragmentBuffer {
+layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
+layout(set = 0, binding = 3) buffer FragmentBuffer {
 	uvec4 data[];
 } fragmentBuffer;
-layout(set = 0, binding = 3) buffer AtomicCounter {
+layout(set = 0, binding = 4) buffer AtomicCounter {
 	uint value;
 } atomicCounter;
 

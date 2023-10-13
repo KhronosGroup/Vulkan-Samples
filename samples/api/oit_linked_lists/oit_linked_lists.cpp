@@ -32,6 +32,10 @@ OITLinkedLists::~OITLinkedLists()
     vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 	vkDestroyDescriptorPool(get_device().get_handle(), descriptor_pool, VK_NULL_HANDLE);
     vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
+    atomic_counter_buffer.reset();
+    fragment_buffer.reset();
+    linked_list_head_image_view.reset();
+    linked_list_head_image.reset();
 	object_desc.reset();
 	scene_constants.reset();
 	object.reset();
@@ -71,6 +75,21 @@ void OITLinkedLists::create_resources()
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	object_desc = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(ObjectDesc) * kObjectCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
+    {
+        VkExtent3D image_extent = {};
+        image_extent.width  = width;
+        image_extent.height = height;
+        image_extent.depth  = 1;
+
+        linked_list_head_image = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
+        linked_list_head_image_view = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);;
+    }
+    {
+        fragment_buffer_size = sizeof(glm::uvec4) * width * height * kFragmentsPerPixelAverage;
+        fragment_buffer = std::make_unique<vkb::core::Buffer>(get_device(), fragment_buffer_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
+    }
+	atomic_counter_buffer = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(glm::uint), VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 }
 
 void OITLinkedLists::create_descriptors()
@@ -79,6 +98,9 @@ void OITLinkedLists::create_descriptors()
         std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
             vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0),
             vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 1),
+            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
+            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 3),
+            vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 4),
         };
         VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
         VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
@@ -87,6 +109,8 @@ void OITLinkedLists::create_descriptors()
     {
         std::vector<VkDescriptorPoolSize> pool_sizes = {
             vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
+            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1),
+            vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2),
         };
         const uint32_t num_descriptor_sets = 1;
         VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
@@ -99,9 +123,15 @@ void OITLinkedLists::create_descriptors()
 
         VkDescriptorBufferInfo scene_constants_descriptor = create_descriptor(*scene_constants);
         VkDescriptorBufferInfo object_desc_descriptor = create_descriptor(*object_desc);
+        VkDescriptorImageInfo linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+        VkDescriptorBufferInfo fragment_buffer_descriptor = create_descriptor(*fragment_buffer);
+        VkDescriptorBufferInfo atomic_counter_buffer_descriptor = create_descriptor(*atomic_counter_buffer);
         std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
             vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &object_desc_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
+            vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &atomic_counter_buffer_descriptor),
         };
         vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
     }
@@ -213,9 +243,10 @@ void OITLinkedLists::build_command_buffers()
 
 void OITLinkedLists::update_scene_constants()
 {
-	SceneConstants constants;
-	constants.projection       = camera.matrices.perspective;
-	constants.view             = camera.matrices.view;
+	SceneConstants constants = {};
+	constants.projection = camera.matrices.perspective;
+	constants.view = camera.matrices.view;
+    constants.parameters.x = fragment_buffer_size;
 	scene_constants->convert_and_update(constants);
 }
 
