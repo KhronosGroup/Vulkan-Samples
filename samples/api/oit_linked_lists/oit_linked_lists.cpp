@@ -225,7 +225,7 @@ void OITLinkedLists::create_gather_pass_objects(const uint32_t width, const uint
 void OITLinkedLists::create_fragment_resources(const uint32_t width, const uint32_t height)
 {
 	{
-		const VkExtent3D image_extent = { width, height, 1 };
+		const VkExtent3D image_extent = {width, height, 1};
 		linked_list_head_image        = std::make_unique<vkb::core::Image>(get_device(), image_extent, VK_FORMAT_R32_UINT, VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT, VMA_MEMORY_USAGE_GPU_ONLY, VK_SAMPLE_COUNT_1_BIT);
 		linked_list_head_image_view   = std::make_unique<vkb::core::ImageView>(*linked_list_head_image, VK_IMAGE_VIEW_TYPE_2D, VK_FORMAT_R32_UINT);
 	}
@@ -330,12 +330,12 @@ void OITLinkedLists::update_descriptors()
 	VkDescriptorBufferInfo            fragment_buffer_descriptor             = create_descriptor(*fragment_buffer);
 	VkDescriptorBufferInfo            fragment_counter_descriptor            = create_descriptor(*fragment_counter);
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets                  = {
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_data_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &fragment_counter_descriptor),
-	};
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_data_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
+        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &fragment_counter_descriptor),
+    };
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
@@ -480,4 +480,3 @@ std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists()
 {
 	return std::make_unique<OITLinkedLists>();
 }
-
