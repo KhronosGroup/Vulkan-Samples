@@ -28,6 +28,11 @@ OITLinkedLists::~OITLinkedLists()
 		return;
 	}
 
+	destroy_all_objects();
+}
+
+void OITLinkedLists::destroy_all_objects()
+{
 	vkDestroyPipeline(get_device().get_handle(), combine_pipeline, nullptr);
 	vkDestroyPipeline(get_device().get_handle(), gather_pipeline, nullptr);
 	vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
@@ -44,6 +49,20 @@ OITLinkedLists::~OITLinkedLists()
 	object.reset();
 }
 
+void OITLinkedLists::create_all_objects(const uint32_t width, const uint32_t height)
+{
+	load_assets();
+
+	create_gather_pass_objects(width, height);
+	create_resources(width, height);
+	create_descriptors();
+	create_pipelines();
+
+	update_scene_constants();
+	fill_instance_data();
+	clear_resources();
+}
+
 bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 {
 	if (!ApiVulkanSample::prepare(options))
@@ -56,19 +75,18 @@ bool OITLinkedLists::prepare(const vkb::ApplicationOptions &options)
 	camera.set_rotation({0.0f, 0.0f, 0.0f});
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
 
-	load_assets();
-
-	create_gather_pass_objects();
-	create_resources();
-	create_descriptors();
-	create_pipelines();
-
+	create_all_objects(width, height);
 	build_command_buffers();
-	update_scene_constants();
-	fill_instance_data();
-	clear_resources();
 
 	prepared = true;
+	return true;
+}
+
+bool OITLinkedLists::resize(const uint32_t width, const uint32_t height)
+{
+	destroy_all_objects();
+	create_all_objects(width, height);
+	ApiVulkanSample::resize(width, height);
 	return true;
 }
 
@@ -77,7 +95,7 @@ void OITLinkedLists::load_assets()
 	object = load_model("scenes/geosphere.gltf");
 }
 
-void OITLinkedLists::create_gather_pass_objects()
+void OITLinkedLists::create_gather_pass_objects(const uint32_t width, const uint32_t height)
 {
 	VkSubpassDescription subpass = {};
 	subpass.pipelineBindPoint    = VK_PIPELINE_BIND_POINT_GRAPHICS;
@@ -98,7 +116,7 @@ void OITLinkedLists::create_gather_pass_objects()
 	VK_CHECK(vkCreateFramebuffer(get_device().get_handle(), &framebuffer_create_info, nullptr, &gather_framebuffer));
 }
 
-void OITLinkedLists::create_resources()
+void OITLinkedLists::create_resources(const uint32_t width, const uint32_t height)
 {
 	scene_constants = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SceneConstants), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	instance_data   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(Instance) * kInstanceCount, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);

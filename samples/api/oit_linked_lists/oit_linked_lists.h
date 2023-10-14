@@ -28,15 +28,19 @@ class OITLinkedLists : public ApiVulkanSample
 	~OITLinkedLists();
 
 	bool prepare(const vkb::ApplicationOptions &options) override;
+	bool resize(const uint32_t width, const uint32_t height) override;
 	void render(float delta_time) override;
 	void build_command_buffers() override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
+	void create_all_objects(const uint32_t width, const uint32_t height);
+	void destroy_all_objects();
+
 	void load_assets();
-	void create_gather_pass_objects();
-	void create_resources();
+	void create_gather_pass_objects(const uint32_t width, const uint32_t height);
+	void create_resources(const uint32_t width, const uint32_t height);
 	void create_descriptors();
 	void create_pipelines();
 
@@ -52,7 +56,7 @@ class OITLinkedLists : public ApiVulkanSample
 		kInstanceLayerCount  = 4,
 		kInstanceCount       = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount,
 
-		kFragmentsPerPixelAverage = 4,
+		kFragmentsPerPixelAverage = 8,
 
 		kLinkedListEndSentinel = 0xFFFFFFFFU,
 	};
