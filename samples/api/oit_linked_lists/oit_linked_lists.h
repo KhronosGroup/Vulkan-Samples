@@ -35,18 +35,20 @@ class OITLinkedLists : public ApiVulkanSample
 	void on_update_ui_overlay(vkb::Drawer &drawer) override;
 
   private:
-	void create_all_objects(const uint32_t width, const uint32_t height);
-	void destroy_all_objects();
+	void create_sized_objects(const uint32_t width, const uint32_t height);
+	void destroy_sized_objects();
+	void create_gather_pass_objects(const uint32_t width, const uint32_t height);
+	void create_fragment_resources(const uint32_t width, const uint32_t height);
+	void clear_sized_resources();
 
 	void load_assets();
-	void create_gather_pass_objects(const uint32_t width, const uint32_t height);
-	void create_resources(const uint32_t width, const uint32_t height);
+	void create_constant_buffers();
 	void create_descriptors();
 	void create_pipelines();
 
+	void update_descriptors();
 	void update_scene_constants();
 	void fill_instance_data();
-	void clear_resources();
 
   private:
 	enum : uint32_t
@@ -85,8 +87,8 @@ class OITLinkedLists : public ApiVulkanSample
 	std::unique_ptr<vkb::core::Image>     linked_list_head_image;
 	std::unique_ptr<vkb::core::ImageView> linked_list_head_image_view;
 	std::unique_ptr<vkb::core::Buffer>    fragment_buffer;
+	std::unique_ptr<vkb::core::Buffer> fragment_counter;
 	glm::uint                             fragment_max_count = 0U;
-	std::unique_ptr<vkb::core::Buffer>    fragment_counter;
 
 	VkRenderPass  gather_render_pass = VK_NULL_HANDLE;
 	VkFramebuffer gather_framebuffer = VK_NULL_HANDLE;
@@ -103,3 +105,4 @@ class OITLinkedLists : public ApiVulkanSample
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
+
