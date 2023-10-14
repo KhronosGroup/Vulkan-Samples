@@ -501,19 +501,41 @@ void SubgroupsOperations::prepare_uniform_buffers()
 
 void SubgroupsOperations::generate_plane()
 {
-	std::vector<Vertex> plane_vertices;
+	uint32_t              vertex_count = grid_size + 1u;
+	std::vector<Vertex>   plane_vertices;
+	const float           tex_coord_scale = 64.0f;
+	std::vector<uint32_t> indices;
+	int32_t               half_grid_size = static_cast<int32_t>(grid_size / 2);
 
-	Vertex v;
-	v.pos = {10.0f, 10.0f, 0.0f};
-	plane_vertices.push_back(v);
-	v.pos = {-10.0f, 10.0f, 0.0f};
-	plane_vertices.push_back(v);
-	v.pos = {-10.0f, -10.0f, 0.0f};
-	plane_vertices.push_back(v);
-	v.pos = {10.0f, -10.0f, 0.0f};
-	plane_vertices.push_back(v);
+	for (int32_t z = -half_grid_size; z <= half_grid_size; ++z)
+	{
+		for (int32_t x = -half_grid_size; x <= half_grid_size; ++x)
+		{
+			float  u = static_cast<float>(x) / static_cast<float>(grid_size) + 0.5f;
+			float  v = static_cast<float>(z) / static_cast<float>(grid_size) + 0.5f;
+			Vertex vert;
+			vert.pos = glm::vec3(float(x), 0.0f, float(z));
+			vert.uv  = glm::vec2(u, v) * tex_coord_scale;
 
-	std::vector<uint32_t> indices = {0, 1, 3, 1, 2, 3};
+			plane_vertices.push_back(vert);
+		}
+	}
+
+	for (uint32_t y = 0u; y < grid_size; ++y)
+	{
+		for (uint32_t x = 0u; x < grid_size; ++x)
+		{
+			// tris 1
+			indices.push_back((vertex_count * y) + x);
+			indices.push_back((vertex_count * (y + 1u)) + x);
+			indices.push_back((vertex_count * y) + x + 1u);
+
+			// tris 2
+			indices.push_back((vertex_count * y) + x + 1u);
+			indices.push_back((vertex_count * (y + 1u)) + x);
+			indices.push_back((vertex_count * (y + 1u)) + x + 1u);
+		}
+	}
 
 	auto vertex_buffer_size = vkb::to_u32(plane_vertices.size() * sizeof(Vertex));
 	auto index_buffer_size  = vkb::to_u32(indices.size() * sizeof(uint32_t));
@@ -628,7 +650,8 @@ void SubgroupsOperations::create_pipelines()
 	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
 	    vkb::initializers::vertex_input_binding_description(0u, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)};
 	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
-	    vkb::initializers::vertex_input_attribute_description(0u, 0u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos))};
+	    vkb::initializers::vertex_input_attribute_description(0u, 0u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+	    vkb::initializers::vertex_input_attribute_description(0u, 1u, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv))};
 	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
 	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
 	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();

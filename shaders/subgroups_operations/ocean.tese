@@ -18,6 +18,9 @@
 
 layout(triangles) in;
 
+layout(location = 0) in vec3 inPostion[];
+layout(location = 1) in vec2 inUv[];
+
 layout (binding = 0) uniform Ubo 
 {
 	mat4 projection;
@@ -25,18 +28,31 @@ layout (binding = 0) uniform Ubo
 	mat4 model;
 } ubo;
 
+layout (binding = 1) uniform sampler2D fftDisplacementMap; 
+
+
+vec2 interpolate_2d(vec2 v0, vec2 v1, vec2 v2)
+{
+	return vec2(gl_TessCoord.x) * v0 + vec2(gl_TessCoord.y) * v1 + vec2(gl_TessCoord.z) * v2;
+}
+
+vec3 interpolate_3d(vec3 v0, vec3 v1, vec3 v2)
+{
+	return vec3(gl_TessCoord.x) * v0 + vec3(gl_TessCoord.y) * v1 + vec3(gl_TessCoord.z) * v2;
+}
 
 void main()
 {
-	vec4 p00 = gl_in[0].gl_Position;
-	vec4 p01 = gl_in[1].gl_Position;
-	vec4 p10 = gl_in[2].gl_Position;
-	vec4 p11 = gl_in[3].gl_Position;
 
-	vec4 p0 = mix(p00, p01, gl_TessCoord.x);
-	vec4 p1 = mix(p10, p11, gl_TessCoord.x);
+	vec3 world_pos = interpolate_3d(inPostion[0], inPostion[1], inPostion[2]);
 
-	vec4 p = mix(p0, p1, gl_TessCoord.y);
+	vec2 tex_coord = interpolate_2d(inUv[0], inUv[1], inUv[2]);
+	vec4 fft_texel = vec4(1.0f); // texture2D(fftDisplacementMap, tex_coord);
 
-	gl_Position = ubo.projection * ubo.view * ubo.model * p;
+	world_pos.y += fft_texel.y;
+	world_pos.x -= fft_texel.x;
+	world_pos.z -= fft_texel.z;
+
+	
+	gl_Position = ubo.projection * ubo.view * ubo.model * vec4(world_pos, 1.0f);
 }

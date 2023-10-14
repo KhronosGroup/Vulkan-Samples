@@ -18,16 +18,44 @@
 
 layout (vertices = 3) out;
 
+layout(location = 0) in vec3 inPostion[];
+layout(location = 1) in vec2 inUv[];
+
+layout(location = 0) out vec3 outPos[];
+layout(location = 1) out vec2 outUv[];
+
+layout (binding = 0) uniform CameraUbo 
+{
+    vec3 position;
+} cam;
+
+float get_tesselllation_level(float dist0, float dist1)
+{
+    float avg_dist = (dist0 + dist1) / 2.0f;
+
+    if (avg_dist <= 10.0f)
+        return 20.0f;
+    if (avg_dist <= 20.0f)
+        return 30.0f;
+    if (avg_dist <= 30.0f)
+        return 5.0f;
+
+    return 1.0f;
+}
+
 void main()
 {
-   if (gl_InvocationID == 0)
-   {
-       gl_TessLevelOuter[0] = 1.0f;
-       gl_TessLevelOuter[1] = 1.0f;
-       gl_TessLevelOuter[2] = 1.0f;
+    outPos[gl_InvocationID] = inPostion[gl_InvocationID];
+    outUv[gl_InvocationID] = inUv[gl_InvocationID];
 
-       gl_TessLevelInner[0] = 15.0f;
-   }
 
-   gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
+    float dist_cam_v0 = distance(cam.position, outPos[0]);
+    float dist_cam_v1 = distance(cam.position, outPos[1]);
+    float dist_cam_v2 = distance(cam.position, outPos[2]);
+
+    gl_TessLevelOuter[0] = get_tesselllation_level(dist_cam_v1, dist_cam_v2);
+    gl_TessLevelOuter[1] = get_tesselllation_level(dist_cam_v0, dist_cam_v2);
+    gl_TessLevelOuter[2] = get_tesselllation_level(dist_cam_v0, dist_cam_v1);
+
+    gl_TessLevelInner[0] = gl_TessLevelOuter[2];
 }

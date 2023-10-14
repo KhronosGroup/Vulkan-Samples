@@ -24,11 +24,6 @@
 
 class SubgroupsOperations : public ApiVulkanSample
 {
-	struct OceanVertex
-	{
-		glm::vec3 position;
-	};
-
   public:
 	SubgroupsOperations();
 	~SubgroupsOperations();
