@@ -138,6 +138,8 @@ std::vector<const char *> get_optimal_validation_layers(const std::vector<vk::La
 	return {};
 }
 
+Optional<uint32_t> HPPInstance::selected_gpu_index;
+
 namespace
 {
 bool enable_extension(const char                                 *required_ext_name,
@@ -413,6 +415,17 @@ vk::Instance HPPInstance::get_handle() const
 vkb::core::HPPPhysicalDevice &HPPInstance::get_suitable_gpu(vk::SurfaceKHR surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");
+
+	// A GPU can be explicitly selected via the command line (see plugins/gpu_selection.cpp), this overrides the below GPU selection algorithm
+	if (selected_gpu_index.has_value())
+	{
+		LOGI("Explicitly selecting GPU {}", selected_gpu_index.value());
+		if (selected_gpu_index.value() > gpus.size() - 1)
+		{
+			throw std::runtime_error("Selected GPU index is not within no. of available GPUs");
+		}
+		return *gpus[selected_gpu_index.value()];
+	}
 
 	// Find a discrete GPU
 	for (auto &gpu : gpus)

@@ -18,6 +18,7 @@
 #pragma once
 
 #include "common/helpers.h"
+#include "common/optional.h"
 #include "common/vk_common.h"
 
 namespace vkb
@@ -40,6 +41,11 @@ class Instance
 {
   public:
 	/**
+	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
+	 */
+	static Optional<uint32_t> selected_gpu_index;
+
+	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application
 	 * @param required_extensions The extensions requested to be enabled
@@ -48,9 +54,9 @@ class Instance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	Instance(const std::string &                           application_name,
+	Instance(const std::string                            &application_name,
 	         const std::unordered_map<const char *, bool> &required_extensions        = {},
-	         const std::vector<const char *> &             required_validation_layers = {},
+	         const std::vector<const char *>              &required_validation_layers = {},
 	         bool                                          headless                   = false,
 	         uint32_t                                      api_version                = VK_API_VERSION_1_0);
 
@@ -93,17 +99,17 @@ class Instance
 	const std::vector<const char *> &get_extensions();
 
 	/**
-	* @brief Returns a const ref to the properties of all requested layers in this instance
-	* @returns The VkLayerProperties for all requested layers in this instance
-	*/
+	 * @brief Returns a const ref to the properties of all requested layers in this instance
+	 * @returns The VkLayerProperties for all requested layers in this instance
+	 */
 	const std::vector<VkLayerProperties> &get_layer_properties();
 
 	/**
-	* @brief Finds layer properties for the layer with the given name
-	* @param layerName The layer to search for
-	* @param properties A reference to a VkLayerProperties struct to populate
-	* @returns True if the layer was found and populated, false otherwise
-	*/
+	 * @brief Finds layer properties for the layer with the given name
+	 * @param layerName The layer to search for
+	 * @param properties A reference to a VkLayerProperties struct to populate
+	 * @returns True if the layer was found and populated, false otherwise
+	 */
 	bool get_layer_properties(const char *layerName, VkLayerProperties &properties);
 
   private:
