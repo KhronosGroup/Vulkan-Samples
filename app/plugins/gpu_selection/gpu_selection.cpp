@@ -19,8 +19,8 @@
 
 #include <algorithm>
 
-#include "core/instance.h"
 #include "core/hpp_instance.h"
+#include "core/instance.h"
 
 namespace plugins
 {
@@ -41,7 +41,7 @@ void GpuSelection::init(const vkb::CommandParser &parser)
 	// @todo: required?
 	if (parser.contains(&selected_gpu_index))
 	{
-		vkb::Instance::selected_gpu_index = parser.as<uint32_t>(&selected_gpu_index);
+		vkb::Instance::selected_gpu_index          = parser.as<uint32_t>(&selected_gpu_index);
 		vkb::core::HPPInstance::selected_gpu_index = parser.as<uint32_t>(&selected_gpu_index);
 	}
 }
