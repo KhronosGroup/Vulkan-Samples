@@ -460,24 +460,6 @@ void Instance::query_gpus()
 	}
 }
 
-PhysicalDevice &Instance::get_first_gpu()
-{
-	assert(!gpus.empty() && "No physical devices were found on the system.");
-
-	// Find a discrete GPU
-	for (auto &gpu : gpus)
-	{
-		if (gpu->get_properties().deviceType == VK_PHYSICAL_DEVICE_TYPE_DISCRETE_GPU)
-		{
-			return *gpu;
-		}
-	}
-
-	// Otherwise just pick the first one
-	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus[0];
-}
-
 PhysicalDevice &Instance::get_suitable_gpu(VkSurfaceKHR surface)
 {
 	assert(!gpus.empty() && "No physical devices were found on the system.");

@@ -405,24 +405,6 @@ const std::vector<const char *> &HPPInstance::get_extensions()
 	return enabled_extensions;
 }
 
-vkb::core::HPPPhysicalDevice &HPPInstance::get_first_gpu()
-{
-	assert(!gpus.empty() && "No physical devices were found on the system.");
-
-	// Find a discrete GPU
-	for (auto &gpu : gpus)
-	{
-		if (gpu->get_properties().deviceType == vk::PhysicalDeviceType::eDiscreteGpu)
-		{
-			return *gpu;
-		}
-	}
-
-	// Otherwise just pick the first one
-	LOGW("Couldn't find a discrete physical device, picking default GPU");
-	return *gpus[0];
-}
-
 vk::Instance HPPInstance::get_handle() const
 {
 	return handle;

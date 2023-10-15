@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -74,12 +74,6 @@ class HPPInstance
 	HPPInstance &operator=(HPPInstance &&) = delete;
 
 	const std::vector<const char *> &get_extensions();
-
-	/**
-	 * @brief Tries to find the first available discrete GPU
-	 * @returns A valid physical device
-	 */
-	HPPPhysicalDevice &get_first_gpu();
 
 	vk::Instance get_handle() const;
 
