@@ -709,7 +709,6 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_time_ubo->convert_and_update(t);
 	camera_ubo->convert_and_update(ubo);
 	fft_params_ubo->convert_and_update(fft_ubo);
-	fft_time_ubo->convert_and_update(fftTime);
 	invert_fft_ubo->convert_and_update(invertFft);
 	tessellation_params_ubo->convert_and_update(tess_params);
 	camera_postion_ubo->convert_and_update(cam_pos);
@@ -856,10 +855,6 @@ void SubgroupsOperations::render(float delta_time)
 
 	update_uniform_buffers();
 	draw();
-
-	auto elapsed_time = static_cast<float>(timer.elapsed<vkb::Timer::Seconds>());
-	if (elapsed_time >= 1.0f)
-		timer.lap();
 }
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations()
