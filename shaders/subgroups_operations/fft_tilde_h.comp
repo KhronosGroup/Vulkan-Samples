@@ -98,7 +98,7 @@ void main()
     vec2 k = vec2((2.0 * PI * pos.x) / L, (2.0 * PI * pos.y) / L);
 
     float k_magnitude = length(k);
-    if (k_magnitude < 0.00001)	k_magnitude = 0.00001;
+    if (k_magnitude < 0.00001f)	k_magnitude = 0.00001f;
 
     // Dispersion relation, Eq 31, Section 4.2
     float w = sqrt(GRAVITY * k_magnitude);

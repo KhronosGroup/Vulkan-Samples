@@ -56,11 +56,10 @@ SubgroupsOperations::SubgroupsOperations()
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);
 
 	title       = "Subgroups operations";
-	camera.type = vkb::CameraType::LookAt;
+	camera.type = vkb::CameraType::FirstPerson;
 
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
-	camera.set_position({-2.0f, -2.25f, -29.0f});
-	camera.set_rotation({-24.0f, -7.0f, 0.0f});
+	camera.set_position({0.0f, 5.0f, 0.0f});
 }
 
 SubgroupsOperations::~SubgroupsOperations()
@@ -71,6 +70,8 @@ SubgroupsOperations::~SubgroupsOperations()
 		fft_buffers.fft_tilde_h_kt_dy->destroy(get_device().get_handle());
 		fft_buffers.fft_tilde_h_kt_dz->destroy(get_device().get_handle());
 		fft_buffers.fft_displacement->destroy(get_device().get_handle());
+		fft_buffers.fft_input_htilde0->destroy(get_device().get_handle());
+		fft_buffers.fft_input_htilde0_conj->destroy(get_device().get_handle());
 		butterfly_precomp.destroy(get_device().get_handle());
 
 		precompute.pipeline.destroy(get_device().get_handle());
@@ -78,6 +79,9 @@ SubgroupsOperations::~SubgroupsOperations()
 
 		tildas.pipeline.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), tildas.descriptor_set_layout, nullptr);
+
+		initial_tildas.pipeline.destroy(get_device().get_handle());
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), initial_tildas.descriptor_set_layout, nullptr);
 
 		fft_inversion.pipeline.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), fft_inversion.descriptor_set_layout, nullptr);
@@ -116,14 +120,15 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	// prepare grpahics pipeline
 	create_semaphore();
 	create_descriptor_set_layout();
-	create_descriptor_set();
-	create_pipelines();
 
 	create_initial_tildas();
 	create_tildas();
 	create_butterfly_texture();
 	create_fft();
 	create_fft_inversion();
+
+	create_descriptor_set();
+	create_pipelines();
 
 	build_compute_command_buffer();
 
@@ -179,23 +184,9 @@ void SubgroupsOperations::create_compute_command_buffer()
 
 void SubgroupsOperations::build_compute_command_buffer()
 {
-	// record command
+	// record compute command
 	VkCommandBufferBeginInfo begin_info = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(compute.command_buffer, &begin_info));
-
-	if (compute.queue_family_index != ocean.graphics_queue_family_index)
-	{
-		VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-		memory_barrier.srcAccessMask         = 0u;
-		memory_barrier.dstAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
-		memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
-		memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
-		memory_barrier.buffer                = fft_buffers.fft_input_random->get_handle();
-		memory_barrier.offset                = 0u;
-		memory_barrier.size                  = fft_buffers.fft_input_random->get_size();
-
-		vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
-	}
 
 	// buttle fly texture
 	{
@@ -264,28 +255,12 @@ void SubgroupsOperations::build_compute_command_buffer()
 	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
 	    }
 
-	    // fft inverse
-	    {
-	        vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
-	        vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
-	        vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
-	    }
-	*/
-	/*
-	    if (compute.queue_family_index != ocean.graphics_queue_family_index)
-	    {
-	        VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-	        memory_barrier.srcAccessMask         = VK_ACCESS_SHADER_WRITE_BIT;
-	        memory_barrier.dstAccessMask         = 0u;
-	        memory_barrier.srcQueueFamilyIndex   = compute.queue_family_index;
-	        memory_barrier.dstQueueFamilyIndex   = ocean.graphics_queue_family_index;
-	        memory_barrier.buffer                = fft_buffers.fft_input_htilde0->get_handle();
-	        memory_barrier.offset                = 0u;
-	        memory_barrier.size                  = fft_buffers.fft_input_htilde0->get_size();
-
-	        vkCmdPipelineBarrier(compute.command_buffer, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, 0u, 0u, nullptr, 1u, &memory_barrier, 0u, nullptr);
-	    }
-	*/
+	// fft inverse
+	{
+		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
+		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	}
 
 	VK_CHECK(vkEndCommandBuffer(compute.command_buffer));
 }
@@ -295,6 +270,11 @@ void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 	if (gpu.get_features().fillModeNonSolid)
 	{
 		gpu.get_mutable_requested_features().fillModeNonSolid = VK_TRUE;
+	}
+
+	if (gpu.get_features().vertexPipelineStoresAndAtomics)
+	{
+		gpu.get_mutable_requested_features().vertexPipelineStoresAndAtomics = VK_TRUE;
 	}
 
 	if (gpu.get_features().tessellationShader)
@@ -492,10 +472,13 @@ glm::vec2 SubgroupsOperations::rndGaussian()
 
 void SubgroupsOperations::prepare_uniform_buffers()
 {
-	camera_ubo     = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	fft_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	fft_time_ubo   = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-	invert_fft_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTInvert), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_ubo              = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	camera_postion_ubo      = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraPosition), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	fft_params_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	fft_time_ubo            = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	invert_fft_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTInvert), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	tessellation_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TessellationParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+
 	update_uniform_buffers();
 }
 
@@ -565,7 +548,7 @@ void SubgroupsOperations::create_semaphore()
 void SubgroupsOperations::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7u),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5u),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 7u)};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
@@ -578,7 +561,16 @@ void SubgroupsOperations::create_descriptor_set_layout()
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-	        0u)};
+	        0u),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        1u),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        2u),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        3u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
@@ -592,9 +584,16 @@ void SubgroupsOperations::create_descriptor_set()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &ocean.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &ocean.descriptor_set));
 
-	VkDescriptorBufferInfo            buffer_descriptor     = create_descriptor(*camera_ubo);
+	VkDescriptorBufferInfo buffer_descriptor              = create_descriptor(*camera_ubo);
+	VkDescriptorImageInfo  desplacement_descriptor        = create_fb_descriptor(*fft_buffers.fft_displacement);
+	VkDescriptorBufferInfo tessellation_params_descriptor = create_descriptor(*tessellation_params_ubo);
+	VkDescriptorBufferInfo camera_pos_buffer_descriptor   = create_descriptor(*camera_postion_ubo);
+
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor)};
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &desplacement_descriptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &tessellation_params_descriptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
@@ -687,6 +686,9 @@ void SubgroupsOperations::update_uniform_buffers()
 	ubo.view       = camera.matrices.view;
 	ubo.projection = camera.matrices.perspective;
 
+	CameraPosition cam_pos;
+	cam_pos.position = glm::vec4(camera.position, 0.0f);
+
 	FFTParametersUbo fft_ubo;
 	fft_ubo.amplitude = ui.amplitude;
 	fft_ubo.grid_size = grid_size;
@@ -697,10 +699,20 @@ void SubgroupsOperations::update_uniform_buffers()
 	invertFft.grid_size = grid_size;
 	invertFft.page_idx  = log_2_N % 2;
 
+	TessellationParams tess_params;
+	tess_params.displacement_scale = 0.5f;
+	tess_params.choppines          = 0.75f;
+
+	TimeUbo t;
+	t.time = float(timer.elapsed<vkb::Timer::Seconds>());
+
+	fft_time_ubo->convert_and_update(t);
 	camera_ubo->convert_and_update(ubo);
 	fft_params_ubo->convert_and_update(fft_ubo);
 	fft_time_ubo->convert_and_update(fftTime);
 	invert_fft_ubo->convert_and_update(invertFft);
+	tessellation_params_ubo->convert_and_update(tess_params);
+	camera_postion_ubo->convert_and_update(cam_pos);
 }
 
 void SubgroupsOperations::build_command_buffers()
@@ -725,19 +737,6 @@ void SubgroupsOperations::build_command_buffers()
 
 		VK_CHECK(vkBeginCommandBuffer(cmd_buff, &command_buffer_begin_info));
 
-		if (compute.queue_family_index != ocean.graphics_queue_family_index)
-		{
-			VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-			memory_barrier.dstAccessMask         = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			memory_barrier.srcQueueFamilyIndex   = compute.queue_family_index;
-			memory_barrier.dstQueueFamilyIndex   = ocean.graphics_queue_family_index;
-			memory_barrier.buffer                = ocean.grid.vertex->get_handle();
-			memory_barrier.offset                = 0u;
-			memory_barrier.size                  = ocean.grid.vertex->get_size();
-
-			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, 0, 0, nullptr, 1, &memory_barrier, 0, nullptr);
-		}
-
 		vkCmdBeginRenderPass(cmd_buff, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
@@ -761,18 +760,6 @@ void SubgroupsOperations::build_command_buffers()
 		draw_ui(cmd_buff);
 
 		vkCmdEndRenderPass(cmd_buff);
-
-		if (compute.queue_family_index != ocean.graphics_queue_family_index)
-		{
-			VkBufferMemoryBarrier memory_barrier = vkb::initializers::buffer_memory_barrier();
-			memory_barrier.dstAccessMask         = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-			memory_barrier.srcQueueFamilyIndex   = ocean.graphics_queue_family_index;
-			memory_barrier.dstQueueFamilyIndex   = compute.queue_family_index;
-			memory_barrier.buffer                = ocean.grid.vertex->get_handle();
-			memory_barrier.offset                = 0u;
-			memory_barrier.size                  = ocean.grid.vertex->get_size();
-			vkCmdPipelineBarrier(cmd_buff, VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 1, &memory_barrier, 0, nullptr);
-		}
 
 		VK_CHECK(vkEndCommandBuffer(cmd_buff));
 	}
@@ -826,21 +813,21 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 	if (drawer.header("Ocean settings"))
 
 	{
-		if (drawer.input_float("Amplitude", &ui.amplitude, 0.001f, 3u))
+		if (drawer.input_float("Amplitude", &ui.amplitude, 0.1f, 3u))
 		{
 			// update input for fft
 		}
-		if (drawer.input_float("Length", &ui.length, 0.1f, 1u))
+		if (drawer.input_float("Length", &ui.length, 10.f, 1u))
 		{
 			// update input for fft
 		}
 		if (drawer.header("Wind"))
 		{
-			if (drawer.input_float("X", &ui.wind.x, 0.5f, 2u))
+			if (drawer.input_float("X", &ui.wind.x, 10.f, 2u))
 			{
 				// update input for fft
 			}
-			if (drawer.input_float("Y", &ui.wind.y, 0.5f, 2u))
+			if (drawer.input_float("Y", &ui.wind.y, 10.f, 2u))
 			{
 				// update input for fft
 			}
@@ -864,9 +851,15 @@ void SubgroupsOperations::render(float delta_time)
 	{
 		return;
 	}
-	fftTime.time = delta_time;
+	if (!timer.is_running())
+		timer.start();
+
 	update_uniform_buffers();
 	draw();
+
+	auto elapsed_time = static_cast<float>(timer.elapsed<vkb::Timer::Seconds>());
+	if (elapsed_time >= 1.0f)
+		timer.lap();
 }
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations()
@@ -1012,10 +1005,14 @@ void SubgroupsOperations::create_fft()
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft.descriptor_set_axis_x));
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft.descriptor_set_axis_z));
 
+	VkPushConstantRange push_constant_range = vkb::initializers::push_constant_range(VK_SHADER_STAGE_COMPUTE_BIT, sizeof(int32_t), 0);
+
 	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
 	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 	compute_pipeline_layout_info.setLayoutCount             = 1u;
 	compute_pipeline_layout_info.pSetLayouts                = &fft.descriptor_set_layout;
+	compute_pipeline_layout_info.pushConstantRangeCount     = 1u;
+	compute_pipeline_layout_info.pPushConstantRanges        = &push_constant_range;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &fft.pipelines.horizontal.pipeline_layout));
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &fft.pipelines.vertical.pipeline_layout));

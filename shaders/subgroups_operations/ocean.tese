@@ -28,7 +28,13 @@ layout (binding = 0) uniform Ubo
 	mat4 model;
 } ubo;
 
-layout (binding = 1) uniform sampler2D fftDisplacementMap; 
+layout (binding = 1, rgba32f) uniform image2D fftDisplacementMap; 
+
+layout (binding = 2) uniform TessellationParams
+{
+	float choppines;
+	float displacement_scale;
+} tessParams;
 
 
 vec2 interpolate_2d(vec2 v0, vec2 v1, vec2 v2)
@@ -47,11 +53,11 @@ void main()
 	vec3 world_pos = interpolate_3d(inPostion[0], inPostion[1], inPostion[2]);
 
 	vec2 tex_coord = interpolate_2d(inUv[0], inUv[1], inUv[2]);
-	vec4 fft_texel = vec4(1.0f); // texture2D(fftDisplacementMap, tex_coord);
+	vec4 fft_texel =  imageLoad(fftDisplacementMap, ivec2(tex_coord));
 
-	world_pos.y += fft_texel.y;
-	world_pos.x -= fft_texel.x;
-	world_pos.z -= fft_texel.z;
+	world_pos.y += fft_texel.y * tessParams.displacement_scale;
+	world_pos.x -= fft_texel.x * tessParams.choppines;
+	world_pos.z -= fft_texel.z * tessParams.choppines;
 
 	
 	gl_Position = ubo.projection * ubo.view * ubo.model * vec4(world_pos, 1.0f);

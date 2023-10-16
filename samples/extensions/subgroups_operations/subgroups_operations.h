@@ -85,6 +85,17 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::mat4 model;
 	};
 
+	struct CameraPosition
+	{
+		alignas(16) glm::vec4 position;
+	};
+
+	struct TessellationParams
+	{
+		alignas(4) float choppines;
+		alignas(4) float displacement_scale;
+	};
+
 	struct FFTParametersUbo
 	{
 		alignas(4) float amplitude;
@@ -112,12 +123,14 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec2 wind      = {100.0f, -100.0f};
 	} ui;
 
-	uint32_t                           grid_size          = {DISPLACEMENT_MAP_DIM};
-	std::unique_ptr<vkb::core::Buffer> camera_ubo         = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_params_ubo     = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> fft_time_ubo       = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo     = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer = {VK_NULL_HANDLE};
+	uint32_t                           grid_size               = {DISPLACEMENT_MAP_DIM};
+	std::unique_ptr<vkb::core::Buffer> camera_postion_ubo      = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> tessellation_params_ubo = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_params_ubo          = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> fft_time_ubo            = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> invert_fft_ubo          = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> bit_reverse_buffer      = {VK_NULL_HANDLE};
 
 	std::vector<glm::vec4> input_random;
 
@@ -135,7 +148,8 @@ class SubgroupsOperations : public ApiVulkanSample
 		};
 	} butterfly_precomp;
 
-	uint32_t log_2_N;
+	uint32_t   log_2_N;
+	vkb::Timer timer;
 
 	struct
 	{
