@@ -853,7 +853,7 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 
 	if (drawer.header("Ocean settings"))
 	{
-		drawer.input_float("Amplitude", &ui.amplitude, 0.1f, 3u);
+		drawer.input_float("Amplitude", &ui.amplitude, 1.f, 3u);
 		drawer.input_float("Length", &ui.length, 10.f, 1u);
 		if (drawer.header("Color"))
 		{
@@ -864,8 +864,8 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		if (drawer.header("Wind"))
 		{
-			drawer.input_float("X", &ui.wind.x, 10.f, 2u);
-			drawer.input_float("Y", &ui.wind.y, 10.f, 2u);
+			drawer.slider_float("Angel", &ui.wind.x, 0.0f, 360.0f);
+			drawer.input_float("Force", &ui.wind.y, 10.f, 2u);
 		}
 	}
 }

@@ -126,8 +126,8 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct GuiConfig
 	{
 		bool      wireframe = {true};
-		float     amplitude = {20.0f};
-		float     length    = {1000.0f};
+		float     amplitude = {32.0f};
+		float     length    = {1900.0f};
 		glm::vec2 wind      = {100.0f, -100.0f};
 
 		glm::vec3 light_pos   = {100.0f, 15.0f, -1.0f};
