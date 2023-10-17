@@ -1,4 +1,4 @@
-/* Copyright (c) 2023, Maximilien Dagois
+/* Copyright (c) 2023, Google
  *
  * SPDX-License-Identifier: Apache-2.0
  *
