@@ -491,6 +491,7 @@ void SubgroupsOperations::prepare_uniform_buffers()
 	fft_time_ubo            = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TimeUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	invert_fft_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTInvert), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	tessellation_params_ubo = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(TessellationParams), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	ocean_params_ubo        = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(OceanParamsUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 
 	update_uniform_buffers();
 }
@@ -500,7 +501,7 @@ void SubgroupsOperations::generate_plane()
 	uint32_t              dim_gird     = grid_size;
 	uint32_t              vertex_count = dim_gird + 1u;
 	std::vector<Vertex>   plane_vertices;
-	const float           tex_coord_scale = 256.0f;
+	const float           tex_coord_scale = float(grid_size);
 	std::vector<uint32_t> indices;
 	int32_t               half_grid_size = static_cast<int32_t>(dim_gird / 2);
 
@@ -562,11 +563,11 @@ void SubgroupsOperations::create_semaphore()
 void SubgroupsOperations::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7u),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5u),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 9u)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 20u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 20u),
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 20u)};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 9u);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 15u);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -587,7 +588,10 @@ void SubgroupsOperations::create_descriptor_set_layout()
 	        3u),
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	        4u)};
+	        4u),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	        5u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
@@ -606,13 +610,15 @@ void SubgroupsOperations::create_descriptor_set()
 	VkDescriptorBufferInfo tessellation_params_descriptor = create_descriptor(*tessellation_params_ubo);
 	VkDescriptorBufferInfo camera_pos_buffer_descriptor   = create_descriptor(*camera_postion_ubo);
 	VkDescriptorImageInfo  normal_map_descirptor          = create_fb_descriptor(*fft_buffers.fft_normal_map);
+	VkDescriptorBufferInfo ocean_params_buffer_descriptor = create_descriptor(*ocean_params_ubo);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &desplacement_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &tessellation_params_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &normal_map_descirptor)};
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &normal_map_descirptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &ocean_params_buffer_descriptor)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
@@ -725,6 +731,12 @@ void SubgroupsOperations::update_uniform_buffers()
 	TimeUbo t;
 	t.time = float(timer.elapsed<vkb::Timer::Seconds>());
 
+	OceanParamsUbo ocean_params;
+	ocean_params.light_color    = ui.light_color;
+	ocean_params.light_position = ui.light_pos;
+	ocean_params.ocean_color    = ui.ocean_color;
+
+	ocean_params_ubo->convert_and_update(ocean_params);
 	fft_time_ubo->convert_and_update(t);
 	camera_ubo->convert_and_update(ubo);
 	fft_params_ubo->convert_and_update(fft_ubo);
@@ -826,29 +838,34 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 				build_command_buffers();
 			}
 		}
+
+		if (drawer.header("Light"))
+		{
+			drawer.slider_float("Position x", &ui.light_pos.x, -1000.0f, 1000.0f);
+			drawer.slider_float("Position y", &ui.light_pos.y, -1000.0f, 1000.0f);
+			drawer.slider_float("Position z", &ui.light_pos.z, -1000.0f, 1000.0f);
+
+			drawer.slider_float("Color Red", &ui.light_color.r, 0.0f, 1.0f);
+			drawer.slider_float("Color Green", &ui.light_color.g, 0.0f, 1.0f);
+			drawer.slider_float("Color Blue", &ui.light_color.b, 0.0f, 1.0f);
+		}
 	}
 
 	if (drawer.header("Ocean settings"))
-
 	{
-		if (drawer.input_float("Amplitude", &ui.amplitude, 0.1f, 3u))
+		drawer.input_float("Amplitude", &ui.amplitude, 0.1f, 3u);
+		drawer.input_float("Length", &ui.length, 10.f, 1u);
+		if (drawer.header("Color"))
 		{
-			// update input for fft
+			drawer.slider_float("Red", &ui.ocean_color.r, 0.0f, 1.0f);
+			drawer.slider_float("Green", &ui.ocean_color.g, 0.0f, 1.0f);
+			drawer.slider_float("Blue", &ui.ocean_color.b, 0.0f, 1.0f);
 		}
-		if (drawer.input_float("Length", &ui.length, 10.f, 1u))
-		{
-			// update input for fft
-		}
+
 		if (drawer.header("Wind"))
 		{
-			if (drawer.input_float("X", &ui.wind.x, 10.f, 2u))
-			{
-				// update input for fft
-			}
-			if (drawer.input_float("Y", &ui.wind.y, 10.f, 2u))
-			{
-				// update input for fft
-			}
+			drawer.input_float("X", &ui.wind.x, 10.f, 2u);
+			drawer.input_float("Y", &ui.wind.y, 10.f, 2u);
 		}
 	}
 }

@@ -86,6 +86,13 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::mat4 model;
 	};
 
+	struct OceanParamsUbo
+	{
+		alignas(16) glm::vec3 light_color;
+		alignas(16) glm::vec3 light_position;
+		alignas(16) glm::vec3 ocean_color;
+	};
+
 	struct CameraPosition
 	{
 		alignas(16) glm::vec4 position;
@@ -118,13 +125,18 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct GuiConfig
 	{
-		bool      wireframe = {false};
-		float     amplitude = {1000.0f};
+		bool      wireframe = {true};
+		float     amplitude = {20.0f};
 		float     length    = {1000.0f};
 		glm::vec2 wind      = {100.0f, -100.0f};
+
+		glm::vec3 light_pos   = {100.0f, 15.0f, -1.0f};
+		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
+		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
 	} ui;
 
 	uint32_t                           grid_size               = {DISPLACEMENT_MAP_DIM};
+	std::unique_ptr<vkb::core::Buffer> ocean_params_ubo        = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_postion_ubo      = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> tessellation_params_ubo = {VK_NULL_HANDLE};
