@@ -43,9 +43,9 @@ void main()
 
 	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
-	float perms[2] = { 1.0, -1.0 };
-	int index = int(mod(pixel_pos.x + pixel_pos.y, 2));
-	float perm = perms[index];
+    float perms[2] = { 1.0f, -1.0f };
+    int index = int(mod(pixel_pos.x + pixel_pos.y, 2));
+    float perm = perms[index];
     uint pingpong_index = fftUbo.pong_idx;
 	if (pingpong_index == 0)
     {
@@ -59,6 +59,6 @@ void main()
         float h_y = imageLoad(u_pingpong1_y, pixel_pos).r;
         float h_x = imageLoad(u_pingpong1_x, pixel_pos).r;
         float h_z = imageLoad(u_pingpong1_z, pixel_pos).r;
-        imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1));
+        imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
     }
 }

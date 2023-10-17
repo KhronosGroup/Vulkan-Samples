@@ -16,10 +16,32 @@
  * limitations under the License.
  */
 
+layout (location = 0) in vec3 in_pos;
+layout (location = 1) in vec3 in_normal;
+
 layout (location = 0) out vec4 outFragColor;
+
+
+layout (binding = 3) uniform CameraPos
+{
+    vec4 position;
+} cam;
 
 void main() 
 {
-	vec3 ocean_color = vec3(0.0f, 0.5f, 1.0f);
-	outFragColor = vec4(ocean_color, 1.0f);
+	vec3 light_pos = vec3(0.0f, 0.0f, -1.0f);
+	vec3 ocean_color = vec3(0.0f, 0.2423423f, 0.434335435f);
+	vec3 view_dir = normalize(vec3(cam.position.xyz - in_pos));
+	vec3 ref_dir = reflect(-view_dir, in_normal);
+
+	vec3 light_dir = normalize(light_pos - in_pos);
+
+	float dot_l = max(dot(in_normal, light_dir), 0.0f);
+
+	vec3 result = dot_l * ocean_color;
+	result = result / (result + vec3(1.0f));
+	// gamma correction
+	result = pow(result, vec3(1.0f / 2.2f));
+
+	outFragColor = vec4(result, 1.0f);
 }

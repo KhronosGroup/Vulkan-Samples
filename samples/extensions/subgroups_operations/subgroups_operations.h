@@ -58,6 +58,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_butterfly_texture();
 	void create_fft();
 	void create_fft_inversion();
+	void create_fft_normal_map();
 
 	void update_uniform_buffers();
 
@@ -161,6 +162,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dy;
 		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dz;
 		std::unique_ptr<FBAttachment> fft_displacement;
+		std::unique_ptr<FBAttachment> fft_normal_map;
 	} fft_buffers;
 
 	struct
@@ -196,6 +198,13 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;
 	} fft_inversion;
+
+	struct
+	{
+		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
+		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
+		Pipeline              pipeline;
+	} fft_normal_map;
 
 	struct
 	{

@@ -70,6 +70,8 @@ SubgroupsOperations::~SubgroupsOperations()
 		fft_buffers.fft_tilde_h_kt_dy->destroy(get_device().get_handle());
 		fft_buffers.fft_tilde_h_kt_dz->destroy(get_device().get_handle());
 		fft_buffers.fft_displacement->destroy(get_device().get_handle());
+		fft_buffers.fft_normal_map->destroy(get_device().get_handle());
+
 		fft_buffers.fft_input_htilde0->destroy(get_device().get_handle());
 		fft_buffers.fft_input_htilde0_conj->destroy(get_device().get_handle());
 		butterfly_precomp.destroy(get_device().get_handle());
@@ -85,6 +87,9 @@ SubgroupsOperations::~SubgroupsOperations()
 
 		fft_inversion.pipeline.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), fft_inversion.descriptor_set_layout, nullptr);
+
+		fft_normal_map.pipeline.destroy(get_device().get_handle());
+		vkDestroyDescriptorSetLayout(get_device().get_handle(), fft_normal_map.descriptor_set_layout, nullptr);
 
 		fft.tilde_axis_x->destroy(get_device().get_handle());
 		fft.tilde_axis_y->destroy(get_device().get_handle());
@@ -126,6 +131,7 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 	create_butterfly_texture();
 	create_fft();
 	create_fft_inversion();
+	create_fft_normal_map();
 
 	create_descriptor_set();
 	create_pipelines();
@@ -259,6 +265,13 @@ void SubgroupsOperations::build_compute_command_buffer()
 	{
 		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline);
 		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_inversion.pipeline.pipeline_layout, 0u, 1u, &fft_inversion.descriptor_set, 0u, nullptr);
+		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
+	}
+
+	// fft normal map
+	{
+		vkCmdBindPipeline(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_normal_map.pipeline.pipeline);
+		vkCmdBindDescriptorSets(compute.command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, fft_normal_map.pipeline.pipeline_layout, 0u, 1u, &fft_normal_map.descriptor_set, 0u, nullptr);
 		vkCmdDispatch(compute.command_buffer, DISPLACEMENT_MAP_DIM / 32u, DISPLACEMENT_MAP_DIM, 1u);
 	}
 
@@ -484,18 +497,19 @@ void SubgroupsOperations::prepare_uniform_buffers()
 
 void SubgroupsOperations::generate_plane()
 {
-	uint32_t              vertex_count = grid_size + 1u;
+	uint32_t              dim_gird     = grid_size;
+	uint32_t              vertex_count = dim_gird + 1u;
 	std::vector<Vertex>   plane_vertices;
-	const float           tex_coord_scale = 64.0f;
+	const float           tex_coord_scale = 256.0f;
 	std::vector<uint32_t> indices;
-	int32_t               half_grid_size = static_cast<int32_t>(grid_size / 2);
+	int32_t               half_grid_size = static_cast<int32_t>(dim_gird / 2);
 
 	for (int32_t z = -half_grid_size; z <= half_grid_size; ++z)
 	{
 		for (int32_t x = -half_grid_size; x <= half_grid_size; ++x)
 		{
-			float  u = static_cast<float>(x) / static_cast<float>(grid_size) + 0.5f;
-			float  v = static_cast<float>(z) / static_cast<float>(grid_size) + 0.5f;
+			float  u = static_cast<float>(x) / static_cast<float>(dim_gird) + 0.5f;
+			float  v = static_cast<float>(z) / static_cast<float>(dim_gird) + 0.5f;
 			Vertex vert;
 			vert.pos = glm::vec3(float(x), 0.0f, float(z));
 			vert.uv  = glm::vec2(u, v) * tex_coord_scale;
@@ -504,9 +518,9 @@ void SubgroupsOperations::generate_plane()
 		}
 	}
 
-	for (uint32_t y = 0u; y < grid_size; ++y)
+	for (uint32_t y = 0u; y < dim_gird; ++y)
 	{
-		for (uint32_t x = 0u; x < grid_size; ++x)
+		for (uint32_t x = 0u; x < dim_gird; ++x)
 		{
 			// tris 1
 			indices.push_back((vertex_count * y) + x);
@@ -550,9 +564,9 @@ void SubgroupsOperations::setup_descriptor_pool()
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7u),
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5u),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 7u)};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 9u)};
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
-	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 7u);
+	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 9u);
 	VK_CHECK(vkCreateDescriptorPool(get_device().get_handle(), &descriptor_pool_create_info, nullptr, &descriptor_pool));
 }
 
@@ -560,17 +574,20 @@ void SubgroupsOperations::create_descriptor_set_layout()
 {
 	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindings = {
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 	        0u),
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 	        1u),
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 	        2u),
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT,
-	        3u)};
+	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	        3u),
+	    vkb::initializers::descriptor_set_layout_binding(
+	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	        4u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
@@ -588,12 +605,14 @@ void SubgroupsOperations::create_descriptor_set()
 	VkDescriptorImageInfo  desplacement_descriptor        = create_fb_descriptor(*fft_buffers.fft_displacement);
 	VkDescriptorBufferInfo tessellation_params_descriptor = create_descriptor(*tessellation_params_ubo);
 	VkDescriptorBufferInfo camera_pos_buffer_descriptor   = create_descriptor(*camera_postion_ubo);
+	VkDescriptorImageInfo  normal_map_descirptor          = create_fb_descriptor(*fft_buffers.fft_normal_map);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &desplacement_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &tessellation_params_descriptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor)};
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &normal_map_descirptor)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
@@ -1131,6 +1150,49 @@ void SubgroupsOperations::create_fft_inversion()
 	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 5u, &image_descriptor_pingpong0_axis_z),
 	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 6u, &image_descriptor_pingpong1_axis_z),
 	    vkb::initializers::write_descriptor_set(fft_inversion.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 7u, &fft_page_descriptor)};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+}
+
+void SubgroupsOperations::create_fft_normal_map()
+{
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 0u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 1u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 2u)
+	};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &fft_normal_map.descriptor_set_layout));
+
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &fft_normal_map.descriptor_set_layout, 1u);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_normal_map.descriptor_set));
+
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
+	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	compute_pipeline_layout_info.setLayoutCount             = 1u;
+	compute_pipeline_layout_info.pSetLayouts                = &fft_normal_map.descriptor_set_layout;
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &fft_normal_map.pipeline.pipeline_layout));
+
+	VkComputePipelineCreateInfo computeInfo = {};
+	computeInfo.sType                       = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+	computeInfo.layout                      = fft_normal_map.pipeline.pipeline_layout;
+	computeInfo.stage                       = load_shader("subgroups_operations/fft_normal_map.comp", VK_SHADER_STAGE_COMPUTE_BIT);
+
+	VK_CHECK(vkCreateComputePipelines(get_device().get_handle(), pipeline_cache, 1u, &computeInfo, nullptr, &fft_normal_map.pipeline.pipeline));
+
+	fft_buffers.fft_normal_map = std::make_unique<FBAttachment>();
+
+	createFBAttachement(VK_FORMAT_R32G32B32A32_SFLOAT, grid_size, grid_size, *fft_buffers.fft_normal_map);
+
+	VkDescriptorImageInfo image_descriptor_normal_map       = create_fb_descriptor(*fft_buffers.fft_normal_map);
+	VkDescriptorImageInfo image_descriptor_displacment_axis = create_fb_descriptor(*fft_buffers.fft_displacement);
+	auto                  fft_page_descriptor               = create_descriptor(*invert_fft_ubo);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(fft_normal_map.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 0u, &image_descriptor_normal_map),
+	    vkb::initializers::write_descriptor_set(fft_normal_map.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &image_descriptor_displacment_axis),
+	    vkb::initializers::write_descriptor_set(fft_normal_map.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &fft_page_descriptor)};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }
 
