@@ -123,12 +123,20 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(4) float time = {0.0f};
 	} fftTime;
 
+	struct Wind
+	{
+		void      recalc();
+		glm::vec2 vec;
+		float     angle = 180;
+		float     force = 25;
+	};
+
 	struct GuiConfig
 	{
-		bool      wireframe = {true};
-		float     amplitude = {32.0f};
-		float     length    = {1900.0f};
-		glm::vec2 wind      = {100.0f, -100.0f};
+		bool  wireframe = {true};
+		float amplitude = {32.0f};
+		float length    = {1900.0f};
+		Wind  wind;
 
 		glm::vec3 light_pos   = {100.0f, 15.0f, -1.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};

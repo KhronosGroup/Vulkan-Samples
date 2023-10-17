@@ -415,6 +415,8 @@ void SubgroupsOperations::create_tildas()
 void SubgroupsOperations::load_assets()
 {
 	generate_plane();
+	ui.wind.recalc();
+
 	log_2_N = glm::log2(static_cast<float>(grid_size));
 
 	/*
@@ -718,7 +720,7 @@ void SubgroupsOperations::update_uniform_buffers()
 	fft_ubo.amplitude = ui.amplitude;
 	fft_ubo.grid_size = grid_size;
 	fft_ubo.length    = ui.length;
-	fft_ubo.wind      = ui.wind;
+	fft_ubo.wind      = ui.wind.vec;
 
 	FFTInvert invertFft;
 	invertFft.grid_size = grid_size;
@@ -864,8 +866,10 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 
 		if (drawer.header("Wind"))
 		{
-			drawer.slider_float("Angel", &ui.wind.x, 0.0f, 360.0f);
-			drawer.input_float("Force", &ui.wind.y, 10.f, 2u);
+			drawer.slider_float("Angle", &ui.wind.angle, 0.0f, 360.0f);
+			drawer.slider_float("Force", &ui.wind.force, 0.0f, 50.0f);
+
+			ui.wind.recalc();
 		}
 	}
 }
@@ -1219,4 +1223,11 @@ VkDescriptorImageInfo SubgroupsOperations::create_fb_descriptor(FBAttachment &at
 	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
 	image_descriptor.sampler     = nullptr;
 	return image_descriptor;
+}
+
+void SubgroupsOperations::Wind::recalc()
+{
+	float rad = angle * glm::pi<float>() / 180.0f;
+	vec.x     = force * cos(rad);
+	vec.y     = force * sin(rad);
 }
