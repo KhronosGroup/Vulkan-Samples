@@ -32,18 +32,16 @@ void main()
 {
     uint N = fftUbo.grid_size;
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-
-    vec2 tex_coord = gl_GlobalInvocationID.xy / float(N);
     float tex_dim = 1.0f / N;
 
-    float left_y = imageLoad(fft_displacement_map, ivec2(tex_coord + vec2(-tex_dim, 0.0f))).g;
-    float right_y = imageLoad(fft_displacement_map, ivec2(tex_coord + vec2(tex_dim, 0.0f))).g;
-    float bottom_y = imageLoad(fft_displacement_map, ivec2(tex_coord + vec2(0.0f, tex_dim))).g;
-    float top_y = imageLoad(fft_displacement_map, ivec2(tex_coord + vec2(0.0f, tex_dim))).g;
+    float left_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0.0f))).g;
+    float right_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).g;
+    float bottom_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
+    float top_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
 
     vec3 result = vec3(0.0f);
-    result.z = bottom_y - top_y;
-    result.x = left_y - right_y;
+    result.z = (bottom_y - top_y) / float(N);
+    result.x = (left_y - right_y) / float(N);
     result.y = 1.0f / float(N);
 
     imageStore(fft_normal_map, pixel_pos, vec4(normalize(result), 1.0f));
