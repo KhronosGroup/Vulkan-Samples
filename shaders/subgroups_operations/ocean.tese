@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-layout(triangles) in;
+layout(triangles, equal_spacing, ccw) in;
 
 layout(location = 0) in vec3 inPostion[];
 layout(location = 1) in vec2 inUv[];

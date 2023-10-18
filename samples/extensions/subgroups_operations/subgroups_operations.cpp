@@ -969,9 +969,15 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 			drawer.slider_float("Position y", &ui.light_pos.y, -1000.0f, 1000.0f);
 			drawer.slider_float("Position z", &ui.light_pos.z, -1000.0f, 1000.0f);
 
-			drawer.slider_float("Color Red", &ui.light_color.r, 0.0f, 1.0f);
-			drawer.slider_float("Color Green", &ui.light_color.g, 0.0f, 1.0f);
-			drawer.slider_float("Color Blue", &ui.light_color.b, 0.0f, 1.0f);
+			std::array<float, 3> colors = {ui.light_color.r, ui.light_color.g, ui.light_color.b};
+			drawer.color_op<vkb::Drawer::ColorOp::Pick>("Light color", colors, 0,
+			                                            ImGuiColorEditFlags_NoSidePreview |
+			                                                ImGuiColorEditFlags_NoSmallPreview |
+			                                                ImGuiColorEditFlags_Float |
+			                                                ImGuiColorEditFlags_RGB);
+			ui.light_color.r = colors[0];
+			ui.light_color.g = colors[1];
+			ui.light_color.b = colors[2];
 		}
 	}
 
@@ -979,12 +985,6 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		drawer.input_float("Amplitude", &ui.amplitude, 1.f, 3u);
 		drawer.input_float("Length", &ui.length, 10.f, 1u);
-		if (drawer.header("Color"))
-		{
-			drawer.slider_float("Red", &ui.ocean_color.r, 0.0f, 1.0f);
-			drawer.slider_float("Green", &ui.ocean_color.g, 0.0f, 1.0f);
-			drawer.slider_float("Blue", &ui.ocean_color.b, 0.0f, 1.0f);
-		}
 
 		if (drawer.header("Wind"))
 		{
@@ -993,6 +993,16 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 
 			ui.wind.recalc();
 		}
+
+		std::array<float, 3> colors = {ui.ocean_color.r, ui.ocean_color.g, ui.ocean_color.b};
+		drawer.color_op<vkb::Drawer::ColorOp::Pick>("Ocean color", colors, 0,
+		                                            ImGuiColorEditFlags_NoSidePreview |
+		                                                ImGuiColorEditFlags_NoSmallPreview |
+		                                                ImGuiColorEditFlags_Float |
+		                                                ImGuiColorEditFlags_RGB);
+		ui.ocean_color.r = colors[0];
+		ui.ocean_color.g = colors[1];
+		ui.ocean_color.b = colors[2];
 	}
 }
 
