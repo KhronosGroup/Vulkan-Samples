@@ -34,4 +34,5 @@ add_sample(
     "subgroups_operations/butterfly_precomp.comp"
     "subgroups_operations/fft_tilde_h.comp"
     "subgroups_operations/fft_tilde_h0.comp"
+    "subgroups_operations/fft_normal_map.comp"
     "subgroups_operations/fft.comp")

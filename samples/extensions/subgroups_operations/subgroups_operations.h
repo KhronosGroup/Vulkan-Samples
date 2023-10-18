@@ -18,9 +18,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include <complex>
-
-#define DISPLACEMENT_MAP_DIM 256u
 
 class SubgroupsOperations : public ApiVulkanSample
 {
@@ -93,12 +90,12 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::vec3 ocean_color;
 	};
 
-	struct CameraPosition
+	struct CameraPositionUbo
 	{
 		alignas(16) glm::vec4 position;
 	};
 
-	struct TessellationParams
+	struct TessellationParamsUbo
 	{
 		alignas(4) float choppines;
 		alignas(4) float displacement_scale;
@@ -112,10 +109,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(8) glm::vec2 wind;
 	};
 
-	struct FFTInvert
+	struct FFTInvertUbo
 	{
 		alignas(4) int32_t page_idx   = {-1};
-		alignas(4) uint32_t grid_size = {DISPLACEMENT_MAP_DIM};
+		alignas(4) uint32_t grid_size = {grid_size};
 	};
 
 	struct TimeUbo
@@ -143,7 +140,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
 	} ui;
 
-	uint32_t                           grid_size               = {DISPLACEMENT_MAP_DIM};
+	uint32_t                           grid_size               = {256U};
 	std::unique_ptr<vkb::core::Buffer> ocean_params_ubo        = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_postion_ubo      = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
@@ -155,7 +152,7 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	std::vector<glm::vec4> input_random;
 
-	struct FBAttachment
+	struct ImageAttachment
 	{
 		VkImage        image;
 		VkDeviceMemory memory;
@@ -167,7 +164,9 @@ class SubgroupsOperations : public ApiVulkanSample
 			vkDestroyImage(device, image, nullptr);
 			vkFreeMemory(device, memory, nullptr);
 		};
-	} butterfly_precomp;
+	};
+	
+	ImageAttachment butterfly_precomp;
 
 	uint32_t   log_2_N;
 	vkb::Timer timer;
@@ -175,14 +174,14 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct
 	{
 		std::unique_ptr<vkb::core::Buffer> fft_input_random;
-		std::unique_ptr<FBAttachment>      fft_input_htilde0;
-		std::unique_ptr<FBAttachment>      fft_input_htilde0_conj;
+		std::unique_ptr<ImageAttachment>   fft_input_htilde0;
+		std::unique_ptr<ImageAttachment>   fft_input_htilde0_conj;
 
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dx;
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dy;
-		std::unique_ptr<FBAttachment> fft_tilde_h_kt_dz;
-		std::unique_ptr<FBAttachment> fft_displacement;
-		std::unique_ptr<FBAttachment> fft_normal_map;
+		std::unique_ptr<ImageAttachment> fft_tilde_h_kt_dx;
+		std::unique_ptr<ImageAttachment> fft_tilde_h_kt_dy;
+		std::unique_ptr<ImageAttachment> fft_tilde_h_kt_dz;
+		std::unique_ptr<ImageAttachment> fft_displacement;
+		std::unique_ptr<ImageAttachment> fft_normal_map;
 	} fft_buffers;
 
 	struct
@@ -207,9 +206,9 @@ class SubgroupsOperations : public ApiVulkanSample
 			Pipeline vertical;
 		} pipelines;
 
-		std::unique_ptr<FBAttachment> tilde_axis_y = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment> tilde_axis_x = {VK_NULL_HANDLE};
-		std::unique_ptr<FBAttachment> tilde_axis_z = {VK_NULL_HANDLE};
+		std::unique_ptr<ImageAttachment> tilde_axis_y = {VK_NULL_HANDLE};
+		std::unique_ptr<ImageAttachment> tilde_axis_x = {VK_NULL_HANDLE};
+		std::unique_ptr<ImageAttachment> tilde_axis_z = {VK_NULL_HANDLE};
 	} fft;
 
 	struct
@@ -266,8 +265,8 @@ class SubgroupsOperations : public ApiVulkanSample
 
   private:
 	uint32_t              reverse(uint32_t i);
-	VkDescriptorImageInfo create_fb_descriptor(FBAttachment &attachment);
-	void                  createFBAttachement(VkFormat format, uint32_t width, uint32_t height, FBAttachment &result);
+	VkDescriptorImageInfo create_ia_descriptor(ImageAttachment &attachment);
+	void                  create_image_attachement(VkFormat format, uint32_t width, uint32_t height, ImageAttachment &result);
 };
 
 std::unique_ptr<vkb::VulkanSample> create_subgroups_operations();
