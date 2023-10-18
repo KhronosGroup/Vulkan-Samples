@@ -45,7 +45,7 @@ void main()
     int index = int(mod(pixel_pos.x + pixel_pos.y, 2));
     float perm = perms[index];
     uint pingpong_index = fftUbo.pong_idx;
-	if (pingpong_index == 0)
+    if (pingpong_index == 0)
     {
         float h_y = imageLoad(u_pingpong0_y, pixel_pos).r;
         float h_x = imageLoad(u_pingpong0_x, pixel_pos).r;

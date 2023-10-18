@@ -25,7 +25,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	SubgroupsOperations();
 	~SubgroupsOperations();
 
-	bool prepare(vkb::Platform &platform) override;
+	bool prepare(const vkb::ApplicationOptions &options) override;
 	void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	void build_command_buffers() override;
 	void render(float delta_time) override;

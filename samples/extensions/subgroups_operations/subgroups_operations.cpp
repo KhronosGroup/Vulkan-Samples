@@ -105,9 +105,9 @@ SubgroupsOperations::~SubgroupsOperations()
 	}
 }
 
-bool SubgroupsOperations::prepare(vkb::Platform &platform)
+bool SubgroupsOperations::prepare(const vkb::ApplicationOptions &options)
 {
-	if (!ApiVulkanSample::prepare(platform))
+	if (!ApiVulkanSample::prepare(options))
 	{
 		return false;
 	}
@@ -307,6 +307,11 @@ void SubgroupsOperations::build_compute_command_buffer()
 
 void SubgroupsOperations::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
+	if (gpu.get_features().samplerAnisotropy)
+	{
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+	}
+
 	if (gpu.get_features().fillModeNonSolid)
 	{
 		gpu.get_mutable_requested_features().fillModeNonSolid = VK_TRUE;
@@ -398,8 +403,6 @@ void SubgroupsOperations::create_tildas()
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_COMPUTE_BIT, 4u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 5u),
 	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
-	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_COMPUTE_BIT, 6u)};
-
 	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &tildas.descriptor_set_layout));
 
@@ -449,51 +452,25 @@ void SubgroupsOperations::load_assets()
 
 	log_2_N = glm::log2(static_cast<float>(grid_size));
 
-	/*
+	input_random.clear();
 
-	// generate fft inputs
-	h_tilde_0.clear();
-	h_tilde_0_conj.clear();
 	for (uint32_t m = 0; m < grid_size; ++m)
 	{
-	    for (uint32_t n = 0; n < grid_size; ++n)
-	    {
-	        h_tilde_0.push_back(hTilde_0(n, m, 1));
-	        h_tilde_0_conj.push_back(std::conj(hTilde_0(-n, -m, 1)));
-	    }
+		for (uint32_t n = 0; n < grid_size; ++n)
+		{
+			glm::vec2 rnd1 = rndGaussian();
+			glm::vec2 rnd2 = rndGaussian();
+			input_random.push_back(glm::vec4{rnd1.x, rnd1.y, rnd2.x, rnd2.y});
+		}
 	}
 
-	// calculate weights
-	uint32_t pow2 = 1U;
-	for (uint32_t i = 0U; i < log_2_N; ++i)
-	{
-	    for (uint32_t j = 0U; j < pow2; ++j)
-	    {
-	        weights.push_back(calculate_weight(j, pow2 * 2));
-	    }
-	    pow2 *= 2;
-	}
+	auto input_random_size       = static_cast<VkDeviceSize>(input_random.size() * sizeof(glm::vec4));
+	fft_buffers.fft_input_random = std::make_unique<vkb::core::Buffer>(get_device(),
+	                                                                   input_random_size,
+	                                                                   VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+	                                                                   VMA_MEMORY_USAGE_CPU_TO_GPU);
 
-	auto fft_input_htilde0_size      = static_cast<VkDeviceSize>(h_tilde_0.size() * sizeof(std::complex<float>));
-	fft_buffers.fft_input_htilde0    = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                    fft_input_htilde0_size,
-	                                                                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                                    VMA_MEMORY_USAGE_CPU_TO_GPU);
-	auto fft_input_htilde0_conj_size = static_cast<VkDeviceSize>(h_tilde_0_conj.size() * sizeof(std::complex<float>));
-
-	fft_buffers.fft_input_htilde0_conj = std::make_unique<vkb::core::Buffer>(get_device(),
-	                                                                         fft_input_htilde0_conj_size,
-	                                                                         VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-	                                                                         VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	auto fft_input_weights_size  = static_cast<VkDeviceSize>(weights.size() * sizeof(std::complex<float>));
-	fft_buffers.fft_input_weight = std::make_unique<vkb::core::Buffer>(get_device(), fft_input_weights_size, VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
-
-	fft_buffers.fft_input_htilde0->update(h_tilde_0.data(), fft_input_htilde0_size);
-	fft_buffers.fft_input_htilde0_conj->update(h_tilde_0_conj.data(), fft_input_htilde0_conj_size);
-	fft_buffers.fft_input_weight->update(weights.data(), fft_input_weights_size);
-
-	*/
+	fft_buffers.fft_input_random->update(input_random.data(), input_random_size);
 }
 
 glm::vec2 SubgroupsOperations::rndGaussian()
@@ -755,9 +732,9 @@ void SubgroupsOperations::create_skybox()
 	pipeline_layout_info.pSetLayouts                = &skybox.descriptor_set_layout;
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_info, nullptr, &skybox.pipeline.pipeline_layout));
-	
+
 	VkDescriptorBufferInfo skybox_uniform_descriptor = create_descriptor(*skybox_ubo);
-	VkDescriptorImageInfo skybox_image_descriptor = create_descriptor(skybox.skybox_texture);
+	VkDescriptorImageInfo  skybox_image_descriptor   = create_descriptor(skybox.skybox_texture);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(skybox.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &skybox_uniform_descriptor),
