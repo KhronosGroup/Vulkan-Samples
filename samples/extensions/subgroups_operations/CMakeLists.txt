@@ -26,6 +26,8 @@ add_sample(
     NAME "subgroups_operations"
     DESCRIPTION "Demonstrates the use of a subgroups feature"
     SHADER_FILES_GLSL
+    "subgroups_operations/skybox.vert"
+    "subgroups_operations/skybox.frag"
     "subgroups_operations/ocean.vert"
     "subgroups_operations/ocean.frag"
     "subgroups_operations/ocean.tesc"

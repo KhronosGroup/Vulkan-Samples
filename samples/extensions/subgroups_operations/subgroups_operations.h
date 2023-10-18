@@ -49,6 +49,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_descriptor_set_layout();
 	void create_descriptor_set();
 	void create_pipelines();
+	void create_skybox();
 
 	void create_initial_tildas();
 	void create_tildas();
@@ -81,6 +82,11 @@ class SubgroupsOperations : public ApiVulkanSample
 		alignas(16) glm::mat4 projection;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 model;
+	};
+
+	struct SkyboxUbo
+	{
+		alignas(16) glm::mat4 mvp;
 	};
 
 	struct OceanParamsUbo
@@ -141,6 +147,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	} ui;
 
 	uint32_t                           grid_size               = {256U};
+	std::unique_ptr<vkb::core::Buffer> skybox_ubo              = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> ocean_params_ubo        = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_postion_ubo      = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
@@ -165,7 +172,7 @@ class SubgroupsOperations : public ApiVulkanSample
 			vkFreeMemory(device, memory, nullptr);
 		};
 	};
-	
+
 	ImageAttachment butterfly_precomp;
 
 	uint32_t   log_2_N;
@@ -260,6 +267,22 @@ class SubgroupsOperations : public ApiVulkanSample
 			Pipeline wireframe;
 		} pipelines;
 	} ocean;
+
+	struct Skybox
+	{
+		void destroy(VkDevice device)
+		{
+			pipeline.destroy(device);
+			vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
+		}
+		
+		Pipeline              pipeline;
+		VkDescriptorSetLayout descriptor_set_layout;
+		VkDescriptorSet       descriptor_set;
+
+		Texture                            skybox_texture;
+		std::unique_ptr<vkb::sg::SubMesh>  skybox_shape;
+	} skybox;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;
 

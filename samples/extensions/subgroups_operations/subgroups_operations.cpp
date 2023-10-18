@@ -96,6 +96,8 @@ SubgroupsOperations::~SubgroupsOperations()
 		vkDestroySemaphore(get_device().get_handle(), compute.semaphore, nullptr);
 		vkDestroyCommandPool(get_device().get_handle(), compute.command_pool, nullptr);
 
+		skybox.destroy(get_device().get_handle());
+
 		ocean.pipelines._default.destroy(get_device().get_handle());
 		ocean.pipelines.wireframe.destroy(get_device().get_handle());
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), ocean.descriptor_set_layout, nullptr);
@@ -130,6 +132,7 @@ bool SubgroupsOperations::prepare(vkb::Platform &platform)
 
 	create_descriptor_set();
 	create_pipelines();
+	create_skybox();
 
 	build_compute_command_buffer();
 
@@ -438,6 +441,9 @@ void SubgroupsOperations::create_tildas()
 
 void SubgroupsOperations::load_assets()
 {
+	skybox.skybox_shape   = load_model("scenes/geosphere.gltf");
+	skybox.skybox_texture = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
+
 	generate_plane();
 	ui.wind.recalc();
 
@@ -511,6 +517,7 @@ glm::vec2 SubgroupsOperations::rndGaussian()
 
 void SubgroupsOperations::prepare_uniform_buffers()
 {
+	skybox_ubo              = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(SkyboxUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	camera_ubo              = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	camera_postion_ubo      = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(CameraPositionUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
 	fft_params_ubo          = std::make_unique<vkb::core::Buffer>(get_device(), sizeof(FFTParametersUbo), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
@@ -729,6 +736,109 @@ void SubgroupsOperations::create_pipelines()
 	}
 }
 
+void SubgroupsOperations::create_skybox()
+{
+	// descriptors
+	std::vector<VkDescriptorSetLayoutBinding> set_layout_bindngs = {
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT, 0u),
+	    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 1u)};
+
+	VkDescriptorSetLayoutCreateInfo descriptor_layout = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindngs);
+	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout, nullptr, &skybox.descriptor_set_layout));
+
+	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &skybox.descriptor_set_layout, 1u);
+	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &skybox.descriptor_set));
+
+	VkPipelineLayoutCreateInfo pipeline_layout_info = {};
+	pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipeline_layout_info.setLayoutCount             = 1u;
+	pipeline_layout_info.pSetLayouts                = &skybox.descriptor_set_layout;
+
+	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &pipeline_layout_info, nullptr, &skybox.pipeline.pipeline_layout));
+	
+	VkDescriptorBufferInfo skybox_uniform_descriptor = create_descriptor(*skybox_ubo);
+	VkDescriptorImageInfo skybox_image_descriptor = create_descriptor(skybox.skybox_texture);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(skybox.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &skybox_uniform_descriptor),
+	    vkb::initializers::write_descriptor_set(skybox.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1u, &skybox_image_descriptor),
+	};
+	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
+
+	// pipeline
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
+	    vkb::initializers::pipeline_input_assembly_state_create_info(
+	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
+	        0u,
+	        VK_FALSE);
+	VkPipelineRasterizationStateCreateInfo rasterization_state =
+	    vkb::initializers::pipeline_rasterization_state_create_info(
+	        VK_POLYGON_MODE_FILL,
+	        VK_CULL_MODE_NONE,
+	        VK_FRONT_FACE_COUNTER_CLOCKWISE,
+	        0u);
+	VkPipelineColorBlendAttachmentState blend_attachment_state =
+	    vkb::initializers::pipeline_color_blend_attachment_state(
+	        0xf,
+	        VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo color_blend_state =
+	    vkb::initializers::pipeline_color_blend_state_create_info(
+	        1u,
+	        &blend_attachment_state);
+	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
+	    vkb::initializers::pipeline_depth_stencil_state_create_info(
+	        VK_TRUE,
+	        VK_TRUE,
+	        VK_COMPARE_OP_GREATER);
+
+	VkPipelineViewportStateCreateInfo viewport_state =
+	    vkb::initializers::pipeline_viewport_state_create_info(1u, 1u, 0u);
+
+	VkPipelineMultisampleStateCreateInfo multisample_state =
+	    vkb::initializers::pipeline_multisample_state_create_info(
+	        VK_SAMPLE_COUNT_1_BIT,
+	        0u);
+
+	std::vector<VkDynamicState> dynamic_state_enables = {
+	    VK_DYNAMIC_STATE_VIEWPORT,
+	    VK_DYNAMIC_STATE_SCISSOR};
+
+	VkPipelineDynamicStateCreateInfo dynamic_state =
+	    vkb::initializers::pipeline_dynamic_state_create_info(
+	        dynamic_state_enables.data(),
+	        static_cast<uint32_t>(dynamic_state_enables.size()),
+	        0u);
+
+	std::array<VkPipelineShaderStageCreateInfo, 2> shader_stages;
+	shader_stages[0] = load_shader("subgroups_operations/skybox.vert", VK_SHADER_STAGE_VERTEX_BIT);
+	shader_stages[1] = load_shader("subgroups_operations/skybox.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+	const std::vector<VkVertexInputBindingDescription> vertex_input_bindings = {
+	    vkb::initializers::vertex_input_binding_description(0u, sizeof(Vertex), VK_VERTEX_INPUT_RATE_VERTEX)};
+	const std::vector<VkVertexInputAttributeDescription> vertex_input_attributes = {
+	    vkb::initializers::vertex_input_attribute_description(0u, 0u, VK_FORMAT_R32G32B32_SFLOAT, offsetof(Vertex, pos)),
+	    vkb::initializers::vertex_input_attribute_description(0u, 1u, VK_FORMAT_R32G32_SFLOAT, offsetof(Vertex, uv))};
+
+	VkPipelineVertexInputStateCreateInfo vertex_input_state = vkb::initializers::pipeline_vertex_input_state_create_info();
+	vertex_input_state.vertexBindingDescriptionCount        = static_cast<uint32_t>(vertex_input_bindings.size());
+	vertex_input_state.pVertexBindingDescriptions           = vertex_input_bindings.data();
+	vertex_input_state.vertexAttributeDescriptionCount      = static_cast<uint32_t>(vertex_input_attributes.size());
+	vertex_input_state.pVertexAttributeDescriptions         = vertex_input_attributes.data();
+
+	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(skybox.pipeline.pipeline_layout, render_pass, 0u);
+	pipeline_create_info.pVertexInputState            = &vertex_input_state;
+	pipeline_create_info.pInputAssemblyState          = &input_assembly_state;
+	pipeline_create_info.pRasterizationState          = &rasterization_state;
+	pipeline_create_info.pColorBlendState             = &color_blend_state;
+	pipeline_create_info.pMultisampleState            = &multisample_state;
+	pipeline_create_info.pViewportState               = &viewport_state;
+	pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
+	pipeline_create_info.pDynamicState                = &dynamic_state;
+	pipeline_create_info.stageCount                   = static_cast<uint32_t>(shader_stages.size());
+	pipeline_create_info.pStages                      = shader_stages.data();
+	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1u, &pipeline_create_info, nullptr, &skybox.pipeline.pipeline));
+}
+
 void SubgroupsOperations::update_uniform_buffers()
 {
 	CameraUbo ubo;
@@ -762,6 +872,10 @@ void SubgroupsOperations::update_uniform_buffers()
 	ocean_params.light_position = ui.light_pos;
 	ocean_params.ocean_color    = ui.ocean_color;
 
+	SkyboxUbo skybox_params;
+	skybox_params.mvp = camera.matrices.perspective * glm::mat4(glm::mat3(camera.matrices.view));
+
+	skybox_ubo->convert_and_update(skybox_params);
 	ocean_params_ubo->convert_and_update(ocean_params);
 	fft_time_ubo->convert_and_update(t);
 	camera_ubo->convert_and_update(ubo);
@@ -800,6 +914,13 @@ void SubgroupsOperations::build_command_buffers()
 
 		VkRect2D scissor = vkb::initializers::rect2D(static_cast<int32_t>(width), static_cast<int32_t>(height), 0, 0);
 		vkCmdSetScissor(cmd_buff, 0u, 1u, &scissor);
+
+		// skybox
+		{
+			vkCmdBindPipeline(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.pipeline);
+			vkCmdBindDescriptorSets(cmd_buff, VK_PIPELINE_BIND_POINT_GRAPHICS, skybox.pipeline.pipeline_layout, 0u, 1u, &skybox.descriptor_set, 0u, nullptr);
+			draw_model(skybox.skybox_shape, cmd_buff);
+		}
 
 		// draw ocean
 		{
