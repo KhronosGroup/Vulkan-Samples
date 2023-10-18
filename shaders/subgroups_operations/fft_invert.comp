@@ -38,10 +38,8 @@ layout (binding = 7) uniform InvertFft
 
 void main()
 {
-
     uint N = fftUbo.grid_size;
-
-	ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
 
     float perms[2] = { 1.0f, -1.0f };
     int index = int(mod(pixel_pos.x + pixel_pos.y, 2));
@@ -52,7 +50,7 @@ void main()
         float h_y = imageLoad(u_pingpong0_y, pixel_pos).r;
         float h_x = imageLoad(u_pingpong0_x, pixel_pos).r;
         float h_z = imageLoad(u_pingpong0_z, pixel_pos).r;
-       imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
+        imageStore(u_displacement, pixel_pos, vec4(perm * (h_x / float(N * N)), perm * (h_y / float(N * N)), perm * (h_z / float(N * N)), 1.0f));
     }
     else if (pingpong_index == 1)
     {

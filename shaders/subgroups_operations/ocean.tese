@@ -73,7 +73,6 @@ void main()
 	vec4 fft_texel = interpolate_4d(fft_texel_at_vertex[0], fft_texel_at_vertex[1], fft_texel_at_vertex[2]);
 	vec4 height_texel = interpolate_4d(height_texel_at_vertex[0], height_texel_at_vertex[1], height_texel_at_vertex[2]);
 
-
 	world_pos.y += fft_texel.y * tessParams.displacement_scale;
 	world_pos.x -= fft_texel.x * tessParams.choppines;
 	world_pos.z -= fft_texel.z * tessParams.choppines;

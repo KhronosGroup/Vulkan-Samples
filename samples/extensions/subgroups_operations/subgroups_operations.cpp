@@ -20,7 +20,6 @@
 
 #include <random>
 
-
 void SubgroupsOperations::Pipeline::destroy(VkDevice device)
 {
 	if (pipeline != VK_NULL_HANDLE)
@@ -47,9 +46,6 @@ SubgroupsOperations::SubgroupsOperations()
 
 	// Required by VK_KHR_spirv_1_4
 	add_device_extension(VK_KHR_SHADER_FLOAT_CONTROLS_EXTENSION_NAME);
-
-	// TODO: remove when not needed; for #extension GL_EXT_debug_printf : enable
-	add_device_extension(VK_KHR_SHADER_NON_SEMANTIC_INFO_EXTENSION_NAME);
 
 	// Targeting SPIR-V version
 	vkb::GLSLCompiler::set_target_environment(glslang::EShTargetSpv, glslang::EShTargetSpv_1_4);

@@ -21,7 +21,6 @@ layout (location = 1) in vec3 in_normal;
 
 layout (location = 0) out vec4 outFragColor;
 
-
 layout (binding = 3) uniform CameraPos
 {
     vec4 position;
@@ -37,7 +36,6 @@ layout (binding = 5) uniform OceanParamsUbo
 void main() 
 {
 	vec3 normal = in_normal;
-
 	vec3 light_pos = ocean_ubo.light_position;
 	vec3 light_color = ocean_ubo.light_color;
 	vec3 ocean_color = ocean_ubo.ocean_color;

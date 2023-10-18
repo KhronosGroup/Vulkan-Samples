@@ -1,6 +1,5 @@
 #version 450
 #extension GL_KHR_shader_subgroup_basic : enable
-
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -22,7 +21,6 @@
  layout (binding = 0, rgba32f) writeonly uniform image2D fft_normal_map;
 
  layout (binding = 1, rgba32f) readonly uniform image2D fft_displacement_map;
-
 
  layout (binding = 2) uniform InvertFft
 {

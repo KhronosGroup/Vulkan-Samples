@@ -48,7 +48,6 @@ void main()
     outPos[gl_InvocationID] = inPostion[gl_InvocationID];
     outUv[gl_InvocationID] = inUv[gl_InvocationID];
 
-
     float dist_cam_v0 = distance(cam.position.xyz, outPos[0]);
     float dist_cam_v1 = distance(cam.position.xyz, outPos[1]);
     float dist_cam_v2 = distance(cam.position.xyz, outPos[2]);
