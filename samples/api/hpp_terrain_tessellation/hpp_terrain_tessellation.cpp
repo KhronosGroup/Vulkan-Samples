@@ -477,12 +477,11 @@ void HPPTerrainTessellation::prepare_statistics()
 	if (statistics.query_supported)
 	{
 		// Create query pool
-		vk::QueryPoolCreateInfo query_pool_info({},
-		                                        vk::QueryType::ePipelineStatistics,
-		                                        2,
-		                                        vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
-		                                            vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
-		statistics.query_pool = get_device()->get_handle().createQueryPool(query_pool_info);
+		statistics.query_pool = vkb::common::create_query_pool(get_device()->get_handle(),
+		                                                       vk::QueryType::ePipelineStatistics,
+		                                                       2,
+		                                                       vk::QueryPipelineStatisticFlagBits::eVertexShaderInvocations |
+		                                                           vk::QueryPipelineStatisticFlagBits::eTessellationEvaluationShaderInvocations);
 	}
 }
 
