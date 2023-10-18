@@ -136,9 +136,11 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct GuiConfig
 	{
-		bool  wireframe = {true};
-		float amplitude = {32.0f};
-		float length    = {1900.0f};
+		bool  wireframe          = {true};
+		float choppines          = {0.75f};
+		float displacement_scale = {0.5f};
+		float amplitude          = {32.0f};
+		float length             = {1900.0f};
 		Wind  wind;
 
 		glm::vec3 light_pos   = {100.0f, 15.0f, -1.0f};
@@ -276,13 +278,13 @@ class SubgroupsOperations : public ApiVulkanSample
 			vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
 			skybox_shape.reset();
 		}
-		
+
 		Pipeline              pipeline;
 		VkDescriptorSetLayout descriptor_set_layout;
 		VkDescriptorSet       descriptor_set;
 
-		Texture                            skybox_texture;
-		std::unique_ptr<vkb::sg::SubMesh>  skybox_shape;
+		Texture                           skybox_texture;
+		std::unique_ptr<vkb::sg::SubMesh> skybox_shape;
 	} skybox;
 
 	VkPhysicalDeviceSubgroupProperties subgroups_properties;

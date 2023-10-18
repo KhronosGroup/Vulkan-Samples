@@ -838,8 +838,8 @@ void SubgroupsOperations::update_uniform_buffers()
 	invertFft.page_idx  = log_2_N % 2;
 
 	TessellationParamsUbo tess_params;
-	tess_params.displacement_scale = 0.5f;
-	tess_params.choppines          = 0.75f;
+	tess_params.displacement_scale = ui.displacement_scale;
+	tess_params.choppines          = ui.choppines;
 
 	TimeUbo t;
 	t.time = float(timer.elapsed<vkb::Timer::Seconds>());
@@ -985,6 +985,8 @@ void SubgroupsOperations::on_update_ui_overlay(vkb::Drawer &drawer)
 	{
 		drawer.input_float("Amplitude", &ui.amplitude, 1.f, 3u);
 		drawer.input_float("Length", &ui.length, 10.f, 1u);
+		drawer.slider_float("Choppines", &ui.choppines, 0.0f, 1.0f);
+		drawer.slider_float("Displacement scale", &ui.displacement_scale, 0.0f, 1.0f);
 
 		if (drawer.header("Wind"))
 		{
