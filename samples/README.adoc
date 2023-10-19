@@ -257,7 +257,7 @@ A sample that implements best practices in handling swapchain recreation, for ex
 
 === xref:./api/oit_linked_lists/README.adoc[Order-independent transparency with per-pixel ordered linked lists]
 
-A sample that implements implements an order-independent transparency algorithm using per-pixel ordered linked lists.
+A sample that implements an order-independent transparency algorithm using per-pixel ordered linked lists.
 
 == Extension Samples
 
