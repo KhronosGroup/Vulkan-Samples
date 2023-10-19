@@ -63,11 +63,6 @@ However, for this sample, the maximum number of sorted fragments per-pixel is ke
 | Camera auto-rotation
 | Enable the automatic rotation of the camera
 | 
-
-| Filtered blending
-| Switch to filtered colour blending, instead of the default alpha blending
-| This option demonstrates that, as the blending of the transparency geometry is done in the shader, it is possible to use custom blending equations not supported by the fixed hardware.
-
 |===
 
 == Requirements

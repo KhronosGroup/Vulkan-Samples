@@ -23,12 +23,11 @@
 
 layout(set = 0, binding = 0) uniform SceneConstants
 {
-	mat4 projection;
-	mat4 view;
-	uint sortFragments;
-	uint filtered_blending;
-	uint fragmentMaxCount;
-	uint unused;
+	mat4  projection;
+	mat4  view;
+	uvec2 unused;
+	uint  sortFragments;
+	uint  fragmentMaxCount;
 } sceneConstants;
 
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
@@ -97,14 +96,9 @@ void main()
 	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
 	for(int i = 0; i < fragmentCount; ++i)
 	{
-		const vec4 srcColor = unpackUnorm4x8(sortedFragments[i].x);
-		vec3 dstColor = color.rgb;
-		if(sceneConstants.filtered_blending == 1U)
-		{
-			dstColor *= srcColor.rgb;
-		}
-		color.rgb = mix(dstColor, srcColor.rgb, srcColor.a);
-		color.a *= 1.0f - srcColor.a;
+		const vec4 fragmentColor = unpackUnorm4x8(sortedFragments[i].x);
+		color.rgb = mix(color.rgb, fragmentColor.rgb, fragmentColor.a);
+		color.a *= 1.0f - fragmentColor.a;
 	}
 	color.a = 1.0f - color.a;
 	outFragColor = color;

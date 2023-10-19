@@ -115,7 +115,6 @@ void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	drawer.checkbox("Sort fragments", &sort_fragments);
 	drawer.checkbox("Camera auto-rotation", &camera_auto_rotation);
-	drawer.checkbox("Filtered blending", &filtered_blending);
 }
 
 void OITLinkedLists::build_command_buffers()
@@ -436,10 +435,9 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants     = {};
 	constants.projection         = camera.matrices.perspective;
 	constants.view               = camera.matrices.view;
+	constants.unused             = glm::uvec2(0U);
 	constants.sort_fragments     = sort_fragments ? 1U : 0U;
-	constants.filtered_blending  = filtered_blending ? 1U : 0U;
 	constants.fragment_max_count = fragment_max_count;
-	constants.unused             = 0U;
 	scene_constants->convert_and_update(constants);
 }
 
