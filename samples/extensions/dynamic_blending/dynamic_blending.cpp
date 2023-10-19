@@ -189,7 +189,7 @@ void DynamicBlending::update_uniform_buffers()
 
 	reverse = plane0.z < plane1.z;
 
-	build_command_buffers();
+	rebuild_command_buffers();
 }
 
 void DynamicBlending::setup_descriptor_pool()
@@ -372,7 +372,7 @@ void DynamicBlending::randomize_color(std::array<float, 4> &color, bool alpha)
 void DynamicBlending::update_color_uniform()
 {
 	update_color();
-	build_command_buffers();
+	rebuild_command_buffers();
 }
 
 void DynamicBlending::build_command_buffers()

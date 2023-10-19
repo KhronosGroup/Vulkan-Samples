@@ -421,6 +421,15 @@ void ApiVulkanSample::destroy_command_buffers()
 	vkFreeCommandBuffers(device->get_handle(), cmd_pool, static_cast<uint32_t>(draw_cmd_buffers.size()), draw_cmd_buffers.data());
 }
 
+void ApiVulkanSample::recreate_current_command_buffer()
+{
+	auto &cmd = draw_cmd_buffers[current_buffer];
+	assert(cmd);
+	vkFreeCommandBuffers(get_device().get_handle(), cmd_pool, 1, &cmd);
+	VkCommandBufferAllocateInfo command_buffer_allocate_info{VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, nullptr, cmd_pool, VK_COMMAND_BUFFER_LEVEL_PRIMARY, 1};
+	VK_CHECK(vkAllocateCommandBuffers(get_device().get_handle(), &command_buffer_allocate_info, &cmd));
+}
+
 void ApiVulkanSample::create_pipeline_cache()
 {
 	VkPipelineCacheCreateInfo pipeline_cache_create_info = {};
