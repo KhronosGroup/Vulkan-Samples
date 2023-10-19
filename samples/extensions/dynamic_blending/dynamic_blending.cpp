@@ -486,12 +486,15 @@ void DynamicBlending::build_command_buffers()
 
 void DynamicBlending::build_command_buffer_for_plane(VkCommandBuffer &command_buffer, FacePreferences preferences)
 {
-	std::array<VkColorComponentFlags, 1> color_bit = {
-	    (preferences.color_bit_enabled[0] ? VK_COLOR_COMPONENT_R_BIT : 0u) |
-	    (preferences.color_bit_enabled[1] ? VK_COLOR_COMPONENT_G_BIT : 0u) |
-	    (preferences.color_bit_enabled[2] ? VK_COLOR_COMPONENT_B_BIT : 0u) |
-	    (preferences.color_bit_enabled[3] ? VK_COLOR_COMPONENT_A_BIT : 0u)};
-	vkCmdSetColorWriteMaskEXT(command_buffer, 0, 1, color_bit.data());
+	if (eds_feature_support.extendedDynamicState3ColorWriteMask)
+	{
+		std::array<VkColorComponentFlags, 1> color_bit = {
+		    (preferences.color_bit_enabled[0] ? VK_COLOR_COMPONENT_R_BIT : 0u) |
+		    (preferences.color_bit_enabled[1] ? VK_COLOR_COMPONENT_G_BIT : 0u) |
+		    (preferences.color_bit_enabled[2] ? VK_COLOR_COMPONENT_B_BIT : 0u) |
+		    (preferences.color_bit_enabled[3] ? VK_COLOR_COMPONENT_A_BIT : 0u)};
+		vkCmdSetColorWriteMaskEXT(command_buffer, 0, 1, color_bit.data());
+	}
 	vkCmdDrawIndexed(command_buffer, preferences.index_count, 1, preferences.index_offset, 0, 0);
 }
 
