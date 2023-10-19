@@ -19,21 +19,24 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const SPARSE_IMAGE_ON_SCREEN_HORIZONTAL_BLOCKS = 50U;
-size_t const SPARSE_IMAGE_ON_SCREEN_VERTICAL_BLOCKS   = 30U;
-double const SPARSE_IMAGE_FOV_DEGREES                 = 60.0;
+size_t const SPARSE_IMAGE_ON_SCREEN_NUM_HORIZONTAL_BLOCKS = 50U;
+size_t const SPARSE_IMAGE_ON_SCREEN_NUM_VERTICAL_BLOCKS   = 30U;
+double const SPARSE_IMAGE_FOV_DEGREES                     = 60.0;
+size_t const SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC       = 50U;
 
 class SparseImage : public ApiVulkanSample
 {
   public:
-	bool color_highlight     = true;
-	bool color_highlight_mem = true;
+	bool color_highlight        = true;
+	bool color_highlight_mem    = true;
+	bool memory_defragmentation = true;
 
 	enum Stages
 	{
 		SPARSE_IMAGE_IDLE_STAGE,
 		SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE,
 		SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE,
+		SPARSE_IMAGE_FREE_MEMORY_STAGE,
 		SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE,
 		SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE,
 		SPARSE_IMAGE_NUM_STAGES,
@@ -101,16 +104,6 @@ class SparseImage : public ApiVulkanSample
 		uint8_t mip_level;
 	};
 
-	struct PageTable
-	{
-		bool   valid;                   // bound via vkQueueBindSparse() and contains valid data
-		bool   gen_mip_required;        // required for the mip generation
-		bool   fixed;                   // not freed from the memory at any cases
-		size_t page_index;              // index from available_memory_page_indices corresponding to this page
-
-		std::set<std::tuple<uint8_t, size_t, size_t>> render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
-	};
-
 	struct Point
 	{
 		double x;
@@ -124,11 +117,98 @@ class SparseImage : public ApiVulkanSample
 		bool   on_screen;
 	};
 
+	struct MemSector;
+
+	struct PageInfo
+	{
+		std::shared_ptr<MemSector> memory_sector;
+		uint32_t                   offset;
+	};
+
+	struct PageTable
+	{
+		bool     valid;                   // bound via vkQueueBindSparse() and contains valid data
+		bool     gen_mip_required;        // required for the mip generation
+		bool     fixed;                   // not freed from the memory at any cases
+		PageInfo page_memory_info;        // memory-related info
+
+		std::set<std::tuple<uint8_t, size_t, size_t>> render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
+	};
+
+	struct MemAllocInfo
+	{
+		VkDevice device;
+		uint64_t page_size;
+		uint32_t memory_type_index;
+
+		void get_allocation(PageInfo &page_memory_info, size_t page_index);
+
+		uint32_t get_size()
+		{
+			return memory_sectors.size();
+		}
+
+		std::list<std::weak_ptr<MemSector>> &get_handle()
+		{
+			return memory_sectors;
+		}
+
+	  private:
+		std::list<std::weak_ptr<MemSector>> memory_sectors;
+	};
+
+	struct MemSector : public MemAllocInfo
+	{
+		VkDeviceMemory memory = VK_NULL_HANDLE;
+
+		std::set<uint32_t> available_offsets;
+		std::set<size_t>   virt_page_indices;
+
+		MemSector(MemAllocInfo &mem_alloc_info)
+		{
+			this->device            = mem_alloc_info.device;
+			this->page_size         = mem_alloc_info.page_size;
+			this->memory_type_index = mem_alloc_info.memory_type_index;
+
+			VkMemoryAllocateInfo memory_allocate_info{};
+			memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+			memory_allocate_info.allocationSize  = page_size * SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC;
+			memory_allocate_info.memoryTypeIndex = memory_type_index;
+
+			VkDeviceMemory memory;
+			VK_CHECK(vkAllocateMemory(device, &memory_allocate_info, nullptr, &memory));
+			this->memory = memory;
+
+			for (size_t i = 0U; i < SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC; i++)
+			{
+				available_offsets.insert(page_size * i);
+			}
+		}
+
+		~MemSector()
+		{
+			vkFreeMemory(device, memory, nullptr);
+		}
+	};
+
+	friend bool sort_memory_sector(const std::weak_ptr<MemSector> left, const std::weak_ptr<MemSector> right)
+	{
+		if (left.expired())
+		{
+			return false;
+		}
+		else if (right.expired())
+		{
+			return true;
+		}
+		return left.lock()->available_offsets.size() > right.lock()->available_offsets.size();
+	};
+
 	struct VirtualTexture
 	{
-		VkImage        texture_image;
-		VkImageView    texture_image_view;
-		VkDeviceMemory texture_memory;
+		VkImage      texture_image;
+		VkImageView  texture_image_view;
+		MemAllocInfo memory_allocations;
 
 		// Dimensions
 		size_t width;
@@ -136,7 +216,6 @@ class SparseImage : public ApiVulkanSample
 
 		// Number of bytes per page
 		size_t page_size;
-		size_t pages_allocated;
 
 		uint8_t                    base_mip_level;
 		uint8_t                    mip_levels;
@@ -160,8 +239,6 @@ class SparseImage : public ApiVulkanSample
 
 		// Vector of available memory pages (whole memory page pool is statically allocated at the beginning)
 		std::vector<size_t> available_memory_page_indices;
-
-		bool update_required = false;
 
 		// Sparse-image-related format and memory properties
 		VkSparseImageFormatProperties   format_properties;
@@ -194,10 +271,10 @@ class SparseImage : public ApiVulkanSample
 		void calculate_mip_levels();
 	};
 
-	bool        transfer_finished = false;
-	bool        update_frag       = false;
-	uint8_t     frame_counter     = 0U;
-	enum Stages next_stage        = SPARSE_IMAGE_IDLE_STAGE;
+	bool        update_frag     = false;
+	bool        update_required = false;
+	uint8_t     frame_counter   = 0U;
+	enum Stages next_stage      = SPARSE_IMAGE_IDLE_STAGE;
 
 	VirtualTexture virtual_texture;
 
@@ -220,10 +297,6 @@ class SparseImage : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkDescriptorSet       descriptor_set;
 	VkSampler             texture_sampler;
-
-	size_t on_screen_num_vertical_blocks   = SPARSE_IMAGE_ON_SCREEN_VERTICAL_BLOCKS;
-	size_t on_screen_num_horizontal_blocks = SPARSE_IMAGE_ON_SCREEN_HORIZONTAL_BLOCKS;
-	double fov_degrees                     = SPARSE_IMAGE_FOV_DEGREES;
 
 	//==================================================================================================
 	SparseImage();
