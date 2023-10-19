@@ -51,17 +51,14 @@ class OITLinkedLists : public ApiVulkanSample
 	void fill_instance_data();
 
   private:
-	enum : uint32_t
-	{
-		kInstanceRowCount    = 4,
-		kInstanceColumnCount = 4,
-		kInstanceLayerCount  = 4,
-		kInstanceCount       = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount,
+	static constexpr uint32_t kInstanceRowCount    = 4;
+	static constexpr uint32_t kInstanceColumnCount = 4;
+	static constexpr uint32_t kInstanceLayerCount  = 4;
+	static constexpr uint32_t kInstanceCount       = kInstanceRowCount * kInstanceColumnCount * kInstanceLayerCount;
 
-		kFragmentsPerPixelAverage = 8,
+	static constexpr uint32_t kFragmentsPerPixelAverage = 8;
 
-		kLinkedListEndSentinel = 0xFFFFFFFFU,
-	};
+	static constexpr uint32_t kLinkedListEndSentinel = 0xFFFFFFFFU;
 
 	struct SceneConstants
 	{

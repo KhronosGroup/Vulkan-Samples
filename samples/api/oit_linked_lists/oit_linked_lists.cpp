@@ -449,16 +449,12 @@ void OITLinkedLists::fill_instance_data()
 		return static_cast<float>(rand()) / (RAND_MAX);
 	};
 
-	for (uint32_t l = 0; l < kInstanceLayerCount; ++l)
+	for (uint32_t l = 0, instance_index = 0; l < kInstanceLayerCount; ++l)
 	{
 		for (uint32_t c = 0; c < kInstanceColumnCount; ++c)
 		{
-			for (uint32_t r = 0; r < kInstanceRowCount; ++r)
+			for (uint32_t r = 0; r < kInstanceRowCount; ++r, ++instance_index)
 			{
-				const uint32_t instance_index =
-				    (l * kInstanceColumnCount * kInstanceRowCount) +
-				    (c * kInstanceRowCount) + r;
-
 				const float x     = static_cast<float>(r) - ((kInstanceRowCount - 1) * 0.5f);
 				const float y     = static_cast<float>(c) - ((kInstanceColumnCount - 1) * 0.5f);
 				const float z     = static_cast<float>(l) - ((kInstanceLayerCount - 1) * 0.5f);
