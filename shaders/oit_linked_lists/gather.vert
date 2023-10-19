@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,10 @@ layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec2 unused;
 	uint sortFragments;
+	uint filtered_blending;
 	uint fragmentMaxCount;
+	uint unused;
 } sceneConstants;
 
 const uint kInstanceCount = 64;

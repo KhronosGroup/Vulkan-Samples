@@ -31,13 +31,13 @@ image::./images/sample.png[Sample]
 
 This sample implements an order-independent transparency (OIT) algorithm using per-pixel ordered linked lists.
 It renders 64 spheres with random color and opacity (from 0.2 to 1.0).
-It produces pixel-perfert results.
+It produces pixel-perfect results.
 
 == Algorithm
 
 The OIT algorithm consists of two passes: the _gather_ pass and the _combine_ pass.
 
-During the gather pass, the transparent geometry is rendered per-pixel order linked lists.
+During the gather pass, the transparent geometry is rendered into per-pixel order linked lists.
 Each fragment color and depth is pushed into the linked list associated with its destination pixel.
 The linked lists head are stored into a storage image that is the size of the screen.
 The fragment data (color and depth) is stored into a storage buffer shared by all linked lists.
@@ -50,8 +50,25 @@ Finally, it alpha blends (via the fixed blend function) the transparent color in
 The algorithm can produce pixel-perfect results, even with intersecting geometry.
 However, for this sample, the maximum number of sorted fragments per-pixel is kept at 16.
 
-The sample has an option to disable the fragment sorting.
-It is meant to demonstrate the visual issues that occur with non-sorted transparent geometry.
+== Options
+
+[cols="2,4,4"]
+|===
+| Option | Description | Comments
+
+| Sort fragments
+| Enable fragment sorting in the combine pass
+| This option, when disabled, is meant to demonstrate the visual issues that occur with non-sorted transparent geometry.
+
+| Camera auto-rotation
+| Enable the automatic rotation of the camera
+| 
+
+| Filtered blending
+| Switch to filtered colour blending, instead of the default alpha blending
+| This option demonstrates that, as the blending of the transparency geometry is done in the shader, it is possible to use custom blending equations not supported by the fixed hardware.
+
+|===
 
 == Requirements
 

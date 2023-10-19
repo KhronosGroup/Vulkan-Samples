@@ -7,7 +7,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ *	 http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
@@ -24,9 +24,10 @@ layout(set = 0, binding = 0) uniform SceneConstants
 {
 	mat4 projection;
 	mat4 view;
-	uvec2 unused;
 	uint sortFragments;
+	uint filtered_blending;
 	uint fragmentMaxCount;
+	uint unused;
 } sceneConstants;
 
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
@@ -43,19 +44,19 @@ layout(set = 0, binding = 4) buffer FragmentCounter {
 
 void main()
 {
-    // Get the next fragment index
-    const uint nextFragmentIndex = atomicAdd(fragmentCounter.value, 1U);
+	// Get the next fragment index
+	const uint nextFragmentIndex = atomicAdd(fragmentCounter.value, 1U);
 
-    // Ignore the fragment if the fragment buffer is full
-    if(nextFragmentIndex >= sceneConstants.fragmentMaxCount)
-    {
-        discard;
-    }
+	// Ignore the fragment if the fragment buffer is full
+	if(nextFragmentIndex >= sceneConstants.fragmentMaxCount)
+	{
+		discard;
+	}
 
-    // Update the linked list head
-    const uint previousFragmentIndex = imageAtomicExchange(linkedListHeadTex, ivec2(gl_FragCoord.xy), nextFragmentIndex);
+	// Update the linked list head
+	const uint previousFragmentIndex = imageAtomicExchange(linkedListHeadTex, ivec2(gl_FragCoord.xy), nextFragmentIndex);
 
-    // Add the fragment to the buffer
-    fragmentBuffer.data[nextFragmentIndex] = uvec3(previousFragmentIndex, packUnorm4x8(inColor), floatBitsToUint(gl_FragCoord.z));
+	// Add the fragment to the buffer
+	fragmentBuffer.data[nextFragmentIndex] = uvec3(previousFragmentIndex, packUnorm4x8(inColor), floatBitsToUint(gl_FragCoord.z));
 }
 

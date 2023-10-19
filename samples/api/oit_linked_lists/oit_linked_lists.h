@@ -65,11 +65,12 @@ class OITLinkedLists : public ApiVulkanSample
 
 	struct SceneConstants
 	{
-		glm::mat4  projection;
-		glm::mat4  view;
-		glm::uvec2 unused;
-		glm::uint  sort_fragments;
-		glm::uint  fragment_max_count;
+		glm::mat4 projection;
+		glm::mat4 view;
+		glm::uint sort_fragments;
+		glm::uint filtered_blending;
+		glm::uint fragment_max_count;
+		glm::uint unused;
 	};
 
 	struct Instance
@@ -101,7 +102,9 @@ class OITLinkedLists : public ApiVulkanSample
 	VkPipeline       gather_pipeline;
 	VkPipeline       combine_pipeline;
 
-	int32_t sort_fragments = true;
+	int32_t sort_fragments       = true;
+	int32_t camera_auto_rotation = false;
+	int32_t filtered_blending    = false;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();
