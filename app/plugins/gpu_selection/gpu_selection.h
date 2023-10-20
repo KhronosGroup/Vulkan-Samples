@@ -42,7 +42,7 @@ class GpuSelection : public GpuSelectionTags
 
 	virtual void init(const vkb::CommandParser &options) override;
 
-	vkb::FlagCommand selected_gpu_index = {vkb::FlagType::OneValue, "gpu", "", "If flag is set, hides the user interface at startup"};
+	vkb::FlagCommand selected_gpu_index = {vkb::FlagType::OneValue, "gpu", "", "Zero-based index of the GPU that the sample should use"};
 
 	vkb::CommandGroup gpu_selection_options_group = {"GPU selection Options", {&selected_gpu_index}};
 };
