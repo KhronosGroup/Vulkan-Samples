@@ -131,7 +131,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		void      recalc();
 		glm::vec2 vec;
 		float     angle = 180;
-		float     force = 25;
+		float     force = 3;
 	};
 
 	struct GuiConfig

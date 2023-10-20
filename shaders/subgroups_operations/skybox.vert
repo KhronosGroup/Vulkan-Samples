@@ -17,18 +17,17 @@
  */
 
 layout (location = 0) in vec3 inPos;
-layout (location = 1) in vec2 inUV;
+layout (location = 1) in vec3 inUV;
 
-layout (location = 0) out vec2 outUV;
+layout (location = 0) out vec3 outUV;
 
-layout (binding = 0) uniform SkyboxUbo 
+layout (set = 0, binding = 0) uniform SkyboxUbo 
 {
 	mat4 mvp;
 } ubo;
 
 void main(void)
 {
-	outUV = inUV;
-	outUV.t = 1.0 - outUV.t;
-	gl_Position =  ubo.mvp * vec4(inPos, 1.0f);
+    gl_Position = ubo.mvp * vec4(inPos, 1.0f);
+    outUV = inPos;
 }

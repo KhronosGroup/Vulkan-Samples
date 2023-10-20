@@ -18,12 +18,13 @@
 
 layout (location = 0) out vec4 outFragColor;
 
-layout (location = 0) in vec2 inUV;
+layout (location = 0) in vec3 inUV;
 
-layout (set = 0, binding = 1) uniform sampler2D skybox_texture_map;
+layout (set = 0, binding = 1) uniform samplerCube skybox_texture_map;
 
 void main(void)
 {
-	vec4 color = texture(skybox_texture_map, inUV);
-	outFragColor = vec4(color.rgb, 1.0);
+    vec3 normal = normalize(inUV);
+    vec4 color = texture(skybox_texture_map, inUV);
+    outFragColor = vec4(color.rgb, 1.0);
 }
