@@ -22,11 +22,12 @@ layout (location = 0) in vec3 inPos;
 
 layout(set = 0, binding = 0) uniform SceneConstants
 {
-	mat4  projection;
-	mat4  view;
-	uvec2 unused;
-	uint  sortFragments;
-	uint  fragmentMaxCount;
+	mat4 projection;
+	mat4 view;
+	uint unused;
+	uint sortFragments;
+	uint fragmentMaxCount;
+	uint sortedFragmentCount;
 } sceneConstants;
 
 const uint kInstanceCount = 64;

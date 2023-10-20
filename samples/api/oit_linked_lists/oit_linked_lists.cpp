@@ -16,6 +16,7 @@
  */
 
 #include "oit_linked_lists.h"
+#include <algorithm>
 
 OITLinkedLists::OITLinkedLists()
 {
@@ -115,6 +116,7 @@ void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 {
 	drawer.checkbox("Sort fragments", &sort_fragments);
 	drawer.checkbox("Camera auto-rotation", &camera_auto_rotation);
+	drawer.slider_int("Sorted fragments per pixel", &sorted_fragment_count, kSortedFragmentMinCount, kSortedFragmentMaxCount);
 }
 
 void OITLinkedLists::build_command_buffers()
@@ -432,12 +434,13 @@ void OITLinkedLists::create_pipelines()
 
 void OITLinkedLists::update_scene_constants()
 {
-	SceneConstants constants     = {};
-	constants.projection         = camera.matrices.perspective;
-	constants.view               = camera.matrices.view;
-	constants.unused             = glm::uvec2(0U);
-	constants.sort_fragments     = sort_fragments ? 1U : 0U;
-	constants.fragment_max_count = fragment_max_count;
+	SceneConstants constants        = {};
+	constants.projection            = camera.matrices.perspective;
+	constants.view                  = camera.matrices.view;
+	constants.unused                = 0U;
+	constants.sort_fragments        = sort_fragments ? 1U : 0U;
+	constants.fragment_max_count    = fragment_max_count;
+	constants.sorted_fragment_count = sorted_fragment_count;
 	scene_constants->convert_and_update(constants);
 }
 

@@ -58,15 +58,19 @@ class OITLinkedLists : public ApiVulkanSample
 
 	static constexpr uint32_t kFragmentsPerPixelAverage = 8;
 
+	static constexpr int32_t kSortedFragmentMinCount = 1;
+	static constexpr int32_t kSortedFragmentMaxCount = 16;
+
 	static constexpr uint32_t kLinkedListEndSentinel = 0xFFFFFFFFU;
 
 	struct SceneConstants
 	{
-		glm::mat4  projection;
-		glm::mat4  view;
-		glm::uvec2 unused;
-		glm::uint  sort_fragments;
-		glm::uint  fragment_max_count;
+		glm::mat4 projection;
+		glm::mat4 view;
+		glm::uint unused;
+		glm::uint sort_fragments;
+		glm::uint fragment_max_count;
+		glm::uint sorted_fragment_count;
 	};
 
 	struct Instance
@@ -98,8 +102,9 @@ class OITLinkedLists : public ApiVulkanSample
 	VkPipeline       gather_pipeline;
 	VkPipeline       combine_pipeline;
 
-	int32_t sort_fragments       = true;
-	int32_t camera_auto_rotation = false;
+	int32_t sort_fragments        = true;
+	int32_t camera_auto_rotation  = false;
+	int32_t sorted_fragment_count = kSortedFragmentMaxCount;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

@@ -48,7 +48,13 @@ It then alpha blends (in the shader code) them to produce the final transparent 
 Finally, it alpha blends (via the fixed blend function) the transparent color into the backbuffer.
 
 The algorithm can produce pixel-perfect results, even with intersecting geometry.
-However, for this sample, the maximum number of sorted fragments per-pixel is kept at 16.
+However, there is a catch.
+To keep performance high, the maximum number of sorted fragments per-pixel is limited to 16.
+This is well enough for the sample, due to the way the objects are placed in the scene.
+In reality, there is a trade-off between performance and correctness.
+To keep occupancy high, the maximum number of sorted fragments (`SORTED_FRAGMENT_MAX_COUNT` in `combine.frag`) should be kept low.
+To get correct results in every situation, that same number should be as high as possible.
+The artifacts resulting from a low number of sorted fragments per pixel can be observed by using the `Sorted fragments per pixel` option.
 
 == Options
 
@@ -63,6 +69,10 @@ However, for this sample, the maximum number of sorted fragments per-pixel is ke
 | Camera auto-rotation
 | Enable the automatic rotation of the camera
 | 
+
+| Sorted fragments per pixel
+| Specify the maximum number of fragments sorted per pixel
+| This option, when set to a low number (e.g. 4), highlights the main weakness of the algorithm.
 |===
 
 == Requirements

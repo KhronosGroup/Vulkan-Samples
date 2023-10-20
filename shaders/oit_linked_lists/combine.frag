@@ -17,17 +17,20 @@
  */
 
 #define LINKED_LIST_END_SENTINEL	0xFFFFFFFFU
+
+// For performance reasons, this should be kept as low as result correctness allows
 #define SORTED_FRAGMENT_MAX_COUNT	16U
 
 ////////////////////////////////////////
 
 layout(set = 0, binding = 0) uniform SceneConstants
 {
-	mat4  projection;
-	mat4  view;
-	uvec2 unused;
-	uint  sortFragments;
-	uint  fragmentMaxCount;
+	mat4 projection;
+	mat4 view;
+	uint unused;
+	uint sortFragments;
+	uint fragmentMaxCount;
+	uint sortedFragmentCount;
 } sceneConstants;
 
 layout(set = 0, binding = 2, r32ui) uniform uimage2D linkedListHeadTex;
@@ -60,7 +63,8 @@ void main()
 	// Copy the fragments into local memory for sorting
 	uvec2 sortedFragments[SORTED_FRAGMENT_MAX_COUNT];
 	uint fragmentCount = 0U;
-	while(fragmentIndex != LINKED_LIST_END_SENTINEL && fragmentCount < SORTED_FRAGMENT_MAX_COUNT)
+	const uint sortedFragmentMaxCount = min(sceneConstants.sortedFragmentCount, SORTED_FRAGMENT_MAX_COUNT);
+	while(fragmentIndex != LINKED_LIST_END_SENTINEL && fragmentCount < sortedFragmentMaxCount)
 	{
 		const uvec3 fragment = fragmentBuffer.data[fragmentIndex];
 		fragmentIndex = fragment.x;
