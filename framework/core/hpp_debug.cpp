@@ -36,9 +36,9 @@ void HPPDebugUtilsExtDebugUtils::set_debug_tag(
 	device.setDebugUtilsObjectTagEXT(tag_info);
 }
 
-void HPPDebugUtilsExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const
+void HPPDebugUtilsExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(color));
+	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
 	command_buffer.beginDebugUtilsLabelEXT(label_info);
 }
 
@@ -47,9 +47,9 @@ void HPPDebugUtilsExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer)
 	command_buffer.endDebugUtilsLabelEXT();
 }
 
-void HPPDebugUtilsExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const
+void HPPDebugUtilsExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(color));
+	vk::DebugUtilsLabelEXT label_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
 	command_buffer.insertDebugUtilsLabelEXT(label_info);
 }
 
@@ -66,9 +66,9 @@ void HPPDebugMarkerExtDebugUtils::set_debug_tag(
 	device.debugMarkerSetObjectTagEXT(tag_info);
 }
 
-void HPPDebugMarkerExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const
+void HPPDebugMarkerExtDebugUtils::cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(color));
+	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
 	command_buffer.debugMarkerBeginEXT(marker_info);
 }
 
@@ -77,16 +77,16 @@ void HPPDebugMarkerExtDebugUtils::cmd_end_label(vk::CommandBuffer command_buffer
 	command_buffer.debugMarkerEndEXT();
 }
 
-void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const
+void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const
 {
-	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(color));
+	vk::DebugMarkerMarkerInfoEXT marker_info(name, reinterpret_cast<std::array<float, 4> const &>(*&color[0]));
 	command_buffer.debugMarkerInsertEXT(marker_info);
 }
 
 HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
                                          vk::CommandBuffer    command_buffer,
                                          std::string const   &name,
-                                         glm::vec4 const     &color) :
+                                         glm::vec4 const     color) :
     debug_utils{&debug_utils}, command_buffer{VK_NULL_HANDLE}
 {
 	if (!name.empty())
@@ -98,7 +98,7 @@ HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
 	}
 }
 
-HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const &color) :
+HPPScopedDebugLabel::HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color) :
     HPPScopedDebugLabel{command_buffer.get_device().get_debug_utils(), command_buffer.get_handle(), name, color}
 {
 }

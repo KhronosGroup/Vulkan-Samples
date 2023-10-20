@@ -48,7 +48,7 @@ class HPPDebugUtils
 	/**
 	 * @brief Inserts a command to begin a new debug label/marker scope.
 	 */
-	virtual void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color = {}) const = 0;
+	virtual void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 
 	/**
 	 * @brief Inserts a command to end the current debug label/marker scope.
@@ -58,7 +58,7 @@ class HPPDebugUtils
 	/**
 	 * @brief Inserts a (non-scoped) debug label/marker in the command buffer.
 	 */
-	virtual void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color = {}) const = 0;
+	virtual void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color = {}) const = 0;
 };
 
 /**
@@ -74,11 +74,11 @@ class HPPDebugUtilsExtDebugUtils final : public vkb::core::HPPDebugUtils
 	void set_debug_tag(
 	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
-	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const override;
+	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
 	void cmd_end_label(vk::CommandBuffer command_buffer) const override;
 
-	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const override;
+	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 };
 
 /**
@@ -94,11 +94,11 @@ class HPPDebugMarkerExtDebugUtils final : public vkb::core::HPPDebugUtils
 	void set_debug_tag(
 	    vk::Device device, vk::ObjectType object_type, uint64_t object_handle, uint64_t tag_name, const void *tag_data, size_t tag_data_size) const override;
 
-	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const override;
+	void cmd_begin_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 
 	void cmd_end_label(vk::CommandBuffer command_buffer) const override;
 
-	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const &color) const override;
+	void cmd_insert_label(vk::CommandBuffer command_buffer, const char *name, glm::vec4 const color) const override;
 };
 
 /**
@@ -115,13 +115,13 @@ class HPPDummyDebugUtils final : public vkb::core::HPPDebugUtils
 	inline void set_debug_tag(vk::Device, vk::ObjectType, uint64_t, uint64_t, const void *, size_t) const override
 	{}
 
-	inline void cmd_begin_label(vk::CommandBuffer, const char *, glm::vec4 const &) const override
+	inline void cmd_begin_label(vk::CommandBuffer, const char *, glm::vec4 const ) const override
 	{}
 
 	inline void cmd_end_label(vk::CommandBuffer) const override
 	{}
 
-	inline void cmd_insert_label(vk::CommandBuffer, const char *, glm::vec4 const &) const override
+	inline void cmd_insert_label(vk::CommandBuffer, const char *, glm::vec4 const ) const override
 	{}
 };
 
@@ -134,9 +134,9 @@ class HPPDummyDebugUtils final : public vkb::core::HPPDebugUtils
 class HPPScopedDebugLabel final
 {
   public:
-	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const &color = {});
+	HPPScopedDebugLabel(const vkb::core::HPPDebugUtils &debug_utils, vk::CommandBuffer command_buffer, std::string const &name, glm::vec4 const color = {});
 
-	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const &color = {});
+	HPPScopedDebugLabel(const vkb::core::HPPCommandBuffer &command_buffer, std::string const &name, glm::vec4 const color = {});
 
 	~HPPScopedDebugLabel();
 
