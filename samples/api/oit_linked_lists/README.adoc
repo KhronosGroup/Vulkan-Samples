@@ -73,6 +73,10 @@ The artifacts resulting from a low number of sorted fragments per pixel can be o
 | Sorted fragments per pixel
 | Specify the maximum number of fragments sorted per pixel
 | This option, when set to a low number (e.g. 4), highlights the main weakness of the algorithm.
+
+| Background grayscale
+| Specify the grayscale value by which the background color is multiplied (0.0 to 1.0)
+| 
 |===
 
 == Requirements
