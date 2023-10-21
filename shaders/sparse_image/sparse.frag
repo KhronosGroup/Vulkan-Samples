@@ -45,17 +45,15 @@ void main() {
 	int lod = settings.minLOD;
 	int residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
 
-	if (!sparseTexelsResidentARB(residencyCode))
+	for(++lod; (lod <= settings.maxLOD) && !sparseTexelsResidentARB(residencyCode); ++lod)
 	{
-		lod += 1;
-		for(; (lod <= settings.maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
-		{
-			residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
-			if (settings.color_highlight)
-			{
-				color.xyz = (color.xyz * color_blend_table[lod]);
-			}
-		}	
+		residencyCode = sparseTextureLodARB(texSampler, fragTexCoord, lod, color);
+	}	
+
+	if (settings.color_highlight)
+	{
+		lod -= 1;
+		color.xyz = (color.xyz * color_blend_table[lod]);
 	}
 
 	fragOutColor = color;

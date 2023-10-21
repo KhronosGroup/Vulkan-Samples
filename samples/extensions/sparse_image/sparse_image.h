@@ -19,27 +19,17 @@
 
 #include "api_vulkan_sample.h"
 
-size_t const SPARSE_IMAGE_ON_SCREEN_NUM_HORIZONTAL_BLOCKS = 50U;
-size_t const SPARSE_IMAGE_ON_SCREEN_NUM_VERTICAL_BLOCKS   = 30U;
-double const SPARSE_IMAGE_FOV_DEGREES                     = 60.0;
-size_t const SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC       = 50U;
-
 class SparseImage : public ApiVulkanSample
 {
   public:
-	bool color_highlight        = true;
-	bool color_highlight_mem    = true;
-	bool memory_defragmentation = true;
-
-	enum Stages
+	enum class Stages : uint8_t
 	{
-		SPARSE_IMAGE_IDLE_STAGE,
-		SPARSE_IMAGE_CALCULATE_MIPS_TABLE_STAGE,
-		SPARSE_IMAGE_COMPARE_MIPS_TABLE_STAGE,
-		SPARSE_IMAGE_FREE_MEMORY_STAGE,
-		SPARSE_IMAGE_PROCESS_TEXTURE_BLOCKS_STAGE,
-		SPARSE_IMAGE_UPDATE_AND_GENERATE_STAGE,
-		SPARSE_IMAGE_NUM_STAGES,
+		Idle,
+		CalculateMipsTable,
+		CompareMipsTable,
+		FreeMemory,
+		ProcessTextureBlocks,
+		UpdateAndGenerate,
 	};
 
 	struct MVP
@@ -140,6 +130,7 @@ class SparseImage : public ApiVulkanSample
 		VkDevice device;
 		uint64_t page_size;
 		uint32_t memory_type_index;
+		size_t   pages_per_allocation;
 
 		void get_allocation(PageInfo &page_memory_info, size_t page_index);
 
@@ -166,20 +157,21 @@ class SparseImage : public ApiVulkanSample
 
 		MemSector(MemAllocInfo &mem_alloc_info)
 		{
-			this->device            = mem_alloc_info.device;
-			this->page_size         = mem_alloc_info.page_size;
-			this->memory_type_index = mem_alloc_info.memory_type_index;
+			this->device               = mem_alloc_info.device;
+			this->page_size            = mem_alloc_info.page_size;
+			this->memory_type_index    = mem_alloc_info.memory_type_index;
+			this->pages_per_allocation = mem_alloc_info.pages_per_allocation;
 
 			VkMemoryAllocateInfo memory_allocate_info{};
 			memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-			memory_allocate_info.allocationSize  = page_size * SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC;
+			memory_allocate_info.allocationSize  = page_size * pages_per_allocation;
 			memory_allocate_info.memoryTypeIndex = memory_type_index;
 
 			VkDeviceMemory memory;
 			VK_CHECK(vkAllocateMemory(device, &memory_allocate_info, nullptr, &memory));
 			this->memory = memory;
 
-			for (size_t i = 0U; i < SPARSE_IMAGE_NUM_PAGES_IN_SINGLE_ALLOC; i++)
+			for (size_t i = 0U; i < pages_per_allocation; i++)
 			{
 				available_offsets.insert(page_size * i);
 			}
@@ -187,6 +179,7 @@ class SparseImage : public ApiVulkanSample
 
 		~MemSector()
 		{
+			vkDeviceWaitIdle(device);
 			vkFreeMemory(device, memory, nullptr);
 		}
 	};
@@ -224,9 +217,8 @@ class SparseImage : public ApiVulkanSample
 		std::vector<std::vector<MipBlock>> current_mip_table;
 		std::vector<std::vector<MipBlock>> new_mip_table;
 
-		// Image containing a single, most detailed mip, allocated in the CPU memory, coppied to VRAM via staging buffer single_page_buffer
-		std::unique_ptr<vkb::sg::Image>    raw_data_image;
-		std::unique_ptr<vkb::core::Buffer> single_page_buffer;
+		// Image containing a single, most detailed mip, allocated in the CPU memory, coppied to VRAM via staging buffer in update_and_generate()
+		std::unique_ptr<vkb::sg::Image> raw_data_image;
 
 		// Key table that includes data on which page is allocated to what memory block from the textureMemory vector
 		std::vector<PageTable> page_table;
@@ -266,20 +258,46 @@ class SparseImage : public ApiVulkanSample
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
 
-		CalculateMipLevelData(glm::mat4 mvp_transform, VkExtent2D texture_base_dim, VkExtent2D screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels);
+		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels);
+		CalculateMipLevelData();
+
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();
 	};
 
-	bool        update_frag     = false;
-	bool        update_required = false;
-	uint8_t     frame_counter   = 0U;
-	enum Stages next_stage      = SPARSE_IMAGE_IDLE_STAGE;
+	// UI related
+	bool color_highlight         = true;
+	bool color_highlight_changed = false;
+	bool memory_defragmentation  = true;
+	bool frame_counter_feature   = true;
+
+	size_t blocks_to_update_per_cycle = 10U;
+
+	size_t num_vertical_blocks   = 50U;
+	size_t num_horizontal_blocks = 50U;
+
+	size_t num_vertical_blocks_upd   = 50U;
+	size_t num_horizontal_blocks_upd = 50U;
+
+	bool update_required = false;
+
+	uint8_t frame_counter_per_transfer = 0U;
+
+	const uint8_t FRAME_COUNTER_CAP        = 10U;
+	const uint8_t MEMORY_FRAGMENTATION_CAP = 20U;
+	const uint8_t PAGES_PER_ALLOC          = 50U;
+	const double  FOV_DEGREES              = 60.0;
+
+	Stages next_stage = Stages::Idle;
+
+	const VkFormat    image_format = VK_FORMAT_R8G8B8A8_SRGB;
+	VkImageUsageFlags image_usage  = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	VirtualTexture virtual_texture;
 
+	CalculateMipLevelData mesh_data;
+
 	VkQueue sparse_queue;
-	size_t  sparse_queue_family_index;
 
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
 
@@ -297,6 +315,9 @@ class SparseImage : public ApiVulkanSample
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkDescriptorSet       descriptor_set;
 	VkSampler             texture_sampler;
+
+	VkSemaphore bound_semaphore;
+	VkSemaphore submit_semaphore;
 
 	//==================================================================================================
 	SparseImage();
@@ -321,13 +342,15 @@ class SparseImage : public ApiVulkanSample
 
 	void create_sparse_texture_image();
 
+	void draw();
+
 	void                      update_mvp();
 	void                      process_stage(enum Stages next_stage);
 	void                      free_unused_memory();
 	void                      update_and_generate();
 	void                      process_texture_blocks();
 	struct MemPageDescription get_mem_page_description(size_t page_index);
-	void                      calculate_mips_table(glm::mat4 mvp_transform, uint32_t numVerticalBlocks, uint32_t numHorizontalBlocks, std::vector<std::vector<MipBlock>> &mipTable);
+	void                      calculate_mips_table();
 	void                      compare_mips_table();
 	void                      process_texture_block(const TextureBlock &on_screen_block);
 	std::vector<size_t>       get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level);
@@ -339,6 +362,7 @@ class SparseImage : public ApiVulkanSample
 	void                      update_frag_settings();
 	uint8_t                   get_mip_level(size_t page_index);
 	size_t                    get_page_index(MemPageDescription mem_page_desc);
+	void                      reset_mip_table();
 
 	// Override basic framework functionalities
 	void         build_command_buffers() override;
