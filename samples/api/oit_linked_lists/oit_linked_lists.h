@@ -61,13 +61,16 @@ class OITLinkedLists : public ApiVulkanSample
 	static constexpr int32_t kSortedFragmentMinCount = 1;
 	static constexpr int32_t kSortedFragmentMaxCount = 16;
 
+	static constexpr float kBackgroundGrayscaleMinCount = 0.0f;
+	static constexpr float kBackgroundGrayscaleMaxCount = 1.0f;
+
 	static constexpr uint32_t kLinkedListEndSentinel = 0xFFFFFFFFU;
 
 	struct SceneConstants
 	{
 		glm::mat4 projection;
 		glm::mat4 view;
-		glm::uint unused;
+		glm::f32  background_grayscale;
 		glm::uint sort_fragments;
 		glm::uint fragment_max_count;
 		glm::uint sorted_fragment_count;
@@ -81,6 +84,7 @@ class OITLinkedLists : public ApiVulkanSample
 
   private:
 	std::unique_ptr<vkb::sg::SubMesh> object;
+	Texture                           background_texture;
 
 	std::unique_ptr<vkb::core::Buffer> scene_constants;
 	std::unique_ptr<vkb::core::Buffer> instance_data;
@@ -100,11 +104,13 @@ class OITLinkedLists : public ApiVulkanSample
 
 	VkPipelineLayout pipeline_layout;
 	VkPipeline       gather_pipeline;
+	VkPipeline       background_pipeline;
 	VkPipeline       combine_pipeline;
 
 	int32_t sort_fragments        = true;
 	int32_t camera_auto_rotation  = false;
 	int32_t sorted_fragment_count = kSortedFragmentMaxCount;
+	float   background_grayscale  = 0.3f;
 };
 
 std::unique_ptr<vkb::VulkanSample> create_oit_linked_lists();

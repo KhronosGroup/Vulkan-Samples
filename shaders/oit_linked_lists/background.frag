@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-layout (location = 0) in vec3 inPos;
+layout (location = 0) in vec2 inUV;
 
 ////////////////////////////////////////
 
@@ -30,27 +30,16 @@ layout(set = 0, binding = 0) uniform SceneConstants
 	uint  sortedFragmentCount;
 } sceneConstants;
 
-const uint kInstanceCount = 64;
-struct Instance
-{
-	mat4 model;
-	vec4 color;
-};
-layout (binding = 1) uniform InstanceData
-{
-	Instance instance[kInstanceCount];
-} instanceData;
+////////////////////////////////////////
+
+layout(set = 0, binding = 5) uniform sampler2D backgroundTex;
 
 ////////////////////////////////////////
 
-layout (location = 0) out vec4 outColor;
-
-////////////////////////////////////////
+layout(location = 0) out vec4 outColor;
 
 void main()
 {
-	const Instance instance = instanceData.instance[gl_InstanceIndex];
-	gl_Position = sceneConstants.projection * sceneConstants.view * instance.model * vec4(inPos, 1.0f);
-	outColor = instance.color;
+	outColor = texture(backgroundTex, inUV) * sceneConstants.background_grayscale;
 }
 

@@ -30,6 +30,7 @@ OITLinkedLists::~OITLinkedLists()
 	}
 
 	vkDestroyPipeline(get_device().get_handle(), combine_pipeline, nullptr);
+	vkDestroyPipeline(get_device().get_handle(), background_pipeline, nullptr);
 	vkDestroyPipeline(get_device().get_handle(), gather_pipeline, nullptr);
 	vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 
@@ -41,6 +42,7 @@ OITLinkedLists::~OITLinkedLists()
 	instance_data.reset();
 	scene_constants.reset();
 
+	vkDestroySampler(get_device().get_handle(), background_texture.sampler, nullptr);
 	object.reset();
 }
 
@@ -110,6 +112,15 @@ void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		throw std::runtime_error("This sample requires support for buffers and images stores and atomic operations in the fragment shader stage");
 	}
+
+	if (gpu.get_features().samplerAnisotropy)
+	{
+		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
+	}
+	else
+	{
+		throw std::runtime_error("This sample requires support for anisotropic sampling");
+	}
 }
 
 void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
@@ -117,6 +128,7 @@ void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 	drawer.checkbox("Sort fragments", &sort_fragments);
 	drawer.checkbox("Camera auto-rotation", &camera_auto_rotation);
 	drawer.slider_int("Sorted fragments per pixel", &sorted_fragment_count, kSortedFragmentMinCount, kSortedFragmentMaxCount);
+	drawer.slider_float("Background grayscale", &background_grayscale, kBackgroundGrayscaleMinCount, kBackgroundGrayscaleMaxCount);
 }
 
 void OITLinkedLists::build_command_buffers()
@@ -150,8 +162,9 @@ void OITLinkedLists::build_command_buffers()
 				VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
 				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
 				draw_model(object, draw_cmd_buffers[i], kInstanceCount);
 			}
 			vkCmdEndRenderPass(draw_cmd_buffers[i]);
@@ -175,8 +188,12 @@ void OITLinkedLists::build_command_buffers()
 				VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
 				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
 				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background_pipeline);
+				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+
+				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
 				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
 
 				draw_ui(draw_cmd_buffers[i]);
@@ -291,7 +308,8 @@ void OITLinkedLists::clear_sized_resources()
 
 void OITLinkedLists::load_assets()
 {
-	object = load_model("scenes/geosphere.gltf");
+	object             = load_model("scenes/geosphere.gltf");
+	background_texture = load_texture("textures/vulkan_logo_full.ktx", vkb::sg::Image::Color);
 }
 
 void OITLinkedLists::create_constant_buffers()
@@ -309,6 +327,7 @@ void OITLinkedLists::create_descriptors()
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_FRAGMENT_BIT, 2),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 3),
 		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, VK_SHADER_STAGE_FRAGMENT_BIT, 4),
+		    vkb::initializers::descriptor_set_layout_binding(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT, 5),
 		};
 		VkDescriptorSetLayoutCreateInfo descriptor_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings.data(), static_cast<uint32_t>(set_layout_bindings.size()));
 		VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_layout_create_info, nullptr, &descriptor_set_layout));
@@ -319,6 +338,7 @@ void OITLinkedLists::create_descriptors()
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2),
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1),
 		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2),
+		    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1),
 		};
 		const uint32_t             num_descriptor_sets         = 1;
 		VkDescriptorPoolCreateInfo descriptor_pool_create_info = vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), num_descriptor_sets);
@@ -331,18 +351,21 @@ void OITLinkedLists::create_descriptors()
 
 void OITLinkedLists::update_descriptors()
 {
-	VkDescriptorBufferInfo            scene_constants_descriptor             = create_descriptor(*scene_constants);
-	VkDescriptorBufferInfo            instance_data_descriptor               = create_descriptor(*instance_data);
-	VkDescriptorImageInfo             linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
-	VkDescriptorBufferInfo            fragment_buffer_descriptor             = create_descriptor(*fragment_buffer);
-	VkDescriptorBufferInfo            fragment_counter_descriptor            = create_descriptor(*fragment_counter);
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets                  = {
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_data_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &fragment_counter_descriptor),
-    };
+	VkDescriptorBufferInfo scene_constants_descriptor             = create_descriptor(*scene_constants);
+	VkDescriptorBufferInfo instance_data_descriptor               = create_descriptor(*instance_data);
+	VkDescriptorImageInfo  linked_list_head_image_view_descriptor = vkb::initializers::descriptor_image_info(VK_NULL_HANDLE, linked_list_head_image_view->get_handle(), VK_IMAGE_LAYOUT_GENERAL);
+	VkDescriptorBufferInfo fragment_buffer_descriptor             = create_descriptor(*fragment_buffer);
+	VkDescriptorBufferInfo fragment_counter_descriptor            = create_descriptor(*fragment_counter);
+	VkDescriptorImageInfo  background_texture_descriptor          = create_descriptor(background_texture);
+
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &scene_constants_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, &instance_data_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 2, &linked_list_head_image_view_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 3, &fragment_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 4, &fragment_counter_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5, &background_texture_descriptor),
+	};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, NULL);
 }
 
@@ -412,6 +435,20 @@ void OITLinkedLists::create_pipelines()
 			vertex_input_state.vertexAttributeDescriptionCount = 0;
 			vertex_input_state.pVertexAttributeDescriptions    = nullptr;
 
+			shader_stages[0] = load_shader("oit_linked_lists/fullscreen.vert", VK_SHADER_STAGE_VERTEX_BIT);
+			shader_stages[1] = load_shader("oit_linked_lists/background.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
+
+			pipeline_create_info.renderPass = render_pass;
+
+			VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1, &pipeline_create_info, nullptr, &background_pipeline));
+		}
+
+		{
+			vertex_input_state.vertexBindingDescriptionCount   = 0;
+			vertex_input_state.pVertexBindingDescriptions      = nullptr;
+			vertex_input_state.vertexAttributeDescriptionCount = 0;
+			vertex_input_state.pVertexAttributeDescriptions    = nullptr;
+
 			blend_attachment_state.blendEnable         = VK_TRUE;
 			blend_attachment_state.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 			blend_attachment_state.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -437,7 +474,7 @@ void OITLinkedLists::update_scene_constants()
 	SceneConstants constants        = {};
 	constants.projection            = camera.matrices.perspective;
 	constants.view                  = camera.matrices.view;
-	constants.unused                = 0U;
+	constants.background_grayscale  = background_grayscale;
 	constants.sort_fragments        = sort_fragments ? 1U : 0U;
 	constants.fragment_max_count    = fragment_max_count;
 	constants.sorted_fragment_count = sorted_fragment_count;
