@@ -22,7 +22,7 @@ get_filename_component(CATEGORY_NAME ${PARENT_DIR} NAME)
 add_sample(
     ID ${FOLDER_NAME}
     CATEGORY ${CATEGORY_NAME}
-	AUTHOR "Maximilien Dagois"
+	AUTHOR "Google"
     NAME "oit_linked_lists"
 	DESCRIPTION "Order-independent transparency using per-pixel ordered linked lists"
     SHADER_FILES_GLSL
