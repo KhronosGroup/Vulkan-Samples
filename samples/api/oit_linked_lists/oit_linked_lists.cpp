@@ -128,7 +128,7 @@ void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
 	drawer.checkbox("Sort fragments", &sort_fragments);
 	drawer.checkbox("Camera auto-rotation", &camera_auto_rotation);
 	drawer.slider_int("Sorted fragments per pixel", &sorted_fragment_count, kSortedFragmentMinCount, kSortedFragmentMaxCount);
-	drawer.slider_float("Background grayscale", &background_grayscale, kBackgroundGrayscaleMinCount, kBackgroundGrayscaleMaxCount);
+	drawer.slider_float("Background grayscale", &background_grayscale, kBackgroundGrayscaleMin, kBackgroundGrayscaleMax);
 }
 
 void OITLinkedLists::build_command_buffers()

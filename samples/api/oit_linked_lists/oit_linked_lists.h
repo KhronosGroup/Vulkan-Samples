@@ -61,8 +61,8 @@ class OITLinkedLists : public ApiVulkanSample
 	static constexpr int32_t kSortedFragmentMinCount = 1;
 	static constexpr int32_t kSortedFragmentMaxCount = 16;
 
-	static constexpr float kBackgroundGrayscaleMinCount = 0.0f;
-	static constexpr float kBackgroundGrayscaleMaxCount = 1.0f;
+	static constexpr float kBackgroundGrayscaleMin = 0.0f;
+	static constexpr float kBackgroundGrayscaleMax = 1.0f;
 
 	static constexpr uint32_t kLinkedListEndSentinel = 0xFFFFFFFFU;
 
