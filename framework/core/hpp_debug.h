@@ -115,13 +115,13 @@ class HPPDummyDebugUtils final : public vkb::core::HPPDebugUtils
 	inline void set_debug_tag(vk::Device, vk::ObjectType, uint64_t, uint64_t, const void *, size_t) const override
 	{}
 
-	inline void cmd_begin_label(vk::CommandBuffer, const char *, glm::vec4 const ) const override
+	inline void cmd_begin_label(vk::CommandBuffer, const char *, glm::vec4 const) const override
 	{}
 
 	inline void cmd_end_label(vk::CommandBuffer) const override
 	{}
 
-	inline void cmd_insert_label(vk::CommandBuffer, const char *, glm::vec4 const ) const override
+	inline void cmd_insert_label(vk::CommandBuffer, const char *, glm::vec4 const) const override
 	{}
 };
 
