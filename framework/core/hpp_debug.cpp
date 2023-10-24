@@ -85,8 +85,8 @@ void HPPDebugMarkerExtDebugUtils::cmd_insert_label(vk::CommandBuffer command_buf
 
 HPPScopedDebugLabel::HPPScopedDebugLabel(const HPPDebugUtils &debug_utils,
                                          vk::CommandBuffer    command_buffer,
-                                         std::string const   &name,
-                                         glm::vec4 const     color) :
+                                         std::string const &  name,
+                                         glm::vec4 const      color) :
     debug_utils{&debug_utils}, command_buffer{VK_NULL_HANDLE}
 {
 	if (!name.empty())
