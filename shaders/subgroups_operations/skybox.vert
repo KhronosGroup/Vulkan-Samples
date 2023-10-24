@@ -21,14 +21,14 @@ layout (location = 1) in vec2 inUV;
 
 layout (location = 0) out vec2 outUV;
 
-layout (set = 0, binding = 0) uniform SkyboxUbo 
+layout (binding = 0) uniform SkyboxUbo 
 {
 	mat4 mvp;
 } ubo;
 
 void main(void)
 {
-	gl_Position = ubo.mvp * vec4(inPos, 1.0f);
 	outUV = inUV;
 	outUV.t = 1.0 - outUV.t;
+	gl_Position =  ubo.mvp * vec4(inPos, 1.0f);
 }

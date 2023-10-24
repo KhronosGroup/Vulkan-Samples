@@ -275,6 +275,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		void destroy(VkDevice device)
 		{
 			pipeline.destroy(device);
+			vkDestroySampler(device, skybox_texture.sampler, nullptr);
 			vkDestroyDescriptorSetLayout(device, descriptor_set_layout, nullptr);
 			skybox_shape.reset();
 		}

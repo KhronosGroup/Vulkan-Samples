@@ -19,11 +19,10 @@
 layout (location = 0) in vec3 inPos;
 layout (location = 1) in vec2 inUv;
 
-layout (location = 0) out vec3 outPos;
-layout (location = 1) out vec2 outUv;
+layout (location = 0) out vec2 outUv;
 
 void main() 
 {
-	outPos = inPos;
+	gl_Position = vec4(inPos, 1.0f);
 	outUv = inUv;
 }

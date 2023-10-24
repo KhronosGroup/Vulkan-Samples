@@ -55,6 +55,7 @@ SubgroupsOperations::SubgroupsOperations()
 
 	camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 0.1f, 256.0f);
 	camera.set_position({0.0f, 5.0f, 0.0f});
+	camera.translation_speed = {15.0f};
 }
 
 SubgroupsOperations::~SubgroupsOperations()
@@ -765,7 +766,7 @@ void SubgroupsOperations::create_skybox()
 	VkPipelineDepthStencilStateCreateInfo depth_stencil_state =
 	    vkb::initializers::pipeline_depth_stencil_state_create_info(
 	        VK_TRUE,
-	        VK_TRUE,
+	        VK_FALSE,
 	        VK_COMPARE_OP_GREATER);
 
 	VkPipelineViewportStateCreateInfo viewport_state =
@@ -820,7 +821,6 @@ void SubgroupsOperations::update_uniform_buffers()
 {
 	CameraUbo ubo;
 	ubo.model      = glm::mat4(1.0f);
-	ubo.model      = glm::translate(ubo.model, glm::vec3(0.0f));
 	ubo.view       = camera.matrices.view;
 	ubo.projection = camera.matrices.perspective;
 
