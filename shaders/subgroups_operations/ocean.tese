@@ -21,9 +21,12 @@ layout(triangles, equal_spacing, ccw) in;
 layout(location = 0) in vec3 inPostion[];
 layout(location = 1) in vec2 inUv[];
 
-layout (location=1) out vec3 outNormal;
-layout (location=2) out vec3 outEyePosition;
-layout (location=3) out vec3 outLightVec;
+// layout (location=1) out vec3 outNormal;
+// layout (location=2) out vec3 outEyePosition;
+// layout (location=3) out vec3 outLightVec;
+
+layout (location = 0) out vec3 outPos;
+layout (location = 1) out vec3 outNormal;
 
 layout (binding = 0) uniform Ubo 
 {
@@ -41,11 +44,6 @@ layout (binding = 2) uniform TessellationParams
 } tessParams;
 
 layout (binding = 4, rgba32f) uniform image2D fft_height_map; 
-
-layout (binding = 6) uniform SkyboxUbo
-{
-        mat4 view;
-} skybox_ubo;
 
 vec2 interpolate_2d(vec2 v0, vec2 v1, vec2 v2)
 {
@@ -88,9 +86,8 @@ void main()
 
     gl_Position = ubo.projection * ubo.view * ubo.model * vec4(world_pos, 1.0f);
 
-    outEyePosition = vec4(ubo.view * ubo.model * vec4(world_pos, 1.0f)).xyz;
-    outNormal = vec4(ubo.view * ubo.model * vec4(height_texel.xyz, 0.0f)).xyz;
-    vec3 lightPos = vec3(0.0f, -5.0f, 5.0f);
-    outLightVec = vec4(ubo.view * vec4(lightPos, 1.0f)).xyz - outEyePosition;
-
+ //   outEyePosition = vec4(ubo.view * ubo.model * vec4(world_pos, 1.0f)).xyz;
+ //   outNormal = vec4(ubo.view * ubo.model * vec4(height_texel.xyz, 0.0f)).xyz;
+//    vec3 lightPos = vec3(0.0f, -5.0f, 5.0f);
+ //   outLightVec = vec4(ubo.view * vec4(lightPos, 1.0f)).xyz - outEyePosition;
 }

@@ -446,11 +446,8 @@ void SubgroupsOperations::create_tildas()
 
 void SubgroupsOperations::load_assets()
 {
-	// skybox.skybox_shape   = load_model("scenes/geosphere.gltf");
-	// skybox.skybox_texture = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
-
-	skybox.skybox_shape   = load_model("scenes/cube.gltf");
-	skybox.skybox_texture = load_texture_cubemap("textures/uffizi_rgba16f_cube.ktx", vkb::sg::Image::Color);
+	skybox.skybox_shape   = load_model("scenes/geosphere.gltf");
+	skybox.skybox_texture = load_texture("textures/skysphere_rgba.ktx", vkb::sg::Image::Color);
 
 	generate_plane();
 	ui.wind.recalc();
@@ -606,13 +603,7 @@ void SubgroupsOperations::create_descriptor_set_layout()
 	        4u),
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	        5u),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-	        6u),
-	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT,
-	        7u)};
+	        5u)};
 
 	VkDescriptorSetLayoutCreateInfo descriptor_set_layout_create_info = vkb::initializers::descriptor_set_layout_create_info(set_layout_bindings);
 	VK_CHECK(vkCreateDescriptorSetLayout(get_device().get_handle(), &descriptor_set_layout_create_info, nullptr, &ocean.descriptor_set_layout));
@@ -632,8 +623,6 @@ void SubgroupsOperations::create_descriptor_set()
 	VkDescriptorBufferInfo camera_pos_buffer_descriptor   = create_descriptor(*camera_postion_ubo);
 	VkDescriptorImageInfo  normal_map_descirptor          = create_ia_descriptor(*fft_buffers.fft_normal_map);
 	VkDescriptorBufferInfo ocean_params_buffer_descriptor = create_descriptor(*ocean_params_ubo);
-	VkDescriptorBufferInfo skybox_uniform_descriptor      = create_descriptor(*skybox_ubo);
-	VkDescriptorImageInfo  skybox_image_descriptor        = create_descriptor(skybox.skybox_texture);
 
 	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0u, &buffer_descriptor),
@@ -641,10 +630,7 @@ void SubgroupsOperations::create_descriptor_set()
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &tessellation_params_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &normal_map_descirptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &ocean_params_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 6u, &skybox_uniform_descriptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 7u, &skybox_image_descriptor),
-	};
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &ocean_params_buffer_descriptor)};
 
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0u, nullptr);
 }

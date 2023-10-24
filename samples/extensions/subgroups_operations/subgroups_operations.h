@@ -128,10 +128,14 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	struct Wind
 	{
+		Wind()
+		{
+			recalc();
+		}
 		void      recalc();
 		glm::vec2 vec;
-		float     angle = 180;
-		float     force = 3;
+		float     angle = {180.0f};
+		float     force = {25.0f};
 	};
 
 	struct GuiConfig
