@@ -171,7 +171,7 @@ cmake -G"Visual Studio 15 2017 Win64" -S . -Bbuild/windows
 (Prior to CMake v3.13)
 
 ----
-cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows
+cmake -G"Visual Studio 15 2017 Win64" . -Bbuild/windows
 ----
 
 (New in CMake v3.14.
@@ -218,7 +218,7 @@ sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
+cmake -G "Unix Makefiles" -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
 ----
 
 `Step 2.` Build the project
@@ -249,7 +249,7 @@ cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 `Step 1.` The following command will generate the project
 
 ----
-cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
 ----
 
 `Step 2.` Build the project
