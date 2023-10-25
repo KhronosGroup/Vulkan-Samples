@@ -356,10 +356,7 @@ void SubgroupsOperations::create_initial_tildas()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &initial_tildas.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &initial_tildas.descriptor_set));
 
-	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount             = 1u;
-	compute_pipeline_layout_info.pSetLayouts                = &initial_tildas.descriptor_set_layout;
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = vkb::initializers::pipeline_layout_create_info(&initial_tildas.descriptor_set_layout);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &initial_tildas.pipeline.pipeline_layout));
 
@@ -411,10 +408,7 @@ void SubgroupsOperations::create_tildas()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &tildas.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &tildas.descriptor_set));
 
-	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount             = 1u;
-	compute_pipeline_layout_info.pSetLayouts                = &tildas.descriptor_set_layout;
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = vkb::initializers::pipeline_layout_create_info(&tildas.descriptor_set_layout);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &tildas.pipeline.pipeline_layout));
 
@@ -1122,10 +1116,7 @@ void SubgroupsOperations::create_butterfly_texture()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &precompute.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &precompute.descriptor_set));
 
-	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount             = 1u;
-	compute_pipeline_layout_info.pSetLayouts                = &precompute.descriptor_set_layout;
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = vkb::initializers::pipeline_layout_create_info(&precompute.descriptor_set_layout);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &precompute.pipeline.pipeline_layout));
 
@@ -1266,10 +1257,7 @@ void SubgroupsOperations::create_fft_inversion()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &fft_inversion.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_inversion.descriptor_set));
 
-	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount             = 1u;
-	compute_pipeline_layout_info.pSetLayouts                = &fft_inversion.descriptor_set_layout;
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = vkb::initializers::pipeline_layout_create_info(&fft_inversion.descriptor_set_layout);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &fft_inversion.pipeline.pipeline_layout));
 
@@ -1319,10 +1307,7 @@ void SubgroupsOperations::create_fft_normal_map()
 	VkDescriptorSetAllocateInfo alloc_info = vkb::initializers::descriptor_set_allocate_info(descriptor_pool, &fft_normal_map.descriptor_set_layout, 1u);
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &fft_normal_map.descriptor_set));
 
-	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = {};
-	compute_pipeline_layout_info.sType                      = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	compute_pipeline_layout_info.setLayoutCount             = 1u;
-	compute_pipeline_layout_info.pSetLayouts                = &fft_normal_map.descriptor_set_layout;
+	VkPipelineLayoutCreateInfo compute_pipeline_layout_info = vkb::initializers::pipeline_layout_create_info(&fft_normal_map.descriptor_set_layout);
 
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &compute_pipeline_layout_info, nullptr, &fft_normal_map.pipeline.pipeline_layout));
 
