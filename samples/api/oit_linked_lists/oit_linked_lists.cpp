@@ -140,29 +140,32 @@ void OITLinkedLists::build_command_buffers()
 	render_pass_begin_info.renderArea.offset.y      = 0;
 	render_pass_begin_info.renderArea.extent.width  = width;
 	render_pass_begin_info.renderArea.extent.height = height;
-	render_pass_begin_info.clearValueCount          = 0;
 
 	for (int32_t i = 0; i < draw_cmd_buffers.size(); ++i)
 	{
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &command_buffer_begin_info));
 		{
 			// Gather pass
-			render_pass_begin_info.framebuffer = gather_framebuffer;
-			render_pass_begin_info.renderPass  = gather_render_pass;
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			{
-				VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-				vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+				render_pass_begin_info.framebuffer     = gather_framebuffer;
+				render_pass_begin_info.renderPass      = gather_render_pass;
+				render_pass_begin_info.clearValueCount = 0;
 
-				VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+				vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+				{
+					VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+					vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+					VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+					vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
-				draw_model(object, draw_cmd_buffers[i], kInstanceCount);
+					vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+
+					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, gather_pipeline);
+					draw_model(object, draw_cmd_buffers[i], kInstanceCount);
+				}
+				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 			}
-			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 			VkImageSubresourceRange subresource_range = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
 			vkb::image_layout_transition(
@@ -173,27 +176,36 @@ void OITLinkedLists::build_command_buffers()
 			    subresource_range);
 
 			// Combine pass
-			render_pass_begin_info.framebuffer = framebuffers[i];
-			render_pass_begin_info.renderPass  = render_pass;
-			vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 			{
-				VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
-				vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
+				VkClearValue clear_values[2];
+				clear_values[0].color        = {{0.0f, 0.0f, 0.0f, 0.0f}};
+				clear_values[1].depthStencil = {0.0f, 0};
 
-				VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
-				vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
+				render_pass_begin_info.framebuffer     = framebuffers[i];
+				render_pass_begin_info.renderPass      = render_pass;
+				render_pass_begin_info.clearValueCount = 2;
+				render_pass_begin_info.pClearValues    = clear_values;
 
-				vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
+				vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+				{
+					VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
+					vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
 
-				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background_pipeline);
-				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+					VkRect2D scissor = vkb::initializers::rect2D(width, height, 0, 0);
+					vkCmdSetScissor(draw_cmd_buffers[i], 0, 1, &scissor);
 
-				vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
-				vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+					vkCmdBindDescriptorSets(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 1, &descriptor_set, 0, NULL);
 
-				draw_ui(draw_cmd_buffers[i]);
+					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, background_pipeline);
+					vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+
+					vkCmdBindPipeline(draw_cmd_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, combine_pipeline);
+					vkCmdDraw(draw_cmd_buffers[i], 3, 1, 0, 0);
+
+					draw_ui(draw_cmd_buffers[i]);
+				}
+				vkCmdEndRenderPass(draw_cmd_buffers[i]);
 			}
-			vkCmdEndRenderPass(draw_cmd_buffers[i]);
 		}
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
 	}
