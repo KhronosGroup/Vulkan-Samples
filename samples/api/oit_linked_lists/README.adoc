@@ -50,8 +50,9 @@ Finally, it alpha blends (via the fixed blend function) the transparent color in
 The algorithm can produce pixel-perfect results, even with intersecting geometry.
 However, there is a catch.
 To keep performance high, the maximum number of sorted fragments per-pixel is limited to 16.
+For more than 16 fragments, the algorithm does its best effort to blend the extra fragments, but the results might be inaccurate.
 This is well enough for the sample, due to the way the objects are placed in the scene.
-In reality, there is a trade-off between performance and correctness.
+In general, there is a trade-off between performance and correctness.
 To keep occupancy high, the maximum number of sorted fragments (`SORTED_FRAGMENT_MAX_COUNT` in `combine.frag`) should be kept low.
 To get correct results in every situation, that same number should be as high as possible.
 The artifacts resulting from a low number of sorted fragments per pixel can be observed by using the `Sorted fragments per pixel` option.

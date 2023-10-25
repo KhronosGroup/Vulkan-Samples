@@ -18,7 +18,7 @@
 
 #define LINKED_LIST_END_SENTINEL	0xFFFFFFFFU
 
-// For performance reasons, this should be kept as low as result correctness allows
+// For performance reasons, this should be kept as low as result correctness allows.
 #define SORTED_FRAGMENT_MAX_COUNT	16U
 
 ////////////////////////////////////////
@@ -49,62 +49,111 @@ layout (location = 0) out vec4 outFragColor;
 
 ////////////////////////////////////////
 
-void main()
+// Blend two colors.
+// The alpha channel keeps track of the amount of visibility of the background.
+vec4 blendColors(uint packedSrcColor, vec4 dstColor)
 {
-	// Reset the atomic counter for the next frame
-	// Note that we don't care about atomicity here, as all threads will write the same value
-	fragmentCounter.value = 0;
+	const vec4 srcColor = unpackUnorm4x8(packedSrcColor);
+	return vec4(
+		mix(dstColor.rgb, srcColor.rgb, srcColor.a),
+		dstColor.a * (1.0f - srcColor.a));
+}
 
-	// Get the first fragment index in the linked list
-	uint fragmentIndex = imageLoad(linkedListHeadTex, ivec2(gl_FragCoord.xy)).r;
-	// Reset the list head for the next frame
-	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(LINKED_LIST_END_SENTINEL, 0, 0, 0));
-
-	// Copy the fragments into local memory for sorting
+// Sort and blend fragments from the linked list.
+// For performance reasons, the maximum number of sorted fragments is limited.
+// Approximations are used when the number of fragments is over the limit.
+vec4 mergeWithSort(uint firstFragmentIndex)
+{
+	// Fragments are sorted from back to front.
+	// e.g. sortedFragments[0] is the farthest from the camera.
 	uvec2 sortedFragments[SORTED_FRAGMENT_MAX_COUNT];
-	uint fragmentCount = 0U;
-	const uint sortedFragmentMaxCount = min(sceneConstants.sortedFragmentCount, SORTED_FRAGMENT_MAX_COUNT);
-	while(fragmentIndex != LINKED_LIST_END_SENTINEL && fragmentCount < sortedFragmentMaxCount)
+	uint sortedFragmentCount = 0U;
+	const uint kSortedFragmentMaxCount = min(sceneConstants.sortedFragmentCount, SORTED_FRAGMENT_MAX_COUNT);
+
+	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	uint fragmentIndex = firstFragmentIndex;
+	while(fragmentIndex != LINKED_LIST_END_SENTINEL)
 	{
 		const uvec3 fragment = fragmentBuffer.data[fragmentIndex];
 		fragmentIndex = fragment.x;
-		sortedFragments[fragmentCount] = fragment.yz;
-		++fragmentCount;
-	}
 
-	// Early return if there are no fragments
-	if(fragmentCount == 0)
-	{
-		outFragColor = vec4(0.0f);
-		return;
-	}
-
-	// Sort the fragments by depth (back to front)
-	if(sceneConstants.sortFragments == 1U)
-	{
-		for(int i = 0; i < fragmentCount - 1; ++i)
+		if(sortedFragmentCount < kSortedFragmentMaxCount)
 		{
-			for(int j = i + 1; j < fragmentCount; ++j)
+			// There is still room in the sorted list.
+			// Insert the fragment so that the list stay sorted.
+			uint i = sortedFragmentCount;
+			for(; (i > 0) && (fragment.z < sortedFragments[i - 1].y); --i)
 			{
-				if(sortedFragments[j].y < sortedFragments[i].y)
-				{
-					const uvec2 tmp = sortedFragments[i];
-					sortedFragments[i] = sortedFragments[j];
-					sortedFragments[j] = tmp;
-				}
+				sortedFragments[i] = sortedFragments[i - 1];
 			}
+			sortedFragments[i] = fragment.yz;
+			++sortedFragmentCount;
+		}
+		else if(sortedFragments[0].y < fragment.z)
+		{
+			// The fragment is closer than the farthest sorted one.
+			// First, make room by blending the farthest fragment from the sorted list.
+			// Then, insert the fragment in the sorted list.
+            // This is an approximation.
+			color = blendColors(sortedFragments[0].x, color);
+			uint i = 0;
+			for(; (i < kSortedFragmentMaxCount - 1) && (sortedFragments[i + 1].y < fragment.z); ++i)
+			{
+				sortedFragments[i] = sortedFragments[i + 1];
+			}
+			sortedFragments[i] = fragment.yz;
+		}
+		else
+		{
+			// The next fragment is farther than any of the sorted ones.
+			// Blend it early.
+            // This is an approximation.
+			color = blendColors(fragment.y, color);
 		}
 	}
 
-	// Merge the fragments to get the final color
-	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
-	for(int i = 0; i < fragmentCount; ++i)
+	// Early return if there are no fragments.
+	if(sortedFragmentCount == 0)
 	{
-		const vec4 fragmentColor = unpackUnorm4x8(sortedFragments[i].x);
-		color.rgb = mix(color.rgb, fragmentColor.rgb, fragmentColor.a);
-		color.a *= 1.0f - fragmentColor.a;
+		return vec4(0.0f);
+	}
+
+	// Blend the sorted fragments to get the final color.
+	for(int i = 0; i < sortedFragmentCount; ++i)
+	{
+		color = blendColors(sortedFragments[i].x, color);
 	}
 	color.a = 1.0f - color.a;
-	outFragColor = color;
+	return color;
+}
+
+// Blend fragments from the linked list without sorting them.
+vec4 mergeWithoutSort(uint firstFragmentIndex)
+{
+	vec4 color = vec4(0.0f, 0.0f, 0.0f, 1.0f);
+	uint fragmentIndex = firstFragmentIndex;
+	while(fragmentIndex != LINKED_LIST_END_SENTINEL)
+	{
+		const uvec3 fragment = fragmentBuffer.data[fragmentIndex];
+		fragmentIndex = fragment.x;
+		color = blendColors(fragment.y, color);
+	}
+	color.a = 1.0f - color.a;
+	return color;
+}
+
+void main()
+{
+	// Reset the atomic counter for the next frame.
+	// Note that we don't care about atomicity here, as all threads will write the same value.
+	fragmentCounter.value = 0;
+
+	// Get the first fragment index in the linked list.
+	uint fragmentIndex = imageLoad(linkedListHeadTex, ivec2(gl_FragCoord.xy)).r;
+	// Reset the list head for the next frame.
+	imageStore(linkedListHeadTex, ivec2(gl_FragCoord.xy), uvec4(LINKED_LIST_END_SENTINEL, 0, 0, 0));
+
+	// Compute the final color.
+	outFragColor = (sceneConstants.sortFragments == 1U) ? mergeWithSort(fragmentIndex) : mergeWithoutSort(fragmentIndex);
 }
 
