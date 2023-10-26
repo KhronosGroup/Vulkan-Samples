@@ -1,4 +1,4 @@
-/* Copyright (c) 2019-2021, Arm Limited and Contributors
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -51,9 +51,9 @@ Buffer::Buffer(Device const &device, VkDeviceSize size, VkBufferUsageFlags buffe
 
 	VmaAllocationInfo allocation_info{};
 	auto              result = vmaCreateBuffer(device.get_memory_allocator(),
-                                  &buffer_info, &memory_info,
-                                  &handle, &allocation,
-                                  &allocation_info);
+	                                           &buffer_info, &memory_info,
+	                                           &handle, &allocation,
+	                                           &allocation_info);
 
 	if (result != VK_SUCCESS)
 	{
@@ -150,7 +150,7 @@ uint64_t Buffer::get_device_address()
 	return vkGetBufferDeviceAddressKHR(device->get_handle(), &buffer_device_address_info);
 }
 
-void Buffer::update(void *data, size_t size, size_t offset)
+void Buffer::update(void const *data, size_t size, size_t offset)
 {
 	update(reinterpret_cast<const uint8_t *>(data), size, offset);
 }
