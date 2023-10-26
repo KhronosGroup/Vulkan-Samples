@@ -1068,8 +1068,8 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 

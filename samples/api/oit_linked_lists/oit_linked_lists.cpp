@@ -112,15 +112,6 @@ void OITLinkedLists::request_gpu_features(vkb::PhysicalDevice &gpu)
 	{
 		throw std::runtime_error("This sample requires support for buffers and images stores and atomic operations in the fragment shader stage");
 	}
-
-	if (gpu.get_features().samplerAnisotropy)
-	{
-		gpu.get_mutable_requested_features().samplerAnisotropy = VK_TRUE;
-	}
-	else
-	{
-		throw std::runtime_error("This sample requires support for anisotropic sampling");
-	}
 }
 
 void OITLinkedLists::on_update_ui_overlay(vkb::Drawer &drawer)
