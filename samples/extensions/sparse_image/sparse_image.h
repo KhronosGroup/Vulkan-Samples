@@ -139,7 +139,7 @@ class SparseImage : public ApiVulkanSample
 			return memory_sectors.size();
 		}
 
-		std::list<std::weak_ptr<MemSector>> &get_handle()
+		std::list<std::weak_ptr<MemSector>> &get_memory_sectors()
 		{
 			return memory_sectors;
 		}
@@ -155,13 +155,9 @@ class SparseImage : public ApiVulkanSample
 		std::set<uint32_t> available_offsets;
 		std::set<size_t>   virt_page_indices;
 
-		MemSector(MemAllocInfo &mem_alloc_info)
+		MemSector(MemAllocInfo &mem_alloc_info) :
+		    MemAllocInfo(mem_alloc_info)
 		{
-			this->device               = mem_alloc_info.device;
-			this->page_size            = mem_alloc_info.page_size;
-			this->memory_type_index    = mem_alloc_info.memory_type_index;
-			this->pages_per_allocation = mem_alloc_info.pages_per_allocation;
-
 			VkMemoryAllocateInfo memory_allocate_info{};
 			memory_allocate_info.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 			memory_allocate_info.allocationSize  = page_size * pages_per_allocation;
@@ -229,13 +225,8 @@ class SparseImage : public ApiVulkanSample
 		// Set containing information which pages from the page_table should be updated (either loaded from CPU memory or blitted)
 		std::set<size_t> update_set;
 
-		// Vector of available memory pages (whole memory page pool is statically allocated at the beginning)
-		std::vector<size_t> available_memory_page_indices;
-
 		// Sparse-image-related format and memory properties
-		VkSparseImageFormatProperties   format_properties;
-		VkSparseImageMemoryRequirements memory_sparse_requirements;
-		VkMemoryRequirements            mem_requirements;
+		VkSparseImageFormatProperties format_properties;
 
 		std::vector<VkSparseImageMemoryBind> sparse_image_memory_bind;
 	};
@@ -271,7 +262,7 @@ class SparseImage : public ApiVulkanSample
 	bool memory_defragmentation  = true;
 	bool frame_counter_feature   = true;
 
-	size_t blocks_to_update_per_cycle = 10U;
+	size_t blocks_to_update_per_cycle = 25U;
 
 	size_t num_vertical_blocks   = 50U;
 	size_t num_horizontal_blocks = 50U;
@@ -290,8 +281,8 @@ class SparseImage : public ApiVulkanSample
 
 	Stages next_stage = Stages::Idle;
 
-	const VkFormat    image_format = VK_FORMAT_R8G8B8A8_SRGB;
-	VkImageUsageFlags image_usage  = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+	const VkFormat          image_format = VK_FORMAT_R8G8B8A8_SRGB;
+	const VkImageUsageFlags image_usage  = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
 
 	VirtualTexture virtual_texture;
 
@@ -309,8 +300,8 @@ class SparseImage : public ApiVulkanSample
 
 	glm::mat4 current_mvp_transform;
 
-	VkPipeline       sample_pipeline{};
-	VkPipelineLayout sample_pipeline_layout{};
+	VkPipeline       sample_pipeline;
+	VkPipelineLayout sample_pipeline_layout;
 
 	VkDescriptorSetLayout descriptor_set_layout;
 	VkDescriptorSet       descriptor_set;

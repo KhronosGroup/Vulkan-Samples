@@ -98,6 +98,55 @@ for(; (lod <= maxLOD) && !sparseTexelsResidentARB(residencyCode); lod += 1)
 }
 ----
 
+
+== How is required LOD calculated?
+
+The whole method is well-described in the source file. In general, the
+value of LOD is obtained by calculating: What is the ratio between x or y
+movement on the screen, to the u or v movement on the texture?
+
+The idea is, that when moving pixel-by-pixel along the x or y axis
+on-screen, if the small on-screen step causes a significant step
+on-texture, then the area is far away from the observer and
+a less-detailed mip-level is required.
+
+The formula used for those calculations is:
+
+LOD = log2 (max(dT / dx, dT / dy)); where:
+
+* dT is an on-texture-step in texels,
+* dx, dy are on-screen-steps in pixels.
+
+
+== User Interface
+
+The user can alter the application by using the GUI.
+
+These are available options:
+
+* Color highlight - if enabled, areas of a particular LOD usage are
+color-highlighted.
+* Memory defragmentation - if enabled, memory pages are reallocated from
+low-occupied sectors to higher-occupied (but available) sectors to keep the
+overall number of allocations as low as possible.
+* Update prioritization - if enabled, the application is focused on
+processing the most actual requests and discards remainings from the
+previous requests. This can be observed when dynamically moving the
+camera around.
+* Blocks per cycle - describes up to how many blocks can be updated per
+a single render cycle. The total number of blocks is defined as: (Vertical
+blocks) * (Horizontal blocks).
+* Vertical blocks - describes the number of columns the texture is
+divided into.
+* Horizontal blocks - describes the number of rows the texture is
+divided into.
+
+Additionally, GUI contains memory usage data. It describes (in pages)
+what are the virtual requirements (what if the whole image was allocated
+in the memory) and what is the actual, current allocation on the
+device.
+
+
 == Conclusion
 
 The primary usage of the sparse image feature is generally speaking

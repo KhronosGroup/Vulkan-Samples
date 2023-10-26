@@ -35,11 +35,6 @@ SparseImage::~SparseImage()
 		vkDestroySampler(get_device().get_handle(), texture_sampler, nullptr);
 		vkDestroyImageView(get_device().get_handle(), virtual_texture.texture_image_view, nullptr);
 		vkDestroyImage(get_device().get_handle(), virtual_texture.texture_image, nullptr);
-
-		for (auto &page : virtual_texture.page_table)
-		{
-			page.page_memory_info.memory_sector.reset();
-		}
 	}
 }
 
@@ -218,7 +213,7 @@ void SparseImage::bind_sparse_image()
 			continue;
 		}
 
-		if (virtual_texture.page_table[page_index].valid)
+		if (page.valid)
 		{
 			continue;
 		}
@@ -240,14 +235,6 @@ void SparseImage::bind_sparse_image()
 
 	bind_sparse_info.imageBindCount = 1U;
 	bind_sparse_info.pImageBinds    = &sparse_image_memory_bind_info;
-
-	VkSparseImageOpaqueMemoryBindInfo sparse_image_opaque_memory_bind_info{};
-	sparse_image_opaque_memory_bind_info.image     = nullptr;
-	sparse_image_opaque_memory_bind_info.bindCount = 0U;
-	sparse_image_opaque_memory_bind_info.pBinds    = nullptr;
-
-	bind_sparse_info.imageOpaqueBindCount = 0U;
-	bind_sparse_info.pImageOpaqueBinds    = nullptr;
 
 	bind_sparse_info.signalSemaphoreCount = 1U;
 	bind_sparse_info.pSignalSemaphores    = &bound_semaphore;
@@ -441,10 +428,8 @@ std::vector<size_t> SparseImage::get_memory_dependency_for_the_block(size_t colu
  */
 void SparseImage::compare_mips_table()
 {
-	if (!virtual_texture.texture_block_update_set.empty())
-	{
-		virtual_texture.texture_block_update_set.clear();
-	}
+	virtual_texture.texture_block_update_set.clear();
+
 	for (size_t y = 0U; y < virtual_texture.current_mip_table.size(); y++)
 	{
 		for (size_t x = 0U; x < virtual_texture.current_mip_table[y].size(); x++)
@@ -550,7 +535,7 @@ void SparseImage::build_command_buffers()
 void SparseImage::process_texture_blocks()
 {
 	uint8_t block_counter;
-	block_counter = std::min<size_t>(blocks_to_update_per_cycle, virtual_texture.texture_block_update_set.size());
+	block_counter = std::min(blocks_to_update_per_cycle, virtual_texture.texture_block_update_set.size());
 	frame_counter_per_transfer++;
 
 	auto it = virtual_texture.texture_block_update_set.begin();
@@ -713,10 +698,6 @@ void SparseImage::free_unused_memory()
 		{
 			page.valid  = false;
 			auto result = page.page_memory_info.memory_sector->available_offsets.insert(page.page_memory_info.offset);
-			if (!result.second)
-			{
-				assert(false);
-			}
 			page.page_memory_info.memory_sector->virt_page_indices.erase(page_index);
 			page.page_memory_info.memory_sector.reset();
 		}
@@ -725,7 +706,7 @@ void SparseImage::free_unused_memory()
 	std::set<size_t> pages_to_reallocate;
 	uint8_t          sectors_to_reallocate = 0U;
 
-	auto &sectors = virtual_texture.memory_allocations.get_handle();
+	auto &sectors = virtual_texture.memory_allocations.get_memory_sectors();
 	for (auto it = sectors.begin(); it != sectors.end();)
 	{
 		if ((*it).expired())
@@ -750,7 +731,7 @@ void SparseImage::free_unused_memory()
 		it++;
 	}
 
-	if (memory_defragmentation && (pages_to_reallocate.size() > 0U))
+	if (memory_defragmentation && !pages_to_reallocate.empty())
 	{
 		std::unique_ptr<vkb::core::Buffer> reallocation_buffer = std::make_unique<vkb::core::Buffer>(get_device(), virtual_texture.page_size * pages_to_reallocate.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_GPU_ONLY);
 
@@ -796,7 +777,7 @@ void SparseImage::free_unused_memory()
 		subresource_range.baseMipLevel   = virtual_texture.base_mip_level;
 
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, subresource_range);
-		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(), copy_infos.size(), copy_infos.data());
+		vkCmdCopyImageToBuffer(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, reallocation_buffer->get_handle(), static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
 		device->flush_command_buffer(command_buffer, queue, true);
 
 		std::vector<std::shared_ptr<MemSector>> temp_sectors;
@@ -817,7 +798,7 @@ void SparseImage::free_unused_memory()
 		command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, subresource_range);
-		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, copy_infos.size(), copy_infos.data());
+		vkCmdCopyBufferToImage(command_buffer, reallocation_buffer->get_handle(), virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, static_cast<uint32_t>(copy_infos.size()), copy_infos.data());
 		vkb::image_layout_transition(command_buffer, virtual_texture.texture_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, subresource_range);
 		device->flush_command_buffer(command_buffer, queue, true);
 
@@ -885,7 +866,7 @@ void SparseImage::process_stage(Stages next_stage)
 				this->next_stage = Stages::CalculateMipsTable;
 				update_required  = false;
 			}
-			else if ((frame_counter_per_transfer > FRAME_COUNTER_CAP) && frame_counter_feature)
+			else if (frame_counter_feature && (frame_counter_per_transfer > FRAME_COUNTER_CAP))
 			{
 				this->next_stage = Stages::CalculateMipsTable;
 			}
@@ -926,7 +907,7 @@ void SparseImage::draw()
 
 	submit_info.pWaitSemaphores      = wait_semaphores.data();
 	submit_info.pWaitDstStageMask    = wait_stage_masks.data();
-	submit_info.signalSemaphoreCount = signal_semaphores.size();
+	submit_info.signalSemaphoreCount = static_cast<uint32_t>(signal_semaphores.size());
 	submit_info.pSignalSemaphores    = signal_semaphores.data();
 
 	VK_CHECK(vkQueueSubmit(queue, 1U, &submit_info, VK_NULL_HANDLE));
@@ -1057,7 +1038,7 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
  * @brief This is the very core function. It is responsible for calculating what level of detail is required for a particular BLOCK.
  *
  * BLOCKS are just the abstraction units used to describe the texture on-screen. Each block is the same size.
- * Number of vertical and horizontal blocks is described by the global constants ON_SCREEN_VERTICAL_BLOCKS and ON_SCREEN_HORIZONTAL_BLOCKS.
+ * Number of vertical and horizontal blocks is described by num_vertical_blocks and num_horizontal_blocks.
  * These constants are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
  *
  * What this function does, is based on the mesh data created in calculate_mesh_coordinates(), for each node within a mesh it calculates:
@@ -1425,6 +1406,14 @@ void SparseImage::create_sparse_texture_image()
 	sparse_image_create_info.extent.height = static_cast<uint32_t>(virtual_texture.height);
 	sparse_image_create_info.extent.depth  = 1U;
 
+	/*
+	    The number of mip-levels is arbitrary.
+	    5 LODs fit well the current design (6th would be used from too far away).
+
+	    Before incrementing this value, one should consider handling the mip tail and binding it correctly:
+	     - vkGetImageSparseMemoryRequirements()
+	     - VkSparseImageOpaqueMemoryBindInfo
+	 */
 	virtual_texture.base_mip_level = 0U;
 	virtual_texture.mip_levels     = 5U;
 
@@ -1445,7 +1434,6 @@ void SparseImage::create_sparse_texture_image()
 	// Calculating memory dependencies and defining total number of pages and page size
 
 	std::vector<VkSparseImageFormatProperties>   sparse_image_format_properties;
-	std::vector<VkSparseImageMemoryRequirements> sparse_image_memory_requirements;
 	VkMemoryRequirements                         mem_requirements;
 
 	uint32_t property_count;
@@ -1455,15 +1443,9 @@ void SparseImage::create_sparse_texture_image()
 	sparse_image_format_properties.resize(property_count);
 	vkGetPhysicalDeviceSparseImageFormatProperties(device->get_gpu().get_handle(), image_format, VK_IMAGE_TYPE_2D, VK_SAMPLE_COUNT_1_BIT, image_usage, VK_IMAGE_TILING_OPTIMAL, &property_count, sparse_image_format_properties.data());
 
-	vkGetImageSparseMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &memory_req_count, nullptr);
-	sparse_image_memory_requirements.resize(memory_req_count);
-	vkGetImageSparseMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &memory_req_count, sparse_image_memory_requirements.data());
-
 	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &mem_requirements);
 
 	virtual_texture.format_properties          = sparse_image_format_properties[0];
-	virtual_texture.memory_sparse_requirements = sparse_image_memory_requirements[0];
-	virtual_texture.mem_requirements           = mem_requirements;
 
 	// calculate page size
 	virtual_texture.page_size = virtual_texture.format_properties.imageGranularity.height * virtual_texture.format_properties.imageGranularity.width * 4U;
@@ -1511,10 +1493,10 @@ void SparseImage::create_sparse_texture_image()
 	// Memory allocation required data
 	virtual_texture.memory_allocations.device               = get_device().get_handle();
 	virtual_texture.memory_allocations.page_size            = virtual_texture.page_size;
-	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(virtual_texture.mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	virtual_texture.memory_allocations.memory_type_index    = get_device().get_memory_type(mem_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	virtual_texture.memory_allocations.pages_per_allocation = PAGES_PER_ALLOC;
 
-	// Setting the data constant data for memory page binding via vkQueueBindSparse()
+	// Setting the constant data for memory page binding via vkQueueBindSparse()
 	for (size_t page_index = 0U; page_index < virtual_texture.page_table.size(); page_index++)
 	{
 		uint32_t mipLevel = get_mip_level(page_index);
