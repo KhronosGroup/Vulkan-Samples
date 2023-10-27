@@ -353,15 +353,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 	bool         prepared = false;
 	vk::Extent2D extent{1280, 720};
 
-	/** @brief Example settings that can be changed e.g. by command line arguments */
-	struct
-	{
-		/** @brief Set to true if fullscreen mode has been requested via command line */
-		bool fullscreen = false;
-		/** @brief Set to true if v-sync will be forced for the swapchain */
-		bool vsync = false;
-	} settings;
-
 	vk::ClearColorValue default_clear_color = std::array<float, 4>({{0.002f, 0.002f, 0.002f, 1.0f}});
 
 	float zoom = 0;
@@ -397,12 +388,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 
 	struct
 	{
-		glm::vec2 axis_left  = glm::vec2(0.0f);
-		glm::vec2 axis_right = glm::vec2(0.0f);
-	} game_pad_state;
-
-	struct
-	{
 		bool left   = false;
 		bool right  = false;
 		bool middle = false;
@@ -415,7 +400,6 @@ class HPPApiVulkanSample : public vkb::HPPVulkanSample
 		int32_t x;
 		int32_t y;
 	} touch_pos;
-	bool    touch_down    = false;
-	double  touch_timer   = 0.0;
-	int64_t last_tap_time = 0;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
 };
