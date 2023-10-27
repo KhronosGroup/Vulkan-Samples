@@ -392,15 +392,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 	uint32_t width    = 1280;
 	uint32_t height   = 720;
 
-	/** @brief Example settings that can be changed e.g. by command line arguments */
-	struct Settings
-	{
-		/** @brief Set to true if fullscreen mode has been requested via command line */
-		bool fullscreen = false;
-		/** @brief Set to true if v-sync will be forced for the swapchain */
-		bool vsync = false;
-	} settings;
-
 	VkClearColorValue default_clear_color = {{0.002f, 0.002f, 0.002f, 1.0f}};
 
 	float zoom = 0;
@@ -436,12 +427,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 
 	struct
 	{
-		glm::vec2 axis_left  = glm::vec2(0.0f);
-		glm::vec2 axis_right = glm::vec2(0.0f);
-	} game_pad_state;
-
-	struct
-	{
 		bool left   = false;
 		bool right  = false;
 		bool middle = false;
@@ -452,7 +437,6 @@ class ApiVulkanSample : public vkb::VulkanSample
 		int32_t x;
 		int32_t y;
 	} touch_pos;
-	bool    touch_down    = false;
-	double  touch_timer   = 0.0;
-	int64_t last_tap_time = 0;
+	bool   touch_down  = false;
+	double touch_timer = 0.0;
 };
