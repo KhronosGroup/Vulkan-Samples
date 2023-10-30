@@ -1,6 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
- *
- * SPDX-License-Identifier: Apache-2.0
+/* Copyright 2023, Mobica Limited
  *
  * Licensed under the Apache License, Version 2.0 the "License";
  * you may not use this file except in compliance with the License.
@@ -22,7 +20,7 @@
 class SparseImage : public ApiVulkanSample
 {
   public:
-	enum class Stages : uint8_t
+	enum class Stages
 	{
 		Idle,
 		CalculateMipsTable,
@@ -111,28 +109,50 @@ class SparseImage : public ApiVulkanSample
 
 	struct PageInfo
 	{
-		std::shared_ptr<MemSector> memory_sector;
-		uint32_t                   offset;
+		std::shared_ptr<MemSector> memory_sector = nullptr;
+		uint32_t                   offset        = 0U;
 	};
 
 	struct PageTable
 	{
-		bool     valid;                   // bound via vkQueueBindSparse() and contains valid data
-		bool     gen_mip_required;        // required for the mip generation
-		bool     fixed;                   // not freed from the memory at any cases
-		PageInfo page_memory_info;        // memory-related info
+		bool     valid            = false;        // bound via vkQueueBindSparse() and contains valid data
+		bool     gen_mip_required = false;        // required for the mip generation
+		bool     fixed            = false;        // not freed from the memory at any cases
+		PageInfo page_memory_info;                // memory-related info
 
 		std::set<std::tuple<uint8_t, size_t, size_t>> render_required_set;        // set holding information on what BLOCKS require this particular memory page to be valid for rendering
 	};
 
 	struct MemAllocInfo
 	{
-		VkDevice device;
-		uint64_t page_size;
-		uint32_t memory_type_index;
-		size_t   pages_per_allocation;
+		VkDevice device               = VK_NULL_HANDLE;
+		uint64_t page_size            = 0U;
+		uint32_t memory_type_index    = 0U;
+		size_t   pages_per_allocation = 0U;
 
-		void get_allocation(PageInfo &page_memory_info, size_t page_index);
+		void get_allocation(PageInfo &page_memory_info, size_t page_index)
+		{
+			if (memory_sectors.empty() || memory_sectors.front().expired() || memory_sectors.front().lock()->available_offsets.empty())
+			{
+				page_memory_info.memory_sector = std::make_shared<MemSector>(*this);
+				page_memory_info.offset        = *(page_memory_info.memory_sector->available_offsets.begin());
+
+				page_memory_info.memory_sector->available_offsets.erase(page_memory_info.offset);
+				page_memory_info.memory_sector->virt_page_indices.insert(page_index);
+
+				memory_sectors.push_front(page_memory_info.memory_sector);
+			}
+			else
+			{
+				auto ptr = memory_sectors.front().lock();
+
+				page_memory_info.memory_sector = ptr;
+				page_memory_info.offset        = *(page_memory_info.memory_sector->available_offsets.begin());
+
+				page_memory_info.memory_sector->available_offsets.erase(page_memory_info.offset);
+				page_memory_info.memory_sector->virt_page_indices.insert(page_index);
+			}
+		}
 
 		uint32_t get_size()
 		{
@@ -195,19 +215,19 @@ class SparseImage : public ApiVulkanSample
 
 	struct VirtualTexture
 	{
-		VkImage      texture_image;
-		VkImageView  texture_image_view;
+		VkImage      texture_image      = VK_NULL_HANDLE;
+		VkImageView  texture_image_view = VK_NULL_HANDLE;
 		MemAllocInfo memory_allocations;
 
 		// Dimensions
-		size_t width;
-		size_t height;
+		size_t width  = 0U;
+		size_t height = 0U;
 
 		// Number of bytes per page
-		size_t page_size;
+		size_t page_size = 0U;
 
-		uint8_t                    base_mip_level;
-		uint8_t                    mip_levels;
+		uint8_t                    base_mip_level = 0U;
+		uint8_t                    mip_levels     = 0U;
 		std::vector<MipProperties> mip_properties;
 
 		std::vector<std::vector<MipBlock>> current_mip_table;
@@ -226,7 +246,7 @@ class SparseImage : public ApiVulkanSample
 		std::set<size_t> update_set;
 
 		// Sparse-image-related format and memory properties
-		VkSparseImageFormatProperties format_properties;
+		VkSparseImageFormatProperties format_properties{};
 
 		std::vector<VkSparseImageMemoryBind> sparse_image_memory_bind;
 	};
@@ -249,9 +269,18 @@ class SparseImage : public ApiVulkanSample
 		VkExtent2D texture_base_dim;
 		VkExtent2D screen_base_dim;
 
-		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels);
-		CalculateMipLevelData();
+		CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels) :
+		    mesh(vertical_num_blocks + 1U), vertical_num_blocks(vertical_num_blocks), horizontal_num_blocks(horizontal_num_blocks), mip_levels(mip_levels), ax_vertical(horizontal_num_blocks + 1U), ax_horizontal(vertical_num_blocks + 1U), mvp_transform(mvp_transform), texture_base_dim(texture_base_dim), screen_base_dim(screen_base_dim)
+		{
+			for (auto &row : mesh)
+			{
+				row.resize(horizontal_num_blocks + 1U);
+			}
+		}
 
+		CalculateMipLevelData() :
+		    mvp_transform(glm::mat4(0)), texture_base_dim(VkExtent2D{0U, 0U}), screen_base_dim(VkExtent2D{0U, 0U}), mesh{0}, vertical_num_blocks(0U), horizontal_num_blocks(0U), mip_levels(0U)
+		{}
 		void calculate_mesh_coordinates();
 		void calculate_mip_levels();
 	};

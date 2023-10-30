@@ -1,6 +1,4 @@
-/* Copyright (c) 2023, Mobica Limited
- *
- * SPDX-License-Identifier: Apache-2.0
+/* Copyright 2023, Mobica Limited
  *
  * Licensed under the Apache License, Version 2.0 the "License";
  * you may not use this file except in compliance with the License.
@@ -38,6 +36,9 @@ SparseImage::~SparseImage()
 	}
 }
 
+/**
+ * 	@brief Load the main .ktx file to be accessible from CPU's side.
+ */
 void SparseImage::load_assets()
 {
 	virtual_texture.raw_data_image = vkb::sg::Image::load("/textures/vulkan_logo_full.ktx", "/textures/vulkan_logo_full.ktx", vkb::sg::Image::ContentType::Color);
@@ -50,6 +51,9 @@ void SparseImage::load_assets()
 	virtual_texture.height = tex_extent.height;
 }
 
+/**
+ * 	@brief Create a dedicated queue (if available) for sparse-binding.
+ */
 void SparseImage::create_sparse_bind_queue()
 {
 	const auto &queue_family_properties = device->get_gpu().get_queue_family_properties();
@@ -109,6 +113,9 @@ bool SparseImage::prepare(const vkb::ApplicationOptions &options)
 	return true;
 }
 
+/**
+ * 	@brief Setup the pipeline(s).
+ */
 void SparseImage::prepare_pipelines()
 {
 	// Create a blank pipeline layout.
@@ -178,6 +185,9 @@ void SparseImage::prepare_pipelines()
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1U, &pipeline_create_info, nullptr, &sample_pipeline));
 }
 
+/**
+ * 	@brief Set camera type, translation speed and camera's initial position.
+ */
 void SparseImage::setup_camera()
 {
 	camera.type = vkb::CameraType::FirstPerson;
@@ -385,7 +395,7 @@ void SparseImage::check_mip_page_requirements(std::vector<MemPageDescription> &m
 }
 
 /**
- * 	@brief Convert information from BLOCK-based into PAGE-based data. BLOCKS are just the abstraction units described by ON_SCREEN_HORIZONTAL_BLOCKS and ON_SCREEN_VERTICAL_BLOCKS. PAGES are the actually allocated chunks of memory, their size is device-dependent.
+ * 	@brief Convert information from BLOCK-based into PAGE-based data. BLOCKS are just the abstraction units described by num_horizontal_blocks and num_vertical_blocks. PAGES are the actually allocated chunks of memory, their size is device-dependent.
  */
 std::vector<size_t> SparseImage::get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level)
 {
@@ -472,6 +482,9 @@ void SparseImage::update_mvp()
 	current_mvp_transform = mvp_ubo.proj * mvp_ubo.view * mvp_ubo.model;
 }
 
+/**
+ * 	@brief Build draw-related command buffer(s).
+ */
 void SparseImage::build_command_buffers()
 {
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
@@ -532,6 +545,9 @@ void SparseImage::build_command_buffers()
 	}
 }
 
+/**
+ * 	@brief Run the update process for a number of blocks, described by blocks_to_update_per_cycle.
+ */
 void SparseImage::process_texture_blocks()
 {
 	uint8_t block_counter;
@@ -547,6 +563,9 @@ void SparseImage::process_texture_blocks()
 	virtual_texture.texture_block_update_set.erase(virtual_texture.texture_block_update_set.begin(), it);
 }
 
+/**
+ * 	@brief Bind the image, update all of the required pages by either loading the original data via staging buffer or generating mipmaps.
+ */
 void SparseImage::update_and_generate()
 {
 	bind_sparse_image();
@@ -689,6 +708,9 @@ void SparseImage::update_and_generate()
 	}
 }
 
+/**
+ * 	@brief Leave only render-required pages, free empty memory sectors, run defragmentation (if enabled), bind the image.
+ */
 void SparseImage::free_unused_memory()
 {
 	for (size_t page_index = 0U; page_index < virtual_texture.page_table.size(); page_index++)
@@ -815,6 +837,9 @@ void SparseImage::free_unused_memory()
 	}
 }
 
+/**
+ * 	@brief Generate the least detailed mip level, set it as unremovable, bind the image.
+ */
 void SparseImage::load_least_detailed_level()
 {
 	set_least_detailed_level();
@@ -831,6 +856,9 @@ void SparseImage::load_least_detailed_level()
 	update_and_generate();
 }
 
+/**
+ * 	@brief Handle the state machine.
+ */
 void SparseImage::process_stage(Stages next_stage)
 {
 	switch (next_stage)
@@ -893,6 +921,9 @@ void SparseImage::process_stage(Stages next_stage)
 	}
 }
 
+/**
+ * 	@brief Prepare and submit the frame.
+ */
 void SparseImage::draw()
 {
 	ApiVulkanSample::prepare_frame();
@@ -941,7 +972,7 @@ std::unique_ptr<vkb::VulkanSample> create_sparse_image()
 }
 
 /**
- * 	@brief Generate the mesh and calculate required mip level for each texture block
+ * 	@brief Generate the mesh and calculate required mip level for each texture block.
  */
 void SparseImage::calculate_mips_table()
 {
@@ -964,19 +995,9 @@ void SparseImage::calculate_mips_table()
 	virtual_texture.new_mip_table = mesh_data.mip_table;
 }
 
-SparseImage::CalculateMipLevelData::CalculateMipLevelData(const glm::mat4 &mvp_transform, const VkExtent2D &texture_base_dim, const VkExtent2D &screen_base_dim, uint32_t vertical_num_blocks, uint32_t horizontal_num_blocks, uint8_t mip_levels) :
-    mesh(vertical_num_blocks + 1U), vertical_num_blocks(vertical_num_blocks), horizontal_num_blocks(horizontal_num_blocks), mip_levels(mip_levels), ax_vertical(horizontal_num_blocks + 1U), ax_horizontal(vertical_num_blocks + 1U), mvp_transform(mvp_transform), texture_base_dim(texture_base_dim), screen_base_dim(screen_base_dim)
-{
-	for (auto &row : mesh)
-	{
-		row.resize(horizontal_num_blocks + 1U);
-	}
-}
-
-SparseImage::CalculateMipLevelData::CalculateMipLevelData() :
-    mvp_transform(glm::mat4(0)), texture_base_dim(VkExtent2D{0U, 0U}), screen_base_dim(VkExtent2D{0U, 0U}), mesh{0}, vertical_num_blocks(0U), horizontal_num_blocks(0U), mip_levels(0U)
-{}
-
+/**
+ * 	@brief Generate the mesh based on the current MVP transform and number of blocks.
+ */
 void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
 {
 	glm::vec4 top_left(-100.0f, -100.0f, 0.0f, 1.0f);
@@ -1039,7 +1060,7 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
  *
  * BLOCKS are just the abstraction units used to describe the texture on-screen. Each block is the same size.
  * Number of vertical and horizontal blocks is described by num_vertical_blocks and num_horizontal_blocks.
- * These constants are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
+ * These variables are completely arbitrary - the more blocks, the better precision, the greater calculation overhead.
  *
  * What this function does, is based on the mesh data created in calculate_mesh_coordinates(), for each node within a mesh it calculates:
  * "What is the ratio between x/y movement on the screen to the u/v movement on the texture?".
@@ -1063,7 +1084,7 @@ void SparseImage::CalculateMipLevelData::calculate_mesh_coordinates()
  *
  * - IMPORTANT:    I assume that:
  *						- each block is a parallelogram which is obviously not 1:1 true, but the more precise we get (the more blocks we split the texture into) the more accurate this statement is.
- *                      - the image is not "stretched' within a single block, which has the same rules as stated above.
+ *						- the image is not "stretched' within a single block, which has the same rules as stated above.
  *
  *					With those assumption, I'm providing a parralel lines from the Ph point to the corresponding edges. This creates an another parrallelogram.
  *
@@ -1168,6 +1189,9 @@ void SparseImage::CalculateMipLevelData::calculate_mip_levels()
 	}
 }
 
+/**
+ * 	@brief Create and update a vertex buffer.
+ */
 void SparseImage::create_vertex_buffer()
 {
 	std::array<SimpleVertex, 4> vertices;
@@ -1200,6 +1224,9 @@ void SparseImage::create_vertex_buffer()
 	device->flush_command_buffer(command_buffer, queue, true);
 }
 
+/**
+ * 	@brief Create and update an index buffer.
+ */
 void SparseImage::create_index_buffer()
 {
 	std::array<uint16_t, 6U> indices      = {0U, 1U, 2U, 2U, 3U, 0U};
@@ -1224,7 +1251,7 @@ void SparseImage::create_index_buffer()
 }
 
 /**
- * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler
+ * 	@brief Creating descriptor pool with size adjusted to use uniform buffer and image sampler.
  */
 void SparseImage::create_descriptor_pool()
 {
@@ -1244,7 +1271,7 @@ void SparseImage::create_descriptor_pool()
 }
 
 /**
- * 	@brief Creating layout for descriptor sets
+ * 	@brief Creating layout for descriptor sets.
  */
 void SparseImage::create_descriptor_set_layout()
 {
@@ -1271,9 +1298,9 @@ void SparseImage::create_descriptor_set_layout()
 
 /**
  * 	@brief Creating descriptor set:
- * 		   1. Uniform buffer (MVP)
- * 		   2. Image sampler
- * 		   3. Uniform buffer (color_highlight)
+ * 		   1. Uniform buffer (MVP).
+ * 		   2. Image sampler.
+ * 		   3. Uniform buffer (color_highlight and LOD data).
  */
 void SparseImage::create_descriptor_sets()
 {
@@ -1316,6 +1343,9 @@ void SparseImage::create_descriptor_sets()
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0U, nullptr);
 }
 
+/**
+ * 	@brief Update UBO-data used by the fragment shader.
+ */
 void SparseImage::update_frag_settings()
 {
 	FragSettingsData frag_settings = {};
@@ -1326,6 +1356,9 @@ void SparseImage::update_frag_settings()
 	frag_settings_data_buffer->update(&frag_settings, sizeof(FragSettingsData));
 }
 
+/**
+ * 	@brief Create UBO for MVP data and fragment shader settings.
+ */
 void SparseImage::create_uniform_buffers()
 {
 	VkDeviceSize buffer_size = sizeof(MVP);
@@ -1335,6 +1368,9 @@ void SparseImage::create_uniform_buffers()
 	frag_settings_data_buffer = std::make_unique<vkb::core::Buffer>(get_device(), buffer_size, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU, VMA_ALLOCATION_CREATE_MAPPED_BIT);
 }
 
+/**
+ * 	@brief Create and setup the texture sampler.
+ */
 void SparseImage::create_texture_sampler()
 {
 	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
@@ -1359,7 +1395,7 @@ void SparseImage::create_texture_sampler()
 }
 
 /**
- * @brief Enabling features
+ * @brief Enable required GPU features.
  */
 void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 {
@@ -1375,6 +1411,9 @@ void SparseImage::request_gpu_features(vkb::PhysicalDevice &gpu)
 	}
 }
 
+/**
+ * @brief Setup least detailed level to be required and unremovable from the memory.
+ */
 void SparseImage::set_least_detailed_level()
 {
 	// Setting the least detailed mip level to be constantly present in the memory (to avoid black spots on the screen)
@@ -1395,6 +1434,9 @@ void SparseImage::set_least_detailed_level()
 	}
 }
 
+/**
+ * @brief Create and setup the sparse texture.
+ */
 void SparseImage::create_sparse_texture_image()
 {
 	//==================================================================================================
@@ -1433,8 +1475,8 @@ void SparseImage::create_sparse_texture_image()
 	//==================================================================================================
 	// Calculating memory dependencies and defining total number of pages and page size
 
-	std::vector<VkSparseImageFormatProperties>   sparse_image_format_properties;
-	VkMemoryRequirements                         mem_requirements;
+	std::vector<VkSparseImageFormatProperties> sparse_image_format_properties;
+	VkMemoryRequirements                       mem_requirements;
 
 	uint32_t property_count;
 	uint32_t memory_req_count;
@@ -1445,7 +1487,7 @@ void SparseImage::create_sparse_texture_image()
 
 	vkGetImageMemoryRequirements(get_device().get_handle(), virtual_texture.texture_image, &mem_requirements);
 
-	virtual_texture.format_properties          = sparse_image_format_properties[0];
+	virtual_texture.format_properties = sparse_image_format_properties[0];
 
 	// calculate page size
 	virtual_texture.page_size = virtual_texture.format_properties.imageGranularity.height * virtual_texture.format_properties.imageGranularity.width * 4U;
@@ -1553,6 +1595,9 @@ void SparseImage::create_sparse_texture_image()
 	VK_CHECK(vkCreateSemaphore(get_device().get_handle(), &semaphore_create_info, nullptr, &bound_semaphore));
 }
 
+/**
+ * @brief Clear and potentially resize both current and new mip tables.
+ */
 void SparseImage::reset_mip_table()
 {
 	virtual_texture.current_mip_table.clear();
@@ -1598,29 +1643,5 @@ void SparseImage::on_update_ui_overlay(vkb::Drawer &drawer)
 		drawer.text("Memory usage in pages:");
 		drawer.text("* Virtual: %zu ", virtual_texture.page_table.size());
 		drawer.text("* Allocated: %zu ", virtual_texture.memory_allocations.get_size() * PAGES_PER_ALLOC);
-	}
-}
-
-void SparseImage::MemAllocInfo::get_allocation(PageInfo &page_memory_info, size_t page_index)
-{
-	if (memory_sectors.empty() || memory_sectors.front().expired() || memory_sectors.front().lock()->available_offsets.empty())
-	{
-		page_memory_info.memory_sector = std::make_shared<MemSector>(*this);
-		page_memory_info.offset        = *(page_memory_info.memory_sector->available_offsets.begin());
-
-		page_memory_info.memory_sector->available_offsets.erase(page_memory_info.offset);
-		page_memory_info.memory_sector->virt_page_indices.insert(page_index);
-
-		memory_sectors.push_front(page_memory_info.memory_sector);
-	}
-	else
-	{
-		auto ptr = memory_sectors.front().lock();
-
-		page_memory_info.memory_sector = ptr;
-		page_memory_info.offset        = *(page_memory_info.memory_sector->available_offsets.begin());
-
-		page_memory_info.memory_sector->available_offsets.erase(page_memory_info.offset);
-		page_memory_info.memory_sector->virt_page_indices.insert(page_index);
 	}
 }
