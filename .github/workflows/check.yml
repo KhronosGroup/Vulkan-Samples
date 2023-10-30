@@ -77,7 +77,7 @@ jobs:
       id: count-diff
       run: echo "line-count=$(echo "${{ steps.clang-diff.outputs.changes }}" | grep -c +++)" >> $GITHUB_OUTPUT
     - name: Assert
-      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi 
+      run: if test ${{ steps.count-diff.outputs.line-count }} -gt 0; then echo "${{ steps.clang-diff.outputs.changes }}"; exit 1; fi
 
   clang_tidy:
     name: Clang Tidy Check
@@ -91,6 +91,6 @@ jobs:
       with:
         submodules: "recursive"
     - run: git config --global --add safe.directory /__w/Vulkan-Samples/Vulkan-Samples
-    - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -H. -Bbuild/clang
+    - run: cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -Bbuild/clang
     - run: |
         /usr/bin/run-clang-tidy -j $(($(nproc)/2+1)) -p build/clang -header-filter=framework,samples,app -checks=-*,google-*,-google-runtime-references -quiet ${{ needs.changed-files.outputs.all }}
