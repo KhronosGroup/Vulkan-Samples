@@ -1,5 +1,5 @@
 #version 450
-#extension GL_KHR_shader_subgroup_basic : enable
+#extension GL_KHR_shader_subgroup_basic: enable
 /* Copyright (c) 2023, Mobica Limited
  *
  * SPDX-License-Identifier: Apache-2.0
@@ -16,13 +16,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
- layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
+layout (local_size_x = 32, local_size_y = 1, local_size_z = 1) in;
 
- layout (binding = 0, rgba32f) writeonly uniform image2D fft_normal_map;
+layout (binding = 0, rgba32f) writeonly uniform image2D fft_normal_map;
 
- layout (binding = 1, rgba32f) readonly uniform image2D fft_displacement_map;
+layout (binding = 1, rgba32f) readonly uniform image2D fft_displacement_map;
 
- layout (binding = 2) uniform InvertFft
+layout (binding = 2) uniform InvertFft
 {
     int pong_idx;
     uint grid_size;
@@ -32,17 +32,33 @@ void main()
 {
     uint N = fftUbo.grid_size;
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-    float tex_dim = 1.0f / N;
+    float tex_dim = 1.0f;
 
-    float left_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0.0f))).g;
-    float right_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).g;
-    float bottom_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
-    float top_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
+    vec3 v0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, 0.0f))).rgb;
+    vec3 v1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).rgb;
+    vec3 v2 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, tex_dim))).rgb;
+    vec3 normal = cross(v1 - v0, v2 - v0);
+
+    // float left_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0.0f))).g;
+    // float right_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).g;
+    // float bottom_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
+    // float top_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
+
+    // float z0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, -tex_dim))).g;
+    // float z1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0, -tex_dim))).g;
+    // float z2 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, -tex_dim))).g;
+    // float z3 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0))).g;
+    // float z4 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0))).g;
+    // float z5 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, tex_dim))).g;
+    // float z6 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0, tex_dim))).g;
+    // float z7 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, tex_dim))).g;
 
     vec3 result = vec3(0.0f);
-    result.z = (bottom_y - top_y) / float(N);
-    result.x = (left_y - right_y) / float(N);
-    result.y = 1.0f / float(N);
+    // result.z = (bottom_y - top_y) / float(N);
+    // result.x = (left_y - right_y) / float(N);
+    // result.z = z0 + 2 * z1 + z2 - z5 - 2 * z6 - z7;
+    // result.x = z0 + 2 * z3 + z5 - z2 - 2 * z4 - z7;
+    // result.y = 1.0f / float(N);
 
-    imageStore(fft_normal_map, pixel_pos, vec4(normalize(result), 1.0f));
+    imageStore(fft_normal_map, pixel_pos, vec4(normalize(normal), 1.0f));
 }

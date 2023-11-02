@@ -17,11 +17,11 @@
  */
 
 // layout (location=1) in vec3 normalVector;
-// layout (location=2) in vec3 eyePosition;
 // layout (location=3) in vec3 lightVector;
 
 layout (location = 0) in vec3 in_pos;
 layout (location = 1) in vec3 in_normal;
+layout (location = 2) in vec3 eyePosition;
 
 layout (location = 0) out vec4 outFragColor;
 
@@ -32,62 +32,61 @@ layout (binding = 3) uniform CameraPos
 
 layout (binding = 5) uniform OceanParamsUbo
 {
-	vec3 light_color;
-	vec3 light_position;
-	vec3 ocean_color;
+    vec3 light_color;
+    vec3 light_position;
+    vec3 ocean_color;
 } ocean_ubo;
 
-// layout (binding = 7) uniform samplerCube skybox_texture_map;
+layout (binding = 6) uniform samplerCube skybox_texture_map;
 
-void main() 
+void main()
 {
-
- /*   float material_shiness = 27.89f;
-
-    vec3 n = normalize(normalVector);
-    vec3 l = normalize(lightVector);
+    float material_shiness = 27.89f;
+    vec3 n = normalize(in_normal);
+    vec3 l = normalize(ocean_ubo.light_position - in_pos);
 
     float i_diffuse = clamp(dot(n, l), 0, 1);
 
     vec3 e = normalize(-eyePosition);
     vec3 r = reflect(-l, n);
 
-    float i_specular = pow(clamp(dot(e, r), 0, 1), material_shiness);
+    float i_specular = pow(clamp(dot(e, r), 0.0f, 1.0f), material_shiness);
     float lightPower = 1;
 
     vec3 specular = vec3(0.3f, 0.3f, 0.3f);
+    float radio = 1.0f / 1.33f;
 
-    vec3 R = reflect(eyePosition.xyz, normalVector);
+    vec3 R = refract(eyePosition.xyz, in_normal, radio);
     vec3 reflection = texture(skybox_texture_map, R).rgb;
 
     vec3 color = ocean_ubo.light_color * ocean_ubo.ocean_color * i_diffuse + specular * i_specular;
 
-    outFragColor=vec4(mix(color, reflection, 0.1f), 1.0f);
-    */
-    vec3 normal = in_normal;
-    vec3 light_pos = ocean_ubo.light_position;
-    vec3 light_color = ocean_ubo.light_color;
-    vec3 ocean_color = ocean_ubo.ocean_color;
-    float ambient_strength = 0.91f;
+    outFragColor = vec4(mix(color, reflection, 0.1f), 1.0f);
 
-    vec3 ambient = ambient_strength * light_color;
-
-    vec3 light_dir = normalize(light_pos - in_pos);
-    float diff = max(dot(normal, light_dir), 0.0f);
-    vec3 diffuse = diff * light_color;
-
-    float specular_strength = 0.5f;
-    vec3 view_dir = normalize(vec3(cam.position.xyz - in_pos));
-    vec3 ref_dir = reflect(-light_dir, normal);
-    float spec = pow(max(dot(view_dir, ref_dir), 0.0f), 32);
-    vec3 specular = specular_strength * spec * light_color;
-
-    vec3 result = (ambient + diffuse + specular) * ocean_color;
-    result = result / (result + vec3(1.0f));
-
-    // gamma correction
-    result = pow(result, vec3(1.0f / 2.2f));
-
-    outFragColor = vec4(result, 1.0f);
+    //    vec3 normal = in_normal;
+    //    vec3 light_pos = ocean_ubo.light_position;
+    //    vec3 light_color = ocean_ubo.light_color;
+    //    vec3 ocean_color = ocean_ubo.ocean_color;
+    //    float ambient_strength = 0.91f;
+    //
+    //    vec3 ambient = ambient_strength * light_color;
+    //
+    //    vec3 light_dir = normalize(light_pos - in_pos);
+    //    float diff = max(dot(normal, light_dir), 0.0f);
+    //    vec3 diffuse = diff * light_color;
+    //
+    //    float specular_strength = 0.5f;
+    //    vec3 view_dir = normalize(vec3(cam.position.xyz - in_pos));
+    //    vec3 ref_dir = reflect(-light_dir, normal);
+    //    float spec = pow(max(dot(view_dir, ref_dir), 0.0f), 32);
+    //    vec3 specular = specular_strength * spec * light_color;
+    //
+    //    vec3 result = texture(skybox_texture_map, ref_dir).rgb * (ambient + diffuse + specular) * ocean_color;
+    //    result = result / (result + vec3(1.0f));
+    //
+    //    // gamma correction
+    //    result = pow(result, vec3(1.0f / 2.2f));
+    //
+    //    outFragColor = vec4(result, 1.0f);
 
 }

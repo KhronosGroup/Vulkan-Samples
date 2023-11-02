@@ -51,7 +51,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	void create_pipelines();
 	void create_skybox();
 
-	void create_initial_tildas();
+	void create_initial_tides();
 	void create_tildas();
 	void create_butterfly_texture();
 	void create_fft();
@@ -60,11 +60,11 @@ class SubgroupsOperations : public ApiVulkanSample
 
 	void update_uniform_buffers();
 
-	glm::vec2 rndGaussian();
+	static glm::vec2 rndGaussian();
 
 	struct Pipeline
 	{
-		void destroy(VkDevice device);
+		void destroy(VkDevice device) const;
 
 		VkPipeline       pipeline        = {VK_NULL_HANDLE};
 		VkPipelineLayout pipeline_layout = {VK_NULL_HANDLE};
@@ -124,7 +124,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct TimeUbo
 	{
 		alignas(4) float time = {0.0f};
-	} fftTime;
+	};
 
 	struct Wind
 	{
@@ -141,7 +141,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	struct GuiConfig
 	{
 		bool  wireframe          = {true};
-		float choppines          = {0.75f};
+		float choppines          = {0.1f};
 		float displacement_scale = {0.5f};
 		float amplitude          = {32.0f};
 		float length             = {1900.0f};
@@ -155,7 +155,7 @@ class SubgroupsOperations : public ApiVulkanSample
 	uint32_t                           grid_size               = {256U};
 	std::unique_ptr<vkb::core::Buffer> skybox_ubo              = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> ocean_params_ubo        = {VK_NULL_HANDLE};
-	std::unique_ptr<vkb::core::Buffer> camera_postion_ubo      = {VK_NULL_HANDLE};
+	std::unique_ptr<vkb::core::Buffer> camera_position_ubo     = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> camera_ubo              = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> tessellation_params_ubo = {VK_NULL_HANDLE};
 	std::unique_ptr<vkb::core::Buffer> fft_params_ubo          = {VK_NULL_HANDLE};
@@ -171,7 +171,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDeviceMemory memory;
 		VkImageView    view;
 		VkFormat       format;
-		void           destroy(VkDevice device)
+		void           destroy(VkDevice device) const
 		{
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
@@ -179,9 +179,9 @@ class SubgroupsOperations : public ApiVulkanSample
 		};
 	};
 
-	ImageAttachment butterfly_precomp;
+	ImageAttachment butterfly_precomp{};
 
-	uint32_t   log_2_N;
+	uint32_t   log_2_N{};
 	vkb::Timer timer;
 
 	struct
@@ -243,14 +243,14 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;
-	} initial_tildas;
+	} initial_tildes;
 
 	struct
 	{
 		VkDescriptorSetLayout descriptor_set_layout = {VK_NULL_HANDLE};
 		VkDescriptorSet       descriptor_set        = {VK_NULL_HANDLE};
 		Pipeline              pipeline;
-	} tildas;
+	} tildes;
 
 	struct
 	{
@@ -292,10 +292,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		std::unique_ptr<vkb::sg::SubMesh> skybox_shape;
 	} skybox;
 
-	VkPhysicalDeviceSubgroupProperties subgroups_properties;
+	VkPhysicalDeviceSubgroupProperties subgroups_properties{};
 
   private:
-	uint32_t              reverse(uint32_t i);
+	uint32_t              reverse(uint32_t i) const;
 	VkDescriptorImageInfo create_ia_descriptor(ImageAttachment &attachment);
 	void                  create_image_attachement(VkFormat format, uint32_t width, uint32_t height, ImageAttachment &result);
 };
