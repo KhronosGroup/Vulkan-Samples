@@ -118,6 +118,8 @@ class DynamicBlending : public ApiVulkanSample
 	VkDescriptorSet       descriptor_set;
 	VkPipeline            pipeline;
 
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT eds_feature_support;
+
 	std::array<float, 4> clear_color = {0.5f, 0.5f, 0.5f, 1.0f};
 	int32_t              current_blend_color_operator_index;
 	int32_t              current_blend_alpha_operator_index;
