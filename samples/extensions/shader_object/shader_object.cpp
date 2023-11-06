@@ -1580,7 +1580,7 @@ void ShaderObject::render(float delta_time)
 		update_uniform_buffers();
 	}
 
-	build_command_buffers();
+	rebuild_command_buffers();
 
 	draw(delta_time);
 

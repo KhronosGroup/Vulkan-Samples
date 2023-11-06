@@ -328,6 +328,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	void destroy_command_buffers();
 
 	/**
+	 * @brief Recreate the current command buffer draw_cmd_buffer[current_buffer]
+	 */
+	void recreate_current_command_buffer();
+
+	/**
 	 * @brief Create a cache pool for rendering pipelines
 	 */
 	void create_pipeline_cache();
