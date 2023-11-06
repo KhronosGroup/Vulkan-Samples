@@ -255,6 +255,10 @@ Using timestamp queries for profiling GPU workloads.
 
 A sample that implements best practices in handling swapchain recreation, for example due to window resizing or present mode changes.
 
+=== xref:./api/oit_linked_lists/README.adoc[Order-independent transparency with per-pixel ordered linked lists]
+
+A sample that implements an order-independent transparency algorithm using per-pixel ordered linked lists.
+
 == Extension Samples
 
 The goal of these samples is to demonstrate how to use a particular Vulkan extension at the API level with as little abstraction as possible.

@@ -42,6 +42,7 @@
 *** xref:samples/api/hpp_texture_mipmap_generation/README.adoc[Texture mipmap generation (Vulkan.hpp)]
 ** xref:samples/api/timestamp_queries/README.adoc[Timestamp queries]
 *** xref:samples/api/hpp_timestamp_queries/README.adoc[Timestamp queries (Vulkan.hpp)]
+** xref:samples/api/oit_linked_lists/README.adoc[OIT linked lists]
 * xref:samples/extensions/README.adoc[Extension usage samples]
 ** xref:samples/extensions/buffer_device_address/README.adoc[Buffer device address]
 ** xref:samples/extensions/calibrated_timestamps/README.adoc[Calibrated timestamps]

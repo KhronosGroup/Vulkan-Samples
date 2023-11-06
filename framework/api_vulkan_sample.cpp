@@ -1068,8 +1068,8 @@ Texture ApiVulkanSample::load_texture(const std::string &file, vkb::sg::Image::C
 	// Note that for simplicity, we will always be using max. available anisotropy level for the current device
 	// This may have an impact on performance, esp. on lower-specced devices
 	// In a real-world scenario the level of anisotropy should be a user setting or e.g. lowered for mobile devices by default
-	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
-	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_features().samplerAnisotropy;
+	sampler_create_info.maxAnisotropy    = get_device().get_gpu().get_requested_features().samplerAnisotropy ? (get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy) : 1.0f;
+	sampler_create_info.anisotropyEnable = get_device().get_gpu().get_requested_features().samplerAnisotropy;
 	sampler_create_info.borderColor      = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
 	VK_CHECK(vkCreateSampler(device->get_handle(), &sampler_create_info, nullptr, &texture.sampler));
 
@@ -1289,7 +1289,7 @@ std::unique_ptr<vkb::sg::SubMesh> ApiVulkanSample::load_model(const std::string 
 	return model;
 }
 
-void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer)
+void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer, uint32_t instance_count)
 {
 	VkDeviceSize offsets[1] = {0};
 
@@ -1298,7 +1298,7 @@ void ApiVulkanSample::draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCom
 
 	vkCmdBindVertexBuffers(command_buffer, 0, 1, vertex_buffer.get(), offsets);
 	vkCmdBindIndexBuffer(command_buffer, index_buffer->get_handle(), 0, model->index_type);
-	vkCmdDrawIndexed(command_buffer, model->vertex_indices, 1, 0, 0, 0);
+	vkCmdDrawIndexed(command_buffer, model->vertex_indices, instance_count, 0, 0, 0);
 }
 
 void ApiVulkanSample::with_command_buffer(const std::function<void(VkCommandBuffer command_buffer)> &f, VkSemaphore signalSemaphore)
