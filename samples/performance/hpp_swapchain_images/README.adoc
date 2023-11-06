@@ -25,11 +25,11 @@ ifdef::site-gen-antora[]
 TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/hpp_swapchain_images[Khronos Vulkan samples github repository].
 endif::[]
 
-NOTE: A transcoded version of the performance sample https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/swapchain_images[Swapchain Images] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
+NOTE: A transcoded version of the performance sample https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/swapchain_images[Swapchain Images] that illustrates the usage of the C{pp} bindings of vulkan provided by vulkan.hpp.
 
 == Overview
 
-This is the readme as written in https://github.com/KhronosGroup/Vulkan-Samples/tree/master/samples/performance/swapchain_images[Swapchain Images], with code transcoded to functions and classes from vulkan.hpp.
+This is the readme as written in https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/performance/swapchain_images[Swapchain Images], with code transcoded to functions and classes from vulkan.hpp.
 
 Vulkan gives the application some significant control over the number of swapchain images to be created.
 This sample analyzes the available options and their performance implications.
