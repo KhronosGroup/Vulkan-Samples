@@ -65,7 +65,7 @@ class HPPHDR : public HPPApiVulkanSample
 	};
 
 	// Framebuffer for offscreen rendering
-	struct FrameBufferAttachment
+	struct FramebufferAttachment
 	{
 		vk::Format       format = {};
 		vk::Image        image  = {};
@@ -84,7 +84,7 @@ class HPPHDR : public HPPApiVulkanSample
 	{
 		vk::Extent2D          extent      = {};
 		vk::Framebuffer       framebuffer = {};
-		FrameBufferAttachment color       = {};
+		FramebufferAttachment color       = {};
 		vk::RenderPass        render_pass = {};
 		vk::Sampler           sampler     = {};
 
@@ -132,8 +132,8 @@ class HPPHDR : public HPPApiVulkanSample
 	{
 		vk::Extent2D          extent      = {};
 		vk::Framebuffer       framebuffer = {};
-		FrameBufferAttachment color[2]    = {};
-		FrameBufferAttachment depth       = {};
+		FramebufferAttachment color[2]    = {};
+		FramebufferAttachment depth       = {};
 		vk::RenderPass        render_pass = {};
 		vk::Sampler           sampler     = {};
 
@@ -191,7 +191,7 @@ class HPPHDR : public HPPApiVulkanSample
 	virtual void render(float delta_time) override;
 
 	vk::DeviceMemory      allocate_memory(vk::Image image);
-	FrameBufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
+	FramebufferAttachment create_attachment(vk::Format format, vk::ImageUsageFlagBits usage);
 	vk::DescriptorPool    create_descriptor_pool();
 	vk::Pipeline          create_bloom_pipeline(uint32_t direction);
 	vk::Pipeline          create_composition_pipeline();
@@ -202,12 +202,12 @@ class HPPHDR : public HPPApiVulkanSample
 	vk::RenderPass        create_render_pass(std::vector<vk::AttachmentDescription> const &attachment_descriptions, vk::SubpassDescription const &subpass_description);
 	void                  draw();
 	void                  load_assets();
+	void                  prepare_bloom();
 	void                  prepare_camera();
+	void                  prepare_composition();
+	void                  prepare_models();
 	void                  prepare_offscreen_buffer();
 	void                  prepare_uniform_buffers();
-	void                  setup_bloom();
-	void                  setup_composition();
-	void                  setup_models();
 	void                  update_composition_descriptor_set();
 	void                  update_bloom_descriptor_set();
 	void                  update_model_descriptor_set(vk::DescriptorSet descriptor_set);
