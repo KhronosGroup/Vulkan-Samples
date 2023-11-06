@@ -1397,6 +1397,7 @@ void RaytracingExtended::draw()
 	VK_CHECK(vkQueueSubmit(queue, 1, &submit, device->request_fence()));
 	device->get_fence_pool().wait();
 
+	recreate_current_command_buffer();
 	VkCommandBufferBeginInfo begin = vkb::initializers::command_buffer_begin_info();
 	VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffers[i], &begin));
 
