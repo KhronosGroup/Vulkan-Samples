@@ -43,7 +43,7 @@ class ExtendedDynamicState2 : public ApiVulkanSample
 		bool                           time_tick        = false;
 	} gui_settings;
 
-	/* Buffer used inw all pipelines */
+	/* Buffer used in all pipelines */
 	struct UBOCOMM
 	{
 		glm::mat4 projection;
