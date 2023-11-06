@@ -254,6 +254,15 @@ inline vk::ImageView create_image_view(vk::Device           device,
 	return device.createImageView(image_view_create_info);
 }
 
+inline vk::QueryPool create_query_pool(vk::Device device, vk::QueryType query_type, uint32_t query_count, vk::QueryPipelineStatisticFlags pipeline_statistics = {})
+{
+	vk::QueryPoolCreateInfo query_pool_create_info;
+	query_pool_create_info.queryType          = query_type;
+	query_pool_create_info.queryCount         = query_count;
+	query_pool_create_info.pipelineStatistics = pipeline_statistics;
+	return device.createQueryPool(query_pool_create_info);
+}
+
 inline vk::Sampler create_sampler(vk::Device device, vk::Filter filter, vk::SamplerAddressMode sampler_address_mode, float max_anisotropy, float max_LOD)
 {
 	vk::SamplerCreateInfo sampler_create_info;
