@@ -26,5 +26,5 @@ add_sample(
     NAME "Extended Dynamic State3 Multisample Rasterization"
     DESCRIPTION "Sample description"
     SHADER_FILES_GLSL
-        "triangle.vert"
-        "triangle.frag")
+        "model.vert"
+        "model.frag")

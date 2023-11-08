@@ -36,7 +36,7 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	void render(float delta_time) override;
 	bool prepare(const vkb::ApplicationOptions &options) override;
 	//virtual void update(float delta_time) override;
-	virtual void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
+	//virtual void draw(vkb::CommandBuffer &command_buffer, vkb::RenderTarget &render_target) override;
 	void draw_gui() override;
 
 	/**
@@ -50,13 +50,15 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	VkPipeline       sample_pipeline{};
 	VkPipelineLayout sample_pipeline_layout{};
 
+	void load_scene();
+
 	virtual void prepare_render_context() override;
 
 	std::unique_ptr<vkb::RenderTarget> create_render_target(vkb::core::Image &&swapchain_image);
 
 	bool depth_writeback_resolve_supported{false};
 
-	vkb::sg::PerspectiveCamera *camera{nullptr};
+	//vkb::sg::PerspectiveCamera *camera{nullptr};
 
 	enum ColorResolve : int
 	{
@@ -235,6 +237,79 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	VkResolveModeFlagBits gui_depth_resolve_mode{VK_RESOLVE_MODE_NONE};
 
 	VkResolveModeFlagBits last_gui_depth_resolve_mode{VK_RESOLVE_MODE_NONE};
+	
+	struct Vertex
+	{
+		glm::vec3 pt;
+		glm::vec2 uv;
+	};
+
+	struct SceneModel
+	{
+		std::vector<Vertex>                  vertices;
+		std::vector<std::array<uint16_t, 3>> triangles;
+		size_t                               vertex_buffer_offset = 0;
+		size_t                               index_buffer_offset  = 0;
+		size_t                               texture_index        = 0;
+		//BoundingSphere                       bounding_sphere;
+	};
+
+	std::vector<SceneModel> models;
+
+	struct Texture
+	{
+		std::unique_ptr<vkb::core::Image>     image;
+		std::unique_ptr<vkb::core::ImageView> image_view;
+		uint32_t                              n_mip_maps;
+	};
+
+	struct GpuModelInformation
+	{
+		//glm::vec3 bounding_sphere_center;
+		//float     bounding_sphere_radius;
+		uint32_t  texture_index = 0;
+		uint32_t  firstIndex    = 0;
+		uint32_t  indexCount    = 0;
+		uint32_t  _pad          = 0;
+	};
+
+	struct SceneUniform
+	{
+		glm::mat4 view;
+		glm::mat4 proj;
+		glm::mat4 proj_view;
+		uint32_t  model_count;
+	} scene_uniform;
+
+	vkb::Camera camera;
+
+	std::vector<Texture> textures;
+	std::vector<uint32_t> queue_families;
+	std::vector<VkDescriptorImageInfo> image_descriptors;
+
+	std::unique_ptr<vkb::core::Buffer> vertex_buffer;
+	std::unique_ptr<vkb::core::Buffer> index_buffer;
+	std::unique_ptr<vkb::core::Buffer> model_information_buffer;
+	std::unique_ptr<vkb::core::Buffer> scene_uniform_buffer;
+
+	std::unique_ptr<vkb::core::Buffer> cpu_staging_buffer;
+	std::unique_ptr<vkb::core::Buffer> indirect_call_buffer;
+
+	VkPipeline            pipeline{VK_NULL_HANDLE};
+	VkPipelineLayout      pipeline_layout{VK_NULL_HANDLE};
+	VkDescriptorSetLayout descriptor_set_layout{VK_NULL_HANDLE};
+	VkDescriptorSet       descriptor_set{VK_NULL_HANDLE};
+	VkDescriptorSetLayout gpu_cull_descriptor_set_layout{VK_NULL_HANDLE};
+
+	std::vector<VkDrawIndexedIndirectCommand> cpu_commands;
+
+	VkSampler             sampler{VK_NULL_HANDLE};
+	void                  create_sampler();
+	void                  initialize_resources();
+	void                  initialize_descriptors();
+	void                  update_scene_uniform();
+	void                  cpu_cull();
+	void                  draw();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization();
