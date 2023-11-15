@@ -147,7 +147,7 @@ class SubgroupsOperations : public ApiVulkanSample
 		float length             = {1900.0f};
 		Wind  wind;
 
-		glm::vec3 light_pos   = {100.0f, 15.0f, -1.0f};
+		glm::vec3 light_pos   = {100.0f, 15.0f, 10.0f};
 		glm::vec3 light_color = {1.0f, 1.0f, 1.0f};
 		glm::vec3 ocean_color = {0.0f, 0.2423423f, 0.434335435f};
 	} ui;
@@ -171,8 +171,10 @@ class SubgroupsOperations : public ApiVulkanSample
 		VkDeviceMemory memory;
 		VkImageView    view;
 		VkFormat       format;
+		VkSampler      sampler;
 		void           destroy(VkDevice device) const
 		{
+			vkDestroySampler(device, sampler, nullptr);
 			vkDestroyImageView(device, view, nullptr);
 			vkDestroyImage(device, image, nullptr);
 			vkFreeMemory(device, memory, nullptr);

@@ -593,7 +593,7 @@ void SubgroupsOperations::create_descriptor_set_layout()
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 	        3u),
 	    vkb::initializers::descriptor_set_layout_binding(
-	        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+	        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
 	        4u),
 	    vkb::initializers::descriptor_set_layout_binding(
 	        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT | VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
@@ -627,7 +627,7 @@ void SubgroupsOperations::create_descriptor_set()
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1u, &displacement_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 2u, &tessellation_params_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 3u, &camera_pos_buffer_descriptor),
-	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 4u, &normal_map_descriptor),
+	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 4u, &normal_map_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 5u, &ocean_params_buffer_descriptor),
 	    vkb::initializers::write_descriptor_set(ocean.descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6u, &skybox_cubemap_descriptor)};
 
@@ -1066,6 +1066,21 @@ void SubgroupsOperations::create_image_attachement(VkFormat format, uint32_t wid
 	image_view_create_info.image                           = attachment.image;
 	VK_CHECK(vkCreateImageView(get_device().get_handle(), &image_view_create_info, nullptr, &attachment.view));
 
+	VkSamplerCreateInfo sampler_info = vkb::initializers::sampler_create_info();
+	sampler_info.magFilter           = VK_FILTER_LINEAR;
+	sampler_info.minFilter           = VK_FILTER_LINEAR;
+	sampler_info.addressModeU        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler_info.addressModeV        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler_info.addressModeW        = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+	sampler_info.anisotropyEnable    = VK_TRUE;
+	sampler_info.maxAnisotropy       = get_device().get_gpu().get_properties().limits.maxSamplerAnisotropy;
+	sampler_info.compareEnable       = VK_FALSE;
+	sampler_info.compareOp           = VK_COMPARE_OP_ALWAYS;
+	sampler_info.borderColor         = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+	sampler_info.mipmapMode          = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+
+	VK_CHECK(vkCreateSampler(get_device().get_handle(), &sampler_info, nullptr, &attachment.sampler));
+
 	VkImageMemoryBarrier imgMemBarrier            = vkb::initializers::image_memory_barrier();
 	imgMemBarrier.oldLayout                       = VK_IMAGE_LAYOUT_UNDEFINED;
 	imgMemBarrier.newLayout                       = VK_IMAGE_LAYOUT_GENERAL;
@@ -1326,10 +1341,10 @@ void SubgroupsOperations::create_fft_normal_map()
 
 VkDescriptorImageInfo SubgroupsOperations::create_ia_descriptor(ImageAttachment &attachment)
 {
-	VkDescriptorImageInfo image_descriptor{};
-	image_descriptor.imageView   = attachment.view;
-	image_descriptor.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
-	image_descriptor.sampler     = nullptr;
+	VkDescriptorImageInfo image_descriptor = {};
+	image_descriptor.imageView             = attachment.view;
+	image_descriptor.imageLayout           = VK_IMAGE_LAYOUT_GENERAL;
+	image_descriptor.sampler               = attachment.sampler;
 	return image_descriptor;
 }
 

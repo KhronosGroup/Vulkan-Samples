@@ -32,33 +32,23 @@ void main()
 {
     uint N = fftUbo.grid_size;
     ivec2 pixel_pos = ivec2(gl_GlobalInvocationID.xy);
-    float tex_dim = 1.0f;
+    const float offset = 1.0f;
 
-    vec3 v0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, 0.0f))).rgb;
-    vec3 v1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).rgb;
-    vec3 v2 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, tex_dim))).rgb;
-    vec3 normal = cross(v1 - v0, v2 - v0);
+    vec3 v0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, -offset))).rgb;
+    vec3 v1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, offset))).rgb;
+    float v01_length = length(v1 - v0);
 
-    // float left_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0.0f))).g;
-    // float right_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0.0f))).g;
-    // float bottom_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
-    // float top_y = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0.0f, tex_dim))).g;
+    vec3 v2 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-offset, 0.0f))).rgb;
+    vec3 v3 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(offset, 0.0f))).rgb;
+    float v23_length = length(v3 - v2);
 
-    // float z0 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, -tex_dim))).g;
-    // float z1 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0, -tex_dim))).g;
-    // float z2 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, -tex_dim))).g;
-    // float z3 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, 0))).g;
-    // float z4 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, 0))).g;
-    // float z5 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(-tex_dim, tex_dim))).g;
-    // float z6 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(0, tex_dim))).g;
-    // float z7 = imageLoad(fft_displacement_map, ivec2(pixel_pos + vec2(tex_dim, tex_dim))).g;
+    vec3 c0 = v0 - v1 / 2.0f * v01_length;
+    vec3 c1 = v2 - v3 / 2.0f * v23_length;
 
-    vec3 result = vec3(0.0f);
-    // result.z = (bottom_y - top_y) / float(N);
-    // result.x = (left_y - right_y) / float(N);
-    // result.z = z0 + 2 * z1 + z2 - z5 - 2 * z6 - z7;
-    // result.x = z0 + 2 * z3 + z5 - z2 - 2 * z4 - z7;
-    // result.y = 1.0f / float(N);
+    // c0 = f(n - 1) - f(n + 1) / 2h; h - length(f(n + 1) - f(n - 1)) // left - right
+    // c1 = f(m - 1) - f(m + 1) / 2h; h - length(f(m + 1) - f(m - 1)) // top - bottom
+    // n = cross(c0, c1)
 
-    imageStore(fft_normal_map, pixel_pos, vec4(normalize(normal), 1.0f));
+    vec3 result = cross(c0, c1);
+    imageStore(fft_normal_map, pixel_pos, vec4(normalize(result), 1.0f));
 }
