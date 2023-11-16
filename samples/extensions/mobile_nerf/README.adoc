@@ -1,0 +1,38 @@
+////
+- Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved
+-
+- SPDX-License-Identifier: Apache-2.0
+-
+- Licensed under the Apache License, Version 2.0 the "License";
+- you may not use this file except in compliance with the License.
+- You may obtain a copy of the License at
+-
+-     http://www.apache.org/licenses/LICENSE-2.0
+-
+- Unless required by applicable law or agreed to in writing, software
+- distributed under the License is distributed on an "AS IS" BASIS,
+- WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+- See the License for the specific language governing permissions and
+- limitations under the License.
+-
+////
+
+= Mobile Nerf
+
+ifdef::site-gen-antora[]
+TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/extensions/mobile_nerf[Khronos Vulkan samples github repository].
+endif::[]
+
+This sample is a modified version of the https://mobile-nerf.github.io/[Mobile Nerf] developed by Google. 
+It's based on its original https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf[source code] but optimized for Vulkan.
+
+== Description: [https://mobile-nerf.github.io/[Mobile Nerf]]
+Neural Radiance Fields (NeRFs) have demonstrated amazing ability to synthesize images of 3D scenes from novel views. 
+However, they rely upon specialized volumetric rendering algorithms based on ray marching that are mismatched to the capabilities of widely deployed graphics hardware. 
+This paper introduces a new NeRF representation based on textured polygons that can synthesize novel images efficiently with standard rendering pipelines. 
+The NeRF is represented as a set of polygons with textures representing binary opacities and feature vectors. 
+Traditional rendering of the polygons with a z-buffer yields an image with features at every pixel, which are interpreted by a small, view-dependent MLP running in a fragment shader to produce a final pixel color. 
+This approach enables NeRFs to be rendered with the traditional polygon rasterization pipeline, which provides massive pixel-level parallelism, achieving interactive frame rates on a wide range of compute platforms, including mobile phones.
+
+== Notes
+The original source code is also licensed under Apache-2.0, all shader files used by the sample have comments to indicate changes, when applicable.
