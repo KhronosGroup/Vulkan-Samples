@@ -59,6 +59,11 @@ class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
 		return std::unique_ptr<vk::DescriptorSetLayoutBinding>(
 		    reinterpret_cast<vk::DescriptorSetLayoutBinding *>(vkb::DescriptorSetLayout::get_layout_binding(binding_index).release()));
 	}
+
+	vk::DescriptorBindingFlagsEXT get_layout_binding_flag(const uint32_t binding_index) const
+	{
+		return static_cast<vk::DescriptorBindingFlagsEXT>(vkb::DescriptorSetLayout::get_layout_binding_flag(binding_index));
+	}
 };
 }        // namespace core
 }        // namespace vkb

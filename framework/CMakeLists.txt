@@ -48,6 +48,7 @@ set(FRAMEWORK_FILES
     hpp_resource_cache.h
     hpp_resource_record.h
     hpp_resource_replay.h
+    hpp_semaphore_pool.h
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
@@ -133,6 +134,7 @@ set(RENDERING_FILES
     rendering/render_target.cpp
     rendering/subpass.cpp
     rendering/hpp_render_context.cpp
+    rendering/hpp_render_frame.cpp
     rendering/hpp_render_target.cpp)
 
 set(RENDERING_SUBPASSES_FILES
