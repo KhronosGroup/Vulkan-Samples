@@ -1,6 +1,5 @@
 #version 460
-/* Copyright (c) 2023, Qualcomm Innovation Center, Inc. All rights reserved.
- *
+/* 
  * SPDX-License-Identifier: Apache-2.0
  *
  * Licensed under the Apache License, Version 2.0 the "License";
@@ -14,6 +13,17 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
+ *
+ * ------------------------------------------------------------------------
+ *
+ * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
+ * 
+ * The original file, along with the original Apache-2.0 LICENSE can be found at:
+ * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
+ *
+ * Modification details: Shader code was updated to work on Vulkan (originally
+ * built for WebGL)
+ * Contributor: (Qualcomm) Rodrigo Holztrattner - quic_rholztra@quicinc.com
  */
 
 layout(location = 0) in vec2 texCoord_frag;

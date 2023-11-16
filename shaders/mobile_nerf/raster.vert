@@ -18,8 +18,7 @@
  *
  * THIS IS A MODIFIED VERSION OF THE ORIGINAL FILE
  * 
- * The original file, as long as the original Apache-2.0 LICENSE file can
- * be found at:
+ * The original file, along with the original Apache-2.0 LICENSE can be found at:
  * https://github.com/google-research/jax3d/tree/main/jax3d/projects/mobilenerf
  *
  * Modification details: Shader code was updated to work on Vulkan (originally
