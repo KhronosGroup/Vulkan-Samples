@@ -969,7 +969,6 @@ void ShaderObject::build_command_buffers()
 	for (auto &draw_cmd_buffer : draw_cmd_buffers)
 	{
 		auto command_begin = vkb::initializers::command_buffer_begin_info();
-		// vkResetCommandBuffer(draw_cmd_buffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 		VK_CHECK(vkBeginCommandBuffer(draw_cmd_buffer, &command_begin));
 
 		// First set initial required state
@@ -1580,12 +1579,7 @@ void ShaderObject::render(float delta_time)
 		update_uniform_buffers();
 	}
 
-<<<<<<< HEAD
-	vkResetCommandPool(device->get_handle(), cmd_pool, 0);
-	build_command_buffers();
-=======
 	rebuild_command_buffers();
->>>>>>> main
 
 	draw(delta_time);
 
