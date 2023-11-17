@@ -30,7 +30,7 @@ struct hash<std::map<Key, Value>>
 	{
 		size_t result = 0;
 		vkb::hash_combine(result, bindings.size());
-		for (auto &binding : bindings)
+		for (auto const &binding : bindings)
 		{
 			vkb::hash_combine(result, binding.first);
 			vkb::hash_combine(result, binding.second);
@@ -274,6 +274,8 @@ struct hash<vkb::rendering::HPPRenderTarget>
 
 namespace vkb
 {
+namespace common
+{
 /**
  * @brief facade helper functions and structs around the functions and structs in common/resource_caching, providing a vulkan.hpp-based interface
  */
@@ -402,4 +404,5 @@ T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord *record
 
 	return res_it->second;
 }
+}        // namespace common
 }        // namespace vkb

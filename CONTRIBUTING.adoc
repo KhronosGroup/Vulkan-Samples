@@ -58,7 +58,7 @@ Following these guidelines can help ensure that your contribution ends up being 
 
 == Creating a sample
 
-Follow xref:docs/create_sample.adoc[this guide] to create a dummy sample and associated build files automatically.
+Follow xref:scripts/README.adoc[this guide] to create a dummy sample and associated build files automatically.
 This new sample will be based on the framework of wrapper classes that provide an optimized and convenient system to manage Vulkan objects.
 
 == General Requirements

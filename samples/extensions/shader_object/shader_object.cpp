@@ -1580,8 +1580,12 @@ void ShaderObject::render(float delta_time)
 		update_uniform_buffers();
 	}
 
+<<<<<<< HEAD
 	vkResetCommandPool(device->get_handle(), cmd_pool, 0);
 	build_command_buffers();
+=======
+	rebuild_command_buffers();
+>>>>>>> main
 
 	draw(delta_time);
 

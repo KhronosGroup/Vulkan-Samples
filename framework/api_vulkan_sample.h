@@ -243,8 +243,9 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Records the necessary drawing commands to a command buffer
 	 * @param model The model to draw
 	 * @param command_buffer The command buffer to record to
+	 * @param instance_count The number of instances (default: 1)
 	 */
-	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer);
+	void draw_model(std::unique_ptr<vkb::sg::SubMesh> &model, VkCommandBuffer command_buffer, uint32_t instance_count = 1);
 
 	/**
 	 * @brief Synchronously execute a block code within a command buffer, then submit the command buffer and wait for completion.
@@ -325,6 +326,11 @@ class ApiVulkanSample : public vkb::VulkanSample
 	 * @brief Destroy all command buffers, may be necessary during runtime if options are toggled
 	 */
 	void destroy_command_buffers();
+
+	/**
+	 * @brief Recreate the current command buffer draw_cmd_buffer[current_buffer]
+	 */
+	void recreate_current_command_buffer();
 
 	/**
 	 * @brief Create a cache pool for rendering pipelines
