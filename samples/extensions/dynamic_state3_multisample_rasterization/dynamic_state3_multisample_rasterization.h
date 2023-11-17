@@ -53,6 +53,11 @@ private:
 	VkDescriptorSet       descriptor_set;
 	VkDescriptorSetLayout descriptor_set_layout;
 
+	/**
+	 * @brief List of MSAA levels supported by the platform
+	 */
+	std::vector<VkSampleCountFlagBits> supported_sample_count_list{};
+
 	struct
 	{
 		glm::mat4 model_matrix;
@@ -67,6 +72,22 @@ private:
 
 	} push_const_block;
 
+	struct FrameBufferAttachment
+	{
+		VkImage        image;
+		VkDeviceMemory mem;
+		VkImageView    view;
+		VkFormat       format;
+		void           destroy(VkDevice device)
+		{
+			vkDestroyImageView(device, view, nullptr);
+			vkDestroyImage(device, image, nullptr);
+			vkFreeMemory(device, mem, nullptr);
+		}
+	};
+
+	std::vector<FrameBufferAttachment> framebuffer_attachments;
+
 public:
 	void         build_command_buffers() override;
 	void         load_assets();
@@ -77,8 +98,13 @@ public:
 	void         prepare_uniform_buffers();
 	void         update_uniform_buffers();
 	void         draw();
+	void         prepare_supported_sample_count_list();
+	void         create_color_attachment(VkFormat format, FrameBufferAttachment *attachment);
+	void         create_depth_attachment(VkFormat format, FrameBufferAttachment *attachment);
 	bool         prepare(const vkb::ApplicationOptions &options) override;
+	virtual void setup_render_pass() override;
 	virtual void render(float delta_time) override;
+	virtual void setup_framebuffer();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization();
