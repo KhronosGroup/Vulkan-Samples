@@ -386,39 +386,6 @@ vkb::core::HPPQueue const &HPPDevice::get_suitable_graphics_queue() const
 	return get_queue_by_flags(vk::QueueFlagBits::eGraphics, 0);
 }
 
-std::pair<vk::Buffer, vk::DeviceMemory> HPPDevice::create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size, void *data) const
-{
-	vk::Device device = get_handle();
-
-	// Create the buffer handle
-	vk::BufferCreateInfo buffer_create_info({}, size, usage, vk::SharingMode::eExclusive);
-	vk::Buffer           buffer = device.createBuffer(buffer_create_info);
-
-	// Create the memory backing up the buffer handle
-	vk::MemoryRequirements memory_requirements = device.getBufferMemoryRequirements(buffer);
-	vk::MemoryAllocateInfo memory_allocation(memory_requirements.size, get_gpu().get_memory_type(memory_requirements.memoryTypeBits, properties));
-	vk::DeviceMemory       memory = device.allocateMemory(memory_allocation);
-
-	// If a pointer to the buffer data has been passed, map the buffer and copy over the
-	if (data != nullptr)
-	{
-		void *mapped = device.mapMemory(memory, 0, size);
-		memcpy(mapped, data, static_cast<size_t>(size));
-		// If host coherency hasn't been requested, do a manual flush to make writes visible
-		if (!(properties & vk::MemoryPropertyFlagBits::eHostCoherent))
-		{
-			vk::MappedMemoryRange mapped_range(memory, 0, size);
-			device.flushMappedMemoryRanges(mapped_range);
-		}
-		device.unmapMemory(memory);
-	}
-
-	// Attach the memory to the buffer object
-	device.bindBufferMemory(buffer, memory, 0);
-
-	return std::make_pair(buffer, memory);
-}
-
 std::pair<vk::Image, vk::DeviceMemory> HPPDevice::create_image(vk::Format format, vk::Extent2D const &extent, uint32_t mip_levels, vk::ImageUsageFlags usage, vk::MemoryPropertyFlags properties) const
 {
 	vk::Device device = get_handle();

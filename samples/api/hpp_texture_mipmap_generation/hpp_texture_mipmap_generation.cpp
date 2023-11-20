@@ -267,10 +267,8 @@ void HPPTextureMipMapGeneration::load_assets()
 	check_format_features(format);
 
 	// Create a host-visible staging buffer that contains the raw image data
-	auto [staging_buffer, staging_memory] = device->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
-	                                                              vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-	                                                              ktx_texture->dataSize,
-	                                                              ktx_texture->pData);
+	vkb::core::HPPBuffer staging_buffer(*device, ktx_texture->dataSize, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_buffer.update(ktx_texture->pData, ktx_texture->dataSize);
 
 	// now, the ktx_texture can be destroyed
 	ktxTexture_Destroy(ktx_texture);
@@ -291,16 +289,12 @@ void HPPTextureMipMapGeneration::load_assets()
 
 	// Copy the first mip of the chain, remaining mips will be generated
 	vk::BufferImageCopy buffer_copy_region({}, {}, {}, {vk::ImageAspectFlagBits::eColor, 0, 0, 1}, {}, vk::Extent3D(texture.extent, 1));
-	copy_command.copyBufferToImage(staging_buffer, texture.image, vk::ImageLayout::eTransferDstOptimal, buffer_copy_region);
+	copy_command.copyBufferToImage(staging_buffer.get_handle(), texture.image, vk::ImageLayout::eTransferDstOptimal, buffer_copy_region);
 
 	// Transition first mip level to transfer source so we can blit(read) from it
 	vkb::common::image_layout_transition(copy_command, texture.image, vk::ImageLayout::eTransferDstOptimal, vk::ImageLayout::eTransferSrcOptimal);
 
 	device->flush_command_buffer(copy_command, queue, true);
-
-	// Clean up staging resources
-	device->get_handle().destroyBuffer(staging_buffer);
-	device->get_handle().freeMemory(staging_memory);
 
 	// Generate the mip chain
 	// ---------------------------------------------------------------

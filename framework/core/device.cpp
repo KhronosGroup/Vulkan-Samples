@@ -1,5 +1,5 @@
-/* Copyright (c) 2019-2022, Arm Limited and Contributors
- * Copyright (c) 2019-2022, Sascha Willems
+/* Copyright (c) 2019-2023, Arm Limited and Contributors
+ * Copyright (c) 2019-2023, Sascha Willems
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -25,9 +25,9 @@ VKBP_ENABLE_WARNINGS()
 
 namespace vkb
 {
-Device::Device(PhysicalDevice &                       gpu,
+Device::Device(PhysicalDevice                        &gpu,
                VkSurfaceKHR                           surface,
-               std::unique_ptr<DebugUtils> &&         debug_utils,
+               std::unique_ptr<DebugUtils>          &&debug_utils,
                std::unordered_map<const char *, bool> requested_extensions) :
     VulkanResource{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
@@ -306,7 +306,8 @@ DriverVersion Device::get_driver_version() const
 
 	switch (gpu.get_properties().vendorID)
 	{
-		case 0x10DE: {
+		case 0x10DE:
+		{
 			// Nvidia
 			version.major = (gpu.get_properties().driverVersion >> 22) & 0x3ff;
 			version.minor = (gpu.get_properties().driverVersion >> 14) & 0x0ff;
@@ -314,7 +315,8 @@ DriverVersion Device::get_driver_version() const
 			// Ignoring optional tertiary info in lower 6 bits
 			break;
 		}
-		default: {
+		default:
+		{
 			version.major = VK_VERSION_MAJOR(gpu.get_properties().driverVersion);
 			version.minor = VK_VERSION_MINOR(gpu.get_properties().driverVersion);
 			version.patch = VK_VERSION_PATCH(gpu.get_properties().driverVersion);
@@ -482,53 +484,6 @@ const Queue &Device::get_suitable_graphics_queue() const
 	}
 
 	return get_queue_by_flags(VK_QUEUE_GRAPHICS_BIT, 0);
-}
-
-VkBuffer Device::create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size, VkDeviceMemory *memory, void *data)
-{
-	VkBuffer buffer = VK_NULL_HANDLE;
-
-	// Create the buffer handle
-	VkBufferCreateInfo buffer_create_info{};
-	buffer_create_info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-	buffer_create_info.usage       = usage;
-	buffer_create_info.size        = size;
-	buffer_create_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	VK_CHECK(vkCreateBuffer(handle, &buffer_create_info, nullptr, &buffer));
-
-	// Create the memory backing up the buffer handle
-	VkMemoryRequirements memory_requirements;
-	VkMemoryAllocateInfo memory_allocation{};
-	memory_allocation.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	vkGetBufferMemoryRequirements(handle, buffer, &memory_requirements);
-	memory_allocation.allocationSize = memory_requirements.size;
-	// Find a memory type index that fits the properties of the buffer
-	memory_allocation.memoryTypeIndex = get_memory_type(memory_requirements.memoryTypeBits, properties);
-	VK_CHECK(vkAllocateMemory(handle, &memory_allocation, nullptr, memory));
-
-	// If a pointer to the buffer data has been passed, map the buffer and copy over the
-	if (data != nullptr)
-	{
-		void *mapped;
-		VK_CHECK(vkMapMemory(handle, *memory, 0, size, 0, &mapped));
-		memcpy(mapped, data, static_cast<size_t>(size));
-		// If host coherency hasn't been requested, do a manual flush to make writes visible
-		if ((properties & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0)
-		{
-			VkMappedMemoryRange mapped_range{};
-			mapped_range.sType  = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
-			mapped_range.memory = *memory;
-			mapped_range.offset = 0;
-			mapped_range.size   = size;
-			vkFlushMappedMemoryRanges(handle, 1, &mapped_range);
-		}
-		vkUnmapMemory(handle, *memory);
-	}
-
-	// Attach the memory to the buffer object
-	VK_CHECK(vkBindBufferMemory(handle, buffer, *memory, 0));
-
-	return buffer;
 }
 
 void Device::copy_buffer(vkb::core::Buffer &src, vkb::core::Buffer &dst, VkQueue queue, VkBufferCopy *copy_region)
