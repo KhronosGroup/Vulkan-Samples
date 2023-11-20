@@ -177,74 +177,83 @@ ReflectedLight direct_physical(IncidentLight il, Geometry gem, Material mat)
 
 void main()
 {
-    vec3 total_emissive = vec3(0.3f, 0.3f, 0.3f);
-    ReflectedLight ref_light = ReflectedLight(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f));
-    float metalness = 0.91f;
-    float roughness = 0.91f;
-    float ior = 0.5f;
-    vec3 specular_color = vec3(1.0f);
-    float specular_intensity = 1.0f;
+    //    vec3 total_emissive = vec3(0.3f, 0.3f, 0.3f);
+    //    ReflectedLight ref_light = ReflectedLight(vec3(1.0f), vec3(1.0f), vec3(1.0f), vec3(1.0f));
+    //    float metalness = 0.91f;
+    //    float roughness = 0.91f;
+    //    float ior = 0.5f;
+    //    vec3 specular_color = vec3(1.0f);
+    //    float specular_intensity = 1.0f;
+    //
+    //    vec4 diffuse_color = vec4(ocean_ubo.ocean_color.rgb, 0.5f);
+    //    vec3 normal = normalize(texture(fft_normal_map, in_uv).rgb);
+    //
+    //    Material mat;
+    //    mat.diffuse_color = diffuse_color.rgb * (1.0f - metalness);
+    //    vec3 dxy = max(abs(dFdx(normal)), abs(dFdy(normal)));
+    //    float gem_roughness = max(max(dxy.x, dxy.y), dxy.z);
+    //
+    //    mat.roughness = max(roughness, 0.0525f);
+    //    mat.roughness += gem_roughness;
+    //    mat.roughness = min(mat.roughness, 1.0f);
+    //    mat.ior = ior;
+    //    mat.specular_f90 = mix(specular_intensity, 1.0f, metalness);
+    //    mat.specular_color = mix(min(pow2((mat.ior - 1.0f) / (mat.ior + 1.0f)) * specular_color, vec3(1.0f)) * specular_intensity, diffuse_color.rgb, metalness);
+    //
+    //    Geometry geom;
+    //    geom.normal = normal;
+    //    geom.position = -in_pos;
+    //    geom.view_dir = normalize(cam.position.xyz);
+    //
+    //    PointLight point_light;
+    //    point_light.position = ocean_ubo.light_position;
+    //    point_light.color = ocean_ubo.light_color;
+    //    point_light.dist = length(ocean_ubo.light_position - in_pos);
+    //    point_light.decay = 2.0f;
+    //
+    //    IncidentLight dir_light = get_point_light_info(point_light, geom);
+    //
+    //    ref_light = direct_physical(dir_light, geom, mat);
+    //
+    //    vec3 irradiance = ocean_ubo.ocean_color;
+    //    vec3 ibl_irradiance = vec3(1.0f);// envinroment color value - TODO
+    //
+    //    vec3 radiance = vec3(1.0f);
+    //    // radiance += get_ibl_radiance(geom.view_dir, geom.normal, mat.roughness); // envinroment color value - TODO
+    //
+    //    ref_light.indirect_diffuse += irradiance * brdf_lambert(mat.diffuse_color);
+    //
+    //    vec3 single_scattering = vec3(0.0f);
+    //    vec3 multi_scattering = vec3(0.0f);
+    //    vec3 cos_weighted_irradiance = irradiance * LAMBERT_VAL;
+    //
+    //    vec2 fab = dfg_approx(geom.normal, geom.view_dir, roughness);
+    //    vec3 FssEss = mat.specular_color + fab.x + mat.specular_f90 * fab.y;
+    //    float Ess = fab.x + fab.y;
+    //    float Ems = 1.0f - Ess;
+    //    vec3 f_avg = mat.specular_color * (1.0f - mat.specular_color) * 0.0476f;
+    //    vec3 f_ms =  FssEss * f_avg / (1.0f - Ems * f_avg);
+    //    single_scattering += FssEss;
+    //    multi_scattering += f_ms * Ems;
+    //
+    //    vec3 total_scattering = single_scattering + multi_scattering;
+    //    vec3 scattering_diffiuse = mat.diffuse_color * (1.0f - max(max(total_scattering.r, total_scattering.g), total_scattering.b));
+    //    ref_light.indirect_specular += radiance * single_scattering;
+    //    ref_light.indirect_specular += multi_scattering * cos_weighted_irradiance;
+    //    ref_light.indirect_diffuse += scattering_diffiuse * cos_weighted_irradiance;
+    //
+    //
+    //    vec3 total_diffuse = ref_light.dir_diffuse + ref_light.indirect_diffuse;
+    //    vec3 total_specular = ref_light.dir_specular + ref_light.indirect_specular;
 
-    vec4 diffuse_color = vec4(ocean_ubo.ocean_color.rgb, 0.5f);
+    //   outFragColor = vec4(total_diffuse + total_specular + total_emissive, diffuse_color.a);
+    
+    // TODO: implement BRDF reflections; code below is temporary solution
     vec3 normal = normalize(texture(fft_normal_map, in_uv).rgb);
+    vec3 ambient = ocean_ubo.light_color * ocean_ubo.ocean_color;
+    vec3 light_dir = normalize(ocean_ubo.light_position - in_pos);
+    float diff = max(dot(normal, light_dir), 0.0f);
+    vec3 diffuse = ambient * diff;
 
-    Material mat;
-    mat.diffuse_color = diffuse_color.rgb * (1.0f - metalness);
-    vec3 dxy = max(abs(dFdx(normal)), abs(dFdy(normal)));
-    float gem_roughness = max(max(dxy.x, dxy.y), dxy.z);
-
-    mat.roughness = max(roughness, 0.0525f);
-    mat.roughness += gem_roughness;
-    mat.roughness = min(mat.roughness, 1.0f);
-    mat.ior = ior;
-    mat.specular_f90 = mix(specular_intensity, 1.0f, metalness);
-    mat.specular_color = mix(min(pow2((mat.ior - 1.0f) / (mat.ior + 1.0f)) * specular_color, vec3(1.0f)) * specular_intensity, diffuse_color.rgb, metalness);
-
-    Geometry geom;
-    geom.normal = normal;
-    geom.position = -in_pos;
-    geom.view_dir = normalize(cam.position.xyz);
-
-    PointLight point_light;
-    point_light.position = ocean_ubo.light_position;
-    point_light.color = ocean_ubo.light_color;
-    point_light.dist = length(ocean_ubo.light_position - in_pos);
-    point_light.decay = 2.0f;
-
-    IncidentLight dir_light = get_point_light_info(point_light, geom);
-
-    ref_light = direct_physical(dir_light, geom, mat);
-
-    vec3 irradiance = ocean_ubo.ocean_color;
-    vec3 ibl_irradiance = vec3(1.0f);// envinroment color value - TODO
-
-    vec3 radiance = vec3(1.0f);
-    // radiance += get_ibl_radiance(geom.view_dir, geom.normal, mat.roughness); // envinroment color value - TODO
-
-    ref_light.indirect_diffuse += irradiance * brdf_lambert(mat.diffuse_color);
-
-    vec3 single_scattering = vec3(0.0f);
-    vec3 multi_scattering = vec3(0.0f);
-    vec3 cos_weighted_irradiance = irradiance * LAMBERT_VAL;
-
-    vec2 fab = dfg_approx(geom.normal, geom.view_dir, roughness);
-    vec3 FssEss = mat.specular_color + fab.x + mat.specular_f90 * fab.y;
-    float Ess = fab.x + fab.y;
-    float Ems = 1.0f - Ess;
-    vec3 f_avg = mat.specular_color * (1.0f - mat.specular_color) * 0.0476f;
-    vec3 f_ms =  FssEss * f_avg / (1.0f - Ems * f_avg);
-    single_scattering += FssEss;
-    multi_scattering += f_ms * Ems;
-
-    vec3 total_scattering = single_scattering + multi_scattering;
-    vec3 scattering_diffiuse = mat.diffuse_color * (1.0f - max(max(total_scattering.r, total_scattering.g), total_scattering.b));
-    ref_light.indirect_specular += radiance * single_scattering;
-    ref_light.indirect_specular += multi_scattering * cos_weighted_irradiance;
-    ref_light.indirect_diffuse += scattering_diffiuse * cos_weighted_irradiance;
-
-
-    vec3 total_diffuse = ref_light.dir_diffuse + ref_light.indirect_diffuse;
-    vec3 total_specular = ref_light.dir_specular + ref_light.indirect_specular;
-
-    outFragColor = vec4(total_diffuse + total_specular + total_emissive, diffuse_color.a);
+    outFragColor = vec4(diffuse, 1.0f);
 }
