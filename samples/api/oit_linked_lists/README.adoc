@@ -80,10 +80,6 @@ The artifacts resulting from a low number of sorted fragments per pixel can be o
 | 
 |===
 
-== Requirements
-
-The sample requires _fragmentStoresAndAtomics_ from VkPhysicalDeviceFeatures.
-
 == Tests
 
 This sample was tested on Windows.
