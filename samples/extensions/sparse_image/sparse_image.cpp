@@ -198,18 +198,6 @@ void SparseImage::setup_camera()
 }
 
 /**
- * 	@brief Copy a single-page, raw-pixel-data from the CPU memory into the stagging buffer.
- */
-void SparseImage::copy_single_raw_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride)
-{
-	for (size_t row = 0U; row < blockDim.height; row++)
-	{
-		size_t position = (row + offset.y) * stride + offset.x * 4U;
-		memcpy(&buffer[row * blockDim.width * 4U], &virtual_texture.raw_data_image->get_data()[position], blockDim.width * 4U);
-	}
-}
-
-/**
  * 	@brief Fill up the information on how the sparse image should be bound and call vkQueueBindSparse.
  */
 void SparseImage::bind_sparse_image()
@@ -633,7 +621,12 @@ void SparseImage::update_and_generate()
 
 		if (mip_level == 0U)
 		{
-			copy_single_raw_data_block(temp_buffer.data(), block_extent, block_offset, virtual_texture.width * 4U);
+			// Copying a single raw data block
+			for (size_t row = 0U; row < block_extent.height; row++)
+			{
+				size_t position = (row + block_offset.y) * (virtual_texture.width * 4U) + block_offset.x * 4U;
+				memcpy(&temp_buffer[row * block_extent.width * 4U], &virtual_texture.raw_data_image->get_data()[position], block_extent.width * 4U);
+			}
 
 			VkDeviceSize buffer_offset = level_zero_index++ * virtual_texture.page_size;
 			multi_page_buffer->update(temp_buffer, buffer_offset);
@@ -814,7 +807,7 @@ void SparseImage::free_unused_memory()
 			page.valid = false;
 		}
 
-		sectors.sort(sort_memory_sector);
+		sectors.sort(MemSectorCompare());
 		bind_sparse_image();
 
 		command_buffer = get_device().create_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
@@ -832,7 +825,7 @@ void SparseImage::free_unused_memory()
 	}
 	else
 	{
-		sectors.sort(sort_memory_sector);
+		sectors.sort(MemSectorCompare());
 		bind_sparse_image();
 	}
 }

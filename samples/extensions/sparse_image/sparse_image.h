@@ -200,17 +200,20 @@ class SparseImage : public ApiVulkanSample
 		}
 	};
 
-	friend bool sort_memory_sector(const std::weak_ptr<MemSector> left, const std::weak_ptr<MemSector> right)
+	struct MemSectorCompare
 	{
-		if (left.expired())
+		bool operator()(const std::weak_ptr<MemSector> &left, const std::weak_ptr<MemSector> &right)
 		{
-			return false;
-		}
-		else if (right.expired())
-		{
-			return true;
-		}
-		return left.lock()->available_offsets.size() > right.lock()->available_offsets.size();
+			if (left.expired())
+			{
+				return false;
+			}
+			else if (right.expired())
+			{
+				return true;
+			}
+			return left.lock()->available_offsets.size() > right.lock()->available_offsets.size();
+		};
 	};
 
 	struct VirtualTexture
@@ -376,7 +379,6 @@ class SparseImage : public ApiVulkanSample
 	std::vector<size_t>       get_memory_dependency_for_the_block(size_t column, size_t row, uint8_t mip_level);
 	void                      check_mip_page_requirements(std::vector<MemPageDescription> &mipgen_required_vec, MemPageDescription mip_dependency);
 	void                      bind_sparse_image();
-	void                      copy_single_raw_data_block(uint8_t buffer[], const VkExtent2D blockDim, VkOffset2D offset, size_t stride);
 	void                      load_least_detailed_level();
 	void                      set_least_detailed_level();
 	void                      update_frag_settings();

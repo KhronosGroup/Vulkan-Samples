@@ -40,7 +40,7 @@ the lifetime of the resource;
 
 The sample demonstrates usage of the Sparse Image feature by rendering a
 high-resolution texture with only a fraction of the total image size
-actually allocated on the device’s memory. This is possible by
+actually allocated on the device's memory. This is possible by
 dynamically loading required memory areas, generating mip levels for
 outer parts, removing unused memory and finally: binding an image in
 real-time.
@@ -148,7 +148,7 @@ device.
 == Conclusion
 
 The primary usage of the sparse image feature is generally speaking
-dedicated for cases where too much device’s memory is occupied. Keeping
+dedicated for cases where too much device's memory is occupied. Keeping
 a low-detailed mip-level constantly in the memory and dynamically
 loading required areas when the camera changes, is the way to handle
 terrain mega-textures. The downside of these solution is that there is a
