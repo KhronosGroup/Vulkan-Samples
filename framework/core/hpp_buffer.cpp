@@ -143,7 +143,7 @@ uint64_t HPPBuffer::get_device_address() const
 	return get_device().get_handle().getBufferAddressKHR({get_handle()});
 }
 
-void HPPBuffer::update(void *data, size_t size, size_t offset)
+void HPPBuffer::update(void const *data, size_t size, size_t offset)
 {
 	update(reinterpret_cast<const uint8_t *>(data), size, offset);
 }

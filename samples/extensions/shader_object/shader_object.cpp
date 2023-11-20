@@ -831,18 +831,18 @@ void ShaderObject::initialize_descriptor_sets()
 // Generate a terrain grid of triangles
 void ShaderObject::generate_terrain()
 {
-	const uint32_t terrain_resolution = 256;
-	const uint32_t terrain_size       = 1024;
-	const float    uv_scale           = 1;
-	const uint32_t vertex_count       = terrain_resolution * terrain_resolution;
-	Vertex        *vertices           = new Vertex[vertex_count];
+	const uint32_t      terrain_resolution = 256;
+	const uint32_t      terrain_size       = 1024;
+	const float         uv_scale           = 1;
+	const uint32_t      vertex_count       = terrain_resolution * terrain_resolution;
+	std::vector<Vertex> vertices(vertex_count);
 
 	// Calculate normals from height map using a sobel filter
 	vkb::HeightMap heightmap("textures/terrain_heightmap_r16.ktx", terrain_resolution);
 
 	// Indices
-	const uint32_t index_count = vertex_count * 6;
-	uint32_t      *indices     = new uint32_t[index_count];
+	const uint32_t        index_count = vertex_count * 6;
+	std::vector<uint32_t> indices(index_count);
 
 	// For each vertex generate pos, uv's, normals, and face indices
 	for (auto x = 0; x < terrain_resolution; x++)
@@ -900,26 +900,12 @@ void ShaderObject::generate_terrain()
 	uint32_t vertex_buffer_size = vertex_count * sizeof(Vertex);
 	uint32_t index_buffer_size  = index_count * sizeof(uint32_t);
 
-	struct
-	{
-		VkBuffer       buffer;
-		VkDeviceMemory memory;
-	} vertex_staging, index_staging;
-
 	// Create staging buffers
-	vertex_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    vertex_buffer_size,
-	    &vertex_staging.memory,
-	    vertices);
+	vkb::core::Buffer vertex_staging(get_device(), vertex_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	vertex_staging.update(vertices);
 
-	index_staging.buffer = get_device().create_buffer(
-	    VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-	    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-	    index_buffer_size,
-	    &index_staging.memory,
-	    indices);
+	vkb::core::Buffer index_staging(get_device(), index_buffer_size, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	index_staging.update(indices);
 
 	terrain.vertices = std::make_unique<vkb::core::Buffer>(get_device(),
 	                                                       vertex_buffer_size,
@@ -939,7 +925,7 @@ void ShaderObject::generate_terrain()
 	copy_region.size = vertex_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    vertex_staging.buffer,
+	    vertex_staging.get_handle(),
 	    terrain.vertices->get_handle(),
 	    1,
 	    &copy_region);
@@ -947,21 +933,12 @@ void ShaderObject::generate_terrain()
 	copy_region.size = index_buffer_size;
 	vkCmdCopyBuffer(
 	    copy_command,
-	    index_staging.buffer,
+	    index_staging.get_handle(),
 	    terrain.indices->get_handle(),
 	    1,
 	    &copy_region);
 
 	device->flush_command_buffer(copy_command, queue, true);
-
-	// Clean up
-	vkDestroyBuffer(get_device().get_handle(), vertex_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), vertex_staging.memory, nullptr);
-	vkDestroyBuffer(get_device().get_handle(), index_staging.buffer, nullptr);
-	vkFreeMemory(get_device().get_handle(), index_staging.memory, nullptr);
-
-	delete[] vertices;
-	delete[] indices;
 }
 
 void ShaderObject::build_command_buffers()

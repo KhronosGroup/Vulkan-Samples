@@ -88,16 +88,6 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	vkb::core::HPPCommandPool &get_command_pool();
 
 	/**
-	 * @brief Creates a vulkan buffer
-	 * @param usage The buffer usage
-	 * @param properties The memory properties
-	 * @param size The size of the buffer
-	 * @param data The data to place inside the buffer
-	 * @returns A valid vk::Buffer and a corresponding vk::DeviceMemory
-	 */
-	std::pair<vk::Buffer, vk::DeviceMemory> create_buffer(vk::BufferUsageFlags usage, vk::MemoryPropertyFlags properties, vk::DeviceSize size, void *data = nullptr) const;
-
-	/**
 	 * @brief Creates a vulkan image and associated device memory
 	 * @param format The image format
 	 * @param extent The image extent
