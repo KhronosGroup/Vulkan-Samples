@@ -25,11 +25,12 @@ VKBP_DISABLE_WARNINGS()
 #define GLFW_INCLUDE_NONE
 #include <GLFW/glfw3.h>
 #include <GLFW/glfw3native.h>
+#include <fmt/format.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
-#include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
 
 #include "platform/platform.h"
+#include "common/logging.h"
 
 namespace vkb
 {

@@ -21,6 +21,7 @@
 #include "apps.h"
 
 VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
 #include <spdlog/sinks/basic_file_sink.h>
 #include <spdlog/spdlog.h>
 VKBP_ENABLE_WARNINGS()
