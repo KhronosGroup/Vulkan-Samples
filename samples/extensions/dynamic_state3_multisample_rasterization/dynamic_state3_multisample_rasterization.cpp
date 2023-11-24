@@ -25,6 +25,13 @@
 DynamicState3MultisampleRasterization::DynamicState3MultisampleRasterization()
 {
 	title = "DynamicState3 Multisample Rasterization";
+
+	set_api_version(VK_API_VERSION_1_3);
+
+	add_instance_extension(VK_KHR_GET_PHYSICAL_DEVICE_PROPERTIES_2_EXTENSION_NAME);
+	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_EXTENSION_NAME);
+	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_2_EXTENSION_NAME);
+	add_device_extension(VK_EXT_EXTENDED_DYNAMIC_STATE_3_EXTENSION_NAME);
 }
 
 DynamicState3MultisampleRasterization::~DynamicState3MultisampleRasterization()
@@ -35,6 +42,32 @@ DynamicState3MultisampleRasterization::~DynamicState3MultisampleRasterization()
 		vkDestroyPipelineLayout(get_device().get_handle(), pipeline_layout, nullptr);
 		vkDestroyDescriptorSetLayout(get_device().get_handle(), descriptor_set_layout, nullptr);
 	}
+}
+
+void DynamicState3MultisampleRasterization::request_gpu_features(vkb::PhysicalDevice &gpu)
+{
+	auto last_requested_extension_feature = gpu.get_last_requested_extension_feature();
+
+	extended_dynamic_state_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+	extended_dynamic_state_features.extendedDynamicState = VK_TRUE;
+	extended_dynamic_state_features.pNext = &extended_dynamic_state_2_features;
+
+	extended_dynamic_state_2_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
+	extended_dynamic_state_2_features.pNext = &extended_dynamic_state_3_features;
+
+	extended_dynamic_state_3_features.sType                                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+	extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples = VK_TRUE;
+	extended_dynamic_state_3_features.pNext                                       = VK_NULL_HANDLE;
+
+	last_requested_extension_feature = &extended_dynamic_state_features;
+
+	props.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_PROPERTIES_EXT;
+	props.pNext = VK_NULL_HANDLE;
+
+	VkPhysicalDeviceProperties2 device_properties2 = {};
+	device_properties2.sType                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2;
+	device_properties2.pNext                       = &props;
+	vkGetPhysicalDeviceProperties2(gpu.get_handle(), &device_properties2);
 }
 
 const std::string to_string(VkSampleCountFlagBits count)
@@ -60,6 +93,29 @@ const std::string to_string(VkSampleCountFlagBits count)
 	}
 }
 
+const ImVec2 to_scale_ui(VkSampleCountFlagBits sample_count)
+{
+	switch (sample_count)
+	{
+		case VK_SAMPLE_COUNT_1_BIT:
+			return ImVec2(1.0, 1.0);
+		case VK_SAMPLE_COUNT_2_BIT:
+			return ImVec2(2.0, 1.0);
+		case VK_SAMPLE_COUNT_4_BIT:
+			return ImVec2(2.0, 2.0);
+		case VK_SAMPLE_COUNT_8_BIT:
+			return ImVec2(4.0, 2.0);
+		case VK_SAMPLE_COUNT_16_BIT:
+			return ImVec2(4.0, 4.0);
+		case VK_SAMPLE_COUNT_32_BIT:
+			return ImVec2(8.0, 4.0);
+		case VK_SAMPLE_COUNT_64_BIT:
+			return ImVec2(8.0, 8.0);
+		default:
+			return ImVec2(1.0, 1.0);
+	}
+}
+
 void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list()
 {
 	VkPhysicalDeviceProperties gpu_properties;
@@ -77,8 +133,8 @@ void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list(
 	{
 		if (supported_by_depth_and_color & count)
 		{
-			/*
 			supported_sample_count_list.push_back(count);
+			gui_settings.sample_counts.push_back(to_string(count));
 
 			if (sample_count == VK_SAMPLE_COUNT_1_BIT)
 			{
@@ -87,20 +143,12 @@ void DynamicState3MultisampleRasterization::prepare_supported_sample_count_list(
 				gui_sample_count      = count;
 				last_gui_sample_count = count;
 			}
-			*/
 		}
 	}
 }
 
 bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOptions &options)
 {
-	/*
-	if (!ApiVulkanSample::prepare(options))
-	{
-		return false;
-	}
-	*/
-
 	if (!VulkanSample::prepare(options))
 	{
 		return false;
@@ -137,15 +185,12 @@ bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOption
 	create_command_pool();
 	create_command_buffers();
 	create_synchronization_primitives();
-	//setup_depth_stencil();
-	//setup_render_pass();
 	create_pipeline_cache();
-
 
 	width  = get_render_context().get_surface_extent().width;
 	height = get_render_context().get_surface_extent().height;
 
-	//prepare_gui();
+	prepare_supported_sample_count_list();
 
 	camera.type = vkb::CameraType::LookAt;
 	camera.set_position(glm::vec3(1.9f, 2.05f, -18.0f));
@@ -163,12 +208,20 @@ bool DynamicState3MultisampleRasterization::prepare(const vkb::ApplicationOption
 	setup_descriptor_sets();
 	build_command_buffers();
 
+	prepare_gui();
+
 	prepared = true;
 	return true;
 }
 
 void DynamicState3MultisampleRasterization::build_command_buffers()
 {
+	if (!check_command_buffers())
+	{
+		create_command_buffers();
+		destroy_command_buffers();
+	}
+
 	VkCommandBufferBeginInfo command_buffer_begin_info = vkb::initializers::command_buffer_begin_info();
 
 	VkClearValue clear_values[3];
@@ -190,6 +243,7 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 		render_pass_begin_info.framebuffer = framebuffers[i];
 
 		vkCmdBeginRenderPass(draw_cmd_buffers[i], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdSetRasterizationSamplesEXT(draw_cmd_buffers[i], sample_count);        // VK_EXT_extended_dynamic_state3
 
 		VkViewport viewport = vkb::initializers::viewport(static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f);
 		vkCmdSetViewport(draw_cmd_buffers[i], 0, 1, &viewport);
@@ -257,6 +311,32 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 		vkCmdEndRenderPass(draw_cmd_buffers[i]);
 
 		VK_CHECK(vkEndCommandBuffer(draw_cmd_buffers[i]));
+	}
+}
+
+void DynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer& cmd_buffer)
+{
+	if (gui)
+	{
+		auto &scale    = to_scale_ui(sample_count);
+		auto &viewport = vkb::initializers::viewport(static_cast<float>(width) * scale.x, static_cast<float>(height) * scale.y, 0.0f, 1.0f);
+		vkCmdSetViewport(cmd_buffer, 0, 1, &viewport);
+		auto draw_data = ImGui::GetDrawData();
+
+		if (draw_data)
+		{
+			for (int32_t i = 0; i < draw_data->CmdListsCount; i++)
+			{
+				ImDrawList *cmd_list = draw_data->CmdLists[i];
+				for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++)
+				{
+					auto cmd = &cmd_list->CmdBuffer[j];
+					cmd->ClipRect.z *= scale.x;
+					cmd->ClipRect.w *= scale.y;
+				}
+			}
+		}
+		gui->draw(cmd_buffer);
 	}
 }
 
@@ -351,18 +431,32 @@ void DynamicState3MultisampleRasterization::setup_descriptor_sets()
 
 void DynamicState3MultisampleRasterization::setup_render_pass()
 {
-	FrameBufferAttachment color_attachment, depth_attachment;
+	if (render_pass != VK_NULL_HANDLE)
+	{
+		vkDestroyRenderPass(get_device().get_handle(), render_pass, nullptr);
+	}
 
-	create_color_attachment(render_context->get_format(), &color_attachment);
-	framebuffer_attachments.push_back(color_attachment);
+	VkPhysicalDeviceProperties gpu_properties;
+	vkGetPhysicalDeviceProperties(get_device().get_gpu().get_handle(), &gpu_properties);
 
-	create_depth_attachment(depth_format, &depth_attachment);
-	framebuffer_attachments.push_back(depth_attachment);
+	// Check if device supports requested sample count for color and depth frame buffer
+	assert((gpu_properties.limits.framebufferColorSampleCounts >= sample_count) && (gpu_properties.limits.framebufferDepthSampleCounts >= sample_count));
+
+	bool msaa_enabled = sample_count != VK_SAMPLE_COUNT_1_BIT;
+
+	std::unique_ptr<FrameBufferAttachment> color_attachment = std::make_unique<FrameBufferAttachment>();
+	std::unique_ptr<FrameBufferAttachment> depth_attachment = std::make_unique<FrameBufferAttachment>();
+
+	create_color_attachment(render_context->get_format(), color_attachment.get());
+	framebuffer_attachments.push_back(std::move(color_attachment));
+
+	create_depth_attachment(depth_format, depth_attachment.get());
+	framebuffer_attachments.push_back(std::move(depth_attachment));
 
 	std::array<VkAttachmentDescription, 3> attachments = {};
 	// Color attachment
 	attachments[0].format         = render_context->get_format();
-	attachments[0].samples        = VK_SAMPLE_COUNT_4_BIT;
+	attachments[0].samples        = sample_count;
 	attachments[0].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[0].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
 	attachments[0].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -382,7 +476,7 @@ void DynamicState3MultisampleRasterization::setup_render_pass()
 
 	// Resolve attachment
 	attachments[2].format         = depth_format;
-	attachments[2].samples        = VK_SAMPLE_COUNT_4_BIT;
+	attachments[2].samples        = sample_count;
 	attachments[2].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	attachments[2].storeOp        = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachments[2].stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -458,7 +552,7 @@ void DynamicState3MultisampleRasterization::create_color_attachment(VkFormat for
 	image.extent.depth      = 1;
 	image.mipLevels         = 1;
 	image.arrayLayers       = 1;
-	image.samples           = VK_SAMPLE_COUNT_4_BIT;
+	image.samples           = sample_count;
 	image.tiling            = VK_IMAGE_TILING_OPTIMAL;
 	image.usage             = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_INPUT_ATTACHMENT_BIT;
 
@@ -494,7 +588,7 @@ void DynamicState3MultisampleRasterization::create_depth_attachment(VkFormat for
 	image_create_info.extent      = {get_render_context().get_surface_extent().width, get_render_context().get_surface_extent().height, 1};
 	image_create_info.mipLevels   = 1;
 	image_create_info.arrayLayers = 1;
-	image_create_info.samples     = VK_SAMPLE_COUNT_4_BIT;
+	image_create_info.samples     = sample_count;
 	image_create_info.tiling      = VK_IMAGE_TILING_OPTIMAL;
 	image_create_info.usage       = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
 
@@ -532,8 +626,8 @@ void DynamicState3MultisampleRasterization::setup_framebuffer()
 	VkImageView attachments[3];
 
 	// Depth/Stencil attachment is the same for all frame buffers
-	attachments[0] = framebuffer_attachments[0].view;
-	attachments[2] = framebuffer_attachments[1].view;
+	attachments[0] = framebuffer_attachments[0]->view;
+	attachments[2] = framebuffer_attachments[1]->view;
 
 	VkFramebufferCreateInfo framebuffer_create_info = {};
 	framebuffer_create_info.sType                   = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -568,6 +662,11 @@ void DynamicState3MultisampleRasterization::setup_framebuffer()
 
 void DynamicState3MultisampleRasterization::prepare_pipelines()
 {
+	if (pipeline != VK_NULL_HANDLE)
+	{
+		vkDestroyPipeline(get_device().get_handle(), pipeline, nullptr);
+	}
+
 	VkPipelineInputAssemblyStateCreateInfo input_assembly_state =
 	    vkb::initializers::pipeline_input_assembly_state_create_info(
 	        VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
@@ -613,12 +712,14 @@ void DynamicState3MultisampleRasterization::prepare_pipelines()
 
 	VkPipelineMultisampleStateCreateInfo multisample_state =
 	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_4_BIT,
+	        VK_SAMPLE_COUNT_1_BIT, // disable multisampling during configuration
 	        0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {
 	    VK_DYNAMIC_STATE_VIEWPORT,
-	    VK_DYNAMIC_STATE_SCISSOR};
+	    VK_DYNAMIC_STATE_SCISSOR,
+	    VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT /* VK_EXT_extended_dynamic_state3 */
+	};
 	VkPipelineDynamicStateCreateInfo dynamic_state =
 	    vkb::initializers::pipeline_dynamic_state_create_info(
 	        dynamic_state_enables.data(),
@@ -714,6 +815,55 @@ void DynamicState3MultisampleRasterization::render(float delta_time)
 	if (camera.updated)
 	{
 		update_uniform_buffers();
+	}
+}
+
+void DynamicState3MultisampleRasterization::update_resources()
+{
+	if (device)
+	{
+		device->wait_idle();
+
+		// destroy framebuffer attachments:
+		for (auto &att : framebuffer_attachments)
+		{
+			att->destroy(get_device().get_handle());
+		}
+
+		framebuffer_attachments.clear();
+
+		std::unique_ptr<FrameBufferAttachment> color_attachment = std::make_unique<FrameBufferAttachment>();
+		std::unique_ptr<FrameBufferAttachment> depth_attachment = std::make_unique<FrameBufferAttachment>();
+
+		create_color_attachment(render_context->get_format(), color_attachment.get());
+		framebuffer_attachments.push_back(std::move(color_attachment));
+
+		create_depth_attachment(depth_format, depth_attachment.get());
+		framebuffer_attachments.push_back(std::move(depth_attachment));
+
+		width  = get_render_context().get_surface_extent().width;
+		height = get_render_context().get_surface_extent().height;
+
+		camera.set_perspective(60.0f, static_cast<float>(width) / static_cast<float>(height), 256.0f, 0.1f);
+
+		// All resources are recreated during setup
+		setup_render_pass();
+		setup_framebuffer();
+		prepare_pipelines();
+		build_command_buffers();
+	}
+}
+
+void DynamicState3MultisampleRasterization::on_update_ui_overlay(vkb::Drawer &drawer)
+{
+	if (drawer.header("Settings"))
+	{
+		if (drawer.combo_box("antialiasing", &gui_settings.gui_sample_count, gui_settings.sample_counts))
+		{
+			sample_count = supported_sample_count_list[gui_settings.gui_sample_count];
+
+			update_resources();
+		}
 	}
 }
 

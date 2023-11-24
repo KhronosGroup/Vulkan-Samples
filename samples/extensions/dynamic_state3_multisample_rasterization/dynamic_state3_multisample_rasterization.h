@@ -58,6 +58,16 @@ private:
 	 */
 	std::vector<VkSampleCountFlagBits> supported_sample_count_list{};
 
+	/**
+	 * @brief Enables MSAA if set to more than 1 sample per pixel
+	 *        (e.g. sample count 4 enables 4X MSAA)
+	 */
+	VkSampleCountFlagBits sample_count{VK_SAMPLE_COUNT_1_BIT};
+
+	VkSampleCountFlagBits gui_sample_count{VK_SAMPLE_COUNT_1_BIT};
+
+	VkSampleCountFlagBits last_gui_sample_count{VK_SAMPLE_COUNT_1_BIT};
+
 	struct
 	{
 		glm::mat4 model_matrix;
@@ -86,10 +96,28 @@ private:
 		}
 	};
 
-	std::vector<FrameBufferAttachment> framebuffer_attachments;
+	struct GUI_settings
+	{
+		int gui_sample_count = 0;
+		std::vector<std::string> sample_counts;
+	} gui_settings;
+
+	std::vector<std::unique_ptr<FrameBufferAttachment>> framebuffer_attachments;
+
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extended_dynamic_state_features{};
+	VkPhysicalDeviceExtendedDynamicState2FeaturesEXT extended_dynamic_state_2_features{};
+	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
+
+	VkPhysicalDeviceExtendedDynamicState3PropertiesEXT props;
 
 public:
-	void         build_command_buffers() override;
+	virtual void build_command_buffers() override;
+	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
+	virtual bool prepare(const vkb::ApplicationOptions &options) override;
+	virtual void setup_render_pass() override;
+	virtual void render(float delta_time) override;
+	virtual void setup_framebuffer() override;
+	virtual void on_update_ui_overlay(vkb::Drawer &drawer) override;
 	void         load_assets();
 	void         setup_descriptor_pool();
 	void         setup_descriptor_set_layout();
@@ -101,10 +129,8 @@ public:
 	void         prepare_supported_sample_count_list();
 	void         create_color_attachment(VkFormat format, FrameBufferAttachment *attachment);
 	void         create_depth_attachment(VkFormat format, FrameBufferAttachment *attachment);
-	bool         prepare(const vkb::ApplicationOptions &options) override;
-	virtual void setup_render_pass() override;
-	virtual void render(float delta_time) override;
-	virtual void setup_framebuffer();
+	void         draw_ui(VkCommandBuffer&);
+	void         update_resources();
 };
 
 std::unique_ptr<vkb::VulkanSample> create_dynamic_state3_multisample_rasterization();
