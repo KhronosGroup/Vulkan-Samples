@@ -118,17 +118,12 @@ bool SparseImage::prepare(const vkb::ApplicationOptions &options)
  */
 void SparseImage::prepare_pipelines()
 {
-	// Create a blank pipeline layout.
 	VkPipelineLayoutCreateInfo layout_info = vkb::initializers::pipeline_layout_create_info(&descriptor_set_layout, 1);
-
 	VK_CHECK(vkCreatePipelineLayout(get_device().get_handle(), &layout_info, nullptr, &sample_pipeline_layout));
 
-	VkPipelineVertexInputStateCreateInfo vertex_input = vkb::initializers::pipeline_vertex_input_state_create_info();
-
-	/* Binding description */
+	VkPipelineVertexInputStateCreateInfo            vertex_input          = vkb::initializers::pipeline_vertex_input_state_create_info();
 	std::array<VkVertexInputBindingDescription, 1U> vertex_input_bindings = {vkb::initializers::vertex_input_binding_description(0, sizeof(SimpleVertex), VK_VERTEX_INPUT_RATE_VERTEX)};
 
-	/* Attribute description */
 	std::array<VkVertexInputAttributeDescription, 2U> vertex_input_attributes = {
 	    vkb::initializers::vertex_input_attribute_description(0U, 0U, VK_FORMAT_R32G32_SFLOAT, offsetof(SimpleVertex, norm)),
 	    vkb::initializers::vertex_input_attribute_description(0U, 1U, VK_FORMAT_R32G32_SFLOAT, offsetof(SimpleVertex, uv))};
@@ -138,49 +133,33 @@ void SparseImage::prepare_pipelines()
 	vertex_input.vertexBindingDescriptionCount   = static_cast<uint32_t>(vertex_input_bindings.size());
 	vertex_input.pVertexBindingDescriptions      = vertex_input_bindings.data();
 
-	// Specify we will use triangle lists to draw geometry.
-	VkPipelineInputAssemblyStateCreateInfo input_assembly = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0U, VK_FALSE);
+	std::array<VkDynamicState, 2U> dynamic_states{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
 
-	// Specify rasterization state.
-	VkPipelineRasterizationStateCreateInfo raster = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+	VkPipelineInputAssemblyStateCreateInfo input_assembly_state         = vkb::initializers::pipeline_input_assembly_state_create_info(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, 0U, VK_FALSE);
+	VkPipelineRasterizationStateCreateInfo rasterization_state          = vkb::initializers::pipeline_rasterization_state_create_info(VK_POLYGON_MODE_FILL, VK_CULL_MODE_BACK_BIT, VK_FRONT_FACE_CLOCKWISE);
+	VkPipelineColorBlendAttachmentState    color_blend_attachment_state = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
+	VkPipelineColorBlendStateCreateInfo    color_blend_state            = vkb::initializers::pipeline_color_blend_state_create_info(1U, &color_blend_attachment_state);
+	VkPipelineViewportStateCreateInfo      viewport_state               = vkb::initializers::pipeline_viewport_state_create_info(1U, 1U);
+	VkPipelineDepthStencilStateCreateInfo  depth_stencil_state          = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_NEVER);
+	VkPipelineMultisampleStateCreateInfo   multisampling_state          = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
+	VkPipelineDynamicStateCreateInfo       pipeline_dynamic_states      = vkb::initializers::pipeline_dynamic_state_create_info(dynamic_states.data(), vkb::to_u32(dynamic_states.size()));
 
-	// Our attachment will write to all color channels, but no blending is enabled.
-	VkPipelineColorBlendAttachmentState blend_attachment = vkb::initializers::pipeline_color_blend_attachment_state(VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT, VK_FALSE);
-
-	VkPipelineColorBlendStateCreateInfo blend = vkb::initializers::pipeline_color_blend_state_create_info(1U, &blend_attachment);
-
-	// We will have one viewport and scissor box.
-	VkPipelineViewportStateCreateInfo viewport = vkb::initializers::pipeline_viewport_state_create_info(1U, 1U);
-
-	// Enable depth testing (using reversed depth-buffer for increased precision).
-	VkPipelineDepthStencilStateCreateInfo depth_stencil = vkb::initializers::pipeline_depth_stencil_state_create_info(VK_FALSE, VK_FALSE, VK_COMPARE_OP_NEVER);
-
-	// No multisampling.
-	VkPipelineMultisampleStateCreateInfo multisample = vkb::initializers::pipeline_multisample_state_create_info(VK_SAMPLE_COUNT_1_BIT);
-
-	// Specify that these states will be dynamic, i.e. not part of pipeline state object.
-	std::array<VkDynamicState, 2U>   dynamics{VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
-	VkPipelineDynamicStateCreateInfo dynamic = vkb::initializers::pipeline_dynamic_state_create_info(dynamics.data(), vkb::to_u32(dynamics.size()));
-
-	// Load our SPIR-V shaders.
 	std::array<VkPipelineShaderStageCreateInfo, 2U> shader_stages{};
 
-	// Vertex stage of the pipeline
 	shader_stages[0] = load_shader("sparse_image/sparse.vert", VK_SHADER_STAGE_VERTEX_BIT);
 	shader_stages[1] = load_shader("sparse_image/sparse.frag", VK_SHADER_STAGE_FRAGMENT_BIT);
 
-	// We need to specify the pipeline layout and the render pass description up front as well.
 	VkGraphicsPipelineCreateInfo pipeline_create_info = vkb::initializers::pipeline_create_info(sample_pipeline_layout, render_pass);
 	pipeline_create_info.stageCount                   = vkb::to_u32(shader_stages.size());
 	pipeline_create_info.pStages                      = shader_stages.data();
 	pipeline_create_info.pVertexInputState            = &vertex_input;
-	pipeline_create_info.pInputAssemblyState          = &input_assembly;
-	pipeline_create_info.pRasterizationState          = &raster;
-	pipeline_create_info.pColorBlendState             = &blend;
-	pipeline_create_info.pMultisampleState            = &multisample;
-	pipeline_create_info.pViewportState               = &viewport;
-	pipeline_create_info.pDepthStencilState           = &depth_stencil;
-	pipeline_create_info.pDynamicState                = &dynamic;
+	pipeline_create_info.pInputAssemblyState          = &input_assembly_state;
+	pipeline_create_info.pRasterizationState          = &rasterization_state;
+	pipeline_create_info.pColorBlendState             = &color_blend_state;
+	pipeline_create_info.pMultisampleState            = &multisampling_state;
+	pipeline_create_info.pViewportState               = &viewport_state;
+	pipeline_create_info.pDepthStencilState           = &depth_stencil_state;
+	pipeline_create_info.pDynamicState                = &pipeline_dynamic_states;
 
 	VK_CHECK(vkCreateGraphicsPipelines(get_device().get_handle(), pipeline_cache, 1U, &pipeline_create_info, nullptr, &sample_pipeline));
 }
