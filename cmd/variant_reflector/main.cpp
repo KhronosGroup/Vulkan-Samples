@@ -323,28 +323,17 @@ CUSTOM_MAIN(context)
 	auto unique_model_variants = to_unique_variants(model_variants);
 	LOGI("Unique model variants: {}", unique_model_variants.size());
 
-	for (auto &variant : unique_model_variants)
-	{
-		LOGI("Variant:");
-		for (auto &define : variant.defines)
-		{
-			LOGI("{}", define.name);
-		}
-	}
-
 	auto unique_shader_variants = to_unique_variants(shader_variants);
 	LOGI("Unique shader variants: {}", unique_shader_variants.size());
 
-	for (auto &variant : unique_shader_variants)
-	{
-		LOGI("Variant:");
-		for (auto &define : variant.defines)
-		{
-			LOGI("{}", define.name);
-		}
-	}
+	auto unique_variants = unique_model_variants;
+	unique_variants.insert(unique_shader_variants.begin(), unique_shader_variants.end());
+	LOGI("Unique variants: {}", unique_variants.size());
 
-	// TODO: Compile shader variants
+	auto json = create_variant_json(unique_variants);
+
+	auto fs = vkb::fs::get_filesystem();
+	fs->write_file(output_file, json.dump(4));
 
 	return 0;
 }
