@@ -12,7 +12,7 @@
 #include <core/platform/entrypoint.hpp>
 #include <core/util/logging.hpp>
 #include <core/util/strings.hpp>
-#include <fs/filesystem.hpp>
+#include <filesystem/filesystem.hpp>
 
 struct Define
 {

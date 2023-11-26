@@ -141,7 +141,43 @@ std::vector<ShaderResource> SpirvReflector::reflect_push_constant(const SpvRefle
 	return {};
 }
 
-ShaderResourceSet SpirvReflector::reflect(const std::vector<uint32_t> &code) const
+inline std::string result_to_string(SpvReflectResult result)
+{
+#define CASE(x) \
+	case x:     \
+		return #x
+
+	switch (result)
+	{
+		CASE(SPV_REFLECT_RESULT_SUCCESS);
+		CASE(SPV_REFLECT_RESULT_NOT_READY);
+		CASE(SPV_REFLECT_RESULT_ERROR_PARSE_FAILED);
+		CASE(SPV_REFLECT_RESULT_ERROR_ALLOC_FAILED);
+		CASE(SPV_REFLECT_RESULT_ERROR_RANGE_EXCEEDED);
+		CASE(SPV_REFLECT_RESULT_ERROR_NULL_POINTER);
+		CASE(SPV_REFLECT_RESULT_ERROR_INTERNAL_ERROR);
+		CASE(SPV_REFLECT_RESULT_ERROR_COUNT_MISMATCH);
+		CASE(SPV_REFLECT_RESULT_ERROR_ELEMENT_NOT_FOUND);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_CODE_SIZE);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_MAGIC_NUMBER);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_UNEXPECTED_EOF);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_ID_REFERENCE);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_SET_NUMBER_OVERFLOW);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_STORAGE_CLASS);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_RECURSION);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_INSTRUCTION);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_UNEXPECTED_BLOCK_DATA);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_BLOCK_MEMBER_REFERENCE);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_ENTRY_POINT);
+		CASE(SPV_REFLECT_RESULT_ERROR_SPIRV_INVALID_EXECUTION_MODE);
+		default:
+			return "Unknown";
+	}
+
+#undef CASE
+}
+
+ShaderResourceSet SpirvReflector::reflect(const std::vector<uint8_t> &code) const
 {
 	if (code.size() == 0)
 	{
@@ -150,7 +186,11 @@ ShaderResourceSet SpirvReflector::reflect(const std::vector<uint32_t> &code) con
 
 	SpvReflectShaderModule module{};
 	SpvReflectResult       result = spvReflectCreateShaderModule(code.size() * sizeof(code[0]), code.data(), &module);
-	assert(result == SPV_REFLECT_RESULT_SUCCESS);
+	if (result != SPV_REFLECT_RESULT_SUCCESS)
+	{
+		LOGE("Failed to reflect shader module: {}", result_to_string(result));
+		return {};
+	}
 
 	auto inputs              = reflect_input_variables(module);
 	auto outputs             = reflect_output_variables(module);

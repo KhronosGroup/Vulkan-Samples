@@ -26,5 +26,5 @@ else()
     message(FATAL_ERROR "Unsupported platform")
 endif()
 
-add_subdirectory(fs)
+add_subdirectory(filesystem)
 add_subdirectory(shaders)

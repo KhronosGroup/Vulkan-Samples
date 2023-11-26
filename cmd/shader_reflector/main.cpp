@@ -1,6 +1,6 @@
 #include <core/platform/entrypoint.hpp>
 #include <core/util/strings.hpp>
-#include <fs/filesystem.hpp>
+#include <filesystem/filesystem.hpp>
 #include <shaders/reflectors/spirv_reflector.hpp>
 
 #include <CLI/CLI.hpp>

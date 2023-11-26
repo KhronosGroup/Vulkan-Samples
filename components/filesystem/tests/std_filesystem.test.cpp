@@ -17,7 +17,7 @@
 
 #include <core/platform/entrypoint.hpp>
 #include <core/util/error.hpp>
-#include <fs/filesystem.hpp>
+#include <filesystem/filesystem.hpp>
 
 #define EXPECT_TRUE(x, ...)  \
 	if (!x)                  \
@@ -30,7 +30,7 @@ CUSTOM_MAIN(context)
 	auto fs = vkb::fs::get_filesystem();
 	EXPECT_TRUE(fs, "Filesystem is not null");
 
-	std::string DIR = "./components/fs";
+	std::string DIR = "./components/filesystem";
 
 	EXPECT_TRUE(fs->exists(DIR), "Directory exists");
 	EXPECT_TRUE(fs->is_directory(DIR), "Path is a directory");

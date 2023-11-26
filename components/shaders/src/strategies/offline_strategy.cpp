@@ -3,19 +3,19 @@
 #include <nlohmann/json.hpp>
 
 #include <core/util/logging.hpp>
-#include <fs/filesystem.hpp>
+#include <filesystem/filesystem.hpp>
 
 #include <shaders/reflectors/spirv_reflector.hpp>
 
 namespace vkb
 {
 
-OfflineShaderCacheStrategy::OfflineShaderCacheStrategy()
+OfflineShaderstrategy::OfflineShaderstrategy()
 {
 	load_atlas("generated/shader_atlas.json");
 }
 
-void OfflineShaderCacheStrategy::load_atlas(const std::string &atlas_path)
+void OfflineShaderstrategy::load_atlas(const std::string &atlas_path)
 {
 	auto fs = fs::get_filesystem();
 	if (!fs->exists(atlas_path))
@@ -41,25 +41,26 @@ void OfflineShaderCacheStrategy::load_atlas(const std::string &atlas_path)
 			auto variant_file    = variant_json["file"].get<std::string>();
 			auto variant_hash    = variant_json["hash"].get<std::string>();
 
-			auto variant_code = fs->read_binary_file<uint32_t>(variant_file);
+			auto variant_code = fs->read_binary_file<uint8_t>(variant_file);
 			if (variant_code.empty())
 			{
 				LOGE("Failed to load shader {} with defines {}", shader_path, define_hash);
 				continue;
 			}
 
-			auto   resources = reflector.reflect(variant_code);
-			Shader shader{variant_code, std::move(resources)};
+			auto resources = reflector.reflect(variant_code);
+
+			ShaderPtr shader = std::make_shared<Shader>(std::vector<uint32_t>{variant_code.begin(), variant_code.end()}, std::move(resources));
 
 			auto it = atlas.shaders.find(shader_path);
 			if (it != atlas.shaders.end())
 			{
-				it->second.variants[define_hash] = shader;
+				it->second.variants[define_hash] = std::move(shader);
 				continue;
 			}
 
 			AtlasShader atlas_shader;
-			atlas_shader.variants[define_hash] = shader;
+			atlas_shader.variants[define_hash] = std::move(shader);
 			atlas.shaders[shader_path]         = atlas_shader;
 		}
 	}
@@ -67,28 +68,33 @@ void OfflineShaderCacheStrategy::load_atlas(const std::string &atlas_path)
 	LOGI("Loaded {} shaders", atlas.shaders.size());
 }
 
-std::vector<uint32_t> OfflineShaderCacheStrategy::load_shader(const ShaderHandle &handle)
+ShaderPtr OfflineShaderstrategy::load_shader_from_atlas(const ShaderHandle &handle)
 {
 	try
 	{
 		auto &atlas_shader = atlas.shaders.at(handle.path);
-
-		LOGI("variants: {}", atlas_shader.variants.size());
-
-		auto &shader = atlas_shader.variants.at(handle.define_hash);
-
-		return shader.code;
+		auto &shader       = atlas_shader.variants.at(handle.define_hash);
+		return shader;
 	}
 	catch (const std::exception &e)
 	{
-		LOGE("Failed to load shader {} with defines {}", handle.path, handle.define_hash);
-		return {};
+		throw std::runtime_error{fmt::format("Failed to load shader {} with defines {}", handle.path, handle.define_hash)};
 	}
 }
 
-ShaderResourceSet OfflineShaderCacheStrategy::reflect(const std::vector<uint32_t> &code)
+ShaderPtr OfflineShaderstrategy::load_shader(const ShaderHandle &handle)
 {
-	return {};
+	return load_shader_from_atlas(handle);
+}
+
+std::vector<uint32_t> OfflineShaderstrategy::load_spirv(const ShaderHandle &handle)
+{
+	return load_shader_from_atlas(handle)->code;
+}
+
+ShaderResourceSet OfflineShaderstrategy::reflect(const ShaderHandle &handle)
+{
+	return load_shader_from_atlas(handle)->resource_set;
 }
 
 }        // namespace vkb

@@ -17,7 +17,7 @@
 vkb__register_component(
     NAME filesystem
     HEADERS
-        include/fs/filesystem.hpp
+        include/filesystem/filesystem.hpp
         # private
         src/std_filesystem.hpp
     SRC

@@ -14,48 +14,79 @@ namespace vkb
 {
 
 // SPIRV shader code and its resource reflection
-struct Shader
+class Shader
 {
+  public:
+	Shader(std::vector<uint32_t> &&code, ShaderResourceSet &&resource_set) :
+	    code{std::move(code)},
+	    resource_set{std::move(resource_set)}
+	{
+	}
+	Shader(const Shader &)            = delete;
+	Shader &operator=(const Shader &) = delete;
+
+	Shader(Shader &&)            = default;
+	Shader &operator=(Shader &&) = default;
+
+	~Shader() = default;
+
 	std::vector<uint32_t> code;
 	ShaderResourceSet     resource_set;
 };
 
+using ShaderPtr = std::shared_ptr<Shader>;
+
 // A shader cache strategy is responsible for loading and reflecting shaders
-class ShaderCacheStrategy
+class ShaderStrategy
 {
   public:
-	ShaderCacheStrategy()          = default;
-	virtual ~ShaderCacheStrategy() = default;
+	ShaderStrategy()          = default;
+	virtual ~ShaderStrategy() = default;
 
-	virtual Shader                load_shader(const ShaderHandle &handle)    = 0;
-	virtual std::vector<uint32_t> load_spirv(const ShaderHandle &handle)     = 0;
-	virtual ShaderResourceSet     reflect(const std::vector<uint32_t> &code) = 0;
+	virtual ShaderPtr             load_shader(const ShaderHandle &handle) = 0;
+	virtual std::vector<uint32_t> load_spirv(const ShaderHandle &handle)  = 0;
+	virtual ShaderResourceSet     reflect(const ShaderHandle &handle)     = 0;
 };
 
-class ShaderCache
+// A shader cache singleton to load and reflect shaders using a strategy
+class ShaderCache : public ShaderStrategy
 {
   public:
-	ShaderCache(std::unique_ptr<ShaderCacheStrategy> &&strategy) :
-	    strategy{std::move(strategy)}
-	{}
-
-	Shader load_shader(const ShaderHandle &handle)
+	static ShaderCache *get()
 	{
-		assert(strategy != nullptr && "Shader cache strategy is not set");
+		static ShaderCache instance;
+		return &instance;
+	}
 
-		if (cached_shaders.find(handle) == cached_shaders.end())
-		{
-			auto code              = strategy->load_shader(handle);
-			auto resource_set      = strategy->reflect(code);
-			cached_shaders[handle] = {code, resource_set};
-		}
+	~ShaderCache() = default;
 
-		return cached_shaders[handle];
+	void set_strategy(std::unique_ptr<ShaderStrategy> &&strategy)
+	{
+		this->strategy = std::move(strategy);
+	}
+
+	ShaderPtr load_shader(const ShaderHandle &handle)
+	{
+		assert(strategy);
+		return strategy->load_shader(handle);
+	}
+
+	std::vector<uint32_t> load_spirv(const ShaderHandle &handle)
+	{
+		assert(strategy);
+		return strategy->load_spirv(handle);
+	}
+
+	ShaderResourceSet reflect(const ShaderHandle &handle)
+	{
+		assert(strategy);
+		return strategy->reflect(handle);
 	}
 
   private:
-	std::shared_ptr<ShaderCacheStrategy> strategy = nullptr;
+	ShaderCache() = default;
 
-	std::unordered_map<ShaderHandle, Shader> cached_shaders;
+	std::unique_ptr<ShaderStrategy> strategy;
 };
+
 }        // namespace vkb
