@@ -30,6 +30,7 @@ vkb__register_component(
     LINK_LIBS
         spdlog
         fmt
+        picosha2
 )
 
 vkb__register_tests(
@@ -37,6 +38,7 @@ vkb__register_tests(
     NAME utils
     SRC
         tests/strings.test.cpp
+        tests/hash.test.cpp
     LINK_LIBS
         vkb__core
 )

@@ -18,15 +18,11 @@
 vkb__register_component(
     NAME shaders
     HEADERS
-        # Compilers
-        include/shaders/compilers/glsl_compiler.hpp
-
         # Reflectors
         include/shaders/reflectors/spirv_reflector.hpp
 
         # Strategies
         include/shaders/strategies/offline_strategy.hpp
-        include/shaders/strategies/online_strategy.hpp
 
         include/shaders/shader_cache.hpp
         include/shaders/shader_handle.hpp
@@ -34,8 +30,20 @@ vkb__register_component(
     SRC
         src/shader_resources.cpp
         src/reflectors/spirv_reflector.cpp
+        src/strategies/offline_strategy.cpp
     LINK_LIBS
         vkb__core
+        vkb__filesystem
         spirv-reflect-static
+        vulkan
         nlohmann_json::nlohmann_json
+)
+
+vkb__register_tests(
+    NAME shaders
+    SRC
+        tests/shader_handle.test.cpp
+        tests/offline_strategy.test.cpp
+    LINK_LIBS
+        vkb__shaders
 )

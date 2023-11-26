@@ -10,53 +10,15 @@
 
 namespace vkb
 {
-const std::string HAS_BASE_COLOR_TEXTURE         = "HAS_BASE_COLOR_TEXTURE";
-const std::string HAS_NORMAL_TEXTURE             = "HAS_NORMAL_TEXTURE";
-const std::string HAS_METALLIC_ROUGHNESS_TEXTURE = "HAS_METALLIC_ROUGHNESS_TEXTURE";
-
-class ShaderBuilder
-{
-  public:
-	ShaderBuilder()          = default;
-	virtual ~ShaderBuilder() = default;
-
-	ShaderBuilder &with_path(const std::string &path)
-	{
-		this->path = path;
-		return *this;
-	}
-
-	ShaderBuilder &with_define(const std::string &define)
-	{
-		defines.push_back(define);
-		return *this;
-	}
-
-	ShaderHandle build()
-	{
-		HashBuilder builder;
-
-		std::sort(defines.begin(), defines.end());
-
-		builder.with(path);
-
-		for (auto &define : defines)
-		{
-			builder.with(define);
-		}
-
-		return {builder.build(), path, defines};
-	}
-
-  private:
-	std::string              path;
-	std::vector<std::string> defines;
-};
+const std::string HAS_BASE_COLOR_TEXTURE         = "HAS_BASE_COLOR_TEXTURE=1";
+const std::string HAS_NORMAL_TEXTURE             = "HAS_NORMAL_TEXTURE=1";
+const std::string HAS_METALLIC_ROUGHNESS_TEXTURE = "HAS_METALLIC_ROUGHNESS_TEXTURE=1";
 
 struct ShaderHandle
 {
-	size_t                   hash{0};
+	std::string              hash{0};
 	std::string              path;
+	std::string              define_hash{0};
 	std::vector<std::string> defines;
 
 	bool operator==(const ShaderHandle &other) const
@@ -69,6 +31,39 @@ struct ShaderHandle
 		return !(*this == other);
 	}
 };
+
+class ShaderHandleBuilder
+{
+  public:
+	ShaderHandleBuilder()          = default;
+	virtual ~ShaderHandleBuilder() = default;
+
+	ShaderHandleBuilder &with_path(const std::string &path)
+	{
+		this->path = path;
+		return *this;
+	}
+
+	ShaderHandleBuilder &with_define(const std::string &define)
+	{
+		defines.push_back(define);
+		return *this;
+	}
+
+	ShaderHandle build()
+	{
+		std::string define_str = std::accumulate(defines.begin(), defines.end(), std::string(), [](const std::string &a, const std::string &b) {
+			return a + b;
+		});
+
+		return {sha256(path + define_str), path, sha256(define_str), defines};
+	}
+
+  private:
+	std::string              path;
+	std::vector<std::string> defines;
+};
+
 }        // namespace vkb
 
 namespace std
@@ -76,9 +71,9 @@ namespace std
 template <>
 struct hash<vkb::ShaderHandle>
 {
-	size_t operator()(const vkb::ShaderHandle &handle) const
+	std::size_t operator()(const vkb::ShaderHandle &handle) const
 	{
-		return handle.hash;
+		return std::hash<std::string>()(handle.hash);
 	}
 };
 }        // namespace std

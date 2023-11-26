@@ -404,3 +404,6 @@ set_property(TARGET spirv-reflect-static PROPERTY FOLDER "ThirdParty")
 
 # Json
 add_subdirectory(json)
+
+# picosha2
+add_subdirectory(picosha2)

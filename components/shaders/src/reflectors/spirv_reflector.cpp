@@ -2,7 +2,7 @@
 
 #include <core/util/logging.hpp>
 
-#include <spirv-reflect/spirv_reflect.h>
+#include <spirv_reflect.h>
 
 namespace vkb
 {
@@ -141,10 +141,15 @@ std::vector<ShaderResource> SpirvReflector::reflect_push_constant(const SpvRefle
 	return {};
 }
 
-ShaderResourceSet SpirvReflector::reflect(const std::vector<uint8_t> &code) const
+ShaderResourceSet SpirvReflector::reflect(const std::vector<uint32_t> &code) const
 {
+	if (code.size() == 0)
+	{
+		return {};
+	}
+
 	SpvReflectShaderModule module{};
-	SpvReflectResult       result = spvReflectCreateShaderModule(code.size(), code.data(), &module);
+	SpvReflectResult       result = spvReflectCreateShaderModule(code.size() * sizeof(code[0]), code.data(), &module);
 	assert(result == SPV_REFLECT_RESULT_SUCCESS);
 
 	auto inputs              = reflect_input_variables(module);

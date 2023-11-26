@@ -3,7 +3,6 @@
 #include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
-#include <vulkan/vulkan.hpp>
 
 namespace vkb
 {
@@ -74,6 +73,8 @@ struct ShaderResource
 class ShaderResourceSet
 {
   public:
+	ShaderResourceSet() = default;
+
 	ShaderResourceSet(std::vector<ShaderResource> &&resources) :
 	    resources{std::move(resources)} {};
 

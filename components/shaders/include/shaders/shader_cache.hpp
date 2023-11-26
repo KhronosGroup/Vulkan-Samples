@@ -12,20 +12,24 @@
 
 namespace vkb
 {
+
+// SPIRV shader code and its resource reflection
+struct Shader
+{
+	std::vector<uint32_t> code;
+	ShaderResourceSet     resource_set;
+};
+
+// A shader cache strategy is responsible for loading and reflecting shaders
 class ShaderCacheStrategy
 {
   public:
 	ShaderCacheStrategy()          = default;
 	virtual ~ShaderCacheStrategy() = default;
 
-	virtual std::vector<uint32_t> load_shader(const ShaderHandle &handle)    = 0;
+	virtual Shader                load_shader(const ShaderHandle &handle)    = 0;
+	virtual std::vector<uint32_t> load_spirv(const ShaderHandle &handle)     = 0;
 	virtual ShaderResourceSet     reflect(const std::vector<uint32_t> &code) = 0;
-};
-
-struct Shader
-{
-	std::vector<uint32_t> code;
-	ShaderResourceSet     resource_set;
 };
 
 class ShaderCache

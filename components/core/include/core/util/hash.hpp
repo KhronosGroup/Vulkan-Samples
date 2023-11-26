@@ -19,8 +19,13 @@
 
 #include <functional>
 
+// SHA256
+#include <picosha2.h>
+
 namespace vkb
 {
+using namespace picosha2;
+
 inline void hash_combine(size_t &seed, size_t hash)
 {
 	hash += 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -39,28 +44,10 @@ inline void hash_combine(size_t &seed, const T &v)
 	hash_combine(seed, hasher(v));
 }
 
-class HashBuilder
+inline std::string sha256(const std::string &input)
 {
-  public:
-	HashBuilder(size_t seed = 0) :
-	    seed{seed}
-	{}
-
-	virtual ~HashBuilder() = default;
-
-	template <class T>
-	HashBuilder &with(const T &v)
-	{
-		hash_combine(seed, v);
-		return *this;
-	}
-
-	size_t build() const
-	{
-		return seed;
-	}
-
-  private:
-	size_t seed{0};
-};
+	std::string hash_hex_str;
+	hash256_hex_string(input, hash_hex_str);
+	return hash_hex_str;
+}
 }        // namespace vkb
