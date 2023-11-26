@@ -17,6 +17,9 @@
 
 #include "direct_window.h"
 
+#include <fcntl.h>
+#include <sys/stat.h>
+
 #include "core/instance.h"
 
 #include "platform/headless_window.h"
