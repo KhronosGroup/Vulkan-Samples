@@ -24,6 +24,8 @@ from shutil import which
 import sys
 import subprocess
 from typing import Dict, List
+from filelock import FileLock
+
 
 PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -130,10 +132,15 @@ def validate_spirv_shader(spirv_file) -> bool:
     return True
 
 def merge_atlas_file(atlas_file, atlas) -> bool:
+    lock = FileLock(atlas_file + ".lock")
+
+    lock.acquire()
+
     if not os.path.isfile(atlas_file):
         make_dir_if_not_exists(atlas_file)
         with open(atlas_file, "w") as f:
             f.write(json.dumps(atlas, indent=4))
+        lock.release()
         return True
 
     atlas_json = {}
@@ -146,6 +153,7 @@ def merge_atlas_file(atlas_file, atlas) -> bool:
 
     if not isinstance(atlas_json, dict):
         print("ERROR: atlas file is not valid")
+        lock.release()
         return False
     
     for key in atlas:
@@ -154,6 +162,7 @@ def merge_atlas_file(atlas_file, atlas) -> bool:
     with open(atlas_file, "w") as f:
         f.write(json.dumps(atlas_json, indent=4))
     
+    lock.release()
     return True
 
 
@@ -209,7 +218,6 @@ if __name__ == "__main__":
     rel_input_file = os.path.relpath(args.input_file, PARENT_DIR)
     rel_output_file = os.path.relpath(args.output_file, PARENT_DIR)
 
-
     for defines in variants:
         define_hash = hashlib.sha256("".join(defines).encode('utf-8')).hexdigest()
         output_file = rel_output_file.replace(".spv", ".{}.spv".format(define_hash))
@@ -233,12 +241,35 @@ if __name__ == "__main__":
 
         # validate the compiled shader
         if not validate_spirv_shader(output_file):
-            print("ERROR: SPIR-V shader validation failed")
+            print("ERROR: SPIR-V shader validation failed for {}".format(output_file))
             pass
+
+        # calculate the hash of the output file
+        with open(output_file, "rb") as f:
+            file_contents = f.read()
+
+        file_sha = hashlib.sha256(file_contents)
+
+        for entry in variant_entry:
+            if variant_entry[entry]["hash"] == file_sha.hexdigest():
+                # found a duplicate, reuse the existing file
+                os.remove(output_file)
+                variant_entry[define_hash] = {
+                    "defines": defines,
+                    "file": variant_entry[entry]["file"],
+                    "hash": file_sha.hexdigest()
+                }
+                break
+
+        if define_hash in variant_entry:
+            # duplicate found, already added to the atlas
+            # skip to the next variant
+            continue
 
         variant_entry[define_hash] = {
             "defines": defines,
-            "file": output_file
+            "file": output_file,
+            "hash": file_sha.hexdigest()
         }
 
     atlas_entry = {
