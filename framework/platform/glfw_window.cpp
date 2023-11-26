@@ -29,8 +29,8 @@ VKBP_DISABLE_WARNINGS()
 #include <spdlog/sinks/stdout_color_sinks.h>
 VKBP_ENABLE_WARNINGS()
 
-#include "platform/platform.h"
 #include "common/logging.h"
+#include "platform/platform.h"
 
 namespace vkb
 {

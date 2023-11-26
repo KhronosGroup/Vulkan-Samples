@@ -25,7 +25,6 @@
 #include "platform/glfw_window.h"
 #include "platform/headless_window.h"
 
-
 namespace vkb
 {
 namespace

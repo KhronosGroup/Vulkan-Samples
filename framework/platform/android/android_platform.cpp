@@ -26,9 +26,9 @@
 #include "common/error.h"
 
 VKBP_DISABLE_WARNINGS()
+#include <fmt/format.h>
 #include <imgui.h>
 #include <jni.h>
-#include <fmt/format.h>
 #include <spdlog/sinks/android_sink.h>
 #include <spdlog/sinks/basic_file_sink.h>
 VKBP_ENABLE_WARNINGS()
