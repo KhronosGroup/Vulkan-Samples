@@ -77,7 +77,8 @@ if __name__ == "__main__":
         print()
 
         for f in files:
-            check_output(["clang-format", "-i", f])
+            if os.path.isfile(f):
+                check_output(["clang-format", "-i", f])
     else:
         print(terminal_colors.INFO + "No files to format" + terminal_colors.END)
         
