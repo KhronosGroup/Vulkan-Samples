@@ -1,0 +1,61 @@
+{
+    "variants": [
+        {
+            "defines": []
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1"
+            ]
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1",
+                "HAS_EMISSIVE_TEXTURE=1"
+            ]
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1",
+                "HAS_EMISSIVE_TEXTURE=1",
+                "HAS_METALLIC_ROUGHNESS_TEXTURE=1",
+                "HAS_NORMAL_TEXTURE=1"
+            ]
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1",
+                "HAS_METALLIC_ROUGHNESS_TEXTURE=1"
+            ]
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1",
+                "HAS_METALLIC_ROUGHNESS_TEXTURE=1",
+                "HAS_NORMAL_TEXTURE=1"
+            ]
+        },
+        {
+            "defines": [
+                "HAS_BASE_COLOR_TEXTURE=1",
+                "PUSH_CONSTANT_LIMIT_256=1"
+            ]
+        },
+        {
+            "defines": [
+                "MS_DEPTH=1",
+                "OUTLINE_ONLY=1"
+            ]
+        },
+        {
+            "defines": [
+                "PUSH_CONSTANT_16=1"
+            ]
+        },
+        {
+            "defines": [
+                "PUSH_CONSTANT_LIMIT_256=1"
+            ]
+        }
+    ]
+}
