@@ -1,6 +1,7 @@
 #include "shaders/strategies/offline_strategy.hpp"
 
 #include <nlohmann/json.hpp>
+#include <vulkan/vulkan.hpp>
 
 #include <core/util/logging.hpp>
 #include <filesystem/filesystem.hpp>
@@ -10,12 +11,53 @@
 namespace vkb
 {
 
-OfflineShaderstrategy::OfflineShaderstrategy()
+inline vk::ShaderStageFlagBits stage_to_vk_stage(const std::string &stage)
+{
+	static std::unordered_map<std::string, vk::ShaderStageFlagBits> stage_map = {
+	    {"vert",
+	     vk::ShaderStageFlagBits::eVertex},
+	    {"tesc",
+	     vk::ShaderStageFlagBits::eTessellationControl},
+	    {"tese",
+	     vk::ShaderStageFlagBits::eTessellationEvaluation},
+	    {"geom",
+	     vk::ShaderStageFlagBits::eGeometry},
+	    {"frag",
+	     vk::ShaderStageFlagBits::eFragment},
+	    {"comp",
+	     vk::ShaderStageFlagBits::eCompute},
+	    {"rchit",
+	     vk::ShaderStageFlagBits::eRaygenKHR},
+	    {"rahit",
+	     vk::ShaderStageFlagBits::eAnyHitKHR},
+	    {"rmiss",
+	     vk::ShaderStageFlagBits::eMissKHR},
+	    {"rint",
+	     vk::ShaderStageFlagBits::eIntersectionKHR},
+	    {"rcall",
+	     vk::ShaderStageFlagBits::eCallableKHR},
+	    {"rgen",
+	     vk::ShaderStageFlagBits::eRaygenKHR},
+	    {"task",
+	     vk::ShaderStageFlagBits::eTaskNV},
+	    {"mesh",
+	     vk::ShaderStageFlagBits::eMeshNV},
+	};
+
+	if (stage_map.find(stage) == stage_map.end())
+	{
+		throw std::runtime_error{fmt::format("Invalid shader stage {}", stage)};
+	}
+
+	return stage_map.at(stage);
+}
+
+OfflineShaderStrategy::OfflineShaderStrategy()
 {
 	load_atlas("generated/shader_atlas.json");
 }
 
-void OfflineShaderstrategy::load_atlas(const std::string &atlas_path)
+void OfflineShaderStrategy::load_atlas(const std::string &atlas_path)
 {
 	auto fs = fs::get_filesystem();
 	if (!fs->exists(atlas_path))
@@ -40,6 +82,7 @@ void OfflineShaderstrategy::load_atlas(const std::string &atlas_path)
 			auto variant_defines = variant_json["defines"].get<std::vector<std::string>>();
 			auto variant_file    = variant_json["file"].get<std::string>();
 			auto variant_hash    = variant_json["hash"].get<std::string>();
+			auto variant_stage   = variant_json["stage"].get<std::string>();
 
 			auto variant_code = fs->read_binary_file<uint8_t>(variant_file);
 			if (variant_code.empty())
@@ -50,7 +93,10 @@ void OfflineShaderstrategy::load_atlas(const std::string &atlas_path)
 
 			auto resources = reflector.reflect(variant_code);
 
-			ShaderPtr shader = std::make_shared<Shader>(std::vector<uint32_t>{variant_code.begin(), variant_code.end()}, std::move(resources));
+			ShaderPtr shader = std::make_shared<Shader>(
+			    std::vector<uint32_t>{variant_code.begin(), variant_code.end()},
+			    std::move(resources),
+			    stage_to_vk_stage(variant_stage));
 
 			auto it = atlas.shaders.find(shader_path);
 			if (it != atlas.shaders.end())
@@ -68,7 +114,7 @@ void OfflineShaderstrategy::load_atlas(const std::string &atlas_path)
 	LOGI("Loaded {} shaders", atlas.shaders.size());
 }
 
-ShaderPtr OfflineShaderstrategy::load_shader_from_atlas(const ShaderHandle &handle)
+ShaderPtr OfflineShaderStrategy::load_shader_from_atlas(const ShaderHandle &handle)
 {
 	try
 	{
@@ -82,17 +128,17 @@ ShaderPtr OfflineShaderstrategy::load_shader_from_atlas(const ShaderHandle &hand
 	}
 }
 
-ShaderPtr OfflineShaderstrategy::load_shader(const ShaderHandle &handle)
+ShaderPtr OfflineShaderStrategy::load_shader(const ShaderHandle &handle)
 {
 	return load_shader_from_atlas(handle);
 }
 
-std::vector<uint32_t> OfflineShaderstrategy::load_spirv(const ShaderHandle &handle)
+std::vector<uint32_t> OfflineShaderStrategy::load_spirv(const ShaderHandle &handle)
 {
 	return load_shader_from_atlas(handle)->code;
 }
 
-ShaderResourceSet OfflineShaderstrategy::reflect(const ShaderHandle &handle)
+ShaderResourceSet OfflineShaderStrategy::reflect(const ShaderHandle &handle)
 {
 	return load_shader_from_atlas(handle)->resource_set;
 }

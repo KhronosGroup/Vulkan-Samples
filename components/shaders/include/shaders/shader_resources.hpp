@@ -1,6 +1,5 @@
 #pragma once
 
-#include <nlohmann/json.hpp>
 #include <string>
 #include <vector>
 
@@ -66,8 +65,6 @@ struct ShaderResource
 	uint32_t size                   = UINT32_MAX;
 	uint32_t constant_id            = UINT32_MAX;
 	uint32_t qualifiers             = UINT32_MAX;
-
-	nlohmann::json to_json() const;
 };        // namespace vkb
 
 class ShaderResourceSet

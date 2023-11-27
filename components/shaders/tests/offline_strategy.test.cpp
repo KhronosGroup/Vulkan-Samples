@@ -5,7 +5,7 @@
 
 TEST_CASE("OfflineShaderStrategy", "[shaders]")
 {
-	vkb::OfflineShaderCacheStrategy offline_strategy;
+	vkb::OfflineShaderStrategy offline_strategy;
 
 	auto handle = vkb::ShaderHandleBuilder{}
 	                  .with_path("shaders/base.vert.glsl")

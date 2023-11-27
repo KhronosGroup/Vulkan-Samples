@@ -26,7 +26,6 @@ import subprocess
 from typing import Dict, List
 from filelock import FileLock
 
-
 PARENT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 GLSL_COMPILER_EXECUTABLE = "glslc"
@@ -46,8 +45,9 @@ SUPPORTED_SHADER_STAGES = [
     "rint",
     "rcall",
     "rgen",
-    "task", 
+    "task",
     "mesh"]
+
 
 def deduce_hlsl_profile(stage):
     if stage == "vert":
@@ -66,13 +66,16 @@ def deduce_hlsl_profile(stage):
         print("ERROR: unsupported shader stage")
         sys.exit(1)
 
+
 def make_dir_if_not_exists(file):
     dir = os.path.dirname(file)
     if not os.path.exists(dir):
         os.makedirs(dir)
 
+
 def check_required_executables():
-    execs = [GLSL_COMPILER_EXECUTABLE, HLSL_COMPILER_EXECUTABLE, SPIRV_VALIDATOR_EXECUTABLE]
+    execs = [GLSL_COMPILER_EXECUTABLE,
+             HLSL_COMPILER_EXECUTABLE, SPIRV_VALIDATOR_EXECUTABLE]
     for exec in execs:
         if not which(exec):
             print("ERROR: {} executable not found".format(exec))
@@ -87,6 +90,7 @@ def check_required_executables():
     global SPIRV_VALIDATOR_PATH
     SPIRV_VALIDATOR_PATH = which(SPIRV_VALIDATOR_EXECUTABLE)
 
+
 def load_variants(variants_file) -> List[List[str]]:
     variants_json = {}
     with open(variants_file, "r") as f:
@@ -95,7 +99,7 @@ def load_variants(variants_file) -> List[List[str]]:
 
     if not "variants" in variants_json or not isinstance(variants_json["variants"], list):
         return []
-    
+
     variants = []
     for variant in variants_json["variants"]:
         if not isinstance(variant["defines"], list):
@@ -103,24 +107,30 @@ def load_variants(variants_file) -> List[List[str]]:
         variants.append(variant["defines"])
 
     return variants
-    
+
 
 def process_hlsl_shader(input_file, output_file, stage) -> bool:
-    res = subprocess.run([HLSL_COMPILER_EXECUTABLE, "-fspv-target-env=vulkan1.3", "-T", deduce_hlsl_profile(stage), "-E", "main", "-Fo", output_file, "-spirv", input_file])
+    res = subprocess.run(
+        [HLSL_COMPILER_EXECUTABLE, "-fspv-target-env=vulkan1.3", "-T", deduce_hlsl_profile(stage), "-E", "main", "-Fo",
+         output_file, "-spirv", input_file])
 
     if res.returncode != 0:
         print("ERROR: shader compilation failed")
         return False
     return True
+
 
 def process_glsl_shader(input_file, output_file, stage) -> bool:
     # compile the shader
-    res = subprocess.run([GLSL_COMPILER_PATH, "-fshader-stage={}".format(stage), input_file, "--target-env=vulkan1.3", "-o", output_file])
+    res = subprocess.run(
+        [GLSL_COMPILER_PATH, "-fshader-stage={}".format(stage), input_file, "--target-env=vulkan1.3", "-o",
+         output_file])
 
     if res.returncode != 0:
         print("ERROR: shader compilation failed")
         return False
     return True
+
 
 def validate_spirv_shader(spirv_file) -> bool:
     res = subprocess.run([SPIRV_VALIDATOR_PATH, spirv_file])
@@ -130,6 +140,7 @@ def validate_spirv_shader(spirv_file) -> bool:
         print("ERROR: SPIR-V shader validation failed")
         return False
     return True
+
 
 def merge_atlas_file(atlas_file, atlas) -> bool:
     lock = FileLock(atlas_file + ".lock")
@@ -155,13 +166,13 @@ def merge_atlas_file(atlas_file, atlas) -> bool:
         print("ERROR: atlas file is not valid")
         lock.release()
         return False
-    
+
     for key in atlas:
         atlas_json[key] = atlas[key]
-    
+
     with open(atlas_file, "w") as f:
         f.write(json.dumps(atlas_json, indent=4))
-    
+
     lock.release()
     return True
 
@@ -173,15 +184,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("input_file", help="path to the shader source file")
     parser.add_argument("output_file", help="path to the compiled shader file")
-    parser.add_argument("--language", help="shader language", choices=["glsl", "hlsl"], default="glsl", required=True)
-    parser.add_argument("--variants", help="path to the shader variants file", required=True)
-    parser.add_argument("--atlas", help="path to the atlas file", required=True)
+    parser.add_argument("--language", help="shader language",
+                        choices=["glsl", "hlsl"], default="glsl", required=True)
+    parser.add_argument(
+        "--variants", help="path to the shader variants file", required=True)
+    parser.add_argument(
+        "--atlas", help="path to the atlas file", required=True)
     args = parser.parse_args()
 
     if not os.path.isfile(args.variants):
         print("ERROR: shader variants file does not exist")
         sys.exit(1)
-    
+
     # check that the input file exists
     if not os.path.isfile(args.input_file):
         print("ERROR: input file does not exist")
@@ -189,7 +203,7 @@ if __name__ == "__main__":
 
     make_dir_if_not_exists(args.output_file)
 
-     # get the file extension of the input file
+    # get the file extension of the input file
     file = os.path.split(args.input_file)[1]
     parts = file.split(".")
 
@@ -198,7 +212,7 @@ if __name__ == "__main__":
         sys.exit(1)
 
     stage = parts[1]
-    langauge = parts[2]    
+    langauge = parts[2]
 
     # check that the input file extension is supported
     if stage not in SUPPORTED_SHADER_STAGES:
@@ -219,8 +233,10 @@ if __name__ == "__main__":
     rel_output_file = os.path.relpath(args.output_file, PARENT_DIR)
 
     for defines in variants:
-        define_hash = hashlib.sha256("".join(defines).encode('utf-8')).hexdigest()
-        output_file = rel_output_file.replace(".spv", ".{}.spv".format(define_hash))
+        define_hash = hashlib.sha256(
+            "".join(defines).encode('utf-8')).hexdigest()
+        output_file = rel_output_file.replace(
+            ".spv", ".{}.spv".format(define_hash))
 
         result = False
         if args.language == "hlsl":
@@ -233,7 +249,7 @@ if __name__ == "__main__":
 
         if not result:
             pass
-            
+
         # check that the output file was created
         if not os.path.isfile(output_file):
             print("ERROR: output file was not created")
@@ -257,7 +273,8 @@ if __name__ == "__main__":
                 variant_entry[define_hash] = {
                     "defines": defines,
                     "file": variant_entry[entry]["file"],
-                    "hash": file_sha.hexdigest()
+                    "hash": file_sha.hexdigest(),
+                    "stage": stage
                 }
                 break
 
@@ -269,7 +286,8 @@ if __name__ == "__main__":
         variant_entry[define_hash] = {
             "defines": defines,
             "file": output_file,
-            "hash": file_sha.hexdigest()
+            "hash": file_sha.hexdigest(),
+            "stage": stage
         }
 
     atlas_entry = {
@@ -280,6 +298,6 @@ if __name__ == "__main__":
         rel_input_file: atlas_entry
     }
 
-    # append atlas file 
+    # append atlas file
     if not merge_atlas_file(args.atlas, atlas):
         sys.exit(1)

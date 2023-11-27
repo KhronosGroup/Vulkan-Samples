@@ -4,7 +4,7 @@ add_custom_target(shaders_full)
 add_dependencies(shaders_full shaders shader_reflections)
 
 # Require Python 3 for calling shader compile script
-find_package(PythonInterp 3 REQUIRED)
+find_package (Python3 COMPONENTS Interpreter Development)
 
 # We need to know the target language for the shader
 set(TARGET_LANGUAGE_VALUES glsl hlsl)

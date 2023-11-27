@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <vector>
 
+#include <vulkan/vulkan.hpp>
+
 #include "shaders/shader_handle.hpp"
 #include "shaders/shader_resources.hpp"
 
@@ -17,9 +19,10 @@ namespace vkb
 class Shader
 {
   public:
-	Shader(std::vector<uint32_t> &&code, ShaderResourceSet &&resource_set) :
+	Shader(std::vector<uint32_t> &&code, ShaderResourceSet &&resource_set, vk::ShaderStageFlagBits stage) :
 	    code{std::move(code)},
-	    resource_set{std::move(resource_set)}
+	    resource_set{std::move(resource_set)},
+	    stage{stage}
 	{
 	}
 	Shader(const Shader &)            = delete;
@@ -30,8 +33,9 @@ class Shader
 
 	~Shader() = default;
 
-	std::vector<uint32_t> code;
-	ShaderResourceSet     resource_set;
+	std::vector<uint32_t>   code;
+	ShaderResourceSet       resource_set;
+	vk::ShaderStageFlagBits stage;
 };
 
 using ShaderPtr = std::shared_ptr<Shader>;
@@ -52,39 +56,19 @@ class ShaderStrategy
 class ShaderCache : public ShaderStrategy
 {
   public:
-	static ShaderCache *get()
-	{
-		static ShaderCache instance;
-		return &instance;
-	}
-
 	~ShaderCache() = default;
 
-	void set_strategy(std::unique_ptr<ShaderStrategy> &&strategy)
-	{
-		this->strategy = std::move(strategy);
-	}
+	static ShaderCache *get();
 
-	ShaderPtr load_shader(const ShaderHandle &handle)
-	{
-		assert(strategy);
-		return strategy->load_shader(handle);
-	}
+	void                  set_strategy(std::unique_ptr<ShaderStrategy> &&strategy);
+	ShaderPtr             load_shader(const ShaderHandle &handle);
+	std::vector<uint32_t> load_spirv(const ShaderHandle &handle);
+	ShaderResourceSet     reflect(const ShaderHandle &handle);
 
-	std::vector<uint32_t> load_spirv(const ShaderHandle &handle)
-	{
-		assert(strategy);
-		return strategy->load_spirv(handle);
-	}
-
-	ShaderResourceSet reflect(const ShaderHandle &handle)
-	{
-		assert(strategy);
-		return strategy->reflect(handle);
-	}
+	vk::ShaderModule create_shader_module(const vk::Device &device, const ShaderHandle &handle);
 
   private:
-	ShaderCache() = default;
+	ShaderCache();
 
 	std::unique_ptr<ShaderStrategy> strategy;
 };

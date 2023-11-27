@@ -6,7 +6,6 @@
 
 namespace vkb
 {
-
 // An atlas entry contains a set of variants related to a single shader
 struct AtlasShader
 {
@@ -21,11 +20,11 @@ struct Atlas
 
 // An offline shader cache strategy
 // It loads shaders from an atlas which is generated offline
-class OfflineShaderstrategy : public ShaderStrategy
+class OfflineShaderStrategy : public ShaderStrategy
 {
   public:
-	OfflineShaderstrategy();
-	virtual ~OfflineShaderstrategy() = default;
+	OfflineShaderStrategy();
+	virtual ~OfflineShaderStrategy() = default;
 
 	virtual ShaderPtr             load_shader(const ShaderHandle &handle) override;
 	virtual std::vector<uint32_t> load_spirv(const ShaderHandle &handle) override;

@@ -28,6 +28,7 @@ vkb__register_component(
         include/shaders/shader_handle.hpp
         include/shaders/shader_resources.hpp
     SRC
+        src/shader_cache.cpp
         src/shader_resources.cpp
         src/reflectors/spirv_reflector.cpp
         src/strategies/offline_strategy.cpp
@@ -42,6 +43,7 @@ vkb__register_component(
 vkb__register_tests(
     NAME shaders
     SRC
+        tests/shader_cache.test.cpp
         tests/shader_handle.test.cpp
         tests/offline_strategy.test.cpp
     LINK_LIBS
