@@ -48,16 +48,16 @@ void DynamicState3MultisampleRasterization::request_gpu_features(vkb::PhysicalDe
 {
 	auto last_requested_extension_feature = gpu.get_last_requested_extension_feature();
 
-	extended_dynamic_state_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
+	extended_dynamic_state_features.sType                = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_FEATURES_EXT;
 	extended_dynamic_state_features.extendedDynamicState = VK_TRUE;
-	extended_dynamic_state_features.pNext = &extended_dynamic_state_2_features;
+	extended_dynamic_state_features.pNext                = &extended_dynamic_state_2_features;
 
-	extended_dynamic_state_2_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
+	extended_dynamic_state_2_features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_2_FEATURES_EXT;
 	extended_dynamic_state_2_features.pNext = &extended_dynamic_state_3_features;
 
-	extended_dynamic_state_3_features.sType                                       = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
+	extended_dynamic_state_3_features.sType                                     = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_EXTENDED_DYNAMIC_STATE_3_FEATURES_EXT;
 	extended_dynamic_state_3_features.extendedDynamicState3RasterizationSamples = VK_TRUE;
-	extended_dynamic_state_3_features.pNext                                       = VK_NULL_HANDLE;
+	extended_dynamic_state_3_features.pNext                                     = VK_NULL_HANDLE;
 
 	last_requested_extension_feature = &extended_dynamic_state_features;
 
@@ -258,16 +258,16 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 		{
 			const auto &vertex_buffer_pos    = node.sub_mesh->vertex_buffers.at("position");
 			const auto &vertex_buffer_normal = node.sub_mesh->vertex_buffers.at("normal");
-			const auto & vertex_buffer_uv = node.sub_mesh->vertex_buffers.at("texcoord_0");
+			const auto &vertex_buffer_uv     = node.sub_mesh->vertex_buffers.at("texcoord_0");
 			auto       &index_buffer         = node.sub_mesh->index_buffer;
 
 			// Pass data for the current node via push commands
 			auto node_material            = dynamic_cast<const vkb::sg::PBRMaterial *>(node.sub_mesh->get_material());
 			push_const_block.model_matrix = node.node->get_transform().get_world_matrix();
 
-			push_const_block.base_color_factor = node_material->base_color_factor;
-			push_const_block.metallic_factor   = node_material->metallic_factor;
-			push_const_block.roughness_factor  = node_material->roughness_factor;
+			push_const_block.base_color_factor    = node_material->base_color_factor;
+			push_const_block.metallic_factor      = node_material->metallic_factor;
+			push_const_block.roughness_factor     = node_material->roughness_factor;
 			push_const_block.normal_texture_index = -1;
 			push_const_block.pbr_texture_index    = -1;
 
@@ -275,8 +275,8 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 
 			if (base_color_texture != node_material->textures.end())
 			{
-				auto base_color_texture_name          = base_color_texture->second->get_name();
-				push_const_block.base_texture_index   = name_to_texture_id.at(base_color_texture_name);
+				auto base_color_texture_name        = base_color_texture->second->get_name();
+				push_const_block.base_texture_index = name_to_texture_id.at(base_color_texture_name);
 			}
 
 			auto normal_texture = node_material->textures.find("normal_texture");
@@ -292,7 +292,7 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 			if (metallic_roughness_texture != node_material->textures.end())
 			{
 				auto metallic_roughness_texture_name = metallic_roughness_texture->second->get_name();
-				push_const_block.pbr_texture_index = name_to_texture_id.at(metallic_roughness_texture_name);
+				push_const_block.pbr_texture_index   = name_to_texture_id.at(metallic_roughness_texture_name);
 			}
 
 			vkCmdPushConstants(draw_cmd_buffers[i], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(push_const_block), &push_const_block);
@@ -314,7 +314,7 @@ void DynamicState3MultisampleRasterization::build_command_buffers()
 	}
 }
 
-void DynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer& cmd_buffer)
+void DynamicState3MultisampleRasterization::draw_ui(VkCommandBuffer &cmd_buffer)
 {
 	if (gui)
 	{
@@ -361,7 +361,7 @@ void DynamicState3MultisampleRasterization::load_assets()
 
 	for (auto texture : textures)
 	{
-		const auto &name = texture->get_name();
+		const auto           &name  = texture->get_name();
 		auto                  image = texture->get_image();
 		VkDescriptorImageInfo imageInfo;
 		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -377,8 +377,7 @@ void DynamicState3MultisampleRasterization::setup_descriptor_pool()
 {
 	std::vector<VkDescriptorPoolSize> pool_sizes = {
 	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 4),
-	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(image_infos.size()))
-	};
+	    vkb::initializers::descriptor_pool_size(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, static_cast<uint32_t>(image_infos.size()))};
 
 	VkDescriptorPoolCreateInfo descriptor_pool_create_info =
 	    vkb::initializers::descriptor_pool_create_info(static_cast<uint32_t>(pool_sizes.size()), pool_sizes.data(), 2);
@@ -420,12 +419,11 @@ void DynamicState3MultisampleRasterization::setup_descriptor_sets()
 
 	VK_CHECK(vkAllocateDescriptorSets(get_device().get_handle(), &alloc_info, &descriptor_set));
 
-	VkDescriptorBufferInfo            matrix_buffer_descriptor = create_descriptor(*uniform_buffer);
+	VkDescriptorBufferInfo matrix_buffer_descriptor = create_descriptor(*uniform_buffer);
 
-	std::vector<VkWriteDescriptorSet> write_descriptor_sets    = {
-        vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
-		vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_infos.data(), image_infos.size())
-	};
+	std::vector<VkWriteDescriptorSet> write_descriptor_sets = {
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 0, &matrix_buffer_descriptor),
+	    vkb::initializers::write_descriptor_set(descriptor_set, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, image_infos.data(), image_infos.size())};
 	vkUpdateDescriptorSets(get_device().get_handle(), static_cast<uint32_t>(write_descriptor_sets.size()), write_descriptor_sets.data(), 0, nullptr);
 }
 
@@ -712,7 +710,7 @@ void DynamicState3MultisampleRasterization::prepare_pipelines()
 
 	VkPipelineMultisampleStateCreateInfo multisample_state =
 	    vkb::initializers::pipeline_multisample_state_create_info(
-	        VK_SAMPLE_COUNT_1_BIT, // disable multisampling during configuration
+	        VK_SAMPLE_COUNT_1_BIT,        // disable multisampling during configuration
 	        0);
 
 	std::vector<VkDynamicState> dynamic_state_enables = {

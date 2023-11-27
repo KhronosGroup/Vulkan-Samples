@@ -25,11 +25,11 @@ class DynamicState3MultisampleRasterization : public ApiVulkanSample
 	DynamicState3MultisampleRasterization();
 	virtual ~DynamicState3MultisampleRasterization();
 
-private:
+  private:
 	std::unique_ptr<vkb::core::Buffer> vertex_buffer = nullptr;
 	std::unique_ptr<vkb::core::Buffer> index_buffer  = nullptr;
 
-	std::unique_ptr<vkb::sg::Scene> scene;
+	std::unique_ptr<vkb::sg::Scene>    scene;
 	std::vector<VkDescriptorImageInfo> image_infos;
 	std::map<std::string, int>         name_to_texture_id;
 
@@ -73,12 +73,12 @@ private:
 		glm::mat4 model_matrix;
 
 		glm::vec4 base_color_factor;
-		float metallic_factor;
-		float roughness_factor;
+		float     metallic_factor;
+		float     roughness_factor;
 
-		uint32_t  base_texture_index;
-		uint32_t  normal_texture_index;
-		uint32_t  pbr_texture_index;
+		uint32_t base_texture_index;
+		uint32_t normal_texture_index;
+		uint32_t pbr_texture_index;
 
 	} push_const_block;
 
@@ -98,19 +98,19 @@ private:
 
 	struct GUI_settings
 	{
-		int gui_sample_count = 0;
+		int                      gui_sample_count = 0;
 		std::vector<std::string> sample_counts;
 	} gui_settings;
 
 	std::vector<std::unique_ptr<FrameBufferAttachment>> framebuffer_attachments;
 
-	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT extended_dynamic_state_features{};
+	VkPhysicalDeviceExtendedDynamicStateFeaturesEXT  extended_dynamic_state_features{};
 	VkPhysicalDeviceExtendedDynamicState2FeaturesEXT extended_dynamic_state_2_features{};
 	VkPhysicalDeviceExtendedDynamicState3FeaturesEXT extended_dynamic_state_3_features{};
 
 	VkPhysicalDeviceExtendedDynamicState3PropertiesEXT props;
 
-public:
+  public:
 	virtual void build_command_buffers() override;
 	virtual void request_gpu_features(vkb::PhysicalDevice &gpu) override;
 	virtual bool prepare(const vkb::ApplicationOptions &options) override;
@@ -129,7 +129,7 @@ public:
 	void         prepare_supported_sample_count_list();
 	void         create_color_attachment(VkFormat format, FrameBufferAttachment *attachment);
 	void         create_depth_attachment(VkFormat format, FrameBufferAttachment *attachment);
-	void         draw_ui(VkCommandBuffer&);
+	void         draw_ui(VkCommandBuffer &);
 	void         update_resources();
 };
 
