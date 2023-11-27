@@ -29,7 +29,6 @@ VKBP_DISABLE_WARNINGS()
 VKBP_ENABLE_WARNINGS()
 
 #include "buffer_pool.h"
-#include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "common/vk_initializers.h"

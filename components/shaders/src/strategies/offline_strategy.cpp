@@ -8,6 +8,8 @@
 
 #include <shaders/reflectors/spirv_reflector.hpp>
 
+VULKAN_HPP_DEFAULT_DISPATCH_LOADER_DYNAMIC_STORAGE
+
 namespace vkb
 {
 
@@ -91,7 +93,7 @@ void OfflineShaderStrategy::load_atlas(const std::string &atlas_path)
 				continue;
 			}
 
-			auto resources = reflector.reflect(variant_code);
+			auto resources = reflector.reflect(stage_to_vk_stage(variant_stage), variant_code);
 
 			ShaderPtr shader = std::make_shared<Shader>(
 			    std::vector<uint32_t>{variant_code.begin(), variant_code.end()},

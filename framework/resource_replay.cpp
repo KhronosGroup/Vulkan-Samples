@@ -17,7 +17,6 @@
 
 #include "resource_replay.h"
 
-#include "common/logging.h"
 #include "common/vk_common.h"
 #include "rendering/pipeline_state.h"
 #include "resource_cache.h"
@@ -106,7 +105,6 @@ void ResourceReplay::create_shader_module(ResourceCache &resource_cache, std::is
 	read_processes(stream, processes);
 
 	ShaderSource shader_source{};
-	shader_source.set_source(std::move(glsl_source));
 	ShaderVariant shader_variant(std::move(preamble), std::move(processes));
 
 	auto &shader_module = resource_cache.request_shader_module(stage, shader_source, shader_variant);

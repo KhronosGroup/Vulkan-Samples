@@ -32,14 +32,16 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	// Collate them all into a map that is indexed by the name of the resource
 	for (auto *shader_module : shader_modules)
 	{
-		for (const auto &shader_resource : shader_module->get_resources())
+		auto &rs = shader_module->get_resources();
+
+		for (const auto &shader_resource : rs.resources())
 		{
 			std::string key = shader_resource.name;
 
 			// Since 'Input' and 'Output' resources can have the same name, we modify the key string
 			if (shader_resource.type == ShaderResourceType::Input || shader_resource.type == ShaderResourceType::Output)
 			{
-				key = std::to_string(shader_resource.stages) + "_" + key;
+				key = std::to_string(rs.c_stage()) + "_" + key;
 			}
 
 			auto it = shader_resources.find(key);
@@ -102,7 +104,8 @@ PipelineLayout::PipelineLayout(Device &device, const std::vector<ShaderModule *>
 	std::vector<VkPushConstantRange> push_constant_ranges;
 	for (auto &push_constant_resource : get_resources(ShaderResourceType::PushConstant))
 	{
-		push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
+		// TODO
+		// push_constant_ranges.push_back({push_constant_resource.stages, push_constant_resource.offset, push_constant_resource.size});
 	}
 
 	VkPipelineLayoutCreateInfo create_info{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};

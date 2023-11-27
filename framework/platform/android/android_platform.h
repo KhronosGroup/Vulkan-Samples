@@ -62,8 +62,6 @@ class AndroidPlatform : public Platform
 
 	std::string log_output;
 
-	virtual std::vector<spdlog::sink_ptr> get_platform_sinks() override;
-
 	bool surface_ready{false};
 };
 

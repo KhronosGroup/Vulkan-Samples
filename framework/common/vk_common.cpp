@@ -19,8 +19,8 @@
 #include "vk_common.h"
 
 #include <fmt/format.h>
+#include <shaders/shader_cache.hpp>
 
-#include "glsl_compiler.h"
 #include "platform/filesystem.h"
 
 std::ostream &operator<<(std::ostream &os, const VkResult result)
@@ -376,30 +376,24 @@ int32_t get_bits_per_pixel(VkFormat format)
 
 VkShaderModule load_shader(const std::string &filename, VkDevice device, VkShaderStageFlagBits stage)
 {
-	vkb::GLSLCompiler glsl_compiler;
+	auto *cache = vkb::ShaderCache::get();
 
-	auto buffer = vkb::fs::read_shader_binary(filename);
+	auto handle =
+	    vkb::ShaderHandleBuilder{}
+	        .with_path(filename)
+	        .build();
 
-	std::string file_ext = filename;
-
-	// Extract extension name from the glsl shader file
-	file_ext = file_ext.substr(file_ext.find_last_of(".") + 1);
-
-	std::vector<uint32_t> spirv;
-	std::string           info_log;
-
-	// Compile the GLSL source
-	if (!glsl_compiler.compile_to_spirv(vkb::find_shader_stage(file_ext), buffer, "main", {}, spirv, info_log))
+	auto shader = cache->load_shader(handle);
+	if (!shader)
 	{
-		LOGE("Failed to compile shader, Error: {}", info_log.c_str());
-		return VK_NULL_HANDLE;
+		throw std::runtime_error("Failed to load shader: " + filename);
 	}
 
 	VkShaderModule           shader_module;
 	VkShaderModuleCreateInfo module_create_info{};
 	module_create_info.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-	module_create_info.codeSize = spirv.size() * sizeof(uint32_t);
-	module_create_info.pCode    = spirv.data();
+	module_create_info.codeSize = shader->code.size() * sizeof(uint32_t);
+	module_create_info.pCode    = shader->code.data();
 
 	VK_CHECK(vkCreateShaderModule(device, &module_create_info, NULL, &shader_module));
 

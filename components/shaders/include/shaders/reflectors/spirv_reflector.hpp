@@ -12,7 +12,7 @@ class SpirvReflector
 	SpirvReflector()  = default;
 	~SpirvReflector() = default;
 
-	ShaderResourceSet reflect(const std::vector<uint8_t> &code) const;
+	ShaderResourceSet reflect(vk::ShaderStageFlagBits stage, const std::vector<uint8_t> &code) const;
 
   private:
 	std::vector<ShaderResource> reflect_input_variables(const SpvReflectShaderModule &module) const;

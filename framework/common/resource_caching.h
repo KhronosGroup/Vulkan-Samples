@@ -37,7 +37,7 @@ struct hash<vkb::ShaderSource>
 	{
 		std::size_t result = 0;
 
-		vkb::hash_combine(result, shader_source.get_id());
+		vkb::hash_combine(result, shader_source.handle({}).hash);
 
 		return result;
 	}
@@ -196,30 +196,6 @@ struct hash<vkb::SpecializationConstantState>
 				vkb::hash_combine(result, data);
 			}
 		}
-
-		return result;
-	}
-};
-
-template <>
-struct hash<vkb::ShaderResource>
-{
-	std::size_t operator()(const vkb::ShaderResource &shader_resource) const
-	{
-		std::size_t result = 0;
-
-		if (shader_resource.type == vkb::ShaderResourceType::Input ||
-		    shader_resource.type == vkb::ShaderResourceType::Output ||
-		    shader_resource.type == vkb::ShaderResourceType::PushConstant ||
-		    shader_resource.type == vkb::ShaderResourceType::SpecializationConstant)
-		{
-			return result;
-		}
-
-		vkb::hash_combine(result, shader_resource.set);
-		vkb::hash_combine(result, shader_resource.binding);
-		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(shader_resource.type));
-		vkb::hash_combine(result, shader_resource.mode);
 
 		return result;
 	}
@@ -491,7 +467,7 @@ struct hash<vkb::PipelineState>
 		vkb::hash_combine(result, pipeline_state.get_input_assembly_state().primitive_restart_enable);
 		vkb::hash_combine(result, static_cast<std::underlying_type<VkPrimitiveTopology>::type>(pipeline_state.get_input_assembly_state().topology));
 
-		//VkPipelineViewportStateCreateInfo
+		// VkPipelineViewportStateCreateInfo
 		vkb::hash_combine(result, pipeline_state.get_viewport_state().viewport_count);
 		vkb::hash_combine(result, pipeline_state.get_viewport_state().scissor_count);
 
@@ -551,7 +527,7 @@ inline void hash_param(size_t & /*seed*/, const VkPipelineCache & /*value*/)
 
 template <>
 inline void hash_param<std::vector<uint8_t>>(
-    size_t &                    seed,
+    size_t                     &seed,
     const std::vector<uint8_t> &value)
 {
 	hash_combine(seed, std::string{value.begin(), value.end()});
@@ -559,7 +535,7 @@ inline void hash_param<std::vector<uint8_t>>(
 
 template <>
 inline void hash_param<std::vector<Attachment>>(
-    size_t &                       seed,
+    size_t                        &seed,
     const std::vector<Attachment> &value)
 {
 	for (auto &attachment : value)
@@ -570,7 +546,7 @@ inline void hash_param<std::vector<Attachment>>(
 
 template <>
 inline void hash_param<std::vector<LoadStoreInfo>>(
-    size_t &                          seed,
+    size_t                           &seed,
     const std::vector<LoadStoreInfo> &value)
 {
 	for (auto &load_store_info : value)
@@ -581,7 +557,7 @@ inline void hash_param<std::vector<LoadStoreInfo>>(
 
 template <>
 inline void hash_param<std::vector<SubpassInfo>>(
-    size_t &                        seed,
+    size_t                         &seed,
     const std::vector<SubpassInfo> &value)
 {
 	for (auto &subpass_info : value)
@@ -592,7 +568,7 @@ inline void hash_param<std::vector<SubpassInfo>>(
 
 template <>
 inline void hash_param<std::vector<ShaderModule *>>(
-    size_t &                           seed,
+    size_t                            &seed,
     const std::vector<ShaderModule *> &value)
 {
 	for (auto &shader_module : value)
@@ -603,7 +579,7 @@ inline void hash_param<std::vector<ShaderModule *>>(
 
 template <>
 inline void hash_param<std::vector<ShaderResource>>(
-    size_t &                           seed,
+    size_t                            &seed,
     const std::vector<ShaderResource> &value)
 {
 	for (auto &resource : value)
@@ -614,7 +590,7 @@ inline void hash_param<std::vector<ShaderResource>>(
 
 template <>
 inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>>>(
-    size_t &                                                              seed,
+    size_t                                                               &seed,
     const std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferInfo>> &value)
 {
 	for (auto &binding_set : value)
@@ -631,7 +607,7 @@ inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorBufferI
 
 template <>
 inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>>>(
-    size_t &                                                             seed,
+    size_t                                                              &seed,
     const std::map<uint32_t, std::map<uint32_t, VkDescriptorImageInfo>> &value)
 {
 	for (auto &binding_set : value)
@@ -647,7 +623,7 @@ inline void hash_param<std::map<uint32_t, std::map<uint32_t, VkDescriptorImageIn
 }
 
 template <typename T, typename... Args>
-inline void hash_param(size_t &seed, const T &first_arg, const Args &... args)
+inline void hash_param(size_t &seed, const T &first_arg, const Args &...args)
 {
 	hash_param(seed, first_arg);
 
@@ -657,7 +633,7 @@ inline void hash_param(size_t &seed, const T &first_arg, const Args &... args)
 template <class T, class... A>
 struct RecordHelper
 {
-	size_t record(ResourceRecord & /*recorder*/, A &... /*args*/)
+	size_t record(ResourceRecord & /*recorder*/, A &.../*args*/)
 	{
 		return 0;
 	}
@@ -670,7 +646,7 @@ struct RecordHelper
 template <class... A>
 struct RecordHelper<ShaderModule, A...>
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_shader_module(args...);
 	}
@@ -684,7 +660,7 @@ struct RecordHelper<ShaderModule, A...>
 template <class... A>
 struct RecordHelper<PipelineLayout, A...>
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_pipeline_layout(args...);
 	}
@@ -698,7 +674,7 @@ struct RecordHelper<PipelineLayout, A...>
 template <class... A>
 struct RecordHelper<RenderPass, A...>
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_render_pass(args...);
 	}
@@ -712,7 +688,7 @@ struct RecordHelper<RenderPass, A...>
 template <class... A>
 struct RecordHelper<GraphicsPipeline, A...>
 {
-	size_t record(ResourceRecord &recorder, A &... args)
+	size_t record(ResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_graphics_pipeline(args...);
 	}
@@ -725,7 +701,7 @@ struct RecordHelper<GraphicsPipeline, A...>
 }        // namespace
 
 template <class T, class... A>
-T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map<std::size_t, T> &resources, A &... args)
+T &request_resource(Device &device, ResourceRecord *recorder, std::unordered_map<std::size_t, T> &resources, A &...args)
 {
 	RecordHelper<T, A...> record_helper;
 

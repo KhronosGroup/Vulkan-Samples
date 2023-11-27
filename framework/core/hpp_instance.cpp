@@ -16,8 +16,6 @@
  */
 
 #include <core/hpp_instance.h>
-
-#include <common/logging.h>
 #include <core/hpp_physical_device.h>
 #include <volk.h>
 

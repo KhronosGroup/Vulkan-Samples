@@ -16,7 +16,6 @@
  */
 
 #include "shader_object.h"
-#include <glsl_compiler.h>
 #include <heightmap.h>
 #include <unordered_map>
 

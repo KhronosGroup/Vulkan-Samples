@@ -17,7 +17,6 @@
 
 #include "application.h"
 
-#include "common/logging.h"
 #include "platform/window.h"
 
 namespace vkb

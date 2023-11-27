@@ -24,7 +24,6 @@
 #define USE_FRAMEWORK_ACCELERATION_STRUCTURE
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 #include <core/acceleration_structure.h>
 
 class RaytracingExtended : public ApiVulkanSample

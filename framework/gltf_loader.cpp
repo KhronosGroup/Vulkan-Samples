@@ -29,8 +29,9 @@ VKBP_DISABLE_WARNINGS()
 #include <glm/gtc/type_ptr.hpp>
 VKBP_ENABLE_WARNINGS()
 
+#include <core/util/logging.hpp>
+
 #include "api_vulkan_sample.h"
-#include "common/logging.h"
 #include "common/utils.h"
 #include "common/vk_common.h"
 #include "core/device.h"

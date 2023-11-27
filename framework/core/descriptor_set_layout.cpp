@@ -21,6 +21,8 @@
 #include "physical_device.h"
 #include "shader_module.h"
 
+#include <shaders/shader_resources.hpp>
+
 namespace vkb
 {
 namespace
@@ -94,10 +96,10 @@ inline bool validate_flags(const PhysicalDevice &gpu, const std::vector<VkDescri
 }
 }        // namespace
 
-DescriptorSetLayout::DescriptorSetLayout(Device &                           device,
+DescriptorSetLayout::DescriptorSetLayout(Device                            &device,
                                          const uint32_t                     set_index,
                                          const std::vector<ShaderModule *> &shader_modules,
-                                         const std::vector<ShaderResource> &resource_set) :
+                                         const ShaderResourceSet           &resource_set) :
     device{device},
     set_index{set_index},
     shader_modules{shader_modules}
@@ -106,7 +108,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 	//        This way, different pipelines (with different shaders / shader variants) will get
 	//        different descriptor set layouts (incl. appropriate name -> binding lookups)
 
-	for (auto &resource : resource_set)
+	for (auto &resource : resource_set.resources())
 	{
 		// Skip shader resources whitout a binding point
 		if (resource.type == ShaderResourceType::Input ||
@@ -138,7 +140,7 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 		layout_binding.binding         = resource.binding;
 		layout_binding.descriptorCount = resource.array_size;
 		layout_binding.descriptorType  = descriptor_type;
-		layout_binding.stageFlags      = static_cast<VkShaderStageFlags>(resource.stages);
+		layout_binding.stageFlags      = static_cast<VkShaderStageFlags>(resource_set.c_stage());
 
 		bindings.push_back(layout_binding);
 
@@ -156,12 +158,14 @@ DescriptorSetLayout::DescriptorSetLayout(Device &                           devi
 	create_info.pBindings    = bindings.data();
 
 	// Handle update-after-bind extensions
-	if (std::find_if(resource_set.begin(), resource_set.end(),
-	                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resource_set.end())
+
+	const auto &resources = resource_set.resources();
+	if (std::find_if(resources.begin(), resources.end(),
+	                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::UpdateAfterBind; }) != resources.end())
 	{
 		// Spec states you can't have ANY dynamic resources if you have one of the bindings set to update-after-bind
-		if (std::find_if(resource_set.begin(), resource_set.end(),
-		                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::Dynamic; }) != resource_set.end())
+		if (std::find_if(resources.begin(), resources.end(),
+		                 [](const ShaderResource &shader_resource) { return shader_resource.mode == ShaderResourceMode::Dynamic; }) != resources.end())
 		{
 			throw std::runtime_error("Cannot create descriptor set layout, dynamic resources are not allowed if at least one resource is update-after-bind.");
 		}

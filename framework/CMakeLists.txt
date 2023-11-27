@@ -22,7 +22,6 @@ project(framework LANGUAGES C CXX)
 set(FRAMEWORK_FILES
     # Header Files
     gui.h
-    glsl_compiler.h
     gltf_loader.h
     buffer_pool.h
     debug_info.h
@@ -40,7 +39,6 @@ set(FRAMEWORK_FILES
     hpp_api_vulkan_sample.h
     hpp_buffer_pool.h
     hpp_fence_pool.h
-    hpp_glsl_compiler.h
     hpp_gltf_loader.h
     hpp_gui.h
     hpp_resource_binding_state.h
@@ -51,7 +49,6 @@ set(FRAMEWORK_FILES
     hpp_vulkan_sample.h
     # Source Files
     gui.cpp
-    glsl_compiler.cpp
     gltf_loader.cpp
     debug_info.cpp
     buffer_pool.cpp
@@ -78,7 +75,6 @@ set(COMMON_FILES
     common/vk_initializers.h
     common/glm_common.h 
     common/resource_caching.h
-    common/logging.h
     common/helpers.h
     common/error.h
     common/utils.h
@@ -269,7 +265,6 @@ set(CORE_FILES
     core/hpp_queue.h
 	core/hpp_render_pass.h
     core/hpp_sampler.h
-    core/hpp_shader_module.h
     core/hpp_swapchain.h
     core/hpp_vulkan_resource.h
     core/vulkan_resource.h
@@ -509,6 +504,7 @@ target_include_directories(${PROJECT_NAME} PUBLIC $<TARGET_PROPERTY:plugins,INCL
 # Link third party libraries
 target_link_libraries(${PROJECT_NAME} PUBLIC
     vkb__core
+    vkb__shaders
     volk
     ktx
     stb

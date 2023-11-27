@@ -20,6 +20,9 @@
 #include "common/helpers.h"
 #include "common/vk_common.h"
 
+#include <shaders/shader_handle.hpp>
+#include <shaders/shader_resources.hpp>
+
 #if defined(VK_USE_PLATFORM_XLIB_KHR)
 #	undef None
 #endif
@@ -27,7 +30,6 @@
 namespace vkb
 {
 class Device;
-
 
 /**
  * @brief Adds support for C style preprocessor macros to glsl shaders
@@ -95,22 +97,21 @@ class ShaderSource
   public:
 	ShaderSource() = default;
 
-	ShaderSource(const std::string &filename);
+	ShaderSource(const std::string &filename) :
+	    filename{filename}
+	{}
 
-	size_t get_id() const;
-
-	const std::string &get_filename() const;
-
-	void set_source(const std::string &source);
-
-	const std::string &get_source() const;
+	// A temporary shim to bridge the gap between the old and new shader system
+	ShaderHandle handle(const std::vector<std::string> &defines) const
+	{
+		return ShaderHandleBuilder()
+		    .with_path(filename)
+		    .with_defines(defines)
+		    .build();
+	}
 
   private:
-	size_t id;
-
 	std::string filename;
-
-	std::string source;
 };
 
 /**
@@ -125,11 +126,11 @@ class ShaderSource
 class ShaderModule
 {
   public:
-	ShaderModule(Device &              device,
+	ShaderModule(Device               &device,
 	             VkShaderStageFlagBits stage,
-	             const ShaderSource &  glsl_source,
-	             const std::string &   entry_point,
-	             const ShaderVariant & shader_variant);
+	             const ShaderSource   &glsl_source,
+	             const std::string    &entry_point,
+	             const ShaderVariant  &shader_variant);
 
 	ShaderModule(const ShaderModule &) = delete;
 
@@ -145,7 +146,7 @@ class ShaderModule
 
 	const std::string &get_entry_point() const;
 
-	const std::vector<ShaderResource> &get_resources() const;
+	const ShaderResourceSet &get_resources() const;
 
 	const std::string &get_info_log() const;
 
@@ -186,7 +187,7 @@ class ShaderModule
 	/// Compiled source
 	std::vector<uint32_t> spirv;
 
-	std::vector<ShaderResource> resources;
+	ShaderResourceSet resources;
 
 	std::string info_log;
 };

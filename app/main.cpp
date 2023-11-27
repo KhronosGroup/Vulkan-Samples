@@ -15,7 +15,6 @@
  * limitations under the License.
  */
 
-#include "common/logging.h"
 #include "platform/platform.h"
 #include "plugins/plugins.h"
 

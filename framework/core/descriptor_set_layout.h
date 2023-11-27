@@ -26,7 +26,7 @@ class DescriptorPool;
 class Device;
 class ShaderModule;
 
-struct ShaderResource;
+class ShaderResourceSet;
 
 /**
  * @brief Caches DescriptorSet objects for the shader's set index.
@@ -42,10 +42,10 @@ class DescriptorSetLayout
 	 * @param shader_modules The shader modules this set layout will be used for
 	 * @param resource_set A grouping of shader resources belonging to the same set
 	 */
-	DescriptorSetLayout(Device &                           device,
+	DescriptorSetLayout(Device                            &device,
 	                    const uint32_t                     set_index,
 	                    const std::vector<ShaderModule *> &shader_modules,
-	                    const std::vector<ShaderResource> &resource_set);
+	                    const ShaderResourceSet           &resource_set);
 
 	DescriptorSetLayout(const DescriptorSetLayout &) = delete;
 

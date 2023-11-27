@@ -203,7 +203,7 @@ HPPGui::HPPGui(HPPVulkanSample &sample_, const vkb::Window &window, const vkb::s
 	vkb::core::HPPShaderSource vert_shader("imgui.vert.glsl");
 	vkb::core::HPPShaderSource frag_shader("imgui.frag.glsl");
 
-	std::vector<vkb::core::HPPShaderModule *> shader_modules;
+	std::vector<vkb::core::ShaderModule *> shader_modules;
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eVertex, vert_shader, {}));
 	shader_modules.push_back(&device.get_resource_cache().request_shader_module(vk::ShaderStageFlagBits::eFragment, frag_shader, {}));
 

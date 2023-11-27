@@ -15,5 +15,5 @@ TEST_CASE("OfflineShaderStrategy", "[shaders]")
 	auto shader = offline_strategy.load_shader(handle);
 
 	REQUIRE(shader->code.size() > 0);
-	REQUIRE(shader->resource_set.get_resources().size() > 0);
+	REQUIRE(shader->resource_set.resources().size() > 0);
 }

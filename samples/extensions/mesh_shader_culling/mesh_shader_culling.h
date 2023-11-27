@@ -21,7 +21,6 @@
 #pragma once
 
 #include "api_vulkan_sample.h"
-#include "glsl_compiler.h"
 
 class MeshShaderCulling : public ApiVulkanSample
 {

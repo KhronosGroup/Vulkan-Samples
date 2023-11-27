@@ -25,7 +25,7 @@ namespace vkb
 namespace
 {
 template <class T, class... A>
-T &request_resource(Device &device, ResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &... args)
+T &request_resource(Device &device, ResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
 {
 	std::lock_guard<std::mutex> guard(resource_mutex);
 
@@ -70,7 +70,7 @@ PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderM
 
 DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t                     set_index,
                                                                   const std::vector<ShaderModule *> &shader_modules,
-                                                                  const std::vector<ShaderResource> &set_resources)
+                                                                  const ShaderResourceSet           &set_resources)
 {
 	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }

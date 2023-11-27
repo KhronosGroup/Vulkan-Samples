@@ -101,22 +101,22 @@ class ResourceCache
 
 	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                     set_index,
 	                                                   const std::vector<ShaderModule *> &shader_modules,
-	                                                   const std::vector<ShaderResource> &set_resources);
+	                                                   const ShaderResourceSet           &set_resources);
 
 	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
 
 	ComputePipeline &request_compute_pipeline(PipelineState &pipeline_state);
 
-	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
+	DescriptorSet &request_descriptor_set(DescriptorSetLayout                      &descriptor_set_layout,
 	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                      const BindingMap<VkDescriptorImageInfo> & image_infos);
+	                                      const BindingMap<VkDescriptorImageInfo>  &image_infos);
 
-	RenderPass &request_render_pass(const std::vector<Attachment> &   attachments,
+	RenderPass &request_render_pass(const std::vector<Attachment>    &attachments,
 	                                const std::vector<LoadStoreInfo> &load_store_infos,
-	                                const std::vector<SubpassInfo> &  subpasses);
+	                                const std::vector<SubpassInfo>   &subpasses);
 
 	Framebuffer &request_framebuffer(const RenderTarget &render_target,
-	                                 const RenderPass &  render_pass);
+	                                 const RenderPass   &render_pass);
 
 	void clear_pipelines();
 

@@ -17,7 +17,6 @@
 
 #include "full_screen_exclusive.h"
 
-#include "glsl_compiler.h"
 #include "platform/filesystem.h"
 #include "platform/window.h"
 

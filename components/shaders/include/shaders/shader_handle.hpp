@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 #include <numeric>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -46,7 +47,13 @@ class ShaderHandleBuilder
 
 	ShaderHandleBuilder &with_define(const std::string &define)
 	{
-		defines.push_back(define);
+		defines.emplace(define);
+		return *this;
+	}
+
+	ShaderHandleBuilder &with_defines(const std::vector<std::string> &in_defines)
+	{
+		defines.insert(in_defines.begin(), in_defines.end());
 		return *this;
 	}
 
@@ -56,12 +63,12 @@ class ShaderHandleBuilder
 			return a + b;
 		});
 
-		return {sha256(path + define_str), path, sha256(define_str), defines};
+		return {sha256(path + define_str), path, sha256(define_str), {defines.begin(), defines.end()}};
 	}
 
   private:
-	std::string              path;
-	std::vector<std::string> defines;
+	std::string           path;
+	std::set<std::string> defines;
 };
 
 }        // namespace vkb

@@ -36,9 +36,7 @@ namespace core
 {
 class HPPPipelineLayout;
 class HPPRenderPass;
-class HPPShaderModule;
 class HPPShaderSource;
-class HPPShaderVariant;
 struct HPPSubpassInfo;
 }        // namespace core
 
@@ -59,7 +57,7 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		                                                       reinterpret_cast<vkb::PipelineState &>(pipeline_state));
 	}
 
-	size_t register_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
+	size_t register_pipeline_layout(const std::vector<vkb::core::ShaderModule *> &shader_modules)
 	{
 		return vkb::ResourceRecord::register_pipeline_layout(reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules));
 	}
@@ -99,7 +97,7 @@ class HPPResourceRecord : private vkb::ResourceRecord
 		vkb::ResourceRecord::set_render_pass(index, reinterpret_cast<vkb::RenderPass const &>(render_pass));
 	}
 
-	void set_shader_module(size_t index, const vkb::core::HPPShaderModule &shader_module)
+	void set_shader_module(size_t index, const vkb::core::ShaderModule &shader_module)
 	{
 		vkb::ResourceRecord::set_shader_module(index, reinterpret_cast<vkb::ShaderModule const &>(shader_module));
 	}

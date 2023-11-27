@@ -17,7 +17,6 @@
 
 #include "core/swapchain.h"
 
-#include "common/logging.h"
 #include "device.h"
 
 namespace vkb

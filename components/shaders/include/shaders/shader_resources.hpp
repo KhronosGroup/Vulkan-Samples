@@ -3,6 +3,9 @@
 #include <string>
 #include <vector>
 
+#include <core/util/hash.hpp>
+#include <vulkan/vulkan.hpp>
+
 namespace vkb
 {
 
@@ -50,9 +53,10 @@ struct ShaderResourceQualifiers
 /// Used by the shader module.
 struct ShaderResource
 {
-	std::string        name;
-	ShaderResourceType type;
-	ShaderResourceMode mode;
+	std::string          name;
+	ShaderResourceType   type;
+	ShaderResourceMode   mode;
+	vk::ShaderStageFlags stages;
 
 	uint32_t set                    = UINT32_MAX;
 	uint32_t binding                = UINT32_MAX;
@@ -72,30 +76,80 @@ class ShaderResourceSet
   public:
 	ShaderResourceSet() = default;
 
-	ShaderResourceSet(std::vector<ShaderResource> &&resources) :
-	    resources{std::move(resources)} {};
+	ShaderResourceSet(vk::ShaderStageFlagBits stage, std::vector<ShaderResource> &&resources) :
+	    m_stage{stage},
+	    m_resources{std::move(resources)}
+	{
+		for (auto &resource : m_resources)
+		{
+			resource.stages |= stage;
+		}
+	};
 
 	~ShaderResourceSet() = default;
 
-	const std::vector<ShaderResource> &get_resources() const
+	// Get all resources
+	const std::vector<ShaderResource> &resources() const;
+
+	// Get all resources of a specific type
+	std::vector<ShaderResource> resources(const ShaderResourceType &type) const;
+
+	// Update the resource mode of a specific resource
+	void update_resource_mode(const std::string &name, const ShaderResourceMode &mode);
+
+	vk::ShaderStageFlagBits stage() const
 	{
-		return resources;
+		return m_stage;
 	}
 
-	std::vector<ShaderResource> get_resources(const ShaderResourceType &type) const
+	VkShaderStageFlagBits c_stage() const
 	{
-		std::vector<ShaderResource> result;
-		for (const auto &resource : resources)
-		{
-			if (resource.type == type)
-			{
-				result.push_back(resource);
-			}
-		}
-		return result;
+		return static_cast<VkShaderStageFlagBits>(m_stage);
 	}
 
   private:
-	std::vector<ShaderResource> resources;
+	vk::ShaderStageFlagBits     m_stage;
+	std::vector<ShaderResource> m_resources;
 };
 }        // namespace vkb
+
+namespace std
+{
+template <>
+struct hash<vkb::ShaderResource>
+{
+	inline size_t operator()(const vkb::ShaderResource &resource) const
+	{
+		std::size_t result = 0;
+
+		if (resource.type == vkb::ShaderResourceType::Input ||
+		    resource.type == vkb::ShaderResourceType::Output ||
+		    resource.type == vkb::ShaderResourceType::PushConstant ||
+		    resource.type == vkb::ShaderResourceType::SpecializationConstant)
+		{
+			return result;
+		}
+
+		vkb::hash_combine(result, resource.set);
+		vkb::hash_combine(result, resource.binding);
+		vkb::hash_combine(result, static_cast<std::underlying_type<vkb::ShaderResourceType>::type>(resource.type));
+		vkb::hash_combine(result, resource.mode);
+
+		return result;
+	}
+};
+
+template <>
+struct hash<vkb::ShaderResourceSet>
+{
+	inline size_t operator()(const vkb::ShaderResourceSet &resource_set) const
+	{
+		size_t h = 0;
+		for (auto &resource : resource_set.resources())
+		{
+			h ^= hash<vkb::ShaderResource>{}(resource);
+		}
+		return h;
+	}
+};
+}        // namespace std

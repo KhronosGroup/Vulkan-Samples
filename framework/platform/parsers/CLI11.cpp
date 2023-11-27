@@ -17,8 +17,8 @@
 
 #include "CLI11.h"
 
-#include "common/logging.h"
 #include "common/strings.h"
+#include <core/util/logging.hpp>
 
 namespace vkb
 {

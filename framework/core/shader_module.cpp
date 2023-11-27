@@ -17,11 +17,10 @@
 
 #include "shader_module.h"
 
-#include "common/logging.h"
 #include "device.h"
-#include "glsl_compiler.h"
 #include "platform/filesystem.h"
-#include "spirv_reflection.h"
+
+#include <shaders/shader_cache.hpp>
 
 namespace vkb
 {
@@ -82,8 +81,9 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
     stage{stage},
     entry_point{entry_point}
 {
-	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]",
-	                         glsl_source.get_filename(), shader_variant.get_id(), entry_point);
+	auto shader_handle = glsl_source.handle({});
+
+	debug_name = fmt::format("{} [variant {:X}] [entrypoint {}]", shader_handle.path, shader_variant.get_id(), entry_point);
 
 	// Compiling from GLSL source requires the entry point
 	if (entry_point.empty())
@@ -91,39 +91,16 @@ ShaderModule::ShaderModule(Device &device, VkShaderStageFlagBits stage, const Sh
 		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
 	}
 
-	auto &source = glsl_source.get_source();
+	auto *cache  = ShaderCache::get();
+	auto  shader = cache->load_shader(shader_handle);
 
-	// Check if application is passing in GLSL source code to compile to SPIR-V
-	if (source.empty())
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
-	// Precompile source into the final spirv bytecode
-	auto glsl_final_source = precompile_shader(source);
-
-	// Compile the GLSL source
-	GLSLCompiler glsl_compiler;
-
-	if (!glsl_compiler.compile_to_spirv(stage, convert_to_bytes(glsl_final_source), entry_point, shader_variant, spirv, info_log))
-	{
-		LOGE("Shader compilation failed for shader \"{}\"", glsl_source.get_filename());
-		LOGE("{}", info_log);
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
-
-	SPIRVReflection spirv_reflection;
-
-	// Reflect all shader resources
-	if (!spirv_reflection.reflect_shader_resources(stage, spirv, resources, shader_variant))
-	{
-		throw VulkanException{VK_ERROR_INITIALIZATION_FAILED};
-	}
+	// Temporarily store the shader properties in the module
+	spirv     = shader->code;
+	resources = shader->resource_set;
 
 	// Generate a unique id, determined by source and variant
 	std::hash<std::string> hasher{};
-	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()),
-	                        reinterpret_cast<const char *>(spirv.data() + spirv.size())});
+	id = hasher(std::string{reinterpret_cast<const char *>(spirv.data()), reinterpret_cast<const char *>(spirv.data() + spirv.size())});
 }
 
 ShaderModule::ShaderModule(ShaderModule &&other) :
@@ -154,7 +131,7 @@ const std::string &ShaderModule::get_entry_point() const
 	return entry_point;
 }
 
-const std::vector<ShaderResource> &ShaderModule::get_resources() const
+const ShaderResourceSet &ShaderModule::get_resources() const
 {
 	return resources;
 }
@@ -171,30 +148,7 @@ const std::vector<uint32_t> &ShaderModule::get_binary() const
 
 void ShaderModule::set_resource_mode(const std::string &resource_name, const ShaderResourceMode &resource_mode)
 {
-	auto it = std::find_if(resources.begin(), resources.end(), [&resource_name](const ShaderResource &resource) { return resource.name == resource_name; });
-
-	if (it != resources.end())
-	{
-		if (resource_mode == ShaderResourceMode::Dynamic)
-		{
-			if (it->type == ShaderResourceType::BufferUniform || it->type == ShaderResourceType::BufferStorage)
-			{
-				it->mode = resource_mode;
-			}
-			else
-			{
-				LOGW("Resource `{}` does not support dynamic.", resource_name);
-			}
-		}
-		else
-		{
-			it->mode = resource_mode;
-		}
-	}
-	else
-	{
-		LOGW("Resource `{}` not found for shader.", resource_name);
-	}
+	resources.update_resource_mode(resource_name, resource_mode);
 }
 
 ShaderVariant::ShaderVariant(std::string &&preamble, std::vector<std::string> &&processes) :
@@ -288,35 +242,5 @@ void ShaderVariant::update_id()
 {
 	std::hash<std::string> hasher{};
 	id = hasher(preamble);
-}
-
-ShaderSource::ShaderSource(const std::string &filename) :
-    filename{filename},
-    source{fs::read_shader(filename)}
-{
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
-}
-
-size_t ShaderSource::get_id() const
-{
-	return id;
-}
-
-const std::string &ShaderSource::get_filename() const
-{
-	return filename;
-}
-
-void ShaderSource::set_source(const std::string &source_)
-{
-	source = source_;
-	std::hash<std::string> hasher{};
-	id = hasher(std::string{this->source.cbegin(), this->source.cend()});
-}
-
-const std::string &ShaderSource::get_source() const
-{
-	return source;
 }
 }        // namespace vkb

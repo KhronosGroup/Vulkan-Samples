@@ -27,7 +27,6 @@
 #include "graphics_pipeline_library.h"
 
 #include "scene_graph/components/sub_mesh.h"
-#include <glsl_compiler.h>
 
 void GraphicsPipelineLibrary::pipeline_creation_threadfn()
 {

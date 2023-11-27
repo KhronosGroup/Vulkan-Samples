@@ -19,8 +19,6 @@
 
 #include <common/hpp_error.h>
 #include <common/hpp_vk_common.h>
-#include <common/logging.h>
-#include <hpp_glsl_compiler.h>
 #include <platform/filesystem.h>
 #include <platform/window.h>
 

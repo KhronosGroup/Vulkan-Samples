@@ -177,7 +177,7 @@ inline std::string result_to_string(SpvReflectResult result)
 #undef CASE
 }
 
-ShaderResourceSet SpirvReflector::reflect(const std::vector<uint8_t> &code) const
+ShaderResourceSet SpirvReflector::reflect(vk::ShaderStageFlagBits stage, const std::vector<uint8_t> &code) const
 {
 	if (code.size() == 0)
 	{
@@ -209,6 +209,6 @@ ShaderResourceSet SpirvReflector::reflect(const std::vector<uint8_t> &code) cons
 	resources.insert(resources.end(), outputs.begin(), outputs.end());
 	resources.insert(resources.end(), descriptor_bindings.begin(), descriptor_bindings.end());
 
-	return ShaderResourceSet{std::move(resources)};
+	return ShaderResourceSet{stage, std::move(resources)};
 }
 }        // namespace vkb

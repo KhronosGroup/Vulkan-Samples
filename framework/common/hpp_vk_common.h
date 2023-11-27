@@ -18,8 +18,6 @@
 #pragma once
 
 #include "common/vk_common.h"
-
-#include "common/logging.h"
 #include "vulkan/vulkan.hpp"
 #include "vulkan/vulkan_format_traits.hpp"
 

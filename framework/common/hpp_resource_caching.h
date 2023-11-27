@@ -152,15 +152,6 @@ struct hash<vkb::core::HPPRenderPass>
 };
 
 template <>
-struct hash<vkb::core::HPPShaderModule>
-{
-	size_t operator()(const vkb::core::HPPShaderModule &shader_module) const
-	{
-		return std::hash<vkb::ShaderModule>()(reinterpret_cast<vkb::ShaderModule const &>(shader_module));
-	}
-};
-
-template <>
 struct hash<vkb::core::HPPShaderResource>
 {
 	size_t operator()(vkb::core::HPPShaderResource const &shader_resource) const
@@ -295,14 +286,14 @@ struct HPPRecordHelper
 };
 
 template <class... A>
-struct HPPRecordHelper<vkb::core::HPPShaderModule, A...>
+struct HPPRecordHelper<vkb::core::ShaderModule, A...>
 {
 	size_t record(HPPResourceRecord &recorder, A &...args)
 	{
 		return recorder.register_shader_module(args...);
 	}
 
-	void index(HPPResourceRecord &recorder, size_t index, vkb::core::HPPShaderModule &shader_module)
+	void index(HPPResourceRecord &recorder, size_t index, vkb::core::ShaderModule &shader_module)
 	{
 		recorder.set_shader_module(index, shader_module);
 	}

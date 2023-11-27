@@ -19,7 +19,6 @@
 
 #include <imgui_internal.h>
 
-#include "common/logging.h"
 #include "core/device.h"
 #include "gui.h"
 #include "platform/filesystem.h"

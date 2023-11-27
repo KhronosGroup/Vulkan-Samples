@@ -25,8 +25,7 @@ namespace vkb
 namespace core
 {
 class HPPDevice;
-class HPPShaderModule;
-struct HPPShaderResource;
+class ShaderModule;
 
 /**
  * @brief facade class around vkb::DescriptorSetLayout, providing a vulkan.hpp-based interface
@@ -41,12 +40,12 @@ class HPPDescriptorSetLayout : private vkb::DescriptorSetLayout
   public:
 	HPPDescriptorSetLayout(vkb::core::HPPDevice                            &device,
 	                       const uint32_t                                   set_index,
-	                       const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
-	                       const std::vector<vkb::core::HPPShaderResource> &resource_set) :
+	                       const std::vector<vkb::core::ShaderModule *> &shader_modules,
+	                       const ShaderResourceSet                         &resource_set) :
 	    vkb::DescriptorSetLayout(reinterpret_cast<vkb::Device &>(device),
 	                             set_index,
 	                             reinterpret_cast<std::vector<vkb::ShaderModule *> const &>(shader_modules),
-	                             reinterpret_cast<std::vector<vkb::ShaderResource> const &>(resource_set))
+	                             resource_set)
 	{}
 
 	vk::DescriptorSetLayout get_handle() const

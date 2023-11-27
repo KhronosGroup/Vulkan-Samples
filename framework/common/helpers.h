@@ -165,17 +165,6 @@ inline void write(std::ostringstream &os, const T &first_arg, const Args &... ar
 }
 
 /**
- * @brief Helper function to combine a given hash
- *        with a generated hash for the input param.
- */
-template <class T>
-inline void hash_combine(size_t &seed, const T &v)
-{
-	std::hash<T> hasher;
-	glm::detail::hash_combine(seed, hasher(v));
-}
-
-/**
  * @brief Helper function to convert a data type
  *        to string using output stream operator.
  * @param value The object to be converted to string
