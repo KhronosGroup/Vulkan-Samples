@@ -40,7 +40,6 @@ HPPInstancing::~HPPInstancing()
 		device.destroyPipeline(starfield_pipeline);
 		device.destroyPipelineLayout(pipeline_layout);
 		device.destroyDescriptorSetLayout(descriptor_set_layout);
-		instance_buffer.destroy(device);
 	}
 }
 
@@ -159,7 +158,7 @@ void HPPInstancing::build_command_buffers()
 		// Binding point 0 : Mesh vertex buffer
 		command_buffer.bindVertexBuffers(0, rocks.mesh->get_vertex_buffer("vertex_buffer").get_handle(), offset);
 		// Binding point 1 : Instance data buffer
-		command_buffer.bindVertexBuffers(1, instance_buffer.buffer, offset);
+		command_buffer.bindVertexBuffers(1, instance_buffer.buffer->get_handle(), offset);
 		command_buffer.bindIndexBuffer(rocks.mesh->get_index_buffer().get_handle(), 0, vk::IndexType::eUint32);
 		// Render instances
 		command_buffer.drawIndexed(rocks.mesh->vertex_indices, INSTANCE_COUNT, 0, 0, 0);
@@ -438,40 +437,25 @@ void HPPInstancing::prepare_instance_data()
 	// On devices with separate memory types for host visible and device local memory this will result in better performance
 	// On devices with unified memory types (DEVICE_LOCAL_BIT and HOST_VISIBLE_BIT supported at once) this isn't necessary and you could skip the staging
 
-	struct
-	{
-		vk::DeviceMemory memory;
-		vk::Buffer       buffer;
-	} staging_buffer;
-
 	auto const &device = get_device();
 
-	std::tie(staging_buffer.buffer, staging_buffer.memory) =
-	    device->create_buffer(vk::BufferUsageFlagBits::eTransferSrc,
-	                          vk::MemoryPropertyFlagBits::eHostVisible | vk::MemoryPropertyFlagBits::eHostCoherent,
-	                          instance_buffer.size,
-	                          instance_data.data());
+	vkb::core::HPPBuffer staging_buffer(*device, instance_buffer.size, vk::BufferUsageFlagBits::eTransferSrc, VMA_MEMORY_USAGE_CPU_TO_GPU);
+	staging_buffer.update(instance_data.data(), instance_buffer.size);
 
-	std::tie(instance_buffer.buffer, instance_buffer.memory) =
-	    device->create_buffer(vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst,
-	                          vk::MemoryPropertyFlagBits::eDeviceLocal,
-	                          instance_buffer.size);
+	instance_buffer.buffer = std::make_unique<vkb::core::HPPBuffer>(
+	    *device, instance_buffer.size, vk::BufferUsageFlagBits::eVertexBuffer | vk::BufferUsageFlagBits::eTransferDst, VMA_MEMORY_USAGE_GPU_ONLY);
 
 	// Copy to staging buffer
 	vk::CommandBuffer copy_command = device->create_command_buffer(vk::CommandBufferLevel::ePrimary, true);
 
 	vk::BufferCopy copy_region(0, 0, instance_buffer.size);
-	copy_command.copyBuffer(staging_buffer.buffer, instance_buffer.buffer, copy_region);
+	copy_command.copyBuffer(staging_buffer.get_handle(), instance_buffer.buffer->get_handle(), copy_region);
 
 	device->flush_command_buffer(copy_command, queue, true);
 
 	instance_buffer.descriptor.range  = instance_buffer.size;
-	instance_buffer.descriptor.buffer = instance_buffer.buffer;
+	instance_buffer.descriptor.buffer = instance_buffer.buffer->get_handle();
 	instance_buffer.descriptor.offset = 0;
-
-	// Destroy staging resources
-	device->get_handle().destroyBuffer(staging_buffer.buffer);
-	device->get_handle().freeMemory(staging_buffer.memory);
 }
 
 void HPPInstancing::prepare_uniform_buffers()

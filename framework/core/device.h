@@ -148,17 +148,6 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	uint32_t get_memory_type(uint32_t bits, VkMemoryPropertyFlags properties, VkBool32 *memory_type_found = nullptr) const;
 
 	/**
-	 * @brief Creates a vulkan buffer
-	 * @param usage The buffer usage
-	 * @param properties The memory properties
-	 * @param size The size of the buffer
-	 * @param memory The pointer to the buffer memory
-	 * @param data The data to place inside the buffer
-	 * @returns A valid VkBuffer
-	 */
-	VkBuffer create_buffer(VkBufferUsageFlags usage, VkMemoryPropertyFlags properties, VkDeviceSize size, VkDeviceMemory *memory, void *data = nullptr);
-
-	/**
 	 * @brief Copies a buffer from one to another
 	 * @param src The buffer to copy from
 	 * @param dst The buffer to copy to

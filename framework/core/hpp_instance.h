@@ -1,4 +1,4 @@
-/* Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
+/* Copyright (c) 2022-2023, NVIDIA CORPORATION. All rights reserved.
  *
  * SPDX-License-Identifier: Apache-2.0
  *
@@ -17,6 +17,7 @@
 
 #pragma once
 
+#include "common/optional.h"
 #include <common/hpp_error.h>
 #include <unordered_map>
 #include <vulkan/vulkan.hpp>
@@ -43,6 +44,11 @@ class HPPInstance
 {
   public:
 	/**
+	 * @brief Can be set from the GPU selection plugin to explicitly select a GPU instead
+	 */
+	static Optional<uint32_t> selected_gpu_index;
+
+	/**
 	 * @brief Initializes the connection to Vulkan
 	 * @param application_name The name of the application
 	 * @param required_extensions The extensions requested to be enabled
@@ -51,9 +57,9 @@ class HPPInstance
 	 * @param api_version The Vulkan API version that the instance will be using
 	 * @throws runtime_error if the required extensions and validation layers are not found
 	 */
-	HPPInstance(const std::string &                           application_name,
+	HPPInstance(const std::string                            &application_name,
 	            const std::unordered_map<const char *, bool> &required_extensions        = {},
-	            const std::vector<const char *> &             required_validation_layers = {},
+	            const std::vector<const char *>              &required_validation_layers = {},
 	            bool                                          headless                   = false,
 	            uint32_t                                      api_version                = VK_API_VERSION_1_0);
 

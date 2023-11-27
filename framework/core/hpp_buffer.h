@@ -53,8 +53,8 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	HPPBuffer &operator=(const HPPBuffer &) = delete;
 	HPPBuffer &operator=(HPPBuffer &&)      = delete;
 
-	VmaAllocation  get_allocation() const;
-	const uint8_t *get_data() const;
+	VmaAllocation    get_allocation() const;
+	const uint8_t   *get_data() const;
 	vk::DeviceMemory get_memory() const;
 
 	/**
@@ -97,7 +97,7 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	 * @param size The amount of bytes to copy
 	 * @param offset The offset to start the copying into the mapped data
 	 */
-	void update(void *data, size_t size, size_t offset = 0);
+	void update(void const *data, size_t size, size_t offset = 0);
 
 	/**
 	 * @brief Copies a vector of bytes into the buffer
@@ -105,6 +105,12 @@ class HPPBuffer : public vkb::core::HPPVulkanResource<vk::Buffer>
 	 * @param offset The offset to start the copying into the mapped data
 	 */
 	void update(const std::vector<uint8_t> &data, size_t offset = 0);
+
+	template <typename T>
+	void update(std::vector<T> const &data, size_t offset = 0)
+	{
+		update(data.data(), data.size() * sizeof(T), offset);
+	}
 
 	/**
 	 * @brief Copies an object as byte data into the buffer

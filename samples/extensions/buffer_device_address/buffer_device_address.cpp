@@ -366,6 +366,7 @@ void BufferDeviceAddress::render(float delta_time)
 	VkViewport viewport = {0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height), 0.0f, 1.0f};
 	VkRect2D   scissor  = {{0, 0}, {width, height}};
 
+	recreate_current_command_buffer();
 	auto cmd         = draw_cmd_buffers[current_buffer];
 	auto begin_info  = vkb::initializers::command_buffer_begin_info();
 	begin_info.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;

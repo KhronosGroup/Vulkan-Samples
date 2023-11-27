@@ -171,7 +171,7 @@ cmake -G"Visual Studio 15 2017 Win64" -S . -Bbuild/windows
 (Prior to CMake v3.13)
 
 ----
-cmake -G"Visual Studio 15 2017 Win64" -H. -Bbuild/windows
+cmake -G"Visual Studio 15 2017 Win64" . -Bbuild/windows
 ----
 
 (New in CMake v3.14.
@@ -218,7 +218,7 @@ sudo apt-get install cmake g++ xorg-dev libglu1-mesa-dev
 `Step 1.` The following command will generate the project
 
 ----
-cmake -G "Unix Makefiles" -H. -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
+cmake -G "Unix Makefiles" -Bbuild/linux -DCMAKE_BUILD_TYPE=Release
 ----
 
 `Step 2.` Build the project
@@ -249,7 +249,7 @@ cmake --build build/linux --config Release --target vulkan_samples -j$(nproc)
 `Step 1.` The following command will generate the project
 
 ----
-cmake -H. -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
+cmake -Bbuild/mac -DCMAKE_BUILD_TYPE=Release
 ----
 
 `Step 2.` Build the project
@@ -289,7 +289,7 @@ Android Studio uses the following plugins/tools to build samples:
 * CMake Plugin, which installs and uses Ninja
 * NDK
 
-Their versions are configured in the https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/build.gradle.in[build.gradle.in] and https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/app.build.gradle.in[app.build.gradle.in files];
+Their versions are configured in the https://github.com/KhronosGroup/Vulkan-Samples/blob/main/bldsys/cmake/template/gradle/build.gradle.in[build.gradle.in] and https://github.com/KhronosGroup/Vulkan-Samples/blob/main/bldsys/cmake/template/gradle/app.build.gradle.in[app.build.gradle.in files];
 when updating these versions, refer to https://developer.android.com/studio/projects/install-ndk#default-ndk-per-agp[the official documentation for the recommended combinations].
 
 === Build with Gradle
@@ -309,7 +309,7 @@ A new folder will be created in the root directory at `build\android_gradle`
 https://d.android.com/reference/tools/gradle-api[Android Gradle Plugin] (used by Android Studio) may not auto install dependencies.
 You will need to install them if they have not been installed:
 
-* Find the configured versions in `build/android_gradle/app/build.gradle`, or its template file https://github.com/KhronosGroup/Vulkan-Samples/blob/master/bldsys/cmake/template/gradle/app.build.gradle.in[`bldsys/camke/template/gradle/app.build.gradle.in`]
+* Find the configured versions in `build/android_gradle/app/build.gradle`, or its template file https://github.com/KhronosGroup/Vulkan-Samples/blob/main/bldsys/cmake/template/gradle/app.build.gradle.in[`bldsys/camke/template/gradle/app.build.gradle.in`]
 * https://d.android.com/studio/projects/install-ndk[Install them with Android Studio] or https://d.android.com/studio/projects/configure-agp-ndk?language=agp4-1#command-line[sdkmanager command line tool].
 For example, to install AGP port CMake 3.22.1 and NDK version 25.1.8937393 on Linux, do the following:
 +
