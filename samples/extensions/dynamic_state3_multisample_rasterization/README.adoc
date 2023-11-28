@@ -17,73 +17,30 @@
 -
 ////
 
-// NOTE: Remove the following comment block for the actual readme of your sample -->
-
-////
-This is a template for the sample's readme. Every new sample should come with a readme that contains at least a short tutorial that accompanies the code of the example.
-
-Readmes are written in Asciidoc (see https://asciidoc.org/).
-
-You can freely choose how to structure it, but it should always contain an overview and conclusion paragraph.
-
-The readme can (and most often should) show code from along with an explanation. Code in asciidoc can be rendered with syntax highlighting using the following syntax:
-
-[,cpp]
-----
-void main() {
-    std::cout << "Hello World";
-}
-----
-
-or
-
-[,glsl]
-----
-void main() {
-    gl_color = vec4(1.0f);
-}
-----
-
-Ideally it also contains an image of how the sample is supposed to look.
-
-For an example you can take a look at the readme's of existing samples, e.g. https://raw.githubusercontent.com/KhronosGroup/Vulkan-Samples/main/samples/extensions/descriptor_indexing/README.adoc
-////
-
-= Sample name
-
-////
-The following block adds linkage to this repo in the Vulkan docs site project. It's only visible if the file is viewed via the Antora framework.
-////
-
-ifdef::site-gen-antora[]
-TIP: The source for this sample can be found in the https://github.com/KhronosGroup/Vulkan-Samples/tree/main/samples/PUT_SAMPLE_PATH_HERE[Khronos Vulkan samples github repository].
-endif::[]
+// Extended dynamic_state3: Rasterization samples
 
 
 == Overview
 
-////
-This chapter should contain an overview of what this sample is trying to achieve. If extensions are used, this chapter should also list those.
+This sample demonstrates one of the functionalities of VK_EXT_extended_dynamic_state3 related to rasterization samples.
+The extension can be used to dynamically change sampling without any need to restart the application.
+image:image/image.png[]
 
-The following chapters get into the details on how the sample is working, what features are used, etc. 
+== Enabling the extension
 
-The chapter itself can be structured by using sub paragraphs, e.g.:
+To be able to use this extension in Vulkan API:
+1) At least Vulkan API version 1.1 must be supported.
+2) Set of `VkPhysicalDeviceExtendedDynamicStateFeaturesEXT`, `VkPhysicalDeviceExtendedDynamicState2FeaturesEXT`, `VkPhysicalDeviceExtendedDynamicState3FeaturesEXT`
+must be added to the feature chain of `VkPhysicalDeviceProperties2` and `VkPhysicalDeviceExtendedDynamicState3PropertiesEXT` must be added to `VkPhysicalDeviceProperties2`.
 
-# Feature description
+== Using the extension
 
-# Enabling extensions
+To use the extension:
+1) `VK_DYNAMIC_STATE_RASTERIZATION_SAMPLES_EXT` must be added to `VkPipelineDynamicStateCreateInfo`.
+2) Method `void vkCmdSetRasterizationSamplesEXT(VkCommandBuffer commandBuffer, VkSampleCountFlagBits rasterizationSamples)` should be called between
+`vkCmdBeginRenderPass` and `vkCmdEndRenderPass`.
 
-# etc.
+== Resources
 
-////
-
-== Conclusion
-
-////
-The tutorial should end with a conclusion chapter that recaps the tutorial and (if applicable) talks about pros and cons of the features demonstrated in this sample
-////
-
-////
-NOTE: Please also add a link to the new samples' README.adoc to the file located in ./antora/modules/ROOT/nav.adoc
-THis is necessary to have the sample show up on the build for the docs site under https://docs.vulkan.org
-////
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/VK_EXT_extended_dynamic_state3.html
+https://registry.khronos.org/vulkan/specs/1.3-extensions/man/html/vkCmdSetRasterizationSamplesEXT.html
