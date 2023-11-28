@@ -214,6 +214,8 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 
 	ResourceCache &get_resource_cache();
 
+	void override_resource_cache(std::unique_ptr<ResourceCache> &&resource_cache);
+
   private:
 	const PhysicalDevice &gpu;
 
@@ -235,6 +237,6 @@ class Device : public core::VulkanResource<VkDevice, VK_OBJECT_TYPE_DEVICE>
 	/// A fence pool associated to the primary queue
 	std::unique_ptr<FencePool> fence_pool;
 
-	ResourceCache resource_cache;
+	std::unique_ptr<ResourceCache> resource_cache;
 };
 }        // namespace vkb

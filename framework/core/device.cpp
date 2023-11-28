@@ -32,7 +32,7 @@ Device::Device(PhysicalDevice                        &gpu,
     VulkanResource{VK_NULL_HANDLE, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
-    resource_cache{*this}
+    resource_cache{std::make_unique<ResourceCache>(*this)}
 {
 	LOGI("Selected GPU: {}", gpu.get_properties().deviceName);
 
@@ -248,7 +248,7 @@ Device::Device(PhysicalDevice                        &gpu,
 
 Device::Device(PhysicalDevice &gpu, VkDevice &vulkan_device, VkSurfaceKHR surface) :
     gpu{gpu},
-    resource_cache{*this}
+    resource_cache{std::make_unique<ResourceCache>(*this)}
 {
 	this->handle = vulkan_device;
 	debug_utils  = std::make_unique<DummyDebugUtils>();
@@ -256,7 +256,7 @@ Device::Device(PhysicalDevice &gpu, VkDevice &vulkan_device, VkSurfaceKHR surfac
 
 Device::~Device()
 {
-	resource_cache.clear();
+	resource_cache->clear();
 
 	command_pool.reset();
 	fence_pool.reset();
@@ -671,6 +671,12 @@ VkResult Device::wait_idle() const
 
 ResourceCache &Device::get_resource_cache()
 {
-	return resource_cache;
+	assert(resource_cache && "Resource cache is not initialized");
+	return *resource_cache;
+}
+
+void Device::override_resource_cache(std::unique_ptr<ResourceCache> &&resource_cache)
+{
+	this->resource_cache = std::move(resource_cache);
 }
 }        // namespace vkb

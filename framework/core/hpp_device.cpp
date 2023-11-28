@@ -32,7 +32,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
     HPPVulkanResource{nullptr, this},        // Recursive, but valid
     debug_utils{std::move(debug_utils)},
     gpu{gpu},
-    resource_cache{*this}
+    resource_cache{std::make_unique<HPPResourceCache>(*this)}
 {
 	LOGI("Selected GPU: {}", gpu.get_properties().deviceName.data());
 
@@ -232,7 +232,7 @@ HPPDevice::HPPDevice(vkb::core::HPPPhysicalDevice               &gpu,
 
 HPPDevice::~HPPDevice()
 {
-	resource_cache.clear();
+	resource_cache->clear();
 
 	command_pool.reset();
 	fence_pool.reset();
@@ -488,7 +488,14 @@ vkb::HPPFencePool &HPPDevice::get_fence_pool()
 
 vkb::HPPResourceCache &HPPDevice::get_resource_cache()
 {
-	return resource_cache;
+	assert(resource_cache && "No resource cache exists in the device");
+	return *resource_cache;
 }
+
+void HPPDevice::override_resource_cache(std::unique_ptr<vkb::HPPResourceCache> &&resource_cache)
+{
+	this->resource_cache = std::move(resource_cache);
+}
+
 }        // namespace core
 }        // namespace vkb

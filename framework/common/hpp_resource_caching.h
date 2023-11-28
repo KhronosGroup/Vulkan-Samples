@@ -350,59 +350,5 @@ struct HPPRecordHelper<vkb::core::HPPGraphicsPipeline, A...>
 	}
 };
 }        // namespace
-
-template <class T, class... A>
-T &request_resource(vkb::core::HPPDevice &device, vkb::HPPResourceRecord *recorder, std::unordered_map<size_t, T> &resources, A &...args)
-{
-	HPPRecordHelper<T, A...> record_helper;
-
-	size_t hash{0U};
-	hash_param(hash, args...);
-
-	auto res_it = resources.find(hash);
-
-	if (res_it != resources.end())
-	{
-		return res_it->second;
-	}
-
-	// If we do not have it already, create and cache it
-	const char *res_type = typeid(T).name();
-	size_t      res_id   = resources.size();
-
-	LOGD("Building #{} cache object ({})", res_id, res_type);
-
-// Only error handle in release
-#ifndef DEBUG
-	try
-	{
-#endif
-		T resource(device, args...);
-
-		auto res_ins_it = resources.emplace(hash, std::move(resource));
-
-		if (!res_ins_it.second)
-		{
-			throw std::runtime_error{std::string{"Insertion error for #"} + std::to_string(res_id) + "cache object (" + res_type + ")"};
-		}
-
-		res_it = res_ins_it.first;
-
-		if (recorder)
-		{
-			size_t index = record_helper.record(*recorder, args...);
-			record_helper.index(*recorder, index, res_it->second);
-		}
-#ifndef DEBUG
-	}
-	catch (const std::exception &e)
-	{
-		LOGE("Creation error for #{} cache object ({})", res_id, res_type);
-		throw e;
-	}
-#endif
-
-	return res_it->second;
-}
 }        // namespace common
 }        // namespace vkb

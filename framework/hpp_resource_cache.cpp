@@ -24,19 +24,25 @@
 
 namespace vkb
 {
-namespace
-{
+
 template <class T, class... A>
-T &request_resource(
-    vkb::core::HPPDevice &device, vkb::HPPResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &...args)
+T &request_resource(vkb::core::HPPDevice &device, CacheMap<size_t, T> &resources, A &...args)
 {
-	std::lock_guard<std::mutex> guard(resource_mutex);
+	size_t hash{0U};
+	hash_param(hash, args...);
 
-	auto &res = vkb::common::request_resource(device, &recorder, resources, args...);
+	auto it = resources.find_or_emplace(hash, [&]() {
+		// If we do not have it already, create and cache it
+		const char *res_type = typeid(T).name();
+		size_t      res_id   = resources.size();
 
-	return res;
+		LOGD("Building #{} cache object ({})", res_id, res_type);
+
+		return T(device, args...);
+	});
+
+	return it->second;
 }
-}        // namespace
 
 HPPResourceCache::HPPResourceCache(vkb::core::HPPDevice &device) :
     device{device}
@@ -49,7 +55,8 @@ void HPPResourceCache::clear()
 	state.descriptor_sets.clear();
 	state.descriptor_set_layouts.clear();
 	state.render_passes.clear();
-	clear_pipelines();
+	state.graphics_pipelines.clear();
+	state.compute_pipelines.clear();
 	clear_framebuffers();
 }
 
@@ -58,76 +65,48 @@ void HPPResourceCache::clear_framebuffers()
 	state.framebuffers.clear();
 }
 
-void HPPResourceCache::clear_pipelines()
-{
-	state.graphics_pipelines.clear();
-	state.compute_pipelines.clear();
-}
-
-const HPPResourceCacheState &HPPResourceCache::get_internal_state() const
-{
-	return state;
-}
-
 vkb::core::HPPComputePipeline &HPPResourceCache::request_compute_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
+	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
+	return request_resource(device, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
 
-vkb::core::HPPDescriptorSet &HPPResourceCache::request_descriptor_set(vkb::core::HPPDescriptorSetLayout          &descriptor_set_layout,
-                                                                      const BindingMap<vk::DescriptorBufferInfo> &buffer_infos,
-                                                                      const BindingMap<vk::DescriptorImageInfo>  &image_infos)
+vkb::core::HPPDescriptorSet &HPPResourceCache::request_descriptor_set(vkb::core::HPPDescriptorSetLayout &descriptor_set_layout, const BindingMap<vk::DescriptorBufferInfo> &buffer_infos, const BindingMap<vk::DescriptorImageInfo> &image_infos)
 {
-	auto &descriptor_pool = request_resource(device, recorder, descriptor_set_mutex, state.descriptor_pools, descriptor_set_layout);
-	return request_resource(device, recorder, descriptor_set_mutex, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+	auto &descriptor_pool = request_resource(device, state.descriptor_pools, descriptor_set_layout);
+	return request_resource(device, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
-vkb::core::HPPDescriptorSetLayout &HPPResourceCache::request_descriptor_set_layout(const uint32_t                                   set_index,
-                                                                                   const std::vector<vkb::core::HPPShaderModule *> &shader_modules,
-                                                                                   const std::vector<vkb::core::HPPShaderResource> &set_resources)
+vkb::core::HPPDescriptorSetLayout &HPPResourceCache::request_descriptor_set_layout(const uint32_t set_index, const std::vector<vkb::core::HPPShaderModule *> &shader_modules, const std::vector<vkb::core::HPPShaderResource> &set_resources)
 {
-	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
+	return request_resource(device, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }
 
-vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target,
-                                                                 const vkb::core::HPPRenderPass        &render_pass)
+vkb::core::HPPFramebuffer &HPPResourceCache::request_framebuffer(const vkb::rendering::HPPRenderTarget &render_target, const vkb::core::HPPRenderPass &render_pass)
 {
-	return request_resource(device, recorder, framebuffer_mutex, state.framebuffers, render_target, render_pass);
+	return request_resource(device, state.framebuffers, render_target, render_pass);
 }
 
 vkb::core::HPPGraphicsPipeline &HPPResourceCache::request_graphics_pipeline(vkb::rendering::HPPPipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, graphics_pipeline_mutex, state.graphics_pipelines, pipeline_cache, pipeline_state);
+	vk::PipelineCache pipeline_cache{VK_NULL_HANDLE};
+	return request_resource(device, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }
 
 vkb::core::HPPPipelineLayout &HPPResourceCache::request_pipeline_layout(const std::vector<vkb::core::HPPShaderModule *> &shader_modules)
 {
-	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
+	return request_resource(device, state.pipeline_layouts, shader_modules);
 }
 
-vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments,
-                                                                const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos,
-                                                                const std::vector<vkb::core::HPPSubpassInfo>     &subpasses)
+vkb::core::HPPRenderPass &HPPResourceCache::request_render_pass(const std::vector<vkb::rendering::HPPAttachment> &attachments, const std::vector<vkb::common::HPPLoadStoreInfo> &load_store_infos, const std::vector<vkb::core::HPPSubpassInfo> &subpasses)
 {
-	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
+	return request_resource(device, state.render_passes, attachments, load_store_infos, subpasses);
 }
 
-vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits            stage,
-                                                                    const vkb::core::HPPShaderSource  &glsl_source,
-                                                                    const vkb::core::HPPShaderVariant &shader_variant)
+vkb::core::HPPShaderModule &HPPResourceCache::request_shader_module(vk::ShaderStageFlagBits stage, const vkb::core::HPPShaderSource &glsl_source, const vkb::core::HPPShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};
-	return request_resource(device, recorder, shader_module_mutex, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
-}
-
-std::vector<uint8_t> HPPResourceCache::serialize()
-{
-	return recorder.get_data();
-}
-
-void HPPResourceCache::set_pipeline_cache(vk::PipelineCache new_pipeline_cache)
-{
-	pipeline_cache = new_pipeline_cache;
+	return request_resource(device, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
 }
 
 void HPPResourceCache::update_descriptor_sets(const std::vector<vkb::core::HPPImageView> &old_views, const std::vector<vkb::core::HPPImageView> &new_views)
@@ -199,14 +178,8 @@ void HPPResourceCache::update_descriptor_sets(const std::vector<vkb::core::HPPIm
 		size_t new_key = std::hash<vkb::core::HPPDescriptorSet>()(descriptor_set);
 
 		// Add (key, resource) to the cache
-		state.descriptor_sets.emplace(new_key, std::move(descriptor_set));
+		state.descriptor_sets.replace(new_key, std::move(descriptor_set));
 	}
 }
 
-void HPPResourceCache::warmup(const std::vector<uint8_t> &data)
-{
-	recorder.set_data(data);
-
-	replayer.play(*this, recorder);
-}
 }        // namespace vkb

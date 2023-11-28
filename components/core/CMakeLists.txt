@@ -20,6 +20,8 @@ vkb__register_component(
         include/core/util/strings.hpp
         include/core/util/error.hpp
         include/core/util/hash.hpp
+
+        include/core/containers/container_wrapper.hpp
     SRC
         src/strings.cpp
     LINK_LIBS
@@ -29,8 +31,11 @@ vkb__register_component(
 
 vkb__register_tests(
     COMPONENT core
-    NAME utils
+    NAME core
     SRC
+        tests/type_map.test.cpp
+        tests/cache_map.test.cpp
+        tests/container_wrapper.test.cpp
         tests/strings.test.cpp
     LINK_LIBS
         vkb__core

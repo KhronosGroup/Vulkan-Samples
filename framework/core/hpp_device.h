@@ -128,6 +128,8 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 
 	vkb::HPPResourceCache &get_resource_cache();
 
+	void override_resource_cache(std::unique_ptr<vkb::HPPResourceCache> &&resource_cache);
+
   private:
 	vkb::core::HPPPhysicalDevice const &gpu;
 
@@ -149,7 +151,7 @@ class HPPDevice : public vkb::core::HPPVulkanResource<vk::Device>
 	/// A fence pool associated to the primary queue
 	std::unique_ptr<vkb::HPPFencePool> fence_pool;
 
-	vkb::HPPResourceCache resource_cache;
+	std::unique_ptr<vkb::HPPResourceCache> resource_cache;
 };
 }        // namespace core
 }        // namespace vkb

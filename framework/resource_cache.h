@@ -30,6 +30,8 @@
 #include "resource_record.h"
 #include "resource_replay.h"
 
+#include <core/containers/cache_map.hpp>
+
 namespace vkb
 {
 class Device;
@@ -39,29 +41,17 @@ namespace core
 class ImageView;
 }
 
-/**
- * @brief Struct to hold the internal state of the Resource Cache
- *
- */
 struct ResourceCacheState
 {
-	std::unordered_map<std::size_t, ShaderModule> shader_modules;
-
-	std::unordered_map<std::size_t, PipelineLayout> pipeline_layouts;
-
-	std::unordered_map<std::size_t, DescriptorSetLayout> descriptor_set_layouts;
-
-	std::unordered_map<std::size_t, DescriptorPool> descriptor_pools;
-
-	std::unordered_map<std::size_t, RenderPass> render_passes;
-
-	std::unordered_map<std::size_t, GraphicsPipeline> graphics_pipelines;
-
-	std::unordered_map<std::size_t, ComputePipeline> compute_pipelines;
-
-	std::unordered_map<std::size_t, DescriptorSet> descriptor_sets;
-
-	std::unordered_map<std::size_t, Framebuffer> framebuffers;
+	CacheMap<size_t, ShaderModule>        shader_modules;
+	CacheMap<size_t, PipelineLayout>      pipeline_layouts;
+	CacheMap<size_t, DescriptorSetLayout> descriptor_set_layouts;
+	CacheMap<size_t, DescriptorPool>      descriptor_pools;
+	CacheMap<size_t, RenderPass>          render_passes;
+	CacheMap<size_t, GraphicsPipeline>    graphics_pipelines;
+	CacheMap<size_t, ComputePipeline>     compute_pipelines;
+	CacheMap<size_t, DescriptorSet>       descriptor_sets;
+	CacheMap<size_t, Framebuffer>         framebuffers;
 };
 
 /**
@@ -80,82 +70,32 @@ class ResourceCache
 {
   public:
 	ResourceCache(Device &device);
-
-	ResourceCache(const ResourceCache &) = delete;
-
-	ResourceCache(ResourceCache &&) = delete;
-
+	ResourceCache(const ResourceCache &)            = delete;
+	ResourceCache(ResourceCache &&)                 = delete;
 	ResourceCache &operator=(const ResourceCache &) = delete;
+	ResourceCache &operator=(ResourceCache &&)      = delete;
 
-	ResourceCache &operator=(ResourceCache &&) = delete;
-
-	void warmup(const std::vector<uint8_t> &data);
-
-	std::vector<uint8_t> serialize();
-
-	void set_pipeline_cache(VkPipelineCache pipeline_cache);
-
-	ShaderModule &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {});
-
-	PipelineLayout &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
-
-	DescriptorSetLayout &request_descriptor_set_layout(const uint32_t                     set_index,
-	                                                   const std::vector<ShaderModule *> &shader_modules,
-	                                                   const std::vector<ShaderResource> &set_resources);
-
-	GraphicsPipeline &request_graphics_pipeline(PipelineState &pipeline_state);
-
-	ComputePipeline &request_compute_pipeline(PipelineState &pipeline_state);
-
-	DescriptorSet &request_descriptor_set(DescriptorSetLayout &                     descriptor_set_layout,
-	                                      const BindingMap<VkDescriptorBufferInfo> &buffer_infos,
-	                                      const BindingMap<VkDescriptorImageInfo> & image_infos);
-
-	RenderPass &request_render_pass(const std::vector<Attachment> &   attachments,
-	                                const std::vector<LoadStoreInfo> &load_store_infos,
-	                                const std::vector<SubpassInfo> &  subpasses);
-
-	Framebuffer &request_framebuffer(const RenderTarget &render_target,
-	                                 const RenderPass &  render_pass);
-
-	void clear_pipelines();
+	virtual ShaderModule        &request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant = {});
+	virtual PipelineLayout      &request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules);
+	virtual DescriptorSetLayout &request_descriptor_set_layout(const uint32_t set_index, const std::vector<ShaderModule *> &shader_modules, const std::vector<ShaderResource> &set_resources);
+	virtual GraphicsPipeline    &request_graphics_pipeline(PipelineState &pipeline_state);
+	virtual ComputePipeline     &request_compute_pipeline(PipelineState &pipeline_state);
+	virtual DescriptorSet       &request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos);
+	virtual RenderPass          &request_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses);
+	virtual Framebuffer         &request_framebuffer(const RenderTarget &render_target, const RenderPass &render_pass);
 
 	/// @brief Update those descriptor sets referring to old views
 	/// @param old_views Old image views referred by descriptor sets
 	/// @param new_views New image views to be referred
-	void update_descriptor_sets(const std::vector<core::ImageView> &old_views, const std::vector<core::ImageView> &new_views);
+	virtual void update_descriptor_sets(const std::vector<core::ImageView> &old_views, const std::vector<core::ImageView> &new_views);
 
-	void clear_framebuffers();
+	virtual void clear();
+	virtual void clear_framebuffers();
 
-	void clear();
-
-	const ResourceCacheState &get_internal_state() const;
-
-  private:
+  protected:
 	Device &device;
 
-	ResourceRecord recorder;
-
-	ResourceReplay replayer;
-
-	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
-
+	mutable std::mutex mutex;
 	ResourceCacheState state;
-
-	std::mutex descriptor_set_mutex;
-
-	std::mutex pipeline_layout_mutex;
-
-	std::mutex shader_module_mutex;
-
-	std::mutex descriptor_set_layout_mutex;
-
-	std::mutex graphics_pipeline_mutex;
-
-	std::mutex render_pass_mutex;
-
-	std::mutex compute_pipeline_mutex;
-
-	std::mutex framebuffer_mutex;
 };
 }        // namespace vkb

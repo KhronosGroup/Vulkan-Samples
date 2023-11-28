@@ -22,89 +22,81 @@
 
 namespace vkb
 {
-namespace
-{
 template <class T, class... A>
-T &request_resource(Device &device, ResourceRecord &recorder, std::mutex &resource_mutex, std::unordered_map<std::size_t, T> &resources, A &... args)
+T &request_resource(Device &device, CacheMap<std::size_t, T> &resources, A &...args)
 {
-	std::lock_guard<std::mutex> guard(resource_mutex);
+	RecordHelper<T, A...> record_helper;
 
-	auto &res = request_resource(device, &recorder, resources, args...);
+	std::size_t hash{0U};
+	hash_param(hash, args...);
 
-	return res;
+	auto it = resources.find_or_emplace(hash, [&]() {
+		// If we do not have it already, create and cache it
+		const char *res_type = typeid(T).name();
+		size_t      res_id   = resources.size();
+
+		LOGD("Building #{} cache object ({})", res_id, res_type);
+		return T(device, args...);
+	});
+
+	return it->second;
 }
-}        // namespace
 
 ResourceCache::ResourceCache(Device &device) :
     device{device}
 {
 }
 
-void ResourceCache::warmup(const std::vector<uint8_t> &data)
-{
-	recorder.set_data(data);
-
-	replayer.play(*this, recorder);
-}
-
-std::vector<uint8_t> ResourceCache::serialize()
-{
-	return recorder.get_data();
-}
-
-void ResourceCache::set_pipeline_cache(VkPipelineCache new_pipeline_cache)
-{
-	pipeline_cache = new_pipeline_cache;
-}
-
 ShaderModule &ResourceCache::request_shader_module(VkShaderStageFlagBits stage, const ShaderSource &glsl_source, const ShaderVariant &shader_variant)
 {
 	std::string entry_point{"main"};
-	return request_resource(device, recorder, shader_module_mutex, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
+	return request_resource(device, state.shader_modules, stage, glsl_source, entry_point, shader_variant);
 }
 
 PipelineLayout &ResourceCache::request_pipeline_layout(const std::vector<ShaderModule *> &shader_modules)
 {
-	return request_resource(device, recorder, pipeline_layout_mutex, state.pipeline_layouts, shader_modules);
+	return request_resource(device, state.pipeline_layouts, shader_modules);
 }
 
 DescriptorSetLayout &ResourceCache::request_descriptor_set_layout(const uint32_t                     set_index,
                                                                   const std::vector<ShaderModule *> &shader_modules,
                                                                   const std::vector<ShaderResource> &set_resources)
 {
-	return request_resource(device, recorder, descriptor_set_layout_mutex, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
+	return request_resource(device, state.descriptor_set_layouts, set_index, shader_modules, set_resources);
 }
 
 GraphicsPipeline &ResourceCache::request_graphics_pipeline(PipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, graphics_pipeline_mutex, state.graphics_pipelines, pipeline_cache, pipeline_state);
+	// The benefits of a pipeline cache in most of the vulkan samples scenes is negligable
+	// as we use 1-3 pipelines per sample.
+	// Opt to not use a state because of this
+	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
+	return request_resource(device, state.graphics_pipelines, pipeline_cache, pipeline_state);
 }
 
 ComputePipeline &ResourceCache::request_compute_pipeline(PipelineState &pipeline_state)
 {
-	return request_resource(device, recorder, compute_pipeline_mutex, state.compute_pipelines, pipeline_cache, pipeline_state);
+	// The benefits of a pipeline cache in most of the vulkan samples scenes is negligable
+	// as we use 1-3 pipelines per sample.
+	// Opt to not use a state because of this
+	VkPipelineCache pipeline_cache{VK_NULL_HANDLE};
+	return request_resource(device, state.compute_pipelines, pipeline_cache, pipeline_state);
 }
 
 DescriptorSet &ResourceCache::request_descriptor_set(DescriptorSetLayout &descriptor_set_layout, const BindingMap<VkDescriptorBufferInfo> &buffer_infos, const BindingMap<VkDescriptorImageInfo> &image_infos)
 {
-	auto &descriptor_pool = request_resource(device, recorder, descriptor_set_mutex, state.descriptor_pools, descriptor_set_layout);
-	return request_resource(device, recorder, descriptor_set_mutex, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
+	auto &descriptor_pool = request_resource(device, state.descriptor_pools, descriptor_set_layout);
+	return request_resource(device, state.descriptor_sets, descriptor_set_layout, descriptor_pool, buffer_infos, image_infos);
 }
 
 RenderPass &ResourceCache::request_render_pass(const std::vector<Attachment> &attachments, const std::vector<LoadStoreInfo> &load_store_infos, const std::vector<SubpassInfo> &subpasses)
 {
-	return request_resource(device, recorder, render_pass_mutex, state.render_passes, attachments, load_store_infos, subpasses);
+	return request_resource(device, state.render_passes, attachments, load_store_infos, subpasses);
 }
 
 Framebuffer &ResourceCache::request_framebuffer(const RenderTarget &render_target, const RenderPass &render_pass)
 {
-	return request_resource(device, recorder, framebuffer_mutex, state.framebuffers, render_target, render_pass);
-}
-
-void ResourceCache::clear_pipelines()
-{
-	state.graphics_pipelines.clear();
-	state.compute_pipelines.clear();
+	return request_resource(device, state.framebuffers, render_target, render_pass);
 }
 
 void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &old_views, const std::vector<core::ImageView> &new_views)
@@ -188,13 +180,8 @@ void ResourceCache::update_descriptor_sets(const std::vector<core::ImageView> &o
 		hash_param(new_key, descriptor_set.get_layout(), descriptor_set.get_buffer_infos(), descriptor_set.get_image_infos());
 
 		// Add (key, resource) to the cache
-		state.descriptor_sets.emplace(new_key, std::move(descriptor_set));
+		state.descriptor_sets.replace(new_key, std::move(descriptor_set));
 	}
-}
-
-void ResourceCache::clear_framebuffers()
-{
-	state.framebuffers.clear();
 }
 
 void ResourceCache::clear()
@@ -204,12 +191,14 @@ void ResourceCache::clear()
 	state.descriptor_sets.clear();
 	state.descriptor_set_layouts.clear();
 	state.render_passes.clear();
-	clear_pipelines();
-	clear_framebuffers();
+	state.graphics_pipelines.clear();
+	state.compute_pipelines.clear();
+	state.framebuffers.clear();
 }
 
-const ResourceCacheState &ResourceCache::get_internal_state() const
+void ResourceCache::clear_framebuffers()
 {
-	return state;
+	state.framebuffers.clear();
 }
+
 }        // namespace vkb
