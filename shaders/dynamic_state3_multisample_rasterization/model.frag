@@ -69,8 +69,8 @@ void main()
 	vec3 R = reflect(-L, N);
 	vec3 ambient = vec3(0.25);
 	vec3 diffuse = max(dot(N, L), 0.0) * vec3(0.75) * getPBR();
-	vec3 specular = pow(max(dot(R, V), 0.0), 16.0) * vec3(0.75); //texture(textures[uint(round(inMetallicRoughnessTextureIndex))], inUV).xyz;
+	vec3 specular = pow(max(dot(R, V), 0.0), 16.0) * vec3(0.75);
 
 	vec4 base_color = getColor();
-	outFragColor = vec4((ambient/* + diffuse*/) * base_color.rgb + specular, base_color.a) /*+ vec4(inUV.x, inUV.y, 0.0, 1.0); 0.5 * vec4(texture(textures[uint(round(inBaseTextureIndex))], inUV))*/;
+	outFragColor = vec4(ambient * base_color.rgb + specular, base_color.a);
 }
